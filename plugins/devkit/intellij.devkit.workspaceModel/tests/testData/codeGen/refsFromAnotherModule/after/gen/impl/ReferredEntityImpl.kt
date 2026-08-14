@@ -11,12 +11,10 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Parent
-import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.workspaceModel.test.api.ReferredEntity
@@ -95,31 +93,9 @@ getEntityData(true).name = value
 changedProperty.add("name")
 }
 override var contentRoot: ContentRootEntityBuilder?
-get(){
-val _diff = diff
-return if (_diff != null) {
-((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CONTENTROOT_CONNECTION_ID, this) as? ContentRootEntityBuilder) ?: (this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ContentRootEntityBuilder)
-} else {
-(this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ContentRootEntityBuilder)
-}
-}
+get() = getChild(CONTENTROOT_CONNECTION_ID) as? ContentRootEntityBuilder?
 set(value){
-checkModificationAllowed()
-val _diff = diff
-if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null){
-value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
-@Suppress("UNCHECKED_CAST")
-_diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-}
-if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)){
-_diff.instrumentation.replaceChildren(CONTENTROOT_CONNECTION_ID, this, listOfNotNull(value))
-}
-else{
-if (value is ModifiableWorkspaceEntityBase<*, *>){
-value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
-}
-this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = value
-}
+changeChild(value, CONTENTROOT_CONNECTION_ID)
 changedProperty.add("contentRoot")
 }
 override fun getEntityClass(): Class<ReferredEntity> = ReferredEntity::class.java

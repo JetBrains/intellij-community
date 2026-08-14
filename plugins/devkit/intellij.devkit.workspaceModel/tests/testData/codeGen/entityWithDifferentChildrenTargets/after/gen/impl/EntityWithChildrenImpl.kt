@@ -9,12 +9,10 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Parent
-import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.workspaceModel.test.api.ChildEntityType1
@@ -87,59 +85,15 @@ getEntityData(true).name = value
 changedProperty.add("name")
 }
 override var propertyChild: ChildEntityType1Builder?
-get(){
-val _diff = diff
-return if (_diff != null) {
-((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(PROPERTYCHILD_CONNECTION_ID, this) as? ChildEntityType1Builder) ?: (this.entityLinks[EntityLink(true, PROPERTYCHILD_CONNECTION_ID)] as? ChildEntityType1Builder)
-} else {
-(this.entityLinks[EntityLink(true, PROPERTYCHILD_CONNECTION_ID)] as? ChildEntityType1Builder)
-}
-}
+get() = getChild(PROPERTYCHILD_CONNECTION_ID) as? ChildEntityType1Builder?
 set(value){
-checkModificationAllowed()
-val _diff = diff
-if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null){
-value.entityLinks[EntityLink(false, PROPERTYCHILD_CONNECTION_ID)] = this
-@Suppress("UNCHECKED_CAST")
-_diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-}
-if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)){
-_diff.instrumentation.replaceChildren(PROPERTYCHILD_CONNECTION_ID, this, listOfNotNull(value))
-}
-else{
-if (value is ModifiableWorkspaceEntityBase<*, *>){
-value.entityLinks[EntityLink(false, PROPERTYCHILD_CONNECTION_ID)] = this
-}
-this.entityLinks[EntityLink(true, PROPERTYCHILD_CONNECTION_ID)] = value
-}
+changeChild(value, PROPERTYCHILD_CONNECTION_ID)
 changedProperty.add("propertyChild")
 }
 override var typeChild: ChildEntityType2Builder?
-get(){
-val _diff = diff
-return if (_diff != null) {
-((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(TYPECHILD_CONNECTION_ID, this) as? ChildEntityType2Builder) ?: (this.entityLinks[EntityLink(true, TYPECHILD_CONNECTION_ID)] as? ChildEntityType2Builder)
-} else {
-(this.entityLinks[EntityLink(true, TYPECHILD_CONNECTION_ID)] as? ChildEntityType2Builder)
-}
-}
+get() = getChild(TYPECHILD_CONNECTION_ID) as? ChildEntityType2Builder?
 set(value){
-checkModificationAllowed()
-val _diff = diff
-if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null){
-value.entityLinks[EntityLink(false, TYPECHILD_CONNECTION_ID)] = this
-@Suppress("UNCHECKED_CAST")
-_diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-}
-if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)){
-_diff.instrumentation.replaceChildren(TYPECHILD_CONNECTION_ID, this, listOfNotNull(value))
-}
-else{
-if (value is ModifiableWorkspaceEntityBase<*, *>){
-value.entityLinks[EntityLink(false, TYPECHILD_CONNECTION_ID)] = this
-}
-this.entityLinks[EntityLink(true, TYPECHILD_CONNECTION_ID)] = value
-}
+changeChild(value, TYPECHILD_CONNECTION_ID)
 changedProperty.add("typeChild")
 }
 override fun getEntityClass(): Class<EntityWithChildren> = EntityWithChildren::class.java

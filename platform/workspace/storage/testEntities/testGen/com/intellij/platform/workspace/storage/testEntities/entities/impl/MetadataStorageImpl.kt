@@ -16,9 +16,9 @@ import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 internal object MetadataStorageImpl : MetadataStorageBase() {
   override fun initializeMetadata() {
     val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
-    val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
-    val primitiveTypeBooleanNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Boolean")
     val primitiveTypeIntNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Int")
+    val primitiveTypeBooleanNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Boolean")
+    val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
     val primitiveTypeSetNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Set")
     val primitiveTypeStringNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = true, type = "String")
     val primitiveTypeIntNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = true, type = "Int")
@@ -149,47 +149,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                withDefault = false)),
                                        supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
     addMetadata(typeMetadata)
-    typeMetadata =
-      FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.ChildNameIdWithParentId",
-                                       properties = listOf(OwnPropertyMetadata(isComputable = false,
-                                                                               isKey = false,
-                                                                               isOpen = false,
-                                                                               name = "name",
-                                                                               valueType = primitiveTypeStringNotNullable,
-                                                                               withDefault = false),
-                                                           OwnPropertyMetadata(isComputable = false,
-                                                                               isKey = false,
-                                                                               isOpen = false,
-                                                                               name = "parentId",
-                                                                               valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                 isNullable = false,
-                                                                                 typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.ParentNameId",
-                                                                                                                                 properties = listOf(
-                                                                                                                                   OwnPropertyMetadata(
-                                                                                                                                     isComputable = false,
-                                                                                                                                     isKey = false,
-                                                                                                                                     isOpen = false,
-                                                                                                                                     name = "name",
-                                                                                                                                     valueType = primitiveTypeStringNotNullable,
-                                                                                                                                     withDefault = false),
-                                                                                                                                   OwnPropertyMetadata(
-                                                                                                                                     isComputable = false,
-                                                                                                                                     isKey = false,
-                                                                                                                                     isOpen = false,
-                                                                                                                                     name = "presentableName",
-                                                                                                                                     valueType = primitiveTypeStringNotNullable,
-                                                                                                                                     withDefault = false)),
-                                                                                                                                 supertypes = listOf(
-                                                                                                                                   "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
-                                                                               withDefault = false),
-                                                           OwnPropertyMetadata(isComputable = false,
-                                                                               isKey = false,
-                                                                               isOpen = false,
-                                                                               name = "presentableName",
-                                                                               valueType = primitiveTypeStringNotNullable,
-                                                                               withDefault = false)),
-                                       supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
-    addMetadata(typeMetadata)
     typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.FirstPId",
                                                     properties = listOf(OwnPropertyMetadata(isComputable = false,
                                                                                             isKey = false,
@@ -254,18 +213,18 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                withDefault = false)),
                                        supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
     addMetadata(typeMetadata)
-    typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.ParentNameId",
+    typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.PCDId2",
                                                     properties = listOf(OwnPropertyMetadata(isComputable = false,
                                                                                             isKey = false,
                                                                                             isOpen = false,
-                                                                                            name = "name",
+                                                                                            name = "presentableName",
                                                                                             valueType = primitiveTypeStringNotNullable,
                                                                                             withDefault = false),
                                                                         OwnPropertyMetadata(isComputable = false,
                                                                                             isKey = false,
                                                                                             isOpen = false,
-                                                                                            name = "presentableName",
-                                                                                            valueType = primitiveTypeStringNotNullable,
+                                                                                            name = "version",
+                                                                                            valueType = primitiveTypeIntNotNullable,
                                                                                             withDefault = false)),
                                                     supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
     addMetadata(typeMetadata)
@@ -284,6 +243,21 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                valueType = primitiveTypeStringNotNullable,
                                                                                withDefault = false)),
                                        supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
+    addMetadata(typeMetadata)
+    typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.PCDId1",
+                                                    properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                                            isKey = false,
+                                                                                            isOpen = false,
+                                                                                            name = "name",
+                                                                                            valueType = primitiveTypeStringNotNullable,
+                                                                                            withDefault = false),
+                                                                        OwnPropertyMetadata(isComputable = false,
+                                                                                            isKey = false,
+                                                                                            isOpen = false,
+                                                                                            name = "presentableName",
+                                                                                            valueType = primitiveTypeStringNotNullable,
+                                                                                            withDefault = false)),
+                                                    supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
     addMetadata(typeMetadata)
     typeMetadata =
       FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.OoParentEntityId",
@@ -426,6 +400,69 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                valueType = primitiveTypeStringNotNullable,
                                                                                withDefault = false)),
                                        supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
+    addMetadata(typeMetadata)
+    typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.PCDIdChild",
+                                                    properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                                            isKey = false,
+                                                                                            isOpen = false,
+                                                                                            name = "data",
+                                                                                            valueType = primitiveTypeBooleanNotNullable,
+                                                                                            withDefault = false),
+                                                                        OwnPropertyMetadata(isComputable = false,
+                                                                                            isKey = false,
+                                                                                            isOpen = false,
+                                                                                            name = "id1",
+                                                                                            valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                              isNullable = false,
+                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                fqName = "com.intellij.platform.workspace.storage.testEntities.entities.PCDId1",
+                                                                                                properties = listOf(OwnPropertyMetadata(
+                                                                                                  isComputable = false,
+                                                                                                  isKey = false,
+                                                                                                  isOpen = false,
+                                                                                                  name = "name",
+                                                                                                  valueType = primitiveTypeStringNotNullable,
+                                                                                                  withDefault = false),
+                                                                                                                    OwnPropertyMetadata(
+                                                                                                                      isComputable = false,
+                                                                                                                      isKey = false,
+                                                                                                                      isOpen = false,
+                                                                                                                      name = "presentableName",
+                                                                                                                      valueType = primitiveTypeStringNotNullable,
+                                                                                                                      withDefault = false)),
+                                                                                                supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))),
+                                                                                            withDefault = false),
+                                                                        OwnPropertyMetadata(isComputable = false,
+                                                                                            isKey = false,
+                                                                                            isOpen = false,
+                                                                                            name = "id2",
+                                                                                            valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                              isNullable = false,
+                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                fqName = "com.intellij.platform.workspace.storage.testEntities.entities.PCDId2",
+                                                                                                properties = listOf(OwnPropertyMetadata(
+                                                                                                  isComputable = false,
+                                                                                                  isKey = false,
+                                                                                                  isOpen = false,
+                                                                                                  name = "presentableName",
+                                                                                                  valueType = primitiveTypeStringNotNullable,
+                                                                                                  withDefault = false),
+                                                                                                                    OwnPropertyMetadata(
+                                                                                                                      isComputable = false,
+                                                                                                                      isKey = false,
+                                                                                                                      isOpen = false,
+                                                                                                                      name = "version",
+                                                                                                                      valueType = primitiveTypeIntNotNullable,
+                                                                                                                      withDefault = false)),
+                                                                                                supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))),
+                                                                                            withDefault = false),
+                                                                        OwnPropertyMetadata(isComputable = false,
+                                                                                            isKey = false,
+                                                                                            isOpen = false,
+                                                                                            name = "presentableName",
+                                                                                            valueType = primitiveTypeStringNotNullable,
+                                                                                            withDefault = false)),
+                                                    supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
     addMetadata(typeMetadata)
     typeMetadata =
       FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropsOrderEntityId",
@@ -913,88 +950,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                         entityFqName = "com.intellij.platform.workspace.storage.testEntities.entities.ParentEntity",
                                                                                                                         isChild = false,
                                                                                                                         isNullable = false),
-                                                                          withDefault = false)),
-                                  extProperties = listOf(),
-                                  isAbstract = false)
-    addMetadata(typeMetadata)
-    typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.ChildEntityWithSymbolicId",
-                                  entityDataFqName = "com.intellij.platform.workspace.storage.testEntities.entities.impl.ChildEntityWithSymbolicIdData",
-                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
-                                                      "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId"),
-                                  properties = listOf(OwnPropertyMetadata(isComputable = false,
-                                                                          isKey = false,
-                                                                          isOpen = false,
-                                                                          name = "entitySource",
-                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                                                fqName = "com.intellij.platform.workspace.storage.EntitySource")),
-                                                                          withDefault = false),
-                                                      OwnPropertyMetadata(isComputable = false,
-                                                                          isKey = false,
-                                                                          isOpen = false,
-                                                                          name = "myName",
-                                                                          valueType = primitiveTypeStringNotNullable,
-                                                                          withDefault = false),
-                                                      OwnPropertyMetadata(isComputable = false,
-                                                                          isKey = false,
-                                                                          isOpen = false,
-                                                                          name = "parent",
-                                                                          valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_MANY,
-                                                                                                                        entityFqName = "com.intellij.platform.workspace.storage.testEntities.entities.ParentEntityWithSymbolicId",
-                                                                                                                        isChild = false,
-                                                                                                                        isNullable = false),
-                                                                          withDefault = false),
-                                                      OwnPropertyMetadata(isComputable = true,
-                                                                          isKey = false,
-                                                                          isOpen = false,
-                                                                          name = "symbolicId",
-                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                                                                fqName = "com.intellij.platform.workspace.storage.testEntities.entities.ChildNameIdWithParentId",
-                                                                                                                                properties = listOf(
-                                                                                                                                  OwnPropertyMetadata(
-                                                                                                                                    isComputable = false,
-                                                                                                                                    isKey = false,
-                                                                                                                                    isOpen = false,
-                                                                                                                                    name = "name",
-                                                                                                                                    valueType = primitiveTypeStringNotNullable,
-                                                                                                                                    withDefault = false),
-                                                                                                                                  OwnPropertyMetadata(
-                                                                                                                                    isComputable = false,
-                                                                                                                                    isKey = false,
-                                                                                                                                    isOpen = false,
-                                                                                                                                    name = "parentId",
-                                                                                                                                    valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                                                                      isNullable = false,
-                                                                                                                                      typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                                                                        fqName = "com.intellij.platform.workspace.storage.testEntities.entities.ParentNameId",
-                                                                                                                                        properties = listOf(
-                                                                                                                                          OwnPropertyMetadata(
-                                                                                                                                            isComputable = false,
-                                                                                                                                            isKey = false,
-                                                                                                                                            isOpen = false,
-                                                                                                                                            name = "name",
-                                                                                                                                            valueType = primitiveTypeStringNotNullable,
-                                                                                                                                            withDefault = false),
-                                                                                                                                          OwnPropertyMetadata(
-                                                                                                                                            isComputable = false,
-                                                                                                                                            isKey = false,
-                                                                                                                                            isOpen = false,
-                                                                                                                                            name = "presentableName",
-                                                                                                                                            valueType = primitiveTypeStringNotNullable,
-                                                                                                                                            withDefault = false)),
-                                                                                                                                        supertypes = listOf(
-                                                                                                                                          "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
-                                                                                                                                    withDefault = false),
-                                                                                                                                  OwnPropertyMetadata(
-                                                                                                                                    isComputable = false,
-                                                                                                                                    isKey = false,
-                                                                                                                                    isOpen = false,
-                                                                                                                                    name = "presentableName",
-                                                                                                                                    valueType = primitiveTypeStringNotNullable,
-                                                                                                                                    withDefault = false)),
-                                                                                                                                supertypes = listOf(
-                                                                                                                                  "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
@@ -3927,61 +3882,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                   extProperties = listOf(),
                                   isAbstract = false)
     addMetadata(typeMetadata)
-    typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.ParentEntityWithSymbolicId",
-                                  entityDataFqName = "com.intellij.platform.workspace.storage.testEntities.entities.impl.ParentEntityWithSymbolicIdData",
-                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
-                                                      "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId"),
-                                  properties = listOf(OwnPropertyMetadata(isComputable = false,
-                                                                          isKey = false,
-                                                                          isOpen = false,
-                                                                          name = "entitySource",
-                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                                                fqName = "com.intellij.platform.workspace.storage.EntitySource")),
-                                                                          withDefault = false),
-                                                      OwnPropertyMetadata(isComputable = false,
-                                                                          isKey = false,
-                                                                          isOpen = false,
-                                                                          name = "myName",
-                                                                          valueType = primitiveTypeStringNotNullable,
-                                                                          withDefault = false),
-                                                      OwnPropertyMetadata(isComputable = false,
-                                                                          isKey = false,
-                                                                          isOpen = false,
-                                                                          name = "children",
-                                                                          valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_MANY,
-                                                                                                                        entityFqName = "com.intellij.platform.workspace.storage.testEntities.entities.ChildEntityWithSymbolicId",
-                                                                                                                        isChild = true,
-                                                                                                                        isNullable = false),
-                                                                          withDefault = false),
-                                                      OwnPropertyMetadata(isComputable = true,
-                                                                          isKey = false,
-                                                                          isOpen = false,
-                                                                          name = "symbolicId",
-                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                                                                fqName = "com.intellij.platform.workspace.storage.testEntities.entities.ParentNameId",
-                                                                                                                                properties = listOf(
-                                                                                                                                  OwnPropertyMetadata(
-                                                                                                                                    isComputable = false,
-                                                                                                                                    isKey = false,
-                                                                                                                                    isOpen = false,
-                                                                                                                                    name = "name",
-                                                                                                                                    valueType = primitiveTypeStringNotNullable,
-                                                                                                                                    withDefault = false),
-                                                                                                                                  OwnPropertyMetadata(
-                                                                                                                                    isComputable = false,
-                                                                                                                                    isKey = false,
-                                                                                                                                    isOpen = false,
-                                                                                                                                    name = "presentableName",
-                                                                                                                                    valueType = primitiveTypeStringNotNullable,
-                                                                                                                                    withDefault = false)),
-                                                                                                                                supertypes = listOf(
-                                                                                                                                  "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
-                                                                          withDefault = false)),
-                                  extProperties = listOf(),
-                                  isAbstract = false)
-    addMetadata(typeMetadata)
     typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.ParentMultipleEntity",
                                   entityDataFqName = "com.intellij.platform.workspace.storage.testEntities.entities.impl.ParentMultipleEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -4282,6 +4182,246 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           isOpen = false,
                                                                           name = "parentData",
                                                                           valueType = primitiveTypeStringNotNullable,
+                                                                          withDefault = false)),
+                                  extProperties = listOf(),
+                                  isAbstract = false)
+    addMetadata(typeMetadata)
+    typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.PcdChildEntity",
+                                  entityDataFqName = "com.intellij.platform.workspace.storage.testEntities.entities.impl.PcdChildEntityData",
+                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
+                                                      "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId"),
+                                  properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "entitySource",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "data",
+                                                                          valueType = primitiveTypeBooleanNotNullable,
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "parent1",
+                                                                          valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
+                                                                                                                        entityFqName = "com.intellij.platform.workspace.storage.testEntities.entities.PcdParent1Entity",
+                                                                                                                        isChild = false,
+                                                                                                                        isNullable = false),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "parent2",
+                                                                          valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_MANY,
+                                                                                                                        entityFqName = "com.intellij.platform.workspace.storage.testEntities.entities.PcdParent2Entity",
+                                                                                                                        isChild = false,
+                                                                                                                        isNullable = false),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = true,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "symbolicId",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.testEntities.entities.PCDIdChild",
+                                                                                                                                properties = listOf(
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "data",
+                                                                                                                                    valueType = primitiveTypeBooleanNotNullable,
+                                                                                                                                    withDefault = false),
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "id1",
+                                                                                                                                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                      isNullable = false,
+                                                                                                                                      typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                                        fqName = "com.intellij.platform.workspace.storage.testEntities.entities.PCDId1",
+                                                                                                                                        properties = listOf(
+                                                                                                                                          OwnPropertyMetadata(
+                                                                                                                                            isComputable = false,
+                                                                                                                                            isKey = false,
+                                                                                                                                            isOpen = false,
+                                                                                                                                            name = "name",
+                                                                                                                                            valueType = primitiveTypeStringNotNullable,
+                                                                                                                                            withDefault = false),
+                                                                                                                                          OwnPropertyMetadata(
+                                                                                                                                            isComputable = false,
+                                                                                                                                            isKey = false,
+                                                                                                                                            isOpen = false,
+                                                                                                                                            name = "presentableName",
+                                                                                                                                            valueType = primitiveTypeStringNotNullable,
+                                                                                                                                            withDefault = false)),
+                                                                                                                                        supertypes = listOf(
+                                                                                                                                          "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
+                                                                                                                                    withDefault = false),
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "id2",
+                                                                                                                                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                      isNullable = false,
+                                                                                                                                      typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                                        fqName = "com.intellij.platform.workspace.storage.testEntities.entities.PCDId2",
+                                                                                                                                        properties = listOf(
+                                                                                                                                          OwnPropertyMetadata(
+                                                                                                                                            isComputable = false,
+                                                                                                                                            isKey = false,
+                                                                                                                                            isOpen = false,
+                                                                                                                                            name = "presentableName",
+                                                                                                                                            valueType = primitiveTypeStringNotNullable,
+                                                                                                                                            withDefault = false),
+                                                                                                                                          OwnPropertyMetadata(
+                                                                                                                                            isComputable = false,
+                                                                                                                                            isKey = false,
+                                                                                                                                            isOpen = false,
+                                                                                                                                            name = "version",
+                                                                                                                                            valueType = primitiveTypeIntNotNullable,
+                                                                                                                                            withDefault = false)),
+                                                                                                                                        supertypes = listOf(
+                                                                                                                                          "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
+                                                                                                                                    withDefault = false),
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "presentableName",
+                                                                                                                                    valueType = primitiveTypeStringNotNullable,
+                                                                                                                                    withDefault = false)),
+                                                                                                                                supertypes = listOf(
+                                                                                                                                  "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
+                                                                          withDefault = false)),
+                                  extProperties = listOf(),
+                                  isAbstract = false)
+    addMetadata(typeMetadata)
+    typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.PcdParent1Entity",
+                                  entityDataFqName = "com.intellij.platform.workspace.storage.testEntities.entities.impl.PcdParent1EntityData",
+                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
+                                                      "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId"),
+                                  properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "entitySource",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "name",
+                                                                          valueType = primitiveTypeStringNotNullable,
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "version",
+                                                                          valueType = primitiveTypeIntNotNullable,
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "child",
+                                                                          valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
+                                                                                                                        entityFqName = "com.intellij.platform.workspace.storage.testEntities.entities.PcdChildEntity",
+                                                                                                                        isChild = true,
+                                                                                                                        isNullable = true),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = true,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "symbolicId",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.testEntities.entities.PCDId1",
+                                                                                                                                properties = listOf(
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "name",
+                                                                                                                                    valueType = primitiveTypeStringNotNullable,
+                                                                                                                                    withDefault = false),
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "presentableName",
+                                                                                                                                    valueType = primitiveTypeStringNotNullable,
+                                                                                                                                    withDefault = false)),
+                                                                                                                                supertypes = listOf(
+                                                                                                                                  "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
+                                                                          withDefault = false)),
+                                  extProperties = listOf(),
+                                  isAbstract = false)
+    addMetadata(typeMetadata)
+    typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.PcdParent2Entity",
+                                  entityDataFqName = "com.intellij.platform.workspace.storage.testEntities.entities.impl.PcdParent2EntityData",
+                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
+                                                      "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId"),
+                                  properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "entitySource",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "name",
+                                                                          valueType = primitiveTypeStringNotNullable,
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "version",
+                                                                          valueType = primitiveTypeIntNotNullable,
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "children",
+                                                                          valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_MANY,
+                                                                                                                        entityFqName = "com.intellij.platform.workspace.storage.testEntities.entities.PcdChildEntity",
+                                                                                                                        isChild = true,
+                                                                                                                        isNullable = false),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = true,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "symbolicId",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.testEntities.entities.PCDId2",
+                                                                                                                                properties = listOf(
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "presentableName",
+                                                                                                                                    valueType = primitiveTypeStringNotNullable,
+                                                                                                                                    withDefault = false),
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "version",
+                                                                                                                                    valueType = primitiveTypeIntNotNullable,
+                                                                                                                                    withDefault = false)),
+                                                                                                                                supertypes = listOf(
+                                                                                                                                  "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
@@ -7751,11 +7891,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ChildAbstractBaseEntity",
                     metadataHash = -560510087)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ChildEntity", metadataHash = -772115112)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ChildEntityWithSymbolicId",
-                    metadataHash = 475507196)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ChildNameIdWithParentId",
-                    metadataHash = 1035855468)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ParentNameId", metadataHash = -1341386657)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ChildFirstEntity", metadataHash = 136354378)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ChildMultipleEntity",
                     metadataHash = 2117547633)
@@ -7882,8 +8017,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ParentAbEntity", metadataHash = -1424467887)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ParentChainEntity", metadataHash = -1605345680)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ParentEntity", metadataHash = -1642119549)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ParentEntityWithSymbolicId",
-                    metadataHash = -916004223)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ParentMultipleEntity",
                     metadataHash = 1383456438)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ParentSingleAbEntity",
@@ -7901,6 +8034,12 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     metadataHash = 918511794)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ParentWithNullsOppositeMultiple",
                     metadataHash = -1800940400)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.PcdChildEntity", metadataHash = 1463009640)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.PCDIdChild", metadataHash = -1079765322)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.PCDId1", metadataHash = 2117301684)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.PCDId2", metadataHash = 1855124882)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.PcdParent1Entity", metadataHash = 1911201308)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.PcdParent2Entity", metadataHash = -1610269957)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.PlaceholderEntity", metadataHash = 358103773)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ProjectModelTestEntity",
                     metadataHash = -1006149100)
@@ -8136,6 +8275,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.MySource", metadataHash = -866848740)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource", metadataHash = 2075294772)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.VFUEntitySource", metadataHash = 1995493998)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = -1906441224)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = 730111855)
   }
 }

@@ -24,7 +24,6 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -185,127 +184,23 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
         excludedPatternsUpdater.invoke(value)
       }
     override var module: ModuleEntityBuilder
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleEntityBuilder)
-          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] as? ModuleEntityBuilder)
-          ?: error("module is null for ContentRootEntity")
-        }
-        else {
-          (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] as? ModuleEntityBuilder)
-          ?: error("module is null for ContentRootEntity")
-        }
-      }
+      get() = getParent(MODULE_CONNECTION_ID) as? ModuleEntityBuilder ?: error("module is null for ContentRootEntity")
       set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-// Setting backref of the list
-          @Suppress("UNCHECKED_CAST")
-          val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-          value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
-          @Suppress("UNCHECKED_CAST")
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.instrumentation.addChild(MODULE_CONNECTION_ID, value, this)
-        }
-        else {
-// Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            @Suppress("UNCHECKED_CAST")
-            val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
-          }
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
-        }
+        changeParentOfMany(value, MODULE_CONNECTION_ID)
         changedProperty.add("module")
       }
-
-    // List of non-abstract referenced types
     override var sourceRoots: List<SourceRootEntityBuilder>
-      get() {
-// Getter of the list of non-abstract referenced types
-        val _diff = diff
-        return if (_diff != null) {
-          @Suppress("UNCHECKED_CAST")
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(SOURCEROOTS_CONNECTION_ID, this)
-            .toList() as List<SourceRootEntityBuilder>) + (this.entityLinks[EntityLink(true,
-                                                                                       SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootEntityBuilder>
-                                                           ?: emptyList())
-        }
-        else {
-          @Suppress("UNCHECKED_CAST")
-          this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootEntityBuilder> ?: emptyList()
-        }
-      }
+      @Suppress("UNCHECKED_CAST")
+      get() = getChildren(SOURCEROOTS_CONNECTION_ID) as List<SourceRootEntityBuilder>
       set(value) {
-// Setter of the list of non-abstract referenced types
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null) {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
-// Backref setup before adding to store
-              item_value.entityLinks[EntityLink(false, SOURCEROOTS_CONNECTION_ID)] = this
-              @Suppress("UNCHECKED_CAST")
-              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-            }
-          }
-          _diff.instrumentation.replaceChildren(SOURCEROOTS_CONNECTION_ID, this, value)
-        }
-        else {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-              item_value.entityLinks[EntityLink(false, SOURCEROOTS_CONNECTION_ID)] = this
-            }
-          }
-          this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] = value
-        }
+        changeChildren(value, SOURCEROOTS_CONNECTION_ID)
         changedProperty.add("sourceRoots")
       }
-
-    // List of non-abstract referenced types
     override var excludedUrls: List<ExcludeUrlEntityBuilder>
-      get() {
-// Getter of the list of non-abstract referenced types
-        val _diff = diff
-        return if (_diff != null) {
-          @Suppress("UNCHECKED_CAST")
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(EXCLUDEDURLS_CONNECTION_ID, this)
-            .toList() as List<ExcludeUrlEntityBuilder>) + (this.entityLinks[EntityLink(true,
-                                                                                       EXCLUDEDURLS_CONNECTION_ID)] as? List<ExcludeUrlEntityBuilder>
-                                                           ?: emptyList())
-        }
-        else {
-          @Suppress("UNCHECKED_CAST")
-          this.entityLinks[EntityLink(true, EXCLUDEDURLS_CONNECTION_ID)] as? List<ExcludeUrlEntityBuilder> ?: emptyList()
-        }
-      }
+      @Suppress("UNCHECKED_CAST")
+      get() = getChildren(EXCLUDEDURLS_CONNECTION_ID) as List<ExcludeUrlEntityBuilder>
       set(value) {
-// Setter of the list of non-abstract referenced types
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null) {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
-// Backref setup before adding to store
-              item_value.entityLinks[EntityLink(false, EXCLUDEDURLS_CONNECTION_ID)] = this
-              @Suppress("UNCHECKED_CAST")
-              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-            }
-          }
-          _diff.instrumentation.replaceChildren(EXCLUDEDURLS_CONNECTION_ID, this, value)
-        }
-        else {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-              item_value.entityLinks[EntityLink(false, EXCLUDEDURLS_CONNECTION_ID)] = this
-            }
-          }
-          this.entityLinks[EntityLink(true, EXCLUDEDURLS_CONNECTION_ID)] = value
-        }
+        changeChildren(value, EXCLUDEDURLS_CONNECTION_ID)
         changedProperty.add("excludedUrls")
       }
 

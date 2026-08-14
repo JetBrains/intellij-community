@@ -28,7 +28,6 @@ import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceL
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -200,47 +199,11 @@ internal class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Li
         getEntityData(true).roots = value
         rootsUpdater.invoke(value)
       }
-
-    // List of non-abstract referenced types
     override var excludedRoots: List<ExcludeUrlEntityBuilder>
-      get() {
-// Getter of the list of non-abstract referenced types
-        val _diff = diff
-        return if (_diff != null) {
-          @Suppress("UNCHECKED_CAST")
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(EXCLUDEDROOTS_CONNECTION_ID, this)
-            .toList() as List<ExcludeUrlEntityBuilder>) + (this.entityLinks[EntityLink(true,
-                                                                                       EXCLUDEDROOTS_CONNECTION_ID)] as? List<ExcludeUrlEntityBuilder>
-                                                           ?: emptyList())
-        }
-        else {
-          @Suppress("UNCHECKED_CAST")
-          this.entityLinks[EntityLink(true, EXCLUDEDROOTS_CONNECTION_ID)] as? List<ExcludeUrlEntityBuilder> ?: emptyList()
-        }
-      }
+      @Suppress("UNCHECKED_CAST")
+      get() = getChildren(EXCLUDEDROOTS_CONNECTION_ID) as List<ExcludeUrlEntityBuilder>
       set(value) {
-// Setter of the list of non-abstract referenced types
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null) {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
-// Backref setup before adding to store
-              item_value.entityLinks[EntityLink(false, EXCLUDEDROOTS_CONNECTION_ID)] = this
-              @Suppress("UNCHECKED_CAST")
-              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-            }
-          }
-          _diff.instrumentation.replaceChildren(EXCLUDEDROOTS_CONNECTION_ID, this, value)
-        }
-        else {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-              item_value.entityLinks[EntityLink(false, EXCLUDEDROOTS_CONNECTION_ID)] = this
-            }
-          }
-          this.entityLinks[EntityLink(true, EXCLUDEDROOTS_CONNECTION_ID)] = value
-        }
+        changeChildren(value, EXCLUDEDROOTS_CONNECTION_ID)
         changedProperty.add("excludedRoots")
       }
 

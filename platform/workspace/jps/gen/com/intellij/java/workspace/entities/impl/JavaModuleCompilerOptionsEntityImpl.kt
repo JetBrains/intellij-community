@@ -21,7 +21,6 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
@@ -108,35 +107,9 @@ internal class JavaModuleCompilerOptionsEntityImpl(private val dataSource: JavaM
         changedProperty.add("entitySource")
       }
     override var module: ModuleEntityBuilder
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleEntityBuilder)
-          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] as? ModuleEntityBuilder)
-          ?: error("module is null for JavaModuleCompilerOptionsEntity")
-        }
-        else {
-          (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] as? ModuleEntityBuilder)
-          ?: error("module is null for JavaModuleCompilerOptionsEntity")
-        }
-      }
+      get() = getParent(MODULE_CONNECTION_ID) as? ModuleEntityBuilder ?: error("module is null for JavaModuleCompilerOptionsEntity")
       set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
-          @Suppress("UNCHECKED_CAST")
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.instrumentation.addChild(MODULE_CONNECTION_ID, value, this)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
-          }
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
-        }
+        changeParent(value, MODULE_CONNECTION_ID)
         changedProperty.add("module")
       }
     private val additionalOptionsUpdater: (value: List<String>) -> Unit = { value ->

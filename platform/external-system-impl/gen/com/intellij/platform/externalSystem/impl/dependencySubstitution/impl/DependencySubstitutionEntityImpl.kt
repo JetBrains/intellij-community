@@ -25,7 +25,6 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -125,41 +124,9 @@ internal class DependencySubstitutionEntityImpl(private val dataSource: Dependen
         changedProperty.add("entitySource")
       }
     override var owner: ModuleEntityBuilder
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(OWNER_CONNECTION_ID, this) as? ModuleEntityBuilder)
-          ?: (this.entityLinks[EntityLink(false, OWNER_CONNECTION_ID)] as? ModuleEntityBuilder)
-          ?: error("owner is null for DependencySubstitutionEntity")
-        }
-        else {
-          (this.entityLinks[EntityLink(false, OWNER_CONNECTION_ID)] as? ModuleEntityBuilder)
-          ?: error("owner is null for DependencySubstitutionEntity")
-        }
-      }
+      get() = getParent(OWNER_CONNECTION_ID) as? ModuleEntityBuilder ?: error("owner is null for DependencySubstitutionEntity")
       set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-// Setting backref of the list
-          @Suppress("UNCHECKED_CAST")
-          val data = (value.entityLinks[EntityLink(true, OWNER_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-          value.entityLinks[EntityLink(true, OWNER_CONNECTION_ID)] = data
-          @Suppress("UNCHECKED_CAST")
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.instrumentation.addChild(OWNER_CONNECTION_ID, value, this)
-        }
-        else {
-// Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            @Suppress("UNCHECKED_CAST")
-            val data = (value.entityLinks[EntityLink(true, OWNER_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, OWNER_CONNECTION_ID)] = data
-          }
-          this.entityLinks[EntityLink(false, OWNER_CONNECTION_ID)] = value
-        }
+        changeParentOfMany(value, OWNER_CONNECTION_ID)
         changedProperty.add("owner")
       }
     override var library: LibraryId

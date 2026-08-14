@@ -15,7 +15,6 @@ import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBas
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.AnotherOneToOneRefEntity
@@ -118,47 +117,11 @@ internal class OneToOneRefEntityImpl(private val dataSource: OneToOneRefEntityDa
         getEntityData(true).text = value
         changedProperty.add("text")
       }
-
-    // List of non-abstract referenced types
     override var anotherEntity: List<AnotherOneToOneRefEntityBuilder>
-      get() {
-// Getter of the list of non-abstract referenced types
-        val _diff = diff
-        return if (_diff != null) {
-          @Suppress("UNCHECKED_CAST")
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(ANOTHERENTITY_CONNECTION_ID, this)
-            .toList() as List<AnotherOneToOneRefEntityBuilder>) + (this.entityLinks[EntityLink(true,
-                                                                                               ANOTHERENTITY_CONNECTION_ID)] as? List<AnotherOneToOneRefEntityBuilder>
-                                                                   ?: emptyList())
-        }
-        else {
-          @Suppress("UNCHECKED_CAST")
-          this.entityLinks[EntityLink(true, ANOTHERENTITY_CONNECTION_ID)] as? List<AnotherOneToOneRefEntityBuilder> ?: emptyList()
-        }
-      }
+      @Suppress("UNCHECKED_CAST")
+      get() = getChildren(ANOTHERENTITY_CONNECTION_ID) as List<AnotherOneToOneRefEntityBuilder>
       set(value) {
-// Setter of the list of non-abstract referenced types
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null) {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
-// Backref setup before adding to store
-              item_value.entityLinks[EntityLink(false, ANOTHERENTITY_CONNECTION_ID)] = this
-              @Suppress("UNCHECKED_CAST")
-              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-            }
-          }
-          _diff.instrumentation.replaceChildren(ANOTHERENTITY_CONNECTION_ID, this, value)
-        }
-        else {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-              item_value.entityLinks[EntityLink(false, ANOTHERENTITY_CONNECTION_ID)] = this
-            }
-          }
-          this.entityLinks[EntityLink(true, ANOTHERENTITY_CONNECTION_ID)] = value
-        }
+        changeChildren(value, ANOTHERENTITY_CONNECTION_ID)
         changedProperty.add("anotherEntity")
       }
 

@@ -18,7 +18,6 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.workspaceModel.test.api.ChildEntity
@@ -102,36 +101,20 @@ getEntityData(true).name = value
 changedProperty.add("name")
 }
 override var parentEntity: ParentEntityBuilder
-get(){
-val _diff = diff
-return if (_diff != null) {
-((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? ParentEntityBuilder) ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ParentEntityBuilder) ?: error("parentEntity is null for ChildEntity")
-} else {
-(this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ParentEntityBuilder) ?: error("parentEntity is null for ChildEntity")
-}
-}
+get() = getParent(PARENTENTITY_CONNECTION_ID) as? ParentEntityBuilder ?: error("parentEntity is null for ChildEntity")
 set(value){
-checkModificationAllowed()
-val _diff = diff
-if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null){
-value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
-@Suppress("UNCHECKED_CAST")
-_diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-}
-if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)){
-_diff.instrumentation.addChild(PARENTENTITY_CONNECTION_ID, value, this)
-}
-else{
-if (value is ModifiableWorkspaceEntityBase<*, *>){
-value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
-}
-this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
-}
+changeParent(value, PARENTENTITY_CONNECTION_ID)
 changedProperty.add("parentEntity")
-getEntityData(true).parentEntitySymbolicId_Synthetic = ParentId(value.name)
-changedProperty.add("parentEntitySymbolicId_Synthetic")
+updateSymbolicId(value, PARENTENTITY_CONNECTION_ID)
 }
 override fun getEntityClass(): Class<ChildEntity> = ChildEntity::class.java
+override fun updateSymbolicId(parent: WorkspaceEntityBuilder<*>, connectionId: ConnectionId){
+if (connectionId == PARENTENTITY_CONNECTION_ID){
+parent as ParentEntityBuilder
+getEntityData(true).parentEntitySymbolicId_Synthetic = ParentId(parent.name)
+changedProperty.add("parentEntitySymbolicId_Synthetic")
+}
+}
 }
 }
 @OptIn(WorkspaceEntityInternalApi::class)

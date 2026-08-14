@@ -27,7 +27,6 @@ import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceS
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
@@ -159,77 +158,17 @@ internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : 
         getEntityData(true).name = value
         changedProperty.add("name")
       }
-
-    // List of non-abstract referenced types
     override var children: List<ChildEntityBuilder>
-      get() {
-// Getter of the list of non-abstract referenced types
-        val _diff = diff
-        return if (_diff != null) {
-          @Suppress("UNCHECKED_CAST")
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)
-            .toList() as List<ChildEntityBuilder>) + (this.entityLinks[EntityLink(true,
-                                                                                  CHILDREN_CONNECTION_ID)] as? List<ChildEntityBuilder>
-                                                      ?: emptyList())
-        }
-        else {
-          @Suppress("UNCHECKED_CAST")
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ChildEntityBuilder> ?: emptyList()
-        }
-      }
+      @Suppress("UNCHECKED_CAST")
+      get() = getChildren(CHILDREN_CONNECTION_ID) as List<ChildEntityBuilder>
       set(value) {
-// Setter of the list of non-abstract referenced types
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null) {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
-// Backref setup before adding to store
-              item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
-              @Suppress("UNCHECKED_CAST")
-              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-            }
-          }
-          _diff.instrumentation.replaceChildren(CHILDREN_CONNECTION_ID, this, value)
-        }
-        else {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-              item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
-            }
-          }
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
-        }
+        changeChildren(value, CHILDREN_CONNECTION_ID)
         changedProperty.add("children")
       }
     override var singleChild: SingleChildBuilder?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(SINGLECHILD_CONNECTION_ID, this) as? SingleChildBuilder)
-          ?: (this.entityLinks[EntityLink(true, SINGLECHILD_CONNECTION_ID)] as? SingleChildBuilder)
-        }
-        else {
-          (this.entityLinks[EntityLink(true, SINGLECHILD_CONNECTION_ID)] as? SingleChildBuilder)
-        }
-      }
+      get() = getChild(SINGLECHILD_CONNECTION_ID) as? SingleChildBuilder?
       set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          value.entityLinks[EntityLink(false, SINGLECHILD_CONNECTION_ID)] = this
-          @Suppress("UNCHECKED_CAST")
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.instrumentation.replaceChildren(SINGLECHILD_CONNECTION_ID, this, listOfNotNull(value))
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, SINGLECHILD_CONNECTION_ID)] = this
-          }
-          this.entityLinks[EntityLink(true, SINGLECHILD_CONNECTION_ID)] = value
-        }
+        changeChild(value, SINGLECHILD_CONNECTION_ID)
         changedProperty.add("singleChild")
       }
     private val listOfAbstractUpdater: (value: List<AbstractClass>) -> Unit = { value ->

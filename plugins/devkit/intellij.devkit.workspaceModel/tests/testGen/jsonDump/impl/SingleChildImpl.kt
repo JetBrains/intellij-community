@@ -19,7 +19,6 @@ import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBas
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
@@ -102,34 +101,9 @@ internal class SingleChildImpl(private val dataSource: SingleChildData) : Single
         changedProperty.add("someData")
       }
     override var parent: BaseTestEntityBuilder
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID, this) as? BaseTestEntityBuilder)
-          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? BaseTestEntityBuilder)
-          ?: error("parent is null for SingleChild")
-        }
-        else {
-          (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? BaseTestEntityBuilder) ?: error("parent is null for SingleChild")
-        }
-      }
+      get() = getParent(PARENT_CONNECTION_ID) as? BaseTestEntityBuilder ?: error("parent is null for SingleChild")
       set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
-          @Suppress("UNCHECKED_CAST")
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.instrumentation.addChild(PARENT_CONNECTION_ID, value, this)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
-          }
-          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] = value
-        }
+        changeParent(value, PARENT_CONNECTION_ID)
         changedProperty.add("parent")
       }
 

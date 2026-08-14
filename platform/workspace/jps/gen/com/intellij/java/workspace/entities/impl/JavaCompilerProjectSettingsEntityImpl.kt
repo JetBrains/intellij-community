@@ -21,7 +21,6 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
@@ -119,36 +118,10 @@ internal class JavaCompilerProjectSettingsEntityImpl(private val dataSource: Jav
         changedProperty.add("entitySource")
       }
     override var projectSettings: ProjectSettingsEntityBuilder
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PROJECTSETTINGS_CONNECTION_ID,
-                                                                           this) as? ProjectSettingsEntityBuilder)
-          ?: (this.entityLinks[EntityLink(false, PROJECTSETTINGS_CONNECTION_ID)] as? ProjectSettingsEntityBuilder)
-          ?: error("projectSettings is null for JavaCompilerProjectSettingsEntity")
-        }
-        else {
-          (this.entityLinks[EntityLink(false, PROJECTSETTINGS_CONNECTION_ID)] as? ProjectSettingsEntityBuilder)
-          ?: error("projectSettings is null for JavaCompilerProjectSettingsEntity")
-        }
-      }
+      get() = getParent(PROJECTSETTINGS_CONNECTION_ID) as? ProjectSettingsEntityBuilder
+              ?: error("projectSettings is null for JavaCompilerProjectSettingsEntity")
       set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          value.entityLinks[EntityLink(true, PROJECTSETTINGS_CONNECTION_ID)] = this
-          @Suppress("UNCHECKED_CAST")
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.instrumentation.addChild(PROJECTSETTINGS_CONNECTION_ID, value, this)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, PROJECTSETTINGS_CONNECTION_ID)] = this
-          }
-          this.entityLinks[EntityLink(false, PROJECTSETTINGS_CONNECTION_ID)] = value
-        }
+        changeParent(value, PROJECTSETTINGS_CONNECTION_ID)
         changedProperty.add("projectSettings")
       }
     private val additionalOptionsUpdater: (value: List<String>) -> Unit = { value ->

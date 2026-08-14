@@ -14,7 +14,6 @@ import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBas
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.workspaceModel.test.api.EntityWithSelfRef
@@ -95,75 +94,16 @@ getEntityData(true).name = value
 changedProperty.add("name")
 }
 override var parentRef: EntityWithSelfRefBuilder?
-get(){
-val _diff = diff
-return if (_diff != null) {
-((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTREF_CONNECTION_ID, this) as? EntityWithSelfRefBuilder) ?: (this.entityLinks[EntityLink(false, PARENTREF_CONNECTION_ID)] as? EntityWithSelfRefBuilder)
-} else {
-(this.entityLinks[EntityLink(false, PARENTREF_CONNECTION_ID)] as? EntityWithSelfRefBuilder)
-}
-}
+get() = getParent(PARENTREF_CONNECTION_ID) as? EntityWithSelfRefBuilder? ?: error("parentRef is null for EntityWithSelfRef")
 set(value){
-checkModificationAllowed()
-val _diff = diff
-if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null){
-// Setting backref of the list
-@Suppress("UNCHECKED_CAST")
-val data = (value.entityLinks[EntityLink(true, PARENTREF_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-value.entityLinks[EntityLink(true, PARENTREF_CONNECTION_ID)] = data
-@Suppress("UNCHECKED_CAST")
-_diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-}
-if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)){
-_diff.instrumentation.addChild(PARENTREF_CONNECTION_ID, value, this)
-}
-else{
-// Setting backref of the list
-if (value is ModifiableWorkspaceEntityBase<*, *>){
-@Suppress("UNCHECKED_CAST")
-val data = (value.entityLinks[EntityLink(true, PARENTREF_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-value.entityLinks[EntityLink(true, PARENTREF_CONNECTION_ID)] = data
-}
-this.entityLinks[EntityLink(false, PARENTREF_CONNECTION_ID)] = value
-}
+changeParentOfMany(value, PARENTREF_CONNECTION_ID)
 changedProperty.add("parentRef")
 }
-// List of non-abstract referenced types
 override var children: List<EntityWithSelfRefBuilder>
-get(){
-// Getter of the list of non-abstract referenced types
-val _diff = diff
-return if (_diff != null) {
 @Suppress("UNCHECKED_CAST")
-((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this).toList() as List<EntityWithSelfRefBuilder>) + (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<EntityWithSelfRefBuilder> ?: emptyList())
-} else {
-@Suppress("UNCHECKED_CAST")
-this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<EntityWithSelfRefBuilder> ?: emptyList()
-}
-}
+get() = getChildren(CHILDREN_CONNECTION_ID) as List<EntityWithSelfRefBuilder>
 set(value){
-// Setter of the list of non-abstract referenced types
-checkModificationAllowed()
-val _diff = diff
-if (_diff != null){
-for (item_value in value){
-if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null){
-// Backref setup before adding to store
-item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
-@Suppress("UNCHECKED_CAST")
-_diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-}
-}
-_diff.instrumentation.replaceChildren(CHILDREN_CONNECTION_ID, this, value)
-}
-else{
-for (item_value in value){
-if (item_value is ModifiableWorkspaceEntityBase<*, *>){
-item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
-}
-}
-this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
-}
+changeChildren(value, CHILDREN_CONNECTION_ID)
 changedProperty.add("children")
 }
 override fun getEntityClass(): Class<EntityWithSelfRef> = EntityWithSelfRef::class.java

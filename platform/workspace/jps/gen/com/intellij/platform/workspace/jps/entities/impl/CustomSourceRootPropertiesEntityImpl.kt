@@ -18,7 +18,6 @@ import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBas
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -107,35 +106,10 @@ internal class CustomSourceRootPropertiesEntityImpl(private val dataSource: Cust
         changedProperty.add("propertiesXmlTag")
       }
     override var sourceRoot: SourceRootEntityBuilder
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(SOURCEROOT_CONNECTION_ID, this) as? SourceRootEntityBuilder)
-          ?: (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] as? SourceRootEntityBuilder)
-          ?: error("sourceRoot is null for CustomSourceRootPropertiesEntity")
-        }
-        else {
-          (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] as? SourceRootEntityBuilder)
-          ?: error("sourceRoot is null for CustomSourceRootPropertiesEntity")
-        }
-      }
+      get() = getParent(SOURCEROOT_CONNECTION_ID) as? SourceRootEntityBuilder
+              ?: error("sourceRoot is null for CustomSourceRootPropertiesEntity")
       set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = this
-          @Suppress("UNCHECKED_CAST")
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.instrumentation.addChild(SOURCEROOT_CONNECTION_ID, value, this)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = this
-          }
-          this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] = value
-        }
+        changeParent(value, SOURCEROOT_CONNECTION_ID)
         changedProperty.add("sourceRoot")
       }
 

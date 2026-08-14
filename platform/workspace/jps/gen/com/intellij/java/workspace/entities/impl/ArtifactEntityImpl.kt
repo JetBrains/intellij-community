@@ -23,7 +23,6 @@ import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBas
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -174,111 +173,22 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
         if (_diff != null) index(this, "outputUrl", value)
       }
     override var rootElement: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(ROOTELEMENT_CONNECTION_ID,
-                                                                             this) as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>)
-          ?: (this.entityLinks[EntityLink(true,
-                                          ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>)
-        }
-        else {
-          (this.entityLinks[EntityLink(true,
-                                       ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>)
-        }
-      }
+      get() = getChild(ROOTELEMENT_CONNECTION_ID) as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
       set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          value.entityLinks[EntityLink(false, ROOTELEMENT_CONNECTION_ID)] = this
-          @Suppress("UNCHECKED_CAST")
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.instrumentation.replaceChildren(ROOTELEMENT_CONNECTION_ID, this, listOfNotNull(value))
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, ROOTELEMENT_CONNECTION_ID)] = this
-          }
-          this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)] = value
-        }
+        changeChild(value, ROOTELEMENT_CONNECTION_ID)
         changedProperty.add("rootElement")
       }
-
-    // List of non-abstract referenced types
     override var customProperties: List<ArtifactPropertiesEntityBuilder>
-      get() {
-// Getter of the list of non-abstract referenced types
-        val _diff = diff
-        return if (_diff != null) {
-          @Suppress("UNCHECKED_CAST")
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CUSTOMPROPERTIES_CONNECTION_ID, this)
-            .toList() as List<ArtifactPropertiesEntityBuilder>) + (this.entityLinks[EntityLink(true,
-                                                                                               CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ArtifactPropertiesEntityBuilder>
-                                                                   ?: emptyList())
-        }
-        else {
-          @Suppress("UNCHECKED_CAST")
-          this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ArtifactPropertiesEntityBuilder> ?: emptyList()
-        }
-      }
+      @Suppress("UNCHECKED_CAST")
+      get() = getChildren(CUSTOMPROPERTIES_CONNECTION_ID) as List<ArtifactPropertiesEntityBuilder>
       set(value) {
-// Setter of the list of non-abstract referenced types
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null) {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
-// Backref setup before adding to store
-              item_value.entityLinks[EntityLink(false, CUSTOMPROPERTIES_CONNECTION_ID)] = this
-              @Suppress("UNCHECKED_CAST")
-              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-            }
-          }
-          _diff.instrumentation.replaceChildren(CUSTOMPROPERTIES_CONNECTION_ID, this, value)
-        }
-        else {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-              item_value.entityLinks[EntityLink(false, CUSTOMPROPERTIES_CONNECTION_ID)] = this
-            }
-          }
-          this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] = value
-        }
+        changeChildren(value, CUSTOMPROPERTIES_CONNECTION_ID)
         changedProperty.add("customProperties")
       }
     override var artifactOutputPackagingElement: ArtifactOutputPackagingElementEntityBuilder?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID,
-                                                                             this) as? ArtifactOutputPackagingElementEntityBuilder)
-          ?: (this.entityLinks[EntityLink(true,
-                                          ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntityBuilder)
-        }
-        else {
-          (this.entityLinks[EntityLink(true, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntityBuilder)
-        }
-      }
+      get() = getChild(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID) as? ArtifactOutputPackagingElementEntityBuilder?
       set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          value.entityLinks[EntityLink(false, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] = this
-          @Suppress("UNCHECKED_CAST")
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.instrumentation.replaceChildren(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this, listOfNotNull(value))
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] = this
-          }
-          this.entityLinks[EntityLink(true, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] = value
-        }
+        changeChild(value, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)
         changedProperty.add("artifactOutputPackagingElement")
       }
 

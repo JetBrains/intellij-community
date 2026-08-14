@@ -20,7 +20,6 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -126,35 +125,9 @@ internal class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityDa
         orderOfFacetsUpdater.invoke(value)
       }
     override var moduleEntity: ModuleEntityBuilder
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULEENTITY_CONNECTION_ID, this) as? ModuleEntityBuilder)
-          ?: (this.entityLinks[EntityLink(false, MODULEENTITY_CONNECTION_ID)] as? ModuleEntityBuilder)
-          ?: error("moduleEntity is null for FacetsOrderEntity")
-        }
-        else {
-          (this.entityLinks[EntityLink(false, MODULEENTITY_CONNECTION_ID)] as? ModuleEntityBuilder)
-          ?: error("moduleEntity is null for FacetsOrderEntity")
-        }
-      }
+      get() = getParent(MODULEENTITY_CONNECTION_ID) as? ModuleEntityBuilder ?: error("moduleEntity is null for FacetsOrderEntity")
       set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          value.entityLinks[EntityLink(true, MODULEENTITY_CONNECTION_ID)] = this
-          @Suppress("UNCHECKED_CAST")
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.instrumentation.addChild(MODULEENTITY_CONNECTION_ID, value, this)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, MODULEENTITY_CONNECTION_ID)] = this
-          }
-          this.entityLinks[EntityLink(false, MODULEENTITY_CONNECTION_ID)] = value
-        }
+        changeParent(value, MODULEENTITY_CONNECTION_ID)
         changedProperty.add("moduleEntity")
       }
 

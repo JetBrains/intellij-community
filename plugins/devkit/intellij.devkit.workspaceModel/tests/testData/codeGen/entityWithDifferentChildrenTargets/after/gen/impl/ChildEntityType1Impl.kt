@@ -14,7 +14,6 @@ import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBas
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.workspaceModel.test.api.ChildEntityType1
@@ -89,31 +88,9 @@ getEntityData(true).version = value
 changedProperty.add("version")
 }
 override var parent: EntityWithChildrenBuilder
-get(){
-val _diff = diff
-return if (_diff != null) {
-((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID, this) as? EntityWithChildrenBuilder) ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? EntityWithChildrenBuilder) ?: error("parent is null for ChildEntityType1")
-} else {
-(this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? EntityWithChildrenBuilder) ?: error("parent is null for ChildEntityType1")
-}
-}
+get() = getParent(PARENT_CONNECTION_ID) as? EntityWithChildrenBuilder ?: error("parent is null for ChildEntityType1")
 set(value){
-checkModificationAllowed()
-val _diff = diff
-if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null){
-value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
-@Suppress("UNCHECKED_CAST")
-_diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-}
-if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)){
-_diff.instrumentation.addChild(PARENT_CONNECTION_ID, value, this)
-}
-else{
-if (value is ModifiableWorkspaceEntityBase<*, *>){
-value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
-}
-this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] = value
-}
+changeParent(value, PARENT_CONNECTION_ID)
 changedProperty.add("parent")
 }
 override fun getEntityClass(): Class<ChildEntityType1> = ChildEntityType1::class.java

@@ -15,7 +15,6 @@ import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBas
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ContentRootTestEntity
@@ -105,36 +104,10 @@ internal class SourceRootTestOrderEntityImpl(private val dataSource: SourceRootT
         changedProperty.add("data")
       }
     override var contentRoot: ContentRootTestEntityBuilder
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(CONTENTROOT_CONNECTION_ID,
-                                                                           this) as? ContentRootTestEntityBuilder)
-          ?: (this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] as? ContentRootTestEntityBuilder)
-          ?: error("contentRoot is null for SourceRootTestOrderEntity")
-        }
-        else {
-          (this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] as? ContentRootTestEntityBuilder)
-          ?: error("contentRoot is null for SourceRootTestOrderEntity")
-        }
-      }
+      get() = getParent(CONTENTROOT_CONNECTION_ID) as? ContentRootTestEntityBuilder
+              ?: error("contentRoot is null for SourceRootTestOrderEntity")
       set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
-          @Suppress("UNCHECKED_CAST")
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.instrumentation.addChild(CONTENTROOT_CONNECTION_ID, value, this)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
-          }
-          this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = value
-        }
+        changeParent(value, CONTENTROOT_CONNECTION_ID)
         changedProperty.add("contentRoot")
       }
 
