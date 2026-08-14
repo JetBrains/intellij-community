@@ -857,6 +857,16 @@
     <postStartupActivity implementation="com.intellij.ide.scratch.workspace.ScratchWorkspaceStartupActivity"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.ide.scratch.workspace.ScratchRootsEntityWorkspaceFileIndexContributor"/>
     <workspaceModel.entityLifecycleSupporter implementation="com.intellij.ide.scratch.workspace.ScratchEntityLifecycleSupporter"/>
+
+    <registryKey key="ide.analysisignore.file.enabled" defaultValue="true" restartRequired="true"
+                 description="Enable the '.analysisignore' file: a list of files and directories excluded from the IDE analysis."/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.ide.analysisignore.AnalysisIgnoreWorkspaceFileIndexContributor"/>
+    <projectFileScanner implementation="com.intellij.ide.analysisignore.AnalysisIgnoreIndexableFileScanner"/>
+    <vfs.asyncListenerBackgroundable implementation="com.intellij.ide.analysisignore.AnalysisIgnoreVfsListener"/>
+    <editorFactoryDocumentListener implementation="com.intellij.ide.analysisignore.AnalysisIgnoreDocumentListener"/>
+    <fileIconProvider implementation="com.intellij.ide.analysisignore.AnalysisIgnoreFileIconProvider"/>
+    <editorNotificationProvider implementation="com.intellij.ide.analysisignore.AnalysisIgnoreEditorNotificationProvider"/>
+
     <projectService serviceImplementation="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager" preload="true"/>
     <fileTypeOverrider implementation="com.intellij.openapi.file.exclude.UserFileTypeOverrider"/>
     <fileTypeDetector implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$Detector"/>

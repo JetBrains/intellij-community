@@ -158,6 +158,11 @@ final class ExcludeRootsCache {
     }
 
     @Override
+    public void registerUnscopedExclusionCondition(@NotNull VirtualFileUrl root, @NotNull WorkspaceFileSetExclusionCondition condition, @NotNull WorkspaceEntity entity) {
+      // Exclusion conditions are not URLs themselves
+    }
+
+    @Override
     public void registerNonRecursiveFileSet(@NotNull VirtualFileUrl file, @NotNull WorkspaceFileKind kind, @NotNull WorkspaceEntity entity, WorkspaceFileSetData customData) {
       // We only care about excluded roots
     }

@@ -277,6 +277,20 @@ interface WorkspaceFileSetRegistrar {
   }
 
   /**
+   * Excludes every file and directory under [root] which satisfies [condition] from the workspace, also inside a file set nested below
+   * [root]. [registerExclusionCondition] stops at such a nested file set; this call does not.
+   * @param condition may access the passed file and its parents and children only
+   * @param entity the first parameter of [WorkspaceFileIndexContributor.registerFileSets] must be passed here
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  fun registerUnscopedExclusionCondition(
+    root: VirtualFileUrl,
+    condition: WorkspaceFileSetExclusionCondition,
+    entity: WorkspaceEntity,
+  )
+
+  /**
    * Includes [file] to the workspace. Note, that unlike the default [registerFileSet], files under [file] won't be included.
    * @param kind specify the kind that will be assigned to the files
    * @param entity the first parameter of [WorkspaceFileIndexContributor.registerFileSets] must be passed here
