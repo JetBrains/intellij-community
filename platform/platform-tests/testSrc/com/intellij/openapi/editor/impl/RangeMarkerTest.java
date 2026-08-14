@@ -1744,4 +1744,10 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertThrows(IllegalArgumentException.class, () -> createMarker("xxxx", -1, 1));
     assertThrows(IllegalArgumentException.class, () -> createMarker("xxxx", 1, 5));
   }
+
+  public void testUnderlyingTextDeletionMustLeadToInvalidation() {
+    RangeMarkerEx marker = createMarker("12345", 1, 3);
+    deleteString(document, 0, 4);
+    assertFalse(marker.isValid());
+  }
 }
