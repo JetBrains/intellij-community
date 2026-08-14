@@ -12,6 +12,7 @@ import com.intellij.python.pytools.getCustomExecutablePath
 import com.intellij.python.pytools.setCustomExecutablePath
 import com.intellij.python.pytools.statistics.PyToolActionSource
 import com.intellij.python.pytools.statistics.PyToolUsagesCollector
+import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
@@ -34,6 +35,8 @@ import javax.swing.Scrollable
 internal interface RowHost {
   val project: Project
   fun lookupChainHtml(row: ToolRow): @Nls String
+  /** Explanation for the lookup chain when an enabled tool resolves nowhere (red chain); `null` otherwise. */
+  fun lookupChainTooltip(row: ToolRow): @Nls String?
   fun isUpgradeAvailable(row: ToolRow): Boolean
   /** The version an Upgrade would move [row] to, when known. */
   fun upgradeTargetVersion(row: ToolRow): String?
@@ -104,8 +107,14 @@ internal class PyExternalToolsList(
       sdkTotal = sdk?.totalCount ?: 0,
       pathStatus = row.pathFieldValue.toChainStatus(),
       uvxStatus = uvxChainStatus(uv.uvAvailable.get()),
+      unresolved = row.staged.enabled && row.resolvesNowhere(uv.uvAvailable.get()),
     )
   }
+
+  override fun lookupChainTooltip(row: ToolRow): String? =
+    if (row.staged.enabled && row.resolvesNowhere(uv.uvAvailable.get()))
+      PyToolsUiBundle.message("settings.external.tools.unresolved.chain.tooltip")
+    else null
 
   override fun isUpgradeAvailable(row: ToolRow): Boolean = uv.isUpgradeAvailable(row)
   override fun upgradeTargetVersion(row: ToolRow): String? = uv.latestVersionFor(row)

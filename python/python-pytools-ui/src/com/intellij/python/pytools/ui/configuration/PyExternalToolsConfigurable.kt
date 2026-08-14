@@ -111,8 +111,12 @@ class PyExternalToolsConfigurable(private val project: Project) : BoundSearchabl
 
       row {
         icon(AllIcons.General.Warning).gap(RightGap.SMALL)
-        label(message("settings.external.tools.uv.hint.not.installed")).resizableColumn()
-        button(message("settings.external.tools.uv.hint.install.button")) { uv.installUv() }
+        text(
+          text = message("settings.external.tools.uv.hint.not.installed"),
+          action = HyperlinkEventAction { event ->
+            if (event.description == "installUv") uv.installUv()
+          },
+        )
       }.visibleIf(uv.uvAvailable.transform { it == false })
     }
 

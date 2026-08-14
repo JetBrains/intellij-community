@@ -204,6 +204,8 @@ internal class PyExternalToolRowPanel(
     summaryLabel.foreground = if (noFeatures) NO_FEATURES_FOREGROUND else UIUtil.getContextHelpForeground()
 
     chainLabel.text = host.lookupChainHtml(row)
+    val chainTooltip = host.lookupChainTooltip(row)
+    if (chainTooltip != null) chainLabel.setToolTipText(HtmlChunk.text(chainTooltip)) else chainLabel.toolTipText = null
   }
 
   // ---------- Expanded body ----------

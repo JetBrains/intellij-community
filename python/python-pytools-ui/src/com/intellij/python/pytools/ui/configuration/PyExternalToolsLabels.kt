@@ -149,6 +149,19 @@ internal fun uvxChainStatus(uvAvailable: Boolean?): ChainStepStatus = when (uvAv
 }
 
 /**
+ * True when [this] tool would resolve through none of the `SDK → Path → uvx` chain steps — every step
+ * is NOT_FOUND and none is still UNKNOWN (mid-probe). Independent of the row's enabled flag: callers
+ * gate on [ToolRow.staged].enabled, since only an *enabled* tool that resolves nowhere is an error.
+ * While any step is still probing this returns `false`, so incomplete detection never flags a tool.
+ */
+internal fun ToolRow.resolvesNowhere(uvAvailable: Boolean?): Boolean {
+  val steps = listOf(sdkAvailability.toChainStatus(), pathFieldValue.toChainStatus(), uvxChainStatus(uvAvailable))
+  // Still probing (any UNKNOWN) → not an error yet; otherwise unresolved iff no step would resolve it.
+  return steps.none { it == ChainStepStatus.UNKNOWN } &&
+         steps.none { it == ChainStepStatus.FOUND || it == ChainStepStatus.PARTIAL }
+}
+
+/**
  * Render the fixed `SDK → Path → uvx` lookup chain as informational HTML for a tool's header.
  *
  * The chain is no longer selectable; it always runs SDK first, then $PATH, then uvx. To convey the
@@ -166,6 +179,12 @@ internal fun lookupChainHtml(
   sdkTotal: Int,
   pathStatus: ChainStepStatus,
   uvxStatus: ChainStepStatus,
+  /**
+   * When true (an *enabled* tool that [resolvesNowhere]), the whole chain is painted in the error
+   * red instead of the usual available/muted split — a purely visual cue; Apply is not blocked, so
+   * the user can still save and install the tool later (e.g. from a terminal).
+   */
+  unresolved: Boolean = false,
 ): String {
   // Show the "(matched/total)" count only when there is more than one environment — with a single
   // env it is just noise ("(0/1)" / "(1/1)").
@@ -186,12 +205,14 @@ internal fun lookupChainHtml(
   val activeIndex = steps.indexOfFirst { it.second == ChainStepStatus.FOUND || it.second == ChainStepStatus.PARTIAL }
   val availableHex = "%06x".format(UIUtil.getLabelForeground().rgb and 0xFFFFFF)
   val mutedHex = "%06x".format(UIUtil.getInactiveTextColor().rgb and 0xFFFFFF)
+  // Matches the red used for a path-validation error in the expanded row, so the two error cues agree.
+  val errorHex = "%06x".format(JBColor.RED.rgb and 0xFFFFFF)
   return buildString {
     append("<html>")
     steps.forEachIndexed { i, (label, status) ->
       if (i > 0) append("&nbsp;&rarr; ")
       val available = status == ChainStepStatus.FOUND || status == ChainStepStatus.PARTIAL
-      val hex = if (available) availableHex else mutedHex
+      val hex = if (unresolved) errorHex else if (available) availableHex else mutedHex
       if (i == activeIndex) {
         append("<b><font color='#$hex'>").append(label).append("</font></b>")
       }
