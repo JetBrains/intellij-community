@@ -3,6 +3,8 @@
 package com.intellij.ide.starter.process
 
 import com.intellij.ide.starter.ci.CIServer
+import com.intellij.ide.starter.config.ConfigurationStorage
+import com.intellij.ide.starter.config.monitoringDumpsIntervalSeconds
 import com.intellij.ide.starter.ide.LinuxIdeDistribution
 import com.intellij.ide.starter.path.IDE_TESTS_SUBSTRING
 import com.intellij.ide.starter.process.ProcessInfo.Companion.toProcessInfo
@@ -10,21 +12,28 @@ import com.intellij.ide.starter.process.ProcessKiller.killProcesses
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.runner.IDERunContext
+import com.intellij.ide.starter.utils.ReportingPathUtils.checkPathLength
+import com.intellij.ide.starter.utils.catchAll
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter.SyntheticTestKind
 import com.intellij.tools.ide.util.common.PrintFailuresMode
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.withRetry
 import com.intellij.util.system.OS
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import oshi.SystemInfo
 import oshi.software.os.OSProcess
 import java.io.IOException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.function.Predicate
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.createDirectories
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readLines
 import kotlin.time.Duration.Companion.minutes
@@ -284,6 +293,35 @@ fun collectJavaThreadDump(
   }
 }
 
+/**
+ * Collects Java thread dumps at the configured monitoring interval while the process is alive. Liveness is checked again after each delay
+ * so a process that exits while waiting does not produce one final dump. A failed dump is reported and skipped without stopping the loop.
+ */
+@ApiStatus.Internal
+suspend fun collectJavaThreadDumpsWhileAlive(
+  isAlive: () -> Boolean,
+  javaHome: Path,
+  javaProcessId: Long,
+  threadDumpsDir: () -> Path,
+  onDumpCollected: (Path) -> Unit = {},
+) {
+  val timestampFormatter = DateTimeFormatter.ofPattern("HH-mm-ss")
+  var dumpIndex = 0
+  while (isAlive()) {
+    delay(ConfigurationStorage.monitoringDumpsIntervalSeconds().seconds)
+    if (!isAlive()) return
+
+    val dumpFile = checkPathLength(
+      threadDumpsDir().resolve("threadDump-${++dumpIndex}-${LocalTime.now().format(timestampFormatter)}.txt")
+    )
+    dumpFile.parent.createDirectories()
+    logOutput("Dumping threads to $dumpFile")
+    catchAll {
+      collectJavaThreadDumpSuspendable(javaHome, null, javaProcessId, dumpFile)
+      onDumpCollected(dumpFile)
+    }
+  }
+}
 
 /**
  * DON'T ADD ANY LOGGING OTHERWISE IF STDOUT IS BLOCKED THERE WILL BE NO DUMPS

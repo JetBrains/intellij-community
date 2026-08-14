@@ -71,7 +71,6 @@ open class GradleBuildTool(testContext: IDETestContext) : BuildTool(BuildToolTyp
               existingProcesses.add(it)
               event.runContext.startCollectThreadDumpsLoop(event.ideProcess,
                                                            testContext.ide.resolveAndDownloadTheSameJDKOrFallback(),
-                                                           testContext.ide.installationPath,
                                                            it,
                                                            "$GRADLE_DAEMON_NAME-$it")
             }

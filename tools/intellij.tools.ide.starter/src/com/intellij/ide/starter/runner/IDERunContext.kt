@@ -3,7 +3,6 @@ package com.intellij.ide.starter.runner
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.classFileVerification
 import com.intellij.ide.starter.config.includeRuntimeModuleRepositoryInIde
-import com.intellij.ide.starter.config.monitoringDumpsIntervalSeconds
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.IDERemDevTestContext
 import com.intellij.ide.starter.ide.IDEStartConfig
@@ -15,6 +14,7 @@ import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.models.VMOptions.Companion.TEST_SCRIPT_FILE_OPTION
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.process.collectJavaThreadDumpSuspendable
+import com.intellij.ide.starter.process.collectJavaThreadDumpsWhileAlive
 import com.intellij.ide.starter.process.collectMemoryDump
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.profiler.ProfilerInjector
@@ -23,7 +23,6 @@ import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.ide.starter.screenRecorder.IDEScreenRecorder
 import com.intellij.ide.starter.utils.FileSystem.listDirectoryEntriesQuietly
-import com.intellij.ide.starter.utils.ReportingPathUtils.checkPathLength
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.startProfileNativeThreads
 import com.intellij.ide.starter.utils.stopProfileNativeThreads
@@ -42,8 +41,6 @@ import org.kodein.di.direct
 import org.kodein.di.instance
 import java.nio.file.Files
 import java.nio.file.Path
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.bufferedReader
 import kotlin.io.path.createDirectories
@@ -298,31 +295,16 @@ data class IDERunContext(
   suspend fun startCollectThreadDumpsLoop(
     process: IDEHandle,
     jdkHome: Path,
-    workDir: Path,
     collectingProcessId: Long,
     processName: String,
   ) {
-    var cnt = 0
-    while (process.isAlive) {
-      delay(ConfigurationStorage.monitoringDumpsIntervalSeconds().seconds)
-      if (!process.isAlive) break
-
-      val dumpFile = lastIdeReportingData.logsDir
-        .resolve("monitoring-thread-dumps-${processName}")
-        .resolve("threadDump-${++cnt}-${getCurrentTimestamp()}.txt")
-      checkPathLength(dumpFile).parent.createDirectories()
-
-      logOutput("Dumping threads to $dumpFile")
-      catchAll { collectJavaThreadDumpSuspendable(jdkHome, workDir, collectingProcessId, dumpFile) }
-    }
+    collectJavaThreadDumpsWhileAlive(
+      isAlive = { process.isAlive },
+      javaHome = jdkHome,
+      javaProcessId = collectingProcessId,
+      threadDumpsDir = { lastIdeReportingData.logsDir.resolve("monitoring-thread-dumps-${processName}") } ,
+    )
   }
-
-  private fun getCurrentTimestamp(): String {
-    val current = LocalDateTime.now()
-    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")
-    return current.format(formatter)
-  }
-
 
   internal fun logStartupInfo(finalOptions: VMOptions) {
     logOutput(buildString {

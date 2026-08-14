@@ -99,7 +99,6 @@ class LocalIDEProcess : IDEProcess {
                 ideProcessId = it
                 startCollectThreadDumpsLoop(IDEProcessHandle(process),
                                             jdkHome,
-                                            startConfig.workDir,
                                             it,
                                             "ide")
               }
