@@ -1269,16 +1269,14 @@ class PluginInitializationTargetStateTest {
       plugin("bar") { version = "1.0" }.installAt(pluginsDirPath)
 
       val result = computeTargetState(disabledPlugins = setOf(PluginId.getId("bar")))
-      val nonLoadReasons = mutableListOf<PluginNonLoadReason>()
+      val foo = result.getCandidatePlugin("foo")
+      val exclusionReason = result.resolvedPluginSet.getExclusionReason(foo)!!
+      assertThat(exclusionReason).isInstanceOf(ChainedExclusion::class.java)
+      val rootCauseDescriptor = exclusionReason.descriptor.sequenceDescriptorExclusionChain(result.resolvedPluginSet::getExclusionReason).last()
+      val rootCause = result.resolvedPluginSet.getExclusionReason(rootCauseDescriptor)
 
-      PluginManagerCore.adaptDescriptorExclusionReasonAsPluginNonLoadReason(
-        resolvedPluginSet = result.resolvedPluginSet,
-        registerLoadingError = nonLoadReasons::add,
-      )
-
-      assertThat(nonLoadReasons).hasSize(1)
-      assertThat(nonLoadReasons.single()).isInstanceOf(PluginDependencyIsDisabled::class.java)
-      assertThat((nonLoadReasons.single() as PluginDependencyIsDisabled).dependencyId).isEqualTo(PluginId.getId("bar"))
+      assertThat(rootCause).isInstanceOf(PluginIsMarkedDisabled::class.java)
+      assertThat(rootCauseDescriptor.pluginId).isEqualTo(PluginId.getId("bar"))
     }
   }
 }
