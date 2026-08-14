@@ -252,6 +252,40 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       serialize(scheme));
   }
 
+  @TestFor(issues = "IJPL-223521")
+  public void testWriteTextAttributesWithAlpha() {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
+    EditorColorsScheme scheme = (EditorColorsScheme)defaultScheme.clone();
+    scheme.setName("test");
+    scheme.setAttributes(TextAttributesKey.createTextAttributesKey("TEST_TRANSPARENT_TEXT"),
+                         new TextAttributes(new Color(0xAF, 0x1D, 0x1D, 0x80), new Color(0x80, 0x81, 0x82),
+                                            null, EffectType.BOXED, Font.PLAIN));
+    EditorColorSchemeTestCase.assertXmlOutputEquals(
+      """
+        <scheme name="test" version="142" parent_scheme="Default">
+          <attributes>
+            <option name="TEST_TRANSPARENT_TEXT">
+              <value>
+                <option name="FOREGROUND" value="af1d1d80" />
+                <option name="BACKGROUND" value="808182" />
+              </value>
+            </option>
+          </attributes>
+        </scheme>""",
+      serialize(scheme));
+  }
+
+  @TestFor(issues = "IJPL-223521")
+  public void testTextAttributesAlphaSurvivesWriteRead() {
+    TextAttributesKey key = TextAttributesKey.createTextAttributesKey("TEST_TRANSPARENT_TEXT_ROUND_TRIP");
+    TextAttributes attributes = new TextAttributes(new Color(0xAF, 0x1D, 0x1D, 0x80), new Color(0x1D, 0x1D, 0xAF, 0x40),
+                                                   null, EffectType.BOXED, Font.PLAIN);
+    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(key, attributes);
+    assertEquals(attributes, result.second);
+    assertEquals(0x80, result.second.getForegroundColor().getAlpha());
+    assertEquals(0x40, result.second.getBackgroundColor().getAlpha());
+  }
+
   public void testWriteInheritedFromDefault() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();

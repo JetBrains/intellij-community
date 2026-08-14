@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.ui.ColorHexUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ui.ComparableColor;
 import com.intellij.util.ui.JdkConstants;
@@ -167,10 +168,10 @@ public final class AttributesFlyweight {
   }
 
   static @NotNull AttributesFlyweight create(@NotNull Element element) throws InvalidDataException {
-    Color FOREGROUND = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "FOREGROUND"));
-    Color BACKGROUND = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "BACKGROUND"));
-    Color EFFECT_COLOR = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "EFFECT_COLOR"));
-    Color ERROR_STRIPE_COLOR = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "ERROR_STRIPE_COLOR"));
+    Color FOREGROUND = readColor(element, "FOREGROUND");
+    Color BACKGROUND = readColor(element, "BACKGROUND");
+    Color EFFECT_COLOR = readColor(element, "EFFECT_COLOR");
+    Color ERROR_STRIPE_COLOR = readColor(element, "ERROR_STRIPE_COLOR");
     int fontType = DefaultJDOMExternalizer.toInt(JDOMExternalizerUtil.readField(element, "FONT_TYPE", "0"));
     if (fontType < 0 || fontType > 3) {
       fontType = 0;
@@ -196,6 +197,23 @@ public final class AttributesFlyweight {
     return create(FOREGROUND, BACKGROUND, FONT_TYPE, EFFECT_COLOR, toEffectType(EFFECT_TYPE), Collections.emptyMap(), ERROR_STRIPE_COLOR);
   }
 
+  /**
+   * A hex string of that length denotes a color with an alpha channel: {@code RRGGBBAA}.
+   * Fully opaque colors are stored as an unpadded {@code RRGGBB} number, so they never reach that length.
+   */
+  private static final int RGBA_HEX_LENGTH = 8;
+
+  private static @Nullable Color readColor(@NotNull Element element, @NotNull @NonNls String fieldName) throws InvalidDataException {
+    String value = JDOMExternalizerUtil.readField(element, fieldName);
+    if (value != null && value.length() == RGBA_HEX_LENGTH) {
+      Color color = ColorHexUtil.fromHexOrNull(value);
+      if (color != null) {
+        return color;
+      }
+    }
+    return DefaultJDOMExternalizer.toColor(value);
+  }
+
   private static @Nullable Color readColor(@NotNull DataInput in) throws IOException {
     boolean colorExists = in.readBoolean();
     return colorExists ? new Color(readINT(in)) : null;
@@ -203,7 +221,9 @@ public final class AttributesFlyweight {
 
   private static void writeColor(@NotNull Element element, @NotNull String fieldName, Color color) {
     if (color != null) {
-      String string = Integer.toString(color.getRGB() & 0xFFFFFF, 16);
+      int rgb = color.getRGB() & 0xFFFFFF;
+      int alpha = color.getAlpha();
+      String string = alpha == 0xFF ? Integer.toString(rgb, 16) : String.format("%06x%02x", rgb, alpha);
       JDOMExternalizerUtil.writeField(element, fieldName, string);
     }
   }
