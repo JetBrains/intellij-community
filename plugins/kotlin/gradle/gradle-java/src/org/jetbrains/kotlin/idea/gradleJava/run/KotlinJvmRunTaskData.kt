@@ -22,6 +22,9 @@ class KotlinJvmRunTaskData(
     companion object {
         private const val KOTLIN_KMP_JVM_RUN_CLASS_NAME = "org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmRun"
         private const val JAVA_EXEC_RUN_CLASS_NAME = "org.gradle.api.tasks.JavaExec"
+        private const val JVM_SOURCE_SET_NAME = "jvm"
+        private const val COMPOSE_RUN_TASK_NAME = "run"
+        private const val KMP_RUN_TASK_SUFFIX = "Run"
 
         /**
          * Will return the *first* suitable KotlinJvmRun task that is suitable for this module.
@@ -97,7 +100,7 @@ class KotlinJvmRunTaskData(
                 val taskName = runTask.data.name.let { if (it.startsWith(':')) it else ":$it" }
                 val taskNameWithoutLocation = taskName.substringAfterLast(':')
                 val target = allKotlinTargetDataNodes
-                    .filter { target -> taskNameWithoutLocation.equals("${target.data.externalName}Run", ignoreCase = true) }
+                    .filter { target -> taskNameWithoutLocation.equals("${target.data.externalName}$KMP_RUN_TASK_SUFFIX", ignoreCase = true) }
                     .firstOrNull { target -> target.data.moduleIds.any { targetModuleId -> targetModuleId in sourceSetModuleIds } }
                     ?: return@firstNotNullOfOrNull null
                 KotlinJvmRunTaskData(target.data.externalName, taskName, isComposeGradlePluginConfigured = false)
@@ -108,8 +111,8 @@ class KotlinJvmRunTaskData(
             allKotlinJvmRunTasks.firstNotNullOfOrNull { runTask ->
                 val taskName = runTask.data.name.let { if (it.startsWith(':')) it else ":$it" }
                 val taskNameWithoutLocation = taskName.substringAfterLast(':')
-                if (taskNameWithoutLocation != "run") return@firstNotNullOfOrNull null
-                return KotlinJvmRunTaskData("jvm", taskName, isComposeGradlePluginConfigured = true)
+                if (taskNameWithoutLocation != COMPOSE_RUN_TASK_NAME) return@firstNotNullOfOrNull null
+                return KotlinJvmRunTaskData(JVM_SOURCE_SET_NAME, taskName, isComposeGradlePluginConfigured = true)
             }
 
     }
