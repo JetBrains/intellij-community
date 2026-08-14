@@ -62,19 +62,37 @@ private fun KtSimpleNameExpression.getFoldingDescriptor(): FoldingDescriptor? {
 }
 
 private fun getResourcePlaceholderText(psiElements: List<PsiElement>): String? {
-  for (psiElement in psiElements) {
-    val xmlTag = psiElement.parent.parent as? XmlTag ?: continue
-    val textValue = when (xmlTag.name) {
-      ResourceType.STRING.typeName -> xmlTag.value.text.trim()
-      ResourceType.PLURAL_STRING.typeName -> {
-        val itemTag = xmlTag.childrenSequence.filterIsInstance<XmlTag>().firstOrNull() ?: continue
-        itemTag.value.text.trim()
-      }
-      else -> continue
+  for (element in psiElements) {
+    if (isValuesDirectory(element)) {
+      extractPlaceholderText(element)?.let { return it }
     }
-    if (textValue.isEmpty()) continue
-    return "\"" + StringUtil.shortenTextWithEllipsis(textValue, FOLD_MAX_LENGTH - 2, 0) + "\""
+  }
+
+  for (element in psiElements) {
+    if (!isValuesDirectory(element)) {
+      extractPlaceholderText(element)?.let { return it }
+    }
   }
 
   return null
+}
+
+private fun isValuesDirectory(element: PsiElement): Boolean {
+  return element.containingFile?.parent?.name == "values"
+}
+
+private fun extractPlaceholderText(psiElement: PsiElement): String? {
+  val xmlTag = psiElement.parent?.parent as? XmlTag ?: return null
+
+  val rawText = when (xmlTag.name) {
+                  ResourceType.STRING.typeName -> xmlTag.value.text
+                  ResourceType.PLURAL_STRING.typeName -> xmlTag.subTags.firstOrNull()?.value?.text
+                  else -> null
+                } ?: return null
+
+  val trimmed = rawText.trim()
+  if (trimmed.isEmpty()) return null
+
+  val shortened = StringUtil.shortenTextWithEllipsis(trimmed, FOLD_MAX_LENGTH - 2, 0)
+  return "\"$shortened\""
 }
