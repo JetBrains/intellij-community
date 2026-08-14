@@ -10,10 +10,8 @@ import com.intellij.ide.plugins.PluginInitializationContext
 import com.intellij.ide.plugins.PluginInitializationContext.EnvironmentConfiguredModuleData
 import com.intellij.ide.plugins.PluginInitializationContext.RemainingCandidatesView
 import com.intellij.ide.plugins.PluginInitializationDiagnosticUtils
-import com.intellij.ide.plugins.PluginLoadingErrorReportingPolicy
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginManagerState
 import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.PluginsDiscoveryResult
@@ -158,11 +156,4 @@ class PluginSetTestBuilder private constructor(
     }
   }
 
-  fun buildManagerState(configureClassLoaders: Boolean = true): PluginManagerState {
-    return PluginManagerCore.createPluginManagerState(
-      pluginSet = build(configureClassLoaders),
-      parentActivity = null,
-      reportingPolicy = PluginLoadingErrorReportingPolicy.TEST,
-    )
-  }
 }

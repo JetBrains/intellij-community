@@ -11,11 +11,6 @@ data class PluginLoadingErrorReportingPolicy(
   val reportToUser: Boolean,
 ) {
   companion object {
-    val TEST: PluginLoadingErrorReportingPolicy = PluginLoadingErrorReportingPolicy(
-      logLevel = PluginLoadingErrorLogLevel.WARN,
-      reportToUser = true,
-    )
-
     fun forCurrentProduct(): PluginLoadingErrorReportingPolicy = product(
       isUnitTestMode = PluginManagerCore.isUnitTestMode,
       isHeadless = GraphicsEnvironment.isHeadless(),
