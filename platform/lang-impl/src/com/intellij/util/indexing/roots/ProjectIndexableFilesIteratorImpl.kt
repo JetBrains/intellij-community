@@ -40,7 +40,7 @@ class ProjectIndexableFilesIteratorImpl(private val fileOrDir: VirtualFile) : Pr
   }
 
   override fun getRootUrls(project: Project): Set<String> {
-    throw UnsupportedOperationException()
+    return setOf(fileOrDir.url)
   }
 }
 
