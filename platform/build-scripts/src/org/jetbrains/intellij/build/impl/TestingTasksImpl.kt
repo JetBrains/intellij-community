@@ -1692,4 +1692,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.workspace.jps.tests",
   "intellij.platform.workspace.storage.tests",
   "intellij.platform.util.tests",
+  "intellij.platform.credentialStore.impl.tests",
 )
