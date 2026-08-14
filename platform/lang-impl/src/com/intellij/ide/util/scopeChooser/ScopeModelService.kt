@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.IndexingBundle
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
@@ -27,8 +26,6 @@ interface ScopeModelService {
   fun getScopeDescriptorById(scopeId: String): ScopeDescriptor?
 
   fun openEditScopesDialog(selectedScopeId: String?, modelId: String, onFinish: (selectedScopeId: String?) -> Unit)
-
-  fun getCoroutineScope(): CoroutineScope
 
   companion object {
     @JvmStatic

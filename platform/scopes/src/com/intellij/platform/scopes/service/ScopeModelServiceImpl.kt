@@ -85,8 +85,4 @@ internal class ScopeModelServiceImpl(private val project: Project, private val c
       onFinish(deferred?.await())
     }
   }
-
-  override fun getCoroutineScope(): CoroutineScope {
-    return coroutineScope
-  }
 }

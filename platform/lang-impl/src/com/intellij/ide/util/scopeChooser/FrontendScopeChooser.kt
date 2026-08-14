@@ -147,7 +147,7 @@ class FrontendScopeChooser(private val project: Project, private val preselected
 
   private fun editScopes() {
     val selection = getSelectedScopeId()
-    ScopeModelService.getInstance(project).openEditScopesDialog(selection, modelId) { scopeId ->
+    scopeService.openEditScopesDialog(selection, modelId) { scopeId ->
       ApplicationManager.getApplication().invokeLater {
         scopeId?.let { selectedItem = scopesMap[it] }
       }
