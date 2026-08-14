@@ -3,7 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.testFramework.PluginSetSpecBuilder
-import com.intellij.platform.pluginSystem.testFramework.buildPluginManagerState
+import com.intellij.platform.pluginSystem.testFramework.buildPluginSet
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.dependencies
 import com.intellij.platform.testFramework.plugins.module
@@ -20,7 +20,6 @@ internal class ContentModuleDependencyResolutionTest {
   @RegisterExtension
   @JvmField
   val inMemoryFs = InMemoryFsExtension()
-  private var loadingErrors: List<PluginLoadingError> = emptyList()
 
   @Test
   fun `reference to modules from the same plugin without namespace`() {
@@ -198,8 +197,6 @@ internal class ContentModuleDependencyResolutionTest {
 
   private fun buildPluginSet(builder: PluginSetSpecBuilder.() -> Unit): PluginSet {
     val pluginsDirPath = inMemoryFs.fs.getPath("/").resolve("plugins")
-    val state = buildPluginManagerState(pluginsDirPath, builder = builder)
-    loadingErrors = state.loadingErrors
-    return state.pluginSet
+    return buildPluginSet(pluginsDirPath, builder = builder)
   }
 }
