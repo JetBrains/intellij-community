@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil
@@ -16,7 +17,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import java.util.function.Supplier
 import javax.swing.JComponent
 
@@ -25,8 +26,8 @@ internal class WelcomeScreenLeftPanelActions(val project: Project) {
     val group = DefaultActionGroup()
     val toolbar = createToolWindowWelcomeScreenVerticalToolbar(group)
 
-    scope.async {
-      val actionManager = ActionManager.getInstance()
+    scope.launch {
+      val actionManager = serviceAsync<ActionManager>()
       // TODO: Do something with the action group. Now it only is present in Rider
       val actions = (actionManager.getAction("NonModalWelcomeScreen.LeftTabActions") as? DefaultActionGroup)
 
