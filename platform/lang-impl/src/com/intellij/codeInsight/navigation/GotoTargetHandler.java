@@ -319,7 +319,15 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   @ApiStatus.Internal
   protected void navigateToElement(@Nullable Project project, @NotNull Navigatable descriptor) {
     if (project == null) return;
-    requestNavigate(project, descriptor, NavigationOptions.requestFocus(), null);
+    requestNavigate(project, descriptor, navigationOptions(), null);
+  }
+
+  /**
+   * @return the options every navigation started by this handler is performed with
+   */
+  @ApiStatus.Internal
+  protected @NotNull NavigationOptions navigationOptions() {
+    return NavigationOptions.requestFocus();
   }
 
   protected boolean shouldSortTargets() {

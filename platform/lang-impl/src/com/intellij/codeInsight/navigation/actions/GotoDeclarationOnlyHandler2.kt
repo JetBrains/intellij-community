@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupChooserBuilder
+import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.psi.PsiFile
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.components.JBList
@@ -43,6 +44,7 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
       editor: Editor,
       actionResult: NavigationActionResult,
       reporter: GotoDeclarationReporter?,
+      navigationOptions: NavigationOptions,
     ) {
       // obtain event data before showing the popup,
       // because showing the popup will finish the GotoDeclarationAction#actionPerformed and clear the data
@@ -53,7 +55,7 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
           actionResult.navigationProvider?.let {
             GTDUCollector.recordNavigated(eventData, it.javaClass)
           }
-          navigateRequestLazy(project, actionResult.requestor, editor)
+          navigateRequestLazy(project, actionResult.requestor, editor, navigationOptions)
           reporter?.reportNavigatedToDeclaration(GotoDeclarationReporter.NavigationType.AUTO, actionResult.navigationProvider)
         }
         is MultipleTargets -> {
@@ -64,7 +66,7 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
             navigationProvider?.let {
               GTDUCollector.recordNavigated(eventData, navigationProvider.javaClass)
             }
-            navigateRequestLazy(project, requestor, editor)
+            navigateRequestLazy(project, requestor, editor, navigationOptions)
             reporter?.reportNavigatedToDeclaration(GotoDeclarationReporter.NavigationType.FROM_POPUP, navigationProvider)
           }
           builder.setTitle(CodeInsightBundle.message("declaration.navigation.title"))
@@ -108,7 +110,8 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
       notifyNowhereToGo(project, editor, psiFile, offset)
     }
     else {
-      gotoDeclaration(project, editor, actionResult, reporter)
+      // `Go To Declaration Only` is never invoked with custom options, unlike `Go To Declaration`, see GotoDeclarationAction
+      gotoDeclaration(project, editor, actionResult, reporter, NavigationOptions.requestFocus())
     }
   }
 }

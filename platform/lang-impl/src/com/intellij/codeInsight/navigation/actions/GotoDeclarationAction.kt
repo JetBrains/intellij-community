@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
+import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -71,13 +72,13 @@ open class GotoDeclarationAction : BaseCodeInsightAction(), DumbAware, CtrlMouse
   }
 
   override fun getHandler(): CodeInsightActionHandler =
-    GotoDeclarationOrUsageHandler2(null)
+    getHandler(DataContext.EMPTY_CONTEXT)
 
   internal fun getReporter(dataContext: DataContext): GotoDeclarationReporter? =
     GO_TO_DECLARATION_REPORTER_DATA_KEY.getData(dataContext)
 
   override fun getHandler(dataContext: DataContext): CodeInsightActionHandler =
-    GotoDeclarationOrUsageHandler2(getReporter(dataContext))
+    GotoDeclarationOrUsageHandler2(getReporter(dataContext), NavigationOptions.fromContext(dataContext))
 
   override fun getCtrlMouseData(editor: Editor, file: PsiFile, offset: Int): CtrlMouseData? =
     GotoDeclarationOrUsageHandler2.getCtrlMouseData(editor, file, offset)

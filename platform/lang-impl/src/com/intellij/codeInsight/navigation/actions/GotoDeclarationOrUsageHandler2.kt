@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -34,7 +35,10 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 
 @ApiStatus.Internal
-class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: GotoDeclarationReporter?) : CodeInsightActionHandler {
+class GotoDeclarationOrUsageHandler2 internal constructor(
+  private val reporter: GotoDeclarationReporter?,
+  private val navigationOptions: NavigationOptions,
+) : CodeInsightActionHandler {
 
   @ApiStatus.Internal
   companion object {
@@ -96,7 +100,7 @@ class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: 
         }
         is GTDUActionResult.GTD -> {
           GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.GTD)
-          gotoDeclaration(project, editor, actionResult.navigationActionResult, reporter)
+          gotoDeclaration(project, editor, actionResult.navigationActionResult, reporter, navigationOptions)
         }
         is GTDUActionResult.SU -> {
           reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.NONE)

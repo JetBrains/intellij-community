@@ -15,6 +15,7 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileNavigator
@@ -28,21 +29,29 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.navigateAndSelectEditor
 import com.intellij.openapi.fileEditor.navigateInProjectView
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.INativeFileType
+import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.impl.DirectoryNavigationRequest
 import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import com.intellij.platform.backend.navigation.impl.SharedSourceNavigationRequest
 import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
+import com.intellij.platform.ide.navigation.CaretPlacement
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.ide.navigation.NavigationTaskCoordinator
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.pom.Navigatable
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.sequenceOfNotNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -199,12 +208,16 @@ private suspend fun tryNavigateToSource(
 ): Boolean {
   when (request) {
     is SourceNavigationRequest -> {
+      val caretShift = caretShift(project = project, request = request, placement = options.caretPlacement)
+      val knownType = request.file.knownFileType()
       withContext(Dispatchers.EDT) {
         navigateToSourceImpl(
           request = request,
           options = options,
           project = project,
           dataContext = dataContext,
+          offset = request.targetOffset(caretShift),
+          knownType = knownType,
         )
       }
       return true
@@ -214,7 +227,9 @@ private suspend fun tryNavigateToSource(
     }
     is RawNavigationRequest -> {
       if (request.canNavigateToSource) {
+        val caretTarget = rawCaretTarget(project = project, request = request, placement = options.caretPlacement)
         project.serviceAsync<IdeNavigationServiceExecutor>().navigate(request = request, requestFocus = options.requestFocus)
+        caretTarget?.let { adjustCaret(project = project, target = it) }
         return true
       }
       else {
@@ -244,14 +259,121 @@ private suspend fun navigateNonSource(project: Project, request: NavigationReque
   }
 }
 
+/**
+ * Computes the distance from [SourceNavigationRequest.offsetMarker] to the offset [placement] asks for.
+ *
+ * A shift rather than a ready offset is computed here so that the target offset itself may be resolved from the marker
+ * on the EDT: the document may change before the navigation gets there, and the marker follows such changes.
+ *
+ * @return `0` when the caret goes right to the target offset
+ */
+private suspend fun caretShift(project: Project, request: SourceNavigationRequest, placement: CaretPlacement): Int {
+  if (placement == CaretPlacement.TARGET_OFFSET) {
+    return 0
+  }
+  val offset = request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: return 0
+  val shift = readAction {
+    val psiFile = request.file.findPsiFile(project) ?: return@readAction null
+    psiFile.findLeafEndAtOffset(offset = offset)?.minus(offset)
+  }
+  return shift ?: 0
+}
+
+/**
+ * @return the offset in the coordinates of [SourceNavigationRequest.file], or `-1` when the request carries no offset
+ */
+@RequiresEdt
+private fun SourceNavigationRequest.targetOffset(caretShift: Int): Int {
+  val marker = offsetMarker?.takeIf { it.isValid } ?: return -1
+  return (marker.startOffset + caretShift).coerceAtMost(marker.document.textLength)
+}
+
+/**
+ * A [RawNavigationRequest] runs the navigation code of the navigatable itself, so the platform is not told where the navigation lands
+ * and [placement] may only be applied once that navigation is over.
+ *
+ * Only a navigatable which does tell its target upfront is supported, see [targetDescriptor]. For any other navigatable
+ * the [placement] is ignored, because there is nothing to tell a successful navigation from one which did nothing.
+ *
+ * @return the caret target to apply after the navigation, or `null` when the [placement] cannot be honored
+ */
+private suspend fun rawCaretTarget(project: Project, request: RawNavigationRequest, placement: CaretPlacement): RawCaretTarget? {
+  if (placement == CaretPlacement.TARGET_OFFSET) {
+    return null
+  }
+  return readAction {
+    val descriptor = request.navigatable.targetDescriptor() ?: return@readAction null
+    val targetOffset = descriptor.offset.takeIf { it >= 0 } ?: return@readAction null
+    val psiFile = descriptor.file.findPsiFile(project) ?: return@readAction null
+    val caretOffset = psiFile.findLeafEndAtOffset(targetOffset) ?: return@readAction null
+    RawCaretTarget(file = descriptor.file, targetOffset = targetOffset, caretOffset = caretOffset)
+  }
+}
+
+/**
+ * @return the descriptor this navigatable navigates to, or `null` when it does not tell its target
+ */
+private fun Navigatable.targetDescriptor(): OpenFileDescriptor? = when (this) {
+  is OpenFileDescriptor -> this
+  // a PSI element navigates to the descriptor built for it, see com.intellij.psi.impl.source.tree.CompositePsiElement.navigate
+  is PsiElement -> PsiNavigationSupport.getInstance().getDescriptor(this) as? OpenFileDescriptor
+  else -> null
+}
+
+private class RawCaretTarget(val file: VirtualFile, val targetOffset: Int, val caretOffset: Int)
+
+/**
+ * Moves the caret to [RawCaretTarget.caretOffset], but only while the selected editor is the one showing the navigation target:
+ * the navigation may have done nothing at all, may have landed in another editor, or may have scheduled its own asynchronous work
+ * and returned before reaching the target.
+ */
+private suspend fun adjustCaret(project: Project, target: RawCaretTarget) {
+  val fileEditorManager = project.serviceAsync<FileEditorManager>()
+  val fileDocumentManager = serviceAsync<FileDocumentManager>()
+  withContext(Dispatchers.EDT) {
+    val editor = fileEditorManager.selectedTextEditor ?: return@withContext
+    if (fileDocumentManager.getFile(editor.document) == target.file && editor.caretModel.offset == target.targetOffset) {
+      editor.caretModel.moveToOffset(target.caretOffset)
+    }
+  }
+}
+
+/**
+ * The same rule [com.intellij.codeInsight.completion.command.CommandCompletionFactory.adjustCaret] applies post factum,
+ * inlined here to keep the navigation independent of the completion commands.
+ *
+ * @return the end offset of the token starting at [offset], or `null` when [offset] is not a token start
+ */
+private fun PsiFile.findLeafEndAtOffset(offset: Int): Int? {
+  val leaf = findElementAt(offset) ?: return null
+  return leaf.textRange.endOffset.takeIf { leaf.textRange.startOffset == offset }
+}
+
+/**
+ * Resolves the type of the file without the EDT: an unknown type is resolved by the file content, which means reading the file,
+ * and reading it on the EDT freezes the IDE, see IJPL-249536.
+ *
+ * @return the type of the file, or `null` for a directory and for a file whose type stays unknown: asking the user to associate
+ * a type with it is only possible on the EDT
+ */
+private suspend fun VirtualFile.knownFileType(): FileType? {
+  if (isDirectory) {
+    return null
+  }
+  return readAction { fileType.takeIf { it != UnknownFileType.INSTANCE } }
+}
+
 private suspend fun navigateToSourceImpl(
   options: NavigationOptions.Impl,
   request: SourceNavigationRequest,
   project: Project,
   dataContext: DataContext?,
+  offset: Int,
+  knownType: FileType?,
 ) {
   val file = request.file
-  val type = if (file.isDirectory) null else FileTypeManager.getInstance().getKnownFileTypeOrAssociate(file, project)
+  // the type resolved in the background is reused; the remaining case is a type unknown to the IDE, which the user is asked about
+  val type = knownType ?: if (file.isDirectory) null else FileTypeManager.getInstance().getKnownFileTypeOrAssociate(file, project)
   if (type != null && file.isValid) {
     if (type is INativeFileType) {
       if (type.openFileInAssociatedApplication(project, file)) {
@@ -259,7 +381,6 @@ private suspend fun navigateToSourceImpl(
       }
     }
     else {
-      val offset = request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: -1
       val inEditorDataContext = dataContext?.let(OpenFileDescriptor.NAVIGATE_IN_EDITOR::getData) != null
       val descriptor = if (!inEditorDataContext && request is SharedSourceNavigationRequest && isSharedSourceSupportEnabled(project)) {
         OpenFileDescriptor(project, request.file, request.context, offset)
@@ -280,7 +401,7 @@ private suspend fun navigateToSourceImpl(
         }
       }
 
-      if (openFile(request = request, project = project, options = options)) {
+      if (openFile(request = request, project = project, options = options, offset = offset)) {
         return
       }
     }
@@ -293,15 +414,19 @@ private suspend fun openFile(
   options: NavigationOptions.Impl,
   project: Project,
   request: SourceNavigationRequest,
+  offset: Int,
 ): Boolean {
-  var offset = request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: -1
+  var hostOffset = offset
   val originalFile = request.file
   var file = originalFile
 
   val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerEx
   if (originalFile is VirtualFileWindow) {
     readAction {
-      offset = originalFile.documentWindow.injectedToHost(offset)
+      if (hostOffset != -1) {
+        // injectedToHost does not preserve the "no offset" marker, it maps a negative offset into the first host range
+        hostOffset = originalFile.documentWindow.injectedToHost(hostOffset)
+      }
       file = originalFile.delegate
     }
   }
@@ -334,11 +459,11 @@ private suspend fun openFile(
   }
 
 
-  if (offset == -1) {
+  if (hostOffset == -1) {
     return true
   }
 
-  val descriptor = OpenFileDescriptor(project, file, offset)
+  val descriptor = OpenFileDescriptor(project, file, hostOffset)
   suspend fun tryNavigate(fileEditors: Sequence<FileEditor>): Boolean {
     for (editor in fileEditors) {
       // try to navigate opened editor

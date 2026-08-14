@@ -46,7 +46,12 @@ internal fun navigateToLookupItem(project: Project, editor: Editor): Boolean {
 /**
  * Obtains a [NavigationRequest] instance from [requestor] on a background thread, and calls [navigateRequest].
  */
-internal fun navigateRequestLazy(project: Project, requestor: NavigationRequestor, editor: Editor) {
+internal fun navigateRequestLazy(
+  project: Project,
+  requestor: NavigationRequestor,
+  editor: Editor,
+  options: NavigationOptions = NavigationOptions.requestFocus(),
+) {
   EDT.assertIsEdt()
   @Suppress("DialogTitleCapitalization")
   val request = underModalProgress(project, ActionsBundle.actionText("GotoDeclarationOnly")) {
@@ -54,20 +59,25 @@ internal fun navigateRequestLazy(project: Project, requestor: NavigationRequesto
   }
   if (request != null) {
     val dataContext = editor.component.let { DataManager.getInstance().getDataContext(it) }
-    navigateRequest(project, request, dataContext = dataContext)
+    navigateRequest(project, request, dataContext, options)
   }
 }
 
 @Internal
 @RequiresEdt
 @JvmOverloads
-fun navigateRequest(project: Project, request: NavigationRequest, dataContext: DataContext? = null) {
+fun navigateRequest(
+  project: Project,
+  request: NavigationRequest,
+  dataContext: DataContext? = null,
+  options: NavigationOptions = NavigationOptions.requestFocus(),
+) {
   EDT.assertIsEdt()
   if (!Registry.`is`("ide.navigation.requests")) {
     IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
   }
   val scope = project.service<CoreUiCoroutineScopeHolder>().coroutineScope
-  requestNavigate(project, request, NavigationOptions.requestFocus(), dataContext, scope)
+  requestNavigate(project, request, options, dataContext, scope)
 }
 
 internal fun notifyNowhereToGo(project: Project, editor: Editor, file: PsiFile, offset: Int) {

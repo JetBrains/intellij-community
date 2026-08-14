@@ -18,6 +18,7 @@ import com.intellij.platform.ide.navigation.NavigateUtil;
 import com.intellij.platform.ide.navigation.NavigationOptions;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.PomTargetPsiElement;
+import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
@@ -115,10 +116,16 @@ public final class EditSourceUtil {
   }
 
   public static boolean navigateToPsiElement(@NotNull PsiElement element) {
-    Navigatable descriptor = getDescriptor(element);
-    if (descriptor != null && descriptor.canNavigate()) {
+    return navigateToPsiElement(element, NavigationOptions.requestFocus());
+  }
+
+  @Internal
+  public static boolean navigateToPsiElement(@NotNull PsiElement element, @NotNull NavigationOptions options) {
+    // the element's NavigationRequest is preferred over potentially plain one from OpenFileDescriptor
+    Navigatable navigatable = element instanceof NavigatablePsiElement navigatableElement ? navigatableElement : getDescriptor(element);
+    if (navigatable != null && navigatable.canNavigate()) {
       Project project = element.getProject();
-      NavigateUtil.requestNavigate(project, descriptor, NavigationOptions.requestFocus(), null);
+      NavigateUtil.requestNavigate(project, navigatable, options, null);
     }
     return true;
   }
