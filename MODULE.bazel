@@ -134,6 +134,7 @@ use_repo(
     "dev_launch_libghostty",
     "dev_launch_libwebp",
     "dev_launch_maven",
+    "dev_launch_restarter",
 )
 
 [use_repo(

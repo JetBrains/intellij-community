@@ -155,16 +155,32 @@ public final class PathManager {
         ourBinDirectories = Collections.emptyList();
       }
       else {
-        Path root = result;
+        // The distribution's own `bin` first, always: a dev distribution now carries the same native helpers a
+        // production one does (`OsSpecificDistributionBuilder.copyNativeBinFiles`), so it is self-sufficient
+        // wherever it is read from - including a Bazel output on a read-only share, which is how UI-test workers
+        // run one, and where walking up to a checkout finds nothing but the filesystem root.
+        List<Path> binDirectories = getBinDirectories(result);
         if (Boolean.getBoolean("idea.use.dev.build.server")) {
-          while (root.getParent() != null) {
-            if (Files.exists(root.resolve(ULTIMATE_MARKER)) || Files.exists(root.resolve(COMMUNITY_MARKER))) {
+          // Then the checkout's `community/bin`, for a dev distribution assembled before those files were part
+          // of one. Worth keeping as a fallback rather than a replacement, because the failure it prevents is
+          // silent: every `findBinFile` caller reads a missing file as "the feature is unavailable here", so the
+          // IDE just runs with no file watcher, no screen menu and no restarter.
+          for (Path candidate = result; candidate.getParent() != null; candidate = candidate.getParent()) {
+            if (Files.exists(candidate.resolve(ULTIMATE_MARKER)) || Files.exists(candidate.resolve(COMMUNITY_MARKER))) {
+              if (!candidate.equals(result)) {
+                List<Path> withCheckout = new ArrayList<>(binDirectories);
+                for (Path directory : getBinDirectories(candidate)) {
+                  if (!withCheckout.contains(directory)) {
+                    withCheckout.add(directory);
+                  }
+                }
+                binDirectories = withCheckout;
+              }
               break;
             }
-            root = root.getParent();
           }
         }
-        ourBinDirectories = getBinDirectories(root);
+        ourBinDirectories = binDirectories;
       }
 
       ourHomePath = result;

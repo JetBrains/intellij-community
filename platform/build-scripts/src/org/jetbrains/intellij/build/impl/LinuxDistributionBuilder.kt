@@ -33,7 +33,6 @@ import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import org.jetbrains.intellij.build.impl.stdioMcpRunner.generateStdioMcpRunnerLaunchData
 import org.jetbrains.intellij.build.impl.support.generateInstallationIntegrityManifest
 import org.jetbrains.intellij.build.io.copyFile
-import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.io.moveFileToDir
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
@@ -67,6 +66,14 @@ class LinuxDistributionBuilder(
   override val targetOs: OsFamily
     get() = OsFamily.LINUX
 
+  override suspend fun copyNativeBinFiles(binDir: Path, arch: JvmArchitecture): List<Path> = withContext(Dispatchers.IO) {
+    val sourceBinDir = context.paths.communityHomeDir.resolve("bin/linux")
+    listOf(
+      copyRestarterToDir(binDir, OsFamily.LINUX, arch, context),
+      copyNativeBinFileToDir(sourceBinDir.resolve("${arch.dirName}/fsnotifier"), binDir),
+    )
+  }
+
   override suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
     spanBuilder("copy files for os distribution")
       .setAttribute("os", targetOs.osName)
@@ -77,10 +84,7 @@ class LinuxDistributionBuilder(
         writeVmOptions(distBinDir)
 
         context.executeStep(spanBuilder("copy product bin files"), BuildOptions.PRODUCT_BIN_DIR_STEP) {
-          val sourceBinDir = context.paths.communityHomeDir.resolve("bin/linux")
-
-          copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.LINUX, arch), distBinDir)
-          copyFileToDir(sourceBinDir.resolve("${arch.dirName}/fsnotifier"), distBinDir)
+          copyNativeBinFiles(distBinDir, arch)
 
           context.getEmbeddedFrontendProductContext()?.let { clientContext ->
             writeLinuxVmOptions(distBinDir, clientContext)

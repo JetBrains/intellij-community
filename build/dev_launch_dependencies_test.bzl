@@ -96,6 +96,15 @@ def _maven_url_test_impl(ctx):
         _MAVEN + "/org/apache/maven/apache-maven/3.9.16/apache-maven-3.9.16-bin.zip",
         maven_url(_MAVEN, "org.apache.maven", "apache-maven", "3.9.16", "zip", classifier = "bin"),
     )
+
+    # NativeBinaryDownloader.getRestarter, for `restarterBuild=243.6005`. Worth pinning even though it is the
+    # plain Maven shape: `PreloadedDownloads.findByUrl` matches the URL by exact string equality, so a shape
+    # that drifts from `getUriForMavenArtifact` does not fall back to a download - it fails the assembly.
+    asserts.equals(
+        env,
+        _DEPS + "/org/jetbrains/intellij/deps/restarter/243.6005/restarter-243.6005.tar.gz",
+        maven_url(_DEPS, "org.jetbrains.intellij.deps", "restarter", "243.6005", "tar.gz"),
+    )
     return unittest.end(env)
 
 maven_url_test = unittest.make(_maven_url_test_impl)

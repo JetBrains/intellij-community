@@ -42,7 +42,6 @@ import org.jetbrains.intellij.build.impl.stdioMcpRunner.generateStdioMcpRunnerLa
 import org.jetbrains.intellij.build.impl.support.generateInstallationIntegrityManifest
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFile
-import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
 import org.jetbrains.intellij.build.io.writeNewFile
@@ -126,13 +125,21 @@ class MacDistributionBuilder(
     }
   }
 
+  override suspend fun copyNativeBinFiles(binDir: Path, arch: JvmArchitecture): List<Path> = withContext(Dispatchers.IO) {
+    // `add`, not `+`: `Path` is an `Iterable<Path>` of its own name elements, so `List<Path> + Path` appends
+    // those elements instead of the path
+    buildList {
+      addAll(copyNativeBinDir(context.paths.communityHomeDir.resolve("bin/mac"), binDir, fileFilter = customizer.binFilesFilter))
+      add(copyRestarterToDir(binDir, OsFamily.MACOS, arch, context))
+    }
+  }
+
   private suspend fun doCopyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture, copyDistFiles: Boolean) {
     val macBinDir = targetPath.resolve("bin").createDirectories()
     writeVmOptions(macBinDir)
 
     context.executeStep(spanBuilder("copy product bin files"), BuildOptions.PRODUCT_BIN_DIR_STEP) {
-      copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"), macBinDir, customizer.binFilesFilter)
-      copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.MACOS, arch), macBinDir)
+      copyNativeBinFiles(macBinDir, arch)
 
       context.getEmbeddedFrontendProductContext()?.let { clientContext ->
         writeMacOsVmOptions(macBinDir, clientContext)

@@ -39,9 +39,7 @@ import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import org.jetbrains.intellij.build.impl.stdioMcpRunner.generateStdioMcpRunnerLaunchData
 import org.jetbrains.intellij.build.impl.support.generateInstallationIntegrityManifest
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
-import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFile
-import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.io.runJava
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
@@ -83,18 +81,25 @@ internal class WindowsDistributionBuilder(
   override val targetLibcImpl: LibcImpl
     get() = WindowsLibcImpl.DEFAULT
 
+  override suspend fun copyNativeBinFiles(binDir: Path, arch: JvmArchitecture): List<Path> = withContext(Dispatchers.IO) {
+    val sourceBinDir = context.paths.communityHomeDir.resolve("bin/win")
+    // `add`, not `+`: `Path` is an `Iterable<Path>` of its own name elements, so `List<Path> + Path` appends
+    // those elements instead of the path
+    buildList {
+      addAll(copyNativeBinDir(sourceBinDir.resolve(arch.dirName), binDir))
+      // the top-level files of `bin/win` only - the other architecture's directory is not ours
+      addAll(copyNativeBinDir(sourceBinDir, binDir, dirFilter = { it == sourceBinDir }))
+      add(copyRestarterToDir(binDir, OsFamily.WINDOWS, arch, context))
+    }
+  }
+
   override suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
     withContext(Dispatchers.IO) {
       val distBinDir = targetPath.resolve("bin").createDirectories()
       writeVmOptions(distBinDir)
 
       context.executeStep(spanBuilder("copy product bin files"), BuildOptions.PRODUCT_BIN_DIR_STEP) {
-        val sourceBinDir = context.paths.communityHomeDir.resolve("bin/win")
-
-        copyDir(sourceBinDir.resolve(arch.dirName), distBinDir)
-        copyDir(sourceBinDir, distBinDir, dirFilter = { it == sourceBinDir })
-
-        copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
+        copyNativeBinFiles(distBinDir, arch)
 
         context.getEmbeddedFrontendProductContext()?.let { clientContext ->
           writeWindowsVmOptions(distBinDir, clientContext)

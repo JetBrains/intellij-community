@@ -14,8 +14,8 @@ hands each group of artifacts a repository whose attributes carry only its own v
 refetches exactly what it changed.
 
 A repository is per platform only where the artifact is: the JBR, JCEF, the Chatter binary and the
-Toolbox daemon are, while IJent, libwebp, libghostty-vt and the bundled Maven distribution ship every
-platform in one archive and are fetched once for all six.
+Toolbox daemon are, while IJent, libwebp, libghostty-vt, the restart helper and the bundled Maven
+distribution ship every platform in one archive and are fetched once for all six.
 
 This file owns the community half - the machinery, and the groups whose version lives under
 `community/`. The ultimate half is `//build:dev_launch_dependencies.bzl`, and the two compose through
@@ -272,7 +272,7 @@ def _only_select(platforms, value, default):
 
 # What a dev-mode assembly downloads, of the groups community owns.
 COMMUNITY_DEV_LAUNCH_REPOS = merge_repo_sets(
-    _shared_repos(["libghostty", "libwebp", "maven"]),
+    _shared_repos(["libghostty", "libwebp", "maven", "restarter"]),
     _per_platform_repos("jcef"),
 )
 
@@ -294,6 +294,19 @@ def _dev_launch_deps_community_impl(module_ctx):
             "org.jetbrains.intellij.deps",
             "libwebp",
             pinned(community, _COMMUNITY_DEPENDENCIES, "libwebpVersion"),
+            "tar.gz",
+        )],
+    )
+
+    # NativeBinaryDownloader.getRestarter - one archive carrying `<os>-<arch>/restarter` for every platform,
+    # so it is fetched once for all six. Every distribution's `bin` copies it, a dev one included.
+    dev_launch_deps_repo(
+        name = "dev_launch_restarter",
+        urls = [maven_url(
+            INTELLIJ_DEPENDENCIES_URL,
+            "org.jetbrains.intellij.deps",
+            "restarter",
+            pinned(community, _COMMUNITY_DEPENDENCIES, "restarterBuild"),
             "tar.gz",
         )],
     )

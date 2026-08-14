@@ -20,7 +20,11 @@ import java.util.function.Predicate
 import java.util.regex.Pattern
 
 fun copyFileToDir(file: Path, targetDir: Path) {
-  doCopyFile(file = file, target = targetDir.resolve(file.fileName), targetDir = targetDir)
+  doCopyFile(file = file, target = targetDir.resolve(file.fileName), targetDir = targetDir, overwrite = false)
+}
+
+fun copyFileToDir(file: Path, targetDir: Path, overwrite: Boolean) {
+  doCopyFile(file = file, target = targetDir.resolve(file.fileName), targetDir = targetDir, overwrite = overwrite)
 }
 
 fun moveFile(source: Path, target: Path) {
@@ -34,19 +38,51 @@ fun moveFileToDir(file: Path, targetDir: Path): Path {
 }
 
 fun copyFile(file: Path, target: Path) {
-  doCopyFile(file = file, target = target, targetDir = target.parent)
+  doCopyFile(file = file, target = target, targetDir = target.parent, overwrite = false)
 }
 
-private fun doCopyFile(file: Path, target: Path, targetDir: Path) {
+private fun doCopyFile(file: Path, target: Path, targetDir: Path, overwrite: Boolean) {
   Files.createDirectories(targetDir)
-  Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES)
+  if (overwrite) {
+    Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
+  }
+  else {
+    Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES)
+  }
 }
 
-fun copyDir(sourceDir: Path, targetDir: Path, dirFilter: Predicate<Path>? = null, fileFilter: Predicate<Path>? = null) {
+/**
+ * Copies [sourceDir] into [targetDir], and returns the files it wrote.
+ *
+ * The return value is for a caller that owns the target directory's contents and therefore has to know what
+ * landed in it - a dev-mode assembly deletes whatever it did not put in `bin` itself. Most callers ignore it.
+ */
+fun copyDir(
+  sourceDir: Path,
+  targetDir: Path,
+  dirFilter: Predicate<Path>? = null,
+  fileFilter: Predicate<Path>? = null,
+): List<Path> {
+  return copyDir(sourceDir, targetDir, overwrite = false, dirFilter = dirFilter, fileFilter = fileFilter)
+}
+
+/**
+ * [copyDir] with an explicit collision policy. When [overwrite] is `true`, files from an earlier layout are
+ * replaced and still reported in the returned list; directories are merged in both modes.
+ */
+fun copyDir(
+  sourceDir: Path,
+  targetDir: Path,
+  overwrite: Boolean,
+  dirFilter: Predicate<Path>? = null,
+  fileFilter: Predicate<Path>? = null,
+): List<Path> {
   Files.createDirectories(targetDir)
   val dirFilter = dirFilter ?: Predicate { true }
   val fileFilter = fileFilter ?: Predicate { true }
-  Files.walkFileTree(sourceDir, CopyDirectoryVisitor(sourceDir, targetDir, dirFilter, fileFilter))
+  val visitor = CopyDirectoryVisitor(sourceDir, targetDir, dirFilter, fileFilter, overwrite)
+  Files.walkFileTree(sourceDir, visitor)
+  return visitor.copiedFiles
 }
 
 /**
@@ -121,9 +157,13 @@ private class CopyDirectoryVisitor(
   private val sourceDir: Path,
   private val targetDir: Path,
   private val dirFilter: Predicate<Path>,
-  private val fileFilter: Predicate<Path>
+  private val fileFilter: Predicate<Path>,
+  private val overwrite: Boolean,
 ) : SimpleFileVisitor<Path>() {
   private val sourceToTargetFile: (Path) -> Path
+
+  /** The files this visitor wrote, in visit order. */
+  @JvmField val copiedFiles: MutableList<Path> = mutableListOf()
 
   init {
     val isTheSameFileStore = Files.getFileStore(sourceDir) == Files.getFileStore(targetDir)
@@ -154,7 +194,13 @@ private class CopyDirectoryVisitor(
     }
 
     val targetFile = sourceToTargetFile(sourceFile)
-    Files.copy(sourceFile, targetFile, StandardCopyOption.COPY_ATTRIBUTES, LinkOption.NOFOLLOW_LINKS)
+    if (overwrite) {
+      Files.copy(sourceFile, targetFile, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING, LinkOption.NOFOLLOW_LINKS)
+    }
+    else {
+      Files.copy(sourceFile, targetFile, StandardCopyOption.COPY_ATTRIBUTES, LinkOption.NOFOLLOW_LINKS)
+    }
+    copiedFiles.add(targetFile)
     return FileVisitResult.CONTINUE
   }
 }

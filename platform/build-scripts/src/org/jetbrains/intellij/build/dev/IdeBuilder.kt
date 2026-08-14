@@ -52,6 +52,7 @@ import org.jetbrains.intellij.build.impl.copyDistFiles
 import org.jetbrains.intellij.build.impl.createDevBuildCompilationContext
 import org.jetbrains.intellij.build.impl.createIdeaPropertyFile
 import org.jetbrains.intellij.build.impl.createPlatformLayout
+import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder
 import org.jetbrains.intellij.build.impl.getOsDistributionBuilder
 import org.jetbrains.intellij.build.impl.isDevBuildBazelBacked
 import org.jetbrains.intellij.build.impl.layoutPlatformDistribution
@@ -271,6 +272,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
             val productInfoFile = osDistributionBuilder.writeProductInfoFile(productInfoDir, request.arch)
             oldFiles.remove(productInfoFile.moveTo(binDir.resolve(PRODUCT_INFO_FILE_NAME), overwrite = true))
             NioFiles.deleteRecursively(productInfoDir)
+            oldFiles.removeAll(layOutNativeBinFiles(osDistributionBuilder, binDir, runDir, request.arch))
           }
 
           val ideaPropertyFile = binDir.resolve(PathManager.PROPERTIES_FILE_NAME)
@@ -614,6 +616,35 @@ private suspend fun prepareDevRunDir(request: BuildRequest): Path {
     }
     buildDir
   }
+}
+
+/**
+ * Copies the distribution's `bin` natives and marks executable the ones a production build would.
+ *
+ * A production distribution gets those permissions when it is archived - `updateExecutablePermissions` over
+ * [OsSpecificDistributionBuilder.generateExecutableFilesPatterns]. A dev distribution is never archived, and its
+ * sources do not always carry the mode: inside a Bazel action the checkout is a tree that
+ * [materializeProjectModelTree] laid out, and it copies without POSIX attributes, so a `755` file in git arrives
+ * here as `rw-`. The same patterns therefore decide here, applied to the copied files alone - walking the whole
+ * distribution would rewrite the permissions of every jar in it, per assembly.
+ *
+ * Returns the copied files, which the caller must keep out of the sweep that deletes whatever else is in `bin`.
+ */
+private suspend fun layOutNativeBinFiles(
+  osDistributionBuilder: OsSpecificDistributionBuilder,
+  binDir: Path,
+  runDir: Path,
+  arch: JvmArchitecture,
+): List<Path> {
+  val copied = osDistributionBuilder.copyNativeBinFiles(binDir, arch)
+  val executableMatchers = osDistributionBuilder.generateExecutableFilesMatchers(includeRuntime = false, arch = arch).keys
+  for (file in copied) {
+    val relativePath = runDir.relativize(file)
+    if (executableMatchers.any { it.matches(relativePath) }) {
+      NioFiles.setExecutable(file)
+    }
+  }
+  return copied
 }
 
 // paths are written relative to the IDE home dir to keep the built IDE relocatable;
