@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorListener;
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -115,12 +116,25 @@ public final class SdkDownloadTracker {
     task.mySdkFailedHandlers.add(onSdkFailed);
   }
 
+  /**
+   * @param project optional host for the background progress;
+   *                {@code null} means the download runs without visible progress
+   */
   @RequiresEdt
-  public void startSdkDownloadIfNeeded(@NotNull Sdk sdkFromTable) {
+  public void startSdkDownloadIfNeeded(@Nullable Project project, @NotNull Sdk sdkFromTable) {
     PendingDownload task = findTask(sdkFromTable);
     if (task == null) return;
 
-    task.startDownloadIfNeeded(sdkFromTable);
+    task.startDownloadIfNeeded(project, sdkFromTable);
+  }
+
+  /**
+   * @deprecated use {@link #startSdkDownloadIfNeeded(Project, Sdk)} to show download progress
+   */
+  @Deprecated
+  @RequiresEdt
+  public void startSdkDownloadIfNeeded(@NotNull Sdk sdkFromTable) {
+    startSdkDownloadIfNeeded(null, sdkFromTable);
   }
 
   /**
@@ -195,7 +209,8 @@ public final class SdkDownloadTracker {
 
     PendingDownload pd = new PendingDownload(sdk, task, tracker) {
       @Override
-      protected void runTask(@NotNull @NlsContexts.ProgressTitle String title,
+      protected void runTask(@Nullable Project project,
+                             @NotNull @NlsContexts.ProgressTitle String title,
                              @NotNull java.util.function.Consumer<ProgressIndicator> downloadAction) {
         indicator.pushState();
         try {
@@ -219,7 +234,7 @@ public final class SdkDownloadTracker {
       pd.registerEditableSdk(otherSdk);
     }
 
-    pd.startDownloadIfNeeded(sdk);
+    pd.startDownloadIfNeeded(null, sdk);
   }
 
   // we need to track the "best" modality state to trigger SDK update on completion,
@@ -316,12 +331,13 @@ public final class SdkDownloadTracker {
       myEditableSdks.add(editable);
     }
 
-    protected void runTask(@NotNull @NlsContexts.ProgressTitle String title,
+    protected void runTask(@Nullable Project project,
+                           @NotNull @NlsContexts.ProgressTitle String title,
                            @NotNull java.util.function.Consumer<ProgressIndicator> downloadAction) {
-      SdkDownloadTrackerKt.runSdkDownloadTask(title, downloadAction);
+      SdkDownloadTrackerKt.runSdkDownloadTask(project, title, downloadAction);
     }
 
-    void startDownloadIfNeeded(@NotNull Sdk sdkFromTable) {
+    void startDownloadIfNeeded(@Nullable Project project, @NotNull Sdk sdkFromTable) {
       if (!myIsDownloading.compareAndSet(false, true)) return;
       if (myProgressIndicator.isCanceled()) return;
 
@@ -329,7 +345,7 @@ public final class SdkDownloadTracker {
       SdkType type = (SdkType)sdkFromTable.getSdkType();
       String title = ProjectBundle.message("sdk.configure.downloading", type.getPresentableName());
 
-      runTask(title, indicator -> {
+      runTask(project, title, indicator -> {
         doStartDownload(indicator, type, title);
       });
     }

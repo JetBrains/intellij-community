@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.execution.target.TargetBasedSdkAdditionalData;
@@ -419,7 +419,8 @@ public class ProjectSdksModel implements SdkModel {
     LOG.assertTrue(downloadExtension.supportsDownload(type));
     myModified = true;
 
-    downloadExtension.showDownloadUI(type, this, parent, project, selectedSdk, null, sdk -> setupInstallableSdk(type, sdk, callback));
+    downloadExtension.showDownloadUI(type, this, parent, project, selectedSdk, null,
+                                     sdk -> setupInstallableSdk(project, type, sdk, callback));
   }
 
   @ApiStatus.Internal
@@ -453,12 +454,31 @@ public class ProjectSdksModel implements SdkModel {
     return createSdkInternal(type, newSdkName, home);
   }
 
+  /**
+   * Creates an incomplete SDK for the given download task and starts the download.
+   *
+   * @param project optional host for the background progress;
+   *                {@code null} means the download runs without visible progress
+   */
+  @RequiresEdt
+  public void setupInstallableSdk(@Nullable Project project,
+                                  @NotNull SdkType type,
+                                  @NotNull SdkDownloadTask downloadTask,
+                                  @Nullable java.util.function.Consumer<? super Sdk> callback) {
+    final Sdk incompleteSdk = createIncompleteSdk(type, downloadTask, callback);
+    downloadSdk(project, incompleteSdk);
+  }
+
+  /**
+   * @deprecated use {@link #setupInstallableSdk(Project, SdkType, SdkDownloadTask, java.util.function.Consumer)}
+   * to show the download progress in a project
+   */
+  @Deprecated
   @RequiresEdt
   public void setupInstallableSdk(@NotNull SdkType type,
                                   @NotNull SdkDownloadTask downloadTask,
                                   @Nullable java.util.function.Consumer<? super Sdk> callback) {
-    final Sdk incompleteSdk = createIncompleteSdk(type, downloadTask, callback);
-    downloadSdk(incompleteSdk);
+    setupInstallableSdk(null, type, downloadTask, callback);
   }
 
   @ApiStatus.Internal
@@ -483,9 +503,19 @@ public class ProjectSdksModel implements SdkModel {
 
   @RequiresEdt
   @ApiStatus.Internal
-  public static void downloadSdk(Sdk sdk) {
+  public static void downloadSdk(@Nullable Project project, @NotNull Sdk sdk) {
     SdkDownloadTracker tracker = SdkDownloadTracker.getInstance();
-    tracker.startSdkDownloadIfNeeded(sdk);
+    tracker.startSdkDownloadIfNeeded(project, sdk);
+  }
+
+  /**
+   * @deprecated use {@link #downloadSdk(Project, Sdk)} to show download progress
+   */
+  @Deprecated
+  @RequiresEdt
+  @ApiStatus.Internal
+  public static void downloadSdk(Sdk sdk) {
+    downloadSdk(null, sdk);
   }
 
   private void setupSdk(@NotNull Sdk newJdk, @Nullable java.util.function.Consumer<? super Sdk> callback) {

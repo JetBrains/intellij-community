@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WslPath
@@ -74,11 +74,16 @@ object JdkDownloadUtil {
     return sdk
   }
 
+  @Deprecated(message = "Use #downloadSdk(Project?, Sdk) for proper background progress", replaceWith = ReplaceWith("downloadSdk(project, sdk)"))
   suspend fun downloadSdk(sdk: Sdk): Boolean {
+    return downloadSdk(null, sdk)
+  }
+
+  suspend fun downloadSdk(project: Project?, sdk: Sdk): Boolean {
     return withContext(Dispatchers.EDT) {
       Disposer.newDisposable("The JdkDownloader#downloadSdk lifecycle").use { disposable ->
         val tracker = SdkDownloadTracker.getInstance()
-        tracker.startSdkDownloadIfNeeded(sdk)
+        tracker.startSdkDownloadIfNeeded(project, sdk)
         suspendCancellableCoroutine { continuation ->
           val registered = tracker.tryRegisterDownloadingListener(sdk, disposable, null) {
             continuation.resume(it)

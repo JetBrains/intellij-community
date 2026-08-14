@@ -6407,6 +6407,7 @@ c:com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 - p:forceAddActionToSelectFromDisk(com.intellij.openapi.projectRoots.SdkType):Z
 - getMulticaster():com.intellij.openapi.projectRoots.SdkModel$Listener
 - isInitialized():Z
+- setupInstallableSdk(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.SdkType,com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask,java.util.function.Consumer):V
 - setupInstallableSdk(com.intellij.openapi.projectRoots.SdkType,com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask,java.util.function.Consumer):V
 a:com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel$NewSdkAction
 - f:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -6422,6 +6423,7 @@ f:com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 - onSdkRemoved(com.intellij.openapi.projectRoots.Sdk):V
 - registerEditableSdk(com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.projectRoots.Sdk):V
 - registerSdkDownload(com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask):V
+- startSdkDownloadIfNeeded(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk):V
 - startSdkDownloadIfNeeded(com.intellij.openapi.projectRoots.Sdk):V
 - tryRegisterDownloadingListener(com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.Disposable,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Consumer):Z
 - tryRegisterSdkDownloadFailureHandler(com.intellij.openapi.projectRoots.Sdk,java.lang.Runnable):V

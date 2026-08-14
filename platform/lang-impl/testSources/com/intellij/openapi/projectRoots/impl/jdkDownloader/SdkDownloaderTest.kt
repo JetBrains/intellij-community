@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.Disposable
@@ -14,9 +14,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.util.Consumer
 import org.jetbrains.annotations.NotNull
 import org.junit.Assert
-import org.junit.Test
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -34,7 +34,6 @@ class SdkDownloaderTest : LightPlatformTestCase() {
     override fun doDownload(indicator: ProgressIndicator) = Unit
   }
 
-  @Test
   fun testBlockingDownloadWorks() {
     val task = object: SdkDownloadTask by successDownloadTask { }
     val sdk = newSdk("test-sdk-1")
@@ -47,7 +46,6 @@ class SdkDownloaderTest : LightPlatformTestCase() {
     assertThat(sdk.versionString).endsWith(task.plannedVersion)
   }
 
-  @Test
   fun testBlockingDownloadWorksIfDownloadFailed() {
     val task = object: SdkDownloadTask by successDownloadTask {
       override fun doDownload(indicator: ProgressIndicator) = error("This is mock failure")
@@ -64,7 +62,6 @@ class SdkDownloaderTest : LightPlatformTestCase() {
     }
   }
 
-  @Test
   fun testBlockingWhenDownloadIsRunning() {
     //ignored
     if (System.currentTimeMillis() > 0) return
@@ -99,9 +96,28 @@ class SdkDownloaderTest : LightPlatformTestCase() {
     }
 
     //background progress is blocking in the test mode
-    SdkDownloadTracker.getInstance().startSdkDownloadIfNeeded(sdk)
+    SdkDownloadTracker.getInstance().startSdkDownloadIfNeeded(null, sdk)
 
     testThread.join()
+  }
+
+  fun testDownloadWithoutProjectWorks() {
+    val task = object: SdkDownloadTask by successDownloadTask { }
+    val sdk = newSdk("test-sdk-4")
+
+    val tracker = SdkDownloadTracker.getInstance()
+    tracker.registerSdkDownload(sdk, task)
+
+    val downloadResult = AtomicReference<Boolean>(null)
+    Assert.assertTrue(tracker.tryRegisterDownloadingListener(sdk, testRootDisposable, null, Consumer { downloadResult.set(it) }))
+
+    tracker.startSdkDownloadIfNeeded(null, sdk)
+
+    PlatformTestUtil.waitWithEventsDispatching("The SDK download is not completed", { downloadResult.get() != null }, 60)
+
+    assertThat(downloadResult.get()).isTrue()
+    assertThat(sdk.homePath).endsWith(task.plannedHomeDir)
+    assertThat(sdk.versionString).endsWith(task.plannedVersion)
   }
 
   private fun newSdk(sdkName: String): @NotNull Sdk {

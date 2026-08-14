@@ -8,6 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
@@ -28,13 +29,21 @@ private val LOG = logger<SdkDownloadTracker>()
 private class SdkDownloadTrackerService(val scope: CoroutineScope)
 
 internal fun runSdkDownloadTask(
+  project: Project?,
   title: @NlsContexts.ProgressTitle String,
   downloadAction: Consumer<ProgressIndicator>,
 ): Job {
   return service<SdkDownloadTrackerService>().scope.launch(Dispatchers.IO) {
-    withBackgroundProgress(ProjectManager.getInstance().defaultProject, title, cancellable = true) {
+    if (project ==  null) {
       coroutineToIndicator { indicator ->
         downloadAction.accept(indicator)
+      }
+    }
+    else {
+      withBackgroundProgress(project, title, cancellable = true) {
+        coroutineToIndicator { indicator ->
+          downloadAction.accept(indicator)
+        }
       }
     }
   }

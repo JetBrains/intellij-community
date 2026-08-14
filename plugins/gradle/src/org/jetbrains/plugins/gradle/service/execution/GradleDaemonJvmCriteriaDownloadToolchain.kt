@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.openapi.application.EDT
@@ -23,7 +23,7 @@ object GradleDaemonJvmCriteriaDownloadToolchain {
     val (jdkItem, jdkHome) = pickJdkItemAndPathForMatchingCriteria(project, daemonJvmProperties.criteria) ?: return
     val downloadTask = JdkDownloadUtil.createDownloadTask(project, jdkItem, jdkHome) ?: return
     val sdk = JdkDownloadUtil.createDownloadSdk(ExternalSystemJdkUtil.getJavaSdkType(), downloadTask)
-    JdkDownloadUtil.downloadSdk(sdk)
+    JdkDownloadUtil.downloadSdk(project, sdk)
   }
 
   @ApiStatus.Internal

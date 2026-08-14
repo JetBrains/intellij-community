@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.impl.ConfigureJdkService
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
@@ -22,13 +21,18 @@ class DownloadJdkAction: AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val sdkType = JavaSdk.getInstance()
     val downloadExtension = SdkDownload.EP_NAME.findFirstSafe { it: SdkDownload -> it.supportsDownload(sdkType) }
-    val project = e.project ?: DefaultProjectFactory.getInstance().defaultProject
+    val project = e.project
 
     if (downloadExtension != null) {
       downloadExtension.showDownloadUI(sdkType, ProjectSdksModel(), null, project, null, { true }) { task: SdkDownloadTask ->
         val sdk = JdkDownloadService.setupInstallableSdk(task)
-        project.service<JdkDownloadService>().scheduleDownloadSdk(sdk)
-        project.service<ConfigureJdkService>().setProjectJdkIfNull(sdk)
+        if (project == null) {
+          ProjectSdksModel.downloadSdk(null, sdk)
+        }
+        else {
+          project.service<JdkDownloadService>().scheduleDownloadSdk(sdk)
+          project.service<ConfigureJdkService>().setProjectJdkIfNull(sdk)
+        }
       }
     } else {
       log.warn("No download extension found to download a JDK")

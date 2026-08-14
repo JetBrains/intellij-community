@@ -71,7 +71,7 @@ public class ExternalJavaConfigurationJdkDownloaderAction : ExternalJavaConfigur
         }
 
         project.service<ExternalJavaConfigurationService>().updateFromConfig(provider, false)
-        JdkDownloadUtil.downloadSdk(sdk)
+        JdkDownloadUtil.downloadSdk(project, sdk)
       }
     }
   }

@@ -1,7 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard.generators
 
-import com.intellij.ide.JavaUiBundle
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
@@ -12,7 +11,6 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
@@ -38,25 +36,20 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
   fun scheduleDownloadSdk(sdk: Sdk?): CompletableFuture<Boolean> {
     return coroutineScope.async {
       if (sdk == null || !SdkDownloadTracker.getInstance().isDownloading(sdk)) return@async false
-      withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdk.name)) {
-        JdkDownloadUtil.downloadSdk(sdk)
-      }
+      JdkDownloadUtil.downloadSdk(project, sdk)
     }.asCompletableFuture()
   }
 
   fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, onJdkCreated: suspend (Sdk) -> Unit = {}): CompletableFuture<Boolean> {
     return coroutineScope.async {
-      withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdkDownloadTask.suggestedSdkName)) {
+      val downloadTask = JdkDownloadUtil.createDownloadTask(project, sdkDownloadTask.jdkItem, sdkDownloadTask.request.installDir)
+                         ?: return@async false
 
-        val downloadTask = JdkDownloadUtil.createDownloadTask(project, sdkDownloadTask.jdkItem, sdkDownloadTask.request.installDir)
-                           ?: return@withBackgroundProgress false
+      val sdk = JdkDownloadUtil.createDownloadSdk(JavaSdk.getInstance(), downloadTask)
 
-        val sdk = JdkDownloadUtil.createDownloadSdk(JavaSdk.getInstance(), downloadTask)
+      onJdkCreated(sdk)
 
-        onJdkCreated(sdk)
-
-        JdkDownloadUtil.downloadSdk(sdk)
-      }
+      JdkDownloadUtil.downloadSdk(project, sdk)
     }.asCompletableFuture()
   }
 
