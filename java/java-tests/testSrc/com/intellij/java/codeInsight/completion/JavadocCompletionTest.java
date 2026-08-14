@@ -725,6 +725,58 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.checkResult("/** a. {@link #foo}<caret> */ interface Foo { int foo; }}");
   }
 
+  @NeedsIndex.ForStandardLibrary
+  public void test_insert_markdown_link_to_class() {
+    myFixture.configureByText("a.java", "/// FileNotFoEx<caret>\ninterface Foo {}");
+    myFixture.completeBasic();
+    myFixture.checkResult("/// [java.io.FileNotFoundException<caret>]\ninterface Foo {}");
+  }
+
+  @NeedsIndex.Full
+  public void test_insert_markdown_link_to_inner_class() {
+    myFixture.addClass("package zoo; public class Outer { public static class FooBarGoo{}}");
+    myFixture.configureByText("a.java", "/// FooBarGo<caret>\ninterface Foo {}");
+    myFixture.completeBasic();
+    myFixture.checkResult("/// [zoo.Outer.FooBarGoo<caret>]\ninterface Foo {}");
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  public void test_insert_markdown_link_to_imported_class() {
+    myFixture.configureByText("a.java", "import java.io.*;\n\n/// FileNotFoEx<caret>\ninterface Foo {}");
+    myFixture.completeBasic();
+    myFixture.checkResult("import java.io.*;\n\n/// [FileNotFoundException<caret>]\ninterface Foo {}");
+  }
+
+  public void test_insert_markdown_link_to_method() {
+    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable());
+    myFixture.configureByText("a.java", "/// a. #fo<caret>\ninterface Foo { void foo(int a); }");
+    myFixture.completeBasic();
+    myFixture.type("\n");
+
+    myFixture.checkResult("/// a. [#foo<selection>(int)<caret></selection>]\ninterface Foo { void foo(int a); }");
+    assertNotNull(TemplateManagerImpl.getTemplateState(myFixture.getEditor()));
+
+    myFixture.type("\t");
+    myFixture.checkResult("/// a. [#foo(int)]<caret>\ninterface Foo { void foo(int a); }");
+    assertNull(TemplateManagerImpl.getTemplateState(myFixture.getEditor()));
+  }
+
+  /// Square brackets are meaningful in Markdown reference links, so they have to be escaped, see JEP 467. 
+  public void test_insert_markdown_link_to_method_with_array_parameter() {
+    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable());
+    myFixture.configureByText("a.java", "/// a. #fo<caret>\ninterface Foo { void foo(char[] a); }");
+    myFixture.completeBasic();
+    myFixture.type("\n");
+    myFixture.type("\t");
+    myFixture.checkResult("/// a. [#foo(char\\[\\])]<caret>\ninterface Foo { void foo(char[] a); }");
+  }
+
+  public void test_insert_markdown_link_to_field() {
+    myFixture.configureByText("a.java", "/// a. #fo<caret>\ninterface Foo { int foo; }");
+    myFixture.completeBasic();
+    myFixture.checkResult("/// a. [#foo]<caret>\ninterface Foo { int foo; }");
+  }
+
   public void test_wrap_null_into_code_tag() {
     myFixture.configureByText("a.java", "/** nul<caret> */");
     myFixture.completeBasic();
