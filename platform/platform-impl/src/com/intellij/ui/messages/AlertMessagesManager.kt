@@ -32,6 +32,7 @@ import com.intellij.ui.WindowRoundedCornersManager
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.touchbar.Touchbar
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
@@ -153,6 +154,8 @@ internal class AlertDialog(
   private var myInitSize: Dimension? = null
 
   init {
+    ThreadingAssertions.softAssertAwtOperationsThread()
+
     title = myTitle
     setDoNotAskOption(doNotAskOption)
     setInvocationPlace(invocationPlace)

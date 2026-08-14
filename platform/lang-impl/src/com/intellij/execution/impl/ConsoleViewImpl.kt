@@ -149,6 +149,10 @@ open class ConsoleViewImpl protected constructor(
   initialState: ConsoleState,
   usePredefinedMessageFilter: Boolean,
 ) : JPanel(BorderLayout()), ConsoleView, ObservableConsoleView, UiCompatibleDataProvider, OccurenceNavigator {
+  init {
+    ThreadingAssertions.softAssertAwtOperationsThread()
+  }
+
   @Suppress("LeakingThis")
   private val flushUserInputAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
   private val commandLineFolding = CommandLineFolding()

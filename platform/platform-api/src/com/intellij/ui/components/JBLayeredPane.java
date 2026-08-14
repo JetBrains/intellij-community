@@ -2,6 +2,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.concurrency.ThreadingAssertions;
 
 import javax.swing.JLayeredPane;
 import java.awt.Component;
@@ -12,6 +13,8 @@ public class JBLayeredPane extends JLayeredPane {
 
   @Override
   public Component add(Component comp, int index) {
+    ThreadingAssertions.softAssertAwtOperationsThread();
+
     Logger.getInstance(JBLayeredPane.class)
       .warn("Probably incorrect call - constraint as primitive integer will be used as index", new Throwable());
     addImpl(comp, null, index);

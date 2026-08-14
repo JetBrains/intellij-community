@@ -49,6 +49,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -176,6 +177,8 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
                                  @Nullable Color backgroundColor,
                                  @Nullable ColorKey backgroundColorKey) {
     super(new BorderLayout());
+
+    ThreadingAssertions.softAssertAwtOperationsThread();
 
     mySchemeSupplier = editor != null ? () -> editor.getColorsScheme() : GLOBAL_SCHEME_SUPPLIER;
     myBackgroundColor = backgroundColor;
