@@ -197,7 +197,10 @@ class IDEReportingData internal constructor(
 
   internal fun publishArtifact(testContext: IDETestContext, source: Path, artifactName: String) {
     val artifactLayout = artifactLayout
-    val publishedArtifactType = if (artifactLayout == ArtifactLayout.LEGACY && isFrontend) "frontend-$artifactName" else artifactName
+    val publishedArtifactType = if (artifactLayout == ArtifactLayout.LEGACY && isFrontend)
+    // precisely this way, required by Ij Perf
+      "$artifactName-frontend"
+    else artifactName
     testContext.publishArtifact(
       source = source,
       artifactPath = artifactPathFor(artifactLayout),
