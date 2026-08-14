@@ -1,4 +1,4 @@
-package com.intellij.extendedToolWindowsUi
+package com.intellij.extendedToolWindowsUi.frontend
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionButtonComponent
