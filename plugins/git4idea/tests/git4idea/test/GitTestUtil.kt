@@ -150,7 +150,8 @@ private fun disableGitGc(project: Project) {
  * registers it in the Settings;
  * return the [GitRepository] object for this newly created repository.
  */
-fun createRepository(project: Project, root: String) = createRepository(project, Paths.get(root), true)
+@JvmOverloads
+fun createRepository(project: Project, root: String, makeInitialCommit: Boolean = true) = createRepository(project, Paths.get(root), makeInitialCommit)
 
 internal fun createRepository(project: Project, root: Path, makeInitialCommit: Boolean, objectFormat: GitObjectFormat = GitObjectFormat.SHA1): GitRepository {
   initRepo(project, root, makeInitialCommit, objectFormat)
