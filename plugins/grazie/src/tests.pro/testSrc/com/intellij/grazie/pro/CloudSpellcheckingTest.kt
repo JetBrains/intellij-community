@@ -6,7 +6,7 @@ import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-class CloudTextLevelSpellcheckingTest: BaseTestCase() {
+class CloudSpellcheckingTest: BaseTestCase() {
   @BeforeEach
   fun setUp() {
     myFixture.enableInspections(GrazieSpellCheckingInspection())
@@ -46,6 +46,15 @@ class CloudTextLevelSpellcheckingTest: BaseTestCase() {
     enableLanguages(setOf(Lang.SWISS_GERMAN), testRootDisposable)
     myFixture.configureByText("a.md", """
       Ich hätte gerne einen grossen Kaffee mit Hafermilch, bitte. Liebe <TYPO descr="Typo: In word 'Grüße'">Grüße</TYPO>, Liebe Grüsse.
+    """.trimIndent())
+    myFixture.checkHighlighting()
+  }
+
+  @NeedsCloud
+  @Test
+  fun `test typos without suggestions are highlighted`() {
+    myFixture.configureByText("a.md", """
+      English text about <TYPO descr="Typo: In word 'asdkjasjdhasjdasjdhajdzxc'">asdkjasjdhasjdasjdhajdzxc</TYPO>
     """.trimIndent())
     myFixture.checkHighlighting()
   }

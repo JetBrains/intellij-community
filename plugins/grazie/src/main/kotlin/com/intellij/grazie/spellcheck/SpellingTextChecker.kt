@@ -27,7 +27,6 @@ import com.intellij.grazie.utils.EXTRACTOR_SOURCE
 import com.intellij.grazie.utils.NaturalTextDetector
 import com.intellij.grazie.utils.getGrazieTracker
 import com.intellij.grazie.utils.getProblems
-import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.grazie.utils.toSpellingProblems
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -199,20 +198,19 @@ internal class SpellingTextChecker : ExternalTextChecker() {
   }
 
   private fun toCloudProblems(context: ProofreadingContext, problems: List<Problem>, manager: SpellCheckerManager): List<TypoProblem> =
-    problems
-      .mapNotNull {
-        val parts = it.fixes.flatMap { fix -> fix.parts.toList() }
+    problems.mapNotNull { problem ->
+      val range = problem.highlighting.always.single()
+      val word = range.substring(context.text.toString())
+      if (!manager.hasProblem(word)) return@mapNotNull null
+
+      TypoProblem(context.text, range, word, true) {
+        problem.fixes.asSequence()
+          .flatMap { fix -> fix.parts.toList() }
           .filterIsInstance<ProblemFix.Part.Change>()
           .filter { part -> part.type == ProblemFix.Part.Change.ChangeType.REPLACE }
-        if (parts.isEmpty()) return@mapNotNull null
-
-        val word = parts.first().range.substring(context.text.toString())
-        if (!manager.hasProblem(word)) return@mapNotNull null
-
-        TypoProblem(context.text, parts.first().range, word, true) {
-          parts.map { part -> part.text }.toLinkedSet()
-        }
+          .mapTo(LinkedHashSet()) { part -> part.text }
       }
+    }
 
   private fun checkText(context: ProofreadingContext, project: Project): List<Typo> {
     val textSpeller = getTextSpeller(project) ?: return emptyList()
