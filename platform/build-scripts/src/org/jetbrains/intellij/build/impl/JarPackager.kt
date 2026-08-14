@@ -135,7 +135,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "jetbrains.ai.completion.trigger.model.text.cloud",
   "jetbrains.compose.hot.reload.devtools.api",
   "jetbrains.compose.hot.reload.gradle.idea",
-  "jetbrains.compose.hot.reload.orchestration",
   "jetbrains.compose.preview.rpc",
   "jetbrains.intellij.deps.eclipse.jgit",
   "jetbrains.intellij.deps.scheduled.debugger.agent",
