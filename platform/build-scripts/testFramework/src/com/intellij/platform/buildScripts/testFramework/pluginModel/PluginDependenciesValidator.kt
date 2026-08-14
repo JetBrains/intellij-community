@@ -1,23 +1,38 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework.pluginModel
 
+import com.intellij.ide.plugins.ChainedExclusion
 import com.intellij.ide.plugins.ContentModuleDescriptor
 import com.intellij.ide.plugins.DataLoader
 import com.intellij.ide.plugins.DependsSubDescriptor
+import com.intellij.ide.plugins.DescriptorExclusionReason
+import com.intellij.ide.plugins.ExcludedByEnvironmentConfiguration
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.ModuleLoadingRule
+import com.intellij.ide.plugins.NonBundledPluginsLoadingIsDisabled
+import com.intellij.ide.plugins.OnDemandContentModuleHasNoDependentsLeft
+import com.intellij.ide.plugins.PackagePrefixConflictWithAnotherModule
 import com.intellij.ide.plugins.PathResolver
 import com.intellij.ide.plugins.PluginDescriptorLoadingContext
-import com.intellij.ide.plugins.PluginLoadingError
+import com.intellij.ide.plugins.PluginIncompatibilityReason
+import com.intellij.ide.plugins.PluginInitializationDiagnosticUtils
+import com.intellij.ide.plugins.PluginIsIncompatibleWithProduct
+import com.intellij.ide.plugins.PluginIsMarkedDisabled
+import com.intellij.ide.plugins.PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading
+import com.intellij.ide.plugins.PluginLoadingIsDisabledCompletelyExceptCore
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.PluginSet
+import com.intellij.ide.plugins.PluginVersionIsSuperseded
+import com.intellij.ide.plugins.ProductRulesImposedExclusion
 import com.intellij.ide.plugins.ResolvedPluginSet
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.contentModuleName
 import com.intellij.ide.plugins.isLoaded
 import com.intellij.ide.plugins.loadPluginSubDescriptors
+import com.intellij.ide.plugins.sequenceAllDescriptors
+import com.intellij.ide.plugins.sequenceDescriptorExclusionChain
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.pluginSystem.parser.impl.LoadPathUtil
@@ -77,11 +92,8 @@ class PluginDependenciesValidator private constructor(
     ): List<PluginModuleConfigurationError> {
       val validator = PluginDependenciesValidator(tempDir = tempDir, project = project, productMode = productMode, pluginLayoutProvider = pluginLayoutProvider, options = options)
       val pluginSetTestBuilder = validator.createPluginSet()
-      val (pluginSet, loadingErrors) = pluginSetBuildMutex.withLock {
-        val pluginManagerState = pluginSetTestBuilder.buildManagerState()
-        pluginManagerState.pluginSet to pluginManagerState.loadingErrors
-      }
-      validator.reportPluginLoadingErrors(loadingErrors)
+      val pluginSet = pluginSetBuildMutex.withLock { pluginSetTestBuilder.build() }
+      validator.reportPluginLoadingErrors(pluginSet)
       validator.checkPluginSet(pluginSet)
       return validator.errors
     }
@@ -110,38 +122,73 @@ class PluginDependenciesValidator private constructor(
   private val zipPool = ZipFilePoolImpl()
   private val errors = ArrayList<PluginModuleConfigurationError>()
 
-  private fun reportPluginLoadingErrors(loadingErrors: List<PluginLoadingError>) {
-    for (error in loadingErrors) {
-      val errorMessage = error.htmlMessage.toString() + if (error.reason != null) { ":\n  ${error.reason!!.logMessage}" } else ""
-      if (errorMessage.startsWith("<a href")) {
-        //it's an action, not a real error, so ignore it
-        continue
-      }
-      if (errorMessage.contains("is not compatible with the current host platform")) {
-        //just ignore the problem on this OS
-        continue
-      }
-
-      // Use structured error data instead of parsing HTML
-      val moduleName = when (val reason = error.reason) {
-        null -> {
-          // Fallback to regex for errors without structured data
-          val pluginErrorRegexp = Regex("Plugin &#39;(.*?)&#39;.*")
-          val matchResult = pluginErrorRegexp.matchEntire(errorMessage)
-          if (matchResult == null) "unknown" else "plugin_${matchResult.groupValues[1].replace(Regex("[^a-zA-Z0-9_+/]"), "_")}"
-        }
-        else -> {
-          "plugin_${reason.plugin.name}"
-        }
-      }
-
+  private fun reportPluginLoadingErrors(pluginSet: PluginSet) {
+    for (error in pluginSet.input.discoveryResult.descriptorLoadingErrors) {
       errors.add(PluginModuleConfigurationError(
-        pluginModelModuleName = moduleName,
-        errorMessage = errorMessage,
-        pluginLoadingError = error
+        pluginModelModuleName = "unknown",
+        errorMessage = "Failed to read a plugin descriptor from ${error.path}",
+        cause = error.error,
       ))
     }
+
+    val reportedMessages = HashSet<String>()
+    fun report(plugin: PluginMainDescriptor, reason: DescriptorExclusionReason) {
+      val rootReason = if (reason is ChainedExclusion) {
+        val rootDescriptor = reason.descriptor.sequenceDescriptorExclusionChain(pluginSet.resolvedPluginSet::getExclusionReason).last()
+        pluginSet.resolvedPluginSet.getExclusionReason(rootDescriptor)!!
+      }
+      else {
+        reason
+      }
+      if (rootReason.isIgnoredByBuildValidation() || rootReason.isHostSpecificIncompatibility()) {
+        return
+      }
+      val errorMessage = PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(pluginSet.resolvedPluginSet, plugin)
+                         ?: return
+      if (!reportedMessages.add(errorMessage)) {
+        return
+      }
+      errors.add(PluginModuleConfigurationError(
+        pluginModelModuleName = "plugin_${plugin.name}",
+        descriptorExclusionReason = reason,
+        errorMessage = errorMessage,
+      ))
+    }
+
+    for ((plugin, reason) in pluginSet.excludedFromCandidateSubset) {
+      if (!pluginSet.initContext.isPluginDisabled(plugin.pluginId)) {
+        report(plugin, reason)
+      }
+    }
+    for (plugin in pluginSet.resolvedPluginSet.candidateSet.plugins) {
+      pluginSet.resolvedPluginSet.getExclusionReason(plugin)?.let { report(plugin, it) }
+      for (descriptor in plugin.sequenceAllDescriptors()) {
+        val reason = pluginSet.resolvedPluginSet.getExclusionReason(descriptor)
+        if (reason is PackagePrefixConflictWithAnotherModule) {
+          report(plugin, reason)
+        }
+      }
+    }
   }
+
+  private fun DescriptorExclusionReason.isIgnoredByBuildValidation(): Boolean = when (this) {
+    is ExcludedByEnvironmentConfiguration,
+    is OnDemandContentModuleHasNoDependentsLeft,
+    is PluginIsMarkedDisabled,
+    is PluginVersionIsSuperseded -> true
+    is ProductRulesImposedExclusion -> when (productReason) {
+      NonBundledPluginsLoadingIsDisabled,
+      PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading,
+      PluginLoadingIsDisabledCompletelyExceptCore -> true
+      else -> false
+    }
+    else -> false
+  }
+
+  private fun DescriptorExclusionReason.isHostSpecificIncompatibility(): Boolean =
+    this is PluginIsIncompatibleWithProduct &&
+    (incompatibilityReason is PluginIncompatibilityReason.IncompatibleWithHostPlatform ||
+     incompatibilityReason is PluginIncompatibilityReason.IncompatibleWithCpuArch)
 
   private fun checkPluginSet(pluginSet: PluginSet) {
     val jpsModuleToRuntimeDescriptors = LinkedHashMap<String, MutableList<IdeaPluginDescriptorImpl>>()
@@ -455,7 +502,7 @@ class PluginDependenciesValidator private constructor(
           errors.add(PluginModuleConfigurationError(
             pluginModelModuleName = it.mainJpsModule,
             errorMessage = e.message ?: e.toString(),
-            pluginLoadingError = PluginLoadingError(reason = null, messageSupplier = { e.message ?: e.toString() }, error = e),
+            cause = e,
           ))
           null
         }
