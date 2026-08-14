@@ -3,9 +3,11 @@ package com.intellij.python.pytools.ui.configuration
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.setToolTipText
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.python.pytools.ExternalPyTool
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.ActionLink
@@ -69,7 +71,20 @@ internal class PyExternalToolRowPanel(
   private val chainLabel = JBLabel()
   private val toggle = OnOffButton().apply {
     addActionListener {
-      row.staged = row.staged.copy(enabled = isSelected)
+      val newEnabled = isSelected
+      // When the tool is in use (e.g. it is the project's staged/persisted type engine) confirm before
+      // turning it off instead of hard-disabling the toggle; on decline, restore the toggle and bail.
+      val isEngine = host.isTypeEngine(row)
+      val confirmation = (tool as? ExternalPyTool)?.enableToggleConfirmation(newEnabled, isEngine)
+      if (confirmation != null &&
+          !MessageDialogBuilder.yesNo(PyToolsUiBundle.message("settings.external.tools.toggle.confirm.title"), confirmation)
+            .ask(this@PyExternalToolRowPanel)) {
+        isSelected = !newEnabled
+        return@addActionListener
+      }
+      row.staged = row.staged.copy(enabled = newEnabled)
+      // Turning off a tool that is the staged type engine clears the staged engine, keeping them in sync.
+      if (!newEnabled && isEngine) host.onTypeEngineToolDisabled()
       updateHeader()
     }
   }
@@ -174,16 +189,7 @@ internal class PyExternalToolRowPanel(
   }
 
   private fun updateHeader() {
-    val locked = tool.isSelectedAsTypeEngine(project)
     toggle.isSelected = row.staged.enabled
-    toggle.isEnabled = !locked
-    if (locked) {
-      toggle.setToolTipText(HtmlChunk.text(
-        PyToolsUiBundle.message("settings.external.tools.locked.by.type.engine", tool.presentableName)))
-    }
-    else {
-      toggle.toolTipText = null
-    }
 
     // Feature/status summary: only for enabled tools. Prefer the LIVE checkbox state of the embedded
     // panel (so unapplied edits are reflected); fall back to the persisted `summaryFor` before the

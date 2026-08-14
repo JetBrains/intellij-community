@@ -79,9 +79,9 @@ interface PyTool : PyExecutable {
   /**
    * Whether this tool is currently the project's selected type engine. Tools that can double as an
    * external type engine (Pyrefly, ty) override this; ordinary LSP tools keep the default. When it
-   * is `true` the External Tools UI locks this tool's enable toggle (it is governed by the Type
-   * Engine settings instead), and [isActiveOn] reports the tool as active so the shared LSP server
-   * and its features stay on while the tool acts as the engine.
+   * is `true` the External Tools page asks the user to confirm before turning this tool's enable
+   * toggle off (see [ExternalPyTool.enableToggleConfirmation]), and [isActiveOn] reports the tool as
+   * active so the shared LSP server and its features stay on while the tool acts as the engine.
    */
   fun isSelectedAsTypeEngine(project: Project): Boolean = false
 
@@ -128,6 +128,19 @@ interface PyTool : PyExecutable {
 interface ExternalPyTool {
   /** The inline detail configurable (feature toggles) embedded in the tool's expanded row. */
   fun createConfigurable(project: Project): UnnamedConfigurable
+
+  /**
+   * A confirmation message the External Tools page shows before flipping this tool's enable toggle to
+   * [isOn], or `null` (default) to change it silently. Shown when turning the tool **off** while it is
+   * in use — [isTypeEngine] tells the tool whether it is the project's current type engine (**staged or
+   * persisted**, computed by the page, since a not-yet-applied selection isn't visible via
+   * [PyTool.isSelectedAsTypeEngine]). Tools with other "in use" conditions can override.
+   */
+  fun enableToggleConfirmation(isOn: Boolean, isTypeEngine: Boolean): @Nls String? {
+    if (isOn || !isTypeEngine) return null
+    val name = (this as? PyTool)?.presentableName ?: return null
+    return PyToolsBundle.message("py.tool.toggle.confirm.type.engine", name)
+  }
 }
 
 /**

@@ -39,6 +39,11 @@ class PyreflyPyTool : PyLspTool<PyreflyConfiguration>(), ExternalPyTool {
   override fun summaryFor(project: Project): String = pyLspToolFeaturesSummary(configuration(project))
 
   override fun onEnabledChanged(project: Project, enabled: Boolean) {
+    // Turning Pyrefly off while it is the selected type engine falls back to the built-in engine —
+    // otherwise `isActiveOn` would keep it running as the engine and the toggle would have no effect.
+    if (!enabled && isSelectedAsTypeEngine(project)) {
+      PyTypeEngineProjectSettings.getInstance(project).typeEngine = PyTypeEngineType.PYCHARM
+    }
     // Drive the shared LSP server off `isActiveOn` rather than the raw flag: when Pyrefly is the
     // selected type engine the server must keep running even though the tool flag is off.
     val manager = LspClientManager.getInstance(project)
