@@ -176,8 +176,7 @@ object PluginInitializationDiagnosticUtils {
       is OnDemandContentModuleHasNoDependentsLeft -> "$logDescr is on-demand and has no dependents left"
       is PackagePrefixConflictWithAnotherModule -> "$logDescr declares the same package prefix as in " +
                                                    "${preferredConflictingModule.shortLogDescription}: " +
-                                                   "${formatPackagePrefixConflictDetails(descriptor)} conflicts with " +
-                                                   formatPackagePrefixConflictDetails(preferredConflictingModule)
+                                                   descriptor.packagePrefix
       is PartOfDependencyCycle -> buildString {
         appendLine("The following modules form a dependency cycle:")
         explainCycle(dependencyCycle, fmtNode = { it.shortLogDescription })

@@ -514,30 +514,6 @@ val IdeaPluginDescriptorImpl.shortLogDescription: String
     }
   }
 
-internal fun getPackagePrefixConflictModuleId(descriptor: PluginModuleDescriptor): String {
-  return when (descriptor) {
-    is PluginMainDescriptor -> descriptor.pluginId.idString
-    is ContentModuleDescriptor -> descriptor.moduleId.name
-  }
-}
-
-internal fun getPackagePrefixConflictNamespace(descriptor: PluginModuleDescriptor): String {
-  return when (descriptor) {
-    is PluginMainDescriptor -> descriptor.implicitNamespaceForPluginDescriptorModule ?: "<none>"
-    is ContentModuleDescriptor -> descriptor.moduleId.namespace
-  }
-}
-
-internal fun formatPackagePrefixConflictDetails(descriptor: PluginModuleDescriptor): String {
-  val plugin = descriptor.getMainDescriptor()
-  val descriptorPathDescription = descriptor.getDescriptorPath()?.let { ", descriptor=$it" }.orEmpty()
-  return "plugin '${plugin.name}' (${plugin.pluginId}), " +
-         "module '${getPackagePrefixConflictModuleId(descriptor)}', " +
-         "namespace=${getPackagePrefixConflictNamespace(descriptor)}, " +
-         "packagePrefix=${descriptor.packagePrefix ?: "<none>"}" +
-         descriptorPathDescription
-}
-
 /**
  * Workaround for the `com.intellij.rd.client.capable` alias being declared in two plugins (IJPL-220139):
  * in frontend-like modes the JetBrains Client core plugin declares it, while the dual-mode clion-radler plugin
