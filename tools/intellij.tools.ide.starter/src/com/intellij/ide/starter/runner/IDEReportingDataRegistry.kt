@@ -43,7 +43,6 @@ internal class IDEReportingDataRegistry(
         error("Test method '$testMethodId' was activated again after another test method")
       }
 
-      val isIdeReused = registered.isNotEmpty()
       val testMethod = currentTestMethod?.run {
         TestMethodIdentity(
           className = clazzSimpleName,
@@ -57,11 +56,8 @@ internal class IDEReportingDataRegistry(
         testMethod = testMethod,
         launchName = launchName,
         isFrontend = testContext.testCase.ideInfo.isFrontend,
+        artifactLayout = if (registered.isNotEmpty()) IDEReportingData.ArtifactLayout.REUSED_IDE else IDEReportingData.ArtifactLayout.LEGACY
       )
-      if (isIdeReused) {
-        registered.forEach { registration -> registration.reportingData.markAsPartOfReusedIdeRun() }
-        reportingData.markAsPartOfReusedIdeRun()
-      }
       reportArtifactsLink("Link to Logs and artifacts", reportingData)
       registered.firstOrNull()?.reportingData
         ?.takeUnless { it.artifactPath == reportingData.artifactPath }

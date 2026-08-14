@@ -368,9 +368,8 @@ class IDEReportingDataTest {
     testMethod = testMethod,
     launchName = requestedLaunchName,
     isFrontend = isFrontend,
-  ).also { reportingData ->
-    if (isPartOfReusedIdeRun) reportingData.markAsPartOfReusedIdeRun()
-  }
+    artifactLayout = if (isPartOfReusedIdeRun) IDEReportingData.ArtifactLayout.REUSED_IDE else IDEReportingData.ArtifactLayout.LEGACY
+  )
 
   /** The directory names a launch reports under, read back off the tree it created below [reportingRoot]. */
   private fun IDEReportingData.launchDirSegments(): List<String> =

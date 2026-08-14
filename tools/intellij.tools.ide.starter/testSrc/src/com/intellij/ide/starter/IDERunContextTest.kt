@@ -46,7 +46,7 @@ class IDERunContextTest {
 
     error.message shouldBe "Test method 'first test' was activated again after another test method"
     (firstTestReportingDataAgain === firstTestReportingData) shouldBe true
-    firstTestReportingData.artifactPath shouldBe "reused-ide-test/ide-run-context-test/1-first-test"
+    firstTestReportingData.artifactPath shouldBe "reused-ide-test"
     secondTestReportingData.artifactPath shouldBe "reused-ide-test/ide-run-context-test/2-second-test"
     runContext.registeredIdeReportingData() shouldBe listOf(firstTestReportingData, secondTestReportingData)
     runContext.ideReportingDataFromCurrentToOldest() shouldBe listOf(secondTestReportingData, firstTestReportingData)

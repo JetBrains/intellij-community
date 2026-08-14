@@ -64,8 +64,9 @@ class IDEReportingData internal constructor(
   private val testMethod: TestMethodIdentity? = null,
   private val launchName: String? = null,
   private val isFrontend: Boolean = false,
+  internal val artifactLayout: ArtifactLayout = ArtifactLayout.LEGACY,
 ) {
-  private enum class ArtifactLayout {
+  internal enum class ArtifactLayout {
     LEGACY,
     REUSED_IDE,
   }
@@ -144,9 +145,6 @@ class IDEReportingData internal constructor(
     launchName?.let { add(it) }
   }.filter(String::isNotEmpty).joinToString("/").replaceSpecialCharactersWithHyphens()
 
-  @Volatile
-  private var artifactLayout: ArtifactLayout = ArtifactLayout.LEGACY
-
   val artifactPath: String
     get() = artifactPathFor(artifactLayout)
 
@@ -206,10 +204,6 @@ class IDEReportingData internal constructor(
       artifactPath = artifactPathFor(artifactLayout),
       artifactName = ReportingPathUtils.formatArtifactName(publishedArtifactType),
     )
-  }
-
-  internal fun markAsPartOfReusedIdeRun() {
-    artifactLayout = ArtifactLayout.REUSED_IDE
   }
 
   private fun artifactPathFor(layout: ArtifactLayout): String = when (layout) {
