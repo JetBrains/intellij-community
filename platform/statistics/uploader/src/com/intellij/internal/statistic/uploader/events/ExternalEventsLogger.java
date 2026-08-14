@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader.events;
 
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType;
 import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
+import com.intellij.internal.statistic.eventLog.FileDeletionCause;
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -83,6 +85,11 @@ public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
     int succeed = successfullySentFiles.size();
     int failed = errors.size();
     logEvent(new ExternalUploadSendEvent(System.currentTimeMillis(), succeed, failed, total, successfullySentFiles, errors, recorderId));
+  }
+
+  public void logFileDeletedAfterSend(@NotNull String recorderId, @NotNull FileDeletionCause cause,
+                                      long sizeBytes, long ageMs, long queuedMs, @NotNull EventLogBuildType buildType) {
+    logEvent(new ExternalUploadFileDeletedEvent(System.currentTimeMillis(), cause, sizeBytes, ageMs, queuedMs, buildType, recorderId));
   }
 
   @Override

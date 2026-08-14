@@ -4,6 +4,7 @@ package com.intellij.internal.statistics.logger
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
 import com.intellij.internal.statistic.eventLog.EventLogFile
 import com.intellij.internal.statistic.eventLog.EventLogFileWriter
+import com.intellij.internal.statistic.eventLog.FileDeletionCause
 import com.intellij.internal.statistic.eventLog.LogEventSerializer
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider.Companion.DEFAULT_MAX_FILE_SIZE_BYTES
 import com.intellij.openapi.util.text.StringUtil
@@ -242,6 +243,7 @@ class EventLogFileWriterTest {
       fileWriter.cleanUpOldFiles()
 
       val report = fileWriter.deletedReports.single()
+      assertEquals(FileDeletionCause.AGE, report.cause)
       assertEquals(file.length(), report.sizeBytes)
       assertEquals(EventLogBuildType.EAP, report.buildType)
       assertTrue { report.ageMs > 0 }
@@ -318,12 +320,13 @@ class TestEventLogFileWriter(dir: Path, files: List<File>)
   }
 
   public override fun logDeletedFile(
+    cause: FileDeletionCause,
     ageMs: Long,
     queuedMs: Long,
     sizeBytes: Long,
     buildType: EventLogBuildType,
   ) {
-    deletedReports.add(DeletedFileReport(ageMs, queuedMs, sizeBytes, buildType))
+    deletedReports.add(DeletedFileReport(cause, ageMs, queuedMs, sizeBytes, buildType))
   }
 
   override fun getActiveLogName(): String {
@@ -332,6 +335,7 @@ class TestEventLogFileWriter(dir: Path, files: List<File>)
 }
 
 data class DeletedFileReport(
+  val cause: FileDeletionCause,
   val ageMs: Long,
   val queuedMs: Long,
   val sizeBytes: Long,

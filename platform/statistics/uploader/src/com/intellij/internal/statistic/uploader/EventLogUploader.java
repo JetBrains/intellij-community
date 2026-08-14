@@ -1,10 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader;
 
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType;
 import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
 import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
 import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
 import com.intellij.internal.statistic.eventLog.EventLogSendConfig;
+import com.intellij.internal.statistic.eventLog.FileDeletionCause;
 import com.intellij.internal.statistic.eventLog.config.EventLogExternalApplicationInfo;
 import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener;
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
@@ -113,6 +115,11 @@ public final class EventLogUploader {
                                  @NotNull List<Integer> errors,
                                  int totalLocalFiles) {
             eventsLogger.logSendingLogsSucceed(recorderId, successfullySentFiles, errors, totalLocalFiles);
+          }
+
+          @Override
+          public void onFileDeletedAfterSend(@NotNull FileDeletionCause cause, long sizeBytes, long ageMs, long queuedMs, @NotNull EventLogBuildType buildType) {
+            eventsLogger.logFileDeletedAfterSend(recorderId, cause, sizeBytes, ageMs, queuedMs, buildType);
           }
         });
 

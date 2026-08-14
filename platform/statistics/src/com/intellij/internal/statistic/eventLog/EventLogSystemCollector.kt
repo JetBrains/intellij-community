@@ -37,7 +37,7 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
     // Increase the group's versions locally
     // and not increase the versions in all StatisticsEventLoggerProvider
     // in case of any changes in the groups
-    eventLoggerProvider.version + 6,
+    eventLoggerProvider.version + 7,
     eventLoggerProvider.recorderId
   )
   override fun getGroup(): EventLogGroup = GROUP
@@ -108,7 +108,7 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
 
   private val fileDeletedEvent = GROUP.registerVarargEvent(
     "logs.file.deleted",
-    deletedFileAgeMsField, deletedFileQueuedMsField, deletedFileSizeBytesField, deletedFileBuildTypeField
+    deletedFileCauseField, deletedFileAgeMsField, deletedFileQueuedMsField, deletedFileSizeBytesField, deletedFileBuildTypeField
   )
 
   fun logMetadataLoaded(version: String?) = metadataLoadedEvent.log(version)
@@ -179,12 +179,14 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
   }
 
   fun logFileDeleted(
+    cause: FileDeletionCause,
     ageMs: Long,
     queuedMs: Long,
     sizeBytes: Long,
     buildType: EventLogBuildType,
   ) {
     fileDeletedEvent.log(
+      deletedFileCauseField.with(cause),
       deletedFileAgeMsField.with(ageMs),
       deletedFileQueuedMsField.with(queuedMs),
       deletedFileSizeBytesField.with(sizeBytes),
@@ -276,6 +278,7 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
     private val pendingTotalBytesField = EventFields.Long("pending_total_bytes", "Total size on disk of the pending log files, in bytes")
     private val oldestPendingFileWaitMsField = EventFields.Long("oldest_pending_file_wait_ms", "How long the longest-waiting pending file has been idle: now minus its last-modified time, in milliseconds")
 
+    private val deletedFileCauseField = EventFields.Enum<FileDeletionCause>("deleted_file_cause", "Why the file was deleted: aged out, storage size cap exceeded, disk almost full, or rejected by the server on send (HTTP 400 / failed validation).")
     private val deletedFileAgeMsField = EventFields.Long("deleted_file_age_ms", "Age of the data in the deleted file: now minus the timestamp of its oldest event, in milliseconds (-1 if unknown)")
     private val deletedFileQueuedMsField = EventFields.Long("deleted_file_queued_ms", "How long the deleted file waited since its last write before being deleted: now minus last modified time, in milliseconds")
     private val deletedFileSizeBytesField = EventFields.Long("deleted_file_size_bytes", "Size of the deleted file in bytes")

@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
 import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
 import com.intellij.internal.statistic.eventLog.EventLogFile;
 import com.intellij.internal.statistic.eventLog.EventLogSendConfig;
+import com.intellij.internal.statistic.eventLog.FileDeletionCause;
 import com.intellij.internal.statistic.eventLog.LogEventRecord;
 import com.intellij.internal.statistic.eventLog.LogEventRecordRequest;
 import com.intellij.internal.statistic.eventLog.LogEventSerializer;
@@ -17,6 +18,7 @@ import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpRequ
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpResponse;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsRequestBuilder;
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
+import com.jetbrains.fus.reporting.model.lion3.LogEvent;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +75,7 @@ public class EventLogStatisticsService implements StatisticsService {
                                       @NotNull EventLogResultDecorator decorator) {
     final EventLogApplicationInfo info = settings.getApplicationInfo();
     final DataCollectorDebugLogger logger = info.getLogger();
+    final long now = System.currentTimeMillis();
 
     final List<EventLogFile> logs = getLogFiles(config, logger);
     if (!config.isSendEnabled()) {
@@ -117,12 +120,17 @@ public class EventLogStatisticsService implements StatisticsService {
         LogEventRecordRequest recordRequest =
           LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal, logger,
                                                  machineId, config.isEscapingEnabled());
+        long sizeBytes = file.length();
+        long firstEventMs = firstEventMs(recordRequest);
+        long ageMs = firstEventMs > 0 ? now - firstEventMs : -1;
+        long queuedMs = now - file.lastModified();
         ValidationErrorInfo error = validate(recordRequest, file);
         if (error != null) {
           if (logger.isTraceEnabled()) {
             logger.trace("Statistics. " + file.getName() + "-> " + error.getMessage());
           }
           decorator.onFailed(recordRequest, error.getCode(), null);
+          decorator.onFileDeleted(FileDeletionCause.SEND_REJECTED, sizeBytes, ageMs, queuedMs, type);
           toRemove.add(file);
           continue;
         }
@@ -138,6 +146,7 @@ public class EventLogStatisticsService implements StatisticsService {
             fail((r, code) -> {
               if (code == HttpURLConnection.HTTP_BAD_REQUEST) {
                 toRemove.add(file);
+                decorator.onFileDeleted(FileDeletionCause.SEND_REJECTED, sizeBytes, ageMs, queuedMs, type);
               }
               decorator.onFailed(recordRequest, code, loadAndLogResponse(logger, r, file));
             }).send();
@@ -188,6 +197,25 @@ public class EventLogStatisticsService implements StatisticsService {
       logger.trace(file.getName() + " -> " + content);
     }
     return content;
+  }
+
+  /** Returns the timestamp of the oldest event in the already-parsed request, or -1 when unknown. */
+  private static long firstEventMs(@Nullable LogEventRecordRequest request) {
+    if (request == null) {
+      return -1;
+    }
+    long firstMs = Long.MAX_VALUE;
+    boolean hasEvents = false;
+    for (LogEventRecord record : request.getRecords()) {
+      for (LogEvent event : record.getEvents()) {
+        hasEvents = true;
+        long time = event.getTime();
+        if (time < firstMs) {
+          firstMs = time;
+        }
+      }
+    }
+    return hasEvents ? firstMs : -1;
   }
 
   private static @Nullable ValidationErrorInfo validate(@Nullable LogEventRecordRequest request, @NotNull File file) {
@@ -279,6 +307,13 @@ public class EventLogStatisticsService implements StatisticsService {
     @Override
     public void onLogsLoaded(int localFiles) {
       myLocalFiles = localFiles;
+    }
+
+    @Override
+    public void onFileDeleted(@NotNull FileDeletionCause cause, long sizeBytes, long ageMs, long queuedMs, @NotNull EventLogBuildType buildType) {
+      if (myListener != null) {
+        myListener.onFileDeletedAfterSend(cause, sizeBytes, ageMs, queuedMs, buildType);
+      }
     }
 
     @Override

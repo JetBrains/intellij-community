@@ -146,14 +146,14 @@ open class EventLogFileWriter(
         if (lastModified < oldestAcceptable) {
           val sizeBytes = file.length()
           val buildType = EventLogFile(file).getType()
-          val firstEventMs = getFirstEventMs(file)
+          val firstEventMs = EventLogFileStats.readFirstEventMs(file)
           if (!file.delete()) {
             System.err.println("Failed deleting old FUS file $file")
             failedDeletingFiles ++
           }
           else {
             val ageMs = if (firstEventMs > 0) now - firstEventMs else -1L
-            logDeletedFile(ageMs, now - lastModified, sizeBytes, buildType)
+            logDeletedFile(FileDeletionCause.AGE, ageMs, now - lastModified, sizeBytes, buildType)
           }
         }
         else if (lastModified < oldestFile || oldestFile == -1L) {
@@ -167,42 +167,13 @@ open class EventLogFileWriter(
 
   /** Logs a single file removed by [cleanUpOldFiles]. Overridable so tests can capture the reported metrics. */
   protected open fun logDeletedFile(
+    cause: FileDeletionCause,
     ageMs: Long,
     queuedMs: Long,
     sizeBytes: Long,
     buildType: EventLogBuildType,
   ) {
-    eventLogSystemCollector?.logFileDeleted(ageMs, queuedMs, sizeBytes, buildType)
-  }
-
-  /**
-   * Reads only the first non-blank line of [file] and returns the `time` of that event, i.e. the timestamp of the
-   * oldest event in the file. The timestamp comes from the event itself (set on the client at log time), so it is
-   * portable across operating systems, unlike file-system creation time. Returns -1 if the file cannot be read or
-   * the line cannot be parsed.
-   */
-  private fun getFirstEventMs(file: File): Long {
-    try {
-      file.bufferedReader().use { reader ->
-        var line = reader.readLine()
-        while (line != null) {
-          if (line.isNotBlank()) return parseEventTime(line)
-          line = reader.readLine()
-        }
-      }
-    }
-    catch (_: IOException) {
-    }
-    return -1L
-  }
-
-  private fun parseEventTime(line: String): Long {
-    return try {
-      SerializationHelper.deserializeLogEvent(line).time
-    }
-    catch (_: Exception) {
-      -1L
-    }
+    eventLogSystemCollector?.logFileDeleted(cause, ageMs, queuedMs, sizeBytes, buildType)
   }
 
   fun cleanUp() {
