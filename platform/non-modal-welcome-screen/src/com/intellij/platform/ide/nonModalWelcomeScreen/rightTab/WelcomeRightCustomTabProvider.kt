@@ -6,19 +6,25 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.jewel.ui.icon.PathIconKey
 import java.util.function.Supplier
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
 
 @ApiStatus.Internal
 interface WelcomeRightCustomTabProvider {
   val customSubtitle: Supplier<@Nls String>?
   val tabTitle: Supplier<@Nls String>
-  val icon: PathIconKey
+  val icon: Icon
 
   fun isEnabled(): Boolean = true
 
   @Composable
   fun TabContent(project: Project)
+
+  fun createTabContent(project: Project): JComponent {
+    return JLabel(javaClass.simpleName) // XXX
+  }
 
   companion object {
     private val EP_NAME: ExtensionPointName<WelcomeRightCustomTabProvider> = ExtensionPointName("com.intellij.platform.ide.welcomeScreenCustomTabProvider")

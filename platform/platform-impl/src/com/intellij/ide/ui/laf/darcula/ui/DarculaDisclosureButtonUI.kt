@@ -200,7 +200,7 @@ class DarculaDisclosureButtonUI(val uiComponent: JComponent) : BasicButtonUI() {
   }
 
   override fun getPreferredSize(c: JComponent?): Dimension {
-    val result = super.getPreferredSize(c)
+    val result = super.getPreferredSize(c) ?: JBDimension(20, 20)
 
     if (c is DisclosureButton) {
       val insets = c.getInsets()

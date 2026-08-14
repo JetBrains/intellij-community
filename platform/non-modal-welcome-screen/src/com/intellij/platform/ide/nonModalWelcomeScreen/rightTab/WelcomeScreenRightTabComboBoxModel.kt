@@ -38,7 +38,7 @@ internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
     }
   }
 
-  class KeymapModel() : WelcomeScreenRightTabComboBoxModel<Keymap>() {
+  class KeymapModel : WelcomeScreenRightTabComboBoxModel<Keymap>() {
     override val items: List<Keymap> = getKeymaps()
 
     override var currentItem: Keymap
@@ -72,7 +72,7 @@ internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
       get() = KeymapManager.getInstance() as KeymapManagerImpl
   }
 
-  class ThemeModel() : WelcomeScreenRightTabComboBoxModel<LafReference>() {
+  class ThemeModel : WelcomeScreenRightTabComboBoxModel<LafReference>() {
     override val items: List<LafReference>
       get() = getThemes()
 

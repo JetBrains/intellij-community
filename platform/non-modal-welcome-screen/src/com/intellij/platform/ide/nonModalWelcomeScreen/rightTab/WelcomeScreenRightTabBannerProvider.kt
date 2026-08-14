@@ -1,31 +1,39 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Image
+import javax.imageio.ImageIO
+import javax.swing.JComponent
 
 @ApiStatus.Internal
 interface WelcomeScreenRightTabBannerProvider {
   companion object {
-    private val EP_NAME = ExtensionPointName<WelcomeScreenRightTabBannerProvider>("com.intellij.platform.ide.welcomeScreenRightTabBannerProvider")
+    private val EP_NAME =
+      ExtensionPointName<WelcomeScreenRightTabBannerProvider>("com.intellij.platform.ide.welcomeScreenRightTabBannerProvider")
 
-    @Composable
-    fun SingleBanner(project: Project, modifier: Modifier) {
+    fun createSingleBanner(project: Project): JComponent? {
       val provider = EP_NAME.lazySequence().firstOrNull { it.isApplicable(project) }
       if (provider != null) {
-        provider.Banner(project, modifier)
-        Spacer(modifier = Modifier.height(44.dp))
+        return provider.createBanner(project)
       }
+      return null
+    }
+  }
+
+  fun loadImage(path: String): Image? {
+    return try {
+      ImageIO.read(javaClass.getResourceAsStream(path))
+    }
+    catch (e: Exception) {
+      logger<WelcomeScreenRightTabBannerProvider>().error(e)
+      null
     }
   }
 
   fun isApplicable(project: Project): Boolean
 
-  @Composable
-  fun Banner(project: Project, modifier: Modifier)
+  fun createBanner(project: Project): JComponent
 }

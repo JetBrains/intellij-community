@@ -64,6 +64,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 final class PainterHelper implements Painter.Listener {
   private static final Logger LOG = Logger.getInstance(PainterHelper.class);
@@ -203,7 +204,7 @@ final class PainterHelper implements Painter.Listener {
     MyImagePainter.ourImageCache.clear();
   }
 
-  static AbstractPainter newImagePainter(@NotNull Image image,
+  static AbstractPainter newImagePainter(@NotNull Supplier<? extends Image> imageProvider,
                                          @NotNull IdeBackgroundUtil.Fill fillType,
                                          @NotNull IdeBackgroundUtil.Anchor anchor,
                                          float alpha,
@@ -216,7 +217,7 @@ final class PainterHelper implements Painter.Listener {
 
       @Override
       public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
-        executePaint(g, component, image, fillType, anchor, alpha, insets);
+        executePaint(g, component, imageProvider.get(), fillType, anchor, alpha, insets);
       }
     };
   }

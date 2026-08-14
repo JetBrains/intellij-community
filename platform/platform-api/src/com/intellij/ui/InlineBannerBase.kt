@@ -7,6 +7,7 @@ import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Graphics
@@ -75,6 +76,11 @@ abstract class InlineBannerBase(
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
+    fillBanner(g)
+  }
+
+  @ApiStatus.Internal
+  protected open fun fillBanner(g: Graphics) {
     val config = GraphicsUtil.setupAAPainting(g)
     val cornerRadius = JBUI.scale(16)
     g.color = background
