@@ -6,6 +6,8 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
+import com.intellij.mcpserver.McpToolCallResult
+import com.intellij.mcpserver.McpToolCallResultContent
 import com.intellij.mcpserver.McpToolDescriptor
 import com.intellij.mcpserver.McpToolInvocationMode
 import com.intellij.mcpserver.McpToolsProvider
@@ -83,12 +85,28 @@ internal fun lintFilesResultKind(
   else -> LintFilesResultKind.CLEAN
 }
 
+/**
+ * The size both call paths report as `result_bytes`: the characters of the returned text content, summed without
+ * building one string, so a large result is not copied for the sake of measuring it. Structured content is not
+ * counted — it is a separate channel, and including it would make the number mean two different things depending on
+ * which tool answered.
+ */
+internal fun McpToolCallResult.reportableResultSize(): Int =
+  content.sumOf { part -> (part as? McpToolCallResultContent.Text)?.text?.length ?: 0 }
+
 object McpServerCounterUsagesCollector : CounterUsagesCollector() {
+  // v9: mcp.tool.call gained `toolset`, so usage can be read per toolset rather than per tool name only, and
+  // `result_bytes` is now filled on both call paths instead of being registered and always empty.
   // v8: mcp.tool.call gained the caller, transport, invocation mode and payload-size dimensions, without which a
   // cost-per-tool analysis cannot separate one client or one dispatch path from another.
-  private val GROUP = EventLogGroup("mcpserver.events", 8)
+  private val GROUP = EventLogGroup("mcpserver.events", 9)
 
   private val TOOL_NAME = EventFields.StringValidatedByCustomRule<McpToolNameValidator>("tool_name")
+  private val TOOLSET = EventFields.StringValidatedByCustomRule<McpToolsetNameValidator>(
+    "toolset",
+    "The toolset the called tool belongs to. Usage has to be answerable per toolset, not only per tool: there are " +
+    "dozens of toolsets and which of them are worth shipping is the question this data exists to answer",
+  )
   private val OUTCOME = EventFields.Enum("outcome", McpToolCallOutcome::class.java)
 
   private val KNOWN_CLIENT_NAMES: List<String> = listOf(
@@ -133,6 +151,7 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
   private val MCP_TOOL_CALL_EVENT: VarargEventId = GROUP.registerVarargEvent(
     "mcp.tool.call",
     TOOL_NAME,
+    TOOLSET,
     OUTCOME,
     LAUNCH_ORIGIN,
     INVOCATION_MODE,
@@ -225,6 +244,7 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
     MCP_TOOL_CALL_EVENT.log(
       buildList {
         add(TOOL_NAME.with(descriptor.name))
+        add(TOOLSET.with(descriptor.category.fullyQualifiedName))
         add(OUTCOME.with(outcome))
         add(LAUNCH_ORIGIN.with(launchOrigin))
         add(INVOCATION_MODE.with(invocationMode))
@@ -325,6 +345,24 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
     override fun getRuleId(): String = "tool_name_validator_id"
   }
 
+  /**
+   * Accepts a toolset name the same way [McpToolNameValidator] accepts a tool name: from the tools actually
+   * registered, rather than from a list someone has to maintain. A toolset added by a plugin that is not safe to
+   * report is reported as third party, and a name no registered tool belongs to is rejected.
+   */
+  internal class McpToolsetNameValidator : CustomValidationRule() {
+    override fun doValidate(data: String, context: IEventContext): ValidationResultType {
+      for ((ext, toolsets) in service<ScopeHolder>().toolsetMap.value) {
+        if (toolsets.contains(data)) {
+          return if (getPluginInfo(ext.javaClass).isSafeToReport()) ValidationResultType.ACCEPTED else ValidationResultType.THIRD_PARTY
+        }
+      }
+      return ValidationResultType.REJECTED
+    }
+
+    override fun getRuleId(): String = "toolset_name_validator_id"
+  }
+
   @Service(Service.Level.APP)
   private class ScopeHolder(coroutineScope: CoroutineScope) {
     @JvmField
@@ -332,9 +370,21 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
       McpToolsProvider.EP.extensionList.associateWith { ext -> ext.getTools().asSequence().map { it.descriptor.name } }
     }
 
+    @JvmField
+    val toolsetMap = resettableLazy {
+      McpToolsProvider.EP.extensionList.associateWith { ext ->
+        ext.getTools().mapTo(HashSet()) { it.descriptor.category.fullyQualifiedName }
+      }
+    }
+
     init {
-      McpToolsProvider.EP.addChangeListener(coroutineScope) { valueMap.reset() }
-      McpToolset.EP.addChangeListener(coroutineScope) { valueMap.reset() }
+      McpToolsProvider.EP.addChangeListener(coroutineScope) { reset() }
+      McpToolset.EP.addChangeListener(coroutineScope) { reset() }
+    }
+
+    private fun reset() {
+      valueMap.reset()
+      toolsetMap.reset()
     }
   }
 }

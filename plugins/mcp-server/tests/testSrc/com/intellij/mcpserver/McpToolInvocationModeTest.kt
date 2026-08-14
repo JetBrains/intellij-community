@@ -3,13 +3,16 @@
 
 package com.intellij.mcpserver
 
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings
+import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings.ToolState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
+import com.jetbrains.fus.reporting.api.ValidationResultType
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
@@ -92,6 +95,22 @@ class McpToolInvocationModeTest {
     assertThat(names)
       .contains("tool_a", "tool_b", ROUTER_TOOL)
       .doesNotContain("tool_c")
+  }
+
+  /**
+   * The toolset a call belongs to is reported, and the value set is derived from the tools actually registered rather
+   * than from a list someone maintains — so a new toolset is measurable the day it is added, and no unregistered name
+   * can pass. This is what makes "measure every toolset" a property of the code instead of a chore.
+   */
+  @Test
+  fun `a registered toolset is reportable and an unknown one is refused`() {
+    val validator = McpServerCounterUsagesCollector.McpToolsetNameValidator()
+
+    assertThat(validator.validate("test", EventContext.create("toolset", emptyMap())))
+      .describedAs("the fake provider registered tools in the 'test' toolset, so its name must resolve")
+      .isIn(ValidationResultType.ACCEPTED, ValidationResultType.THIRD_PARTY)
+    assertThat(validator.validate("not-a-registered-toolset", EventContext.create("toolset", emptyMap())))
+      .isEqualTo(ValidationResultType.REJECTED)
   }
 
   private fun fakeTool(name: String, fullName: String): McpTool {

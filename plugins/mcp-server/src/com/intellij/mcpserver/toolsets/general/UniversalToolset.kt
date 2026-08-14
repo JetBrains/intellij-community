@@ -14,6 +14,7 @@ import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
+import com.intellij.mcpserver.statistics.reportableResultSize
 import com.intellij.mcpserver.launchOriginOf
 import com.intellij.mcpserver.statistics.McpDispatchRejectReason
 import com.intellij.mcpserver.statistics.McpToolCallOutcome
@@ -184,8 +185,10 @@ class UniversalToolset : McpToolset {
   private suspend fun invokeTool(tool: McpToolDef, jsonArgs: JsonObject): String {
     val callMark = TimeSource.Monotonic.markNow()
     var outcome = McpToolCallOutcome.SUCCESS
+    var resultBytes: Int? = null
     try {
       val result = tool.call(jsonArgs)
+      resultBytes = result.reportableResultSize()
       if (result.isError) {
         outcome = McpToolCallOutcome.RESULT_ERROR
         mcpFail("Tool execution failed: $result")
@@ -215,7 +218,8 @@ class UniversalToolset : McpToolset {
         clientName = callInfo.clientInfo.name,
         transportType = null,
         argumentBytes = jsonArgs.toString().length,
-        resultBytes = null,
+        // Absent when the call threw: there is no result to size, which is not the same as a result of size zero.
+        resultBytes = resultBytes,
       )
     }
   }
