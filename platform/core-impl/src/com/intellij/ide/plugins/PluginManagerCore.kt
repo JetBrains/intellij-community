@@ -713,8 +713,7 @@ object PluginManagerCore {
   internal suspend fun initializeAndSetPlugins(
     initContext: PluginInitializationContext,
     discoveredPlugins: PluginsDiscoveryResult,
-    reportingPolicy: PluginLoadingErrorReportingPolicy,
-  ): PluginManagerState {
+  ): PluginSet {
     val tracerShim = CoroutineTracerShim.coroutineTracer
     return tracerShim.span("plugin initialization") {
       val coreLoader = PluginManagerCore::class.java.classLoader
@@ -726,18 +725,8 @@ object PluginManagerCore {
         parentActivity = parentActivity,
         configureClassLoaders = true,
       )
-      val initResult = createPluginManagerState(
-        pluginSet = pluginSet,
-        parentActivity = parentActivity,
-        reportingPolicy = reportingPolicy,
-      )
-      val pluginState = pluginsState
-      pluginState.pluginsToDisable = initResult.pluginToDisable
-      pluginState.pluginsToEnable = initResult.pluginToEnable
-      pluginState.setErrorsForNotificationReporterAndLogger(initResult.loadingErrors)
-      //activity.setDescription("plugin count: ${initResult.pluginSet.enabledPlugins.size}")
-      pluginState.nullablePluginSet = initResult.pluginSet
-      initResult
+      pluginsState.nullablePluginSet = pluginSet
+      pluginSet
     }
   }
 

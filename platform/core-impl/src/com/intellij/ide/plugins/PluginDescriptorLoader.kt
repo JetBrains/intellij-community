@@ -484,12 +484,10 @@ internal fun CoroutineScope.scheduleLoading(
   val pluginSetDeferred = async {
     val discoveredPlugins = resultDeferred.await()
     val reportingPolicy = PluginLoadingErrorReportingPolicy.forCurrentProduct()
-    val pluginsState = PluginManagerCore.initializeAndSetPlugins(
+    val pluginSet = PluginManagerCore.initializeAndSetPlugins(
       initContext = initContext,
       discoveredPlugins = discoveredPlugins,
-      reportingPolicy = reportingPolicy,
     )
-    val pluginSet = pluginsState.pluginSet
     this@scheduleLoading.launch {
       // logging is not as a part of a plugin set job for performance reasons
       val logger = logDeferred?.await() ?: LOG
