@@ -73,7 +73,7 @@ interface GpgToolWrapper {
 }
 
 private fun createGpg(): GpgToolWrapper {
-  if (ApplicationManager.getApplication().isUnitTestMode) {
+  if (ApplicationManager.getApplication()?.isUnitTestMode == true) {
     return DummyGpgToolWrapper()
   }
 
