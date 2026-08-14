@@ -10,6 +10,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -124,6 +126,7 @@ fun reinitBreadcrumbComponent(fileEditor: TextEditor, fileEditorManager: FileEdi
     val isSuitable = readAction {
       isSuitable(project, file, forcedShown, editorIsValid)
     }
+    logger<BreadcrumbsInitializingActivity>().debug { "reinitBreadcrumbComponent for $file, isSuitable=$isSuitable" }
     withContext(Dispatchers.EDT) {
       if (editor.isDisposed) return@withContext
 
