@@ -340,6 +340,9 @@ suspend fun collectExportedLibrariesFromLibraryModules(
 /**
  * Project library name to the names of the modules of non-`auto` plugins which depend on it.
  * Such a library must be provided by the platform - see the check in [createPlatformLayout].
+ *
+ * `auto` plugins are skipped here, as their content modules are known only during packaging (read from `plugin.xml`);
+ * such a library is checked by `JarPackager.checkImplicitProjectLibraries` instead.
  */
 internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): Map<String, Set<String>> {
   val result = TreeMap<String, MutableSet<String>>()
