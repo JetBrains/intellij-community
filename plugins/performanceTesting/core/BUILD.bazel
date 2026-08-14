@@ -200,6 +200,7 @@ dev_dist_plugin_content(
     prepacked_content_modules = [
         "//plugins/performanceTesting/backend:backend_content_module_jar",
         "//plugins/performanceTesting/freezes:freezes_content_module_jar",
+        "//plugins/performanceTesting/frontend-base:frontend-base_content_module_jar",
         "//plugins/performanceTesting/frontend:frontend_content_module_jar",
         "//plugins/performanceTesting/problemsView:problemsView_content_module_jar",
         "//plugins/performanceTesting/remote-driver.compose:remote-driver.compose_content_module_jar",

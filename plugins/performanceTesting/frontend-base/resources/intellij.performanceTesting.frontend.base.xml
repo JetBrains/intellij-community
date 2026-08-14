@@ -1,0 +1,14 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.statistics"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <applicationListeners>
+    <listener class="com.intellij.performanceTesting.frontend.base.SmartModeTransitionTracker"
+              topic="com.intellij.internal.statistic.SmartModeTransitionPhaseListener"/>
+  </applicationListeners>
+</idea-plugin>

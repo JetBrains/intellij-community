@@ -34,6 +34,9 @@
 - name: lib/modules/intellij.performanceTesting.freezes.jar
   contentModules:
   - name: intellij.performanceTesting.freezes
+- name: lib/modules/intellij.performanceTesting.frontend.base.jar
+  contentModules:
+  - name: intellij.performanceTesting.frontend.base
 - name: lib/modules/intellij.performanceTesting.frontend.jar
   contentModules:
   - name: intellij.performanceTesting.frontend
