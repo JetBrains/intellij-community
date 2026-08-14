@@ -15,12 +15,12 @@
  */
 package com.jetbrains.python.console
 
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
@@ -88,7 +88,9 @@ class PyConsoleEnterHandler {
   private fun executeEnterHandler(project: Project, editor:EditorEx) {
     val enterHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER)
     WriteCommandAction.runWriteCommandAction(project) {
-        enterHandler.execute(editor, null, DataManager.getInstance().getDataContext(editor.component))
+        // The enter handler takes its project from the data context, and the console editor's Swing ancestors may
+        // report another project when several projects share one remote development backend (PY-90740).
+        enterHandler.execute(editor, null, EditorUtil.getEditorDataContext(editor))
     }
   }
 
