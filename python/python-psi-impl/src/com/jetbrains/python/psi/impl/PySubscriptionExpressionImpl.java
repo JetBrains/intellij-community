@@ -79,7 +79,9 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
           return PyUnionType.union(possibleTypes);
         }
         if (operandType instanceof PyTypedDictType typedDictType) {
-          return getTypedDictSubscriptionType(typedDictType, indexExpression, context);
+          return typedDictType.isDefinition()
+                 ? parameterizeTypedDictDeclaration(typedDictType, context)
+                 : getTypedDictSubscriptionType(typedDictType, indexExpression, context);
         }
         if (operandType instanceof PyClassType) {
           PyType parameterizedType = Ref.deref(PyTypingTypeProvider.getType(this, context));
@@ -90,6 +92,19 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
       }
     }
     return PyCallExpressionHelper.getCallType(this, context, key);
+  }
+
+  /**
+   * A TypedDict without type parameters cannot be parameterized, and the expression still denotes the class, so the declaration
+   * type is returned rather than the `dict` class the generic fallback would answer with.
+   */
+  private @NotNull PyType parameterizeTypedDictDeclaration(@NotNull PyTypedDictType declarationType,
+                                                           @NotNull TypeEvalContext context) {
+    final PyType parameterizedType = Ref.deref(PyTypingTypeProvider.getType(this, context));
+    if (parameterizedType instanceof PyTypedDictType typedDictType && !typedDictType.getSubstitutedTypeArguments().isEmpty()) {
+      return typedDictType.toClass();
+    }
+    return declarationType;
   }
 
   /** The extra items type is asked for only when a key is really missing: evaluating it costs as much as an item type. */

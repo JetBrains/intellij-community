@@ -42,6 +42,7 @@ import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeChecker.collectGenerics
 import com.jetbrains.python.psi.types.PyTypeProviderBase
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef
@@ -283,7 +284,7 @@ private fun getTypedDictTypeForClass(
 ): PyTypedDictType? {
   if (!cls.isTypingTypedDictInheritor(context)) return null
 
-  val typedDictAncestors = cls.getAncestorTypes(context)
+  val typedDictAncestors = typedDictAncestors(cls, context)
     .filterIsInstance<PyTypedDictType>()
 
   val extraItemsText = getSuperClassKeywordArgumentText(cls, TYPED_DICT_EXTRA_ITEMS_PARAMETER)
@@ -318,17 +319,14 @@ private fun getTypedDictTypeForClass(
 }
 
 /**
- * The type parameters a generic TypedDict is parameterized by, read from the declarations rather than from the item types, which
- * a recursive one cannot evaluate. Inherited parameters come first, so that `class Sub(Base, Generic[T1])` over
- * `class Base(TypedDict, Generic[T])` is parameterized as `Sub[T, T1]`, matching the order the items are collected in.
- *
- * A base is always reached unspecialized, since `PyClassImpl.unfoldSuperClassExpression` unfolds `Base[int]` to `Base`.
+ * Read from the declarations rather than from the item types, which a recursive TypedDict cannot evaluate. Inherited parameters
+ * come first, so `class Sub(Base, Generic[T1])` over `class Base(TypedDict, Generic[T])` is parameterized as `Sub[T, T1]`.
  */
 private fun collectDeclaredTypeParameters(cls: PyClass, context: TypeEvalContext): List<PyType?> {
   val result = LinkedHashSet<PyType?>()
   for (ancestorType in typedDictAncestors(cls, context)) {
     when (ancestorType) {
-      is PyTypedDictType -> result.addAll(ancestorType.declaredTypeParameters.orEmpty())
+      is PyTypedDictType -> result.addAll(inheritedTypeParameters(ancestorType, context))
       is PyClassType -> if (ancestorType.pyClass.isTypingTypedDictInheritor(context)) {
         result.addAll(ownTypeParameters(ancestorType.pyClass, context))
       }
@@ -343,12 +341,53 @@ private fun collectDeclaredTypeParameters(cls: PyClass, context: TypeEvalContext
  *
  * Without AST the ancestors are resolved from the superclass names in the stub, so `TypedDict` is the resolved class rather than
  * a synthetic [PyCustomType] and a TypedDict ancestor is a plain [PyClassType]. The boundary is found by name so that both modes
- * see the same slice.
+ * see the same slice, and the arguments dropped along with the expressions are put back by [specializeTypedDictAncestors].
  */
 private fun typedDictAncestors(cls: PyClass, context: TypeEvalContext): List<PyClassLikeType?> {
   val ancestors = cls.getAncestorTypes(context)
   val boundary = ancestors.indexOfFirst { nameIsTypedDict(it?.classQName) }
-  return if (boundary >= 0) ancestors.take(boundary) else ancestors
+  val inheritedAsTypedDict = if (boundary >= 0) ancestors.take(boundary) else ancestors
+  return specializeTypedDictAncestors(cls, inheritedAsTypedDict, context)
+}
+
+/**
+ * The ancestor of `class Child(Base[int])` is `Base`: a superclass expression is unfolded to its operand, and over a stub the
+ * ancestors are built from the superclass names. The arguments are read back from the superclass expressions, which a stub keeps
+ * as text, because a TypedDict does not receive them through the substitutions map.
+ *
+ * Applied to the finished ancestor list on purpose: evaluating `Base[T]` has to anchor `T` in the scope declaring it, which asks
+ * for the type parameters of [cls] and through them for its ancestors, so it cannot run while they are being computed.
+ */
+private fun specializeTypedDictAncestors(
+  cls: PyClass,
+  ancestors: List<PyClassLikeType?>,
+  context: TypeEvalContext,
+): List<PyClassLikeType?> {
+  val specializedBases = mutableMapOf<PyClass, PyTypedDictType>()
+  for (expression in PyTypingTypeProvider.getSuperClassExpressions(cls)) {
+    if (expression !is PySubscriptionExpression) continue
+    val baseType = Ref.deref(PyTypingTypeProvider.getType(expression, context)) as? PyTypedDictType ?: continue
+    if (baseType.substitutedTypeArguments.isEmpty()) continue
+    val baseClass = baseType.declarationElement as? PyClass ?: continue
+    specializedBases[baseClass] = baseType
+  }
+  if (specializedBases.isEmpty()) return ancestors
+
+  return ancestors.map { specializedBases[it?.declaringClass()] ?: it }
+}
+
+/** A TypedDict type is built on the `dict` class, so it is identified by its own declaration rather than by [PyClassType.getPyClass]. */
+private fun PyClassLikeType.declaringClass(): PyClass? = when (this) {
+  is PyTypedDictType -> declarationElement as? PyClass
+  is PyClassType -> pyClass
+  else -> null
+}
+
+/** What a base leaves open: nothing for `Base[int]`, `S` for `Base[list[S]]`, its own parameters for an unspecialized one. */
+private fun inheritedTypeParameters(ancestorType: PyTypedDictType, context: TypeEvalContext): List<PyType?> {
+  val typeArguments = ancestorType.substitutedTypeArguments
+  return if (typeArguments.isEmpty()) ancestorType.declaredTypeParameters.orEmpty()
+  else typeArguments.flatMap { it.collectGenerics(context).allTypeParameters }
 }
 
 private fun ownTypeParameters(cls: PyClass, context: TypeEvalContext): List<PyType?> =

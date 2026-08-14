@@ -107,6 +107,30 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-91533"])
+    // Subscripting the declaration of a TypedDict without type parameters is not valid Python: it neither looks an item up
+    // (that needs a value) nor parameterizes anything. The arguments are reported by PyTypeHintsInspection and the expression
+    // still denotes the class, which is what pyright and pyrefly report as well.
+    fun `subscripting a non-generic TypedDict declaration`() = test("""
+      from typing import TypedDict
+      class Movie(TypedDict):
+          name: str
+      expr = Movie["name"]
+      # │          ^^^^^^ WARNING Class 'Movie' is already parameterized
+      # └ TYPE type[Movie]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-91533"])
+    fun `subscripting a generic TypedDict declaration`() = test("""
+      from typing import TypedDict
+      class Box[T](TypedDict):
+          value: T
+      expr = Box[int]
+      # └ TYPE type[Box[int]]
+      """)
+
+    @Test
     @TestFor(issues = ["PY-36008"])
     fun `get of required key`() = test("""
       from typing import TypedDict
@@ -316,9 +340,8 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
     // Structural matching of two recursive TypedDicts relies on the recursion guard in PyTypeChecker.match,
     // which treats a repeated (expected, actual) pair as a match, so the assertion on recursion prevention has
     // to be off here.
-    fun `assignability between recursive TypedDicts`() = test(
-      TestOptions(assertRecursionPrevention = false),
-      """
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `assignability between recursive TypedDicts`() = test("""
       from typing import TypedDict
 
       class Node(TypedDict):
@@ -475,9 +498,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-85440", "PY-91630"])
-    fun `item type substituted in the pre-695 syntax`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON311),
-      """
+    fun `item type substituted in the pre-695 syntax`() = test("""
       from typing import TypedDict, TypeVar, Generic
 
       T = TypeVar("T")
@@ -550,6 +571,120 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `specialized generic base`() = test("""
+      from typing import TypedDict
+
+      class Base[T](TypedDict):
+          value: T
+
+      class Child(Base[int]):
+          pass
+
+      def f(c: Child, wrong: Child[str]):
+      #                            ^^^ WARNING Class 'Child' is already parameterized
+          base = Base[int]
+      #   └ TYPE type[Base[int]]
+          expr = c["value"]
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `partially specialized generic base`() = test("""
+      from typing import TypedDict
+
+      class Base[T](TypedDict):
+          value: T
+
+      class Child[S](Base[list[S]]):
+          tag: S
+
+      def f(c: Child[int]):
+          inherited = c["value"]
+      #   └ TYPE list[int]
+          own = c["tag"]
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-62524", "PY-91630"])
+    fun `generic base specialized with the descendant's own parameter`() = test("""
+      from typing import Generic, TypeVar, TypedDict
+
+      T = TypeVar("T")
+
+      class Base(TypedDict, Generic[T]):
+          value: T
+
+      class Child(Base[T]):
+          pass
+
+      def f(c: Child[int]):
+          expr = c["value"]
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `specialized generic base in pre-695 syntax`() = test("""
+      from typing import Generic, TypeVar, TypedDict
+
+      T = TypeVar("T")
+
+      class Base(TypedDict, Generic[T]):
+          value: T
+
+      class Child(Base[int]):
+          pass
+
+      def f(c: Child):
+          expr = c["value"]
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `specialized generic base from another file`() = test(
+      """
+      from other import Child
+
+      def f(c: Child):
+          expr = c["value"]
+      #   └ TYPE int
+          extra = c["missing"]
+      #   └ TYPE int
+      """,
+      "other.py" to """
+        from typing_extensions import TypedDict
+
+        class Base[T](TypedDict, extra_items=T):
+            value: T
+
+        class Child(Base[int]):
+            pass
+        """,
+    )
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `specialized generic base substitutes inherited extra_items`() = test("""
+      from typing_extensions import TypedDict
+
+      class Base[T](TypedDict, extra_items=T):
+          pass
+
+      class Child(Base[int]):
+          pass
+
+      def f(base: Base[int], c: Child):
+          direct = base["other"]
+      #   └ TYPE int
+          expr = c["other"]
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
     fun `TypedDicts parameterized differently are not assignable`() = test("""
       from typing import TypedDict
 
@@ -562,36 +697,6 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       #                     └ WARNING Expected type 'Box[str]', got 'Box[int]' instead
       """)
 
-    @Test
-    @TestFor(issues = ["PY-85440", "PY-91630", "PY-91594"])
-    // The cross-file counterpart of PyTypeCheckerInspectionTest#testGenericTypedDict (PY-55092): an added parameter comes after
-    // the inherited one. The warning is the inspection counting one parameter where inference uses two, which the same
-    // declarations in a single file are not reported for.
-    fun `own parameter over a generic base from another file`() = test(
-      """
-      from typing import TypeVar, Generic
-      from other import Group
-
-      T1 = TypeVar('T1')
-
-      class GroupWithOtherKey(Group, Generic[T1]):
-          some_other_key: T1
-
-      def f(g: GroupWithOtherKey[str, int]):
-      #                          ^^^^^^^^ WARNING Passed type arguments do not match type parameters [T1] of class 'GroupWithOtherKey'
-          inherited = g["key"]
-      #   └ TYPE str
-          own = g["some_other_key"]
-      #   └ TYPE int
-      """,
-      "other.py" to """
-        from typing import TypeVar, TypedDict, Generic
-
-        T = TypeVar('T')
-
-        class Group(TypedDict, Generic[T]):
-            key: T
-        """)
   }
 
   @Nested
