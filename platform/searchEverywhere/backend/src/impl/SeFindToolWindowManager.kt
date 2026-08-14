@@ -19,7 +19,7 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderId
-import com.intellij.platform.searchEverywhere.backend.providers.text.SeTextSearchItem
+import com.intellij.platform.searchEverywhere.providers.text.SeTextSearchItem
 import com.intellij.platform.searchEverywhere.providers.SeAdaptedItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder

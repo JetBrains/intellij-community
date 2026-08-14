@@ -13,11 +13,13 @@
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.scopes"/>
     <module name="intellij.platform.statistics"/>
@@ -45,5 +47,11 @@
          This declaration here will also bring the provider to ThinClient where it will be de-prioritized in favor of BE implementation -->
     <searchEverywhere.itemsProviderFactory
       implementation="com.intellij.platform.searchEverywhere.providers.nonIndexableFiles.SeNonIndexableFilesProviderFactory"/>
+
+    <!-- Text search wraps TextSearchContributor, which runs locally in monolith, light and RD backend.
+         Same as for the provider above, this declaration also brings it to ThinClient,
+         where it is de-prioritized in favor of the BE one -->
+    <searchEverywhere.itemsProviderFactory
+      implementation="com.intellij.platform.searchEverywhere.providers.text.SeTextItemsProviderFactory"/>
   </extensions>
 </idea-plugin>
