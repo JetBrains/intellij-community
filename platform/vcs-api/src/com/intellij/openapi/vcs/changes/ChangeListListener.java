@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -58,6 +59,14 @@ public interface ChangeListListener extends EventListener {
   }
 
   /**
+   * Fired when CLM enters the update mode
+   * <p>
+   * NB: fired synchronously during the update, so the implementation must be fast to not impede the process
+   */
+  @ApiStatus.Internal
+  default void changeListUpdateRunning() {}
+
+  /**
    * Combined event for {@link #changedFileStatusChanged()} and {@link #unchangedFileStatusChanged()}.
    */
   default void changeListUpdateDone() {}
@@ -67,4 +76,12 @@ public interface ChangeListListener extends EventListener {
    * @see ChangeListManager#areChangeListsEnabled
    */
   default void changeListAvailabilityChanged() {}
+
+  /**
+   * Technical event, meaning that the state was completely invalidated (e.g. by plugin unloading)
+   * <p>
+   * NB: fired synchronously during reset, so the implementation must be fast to not impede the process
+   */
+  @ApiStatus.Internal
+  default void changeListsInvalidated() {}
 }

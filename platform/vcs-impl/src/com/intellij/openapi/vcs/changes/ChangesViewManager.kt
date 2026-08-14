@@ -101,10 +101,6 @@ class ChangesViewManager internal constructor(private val project: Project, priv
     changesView?.setGrouping(groupingKey)
   }
 
-  override fun resetViewImmediatelyAndRefreshLater() {
-    changesView?.resetViewImmediatelyAndRefreshLater()
-  }
-
   internal class ContentPreloader(private val project: Project) : ChangesViewContentProvider.Preloader {
     override fun preloadTabContent(content: Content) {
       ChangesViewCommitTabTitleUpdater(project, ChangesViewContentManager.LOCAL_CHANGES).init(content)

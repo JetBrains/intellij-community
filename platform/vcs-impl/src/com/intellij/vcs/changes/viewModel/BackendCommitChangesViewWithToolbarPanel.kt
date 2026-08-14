@@ -3,8 +3,6 @@ package com.intellij.vcs.changes.viewModel
 
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.ChangeListAdapter
-import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel
@@ -30,7 +28,6 @@ internal class BackendCommitChangesViewWithToolbarPanel(changesView: ChangesList
     val busConnection = project.messageBus.connect(cs)
     busConnection.subscribe(ProblemListener.TOPIC, OnProblemsUpdate(cs, this))
     busConnection.subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, Runnable { scheduleRefresh() })
-    busConnection.subscribe(ChangeListListener.TOPIC, OnChangeListsUpdate(this))
 
     changesView.installDndWithShelvesSupport(cs.asDisposable())
 
@@ -52,20 +49,6 @@ internal class BackendCommitChangesViewWithToolbarPanel(changesView: ChangesList
 
   override fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
     ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler?.synchronizeInclusion(changeLists, unversionedFiles)
-  }
-}
-
-private class OnChangeListsUpdate(private val panel: CommitChangesViewWithToolbarPanel) : ChangeListAdapter() {
-  override fun changeListsChanged() {
-    panel.scheduleRefresh()
-  }
-
-  override fun unchangedFileStatusChanged() {
-    panel.scheduleRefresh()
-  }
-
-  override fun changedFileStatusChanged() {
-    panel.scheduleRefresh()
   }
 }
 

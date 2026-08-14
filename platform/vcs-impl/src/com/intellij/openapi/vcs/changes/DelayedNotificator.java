@@ -110,9 +110,25 @@ public final class DelayedNotificator implements ChangeListListener {
     myScheduler.submit(() -> getMulticaster().unchangedFileStatusChanged(upToDate));
   }
 
+  /**
+   * Delayed "Running" notification doesn't make a lot of sense
+   *
+   * @deprecated deprecated to avoid unintended calls.
+   */
+  @Deprecated
+  @Override
+  public void changeListUpdateRunning() {
+    throw new UnsupportedOperationException();
+  }
+
   @Override
   public void changeListUpdateDone() {
     myScheduler.submit(() -> getMulticaster().changeListUpdateDone());
+  }
+
+  @Override
+  public void changeListsInvalidated() {
+    myScheduler.submit(() -> getMulticaster().changeListsInvalidated());
   }
 
   @Override

@@ -489,10 +489,11 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
         myUpdateException = null;
       }
 
+      // can be done with delay if plugin unloader can handle that - have to check
+      project.getMessageBus().syncPublisher(ChangeListListener.TOPIC).changeListsInvalidated();
       myDelayedNotificator.changedFileStatusChanged(true);
       myDelayedNotificator.unchangedFileStatusChanged(true);
       myDelayedNotificator.changeListUpdateDone();
-      ChangesViewManager.getInstanceEx(project).resetViewImmediatelyAndRefreshLater();
     }
     catch (Exception | AssertionError ex) {
       LOG.error(ex);
@@ -530,7 +531,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
       final List<VcsModifiableDirtyScope> scopes = invalidated.getScopes();
 
       boolean isInitialUpdate;
-      ChangesViewEx changesView = ChangesViewManager.getInstanceEx(project);
       try {
         if (myUpdater.isStopped()) return true;
 
@@ -557,7 +557,8 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
           isInitialUpdate = myInitialUpdate;
           myInitialUpdate = false;
         }
-        changesView.scheduleRefresh();
+        // already on scheduler thread, so can just do a sync call
+        project.getMessageBus().syncPublisher(ChangeListListener.TOPIC).changeListUpdateRunning();
 
         SensitiveProgressWrapper vcsIndicator = new SensitiveProgressWrapper(ProgressManager.getInstance().getProgressIndicator());
         if (!isInitialUpdate) invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
@@ -633,7 +634,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
         myDelayedNotificator.changeListUpdateDone();
 
         myStateProvider.setInUpdateMode(false);
-        changesView.scheduleRefresh();
       }
       return true;
     });
@@ -967,12 +967,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     }
   }
 
-  private void scheduleChangesViewRefresh() {
-    if (!project.isDisposed()) {
-      ChangesViewManager.getInstance(project).scheduleRefresh();
-    }
-  }
-
   @Override
   public @NotNull LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
     return addChangeList(name, comment, null);
@@ -982,9 +976,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   public @NotNull LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
     return ReadAction.computeBlocking(() -> {
       synchronized (myDataLock) {
-        final LocalChangeList changeList = myModifier.addChangeList(name, comment, data);
-        scheduleChangesViewRefresh();
-        return changeList;
+        return myModifier.addChangeList(name, comment, data);
       }
     });
   }
@@ -995,7 +987,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     ReadAction.runBlocking(() -> {
       synchronized (myDataLock) {
         myModifier.removeChangeList(name);
-        scheduleChangesViewRefresh();
       }
     });
   }
@@ -1009,7 +1000,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     ReadAction.runBlocking(() -> {
       synchronized (myDataLock) {
         myModifier.setDefault(name, automatic);
-        scheduleChangesViewRefresh();
       }
     });
   }
@@ -1033,9 +1023,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   public boolean setReadOnly(@NotNull String name, final boolean value) {
     return ReadAction.computeBlocking(() -> {
       synchronized (myDataLock) {
-        final boolean result = myModifier.setReadOnly(name, value);
-        scheduleChangesViewRefresh();
-        return result;
+        return myModifier.setReadOnly(name, value);
       }
     });
   }
@@ -1044,9 +1032,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   public boolean editName(final @NotNull String fromName, final @NotNull String toName) {
     return ReadAction.computeBlocking(() -> {
       synchronized (myDataLock) {
-        final boolean result = myModifier.editName(fromName, toName);
-        scheduleChangesViewRefresh();
-        return result;
+        return myModifier.editName(fromName, toName);
       }
     });
   }
@@ -1055,9 +1041,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   public String editComment(@NotNull String name, String newComment) {
     return ReadAction.computeBlocking(() -> {
       synchronized (myDataLock) {
-        final String oldComment = myModifier.editComment(name, StringUtil.notNullize(newComment));
-        scheduleChangesViewRefresh();
-        return oldComment;
+        return myModifier.editComment(name, StringUtil.notNullize(newComment));
       }
     });
   }
@@ -1066,9 +1050,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   public boolean editChangeListData(@NotNull String name, @Nullable ChangeListData newData) {
     return ReadAction.computeBlocking(() -> {
       synchronized (myDataLock) {
-        final boolean result = myModifier.editData(name, newData);
-        scheduleChangesViewRefresh();
-        return result;
+        return myModifier.editData(name, newData);
       }
     });
   }
@@ -1083,7 +1065,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     ReadAction.runBlocking(() -> {
       synchronized (myDataLock) {
         myModifier.moveChangesTo(list.getName(), changes);
-        scheduleChangesViewRefresh();
       }
     });
   }
@@ -1457,16 +1438,17 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
         myDisabledWorkerState = myWorker.getChangeListsImpl();
       }
 
+      // Schedule refresh to replace FakeRevisions with actual changes
+      if (enabled) {
+        VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
+      }
+
       myWorker.setChangeListsEnabled(enabled);
 
       if (enabled) {
         if (myDisabledWorkerState != null) {
           myWorker.setChangeLists(myDisabledWorkerState);
         }
-
-        // Schedule refresh to replace FakeRevisions with actual changes
-        VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
-        ChangesViewManager.getInstance(project).scheduleRefresh();
       }
     }
 

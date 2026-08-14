@@ -8,12 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.NonExtendable
 interface ChangesViewEx : ChangesViewI {
-  /**
-   * Immediately reset changes view and request refresh when NON_MODAL modality allows (i.e. after a plugin was unloaded or a dialog closed)
-   */
-  @RequiresEdt
-  fun resetViewImmediatelyAndRefreshLater()
-
   @RequiresEdt
   @ApiStatus.Internal
   fun getOrCreateCommitChangesView(): ChangesViewProxy
