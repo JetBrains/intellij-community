@@ -214,7 +214,7 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
   }
 
   @Override
-  public ValidationInfo evaluateValidationInfo(Boolean isDirectoryExists) {
+  public ValidationInfo evaluateValidationInfo(@NotNull Boolean isDirectoryExists) {
     return myDirectoryChooser.getDirectoryValidationInfo(isDirectoryExists);
   }
 
