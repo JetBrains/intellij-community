@@ -48,7 +48,10 @@ private val LOG = logger<FindPopupResultsAutoloadHandler>()
  * interface — no Swing imports beyond [DefaultTableModel], which is the only Swing surface
  * the executor touches directly.
  */
-internal class FindPopupResultsAutoloadHandler(private val host: Host) {
+internal class FindPopupResultsAutoloadHandler(
+  private val host: Host,
+  private val findAndReplaceExecutor: FindAndReplaceExecutor,
+) {
 
   /** Session-scoped paging state. */
   private val state = FindPopupSearchState()
@@ -311,7 +314,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
           val recentItemRef = ThreadLocal<java.lang.ref.Reference<FindPopupItem>>()
 
           LOG.debug { "FiF: run -> executor.findUsages hash=$hash loadMore=$loadMore" }
-          FindAndReplaceExecutor.getInstance(project).findUsages(
+          findAndReplaceExecutor.findUsages(
             project,
             progressIndicatorWhenSearchStarted,
             processPresentation,

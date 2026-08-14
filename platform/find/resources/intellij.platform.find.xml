@@ -16,7 +16,6 @@
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.runtime.product"/>
-    <module name="intellij.platform.scopes"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>
@@ -25,8 +24,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <usagePresentationProvider implementation="com.intellij.platform.find.UsageInfoModelPresentationProvider"/>
 
-    <projectService serviceInterface="com.intellij.find.impl.FindAndReplaceExecutor" open="true"
-                    serviceImplementation="com.intellij.platform.find.FindAndReplaceExecutorImpl"/>
+    <projectService serviceInterface="com.intellij.find.impl.FindAndReplaceService" open="true"
+                    serviceImplementation="com.intellij.platform.find.FindAndReplaceServiceImpl"/>
 
     <registryKey key="find.in.files.split"
                  defaultValue="true"

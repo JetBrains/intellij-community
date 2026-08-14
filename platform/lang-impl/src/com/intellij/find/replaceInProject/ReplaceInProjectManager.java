@@ -9,7 +9,7 @@ import com.intellij.find.FindSettings;
 import com.intellij.find.FindUsagesCollector;
 import com.intellij.find.actions.FindInPathAction;
 import com.intellij.find.findInProject.FindInProjectManager;
-import com.intellij.find.impl.FindAndReplaceExecutor;
+import com.intellij.find.impl.FindAndReplaceService;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.history.LocalHistory;
@@ -160,7 +160,7 @@ public class ReplaceInProjectManager {
     FindUsagesCollector.findPopupShown(dataContext, findModel, stringToFindChanged);
     findManager.showFindDialog(findModel, () -> {
       FindUsagesCollector.replaceAllInvoked();
-      FindAndReplaceExecutor.getInstance(myProject).performFindAllOrReplaceAll(findModel, myProject);
+      FindAndReplaceService.getInstance(myProject).performFindAllOrReplaceAll(findModel, myProject);
     });
   }
 

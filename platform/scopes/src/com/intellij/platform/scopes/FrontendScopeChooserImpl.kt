@@ -2,7 +2,6 @@
 package com.intellij.platform.scopes
 
 import com.intellij.find.FindBundle
-import com.intellij.find.impl.FindAndReplaceExecutor
 import com.intellij.ide.DataManager
 import com.intellij.ide.rpc.rpcId
 import com.intellij.ide.util.scopeChooser.FrontendScopeChooser
@@ -13,10 +12,9 @@ import com.intellij.ide.util.scopeChooser.ScopesStateService
 import com.intellij.ide.util.scopeChooser.createScopeDescriptorRenderer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.impl.Utils
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.util.whenItemSelected
 import com.intellij.openapi.project.Project
@@ -30,6 +28,7 @@ import fleet.rpc.client.RpcTimeoutException
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -38,6 +37,7 @@ import org.jetbrains.concurrency.await
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -76,8 +76,9 @@ class FrontendScopeChooserImpl(
     accessibleContext.accessibleName = FindBundle.message("find.usages.edit.scopes.button.accessible.name")
   }
 
-  private val coroutineScope: CoroutineScope = project.service<FrontendScopeChooserScopeHolder>().coroutineScope
+  private val coroutineScope: CoroutineScope = project.service<ScopesCoroutineScopeHolder>().coroutineScope
     .childScope("FrontendScopeChooserImpl")
+  private val selectScopeJob = AtomicReference<Job?>()
 
   init {
     _comboBox.renderer =
@@ -86,7 +87,7 @@ class FrontendScopeChooserImpl(
     _comboBox.whenItemSelected {
       val scopeId = selectedScopeId ?: return@whenItemSelected
       if (it.needsUserInputForScope()) {
-        FindAndReplaceExecutor.getInstance(project).performScopeSelection(scopeId, project)
+        performScopeSelection(scopeId, project)
       }
     }
     _comboBox.accessibleContext.accessibleName = FindBundle.message("find.usages.scope.combobox.accessible.name")
@@ -106,7 +107,7 @@ class FrontendScopeChooserImpl(
     // because it's going to change with opening Find in Files dialog
     val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync.then { Utils.createAsyncDataContext(it) }
 
-    coroutineScope.childScope("ScopesStateService.subscribeToScopeStates").launch {
+    coroutineScope.launch {
       val dataContext = dataContextPromise.await()
       durable {
         val scopesFlow = ScopeModelApi.getInstance().createModelAndSubscribe(
@@ -143,8 +144,8 @@ class FrontendScopeChooserImpl(
         val deferred = ScopeModelApi.getInstance().openEditScopesDialog(projectId, currentSelectionId, modelId)
         deferred.cancelOnDispose(project)
 
-        val result = deferred.await()
-        ApplicationManager.getApplication().invokeLater {
+        val result = deferred.await() ?: return@launch
+        withContext(Dispatchers.EDT) {
           selectedItem = scopesMap[result]
         }
       }
@@ -152,6 +153,23 @@ class FrontendScopeChooserImpl(
         LOG.warn("Failed to edit scopes", e)
       }
     }
+  }
+
+  private fun performScopeSelection(scopeId: String, project: Project) {
+    val job = coroutineScope.launch {
+      try {
+        val deferred = ScopeModelApi.getInstance().performScopeSelection(scopeId, project.projectId())
+        deferred.cancelOnDispose(project)
+        deferred.await()
+      }
+      catch (e: RpcTimeoutException) {
+        LOG.warn("Failed to select scope", e)
+      }
+    }
+    selectScopeJob.set(job)
+    // Release the reference once the job finishes so a completed job isn't pinned; compareAndSet clears it only if a
+    // newer selection hasn't already replaced it, otherwise awaitScopeSelection would stop gating on the newer one.
+    job.invokeOnCompletion { selectScopeJob.compareAndSet(job, null) }
   }
 
   override val comboBox: JComboBox<*> get() = _comboBox
@@ -209,11 +227,18 @@ class FrontendScopeChooserImpl(
       return scopesMap.entries.firstOrNull { it.value == scopeDescriptor }?.key
     }
 
+  override fun cancelActivities() {
+    // Only the pending selection: the scope list subscription has to survive into the next Find popup session.
+    selectScopeJob.get()?.cancel("cancel all activities for find and replace executor")
+  }
+
+  override suspend fun awaitScopeSelection() {
+    LOG.debug { "FiF: selectScope join begin (selectScopeJob=${selectScopeJob.get()})" }
+    selectScopeJob.get()?.join()
+  }
+
   override fun dispose() {
     coroutineScope.cancel()
     editScopesButton.actionListeners.forEach { editScopesButton.removeActionListener(it) }
   }
 }
-
-@Service(Service.Level.PROJECT)
-private class FrontendScopeChooserScopeHolder(val coroutineScope: CoroutineScope)

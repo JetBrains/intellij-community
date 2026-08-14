@@ -1,6 +1,6 @@
 com.intellij.serviceContainer.IfcService
 com.intellij.serviceContainer.ClsService
-com.intellij.find.impl.FindAndReplaceExecutor
+com.intellij.find.impl.FindAndReplaceService
 com.intellij.find.impl.FindPopupScopeUIProvider
 com.intellij.openapi.vfs.FileIdAdapter
 com.intellij.ide.actions.ReportFeedbackService

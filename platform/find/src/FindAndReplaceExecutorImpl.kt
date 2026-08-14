@@ -2,12 +2,10 @@
 package com.intellij.platform.find
 
 import com.intellij.find.FindModel
-import com.intellij.find.FindSettings
-import com.intellij.find.findInProject.FindInProjectManager
 import com.intellij.find.impl.FindAndReplaceExecutor
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.FindKey
-import com.intellij.find.replaceInProject.ReplaceInProjectManager
+import com.intellij.find.impl.FindPopupScopeUI
 import com.intellij.ide.rpc.ThrottledOneItem
 import com.intellij.ide.rpc.throttledWithAccumulation
 import com.intellij.ide.vfs.rpcId
@@ -20,7 +18,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.project.projectId
-import com.intellij.platform.scopes.ScopeModelApi
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
@@ -28,7 +25,6 @@ import com.intellij.usages.UsageInfoAdapter
 import com.intellij.util.asDisposable
 import com.intellij.util.cancelOnDispose
 import fleet.rpc.client.RpcClientException
-import fleet.rpc.client.RpcTimeoutException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -46,9 +42,8 @@ import java.util.function.Consumer
 private val LOG = logger<FindAndReplaceExecutorImpl>()
 
 @Internal
-open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : FindAndReplaceExecutor {
+open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope, val scopeUI: FindPopupScopeUI) : FindAndReplaceExecutor {
   private val validationJob = AtomicReference<Job?>()
-  private val selectScopeJob = AtomicReference<Job?>()
 
   // A single command channel + single consumer coroutine
   private val requests = Channel<FindCommand>(capacity = Channel.UNLIMITED)
@@ -127,8 +122,8 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     return coroutineScope.launch {
       var firstLogged = false
       try {
-        LOG.debug { "FiF: pass start; selectScope join begin (selectScopeJob=${selectScopeJob.get()})" }
-        selectScopeJob.get()?.join()
+        LOG.debug { "FiF: pass start; selectScope join begin" }
+        scopeUI.awaitScopeSelection()
         LOG.debug { "FiF: selectScope join done" }
 
         val filesToScanInitially = command.previousUsages
@@ -223,22 +218,6 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     }
   }
 
-  override fun performFindAllOrReplaceAll(findModel: FindModel, project: Project) {
-    if (FindKey.isEnabled) {
-      coroutineScope.launch {
-        FindInFilesApi.getInstance().performFindAllOrReplaceAll(findModel, FindSettings.getInstance().isShowResultsInSeparateView, project.projectId())
-      }
-    }
-    else {
-      if (findModel.isReplaceState) {
-        ReplaceInProjectManager.getInstance(project).replaceInPath(findModel)
-      }
-      else {
-        FindInProjectManager.getInstance(project).findInPath(findModel)
-      }
-    }
-  }
-
   override fun validateModel(findModel: FindModel, onFinish: (isDirectoryExists: Boolean) -> Any?) {
     validationJob.get()?.let { if (it.isActive) it.cancel("new validation request is started") }
     val job = coroutineScope.launch {
@@ -255,26 +234,9 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     job.invokeOnCompletion { validationJob.compareAndSet(job, null) }
   }
 
-  override fun performScopeSelection(scopeId: String, project: Project) {
-    val job = coroutineScope.launch {
-      val deferred = try {
-       ScopeModelApi.getInstance().performScopeSelection(scopeId, project.projectId())
-      }
-      catch (e: RpcTimeoutException) {
-        LOG.warn("Failed to select scope", e)
-        null
-      }
-      deferred?.cancelOnDispose(project)
-      deferred?.await()
-    }
-    selectScopeJob.set(job)
-    job.invokeOnCompletion { selectScopeJob.compareAndSet(job, null) }
-  }
-
   override fun cancelActivities() {
     val message = "cancel all activities for find and replace executor"
     validationJob.get()?.cancel(message)
-    selectScopeJob.get()?.cancel(message)
     // Route the search cancellation through the same channel so it is applied serially against the session state.
     requests.trySend(CancelSearch)
   }

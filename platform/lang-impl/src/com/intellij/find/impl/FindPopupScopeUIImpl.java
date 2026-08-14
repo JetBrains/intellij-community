@@ -29,6 +29,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,6 +102,21 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
 
   private JComboBox<?> getScopeCombo() {
     return FindKey.isEnabled() ? newScopeCombo.getComboBox() : myScopeCombo.getComboBox();
+  }
+
+  @Override
+  public void cancelActivities() {
+    if (FindKey.isEnabled()) {
+      newScopeCombo.cancelActivities();
+    }
+  }
+
+  @Override
+  public @Nullable Object awaitScopeSelection(@NotNull Continuation<? super Unit> $completion) {
+    if (FindKey.isEnabled()) {
+      return newScopeCombo.awaitScopeSelection($completion);
+    }
+    return Unit.INSTANCE;
   }
 
   private void initScopeCombo() {

@@ -291,6 +291,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   // Owns the search-results loading chain
   private FindPopupResultsAutoloadHandler myResultsAutoloadHandler;
 
+  private final FindAndReplaceExecutor myFindAndReplaceExecutor;
+
   FindPopupPanel(@NotNull FindUIHelper helper) {
     myHelper = helper;
     myProject = myHelper.getProject();
@@ -314,6 +316,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       if (mySearchRescheduleOnCancellationsAlarm != null) Disposer.dispose(mySearchRescheduleOnCancellationsAlarm);
       if (myUsagePreviewPanel != null) Disposer.dispose(myUsagePreviewPanel);
     });
+
+    myFindAndReplaceExecutor = FindAndReplaceService.getInstance(myProject).createExecutor(myDisposable, myScopeUI);
 
     initComponents();
     updatePreviewRunnable = this::updatePreview;
@@ -405,7 +409,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
         @Override
         protected void dispose() {
-          FindAndReplaceExecutor.getInstance(myProject).cancelActivities();
+          myFindAndReplaceExecutor.cancelActivities();
+          myScopeUI.cancelActivities();
           saveSettings();
           super.dispose();
         }
@@ -587,7 +592,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
   private void initComponents() {
     AnAction myShowFilterPopupAction = new MyShowFilterPopupAction();
-    myResultsAutoloadHandler = new FindPopupResultsAutoloadHandler(new MySearchAutoloadHost());
+    myResultsAutoloadHandler = new FindPopupResultsAutoloadHandler(new MySearchAutoloadHost(), myFindAndReplaceExecutor);
     myFilterContextButton =
       new ActionButton(myShowFilterPopupAction, null, ActionPlaces.UNKNOWN,
                        ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
@@ -1814,7 +1819,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
     @Override
     public void refreshTableRenderer() {
-      TableCellRenderer renderer = FindAndReplaceExecutor.getInstance(myProject).createTableCellRenderer();
+      TableCellRenderer renderer = myFindAndReplaceExecutor.createTableCellRenderer();
       if (renderer == null) renderer = new UsageTableCellRenderer();
       myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(renderer);
     }
@@ -1963,7 +1968,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         return getValidationInfo();
       }
       setNewModel(validatedModel);
-      FindAndReplaceExecutor.getInstance(myProject).validateModel(validatedModel, (isDirectoryExists) -> {
+      myFindAndReplaceExecutor.validateModel(validatedModel, (isDirectoryExists) -> {
         FindModel currentModel = myHelper.getModel();
         if (couldSkipValidation() || isNecessaryToRevalidate(validatedModel, currentModel)) return null;
         setDirectoryExists(isDirectoryExists);

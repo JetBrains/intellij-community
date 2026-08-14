@@ -61,6 +61,18 @@ interface FindPopupScopeUI {
     return null
   }
 
+  /**
+   * Cancels the activities of the current Find popup session.
+   */
+  fun cancelActivities() {
+  }
+
+  /**
+   * Suspends until the scope selection started by the last user action has been applied on the backend.
+   */
+  suspend fun awaitScopeSelection() {
+  }
+
   class ScopeType(
     @JvmField val name: String,
     @JvmField var textComputable: Supplier<@NlsContexts.ListItem String>,

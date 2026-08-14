@@ -4,7 +4,7 @@ package com.intellij.find.findInProject;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindUsagesCollector;
-import com.intellij.find.impl.FindAndReplaceExecutor;
+import com.intellij.find.impl.FindAndReplaceService;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
@@ -58,7 +58,7 @@ public class FindInProjectManager {
 
     FindUsagesCollector.findPopupShown(dataContext, findModel, stringToFindChanged);
     findManager.showFindDialog(findModel, () -> {
-      FindAndReplaceExecutor.getInstance(myProject).performFindAllOrReplaceAll(findModel, myProject);
+      FindAndReplaceService.getInstance(myProject).performFindAllOrReplaceAll(findModel, myProject);
     });
   }
 

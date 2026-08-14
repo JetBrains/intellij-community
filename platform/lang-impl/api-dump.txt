@@ -2379,12 +2379,20 @@ a:com.intellij.find.impl.FindManagerBase
 f:com.intellij.find.impl.FindManagerImpl
 - com.intellij.find.impl.FindManagerBase
 com.intellij.find.impl.FindPopupScopeUI
+- sf:Companion:com.intellij.find.impl.FindPopupScopeUI$Companion
 - a:applyTo(com.intellij.find.FindModel,com.intellij.find.impl.FindPopupScopeUI$ScopeType):V
 - a:applyTo(com.intellij.find.FindSettings,com.intellij.find.impl.FindPopupScopeUI$ScopeType):V
+- awaitScopeSelection(kotlin.coroutines.Continuation):java.lang.Object
+- cancelActivities():V
 - a:getComponents():com.intellij.openapi.util.Pair[]
 - a:hideAllPopups():Z
 - a:initByModel(com.intellij.find.FindModel):com.intellij.find.impl.FindPopupScopeUI$ScopeType
 - validate(com.intellij.find.FindModel,com.intellij.find.impl.FindPopupScopeUI$ScopeType):com.intellij.openapi.ui.ValidationInfo
+f:com.intellij.find.impl.FindPopupScopeUI$Companion
+f:com.intellij.find.impl.FindPopupScopeUI$DefaultImpls
+- s:awaitScopeSelection(com.intellij.find.impl.FindPopupScopeUI,kotlin.coroutines.Continuation):java.lang.Object
+- s:cancelActivities(com.intellij.find.impl.FindPopupScopeUI):V
+- s:validate(com.intellij.find.impl.FindPopupScopeUI,com.intellij.find.FindModel,com.intellij.find.impl.FindPopupScopeUI$ScopeType):com.intellij.openapi.ui.ValidationInfo
 f:com.intellij.find.impl.FindResultImpl
 - com.intellij.find.FindResult
 com.intellij.find.impl.FindUI

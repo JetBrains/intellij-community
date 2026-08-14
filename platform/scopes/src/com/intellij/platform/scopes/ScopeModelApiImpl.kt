@@ -14,7 +14,6 @@ import com.intellij.ide.util.scopeChooser.ScopesFilterConditionType
 import com.intellij.ide.util.scopeChooser.ScopesSnapshot
 import com.intellij.ide.util.scopeChooser.ScopesStateService
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -24,7 +23,6 @@ import com.intellij.platform.project.findProjectOrNull
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ProducerScope
@@ -90,7 +88,7 @@ class ScopeModelApiImpl : ScopeModelApi {
     val project = projectId.findProjectOrNull() ?: return CompletableDeferred(value = null)
     val deferred = CompletableDeferred<String?>()
     deferred.cancelOnDispose(project)
-    project.service<ScopesModelScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
+    project.service<ScopesCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
       WindowFocusFrontendService.getInstance().performActionWithFocus(true) {
         val dialog = EditScopesDialog.showDialog(project, selectedScopeId
           ?.let { ScopesStateService.getInstance(project).getScopeNameById(it) })
@@ -142,13 +140,10 @@ class ScopeModelApiImpl : ScopeModelApi {
     val project = projectId.findProjectOrNull() ?: return CompletableDeferred(value = Unit)
     val deferred = CompletableDeferred<Unit>()
     deferred.cancelOnDispose(project)
-    project.service<ScopesModelScopeHolder>().coroutineScope.launch {
+    project.service<ScopesCoroutineScopeHolder>().coroutineScope.launch {
       ScopesStateService.getInstance(project).getScopeById(scopeId)
       deferred.complete(Unit)
     }
     return deferred
   }
 }
-
-@Service(Service.Level.PROJECT)
-private class ScopesModelScopeHolder(val coroutineScope: CoroutineScope)

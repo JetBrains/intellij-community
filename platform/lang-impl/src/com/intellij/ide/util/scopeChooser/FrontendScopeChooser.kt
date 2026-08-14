@@ -14,4 +14,8 @@ interface FrontendScopeChooser {
 
   val selectedScopeName: @Nls String?
   val selectedScopeId: String?
+
+  fun cancelActivities()
+
+  suspend fun awaitScopeSelection()
 }
