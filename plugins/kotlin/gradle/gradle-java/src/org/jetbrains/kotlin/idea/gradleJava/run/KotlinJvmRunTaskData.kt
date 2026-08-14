@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils.isAndroidStudio
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinTargetData
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.safeCastDataNode
@@ -47,17 +48,68 @@ class KotlinJvmRunTaskData(
                 else -> return null
             }
 
-            /* Find all run carrier tasks (tasks implementing KotlinJvmRun */
-            val allKotlinJvmRunTasks = ExternalSystemApiUtil.findAll(mainModuleDataNode, ProjectKeys.TASK)
+            /* Find all run carrier tasks (tasks implementing KotlinJvmRun) */
+            val allGradleRunTasks = ExternalSystemApiUtil.findAll(mainModuleDataNode, ProjectKeys.TASK).asSequence()
+            val allKotlinJvmRunTasks = allGradleRunTasks
                 .filter { it.data.type == runClassName }
-                .ifEmpty { return null }
+                .toList()
 
             return when {
+                isAndroidStudio && allKotlinJvmRunTasks.isEmpty() ->
+                    inferKotlinJvmRunTask(allGradleRunTasks, mainModuleDataNode, module, usesComposeGradlePlugin)
                 usesComposeGradlePlugin -> getCmpPluginRunTask(allKotlinJvmRunTasks)
                 usesKmpPlugin -> getKmpPluginRunTask(module, mainModuleDataNode, allKotlinJvmRunTasks)
                 else -> null
             }
 
+        }
+
+        /**
+         * In Android Studio only test run tasks are loaded on Gradle import.
+         * So we try to infer the execution run task name based on the test run tasks that are available.
+         */
+        private fun inferKotlinJvmRunTask(
+            allGradleRunTasks: Sequence<DataNode<TaskData?>?>,
+            mainModuleDataNode: DataNode<out ModuleData>,
+            module: Module,
+            usesComposeGradlePlugin: Boolean,
+        ): KotlinJvmRunTaskData? {
+            val location = mainModuleDataNode.data.id.let {
+                if (it.startsWith(':')) it else ""
+            }
+
+            when (usesComposeGradlePlugin) {
+                true -> {
+                    val expectedTestTask = if (location.isNotBlank()) "$location:test" else "test"
+                    val testRunTaskFound = allGradleRunTasks
+                        .map { it?.data?.name }
+                        .contains(expectedTestTask)
+                    if (!testRunTaskFound) return null
+                    return KotlinJvmRunTaskData(
+                        targetName = JVM_SOURCE_SET_NAME,
+                        taskName = "$location:$COMPOSE_RUN_TASK_NAME",
+                        isComposeGradlePluginConfigured = true
+                    )
+                }
+
+                false -> {
+                    val sourceSetName = module.name
+                        .substringAfterLast('.')
+                        .takeIf { it.endsWith("Main") }
+                        ?.removeSuffix("Main")
+                        ?: return null
+                    val expectedTestTask = if (location.isNotBlank()) "$location:${sourceSetName}Test" else "${sourceSetName}Test"
+                    val testRunTaskFound = allGradleRunTasks
+                        .map { it?.data?.name }
+                        .contains(expectedTestTask)
+                    if (!testRunTaskFound) return null
+                    return KotlinJvmRunTaskData(
+                        targetName = sourceSetName,
+                        taskName = "$location:${sourceSetName}$KMP_RUN_TASK_SUFFIX",
+                        isComposeGradlePluginConfigured = false
+                    )
+                }
+            }
         }
 
         private fun getKmpPluginRunTask(
