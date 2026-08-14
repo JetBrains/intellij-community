@@ -407,13 +407,3 @@ fun <T : WorkspaceEntity> EntityChange<T>.newEntity() = when (this) {
     is EntityChange.Removed -> null
     is EntityChange.Replaced -> newEntity
 }
-
-interface I {
-    fun foo()
-}
-
-open class Base {
-    fun foo() {}
-}
-
-class Derived: Base(), I
