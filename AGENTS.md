@@ -44,6 +44,7 @@ For files under these roots, read the referenced rules before edits or reviews; 
   `tests.cmd` performs Bazel compilation internally, so a separate `bazel build` step is not needed when tests will be run.
   Module-specific rules may override the runner. Skip if plugin has no tests. See [TESTING](./.agents/skills/testing/SKILL.md).
 - **Bazel compilation without tests:** when only verifying compilation (no tests to run), use `bazel build <target>` for affected modules. Skip if only `.js`, `.mjs`, `.md`, `.txt`, or `.json` files are modified.
+- After modifying Bazel/Starlark sources (`BUILD`, `BUILD.bazel`, `MODULE.bazel`, `WORKSPACE`, `WORKSPACE.bazel`, or `*.bzl`), run `bazel run //:format.check`. If it reports diffs, run `bazel run //:format`, inspect the changes, and rerun the check.
 - After modifying `*.iml`, `BUILD.bazel`, or `.idea/` files: run `./build/jpsModelToBazel.cmd`.
 
 ### After Writing Code
