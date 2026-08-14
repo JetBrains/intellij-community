@@ -17,7 +17,7 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonToolViewModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
-import com.jetbrains.python.conda.CondaPyTool
+import com.intellij.python.community.impl.conda.CondaPyTool
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.CoroutineScope

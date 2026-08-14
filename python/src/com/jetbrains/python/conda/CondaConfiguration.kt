@@ -1,6 +1,7 @@
 package com.jetbrains.python.conda
 
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.community.impl.conda.CondaPyTool
 import com.intellij.python.pytools.getCustomExecutablePath
 import com.intellij.python.pytools.setCustomExecutablePath
 import java.nio.file.Path

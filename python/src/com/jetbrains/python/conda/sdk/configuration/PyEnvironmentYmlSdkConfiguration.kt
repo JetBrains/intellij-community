@@ -35,7 +35,7 @@ import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.pytools.resolveExecutable
-import com.jetbrains.python.conda.CondaPyTool
+import com.intellij.python.community.impl.conda.CondaPyTool
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo

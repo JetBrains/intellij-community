@@ -113,7 +113,6 @@
     <applicationService serviceInterface="com.jetbrains.python.errorProcessing.ErrorSink"
                         serviceImplementation="com.jetbrains.python.impl.ShowingMessageErrorSink"/>
     <python.pytools.genericPyToolManagerProvider implementation="com.jetbrains.python.sdk.configuration.SystemPythonToolManagerProvider"/>
-    <python.pytools.pyTool implementation="com.jetbrains.python.conda.CondaPyTool"/>
     <statusBarWidgetFactory id="pythonDependencyFileWidget"
                             implementation="com.jetbrains.python.requirements.widget.PyDependenciesFileStatusBarWidgetFactory"
                             order="after pythonInterpreterWidget, before git, before hg, before Notifications"/>
