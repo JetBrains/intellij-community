@@ -114,7 +114,7 @@ class JavaDocParser(
         }
 
         if (tokenType === JavaDocSyntaxTokenType.DOC_INLINE_TAG_END) {
-          val shouldClose = closingStatusList.removeLast()
+          val shouldClose = closingStatusList.removeAt(closingStatusList.lastIndex)
           if (shouldClose) {
             setBraceScope(getBraceScope() - 1)
             builder.advanceLexer()
