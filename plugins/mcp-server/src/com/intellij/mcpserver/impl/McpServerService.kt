@@ -29,6 +29,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManager.ConflictResolution
@@ -289,10 +290,13 @@ open class McpServerService(val cs: CoroutineScope) {
             }
           }
           catch (t: Throwable) {
+            rethrowControlFlowException(t)
             logger.error("Failed to gracefully shutdown authorized MCP server", t)
           }
-          privateServer.server = null
-          logger.trace { "Private MCP server stopped" }
+          finally {
+            privateServer.server = null
+            logger.trace { "Private MCP server stopped" }
+          }
         }
       }
       logger.trace { "Authorized MCP session stopped" }
