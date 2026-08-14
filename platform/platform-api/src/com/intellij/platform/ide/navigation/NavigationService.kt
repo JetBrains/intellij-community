@@ -31,21 +31,11 @@ interface NavigationService {
   }
 
   /**
-   * Initiates navigation in UI based on the provided data context and navigation options.
-   *
-   * @param dataContext Represents the contextual information required for determining the navigation target.
-   * @see [com.intellij.ide.ui.IdeUiService.createAsyncDataContext].
-   * @param options Contains configuration settings and parameters that influence the navigation behavior.
-   * @return `true` if at least one navigation target was handled
-   */
-  suspend fun navigate(dataContext: DataContext, options: NavigationOptions): Boolean
-
-  /**
    * Initiates navigation, resolving the requests lazily via [supplier].
    *
    * The supplier is invoked exactly once, on a background thread inside the navigation task: resolving the target is therefore
    * awaited together with the navigation, and a newer navigation cancels a resolution which is still running.
-   * The supplier may perform read actions, but it must not initiate another navigation:
+   * The supplier may perform `ReadAction`s, but it must not initiate another navigation:
    * a nested navigation request cancels the current one.
    *
    * The resolved requests are navigated as one batch: serialized as a whole, at most one
@@ -63,11 +53,10 @@ interface NavigationService {
   }
 
   /**
-   * Initiates navigation based on the provided request, with optional navigation options and a data context.
+   * Initiates navigation based on the provided request, with optional navigation options.
    *
    * @param request The navigation request describing the destination and associated parameters.
    * @param options Optional navigation options to customize the navigation behavior. Defaults to `NavigationOptions.defaultOptions()`.
-   * @param dataContext Optional context data to provide additional information or state during navigation. Can be null.
    * @return `true` if at least one request was handled
    *
    * @see NavigationRequest
@@ -75,7 +64,6 @@ interface NavigationService {
   suspend fun navigate(
     request: NavigationRequest,
     options: NavigationOptions = NavigationOptions.defaultOptions(),
-    dataContext: DataContext? = null,
   ): Boolean
 
   /**
@@ -88,7 +76,6 @@ interface NavigationService {
   suspend fun navigate(
     requests: Collection<NavigationRequest>,
     options: NavigationOptions = NavigationOptions.defaultOptions(),
-    dataContext: DataContext? = null,
   ): Boolean
 
   /**
@@ -100,7 +87,6 @@ interface NavigationService {
   suspend fun navigate(
     navigatables: List<Navigatable>,
     options: NavigationOptions = NavigationOptions.defaultOptions(),
-    dataContext: DataContext? = null,
   ): Boolean
 
   /**
@@ -118,7 +104,19 @@ interface NavigationService {
    * @return `true` if [navigatable] was handled
    */
   @Internal // compatibility function
-  suspend fun navigate(navigatable: Navigatable, options: NavigationOptions, dataContext: DataContext? = null): Boolean {
-    return navigate(listOf(navigatable), options, dataContext)
+  suspend fun navigate(navigatable: Navigatable, options: NavigationOptions): Boolean {
+    return navigate(listOf(navigatable), options)
+  }
+
+  @Deprecated(
+    "Prefer NavigationOptions instead of DataContext",
+    ReplaceWith("navigate(request, dataContext.toNavigationOptions(options))"),
+  )
+  suspend fun navigate(request: NavigationRequest, options: NavigationOptions = NavigationOptions.defaultOptions(), dataContext: DataContext? = null): Boolean {
+    if (dataContext == null) {
+      return navigate(request, options)
+    }
+    val effectiveOptions = dataContext.toNavigationOptions(options)
+    return navigate(request, effectiveOptions)
   }
 }

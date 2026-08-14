@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.ide.navigation.toNavigationOptions
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.Usage
 import com.intellij.usages.impl.UsageViewStatisticsCollector
@@ -33,12 +34,12 @@ internal class UsageNavigation(private val project: Project, private val cs: Cor
     editor: Editor?,
   ) {
     cs.launch {
-      val dataContext = withContext(Dispatchers.EDT) {
+      val options = withContext(Dispatchers.EDT) {
         editor?.let {
           DataManager.getInstance().getDataContext(it.component)
-        }
+        }.toNavigationOptions()
       }
-      NavigationService.getInstance(project).navigate(usage, NavigationOptions.requestFocus(), dataContext)
+      NavigationService.getInstance(project).navigate(usage, options)
       withContext(Dispatchers.EDT) {
         writeIntentReadAction {
           onReady.run()

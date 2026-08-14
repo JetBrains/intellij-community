@@ -4,7 +4,6 @@ package com.intellij.platform.ide.navigation
 import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
@@ -12,11 +11,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -56,26 +52,6 @@ class NavigationTaskCoordinator(
     finally {
       task.complete()
     }
-  }
-
-  /**
-   * Runs [action] on EDT after all currently pending navigation tasks have settled;
-   * runs it immediately when nothing is pending.
-   * The continuation is tracked as a pending task itself, so tests awaiting pending navigation also wait for it.
-   */
-  @RequiresEdt
-  fun runAfterTasksCompletion(scope: CoroutineScope, action: () -> Unit) {
-    ThreadingAssertions.assertEventDispatchThread()
-    val barrier = pendingNavigation()
-    if (barrier.isCompleted) {
-      action()
-      return
-    }
-    val context = ClientId.coroutineContext() + ModalityState.current().asContextElement() + Dispatchers.EDT
-    createTask(scope, context) {
-      barrier.join()
-      action()
-    }.start()
   }
 
   /**

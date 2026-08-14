@@ -3,9 +3,12 @@ package com.intellij.platform.ide.navigation
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.editor.Editor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 
+@ApiStatus.NonExtendable
 interface NavigationOptions {
   /**
    * Sets whether to request the focus.
@@ -40,6 +43,18 @@ interface NavigationOptions {
   fun preserveCaret(value: Boolean): NavigationOptions
 
   fun openInRightSplit(value: Boolean): NavigationOptions
+
+  /**
+   * Requests the navigation to happen in [editor], provided it is not disposed and displays the target file.
+   * Otherwise, the navigation falls back to regular file opening.
+   *
+   * The editor set here wins over [com.intellij.openapi.fileEditor.OpenFileDescriptor.NAVIGATE_IN_EDITOR]
+   * derived from the UI context of the navigation.
+   *
+   * Default: `null`, which means that the target editor is chosen by the platform.
+   */
+  @Internal
+  fun requestedEditor(editor: Editor?): NavigationOptions
 
   /**
    * Defines where the caret is placed once the navigation reached its target.
@@ -103,6 +118,7 @@ interface NavigationOptions {
       sourceNavigationOnly = false,
       forceFocus = false,
       recordAsBackHistory = true,
+      requestedEditor = null,
       caretPlacement = CaretPlacement.TARGET_OFFSET,
     )
   }
@@ -118,6 +134,7 @@ interface NavigationOptions {
     @Experimental @JvmField val openInRightSplit: Boolean,
     @Experimental @JvmField val forceFocus: Boolean,
     @Experimental @JvmField val recordAsBackHistory: Boolean,
+    @Experimental @JvmField val requestedEditor: Editor?,
     @Experimental @JvmField val caretPlacement: CaretPlacement,
   ) : NavigationOptions {
     override fun requestFocus(value: Boolean): NavigationOptions = copy(requestFocus = value)
@@ -131,6 +148,8 @@ interface NavigationOptions {
     override fun forceFocus(value: Boolean): NavigationOptions = copy(forceFocus = value, requestFocus = if (value) true else requestFocus)
 
     override fun recordAsBackHistory(value: Boolean): NavigationOptions = copy(recordAsBackHistory = value)
+
+    override fun requestedEditor(editor: Editor?): NavigationOptions = copy(requestedEditor = editor)
 
     override fun caretPlacement(placement: CaretPlacement): NavigationOptions = copy(caretPlacement = placement)
   }

@@ -10,13 +10,20 @@ import kotlin.coroutines.CoroutineContext
 /**
  * UI-thread snapshot required to submit navigation from any thread afterward.
  * Do not read focus or [ModalityState.current] when constructing this off the EDT.
+ *
+ * @see [com.intellij.platform.ide.navigation.toNavigationOptions].
  */
 @ApiStatus.Internal
 class NavigationTaskContext internal constructor(
   val dataContext: DataContext?,
   val modalityState: ModalityState,
   private val clientIdContext: CoroutineContext,
+  private val requestedOptions: NavigationOptions,
 ) {
   val coroutineContext: CoroutineContext
     get() = clientIdContext + modalityState.asContextElement()
+
+  val navigationOptions: NavigationOptions by lazy {
+    dataContext.toNavigationOptions(requestedOptions)
+  }
 }

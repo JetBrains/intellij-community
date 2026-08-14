@@ -36,7 +36,7 @@ internal class NavigationTargetNavigatable(
       val request = readAction { navigationTarget?.navigationRequest() }
       request?.let {
         project.serviceAsync<NavigationService>().navigate(
-          it, NavigationOptions.defaultOptions().requestFocus(requestFocus), dataContext
+          it, NavigationOptions.defaultOptions().requestFocus(requestFocus)
         )
       }
     }

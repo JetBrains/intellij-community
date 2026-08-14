@@ -1,21 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.actions.impl
 
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUtil
 import com.intellij.ide.actions.EditSourceAction
+import com.intellij.ide.util.EditSourceUtil
 import com.intellij.openapi.actionSystem.ActionPromoter
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil.copyFrom
+import com.intellij.openapi.fileEditor.FileNavigator
 import com.intellij.openapi.fileEditor.FileNavigator.Companion.getInstance
-import com.intellij.openapi.fileEditor.FileNavigatorImpl
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
+import com.intellij.psi.PsiElement
 
 open class OpenInEditorAction : EditSourceAction(), DumbAware, ActionPromoter {
   init {
@@ -84,10 +86,10 @@ open class OpenInEditorAction : EditSourceAction(), DumbAware, ActionPromoter {
      */
     @JvmStatic
     fun openEditor(navigatables: Array<Navigatable>, callback: Runnable?): Boolean {
-      val fileNavigator = getInstance() as FileNavigatorImpl
+      val fileNavigator = getInstance()
       var success = false
       for (navigatable in navigatables) {
-        success = success or fileNavigator.navigateIgnoringContextEditor(navigatable)
+        success = success or navigate(fileNavigator, navigatable)
       }
       if (success && callback != null) {
         callback.run()
@@ -101,4 +103,28 @@ private fun isManuallyHidden(dataContext: DataContext): Boolean {
   val request = dataContext.getData(DiffDataKeys.DIFF_REQUEST)
   val context = dataContext.getData(DiffDataKeys.DIFF_CONTEXT)
   return DiffUtil.isUserDataFlagSet(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, request, context)
+}
+
+/**
+ * [OpenFileDescriptor.NAVIGATE_IN_EDITOR] of the diff viewer belongs to the viewer, which uses it to keep navigation
+ * inside its own tab, and must not be reused for the source target: the whole point of this action is to leave the diff.
+ */
+private fun navigate(fileNavigator: FileNavigator, navigatable: Navigatable): Boolean {
+  if (!navigatable.canNavigate()) {
+    return false
+  }
+
+  val descriptor = when (navigatable) {
+    is OpenFileDescriptor -> navigatable
+    is PsiElement -> EditSourceUtil.getDescriptor(navigatable) as? OpenFileDescriptor
+    else -> null
+  }
+  if (descriptor != null) {
+    fileNavigator.navigate(descriptor, requestFocus = true, requestedEditor = null)
+  }
+  else {
+    // an opaque legacy navigatable navigates by itself, so there is no channel to state the policy
+    navigatable.navigate(true)
+  }
+  return true
 }

@@ -7,11 +7,14 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.IdeUiService
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
@@ -45,7 +48,6 @@ private val isNavigationRequestsEnabled: Boolean
  * NB: prefer passing a lifecycle-bound [coroutineScope] when possible.
  *
  * @see [CoroutineScope.requestNavigate]
- * @see [NavigationTaskCoordinator.runAfterTasksCompletion]
  *
  * @return [Job] which completes when the navigation task settles: finishes, is canceled
  * by a newer navigation request, or fails. This is an observation handle only
@@ -63,11 +65,12 @@ fun requestNavigate(
     project,
     dataContext,
     coroutineScope,
+    options,
     navigateAsync = { ctx ->
-      project.serviceAsync<NavigationService>().navigate(navigatable, options, ctx)
+      project.serviceAsync<NavigationService>().navigate(navigatable, ctx.navigationOptions)
     }
   ) { ctx ->
-    navigateBlocking(project, navigatable, options, ctx)
+    navigateBlocking(project, navigatable, ctx.navigationOptions)
   }
 }
 
@@ -88,11 +91,12 @@ fun requestNavigate(
     project,
     dataContext,
     coroutineScope,
+    options,
     navigateAsync = { ctx ->
-      project.serviceAsync<NavigationService>().navigate(request, options, ctx)
+      project.serviceAsync<NavigationService>().navigate(request, ctx.navigationOptions)
     }
   ) { ctx ->
-    navigateBlocking(project, request, options, ctx)
+    navigateBlocking(project, request, ctx.navigationOptions)
   }
 }
 
@@ -108,12 +112,13 @@ fun requestNavigate(
     project,
     dataContext,
     coroutineScope,
+    options,
     navigateAsync = { ctx ->
-      project.serviceAsync<NavigationService>().navigate(ctx ?: dataContext, options)
+      navigate(project, ctx.dataContext, ctx.navigationOptions)
     }
   ) { ctx ->
     runWithModalProgressBlocking(project, IdeBundle.message("progress.title.preparing.navigation")) {
-      project.serviceAsync<NavigationService>().navigate(ctx ?: dataContext, options)
+      navigate(project, ctx.dataContext, ctx.navigationOptions)
     }
   }
 }
@@ -132,11 +137,12 @@ fun CoroutineScope.requestNavigate(
   return dispatchNavigateRequest(
     project,
     dataContext,
+    options,
     navigateAsync = { ctx ->
-      project.serviceAsync<NavigationService>().navigate(navigatable, options, ctx)
+      project.serviceAsync<NavigationService>().navigate(navigatable, ctx.navigationOptions)
     }
   ) { ctx ->
-    navigateBlocking(project, navigatable, options, ctx)
+    navigateBlocking(project, navigatable, ctx.navigationOptions)
   }
 }
 
@@ -154,11 +160,24 @@ fun CoroutineScope.requestNavigate(
   return dispatchNavigateRequest(
     project,
     dataContext,
+    options,
     navigateAsync = { ctx ->
-      project.serviceAsync<NavigationService>().navigate(request, options, ctx)
+      project.serviceAsync<NavigationService>().navigate(request, ctx.navigationOptions)
     }
   ) { ctx ->
-    navigateBlocking(project, request, options, ctx)
+    navigateBlocking(project, request, ctx.navigationOptions)
+  }
+}
+
+/**
+ * The targets are resolved from async [dataContext] inside the navigation task, so a navigation which is still resolving them
+ * is canceled by a newer one instead of outliving it.
+ */
+internal suspend fun navigate(project: Project, dataContext: DataContext?, options: NavigationOptions): Boolean {
+  return project.serviceAsync<NavigationService>().navigate(options) {
+    readAction {
+      dataContext?.getData(CommonDataKeys.NAVIGATABLE_ARRAY)?.toList()
+    }.orEmpty()
   }
 }
 
@@ -166,37 +185,35 @@ private fun dispatchNavigateRequest(
   project: Project,
   dataContext: DataContext?,
   coroutineScope: CoroutineScope?,
-  navigateAsync: suspend (DataContext?) -> Unit,
-  navigateBlocking: (DataContext?) -> Unit,
+  options: NavigationOptions,
+  navigateAsync: suspend (NavigationTaskContext) -> Unit,
+  navigateBlocking: (NavigationTaskContext) -> Unit,
 ): Job {
   if (ApplicationManager.getApplication().isDispatchThread) {
-    return createNavigationContext(project, dataContext).dispatchNavigateRequest(
-      project,
-      coroutineScope,
-      navigateAsync,
-      navigateBlocking,
-    )
+    return createNavigationContext(project, options, dataContext)
+      .dispatchNavigateRequest(project, coroutineScope, navigateAsync, navigateBlocking)
   }
-  return coroutineScope.dispatchNavigateRequest(project, dataContext, navigateAsync, navigateBlocking)
+  return coroutineScope.dispatchNavigateRequest(project, dataContext, options, navigateAsync, navigateBlocking)
 }
 
 private fun CoroutineScope?.dispatchNavigateRequest(
   project: Project,
   dataContext: DataContext?,
-  navigateAsync: suspend (DataContext?) -> Unit,
-  navigateBlocking: (DataContext?) -> Unit,
+  options: NavigationOptions,
+  navigateAsync: suspend (NavigationTaskContext) -> Unit,
+  navigateBlocking: (NavigationTaskContext) -> Unit,
 ): Job {
   return NavigationTaskCoordinator.getInstance(project).dispatchNavigation(this) {
     val navigateContext = withContext(Dispatchers.EDT) {
-      createNavigationContext(project, dataContext)
+      createNavigationContext(project, options, dataContext)
     }
     withContext(navigateContext.coroutineContext) {
       if (isNavigationRequestsEnabled) {
-        navigateAsync(navigateContext.dataContext)
+        navigateAsync(navigateContext)
       }
       else {
         withContext(Dispatchers.EDT) {
-          navigateBlocking(navigateContext.dataContext)
+          navigateBlocking(navigateContext)
         }
       }
     }
@@ -206,19 +223,19 @@ private fun CoroutineScope?.dispatchNavigateRequest(
 private inline fun NavigationTaskContext.dispatchNavigateRequest(
   project: Project,
   coroutineScope: CoroutineScope?,
-  crossinline navigateAsync: suspend (DataContext?) -> Unit,
-  crossinline navigateBlocking: (DataContext?) -> Unit,
+  crossinline navigateAsync: suspend (NavigationTaskContext) -> Unit,
+  crossinline navigateBlocking: (NavigationTaskContext) -> Unit,
 ): Job {
   val coordinator = NavigationTaskCoordinator.getInstance(project)
   return if (isNavigationRequestsEnabled) {
     coordinator.dispatchNavigation(coroutineScope, this) {
-      navigateAsync(dataContext)
+      navigateAsync(this@dispatchNavigateRequest)
     }
   }
   else {
     coordinator.dispatchNavigation(coroutineScope, this) {
       withContext(Dispatchers.EDT) {
-        navigateBlocking(dataContext)
+        navigateBlocking(this@dispatchNavigateRequest)
       }
     }
   }
@@ -229,11 +246,10 @@ private inline fun NavigationTaskContext.dispatchNavigateRequest(
  * This is a blocking version of [NavigationService.navigate].
  */
 @RequiresEdt
-private fun navigateBlocking(project: Project, navigatable: Navigatable, options: NavigationOptions, dataContext: DataContext?) {
+private fun navigateBlocking(project: Project, navigatable: Navigatable, options: NavigationOptions) {
   ThreadingAssertions.assertEventDispatchThread()
-  val dataContext = dataContext ?: fetchDataContext(project)
   return runWithModalProgressBlocking(project, IdeBundle.message("progress.title.preparing.navigation")) {
-    project.serviceAsync<NavigationService>().navigate(navigatable, options, dataContext)
+    project.serviceAsync<NavigationService>().navigate(navigatable, options)
   }
 }
 
@@ -242,11 +258,10 @@ private fun navigateBlocking(project: Project, navigatable: Navigatable, options
  * This is a blocking version of [NavigationService.navigate].
  */
 @RequiresEdt
-private fun navigateBlocking(project: Project, request: NavigationRequest, options: NavigationOptions, dataContext: DataContext?) {
+private fun navigateBlocking(project: Project, request: NavigationRequest, options: NavigationOptions) {
   ThreadingAssertions.assertEventDispatchThread()
-  val dataContext = dataContext ?: fetchDataContext(project)
   return runWithModalProgressBlocking(project, IdeBundle.message("progress.title.preparing.navigation")) {
-    project.serviceAsync<NavigationService>().navigate(request, options, dataContext)
+    project.serviceAsync<NavigationService>().navigate(request, options)
   }
 }
 
@@ -256,12 +271,17 @@ private fun navigateBlocking(project: Project, request: NavigationRequest, optio
  */
 @RequiresEdt
 @ApiStatus.Internal
-private fun createNavigationContext(project: Project, dataContext: DataContext? = null): NavigationTaskContext {
+private fun createNavigationContext(
+  project: Project,
+  options: NavigationOptions,
+  dataContext: DataContext? = null,
+): NavigationTaskContext {
   ThreadingAssertions.assertEventDispatchThread()
   return NavigationTaskContext(
-    getOrCreateAsyncDataContext(project, dataContext),
+    dataContext = getOrCreateAsyncDataContext(project, dataContext),
     modalityState = ModalityState.current(),
     clientIdContext = ClientId.coroutineContext(),
+    requestedOptions = options,
   )
 }
 
@@ -277,4 +297,24 @@ private fun fetchDataContext(project: Project): DataContext? {
   ThreadingAssertions.assertEventDispatchThread()
   val component = IdeFocusManager.getInstance(project).getFocusOwner()
   return component?.let { DataManager.getInstance().getDataContext(it) }
+}
+
+/**
+ * Maps navigation inputs from this context into [options].
+ *
+ * A decision the caller already made about [NavigationOptions.requestedEditor] wins over
+ * [OpenFileDescriptor.NAVIGATE_IN_EDITOR] from the context.
+ */
+@ApiStatus.Internal
+fun DataContext?.toNavigationOptions(options: NavigationOptions = NavigationOptions.requestFocus()): NavigationOptions {
+  if ((options as NavigationOptions.Impl).requestedEditor != null) {
+    return options
+  }
+  val contextEditor = this?.getData(OpenFileDescriptor.NAVIGATE_IN_EDITOR)
+
+  return if (contextEditor == null) {
+    options
+  } else {
+    options.requestedEditor(contextEditor)
+  }
 }

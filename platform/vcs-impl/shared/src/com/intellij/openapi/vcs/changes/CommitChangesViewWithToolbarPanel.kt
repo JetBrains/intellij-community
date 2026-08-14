@@ -23,7 +23,7 @@ import com.intellij.openapi.vcs.changes.ui.selectedDiffableNode
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.ide.navigation.NavigationOptions
-import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.ide.navigation.requestNavigate
 import com.intellij.platform.vcs.impl.shared.SingleTaskRunner
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys
@@ -245,10 +245,8 @@ private class ChangesViewInputHandler(
       }
       else {
         val dataContext = DataManager.getInstance().getDataContext(changesView)
-        cs.launch {
-          val parameters = NavigationOptions.defaultOptions().requestFocus(requestFocus)
-          NavigationService.getInstance(changesView.project).navigate(dataContext, parameters)
-        }
+        val parameters = NavigationOptions.defaultOptions().requestFocus(requestFocus)
+        requestNavigate(changesView.project, dataContext, parameters, cs)
       }
     }
     return true

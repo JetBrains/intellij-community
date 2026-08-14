@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
-import com.intellij.codeInsight.completion.command.CommandCompletionService
 import com.intellij.codeInsight.completion.command.CommandProvider
 import com.intellij.codeInsight.completion.command.CompletionCommand
 import com.intellij.codeInsight.completion.command.HighlightInfoLookup
@@ -18,23 +17,19 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.AnActionResult
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.ex.AnActionListener
-import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.UserDataHolder
-import com.intellij.platform.ide.navigation.NavigationTaskCoordinator
+import com.intellij.platform.ide.navigation.CaretPlacement
+import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
@@ -142,7 +137,11 @@ open class ActionCommandProvider(
 
   /**
    * Creates an action completion command based on a provided context, where the name identifier
-   * or relevant PSI element and its range are adjusted appropriately after calling the command.
+   * or relevant PSI element and its range are the command target, and the caret is placed behind that name
+   * by the navigation the action performs.
+   *
+   * Suits actions which navigate through [com.intellij.platform.ide.navigation.NavigationService]; an action navigating
+   * on its own ignores the requested caret placement, and its caret ends up at the target offset.
    *
    * @param context Provides the necessary information about the environment, such as the PSI file,
    *                editor, offset, and other relevant metadata required for command creation.
@@ -150,7 +149,17 @@ open class ActionCommandProvider(
    *         or null if it cannot be constructed due to incompatible context or missing elements.
    */
   @ApiStatus.Experimental
-  protected fun createCommandWithNameIdentifierAndLastAdjusted(context: CommandCompletionProviderContext): ActionCompletionCommand? {
+  protected fun createNavigationCommandWithNameIdentifier(context: CommandCompletionProviderContext): ActionCompletionCommand? {
+    return createCustomizedCommandWithNameIdentifier(context) { dataContext ->
+      val options = NavigationOptions.requestFocus().caretPlacement(CaretPlacement.TOKEN_END)
+      SimpleDataContext.getSimpleContext(NavigationOptions.KEY, options, dataContext)
+    }
+  }
+
+  private fun createCustomizedCommandWithNameIdentifier(
+    context: CommandCompletionProviderContext,
+    customizeContext: (DataContext) -> DataContext,
+  ): ActionCompletionCommand? {
     var element = getCommandContext(context.offset, context.psiFile) ?: return null
     if (element is PsiNameIdentifierOwner) {
       element = element.nameIdentifier ?: return null
@@ -168,13 +177,7 @@ open class ActionCommandProvider(
         super.execute(offset, psiFile, editor)
       }
 
-      override fun customizeEvent(event: AnActionEvent) {
-        super.customizeEvent(event)
-        val dataContext = event.dataContext
-        if (dataContext is UserDataHolder) {
-          dataContext.putUserData(ADJUST_LAST, true)
-        }
-      }
+      override fun customizeDataContext(dataContext: DataContext): DataContext = customizeContext(dataContext)
     }
   }
 
@@ -237,20 +240,21 @@ open class ActionCompletionCommand(
       return null
     }
 
+  /**
+   * Called before the event is created
+   */
   @ApiStatus.Internal
-  protected open fun customizeEvent(event: AnActionEvent) {
-  }
+  protected open fun customizeDataContext(dataContext: DataContext): DataContext = dataContext
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     val action = action ?: return
     if (editor == null) return
     //drop data context caches because it can be cached before psi was changed and it is necessary to refresh
     ActivityTracker.getInstance().inc()
-    val dataContext = DataManager.getInstance().getDataContext(editor.getComponent())
+    val dataContext = customizeDataContext(DataManager.getInstance().getDataContext(editor.getComponent()))
     val presentation: Presentation = action.templatePresentation.clone()
     val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION,
                                           ActionUiKind.NONE, null)
-    customizeEvent(event)
     if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) {
       SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { _ ->
         ActionUtil.performAction(action, event)
@@ -267,35 +271,5 @@ open class ActionCompletionCommand(
       contentHtml = "$contentHtml."
     }
     return IntentionPreviewInfo.Html(contentHtml)
-  }
-}
-
-private val ADJUST_LAST = Key.create<Boolean>("CommandCompletion.AdjustLast")
-
-@ApiStatus.Experimental
-private class ActionsAdjustLastListener : AnActionListener {
-  override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
-    super.afterActionPerformed(action, event, result)
-    val dataContext = event.dataContext
-    if (dataContext is UserDataHolder) {
-      val data = dataContext.getUserData(ADJUST_LAST)
-      if (data != true) return
-      val project = event.project ?: return
-      NavigationTaskCoordinator.getInstance(project).runAfterTasksCompletion(event.coroutineScope) {
-        val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return@runAfterTasksCompletion
-        moveCaretToEnd(editor)
-      }
-    }
-  }
-
-  private fun moveCaretToEnd(editor: Editor) {
-    val project = editor.project ?: return
-    val commandCompletionService = project.serviceOrNull<CommandCompletionService>() ?: return
-    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
-    val factory = commandCompletionService.getFactory(psiFile.language) ?: return
-    val newOffset: Int? = factory.adjustCaret(psiFile, editor.caretModel.offset)
-    if (newOffset != null && newOffset <= editor.document.textLength) {
-      editor.caretModel.moveToOffset(newOffset)
-    }
   }
 }

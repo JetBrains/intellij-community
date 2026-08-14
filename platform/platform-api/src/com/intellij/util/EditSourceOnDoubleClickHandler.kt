@@ -8,12 +8,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.navigation.NavigationOptions
-import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.ide.navigation.NavigationTaskCoordinator
+import com.intellij.platform.ide.navigation.toNavigationOptions
+import com.intellij.platform.ide.navigation.navigate
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.treeStructure.treetable.TreeTable
@@ -97,9 +97,9 @@ object EditSourceOnDoubleClickHandler {
     if (Registry.`is`("ide.navigation.requests")) {
       val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
       val asyncContext = IdeUiService.getInstance().createAsyncDataContext(dataContext)
+      val options = asyncContext.toNavigationOptions(NavigationOptions.requestFocus().preserveCaret(true))
       NavigationTaskCoordinator.getInstance(project).dispatchNavigation {
-        val options = NavigationOptions.defaultOptions().requestFocus(true).preserveCaret(true)
-        project.serviceAsync<NavigationService>().navigate(asyncContext, options)
+        navigate(project, asyncContext, options)
         whenPerformed?.let { task ->
           withContext(Dispatchers.EDT) {
             task.run()

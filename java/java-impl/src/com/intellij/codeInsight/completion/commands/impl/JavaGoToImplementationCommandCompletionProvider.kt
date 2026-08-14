@@ -68,6 +68,6 @@ internal class JavaGoToImplementationCommandCompletionProvider : AbstractGoToImp
       }
       targetContext = context.copy(offset = currentOffset)
     }
-    return super.createCommandWithNameIdentifierAndLastAdjusted(targetContext)
+    return super.createNavigationCommandWithNameIdentifier(targetContext)
   }
 }

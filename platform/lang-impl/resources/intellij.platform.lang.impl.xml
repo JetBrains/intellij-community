@@ -1918,8 +1918,6 @@
               topic="com.intellij.openapi.editor.colors.EditorColorsListener" activeInHeadlessMode="false"/>
     <listener class="com.intellij.refactoring.suggested.SuggestedRefactoringEditorHintAdvSettingListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
-    <listener class="com.intellij.codeInsight.completion.command.commands.ActionsAdjustLastListener"
-              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
     <listener class="com.intellij.ide.projectView.impl.ProjectViewVfsInfoListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener class="com.intellij.ide.projectView.impl.ProjectViewIndexableInfoListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
   </applicationListeners>

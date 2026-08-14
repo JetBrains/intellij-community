@@ -1,14 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.navigation.impl
 
-import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
-import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.injected.editor.VirtualFileWindow
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.impl.Utils
-import com.intellij.openapi.actionSystem.impl.Utils.isAsyncDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
@@ -40,7 +34,6 @@ import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.impl.DirectoryNavigationRequest
 import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
-import com.intellij.platform.backend.navigation.impl.SharedSourceNavigationRequest
 import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
 import com.intellij.platform.ide.navigation.CaretPlacement
 import com.intellij.platform.ide.navigation.NavigationOptions
@@ -68,39 +61,12 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
   private val taskCoordinator: NavigationTaskCoordinator
     get() = NavigationTaskCoordinator.getInstance(project)
 
-  override suspend fun navigate(dataContext: DataContext, options: NavigationOptions): Boolean {
-    return taskCoordinator.runWithTracking {
-      val asyncContext = if (isAsyncDataContext(dataContext)) {
-        dataContext
-      }
-      else {
-        LOG.error("Expected async context, got: $dataContext")
-        withContext(Dispatchers.EDT) {
-          // hope that context component is still available
-          Utils.createAsyncDataContext(dataContext)
-        }
-      }
-
-      semaphore.withPermit {
-        val navigatables = readAction {
-          asyncContext.getData(CommonDataKeys.NAVIGATABLE_ARRAY)
-        }
-        if (!navigatables.isNullOrEmpty()) {
-          doNavigate(navigatables = navigatables.toList(), options = options, dataContext = asyncContext)
-        }
-        else {
-          false
-        }
-      }
-    }
-  }
-
   override suspend fun navigateRequests(options: NavigationOptions, supplier: suspend () -> Collection<NavigationRequest>): Boolean {
     return taskCoordinator.runWithTracking {
       semaphore.withPermit {
         val requests = withContext(Dispatchers.Default) { supplier() }
         requests.isNotEmpty() && withHistoryIfNeeded(options) {
-          navigate(project = project, requests = requests, options = options, dataContext = null)
+          navigate(project = project, requests = requests, options = options)
         }
       }
     }
@@ -110,39 +76,39 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
     return taskCoordinator.runWithTracking {
       semaphore.withPermit {
         val navigatables = withContext(Dispatchers.Default) { supplier() }
-        navigatables.isNotEmpty() && doNavigate(navigatables.toList(), options, dataContext = null)
+        navigatables.isNotEmpty() && doNavigate(navigatables.toList(), options)
       }
     }
   }
 
-  override suspend fun navigate(navigatables: List<Navigatable>, options: NavigationOptions, dataContext: DataContext?): Boolean {
+  override suspend fun navigate(navigatables: List<Navigatable>, options: NavigationOptions): Boolean {
     return taskCoordinator.runWithTracking {
       semaphore.withPermit {
-        doNavigate(navigatables, options, dataContext)
+        doNavigate(navigatables, options)
       }
     }
   }
 
-  private suspend fun doNavigate(navigatables: List<Navigatable>, options: NavigationOptions, dataContext: DataContext?): Boolean {
+  private suspend fun doNavigate(navigatables: List<Navigatable>, options: NavigationOptions): Boolean {
     val requests = navigatables.mapWithProgress {
       readAction {
         it.navigationRequest()
       }
     }.filterNotNull()
     return withHistoryIfNeeded(options) {
-      navigate(project = project, requests = requests, options = options, dataContext = dataContext)
+      navigate(project = project, requests = requests, options = options)
     }
   }
 
-  override suspend fun navigate(request: NavigationRequest, options: NavigationOptions, dataContext: DataContext?): Boolean {
-    return navigate(listOf(request), options, dataContext)
+  override suspend fun navigate(request: NavigationRequest, options: NavigationOptions): Boolean {
+    return navigate(listOf(request), options)
   }
 
-  override suspend fun navigate(requests: Collection<NavigationRequest>, options: NavigationOptions, dataContext: DataContext?): Boolean {
+  override suspend fun navigate(requests: Collection<NavigationRequest>, options: NavigationOptions): Boolean {
     return taskCoordinator.runWithTracking {
       semaphore.withPermit {
         withHistoryIfNeeded(options) {
-          navigate(project = project, requests = requests, options = options, dataContext = dataContext)
+          navigate(project = project, requests = requests, options = options)
         }
       }
     }
@@ -162,7 +128,7 @@ private val LOG: Logger = Logger.getInstance("#com.intellij.platform.ide.navigat
 /**
  * Navigates to all sources from [requests], or navigates to first non-source request.
  */
-private suspend fun navigate(project: Project, requests: Collection<NavigationRequest>, options: NavigationOptions, dataContext: DataContext?): Boolean {
+private suspend fun navigate(project: Project, requests: Collection<NavigationRequest>, options: NavigationOptions): Boolean {
   val maxSourceRequests = if (requests.size == 1) Int.MAX_VALUE else Registry.intValue("ide.source.file.navigation.limit", 100)
   var nonSourceRequest: Pair<NavigationRequest, NavigationOptions.Impl>? = null
 
@@ -178,7 +144,7 @@ private suspend fun navigate(project: Project, requests: Collection<NavigationRe
     else {
       options.openInRightSplit(false) as NavigationOptions.Impl
     }
-    if (tryNavigateToSource(project = project, request = requestFromNavigatable, options = requestOptions, dataContext = dataContext)) {
+    if (tryNavigateToSource(project = project, request = requestFromNavigatable, options = requestOptions)) {
       navigatedSourcesCounter++
     }
     else if (nonSourceRequest == null) {
@@ -204,7 +170,6 @@ private suspend fun tryNavigateToSource(
   project: Project,
   request: NavigationRequest,
   options: NavigationOptions.Impl,
-  dataContext: DataContext?,
 ): Boolean {
   when (request) {
     is SourceNavigationRequest -> {
@@ -215,7 +180,6 @@ private suspend fun tryNavigateToSource(
           request = request,
           options = options,
           project = project,
-          dataContext = dataContext,
           offset = request.targetOffset(caretShift),
           knownType = knownType,
         )
@@ -339,9 +303,6 @@ private suspend fun adjustCaret(project: Project, target: RawCaretTarget) {
 }
 
 /**
- * The same rule [com.intellij.codeInsight.completion.command.CommandCompletionFactory.adjustCaret] applies post factum,
- * inlined here to keep the navigation independent of the completion commands.
- *
  * @return the end offset of the token starting at [offset], or `null` when [offset] is not a token start
  */
 private fun PsiFile.findLeafEndAtOffset(offset: Int): Int? {
@@ -367,7 +328,6 @@ private suspend fun navigateToSourceImpl(
   options: NavigationOptions.Impl,
   request: SourceNavigationRequest,
   project: Project,
-  dataContext: DataContext?,
   offset: Int,
   knownType: FileType?,
 ) {
@@ -381,22 +341,12 @@ private suspend fun navigateToSourceImpl(
       }
     }
     else {
-      val inEditorDataContext = dataContext?.let(OpenFileDescriptor.NAVIGATE_IN_EDITOR::getData) != null
-      val descriptor = if (!inEditorDataContext && request is SharedSourceNavigationRequest && isSharedSourceSupportEnabled(project)) {
-        OpenFileDescriptor(project, request.file, request.context, offset)
-      }
-      else {
-        OpenFileDescriptor(project, request.file, offset)
-      }
-      if (UISettings.getInstance().openInPreviewTabIfPossible && Registry.`is`("editor.preview.tab.navigation")) {
-        descriptor.isUsePreviewTab = true
-      }
-
-      if (inEditorDataContext) {
-        descriptor.isUseCurrentWindow = true
+      val requestedEditor = options.requestedEditor
+      if (requestedEditor != null) {
+        val descriptor = OpenFileDescriptor(project, request.file, offset)
         val fileNavigator = serviceAsync<FileNavigator>()
         if (fileNavigator is FileNavigatorImpl &&
-            fileNavigator.navigateInRequestedEditorAsync(descriptor, dataContext, options.requestFocus)) {
+            fileNavigator.navigateInRequestedEditorAsync(descriptor, requestedEditor, options.requestFocus)) {
           return
         }
       }
@@ -464,6 +414,7 @@ private suspend fun openFile(
   }
 
   val descriptor = OpenFileDescriptor(project, file, hostOffset)
+  val fileNavigator = serviceAsync<FileNavigator>()
   suspend fun tryNavigate(fileEditors: Sequence<FileEditor>): Boolean {
     for (editor in fileEditors) {
       // try to navigate opened editor
@@ -480,8 +431,9 @@ private suspend fun openFile(
               editor.canNavigateTo(descriptor) -> {
                 navigateAndSelectEditor(editor, descriptor, composite as? EditorComposite)
               }
-              FileNavigator.getInstance().canNavigate(descriptor) -> {
-                FileNavigator.getInstance().navigate(descriptor, options.requestFocus)
+              fileNavigator.canNavigate(descriptor) -> {
+                // NAVIGATE_IN_EDITOR of the current data context is unrelated to this navigation
+                fileNavigator.navigate(descriptor, options.requestFocus, requestedEditor = null)
                 true
               }
               else -> false
