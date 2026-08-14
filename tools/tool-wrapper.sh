@@ -136,32 +136,61 @@ acquire_lock() {
   local flag_file="$2"
   local lock_file="$lock_dir/.tool-wrapper-lock.pid"
   local tmp_lock_file="$lock_dir/.tmp.$$.pid"
+  local retry_count=0
 
   mkdir -p "$lock_dir"
   echo $$ > "$tmp_lock_file"
 
-  while ! ln "$tmp_lock_file" "$lock_file" 2>/dev/null; do
-    local lock_owner
-    lock_owner=$(cat "$lock_file" 2>/dev/null || true)
+  while true; do
+    local link_error
+    if link_error=$(ln "$tmp_lock_file" "$lock_file" 2>&1); then
+      break
+    fi
 
-    # Wait if lock owner is still running
-    while [ -n "$lock_owner" ] && ps -p "$lock_owner" >/dev/null 2>&1; do
+    if [ ! -f "$tmp_lock_file" ]; then
+      die "Temporary lock file disappeared while acquiring $lock_file: $link_error"
+    fi
+
+    local lock_owner
+    if ! lock_owner=$(cat "$lock_file" 2>/dev/null); then
+      if [ -e "$lock_file" ]; then
+        rm -f "$tmp_lock_file"
+        die "Cannot read existing lock $lock_file"
+      fi
+      retry_count=$((retry_count + 1))
+      if [ "$retry_count" -ge 3 ]; then
+        rm -f "$tmp_lock_file"
+        die "Failed to acquire $lock_file after $retry_count attempts: $link_error"
+      fi
+      sleep 1
+      continue
+    fi
+
+    case "$lock_owner" in
+      ''|*[!0-9]*)
+        rm -f "$tmp_lock_file"
+        die "Invalid lock owner in $lock_file"
+        ;;
+    esac
+
+    if ps -p "$lock_owner" >/dev/null 2>&1; then
+      retry_count=0
       info "Waiting for process $lock_owner to finish downloading $TOOL_NAME..."
       sleep 1
-      lock_owner=$(cat "$lock_file" 2>/dev/null || true)
 
-      # Check if another process completed the download
       if [ -f "$flag_file" ]; then
         rm -f "$tmp_lock_file"
         return 1  # Signal: already downloaded by another process
       fi
-    done
+      continue
+    fi
 
-    # Stale lock - remove it
-    if [ -n "$lock_owner" ]; then
+    # Recheck the owner before removing a stale lock another waiter may have replaced.
+    if grep -qx "$lock_owner" "$lock_file" 2>/dev/null; then
       info "Removing stale lock from process $lock_owner"
       rm -f "$lock_file"
     fi
+    sleep 1
   done
 
   rm -f "$tmp_lock_file"
