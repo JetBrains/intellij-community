@@ -23,6 +23,7 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.nio.file.Path
 import java.util.Collections
 
 private val LOG = logger<FeatureUsageData>()
@@ -108,6 +109,24 @@ class FeatureUsageData(val recorderId: String) {
     }
     return this
   }
+
+/**
+ * Reports the same `project` field as [addProject], but derived from a raw project path instead of a [Project] instance.
+ *
+ * Prefer [addProject] whenever a [Project] is available. This variant exists only for collectors that report data about a project
+ * which is not open in this IDE, for example metrics produced by an external build process and reported by the IDE later, when the
+ * build the metrics belong to can't be attributed to any open project.
+ *
+ * @param projectPath normalized path to the project base directory, or `null` to add no `project` field at all
+ * @see addProject
+ */
+@ApiStatus.Internal
+fun addProjectPath(projectPath: Path?): FeatureUsageData {
+  if (projectPath != null) {
+    data["project"] = EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(getProjectCacheFileName(projectPath))
+  }
+  return this
+}
 
   fun addVersionByString(@NonNls version: String?): FeatureUsageData {
     if (version == null) {

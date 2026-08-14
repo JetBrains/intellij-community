@@ -7,6 +7,8 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import java.util.function.Consumer
 
 /**
@@ -208,6 +210,19 @@ class VarargEventId internal constructor(
 
   fun log(project: Project?, pairs: List<EventPair<*>>) {
     processLoggers { it.logAsync(group, eventId, buildUsageData(pairs).addProject(project).build(), false) }
+  }
+
+  /**
+   * Logs the event with a `project` field derived from a raw project path rather than from a [Project] instance.
+   *
+   * Prefer [log] with a [Project]. This entry point exists only for collectors reporting on a project that is not open in this IDE,
+   * such as metrics produced by an external build process and reported later. See [FeatureUsageData.addProjectPath].
+   *
+   * @param projectPath normalized path to the project base directory, or `null` to log without a `project` field
+   */
+  @ApiStatus.Internal
+  fun logWithProjectPath(projectPath: Path?, pairs: List<EventPair<*>>) {
+    processLoggers { it.logAsync(group, eventId, buildUsageData(pairs).addProjectPath(projectPath).build(), false) }
   }
 
   /**
