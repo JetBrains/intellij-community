@@ -16,12 +16,18 @@
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.statistics"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <advancedSetting id="stream.debugger.show.inlays" default="true"
                      bundle="messages.JavaStreamDebuggerFrontendBundle"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.debugger.streams.java.frontend.StreamDebuggerInlaySettingsListener"
+              topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
+  </applicationListeners>
 
   <projectListeners>
     <listener class="com.intellij.debugger.streams.java.frontend.StreamDebuggerInlaySessionListener"

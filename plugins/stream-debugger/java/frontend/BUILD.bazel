@@ -36,6 +36,7 @@ jvm_library(
         "//platform/kernel/rpc",
         "//fleet/rhizomedb",
         "//platform/platform-frontend:frontend",
+        "//platform/statistics",
     ],
 )
 
@@ -67,6 +68,7 @@ jvm_library(
         "//platform/kernel/rpc:rpc_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/platform-frontend:frontend_test_lib",
+        "//platform/statistics:statistics_test_lib",
     ],
 )
 ### auto-generated section `build intellij.debugger.streams.java.frontend` end

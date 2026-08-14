@@ -7,7 +7,6 @@ import com.intellij.debugger.streams.core.ChainDetectionStateManager
 import com.intellij.debugger.streams.core.diagnostic.ex.TraceCompilationException
 import com.intellij.debugger.streams.core.diagnostic.ex.TraceEvaluationException
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
-import com.intellij.debugger.streams.core.statistics.StreamDebuggerStatisticsCollector
 import com.intellij.debugger.streams.core.trace.StreamTracer
 import com.intellij.debugger.streams.core.trace.formatResolvedTrace
 import com.intellij.debugger.streams.core.trace.formatTrace
@@ -17,6 +16,8 @@ import com.intellij.debugger.streams.core.ui.impl.ElementChooserImpl
 import com.intellij.debugger.streams.core.ui.impl.EvaluationAwareTraceWindow
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.shared.TraceEntryPoint
+import com.intellij.debugger.streams.shared.statistics.StreamDebuggerStatisticsCollector
+import com.intellij.debugger.streams.shared.statistics.StreamDebuggerStatisticsCollector.StreamTraceResult
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -121,6 +122,17 @@ class TraceStreamRunner(val cs: CoroutineScope) {
 
     private val LOG = Logger.getInstance(TraceStreamRunner::class.java)
 
+    private fun getFusTraceResult(result: StreamTracer.Result): StreamTraceResult {
+      return when (result) {
+        is StreamTracer.Result.Evaluated -> {
+          if (result.result.exceptionThrown()) StreamTraceResult.CLIENT_EXCEPTION else StreamTraceResult.SUCCESS
+        }
+        is StreamTracer.Result.EvaluationFailed -> StreamTraceResult.INTERNAL_ERROR
+        is StreamTracer.Result.CompilationFailed -> StreamTraceResult.COMPILATION_FAILED
+        StreamTracer.Result.Unknown -> StreamTraceResult.INTERNAL_ERROR
+      }
+    }
+
     @OptIn(AwaitCancellationAndInvoke::class)
     private suspend fun runTrace(chain: StreamChain, provider: LibrarySupportProvider, session: XDebugSession) = coroutineScope {
       val window = withContext(Dispatchers.EDT) {
@@ -151,7 +163,7 @@ class TraceStreamRunner(val cs: CoroutineScope) {
         val tracer: StreamTracer = provider.getTracerFor(chain, session)
         val result = tracer.trace(chain)
 
-        StreamDebuggerStatisticsCollector.logTraceFinished(project, provider, tracer, result)
+        StreamDebuggerStatisticsCollector.logTraceFinished(project, provider.javaClass, tracer.javaClass, getFusTraceResult(result))
 
         when (result) {
           is StreamTracer.Result.Evaluated -> {

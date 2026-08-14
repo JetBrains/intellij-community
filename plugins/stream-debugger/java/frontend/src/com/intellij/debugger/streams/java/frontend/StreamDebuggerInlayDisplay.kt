@@ -11,6 +11,7 @@ import com.intellij.debugger.streams.shared.StreamDebuggerApi
 import com.intellij.debugger.streams.shared.StreamDebuggerManager
 import com.intellij.debugger.streams.shared.TraceEntryPoint
 import com.intellij.debugger.streams.shared.icons.DebuggerStreamsSharedIcons
+import com.intellij.debugger.streams.shared.statistics.StreamDebuggerStatisticsCollector
 import com.intellij.java.debugger.impl.shared.SharedJavaDebuggerSession
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -39,6 +40,7 @@ import kotlinx.coroutines.withContext
 import java.awt.Cursor
 import java.awt.Point
 import java.awt.event.MouseEvent
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Shows the "Trace Current Stream Chain" inlay for JVM debug sessions.
@@ -47,7 +49,35 @@ import java.awt.event.MouseEvent
 internal class StreamDebuggerInlaySessionListener(private val project: Project) : XDebuggerManagerProxyListener {
   override fun sessionStarted(session: XDebugSessionProxy) {
     // The scope is canceled when the session stops. This stops the collector and disposes the last inlay.
-    session.coroutineScope.launch(Dispatchers.Default) { collectInlayUpdates(project, session) }
+    session.coroutineScope.launch(Dispatchers.Default) {
+      val counters = InlaySessionCounters()
+      try {
+        collectInlayUpdates(project, session, counters)
+      }
+      finally {
+        counters.report(project)
+      }
+    }
+  }
+}
+
+/**
+ * The inlay is recreated on every pause, so the counters are aggregated and reported once, when the session is over.
+ * The click comes from the EDT, the shows come from [Dispatchers.Default], so we use atomics.
+ */
+private class InlaySessionCounters {
+  val chainFound: AtomicInteger = AtomicInteger()
+  val shown: AtomicInteger = AtomicInteger()
+  val clicked: AtomicInteger = AtomicInteger()
+
+  fun report(project: Project) {
+    val chainFoundCount = chainFound.get()
+    // The session never paused inside a traceable chain, so the hint had no chance to appear: nothing to report.
+    if (chainFoundCount == 0) return
+    // The session scope is also canceled when the project is closed, and then there is nothing to attribute the event to.
+    if (project.isDisposed) return
+    StreamDebuggerStatisticsCollector.logInlaySessionFinished(
+      project, chainFoundCount, shown.get(), clicked.get(), isStreamDebuggerInlaysEnabled())
   }
 }
 
@@ -55,16 +85,17 @@ internal class StreamDebuggerInlaySessionListener(private val project: Project) 
  * Each new flow value cancels the previous [collectLatest] block before the next block starts.
  * The `finally` of the previous block disposes the previous inlay, so there is always exactly 0 or 1 inlay
  */
-private suspend fun collectInlayUpdates(project: Project, session: XDebugSessionProxy) {
+private suspend fun collectInlayUpdates(project: Project, session: XDebugSessionProxy, counters: InlaySessionCounters) {
   StreamDebuggerManager.getInstance(project).chainStateFlow(session)
     .map { (it as? ChainStateDto.Found)?.position }
     .distinctUntilChanged() // Only the pause point matters
     .filterNotNull()
     .collectLatest { position ->
-      if (!isStreamDebuggerInlaysEnabled()) return@collectLatest
       // The process descriptor is registered asynchronously, so the JVM check cannot be moved to `sessionStarted`.
       if (!isJavaSession(project, session)) return@collectLatest
-      val inlay = withContext(Dispatchers.EDT) { createInlay(project, session, position.sourcePosition()) }
+      counters.chainFound.incrementAndGet()
+      if (!isStreamDebuggerInlaysEnabled()) return@collectLatest
+      val inlay = withContext(Dispatchers.EDT) { createInlay(project, session, position.sourcePosition(), counters) }
                   ?: return@collectLatest
       try {
         awaitCancellation()
@@ -78,7 +109,12 @@ private suspend fun collectInlayUpdates(project: Project, session: XDebugSession
 private fun isJavaSession(project: Project, session: XDebugSessionProxy): Boolean =
   CustomDescriptorStateManager.getInstance(project).getProcessDescriptorState(session.id) is SharedJavaDebuggerSession
 
-private fun createInlay(project: Project, session: XDebugSessionProxy, position: XSourcePosition): Inlay<PresentationRenderer>? {
+private fun createInlay(
+  project: Project,
+  session: XDebugSessionProxy,
+  position: XSourcePosition,
+  counters: InlaySessionCounters,
+): Inlay<PresentationRenderer>? {
   val editor = getEditor(project, position) ?: return null
   val lineEnd = editor.document.getLineEndOffset(position.line)
   val message = JavaStreamDebuggerFrontendBundle.message("action.trace.stream.inlay.text")
@@ -91,7 +127,7 @@ private fun createInlay(project: Project, session: XDebugSessionProxy, position:
               smallScaledIcon(DebuggerStreamsSharedIcons.Stream_debugger),
               smallTextWithoutBackground(message)
             ),
-            ClickHandler(session),
+            ClickHandler(session, counters),
             null
           ),
           Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
@@ -100,6 +136,7 @@ private fun createInlay(project: Project, session: XDebugSessionProxy, position:
     )
   }
 
+  counters.shown.incrementAndGet()
   return editor.inlayModel.addAfterLineEndElement(lineEnd, false, renderer)
 }
 
@@ -108,11 +145,17 @@ private fun getEditor(project: Project, position: XSourcePosition): Editor? {
   return (selectedEditor as? TextEditor)?.editor
 }
 
-private class ClickHandler(private val session: XDebugSessionProxy) : InlayPresentationFactory.ClickListener {
+private class ClickHandler(
+  private val session: XDebugSessionProxy,
+  private val counters: InlaySessionCounters,
+) : InlayPresentationFactory.ClickListener {
   override fun onClick(event: MouseEvent, translated: Point) {
     when (event.mouseButton) {
-      MouseButton.Left -> session.coroutineScope.launch {
-        StreamDebuggerApi.getInstance().showTraceDebuggerDialog(session.id, TraceEntryPoint.INLAY_HINT)
+      MouseButton.Left -> {
+        counters.clicked.incrementAndGet()
+        session.coroutineScope.launch {
+          StreamDebuggerApi.getInstance().showTraceDebuggerDialog(session.id, TraceEntryPoint.INLAY_HINT)
+        }
       }
       MouseButton.Right -> showByEvent(event, "StreamDebuggerInlayPopup",
                                        ActionManager.getInstance().getAction("StreamDebuggerInlayPopup") as ActionGroup)

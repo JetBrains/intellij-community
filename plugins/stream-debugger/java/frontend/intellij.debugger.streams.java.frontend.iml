@@ -25,5 +25,6 @@
     <orderEntry type="module" module-name="intellij.platform.rpc" />
     <orderEntry type="module" module-name="fleet.rhizomedb" />
     <orderEntry type="module" module-name="intellij.platform.frontend" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>
