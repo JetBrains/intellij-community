@@ -218,6 +218,7 @@ class PluginManagerTest {
         "- intellij.platform.frontend",
         "- intellij.platform.frontend.split",
         "- intellij.platform.frontend.split.base",
+        "- intellij.platform.split",
       ),
     )
     for ((currentMode, expectedValues) in modes) {
