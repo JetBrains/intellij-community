@@ -55,8 +55,6 @@
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.McpServerService"/>
     <applicationService serviceInterface="com.intellij.mcpserver.impl.McpSessionProjectResolver" serviceImplementation="com.intellij.mcpserver.impl.McpSessionProjectResolverImpl" open="true"/>
 
-    <applicationService serviceImplementation="com.intellij.mcpserver.toolsets.general.SymbolSearchEngine" open="true"/>
-
     <statistics.counterUsagesCollector implementationClass="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector$McpToolNameValidator"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.mcpserver.statistics.McpServerApplicationUsagesCollector"/>
@@ -72,7 +70,6 @@
     <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.SettingsBasedMcpToolFilterProvider" />
     <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.RegistryKeyMcpToolFilterProvider" />
     <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.IndividualRegistryKeyMcpToolFilterProvider" />
-    <mcpServer.projectDependenciesProvider implementation="com.intellij.mcpserver.toolsets.general.JpsDependenciesProvider" />
 
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.UniversalToolset" />
 
