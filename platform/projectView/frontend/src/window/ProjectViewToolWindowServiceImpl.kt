@@ -40,7 +40,6 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CompletableDeferred
@@ -131,10 +130,12 @@ internal class ProjectViewToolWindowServiceImpl(
         val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
         val activeJobs = CopyOnWriteArraySet<ManagePaneJob>()
         aggregator.getPaneDescriptorsFlow().collect { paneDescriptors ->
+          LOG.debug { "Pane descriptors updated: $paneDescriptors" }
           orderedDescriptors.value = paneDescriptors
           defaultSelection = paneDescriptors.firstOrNull { it.isDefault }?.id ?: defaultSelectedPaneId()
           val actualIds = paneDescriptors.map { it.id }.toSet()
-          for ((existingDescriptor, existingJob) in activeJobs) {
+          for ((existingManager, existingJob) in activeJobs) {
+            val existingDescriptor = existingManager.descriptor
             if (existingDescriptor.id !in actualIds) {
               LOG.debug { "The pane ${existingDescriptor.id} is gone, cancelling its job" }
               existingJob.cancel(CancellationException("The descriptor is no longer present: $existingDescriptor"))
@@ -151,13 +152,13 @@ internal class ProjectViewToolWindowServiceImpl(
             // because it would cause content selection changes and therefore UI flickering.
             // The new content is created first, then it's replaced in a single EDT event,
             // and then the old content is disposed, which will cancel the old job automatically.
+            LOG.debug { "Initializing the pane ${descriptor.id}, descriptor = $descriptor" }
+            val pane = withContext(Dispatchers.UI) {
+              TreeBasedFrontendProjectViewPane(project, descriptor)
+            }
+            val paneManager = PaneManager(paneContentManager, pane)
             val job = managementScope.launch(CoroutineName("Manage PV pane ${descriptor.id}")) {
               try {
-                LOG.debug { "Initializing the pane ${descriptor.id}, descriptor = $descriptor" }
-                val pane = withContext(Dispatchers.UI) {
-                  TreeBasedFrontendProjectViewPane(project, descriptor)
-                }
-                val paneManager = PaneManager(paneContentManager, pane)
                 paneManager.managePane()
               }
               catch (e: Throwable) {
@@ -168,11 +169,23 @@ internal class ProjectViewToolWindowServiceImpl(
                 LOG.debug { "Done with the pane ${descriptor.id}, descriptor = $descriptor" }
               }
             }
-            val newJob = ManagePaneJob(descriptor, job)
+            val newJob = ManagePaneJob(paneManager, job)
             activeJobs += newJob
             job.invokeOnCompletion {
               activeJobs -= newJob
             }
+          }
+          // A very important step: the managers are allowed to run concurrently within a given snapshot,
+          // but when the descriptors are updated next time, we can't have races between new and old descriptors,
+          // as then the winner can't be determined.
+          // Example: a pane with some ID1 and descriptor1 is created and begins to initialize.
+          // Then an updated descriptor2 with the same ID1 is received, and a new job is launched.
+          // If the second job manages to create its content faster, then the previous job will dispose and replace it when it catches up.
+          // So we'll end up with a job for a stale descriptor, which will then be immediately canceled.
+          // Within a given snapshot, IDs are unique, so no such races are possible.
+          // So we only need to finish initializing the previous batch before proceeding to the next one.
+          for ((manager, _) in activeJobs) {
+            manager.awaitInitialization()
           }
         }
       }
@@ -183,9 +196,12 @@ internal class ProjectViewToolWindowServiceImpl(
   }
   
   private data class ManagePaneJob(
-    val descriptor: ProjectViewPaneDescriptorImpl,
+    val manager: PaneManager,
     val job: Job,
-  )
+  ) {
+    val descriptor: ProjectViewPaneDescriptorImpl
+      get() = manager.descriptor
+  }
   
   private fun currentPaneChanged(
     oldPane: FrontendProjectViewPane?,
@@ -282,9 +298,17 @@ internal class ProjectViewToolWindowServiceImpl(
     private val paneContentManager: PaneContentManager,
     private val pane: TreeBasedFrontendProjectViewPane,
   ) {
+    val descriptor: ProjectViewPaneDescriptorImpl
+      get() = pane.descriptor
+    
+    private val initialized = CompletableDeferred<Unit>()
+    
     suspend fun managePane() {
       coroutineScope {
         val mainScope = this
+        coroutineContext.job.invokeOnCompletion { 
+          initialized.complete(Unit) // in the case of a failure
+        }
         withTimeoutOrNull(15.seconds) { // in case something went wrong with loading the state
           stateInitJob.await()
         }
@@ -321,11 +345,11 @@ internal class ProjectViewToolWindowServiceImpl(
             LOG.debug { "Canceling the pane ${pane.id} because the TW content is disposed, descriptor = ${pane.descriptor}" }
             mainScope.cancel("TW content disposed")
           }
-          mainScope.coroutineContext.job.cancelOnDispose(paneContent.content)
           if (mustSelectThisPane) {
             paneSelectJob.complete(Unit)
           }
-          LOG.debug { "The content has been created for ${pane.id}" }
+          LOG.debug { "The pane has been initialized, ID = ${pane.id}, descriptor = ${pane.descriptor}" }
+          initialized.complete(Unit)
           try {
             awaitCancellation()
           }
@@ -391,6 +415,10 @@ internal class ProjectViewToolWindowServiceImpl(
         LOG.debug { "Managing pane ${pane.id}" }
         pane.manage()
       }
+    }
+    
+    suspend fun awaitInitialization() {
+      initialized.await()
     }
 
     @RequiresEdt
@@ -508,9 +536,10 @@ internal class ProjectViewToolWindowServiceImpl(
 
     @RequiresEdt
     fun removeAndDisposeContent(paneContent: PaneContent) {
-      contentManager.removeContent(paneContent.content, true)
-      panes -= paneContent.id
-      LOG.info("Removed pane ${paneContent.id}, descriptor ${paneContent.descriptor}")
+      if (contentManager.removeContent(paneContent.content, true)) {
+        panes -= paneContent.id
+        LOG.info("Removed pane ${paneContent.id}, descriptor ${paneContent.descriptor}")
+      }
     }
 
     @RequiresEdt
