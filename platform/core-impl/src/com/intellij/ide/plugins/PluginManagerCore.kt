@@ -94,43 +94,9 @@ object PluginManagerCore {
   class PluginsMutableState {
     @Volatile
     var nullablePluginSet: PluginSet? = null
-    private val pluginNonLoadReasons: MutableMap<PluginId, PluginNonLoadReason> = hashMapOf()
-    private val pluginErrors: MutableList<PluginLoadingError> = ArrayList()
-    var pluginsToDisable: List<PluginStateChangeData> = emptyList()
-    var pluginsToEnable: List<PluginStateChangeData> = emptyList()
 
     @Volatile
     var initFuture: Deferred<PluginSet>? = null
-
-    @Synchronized
-    fun setErrorsForNotificationReporterAndLogger(errors: List<PluginLoadingError>) {
-      pluginErrors.clear()
-      pluginErrors.addAll(errors)
-    }
-
-    @Synchronized
-    fun getAndClearPluginLoadingErrors(): List<PluginLoadingError> {
-      val result = pluginErrors.toList()
-      pluginErrors.clear()
-      return result
-    }
-
-    @Synchronized
-    fun getStartupActionsPluginsToEnableDisable(): Pair<List<PluginStateChangeData>, List<PluginStateChangeData>> {
-      val toEnable = pluginsToEnable
-      val toDisable = pluginsToDisable
-      return toEnable to toDisable
-    }
-
-    fun getPluginNonLoadReason(pluginId: PluginId): PluginNonLoadReason? = pluginNonLoadReasons[pluginId]
-
-    fun clearPluginNonLoadReason(pluginId: PluginId) {
-      pluginNonLoadReasons.remove(pluginId)
-    }
-
-    fun addPluginNonLoadReasons(pluginNonLoadReasons: Map<PluginId, PluginNonLoadReason>) {
-      this.pluginNonLoadReasons.putAll(pluginNonLoadReasons)
-    }
   }
 
   private var isRunningFromSources: Boolean? = null
@@ -215,9 +181,6 @@ object PluginManagerCore {
   @ApiStatus.Internal
   @JvmStatic
   fun isLoaded(plugin: PluginDescriptor): Boolean = (plugin as? IdeaPluginDescriptorImpl)?.isLoaded ?: false
-
-  @ApiStatus.Internal
-  fun getAndClearPluginLoadingErrors(): List<PluginLoadingError> = pluginsState.getAndClearPluginLoadingErrors()
 
   @ApiStatus.Internal
   @JvmStatic
@@ -609,9 +572,6 @@ object PluginManagerCore {
     }
     return true
   }
-
-  @ApiStatus.Internal
-  fun getStartupActionsPluginsToEnableDisable(): Pair<List<PluginStateChangeData>, List<PluginStateChangeData>> = pluginsState.getStartupActionsPluginsToEnableDisable()
 
   //<editor-fold desc="Deprecated stuff.">
   @ApiStatus.ScheduledForRemoval
