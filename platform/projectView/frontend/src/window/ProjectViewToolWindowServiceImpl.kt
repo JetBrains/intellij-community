@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContentUiType
@@ -35,7 +36,6 @@ import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
-import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.AwaitCancellationAndInvoke
@@ -48,6 +48,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -119,16 +120,11 @@ internal class ProjectViewToolWindowServiceImpl(
 
   override suspend fun manageToolWindow(toolWindow: ToolWindow) {
     supervisorScope {
-      launch(Dispatchers.UI + CoroutineName("Current pane listener")) {
-        toolWindow.contentManager.addContentManagerListener(currentPaneListener)
-        awaitCancellationAndInvoke {
-          toolWindow.contentManager.removeContentManagerListener(currentPaneListener)
-        }
+      val paneContentManager = withContext(Dispatchers.UI) {
+        PaneContentManager(toolWindow)
       }
-      launch(Dispatchers.UI + CoroutineName("Content ordering")) {
-        orderedDescriptors.collectLatest { 
-          ensureContentsOrdered(toolWindow)
-        }
+      launch(CoroutineName("Managing PV TW content")) {
+        paneContentManager.manageContent()
       }
       launch(CoroutineName("Pane management")) {
         val managementScope = this
@@ -157,13 +153,11 @@ internal class ProjectViewToolWindowServiceImpl(
             // and then the old content is disposed, which will cancel the old job automatically.
             val job = managementScope.launch(CoroutineName("Manage PV pane ${descriptor.id}")) {
               try {
-                LOG.debug { "Initializing pane ${descriptor.id}, descriptor = $descriptor" }
+                LOG.debug { "Initializing the pane ${descriptor.id}, descriptor = $descriptor" }
                 val pane = withContext(Dispatchers.UI) {
                   TreeBasedFrontendProjectViewPane(project, descriptor)
                 }
-                val paneManager = PaneContentManager(toolWindow, pane)
-                panes[descriptor.id] = pane
-                LOG.info("Added pane ${descriptor.id}")
+                val paneManager = PaneManager(paneContentManager, pane)
                 paneManager.managePane()
               }
               catch (e: Throwable) {
@@ -171,8 +165,7 @@ internal class ProjectViewToolWindowServiceImpl(
                 LOG.error("Failed to initialize pane ${descriptor.id}", e)
               }
               finally {
-                panes.remove(descriptor.id)
-                LOG.info("Removed pane ${descriptor.id}")
+                LOG.debug { "Done with the pane ${descriptor.id}, descriptor = $descriptor" }
               }
             }
             val newJob = ManagePaneJob(descriptor, job)
@@ -194,45 +187,6 @@ internal class ProjectViewToolWindowServiceImpl(
     val job: Job,
   )
   
-  @RequiresEdt
-  private fun ensureContentsOrdered(toolWindow: ToolWindow) {
-    val order = descriptorOrder() // take a snapshot as it's updated concurrently
-    val contentManager = toolWindow.contentManager
-    val currentDescriptorOrder = (0 until contentManager.contentCount).mapNotNull { i ->
-      // A null safety chain because we're only interested in descriptors that are still valid and present.
-      // Other stuff (contents not representing panes, descriptors that are about to be removed) is not relevant.
-      contentManager.getContent(i)?.let { content ->
-        content.getUserData(PANE_KEY)?.descriptor?.let { descriptor ->
-          order[descriptor]
-        }
-      }
-    }
-    if (currentDescriptorOrder.isSorted()) return
-    val contentsBeforeSelected = mutableListOf<Content>()
-    val contentsAfterSelected = mutableListOf<Content>()
-    val selectedContent = contentManager.selectedContent
-    var isAfterSelected = false
-    for (content in contentManager.contents) {
-      if (content == selectedContent) {
-        isAfterSelected = true // don't remove the selected content itself
-      }
-      else if (isAfterSelected) {
-        contentsAfterSelected += content
-        contentManager.removeContent(content, false)
-      }
-      else {
-        contentsBeforeSelected += content
-        contentManager.removeContent(content, false)
-      }
-    }
-    for ((index, content) in contentsBeforeSelected.withIndex()) {
-      contentManager.addContent(content, index)
-    }
-    for (content in contentsAfterSelected) {
-      contentManager.addContent(content, contentManager.contentCount)
-    }
-  }
-
   private fun currentPaneChanged(
     oldPane: FrontendProjectViewPane?,
     newPane: FrontendProjectViewPane?,
@@ -324,8 +278,8 @@ internal class ProjectViewToolWindowServiceImpl(
     stateInitJob.complete(Unit)
   }
 
-  private inner class PaneContentManager(
-    private val toolWindow: ToolWindow,
+  private inner class PaneManager(
+    private val paneContentManager: PaneContentManager,
     private val pane: TreeBasedFrontendProjectViewPane,
   ) {
     suspend fun managePane() {
@@ -360,10 +314,14 @@ internal class ProjectViewToolWindowServiceImpl(
               paneSelectJob.await()
             }
           }
-          val content = addOrReplaceContent() ?: return@launch // failure to add means the job is canceled
+          val paneContent = addOrReplaceContent() ?: return@launch // failure to add means the job is canceled
           // This is just a nice way to cancel this whole thing from anywhere.
           // Currently used by addOrReplaceContent  to replace the previous pane with the same ID.
-          mainScope.coroutineContext.job.cancelOnDispose(content)
+          Disposer.register(paneContent.content) {
+            LOG.debug { "Canceling the pane ${pane.id} because the TW content is disposed, descriptor = ${pane.descriptor}" }
+            mainScope.cancel("TW content disposed")
+          }
+          mainScope.coroutineContext.job.cancelOnDispose(paneContent.content)
           if (mustSelectThisPane) {
             paneSelectJob.complete(Unit)
           }
@@ -372,7 +330,7 @@ internal class ProjectViewToolWindowServiceImpl(
             awaitCancellation()
           }
           finally {
-            removeContent(content)
+            paneContentManager.removeAndDisposeContent(paneContent)
           }
         }
         LOG.debug { "Obtaining the pane aggregator to manage the pane ${pane.id}" }
@@ -436,75 +394,161 @@ internal class ProjectViewToolWindowServiceImpl(
     }
 
     @RequiresEdt
-    private fun addOrReplaceContent(): Content? {
-      ensureContentsOrdered(toolWindow)
+    private fun addOrReplaceContent(): PaneContent? {
+      paneContentManager.ensureContentsOrdered()
 
-      val contentManager = toolWindow.contentManager
       var wasSelected = false
-      findOldContentAndPane(contentManager, pane.id)?.let { (oldContent, oldPane) ->
-        wasSelected = contentManager.isSelected(oldContent)
+      val oldPaneContent = paneContentManager.findContent(pane.id)
+      if (oldPaneContent != null) {
+        wasSelected = paneContentManager.isSelected(oldPaneContent)
         // This has to be done now so the content is removed and added in a single EDT event.
         // The old pane's job will be canceled when the content is disposed.
-        LOG.debug { "Replacing the pane with ID = ${pane.id}: old descriptor = ${oldPane.descriptor}, new descriptor = ${pane.descriptor}" }
-        contentManager.removeContent(oldContent, true)
+        LOG.info("Replacing the pane with ID = ${pane.id}: old descriptor = ${oldPaneContent.descriptor}, new descriptor = ${pane.descriptor}")
+        paneContentManager.removeAndDisposeContent(oldPaneContent)
       }
 
+      val newContent = paneContentManager.createAndAddContent(pane) ?: return null
+
+      if (wasSelected) {
+        LOG.debug { "The previous pane with ID = ${pane.id} was selected, therefore selecting the new one with the same ID" }
+        paneContentManager.setSelectedContent(newContent)
+      }
+      return newContent
+    }
+  }
+  
+  private data class PaneContent(val pane: FrontendProjectViewPane, val content: Content) {
+    val id: ProjectViewPaneId
+      get() = pane.id
+    
+    val descriptor: ProjectViewPaneDescriptorImpl
+      get() = pane.descriptor
+  }
+  
+  private inner class PaneContentManager @RequiresEdt constructor(toolWindow: ToolWindow) {
+    private val contentManager = toolWindow.contentManager
+    
+    suspend fun manageContent() {
+      coroutineScope {
+        launch(Dispatchers.UI + CoroutineName("Current pane listener")) {
+          contentManager.addContentManagerListener(currentPaneListener)
+          awaitCancellationAndInvoke {
+            contentManager.removeContentManagerListener(currentPaneListener)
+          }
+        }
+        launch(Dispatchers.UI + CoroutineName("Content ordering")) {
+          orderedDescriptors.collectLatest {
+            ensureContentsOrdered()
+          }
+        }
+      }
+    }
+
+    @RequiresEdt
+    fun findContent(id: ProjectViewPaneId): PaneContent? {
+      for (i in 0 until contentManager.contentCount) {
+        val content = contentManager.getContent(i) ?: continue
+        val pane = content.getUserData(PANE_KEY) ?: continue
+        if (pane.id == id) return PaneContent(pane, content)
+      }
+      return null
+    }
+    
+    @RequiresEdt
+    fun isSelected(paneContent: PaneContent): Boolean {
+      return contentManager.isSelected(paneContent.content)
+    }
+
+    @RequiresEdt
+    fun createAndAddContent(pane: TreeBasedFrontendProjectViewPane): PaneContent? {
       val newContent = ContentFactory.getInstance().createContent(
         /* component = */ pane.component,
         /* displayName = */ pane.displayName,
         /* isLockable = */ false
       )
       newContent.putUserData(PANE_KEY, pane)
-      val index = findSuitableIndex() ?: return null
+      val index = findSuitableIndex(pane) ?: return null
       contentManager.addContent(newContent, index)
-
-      if (wasSelected) {
-        LOG.debug { "The previous pane with ID = ${pane.id} was selected, therefore selecting the new one with the same ID" }
-        contentManager.setSelectedContent(newContent)
-      }
-      return newContent
+      panes[pane.id] = pane
+      LOG.info("Added pane ${pane.id}, descriptor ${pane.descriptor}")
+      return PaneContent(pane, newContent)
     }
 
-    private fun findSuitableIndex(): Int? {
-      val contentManager = toolWindow.contentManager
+    private fun findSuitableIndex(pane: FrontendProjectViewPane): Int? {
       val order = descriptorOrder()
       // We update the order before launching the managing job.
       // So no order can only mean the order was updated again, the descriptor is no longer there, and our job is being canceled.
       // Returning null early here to avoid UI flickering because the content will be immediately removed.
       val ourOrder = order[pane.descriptor] ?: return null
       val bisectIndex = (0 until contentManager.contentCount).toList().binarySearch { i ->
-            val existingContent = contentManager.getContent(i)
-            // Any null here means the content doesn't belong to the ordered sequence for any reason.
-            // The most likely scenario is that it's about to be removed (its job is being canceled).
-            // Or it could be a content added externally.
-            // In either case, we keep such contents last as we're not interested in them.
-            val existingDescriptor = existingContent?.getUserData(PANE_KEY)?.descriptor ?: return@binarySearch 1
-            val existingOrder = order[existingDescriptor] ?: return@binarySearch 1
-            existingOrder.compareTo(ourOrder)
+        val existingContent = contentManager.getContent(i)
+        // Any null here means the content doesn't belong to the ordered sequence for any reason.
+        // The most likely scenario is that it's about to be removed (its job is being canceled).
+        // Or it could be a content added externally.
+        // In either case, we keep such contents last as we're not interested in them.
+        val existingDescriptor = existingContent?.getUserData(PANE_KEY)?.descriptor ?: return@binarySearch 1
+        val existingOrder = order[existingDescriptor] ?: return@binarySearch 1
+        existingOrder.compareTo(ourOrder)
       }
       val index = if (bisectIndex >= 0) {
-            LOG.warn("We have two panes with the same order (=$ourOrder), shouldn't be possible: " +
-                     "$pane and ${contentManager.getContent(bisectIndex)?.getUserData(PANE_KEY)}")
-            bisectIndex + 1 // add after the dup pane
+        LOG.warn("We have two panes with the same order (=$ourOrder), shouldn't be possible: " +
+                 "$pane and ${contentManager.getContent(bisectIndex)?.getUserData(PANE_KEY)}")
+        bisectIndex + 1 // add after the dup pane
       }
       else {
-            -bisectIndex - 1
+        -bisectIndex - 1
       }
       return index
     }
 
-    private fun findOldContentAndPane(contentManager: ContentManager, id: ProjectViewPaneId): Pair<Content, FrontendProjectViewPane>? {
-      for (i in 0 until contentManager.contentCount) {
-        val content = contentManager.getContent(i) ?: continue
-        val pane = content.getUserData(PANE_KEY) ?: continue
-        if (pane.id == id) return Pair(content, pane)
-      }
-      return null
+    @RequiresEdt
+    fun setSelectedContent(newContent: PaneContent) {
+      contentManager.setSelectedContent(newContent.content)
     }
 
     @RequiresEdt
-    private fun removeContent(content: Content) {
-      toolWindow.contentManager.removeContent(content, true)
+    fun removeAndDisposeContent(paneContent: PaneContent) {
+      contentManager.removeContent(paneContent.content, true)
+      panes -= paneContent.id
+      LOG.info("Removed pane ${paneContent.id}, descriptor ${paneContent.descriptor}")
+    }
+
+    @RequiresEdt
+    fun ensureContentsOrdered() {
+      val order = descriptorOrder() // take a snapshot as it's updated concurrently
+      val currentDescriptorOrder = (0 until contentManager.contentCount).mapNotNull { i ->
+        // A null safety chain because we're only interested in descriptors that are still valid and present.
+        // Other stuff (contents not representing panes, descriptors that are about to be removed) is not relevant.
+        contentManager.getContent(i)?.let { content ->
+          content.getUserData(PANE_KEY)?.descriptor?.let { descriptor ->
+            order[descriptor]
+          }
+        }
+      }
+      if (currentDescriptorOrder.isSorted()) return
+      val contentsBeforeSelected = mutableListOf<Content>()
+      val contentsAfterSelected = mutableListOf<Content>()
+      val selectedContent = contentManager.selectedContent
+      var isAfterSelected = false
+      for (content in contentManager.contents) {
+        if (content == selectedContent) {
+          isAfterSelected = true // don't remove the selected content itself
+        }
+        else if (isAfterSelected) {
+          contentsAfterSelected += content
+          contentManager.removeContent(content, false)
+        }
+        else {
+          contentsBeforeSelected += content
+          contentManager.removeContent(content, false)
+        }
+      }
+      for ((index, content) in contentsBeforeSelected.withIndex()) {
+        contentManager.addContent(content, index)
+      }
+      for (content in contentsAfterSelected) {
+        contentManager.addContent(content, contentManager.contentCount)
+      }
     }
   }
 }
