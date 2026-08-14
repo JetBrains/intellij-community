@@ -3,10 +3,15 @@ package com.intellij.driver.sdk.ui.components.common.toolwindows
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.UiText
+import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
 import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
+import com.intellij.driver.sdk.ui.components.elements.actionButton
+import com.intellij.driver.sdk.ui.components.elements.contentTabLabel
+import com.intellij.driver.sdk.ui.components.elements.list
+import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.components.elements.tree
 import org.intellij.lang.annotations.Language
 import java.awt.Point
@@ -52,6 +57,26 @@ class StructureToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
       structureTree.waitFound(5.seconds)
       return xx("//div[@class='ContentTabLabel']").list()
     }
+
+  fun hasMultipleTabs(): Boolean = tabs.size >= 2 || hiddenTabsButton.present()
+
+  fun selectTab(tabName: String) {
+    val visibleTab = contentTabLabel(tabName)
+    if (visibleTab.present()) {
+      step("Select visible Structure tab '$tabName'") {
+        visibleTab.click()
+      }
+      return
+    }
+
+    step("Select hidden Structure tab '$tabName'") {
+      hiddenTabsButton.click()
+      driver.ui.popup().list().clickItem(tabName)
+    }
+  }
+
+  private val hiddenTabsButton: ActionButtonUi
+    get() = toolWindowHeader.actionButton { byAccessibleName("Show Hidden Tabs") }
 
   fun expandViewOptions() {
     viewOptionsButton.click()
