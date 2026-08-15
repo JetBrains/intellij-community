@@ -26,7 +26,8 @@ private val LOG: Logger = Logger.getInstance("#com.intellij.openapi.progress.uti
 
 fun <T> Future<T>.awaitWithCheckCanceled(): T {
   @Suppress("UsagesOfObsoleteApi")
-  val indicator = ProgressManager.getInstance().getProgressIndicator()
+  // Can be called before Application has started, services may be unavailable
+  val indicator = ProgressManager.getInstanceOrNull()?.getProgressIndicator()
   return awaitWithCheckCanceled(indicator)
 }
 
