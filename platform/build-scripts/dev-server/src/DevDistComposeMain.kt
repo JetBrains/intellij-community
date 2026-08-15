@@ -22,6 +22,7 @@ fun main(args: Array<String>) {
   val platformManifest = readDevBuildComponentManifest(options.requiredPath("--platform-manifest"))
   val pluginsManifest = readDevBuildComponentManifest(options.requiredPath("--plugins-manifest"))
   val ideConfig = options.requiredPath("--ide-config")
+  val fingerprintFile = options.requiredPath("--fingerprint")
 
   check(platformManifest.kind == "platform") { "Expected a platform component, got '${platformManifest.kind}'" }
   check(pluginsManifest.kind == "plugins") { "Expected a plugins component, got '${pluginsManifest.kind}'" }
@@ -38,7 +39,9 @@ fun main(args: Array<String>) {
 
   val classPath = platformManifest.coreClassPath + pluginsManifest.coreClassPath
   Files.writeString(outputDir.resolve("core-classpath.txt"), classPath.joinToString(separator = "\n"))
-  Files.writeString(outputDir.resolve("fingerprint.txt"), computeIdeFingerprintFromComponents(listOf(platformManifest, pluginsManifest)))
+  val fingerprint = computeIdeFingerprintFromComponents(listOf(platformManifest, pluginsManifest))
+  Files.writeString(outputDir.resolve("fingerprint.txt"), fingerprint)
+  Files.writeString(fingerprintFile, fingerprint)
   DevIdeConfig.write(
     ideConfig,
     outputDir,

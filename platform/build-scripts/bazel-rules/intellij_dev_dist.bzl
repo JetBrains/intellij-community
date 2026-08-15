@@ -23,6 +23,7 @@ IntellijDevPluginsInfo = provider(
 
 IntellijDevDistInfo = provider(
     fields = {
+        "fingerprint": "The content fingerprint of the composed IDE distribution.",
         "home": "The composed IDE home directory.",
         "ide_config": "The config file used by PreBuiltDevMain.",
     },
@@ -137,6 +138,7 @@ intellij_dev_plugins = rule(
 def _compose_impl(ctx):
     home = ctx.actions.declare_directory(ctx.label.name + ".dist")
     ide_config = ctx.actions.declare_file(ctx.label.name + ".ide.config")
+    fingerprint = ctx.actions.declare_file(ctx.label.name + ".fingerprint")
     platform = ctx.attr.platform[IntellijDevPlatformInfo]
     plugins = ctx.attr.plugins[IntellijDevPluginsInfo]
     args = ctx.actions.args()
@@ -146,9 +148,10 @@ def _compose_impl(ctx):
     args.add("--plugins-manifest=" + plugins.manifest.path)
     args.add("--output-dir=" + home.path)
     args.add("--ide-config=" + ide_config.path)
+    args.add("--fingerprint=" + fingerprint.path)
     ctx.actions.run(
         inputs = [platform.home, platform.manifest, plugins.home, plugins.manifest],
-        outputs = [home, ide_config],
+        outputs = [home, ide_config, fingerprint],
         executable = ctx.executable.composer,
         arguments = [args],
         execution_requirements = {"local": "1", "no-remote-cache": "1"},
@@ -156,9 +159,13 @@ def _compose_impl(ctx):
         progress_message = "Composing dev distribution %s" % ctx.label,
     )
     return [
-        DefaultInfo(files = depset([home, ide_config])),
-        IntellijDevDistInfo(home = home, ide_config = ide_config),
-        OutputGroupInfo(ide_config = depset([ide_config]), home = depset([home])),
+        DefaultInfo(files = depset([home, ide_config, fingerprint])),
+        IntellijDevDistInfo(home = home, ide_config = ide_config, fingerprint = fingerprint),
+        OutputGroupInfo(
+            fingerprint = depset([fingerprint]),
+            home = depset([home]),
+            ide_config = depset([ide_config]),
+        ),
     ]
 
 intellij_dev_dist = rule(
