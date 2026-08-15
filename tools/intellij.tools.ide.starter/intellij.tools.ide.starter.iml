@@ -41,7 +41,7 @@
     <orderEntry type="module" module-name="intellij.tools.ide.performanceTesting.commands" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.libraries.monte.screen.recorder" />
-    <orderEntry type="library" exported="" name="io.qameta.allure.java.commons" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.allure.java.commons" exported="" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" />
     <orderEntry type="module" module-name="intellij.tools.ide.util.common" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.bus" exported="" />

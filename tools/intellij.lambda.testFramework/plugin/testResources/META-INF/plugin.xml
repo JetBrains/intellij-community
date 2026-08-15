@@ -68,7 +68,11 @@
   <content namespace="jetbrains">
     <!-- region lambda.testFrameworkLibraries -->
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.allure.java.commons"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.byte.buddy"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.gradle"/>
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.hamcrest"/>
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->

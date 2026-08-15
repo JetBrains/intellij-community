@@ -12,7 +12,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:io-qameta-allure-java-commons",
+        "//libraries/allure/java-commons:libraries-allure-java-commons",
         "//libraries/system-stubs-jupiter",
     ],
     runtime_deps = ["//python/pluginCore:community-plugin"],
@@ -37,7 +37,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:io-qameta-allure-java-commons",
+        "//libraries/allure/java-commons:libraries-allure-java-commons",
+        "//libraries/allure/java-commons:libraries-allure-java-commons_test_lib",
         "//libraries/system-stubs-jupiter",
         "//libraries/system-stubs-jupiter:system-stubs-jupiter_test_lib",
     ],
@@ -54,7 +55,8 @@ jvm_library(
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
-        "@lib//:io-qameta-allure-java-commons",
+        "//libraries/allure/java-commons:libraries-allure-java-commons",
+        "//libraries/allure/java-commons:libraries-allure-java-commons_test_lib",
         "//libraries/junit5-jupiter",
         "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
         "//libraries/junit5-params",

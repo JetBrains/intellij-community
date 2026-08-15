@@ -4747,34 +4747,6 @@ http_file(
 )
 
 http_file(
-    name = "io_qameta_allure-allure-java-commons-2_25_0_http",
-    downloaded_file_path = "allure-java-commons-2.25.0.jar",
-    sha256 = "5f16061bd881c8e568ace97d8a708dd57aefb2630a7b7d792b64fe55368d4284",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/qameta/allure/allure-java-commons/2.25.0/allure-java-commons-2.25.0.jar",
-)
-
-http_file(
-    name = "io_qameta_allure-allure-model-2_25_0_http",
-    downloaded_file_path = "allure-model-2.25.0.jar",
-    sha256 = "1611fb0f34cb0b5de17cdcaca9ba46634863a2bd4074d98bda3b3f4ffb8cf7aa",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/qameta/allure/allure-model/2.25.0/allure-model-2.25.0.jar",
-)
-
-http_file(
-    name = "io_qameta_allure-allure-java-commons-2_25_0-sources_http",
-    downloaded_file_path = "allure-java-commons-2.25.0-sources.jar",
-    sha256 = "8516e016119e4bb0df05b19c9500f4fb9a4185d9d0187a921b3761f707ba0b83",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/qameta/allure/allure-java-commons/2.25.0/allure-java-commons-2.25.0-sources.jar",
-)
-
-http_file(
-    name = "io_qameta_allure-allure-model-2_25_0-sources_http",
-    downloaded_file_path = "allure-model-2.25.0-sources.jar",
-    sha256 = "ad46c0ba4603a244eecd78a33e3d39e16b10e0f61d863caa7352ea4e5ef54711",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/qameta/allure/allure-model/2.25.0/allure-model-2.25.0-sources.jar",
-)
-
-http_file(
     name = "org_jacoco-org_jacoco_ant-0_8_15_http",
     downloaded_file_path = "org.jacoco.ant-0.8.15.jar",
     sha256 = "54fb6af97c95352d7deeb49113d7ad63f190eaa8cc9ae8e068fdb2f2a6de009e",
@@ -6697,6 +6669,34 @@ http_file(
     downloaded_file_path = "hunspell-en-0.2.359.jar",
     sha256 = "539594571b6f75697b82712530fd5e8df236644e34d7e8afd87551a58bb85e2f",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/spell/hunspell-en/0.2.359/hunspell-en-0.2.359.jar",
+)
+
+http_file(
+    name = "io_qameta_allure-allure-java-commons-2_25_0_http",
+    downloaded_file_path = "allure-java-commons-2.25.0.jar",
+    sha256 = "5f16061bd881c8e568ace97d8a708dd57aefb2630a7b7d792b64fe55368d4284",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/qameta/allure/allure-java-commons/2.25.0/allure-java-commons-2.25.0.jar",
+)
+
+http_file(
+    name = "io_qameta_allure-allure-model-2_25_0_http",
+    downloaded_file_path = "allure-model-2.25.0.jar",
+    sha256 = "1611fb0f34cb0b5de17cdcaca9ba46634863a2bd4074d98bda3b3f4ffb8cf7aa",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/qameta/allure/allure-model/2.25.0/allure-model-2.25.0.jar",
+)
+
+http_file(
+    name = "io_qameta_allure-allure-java-commons-2_25_0-sources_http",
+    downloaded_file_path = "allure-java-commons-2.25.0-sources.jar",
+    sha256 = "8516e016119e4bb0df05b19c9500f4fb9a4185d9d0187a921b3761f707ba0b83",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/qameta/allure/allure-java-commons/2.25.0/allure-java-commons-2.25.0-sources.jar",
+)
+
+http_file(
+    name = "io_qameta_allure-allure-model-2_25_0-sources_http",
+    downloaded_file_path = "allure-model-2.25.0-sources.jar",
+    sha256 = "ad46c0ba4603a244eecd78a33e3d39e16b10e0f61d863caa7352ea4e5ef54711",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/qameta/allure/allure-model/2.25.0/allure-model-2.25.0-sources.jar",
 )
 
 http_file(

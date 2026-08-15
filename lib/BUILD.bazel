@@ -5936,44 +5936,6 @@ java_library(
 )
 
 copy_file(
-    name = "io.qameta.allure/allure-java-commons-2.25.0.jar_copy",
-    src = "@io_qameta_allure-allure-java-commons-2_25_0_http//file",
-    out = "io.qameta.allure/allure-java-commons-2.25.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.qameta.allure/allure-model-2.25.0.jar_copy",
-    src = "@io_qameta_allure-allure-model-2_25_0_http//file",
-    out = "io.qameta.allure/allure-model-2.25.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "io-qameta-allure-java-commons",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":io_qameta_allure-allure-java-commons-2_25_0_http_import",
-        ":io_qameta_allure-allure-model-2_25_0_http_import",
-    ],
-)
-
-jvm_import(
-    name = "io_qameta_allure-allure-java-commons-2_25_0_http_import",
-    jar = "@io_qameta_allure-allure-java-commons-2_25_0_http//file",
-    source_jar = "@io_qameta_allure-allure-java-commons-2_25_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_qameta_allure-allure-model-2_25_0_http_import",
-    jar = "@io_qameta_allure-allure-model-2_25_0_http//file",
-    source_jar = "@io_qameta_allure-allure-model-2_25_0-sources_http//file",
-)
-
-copy_file(
     name = "org.jacoco/org.jacoco.ant-0.8.15.jar_copy",
     src = "@org_jacoco-org_jacoco_ant-0_8_15_http//file",
     out = "org.jacoco/org.jacoco.ant-0.8.15.jar",
@@ -8730,6 +8692,44 @@ jvm_import(
     jar = "@ai_grazie_utils-utils-multiplatform-jvm-0_8_256_http//file",
     source_jar = "@ai_grazie_utils-utils-multiplatform-jvm-0_8_256-sources_http//file",
     visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.qameta.allure/allure-java-commons-2.25.0.jar_copy",
+    src = "@io_qameta_allure-allure-java-commons-2_25_0_http//file",
+    out = "io.qameta.allure/allure-java-commons-2.25.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.qameta.allure/allure-model-2.25.0.jar_copy",
+    src = "@io_qameta_allure-allure-model-2_25_0_http//file",
+    out = "io.qameta.allure/allure-model-2.25.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-allure-java-commons-io-qameta-allure-java-commons",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":io_qameta_allure-allure-java-commons-2_25_0_http_import",
+        ":io_qameta_allure-allure-model-2_25_0_http_import",
+    ],
+)
+
+jvm_import(
+    name = "io_qameta_allure-allure-java-commons-2_25_0_http_import",
+    jar = "@io_qameta_allure-allure-java-commons-2_25_0_http//file",
+    source_jar = "@io_qameta_allure-allure-java-commons-2_25_0-sources_http//file",
+)
+
+jvm_import(
+    name = "io_qameta_allure-allure-model-2_25_0_http_import",
+    jar = "@io_qameta_allure-allure-model-2_25_0_http//file",
+    source_jar = "@io_qameta_allure-allure-model-2_25_0-sources_http//file",
 )
 
 copy_file(

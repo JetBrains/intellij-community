@@ -32,7 +32,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kodein.di.jvm" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.driver.sdk" />
-    <orderEntry type="library" name="io.qameta.allure.java.commons" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.allure.java.commons" />
     <orderEntry type="module" module-name="intellij.tools.ide.util.common" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" />
     <orderEntry type="module" module-name="intellij.platform.util" />

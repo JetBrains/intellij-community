@@ -1,6 +1,7 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.allure.java.commons"/>
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.kodein.di.jvm"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
