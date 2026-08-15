@@ -14,6 +14,20 @@ import java.nio.file.attribute.PosixFilePermission
 
 internal class DevBuildComponentComposerTest {
   @Test
+  fun `component merge copies owned bytes`(@TempDir tempDir: Path) {
+    val source = tempDir.resolve("source")
+    Files.createDirectories(source)
+    val sourceFile = source.resolve("file.txt")
+    Files.writeString(sourceFile, "before")
+    val target = tempDir.resolve("target")
+
+    mergeDevBuildComponent(source, target)
+    Files.writeString(sourceFile, "after")
+
+    assertThat(Files.readString(target.resolve("file.txt"))).isEqualTo("before")
+  }
+
+  @Test
   fun `copy fallback preserves file attributes`(@TempDir tempDir: Path) {
     val source = tempDir.resolve("source")
     val sourceFile = source.resolve("bin/tool")
@@ -52,5 +66,90 @@ internal class DevBuildComponentComposerTest {
     assertThatThrownBy { mergeDevBuildComponent(plugins, target) }
       .isInstanceOf(IllegalStateException::class.java)
       .hasMessageContaining("both provide 'shared.txt'")
+  }
+
+  @Test
+  fun `composer accepts ordered platform layers and plugins`(@TempDir tempDir: Path) {
+    val platformLib = component(tempDir, "platform-lib", "lib/platform.jar")
+    val platformResources = component(tempDir, "platform-resources", "bin/idea.properties")
+    val plugins = component(tempDir, "plugins", "plugins/sample/lib/sample.jar")
+    val components = listOf(
+      DevBuildComponent(
+        root = platformLib,
+        manifest = manifest(kind = "platform_lib", coreClassPath = listOf("lib/platform.jar")),
+      ),
+      DevBuildComponent(
+        root = platformResources,
+        manifest = manifest(kind = "platform_resources"),
+      ),
+      DevBuildComponent(
+        root = plugins,
+        manifest = manifest(
+          kind = "plugins",
+          coreClassPath = listOf("plugins/sample/lib/sample.jar"),
+          additionalModules = listOf("intellij.sample", "intellij.shared"),
+        ),
+      ),
+      DevBuildComponent(
+        root = component(tempDir, "extra-plugins", "plugins/extra/lib/extra.jar"),
+        manifest = manifest(
+          kind = "plugins_extra",
+          coreClassPath = listOf("plugins/extra/lib/extra.jar"),
+          additionalModules = listOf("intellij.shared", "intellij.extra"),
+        ),
+      ),
+    )
+
+    val result = composeDevBuildComponents(components, tempDir.resolve("target"))
+
+    assertThat(result.coreClassPath).containsExactly(
+      "lib/platform.jar",
+      "plugins/sample/lib/sample.jar",
+      "plugins/extra/lib/extra.jar",
+    )
+    assertThat(result.additionalModules).containsExactly("intellij.sample", "intellij.shared", "intellij.extra")
+    assertThat(Files.exists(tempDir.resolve("target/bin/idea.properties"))).isTrue()
+    assertThat(result.fingerprint).isEqualTo(computeIdeFingerprintFromComponents(components.map { it.manifest }))
+  }
+
+  @Test
+  fun `composer rejects a component for another product before writing output`(@TempDir tempDir: Path) {
+    val first = DevBuildComponent(component(tempDir, "first", "first.txt"), manifest(kind = "platform_lib"))
+    val second = DevBuildComponent(
+      component(tempDir, "second", "second.txt"),
+      manifest(kind = "platform_resources", platformPrefix = "Rider"),
+    )
+    val target = tempDir.resolve("target")
+
+    assertThatThrownBy { composeDevBuildComponents(listOf(first, second), target) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("different products")
+    assertThat(Files.exists(target)).isFalse()
+  }
+
+  private fun component(tempDir: Path, name: String, relativeFile: String): Path {
+    val root = tempDir.resolve(name)
+    val file = root.resolve(relativeFile)
+    Files.createDirectories(file.parent)
+    Files.writeString(file, name)
+    return root
+  }
+
+  private fun manifest(
+    kind: String,
+    platformPrefix: String = "idea",
+    coreClassPath: List<String> = emptyList(),
+    additionalModules: List<String> = emptyList(),
+  ): DevBuildComponentManifest {
+    return DevBuildComponentManifest(
+      kind = kind,
+      platformPrefix = platformPrefix,
+      os = "linux",
+      arch = "x64",
+      additionalModules = additionalModules,
+      mainClass = "com.intellij.idea.Main",
+      coreClassPath = coreClassPath,
+      entries = emptyList(),
+    )
   }
 }

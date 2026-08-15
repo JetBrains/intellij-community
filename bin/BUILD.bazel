@@ -11,7 +11,7 @@ exports_files(
 # from what it declares, so an undeclared binary is not on disk at all and the assembly fails on it.
 #
 # Grouped per OS rather than in one filegroup because a distribution is built for one: a macOS dist has no
-# business declaring the Windows binaries, and `intellij_dev_platform_ultimate` picks the group its
+# business declaring the Windows binaries, and `intellij_dev_platform_fragments_ultimate` picks the group its
 # `target_platform` implies.
 
 filegroup(

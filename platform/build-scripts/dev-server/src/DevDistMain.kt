@@ -38,7 +38,7 @@ import kotlin.system.exitProcess
  * It also runs where there is no checkout to read: `--project-manifest` builds the project model tree out of declared
  * files, `--preloaded-manifest` supplies the archives a build would otherwise download, and the jar cache is off unless
  * `--jar-cache-dir` names one. `--os` and `--arch` select the complete target platform. That is what an
- * `intellij_dev_dist` Bazel action passes.
+ * dev-distribution fragment Bazel action passes.
  */
 @OptIn(ExperimentalPathApi::class)
 fun main(args: Array<String>) {
@@ -89,7 +89,7 @@ fun main(args: Array<String>) {
   val cleanScratchOnSuccess = options.optionalBoolean("--clean-scratch-on-success") ?: false
   val buildPart = options.optional("--build-part")?.let { value ->
     DevBuildPart.entries.firstOrNull { it.name.equals(value, ignoreCase = true) }
-    ?: error("Unknown --build-part value '$value', expected platform, plugins, or all")
+    ?: error("Unknown --build-part value '$value', expected one of ${DevBuildPart.entries.joinToString { it.name.lowercase() }}")
   } ?: DevBuildPart.ALL
   val componentManifest = options.optionalPath("--component-manifest")
   options.optionalPath("--bazel-targets-json")?.let { path ->

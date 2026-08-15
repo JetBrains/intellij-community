@@ -5,8 +5,8 @@
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.platform.devIdeConfig.DevIdeConfig
-import org.jetbrains.intellij.build.dev.computeIdeFingerprintFromComponents
-import org.jetbrains.intellij.build.dev.mergeDevBuildComponent
+import org.jetbrains.intellij.build.dev.DevBuildComponent
+import org.jetbrains.intellij.build.dev.composeDevBuildComponents
 import org.jetbrains.intellij.build.dev.readDevBuildComponentManifest
 import java.nio.file.Files
 import java.nio.file.Path
@@ -16,54 +16,62 @@ import kotlin.io.path.deleteRecursively
 @OptIn(ExperimentalPathApi::class)
 fun main(args: Array<String>) {
   val options = parseComposeArgs(args)
-  val platformDir = options.requiredPath("--platform-dir")
-  val pluginsDir = options.requiredPath("--plugins-dir")
+  val componentDirs = options.pathList("--component-dir")
+  val componentManifestFiles = options.pathList("--component-manifest")
+  require(componentDirs.isNotEmpty()) { "At least one --component-dir is required" }
+  require(componentDirs.size == componentManifestFiles.size) {
+    "--component-dir and --component-manifest must have the same number of values"
+  }
   val outputDir = options.requiredPath("--output-dir")
-  val platformManifest = readDevBuildComponentManifest(options.requiredPath("--platform-manifest"))
-  val pluginsManifest = readDevBuildComponentManifest(options.requiredPath("--plugins-manifest"))
   val ideConfig = options.requiredPath("--ide-config")
   val fingerprintFile = options.requiredPath("--fingerprint")
+  options.checkNoUnknownOptions()
 
-  check(platformManifest.kind == "platform") { "Expected a platform component, got '${platformManifest.kind}'" }
-  check(pluginsManifest.kind == "plugins") { "Expected a plugins component, got '${pluginsManifest.kind}'" }
-  check(platformManifest.platformPrefix == pluginsManifest.platformPrefix) { "Dev-build components have different products" }
-  check(platformManifest.os == pluginsManifest.os && platformManifest.arch == pluginsManifest.arch) {
-    "Dev-build components have different target platforms"
+  val components = componentDirs.zip(componentManifestFiles) { componentDir, manifestFile ->
+    DevBuildComponent(root = componentDir, manifest = readDevBuildComponentManifest(manifestFile))
   }
-  check(platformManifest.mainClass == pluginsManifest.mainClass) { "Dev-build components have different IDE main classes" }
 
   if (Files.exists(outputDir)) outputDir.deleteRecursively()
-  Files.createDirectories(outputDir)
-  mergeDevBuildComponent(platformDir, outputDir)
-  mergeDevBuildComponent(pluginsDir, outputDir)
-
-  val classPath = platformManifest.coreClassPath + pluginsManifest.coreClassPath
-  Files.writeString(outputDir.resolve("core-classpath.txt"), classPath.joinToString(separator = "\n"))
-  val fingerprint = computeIdeFingerprintFromComponents(listOf(platformManifest, pluginsManifest))
-  Files.writeString(outputDir.resolve("fingerprint.txt"), fingerprint)
-  Files.writeString(fingerprintFile, fingerprint)
+  val result = composeDevBuildComponents(components = components, target = outputDir)
+  Files.writeString(outputDir.resolve("core-classpath.txt"), result.coreClassPath.joinToString(separator = "\n"))
+  Files.writeString(outputDir.resolve("fingerprint.txt"), result.fingerprint)
+  Files.writeString(fingerprintFile, result.fingerprint)
   DevIdeConfig.write(
     ideConfig,
     outputDir,
-    platformManifest.mainClass,
-    platformManifest.platformPrefix,
-    pluginsManifest.additionalModules,
+    result.mainClass,
+    result.platformPrefix,
+    result.additionalModules,
   )
 }
 
-private class ComposeOptions(private val values: Map<String, String>) {
+private class ComposeOptions(private val values: Map<String, List<String>>) {
+  private val used = HashSet<String>()
+
   fun requiredPath(name: String): Path {
-    return Path.of(values.get(name) ?: error("$name is required")).toAbsolutePath().normalize()
+    val paths = pathList(name)
+    require(paths.size == 1) { "$name must be specified exactly once, but got ${paths.size} values" }
+    return paths.single()
+  }
+
+  fun pathList(name: String): List<Path> {
+    used.add(name)
+    return values.get(name)?.map { Path.of(it).toAbsolutePath().normalize() } ?: emptyList()
+  }
+
+  fun checkNoUnknownOptions() {
+    val unknown = values.keys - used
+    check(unknown.isEmpty()) { "Unknown options: ${unknown.sorted().joinToString()}" }
   }
 }
 
 private fun parseComposeArgs(args: Array<String>): ComposeOptions {
-  val values = LinkedHashMap<String, String>()
+  val values = LinkedHashMap<String, MutableList<String>>()
   for (arg in args) {
     val separator = arg.indexOf('=')
     require(arg.startsWith("--") && separator > 2) { "Expected an option in the '--key=value' form, but got '$arg'" }
     val name = arg.substring(0, separator)
-    check(values.put(name, arg.substring(separator + 1)) == null) { "$name must be specified at most once" }
+    values.computeIfAbsent(name) { ArrayList() }.add(arg.substring(separator + 1))
   }
   return ComposeOptions(values)
 }

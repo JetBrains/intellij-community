@@ -9,11 +9,61 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
+import java.util.LinkedHashSet
+
+@ApiStatus.Internal
+data class DevBuildComponent(
+  @JvmField val root: Path,
+  @JvmField val manifest: DevBuildComponentManifest,
+)
+
+@ApiStatus.Internal
+data class ComposedDevBuild(
+  @JvmField val platformPrefix: String,
+  @JvmField val mainClass: String,
+  @JvmField val additionalModules: List<String>,
+  @JvmField val coreClassPath: List<String>,
+  @JvmField val fingerprint: String,
+)
+
+@ApiStatus.Internal
+fun composeDevBuildComponents(components: List<DevBuildComponent>, target: Path): ComposedDevBuild {
+  require(components.isNotEmpty()) { "At least one dev-build component is required" }
+  val first = components.first().manifest
+  for ((_, manifest) in components.drop(1)) {
+    check(manifest.platformPrefix == first.platformPrefix) {
+      "Dev-build components have different products: '${first.platformPrefix}' and '${manifest.platformPrefix}'"
+    }
+    check(manifest.os == first.os && manifest.arch == first.arch) {
+      "Dev-build components have different target platforms: '${first.os}/${first.arch}' and '${manifest.os}/${manifest.arch}'"
+    }
+    check(manifest.mainClass == first.mainClass) {
+      "Dev-build components have different IDE main classes: '${first.mainClass}' and '${manifest.mainClass}'"
+    }
+  }
+
+  Files.createDirectories(target)
+  for ((root, _) in components) {
+    mergeDevBuildComponent(root, target)
+  }
+
+  val additionalModules = LinkedHashSet<String>()
+  for ((_, manifest) in components) {
+    additionalModules.addAll(manifest.additionalModules)
+  }
+  return ComposedDevBuild(
+    platformPrefix = first.platformPrefix,
+    mainClass = first.mainClass,
+    additionalModules = additionalModules.toList(),
+    coreClassPath = components.flatMap { it.manifest.coreClassPath },
+    fingerprint = computeIdeFingerprintFromComponents(components.map { it.manifest }),
+  )
+}
 
 @ApiStatus.Internal
 fun mergeDevBuildComponent(source: Path, target: Path) {
   mergeDevBuildComponent(source = source, target = target) { destination, file ->
-    Files.createLink(destination, file)
+    Files.copy(file, destination, StandardCopyOption.COPY_ATTRIBUTES)
   }
 }
 

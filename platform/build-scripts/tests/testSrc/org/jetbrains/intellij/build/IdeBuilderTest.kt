@@ -18,6 +18,9 @@ import org.jetbrains.intellij.build.dev.computeIdeFingerprint
 import org.jetbrains.intellij.build.dev.copyWithDevBuildOverrides
 import org.jetbrains.intellij.build.dev.createDevBuildPaths
 import org.jetbrains.intellij.build.dev.formatCoreClasspath
+import org.jetbrains.intellij.build.dev.includesPlatformLibraries
+import org.jetbrains.intellij.build.dev.includesPlatformResources
+import org.jetbrains.intellij.build.dev.includesPlugins
 import org.jetbrains.intellij.build.dev.prepareOverriddenRunDir
 import org.jetbrains.intellij.build.dev.prepareScratchDir
 import org.jetbrains.intellij.build.dev.readDevBuildComponentManifest
@@ -33,6 +36,19 @@ import kotlin.io.path.invariantSeparatorsPathString
 class IdeBuilderTest {
   @TempDir
   lateinit var tempDir: Path
+
+  @Test
+  fun devBuildPartsSelectNaturalDistributionLayers() {
+    assertThat(DevBuildPart.PLATFORM_LIB.includesPlatformLibraries).isTrue()
+    assertThat(DevBuildPart.PLATFORM_LIB.includesPlatformResources).isFalse()
+    assertThat(DevBuildPart.PLATFORM_RESOURCES.includesPlatformLibraries).isFalse()
+    assertThat(DevBuildPart.PLATFORM_RESOURCES.includesPlatformResources).isTrue()
+    assertThat(DevBuildPart.PLUGINS.includesPlugins).isTrue()
+    assertThat(DevBuildPart.PLUGINS.includesPlatformLibraries).isFalse()
+    assertThat(DevBuildPart.ALL.includesPlatformLibraries).isTrue()
+    assertThat(DevBuildPart.ALL.includesPlatformResources).isTrue()
+    assertThat(DevBuildPart.ALL.includesPlugins).isTrue()
+  }
 
   @Test
   fun createProjectDevBuildOptionsUsesRequestClassesOutputDirectoryOverride() {

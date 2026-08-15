@@ -71,7 +71,7 @@ INTELLIJ_ADD_OPENS = [
 DEV_IDE_CONFIG_PATH_PROPERTY = "idea.ide.config.path"
 
 def intellij_dev_dist_config(name, dist, visibility = None):
-    """A single-file label for an `intellij_dev_dist` target's config file, for `$(rlocationpath ...)`.
+    """A single-file label for an assembled dev distribution's config file, for `$(rlocationpath ...)`.
 
     That expansion takes a label naming exactly one file, which a dist target - two outputs, one of them declared rather
     than predeclared - is not. Its `ide_config` output group is how it gets one.
@@ -179,7 +179,7 @@ def intellij_dev_prebuilt_binary(
         system_path = None,
         program_args = [],
         visibility = None):
-    """Launches an already-assembled `intellij_dev_dist` distribution, instead of assembling one first.
+    """Launches an already-assembled dev distribution, instead of assembling one first.
 
     The counterpart of [intellij_dev_binary]: same runtime vocabulary, but the layout was computed once by the dist's
     action rather than on every `bazel run`. So none of the build's inputs appear here - no module jars, no
