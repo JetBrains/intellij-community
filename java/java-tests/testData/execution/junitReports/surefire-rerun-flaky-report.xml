@@ -1,19 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="RetryingTest" tests="2" skipped="0" failures="1" errors="0" time="0.200">
+<testsuite name="RetryingTest" time="0.200" tests="2" errors="0" skipped="0" failures="1">
   <testcase name="flakyPassesOnRerun" classname="RetryingTest" time="0.100">
+    <!-- A failed attempt is reported as flakyFailure when a later rerun passes. -->
     <flakyFailure message="first attempt failed" type="java.lang.AssertionError">
-      first attempt stack trace
-      at RetryingTest.flakyPassesOnRerun(RetryingTest.java:12)
+      <stackTrace><![CDATA[java.lang.AssertionError: first attempt failed
+]]></stackTrace>
     </flakyFailure>
+    <!-- An errored attempt is reported as flakyError when a later rerun passes. -->
+    <flakyError message="second attempt errored" type="java.lang.IllegalStateException">
+      <stackTrace><![CDATA[java.lang.IllegalStateException: second attempt errored
+]]></stackTrace>
+    </flakyError>
   </testcase>
   <testcase name="failsAfterRerun" classname="RetryingTest" time="0.100">
+    <!-- The first attempt remains the primary failure when all reruns are exhausted. -->
+    <failure message="initial failure" type="java.lang.AssertionError"><![CDATA[java.lang.AssertionError: initial failure
+]]></failure>
+    <!-- A failed retry after the primary attempt is represented as rerunFailure. -->
     <rerunFailure message="rerun failed" type="java.lang.AssertionError">
-      rerun stack trace
-      at RetryingTest.failsAfterRerun(RetryingTest.java:25)
+      <stackTrace><![CDATA[java.lang.AssertionError: rerun failed
+]]></stackTrace>
     </rerunFailure>
-    <failure message="final failure" type="java.lang.AssertionError">
-      final stack trace
-      at RetryingTest.failsAfterRerun(RetryingTest.java:25)
-    </failure>
+    <!-- An errored retry after the primary attempt is represented as rerunError. -->
+    <rerunError message="rerun errored" type="java.lang.IllegalStateException">
+      <stackTrace><![CDATA[java.lang.IllegalStateException: rerun errored
+]]></stackTrace>
+    </rerunError>
   </testcase>
 </testsuite>

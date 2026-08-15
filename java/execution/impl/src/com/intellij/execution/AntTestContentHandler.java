@@ -133,6 +133,10 @@ public class AntTestContentHandler extends DefaultHandler {
                                           null));
     }
     else if (isProblemElement(name)) {
+      // Text in those enclosed elements are collected as "raw" text.
+      // This allows to handle Surefire's way of nesting a <stackTrace> element inside
+      // flaky/rerun elements ; other junit report writers may also put diagnostic text
+      // in such element.
       boolean error = ERROR.equals(name) || RERUN_ERROR.equals(name) || FLAKY_ERROR.equals(name);
       boolean primary = ERROR.equals(name) || FAILURE.equals(name);
       myTextElements.push(new TextElement(name,
@@ -163,11 +167,15 @@ public class AntTestContentHandler extends DefaultHandler {
       myProcessor.onSuiteFinished(new TestSuiteFinishedEvent(mySuites.pop()));
     }
     else if (TESTCASE.equals(name)) {
+      // Note: TestFailedEvent does not model surefire diagnostic messages (earlier individual attempts).
+      // The failure/error elements define the final state, while Surefire injects retry/flaky elements as diagnostics.
+      // * re-ran tests are appended to the primary stack trace
       TestFailedEvent failedEvent = createTestFailedEvent();
       if (failedEvent != null) {
         myProcessor.onTestFailure(failedEvent);
       }
       else {
+        // * flakies, however, are appended to stderr (because there's no primary failures)
         emitNonPrimaryProblems();
         if (myIgnoredEvent != null) {
           myProcessor.onTestIgnored(myIgnoredEvent);
@@ -245,6 +253,7 @@ public class AntTestContentHandler extends DefaultHandler {
         break;
       }
     }
+    // test passed, but it may have flaked
     if (firstPrimaryIndex < 0) return null;
 
     TestProblem first = myProblems.get(firstPrimaryIndex);
@@ -287,6 +296,7 @@ public class AntTestContentHandler extends DefaultHandler {
     return switch (name) {
       case ERROR -> "Error";
       case FAILURE -> "Failure";
+      // Surefire problems
       case RERUN_ERROR -> "Rerun error";
       case RERUN_FAILURE -> "Rerun failure";
       case FLAKY_ERROR -> "Flaky error";

@@ -166,21 +166,29 @@ public class AntImportTest extends BaseSMTRunnerTestCase {
     assertContains(propertiesPrinter.getStdOut(), "This text describes the purpose of this test case");
   }
 
-  public void testSurefireRerunAndFlakyDetailsAreVisibleWithoutChangingFinalStatus() throws Exception {
+  public void testSurefireRerunAndFlakyDetailsAreExposedAreFlattened() throws Exception {
     SMTestProxy.SMRootTestProxy rootNode = parseTestResultFixture("surefire-rerun-flaky-report.xml");
 
+    // Note: SMTestProxy does not model individual Surefire attempts:
+
+    // * flaky tests are emitted as stderr, because these test eventually passed
     SMTestProxy flaky = findTest(rootNode, "flakyPassesOnRerun");
     assertTrue(flaky.isPassed());
     MockPrinter flakyPrinter = MockPrinter.fillPrinter(flaky);
     assertContains(flakyPrinter.getStdErr(), "Flaky failure");
-    assertContains(flakyPrinter.getStdErr(), "first attempt stack trace");
+    assertContains(flakyPrinter.getStdErr(), "java.lang.AssertionError: first attempt failed");
+    assertContains(flakyPrinter.getStdErr(), "Flaky error");
+    assertContains(flakyPrinter.getStdErr(), "java.lang.IllegalStateException: second attempt errored");
 
+    // * re-ran tests are appended to the primary failure's stack trace.
     SMTestProxy failed = findTest(rootNode, "failsAfterRerun");
     assertTrue(failed.isDefect());
-    assertEquals("final failure", failed.getErrorMessage());
-    assertContains(failed.getStacktrace(), "final stack trace");
+    assertEquals("initial failure", failed.getErrorMessage());
+    assertContains(failed.getStacktrace(), "java.lang.AssertionError: initial failure");
     assertContains(failed.getStacktrace(), "Rerun failure");
-    assertContains(failed.getStacktrace(), "rerun stack trace");
+    assertContains(failed.getStacktrace(), "java.lang.AssertionError: rerun failed");
+    assertContains(failed.getStacktrace(), "Rerun error");
+    assertContains(failed.getStacktrace(), "java.lang.IllegalStateException: rerun errored");
   }
 
   private static @NotNull SMTestProxy findTest(@NotNull SMTestProxy.SMRootTestProxy rootNode, @NotNull String testName) {
