@@ -1,9 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService.impl
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.python.community.execService.Args
@@ -36,7 +34,7 @@ import org.jetbrains.annotations.Nls
 
 
 @Service(Service.Level.APP)
-internal class ExecServiceImpl private constructor() : ExecService {
+internal class ExecServiceImpl private constructor(private val defaultScope: CoroutineScope) : ExecService {
   private val execLimiter = ConcurrencyLimiter {
     when (it) {
       ConcurrentProcessWeight.LIGHT -> Registry.intValue("python.execService.limit.light")
@@ -65,7 +63,7 @@ internal class ExecServiceImpl private constructor() : ExecService {
     options: ExecOptionsBase,
     scopeToBind: CoroutineScope? = null,
   ): Result<ProcessLauncher, ExecuteGetProcessError.EnvironmentError> {
-    val scope = scopeToBind ?: ApplicationManager.getApplication().service<MyService>().scope
+    val scope = scopeToBind ?: defaultScope
     val request = LaunchRequest(scope, args, options.env, options.tty, options.uploadBeforeExecution, options.downloadAfterExecution)
     return Result.success(
       when (binary) {
@@ -76,7 +74,8 @@ internal class ExecServiceImpl private constructor() : ExecService {
           }
           return it
         }
-      })
+      }
+    )
   }
 
   override suspend fun <T> executeAdvanced(
@@ -102,16 +101,12 @@ internal class ExecServiceImpl private constructor() : ExecService {
     processLauncher: ProcessLauncher,
     processInteractiveHandler: ProcessInteractiveHandler<T>,
   ): Result<T, ExecError> {
-    val description = options.processDescription
-                      ?: PyExecBundle.message("py.exec.defaultName.process",
-                                              (listOf(processLauncher.exeForError.toString()) + processLauncher.args).joinToString(" "))
+    val description = options.processDescription ?: PyExecBundle.message("py.exec.defaultName.process",
+                                                                         (listOf(processLauncher.exeForError.toString()) + processLauncher.args).joinToString(
+                                                                           " "))
     val process = processLauncher.start(options.weight).getOr {
-      val message = PyExecBundle.message("py.exec.start.error", description, it.error.cantExecProcessError, it.error.errNo
-                                                                                                            ?: "unknown")
-      return processLauncher.createExecError(
-        messageToUser = message,
-        errorReason = it.error
-      )
+      val message = PyExecBundle.message("py.exec.start.error", description, it.error.cantExecProcessError, it.error.errNo ?: "unknown")
+      return processLauncher.createExecError(messageToUser = message, errorReason = it.error)
     }
 
     val result = try {
@@ -148,22 +143,18 @@ private fun <T : ExecErrorReason> ProcessLauncher.createExecError(
   messageToUser: @Nls String,
   errorReason: T,
   loggedProcessId: Int? = null,
-): Result.Failure<ExecErrorImpl<T>> =
-  ExecErrorImpl(
-    exe = exeForError,
-    args = args.toTypedArray(),
-    additionalMessageToUser = messageToUser,
-    errorReason = errorReason,
-    loggedProcessId = loggedProcessId,
-  ).logAndFail()
+): Result.Failure<ExecErrorImpl<T>> = ExecErrorImpl(
+  exe = exeForError,
+  args = args.toTypedArray(),
+  additionalMessageToUser = messageToUser,
+  errorReason = errorReason,
+  loggedProcessId = loggedProcessId,
+).logAndFail()
 
 
 private fun <T : ExecErrorReason> ExecErrorImpl<T>.logAndFail(): Result.Failure<ExecErrorImpl<T>> {
   fileLogger().warn(message)
   return failure(this)
 }
-
-@Service
-private class MyService(val scope: CoroutineScope)
 
 private fun Result.Failure<ExecuteGetProcessError<*>>.asPyError(): Result.Failure<PyError> = PyResult.failure(this.error.pyError)
