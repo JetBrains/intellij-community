@@ -8,6 +8,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -17,7 +20,9 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.function.Supplier
 import javax.swing.JComponent
 
@@ -41,7 +46,9 @@ internal class WelcomeScreenLeftPanelActions(val project: Project) {
         actions.childActionsOrStubs.forEach(group::add)
       }
 
-      toolbar.updateActionsAsync()
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        toolbar.updateActionsAsync()
+      }
     }
 
     return UiDataProvider.wrapComponent(toolbar.component) { sink ->
