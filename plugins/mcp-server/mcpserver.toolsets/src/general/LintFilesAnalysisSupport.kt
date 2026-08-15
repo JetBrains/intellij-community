@@ -39,15 +39,19 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 import kotlin.coroutines.resume
 import kotlin.time.Duration.Companion.milliseconds
@@ -420,33 +424,46 @@ private suspend fun runLintMainPassesLocked(
     val attempt = attemptIndex + 1
     val daemonIndicator = DaemonProgressIndicator()
     val listenerDisposable = Disposer.newDisposable()
-    var canceledByWriteAction = false
-
-    ApplicationManagerEx.getApplicationEx().addWriteActionListener(object : WriteActionListener {
-      override fun beforeWriteActionStart(action: Class<*>) {
-        canceledByWriteAction = true
-        daemonIndicator.cancel("beforeWriteActionStart: $action")
-      }
-    }, listenerDisposable)
+    val canceledByWriteAction = AtomicBoolean()
 
     try {
-      if (ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
-        canceledByWriteAction = true
-        throw ProcessCanceledException()
-      }
+      return supervisorScope {
+        // Arm the listener before the lazy attempt starts; cancel only this child so the request can retry.
+        val attemptJob = async(start = CoroutineStart.LAZY) {
+          runLintMainPassesAttempt(
+            project = project,
+            relativePath = relativePath,
+            attempt = attempt,
+            psiFile = psiFile,
+            document = document,
+            minSeverity = minSeverity,
+            daemonIndicator = daemonIndicator,
+            profileProvider = profileProvider,
+            codeAnalyzer = codeAnalyzer,
+            codeAnalyzerSettings = codeAnalyzerSettings,
+          )
+        }
 
-      return runLintMainPassesAttempt(
-        project = project,
-        relativePath = relativePath,
-        attempt = attempt,
-        psiFile = psiFile,
-        document = document,
-        minSeverity = minSeverity,
-        daemonIndicator = daemonIndicator,
-        profileProvider = profileProvider,
-        codeAnalyzer = codeAnalyzer,
-        codeAnalyzerSettings = codeAnalyzerSettings,
-      )
+        ApplicationManagerEx.getApplicationEx().addWriteActionListener(object : WriteActionListener {
+          override fun beforeWriteActionStart(action: Class<*>) {
+            canceledByWriteAction.set(true)
+            attemptJob.cancel(ProcessCanceledException())
+            daemonIndicator.cancel("beforeWriteActionStart: $action")
+          }
+        }, listenerDisposable)
+
+        try {
+          if (ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
+            canceledByWriteAction.set(true)
+            throw ProcessCanceledException()
+          }
+
+          attemptJob.await()
+        }
+        finally {
+          attemptJob.cancel()
+        }
+      }
     }
     catch (e: ProcessCanceledException) {
       currentCoroutineContext().ensureActive()
@@ -456,7 +473,7 @@ private suspend fun runLintMainPassesLocked(
 
       exception = e
 
-      if (canceledByWriteAction || ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
+      if (canceledByWriteAction.get() || ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
         LOG.trace { "Retrying main passes for $relativePath after write action contention" }
         waitForWriteActionCompletion()
       }

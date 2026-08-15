@@ -5,9 +5,13 @@ import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.backgroundWriteAction
+import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -21,6 +25,7 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
@@ -59,6 +64,8 @@ class LintFilesAnalysisSupportTest : GeneralMcpToolsetTestBase() {
         try {
           if (firstFile.compareAndSet(null, request.filePath)) {
             firstStarted.complete(request.filePath)
+          }
+          if (request.filePath == firstFile.get()) {
             releaseFirst.await()
           }
           else {
@@ -221,6 +228,56 @@ class LintFilesAnalysisSupportTest : GeneralMcpToolsetTestBase() {
 
     assertThat(mainAttempts).hasSize(2)
     assertThat(mainAttempts[1]).isEqualTo(mainAttempts[0] + 1)
+  }
+
+  @Test
+  @Timeout(30)
+  fun collectLintFileResults_cancels_running_read_action_for_background_write(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val mainPath = relativePath(mainJavaFile)
+    val firstAttemptStarted = CompletableDeferred<Unit>()
+    val writeActionStarted = CompletableDeferred<Unit>()
+    val secondAttemptStarted = CompletableDeferred<Unit>()
+    val firstObservedMainAttempt = AtomicInteger()
+
+    withLintMainPassesRunnerOverride(
+      project,
+      runner = { request ->
+        if (request.filePath == mainPath) {
+          val firstAttempt = firstObservedMainAttempt.get()
+          when {
+            firstAttempt == 0 && firstObservedMainAttempt.compareAndSet(0, request.attempt) -> readActionBlocking {
+              firstAttemptStarted.complete(Unit)
+              while (true) {
+                ProgressManager.checkCanceled()
+              }
+            }
+
+            firstAttempt != 0 && request.attempt == firstAttempt + 1 -> secondAttemptStarted.complete(Unit)
+          }
+        }
+        emptyList()
+      },
+    ) {
+      coroutineScope {
+        val resultsJob = async {
+          collectResults(listOf(mainPath))
+        }
+
+        firstAttemptStarted.await()
+        val writeActionJob = async {
+          backgroundWriteAction {
+            writeActionStarted.complete(Unit)
+          }
+        }
+
+        withTimeout(5_000.milliseconds) {
+          writeActionStarted.await()
+          secondAttemptStarted.await()
+          assertThat(resultsJob.await().map { it.filePath }).containsExactly(mainPath)
+          writeActionJob.await()
+        }
+      }
+    }
   }
 
   @Test
