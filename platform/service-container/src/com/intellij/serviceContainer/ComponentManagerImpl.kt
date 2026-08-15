@@ -1674,10 +1674,10 @@ private fun getInstanceBlocking(holder: InstanceHolder, debugString: String, cre
 }
 
 private val forbidGetServiceEvenInNonCancellable: Boolean =
-  System.getProperty("idea.forbid.get.service.in.nc.static.init", "false").toBoolean()
+  System.getProperty("ide.forbid.get.service.in.nc.static.init", "false").toBoolean()
 
-@Internal
-var checkInsideClassInitializer: Boolean = true
+private val checkInsideClassInitializer: Boolean =
+  System.getProperty("ide.assert.get.service.in.static.init", "false").toBoolean()
 
 internal fun getOrCreateInstanceBlocking(holder: InstanceHolder, debugString: String, keyClass: Class<*>?): Any {
   // container scope might be canceled
