@@ -199,7 +199,7 @@ Run this suite before relying on TeamCity after pluginization or plugin dependen
 - Re-render the skill mirrors:
 
 ```bash
-node community/.ai/render-guides.mjs
+bazel run @community//.ai:render-guides
 ```
 
   The renderer copies this file to `community/.claude/skills/module-set-pluginization/SKILL.md`, `.agents/skills/module-set-pluginization/SKILL.md`, `.claude/skills/module-set-pluginization/SKILL.md`, and `.junie/skills/module-set-pluginization/SKILL.md`. Confirm `git status` shows only this source file and those generated mirrors diverging.

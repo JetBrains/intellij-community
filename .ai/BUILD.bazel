@@ -1,0 +1,44 @@
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
+
+# `bazel run @community//.ai:render-guides` renders the guides, skill stubs, OpenCode config and
+# harness permission rules from the sources in this directory. See README.md for what it produces.
+#
+# It runs on the bun Bazel pins (`//build:bun`, six http_archives in //:MODULE.bazel) rather than on
+# whichever `node` the machine happens to have — the same runtime the docs gates use, for the same
+# reason. See plugins/air/docs/decisions/0016-bazel-provided-bun.md for the pins and
+# plugins/air/scripts/BUILD.bazel for this target shape: bazel_skylib accepts the
+# alias -> select -> filegroup as an executable and runs bun directly, so there is no generated
+# launcher to port to Windows, where bun ships a real bun.exe.
+#
+# The renderer rewrites files in the checkout, so it must see the real source tree rather than a
+# runfiles copy of it. That is why this target declares no `data` and no `$(rootpath …)`: the shim
+# resolves the script under BUILD_WORKSPACE_DIRECTORY, which `bazel run` sets, keeping the script's
+# own `import.meta.url`-derived repo root identical to a direct `node` run. It also keeps the target
+# free of runfiles entirely — Windows materializes no runfiles tree, and ADR 0017 records a target
+# whose `$(rootpath …)` argv named a file that was not there in ten consecutive builds.
+#
+# Bazel Bourne-tokenizes `args`, so the shim is one double-quoted line with single-quoted JS strings
+# inside, and its messages avoid backticks.
+_RENDER_IN_WORKSPACE = "\"" + " ".join([
+    "const {existsSync} = require('node:fs');",
+    "const {resolve} = require('node:path');",
+    "const {pathToFileURL} = require('node:url');",
+    "const root = process.env.BUILD_WORKSPACE_DIRECTORY;",
+    "if (!root) { console.error('BUILD_WORKSPACE_DIRECTORY is unset: run this target with bazel run, not bazel build.'); process.exit(1) }",
+    "const script = resolve(root, process.argv[1]);",
+    # The renderer's repo root is the parent of community/, so it renders the monorepo and only the
+    # monorepo. Say that here instead of letting it fail later on a missing template.
+    "if (!existsSync(script)) { console.error(script + ' does not exist: render-guides renders the monorepo, so run this from the ultimate root, where community/ is a subdirectory.'); process.exit(1) }",
+    "await (await import(pathToFileURL(script).href)).main();",
+]) + "\""
+
+native_binary(
+    name = "render-guides",
+    src = "//build:bun",
+    args = [
+        "-e",
+        _RENDER_IN_WORKSPACE,
+        "community/.ai/render-guides.mjs",
+    ],
+    visibility = ["//visibility:public"],
+)

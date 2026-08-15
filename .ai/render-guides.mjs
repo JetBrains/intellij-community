@@ -1021,7 +1021,11 @@ async function renderGuideOutputsWithContext({basePartials, defaultEdition}) {
   return renderedOutputs;
 }
 
-async function main() {
+/**
+ * Renders every output into the checkout. Exported for `@community//.ai:render-guides`, which imports
+ * this module rather than executing it, so the entry guard at the bottom does not fire.
+ */
+export async function main() {
   const renderContext = await loadRenderContext();
   await collectCanonicalSkillSources(
     communitySkillsSourceDir,
