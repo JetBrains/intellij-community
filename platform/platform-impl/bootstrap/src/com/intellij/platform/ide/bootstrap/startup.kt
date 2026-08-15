@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
 @file:OptIn(LowLevelLocalMachineAccess::class)
+
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.BundleBase
@@ -30,7 +31,8 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.util.checkCancelledEvenWithPCEDisabled
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.awaitWithCheckCanceled
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -41,7 +43,6 @@ import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.svg.SvgCacheManager
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ShellEnvironmentReader
@@ -59,14 +60,13 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Toolkit
 import java.lang.invoke.MethodHandles
@@ -81,13 +81,13 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.Random
 import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiConsumer
 import java.util.function.Supplier
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import kotlin.system.exitProcess
-import kotlin.time.Duration.Companion.milliseconds
 
 internal const val IDE_STARTED: String = "------------------------------------------------------ IDE STARTED ------------------------------------------------------"
 private const val IDE_SHUTDOWN = "------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"
@@ -537,7 +537,8 @@ private fun checkDirectory(dir: Path, kind: Int, property: String): Boolean {
     try {
       Files.deleteIfExists(tempFile)
     }
-    catch (_: Exception) { }
+    catch (_: Exception) {
+    }
   }
 
   return true
@@ -705,9 +706,7 @@ private fun loadEnvironment(parentJob: Job, log: Logger): Boolean {
 
     override fun get(): Map<String, String> {
       if (env == null) {
-        env = @Suppress("RAW_RUN_BLOCKING") runBlocking {
-          awaitWithCheckCanceled(envFuture)
-        }
+        env = awaitWithIndicatorIfPossible(envFuture.asCompletableFuture())
       }
       return env!!
     }
@@ -730,18 +729,10 @@ private fun loadEnvironment(parentJob: Job, log: Logger): Boolean {
   }
 }
 
-private suspend fun <T> awaitWithCheckCanceled(deferred: CompletableDeferred<T>): T {
-  while (true) {
-    if (!deferred.isCompleted) {
-      checkCancelledEvenWithPCEDisabled(indicator = null)
-    }
-    try {
-      return withTimeout(ConcurrencyUtil.DEFAULT_TIMEOUT_MS.milliseconds) {
-        deferred.await()
-      }
-    }
-    catch (_: TimeoutCancellationException) { }
-  }
+private fun <T> awaitWithIndicatorIfPossible(future: Future<T?>): T? {
+  // Can be called before Application has started, services may be unavailable
+  val indicator = ProgressManager.getInstanceOrNull()?.getProgressIndicator()
+  return future.awaitWithCheckCanceled(indicator)
 }
 
 interface AppStarter {
