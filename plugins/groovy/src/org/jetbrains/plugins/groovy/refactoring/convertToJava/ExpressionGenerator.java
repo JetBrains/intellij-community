@@ -940,7 +940,7 @@ public class ExpressionGenerator extends Generator {
 
   @Override
   public void visitGStringExpression(@NotNull GrString gstring) {
-    final String newExprText = ConvertGStringToStringIntention.convertGStringLiteralToStringLiteral(gstring);
+    final String newExprText = ConvertGStringToStringIntention.convertLiteralToStringLiteral(gstring);
     final GrExpression newExpr = factory.createExpressionFromText(newExprText, gstring);
     newExpr.accept(this);
   }

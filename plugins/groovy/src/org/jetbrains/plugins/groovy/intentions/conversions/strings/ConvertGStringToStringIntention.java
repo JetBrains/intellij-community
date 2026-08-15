@@ -17,8 +17,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
@@ -37,53 +37,95 @@ public class ConvertGStringToStringIntention extends GrPsiUpdateIntention {
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     final GrLiteral exp = (GrLiteral)element;
-    PsiImplUtil.replaceExpression(convertGStringLiteralToStringLiteral(exp), exp);
+    PsiImplUtil.replaceExpression(convertLiteralToStringLiteral(exp), exp);
   }
 
+  /** @deprecated Use {@link #convertLiteralToStringLiteral(GrLiteral)} */
+  @Deprecated
   public static String convertGStringLiteralToStringLiteral(GrLiteral literal) {
-    PsiElement child = literal.getFirstChild();
-    if (child == null) return literal.getText();
-    String text;
+    return convertLiteralToStringLiteral(literal);
+  }
 
-    ArrayList<String> list = new ArrayList<>();
+  public static String convertLiteralToStringLiteral(GrLiteral literal) {
+    if (GrStringUtil.isSlashyString(literal) || GrStringUtil.isDollarSlashyString(literal)) {
+      return convertRegexLiteralToStringLiteral(literal);
+    }
+    return convertDoubleQuotedLiteralToStringLiteral(literal);
+  }
 
-    PsiElement prevSibling = null;
-    PsiElement nextSibling;
-    do {
-      text = child.getText();
-      nextSibling = child.getNextSibling();
-      if (child instanceof GrStringInjection) {
-        if (((GrStringInjection)child).getClosableBlock() != null) {
-          text = prepareClosableBlock(((GrStringInjection)child).getClosableBlock());
-        }
-        else if (((GrStringInjection)child).getExpression() != null) {
-          text = prepareExpression(((GrStringInjection)child).getExpression());
-        }
-        else {
-          text = child.getText();
-        }
+  private static String convertDoubleQuotedLiteralToStringLiteral(GrLiteral literal) {
+    if (!(literal instanceof GrString grString)) {
+      String quoted = escapeAndQuoteGStringContent(GrStringUtil.removeQuotes(literal.getText()));
+      return quoted != null ? quoted : "''";
+    }
+    ArrayList<String> parts = new ArrayList<>();
+    for (PsiElement part : grString.getAllContentParts()) {
+      if (part instanceof GrStringInjection injection) {
+        String text = convertInjection(injection);
+        if (text != null) parts.add(text);
       }
       else {
-        text = prepareText(text, prevSibling == null, nextSibling == null,
-                           nextSibling instanceof GrClosableBlock || nextSibling instanceof GrReferenceExpression);
+        String quoted = escapeAndQuoteGStringContent(part.getText());
+        if (quoted != null) parts.add(quoted);
       }
-      if (text != null) {
-        list.add(text);
+    }
+    return parts.isEmpty() ? "''" : StringUtil.join(parts, " + ");
+  }
+
+  private static String convertRegexLiteralToStringLiteral(GrLiteral literal) {
+    boolean isSlashy = GrStringUtil.isSlashyString(literal);
+    if (literal instanceof GrString grString) {
+      ArrayList<String> parts = new ArrayList<>();
+      for (PsiElement part : grString.getAllContentParts()) {
+        if (part instanceof GrStringInjection injection) {
+          String text = convertInjection(injection);
+          if (text != null) parts.add(text);
+        }
+        else {
+          String raw = isSlashy ? GrStringUtil.unescapeSlashyString(part.getText())
+                                : GrStringUtil.unescapeDollarSlashyString(part.getText());
+          String quoted = escapeAndQuoteRaw(raw);
+          if (!quoted.equals("''")) parts.add(quoted);
+        }
       }
-      prevSibling = child;
-      child = child.getNextSibling();
+      return parts.isEmpty() ? "''" : StringUtil.join(parts, " + ");
     }
-    while (child != null);
+    String content = GrStringUtil.removeQuotes(literal.getText());
+    String raw = literal.getValue() instanceof String s ? s
+               : isSlashy ? GrStringUtil.unescapeSlashyString(content) : GrStringUtil.unescapeDollarSlashyString(content);
+    return escapeAndQuoteRaw(raw);
+  }
 
-    StringBuilder builder = new StringBuilder(literal.getTextLength() * 2);
+  private static @Nullable String convertInjection(GrStringInjection injection) {
+    GrClosableBlock block = injection.getClosableBlock();
+    if (block != null) return prepareClosableBlock(block);
+    GrExpression expr = injection.getExpression();
+    if (expr != null) return prepareExpression(expr);
+    return injection.getText();
+  }
 
-    if (list.isEmpty()) return "''";
-
-    builder.append(list.get(0));
-    for (int i = 1; i < list.size(); i++) {
-      builder.append(" + ").append(list.get(i));
+  private static @Nullable String escapeAndQuoteGStringContent(String text) {
+    StringBuilder buffer = new StringBuilder();
+    if (text.indexOf('\n') >= 0) {
+      GrStringUtil.escapeAndUnescapeSymbols(text, "", "\"$", buffer);
+      GrStringUtil.fixAllTripleQuotes(buffer, 0);
     }
-    return builder.toString();
+    else {
+      GrStringUtil.escapeAndUnescapeSymbols(text, "'", "\"$", buffer);
+    }
+    String quoted = GrStringUtil.addQuotes(buffer.toString(), false);
+    return quoted.equals("''") ? null : quoted;
+  }
+
+  private static String escapeAndQuoteRaw(String raw) {
+    boolean multiline = raw.indexOf('\n') >= 0 || raw.indexOf('\r') >= 0;
+    String escaped = GrStringUtil.escapeSymbolsForString(raw, !multiline, false);
+    if (multiline) {
+      StringBuilder sb = new StringBuilder(escaped);
+      GrStringUtil.fixAllTripleQuotes(sb, 0);
+      escaped = sb.toString();
+    }
+    return GrStringUtil.addQuotes(escaped, false);
   }
 
   private static String prepareClosableBlock(GrClosableBlock block) {
@@ -96,7 +138,6 @@ public class ConvertGStringToStringIntention extends GrPsiUpdateIntention {
       expr = (GrExpression)statement;
     }
     return prepareExpression(expr);
-
   }
 
   private static String prepareExpression(GrExpression expr) {
@@ -115,35 +156,5 @@ public class ConvertGStringToStringIntention extends GrPsiUpdateIntention {
     else {
       return "String.valueOf(" + text + ")";
     }
-  }
-
-  private static @Nullable String prepareText(String text, boolean isFirst, boolean isLast, boolean isBeforeInjection) {
-    if (isFirst) {
-      if (text.startsWith("\"\"\"")) {
-        text = text.substring(3);
-      }
-      else text = StringUtil.trimStart(text, "\"");
-    }
-    if (isLast) {
-      if (text.endsWith("\"\"\"")) {
-        text = text.substring(0, text.length() - 3);
-      }
-      else text = StringUtil.trimEnd(text, "\"");
-    }
-    if (isBeforeInjection) {
-      text = text.substring(0, text.length() - 1);
-    }
-    if (text.isEmpty()) return null;
-
-
-    final StringBuilder buffer = new StringBuilder();
-    if (text.indexOf('\n') >= 0) {
-      GrStringUtil.escapeAndUnescapeSymbols(text, "", "\"$", buffer);
-      GrStringUtil.fixAllTripleQuotes(buffer, 0);
-    }
-    else {
-      GrStringUtil.escapeAndUnescapeSymbols(text, "'", "\"$", buffer);
-    }
-    return GrStringUtil.addQuotes(buffer.toString(), false);
   }
 }

@@ -23,7 +23,7 @@ class ConvertibleGStringLiteralPredicate implements PsiElementPredicate {
 
     final @NonNls String text = element.getText();
 
-    if (text.charAt(0) != '"') return false;
+    if (text.charAt(0) != '"' && !text.startsWith("/") && !text.startsWith("$/")) return false;
     for (PsiElement child : element.getChildren()) {
       if (child instanceof GrStringInjection) {
         GrClosableBlock block = ((GrStringInjection)child).getClosableBlock();
