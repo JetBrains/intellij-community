@@ -1057,8 +1057,9 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
 
     if (myType1 == GroovyDocTokenTypes.mGDOC_COMMENT_START && myType2 == GroovyDocTokenTypes.mGDOC_COMMENT_DATA ||
-        myType1 == GroovyDocTokenTypes.mGDOC_COMMENT_DATA &&  myType2 == GroovyDocTokenTypes.mGDOC_COMMENT_END ||
-        myType1 == GroovyDocTokenTypes.mGDOC_ASTERISKS &&     myType2 == GroovyDocTokenTypes.mGDOC_COMMENT_END) {
+        myType1 == GroovyDocTokenTypes.mGDOC_COMMENT_DATA && myType2 == GroovyDocTokenTypes.mGDOC_COMMENT_END ||
+        myType1 == GroovyDocTokenTypes.mGDOC_ASTERISKS && myType2 == GroovyDocTokenTypes.mGDOC_COMMENT_END ||
+        myType1 == GroovyDocElementTypes.GDOC_TAG && myType2 == GroovyDocTokenTypes.mGDOC_COMMENT_END) {
       createLazySpace();
     }
   }
