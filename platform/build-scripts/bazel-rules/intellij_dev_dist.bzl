@@ -29,6 +29,53 @@ IntellijDevDistInfo = provider(
     },
 )
 
+IntellijProjectModelTreeInfo = provider(
+    fields = {
+        "tree": "The checkout-shaped project model tree.",
+    },
+)
+
+def _project_model_tree_impl(ctx):
+    tree = ctx.actions.declare_directory(ctx.label.name + ".tree")
+    project_files = ctx.files.project_model_files + ctx.files.extra_project_files
+    manifest = write_project_model_manifest(ctx, ctx.label.name + ".project.manifest", project_files, ctx.attr.mode)
+
+    args = ctx.actions.args()
+    args.add("--project-manifest=" + manifest.path)
+    args.add("--output-dir=" + tree.path)
+    ctx.actions.run(
+        inputs = project_files + [manifest],
+        outputs = [tree],
+        executable = ctx.executable.materializer,
+        arguments = [args],
+        execution_requirements = {"local": "1"},
+        mnemonic = "IntellijProjectModelTree",
+        progress_message = "Materializing the project model tree %s" % ctx.label,
+    )
+    return [
+        DefaultInfo(files = depset([tree])),
+        IntellijProjectModelTreeInfo(tree = tree),
+    ]
+
+intellij_project_model_tree = rule(
+    doc = """The checkout-shaped JPS project model tree that dev-distribution fragments read.
+
+    One tree per product and target platform, shared by every fragment of it. A fragment used to build its own, and at
+    7 432 file copies that cost as much as the assembly itself - affordable once, not once per fragment.
+
+    It carries the union of what the fragments need, so a file only one of them reads (the OS natives of the resources
+    fragment, say) now invalidates all of them. Those change far less often than the model does, and the model was
+    already invalidating every fragment: project files are inputs no fragment can prune, unlike the module jars.
+    """,
+    implementation = _project_model_tree_impl,
+    attrs = {
+        "materializer": attr.label(executable = True, cfg = "exec", mandatory = True),
+        "mode": attr.string(default = "ultimate", values = ["community", "ultimate"]),
+        "project_model_files": attr.label_list(allow_files = True, mandatory = True),
+        "extra_project_files": attr.label_list(allow_files = True),
+    },
+)
+
 # The selector values `DevDistMain` accepts, mirrored here so a typo in a BUILD file fails at analysis time.
 _PLATFORM_SELECTORS = ["", "all", "core", "content-modules", "remaining-content-modules"]
 
@@ -70,16 +117,24 @@ def _fragment_impl(ctx):
     unused_inputs = ctx.actions.declare_file(ctx.label.name + ".unused-inputs")
     outputs = [home, component_manifest, scratch, unused_inputs]
 
-    project_files = ctx.files.project_model_files + ctx.files.extra_project_files
-    project_manifest = write_project_model_manifest(ctx, ctx.label.name + ".project.manifest", project_files, ctx.attr.mode)
+    project_tree = ctx.attr.project_model_tree[IntellijProjectModelTreeInfo].tree
     bazel_inputs_manifest, module_outputs = _write_bazel_inputs_manifest(ctx)
 
     args = ctx.actions.args()
-    args.add("--project-manifest=" + project_manifest.path)
+    args.add("--project-dir=" + project_tree.path)
     args.add("--output-dir=" + home.path)
     args.add("--component-manifest=" + component_manifest.path)
     args.add("--scratch-dir=" + scratch.path)
+
+    # Whatever an assembly still wants to download or extract goes here rather than into the checkout, where the cache
+    # used to live: the project tree is shared and read-only now, and a cache no action declares is not an input.
+    # Everything a fragment actually reads is declared - see `ijent_binaries` and the preloaded archives - so this
+    # should stay empty, and it is cleaned on success.
+    args.add("--download-cache-dir=" + scratch.path + "/download-cache")
     args.add("--clean-scratch-on-success")
+    if ctx.files.ijent_binaries:
+        # The unpacked archive, handed over as a directory: without it the build extracts the preloaded tar.gz itself.
+        args.add("--ijent-binaries-dir=" + ctx.files.ijent_binaries[0].dirname)
     args.add("--fragment=" + ctx.attr.fragment_name)
     args.add("--build-date-seconds=" + ctx.attr.build_date_seconds)
     args.add("--platform-prefix=" + ctx.attr.platform_prefix)
@@ -121,11 +176,11 @@ def _fragment_impl(ctx):
 
     ctx.actions.run(
         inputs = depset(
-            direct = project_files + [
-                project_manifest,
+            direct = [
+                project_tree,
                 bazel_inputs_manifest,
                 ctx.file.bazel_targets_json,
-            ] + module_outputs + ctx.files.preloaded_downloads + ctx.files.preloaded_manifests,
+            ] + module_outputs + ctx.files.preloaded_downloads + ctx.files.preloaded_manifests + ctx.files.ijent_binaries,
         ),
         outputs = outputs,
         executable = ctx.executable.assembler,
@@ -172,14 +227,14 @@ intellij_dev_fragment = rule(
         "produces_plugin_classpath_prefix": attr.bool(default = False, doc = "Whether this fragment writes the `plugin-classpath.txt` prefix; exactly one fragment of a distribution does."),
         "additional_modules": attr.string_list(),
         "test_output_modules": attr.string_list(),
-        "project_model_files": attr.label_list(allow_files = True, mandatory = True),
-        "extra_project_files": attr.label_list(allow_files = True),
+        "project_model_tree": attr.label(providers = [IntellijProjectModelTreeInfo], mandatory = True, doc = "The materialized project model tree this fragment reads, shared with the other fragments of its product."),
         "bazel_targets_json": attr.label(allow_single_file = True, mandatory = True),
         "module_outputs": attr.label_list(allow_files = True),
         "module_output_labels": attr.string_list(),
         "preloaded_downloads": attr.label_list(allow_files = True),
         "preloaded_manifests": attr.label_list(allow_files = True),
         "preloaded_only": attr.bool(default = False),
+        "ijent_binaries": attr.label_list(allow_files = True, doc = "The unpacked IJent binaries the assembly bundles at `lib/ijent/`, so that it extracts nothing itself."),
     },
 )
 

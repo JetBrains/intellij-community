@@ -99,6 +99,16 @@ fun main(args: Array<String>) {
   options.optionalPath("--bazel-inputs-manifest")?.let { path ->
     System.setProperty("intellij.build.bazel.inputs.manifest", path.invariantSeparatorsPathString)
   }
+  // A build downloads and extracts into the checkout it is reading, and a project tree shared by several assemblies is
+  // read-only. This is the property the platform already has for that case; the caller points it at writable scratch.
+  options.optionalPath("--download-cache-dir")?.let { path ->
+    System.setProperty(BuildDependenciesConstants.DOWNLOAD_CACHE_DIR_PROPERTY, path.invariantSeparatorsPathString)
+  }
+  // The IJent binaries the distribution bundles, already unpacked by the caller. Without this the build extracts the
+  // archive into the cache above just to read four files out of it, on every assembly of every fragment.
+  options.optionalPath("--ijent-binaries-dir")?.let { path ->
+    System.setProperty("ijent.provided.at", path.invariantSeparatorsPathString)
+  }
   val unusedInputs = options.optionalPath("--unused-inputs")
   configurePreloadedDownloads(options)
   options.checkNoUnknownOptions()
