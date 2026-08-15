@@ -567,14 +567,21 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
               arch = request.arch,
               context = context
             )
-            copyDistFiles(
-              newDir = runDir,
-              os = request.os,
-              arch = request.arch,
-              libcImpl = LibcImpl.current(request.os),
-              context = context,
-            )
           }
+        }
+
+        // Every fragment, not just the one that owns `bin`: a dist file is registered in the process that laid its
+        // producer out - `bundleIjentBinariesIntoDistribution` registers `lib/ijent/…` while the platform layout is
+        // being built - and `context.getDistFiles()` is per-process, so a fragment that does not copy what it
+        // registered drops it. Two fragments registering one path would collide in the composer, loudly.
+        withContext(Dispatchers.IO) {
+          copyDistFiles(
+            newDir = runDir,
+            os = request.os,
+            arch = request.arch,
+            libcImpl = LibcImpl.current(request.os),
+            context = context,
+          )
         }
       }
     }

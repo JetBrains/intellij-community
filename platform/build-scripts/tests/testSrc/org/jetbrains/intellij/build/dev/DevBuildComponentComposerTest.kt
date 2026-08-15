@@ -52,7 +52,7 @@ internal class DevBuildComponentComposerTest {
   }
 
   @Test
-  fun `component merge rejects duplicate files`(@TempDir tempDir: Path) {
+  fun `component merge rejects a file two components disagree about`(@TempDir tempDir: Path) {
     val platform = tempDir.resolve("platform")
     val plugins = tempDir.resolve("plugins")
     Files.createDirectories(platform)
@@ -65,7 +65,42 @@ internal class DevBuildComponentComposerTest {
 
     assertThatThrownBy { mergeDevBuildComponent(plugins, target) }
       .isInstanceOf(IllegalStateException::class.java)
-      .hasMessageContaining("both provide 'shared.txt'")
+      .hasMessageContaining("provide different content for 'shared.txt'")
+  }
+
+  @Test
+  fun `component merge rejects same-size files with different content`(@TempDir tempDir: Path) {
+    val first = tempDir.resolve("first")
+    val second = tempDir.resolve("second")
+    Files.createDirectories(first)
+    Files.createDirectories(second)
+    Files.writeString(first.resolve("native.so"), "aaaa")
+    Files.writeString(second.resolve("native.so"), "bbbb")
+    val target = tempDir.resolve("target")
+
+    mergeDevBuildComponent(first, target)
+
+    assertThatThrownBy { mergeDevBuildComponent(second, target) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("the same size, 4 bytes, but different content")
+  }
+
+  @Test
+  fun `component merge accepts a file two components produced identically`(@TempDir tempDir: Path) {
+    // What every fragment that builds the platform layout registers - `lib/ijent/…` and the presigned natives beside it.
+    // None of them owns it, and rejecting it is how those files went missing from a split distribution.
+    val first = tempDir.resolve("first")
+    val second = tempDir.resolve("second")
+    Files.createDirectories(first.resolve("lib/ijent"))
+    Files.createDirectories(second.resolve("lib/ijent"))
+    Files.writeString(first.resolve("lib/ijent/binary"), "same bytes")
+    Files.writeString(second.resolve("lib/ijent/binary"), "same bytes")
+    val target = tempDir.resolve("target")
+
+    mergeDevBuildComponent(first, target)
+    mergeDevBuildComponent(second, target)
+
+    assertThat(Files.readString(target.resolve("lib/ijent/binary"))).isEqualTo("same bytes")
   }
 
   @Test

@@ -142,7 +142,16 @@ internal fun mergeDevBuildComponent(
 
     override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
       val destination = target.resolve(source.relativize(file).toString())
-      check(!Files.exists(destination)) { "Dev-build components both provide '${target.relativize(destination)}'" }
+      if (Files.exists(destination)) {
+        // Two components claiming one path is normally a fragment-ownership bug, and stays an error. It is not one when
+        // the bytes agree: a file registered while the platform layout is built - `DistFile`s like `lib/ijent/…`, which
+        // every fragment that builds that layout registers and none of them owns - is produced identically by each of
+        // them. Dropping it because more than one produced it is how it went missing from a split distribution before.
+        check(mismatchOf(file, destination) == null) {
+          "Dev-build components provide different content for '${target.relativize(destination)}': ${mismatchOf(file, destination)}"
+        }
+        return FileVisitResult.CONTINUE
+      }
       if (Files.isSymbolicLink(file)) {
         Files.createSymbolicLink(destination, Files.readSymbolicLink(file))
       }
@@ -157,4 +166,18 @@ internal fun mergeDevBuildComponent(
       return FileVisitResult.CONTINUE
     }
   })
+}
+
+/**
+ * How two files claiming one distribution path differ, or `null` when they do not differ at all.
+ *
+ * Size first, because that settles almost every real collision without reading a jar twice.
+ */
+private fun mismatchOf(source: Path, destination: Path): String? {
+  val sourceSize = Files.size(source)
+  val destinationSize = Files.size(destination)
+  if (sourceSize != destinationSize) {
+    return "$sourceSize bytes from '$source' against $destinationSize already there"
+  }
+  return if (Files.mismatch(source, destination) == -1L) null else "the same size, $sourceSize bytes, but different content"
 }
