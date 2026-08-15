@@ -26,7 +26,7 @@ A requested suffix such as `IJ-MR-100` goes in its own trailing paragraph.
 
 ## Safe message input
 
-Pass a multiline commit message through stdin with `-F -` and a quoted heredoc:
+On POSIX shells, pass a multiline commit message through stdin with `-F -` and a quoted heredoc:
 
 ```bash
 git commit -F - <<'EOF'
@@ -35,6 +35,20 @@ IDEA-12345 concise subject
 Explain why the change was made and what was decided.
 EOF
 ```
+
+On PowerShell, do **not** pipe a here-string into `git commit -F -`. Windows PowerShell may add a
+Unicode BOM to the first line, producing a malformed subject that SafePush rejects. Pass one
+paragraph per `-m` argument instead; the same form is safe with `git commit --amend`:
+
+```powershell
+git commit `
+  -m "IDEA-12345 concise subject" `
+  -m "Explain why the change was made and what was decided." `
+  -m "IJ-MR-100"
+```
+
+After committing or amending from PowerShell, inspect `git cat-file commit HEAD` and confirm that
+the subject begins directly with the ticket or label, without an invisible BOM.
 
 Do not stage commit messages in `/tmp`, `/private/tmp`, or another path outside the workspace. That can require an extra filesystem-access approval and leaves a plaintext artifact behind. If a reusable draft is genuinely needed, keep it under the repository's gitignored `out/` directory, for example `out/commit-message.txt`.
 
