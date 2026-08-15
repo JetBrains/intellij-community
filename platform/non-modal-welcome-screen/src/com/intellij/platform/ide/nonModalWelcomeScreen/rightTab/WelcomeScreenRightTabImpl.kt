@@ -395,7 +395,7 @@ internal class WelcomeScreenRightTabImpl(
 
             if (comboBoxModel is ThemeModel) {
               updateLafIconCallback = {
-                label.icon = if (JBColor.isBright()) AllIcons.MeetNewUi.LightTheme else AllIcons.MeetNewUi.DarkTheme
+                label.icon = ThemeModel.getIcon()
               }
             }
 
@@ -425,16 +425,10 @@ internal class WelcomeScreenRightTabImpl(
 
   private fun createFooterModels(): List<InfoPanelModel> {
     return buildList {
-      add(ComboBoxInfoPanelModel(AllIcons.MeetNewUi.LightTheme,
-                                 "welcome.screen.right.tab.theme.switch.prefix",
-                                 ThemeModel()))
-      add(ComboBoxInfoPanelModel(AllIcons.General.Keyboard,
-                                 "welcome.screen.right.tab.keymap.switch.prefix",
-                                 KeymapModel()))
+      add(ComboBoxInfoPanelModel(ThemeModel.getIcon(), "welcome.screen.right.tab.theme.switch.prefix", ThemeModel()))
+      add(ComboBoxInfoPanelModel(AllIcons.General.Keyboard, "welcome.screen.right.tab.keymap.switch.prefix", KeymapModel()))
       if (contentProvider.isStartupSwitchPanelOptionVisible) {
-        add(ComboBoxInfoPanelModel(AllIcons.General.Settings,
-                                   "welcome.screen.right.tab.startup.switch.prefix",
-                                   StartupSwitchModel()))
+        add(ComboBoxInfoPanelModel(AllIcons.General.Settings, "welcome.screen.right.tab.startup.switch.prefix", StartupSwitchModel()))
       }
       addAll(contentProvider.getAdditionalInfoButtonModels(project).map { ButtonInfoPanelModel(it) })
     }
