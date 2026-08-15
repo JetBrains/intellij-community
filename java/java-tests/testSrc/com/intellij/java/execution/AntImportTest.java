@@ -21,6 +21,7 @@ import com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsCo
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.history.ImportedToGeneralTestEventsConverter;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
+import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.util.Disposer;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -132,6 +133,10 @@ public class AntImportTest extends BaseSMTRunnerTestCase {
     assertTrue(test.isDefect());
     assertContains(test.getErrorMessage(), "Actual data differs from file content");
     assertContains(test.getStacktrace(), "GlobalMetadataInfoHandler.compareAllMetaDataInfos");
+    DiffHyperlink diffHyperlink = test.getDiffViewerProvider();
+    assertNotNull(diffHyperlink);
+    assertEquals("...ExpectClass(val [<!ACTUAL_WITHOUT_EXPECT!>x<!>]: Int)...", diffHyperlink.getLeft());
+    assertEquals("...ExpectClass(val [x]: Int)...", diffHyperlink.getRight());
   }
 
   public void testCommonJUnitReportPreservesOutputAndProperties() throws Exception {

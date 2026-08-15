@@ -13,6 +13,8 @@ import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEv
 import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
 import com.intellij.execution.testframework.sm.runner.history.ImportTestOutputExtension;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.rt.execution.junit.ComparisonFailureData;
+import com.intellij.rt.execution.testFrameworks.AbstractExpectedPatterns;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
@@ -256,7 +258,10 @@ public class AntTestContentHandler extends DefaultHandler {
       }
       stackTrace.append(problem.formatForOutput());
     }
-    return new TestFailedEvent(myCurrentTest, message, stackTrace.toString(), first.error, null, null);
+    ComparisonFailureData comparisonData = AbstractExpectedPatterns.parseComparisonFailure(message);
+    String actual = comparisonData != null ? comparisonData.getActual() : null;
+    String expected = comparisonData != null ? comparisonData.getExpected() : null;
+    return new TestFailedEvent(myCurrentTest, message, stackTrace.toString(), first.error, actual, expected);
   }
 
   private void emitNonPrimaryProblems() {
