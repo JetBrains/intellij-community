@@ -185,6 +185,14 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     });
 
     putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
+
+    // Re-applied on every construction on purpose: a toolbar rebuild replaces this button with a new one built
+    // from the same action, and a name that did not come along would leave the control unaddressable exactly
+    // when the toolbar changed. See ActionUtil.COMPONENT_NAME.
+    String componentName = ActionUtil.getComponentName(myAction, myPresentation);
+    if (componentName != null) {
+      setName(componentName);
+    }
   }
 
   private void updateMinimumSize() {
