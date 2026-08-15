@@ -40,7 +40,6 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -90,12 +89,10 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
         // (the document text is compared, so, double work is not performed)
         highlighter.setText(effectiveDocument.immutableCharSequence)
         if (effectiveDocument.immutableCharSequence.isNotEmpty()) {
-          asyncLoader.coroutineScope.launch {
-            // preload the syntax highlighter in BGT because it's expensive
-            // - to classload all highlighters and
-            // - enumerate and handle all extensions (see e.g. [com.intellij.ide.highlighter.XmlFileHighlighter.EMBEDDED_HIGHLIGHTERS])
-            highlighter.createIterator(0).textAttributes
-          }
+          // preload the syntax highlighter in BGT because it's expensive
+          // - to classload all highlighters and
+          // - enumerate and handle all extensions (see e.g. [com.intellij.ide.highlighter.XmlFileHighlighter.EMBEDDED_HIGHLIGHTERS])
+          highlighter.createIterator(0).textAttributes
         }
         highlighter
       }
