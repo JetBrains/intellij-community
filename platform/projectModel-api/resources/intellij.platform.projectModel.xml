@@ -8,5 +8,30 @@
     <extensionPoint qualifiedName="com.intellij.projectTypesProvider" interface="com.intellij.openapi.project.ProjectTypesProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.pathMacroFilter" interface="com.intellij.openapi.application.PathMacroFilter" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.projectCloseHandler" interface="com.intellij.openapi.project.ProjectCloseHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.workspaceModel.preUpdateHandler" interface="com.intellij.platform.backend.workspace.WorkspaceModelPreUpdateHandler"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.workspace.bridgeInitializer" interface="com.intellij.platform.backend.workspace.BridgeInitializer"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.workspaceModel.serializerHook" interface="com.intellij.platform.backend.workspace.WorkspaceModelSerializerHook"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.moduleExtension" beanClass="com.intellij.openapi.roots.ModuleExtensionEp" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.openapi.roots.ModuleExtension"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.orderEnumerationHandlerFactory" interface="com.intellij.openapi.roots.OrderEnumerationHandler$Factory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.filePropertyPusher" interface="com.intellij.openapi.roots.impl.FilePropertyPusher" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.projectFileScanner" interface="com.intellij.util.indexing.roots.IndexableFileScanner" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.customLibraryTable" interface="com.intellij.openapi.roots.libraries.CustomLibraryTableDescription" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.primaryModuleManager" interface="com.intellij.openapi.module.PrimaryModuleManager" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.orderRootType" interface="com.intellij.openapi.roots.OrderRootType"/>
   </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.openapi.roots.libraries.LibraryKindRegistry" open="true"/>
+    <applicationService serviceInterface="com.intellij.openapi.roots.ExternalProjectSystemRegistry" open="true"
+                        serviceImplementation="com.intellij.openapi.roots.impl.EmptyProjectSystemRegistry"/>
+    <projectService serviceInterface="com.intellij.projectModel.ModuleDependenciesGraphService"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleDependenciesGraphServiceImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.components.CustomImlComponentService"
+                    serviceImplementation="com.intellij.openapi.components.CustomImlComponentServiceImpl"/>
+    <projectSettings service="com.intellij.openapi.project.ProjectTypeService"/>
+  </extensions>
 </idea-plugin>

@@ -26,5 +26,13 @@
     <applicationService serviceImplementation="com.intellij.ide.todo.TodoConfiguration" open="true"/>
     <indexPatternSearch implementation="com.intellij.psi.impl.search.IndexPatternSearcher"/>
     <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>
+    <applicationService serviceImplementation="com.intellij.openapi.editor.colors.impl.AppEditorFontOptions"/>
+    <applicationService serviceImplementation="com.intellij.openapi.editor.colors.impl.AppConsoleFontOptions"/>
+    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorFontCache"
+                        serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.editor.highlighter.EditorHighlighterFactory"
+                        serviceImplementation="com.intellij.openapi.editor.highlighter.EditorHighlighterFactoryImpl"/>
+    <applicationSettings service="com.intellij.openapi.editor.colors.impl.AppConsoleFontOptions"/>
+    <applicationSettings service="com.intellij.openapi.editor.colors.impl.AppEditorFontOptions"/>
   </extensions>
 </idea-plugin>

@@ -47,6 +47,89 @@
     <projectService
       serviceInterface="com.intellij.openapi.module.ModuleManager" open="true"
       serviceImplementation="com.intellij.openapi.module.EmptyModuleManager"/>
+
+    <projectService serviceInterface="com.intellij.platform.backend.workspace.WorkspaceModel" open="true"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl"/>
+    <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceEntitiesLifecycleActivity"/>
+    <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.ide.ProjectRootEntityWorkspaceFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.ide.AutoExcludeWorkspaceFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.ide.AutoExcludeInContentRootsWorkspaceFileIndexContributor"/>
+
+    <projectService serviceInterface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex"
+                    serviceImplementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl"/>
+    <projectPreInit id="workspaceFileIndexInitializer" implementation="com.intellij.workspaceModel.ide.impl.WorkspaceFileIndexInitializer"/>
+    <registryKey key="ide.new.project.model.strict.mode.rbs" defaultValue="false" restartRequired="true"
+                 description="Enable additional checks after replaceBySource and applyChangesFrom"/>
+    <registryKey key="ide.workspace.model.assertions.on.update" defaultValue="false" restartRequired="false"
+                 description="Enable workspace model consistency checking after every update"/>
+    <registryKey key="ide.workspace.model.assertions.on.long.listeners" defaultValue="true" restartRequired="true"
+                 description="Enable workspace model checking for listeners that execute more than 200ms"/>
+    <registryKey key="ide.workspace.model.assertions.bridges.usage" defaultValue="false" restartRequired="true"
+                 description="Enable workspace model checking for accessing bridges from WSM listeners"/>
+    <registryKey key="ide.workspace.model.per.environment.model.separation" defaultValue="true" restartRequired="true"
+                 description="Enable existence of multiple workspace models, one per each isolated environment"/>
+    <registryKey key="ide.workspace.model.dump.on.every.wsm.update" defaultValue="false" restartRequired="false"
+                 description="Dump workspace model to log directory on every WSM update"/>
+    <registryKey key="ide.workspace.model.relative.paths.to.exclude.automatically"
+                 defaultValue=".worktrees;.claude/worktrees" restartRequired="true"
+                 description="Semicolon-separated list of relative-paths from project root to automatically exclude from indexing and searching."/>
+    <registryKey key="use.wsm.for.dependent.unloaded.modules" defaultValue="true" restartRequired="true"
+                 description="Use workspace model based modules graph for calculating dependent unloaded modules"/>
+    <registryKey key="ide.workspace.model.use.concurrent.virtual.file.url.manager" defaultValue="true" restartRequired="true"
+                 description="Use the lock-free VirtualFileUrlManager implementation. Disable to fall back to the synchronized one."/>
+    <persistentFsConnectionListener implementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexCleaner"/>
+
+    <projectService serviceInterface="com.intellij.openapi.components.PathMacroManager"
+                    serviceImplementation="com.intellij.openapi.components.impl.ProjectPathMacroManager"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.impl.ModifiableModelCommitterService"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableModelCommitterServiceBridge"/>
+    <applicationService serviceInterface="com.intellij.openapi.project.ProjectLocator"
+                        serviceImplementation="com.intellij.openapi.project.ProjectLocatorImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTablesRegistrar"
+                        serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl"/>
+    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry"
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistryImpl"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceModelLegacyBridge"
+                    serviceImplementation="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceModelLegacyBridgeImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.TestModulePropertiesProvider"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridgeProvider"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.ProjectSynchronizerUtil"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.ProjectSynchronizerUtilImpl"/>
+    <!-- Global Workspace Model -->
+    <applicationService serviceInterface="com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer"
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl"
+                        open="true"/>
+    <!-- Global or Custom Workspace Model Libraries -->
+    <workspace.bridgeInitializer
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalAndCustomLibraryTableBridgeInitializer"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
+                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexFacade"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.ProjectFileIndex" open="true"
+                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexImpl"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.EntitiesOrphanage"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.EntitiesOrphanageImpl"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeJpsEntitySourceFactoryImpl"/>
+    <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl"
+                    serviceInterface="com.intellij.workspaceModel.ide.JpsProjectLoadingManager"/>
+    <projectService serviceInterface="com.intellij.openapi.module.AutomaticModuleUnloader" open="true"
+                    serviceImplementation="com.intellij.openapi.module.DummyAutomaticModuleUnloader"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleDependencyIndexImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.roots.AdditionalLibraryRootsListenerHelper"
+                        serviceImplementation="com.intellij.openapi.roots.impl.AdditionalLibraryRootsListenerHelperImpl"/>
+    <workspaceModel.preUpdateHandler implementation="com.intellij.workspaceModel.ide.impl.ModulePreUpdateHandler"/>
+    <workspaceModel.serializerHook implementation="com.intellij.workspaceModel.ide.impl.RemoveTransientJpsEntities"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
+                    serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl" preload="true"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.ContentRootFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.SourceRootFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.ExcludedRootFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.UnloadedContentRootFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.SdkEntityFileIndexContributor"/>
+    <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.OrphanageActivity"/>
   </extensions>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.bundledColorScheme" beanClass="com.intellij.configurationStore.BundledSchemeEP" dynamic="true"/>
@@ -57,5 +140,36 @@
                     interface="com.intellij.configurationStore.ProjectStorePathCustomizer"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.sdkFinder" interface="com.intellij.openapi.roots.impl.SdkFinder" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.workspaceModel.entityLifecycleSupporter" dynamic="true"
+                    interface="com.intellij.platform.backend.workspace.WorkspaceEntityLifecycleSupporter"/>
+    <extensionPoint qualifiedName="com.intellij.directoryIndexExcludePolicy" area="IDEA_PROJECT" dynamic="true"
+                    interface="com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy"/>
+    <extensionPoint qualifiedName="com.intellij.workspaceModel.fileIndexContributor" dynamic="true"
+                    interface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor"/>
+    <extensionPoint qualifiedName="com.intellij.additionalLibraryRootsProvider" interface="com.intellij.openapi.roots.AdditionalLibraryRootsProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.workspaceModel.moduleExtensionBridgeFactory"
+                    interface="com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.projectPathMacroContributor" interface="com.intellij.openapi.components.impl.ProjectWidePathMacroContributor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.pathMacroSubstitutorProvider" interface="com.intellij.openapi.components.impl.PathMacroSubstitutorProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.workspaceModel.facetContributor" interface="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.workspaceFileIndexContributorEnforcer" interface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributorEnforcer"
+                    dynamic="true"/>
   </extensionPoints>
+  <applicationListeners>
+    <listener class="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSeparationListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+  </applicationListeners>
+  <projectListeners>
+    <listener class="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSynchronizerListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+    <listener class="com.intellij.workspaceModel.ide.impl.OrphanListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+    <listener class="com.intellij.workspaceModel.ide.impl.JpsProjectLoadedListenerImpl"
+              topic="com.intellij.workspaceModel.ide.JpsProjectLoadedListener"/>
+  </projectListeners>
 </idea-plugin>
