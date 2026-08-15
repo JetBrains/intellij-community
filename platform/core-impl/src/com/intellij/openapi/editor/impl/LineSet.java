@@ -215,12 +215,23 @@ public final class LineSet {
     }
   }
 
-  boolean isModified(int index) {
+  /**
+   * {@code isModified}/{@code setModified}/{@code clearModificationFlags} below are no longer consumed by any
+   * production code: since the {@code DocumentText}/{@code DocumentModState} split, per-line modification
+   * tracking lives in {@link ModifiedLineSet} instead, and {@link DocumentTextImpl} never calls
+   * {@link #clearModificationFlags} on its own {@code LineSet} anymore -- so the {@code MODIFIED_MASK} bits it
+   * sets as a side effect of {@link #update} now only accumulate, never reset. Widened from package-private to
+   * public {@code @VisibleForTesting} only so {@code ModifiedLineSetTest} can compare {@link ModifiedLineSet}
+   * against this class directly. Do not read these as reflecting a document's real modification state.
+   */
+  @VisibleForTesting
+  public boolean isModified(int index) {
     checkLineIndex(index);
     return !isLastEmptyLine(index) && BitUtil.isSet(myFlags[index], MODIFIED_MASK);
   }
 
-  @NotNull LineSet setModified(@NotNull IntList indices) {
+  @VisibleForTesting
+  public @NotNull LineSet setModified(@NotNull IntList indices) {
     if (indices.isEmpty()) {
       return this;
     }
@@ -240,8 +251,8 @@ public final class LineSet {
   /**
    * @param endLine is exclusive, {@code Integer.MAX_VALUE} means the last line
    */
-  @NotNull
-  LineSet clearModificationFlags(int startLine, int endLine) {
+  @VisibleForTesting
+  public @NotNull LineSet clearModificationFlags(int startLine, int endLine) {
     if (startLine > endLine) {
       throw new IllegalArgumentException("endLine < startLine: " + endLine + " < " + startLine + "; lineCount: " + getLineCount());
     }

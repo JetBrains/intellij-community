@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 
 /**
- * Document chars + lineSet + modStamp
+ * Document chars + lineSet
  */
 @ApiStatus.Internal
 interface DocumentText {
@@ -47,23 +47,6 @@ interface DocumentText {
   fun length(): Int
 
   /**
-   * Part of the document metadata tracking text timeline
-   *
-   * @see DocumentEx.getModificationStamp
-   */
-  @Contract(pure = true)
-  fun modStamp(): Long
-
-  /**
-   * Part of the document metadata tracking text timeline.
-   * Always increases from snapshot to snapshot if text is changed.
-   *
-   * @see DocumentEx.getModificationSequence
-   */
-  @Contract(pure = true)
-  fun modSequence(): Int
-
-  /**
    * @see DocumentEx.getLineCount
    */
   @Contract(pure = true)
@@ -94,43 +77,10 @@ interface DocumentText {
   fun lineSeparatorLength(line: Int): Int
 
   /**
-   * Part of the document metadata tracking text timeline
-   *
-   * @see DocumentEx.isLineModified
-   */
-  @Contract(pure = true)
-  fun isLineModified(line: Int): Boolean
-
-  /**
    * @see DocumentEx.createLineIterator
    */
   @Contract(pure = true)
   fun lineIterator(): LineIterator
-
-  /**
-   * Returns snapshot with specified `newModStamp`.
-   *
-   * @param incrementModSeq whether [modSequence] should be incremented
-   */
-  @Contract(pure = true)
-  fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentText
-
-  /**
-   * Returns snapshot with cleared specified line flags.
-   *
-   * @param endLine is exclusive. Two special values `0` and `Int.MAX_VALUE` ignoring range checks
-   */
-  @Contract(pure = true)
-  fun withClearedLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray): DocumentText
-
-  /**
-   * Returns snapshot with the same text and metadata from the other snapshot.
-   * This method is used to preserve the semantics of metadata being a tracker of text timeline.
-   *
-   * @param metadata latest version of the document
-   */
-  @Contract(pure = true)
-  fun withMetadata(metadata: DocumentText): DocumentText
 
   /**
    * Returns snapshot with [patch] applied: the result's text is this snapshot's text after replacing

@@ -7,22 +7,16 @@ import com.intellij.openapi.editor.ex.LineIterator
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.text.CharArrayUtil
 import com.intellij.util.text.ImmutableCharSequence
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntList
 import java.lang.ref.SoftReference
 
 internal class DocumentTextImpl private constructor(
   private val chars: ImmutableCharSequence,
-  private val modStamp: Long,
-  private val modSequence: Int,
   private var lineSet: LineSet?,                    // non-volatile intentionally, see getLineSet()
   private var cachedString: SoftReference<String>?, // non-volatile intentionally, see string()
 ) : DocumentText {
 
   constructor(chars: CharSequence) : this(
     chars = CharArrayUtil.createImmutableCharSequence(chars),
-    modStamp = DocumentModStamp.next(),
-    modSequence = 0,
     lineSet = null,
     cachedString = null,
   )
@@ -65,14 +59,6 @@ internal class DocumentTextImpl private constructor(
     return chars.length
   }
 
-  override fun modStamp(): Long {
-    return modStamp
-  }
-
-  override fun modSequence(): Int {
-    return modSequence
-  }
-
   override fun lineCount(): Int {
     val lineCount = getLineSet().lineCount
     assert(lineCount >= 0)
@@ -106,68 +92,8 @@ internal class DocumentTextImpl private constructor(
     return separatorLength
   }
 
-  override fun isLineModified(line: Int): Boolean {
-    val lineSet = this.lineSet
-    return lineSet != null && lineSet.isModified(line)
-  }
-
   override fun lineIterator(): LineIterator {
     return getLineSet().createIterator()
-  }
-
-  override fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentText {
-    val newModSequence = if (incrementModSeq) nextModSequence() else modSequence
-    if (modStamp == newModStamp && modSequence == newModSequence) {
-      return this
-    }
-    return DocumentTextImpl(chars, newModStamp, newModSequence, lineSet, cachedString)
-  }
-
-  override fun withClearedLineFlags(
-    startLine: Int,
-    endLine: Int,
-    exceptLines: IntArray,
-  ): DocumentTextImpl {
-    if (this.lineSet == null) {
-      // there were no text changes if line set is not created yet
-      return this
-    }
-    var lineSet = getLineSet()
-    val modifiedLines: IntList
-    if (exceptLines.isEmpty()) {
-      modifiedLines = EMPTY_INDICES
-    } else {
-      modifiedLines = IntArrayList(exceptLines.size)
-      for (line in exceptLines) {
-        // TODO: why line < 0 || line >= lineSet.lineCount
-        //  silently ignored not IndexOutOfBoundsException?
-        if (0 <= line && line < lineSet.lineCount) {
-          if (lineSet.isModified(line)) {
-            modifiedLines.add(line)
-          }
-        }
-      }
-    }
-    lineSet = lineSet.clearModificationFlags(startLine, endLine)
-    lineSet = lineSet.setModified(modifiedLines)
-    return withLineSet(lineSet)
-  }
-
-  override fun withMetadata(metadata: DocumentText): DocumentText {
-    if (this === metadata) {
-      return this
-    }
-    if (this.chars === metadata.chars()) {
-      return metadata
-    }
-    // discard metadata.chars, see the reconciliation note in [com.intellij.openapi.editor.ex.DocumentMutator]
-    return DocumentTextImpl(
-      this.chars,
-      metadata.modStamp(),
-      metadata.modSequence(),
-      this.lineSet,
-      this.cachedString,
-    )
   }
 
   override fun withPatch(patch: DocumentTextPatch): DocumentTextImpl {
@@ -188,7 +114,7 @@ internal class DocumentTextImpl private constructor(
       "; nextTextLength = " + newTextLength
     }
     val oldLineSet = getLineSet()
-    var newLineSet = oldLineSet.update(
+    val newLineSet = oldLineSet.update(
       oldText,
       startOffset,
       endOffset,
@@ -198,24 +124,7 @@ internal class DocumentTextImpl private constructor(
       "nextTextLength = " + newTextLength +
       "; nextLineSet.getLength() = " + newLineSet.length
     }
-    if (patch.clearLineFlags()) {
-      newLineSet = newLineSet.clearModificationFlags(0, Int.MAX_VALUE)
-    }
-    val newModSequence = nextModSequence()
-    return DocumentTextImpl(
-      newText,
-      patch.newModStamp(),
-      newModSequence,
-      newLineSet,
-      null,
-    )
-  }
-
-  private fun withLineSet(newLineSet: LineSet?): DocumentTextImpl {
-    if (this.lineSet === newLineSet) {
-      return this
-    }
-    return DocumentTextImpl(chars, modStamp, modSequence, newLineSet, cachedString)
+    return DocumentTextImpl(newText, newLineSet, null)
   }
 
   /**
@@ -248,10 +157,6 @@ internal class DocumentTextImpl private constructor(
     return chars.replace(startOffset, endOffset, newFragment)
   }
 
-  private fun nextModSequence(): Int {
-    return modSequence + 1
-  }
-
   private fun presentation(obj: Any?): String {
     if (obj == null) {
       return "null"
@@ -269,21 +174,13 @@ internal class DocumentTextImpl private constructor(
 
   override fun toString(): String {
     val id = presentation(this)
-    val ms = modStamp
-    val mq = modSequence
     val ch = presentation(chars)
     val ls = presentation(lineSet)
     val cs = presentation(cachedString)
     return "DocumentText" + id + '{' +
-           "modStamp=" + ms +
-           ", modSequence=" + mq +
-           ", chars=" + ch +
+           "chars=" + ch +
            ", lineSet=" + ls +
            ", string=" + cs +
            '}'
-  }
-
-  companion object {
-    private val EMPTY_INDICES: IntList = IntArrayList(0)
   }
 }

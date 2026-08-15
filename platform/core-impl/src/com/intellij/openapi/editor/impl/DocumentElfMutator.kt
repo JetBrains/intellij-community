@@ -230,7 +230,7 @@ internal abstract class DocumentElfMutator(
       eventToRevert.offset,
       eventToRevert.newFragment,
       eventToRevert.oldFragment,
-      currentText.modStamp(),
+      currentSnapshot.modState().stamp(),
       eventToRevert.isWholeTextReplaced,
       initialStartOffset,
       eventToRevert.newLength,

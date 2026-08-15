@@ -30,10 +30,16 @@ interface DocumentSnapshot {
   fun text(): DocumentText
 
   /**
+   * Returns the modification-tracking state of this snapshot
+   */
+  @Contract(pure = true)
+  fun modState(): DocumentModState
+
+  /**
    * Returns snapshot with specified `newModStamp`. The aspects are kept, the characters do not change.
    *
-   * @param incrementModSeq whether [DocumentText.modSequence] should be incremented
-   * @see DocumentText.withModStamp
+   * @param incrementModSeq whether [DocumentModState.sequence] should be incremented
+   * @see DocumentModState.withStamp
    */
   @Contract(pure = true)
   fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentSnapshot
@@ -42,7 +48,7 @@ interface DocumentSnapshot {
    * Returns snapshot with cleared specified line flags. The aspects are kept, the characters do not change.
    *
    * @param endLine is exclusive. Two special values `0` and `Int.MAX_VALUE` ignoring range checks
-   * @see DocumentText.withClearedLineFlags
+   * @see DocumentModState.withClearedLineFlags
    */
   @Contract(pure = true)
   fun withClearedLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray): DocumentSnapshot
@@ -76,8 +82,12 @@ interface DocumentSnapshot {
    * - otherwise this snapshot's aspects are kept, because [metadata]'s aspects
    *   correspond to its discarded text
    *
+   * The [DocumentModState.stamp]/[DocumentModState.sequence] always come from [metadata], but
+   * line-modification tracking always stays this snapshot's own: it is tied to the text that survives,
+   * never to [metadata]'s discarded one.
+   *
    * @param metadata latest version of the document
-   * @see DocumentText.withMetadata
+   * @see DocumentModState.withMetadata
    */
   @Contract(pure = true)
   fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot

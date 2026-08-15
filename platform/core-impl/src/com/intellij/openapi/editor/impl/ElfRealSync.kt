@@ -149,7 +149,7 @@ internal abstract class ElfRealSync(
       startOffset,
       changeEvent.oldFragment,
       changeEvent.newFragment,
-      realText.modStamp(),
+      real.modState().stamp(),
       changeEvent.isWholeTextReplaced,
       initialStartOffset,
       initialOldLength,

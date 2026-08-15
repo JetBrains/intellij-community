@@ -26,7 +26,7 @@ interface DocumentTextPatch { // TODO: implement DocumentEventImpl via DocumentT
   fun endOffset(): Int
   fun newFragment(): CharSequence
   fun newModStamp(): Long
-  fun clearLineFlags(): Boolean
+  fun clearLineFlags(): Boolean // TODO: remove
   fun originStartOffset(): Int
   fun originEndOffset(): Int
   fun moveOffset(): Int

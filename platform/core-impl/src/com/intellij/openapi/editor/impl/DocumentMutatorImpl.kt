@@ -282,7 +282,7 @@ internal abstract class DocumentMutatorImpl(
       startOffset,
       oldFragment,
       newFragment,
-      textBefore.modStamp(),
+      snapshotBefore.modState().stamp(),
       wholeTextReplaced,
       patch.originStartOffset(),
       patch.originEndOffset() - patch.originStartOffset(),
@@ -316,10 +316,11 @@ internal abstract class DocumentMutatorImpl(
   }
 
   /**
-   * Returns the snapshot of [snapshotBefore] updated by [patch], carrying the metadata of [latest].
+   * Returns the snapshot of [snapshotBefore] updated by [patch], carrying the modification stamp/sequence
+   * of [latest].
    *
-   * modStamp or other metadata could be changed during before-change listeners,
-   * so the metadata of [latest] is merged in before the patch is applied.
+   * The stamp could be changed during before-change listeners, so [latest]'s stamp/sequence is merged in
+   * before the patch is applied; line-modification tracking stays [snapshotBefore]'s own.
    */
   protected fun mergeAndPatch(
     snapshotBefore: DocumentSnapshot,

@@ -152,7 +152,7 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public long getModificationStamp() {
-    return mySnapshot.text().modStamp();
+    return mySnapshot.modState().stamp();
   }
 
   @Override

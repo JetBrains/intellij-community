@@ -122,7 +122,7 @@ internal class DocumentAspectTest {
     assertEquals(1, rebuilt.startOffset)
     assertEquals(1, rebuilt.endOffset)
     assertEquals("XY", rebuilt.newFragment.toString())
-    assertEquals(before.text().modStamp() + 1, rebuilt.newModStamp)
+    assertEquals(before.modState().stamp() + 1, rebuilt.newModStamp)
     assertSame(aspect, before.aspect(KEY_1)) // the old snapshot keeps the old aspect
   }
 
@@ -146,7 +146,7 @@ internal class DocumentAspectTest {
         startOffset = 2,
         endOffset = 3,
         newFragment = "Z",
-        newModStamp = before.text().modStamp() + 1,
+        newModStamp = before.modState().stamp() + 1,
         clearLineFlags = false,
         originStartOffset = 1,
         originEndOffset = 4,
@@ -216,7 +216,7 @@ internal class DocumentAspectTest {
     val withAspect = base.withAspect(KEY_1, TestAspect())
     val metadata = withModStamp(base) // shares the text characters with `withAspect`
     val merged = withAspect.withMetadata(metadata)
-    assertEquals(MOD_STAMP, merged.text().modStamp())
+    assertEquals(MOD_STAMP, merged.modState().stamp())
     assertNull(merged.aspect(KEY_1)) // aspects follow the newest snapshot whose text survives
   }
 
@@ -235,7 +235,7 @@ internal class DocumentAspectTest {
     val changed = insertString(before, offset = 0, fragment = "x")
     val metadata = withModStamp(snapshot("abc").withAspect(KEY_2, TestAspect()))
     val merged = changed.withMetadata(metadata)
-    assertEquals(MOD_STAMP, merged.text().modStamp())
+    assertEquals(MOD_STAMP, merged.modState().stamp())
     val kept = merged.aspect(KEY_1)
     assertNotNull(kept) // this text survives, so this aspects survive
     assertSame(changed.aspect(KEY_1), kept)
@@ -267,7 +267,7 @@ internal class DocumentAspectTest {
       startOffset = 0,
       endOffset = 0,
       newFragment = "x",
-      newModStamp = document.core.snapshot().text().modStamp() + 1,
+      newModStamp = document.core.snapshot().modState().stamp() + 1,
       clearLineFlags = false,
     )
     val snapshotBefore = document.core.snapshot()
@@ -319,7 +319,7 @@ internal class DocumentAspectTest {
         startOffset = startOffset,
         endOffset = endOffset,
         newFragment = fragment,
-        newModStamp = snapshot.text().modStamp() + 1,
+        newModStamp = snapshot.modState().stamp() + 1,
         clearLineFlags = false,
         originStartOffset = startOffset,
         originEndOffset = endOffset,

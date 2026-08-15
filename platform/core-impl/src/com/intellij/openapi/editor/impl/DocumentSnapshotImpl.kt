@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.ex.DocumentAspect
 import com.intellij.openapi.editor.ex.DocumentAspectList
+import com.intellij.openapi.editor.ex.DocumentModState
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentTextPatch
@@ -10,24 +11,39 @@ import com.intellij.openapi.util.Key
 
 internal class DocumentSnapshotImpl private constructor(
   private val text: DocumentText,
+  private val modState: DocumentModState,
   private val aspects: DocumentAspectList,
 ) : DocumentSnapshot {
 
   constructor(text: DocumentText) : this(
     text = text,
-    aspects = DocumentAspectList.empty(),
+    modState = DocumentModStateImpl(),
+    aspects = DocumentAspectListImpl.EMPTY,
   )
 
   override fun text(): DocumentText {
     return text
   }
 
+  override fun modState(): DocumentModState {
+    return modState
+  }
+
   override fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentSnapshot {
-    return withMetadataText(text.withModStamp(newModStamp, incrementModSeq))
+    val newModState = modState.withStamp(newModStamp, incrementModSeq)
+    if (newModState === modState) {
+      return this
+    }
+    return DocumentSnapshotImpl(text, newModState, aspects)
   }
 
   override fun withClearedLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray): DocumentSnapshot {
-    return withMetadataText(text.withClearedLineFlags(startLine, endLine, exceptLines))
+    val newModState = modState.withClearedLineFlags(text, startLine, endLine, exceptLines)
+    assertLineCountsAgree(text, newModState)
+    if (newModState === modState) {
+      return this
+    }
+    return DocumentSnapshotImpl(text, newModState, aspects)
   }
 
   override fun <A : DocumentAspect> aspect(key: Key<A>): A? {
@@ -44,7 +60,7 @@ internal class DocumentSnapshotImpl private constructor(
     if (newAspects === aspects) {
       return this
     }
-    return DocumentSnapshotImpl(text, newAspects)
+    return DocumentSnapshotImpl(text, modState, newAspects)
   }
 
   override fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot {
@@ -52,38 +68,37 @@ internal class DocumentSnapshotImpl private constructor(
       return this
     }
     val metadataText = metadata.text()
-    val newText = text.withMetadata(metadataText)
-    if (newText === metadataText) {
-      // the texts share the characters, so aspects follow the newest snapshot
+    if (text.chars() === metadataText.chars()) {
       return metadata
     }
-    // metadata.text is discarded, so are its aspects,
-    // see the reconciliation note in [com.intellij.openapi.editor.ex.DocumentMutator]
-    return DocumentSnapshotImpl(newText, aspects)
+    val newModState = modState.withMetadata(metadata.modState())
+    assertLineCountsAgree(text, newModState)
+    if (newModState === modState) {
+      return this
+    }
+    return DocumentSnapshotImpl(text, newModState, aspects)
   }
 
   override fun withPatch(patch: DocumentTextPatch): DocumentSnapshot {
     val newText = text.withPatch(patch)
+    val newModState = modState.withPatch(text, patch)
+    assertLineCountsAgree(newText, newModState)
     val newAspects = aspects.transform {
       it.withTextChange(text, newText, patch)
     }
-    return DocumentSnapshotImpl(newText, newAspects)
+    return DocumentSnapshotImpl(newText, newModState, newAspects)
   }
 
   /**
-   * Returns a snapshot carrying [newText], or `this` when nothing changed.
-   *
-   * [newText] must hold the same characters as the current one: the aspects are carried over as they are,
-   * a change of the characters has to go through [withPatch], which rebuilds them.
+   * Guards against [DocumentModState]'s independently-maintained line structure (see [ModifiedLineSet])
+   * silently drifting from [text]'s -- both must agree on line count whenever [modState]'s tracking has
+   * actually been built (`null` means it hasn't, and there is nothing yet to compare).
    */
-  private fun withMetadataText(newText: DocumentText): DocumentSnapshot {
-    if (newText === text) {
-      return this
+  private fun assertLineCountsAgree(text: DocumentText, modState: DocumentModState) {
+    val modStateLineCount = modState.lineCount()
+    assert(modStateLineCount == null || modStateLineCount == text.lineCount()) {
+      "text.lineCount() = " + text.lineCount() + "; modState.lineCount() = " + modStateLineCount
     }
-    assert(newText.chars() === text.chars()) {
-      "a metadata-only update must keep the characters, use withPatch to change them"
-    }
-    return DocumentSnapshotImpl(newText, aspects)
   }
 
   override fun dumpState(): String {
@@ -108,6 +123,6 @@ internal class DocumentSnapshotImpl private constructor(
   override fun toString(): String {
     val id = Integer.toHexString(System.identityHashCode(this))
     val aspectsId = Integer.toHexString(System.identityHashCode(aspects))
-    return "DocumentSnapshot@$id{text=$text, aspects=@$aspectsId}"
+    return "DocumentSnapshot@$id{text=$text, modState=$modState, aspects=@$aspectsId}"
   }
 }

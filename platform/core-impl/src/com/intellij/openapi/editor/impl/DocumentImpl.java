@@ -190,12 +190,12 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public int getModificationSequence() {
-    return impl.snapshot().text().modSequence();
+    return impl.snapshot().modState().sequence();
   }
 
   @Override
   public long getModificationStamp() {
-    return impl.snapshot().text().modStamp();
+    return impl.snapshot().modState().stamp();
   }
 
   @Override
@@ -205,7 +205,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public boolean isLineModified(int line) {
-    return impl.snapshot().text().isLineModified(line);
+    return impl.snapshot().modState().isLineModified(line);
   }
 
   @Override
