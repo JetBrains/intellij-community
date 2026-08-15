@@ -63,7 +63,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.log.graph.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="mockito-kotlin" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.mockito.kotlin" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.vcs.log.impl" />
 </module>

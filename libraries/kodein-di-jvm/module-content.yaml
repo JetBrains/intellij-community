@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.kodein.di.jvm.jar
+  modules:
+  - name: intellij.libraries.kodein.di.jvm
+    libraries:
+      kodein-di-jvm:
+      - name: $MAVEN_REPOSITORY$/org/kodein/di/kodein-di-jvm/7/kodein-di-jvm-7.jar
+      - name: $MAVEN_REPOSITORY$/org/kodein/type/kaverit-jvm/2/kaverit-jvm-2.jar

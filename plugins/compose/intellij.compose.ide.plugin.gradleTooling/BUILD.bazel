@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.compose.ide.plugin.gradleTooling.rt` start
@@ -6,6 +6,11 @@ create_kotlinc_options(
     name = "custom_ide-plugin-gradleTooling-rt",
     jvm_target = "8",
     x_sam_conversions = "class",
+)
+
+jvm_provided_library(
+    name = "libraries_gradle_provided",
+    lib = "//libraries/gradle",
 )
 
 jvm_library(
@@ -29,7 +34,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
-        "@lib//:gradle-provided",
+        ":libraries_gradle_provided",
     ],
 )
 
@@ -47,7 +52,8 @@ jvm_library(
         # do not sort,
         ":ide-plugin-gradleTooling-rt",
         "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
-        "@lib//:gradle-provided",
+        "//libraries/gradle",
+        "//libraries/gradle:gradle_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.gradleTooling.rt` end

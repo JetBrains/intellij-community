@@ -86,6 +86,8 @@
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.junit5.vintage"/>
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.kodein.di.jvm"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.kotlinTest"/>
     <!-- endregion -->
 

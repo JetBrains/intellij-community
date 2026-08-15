@@ -1,6 +1,11 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.devkit.gradle.tooling` start
+jvm_provided_library(
+    name = "libraries_gradle_provided",
+    lib = "//libraries/gradle",
+)
+
 jvm_library(
     name = "gradle-tooling",
     srcs = glob(
@@ -22,7 +27,7 @@ jvm_library(
         # do not sort,
         "//libraries/jetbrains/annotations",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-        "@lib//:gradle-provided",
+        ":libraries_gradle_provided",
     ],
 )
 
@@ -41,7 +46,8 @@ jvm_library(
         ":gradle-tooling",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
-        "@lib//:gradle-provided",
+        "//libraries/gradle",
+        "//libraries/gradle:gradle_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.gradle.tooling` end

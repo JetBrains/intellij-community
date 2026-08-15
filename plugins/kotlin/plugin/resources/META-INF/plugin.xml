@@ -212,6 +212,7 @@
     <module name="intellij.libraries.kotlinc.analysis.api.k2" loading="embedded"/>
     <module name="intellij.libraries.kotlinc.analysis.api.platform.interface" loading="embedded"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin" loading="embedded"/>
     <module name="intellij.libraries.kotlinc.low.level.api.fir" loading="embedded"/>
     <module name="intellij.libraries.kotlinc.symbol.light.classes" loading="embedded"/>
 

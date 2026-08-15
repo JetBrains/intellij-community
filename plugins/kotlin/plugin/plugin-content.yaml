@@ -260,10 +260,11 @@
   - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2/kotlin-jps-common-for-ide-2.jar
   reason: withProjectLibrary
 - name: lib/kotlinc.kotlinx-serialization-compiler-plugin.jar
-  library: kotlinc.kotlinx-serialization-compiler-plugin
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2/kotlinx-serialization-compiler-plugin-for-ide-2.jar
-  reason: withProjectLibrary
+  modules:
+  - name: intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin
+    libraries:
+      kotlinc.kotlinx-serialization-compiler-plugin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2/kotlinx-serialization-compiler-plugin-for-ide-2.jar
 - name: lib/kotlinc.lombok-compiler-plugin.jar
   library: kotlinc.lombok-compiler-plugin
   files:

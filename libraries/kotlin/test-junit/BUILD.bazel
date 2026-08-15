@@ -1,0 +1,42 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.kotlin.test.junit` start
+jvm_library(
+    name = "libraries-kotlin-test-junit",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlin.test.junit",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlin-test-junit-kotlin-test-junit"],
+    runtime_deps = ["@lib//:libraries-kotlin-test-junit-kotlin-test-junit"],
+)
+
+jvm_library(
+    name = "libraries-kotlin-test-junit_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.kotlin.test.junit",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlin-test-junit-kotlin-test-junit"],
+    runtime_deps = [":libraries-kotlin-test-junit"],
+)
+### auto-generated section `build intellij.libraries.kotlin.test.junit` end
+
+### auto-generated section `iml intellij.libraries.kotlin.test.junit` start
+exports_files(
+    [
+        "intellij.libraries.kotlin.test.junit.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.kotlin.test.junit` end

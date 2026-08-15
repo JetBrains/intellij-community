@@ -1,5 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 jps_test(
@@ -15,6 +15,11 @@ jps_test(
 create_kotlinc_options(
     name = "custom_whatsNew",
     opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],
+)
+
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlinx-serialization-compiler-plugin_provided",
+    lib = "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin",
 )
 
 jvm_library(
@@ -49,12 +54,12 @@ jvm_library(
         "//platform/ide-core-impl",
         "//platform/ide-core",
         "//libraries/miglayout-swing",
-        "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/core",
         "//platform/ui.jcef",
         "//platform/analysis-api:analysis",
         "//platform/util/coroutines",
+        ":libraries_kotlinc_libraries-kotlinc-kotlinx-serialization-compiler-plugin_provided",
     ],
 )
 
@@ -84,7 +89,8 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//libraries/miglayout-swing:miglayout-swing_test_lib",
-        "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
+        "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin",
+        "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//platform/ui.jcef:ui.jcef_test_lib",
@@ -173,7 +179,8 @@ jvm_library(
         "//platform/ide-core-impl",
         "//libraries/miglayout-swing",
         "//libraries/miglayout-swing:miglayout-swing_test_lib",
-        "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
+        "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin",
+        "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin_test_lib",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/kotlinx/serialization/core",

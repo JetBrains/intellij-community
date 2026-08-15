@@ -138,6 +138,21 @@ object BuildDependenciesUtil {
     }
   }
 
+  fun getModuleLibraryMavenId(iml: Path, libraryName: String): String {
+    return try {
+      val documentBuilder = createDocumentBuilder()
+      val document = Files.newInputStream(iml).use(documentBuilder::parse)
+      val libraryElement = document.documentElement.getLibraryElement(libraryName, iml)
+      val propertiesElement = libraryElement.getSingleChildElement("properties")
+      val mavenId = propertiesElement.getAttribute("maven-id")
+      check(!mavenId.isBlank()) { "Invalid maven-id" }
+      mavenId
+    }
+    catch (t: Throwable) {
+      throw IllegalStateException("Unable to load maven-id for module library '$libraryName' from $iml: ${t.message}", t)
+    }
+  }
+
   fun Element.getLibraryElement(libraryName: String, iml: Path): Element {
     val rootManager = this.getComponentElement("NewModuleRootManager")
     val library = rootManager.getChildElements("orderEntry")

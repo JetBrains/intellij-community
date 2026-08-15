@@ -296,7 +296,8 @@ jvm_library(
         "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
-        "@lib//:mockito-kotlin",
+        "//libraries/mockito-kotlin",
+        "//libraries/mockito-kotlin:mockito-kotlin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.log.impl.tests` end

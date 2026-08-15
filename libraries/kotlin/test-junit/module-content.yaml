@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlin.test.junit.jar
+  modules:
+  - name: intellij.libraries.kotlin.test.junit
+    libraries:
+      kotlin-test-junit:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/2/kotlin-test-junit-2.jar

@@ -40,7 +40,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea.proto" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
-    <orderEntry type="library" name="Gradle" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gradle" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />

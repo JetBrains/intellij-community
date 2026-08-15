@@ -23,7 +23,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kodein-di-jvm",
+        "//libraries/kodein-di-jvm",
         "//tools/intellij.tools.ide.starter:ide-starter",
         "//tools/intellij.tools.ide.util.common:ide-util-common",
         "//platform/core-api:core",
@@ -47,6 +47,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":ide-starter-bazel",
+        "//libraries/kodein-di-jvm:kodein-di-jvm_test_lib",
         "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
         "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
         "//platform/core-api:core_test_lib",

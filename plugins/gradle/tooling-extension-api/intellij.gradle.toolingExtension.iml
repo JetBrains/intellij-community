@@ -31,7 +31,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.rt" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
-    <orderEntry type="library" name="Gradle" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gradle" />
     <orderEntry type="module" module-name="intellij.libraries.groovy" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.groovy.ant" scope="PROVIDED" />
   </component>

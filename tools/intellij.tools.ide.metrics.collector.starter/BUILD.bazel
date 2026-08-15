@@ -1,6 +1,11 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.tools.ide.metrics.collector.starter` start
+jvm_provided_library(
+    name = "libraries_kodein-di-jvm_provided",
+    lib = "//libraries/kodein-di-jvm",
+)
+
 jvm_library(
     name = "ide-metrics-collector-starter",
     srcs = glob(
@@ -30,7 +35,7 @@ jvm_library(
         "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
         "//platform/statistics",
         "//platform/statistics/uploader",
-        "@lib//:kodein-di-jvm-provided",
+        ":libraries_kodein-di-jvm_provided",
     ],
 )
 
@@ -67,7 +72,8 @@ jvm_library(
         "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/statistics/uploader:uploader_test_lib",
-        "@lib//:kodein-di-jvm-provided",
+        "//libraries/kodein-di-jvm",
+        "//libraries/kodein-di-jvm:kodein-di-jvm_test_lib",
     ],
 )
 ### auto-generated section `build intellij.tools.ide.metrics.collector.starter` end

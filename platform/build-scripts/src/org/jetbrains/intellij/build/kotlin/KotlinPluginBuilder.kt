@@ -25,6 +25,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
      */
     const val MAIN_KOTLIN_PLUGIN_MODULE: String = "intellij.kotlin.plugin"
     const val MAIN_FRONTEND_MODULE_NAME: String = "kotlin.frontend.split"
+    private const val SERIALIZATION_COMPILER_PLUGIN_MODULE = "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin"
 
     val MODULES: List<String> = java.util.List.of(
       "kotlin.scripting",
@@ -75,7 +76,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlinc.sam-with-receiver-compiler-plugin",
       "kotlinc.assignment-compiler-plugin",
       "kotlinc.scripting-compiler-plugin",
-      "kotlinc.kotlinx-serialization-compiler-plugin",
       "kotlinc.parcelize-compiler-plugin",
       "kotlinc.lombok-compiler-plugin",
       "kotlinc.compose-compiler-plugin",
@@ -138,6 +138,10 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
   /** paired with [excludeKotlinLibraries] */
   fun basePluginsAndLibraries(spec: PluginLayout.PluginLayoutSpec) {
     spec.withModules(KOTLINC_LIBRARY_MODULES)
+    spec.withModule(
+      SERIALIZATION_COMPILER_PLUGIN_MODULE,
+      "kotlinc.kotlinx-serialization-compiler-plugin.jar",
+    )
     for (libraryName in LIBRARIES_UNPACKED) {
       spec.withProjectLibraryUnpackedIntoJar(libraryName, spec.mainJarName)
     }
