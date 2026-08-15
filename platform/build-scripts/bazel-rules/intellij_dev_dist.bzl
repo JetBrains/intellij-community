@@ -260,7 +260,10 @@ def _compose(ctx, fragment_targets):
             part = fragment.plugin_classpath_part
             args.add("--plugin-classpath-part=" + (part.path if part else ""))
         args.add("--plugin-classpath-prefix=" + prefixes[0].path)
-    args.add_all([fragment.name for fragment in fragments], format_each = "--expect-fragment=%s")
+
+    # Declared by whoever wired this distribution, not derived from `fragments`: a fragment dropped from that list
+    # disappears from the component arguments too, so a list built from it could never notice the omission.
+    args.add_all(ctx.attr.expect_fragments, format_each = "--expect-fragment=%s")
     args.add("--output-dir=" + home.path)
     args.add("--ide-config=" + ide_config.path)
     args.add("--fingerprint=" + fingerprint.path)
@@ -290,5 +293,8 @@ intellij_dev_fragments_dist = rule(
     attrs = {
         "composer": attr.label(executable = True, cfg = "exec", mandatory = True),
         "fragments": attr.label_list(providers = [IntellijDevFragmentInfo], mandatory = True),
+        "expect_fragments": attr.string_list(
+            doc = "The fragment names this distribution is supposed to be made of, stated independently of `fragments` so that a fragment missing from that list fails composition instead of thinning the IDE.",
+        ),
     },
 )

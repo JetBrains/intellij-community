@@ -154,6 +154,7 @@ private suspend fun buildPluginDescriptorsForDevMode(
 
 /** Per-plugin scramble for non-co-scramble plugins after platform scramble has completed (dev mode). */
 internal suspend fun scrambleAlreadyLaidOutPluginsForDevMode(
+  request: BuildRequest,
   descriptors: List<PluginBuildResult>,
   context: BuildContext,
   runDir: Path,
@@ -173,13 +174,21 @@ internal suspend fun scrambleAlreadyLaidOutPluginsForDevMode(
     context = context,
   )
   val pluginRootDir = runDir.resolve("plugins")
-  val additionalPlugins = copyAdditionalPlugins(pluginRootDir, context)
+  // The same rule as on the non-scrambling path: only the fragment that assembles what nobody claimed owns these, and
+  // this path is reached only by a complete distribution, which owns them either way.
+  val additionalPlugins = if (checkNotNull(request.fragment.plugins).ownsPrebuiltPluginDirs) {
+    copyAdditionalPlugins(pluginRootDir, context)
+  }
+  else {
+    null
+  }
   return PluginsLayoutResult(descriptors, additionalPlugins)
 }
 
 internal fun devModePluginCandidates(request: BuildRequest, context: BuildContext): List<PluginLayout> {
   val selector = checkNotNull(request.fragment.plugins)
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
+  selector.checkNamesAreKnown(bundledMainModuleNames, request.fragment.name)
   return getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)
     .filter {
       // The candidate set is the product's, and the fragment takes its share of it. Computing the whole set in every

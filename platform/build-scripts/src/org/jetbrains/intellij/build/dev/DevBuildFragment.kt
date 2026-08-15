@@ -36,9 +36,15 @@ data class DevBuildFragment(
     )
   }
 
-  /** A complete distribution needs no component manifest, and is the only shape that may be scrambled. */
+  /**
+   * Whether this fragment is the whole distribution: it needs no component manifest, writes `plugin-classpath.txt`
+   * itself, and is the only shape that may be scrambled.
+   *
+   * Defined by what it owns rather than by its name, so that naming a fragment `all` does not make it complete and a
+   * fragment that genuinely owns everything is not treated as a piece of something larger.
+   */
   val isComplete: Boolean
-    get() = this == COMPLETE
+    get() = platform == PlatformFragmentSelector.All && platformResources && plugins == PluginFragmentSelector.All
 
   internal val ownsPlatformJars: Boolean
     get() = platform != null
@@ -92,18 +98,46 @@ sealed interface PluginFragmentSelector {
 private const val MODULE_SET_NAME_PREFIX = "intellij.moduleSets."
 
 /**
- * What owns a `lib/` jar - the module set of the content module in it, or [JarOwnership.PlatformCore] when it holds none.
+ * Who owns each `lib/` jar, decided once from the whole platform layout.
  *
- * A jar is the unit, not a module: [org.jetbrains.intellij.build.impl.PlatformLayout.withProductModuleOutputFile] lets
- * a content module be renamed into another jar, so ownership has to be decided for the jar as a whole.
- *
- * Two content modules from *different module sets* in one jar would put the jar in two fragments at once, so that fails
- * here rather than leaving the composer to report the same path twice. The layout cannot produce it today - a content
- * module gets `$moduleName.jar` unless renamed, and `ImplicitEmbeddedContentModuleValidator` keeps
- * `includeDependencies` closures free of content modules - and if it ever can, the fragment API has to grow a way to
- * say which fragment gets the jar.
+ * Both halves of the split read this one answer: the layout filter, which decides what a fragment resolves and packs,
+ * and the asset filter, which decides what it writes. Deciding twice - once over the layout, once over the jars packing
+ * produced - is how a jar could pass one and fail the other and end up in no fragment at all: packing creates `lib/`
+ * jars the layout never named, for a library that has to stay in its own jar
+ * (`org.jetbrains.intellij.build.impl.isSeparateLibraryJar`) or for a project library, and those hold no module for the
+ * asset filter to recognize. A jar this does not know is [JarOwnership.PlatformCore], which is what `Core` means: the
+ * complement of what the content-module fragments claimed.
  */
-internal fun jarOwnership(relativeOutputFile: String, includedModules: Collection<ModuleItem>): JarOwnership {
+internal class PlatformJarOwnership private constructor(private val byJar: Map<String, JarOwnership>) {
+  fun of(relativeOutputFile: String): JarOwnership = byJar[relativeOutputFile] ?: JarOwnership.PlatformCore
+
+  /** Every module set that declares a content module of this layout. */
+  val contentModuleSetNames: Set<String>
+    get() = byJar.values.asSequence().filterIsInstance<JarOwnership.ContentModule>().mapNotNull { it.setName }.toSet()
+
+  companion object {
+    fun of(includedModules: Collection<ModuleItem>): PlatformJarOwnership {
+      val byJar = HashMap<String, JarOwnership>()
+      for ((relativeOutputFile, modules) in includedModules.groupBy(ModuleItem::relativeOutputFile)) {
+        byJar[relativeOutputFile] = jarOwnership(relativeOutputFile, modules)
+      }
+      return PlatformJarOwnership(byJar)
+    }
+  }
+}
+
+/**
+ * What owns one `lib/` jar - the module set of the content module in it, or [JarOwnership.PlatformCore] when it holds none.
+ *
+ * A jar is the unit, not a module: [org.jetbrains.intellij.build.impl.PlatformLayout.withProductModuleOutputFile] lets a
+ * content module be renamed into another jar, so ownership has to be decided for the jar as a whole.
+ *
+ * Two content modules from *different module sets* in one jar would put it in two fragments at once, so that fails here
+ * rather than leaving the composer to report the same path twice. The layout cannot produce it today - a content module
+ * gets `$moduleName.jar` unless renamed, and `ImplicitEmbeddedContentModuleValidator` keeps `includeDependencies`
+ * closures free of content modules - and if it ever can, the fragment API has to grow a way to say which fragment wins.
+ */
+private fun jarOwnership(relativeOutputFile: String, includedModules: Collection<ModuleItem>): JarOwnership {
   var holdsContentModule = false
   var owner: ModuleItem? = null
   for (module in includedModules) {
@@ -132,25 +166,21 @@ internal fun jarOwnership(relativeOutputFile: String, includedModules: Collectio
 }
 
 /**
- * The modules of [includedModules] whose jars this fragment owns.
+ * The modules of [includedModules] whose jars this fragment owns, according to [ownership].
  *
  * Filtering the layout, and not only the jars it produced, is what makes the split pay: a module the fragment does not
  * pack is never resolved to its Bazel output, so it does not end up in the action's used-input set and cannot invalidate
- * this fragment. Grouping by jar first keeps the jar the unit of ownership - filtering module by module would split a
- * jar between two fragments, and the composer would then find both of them providing it.
+ * this fragment. The jar stays the unit - filtering module by module would split one jar between two fragments, and the
+ * composer would then find both of them providing it.
  */
-internal fun PlatformFragmentSelector.selectModules(includedModules: Collection<ModuleItem>): Collection<ModuleItem> {
+internal fun PlatformFragmentSelector.selectModules(
+  includedModules: Collection<ModuleItem>,
+  ownership: PlatformJarOwnership,
+): Collection<ModuleItem> {
   if (this == PlatformFragmentSelector.All) {
     return includedModules
   }
-
-  val result = ArrayList<ModuleItem>(includedModules.size)
-  for ((relativeOutputFile, modules) in includedModules.groupBy(ModuleItem::relativeOutputFile)) {
-    if (accepts(relativeOutputFile, modules)) {
-      result.addAll(modules)
-    }
-  }
-  return result
+  return includedModules.filter { accepts(ownership, it.relativeOutputFile) }
 }
 
 /**
@@ -173,22 +203,38 @@ internal sealed interface JarOwnership {
 }
 
 /**
- * Whether the jar described by [relativeOutputFile] and [includedModules] belongs to this fragment.
+ * Fails when this selector names a module set the product's layout does not have.
  *
- * [PlatformFragmentSelector.All] answers without asking who owns the jar, so a complete assembly cannot fail on an
- * ownership question that only a split one has to answer.
+ * A misspelled set is otherwise invisible: its fragment assembles nothing, and the set it was meant to name returns to
+ * the `remaining` fragment, so the distribution is still complete and only the caching intent is quietly lost. An empty
+ * *known* set is fine - a set can legitimately contribute no jar to a given target platform.
  */
-internal fun PlatformFragmentSelector.accepts(relativeOutputFile: String, includedModules: Collection<ModuleItem>): Boolean {
+internal fun PlatformFragmentSelector.checkNamesAreKnown(ownership: PlatformJarOwnership, fragmentName: String) {
+  val named = when (this) {
+    is PlatformFragmentSelector.ContentModuleSets -> setNames
+    is PlatformFragmentSelector.RemainingContentModules -> claimedSetNames
+    else -> return
+  }
+  val known = ownership.contentModuleSetNames
+  val unknown = named.filterNot(known::contains)
+  check(unknown.isEmpty()) {
+    "Fragment '$fragmentName' names module sets this product's platform does not declare: ${unknown.sorted().joinToString()}." +
+    " Known: ${known.sorted().joinToString()}"
+  }
+}
+
+/** Whether the `lib/` jar at [relativeOutputFile] belongs to this fragment. */
+internal fun PlatformFragmentSelector.accepts(ownership: PlatformJarOwnership, relativeOutputFile: String): Boolean {
   return when (this) {
     PlatformFragmentSelector.All -> true
-    PlatformFragmentSelector.Core -> jarOwnership(relativeOutputFile, includedModules) == JarOwnership.PlatformCore
+    PlatformFragmentSelector.Core -> ownership.of(relativeOutputFile) == JarOwnership.PlatformCore
     is PlatformFragmentSelector.ContentModuleSets -> {
-      val ownership = jarOwnership(relativeOutputFile, includedModules)
-      ownership is JarOwnership.ContentModule && setNames.contains(ownership.setName)
+      val owner = ownership.of(relativeOutputFile)
+      owner is JarOwnership.ContentModule && setNames.contains(owner.setName)
     }
     is PlatformFragmentSelector.RemainingContentModules -> {
-      val ownership = jarOwnership(relativeOutputFile, includedModules)
-      ownership is JarOwnership.ContentModule && !claimedSetNames.contains(ownership.setName)
+      val owner = ownership.of(relativeOutputFile)
+      owner is JarOwnership.ContentModule && !claimedSetNames.contains(owner.setName)
     }
   }
 }
@@ -199,6 +245,22 @@ internal fun PluginFragmentSelector.accepts(mainModule: String): Boolean {
     PluginFragmentSelector.All -> true
     is PluginFragmentSelector.Named -> mainModules.contains(mainModule)
     is PluginFragmentSelector.Remaining -> !claimedMainModules.contains(mainModule)
+  }
+}
+
+/**
+ * Fails when this selector names a plugin the product does not bundle - the same silent no-op a misspelled module set
+ * would be. [candidateMainModules] is the product's whole bundled set, which every plugin fragment computes.
+ */
+internal fun PluginFragmentSelector.checkNamesAreKnown(candidateMainModules: Set<String>, fragmentName: String) {
+  val named = when (this) {
+    is PluginFragmentSelector.Named -> mainModules
+    is PluginFragmentSelector.Remaining -> claimedMainModules
+    else -> return
+  }
+  val unknown = named.filterNot(candidateMainModules::contains)
+  check(unknown.isEmpty()) {
+    "Fragment '$fragmentName' names plugins this product does not bundle: ${unknown.sorted().joinToString()}"
   }
 }
 

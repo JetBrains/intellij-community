@@ -380,6 +380,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
       else async(CoroutineName("scramble plugins")) {
         if (pluginBuildStrategy == DevModePluginBuildStrategy.LAYOUT_BEFORE_PLATFORM_SCRAMBLE) {
           scrambleAlreadyLaidOutPluginsForDevMode(
+            request = request,
             descriptors = checkNotNull(pluginsBuildResultsDeferred).await(),
             context = context,
             runDir = runDir,
@@ -989,6 +990,16 @@ private suspend fun layoutPlatform(
   request: BuildRequest,
 ): PlatformLayoutResult {
   val selector = checkNotNull(request.fragment.platform)
+  // One answer for both filters below, taken from the whole layout rather than from whatever each of them can see.
+  val ownership = PlatformJarOwnership.of(platformLayout.includedModules)
+  selector.checkNamesAreKnown(ownership, request.fragment.name)
+  check(platformLayout.resourcePaths.isEmpty() || request.fragment.isComplete) {
+    // Copied by every fragment that lays the platform out, into its own tree, and the paths are not jars the asset
+    // filter can partition. No product does this today; the first one that does has to say which fragment owns them.
+    "The platform layout of '${request.platformPrefix}' declares resource paths" +
+    " (${platformLayout.resourcePaths.joinToString { it.relativeOutputPath }}), which a split assembly cannot place:" +
+    " every platform fragment would copy them. Give them an owner before splitting this product."
+  }
   // cannot be in parallel
   val entries = layoutPlatformDistribution(
     moduleOutputPatcher = moduleOutputPatcher,
@@ -997,10 +1008,10 @@ private suspend fun layoutPlatform(
     searchableOptionSet = searchableOptionSet,
     copyFiles = true,
     // Narrows what is resolved, so that a module this fragment does not pack cannot invalidate it.
-    includedModules = selector.selectModules(platformLayout.includedModules),
-    // Narrows what is written, over the jars the layout produced anyway - the project libraries are computed for every
-    // fragment, since a library can be pinned into any jar, and only the core fragment packs the jars they end up in.
-    assetFilter = { relativeOutputFile, includedModules -> selector.accepts(relativeOutputFile, includedModules) },
+    includedModules = selector.selectModules(platformLayout.includedModules, ownership),
+    // Narrows what is written, over the jars packing produced - including the ones the layout never named, which the
+    // core fragment owns: a library pinned into its own jar, or a project library.
+    assetFilter = { relativeOutputFile, _ -> selector.accepts(ownership, relativeOutputFile) },
     context = context,
   )
   val coreClassPath = coroutineScope {
