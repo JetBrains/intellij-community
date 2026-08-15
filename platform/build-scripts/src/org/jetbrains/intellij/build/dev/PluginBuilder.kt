@@ -73,7 +73,14 @@ internal suspend fun buildPluginsForDevMode(
     platformEntriesProvider = platformEntriesProvider,
     layoutOnly = false,
   )
-  val additionalPlugins = copyAdditionalPlugins(runDir.resolve("plugins"), context)
+  // Prebuilt plugin directories are not plugin layouts, so no fragment can claim them by name - one fragment owns them
+  // all, and it is the one that also assembles whatever the named fragments did not claim.
+  val additionalPlugins = if (checkNotNull(request.fragment.plugins).ownsPrebuiltPluginDirs) {
+    copyAdditionalPlugins(runDir.resolve("plugins"), context)
+  }
+  else {
+    null
+  }
   return PluginsLayoutResult(descriptors, additionalPlugins)
 }
 
@@ -171,9 +178,14 @@ internal suspend fun scrambleAlreadyLaidOutPluginsForDevMode(
 }
 
 internal fun devModePluginCandidates(request: BuildRequest, context: BuildContext): List<PluginLayout> {
+  val selector = checkNotNull(request.fragment.plugins)
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
   return getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)
     .filter {
+      // The candidate set is the product's, and the fragment takes its share of it. Computing the whole set in every
+      // fragment is what makes `Remaining` exact: it is the complement of what the named fragments claimed, not a
+      // second list that could drift from them.
+      selector.accepts(it.mainModule) &&
       isPluginApplicable(
         bundledMainModuleNames = bundledMainModuleNames,
         plugin = it,

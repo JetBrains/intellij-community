@@ -1,4 +1,8 @@
-"""Builds independently cacheable natural fragments of a dev-mode IDE distribution.
+"""Builds independently cacheable fragments of a dev-mode IDE distribution.
+
+A fragment names itself and the slice it owns; the assembler decides ownership from the layout it computed, so the
+fragments of one distribution partition it exactly instead of following lists someone maintains. See
+`org.jetbrains.intellij.build.dev.DevBuildFragment`.
 
 Split assembly deliberately supports only builds with scrambling disabled. Platform co-scrambling and per-plugin
 scrambling require both component layouts in one process.
@@ -9,8 +13,11 @@ load("//build:dev_launch_dependencies.bzl", "platform_parts")
 
 IntellijDevFragmentInfo = provider(
     fields = {
+        "name": "The fragment name, which is also the `kind` of its manifest.",
         "home": "The fragment tree.",
         "manifest": "The fragment manifest.",
+        "plugin_classpath_part": "This fragment's plugin-classpath records, or None if it built no plugin.",
+        "plugin_classpath_prefix": "The plugin-classpath prefix, or None if another fragment produces it.",
     },
 )
 
@@ -21,6 +28,11 @@ IntellijDevDistInfo = provider(
         "ide_config": "The config file used by PreBuiltDevMain.",
     },
 )
+
+# The selector values `DevDistMain` accepts, mirrored here so a typo in a BUILD file fails at analysis time.
+_PLATFORM_SELECTORS = ["", "all", "core", "content-modules", "remaining-content-modules"]
+
+_PLUGIN_SELECTORS = ["", "all", "named", "remaining"]
 
 def _write_bazel_inputs_manifest(ctx):
     if len(ctx.attr.module_outputs) != len(ctx.attr.module_output_labels):
@@ -44,11 +56,19 @@ def _add_target_platform_args(args, target_platform):
         args.add("--os=" + ("macos" if target_parts.os == "darwin" else target_parts.os))
         args.add("--arch=" + target_parts.arch)
 
-def _component_action(ctx, kind, additional_modules, test_output_modules):
-    home = ctx.actions.declare_directory(ctx.label.name + "." + kind)
+def _mnemonic(fragment_name):
+    """A CamelCase mnemonic, so `bazel --profile` and `--strategy` can name these actions."""
+    return "IntellijDev" + "".join([part.capitalize() for part in fragment_name.replace("-", "_").replace(".", "_").split("_")])
+
+def _fragment_impl(ctx):
+    if not ctx.attr.platform and not ctx.attr.platform_resources and not ctx.attr.plugins:
+        fail("%s selects nothing: set platform, platform_resources or plugins" % ctx.label)
+
+    home = ctx.actions.declare_directory(ctx.label.name + ".home")
     component_manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
     scratch = ctx.actions.declare_directory(ctx.label.name + ".scratch")
     unused_inputs = ctx.actions.declare_file(ctx.label.name + ".unused-inputs")
+    outputs = [home, component_manifest, scratch, unused_inputs]
 
     project_files = ctx.files.project_model_files + ctx.files.extra_project_files
     project_manifest = write_project_model_manifest(ctx, ctx.label.name + ".project.manifest", project_files, ctx.attr.mode)
@@ -60,15 +80,41 @@ def _component_action(ctx, kind, additional_modules, test_output_modules):
     args.add("--component-manifest=" + component_manifest.path)
     args.add("--scratch-dir=" + scratch.path)
     args.add("--clean-scratch-on-success")
-    args.add("--build-part=" + kind)
+    args.add("--fragment=" + ctx.attr.fragment_name)
     args.add("--build-date-seconds=" + ctx.attr.build_date_seconds)
     args.add("--platform-prefix=" + ctx.attr.platform_prefix)
     args.add("--bazel-targets-json=" + ctx.file.bazel_targets_json.path)
     args.add("--bazel-inputs-manifest=" + bazel_inputs_manifest.path)
     args.add("--unused-inputs=" + unused_inputs.path)
     _add_target_platform_args(args, ctx.attr.target_platform)
-    args.add_all(additional_modules, format_each = "--additional-module=%s")
-    args.add_all(test_output_modules, format_each = "--test-output-module=%s")
+
+    if ctx.attr.platform:
+        args.add("--platform=" + ctx.attr.platform)
+        args.add_all(ctx.attr.content_module_sets, format_each = "--content-module-set=%s")
+        args.add_all(ctx.attr.claimed_content_module_sets, format_each = "--claimed-content-module-set=%s")
+    if ctx.attr.platform_resources:
+        args.add("--platform-resources")
+
+    plugin_classpath_part = None
+    if ctx.attr.plugins:
+        args.add("--plugins=" + ctx.attr.plugins)
+        args.add_all(ctx.attr.plugin_main_modules, format_each = "--plugin=%s")
+        args.add_all(ctx.attr.claimed_plugin_main_modules, format_each = "--claimed-plugin=%s")
+        args.add_all(ctx.attr.additional_modules, format_each = "--additional-module=%s")
+        args.add_all(ctx.attr.test_output_modules, format_each = "--test-output-module=%s")
+
+        # The count in `plugin-classpath.txt` spans the whole distribution, so a fragment can only produce its records
+        # and the composer assembles the file.
+        plugin_classpath_part = ctx.actions.declare_file(ctx.label.name + ".plugin-classpath-part")
+        args.add("--plugin-classpath-part=" + plugin_classpath_part.path)
+        outputs.append(plugin_classpath_part)
+
+    plugin_classpath_prefix = None
+    if ctx.attr.produces_plugin_classpath_prefix:
+        plugin_classpath_prefix = ctx.actions.declare_file(ctx.label.name + ".plugin-classpath-prefix")
+        args.add("--plugin-classpath-prefix=" + plugin_classpath_prefix.path)
+        outputs.append(plugin_classpath_prefix)
+
     args.add_all(ctx.files.preloaded_manifests, format_each = "--preloaded-manifest=%s")
     if ctx.attr.preloaded_only:
         args.add("--preloaded-only")
@@ -81,62 +127,60 @@ def _component_action(ctx, kind, additional_modules, test_output_modules):
                 ctx.file.bazel_targets_json,
             ] + module_outputs + ctx.files.preloaded_downloads + ctx.files.preloaded_manifests,
         ),
-        outputs = [home, component_manifest, scratch, unused_inputs],
+        outputs = outputs,
         executable = ctx.executable.assembler,
         arguments = [args],
         execution_requirements = {"local": "1"},
         unused_inputs_list = unused_inputs,
-        mnemonic = "IntellijDev%s" % kind.title().replace("_", ""),
-        progress_message = "Assembling %s %s component %s" % (ctx.attr.platform_prefix, kind, ctx.label),
+        mnemonic = _mnemonic(ctx.attr.fragment_name),
+        progress_message = "Assembling %s dev fragment %s" % (ctx.attr.platform_prefix, ctx.label),
     )
     return [
         DefaultInfo(files = depset([home, component_manifest])),
-        IntellijDevFragmentInfo(home = home, manifest = component_manifest),
+        IntellijDevFragmentInfo(
+            name = ctx.attr.fragment_name,
+            home = home,
+            manifest = component_manifest,
+            plugin_classpath_part = plugin_classpath_part,
+            plugin_classpath_prefix = plugin_classpath_prefix,
+        ),
     ]
 
-def _platform_lib_impl(ctx):
-    return _component_action(ctx, "platform_lib", [], [])
+intellij_dev_fragment = rule(
+    doc = """One independently cacheable slice of a dev distribution.
 
-def _platform_resources_impl(ctx):
-    return _component_action(ctx, "platform_resources", [], [])
-
-def _plugins_impl(ctx):
-    return _component_action(ctx, "plugins", ctx.attr.additional_modules, ctx.attr.test_output_modules)
-
-_component_attrs = {
-    "assembler": attr.label(executable = True, cfg = "exec", mandatory = True),
-    # A stable far-future dev date keeps EAP expiration checks valid without putting the wall clock in the action key.
-    "build_date_seconds": attr.string(default = "2145916800"),
-    "mode": attr.string(default = "ultimate", values = ["community", "ultimate"]),
-    "platform_prefix": attr.string(mandatory = True),
-    "target_platform": attr.string(default = ""),
-    "project_model_files": attr.label_list(allow_files = True, mandatory = True),
-    "extra_project_files": attr.label_list(allow_files = True),
-    "bazel_targets_json": attr.label(allow_single_file = True, mandatory = True),
-    "module_outputs": attr.label_list(allow_files = True),
-    "module_output_labels": attr.string_list(),
-    "preloaded_downloads": attr.label_list(allow_files = True),
-    "preloaded_manifests": attr.label_list(allow_files = True),
-    "preloaded_only": attr.bool(default = False),
-}
-
-intellij_dev_platform_lib = rule(
-    implementation = _platform_lib_impl,
-    attrs = _component_attrs,
-)
-
-intellij_dev_platform_resources = rule(
-    implementation = _platform_resources_impl,
-    attrs = _component_attrs,
-)
-
-intellij_dev_plugins = rule(
-    implementation = _plugins_impl,
-    attrs = dict(
-        _component_attrs,
-        additional_modules = attr.string_list(),
-        test_output_modules = attr.string_list(),
-    ),
+    What the fragment owns is a selector, not a file list: `platform` picks the `lib/` jars by what the plugin model
+    says about them, `plugins` picks bundled plugin directories by main module, and the `remaining*` selectors are the
+    exact complement of what their siblings claimed, so nothing is silently left out of the composition.
+    """,
+    implementation = _fragment_impl,
+    attrs = {
+        "assembler": attr.label(executable = True, cfg = "exec", mandatory = True),
+        # A stable far-future dev date keeps EAP expiration checks valid without putting the wall clock in the action key.
+        "build_date_seconds": attr.string(default = "2145916800"),
+        "mode": attr.string(default = "ultimate", values = ["community", "ultimate"]),
+        "platform_prefix": attr.string(mandatory = True),
+        "target_platform": attr.string(default = ""),
+        "fragment_name": attr.string(mandatory = True, doc = "Identifies this fragment in its manifest, its mnemonic and the composer's completeness check."),
+        "platform": attr.string(default = "", values = _PLATFORM_SELECTORS, doc = "Which `lib/` jars this fragment owns; empty means none."),
+        "content_module_sets": attr.string_list(doc = "For platform = 'content-modules': the module sets whose content-module jars this fragment owns."),
+        "claimed_content_module_sets": attr.string_list(doc = "For platform = 'remaining-content-modules': the module sets the sibling fragments own."),
+        "platform_resources": attr.bool(default = False, doc = "Whether this fragment owns `bin`, the product metadata, the launchers and the copied product files."),
+        "plugins": attr.string(default = "", values = _PLUGIN_SELECTORS, doc = "Which bundled plugins this fragment owns; empty means none."),
+        "plugin_main_modules": attr.string_list(doc = "For plugins = 'named': the main modules of the plugins this fragment owns."),
+        "claimed_plugin_main_modules": attr.string_list(doc = "For plugins = 'remaining': the main modules the sibling fragments own."),
+        "produces_plugin_classpath_prefix": attr.bool(default = False, doc = "Whether this fragment writes the `plugin-classpath.txt` prefix; exactly one fragment of a distribution does."),
+        "additional_modules": attr.string_list(),
+        "test_output_modules": attr.string_list(),
+        "project_model_files": attr.label_list(allow_files = True, mandatory = True),
+        "extra_project_files": attr.label_list(allow_files = True),
+        "bazel_targets_json": attr.label(allow_single_file = True, mandatory = True),
+        "module_outputs": attr.label_list(allow_files = True),
+        "module_output_labels": attr.string_list(),
+        "preloaded_downloads": attr.label_list(allow_files = True),
+        "preloaded_manifests": attr.label_list(allow_files = True),
+        "preloaded_only": attr.bool(default = False),
+    },
 )
 
 def _compose(ctx, fragment_targets):
@@ -144,16 +188,29 @@ def _compose(ctx, fragment_targets):
     ide_config = ctx.actions.declare_file(ctx.label.name + ".ide.config")
     fingerprint = ctx.actions.declare_file(ctx.label.name + ".fingerprint")
     fragments = [target[IntellijDevFragmentInfo] for target in fragment_targets]
+
+    prefixes = [fragment.plugin_classpath_prefix for fragment in fragments if fragment.plugin_classpath_prefix]
+    parts = [fragment.plugin_classpath_part for fragment in fragments if fragment.plugin_classpath_part]
+    if parts and len(prefixes) != 1:
+        fail("%s: exactly one fragment must set produces_plugin_classpath_prefix, got %d" % (ctx.label, len(prefixes)))
+
     args = ctx.actions.args()
     for fragment in fragments:
         args.add("--component-dir=" + fragment.home.path)
     for fragment in fragments:
         args.add("--component-manifest=" + fragment.manifest.path)
+    if parts:
+        # Positional, one per component, empty where a component built no plugin.
+        for fragment in fragments:
+            part = fragment.plugin_classpath_part
+            args.add("--plugin-classpath-part=" + (part.path if part else ""))
+        args.add("--plugin-classpath-prefix=" + prefixes[0].path)
+    args.add_all([fragment.name for fragment in fragments], format_each = "--expect-fragment=%s")
     args.add("--output-dir=" + home.path)
     args.add("--ide-config=" + ide_config.path)
     args.add("--fingerprint=" + fingerprint.path)
     ctx.actions.run(
-        inputs = [file for fragment in fragments for file in [fragment.home, fragment.manifest]],
+        inputs = [file for fragment in fragments for file in [fragment.home, fragment.manifest]] + parts + prefixes,
         outputs = [home, ide_config, fingerprint],
         executable = ctx.executable.composer,
         arguments = [args],

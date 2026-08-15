@@ -12,7 +12,9 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dev.BuildRequest
-import org.jetbrains.intellij.build.dev.DevBuildPart
+import org.jetbrains.intellij.build.dev.DevBuildFragment
+import org.jetbrains.intellij.build.dev.PlatformFragmentSelector
+import org.jetbrains.intellij.build.dev.PluginFragmentSelector
 import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.dev.materializeProjectModelTree
 import org.jetbrains.intellij.build.impl.BazelBuildInputs
@@ -87,11 +89,10 @@ fun main(args: Array<String>) {
   // directory, so this is for a standalone caller re-running the assembler into a path it already used.
   val cleanOutput = options.optionalBoolean("--clean-output") ?: false
   val cleanScratchOnSuccess = options.optionalBoolean("--clean-scratch-on-success") ?: false
-  val buildPart = options.optional("--build-part")?.let { value ->
-    DevBuildPart.entries.firstOrNull { it.name.equals(value, ignoreCase = true) }
-    ?: error("Unknown --build-part value '$value', expected one of ${DevBuildPart.entries.joinToString { it.name.lowercase() }}")
-  } ?: DevBuildPart.ALL
+  val fragment = parseFragment(options)
   val componentManifest = options.optionalPath("--component-manifest")
+  val pluginClasspathPart = options.optionalPath("--plugin-classpath-part")
+  val pluginClasspathPrefix = options.optionalPath("--plugin-classpath-prefix")
   options.optionalPath("--bazel-targets-json")?.let { path ->
     System.setProperty("intellij.build.bazel.targets.json.file", path.invariantSeparatorsPathString)
   }
@@ -128,8 +129,10 @@ fun main(args: Array<String>) {
         buildDateInSeconds = buildDateInSeconds,
         linkImmutableCacheEntries = linkCacheEntries,
         jarCacheDir = jarCacheDir,
-        buildPart = buildPart,
+        fragment = fragment,
         componentManifestFile = componentManifest,
+        pluginClasspathPartFile = pluginClasspathPart,
+        pluginClasspathPrefixFile = pluginClasspathPrefix,
       )
     )
 
@@ -138,14 +141,14 @@ fun main(args: Array<String>) {
       // What the distribution is, not just where it is: a consumer that needs a different product or a plugin module
       // this assembly did not build in is looking at the wrong distribution, and `DevIdeConfig` is where it can find
       // that out. The relative-home rule and the file format live there too, with the readers.
-      if (buildPart == DevBuildPart.ALL) {
+      if (fragment.isComplete) {
         DevIdeConfig.write(checkNotNull(ideConfigFile) { "--ide-config is required for a complete distribution" }, runDir, mainClassName, platformPrefix, additionalModules)
       }
     }
     runDir
   }
 
-  println("Dev $buildPart distribution component assembled into $runDir (main class: $mainClassName${ideConfigFile?.let { ", config: $it" }.orEmpty()})")
+  println("Dev distribution fragment '$fragment' assembled into $runDir (main class: $mainClassName${ideConfigFile?.let { ", config: $it" }.orEmpty()})")
   if (cleanScratchOnSuccess) {
     scratchDir.deleteRecursively()
     Files.createDirectories(scratchDir)
@@ -153,6 +156,47 @@ fun main(args: Array<String>) {
   unusedInputs?.let(BazelBuildInputs::writeUnusedInputs)
   // the build uses thread pools and Netty/Ktor selectors that may outlive the last coroutine
   exitProcess(0)
+}
+
+/**
+ * Reads which slice of a distribution to assemble.
+ *
+ * Nothing is inferred: a fragment names itself and its selectors, and passing none of them means the complete
+ * distribution. `--platform=content-modules` without `--content-module-set` is an empty fragment rather than an error,
+ * which is what lets a product wire a module set that a given target platform happens not to include.
+ */
+private fun parseFragment(options: Options): DevBuildFragment {
+  val name = options.optional("--fragment")
+  val platform = options.optional("--platform")?.let { value ->
+    when (value) {
+      "all" -> PlatformFragmentSelector.All
+      "core" -> PlatformFragmentSelector.Core
+      "content-modules" -> PlatformFragmentSelector.ContentModuleSets(options.list("--content-module-set").toSet())
+      "remaining-content-modules" -> PlatformFragmentSelector.RemainingContentModules(options.list("--claimed-content-module-set").toSet())
+      else -> error("Unknown --platform value '$value', expected all, core, content-modules or remaining-content-modules")
+    }
+  }
+  val platformResources = options.optionalBoolean("--platform-resources") ?: false
+  val plugins = options.optional("--plugins")?.let { value ->
+    when (value) {
+      "all" -> PluginFragmentSelector.All
+      "named" -> PluginFragmentSelector.Named(options.list("--plugin").toSet())
+      "remaining" -> PluginFragmentSelector.Remaining(options.list("--claimed-plugin").toSet())
+      else -> error("Unknown --plugins value '$value', expected all, named or remaining")
+    }
+  }
+
+  if (name == null) {
+    require(platform == null && !platformResources && plugins == null) {
+      "--fragment is required to select a part of a distribution; without it the whole distribution is assembled"
+    }
+    return DevBuildFragment.COMPLETE
+  }
+
+  require(platform != null || platformResources || plugins != null) {
+    "The '$name' fragment selects nothing: pass at least one of --platform, --platform-resources, --plugins"
+  }
+  return DevBuildFragment(name = name, platform = platform, platformResources = platformResources, plugins = plugins)
 }
 
 /**

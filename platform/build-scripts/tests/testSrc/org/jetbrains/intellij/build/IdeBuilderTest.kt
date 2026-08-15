@@ -7,10 +7,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dev.BuildRequest
-import org.jetbrains.intellij.build.dev.DevBuildPart
 import org.jetbrains.intellij.build.dev.DevBuildComponentEntry
 import org.jetbrains.intellij.build.dev.DevBuildComponentManifest
+import org.jetbrains.intellij.build.dev.DevBuildFragment
 import org.jetbrains.intellij.build.dev.IdeFingerprintEntry
+import org.jetbrains.intellij.build.dev.PlatformFragmentSelector
+import org.jetbrains.intellij.build.dev.PluginFragmentSelector
+import org.jetbrains.intellij.build.dev.accepts
 import org.jetbrains.intellij.build.dev.computeIdeFingerprintFromComponents
 import org.jetbrains.intellij.build.dev.configureDevModeBuildOptions
 import org.jetbrains.intellij.build.dev.configureTargetPlatform
@@ -18,13 +21,12 @@ import org.jetbrains.intellij.build.dev.computeIdeFingerprint
 import org.jetbrains.intellij.build.dev.copyWithDevBuildOverrides
 import org.jetbrains.intellij.build.dev.createDevBuildPaths
 import org.jetbrains.intellij.build.dev.formatCoreClasspath
-import org.jetbrains.intellij.build.dev.includesPlatformLibraries
-import org.jetbrains.intellij.build.dev.includesPlatformResources
-import org.jetbrains.intellij.build.dev.includesPlugins
 import org.jetbrains.intellij.build.dev.prepareOverriddenRunDir
 import org.jetbrains.intellij.build.dev.prepareScratchDir
 import org.jetbrains.intellij.build.dev.readDevBuildComponentManifest
 import org.jetbrains.intellij.build.dev.writeDevBuildComponentManifest
+import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
+import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -38,16 +40,85 @@ class IdeBuilderTest {
   lateinit var tempDir: Path
 
   @Test
-  fun devBuildPartsSelectNaturalDistributionLayers() {
-    assertThat(DevBuildPart.PLATFORM_LIB.includesPlatformLibraries).isTrue()
-    assertThat(DevBuildPart.PLATFORM_LIB.includesPlatformResources).isFalse()
-    assertThat(DevBuildPart.PLATFORM_RESOURCES.includesPlatformLibraries).isFalse()
-    assertThat(DevBuildPart.PLATFORM_RESOURCES.includesPlatformResources).isTrue()
-    assertThat(DevBuildPart.PLUGINS.includesPlugins).isTrue()
-    assertThat(DevBuildPart.PLUGINS.includesPlatformLibraries).isFalse()
-    assertThat(DevBuildPart.ALL.includesPlatformLibraries).isTrue()
-    assertThat(DevBuildPart.ALL.includesPlatformResources).isTrue()
-    assertThat(DevBuildPart.ALL.includesPlugins).isTrue()
+  fun completeFragmentOwnsEverythingAndNeedsNoManifest() {
+    val complete = DevBuildFragment.COMPLETE
+
+    assertThat(complete.isComplete).isTrue()
+    assertThat(complete.platform).isEqualTo(PlatformFragmentSelector.All)
+    assertThat(complete.platformResources).isTrue()
+    assertThat(complete.plugins).isEqualTo(PluginFragmentSelector.All)
+    assertThat(
+      DevBuildFragment(
+        name = "platform_core",
+        platform = PlatformFragmentSelector.Core,
+        platformResources = false,
+        plugins = null,
+      ).isComplete
+    ).isFalse()
+  }
+
+  @Test
+  fun platformSelectorsPartitionLibJarsByContentModuleSet() {
+    val coreJar = "app-backend.jar" to listOf(platformModule("intellij.platform.ide.impl"))
+    val libraryJar = "swingx.jar" to emptyList<ModuleItem>()
+    val librariesSetJar = "intellij.libraries.asm.jar" to listOf(contentModule("intellij.libraries.asm", "libraries.platform"))
+    val langSetJar = "intellij.platform.lang.impl.jar" to listOf(contentModule("intellij.platform.lang.impl", "core.lang"))
+    val setlessJar = "intellij.charts.jar" to listOf(contentModule("intellij.charts", null))
+    val all = listOf(coreJar, libraryJar, librariesSetJar, langSetJar, setlessJar)
+
+    val core = PlatformFragmentSelector.Core
+    val libraries = PlatformFragmentSelector.ContentModuleSets(setOf("libraries.platform"))
+    val remaining = PlatformFragmentSelector.RemainingContentModules(setOf("libraries.platform"))
+
+    // Every jar belongs to exactly one of the three, so the fragments partition `lib` instead of overlapping or losing a jar.
+    for ((jar, modules) in all) {
+      val owners = listOf(core, libraries, remaining).filter { it.accepts(jar, modules) }
+      assertThat(owners).describedAs(jar).hasSize(1)
+      assertThat(PlatformFragmentSelector.All.accepts(jar, modules)).describedAs(jar).isTrue()
+    }
+
+    assertThat(core.accepts(coreJar.first, coreJar.second)).isTrue()
+    assertThat(core.accepts(libraryJar.first, libraryJar.second)).isTrue()
+    assertThat(libraries.accepts(librariesSetJar.first, librariesSetJar.second)).isTrue()
+    // A content module in no module set is still assembled - by the fragment that takes what nobody claimed.
+    assertThat(remaining.accepts(setlessJar.first, setlessJar.second)).isTrue()
+    assertThat(remaining.accepts(langSetJar.first, langSetJar.second)).isTrue()
+  }
+
+  @Test
+  fun platformSelectorRejectsAJarSharedByTwoModuleSets() {
+    val modules = listOf(contentModule("intellij.platform.lang.impl", "core.lang"), contentModule("intellij.libraries.asm", "libraries.platform"))
+
+    assertThatThrownBy { PlatformFragmentSelector.Core.accepts("shared.jar", modules) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("holds content modules from two module sets")
+    // A complete assembly owns the jar whoever declared it, and must not fail on a question it never asks.
+    assertThat(PlatformFragmentSelector.All.accepts("shared.jar", modules)).isTrue()
+  }
+
+  @Test
+  fun pluginSelectorsPartitionBundledPlugins() {
+    val named = PluginFragmentSelector.Named(setOf("intellij.air.plugin"))
+    val remaining = PluginFragmentSelector.Remaining(setOf("intellij.air.plugin"))
+
+    assertThat(named.accepts("intellij.air.plugin")).isTrue()
+    assertThat(named.accepts("intellij.vcs.git")).isFalse()
+    assertThat(remaining.accepts("intellij.air.plugin")).isFalse()
+    assertThat(remaining.accepts("intellij.vcs.git")).isTrue()
+    assertThat(PluginFragmentSelector.All.accepts("intellij.air.plugin")).isTrue()
+  }
+
+  private fun platformModule(moduleName: String): ModuleItem {
+    return ModuleItem(moduleName = moduleName, relativeOutputFile = "app-backend.jar", reason = "addModule")
+  }
+
+  private fun contentModule(moduleName: String, setName: String?): ModuleItem {
+    return ModuleItem(
+      moduleName = moduleName,
+      relativeOutputFile = "$moduleName.jar",
+      reason = ModuleIncludeReasons.PRODUCT_MODULES,
+      moduleSet = setName?.let { listOf("intellij.moduleSets.$it") },
+    )
   }
 
   @Test
@@ -546,20 +617,23 @@ class IdeBuilderTest {
 
     writeDevBuildComponentManifest(
       file = manifestFile,
-      kind = DevBuildPart.PLUGINS,
+      kind = "plugins_remaining",
       platformPrefix = "Rider",
       os = OsFamily.LINUX,
       arch = JvmArchitecture.aarch64,
       additionalModules = emptyList(),
       mainClass = "com.intellij.idea.Main",
       coreClassPath = emptyList(),
+      pluginCount = 1,
       entries = sequenceOf(entry),
       componentRoot = componentRoot,
       projectDir = projectDir,
     )
 
     val manifest = readDevBuildComponentManifest(manifestFile)
-    assertThat(manifest.version).isEqualTo(2)
+    assertThat(manifest.version).isEqualTo(3)
+    assertThat(manifest.kind).isEqualTo("plugins_remaining")
+    assertThat(manifest.pluginCount).isEqualTo(1)
     assertThat(manifest.entries).containsExactly(
       DevBuildComponentEntry(relativePath = "plugins/rider-plugins-renderdoc", type = "custom-asset", hash = 1)
     )

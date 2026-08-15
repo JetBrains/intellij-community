@@ -102,14 +102,86 @@ internal class DevBuildComponentComposerTest {
 
     val result = composeDevBuildComponents(components, tempDir.resolve("target"))
 
+    // Ordered here rather than left in component order: each component sorted only the share it packed.
     assertThat(result.coreClassPath).containsExactly(
       "lib/platform.jar",
-      "plugins/sample/lib/sample.jar",
       "plugins/extra/lib/extra.jar",
+      "plugins/sample/lib/sample.jar",
     )
     assertThat(result.additionalModules).containsExactly("intellij.sample", "intellij.shared", "intellij.extra")
     assertThat(Files.exists(tempDir.resolve("target/bin/idea.properties"))).isTrue()
     assertThat(result.fingerprint).isEqualTo(computeIdeFingerprintFromComponents(components.map { it.manifest }))
+  }
+
+  @Test
+  fun `composer puts the leading core classpath jars first`(@TempDir tempDir: Path) {
+    val component = DevBuildComponent(
+      root = component(tempDir, "platform", "lib/util.jar"),
+      manifest = manifest(
+        kind = "platform_core",
+        coreClassPath = listOf("lib/app-backend.jar", "lib/util.jar", "lib/platform-loader.jar", "lib/util-8.jar"),
+      ),
+    )
+
+    val result = composeDevBuildComponents(listOf(component), tempDir.resolve("target"))
+
+    assertThat(result.coreClassPath).containsExactly(
+      "lib/platform-loader.jar",
+      "lib/util-8.jar",
+      "lib/util.jar",
+      "lib/app-backend.jar",
+    )
+  }
+
+  @Test
+  fun `composer builds plugin-classpath from the prefix and every component's records`(@TempDir tempDir: Path) {
+    val prefix = tempDir.resolve("prefix.bin")
+    Files.write(prefix, byteArrayOf(2, 1, 0, 0, 0, 0))
+    val air = DevBuildComponent(
+      root = component(tempDir, "air", "plugins/air-plugin/lib/air.jar"),
+      manifest = manifest(kind = "plugins_air", pluginCount = 1),
+      pluginClasspathPart = tempDir.resolve("air.part").also { Files.write(it, byteArrayOf(10)) },
+    )
+    val remaining = DevBuildComponent(
+      root = component(tempDir, "remaining", "plugins/git/lib/git.jar"),
+      manifest = manifest(kind = "plugins_remaining", pluginCount = 2),
+      pluginClasspathPart = tempDir.resolve("remaining.part").also { Files.write(it, byteArrayOf(20, 21)) },
+    )
+    val target = tempDir.resolve("target")
+
+    composeDevBuildComponents(listOf(air, remaining), target, pluginClasspathPrefix = prefix)
+
+    // prefix, then the summed plugin count as a big-endian short, then the records in component order
+    assertThat(Files.readAllBytes(target.resolve("plugins/plugin-classpath.txt")))
+      .containsExactly(2, 1, 0, 0, 0, 0, 0, 3, 10, 20, 21)
+  }
+
+  @Test
+  fun `composer rejects plugin records without a prefix`(@TempDir tempDir: Path) {
+    val air = DevBuildComponent(
+      root = component(tempDir, "air", "plugins/air-plugin/lib/air.jar"),
+      manifest = manifest(kind = "plugins_air", pluginCount = 1),
+      pluginClasspathPart = tempDir.resolve("air.part").also { Files.write(it, byteArrayOf(10)) },
+    )
+
+    assertThatThrownBy { composeDevBuildComponents(listOf(air), tempDir.resolve("target")) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("plugin-classpath prefix is required")
+  }
+
+  @Test
+  fun `composer rejects a composition that is missing a wired fragment`(@TempDir tempDir: Path) {
+    val platform = DevBuildComponent(component(tempDir, "platform", "lib/platform.jar"), manifest(kind = "platform_core"))
+
+    assertThatThrownBy {
+      composeDevBuildComponents(
+        components = listOf(platform),
+        target = tempDir.resolve("target"),
+        expectedFragments = listOf("platform_core", "platform_resources"),
+      )
+    }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("platform_resources")
   }
 
   @Test
@@ -140,6 +212,7 @@ internal class DevBuildComponentComposerTest {
     platformPrefix: String = "idea",
     coreClassPath: List<String> = emptyList(),
     additionalModules: List<String> = emptyList(),
+    pluginCount: Int = 0,
   ): DevBuildComponentManifest {
     return DevBuildComponentManifest(
       kind = kind,
@@ -149,6 +222,7 @@ internal class DevBuildComponentComposerTest {
       additionalModules = additionalModules,
       mainClass = "com.intellij.idea.Main",
       coreClassPath = coreClassPath,
+      pluginCount = pluginCount,
       entries = emptyList(),
     )
   }

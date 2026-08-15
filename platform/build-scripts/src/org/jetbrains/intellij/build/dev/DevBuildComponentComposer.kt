@@ -2,6 +2,11 @@
 package org.jetbrains.intellij.build.dev
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.classPath.orderCoreClasspathEntries
+import org.jetbrains.intellij.build.classPath.writePluginClassPathCount
+import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
+import java.io.BufferedOutputStream
+import java.io.DataOutputStream
 import java.io.IOException
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -15,6 +20,8 @@ import java.util.LinkedHashSet
 data class DevBuildComponent(
   @JvmField val root: Path,
   @JvmField val manifest: DevBuildComponentManifest,
+  /** This component's share of the `plugin-classpath.txt` records, if it built any plugin. */
+  @JvmField val pluginClasspathPart: Path? = null,
 )
 
 @ApiStatus.Internal
@@ -26,11 +33,24 @@ data class ComposedDevBuild(
   @JvmField val fingerprint: String,
 )
 
+/**
+ * Assembles [components] into one distribution at [target].
+ *
+ * [expectedFragments], when given, is every fragment the caller wired: composing a subset of them would produce an IDE
+ * that starts and then fails somewhere far away, so a component that never arrived is caught here instead.
+ * [pluginClasspathPrefix] is the `plugin-classpath.txt` prefix one component was asked to produce; it is required as
+ * soon as any component contributed plugins, since the file cannot be written without it.
+ */
 @ApiStatus.Internal
-fun composeDevBuildComponents(components: List<DevBuildComponent>, target: Path): ComposedDevBuild {
+fun composeDevBuildComponents(
+  components: List<DevBuildComponent>,
+  target: Path,
+  pluginClasspathPrefix: Path? = null,
+  expectedFragments: Collection<String> = emptyList(),
+): ComposedDevBuild {
   require(components.isNotEmpty()) { "At least one dev-build component is required" }
   val first = components.first().manifest
-  for ((_, manifest) in components.drop(1)) {
+  for (manifest in components.asSequence().drop(1).map(DevBuildComponent::manifest)) {
     check(manifest.platformPrefix == first.platformPrefix) {
       "Dev-build components have different products: '${first.platformPrefix}' and '${manifest.platformPrefix}'"
     }
@@ -42,22 +62,64 @@ fun composeDevBuildComponents(components: List<DevBuildComponent>, target: Path)
     }
   }
 
+  if (!expectedFragments.isEmpty()) {
+    val present = components.mapTo(HashSet()) { it.manifest.kind }
+    val missing = expectedFragments.filterNot(present::contains)
+    check(missing.isEmpty()) {
+      "Dev-build fragments are missing from the composition: ${missing.joinToString()};" +
+      " present: ${present.sorted().joinToString()}"
+    }
+  }
+
   Files.createDirectories(target)
   for ((root, _) in components) {
     mergeDevBuildComponent(root, target)
   }
 
+  composePluginClassPath(components = components, target = target, prefix = pluginClasspathPrefix)
+
   val additionalModules = LinkedHashSet<String>()
-  for ((_, manifest) in components) {
+  for (manifest in components.map(DevBuildComponent::manifest)) {
     additionalModules.addAll(manifest.additionalModules)
   }
   return ComposedDevBuild(
     platformPrefix = first.platformPrefix,
     mainClass = first.mainClass,
     additionalModules = additionalModules.toList(),
-    coreClassPath = components.flatMap { it.manifest.coreClassPath },
+    // Ordering can only happen here: each component sorted the share of the classpath it packed, and the leading jars
+    // are not necessarily in the same component as the rest.
+    coreClassPath = orderCoreClasspathEntries(components.flatMap { it.manifest.coreClassPath }),
     fingerprint = computeIdeFingerprintFromComponents(components.map { it.manifest }),
   )
+}
+
+/**
+ * Writes `plugins/plugin-classpath.txt` from the prefix one component produced and the per-plugin records of all of them.
+ *
+ * The file's plugin count spans the whole distribution and sits between the two, which is why no single component can
+ * write it. Record order is free - the reader consumes them sequentially, each one self-describing - so it follows the
+ * component order the caller passed, which keeps the composition reproducible.
+ */
+private fun composePluginClassPath(components: List<DevBuildComponent>, target: Path, prefix: Path?) {
+  val parts = components.filter { it.pluginClasspathPart != null }
+  if (parts.isEmpty()) {
+    return
+  }
+
+  val prefixFile = checkNotNull(prefix) {
+    "Components contributed plugins (${parts.joinToString { it.manifest.kind }}), so the plugin-classpath prefix is required"
+  }
+
+  val pluginCount = components.sumOf { it.manifest.pluginCount }
+  val file = target.resolve(PLUGIN_CLASSPATH)
+  file.parent?.let { Files.createDirectories(it) }
+  DataOutputStream(BufferedOutputStream(Files.newOutputStream(file))).use { out ->
+    out.write(Files.readAllBytes(prefixFile))
+    writePluginClassPathCount(out = out, pluginCount = pluginCount)
+    for (part in parts) {
+      out.write(Files.readAllBytes(part.pluginClasspathPart!!))
+    }
+  }
 }
 
 @ApiStatus.Internal

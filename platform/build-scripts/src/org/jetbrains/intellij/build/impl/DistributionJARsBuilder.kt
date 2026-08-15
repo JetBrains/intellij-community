@@ -619,6 +619,15 @@ internal suspend fun layoutPlatformDistribution(
   platform: PlatformLayout,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   copyFiles: Boolean,
+  /**
+   * The modules to pack, `null` for all of [PlatformLayout.includedModules].
+   *
+   * A split dev-distribution fragment passes its share, so that the modules it does not pack are never resolved to
+   * their outputs and cannot invalidate it.
+   */
+  includedModules: Collection<ModuleItem>? = null,
+  /** Packs only the `lib/` jars this accepts; `null` packs all of them. Set by a split dev-distribution fragment. */
+  assetFilter: DistributionAssetFilter? = null,
   context: BuildContext,
 ): List<DistributionFileEntry> {
   if (copyFiles) {
@@ -662,9 +671,10 @@ internal suspend fun layoutPlatformDistribution(
         targetDir = targetDir,
         copyFiles = copyFiles,
         moduleOutputPatcher = moduleOutputPatcher,
-        includedModules = platform.includedModules,
+        includedModules = includedModules ?: platform.includedModules,
         searchableOptionSet = searchableOptionSet,
         cachedDescriptorWriterProvider = null,
+        assetFilter = assetFilter,
         context = context,
       ).first
     }
@@ -793,6 +803,7 @@ internal suspend fun layoutDistribution(
   includedModules: Collection<ModuleItem>,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   cachedDescriptorWriterProvider: ScopedCachedDescriptorContainer?,
+  assetFilter: DistributionAssetFilter? = null,
   context: BuildContext,
 ): Pair<List<DistributionFileEntry>, Path> {
   if (copyFiles) {
@@ -832,6 +843,7 @@ internal suspend fun layoutDistribution(
           searchableOptionSet = searchableOptionSet,
           dryRun = !copyFiles,
           descriptorCache = cachedDescriptorWriterProvider,
+          assetFilter = assetFilter,
           context = context,
         )
       }

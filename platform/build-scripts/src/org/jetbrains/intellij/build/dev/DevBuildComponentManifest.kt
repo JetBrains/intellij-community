@@ -11,7 +11,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
-private const val DEV_BUILD_COMPONENT_MANIFEST_VERSION = 2
+private const val DEV_BUILD_COMPONENT_MANIFEST_VERSION = 3
 
 @Serializable
 @ApiStatus.Internal
@@ -25,6 +25,7 @@ data class DevBuildComponentEntry(
 @ApiStatus.Internal
 data class DevBuildComponentManifest(
   @JvmField val version: Int = DEV_BUILD_COMPONENT_MANIFEST_VERSION,
+  /** The name of the fragment that produced this component. */
   @JvmField val kind: String,
   @JvmField val platformPrefix: String,
   @JvmField val os: String,
@@ -32,6 +33,13 @@ data class DevBuildComponentManifest(
   @JvmField val additionalModules: List<String>,
   @JvmField val mainClass: String,
   @JvmField val coreClassPath: List<String>,
+  /**
+   * How many plugins this component contributed to `plugin-classpath.txt`.
+   *
+   * The count in that file covers the whole distribution and precedes the records, so only the composer can write it -
+   * it is the sum over the components, and each one has to report its own share.
+   */
+  @JvmField val pluginCount: Int = 0,
   @JvmField val entries: List<DevBuildComponentEntry>,
 )
 
@@ -43,20 +51,21 @@ private val componentManifestJson = Json {
 @ApiStatus.Internal
 fun writeDevBuildComponentManifest(
   file: Path,
-  kind: DevBuildPart,
+  kind: String,
   platformPrefix: String,
   os: OsFamily,
   arch: JvmArchitecture,
   additionalModules: List<String>,
   mainClass: String,
   coreClassPath: Collection<Path>,
+  pluginCount: Int,
   entries: Sequence<DistributionFileEntry>,
   componentRoot: Path,
   projectDir: Path,
 ) {
   val manifestEntries = normalizeDevBuildComponentEntries(entries, componentRoot, projectDir)
   val manifest = DevBuildComponentManifest(
-    kind = kind.name.lowercase(),
+    kind = kind,
     platformPrefix = platformPrefix,
     os = os.osId,
     arch = arch.name,
@@ -65,6 +74,7 @@ fun writeDevBuildComponentManifest(
     coreClassPath = coreClassPath.map { path ->
       if (path.startsWith(componentRoot)) componentRoot.relativize(path).invariantSeparatorsPathString else path.invariantSeparatorsPathString
     },
+    pluginCount = pluginCount,
     entries = manifestEntries,
   )
   file.parent?.let { Files.createDirectories(it) }

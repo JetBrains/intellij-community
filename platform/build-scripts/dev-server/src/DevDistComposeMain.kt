@@ -22,17 +22,34 @@ fun main(args: Array<String>) {
   require(componentDirs.size == componentManifestFiles.size) {
     "--component-dir and --component-manifest must have the same number of values"
   }
+  // One per component, positionally, and empty where a component built no plugin: a component's records cannot be
+  // matched to it by name, and mismatched lists would silently attach one component's plugins to another.
+  val pluginClasspathParts = options.sparsePathList("--plugin-classpath-part")
+  require(pluginClasspathParts.isEmpty() || pluginClasspathParts.size == componentDirs.size) {
+    "--plugin-classpath-part must be given once per --component-dir, or not at all"
+  }
   val outputDir = options.requiredPath("--output-dir")
   val ideConfig = options.requiredPath("--ide-config")
   val fingerprintFile = options.requiredPath("--fingerprint")
+  val pluginClasspathPrefix = options.optionalPath("--plugin-classpath-prefix")
+  val expectedFragments = options.stringList("--expect-fragment")
   options.checkNoUnknownOptions()
 
-  val components = componentDirs.zip(componentManifestFiles) { componentDir, manifestFile ->
-    DevBuildComponent(root = componentDir, manifest = readDevBuildComponentManifest(manifestFile))
+  val components = componentDirs.mapIndexed { index, componentDir ->
+    DevBuildComponent(
+      root = componentDir,
+      manifest = readDevBuildComponentManifest(componentManifestFiles.get(index)),
+      pluginClasspathPart = pluginClasspathParts.getOrNull(index),
+    )
   }
 
   if (Files.exists(outputDir)) outputDir.deleteRecursively()
-  val result = composeDevBuildComponents(components = components, target = outputDir)
+  val result = composeDevBuildComponents(
+    components = components,
+    target = outputDir,
+    pluginClasspathPrefix = pluginClasspathPrefix,
+    expectedFragments = expectedFragments,
+  )
   Files.writeString(outputDir.resolve("core-classpath.txt"), result.coreClassPath.joinToString(separator = "\n"))
   Files.writeString(outputDir.resolve("fingerprint.txt"), result.fingerprint)
   Files.writeString(fingerprintFile, result.fingerprint)
@@ -54,9 +71,30 @@ private class ComposeOptions(private val values: Map<String, List<String>>) {
     return paths.single()
   }
 
+  fun optionalPath(name: String): Path? {
+    val paths = pathList(name)
+    require(paths.size <= 1) { "$name must be specified at most once, but got ${paths.size} values" }
+    return paths.singleOrNull()
+  }
+
   fun pathList(name: String): List<Path> {
+    return sparsePathList(name).map { checkNotNull(it) { "$name must not be empty" } }
+  }
+
+  /**
+   * The paths given for [name], where an empty value is a hole rather than a path.
+   *
+   * That is how a caller fills a positional list in which some positions have nothing, without shifting the rest.
+   */
+  fun sparsePathList(name: String): List<Path?> {
     used.add(name)
-    return values.get(name)?.map { Path.of(it).toAbsolutePath().normalize() } ?: emptyList()
+    val raw = values.get(name) ?: return emptyList()
+    return raw.map { value -> if (value.isEmpty()) null else Path.of(value).toAbsolutePath().normalize() }
+  }
+
+  fun stringList(name: String): List<String> {
+    used.add(name)
+    return values.get(name)?.filter { it.isNotEmpty() } ?: emptyList()
   }
 
   fun checkNoUnknownOptions() {

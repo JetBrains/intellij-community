@@ -18,6 +18,7 @@ import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
+import org.jetbrains.intellij.build.impl.LIB_DIRECTORY
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.PRODUCT_DESCRIPTOR_META_PATH
 import org.jetbrains.intellij.build.impl.PlatformJarNames
@@ -89,9 +90,37 @@ fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFile
 
   val result = LinkedHashSet<Path>(classPath.size + 4)
   // add first - should be listed first
-  sequenceOf(PLATFORM_LOADER_JAR, UTIL_8_JAR, UTIL_JAR, PRODUCT_BACKEND_JAR).map(libDir::resolve).filterTo(result, classPath::contains)
+  CORE_CLASSPATH_LEADING_JARS.asSequence().map(libDir::resolve).filterTo(result, classPath::contains)
   // sorted to ensure stable performance results
   result.addAll(if (isWindows) classPath.sortedBy(Path::toString) else classPath.sorted())
+  return result
+}
+
+/** The `lib/` jars the core classpath lists before everything else, in this order. */
+private val CORE_CLASSPATH_LEADING_JARS: List<String> = listOf(PLATFORM_LOADER_JAR, UTIL_8_JAR, UTIL_JAR, PRODUCT_BACKEND_JAR)
+
+/**
+ * Applies the order of [generateClassPathByLayoutReport] to core-classpath entries that are already home-relative paths.
+ *
+ * The fragments of a split dev distribution each report the share of the classpath they packed, so ordering can only
+ * happen once they are all in - and by then the entries are the strings a component manifest carries rather than the
+ * `Path`s the layout produced. Same rule, same leading jars: a change to one of these two has to be made in the other.
+ */
+@ApiStatus.Internal
+fun orderCoreClasspathEntries(entries: Collection<String>): List<String> {
+  val leading = CORE_CLASSPATH_LEADING_JARS.map { "$LIB_DIRECTORY/$it" }
+  val remaining = entries.toMutableList()
+  val result = ArrayList<String>(entries.size)
+  for (jar in leading) {
+    if (remaining.remove(jar)) {
+      result.add(jar)
+    }
+  }
+  // Sorted as `Path`s, not as strings, to reproduce the order of a complete assembly - which sorts absolute paths, so
+  // for an entry outside the distribution the two can still disagree. That only costs the "stable performance results"
+  // the sort is there for, never correctness: the platform classloader gets the same set either way.
+  remaining.sortWith(if (isWindows) compareBy { it } else compareBy(Path::of))
+  result.addAll(remaining)
   return result
 }
 
@@ -167,11 +196,18 @@ data class PluginBuildDescriptor(
   @JvmField val buildResult: PluginBuildResult,
 )
 
+/**
+ * Writes everything in `plugin-classpath.txt` that precedes the plugin count: the format version, the `jarOnly` flag
+ * and the product descriptor.
+ *
+ * The count is not written here because it is not always known to whoever knows the descriptor. A split dev assembly
+ * has the platform fragment produce this prefix while each plugin fragment produces only its own records, so the count
+ * is the sum the composer arrives at once every fragment is in - see `writePluginClassPathCount`.
+ */
 @Suppress("BlockingMethodInNonBlockingContext")
-internal suspend fun writePluginClassPathHeader(
+internal suspend fun writePluginClassPathPrefix(
   out: DataOutputStream,
   isJarOnly: Boolean,
-  pluginCount: Int,
   platformLayout: PlatformLayout,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
@@ -188,8 +224,10 @@ internal suspend fun writePluginClassPathHeader(
 
   out.writeInt(mainPluginDescriptorContent.size())
   out.write(mainPluginDescriptorContent.internalBuffer, 0, mainPluginDescriptorContent.size())
+}
 
-  // bundled plugin metadata
+/** Writes the bundled plugin count, which separates the prefix written by [writePluginClassPathPrefix] from the per-plugin records. */
+internal fun writePluginClassPathCount(out: DataOutputStream, pluginCount: Int) {
   out.writeShort(pluginCount)
 }
 

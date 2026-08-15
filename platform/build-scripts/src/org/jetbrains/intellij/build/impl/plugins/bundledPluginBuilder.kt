@@ -21,7 +21,8 @@ import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.generatePluginClassPath
 import org.jetbrains.intellij.build.classPath.generatePluginClassPathFromPrebuiltPluginFiles
-import org.jetbrains.intellij.build.classPath.writePluginClassPathHeader
+import org.jetbrains.intellij.build.classPath.writePluginClassPathCount
+import org.jetbrains.intellij.build.classPath.writePluginClassPathPrefix
 import org.jetbrains.intellij.build.dev.collectLayoutsOfPluginsToScramble
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
@@ -340,14 +341,14 @@ private suspend fun writePluginInfo(
       val byteOut = ByteArrayOutputStream()
       DataOutputStream(byteOut).use { out ->
         val pluginCount = common.size + (additional?.size ?: 0) + (specificList?.size ?: 0)
-        writePluginClassPathHeader(
+        writePluginClassPathPrefix(
           out = out,
           isJarOnly = true,
-          pluginCount = pluginCount,
           platformLayout = platformLayout,
           descriptorCacheContainer = descriptorCacheContainer,
           context = context,
         )
+        writePluginClassPathCount(out = out, pluginCount = pluginCount)
         out.write(commonClassPath)
         additionalClassPath?.let { out.write(it) }
         specificClasspath?.let { out.write(it) }

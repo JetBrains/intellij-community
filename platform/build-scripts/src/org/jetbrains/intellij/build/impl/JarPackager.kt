@@ -16,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
@@ -71,6 +72,18 @@ private fun isJarPreSigned(file: Path, context: BuildContext): Boolean {
   return context.productProperties.presignedNativeLibs.containsKey(getLibNameBySourceFile(file))
 }
 
+/**
+ * Selects the jars an assembly actually writes, out of everything the layout put in them.
+ *
+ * A split dev-distribution fragment lays the whole layout out - that part is metadata, and cheap - and then packs only
+ * the jars it owns, so that reading and zipping is what the split divides. The layout is the input because ownership is
+ * decided from it (see `org.jetbrains.intellij.build.dev.jarOwnership`), never from a list of file names.
+ */
+@ApiStatus.Internal
+fun interface DistributionAssetFilter {
+  fun accept(relativeOutputFile: String, includedModules: Collection<ModuleItem>): Boolean
+}
+
 class JarPackager private constructor(
   private val outDir: Path,
   private val context: BuildContext,
@@ -111,6 +124,7 @@ class JarPackager private constructor(
       dryRun: Boolean,
       searchableOptionSet: SearchableOptionSetDescriptor? = null,
       descriptorCache: ScopedCachedDescriptorContainer? = null,
+      assetFilter: DistributionAssetFilter? = null,
       context: BuildContext,
     ): Collection<DistributionFileEntry> {
       val packager = JarPackager(outDir = outputDir, context = context, platformLayout = platformLayout, isRootDir = isRootDir, moduleOutputPatcher = moduleOutputPatcher)
@@ -128,9 +142,18 @@ class JarPackager private constructor(
         copiedFiles = packager.copiedFiles,
       )
 
+      // The whole layout is computed above, but only the owned jars are packed and reported: everything downstream -
+      // the built files, the distribution entries, the classpath - must see one consistent subset.
+      val assets = if (assetFilter == null) {
+        packager.assets.values
+      }
+      else {
+        packager.assets.values.filter { assetFilter.accept(it.relativePath, it.includedModules.keys) }
+      }
+
       val cacheManager = if (dryRun || context !is BuildContextImpl) NonCachingJarCacheManager else context.jarCacheManager
       val buildAssetResult = buildJars(
-        assets = packager.assets.values,
+        assets = assets,
         cache = cacheManager,
         isCodesignEnabled = isCodesignEnabled,
         useCacheAsTargetFile = !dryRun && context.options.isUnpackedDist,
@@ -154,7 +177,7 @@ class JarPackager private constructor(
 
         val list = mutableListOf<DistributionFileEntry>()
         val hasher = Hashing.xxh3_64().hashStream()
-        for (item in packager.assets.values) {
+        for (item in assets) {
           computeDistributionFileEntries(asset = item, hasher = hasher, list = list, dryRun = dryRun, buildAssetResult = buildAssetResult)
         }
         list
