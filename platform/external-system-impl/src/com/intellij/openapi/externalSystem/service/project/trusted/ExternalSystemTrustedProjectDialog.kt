@@ -5,7 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.externalSystem.util.naturalJoinSystemIds
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -35,7 +35,7 @@ object ExternalSystemTrustedProjectDialog {
     project: Project,
     systemIds: Collection<ProjectSystemId>
   ): Boolean {
-    val systemsPresentation = ExternalSystemUtil.naturalJoinSystemIds(systemIds)
+    val systemsPresentation = naturalJoinSystemIds(systemIds)
     return TrustedProjectsDialog.confirmLoadingUntrustedProjectAsync(
       project = project,
       title = IdeBundle.message("untrusted.project.dialog.title", systemsPresentation, systemIds.size),
@@ -58,7 +58,7 @@ object ExternalSystemTrustedProjectDialog {
     project: Project,
     systemIds: Collection<ProjectSystemId>
   ): Boolean {
-    val systemsPresentation = ExternalSystemUtil.naturalJoinSystemIds(systemIds)
+    val systemsPresentation = naturalJoinSystemIds(systemIds)
     return TrustedProjectsDialog.confirmLoadingUntrustedProject(
       project = project,
       title = IdeBundle.message("untrusted.project.dialog.title", systemsPresentation, systemIds.size),

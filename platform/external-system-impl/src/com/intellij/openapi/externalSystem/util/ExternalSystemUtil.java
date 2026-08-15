@@ -15,9 +15,6 @@ import com.intellij.build.events.OutputBuildEvent;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.build.events.impl.FailureResultImpl;
-import com.intellij.build.events.impl.FinishBuildEventImpl;
-import com.intellij.build.events.impl.OutputBuildEventImpl;
-import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionListener;
@@ -34,7 +31,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
@@ -57,7 +53,6 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.openapi.externalSystem.service.internal.ExternalSystemPartialResolutionException;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -76,6 +71,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemProce
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
+import com.intellij.openapi.externalSystem.service.internal.ExternalSystemPartialResolutionException;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
@@ -100,7 +96,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IncompleteDependenciesService;
 import com.intellij.openapi.project.Project;
@@ -110,7 +105,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -142,7 +136,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
@@ -628,11 +621,12 @@ public final class ExternalSystemUtil {
     return ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, systemId);
   }
 
+  /**
+   * @deprecated use {@link ExternalSystemTrustUtilKt#naturalJoinSystemIds} directly
+   */
+  @Deprecated
   public static @NotNull @Nls String naturalJoinSystemIds(@NotNull Collection<ProjectSystemId> systemIds) {
-    return new HashSet<>(systemIds).stream()
-      .map(it -> it.getReadableName())
-      .sorted(NaturalComparator.INSTANCE)
-      .collect(NlsMessages.joiningAnd());
+    return ExternalSystemTrustUtilKt.naturalJoinSystemIds(systemIds);
   }
 
   public static boolean isNewProject(Project project) {

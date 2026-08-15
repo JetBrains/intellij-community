@@ -9,7 +9,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.externalSystem.util.naturalJoinSystemIds
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
@@ -44,13 +44,13 @@ class ProjectRefreshAction : DumbAwareAction() {
 
   @NlsActions.ActionText
   private fun getNotificationText(systemIds: Set<ProjectSystemId>): String {
-    val systemsPresentation = ExternalSystemUtil.naturalJoinSystemIds(systemIds)
+    val systemsPresentation = naturalJoinSystemIds(systemIds)
     return ExternalSystemBundle.message("external.system.reload.notification.action.reload.text", systemsPresentation)
   }
 
   @NlsActions.ActionDescription
   private fun getNotificationDescription(systemIds: Set<ProjectSystemId>): String {
-    val systemsPresentation = ExternalSystemUtil.naturalJoinSystemIds(systemIds)
+    val systemsPresentation = naturalJoinSystemIds(systemIds)
     val productName = ApplicationNamesInfo.getInstance().fullProductName
     return ExternalSystemBundle.message("external.system.reload.notification.action.reload.description", systemsPresentation, productName)
   }
