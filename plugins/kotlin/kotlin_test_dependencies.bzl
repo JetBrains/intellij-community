@@ -6,7 +6,7 @@ _files = []
 def download_file(name, url, sha256):
     _files.append(struct(name = name, url = url, sha256 = sha256))
 
-kotlinCompilerCliVersion = "2.4.20-ij262-49"
+kotlinCompilerCliVersion = "2.4.20-ij262-52"
 kotlincKotlinJpsPluginTestsVersion = "2.3.20"
 
 download_file(
@@ -234,7 +234,7 @@ download_file(
 download_file(
     name = "kotlin-compiler.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler/{0}/kotlin-compiler-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "43c02eed0051ef2234a91e0aba11a1bba00ae3138441c938749c3b39c6701bb7",
+    sha256 = "6042fc7996b4c21f9a5dc041be5e6fa244c2fe952f7649ee44c934564ab7d8e6",
 )
 
 download_file(
