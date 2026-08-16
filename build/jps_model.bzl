@@ -45,10 +45,12 @@ def _normalize_project_relative_path(parts, context):
             result.append(part)
     return "/".join(result)
 
-def _find_plugin_xml_rel_path(ctx, project_root, iml_content, iml_rel_path, iml_dir_rel):
+def _production_resource_roots(iml_content, iml_rel_path, iml_dir_rel):
+    """The project-relative path of every production resource root an .iml declares."""
     doc = xml.parse(iml_content, strict = True)
     root = xml.get_document_element(doc)
 
+    roots = []
     for source_folder in xml.find_elements_by_tag_name(root, "sourceFolder"):
         if xml.get_attribute(source_folder, "type") != "java-resource":
             continue
@@ -70,11 +72,15 @@ def _find_plugin_xml_rel_path(ctx, project_root, iml_content, iml_rel_path, iml_
         parts = iml_dir_rel.split("/") if iml_dir_rel else []
         if resource_root_rel:
             parts += resource_root_rel.split("/")
-        parts += ["META-INF", "plugin.xml"]
-        plugin_xml_rel_path = _normalize_project_relative_path(
+        roots.append(_normalize_project_relative_path(
             parts,
             "Production resource root '%s' in %s" % (url, iml_rel_path),
-        )
+        ))
+    return roots
+
+def _find_plugin_xml_rel_path(ctx, project_root, resource_roots):
+    for resource_root in resource_roots:
+        plugin_xml_rel_path = _join_project_relative_path(resource_root, "META-INF/plugin.xml")
         plugin_xml_path = project_root.get_child(plugin_xml_rel_path)
         if not plugin_xml_path.exists:
             continue
@@ -85,6 +91,29 @@ def _find_plugin_xml_rel_path(ctx, project_root, iml_content, iml_rel_path, iml_
             return plugin_xml_rel_path
 
     return None
+
+def _join_project_relative_path(directory, relative):
+    return directory + "/" + relative if directory else relative
+
+def _find_descriptor_rel_paths(project_root, module_name, resource_roots):
+    """The descriptors a dev-distribution assembly reads that the module name alone is enough to name.
+
+    A content module's descriptor is `<moduleName>.xml` at a production resource root, and a plugin's descriptor is
+    `META-INF/plugin.xml`. Almost every descriptor follows that convention; `build/dev_dist_plan.bzl` carries only
+    what it cannot predict - descriptors reached through an `xi:include`, whose names the product model knows and
+    this side does not. Splitting it that way keeps the generated file ~120 lines instead of ~3300, which matters
+    for a file every model change would otherwise rewrite under a large team.
+
+    Probed rather than listed: `readdir` would watch each resource root's listing, so adding any file under one
+    would re-run this repository rule.
+    """
+    result = []
+    for resource_root in resource_roots:
+        for candidate in [module_name + ".xml", "META-INF/plugin.xml"]:
+            rel_path = _join_project_relative_path(resource_root, candidate)
+            if project_root.get_child(rel_path).exists:
+                result.append(rel_path)
+    return result
 
 def watch_project_model_files(ctx, project_root):
     idea_dir = project_root.get_child(".idea")
@@ -106,7 +135,8 @@ def read_project_model(ctx, project_root):
     returns the file contents for processing.
 
     Returns struct with:
-      - modules: list of structs (module_name, iml_dir_rel, iml_content, iml_rel_path, plugin_xml_rel_path)
+      - modules: list of structs (module_name, iml_dir_rel, iml_content, iml_rel_path, plugin_xml_rel_path,
+        descriptor_rel_paths)
       - library_xmls: list of structs (xml_content, xml_rel_path) from .idea/libraries/
     """
     idea_dir = project_root.get_child(".idea")
@@ -132,9 +162,7 @@ def read_project_model(ctx, project_root):
         else:
             iml_dir_rel = ""
 
-        plugin_xml_rel_path = _find_plugin_xml_rel_path(
-            ctx = ctx,
-            project_root = project_root,
+        resource_roots = _production_resource_roots(
             iml_content = iml_content,
             iml_rel_path = rel_path,
             iml_dir_rel = iml_dir_rel,
@@ -145,7 +173,12 @@ def read_project_model(ctx, project_root):
             iml_dir_rel = iml_dir_rel,
             iml_content = iml_content,
             iml_rel_path = rel_path,
-            plugin_xml_rel_path = plugin_xml_rel_path,
+            plugin_xml_rel_path = _find_plugin_xml_rel_path(ctx = ctx, project_root = project_root, resource_roots = resource_roots),
+            descriptor_rel_paths = _find_descriptor_rel_paths(
+                project_root = project_root,
+                module_name = module_name,
+                resource_roots = resource_roots,
+            ),
         ))
 
     # Read library XMLs and retain relative paths for error messages.

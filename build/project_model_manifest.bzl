@@ -47,13 +47,25 @@ def project_model_manifest_lines(files, mode):
     prefixes = _ULTIMATE_PREFIXES if mode == "ultimate" else _COMMUNITY_PREFIXES
 
     lines = []
+
+    # A file can be named twice - as a project-model file and again as one of a product's extra files, the way
+    # `ultimate-resources`' plugin.xml is both a module descriptor and the product's ApplicationInfo neighbour. The
+    # materializer copies row by row and would fail on the second, so collapse the duplicates here and keep the
+    # failure for the case that is genuinely wrong: two different sources claiming one destination.
+    source_by_destination = {}
     for file in files:
         destination = file.path
         for p in prefixes:
             if file.path.startswith(p.path_prefix):
                 destination = p.destination_prefix + file.path[len(p.path_prefix):]
                 break
-        lines.append("copy\t%s\t%s" % (file.path, destination))
+
+        existing = source_by_destination.get(destination)
+        if existing == None:
+            source_by_destination[destination] = file.path
+            lines.append("copy\t%s\t%s" % (file.path, destination))
+        elif existing != file.path:
+            fail("Project model tree destination '%s' is claimed by both '%s' and '%s'" % (destination, existing, file.path))
 
     # The repository markers `IdeaProjectLoaderUtil` searches upwards for. Without them the tree is not
     # recognized as a repository at all, whatever `intellij.build.ultimate.home.path` is set to.

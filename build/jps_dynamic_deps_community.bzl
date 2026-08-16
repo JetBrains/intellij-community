@@ -21,7 +21,7 @@ def _format_target_list(name, targets):
     lines.append("]\n")
     return "\n".join(lines)
 
-def _generate_targets_bzl(production_targets, test_targets, library_targets, iml_targets, plugin_xml_targets, plugin_distribution_targets):
+def _generate_targets_bzl(production_targets, test_targets, library_targets, iml_targets, plugin_xml_targets, plugin_distribution_targets, descriptor_targets):
     """Generate the content for targets.bzl file."""
     content = []
     content.append(_format_target_list("ALL_PRODUCTION_COMMUNITY_TARGETS", production_targets))
@@ -30,6 +30,7 @@ def _generate_targets_bzl(production_targets, test_targets, library_targets, iml
     content.append(_format_target_list("ALL_COMMUNITY_IML_TARGETS", iml_targets))
     content.append(_format_target_list("ALL_COMMUNITY_PLUGIN_XML_TARGETS", plugin_xml_targets))
     content.append(_format_target_list("ALL_COMMUNITY_PLUGIN_DISTRIBUTION_TARGETS", plugin_distribution_targets))
+    content.append(_format_target_list("ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS", descriptor_targets))
     content.append("BAZEL_TARGETS_JSON_COMMUNITY = \"@community//build:community_bazel_targets_json\"")
     content.append("ALL_COMMUNITY_TARGETS = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_TEST_COMMUNITY_TARGETS + ALL_LIBRARY_COMMUNITY_TARGETS")
     return "\n".join(content)
@@ -49,6 +50,7 @@ def _derive_targets_from_model(ctx, model):
     iml_data_list = []
     all_iml = []
     all_plugin_xml = []
+    all_descriptors = []
     all_plugin_distribution = []
 
     # community-only: community_root_parts is [] (project root IS community root)
@@ -70,6 +72,16 @@ def _derive_targets_from_model(ctx, model):
         )
         if iml_target not in all_iml:
             all_iml.append(iml_target)
+        for descriptor_rel_path in mod.descriptor_rel_paths:
+            descriptor_target = compute_project_file_target(
+                module_name = mod.module_name,
+                build_dir_parts = build_dir_parts,
+                file_rel_path = descriptor_rel_path,
+                is_community = True,
+                community_root_parts = community_root_parts,
+            )
+            if descriptor_target not in all_descriptors:
+                all_descriptors.append(descriptor_target)
         if mod.plugin_xml_rel_path != None:
             plugin_xml_target = compute_project_file_target(
                 module_name = mod.module_name,
@@ -140,6 +152,7 @@ def _derive_targets_from_model(ctx, model):
         iml = all_iml,
         plugin_xml = all_plugin_xml,
         plugin_distribution = all_plugin_distribution,
+        descriptors = all_descriptors,
     )
 
 def _targets_repo_impl(ctx):
@@ -154,6 +167,7 @@ def _targets_repo_impl(ctx):
         sorted(starlark.iml),
         sorted(starlark.plugin_xml),
         sorted(starlark.plugin_distribution),
+        sorted(starlark.descriptors),
     )
 
     # jps_to_bazel_targets_json rule has no way to get JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT environment variable, forward it via targets.bzl
