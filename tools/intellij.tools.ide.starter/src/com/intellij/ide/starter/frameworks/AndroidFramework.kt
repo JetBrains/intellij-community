@@ -8,9 +8,9 @@ import com.intellij.ide.starter.project.GitProjectInfo
 import com.intellij.ide.starter.utils.FileSystem
 import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
 import com.intellij.ide.starter.utils.HttpClient
+import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.copyRecursively
 import com.intellij.util.system.OS
-import org.gradle.internal.hash.Hashing
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -42,7 +42,7 @@ class AndroidFramework(testContext: IDETestContext) : Framework(testContext) {
 
       // we use unique home folder per installation to ensure only expected
       // packages are included into the SDK home path
-      val packagesHash = Hashing.sha1().hashString(packages.joinToString("$"))
+      val packagesHash = DigestUtil.sha1Hex(packages.joinToString("$"))
       val home = GlobalPaths.instance.getCacheDirectoryFor("android-sdk") / "sdk-roots" / "sdk-root-$packagesHash"
       if (home.isDirectory() && home.walk().count() > 10) return home
 
