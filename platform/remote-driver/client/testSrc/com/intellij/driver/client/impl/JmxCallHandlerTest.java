@@ -8,6 +8,7 @@ import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -21,6 +22,24 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Timeout(value = 10, unit = TimeUnit.SECONDS)
 class JmxCallHandlerTest {
+  @Test
+  void closedDriverReportsDisconnected() throws Exception {
+    // The Java-only test compile classpath intentionally omits Kotlin stdlib, so do not resolve the constructor's
+    // Function1 parameter statically. Runtime includes the production client's Kotlin dependency.
+    Class<?> driverClass = Class.forName("com.intellij.driver.client.impl.DriverImpl");
+    Object driver = Arrays.stream(driverClass.getConstructors())
+      .filter(constructor -> constructor.getParameterCount() == 3 &&
+                             constructor.getParameterTypes()[0] == JmxHost.class &&
+                             constructor.getParameterTypes()[1] == boolean.class)
+      .findFirst()
+      .orElseThrow()
+      .newInstance(new JmxHost(null, null, "unused"), false, null);
+
+    driverClass.getMethod("close").invoke(driver);
+
+    assertThat(driverClass.getMethod("isConnected").invoke(driver)).isEqualTo(false);
+  }
+
   @Test
   void closeInterruptsBlockedCallAndPermanentlyClosesHandler() throws Exception {
     CountDownLatch callEntered = new CountDownLatch(1);

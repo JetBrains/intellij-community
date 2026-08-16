@@ -53,7 +53,10 @@ open class DriverImpl(host: JmxHost, override val isRemDevMode: Boolean, overrid
         }
         throw ut
       }
-      catch (ioe: JmxCallException) {
+      catch (_: JmxCallException) {
+        return false
+      }
+      catch (_: JmxCallHandler.ClosedException) {
         return false
       }
     }

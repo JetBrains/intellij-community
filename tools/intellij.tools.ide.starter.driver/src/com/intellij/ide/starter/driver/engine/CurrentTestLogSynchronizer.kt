@@ -11,14 +11,26 @@ import com.intellij.ide.starter.runner.TestMethod
  *
  * The listener self-removes on a driver failure with no successor (e.g. IDE disconnect with no restart).
  */
-internal class CurrentTestLogSynchronizer(private val driver: Driver, private val runContext: IDERunContext) {
+internal class CurrentTestLogSynchronizer(
+  private val isConnected: () -> Boolean,
+  private val syncLogDir: () -> Unit,
+) {
 
-  private val listener: (TestMethod?) -> Unit = listener@{ testMethod ->
-    if (driver.isConnected && driver.getProductVersion().baselineVersion >= 263) {
-      if (testMethod != null) {
+  constructor(driver: Driver, runContext: IDERunContext) : this(
+    isConnected = { driver.isConnected },
+    syncLogDir = {
+      if (driver.getProductVersion().baselineVersion >= 263) {
         runContext.registerNewIdeReportingData { logsDir ->
           driver.setLogDir(logsDir)
         }
+      }
+    },
+  )
+
+  private val listener: (TestMethod?) -> Unit = listener@{ testMethod ->
+    if (isConnected()) {
+      if (testMethod != null) {
+        syncLogDir()
       }
     }
     else {

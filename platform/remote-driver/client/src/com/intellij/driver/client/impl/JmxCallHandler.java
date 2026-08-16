@@ -19,6 +19,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class JmxCallHandler implements InvocationHandler {
+  static final class ClosedException extends IllegalStateException {
+    ClosedException() {
+      super("JMX call handler is closed");
+    }
+  }
+
   private final JmxHost hostInfo;
   private final ObjectName mbeanName;
   private final Object callLock = new Object();
@@ -88,7 +94,7 @@ public class JmxCallHandler implements InvocationHandler {
     synchronized (connectorStateLock) {
       if (closed) {
         closeIgnoringFailure(connector);
-        throw new IllegalStateException("JMX call handler is closed");
+        throw new ClosedException();
       }
       currentConnector = connector;
       return connector;
@@ -119,7 +125,7 @@ public class JmxCallHandler implements InvocationHandler {
 
   private void checkNotClosed() {
     if (closed) {
-      throw new IllegalStateException("JMX call handler is closed");
+      throw new ClosedException();
     }
   }
 
