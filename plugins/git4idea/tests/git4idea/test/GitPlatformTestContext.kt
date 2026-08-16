@@ -143,6 +143,9 @@ fun GitPlatformTestContext.tryCommit(changes: Collection<Change>, commitMessage:
 fun GitPlatformTestContext.createFile(parent: VirtualFile, fileName: String, content: String = Math.random().toString()): VirtualFile =
   VcsTestUtil.createFile(project, parent, fileName, content)!!
 
+fun GitPlatformTestContext.createDir(parent: VirtualFile, dir: String): VirtualFile =
+  VcsTestUtil.findOrCreateDir(project, parent, dir)!!
+
 fun GitPlatformTestContext.assertNoChanges() {
   changeListManager.assertNoChanges()
 }

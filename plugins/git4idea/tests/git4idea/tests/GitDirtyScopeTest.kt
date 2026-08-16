@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.tests
 
 import com.intellij.openapi.command.WriteCommandAction
@@ -14,30 +14,46 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener
 import com.intellij.openapi.vcs.impl.FileStatusManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.DocumentUtil
 import com.intellij.vcsUtil.VcsUtil
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.assertChanges
+import git4idea.test.assertNoChanges
 import git4idea.test.commit
-import org.junit.Assume.assumeFalse
+import git4idea.test.createDir
+import git4idea.test.createFile
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class GitDirtyScopeTest : GitSingleRepoTest() {
+@TestApplication
+internal class GitDirtyScopeTest {
+  private val contextFixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = contextFixture.get()
+
   private lateinit var dirtyScopeManager: VcsDirtyScopeManager
   private lateinit var fileDocumentManager: FileDocumentManager
   private lateinit var fileStatusManager: FileStatusManagerImpl
   private lateinit var undoManager: UndoManager
 
-  override fun setUp() {
-    super.setUp()
-
-    dirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
-    fileDocumentManager = FileDocumentManager.getInstance()
-    undoManager = UndoManager.getInstance(project)
-    fileStatusManager = FileStatusManager.getInstance(project) as FileStatusManagerImpl
+  @BeforeEach
+  fun setUp() {
+    with(context) {
+      dirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
+      fileDocumentManager = FileDocumentManager.getInstance()
+      undoManager = UndoManager.getInstance(project)
+      fileStatusManager = FileStatusManager.getInstance(project) as FileStatusManagerImpl
+    }
   }
 
-  fun testRevertingUnsavedChanges() {
-    val file = repo.root.createFile("file.txt", "initial")
+  @Test
+  fun `test reverting unsaved changes`(): Unit = with(context) {
+    val file = createFile(repo.root, "file.txt", "initial")
     git("add .")
     commit("initial")
     dirtyScopeManager.markEverythingDirty()
@@ -66,8 +82,9 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     assertNoChanges()
   }
 
-  fun testUndoingUnsavedChanges() {
-    val file = repo.root.createFile("file.txt", "initial")
+  @Test
+  fun `test undoing unsaved changes`(): Unit = with(context) {
+    val file = createFile(repo.root, "file.txt", "initial")
     git("add .")
     commit("initial")
     dirtyScopeManager.markEverythingDirty()
@@ -96,8 +113,9 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     }
   }
 
-  fun testTypingDoesNotMarkDirty() {
-    val file = repo.root.createFile("file.txt", "initial")
+  @Test
+  fun `test typing does not mark dirty`(): Unit = with(context) {
+    val file = createFile(repo.root, "file.txt", "initial")
     git("add .")
     commit("initial")
     dirtyScopeManager.markEverythingDirty()
@@ -110,16 +128,17 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     assertChanges {
       modified("file.txt")
     }
-    assertFalse(isDirtyPath(file))
+    assertThat(isDirtyPath(file)).isFalse()
 
     editDocument(file, "new better content")
     fileStatusManager.waitFor()
 
-    assertFalse(isDirtyPath(file))
+    assertThat(isDirtyPath(file)).isFalse()
   }
 
-  fun testEmptyBulkModeDoesNotMarkDirty() {
-    val file = repo.root.createFile("file.txt", "initial")
+  @Test
+  fun `test empty bulk mode does not mark dirty`(): Unit = with(context) {
+    val file = createFile(repo.root, "file.txt", "initial")
     git("add .")
     commit("initial")
     dirtyScopeManager.markEverythingDirty()
@@ -132,23 +151,22 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     assertChanges {
       modified("file.txt")
     }
-    assertFalse(isDirtyPath(file))
+    assertThat(isDirtyPath(file)).isFalse()
 
     writeAction {
-      DocumentUtil.executeInBulk(file.document, object : Runnable {
-        override fun run() {
-          // do nothing
-        }
-      })
+      DocumentUtil.executeInBulk(file.document) {
+        // do nothing
+      }
     }
 
-    assertFalse(isDirtyPath(file))
+    assertThat(isDirtyPath(file)).isFalse()
   }
 
-  fun testCaseOnlyRename() {
+  @Test
+  fun `test case only rename`(): Unit = with(context) {
     assumeFalse(SystemInfo.isFileSystemCaseSensitive)
 
-    val file = repo.root.createFile("file.txt", "initial")
+    val file = createFile(repo.root, "file.txt", "initial")
     git("add .")
     commit("initial")
 
@@ -163,7 +181,7 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     writeAction {
       val parent = file.parent
       file.delete(this)
-      parent.createFile("FILE.txt", "initial")
+      createFile(parent, "FILE.txt", "initial")
     }
     git("add .")
     project.service<VcsDirtyScopeVfsListener>().waitForAsyncTaskCompletion()
@@ -174,14 +192,15 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     assertChanges {
       rename("file.txt", "FILE.txt")
     }
-    assertFalse(isDirtyPath(file))
+    assertThat(isDirtyPath(file)).isFalse()
   }
 
-  fun testCaseOnlyDirectoryRename() {
+  @Test
+  fun `test case only directory rename`(): Unit = with(context) {
     assumeFalse(SystemInfo.isFileSystemCaseSensitive)
 
-    val dir = repo.root.createDir("dir")
-    val file = dir.createFile("file.txt", "initial")
+    val dir = createDir(repo.root, "dir")
+    val file = createFile(dir, "file.txt", "initial")
     git("add .")
     commit("initial")
 
@@ -195,8 +214,8 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
 
     writeAction {
       dir.delete(this)
-      val newDir = repo.root.createDir("DIR")
-      newDir.createFile("file.txt", "initial")
+      val newDir = createDir(repo.root, "DIR")
+      createFile(newDir, "file.txt", "initial")
     }
     dirtyScopeManager.dirDirtyRecursively(VcsUtil.getFilePath(repo.root, "DHq")) // hash code collisions
     dirtyScopeManager.dirDirtyRecursively(VcsUtil.getFilePath(repo.root, "djS"))
@@ -209,11 +228,10 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     assertChanges {
       rename("dir/file.txt", "DIR/file.txt")
     }
-    assertFalse(isDirtyPath(file))
+    assertThat(isDirtyPath(file)).isFalse()
   }
 
-
-  private fun editDocument(file: VirtualFile, newContent: String) {
+  private fun GitSingleRepoContext.editDocument(file: VirtualFile, newContent: String) {
     runInEdtAndWait {
       WriteCommandAction.runWriteCommandAction(project) {
         val document = file.document
@@ -235,7 +253,7 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     }
   }
 
-  private fun writeAction(task: () -> Unit) {
+  private fun GitSingleRepoContext.writeAction(task: () -> Unit) {
     runInEdtAndWait {
       WriteCommandAction.runWriteCommandAction(project) {
         task()
@@ -243,13 +261,10 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     }
   }
 
-  private fun isDirtyPath(file: VirtualFile): Boolean {
-    return isDirtyPath(VcsUtil.getFilePath(file))
-  }
+  private fun isDirtyPath(file: VirtualFile): Boolean = isDirtyPath(VcsUtil.getFilePath(file))
 
   private fun isDirtyPath(filePath: FilePath): Boolean {
-    val dirtyPaths = dirtyScopeManager.whatFilesDirty(listOf(filePath))
-    return dirtyPaths.contains(filePath)
+    return dirtyScopeManager.whatFilesDirty(listOf(filePath)).contains(filePath)
   }
 
   private val VirtualFile.document: Document get() = fileDocumentManager.getDocument(this)!!

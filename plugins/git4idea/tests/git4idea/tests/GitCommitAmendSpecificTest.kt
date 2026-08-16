@@ -2,33 +2,48 @@
 package git4idea.tests
 
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.vcs.Executor.overwrite
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.commit.CommitToAmend
 import com.intellij.vcs.commit.commitToAmend
 import com.intellij.vcs.commit.commitWithoutChangesRoots
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.test.refresh
+import com.intellij.vcs.test.updateChangeListManager
 import git4idea.checkin.GitAmendSpecificCommitSquasher
 import git4idea.i18n.GitBundle
 import git4idea.log.refreshAndWait
 import git4idea.rebase.GitSquashedCommitsMessage.canAutosquash
 import git4idea.rebase.GitSquashedCommitsMessage.getSubject
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.assertChangesWithRefresh
 import git4idea.test.assertCommitted
 import git4idea.test.assertLatestHistory
 import git4idea.test.assertMessage
+import git4idea.test.assertNoChanges
+import git4idea.test.file
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.last
 import git4idea.test.lastMessage
 import git4idea.test.message
 import git4idea.test.tac
+import git4idea.test.tryCommit
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {
-  fun `test commit amend specific`() {
+@TestApplication
+internal class GitCommitAmendSpecificTest {
+  private val contextFixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = contextFixture.get()
+
+  @Test
+  fun `test commit amend specific`(): Unit = with(context) {
     val initialContent = "initial content"
     tac("a.txt", initialContent)
     val targetHash = HashImpl.build(repo.last())
@@ -43,8 +58,7 @@ internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {
     }
 
     val newMessage = "new message\n"
-    val exceptions = amendSpecificCommit(targetHash, targetMessage, changes, newMessage)
-    assertEmpty(exceptions)
+    assertThat(amendSpecificCommit(targetHash, targetMessage, changes, newMessage)).isEmpty()
 
     assertNoChanges()
     assertMessage(newMessage, repo.message("HEAD~1"))
@@ -57,20 +71,21 @@ internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit amend specific without changes`() {
+  @Test
+  fun `test commit amend specific without changes`(): Unit = with(context) {
     tac("a.txt")
     val targetHash = HashImpl.build(repo.last())
     val targetMessage = repo.lastMessage()
     tac("b.txt")
 
     val newMessage = "new message\n"
-    val exceptions = amendSpecificCommit(targetHash, targetMessage, emptyList(), newMessage)
-    assertEmpty(exceptions)
+    assertThat(amendSpecificCommit(targetHash, targetMessage, emptyList(), newMessage)).isEmpty()
 
     assertMessage(newMessage, repo.message("HEAD~1"))
   }
 
-  fun `test commit amend specific with conflict`() {
+  @Test
+  fun `test commit amend specific with conflict`(): Unit = with(context) {
     val initialContent = "initial content"
     tac("a.txt", initialContent)
     val targetHash = HashImpl.build(repo.last())
@@ -96,8 +111,8 @@ internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {
       modified("a.txt")
     }
 
-    assertEquals(oldHead, repo.last())
-    assertEquals(file("a.txt").read(), updatedContent)
+    assertThat(repo.last()).isEqualTo(oldHead)
+    assertThat(file("a.txt").read()).isEqualTo(updatedContent)
 
     runBlocking {
       conflictException.resetToAmendCommit()
@@ -109,10 +124,11 @@ internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {
       modified("a.txt")
     }
     assertNoChanges()
-    assertTrue(canAutosquash(lastMessage(), setOf(getSubject(targetMessage))))
+    assertThat(canAutosquash(lastMessage(), setOf(getSubject(targetMessage)))).isTrue()
   }
 
-  fun `test commit amend specific target not in current branch`() {
+  @Test
+  fun `test commit amend specific target not in current branch`(): Unit = with(context) {
     val initialContent = "initial content"
     tac("a.txt", initialContent)
     val targetHash = HashImpl.build(repo.last())
@@ -132,10 +148,11 @@ internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {
     val newMessage = "new message\n"
     val exception = amendSpecificCommit(targetHash, targetMessage, changes, newMessage).single()
 
-    assertEquals(GitBundle.message("git.commit.amend.specific.commit.not.found.error.message"), exception.message)
+    assertThat(exception.message).isEqualTo(GitBundle.message("git.commit.amend.specific.commit.not.found.error.message"))
   }
 
-  fun `test commit amend specific with fixup pair between commits`() {
+  @Test
+  fun `test commit amend specific with fixup pair between commits`(): Unit = with(context) {
     val initialContent = "initial content"
     tac("a.txt", initialContent)
     val targetHash = HashImpl.build(repo.last())
@@ -157,8 +174,7 @@ internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {
     }
 
     val newMessage = "new message"
-    val exceptions = amendSpecificCommit(targetHash, targetMessage, changes, newMessage)
-    assertEmpty(exceptions)
+    assertThat(amendSpecificCommit(targetHash, targetMessage, changes, newMessage)).isEmpty()
 
     assertNoChanges()
 
@@ -177,7 +193,7 @@ internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {
     }
   }
 
-  private fun amendSpecificCommit(
+  private fun GitSingleRepoContext.amendSpecificCommit(
     targetHash: Hash,
     targetMessage: String,
     changes: Collection<Change>,

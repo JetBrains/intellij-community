@@ -1,26 +1,40 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.tests
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.vcs.Executor.child
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vfs.LocalFileSystem
-import git4idea.test.GitSingleRepoTest
+import com.intellij.testFramework.junit5.TestApplication
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.assertChanges
+import git4idea.test.assertChangesWithRefresh
 import git4idea.test.assertCommitted
+import git4idea.test.assertNoChanges
+import git4idea.test.commit
+import git4idea.test.git
 import git4idea.test.gitAsBytes
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.tac
+import git4idea.test.withPartialTracker
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class GitPartialCommitTest : GitSingleRepoTest() {
-  fun `test partial commit with changelists`() {
+@TestApplication
+internal class GitPartialCommitTest {
+  private val contextFixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = contextFixture.get()
+
+  @Test
+  fun `test partial commit with changelists`(): Unit = with(context) {
     tac("a.java", "A\nB\nC")
 
     val testChangeList = changeListManager.addChangeList("Test", null)
 
-    withTrackedDocument("a.java", "X\nB\nZ") { document, tracker ->
+    withTrackedDocument("a.java", "X\nB\nZ") { _, tracker ->
       val ranges = tracker.getRanges()!!
       tracker.moveToChangelist(ranges[1], testChangeList)
     }
@@ -42,10 +56,11 @@ class GitPartialCommitTest : GitSingleRepoTest() {
     assertCommittedContent("a.java", "A\nB\nZ")
   }
 
-  fun `test partial commit with excluded range`() {
+  @Test
+  fun `test partial commit with excluded range`(): Unit = with(context) {
     tac("a.java", "A\nB\nC")
 
-    withTrackedDocument("a.java", "X\nB\nZ") { document, tracker ->
+    withTrackedDocument("a.java", "X\nB\nZ") { _, tracker ->
       val ranges = tracker.getRanges()!!
       tracker.setExcludedFromCommit(ranges[1], true)
     }
@@ -67,12 +82,13 @@ class GitPartialCommitTest : GitSingleRepoTest() {
     assertCommittedContent("a.java", "X\nB\nC")
   }
 
-  fun `test full commit with changelists`() {
+  @Test
+  fun `test full commit with changelists`(): Unit = with(context) {
     tac("a.java", "A\nB\nC")
 
     val testChangeList = changeListManager.addChangeList("Test", null)
 
-    withTrackedDocument("a.java", "X\nB\nZ") { document, tracker ->
+    withTrackedDocument("a.java", "X\nB\nZ") { _, tracker ->
       val ranges = tracker.getRanges()!!
       tracker.moveToChangelist(ranges[1], testChangeList)
     }
@@ -92,7 +108,8 @@ class GitPartialCommitTest : GitSingleRepoTest() {
     assertCommittedContent("a.java", "X\nB\nZ")
   }
 
-  fun `test partial commit with changelists & don't commit staged change`() {
+  @Test
+  fun `test partial commit with changelists and don't commit staged change`(): Unit = with(context) {
     tac("a.java", "A\nB\nC")
     tac("b.java", "A\nB\nC")
     VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
@@ -100,12 +117,12 @@ class GitPartialCommitTest : GitSingleRepoTest() {
 
     val testChangeList = changeListManager.addChangeList("Test", null)
 
-    withTrackedDocument("a.java", "X\nB\nZ") { document, tracker ->
+    withTrackedDocument("a.java", "X\nB\nZ") { _, tracker ->
       val ranges = tracker.getRanges()!!
       tracker.moveToChangelist(ranges[1], testChangeList)
     }
 
-    withTrackedDocument("b.java", "X1\nB\nZ2") { document, tracker ->
+    withTrackedDocument("b.java", "X1\nB\nZ2") { _, tracker ->
       val ranges = tracker.getRanges()!!
       tracker.moveToChangelist(ranges[1], testChangeList)
     }
@@ -131,13 +148,14 @@ class GitPartialCommitTest : GitSingleRepoTest() {
     assertCommittedContent("b.java", "A\nB\nC")
   }
 
-  fun `test partial commit with changelists & enabled autocrlf conversions`() {
+  @Test
+  fun `test partial commit with changelists and enabled autocrlf conversions`(): Unit = with(context) {
     git("config core.autocrlf true")
     tac("a.java", "A\r\nB\r\nC")
 
     val testChangeList = changeListManager.addChangeList("Test", null)
 
-    withTrackedDocument("a.java", "X\nB\nZ") { document, tracker ->
+    withTrackedDocument("a.java", "X\nB\nZ") { _, tracker ->
       val ranges = tracker.getRanges()!!
       tracker.moveToChangelist(ranges[1], testChangeList)
     }
@@ -160,13 +178,14 @@ class GitPartialCommitTest : GitSingleRepoTest() {
     assertCommittedContent("a.java", "A\r\nB\r\nZ", true)
   }
 
-  fun `test partial commit with changelists & disabled autocrlf conversions`() {
+  @Test
+  fun `test partial commit with changelists and disabled autocrlf conversions`(): Unit = with(context) {
     git("config core.autocrlf false")
     tac("a.java", "A\r\nB\r\nC")
 
     val testChangeList = changeListManager.addChangeList("Test", null)
 
-    withTrackedDocument("a.java", "X\nB\nZ") { document, tracker ->
+    withTrackedDocument("a.java", "X\nB\nZ") { _, tracker ->
       val ranges = tracker.getRanges()!!
       tracker.moveToChangelist(ranges[1], testChangeList)
     }
@@ -189,12 +208,13 @@ class GitPartialCommitTest : GitSingleRepoTest() {
     assertCommittedContent("a.java", "A\r\nB\r\nZ", true)
   }
 
-  fun `test partial commit with multiple changelists 1`() {
+  @Test
+  fun `test partial commit with multiple changelists 1`(): Unit = with(context) {
     tac("a.java", "A\nB\nC")
 
     val testChangeList = changeListManager.addChangeList("Test", null)
 
-    withTrackedDocument("a.java", "X\nB\nZ") { document, tracker ->
+    withTrackedDocument("a.java", "X\nB\nZ") { _, tracker ->
       val ranges = tracker.getRanges()!!
       tracker.moveToChangelist(ranges[1], testChangeList)
     }
@@ -215,13 +235,14 @@ class GitPartialCommitTest : GitSingleRepoTest() {
     assertCommittedContent("a.java", "X\nB\nZ")
   }
 
-  fun `test partial commit with multiple changelists 2`() {
+  @Test
+  fun `test partial commit with multiple changelists 2`(): Unit = with(context) {
     tac("a.java", "A\nB\nC\nD\nE")
 
     val testChangeList1 = changeListManager.addChangeList("Test 1", null)
     val testChangeList2 = changeListManager.addChangeList("Test 2", null)
 
-    withTrackedDocument("a.java", "X\nB\nZ\nD\nY") { document, tracker ->
+    withTrackedDocument("a.java", "X\nB\nZ\nD\nY") { _, tracker ->
       val ranges = tracker.getRanges()!!
       tracker.moveToChangelist(ranges[1], testChangeList1)
       tracker.moveToChangelist(ranges[2], testChangeList2)
@@ -245,16 +266,23 @@ class GitPartialCommitTest : GitSingleRepoTest() {
     assertCommittedContent("a.java", "A\nB\nZ\nD\nY")
   }
 
-
-  private fun assertCommittedContent(fileName: String, expectedContent: String, useFilters: Boolean = false) {
+  private fun GitSingleRepoContext.assertCommittedContent(
+    fileName: String,
+    expectedContent: String,
+    useFilters: Boolean = false,
+  ) {
     val actualContent = repo.gitAsBytes("cat-file" +
                                         (if (useFilters) " --filters" else " -p") +
                                         " :$fileName")
-    assertEquals(expectedContent, String(actualContent, Charsets.UTF_8))
+    assertThat(String(actualContent, Charsets.UTF_8)).isEqualTo(expectedContent)
   }
 
-  private fun withTrackedDocument(fileName: String, newContent: String, task: (Document, PartialLocalLineStatusTracker) -> Unit) {
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(child(fileName))!!
+  private fun GitSingleRepoContext.withTrackedDocument(
+    fileName: String,
+    newContent: String,
+    task: (Document, PartialLocalLineStatusTracker) -> Unit,
+  ) {
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(child(fileName))!!
 
     withPartialTracker(file, newContent) { document, tracker ->
       // Assume that initial changes are included into commit

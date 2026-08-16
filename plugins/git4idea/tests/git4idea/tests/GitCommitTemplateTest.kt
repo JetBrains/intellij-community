@@ -1,40 +1,49 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.tests
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.HeavyPlatformTestCase.createChildDirectory
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.config.GitConfigUtil.COMMIT_TEMPLATE
 import git4idea.repo.GitCommitTemplateTracker
 import git4idea.repo.GitRepository
-import git4idea.test.GitPlatformTest
+import git4idea.test.GitPlatformTestContext
 import git4idea.test.TestFile
+import git4idea.test.createRepository
 import git4idea.test.file
 import git4idea.test.git
+import git4idea.test.gitPlatformContextFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.File
 
-class GitCommitTemplateTest : GitPlatformTest() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+internal class GitCommitTemplateTest {
+  private val contextFixture = gitPlatformContextFixture()
+  private val context: GitPlatformTestContext get() = contextFixture.get()
 
+  @BeforeEach
+  fun setUp() {
     // backgroundPostStartupActivity are not started in unit tests
-    project.service<GitCommitTemplateTracker>().start()
+    context.project.service<GitCommitTemplateTracker>().start()
   }
 
-  override fun tearDown() {
-    runAll(
-      { git("config --global --unset commit.template", ignoreNonZeroExitCode = true) },
-      { super.tearDown() }
-    )
+  @AfterEach
+  fun tearDown() {
+    context.git("config --global --unset commit.template", ignoreNonZeroExitCode = true)
   }
 
-  fun `test set commit template`() {
-    val repository = createRepository(projectPath)
+  @Test
+  fun `test set commit template`(): Unit = with(context) {
+    val repository = createRepository(project, projectPath)
     val templateContent = """
       Some Template
-      
+
       # comment1
       # comment2
     """.trimIndent()
@@ -43,11 +52,12 @@ class GitCommitTemplateTest : GitPlatformTest() {
     assertCommitTemplate(repository, templateContent)
   }
 
-  fun `test set and change commit template`() {
-    val repository = createRepository(projectPath)
+  @Test
+  fun `test set and change commit template`(): Unit = with(context) {
+    val repository = createRepository(project, projectPath)
     val templateContent = """
       Local Template
-      
+
       # comment1
       # comment2
     """.trimIndent()
@@ -57,7 +67,7 @@ class GitCommitTemplateTest : GitPlatformTest() {
 
     val newTemplateContent = """
       New Local Template
-      
+
       # comment3
       # comment4
     """.trimIndent()
@@ -67,11 +77,12 @@ class GitCommitTemplateTest : GitPlatformTest() {
     assertCommitTemplate(repository, newTemplateContent)
   }
 
-  fun `test local commit template override global`() {
-    val repository = createRepository(projectPath)
+  @Test
+  fun `test local commit template override global`(): Unit = with(context) {
+    val repository = createRepository(project, projectPath)
     val globalTemplateContent = """
       Global Template
-      
+
       # comment3
       # comment4
     """.trimIndent()
@@ -81,7 +92,7 @@ class GitCommitTemplateTest : GitPlatformTest() {
 
     val localTemplateContent = """
       Local Template
-      
+
       # comment1
       # comment2
     """.trimIndent()
@@ -90,20 +101,21 @@ class GitCommitTemplateTest : GitPlatformTest() {
     assertCommitTemplate(repository, localTemplateContent)
   }
 
-  fun `test commit template in multiple repositories`() {
-    val repo1 = createRepository(createChildDirectory(projectRoot, "root1").path)
-    val repo2 = createRepository(createChildDirectory(projectRoot, "root2").path)
+  @Test
+  fun `test commit template in multiple repositories`(): Unit = with(context) {
+    val repo1 = createRepository(project, createChildDirectory(projectRoot, "root1").path)
+    val repo2 = createRepository(project, createChildDirectory(projectRoot, "root2").path)
 
     val templateContent1 = """
       Template for first repository
-      
+
       # comment1
       # comment2
     """.trimIndent()
 
     val templateContent2 = """
       Template for second repository
-      
+
       # comment3
       # comment4
     """.trimIndent()
@@ -114,11 +126,12 @@ class GitCommitTemplateTest : GitPlatformTest() {
     assertCommitTemplate(repo2, templateContent2)
   }
 
-  fun `test commit template specified relative to git dir`() {
-    val repository = createRepository(projectPath)
+  @Test
+  fun `test commit template specified relative to git dir`(): Unit = with(context) {
+    val repository = createRepository(project, projectPath)
     val templateContent = """
       Some Template
-      
+
       # comment1
       # comment2
     """.trimIndent()
@@ -132,11 +145,12 @@ class GitCommitTemplateTest : GitPlatformTest() {
     assertCommitTemplate(repository, templateContent)
   }
 
-  fun `test not valid commit template specified relative to git dir`() {
-    val repository = createRepository(projectPath)
+  @Test
+  fun `test not valid commit template specified relative to git dir`(): Unit = with(context) {
+    val repository = createRepository(project, projectPath)
     val templateContent = """
       Some Template
-      
+
       # comment1
       # comment2
     """.trimIndent()
@@ -148,15 +162,16 @@ class GitCommitTemplateTest : GitPlatformTest() {
 
     git.config(repository, "--local", COMMIT_TEMPLATE, "/template.txt")
     repository.repositoryFiles.configFile.refresh()
-    assertTrue("Commit template exist for $repository", !commitTemplateTracker.exists(repository))
+    assertThat(commitTemplateTracker.exists(repository)).describedAs("Commit template exist for $repository").isFalse()
 
     git.config(repository, "--local", COMMIT_TEMPLATE, "template.txt/")
     repository.repositoryFiles.configFile.refresh()
-    assertTrue("Commit template exist for $repository", !commitTemplateTracker.exists(repository))
+    assertThat(commitTemplateTracker.exists(repository)).describedAs("Commit template exist for $repository").isFalse()
   }
 
-  fun `test commit template with empty or blank content`() {
-    val repository = createRepository(projectPath)
+  @Test
+  fun `test commit template with empty or blank content`(): Unit = with(context) {
+    val repository = createRepository(project, projectPath)
 
     setupCommitTemplate(repository, "template.txt", "", true)
     assertCommitTemplateNotExists(repository)
@@ -171,15 +186,17 @@ class GitCommitTemplateTest : GitPlatformTest() {
     assertCommitTemplateNotExists(repository)
   }
 
-  private fun setupCommitTemplate(repository: GitRepository,
-                                  templateFileName: String,
-                                  templateContent: String,
-                                  local: Boolean = true): TestFile {
+  private fun GitPlatformTestContext.setupCommitTemplate(
+    repository: GitRepository,
+    templateFileName: String,
+    templateContent: String,
+    local: Boolean = true,
+  ): TestFile {
     val commitTemplate = repository
       .file(templateFileName)
       .assertNotExists()
       .create(templateContent)
-    val pathToCommitTemplatePath = commitTemplate.file.let { FileUtil.toSystemIndependentName(it.path) }
+    val pathToCommitTemplatePath = FileUtil.toSystemIndependentName(commitTemplate.file.path)
     git.config(repository, if (local) "--local" else "--global", COMMIT_TEMPLATE, pathToCommitTemplatePath)
     if (local) {
       repository.repositoryFiles.configFile.refresh()
@@ -192,17 +209,20 @@ class GitCommitTemplateTest : GitPlatformTest() {
     return commitTemplate
   }
 
-  private fun assertCommitTemplate(repository: GitRepository, expectedTemplateContent: String?) {
+  private fun GitPlatformTestContext.assertCommitTemplate(repository: GitRepository, expectedTemplateContent: String?) {
     val commitTemplateTracker = project.service<GitCommitTemplateTracker>()
-    assertTrue("Commit template doesn't exist for $repository", commitTemplateTracker.exists(repository))
-    assertEquals("Commit template content doesn't match $repository", expectedTemplateContent,
-                 commitTemplateTracker.getTemplateContent(repository))
+    assertThat(commitTemplateTracker.exists(repository)).describedAs("Commit template doesn't exist for $repository").isTrue()
+    assertThat(commitTemplateTracker.getTemplateContent(repository))
+      .describedAs("Commit template content doesn't match $repository")
+      .isEqualTo(expectedTemplateContent)
   }
 
-  private fun assertCommitTemplateNotExists(repository: GitRepository) {
+  private fun GitPlatformTestContext.assertCommitTemplateNotExists(repository: GitRepository) {
     val commitTemplateTracker = project.service<GitCommitTemplateTracker>()
-    assertTrue("Commit template exist for $repository", !commitTemplateTracker.exists(repository))
-    assertEquals("Commit template content doesn't match $repository", null, commitTemplateTracker.getTemplateContent(repository))
+    assertThat(commitTemplateTracker.exists(repository)).describedAs("Commit template exist for $repository").isFalse()
+    assertThat(commitTemplateTracker.getTemplateContent(repository))
+      .describedAs("Commit template content doesn't match $repository")
+      .isNull()
   }
 
   private fun File.refresh() {

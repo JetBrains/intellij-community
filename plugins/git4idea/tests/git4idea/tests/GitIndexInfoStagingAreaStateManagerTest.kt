@@ -1,25 +1,36 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.tests
 
-import com.intellij.openapi.vcs.Executor.overwrite
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.checkin.GitIndexInfoStagingAreaStateManager
 import git4idea.test.GitScenarios.unmergedFiles
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
 import git4idea.test.createSubRepository
+import git4idea.test.file
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.tac
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-internal class GitIndexInfoStagingAreaStateManagerTest : GitSingleRepoTest() {
+@TestApplication
+internal class GitIndexInfoStagingAreaStateManagerTest {
+  private val contextFixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = contextFixture.get()
+
   private lateinit var saver: GitIndexInfoStagingAreaStateManager
 
-  override fun setUp() {
-    super.setUp()
-    saver = GitIndexInfoStagingAreaStateManager(repo)
+  @BeforeEach
+  fun setUp() {
+    saver = GitIndexInfoStagingAreaStateManager(context.repo)
   }
 
-  fun `test unmerged paths are rejected`() {
+  @Test
+  fun `test unmerged paths are rejected`(): Unit = with(context) {
     unmergedFiles(repo)
     file("a").create().add()
 
@@ -28,7 +39,8 @@ internal class GitIndexInfoStagingAreaStateManagerTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test staged modifications reset and restored`() {
+  @Test
+  fun `test staged modifications reset and restored`(): Unit = with(context) {
     file("a").create("index content a").add()
     file("b").create("index content b").add()
 
@@ -38,7 +50,8 @@ internal class GitIndexInfoStagingAreaStateManagerTest : GitSingleRepoTest() {
     verifyStagedChangesAreSavedAndLoadedCorrectly()
   }
 
-  fun `test staged deletions reset and restored`() {
+  @Test
+  fun `test staged deletions reset and restored`(): Unit = with(context) {
     tac("a")
     tac("b")
     git("rm --cached -- a b")
@@ -46,7 +59,8 @@ internal class GitIndexInfoStagingAreaStateManagerTest : GitSingleRepoTest() {
     verifyStagedChangesAreSavedAndLoadedCorrectly()
   }
 
-  fun `test staged renames reset and restored`() {
+  @Test
+  fun `test staged renames reset and restored`(): Unit = with(context) {
     val initialName = "a"
     val renamed = "b"
     tac(initialName)
@@ -60,21 +74,24 @@ internal class GitIndexInfoStagingAreaStateManagerTest : GitSingleRepoTest() {
     verifyStagedChangesAreSavedAndLoadedCorrectly()
   }
 
-  fun `test executable file mode is preserved`() {
+  @Test
+  fun `test executable file mode is preserved`(): Unit = with(context) {
     file("exec").create().add()
     git("update-index --chmod=+x exec")
 
     verifyStagedChangesAreSavedAndLoadedCorrectly()
   }
 
-  fun `test submodule entry is preserved`() {
+  @Test
+  fun `test submodule entry is preserved`(): Unit = with(context) {
     val submodule = repo.createSubRepository("submodule", addToGitIgnore = false)
     git("add submodule ${submodule.root.path}")
 
     verifyStagedChangesAreSavedAndLoadedCorrectly()
   }
 
-  fun `test filtering excludes only non committed paths`() {
+  @Test
+  fun `test filtering excludes only non committed paths`(): Unit = with(context) {
     val fileA = file("a").create().add()
     val fileB = file("b").create().add()
     file("c").create().add()
@@ -87,19 +104,20 @@ internal class GitIndexInfoStagingAreaStateManagerTest : GitSingleRepoTest() {
     val statusBefore = getPorcelainStatusLines()
     saver.prepareStagingArea(toCommitAdded, toCommitRemoved)
 
-    assertEquals(remainingEntries, getPorcelainStatusLines())
+    assertThat(getPorcelainStatusLines()).isEqualTo(remainingEntries)
 
     saver.restore()
-    assertEquals(statusBefore, getPorcelainStatusLines())
+    assertThat(getPorcelainStatusLines()).isEqualTo(statusBefore)
   }
 
-  private fun verifyStagedChangesAreSavedAndLoadedCorrectly() {
+  private fun GitSingleRepoContext.verifyStagedChangesAreSavedAndLoadedCorrectly() {
     val statusBefore = getPorcelainStatusLines()
     saver.prepareStagingArea(emptySet(), emptySet())
-    assertEquals(emptySet<String>(), getPorcelainStatusLines())
+    assertThat(getPorcelainStatusLines()).isEmpty()
     saver.restore()
-    assertEquals(statusBefore, getPorcelainStatusLines())
+    assertThat(getPorcelainStatusLines()).isEqualTo(statusBefore)
   }
 
-  private fun getPorcelainStatusLines(): Set<String> = git("status --porcelain=v2 --untracked-files=no").lines().filter { it.isNotBlank() }.toSet()
+  private fun GitSingleRepoContext.getPorcelainStatusLines(): Set<String> =
+    git("status --porcelain=v2 --untracked-files=no").lines().filter { it.isNotBlank() }.toSet()
 }

@@ -1,37 +1,45 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.tests
 
-import com.intellij.openapi.vcs.Executor.overwrite
-import com.intellij.openapi.vcs.Executor.rm
-import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.junit5.EnableTracingFor
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.vcs.test.refresh
 import com.intellij.vcsUtil.VcsUtil
-import git4idea.test.GitPlatformTest
+import git4idea.test.GitPlatformTestContext
 import git4idea.test.addCommit
 import git4idea.test.cd
 import git4idea.test.createFileStructure
 import git4idea.test.createRepository
 import git4idea.test.createSubRepository
 import git4idea.test.git
+import git4idea.test.gitPlatformContextFixture
+import git4idea.test.updateUntrackedFiles
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.File
 
-class GitChangeProviderNestedRepositoriesTest : GitPlatformTest() {
+@TestApplication
+@EnableTracingFor(categories = ["#com.intellij.openapi.vcs.changes", "#GitStatus"])
+internal class GitChangeProviderNestedRepositoriesTest {
+  private val contextFixture = gitPlatformContextFixture()
+  private val context: GitPlatformTestContext get() = contextFixture.get()
+
   private lateinit var dirtyScopeManager: VcsDirtyScopeManager
 
-  @Throws(Exception::class)
-  public override fun setUp() {
-    super.setUp()
-    dirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
+  @BeforeEach
+  fun setUp() {
+    dirtyScopeManager = VcsDirtyScopeManager.getInstance(context.project)
   }
 
-  override fun getDebugLogCategories() = super.getDebugLogCategories().plus(listOf("#com.intellij.openapi.vcs.changes", "#GitStatus"))
-
   // IDEA-149060
-  fun `test changes in 3-level nested root`() {
+  @Test
+  fun `test changes in 3-level nested root`(): Unit = with(context) {
     // 1. prepare roots and files
     val repo = createRepository(project, projectPath)
     val childRepo = repo.createSubRepository("child")
@@ -67,10 +75,11 @@ class GitChangeProviderNestedRepositoriesTest : GitPlatformTest() {
     assertFileStatus("child/in1.txt", FileStatus.MODIFIED)
     assertFileStatus("child/in2.txt", FileStatus.MODIFIED)
     assertFileStatus("child/grand/inin1.txt", FileStatus.MODIFIED)
-    assertEquals(4, changeListManager.allChanges.size)
+    assertThat(changeListManager.allChanges).hasSize(4)
   }
 
-  fun `test new rename forcing old file path refresh`() {
+  @Test
+  fun `test new rename forcing old file path refresh`(): Unit = with(context) {
     // 1. prepare roots and files
     val repo = createRepository(project, projectPath)
     cd(repo)
@@ -85,31 +94,30 @@ class GitChangeProviderNestedRepositoriesTest : GitPlatformTest() {
     changeListManager.ensureUpToDate()
     updateUntrackedFiles(repo)
 
-    assertEquals(1, changeListManager.allChanges.size)
+    assertThat(changeListManager.allChanges).hasSize(1)
     assertFileStatus("a.txt", FileStatus.DELETED)
     assertFileStatus("b.txt", FileStatus.UNKNOWN)
-
 
     git("add b.txt")
 
     dirtyScopeManager.fileDirty(getFilePath("b.txt"))
     changeListManager.ensureUpToDate()
 
-    assertEquals(2, changeListManager.allChanges.size)
+    assertThat(changeListManager.allChanges).hasSize(2)
     assertFileStatus("a.txt", FileStatus.DELETED)
     assertFileStatus("b.txt", FileStatus.ADDED)
-
 
     git("add a.txt")
 
     dirtyScopeManager.fileDirty(getFilePath("a.txt"))
     changeListManager.ensureUpToDate()
 
-    assertEquals(1, changeListManager.allChanges.size)
+    assertThat(changeListManager.allChanges).hasSize(1)
     assertFileStatus("b.txt", FileStatus.MODIFIED)
   }
 
-  fun `test marking root dirty`() {
+  @Test
+  fun `test marking root dirty`(): Unit = with(context) {
     val repo = createRepository(project, projectPath)
     val subrepo = repo.createSubRepository("subrepo")
 
@@ -128,32 +136,32 @@ class GitChangeProviderNestedRepositoriesTest : GitPlatformTest() {
     dirtyScopeManager.rootDirty(repo.root)
 
     var dirtyFiles = dirtyScopeManager.whatFilesDirty(listOf(repoPath, repoFilePath, subRepoPath, subRepoFilePath))
-    assertContainsElements(dirtyFiles, repoPath, repoFilePath)
-    assertDoesntContain(dirtyFiles, subRepoPath, subRepoFilePath)
+    assertThat(dirtyFiles).contains(repoPath, repoFilePath)
+    assertThat(dirtyFiles).doesNotContain(subRepoPath, subRepoFilePath)
 
     changeListManager.ensureUpToDate()
     dirtyScopeManager.dirDirtyRecursively(repo.root)
 
     dirtyFiles = dirtyScopeManager.whatFilesDirty(listOf(repoPath, repoFilePath, subRepoPath, subRepoFilePath))
-    assertContainsElements(dirtyFiles, repoPath, repoFilePath, subRepoPath, subRepoFilePath)
+    assertThat(dirtyFiles).contains(repoPath, repoFilePath, subRepoPath, subRepoFilePath)
   }
 
-  private fun assertFileStatus(relativePath: String, fileStatus: FileStatus) {
+  private fun GitPlatformTestContext.assertFileStatus(relativePath: String, fileStatus: FileStatus) {
     if (fileStatus == FileStatus.UNKNOWN) {
       val vf = getVirtualFile(relativePath)
-      assertTrue("$vf is not known as unversioned", changeListManager.isUnversioned(vf))
+      assertThat(changeListManager.isUnversioned(vf)).describedAs("$vf is not known as unversioned").isTrue()
     }
     else {
       val change = changeListManager.getChange(getFilePath(relativePath))
-      assertEquals(fileStatus, change?.fileStatus ?: FileStatus.NOT_CHANGED)
+      assertThat(change?.fileStatus ?: FileStatus.NOT_CHANGED).isEqualTo(fileStatus)
     }
   }
 
-  private fun getVirtualFile(relativePath: String): VirtualFile {
+  private fun GitPlatformTestContext.getVirtualFile(relativePath: String): VirtualFile {
     return VfsUtil.findFileByIoFile(File(projectPath, relativePath), true)!!
   }
 
-  private fun getFilePath(relativePath: String): FilePath {
+  private fun GitPlatformTestContext.getFilePath(relativePath: String): FilePath {
     return VcsUtil.getFilePath(File(projectPath, relativePath))
   }
 }

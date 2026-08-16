@@ -1,21 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.tests
 
-import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.vcs.test.refresh
+import com.intellij.vcs.test.updateChangeListManager
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.repo.GitConflict.ConflictSide
 import git4idea.repo.GitConflict.Status
+import git4idea.test.GitSingleRepoContext
 import git4idea.test.add
 import git4idea.test.checkout
 import git4idea.test.commit
+import git4idea.test.git
+import git4idea.test.gitUsingOrtMergeAlg
 import git4idea.test.mv
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class GitChangeProviderConflictTest : GitChangeProviderTest() {
+@TestApplication
+internal class GitChangeProviderConflictTest : GitChangeProviderTest() {
   /**
    * "modify-modify" merge conflict.
    * 1. Create a file and commit it.
@@ -25,7 +32,8 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
    * 5. Merge the branch on master.
    * Merge conflict "modify-modify" happens.
    */
-  fun testConflictMM() {
+  @Test
+  fun `test conflict MM`(): Unit = with(context) {
     modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.MODIFY)
     assertProviderChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
     assertManagerConflicts(Conflict("a.txt", Status.MODIFIED, Status.MODIFIED))
@@ -34,7 +42,8 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
   /**
    * Modify-Delete conflict.
    */
-  fun testConflictMD() {
+  @Test
+  fun `test conflict MD`(): Unit = with(context) {
     modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.DELETE)
     assertProviderChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
     assertManagerConflicts(Conflict("a.txt", Status.MODIFIED, Status.DELETED))
@@ -43,7 +52,8 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
   /**
    * Delete-Modify conflict.
    */
-  fun testConflictDM() {
+  @Test
+  fun `test conflict DM`(): Unit = with(context) {
     modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.MODIFY)
     assertProviderChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
     assertManagerConflicts(Conflict("a.txt", Status.DELETED, Status.MODIFIED))
@@ -52,14 +62,16 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
   /**
    * Create a file with conflicting content.
    */
-  fun testConflictCC() {
+  @Test
+  fun `test conflict CC`(): Unit = with(context) {
     modifyFileInBranches("z.txt", FileAction.CREATE, FileAction.CREATE)
     val zfile = projectRoot.findChild("z.txt")
     assertProviderChanges(zfile!!, FileStatus.MERGED_WITH_CONFLICTS)
     assertManagerConflicts(Conflict("z.txt", Status.ADDED, Status.ADDED))
   }
 
-  fun testConflictRD() {
+  @Test
+  fun `test conflict RD`(): Unit = with(context) {
     modifyFileInBranches("a.txt", FileAction.RENAME, FileAction.DELETE)
     val newfile = projectRoot.findChild("a.txt_master_new") // renamed in master
     assertProviderChanges(newfile!!, FileStatus.MERGED_WITH_CONFLICTS)
@@ -71,7 +83,8 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
     }
   }
 
-  fun testConflictDR() {
+  @Test
+  fun `test conflict DR`(): Unit = with(context) {
     modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.RENAME)
     // deleted in master, renamed in feature
     val newFile = projectRoot.findChild("a.txt_feature_new")!!
@@ -84,17 +97,19 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
     }
   }
 
-  fun testConflictRR() {
+  @Test
+  fun `test conflict RR`(): Unit = with(context) {
     modifyFileInBranches("a.txt", FileAction.RENAME, FileAction.RENAME)
     val newMasterFile = projectNioRoot.resolve("a.txt_master_new")
     val newFeatureFile = projectNioRoot.resolve("a.txt_feature_new")
-    assertProviderChangesInPaths(listOf(newMasterFile, newFeatureFile).map { VcsUtil.getFilePath(it.toFile()) }, listOf(FileStatus.MERGED_WITH_CONFLICTS, FileStatus.MERGED_WITH_CONFLICTS))
+    assertProviderChangesInPaths(listOf(newMasterFile, newFeatureFile).map { VcsUtil.getFilePath(it.toFile()) },
+                                 listOf(FileStatus.MERGED_WITH_CONFLICTS, FileStatus.MERGED_WITH_CONFLICTS))
     assertManagerConflicts(Conflict("a.txt_master_new", Status.ADDED, Status.MODIFIED),
                            Conflict("a.txt_feature_new", Status.MODIFIED, Status.ADDED),
                            Conflict("a.txt", Status.DELETED, Status.DELETED))
   }
 
-  private fun modifyFileInBranches(filename: String, masterAction: FileAction, featureAction: FileAction) {
+  private fun GitSingleRepoContext.modifyFileInBranches(filename: String, masterAction: FileAction, featureAction: FileAction) {
     git("checkout -b feature")
     performActionOnFileAndRecordToIndex(filename, "feature", featureAction)
     repo.commit("commit to feature")
@@ -106,21 +121,21 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
     refresh()
   }
 
-  private fun performActionOnFileAndRecordToIndex(filename: String, branchName: String, action: FileAction) {
+  private fun GitSingleRepoContext.performActionOnFileAndRecordToIndex(filename: String, branchName: String, action: FileAction) {
     if (action != FileAction.CREATE) {
       assertThat(projectNioRoot.resolve(filename)).exists()
     }
 
     when (action) {
       FileAction.CREATE -> {
-        val f = Executor.touch(filename, "initial content in branch $branchName")
-        val createdFile = VfsUtil.findFileByIoFile(f, true)
+        val f = touch(filename, "initial content in branch $branchName")
+        val createdFile = VfsUtil.findFile(f, true)
         dirty(createdFile)
         repo.add(filename)
       }
       FileAction.MODIFY -> {
         val file = projectRoot.findChild(filename)
-        Executor.overwrite(VfsUtilCore.virtualToIoFile(file!!), "new content in branch $branchName")
+        overwrite(VfsUtilCore.virtualToIoFile(file!!).toPath(), "new content in branch $branchName")
         dirty(file)
         repo.add(filename)
       }
@@ -138,7 +153,7 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
     }
   }
 
-  private fun assertManagerConflicts(vararg expectedConflicts: Conflict) {
+  private fun GitSingleRepoContext.assertManagerConflicts(vararg expectedConflicts: Conflict) {
     updateChangeListManager()
 
     val actualConflicts = repo.stagingAreaHolder.allConflicts.map {
@@ -146,27 +161,29 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
                it.getStatus(ConflictSide.OURS),
                it.getStatus(ConflictSide.THEIRS))
     }
-    assertSameElements(actualConflicts, expectedConflicts.toList())
+    assertThat(actualConflicts).containsExactlyInAnyOrderElementsOf(expectedConflicts.toList())
 
     val actualLocalChangesConflicts = changeListManager.allChanges
       .filter { it.fileStatus == FileStatus.MERGED_WITH_CONFLICTS }
       .map { ChangesUtil.getFilePath(it).name }
-    val expectedLocalChangesConflicts = expectedConflicts.map { it.name }
-    assertSameElements(actualLocalChangesConflicts, expectedLocalChangesConflicts)
+    assertThat(actualLocalChangesConflicts).containsExactlyInAnyOrderElementsOf(expectedConflicts.map { it.name })
   }
 
   private enum class FileAction {
     CREATE, MODIFY, DELETE, RENAME
   }
 
-  private class Conflict(val name: String,
-                         val ourStatus: Status,
-                         val theirsStatus: Status) {
+  private class Conflict(
+    val name: String,
+    val ourStatus: Status,
+    val theirsStatus: Status,
+  ) {
     override fun hashCode(): Int = name.hashCode()
+
     override fun equals(other: Any?): Boolean = other is Conflict &&
-                                                name == other.name &&
-                                                ourStatus == other.ourStatus &&
-                                                theirsStatus == other.theirsStatus
+                                               name == other.name &&
+                                               ourStatus == other.ourStatus &&
+                                               theirsStatus == other.theirsStatus
 
     override fun toString(): String = "$name - $ourStatus - $theirsStatus"
   }
