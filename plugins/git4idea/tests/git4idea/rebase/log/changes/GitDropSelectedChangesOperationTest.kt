@@ -1,19 +1,33 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log.changes
 
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.test.refresh
+import com.intellij.vcs.test.updateChangeListManager
 import git4idea.i18n.GitBundle
 import git4idea.rebase.log.GitCommitEditingOperationResult
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
 import git4idea.test.assertCommitted
 import git4idea.test.assertStagedChanges
 import git4idea.test.commit
+import git4idea.test.commitDetails
+import git4idea.test.file
 import git4idea.test.filterChangesByFileName
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
-  fun `test drop multiple new files from middle commit`() {
+@TestApplication
+internal class GitDropSelectedChangesOperationTest {
+  private val contextFixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = contextFixture.get()
+
+  @Test
+  fun `test drop multiple new files from middle commit`(): Unit = with(context) {
     file("a").create().addCommit("Add a")
 
     file("b").create().add()
@@ -37,7 +51,8 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
     file("e").assertExists()
   }
 
-  fun `test drop partial changes from modified file`() {
+  @Test
+  fun `test drop partial changes from modified file`(): Unit = with(context) {
     val newContent = "new content a"
     val oldContent = "old content a"
 
@@ -55,12 +70,12 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
 
     executeDropSelectedChangesOperation(changesToDrop, targetCommit) as GitCommitEditingOperationResult.Complete
 
-    val currentContent = file("a").read()
-    assertEquals("File 'a' should be restored to original content", oldContent, currentContent)
+    assertThat(file("a").read()).describedAs("File 'a' should be restored to original content").isEqualTo(oldContent)
     file("b").assertExists()
   }
 
-  fun `test drop file deletion change restores deleted file`() {
+  @Test
+  fun `test drop file deletion change restores deleted file`(): Unit = with(context) {
     val oldContent = "old content a"
     file("a").create(oldContent).addCommit("Add a")
 
@@ -76,11 +91,12 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
     executeDropSelectedChangesOperation(changesToDrop, targetCommit) as GitCommitEditingOperationResult.Complete
 
     file("a").assertExists()
-    assertEquals("File 'a' should have original content", oldContent, file("a").read())
+    assertThat(file("a").read()).describedAs("File 'a' should have original content").isEqualTo(oldContent)
     file("b").assertExists()
   }
 
-  fun `test undo drop selected changes operation`() {
+  @Test
+  fun `test undo drop selected changes operation`(): Unit = with(context) {
     val oldContent = "old content b"
     file("a").create().addCommit("Add a")
 
@@ -106,13 +122,14 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
       assertCommitted(3) { added("a") }
     }
 
-    val undoPossibility = runBlocking { result.checkUndoPossibility() }
-    assertTrue("Undo should be possible", undoPossibility is GitCommitEditingOperationResult.Complete.UndoPossibility.Possible)
+    assertThat(runBlocking { result.checkUndoPossibility() })
+      .describedAs("Undo should be possible")
+      .isInstanceOf(GitCommitEditingOperationResult.Complete.UndoPossibility.Possible::class.java)
 
     result.undo()
 
     file("b").assertExists()
-    assertEquals("File 'b' should have original content", oldContent, file("b").read())
+    assertThat(file("b").read()).describedAs("File 'b' should have original content").isEqualTo(oldContent)
     file("c").assertExists()
     file("d").assertExists()
 
@@ -126,7 +143,8 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test drop changes from initial commit`() {
+  @Test
+  fun `test drop changes from initial commit`(): Unit = with(context) {
     file("b").create().add()
     file("c").create().add()
     git("commit --amend --no-edit")
@@ -150,7 +168,8 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test drop changes preserves existing fixup commits`() {
+  @Test
+  fun `test drop changes preserves existing fixup commits`(): Unit = with(context) {
     file("a").create().addCommit("Add a")
 
     file("b").create().add()
@@ -177,7 +196,8 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test drop selected changes doesn't touch local changes`() {
+  @Test
+  fun `test drop selected changes doesn't touch local changes`(): Unit = with(context) {
     val oldContent = "old content local"
     file("a").create().addCommit("Add a")
 
@@ -196,7 +216,7 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
     executeDropSelectedChangesOperation(changesToDrop, targetCommit) as GitCommitEditingOperationResult.Complete
 
     file("local").assertExists()
-    assertEquals("Local unstaged file should preserve content", oldContent, file("local").read())
+    assertThat(file("local").read()).describedAs("Local unstaged file should preserve content").isEqualTo(oldContent)
 
     with(repo) {
       assertStagedChanges { added("local-staged") }
@@ -205,7 +225,8 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test drop selected changes fails due to the rebase fail and restores saved local changes`() {
+  @Test
+  fun `test drop selected changes fails due to the rebase fail and restores saved local changes`(): Unit = with(context) {
     file("a").create().addCommit("Add a")
 
     file("b").create().add()
@@ -226,7 +247,9 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
 
     val result = executeDropSelectedChangesOperation(changesToDrop, targetCommit)
 
-    assertTrue("Operation should fail due to rebase fail", result is GitCommitEditingOperationResult.Incomplete)
+    assertThat(result)
+      .describedAs("Operation should fail due to rebase fail")
+      .isInstanceOf(GitCommitEditingOperationResult.Incomplete::class.java)
 
     with(repo) {
       assertCommitted(1) { deleted("b") } // fixup commit
@@ -236,10 +259,11 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
     }
 
     file("c").assertExists()
-    assertEquals("Local changes should be preserved", localChange, file("c").read())
+    assertThat(file("c").read()).describedAs("Local changes should be preserved").isEqualTo(localChange)
   }
 
-  fun `test drop all changes from middle commit fails in rebase`() {
+  @Test
+  fun `test drop all changes from middle commit fails in rebase`(): Unit = with(context) {
     file("a").create().addCommit("Add a")
 
     file("b").create().add()
@@ -255,12 +279,16 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
 
     val result = executeDropSelectedChangesOperation(allChangesToDrop, targetCommit)
 
-    assertTrue("Operation should fail when trying to create empty commit", result is GitCommitEditingOperationResult.Incomplete)
+    assertThat(result)
+      .describedAs("Operation should fail when trying to create empty commit")
+      .isInstanceOf(GitCommitEditingOperationResult.Incomplete::class.java)
 
-    assertNotNull(vcsNotifier.notifications.find { it.title == GitBundle.message("rebase.notification.failed.rebase.title") })
+    assertThat(vcsNotifier.notifications)
+      .anyMatch { it.title == GitBundle.message("rebase.notification.failed.rebase.title") }
   }
 
-  fun `test drop all changes from the last commit fails`() {
+  @Test
+  fun `test drop all changes from the last commit fails`(): Unit = with(context) {
     file("a").create().addCommit("Add a")
 
     file("b").create().add()
@@ -274,12 +302,18 @@ class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {
 
     val result = executeDropSelectedChangesOperation(allChangesToDrop, targetCommit)
 
-    assertTrue("Operation should fail when trying to create empty commit", result is GitCommitEditingOperationResult.Incomplete)
+    assertThat(result)
+      .describedAs("Operation should fail when trying to create empty commit")
+      .isInstanceOf(GitCommitEditingOperationResult.Incomplete::class.java)
 
-    assertNotNull(vcsNotifier.notifications.find { it.title == GitBundle.message("rebase.log.changes.drop.failed.title") })
+    assertThat(vcsNotifier.notifications)
+      .anyMatch { it.title == GitBundle.message("rebase.log.changes.drop.failed.title") }
   }
 
-  private fun executeDropSelectedChangesOperation(changes: List<Change>, targetCommit: VcsCommitMetadata): GitCommitEditingOperationResult =
+  private fun GitSingleRepoContext.executeDropSelectedChangesOperation(
+    changes: List<Change>,
+    targetCommit: VcsCommitMetadata,
+  ): GitCommitEditingOperationResult =
     runBlocking {
       GitDropSelectedChangesOperation(repo, targetCommit, changes).execute()
     }

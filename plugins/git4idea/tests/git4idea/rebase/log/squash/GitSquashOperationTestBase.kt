@@ -1,22 +1,40 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log.squash
 
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.test.refresh
+import com.intellij.vcs.test.updateChangeListManager
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.rebase.log.GitCommitEditingOperationResult.Complete
 import git4idea.rebase.log.GitCommitEditingOperationResult.Complete.UndoPossibility
 import git4idea.rebase.log.GitCommitEditingOperationResult.Complete.UndoResult
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
 import git4idea.test.assertCommitted
 import git4idea.test.assertLastMessage
 import git4idea.test.assertMessage
+import git4idea.test.file
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.message
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-internal abstract class GitSquashOperationTestBase : GitSingleRepoTest() {
-  protected abstract fun execute(commitsToSquash: List<VcsCommitMetadata>, newMessage: String): GitCommitEditingOperationResult
+/**
+ * The shared squash test suite. Subclasses provide the way the squash is actually performed
+ * (a native rebase or an in-memory one) by implementing [execute].
+ */
+internal abstract class GitSquashOperationTestBase {
+  private val contextFixture = gitSingleRepoContextFixture()
+  protected val context: GitSingleRepoContext get() = contextFixture.get()
 
-  fun `test squash last few commits`() {
+  protected abstract fun GitSingleRepoContext.execute(
+    commitsToSquash: List<VcsCommitMetadata>,
+    newMessage: String,
+  ): GitCommitEditingOperationResult
+
+  @Test
+  fun `test squash last few commits`(): Unit = with(context) {
     val commitA = file("a").create().addCommit("Commit a").details()
     val commitB = file("b").create().addCommit("Commit b").details()
     val commitC = file("c").create().addCommit("Commit c").details()
@@ -37,7 +55,8 @@ internal abstract class GitSquashOperationTestBase : GitSingleRepoTest() {
     }
   }
 
-  fun `test squash few non-last commits`() {
+  @Test
+  fun `test squash few non-last commits`(): Unit = with(context) {
     file("before").create().addCommit("Commit before")
     val commitA = file("a").create().addCommit("Commit a").details()
     val commitB = file("b").create().addCommit("Commit b").details()
@@ -65,7 +84,8 @@ internal abstract class GitSquashOperationTestBase : GitSingleRepoTest() {
     }
   }
 
-  fun `test squash non-linear history`() {
+  @Test
+  fun `test squash non-linear history`(): Unit = with(context) {
     val commitA = file("a").create().addCommit("Commit a").details()
     file("between1").create().addCommit("Commit between1")
     val commitB = file("b").create().addCommit("Commit b").details()
@@ -93,7 +113,8 @@ internal abstract class GitSquashOperationTestBase : GitSingleRepoTest() {
     }
   }
 
-  fun `test undo squash non-linear history`() {
+  @Test
+  fun `test undo squash non-linear history`(): Unit = with(context) {
     val commitA = file("a").create().addCommit("Commit a").details()
     file("between1").create().addCommit("Commit between1")
     val commitB = file("b").create().addCommit("Commit b").details()
@@ -107,9 +128,8 @@ internal abstract class GitSquashOperationTestBase : GitSingleRepoTest() {
     val newMessage = "Squashed commit message"
     val operationResult = execute(commitsToSquash, newMessage) as Complete
 
-    assertTrue(runBlocking { operationResult.checkUndoPossibility() } is UndoPossibility.Possible)
-    val undoResult = operationResult.undo()
-    assertTrue(undoResult is UndoResult.Success)
+    assertThat(runBlocking { operationResult.checkUndoPossibility() }).isInstanceOf(UndoPossibility.Possible::class.java)
+    assertThat(operationResult.undo()).isInstanceOf(UndoResult.Success::class.java)
 
     repo.assertCommitted(1) {
       added("c")
@@ -125,7 +145,8 @@ internal abstract class GitSquashOperationTestBase : GitSingleRepoTest() {
     }
   }
 
-  fun `test undo squash non-linear history is not allowed if repository changed`() {
+  @Test
+  fun `test undo squash non-linear history is not allowed if repository changed`(): Unit = with(context) {
     val commitA = file("a").create().addCommit("Commit a").details()
     file("between1").create().addCommit("Commit between1")
     val commitB = file("b").create().addCommit("Commit b").details()
@@ -141,10 +162,12 @@ internal abstract class GitSquashOperationTestBase : GitSingleRepoTest() {
 
     file("new").create().addCommit("new")
 
-    assertTrue(runBlocking { operationResult.checkUndoPossibility() } is UndoPossibility.Impossible.HeadMoved)
+    assertThat(runBlocking { operationResult.checkUndoPossibility() })
+      .isInstanceOf(UndoPossibility.Impossible.HeadMoved::class.java)
   }
 
-  fun `test undo squash linear history is not allowed if first changed commit is pushed to protected branch`() {
+  @Test
+  fun `test undo squash linear history is not allowed if first changed commit is pushed to protected branch`(): Unit = with(context) {
     val commitA = file("a").create().addCommit("Commit a").details()
     file("between1").create().addCommit("Commit between1")
     val commitB = file("b").create().addCommit("Commit b").details()
@@ -160,6 +183,7 @@ internal abstract class GitSquashOperationTestBase : GitSingleRepoTest() {
 
     git("update-ref refs/remotes/origin/master HEAD~2")
 
-    assertTrue(runBlocking { operationResult.checkUndoPossibility() } is UndoPossibility.Impossible.PushedToProtectedBranch)
+    assertThat(runBlocking { operationResult.checkUndoPossibility() })
+      .isInstanceOf(UndoPossibility.Impossible.PushedToProtectedBranch::class.java)
   }
 }

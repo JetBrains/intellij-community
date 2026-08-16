@@ -169,7 +169,8 @@ fun GitPlatformTestContext.withPartialTracker(file: VirtualFile, newContent: Str
 
     lstm.requestTrackerFor(document, this)
     try {
-      val tracker = lstm.getLineStatusTracker(file) as PartialLocalLineStatusTracker
+      val lineStatusTracker = lstm.getLineStatusTracker(file)
+      val tracker = lineStatusTracker as PartialLocalLineStatusTracker
       lstm.waitUntilBaseContentsLoaded()
 
       task(document, tracker)
