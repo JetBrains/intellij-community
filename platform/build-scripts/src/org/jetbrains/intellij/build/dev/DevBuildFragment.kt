@@ -52,6 +52,19 @@ data class DevBuildFragment(
   internal val ownsPlugins: Boolean
     get() = plugins != null
 
+  /**
+   * Whether this fragment packs the jars that the inlined product descriptor ends up in.
+   *
+   * Those are the flat core jars: the application-info module is not a content module, so the jar holding it holds
+   * none, and falls to [PlatformFragmentSelector.Core]. A fragment that owns only content-module jars has no use for
+   * the inlined descriptors and does not resolve them - see
+   * [org.jetbrains.intellij.build.BuildOptions.embedProductContentModuleDescriptors]. `layoutPlatform` re-checks this
+   * conclusion against the layout it actually got, so a product that puts its application-info module elsewhere fails
+   * instead of shipping a descriptor with nothing inlined into it.
+   */
+  internal val ownsProductDescriptorJars: Boolean
+    get() = platform == PlatformFragmentSelector.All || platform == PlatformFragmentSelector.Core
+
   override fun toString(): String = name
 }
 

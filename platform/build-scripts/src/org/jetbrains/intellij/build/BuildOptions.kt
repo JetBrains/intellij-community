@@ -62,6 +62,22 @@ data class BuildOptions(
   @JvmField var linkImmutableCacheEntries: Boolean = false,
 
   /**
+   * If `true`, every non-scrambled content module's own descriptor is inlined into the product descriptor as CDATA
+   * while the platform layout is built.
+   *
+   * The inlined result reaches the distribution through exactly two files, and one assembly owns both: the `META-INF`
+   * descriptor patched into [ProductProperties.applicationInfoModule]'s jar, and the `plugin-classpath.txt` prefix.
+   * Nothing else reads it - not the jar a module lands in, not its module set, not which fragment owns it - so a
+   * fragment that produces neither used to resolve some four hundred descriptors and discard the result. That is not
+   * merely wasted work: reading a descriptor out of a module's jar makes that jar an input of the fragment, which is
+   * how a single content module's source change came to re-run every fragment of the distribution.
+   *
+   * Only a split assembly turns it off, and only for a fragment that owns neither file; `layoutPlatform` fails if such
+   * a fragment turns out to pack the application-info module after all.
+   */
+  @JvmField var embedProductContentModuleDescriptors: Boolean = true,
+
+  /**
    * In addition to production compilation sources, allow various functions to use and traverse test output.
    * It is necessary. e.g., to run tests in a dev-build-provided environment.
    */

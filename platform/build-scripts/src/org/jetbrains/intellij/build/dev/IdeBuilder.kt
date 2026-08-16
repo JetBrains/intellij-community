@@ -859,6 +859,9 @@ internal fun configureDevModeBuildOptions(options: BuildOptions, request: BuildR
   options.storeGitRevision = false
   // a dev run directory is disposable and never patched in place, so by default it can share bytes with the caches it is assembled from
   options.linkImmutableCacheEntries = request.linkImmutableCacheEntries
+  // Only the fragment that packs the core jars or writes the `plugin-classpath.txt` prefix has anywhere to put the
+  // inlined content-module descriptors; for the rest, resolving them only makes every content module's jar an input.
+  options.embedProductContentModuleDescriptors = request.fragment.ownsProductDescriptorJars || request.pluginClasspathPrefixFile != null
 }
 
 /** [scratchDir] holds throwaway build data (`temp`, `artifacts`); it is separate from [buildDir] when the latter must contain only the distribution. */
@@ -1000,6 +1003,17 @@ private suspend fun layoutPlatform(
     " (${platformLayout.resourcePaths.joinToString { it.relativeOutputPath }}), which a split assembly cannot place:" +
     " every platform fragment would copy them. Give them an owner before splitting this product."
   }
+  val includedModules = selector.selectModules(platformLayout.includedModules, ownership)
+  // The fragment decided before the layout existed that it would not need the inlined content-module descriptors,
+  // because the application-info module's jar holds no content module and so belongs to the core. Confirm it against
+  // the layout that was actually produced: a product that lands that module in a content-module jar would otherwise
+  // ship a product descriptor with nothing inlined into it, which fails far away at runtime.
+  val applicationInfoModule = context.productProperties.applicationInfoModule
+  check(context.options.embedProductContentModuleDescriptors || includedModules.none { it.moduleName == applicationInfoModule }) {
+    "Fragment '${request.fragment}' packs the application-info module '$applicationInfoModule'," +
+    " whose jar carries the product descriptor, but it did not inline the content-module descriptors into it." +
+    " DevBuildFragment.ownsProductDescriptorJars has to account for how '${request.platformPrefix}' lays that module out."
+  }
   // cannot be in parallel
   val entries = layoutPlatformDistribution(
     moduleOutputPatcher = moduleOutputPatcher,
@@ -1008,7 +1022,7 @@ private suspend fun layoutPlatform(
     searchableOptionSet = searchableOptionSet,
     copyFiles = true,
     // Narrows what is resolved, so that a module this fragment does not pack cannot invalidate it.
-    includedModules = selector.selectModules(platformLayout.includedModules, ownership),
+    includedModules = includedModules,
     // Narrows what is written, over the jars packing produced - including the ones the layout never named, which the
     // core fragment owns: a library pinned into its own jar, or a project library.
     assetFilter = { relativeOutputFile, _ -> selector.accepts(ownership, relativeOutputFile) },

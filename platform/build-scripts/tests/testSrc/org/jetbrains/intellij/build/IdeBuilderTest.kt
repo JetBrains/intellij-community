@@ -283,6 +283,76 @@ class IdeBuilderTest {
   }
 
   @Test
+  fun contentModuleFragmentDoesNotInlineTheProductDescriptor() {
+    val options = BuildOptions()
+
+    configureDevModeBuildOptions(
+      options = options,
+      request = createBuildRequest(
+        fragment = DevBuildFragment(
+          name = "platform_cm_libraries_platform",
+          platform = PlatformFragmentSelector.ContentModuleSets(setOf("libraries.platform")),
+          platformResources = false,
+          plugins = null,
+        ),
+      ),
+      buildOptionsTemplate = BuildOptions(),
+    )
+
+    assertThat(options.embedProductContentModuleDescriptors).isFalse()
+  }
+
+  @Test
+  fun coreFragmentInlinesTheProductDescriptorBecauseItPacksTheJarThatCarriesIt() {
+    val options = BuildOptions()
+
+    configureDevModeBuildOptions(
+      options = options,
+      request = createBuildRequest(
+        fragment = DevBuildFragment(
+          name = "platform_core",
+          platform = PlatformFragmentSelector.Core,
+          platformResources = false,
+          plugins = null,
+        ),
+      ),
+      buildOptionsTemplate = BuildOptions(),
+    )
+
+    assertThat(options.embedProductContentModuleDescriptors).isTrue()
+  }
+
+  @Test
+  fun theFragmentWritingTheClasspathPrefixInlinesTheProductDescriptorWhateverElseItOwns() {
+    val options = BuildOptions()
+
+    configureDevModeBuildOptions(
+      options = options,
+      request = createBuildRequest(
+        fragment = DevBuildFragment(
+          name = "platform_cm_rest",
+          platform = PlatformFragmentSelector.RemainingContentModules(emptySet()),
+          platformResources = false,
+          plugins = null,
+        ),
+        pluginClasspathPrefixFile = tempDir.resolve("plugin-classpath-prefix"),
+      ),
+      buildOptionsTemplate = BuildOptions(),
+    )
+
+    assertThat(options.embedProductContentModuleDescriptors).isTrue()
+  }
+
+  @Test
+  fun aCompleteDistributionInlinesTheProductDescriptor() {
+    val options = BuildOptions()
+
+    configureDevModeBuildOptions(options = options, request = createBuildRequest(), buildOptionsTemplate = BuildOptions())
+
+    assertThat(options.embedProductContentModuleDescriptors).isTrue()
+  }
+
+  @Test
   fun targetPlatformAppliesOsAndArchitectureTogether() {
     val targetOs = if (OsFamily.currentOs == OsFamily.LINUX) OsFamily.MACOS else OsFamily.LINUX
     val targetArch = if (JvmArchitecture.currentJvmArch == JvmArchitecture.aarch64) JvmArchitecture.x64 else JvmArchitecture.aarch64
@@ -724,6 +794,8 @@ class IdeBuilderTest {
     linkImmutableCacheEntries: Boolean = true,
     os: OsFamily = OsFamily.currentOs,
     arch: JvmArchitecture = JvmArchitecture.currentJvmArch,
+    fragment: DevBuildFragment = DevBuildFragment.COMPLETE,
+    pluginClasspathPrefixFile: Path? = null,
   ): BuildRequest {
     return BuildRequest(
       platformPrefix = "idea",
@@ -735,6 +807,9 @@ class IdeBuilderTest {
       linkImmutableCacheEntries = linkImmutableCacheEntries,
       os = os,
       arch = arch,
+      fragment = fragment,
+      componentManifestFile = if (fragment.isComplete) null else tempDir.resolve("${fragment.name}.component.json"),
+      pluginClasspathPrefixFile = pluginClasspathPrefixFile,
     )
   }
 

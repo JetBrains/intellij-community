@@ -192,7 +192,11 @@ private suspend fun processProductModule(
   // For non-scrambled modules, we embed the module descriptor to address this.
   //
   // Note: We could implement runtime loading via the module's classloader, but that would significantly complicate the runtime code.
-  if (!willBeScrambled) {
+  //
+  // An assembly that produces neither of the two files the inlined descriptors reach skips this entirely - resolving a
+  // descriptor means reading that module's jar, which then becomes an input of the assembly. See
+  // [BuildOptions.embedProductContentModuleDescriptors].
+  if (!willBeScrambled && context.options.embedProductContentModuleDescriptors) {
     resolveAndEmbedContentModuleDescriptor(
       moduleElement = moduleElement,
       descriptorCache = descriptorCache,
