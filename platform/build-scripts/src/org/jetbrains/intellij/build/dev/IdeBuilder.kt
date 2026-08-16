@@ -825,6 +825,7 @@ internal fun BuildOptions.copyWithDevBuildOverrides(
   return copy(
     jarCacheDir = request.jarCacheDir,
     buildDateInSeconds = request.buildDateInSeconds ?: defaultBuildDateInSeconds,
+    isDevDistribution = true,
     printFreeSpace = false,
     validateImplicitPlatformModule = false,
     skipDependencySetup = true,

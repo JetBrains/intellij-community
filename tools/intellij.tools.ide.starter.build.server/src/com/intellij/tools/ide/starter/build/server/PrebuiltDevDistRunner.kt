@@ -5,6 +5,7 @@ import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.runner.DevBuildServerRunner
 import com.intellij.platform.devIdeConfig.DevIdeConfig
 import com.intellij.tools.ide.util.common.logOutput
+import org.jetbrains.intellij.build.distributionExpirationProblem
 import org.jetbrains.intellij.build.dev.readCustomCommand
 import org.jetbrains.intellij.build.dev.resolveAdditionalJvmArguments
 import java.nio.file.Path
@@ -20,9 +21,10 @@ import kotlin.io.path.isDirectory
  * `IdeFromCodeInstaller` reads `core-classpath.txt`, resolves the JBR, and synthesizes the command line exactly as it
  * does for an assembled run.
  *
- * The distribution is fixed, which is the whole point and also the one way this can go wrong: a test asking for plugin
- * modules the assembly did not build in would otherwise run against an IDE quietly missing them. So the request is
- * checked against what the distribution says it is, and a shortfall fails the run rather than the assertions.
+ * The distribution is fixed, which is the whole point and also the two ways this can go wrong: a test asking for plugin
+ * modules the assembly did not build in would otherwise run against an IDE quietly missing them, and a distribution
+ * reused past its EAP expiration would come up showing a modal instead of a frame. Both are decidable here, from bytes
+ * already on disk, so both fail the run with a named reason rather than the assertions - or, worse, a timeout.
  */
 internal class PrebuiltDevDistRunner(private val configFile: Path) : DevBuildServerRunner {
   private val config by lazy { DevIdeConfig.read(configFile) }
@@ -45,8 +47,32 @@ internal class PrebuiltDevDistRunner(private val configFile: Path) : DevBuildSer
       "The dev distribution declared by '${DevIdeConfig.CONFIG_PATH_PROPERTY}' is missing: $configFile names $home, which is not a directory"
     }
     checkDistributionSatisfies(ideInfo)
+    checkDistributionIsNotExpired(home)
     logOutput("Using the prepared dev distribution $home for $ideInfo")
     return home
+  }
+
+  /**
+   * Refuses to launch an IDE that would come up expired.
+   *
+   * An EAP build whose stamped date is outside its expiration period - in either direction: too old, or in the future,
+   * which the licensing code reads as a tampered clock - shows a modal "build expired" dialog a few seconds after
+   * startup and shuts down. From the outside that is indistinguishable from a hung IDE, and costs the whole launch
+   * timeout to find out. The same verdict is pure arithmetic over a value sitting in the distribution, so it is decided
+   * here in milliseconds, before a single process is started.
+   *
+   * A dev distribution stamps no build date and therefore never trips this; the check is what makes it loud if one ever
+   * starts stamping one again.
+   */
+  private fun checkDistributionIsNotExpired(home: Path) {
+    val problem = distributionExpirationProblem(home) ?: return
+    error(
+      "The dev distribution declared by '${DevIdeConfig.CONFIG_PATH_PROPERTY}' would not start: $problem.\n" +
+      "  distribution: $home\n" +
+      "  config file: $configFile\n" +
+      "The IDE would show the 'EAP build expired' dialog and shut down. Reassemble the distribution: a dev build must " +
+      "leave the '__BUILD_DATE__' placeholder in ApplicationInfo.xml so that its build time is resolved at startup."
+    )
   }
 
   private fun checkDistributionSatisfies(ideInfo: IdeInfo) {

@@ -132,6 +132,20 @@ data class BuildOptions(
   @JvmField internal val isUnpackedDist: Boolean = false,
 
   /**
+   * If `true`, the assembled distribution is a disposable dev build that is only ever launched - from a run
+   * configuration, from a test lane, from a Bazel output - and never shipped.
+   *
+   * Deliberately *not* [isInDevelopmentMode], which is merely "not on a CI server" and is true for a release-shaped
+   * build on a developer machine. This one is set by [org.jetbrains.intellij.build.dev.copyWithDevBuildOverrides],
+   * the single owner of the dev overrides, so both dev paths - the in-process assembly and the one nested in a real
+   * build - agree on it.
+   *
+   * The one thing it currently decides is the build date stamped into `ApplicationInfo.xml`: a dev distribution stamps
+   * none, so that the IDE resolves its build time at startup and no EAP expiration period can run out on it.
+   */
+  @JvmField internal val isDevDistribution: Boolean = false,
+
+  /**
    * If `true`, the project modules will be compiled incrementally.
    */
   var incrementalCompilation: Boolean = getBooleanProperty(INTELLIJ_BUILD_INCREMENTAL_COMPILATION),

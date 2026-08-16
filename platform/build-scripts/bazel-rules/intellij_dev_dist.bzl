@@ -211,8 +211,14 @@ intellij_dev_fragment = rule(
     implementation = _fragment_impl,
     attrs = {
         "assembler": attr.label(executable = True, cfg = "exec", mandatory = True),
-        # A stable far-future dev date keeps EAP expiration checks valid without putting the wall clock in the action key.
-        "build_date_seconds": attr.string(default = "2145916800"),
+        # Pinned so the fragments of one distribution agree and an assembly does not carry the wall clock into its
+        # outputs: it dates archive entries and the `.SNAPSHOT` plugin version suffix, both of which would otherwise
+        # differ between fragments assembled minutes apart. It is deliberately *not* the product build date - a dev
+        # distribution stamps none, so that the IDE resolves its build time at startup and no EAP expiration period can
+        # run out on a cached distribution (see `computeAppInfoXml`). It used to be a far-future date chosen to outrun
+        # that period, which is what made every dev IDE start expired: a build date over a day ahead of the wall clock
+        # is expired too.
+        "build_date_seconds": attr.string(default = "1767225600"),  # 2026-01-01T00:00:00Z
         "mode": attr.string(default = "ultimate", values = ["community", "ultimate"]),
         "platform_prefix": attr.string(mandatory = True),
         "target_platform": attr.string(default = ""),

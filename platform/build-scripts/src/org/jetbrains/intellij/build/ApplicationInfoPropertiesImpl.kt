@@ -17,7 +17,6 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 import kotlin.io.path.name
 
 private val BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
@@ -103,15 +102,15 @@ internal class ApplicationInfoPropertiesImpl(
                              ?: buildTag.getAttributeValue("majorReleaseDate"))?.takeIf { it.isNotEmpty() }
       when {
         isEAP -> {
-          val buildDate = Instant.ofEpochSecond(buildOptions.buildDateInSeconds)
-          val expirationDate = buildDate.plus(30, ChronoUnit.DAYS)
-          val now = Instant.ofEpochMilli(System.currentTimeMillis())
-          if (expirationDate < now) {
-            reportBuildProblem(
-              "Supplied build date is $buildDate, " +
-              "so expiration date is in the past, " +
-              "distribution won't be able to start"
-            )
+          // A dev distribution stamps no build date at all (see `computeAppInfoXml`), so its `buildDateInSeconds` -
+          // pinned for reproducible archive entries - says nothing about whether the IDE will start.
+          if (!buildOptions.isDevDistribution) {
+            eapBuildExpirationProblem(
+              buildTime = Instant.ofEpochSecond(buildOptions.buildDateInSeconds),
+              now = Instant.ofEpochMilli(System.currentTimeMillis()),
+            )?.let { problem ->
+              reportBuildProblem("Supplied build date is unusable: $problem; distribution won't be able to start")
+            }
           }
         }
         majorReleaseDate == null || majorReleaseDate.startsWith("__") -> {
@@ -156,12 +155,20 @@ internal fun computeAppInfoXml(appInfo: ApplicationInfoProperties, context: Buil
   val buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(context.options.buildDateInSeconds), ZoneOffset.UTC)
   var patchedAppInfo = BuildUtils.replaceAll(
     text = Files.readString(appInfoXmlPath),
-    replacements = mapOf(
-      "BUILD_NUMBER" to "${appInfo.productCode}-${context.buildNumber}",
-      "BUILD_DATE" to buildDate.format(BUILD_DATE_PATTERN),
-      "BUILD" to context.buildNumber,
-      "BUILTIN_PLUGINS_URL" to builtinPluginsRepoUrl
-    )
+    replacements = buildMap {
+      put("BUILD_NUMBER", "${appInfo.productCode}-${context.buildNumber}")
+      // A dev distribution deliberately stamps no build date. It is launched rather than shipped, and it is reused for as
+      // long as its inputs are unchanged - so any date written here is a countdown to the day the IDE refuses to start:
+      // an EAP build is expired both when it is older than `EAPProfile.getExpirationPeriodDays()` and when its date is
+      // more than a day in the future (see `com.intellij.ide.license.impl.UnifiedLicenseManager.initLicenses`).
+      // Leaving the placeholder is the platform's own "this build has no build date": `ApplicationInfoImpl.readBuildInfo`
+      // skips it and `getBuildTime()` answers the startup time, so a dev IDE is always inside its budget.
+      if (!context.options.isDevDistribution) {
+        put("BUILD_DATE", buildDate.format(BUILD_DATE_PATTERN))
+      }
+      put("BUILD", context.buildNumber)
+      put("BUILTIN_PLUGINS_URL", builtinPluginsRepoUrl)
+    }
       .let { base ->
         context.productProperties.appInfoXmlReplacements?.let { it + base } ?: base
       },
