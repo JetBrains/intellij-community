@@ -3,6 +3,7 @@ package com.intellij.mcpserver.impl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.TaskInfoEntity
 import com.intellij.platform.ide.progress.activeTasks
 import com.intellij.platform.ide.progress.updates
 import com.intellij.platform.project.projectId
@@ -11,6 +12,7 @@ import com.intellij.platform.util.progress.ProgressPipe
 import com.intellij.platform.util.progress.ProgressState
 import com.intellij.platform.util.progress.createProgressPipe
 import fleet.kernel.rete.asValuesFlow
+import fleet.kernel.rete.getOrNull
 import fleet.kernel.tryWithEntities
 import io.modelcontextprotocol.kotlin.sdk.server.ServerSession
 import io.modelcontextprotocol.kotlin.sdk.types.ProgressNotification
@@ -136,12 +138,11 @@ private fun backgroundProgressFlow(project: Project?, observeBackgroundTasks: At
     return emptyFlow()
   }
 
-  val projectId = project.projectId()
   return flow {
     val seenTaskIds = HashSet<Any>()
     activeTasks.asValuesFlow().collect { task ->
       if (!observeBackgroundTasks.get()) return@collect
-      if (task.projectEntity?.projectId != projectId) return@collect
+      if (!taskBelongsToProject(task, project)) return@collect
       if (!seenTaskIds.add(task.eid)) return@collect
       emit(task)
     }
@@ -154,6 +155,13 @@ private fun backgroundProgressFlow(project: Project?, observeBackgroundTasks: At
       }
     }
   }
+}
+
+internal suspend fun taskBelongsToProject(task: TaskInfoEntity, project: Project): Boolean {
+  val projectId = project.projectId()
+  return tryWithEntities(task) {
+    task.projectEntity?.projectId == projectId
+  }.getOrNull() == true
 }
 
 private fun heartbeatFlow(

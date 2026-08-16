@@ -1,11 +1,16 @@
 package com.intellij.mcpserver
 
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.impl.taskBelongsToProject
 import com.intellij.mcpserver.testFramework.ObservedProgress
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.TaskStorage
+import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.util.progress.reportProgressScope
 import com.intellij.platform.util.progress.withProgressText
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -14,6 +19,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -33,6 +39,34 @@ class ProgressNotificationsTest : McpToolsetTestBase() {
   @AfterEach
   fun clearProgressNotificationInterval() {
     Registry.get(PROGRESS_NOTIFICATION_INTERVAL_REGISTRY_KEY).resetToDefault()
+  }
+
+  @Test
+  @Timeout(30)
+  fun completed_background_task_is_not_read_after_removal(): Unit = timeoutRunBlocking {
+    withRegisteredTestTools(this@ProgressNotificationsTest::flow_completed_background_task) {
+      val call = callToolWithProgress(toolName = "flow_completed_background_task", timeout = 10.seconds)
+
+      assertThat(call.result.textContent.text).isEqualTo("background-task-removed")
+    }
+  }
+
+  @McpTool(title = "Flow completed background task")
+  suspend fun flow_completed_background_task(): String {
+    val taskStorage = TaskStorage.getInstance()
+    val task = checkNotNull(
+      taskStorage.addTask(
+        project = project,
+        title = "Short-lived background task",
+        cancellation = TaskCancellation.nonCancellable(),
+        suspendable = TaskSuspension.NonSuspendable,
+        visibleInStatusBar = false,
+      )
+    )
+    taskStorage.removeTask(task)
+
+    check(!taskBelongsToProject(task, project))
+    return "background-task-removed"
   }
 
   @Test
