@@ -95,17 +95,22 @@ def _find_plugin_xml_rel_path(ctx, project_root, resource_roots):
 def _join_project_relative_path(directory, relative):
     return directory + "/" + relative if directory else relative
 
-def _find_descriptor_rel_paths(project_root, module_name, resource_roots):
-    """The descriptors a dev-distribution assembly reads that the module name alone is enough to name.
+def _find_descriptor_rel_paths(project_root, module_name, resource_roots, extra_rel_paths):
+    """Every descriptor a dev-distribution assembly reads out of this module's production resources.
 
     A content module's descriptor is `<moduleName>.xml` at a production resource root, and a plugin's descriptor is
-    `META-INF/plugin.xml`. Almost every descriptor follows that convention; `build/dev_dist_plan.bzl` carries only
-    what it cannot predict - descriptors reached through an `xi:include`, whose names the product model knows and
-    this side does not. Splitting it that way keeps the generated file ~120 lines instead of ~3300, which matters
-    for a file every model change would otherwise rewrite under a large team.
+    `META-INF/plugin.xml`. Almost every descriptor follows that convention, and it is derived here.
+    [extra_rel_paths] is the remainder, named by the product model in `build/dev_dist_plan.bzl`: descriptors reached
+    only through an `xi:include`, whose names this side cannot predict. Splitting it that way keeps the generated
+    file ~120 lines instead of ~3300, which matters for a file every model change would otherwise rewrite under a
+    large team.
 
     Probed rather than listed: `readdir` would watch each resource root's listing, so adding any file under one
-    would re-run this repository rule.
+    would re-run this repository rule. The listed paths are probed too, and a miss is silently dropped rather than
+    an error - a stale entry then costs the pinned module jar the assembly reads that descriptor from today, and
+    nothing else. Failing here would be far worse: this runs during module-extension evaluation, so it would make
+    the very tool that regenerates the plan unbuildable. Staleness is caught by the blocking `model-generation`
+    validation instead.
     """
     result = []
     for resource_root in resource_roots:
@@ -113,6 +118,9 @@ def _find_descriptor_rel_paths(project_root, module_name, resource_roots):
             rel_path = _join_project_relative_path(resource_root, candidate)
             if project_root.get_child(rel_path).exists:
                 result.append(rel_path)
+    for rel_path in extra_rel_paths:
+        if project_root.get_child(rel_path).exists:
+            result.append(rel_path)
     return result
 
 def watch_project_model_files(ctx, project_root):
@@ -128,11 +136,19 @@ def watch_project_model_files(ctx, project_root):
     for library_xml in libraries_dir.readdir(watch = "yes"):
         ctx.read(library_xml, watch = "yes")
 
-def read_project_model(ctx, project_root):
+def read_project_model(ctx, project_root, extra_descriptor_rel_paths_by_module = {}):
     """Read project model files and return their contents for Starlark-based derivation.
 
     Watches all files for invalidation (same as watch_project_model_files) but also
     returns the file contents for processing.
+
+    Args:
+        ctx: repository rule context.
+        project_root: the repository root to read the model from.
+        extra_descriptor_rel_paths_by_module: module name to the project-relative descriptor paths the convention
+            in [_find_descriptor_rel_paths] cannot derive, from `build/dev_dist_plan.bzl`. Only the Ultimate
+            repository rule passes it: the plan is an Ultimate artifact, community has to build standalone without
+            it, and no community target materializes a project model tree.
 
     Returns struct with:
       - modules: list of structs (module_name, iml_dir_rel, iml_content, iml_rel_path, plugin_xml_rel_path,
@@ -178,6 +194,7 @@ def read_project_model(ctx, project_root):
                 project_root = project_root,
                 module_name = module_name,
                 resource_roots = resource_roots,
+                extra_rel_paths = extra_descriptor_rel_paths_by_module.get(module_name, []),
             ),
         ))
 
