@@ -29367,6 +29367,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/mapToForEach/lazySequence.kt");
         }
 
+        @TestMetadata("mapIndexedWithReturnValueChecker.kt")
+        public void testMapIndexedWithReturnValueChecker() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mapToForEach/mapIndexedWithReturnValueChecker.kt");
+        }
+
+        @TestMetadata("mapIndexedWithoutReturnValueChecker.kt")
+        public void testMapIndexedWithoutReturnValueChecker() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mapToForEach/mapIndexedWithoutReturnValueChecker.kt");
+        }
+
+        @TestMetadata("mapNotNull.kt")
+        public void testMapNotNull() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mapToForEach/mapNotNull.kt");
+        }
+
         @TestMetadata("nonUnitImplicitReturn.kt")
         public void testNonUnitImplicitReturn() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/mapToForEach/nonUnitImplicitReturn.kt");
