@@ -7,6 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="RUNTIME" />
     <orderEntry type="module-library" exported="">
       <library name="kotlin-test-junit" type="repository">
         <properties maven-id="org.jetbrains.kotlin:kotlin-test-junit:2.4.10-RC2">

@@ -14,7 +14,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlin-test-junit-kotlin-test-junit"],
-    runtime_deps = ["@lib//:libraries-kotlin-test-junit-kotlin-test-junit"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "@lib//:libraries-kotlin-test-junit-kotlin-test-junit",
+    ],
 )
 
 jvm_library(
@@ -28,7 +32,11 @@ jvm_library(
     module_name = "intellij.libraries.kotlin.test.junit",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlin-test-junit-kotlin-test-junit"],
-    runtime_deps = [":libraries-kotlin-test-junit"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-kotlin-test-junit",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.kotlin.test.junit` end
 
