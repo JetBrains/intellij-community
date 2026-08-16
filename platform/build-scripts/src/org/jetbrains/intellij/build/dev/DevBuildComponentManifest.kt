@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dev
 
+import com.dynatrace.hash4j.hashing.Hashing
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
@@ -104,12 +105,32 @@ private fun normalizeDevBuildComponentEntries(
 ): List<DevBuildComponentEntry> {
   val normalizedComponentRoot = componentRoot.toAbsolutePath().normalize()
   val normalizedProjectDir = projectDir.toAbsolutePath().normalize()
+  val contentHashes = HashMap<Path, Long>()
   return entries.map { entry ->
     val relativePath = getRelativeDistributionPath(entry, normalizedComponentRoot, normalizedProjectDir)
+    val contentPath = entry.path.toAbsolutePath().normalize()
     DevBuildComponentEntry(
       relativePath = relativePath.invariantSeparatorsPathString,
       type = entry.type,
-      hash = entry.hash,
+      hash = if (Files.isRegularFile(contentPath)) {
+        contentHashes.computeIfAbsent(contentPath, ::computeDevBuildContentHash)
+      }
+      else {
+        entry.hash
+      },
     )
   }.sortedWith(compareBy(DevBuildComponentEntry::relativePath, DevBuildComponentEntry::type, DevBuildComponentEntry::hash)).toList()
+}
+
+private fun computeDevBuildContentHash(file: Path): Long {
+  val hasher = Hashing.xxh3_64().hashStream()
+  val buffer = ByteArray(256 * 1024)
+  Files.newInputStream(file).use { input ->
+    while (true) {
+      val count = input.read(buffer)
+      if (count < 0) break
+      if (count > 0) hasher.putByteArray(if (count == buffer.size) buffer else buffer.copyOf(count))
+    }
+  }
+  return hasher.asLong
 }

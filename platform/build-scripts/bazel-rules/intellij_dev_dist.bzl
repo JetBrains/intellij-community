@@ -26,6 +26,7 @@ IntellijDevDistInfo = provider(
         "fingerprint": "The content fingerprint of the composed IDE distribution.",
         "home": "The composed IDE home directory.",
         "ide_config": "The config file used by PreBuiltDevMain.",
+        "stamp_inputs": "Small declared inputs whose contents identify the fragments composed into the distribution.",
     },
 )
 
@@ -252,6 +253,7 @@ def _compose(ctx, fragment_targets):
 
     prefixes = [fragment.plugin_classpath_prefix for fragment in fragments if fragment.plugin_classpath_prefix]
     parts = [fragment.plugin_classpath_part for fragment in fragments if fragment.plugin_classpath_part]
+    stamp_inputs = [fragment.manifest for fragment in fragments] + parts + prefixes
     if parts and len(prefixes) != 1:
         fail("%s: exactly one fragment must set produces_plugin_classpath_prefix, got %d" % (ctx.label, len(prefixes)))
 
@@ -283,7 +285,12 @@ def _compose(ctx, fragment_targets):
     )
     return [
         DefaultInfo(files = depset([home, ide_config, fingerprint])),
-        IntellijDevDistInfo(home = home, ide_config = ide_config, fingerprint = fingerprint),
+        IntellijDevDistInfo(
+            home = home,
+            ide_config = ide_config,
+            fingerprint = fingerprint,
+            stamp_inputs = depset(stamp_inputs),
+        ),
         OutputGroupInfo(
             fingerprint = depset([fingerprint]),
             home = depset([home]),

@@ -3,6 +3,9 @@ package org.jetbrains.intellij.build.dev
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.IOException
@@ -13,6 +16,28 @@ import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
 
 internal class DevBuildComponentComposerTest {
+  @Test
+  fun `component manifest fingerprints packaged bytes rather than stale entry metadata`(@TempDir tempDir: Path) {
+    val componentRoot = tempDir.resolve("component")
+    val packagedFile = componentRoot.resolve("plugins/air/lib/air.jar")
+    Files.createDirectories(packagedFile.parent)
+    Files.writeString(packagedFile, "before")
+    val entry = CustomAssetEntry(path = packagedFile, hash = 1)
+    val beforeManifest = tempDir.resolve("before.json")
+    writeManifest(beforeManifest, componentRoot, entry)
+
+    Files.writeString(packagedFile, "after!")
+    val afterManifest = tempDir.resolve("after.json")
+    writeManifest(afterManifest, componentRoot, entry)
+
+    val before = readDevBuildComponentManifest(beforeManifest)
+    val after = readDevBuildComponentManifest(afterManifest)
+    assertThat(before.entries.single().hash).isNotEqualTo(1)
+    assertThat(after.entries.single().hash).isNotEqualTo(before.entries.single().hash)
+    assertThat(computeIdeFingerprintFromComponents(listOf(after)))
+      .isNotEqualTo(computeIdeFingerprintFromComponents(listOf(before)))
+  }
+
   @Test
   fun `component merge copies owned bytes`(@TempDir tempDir: Path) {
     val source = tempDir.resolve("source")
@@ -232,6 +257,23 @@ internal class DevBuildComponentComposerTest {
       .isInstanceOf(IllegalStateException::class.java)
       .hasMessageContaining("different products")
     assertThat(Files.exists(target)).isFalse()
+  }
+
+  private fun writeManifest(file: Path, componentRoot: Path, entry: CustomAssetEntry) {
+    writeDevBuildComponentManifest(
+      file = file,
+      kind = "plugins_air",
+      platformPrefix = "idea",
+      os = OsFamily.MACOS,
+      arch = JvmArchitecture.aarch64,
+      additionalModules = emptyList(),
+      mainClass = "com.intellij.idea.Main",
+      coreClassPath = emptyList(),
+      pluginCount = 1,
+      entries = sequenceOf(entry),
+      componentRoot = componentRoot,
+      projectDir = componentRoot,
+    )
   }
 
   private fun component(tempDir: Path, name: String, relativeFile: String): Path {
