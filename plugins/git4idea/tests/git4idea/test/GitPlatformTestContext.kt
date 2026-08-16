@@ -28,6 +28,8 @@ import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.util.application
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.test.VcsPlatformTestContext
 import com.intellij.vcs.test.updateChangeListManager
 import git4idea.DialogManager
@@ -123,6 +125,9 @@ fun GitPlatformTestContext.updateUntrackedFiles(repo: GitRepository) {
     repo.untrackedFilesHolder.awaitNotBusy()
   }
 }
+
+fun GitPlatformTestContext.readDetails(vararg hashes: String): List<VcsFullCommitDetails> =
+  VcsLogUtil.getDetails(logProvider, projectRoot, hashes.asList())
 
 fun GitPlatformTestContext.commit(changes: Collection<Change>, commitMessage: String = "comment") {
   val exceptions = tryCommit(changes, commitMessage)

@@ -1,46 +1,55 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.log;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea.log
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.RefGroup;
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.impl.SingletonRefGroup;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.vcs.log.RefGroup
+import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.impl.SingletonRefGroup
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.gitSingleRepoContextFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+@TestApplication
+internal class GitRefGroupsTest {
+  private val contextFixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = contextFixture.get()
 
-public class GitRefGroupsTest extends GitRefManagerTest {
-  public void test_single_tracked_branch() {
-    check(given("HEAD", "master", "origin/master"), Arrays.asList("HEAD"), Pair.create("Local", Arrays.asList("master")),
-          Pair.create("origin/...", Arrays.asList("origin/master")));
+  @Test
+  fun `test single tracked branch`(): Unit = with(context) {
+    check(given("HEAD", "master", "origin/master"),
+          listOf("HEAD"),
+          "Local" to listOf("master"),
+          "origin/..." to listOf("origin/master"))
   }
 
-  public void test_single_local_branch() {
-    check(given("HEAD", "master"), Arrays.asList("HEAD"), Pair.create("Local", Arrays.asList("master")));
+  @Test
+  fun `test single local branch`(): Unit = with(context) {
+    check(given("HEAD", "master"),
+          listOf("HEAD"),
+          "Local" to listOf("master"))
   }
 
-  public void test_local_tracked_and_remote_branch() {
-    check(given("HEAD", "master", "origin/master", "origin/remote_branch", "local_branch"), Arrays.asList("HEAD"),
-          Pair.create("Local", Arrays.asList("master", "local_branch")),
-          Pair.create("origin/...", Arrays.asList("origin/master", "origin/remote_branch")));
+  @Test
+  fun `test local tracked and remote branch`(): Unit = with(context) {
+    check(given("HEAD", "master", "origin/master", "origin/remote_branch", "local_branch"),
+          listOf("HEAD"),
+          "Local" to listOf("master", "local_branch"),
+          "origin/..." to listOf("origin/master", "origin/remote_branch"))
   }
 
-  private void check(@NotNull Collection<? extends VcsRef> actual,
-                     @NotNull List<String> expectedSingleGroups,
-                     Pair<String, List<String>>... expectedOtherGroups) {
+  private fun GitSingleRepoContext.check(
+    actual: Collection<VcsRef>,
+    expectedSingleGroups: List<String>,
+    vararg expectedOtherGroups: Pair<String, List<String>>,
+  ) {
+    val actualGroups = GitRefManager(project, repositoryManager).groupForBranchFilter(actual)
 
-    List<RefGroup> actualGroups = new GitRefManager(getProject(), repositoryManager).groupForBranchFilter(actual);
+    val singleGroups = actualGroups.filterIsInstance<SingletonRefGroup>()
+    assertThat(singleGroups.map { it.name }).isEqualTo(expectedSingleGroups)
 
-    List<SingletonRefGroup> singleGroups = ContainerUtil.findAll(actualGroups, SingletonRefGroup.class);
-    assertEquals(expectedSingleGroups, ContainerUtil.map(singleGroups,
-                                                         (Function<RefGroup, String>)singletonRefGroup -> singletonRefGroup.getName()));
-
-    actualGroups.removeAll(singleGroups);
-
-    assertEquals(Arrays.asList(expectedOtherGroups), ContainerUtil.map(actualGroups, refGroup -> Pair.create(refGroup.getName(), ContainerUtil.map(refGroup.getRefs(), vcsRef -> vcsRef.getName()))));
+    val otherGroups = actualGroups.filter { it !is SingletonRefGroup }
+    assertThat(otherGroups.map { group: RefGroup -> group.name to group.refs.map { it.name } })
+      .isEqualTo(expectedOtherGroups.toList())
   }
 }

@@ -193,7 +193,13 @@ fun assumeSupportedGitVersion(vcs: GitVcs) {
   assumeTrue("Unsupported Git version: $version", version.isSupported)
 }
 
-fun GitPlatformTest.readAllRefs(root: VirtualFile, objectsFactory: VcsLogObjectsFactory): Set<VcsRef> {
+fun GitPlatformTest.readAllRefs(root: VirtualFile, objectsFactory: VcsLogObjectsFactory): Set<VcsRef> =
+  readAllRefs(root, objectsFactory) { git(it) }
+
+fun VcsPlatformTestContext.readAllRefs(root: VirtualFile, objectsFactory: VcsLogObjectsFactory): Set<VcsRef> =
+  readAllRefs(root, objectsFactory) { git(it) }
+
+private fun readAllRefs(root: VirtualFile, objectsFactory: VcsLogObjectsFactory, git: (String) -> String): Set<VcsRef> {
   val refs = git("log --branches --tags --no-walk --format=%H%d --decorate=full").lines()
   val result = mutableSetOf<VcsRef>()
   for (ref in refs) {
@@ -215,6 +221,13 @@ fun GitPlatformTestContext.makeCommit(file: String): String {
 }
 
 fun GitPlatformTest.makeCommit(author: VcsUser, file: String): String {
+  setupUsername(project, author.name, author.email)
+  val commit = modify(file)
+  setupDefaultUsername(project)
+  return commit
+}
+
+fun GitPlatformTestContext.makeCommit(author: VcsUser, file: String): String {
   setupUsername(project, author.name, author.email)
   val commit = modify(file)
   setupDefaultUsername(project)

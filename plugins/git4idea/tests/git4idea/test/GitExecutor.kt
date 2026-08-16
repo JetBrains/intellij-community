@@ -79,6 +79,8 @@ fun GitRepository.add(path: String = ".") = cd { add(project, path) }
 
 fun GitPlatformTest.add(path: String = ".") = add(project, path)
 
+fun GitPlatformTestContext.add(path: String = ".") = add(project, path)
+
 private fun add(project: Project, path: String = ".") = git(project, "add --verbose $path")
 
 fun GitRepository.addCommit(message: String) = cd { addCommit(project, message) }
@@ -181,6 +183,7 @@ private fun log(project: Project, vararg params: String) = git(project, "log " +
 
 fun GitRepository.mv(fromPath: String, toPath: String) = cd { mv(project, fromPath, toPath) }
 fun GitPlatformTest.mv(fromPath: String, toPath: String) = mv(project, fromPath, toPath)
+fun GitPlatformTestContext.mv(fromPath: String, toPath: String) = mv(project, fromPath, toPath)
 private fun mv(project: Project, fromPath: String, toPath: String) = git(project, "mv $fromPath $toPath")
 
 fun GitRepository.mv(from: File, to: File) {

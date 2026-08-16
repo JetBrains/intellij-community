@@ -1,49 +1,40 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
-import com.intellij.openapi.vcs.Executor.cd
-import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.changes.patch.BlobIndexUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
-import git4idea.repo.GitObjectFormat
-import git4idea.repo.GitRepository
-import git4idea.test.GitSingleRepoTest
+import com.intellij.testFramework.HeavyPlatformTestCase.setFileText
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.vcs.test.updateChangeListManager
+import git4idea.test.GitSingleRepoContext
 import git4idea.test.add
 import git4idea.test.addCommit
 import git4idea.test.createFileStructure
-import git4idea.test.createRepository
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 
-class GitSha1Test : GitSingleRepoTest() {
-  override fun createRepository(): GitRepository {
-    return createRepository(project, projectNioRoot, makeInitialCommit(), GitObjectFormat.SHA1)
+private const val A_FILE = "a.txt"
+
+@TestApplication
+internal class GitSha1Test {
+  private val contextFixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = contextFixture.get()
+
+  @BeforeEach
+  fun setUp() {
+    with(context) {
+      createFileStructure(projectRoot, A_FILE)
+      addCommit("initial")
+    }
   }
 
-  private var A_FILE = "a.txt"
-
-  @Throws(Exception::class)
-  override fun setUp() {
-    super.setUp()
-    createFileStructure(projectRoot, A_FILE)
-    addCommit("initial")
-  }
-
-  fun `test sha for add`() {
+  @Test
+  fun `test sha for add`(): Unit = with(context) {
     cd(projectPath)
     val newFile = "newFile.txt"
     val path = Paths.get(projectPath, newFile)
@@ -54,7 +45,8 @@ class GitSha1Test : GitSingleRepoTest() {
     checkSha1ForSingleChange(BlobIndexUtil.NOT_COMMITTED_HASH, git("hash-object $newFile"))
   }
 
-  fun `test sha for del`() {
+  @Test
+  fun `test sha for del`(): Unit = with(context) {
     cd(projectPath)
     val path = Paths.get(projectPath, A_FILE)
     val expectedBefore = git("hash-object $path")
@@ -62,10 +54,11 @@ class GitSha1Test : GitSingleRepoTest() {
     checkSha1ForSingleChange(expectedBefore, BlobIndexUtil.NOT_COMMITTED_HASH)
   }
 
-  fun `test sha for modified`() {
+  @Test
+  fun `test sha for modified`(): Unit = with(context) {
     cd(projectPath)
     val path = Paths.get(projectPath, A_FILE)
-    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(path.toFile())!!
+    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
     val expectedBefore = git("hash-object $path")
     setFileText(virtualFile, "echo content\n with line separator")
 
@@ -73,13 +66,12 @@ class GitSha1Test : GitSingleRepoTest() {
     checkSha1ForSingleChange(expectedBefore, git("hash-object $path"))
   }
 
-  private fun checkSha1ForSingleChange(expectedBefore: String?, expectedAfter: String?) {
+  private fun GitSingleRepoContext.checkSha1ForSingleChange(expectedBefore: String?, expectedAfter: String?) {
     updateChangeListManager()
     val changes = changeListManager.allChanges
-    assertTrue(changes.size == 1)
+    assertThat(changes).hasSize(1)
     val beforeAfterSha1 = BlobIndexUtil.getBeforeAfterSha1(changes.first())
-    assertEquals(expectedBefore, beforeAfterSha1.first)
-    assertEquals(expectedAfter, beforeAfterSha1.second)
+    assertThat(beforeAfterSha1.first).isEqualTo(expectedBefore)
+    assertThat(beforeAfterSha1.second).isEqualTo(expectedAfter)
   }
 }
-

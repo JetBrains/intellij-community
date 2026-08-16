@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.Executor
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
-import com.intellij.util.Function
 import com.intellij.vcs.log.TimedVcsCommit
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsFullCommitDetails
@@ -28,15 +28,17 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromBranch
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromPattern
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRange
+import com.intellij.vcs.test.refresh
 import git4idea.config.GitVersion
 import git4idea.repo.GitObjectFormat
 import git4idea.repo.GitRepositoryTagsHolderImpl
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
 import git4idea.test.USER_EMAIL
 import git4idea.test.USER_NAME
 import git4idea.test.addCommit
 import git4idea.test.createRepository
-import git4idea.test.findGitLogProvider
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.last
 import git4idea.test.log
 import git4idea.test.modify
@@ -44,77 +46,96 @@ import git4idea.test.readAllRefs
 import git4idea.test.setupDefaultUsername
 import git4idea.test.setupUsername
 import git4idea.test.tac
-import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
-import org.junit.Assume
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.Test
 
-class GitReadRecentCommitsTest : GitReadRecentCommitsTestBase(collectRefsFromLog = true)
+/**
+ * Prior to 1.8.0 --regexp-ignore-case does not work when --fixed-strings parameter is specified,
+ * so it is not possible to filter case-insensitively without regex.
+ */
+private val FIXED_STRINGS_WORKS_WITH_IGNORE_CASE = GitVersion(1, 8, 0, 0)
 
-class GitExperimentalReadRecentCommitsTestBase : GitReadRecentCommitsTestBase(collectRefsFromLog = false)
+private const val EXPERIMENTAL_REFS_COLLECTION = "git.log.provider.experimental.refs.collection"
 
-class GitLogProviderTest : GitLogProviderTestBase() {
-  fun test_all_log_with_tagged_branch() {
+@TestApplication
+@RegistryKey(EXPERIMENTAL_REFS_COLLECTION, "false")
+internal class GitReadRecentCommitsTest : GitReadRecentCommitsTestBase()
+
+@TestApplication
+@RegistryKey(EXPERIMENTAL_REFS_COLLECTION, "true")
+internal class GitExperimentalReadRecentCommitsTest : GitReadRecentCommitsTestBase()
+
+@TestApplication
+internal class GitLogProviderTest : GitLogProviderTestBase() {
+  @Test
+  fun `test all log with tagged branch`(): Unit = with(context) {
     prepareSomeHistory()
     createTaggedBranch()
     val expectedLog = readCommitsFromGit()
-    val collector: MutableList<TimedVcsCommit?> = ArrayList<TimedVcsCommit?>()
-    myLogProvider.readAllHashes(projectRoot, CollectConsumer<TimedVcsCommit?>(collector))
-    assertOrderedEquals<TimedVcsCommit?>(expectedLog, collector)
+    val collector = mutableListOf<TimedVcsCommit>()
+    logProvider.readAllHashes(projectRoot, CollectConsumer(collector))
+    assertThat(collector).containsExactlyElementsOf(expectedLog)
   }
 
-  fun test_full_hash_check_sha1_repository() {
-    val sha1Repo = createRepository(project, testNioRoot.resolve("sha1-repo"), makeInitialCommit = true, objectFormat = GitObjectFormat.SHA1)
+  @Test
+  fun `test full hash check sha1 repository`(): Unit = with(context) {
+    val sha1Repo = createRepository(project, testNioRoot.resolve("sha1-repo"), makeInitialCommit = true,
+                                    objectFormat = GitObjectFormat.SHA1)
     val headHash = last()
-    assertEquals(GitObjectFormat.SHA1.hexSize, headHash.length)
+    assertThat(headHash).hasSize(GitObjectFormat.SHA1.hexSize)
 
-    assertTrue(myLogProvider.isFullHash(sha1Repo.root, headHash))
+    assertThat(logProvider.isFullHash(sha1Repo.root, headHash)).isTrue()
 
     val hashPrefix = headHash.take(7)
-    assertFalse(myLogProvider.isFullHash(sha1Repo.root, hashPrefix))
+    assertThat(logProvider.isFullHash(sha1Repo.root, hashPrefix)).isFalse()
 
     val notHex = "z".repeat(GitObjectFormat.SHA1.hexSize)
-    assertFalse(myLogProvider.isFullHash(sha1Repo.root, notHex))
+    assertThat(logProvider.isFullHash(sha1Repo.root, notHex)).isFalse()
   }
 
-  fun test_full_hash_check_sha256_repository() {
+  @Test
+  fun `test full hash check sha256 repository`(): Unit = with(context) {
     val sha256Repo = createRepository(project, testNioRoot.resolve("sha256-repo"), makeInitialCommit = true,
                                       objectFormat = GitObjectFormat.SHA256)
     val headHash = last()
-    assertEquals(GitObjectFormat.SHA256.hexSize, headHash.length)
+    assertThat(headHash).hasSize(GitObjectFormat.SHA256.hexSize)
 
-    assertTrue(myLogProvider.isFullHash(sha256Repo.root, headHash))
+    assertThat(logProvider.isFullHash(sha256Repo.root, headHash)).isTrue()
 
     val hashPrefix = headHash.take(40)
-    assertFalse(myLogProvider.isFullHash(sha256Repo.root, hashPrefix))
+    assertThat(logProvider.isFullHash(sha256Repo.root, hashPrefix)).isFalse()
   }
 
-  fun test_get_current_user() {
-    val user = myLogProvider.getCurrentUser(projectRoot)
-    assertNotNull("User is not defined", user)
-    val expected: VcsUser = defaultUser
-    TestCase.assertEquals("User name is incorrect", expected.getName(), user!!.getName())
-    TestCase.assertEquals("User email is incorrect", expected.getEmail(), user.getEmail())
+  @Test
+  fun `test get current user`(): Unit = with(context) {
+    val user = logProvider.getCurrentUser(projectRoot)
+    assertThat(user).describedAs("User is not defined").isNotNull()
+    assertThat(user!!.name).describedAs("User name is incorrect").isEqualTo(defaultUser.name)
+    assertThat(user.email).describedAs("User email is incorrect").isEqualTo(defaultUser.email)
   }
 
-  fun test_filter_by_branch() {
-    val hashes = generateHistoryForFilters(true, false)
+  @Test
+  fun `test filter by branch`(): Unit = with(context) {
+    val hashes = generateHistoryForFilters(takeAllUsers = true, allBranches = false)
     val branchFilter = fromBranch("feature")
     repo.update()
-    val actualHashes = getFilteredHashes(collection(branchFilter))
-    assertEquals(hashes, actualHashes)
+    assertThat(getFilteredHashes(collection(branchFilter))).isEqualTo(hashes)
   }
 
-  fun test_filter_by_branch_and_user() {
-    val hashes = generateHistoryForFilters(false, false)
+  @Test
+  fun `test filter by branch and user`(): Unit = with(context) {
+    val hashes = generateHistoryForFilters(takeAllUsers = false, allBranches = false)
     val branchFilter = fromBranch("feature")
     val user = VcsUserUtil.createUser(USER_NAME, USER_EMAIL)
     val userFilter = VcsLogFilterObject.fromUser(user, setOf(user))
     repo.update()
-    val actualHashes = getFilteredHashes(collection(branchFilter, userFilter))
-    assertEquals(hashes, actualHashes)
+    assertThat(getFilteredHashes(collection(branchFilter, userFilter))).isEqualTo(hashes)
   }
 
-  fun test_by_range() {
+  @Test
+  fun `test by range`(): Unit = with(context) {
     repo.tac("a.txt")
     val mergeBase = repo.tac("b.txt")
     val master1 = repo.tac("m1.txt")
@@ -124,11 +145,11 @@ class GitLogProviderTest : GitLogProviderTestBase() {
     repo.update()
 
     val rangeFilter = fromRange("feature", "master")
-    val actualHashes = getFilteredHashes(collection(rangeFilter))
-    assertOrderedEquals(actualHashes, listOf(master2, master1))
+    assertThat(getFilteredHashes(collection(rangeFilter))).containsExactly(master2, master1)
   }
 
-  fun test_by_range_and_branch() {
+  @Test
+  fun `test by range and branch`(): Unit = with(context) {
     repo.tac("a.txt")
     git("branch old")
     val mergeBase = repo.tac("b.txt")
@@ -140,150 +161,131 @@ class GitLogProviderTest : GitLogProviderTestBase() {
 
     val rangeFilter = fromRange("feature", "master")
     val branchFilter = fromBranch("old")
-    val actualHashes = getFilteredHashes(collection(rangeFilter, branchFilter))
-    val expected: MutableList<String?> = ArrayList()
-    expected.add(master2)
-    expected.add(master1)
+    val expected = mutableListOf(master2, master1)
     expected.addAll(StringUtil.splitByLines(repo.log("--pretty=%H old")))
-    assertSameElements(actualHashes, expected) // NB: not possible to get ordered results here
+    // NB: not possible to get ordered results here
+    assertThat(getFilteredHashes(collection(rangeFilter, branchFilter))).containsExactlyInAnyOrderElementsOf(expected)
   }
 
-  /*
- 3 cases: no regexp + match case, regex + match case, regex + no matching case
-  */
-  fun test_filter_by_text() {
+  /**
+   * 3 cases: no regexp + match case, regex + match case, regex + no matching case
+   */
+  @Test
+  fun `test filter by text`(): Unit = with(context) {
     val initial = repo.last()
 
     val fileName = "f"
 
-    Executor.touch(fileName, "content" + Math.random())
+    touch(fileName, "content" + Math.random())
     val smallBrackets = repo.addCommit("[git] $fileName")
-    Executor.echo(fileName, "content" + Math.random())
+    echo(fileName, "content" + Math.random())
     val bigBrackets = repo.addCommit("[GIT] $fileName")
-    Executor.echo(fileName, "content" + Math.random())
+    echo(fileName, "content" + Math.random())
     val smallNoBrackets = repo.addCommit("git $fileName")
-    Executor.echo(fileName, "content" + Math.random())
+    echo(fileName, "content" + Math.random())
     val bigNoBrackets = repo.addCommit("GIT $fileName")
 
     val text = "[git]"
-    assertEquals(
-      mutableListOf(smallBrackets),
-      getFilteredHashes(collection(fromPattern(text, false, true)))
-    )
-    assertEquals(
-      listOf(bigNoBrackets, smallNoBrackets, bigBrackets, smallBrackets, initial),
-      getFilteredHashes(collection(fromPattern(text, true, false)))
-    )
-    assertEquals(
-      listOf(smallNoBrackets, smallBrackets, initial),
-      getFilteredHashes(collection(fromPattern(text, true, true)))
-    )
+    assertThat(getFilteredHashes(collection(fromPattern(text, false, true))))
+      .isEqualTo(listOf(smallBrackets))
+    assertThat(getFilteredHashes(collection(fromPattern(text, true, false))))
+      .isEqualTo(listOf(bigNoBrackets, smallNoBrackets, bigBrackets, smallBrackets, initial))
+    assertThat(getFilteredHashes(collection(fromPattern(text, true, true))))
+      .isEqualTo(listOf(smallNoBrackets, smallBrackets, initial))
   }
 
-  fun test_filter_by_text_no_regex() {
+  @Test
+  fun `test filter by text no regex`(): Unit = with(context) {
     assumeFixedStringsWorks()
 
     val fileName = "f"
 
-    Executor.touch(fileName, "content" + Math.random())
+    touch(fileName, "content" + Math.random())
     val smallBrackets = repo.addCommit("[git] $fileName")
-    Executor.echo(fileName, "content" + Math.random())
+    echo(fileName, "content" + Math.random())
     val bigBrackets = repo.addCommit("[GIT] $fileName")
-    Executor.echo(fileName, "content" + Math.random())
+    echo(fileName, "content" + Math.random())
 
-    assertEquals(
-      listOf(bigBrackets, smallBrackets),
-      getFilteredHashes(collection(fromPattern("[git]", false, false)))
-    )
+    assertThat(getFilteredHashes(collection(fromPattern("[git]", false, false))))
+      .isEqualTo(listOf(bigBrackets, smallBrackets))
   }
 
-  private fun assumeFixedStringsWorks() {
-    Assume.assumeTrue(
-      "Not testing: --regexp-ignore-case does not affect grep" +
-      " or author filter when --fixed-strings parameter is specified prior to 1.8.0",
-      vcs.version.isLaterOrEqual(FIXED_STRINGS_WORKS_WITH_IGNORE_CASE)
-    )
+  @Test
+  fun `test filter by text with regex and user`(): Unit = with(context) {
+    checkFilterByTextAndUser(regexp = true)
   }
 
-  private fun filter_by_text_and_user(regexp: Boolean) {
-    val hashes = generateHistoryForFilters(false, true)
-    val user = VcsUserUtil.createUser(USER_NAME, USER_EMAIL)
-    val userFilter = VcsLogFilterObject.fromUser(user)
-    val textFilter = fromPattern(if (regexp) ".*" else "", regexp, false)
-    assertEquals(hashes, getFilteredHashes(collection(userFilter, textFilter)))
-  }
-
-  fun test_filter_by_text_with_regex_and_user() {
-    filter_by_text_and_user(true)
-  }
-
-  fun test_filter_by_simple_text_and_user() {
+  @Test
+  fun `test filter by simple text and user`(): Unit = with(context) {
     assumeFixedStringsWorks()
-    filter_by_text_and_user(false)
+    checkFilterByTextAndUser(regexp = false)
   }
 
-  fun test_short_details() {
+  @Test
+  fun `test short details`(): Unit = with(context) {
     prepareLongHistory()
     val log = readCommitsFromGit()
 
     val hashes = mutableListOf<String>()
-    myLogProvider.readAllHashes(
-      projectRoot,
-      Consumer { timedVcsCommit: TimedVcsCommit? -> hashes.add(timedVcsCommit!!.getId().asString()) })
+    logProvider.readAllHashes(projectRoot, Consumer { hashes.add(it.id.asString()) })
 
+    val collectConsumer = CollectConsumer<VcsShortCommitDetails>()
+    logProvider.readMetadata(projectRoot, hashes, collectConsumer)
 
-    val collectConsumer = CollectConsumer<VcsShortCommitDetails?>()
-    myLogProvider.readMetadata(projectRoot, hashes, collectConsumer)
-
-    assertOrderedEquals(
-      collectConsumer.getResult().map { shortDetailsToString.`fun`(it) },
-      log.map { shortDetailsToString.`fun`(it) }
-    )
+    assertThat(collectConsumer.result.map { it.shortPresentation() })
+      .containsExactlyElementsOf(log.map { it.shortPresentation() })
   }
 
-  fun test_full_details() {
+  @Test
+  fun `test full details`(): Unit = with(context) {
     prepareLongHistory()
     val log = readCommitsFromGit()
 
-    val hashes: MutableList<String> = ArrayList()
-    myLogProvider.readAllHashes(
-      projectRoot,
-      Consumer { timedVcsCommit: TimedVcsCommit? -> hashes.add(timedVcsCommit!!.getId().asString()) })
+    val hashes = mutableListOf<String>()
+    logProvider.readAllHashes(projectRoot, Consumer { hashes.add(it.id.asString()) })
 
-    val result: MutableList<VcsFullCommitDetails> = ArrayList()
-    myLogProvider.readFullDetails(projectRoot, hashes, Consumer { e: VcsFullCommitDetails? -> e?.let { result.add(it) } })
+    val result = mutableListOf<VcsFullCommitDetails>()
+    logProvider.readFullDetails(projectRoot, hashes, Consumer { result.add(it) })
 
     // we do not check for changes here
-    val shortDetailsToString = shortDetailsToString
-    val metadataToString =
-      Function { details: VcsCommitMetadata? -> shortDetailsToString.`fun`(details) + "\n" + details!!.getFullMessage() }
-    assertOrderedEquals(
-      result.map { metadataToString.`fun`(it) },
-      log.map { metadataToString.`fun`(it) }
-    )
+    assertThat(result.map { it.metadataPresentation() })
+      .containsExactlyElementsOf(log.map { it.metadataPresentation() })
+  }
+
+  private fun GitSingleRepoContext.assumeFixedStringsWorks() {
+    assumeTrue(vcs.version.isLaterOrEqual(FIXED_STRINGS_WORKS_WITH_IGNORE_CASE)) {
+      "Not testing: --regexp-ignore-case does not affect grep" +
+      " or author filter when --fixed-strings parameter is specified prior to 1.8.0"
+    }
+  }
+
+  private fun GitSingleRepoContext.checkFilterByTextAndUser(regexp: Boolean) {
+    val hashes = generateHistoryForFilters(takeAllUsers = false, allBranches = true)
+    val user = VcsUserUtil.createUser(USER_NAME, USER_EMAIL)
+    val userFilter = VcsLogFilterObject.fromUser(user)
+    val textFilter = fromPattern(if (regexp) ".*" else "", regexp, false)
+    assertThat(getFilteredHashes(collection(userFilter, textFilter))).isEqualTo(hashes)
   }
 
   /**
    * Generates some history with two branches: master and feature, and made by two users.
-   * Returns hashes of this history filtered by the given parameters:
+   * Returns hashes of this history filtered by the given parameters.
    *
    * @param takeAllUsers if true, don't filter by users, otherwise filter by default user.
    */
-  private fun generateHistoryForFilters(takeAllUsers: Boolean, allBranches: Boolean): MutableList<String?> {
-    val hashes: MutableList<String?> = ArrayList()
+  private fun GitSingleRepoContext.generateHistoryForFilters(takeAllUsers: Boolean, allBranches: Boolean): List<String> {
+    val hashes = mutableListOf<String>()
     hashes.add(repo.last())
 
-    setupUsername(myProject, "bob.smith", "bob.smith@example.com")
+    setupUsername(project, "bob.smith", "bob.smith@example.com")
     if (takeAllUsers) {
-      val commitByBob = repo.tac("file.txt")
-      hashes.add(commitByBob)
+      hashes.add(repo.tac("file.txt"))
     }
-    setupDefaultUsername(myProject)
+    setupDefaultUsername(project)
 
     hashes.add(repo.tac("file1.txt"))
     git("checkout -b feature")
-    val commitOnlyInFeature = repo.tac("file2.txt")
-    hashes.add(commitOnlyInFeature)
+    hashes.add(repo.tac("file2.txt"))
     git("checkout master")
     val commitOnlyInMaster = repo.tac("master.txt")
     if (allBranches) hashes.add(commitOnlyInMaster)
@@ -293,12 +295,12 @@ class GitLogProviderTest : GitLogProviderTestBase() {
     return hashes
   }
 
-  private fun getFilteredHashes(filters: VcsLogFilterCollection): List<String> {
-    val commits = myLogProvider.getCommitsMatchingFilter(projectRoot, filters, PermanentGraph.Options.Default, -1)
-    return commits.map { commit: TimedVcsCommit -> commit.getId().asString() }
+  private fun GitSingleRepoContext.getFilteredHashes(filters: VcsLogFilterCollection): List<String> {
+    val commits = logProvider.getCommitsMatchingFilter(projectRoot, filters, PermanentGraph.Options.Default, -1)
+    return commits.map { it.id.asString() }
   }
 
-  private fun prepareLongHistory() {
+  private fun GitSingleRepoContext.prepareLongHistory() {
     for (i in 0..<15) {
       val file = "a" + (i % 10) + ".txt"
       if (i < 10) {
@@ -309,111 +311,102 @@ class GitLogProviderTest : GitLogProviderTestBase() {
       }
     }
   }
-
 }
 
-abstract class GitReadRecentCommitsTestBase(val collectRefsFromLog: Boolean) : GitLogProviderTestBase() {
-  override fun setUp() {
-    super.setUp()
-    setRegistryPropertyForTest("git.log.provider.experimental.refs.collection", (!collectRefsFromLog).toString())
-  }
-
-  fun test_init_with_tagged_branch() {
+internal abstract class GitReadRecentCommitsTestBase : GitLogProviderTestBase() {
+  @Test
+  fun `test init with tagged branch`(): Unit = with(context) {
     prepareSomeHistory()
     val expectedLogWithoutTaggedBranch = readCommitsFromGit()
     createTaggedBranch()
 
     val block = readRecentCommits(SimpleLogProviderRequirements(1000))
-    assertOrderedEquals(block.commits, expectedLogWithoutTaggedBranch)
+    assertThat(block.commits).containsExactlyElementsOf(expectedLogWithoutTaggedBranch)
   }
 
-  fun test_refresh_with_new_tagged_branch() {
+  @Test
+  fun `test refresh with new tagged branch`(): Unit = with(context) {
     prepareSomeHistory()
-    val prevRefs = readAllRefs(projectRoot, myObjectsFactory)
+    val prevRefs = readAllRefs(projectRoot, objectsFactory)
     createTaggedBranch()
 
     val expectedLog = readCommitsFromGit()
     val block = readRecentCommits(RequirementsImpl(1000, true, TestVcsRefsSequences(prevRefs)))
-    assertSameElements(block.commits, expectedLog)
+    assertThat(block.commits).containsExactlyInAnyOrderElementsOf(expectedLog)
   }
 
-  fun test_refresh_when_new_tag_moved() {
+  @Test
+  fun `test refresh when new tag moved`(): Unit = with(context) {
     prepareSomeHistory()
-    val prevRefs = readAllRefs(projectRoot, myObjectsFactory)
+    val prevRefs = readAllRefs(projectRoot, objectsFactory)
     git("tag -f ATAG")
 
     val expectedLog = readCommitsFromGit()
-    val refs = readAllRefs(projectRoot, myObjectsFactory)
+    val refs = readAllRefs(projectRoot, objectsFactory)
     val block = readRecentCommits(RequirementsImpl(1000, true, TestVcsRefsSequences(prevRefs)))
-    assertSameElements(block.commits, expectedLog)
-    assertSameElements(block.refsIterable.toList(), refs)
+    assertThat(block.commits).containsExactlyInAnyOrderElementsOf(expectedLog)
+    assertThat(block.refsIterable.toList()).containsExactlyInAnyOrderElementsOf(refs)
   }
 
-  fun test_new_tag_on_old_commit() {
+  @Test
+  fun `test new tag on old commit`(): Unit = with(context) {
     prepareSomeHistory()
-    val prevRefs = readAllRefs(projectRoot, myObjectsFactory)
+    val prevRefs = readAllRefs(projectRoot, objectsFactory)
     val commits = readCommitsFromGit()
     val firstCommit = commits[commits.size - 1].id.asString()
     git("tag NEW_TAG $firstCommit")
 
-    val refs = readAllRefs(projectRoot, myObjectsFactory)
+    val refs = readAllRefs(projectRoot, objectsFactory)
     val block = readRecentCommits(RequirementsImpl(1000, true, TestVcsRefsSequences(prevRefs)))
-    assertSameElements(block.refsIterable.toList(), refs)
+    assertThat(block.refsIterable.toList()).containsExactlyInAnyOrderElementsOf(refs)
   }
 
-  fun test_dont_report_origin_HEAD() {
+  @Test
+  fun `test dont report origin HEAD`(): Unit = with(context) {
     prepareSomeHistory()
     git("update-ref refs/remotes/origin/HEAD master")
 
     val block = readRecentCommits(SimpleLogProviderRequirements(1000))
-    assertFalse(
-      "origin/HEAD should be ignored",
-      block.refsIterable.toList().any { ref -> ref.getName() == "origin/HEAD" }
-    )
+    assertThat(block.refsIterable.toList())
+      .describedAs("origin/HEAD should be ignored")
+      .noneMatch { it.name == "origin/HEAD" }
   }
 
-  fun test_support_equally_named_branch_and_tag() {
+  @Test
+  fun `test support equally named branch and tag`(): Unit = with(context) {
     prepareSomeHistory()
     git("branch build")
     git("tag build")
 
     val data = readRecentCommits(RequirementsImpl(1000, true, TestVcsRefsSequences(emptyList())))
     val expectedLog = readCommitsFromGit()
-    assertOrderedEquals(data.commits, expectedLog)
-    assertTrue(
-      data.refsIterable.any { ref -> ref.getName() == "build" && ref.getType() === GitRefManager.LOCAL_BRANCH }
-    )
-    assertTrue(
-      data.refsIterable.any { ref -> ref.getName() == "build" && ref.getType() === GitRefManager.TAG }
-    )
+    assertThat(data.commits).containsExactlyElementsOf(expectedLog)
+    assertThat(data.refsIterable).anyMatch { it.name == "build" && it.type === GitRefManager.LOCAL_BRANCH }
+    assertThat(data.refsIterable).anyMatch { it.name == "build" && it.type === GitRefManager.TAG }
   }
 
-  private fun readRecentCommits(requirements: VcsLogProvider.Requirements): DetailedLogData {
+  private fun GitSingleRepoContext.readRecentCommits(requirements: VcsLogProvider.Requirements): DetailedLogData {
     repo.update()
     (repo.tagsHolder as? GitRepositoryTagsHolderImpl)?.updateForTests()
     return runBlocking {
-      val refsLoadingPolicy = requirements.toRefsLoadingPolicy()
-      myLogProvider.readRecentCommits(projectRoot, requirements, refsLoadingPolicy)
+      logProvider.readRecentCommits(projectRoot, requirements, requirements.toRefsLoadingPolicy())
     }
   }
 }
 
+internal abstract class GitLogProviderTestBase {
+  private val contextFixture = gitSingleRepoContextFixture()
+  protected val context: GitSingleRepoContext get() = contextFixture.get()
 
-abstract class GitLogProviderTestBase : GitSingleRepoTest() {
-  protected lateinit var myLogProvider: GitLogProvider
-  protected lateinit var myObjectsFactory: VcsLogObjectsFactory
+  protected val GitSingleRepoContext.objectsFactory: VcsLogObjectsFactory
+    get() = project.getService(VcsLogObjectsFactory::class.java)
 
-  public override fun setUp() {
-    super.setUp()
-    myLogProvider = findGitLogProvider(myProject)
-    myObjectsFactory = myProject.getService(VcsLogObjectsFactory::class.java)
-  }
+  protected val defaultUser: VcsUser = VcsUserUtil.createUser(USER_NAME, USER_EMAIL)
 
-  protected fun readCommitsFromGit(): List<VcsCommitMetadataImpl> {
+  protected fun GitSingleRepoContext.readCommitsFromGit(): List<VcsCommitMetadataImpl> {
     val output = git("log --all --date-order --full-history --sparse --pretty='%H|%P|%ct|%s|%B'")
-    val defaultUser: VcsUser = defaultUser
     return StringUtil.splitByLines(output).map { record ->
-      val items = ArrayUtilRt.toStringArray(StringUtil.split(record!!, "|", true, false))
+      val items = ArrayUtilRt.toStringArray(StringUtil.split(record, "|", true, false))
       val time = items[2].toLong() * 1000
       VcsCommitMetadataImpl(
         HashImpl.build(items[0]),
@@ -429,13 +422,13 @@ abstract class GitLogProviderTestBase : GitSingleRepoTest() {
     }
   }
 
-  protected fun prepareSomeHistory() {
+  protected fun GitSingleRepoContext.prepareSomeHistory() {
     repo.tac("a.txt")
     git("tag ATAG")
     repo.tac("b.txt")
   }
 
-  protected fun createTaggedBranch() {
+  protected fun GitSingleRepoContext.createTaggedBranch() {
     val hash = repo.last()
     repo.tac("c.txt")
     repo.tac("d.txt")
@@ -444,28 +437,8 @@ abstract class GitLogProviderTestBase : GitSingleRepoTest() {
     git("reset --hard $hash")
   }
 
-  companion object {
-    /**
-     * Prior to 1.8.0 --regexp-ignore-case does not work when --fixed-strings parameter is specified, so can not filter case-insensitively without regex.
-     */
-    @JvmStatic
-    protected val FIXED_STRINGS_WORKS_WITH_IGNORE_CASE = GitVersion(1, 8, 0, 0)
+  protected fun VcsShortCommitDetails.shortPresentation(): String =
+    "${id.toShortString()}\n$authorTime\n$author\n$commitTime\n$committer\n$subject"
 
-    @JvmStatic
-    protected val shortDetailsToString: Function<VcsShortCommitDetails?, String?>
-      get() = Function { details: VcsShortCommitDetails? ->
-        var result = ""
-        result += details!!.getId().toShortString() + "\n"
-        result += details.getAuthorTime().toString() + "\n"
-        result += details.getAuthor().toString() + "\n"
-        result += details.getCommitTime().toString() + "\n"
-        result += details.getCommitter().toString() + "\n"
-        result += details.getSubject()
-        result
-      }
-
-    @JvmStatic
-    protected val defaultUser: VcsUser
-      get() = VcsUserUtil.createUser(USER_NAME, USER_EMAIL)
-  }
+  protected fun VcsCommitMetadata.metadataPresentation(): String = "${shortPresentation()}\n$fullMessage"
 }

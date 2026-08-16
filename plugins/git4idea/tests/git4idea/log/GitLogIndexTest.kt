@@ -1,14 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.Executor.append
-import com.intellij.openapi.vcs.Executor.cd
-import com.intellij.openapi.vcs.Executor.child
-import com.intellij.openapi.vcs.Executor.mkdir
-import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -22,55 +17,66 @@ import com.intellij.vcs.log.data.index.setUpIndex
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import com.intellij.vcsUtil.VcsUtil
 import git4idea.cherrypick.GitCherryPicker
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
 import git4idea.test.USER_EMAIL
 import git4idea.test.USER_NAME
 import git4idea.test.addCommit
 import git4idea.test.appendAndCommit
+import git4idea.test.build
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.last
 import git4idea.test.makeCommit
 import git4idea.test.modify
 import git4idea.test.mv
+import git4idea.test.readDetails
 import git4idea.test.runUnderProgress
 import git4idea.test.setupDefaultUsername
 import git4idea.test.setupUsername
 import git4idea.test.tac
-import junit.framework.TestCase
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
+@TestApplication
+internal class GitLogPhmIndexTest : GitLogIndexTest() {
+  override val useSqlite: Boolean get() = false
+}
+
+@TestApplication
+internal class GitLogSqliteIndexTest : GitLogIndexTest() {
+  override val useSqlite: Boolean get() = true
+}
+
+/**
+ * The shared VCS log index test suite, run against both the persistent-hash-map and the SQLite index implementation.
+ */
+internal abstract class GitLogIndexTest {
+  private val contextFixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = contextFixture.get()
+
+  private val disposableFixture = disposableFixture()
+
+  protected abstract val useSqlite: Boolean
+
   private val defaultUser = VcsUserUtil.createUser(USER_NAME, USER_EMAIL)
 
-  private lateinit var disposable: Disposable
   private lateinit var index: VcsLogPersistentIndex
+
   private val dataGetter: IndexDataGetter
     get() = index.dataGetter
   private val storage: VcsLogStorage
     get() = dataGetter.logStorage
 
-  override fun setUp() {
-    super.setUp()
-
-    disposable = Disposer.newDisposable()
-    Disposer.register(testRootDisposable, disposable)
-
-    index = setUpIndex(myProject, repo.root, logProvider, useSqlite, disposable)
-  }
-
-  override fun tearDown() {
-    try {
-      Disposer.dispose(disposable)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
+  @BeforeEach
+  fun setUp() {
+    with(context) {
+      index = setUpIndex(project, repo.root, logProvider, useSqlite, disposableFixture.get())
     }
   }
 
-  fun `test indexed`() {
+  @Test
+  fun `test indexed`(): Unit = with(context) {
     val file = "file.txt"
     tac(file)
     for (i in 0 until 5) {
@@ -78,13 +84,14 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     }
 
     val commits = indexAll()
-    assertTrue(index.isIndexed(repo.root))
+    assertThat(index.isIndexed(repo.root)).isTrue()
     for (commit in commits) {
-      assertTrue(index.isIndexed(commit))
+      assertThat(index.isIndexed(commit)).isTrue()
     }
   }
 
-  fun `test forward index`() {
+  @Test
+  fun `test forward index`(): Unit = with(context) {
     val commitHash = tac("file.txt")
 
     indexAll()
@@ -94,10 +101,11 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     val expectedMetadata = collector.result.first()
     val actualMetadata = IndexedDetails(dataGetter, storage, getCommitIndex(commitHash), 0L)
 
-    TestCase.assertEquals(expectedMetadata.presentation(), actualMetadata.presentation())
+    assertThat(actualMetadata.presentation()).isEqualTo(expectedMetadata.presentation())
   }
 
-  fun `test forward index with batch api`() {
+  @Test
+  fun `test forward index with batch api`(): Unit = with(context) {
     val file = "file.txt"
     tac(file)
     for (i in 0 until 5) {
@@ -118,11 +126,11 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
                                                        project.getService(VcsLogObjectsFactory::class.java))
     val actualPresentation = commits.map { actualMetadata[it] }.joinToString("\n\n") { it?.presentation() ?: "NOT LOADED" }
 
-
-    TestCase.assertEquals(expectedPresentation, actualPresentation)
+    assertThat(actualPresentation).isEqualTo(expectedPresentation)
   }
 
-  fun `test text filter`() {
+  @Test
+  fun `test text filter`(): Unit = with(context) {
     val file = "file.txt"
     touch(file, "content")
     repo.addCommit("some message")
@@ -138,10 +146,11 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPattern(keyword)))
 
-    assertEquals(expected, actual)
+    assertThat(actual).isEqualTo(expected)
   }
 
-  fun `test regexp text filter`() {
+  @Test
+  fun `test regexp text filter`(): Unit = with(context) {
     val expected = mutableSetOf<Int>()
     val pattern = "[A-Z]+\\-\\d+"
 
@@ -165,10 +174,10 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPattern(pattern, isRegexpAllowed = true)))
 
-    assertEquals(expected, actual)
+    assertThat(actual).isEqualTo(expected)
   }
 
-  private fun `test text filter with multiple patterns`(keyword1: String, keyword2: String) {
+  private fun checkTextFilterWithMultiplePatterns(keyword1: String, keyword2: String): Unit = with(context) {
     val expected = mutableSetOf<Int>()
 
     val file = "file.txt"
@@ -188,22 +197,26 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPatternsList(listOf(keyword1, keyword2))))
 
-    assertEquals(expected.sorted(), actual.sorted())
+    assertThat(actual.sorted()).isEqualTo(expected.sorted())
   }
 
+  @Test
   fun `test text filter with multiple patterns`() {
-    `test text filter with multiple patterns`("keyword1", "keyword2")
+    checkTextFilterWithMultiplePatterns("keyword1", "keyword2")
   }
 
+  @Test
   fun `test text filter with short and long patterns`() {
-    `test text filter with multiple patterns`("k1", "keyword2")
+    checkTextFilterWithMultiplePatterns("k1", "keyword2")
   }
 
+  @Test
   fun `test text filter with short patterns`() {
-    `test text filter with multiple patterns`("k1", "k2")
+    checkTextFilterWithMultiplePatterns("k1", "k2")
   }
 
-  fun `test author filter`() {
+  @Test
+  fun `test author filter`(): Unit = with(context) {
     val file = "file.txt"
     touch(file, "content")
     repo.addCommit("some message")
@@ -218,10 +231,11 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromUser(author, setOf(author, defaultUser))))
 
-    assertEquals(expected, actual)
+    assertThat(actual).isEqualTo(expected)
   }
 
-  fun `test author filter with different committer`() {
+  @Test
+  fun `test author filter with different committer`(): Unit = with(context) {
     val author = VcsUserUtil.createUser("Name", "name@server.com")
     val expected = mutableSetOf<Int>()
     var hashToPick = ""
@@ -250,10 +264,11 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromUser(defaultUser, setOf(author, defaultUser))))
 
-    TestCase.assertEquals(expected, actual)
+    assertThat(actual).isEqualTo(expected)
   }
 
-  fun `test text and author filter`() {
+  @Test
+  fun `test text and author filter`(): Unit = with(context) {
     val author = VcsUserUtil.createUser("Name", "name@server.com")
     val keyword = "keyword"
     val expected = mutableSetOf<Int>()
@@ -280,10 +295,11 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromUser(author, setOf(author, defaultUser)),
                                           VcsLogFilterObject.fromPattern(keyword)))
 
-    TestCase.assertEquals(expected, actual)
+    assertThat(actual).isEqualTo(expected)
   }
 
-  fun `test file history`() {
+  @Test
+  fun `test file history`(): Unit = with(context) {
     val expectedHistory = mutableSetOf<Int>()
 
     val oldFile = "oldFile.txt"
@@ -304,11 +320,12 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     val newHistory = dataGetter.filter(listOf(createPathFilter(newFile)))
     val oldHistory = dataGetter.filter(listOf(createPathFilter(oldFile)))
 
-    assertEquals(expectedHistory, newHistory)
-    assertEquals(expectedHistory, oldHistory)
+    assertThat(newHistory).isEqualTo(expectedHistory)
+    assertThat(oldHistory).isEqualTo(expectedHistory)
   }
 
-  fun `test directory history`() {
+  @Test
+  fun `test directory history`(): Unit = with(context) {
     val dir = "dir"
     mkdir(dir)
 
@@ -338,12 +355,13 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     indexAll()
 
     val actualHistory = dataGetter.filter(listOf(createPathFilter(dir)))
-    assertEquals(expectedHistory, actualHistory)
+    assertThat(actualHistory).isEqualTo(expectedHistory)
   }
 
-  private fun createPathFilter(relativePath: String) = VcsLogFilterObject.fromPaths(setOf(VcsUtil.getFilePath(child(relativePath))))
+  private fun GitSingleRepoContext.createPathFilter(relativePath: String) =
+    VcsLogFilterObject.fromPaths(setOf(childPath(relativePath)))
 
-  private fun getCommitIndex(hash: String): Int {
+  private fun GitSingleRepoContext.getCommitIndex(hash: String): Int {
     return storage.getCommitIndex(HashImpl.build(hash), repo.root)
   }
 
@@ -351,13 +369,13 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     return storage.getCommitId(commit)!!.hash.asString()
   }
 
-  private fun indexAll(): Set<Int> {
+  private fun GitSingleRepoContext.indexAll(): Set<Int> {
     val commits = readCommits(repo.root)
     index.index(repo.root, commits)
     return commits
   }
 
-  private fun readCommits(root: VirtualFile): Set<Int> {
+  private fun GitSingleRepoContext.readCommits(root: VirtualFile): Set<Int> {
     val result = mutableSetOf<Int>()
     logProvider.readAllHashes(root, Consumer { commit ->
       result.add(storage.getCommitIndex(commit.id, root))
@@ -373,6 +391,3 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
            "$subject\n$fullMessage"
   }
 }
-
-class GitLogPhmIndexTest : GitLogIndexTest(useSqlite = false)
-class GitLogSqliteIndexTest : GitLogIndexTest(useSqlite = true)

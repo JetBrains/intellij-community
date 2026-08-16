@@ -1,78 +1,82 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.log;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea.log
 
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsLogUserFilterTest;
-import com.intellij.vcs.log.VcsUser;
-import git4idea.config.GitVersion;
-import git4idea.test.GitSingleRepoTest;
-import git4idea.test.GitTestUtil;
-import org.jetbrains.annotations.NotNull;
-import org.junit.Assume;
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.vcs.log.VcsLogUserFilterTest
+import com.intellij.vcs.log.VcsUser
+import git4idea.config.GitVersion
+import git4idea.config.GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.gitSingleRepoContextFixture
+import git4idea.test.makeCommit
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-import static git4idea.config.GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR;
-import static git4idea.test.GitTestUtil.makeCommit;
+/**
+ * `git log` supports multiple "--author=Author Name" arguments
+ */
+private val LOG_AUTHOR_FILTER_SUPPORTS_MULTIPLE_AUTHORS = GitVersion(1, 7, 4, 0)
 
-public class GitUserFilterTest extends GitSingleRepoTest {
-  /**
-   * git log supports multiple "--author=Author Name" arguments
-   */
-  private static final GitVersion LOG_AUTHOR_FILTER_SUPPORTS_MULTIPLE_AUTHORS = new GitVersion(1, 7, 4, 0);
-  private VcsLogUserFilterTest myVcsLogUserFilterTest;
+@TestApplication
+internal class GitUserFilterTest {
+  private val contextFixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = contextFixture.get()
 
-  @Override
-  protected void setUp() {
-    super.setUp();
-    myVcsLogUserFilterTest = new VcsLogUserFilterTest(GitTestUtil.findGitLogProvider(myProject), myProject) {
-      @Override
-      @NotNull
-      protected String commit(@NotNull VcsUser user) {
-        return makeCommit(GitUserFilterTest.this, user, "file.txt");
+  private lateinit var userFilterTest: VcsLogUserFilterTest
+
+  @BeforeEach
+  fun setUp() {
+    with(context) {
+      userFilterTest = object : VcsLogUserFilterTest(logProvider, project) {
+        override fun commit(user: VcsUser): String = makeCommit(user, "file.txt")
       }
-    };
+    }
   }
 
-  public void testFullMatching() throws Exception {
-    myVcsLogUserFilterTest.testFullMatching();
+  @Test
+  fun `test full matching`() {
+    userFilterTest.testFullMatching()
   }
 
-  public void testSynonyms() throws Exception {
-    assumeMultipleUserFiltersWork();
+  @Test
+  fun `test synonyms`() {
+    assumeMultipleUserFiltersWork()
     // commit by user with < or > in username does not contain them somewhy
-    myVcsLogUserFilterTest.testSynonyms(ContainerUtil.newHashSet('<', '>'));
+    userFilterTest.testSynonyms(setOf('<', '>'))
   }
 
-  public void testTurkishLocale() throws Exception {
-    assumeMultipleUserFiltersWork();
-    myVcsLogUserFilterTest.testTurkishLocale();
+  @Test
+  fun `test turkish locale`() {
+    assumeMultipleUserFiltersWork()
+    userFilterTest.testTurkishLocale()
   }
 
-  private void assumeMultipleUserFiltersWork() {
-    Assume.assumeTrue("Not testing: filtering by several users does not work on mac os with git prior to 1.7.4",
-                      LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(vcs.getVersion()) ||
-                      vcs.getVersion().isLaterOrEqual(LOG_AUTHOR_FILTER_SUPPORTS_MULTIPLE_AUTHORS));
+  private fun assumeMultipleUserFiltersWork() {
+    val version = context.vcs.version
+    assumeTrue(LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(version) ||
+               version.isLaterOrEqual(LOG_AUTHOR_FILTER_SUPPORTS_MULTIPLE_AUTHORS)) {
+      "Not testing: filtering by several users does not work on mac os with git prior to 1.7.4"
+    }
   }
 
-  public void testWeirdCharacters() throws Exception {
-    myVcsLogUserFilterTest.testWeirdCharacters();
+  @Test
+  fun `test weird characters`() {
+    userFilterTest.testWeirdCharacters()
   }
 
-  public void testWeirdNames() throws Exception {
-    myVcsLogUserFilterTest.testWeirdNames();
+  @Test
+  fun `test weird names`() {
+    userFilterTest.testWeirdNames()
   }
 
-  public void testJeka() throws Exception {
-    myVcsLogUserFilterTest.testJeka();
+  @Test
+  fun `test jeka`() {
+    userFilterTest.testJeka()
   }
 
-  public void testNameAtSurnameEmails() throws Exception {
-    myVcsLogUserFilterTest.testNameAtSurnameEmails();
-  }
-
-  @Override
-  protected void tearDown() {
-    myVcsLogUserFilterTest = null;
-
-    super.tearDown();
+  @Test
+  fun `test name at surname emails`() {
+    userFilterTest.testNameAtSurnameEmails()
   }
 }
