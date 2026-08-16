@@ -426,7 +426,7 @@ open class DriverImpl(host: JmxHost, override val isRemDevMode: Boolean, overrid
         try {
           invoker.cleanup(runAsSession.id)
         }
-        catch (e: JmxCallException) {
+        catch (_: JmxCallException) {
           System.err.println("Unable to cleanup remote Driver session")
         }
 
