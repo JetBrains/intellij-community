@@ -7,11 +7,11 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.LimitedInputStream
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
@@ -26,16 +26,6 @@ import java.util.concurrent.ConcurrentHashMap
  * `testsuite` or `testsuites` (including prefixed names such as `ns:testsuite`).
  */
 object JUnitReportXmlDetector {
-  const val MAX_PREFIX_BYTES: Int = 256 * 1024
-  private val TESTSUITE = "testsuite".toByteArray(StandardCharsets.US_ASCII)
-  private val TESTSUITES = "testsuites".toByteArray(StandardCharsets.US_ASCII)
-
-  @JvmStatic
-  fun looksLikeJUnitReportFile(file: VirtualFile): Boolean {
-    val project = ProjectLocator.getInstance().guessProjectForFile(file) ?: return false
-    return looksLikeJUnitReportFile(project, file)
-  }
-
   internal fun looksLikeJUnitReportFile(project: Project, file: VirtualFile): Boolean =
     project.service<DetectionCache>().getOrScheduleDetection(file) == true
 
@@ -182,7 +172,7 @@ object JUnitReportXmlDetector {
    */
   @Service(Service.Level.PROJECT)
   private class DetectionCache(private val project: Project) : Disposable {
-    private val detectionCache = ConcurrentHashMap<VirtualFile, CachedDetection>()
+    private val detectionCache = CollectionFactory.createConcurrentWeakMap<VirtualFile, CachedDetection>()
     private val pendingRequests = ConcurrentHashMap.newKeySet<DetectionRequest>()
 
     fun getOrScheduleDetection(file: VirtualFile): Boolean? {

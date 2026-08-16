@@ -21,7 +21,7 @@ class JUnitViewReportAsTestResultsAction : DumbAwareAction() {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    e.presentation.isEnabledAndVisible = JUnitReportXmlDetector.looksLikeJUnitReportFile(file)
+    e.presentation.isEnabledAndVisible = JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
