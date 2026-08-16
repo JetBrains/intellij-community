@@ -122,7 +122,12 @@ suspend fun runModuleSetMain(
         // Default mode: Generate XML files but NOT suppressions.json
         val result = generateXmlImpl(outputProvider, options)
         printGenerationSummary(result.stats, result.errors)
-        if (result.errors.isNotEmpty()) {
+        if (!options.commitChanges) {
+          for (diff in result.diffs) {
+            println("out of sync: ${projectRoot.relativize(diff.path)} (${diff.changeType})")
+          }
+        }
+        if (result.errors.isNotEmpty() || (!options.commitChanges && result.diffs.isNotEmpty())) {
           exitProcess(1)
         }
       }
