@@ -74,6 +74,7 @@ def parse_iml(iml_content, iml_path):
       - has_test_sources: bool
       - module_libraries: list of structs with jar_urls
       - project_library_refs: list of project-level library names referenced by this module
+      - module_deps: names of the modules this one depends on outside test scope
     """
     doc = xml.parse(iml_content, strict = True)
     root = xml.get_document_element(doc)
@@ -83,6 +84,7 @@ def parse_iml(iml_content, iml_path):
     has_test = False
     module_libraries = []
     project_library_refs = []
+    module_deps = []
 
     found_nrm = False
     for component_el in xml.find_elements_by_tag_name(root, "component"):
@@ -127,6 +129,14 @@ def parse_iml(iml_content, iml_path):
                         fail("<orderEntry type='library'> missing required 'level' attribute in %s" % iml_path)
                     if lib_level == "project":
                         project_library_refs.append(lib_name)
+                elif oe_type == "module":
+                    dep_name = xml.get_attribute(child, "module-name")
+                    if not dep_name:
+                        fail("<orderEntry type='module'> missing required 'module-name' attribute in %s" % iml_path)
+
+                    # Test-scope dependencies are not part of what a production layout resolves.
+                    if xml.get_attribute(child, "scope") != "TEST":
+                        module_deps.append(dep_name)
 
     if not found_nrm:
         fail("No <component name='NewModuleRootManager'> found in %s" % iml_path)
@@ -137,6 +147,7 @@ def parse_iml(iml_content, iml_path):
         has_test_sources = has_test,
         module_libraries = module_libraries,
         project_library_refs = project_library_refs,
+        module_deps = module_deps,
     )
 
 def _parse_library_element(lib_el, iml_path):
