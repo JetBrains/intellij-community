@@ -160,6 +160,8 @@ exports_files(
     [
         "intellij.markdown.iml",
         "resources/META-INF/plugin.xml",
+        "resources/colorSchemes/MarkdownDarcula.xml",
+        "resources/colorSchemes/MarkdownDefault.xml",
         "resources/intellij.markdown.xml",
     ],
     visibility = ["//visibility:public"],

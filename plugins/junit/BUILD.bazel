@@ -139,6 +139,7 @@ exports_files(
     [
         "intellij.junit.iml",
         "resources/META-INF/plugin.xml",
+        "resources/com/intellij/execution/junit2/refactoring/JUnit4__5.xml",
     ],
     visibility = ["//visibility:public"],
 )

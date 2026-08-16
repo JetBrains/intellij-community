@@ -150,6 +150,7 @@ exports_files(
     [
         "intellij.javaFX.iml",
         "resources/intellij.javaFX.xml",
+        "resources/org/jetbrains/plugins/javaFX/refactoring/migration/JavaFx8__9.xml",
     ],
     visibility = ["//visibility:public"],
 )

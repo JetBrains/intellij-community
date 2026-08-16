@@ -143,6 +143,12 @@ exports_files(
     [
         "intellij.lambda.testFramework.iml",
         "resources/intellij.lambda.testFramework.xml",
+        "resources/projects/TestApp/.idea/misc.xml",
+        "resources/projects/TestApp/.idea/modules.xml",
+        "resources/projects/hello-world/.idea/encodings.xml",
+        "resources/projects/hello-world/.idea/misc.xml",
+        "resources/projects/hello-world/.idea/modules.xml",
+        "resources/projects/hello-world/.idea/project-template.xml",
     ],
     visibility = ["//visibility:public"],
 )

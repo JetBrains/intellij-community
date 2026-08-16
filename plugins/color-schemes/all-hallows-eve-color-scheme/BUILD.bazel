@@ -33,6 +33,7 @@ exports_files(
     [
         "intellij.color.scheme.all_hallows_eve.iml",
         "resources/META-INF/plugin.xml",
+        "resources/colorSchemes/all_hallows_eve.xml",
     ],
     visibility = ["//visibility:public"],
 )

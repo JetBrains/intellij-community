@@ -68,6 +68,7 @@ exports_files(
         "intellij.pycharm.community.iml",
         "ide-common/resources/META-INF/PyCharmCorePlugin.xml",
         "ide-common/resources/META-INF/pycharm-core-customization.xml",
+        "ide-common/resources/idea/PyCharmCoreApplicationInfo.xml",
         "resources/META-INF/pycharm-core.xml",
         "resources/ProductivityFeaturesRegistry.xml",
     ],
@@ -687,7 +688,10 @@ jvm_library(
 exports_files(
     [
         "intellij.python.community.impl.iml",
+        "pluginResources/colorSchemes/PythonDarcula.xml",
+        "pluginResources/colorSchemes/PythonDefault.xml",
         "pluginResources/intellij.python.community.impl.xml",
+        "pluginResources/liveTemplates/Python.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -1489,6 +1493,8 @@ jvm_library(
 exports_files(
     [
         "intellij.python.helpers.iml",
+        "helpers/tools/class_method_versions.xml",
+        "helpers/tools/versions.xml",
     ],
     visibility = ["//visibility:public"],
 )

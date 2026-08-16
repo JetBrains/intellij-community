@@ -33,6 +33,7 @@ exports_files(
     [
         "intellij.mps.resources.iml",
         "src/META-INF/plugin.xml",
+        "src/idea/MPSApplicationInfo.xml",
     ],
     visibility = ["//visibility:public"],
 )

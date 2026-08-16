@@ -331,6 +331,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.lang.impl.iml",
+        "resources/idea/PriorityEditorLangActions.xml",
         "resources/intellij.platform.lang.impl.actions.xml",
         "resources/intellij.platform.lang.impl.xml",
     ],

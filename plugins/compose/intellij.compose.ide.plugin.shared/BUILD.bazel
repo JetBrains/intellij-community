@@ -105,6 +105,8 @@ jvm_library(
 exports_files(
     [
         "intellij.compose.ide.plugin.shared.iml",
+        "resources/colorSchemes/IntelliJComposeColorSchemeDarcula.xml",
+        "resources/colorSchemes/IntelliJComposeColorSchemeDefault.xml",
         "resources/intellij.compose.ide.plugin.shared.xml",
     ],
     visibility = ["//visibility:public"],

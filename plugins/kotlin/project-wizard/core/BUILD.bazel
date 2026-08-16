@@ -100,6 +100,10 @@ exports_files(
     [
         "intellij.kotlin.projectWizard.core.iml",
         "resources/intellij.kotlin.projectWizard.core.xml",
+        "resources/org/jetbrains/kotlin/tools/projectWizard/templates/android/AndroidManifest.xml",
+        "resources/org/jetbrains/kotlin/tools/projectWizard/templates/android/colors.xml",
+        "resources/org/jetbrains/kotlin/tools/projectWizard/templates/android/styles.xml",
+        "resources/org/jetbrains/kotlin/tools/projectWizard/templates/android/stylesCompose.xml",
     ],
     visibility = ["//visibility:public"],
 )

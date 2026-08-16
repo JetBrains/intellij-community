@@ -33,6 +33,8 @@ exports_files(
     [
         "intellij.keymap.qtcreator.iml",
         "resources/META-INF/plugin.xml",
+        "resources/keymaps/QtCreator (Mac OS X).xml",
+        "resources/keymaps/QtCreator.xml",
     ],
     visibility = ["//visibility:public"],
 )

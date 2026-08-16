@@ -149,6 +149,7 @@ exports_files(
     [
         "intellij.json.backend.iml",
         "resources/intellij.json.backend.xml",
+        "resources/jsonSchema/build.xml",
     ],
     visibility = ["//visibility:public"],
 )

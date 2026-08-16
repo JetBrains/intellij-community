@@ -32,6 +32,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.resources.en.iml",
+        "src/search/synonyms.xml",
     ],
     visibility = ["//visibility:public"],
 )

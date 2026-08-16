@@ -33,6 +33,7 @@ exports_files(
     [
         "intellij.color.scheme.vibrant_ink.iml",
         "resources/META-INF/plugin.xml",
+        "resources/colorSchemes/vibrant_ink.xml",
     ],
     visibility = ["//visibility:public"],
 )

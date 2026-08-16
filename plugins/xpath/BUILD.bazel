@@ -139,6 +139,8 @@ exports_files(
     [
         "intellij.xpath.iml",
         "xpath-lang/resources/META-INF/plugin.xml",
+        "xpath-lang/resources/liveTemplates/xsl.xml",
+        "xpath-lang/resources/org/intellij/lang/xpath/xslt/resources/documentation.xml",
     ],
     visibility = ["//visibility:public"],
 )

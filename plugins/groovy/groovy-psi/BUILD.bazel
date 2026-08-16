@@ -137,6 +137,10 @@ jvm_library(
 exports_files(
     [
         "intellij.groovy.psi.iml",
+        "resources/colorSchemes/GroovyDarcula.xml",
+        "resources/colorSchemes/GroovyDefault.xml",
+        "resources/liveTemplates/Groovy.xml",
+        "resources/resources/groovyInjections.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -92,6 +92,7 @@ exports_files(
     [
         "intellij.kotlin.codeInsight.liveTemplates.iml",
         "resources/intellij.kotlin.codeInsight.liveTemplates.xml",
+        "resources/liveTemplates/Kotlin.xml",
     ],
     visibility = ["//visibility:public"],
 )

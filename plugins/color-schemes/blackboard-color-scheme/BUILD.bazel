@@ -33,6 +33,7 @@ exports_files(
     [
         "intellij.color.scheme.blackboard.iml",
         "resources/META-INF/plugin.xml",
+        "resources/colorSchemes/blackboard.xml",
     ],
     visibility = ["//visibility:public"],
 )

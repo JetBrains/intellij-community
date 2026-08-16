@@ -122,6 +122,9 @@ exports_files(
     [
         "intellij.tasks.core.iml",
         "resources/META-INF/plugin.xml",
+        "resources/com/intellij/tasks/generic/connectors/asana.xml",
+        "resources/com/intellij/tasks/generic/connectors/assembla.xml",
+        "resources/com/intellij/tasks/generic/connectors/sprintly.xml",
     ],
     visibility = ["//visibility:public"],
 )

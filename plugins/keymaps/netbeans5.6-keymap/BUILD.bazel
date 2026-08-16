@@ -33,6 +33,7 @@ exports_files(
     [
         "intellij.keymap.netbeans.iml",
         "resources/META-INF/plugin.xml",
+        "resources/keymaps/NetBeans 6.5.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -33,6 +33,7 @@ exports_files(
     [
         "intellij.color.scheme.github.iml",
         "resources/META-INF/plugin.xml",
+        "resources/colorSchemes/github.xml",
     ],
     visibility = ["//visibility:public"],
 )

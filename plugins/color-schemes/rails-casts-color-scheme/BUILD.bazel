@@ -33,6 +33,7 @@ exports_files(
     [
         "intellij.color.scheme.rails_casts.iml",
         "resources/META-INF/plugin.xml",
+        "resources/colorSchemes/rails_casts.xml",
     ],
     visibility = ["//visibility:public"],
 )

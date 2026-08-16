@@ -241,6 +241,8 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.core.iml",
+        "resources/assets/devkit-Run_IDE_with_Plugin_run.xml",
+        "resources/inlayProviders/devkit.plugin.descriptor.split.mode.kind/preview.xml",
         "resources/intellij.devkit.core.xml",
     ],
     visibility = ["//visibility:public"],

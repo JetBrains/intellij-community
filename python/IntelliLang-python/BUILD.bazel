@@ -59,6 +59,7 @@ exports_files(
     [
         "intellij.python.langInjection.iml",
         "resources/intellij.python.langInjection.xml",
+        "resources/resources/pyInjections.xml",
     ],
     visibility = ["//visibility:public"],
 )

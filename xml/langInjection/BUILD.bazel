@@ -81,6 +81,7 @@ exports_files(
     [
         "intellij.xml.langInjection.iml",
         "resources/intellij.xml.langInjection.xml",
+        "resources/resources/xmlInjections-html.xml",
     ],
     visibility = ["//visibility:public"],
 )

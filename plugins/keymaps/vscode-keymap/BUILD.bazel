@@ -33,6 +33,8 @@ exports_files(
     [
         "intellij.keymap.vscode.iml",
         "resources/META-INF/plugin.xml",
+        "resources/keymaps/VSCode OSX.xml",
+        "resources/keymaps/VSCode.xml",
     ],
     visibility = ["//visibility:public"],
 )

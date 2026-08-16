@@ -133,6 +133,8 @@ jvm_library(
 exports_files(
     [
         "intellij.yaml.backend.iml",
+        "resources/colorSchemes/YAMLDarcula.xml",
+        "resources/colorSchemes/YAMLDefault.xml",
         "resources/intellij.yaml.backend.xml",
     ],
     visibility = ["//visibility:public"],

@@ -82,6 +82,9 @@ jvm_library(
 exports_files(
     [
         "intellij.xml.ui.common.iml",
+        "resources/colorSchemes/XmlDarcula.xml",
+        "resources/colorSchemes/XmlHighContrast.xml",
+        "resources/colorSchemes/XmlIntelliJLight.xml",
         "resources/intellij.xml.ui.common.xml",
     ],
     visibility = ["//visibility:public"],

@@ -284,7 +284,10 @@ jvm_library(
 exports_files(
     [
         "intellij.maven.iml",
+        "src/main/resources/inlayProviders/maven.pom.model.version.hints/preview.xml",
         "src/main/resources/intellij.maven.xml",
+        "src/main/resources/liveTemplates/maven_xml.xml",
+        "src/main/resources/org/jetbrains/idea/maven/dom/converters/repositories/repositories.xml",
     ],
     visibility = ["//visibility:public"],
 )

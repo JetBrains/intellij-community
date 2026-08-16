@@ -247,6 +247,9 @@ exports_files(
     [
         "intellij.xml.emmet.iml",
         "resources/intellij.xml.emmet.xml",
+        "resources/liveTemplates/html_xml.xml",
+        "resources/liveTemplates/zen_html.xml",
+        "resources/liveTemplates/zen_xsl.xml",
     ],
     visibility = ["//visibility:public"],
 )
