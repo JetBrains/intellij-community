@@ -118,6 +118,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.builtInServer.impl.iml",
+        "resources/intellij.platform.builtInServer.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

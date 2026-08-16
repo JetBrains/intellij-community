@@ -48,6 +48,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.kryo2.iml",
+        "resources/intellij.libraries.kryo2.xml",
     ],
     visibility = ["//visibility:public"],
 )

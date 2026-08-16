@@ -35,6 +35,7 @@ jvm_library(
 exports_files(
     [
         "intellij.terminal.libraries.completionDbWithExtensions.iml",
+        "resources/intellij.terminal.libraries.completionDbWithExtensions.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -81,6 +81,7 @@ jvm_library(
 exports_files(
     [
         "intellij.maven.performanceTesting.iml",
+        "resources/intellij.maven.performanceTesting.xml",
     ],
     visibility = ["//visibility:public"],
 )

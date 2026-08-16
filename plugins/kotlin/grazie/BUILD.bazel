@@ -57,6 +57,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.grazie.iml",
+        "resources/intellij.kotlin.grazie.xml",
     ],
     visibility = ["//visibility:public"],
 )

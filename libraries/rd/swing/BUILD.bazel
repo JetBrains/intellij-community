@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.rd.swing.iml",
+        "resources/intellij.libraries.rd.swing.xml",
     ],
     visibility = ["//visibility:public"],
 )

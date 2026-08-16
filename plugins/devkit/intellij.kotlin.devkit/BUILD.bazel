@@ -135,6 +135,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.devkit.iml",
+        "resources/intellij.kotlin.devkit.xml",
     ],
     visibility = ["//visibility:public"],
 )

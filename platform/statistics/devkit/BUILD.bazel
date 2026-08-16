@@ -117,6 +117,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.statistics.devkit.iml",
+        "resources/intellij.platform.statistics.devkit.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -129,6 +129,7 @@ jvm_library(
 exports_files(
     [
         "intellij.gradle.java.groovy.iml",
+        "resources/intellij.gradle.java.groovy.xml",
     ],
     visibility = ["//visibility:public"],
 )

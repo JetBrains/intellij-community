@@ -116,6 +116,7 @@ jvm_library(
 exports_files(
     [
         "intellij.jvm.analysis.impl.iml",
+        "resources/intellij.jvm.analysis.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

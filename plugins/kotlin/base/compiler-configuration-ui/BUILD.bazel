@@ -92,6 +92,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.base.compilerConfiguration.ui.iml",
+        "resources/intellij.kotlin.base.compilerConfiguration.ui.xml",
     ],
     visibility = ["//visibility:public"],
 )

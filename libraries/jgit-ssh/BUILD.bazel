@@ -47,6 +47,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.jgit.ssh.iml",
+        "resources/intellij.libraries.jgit.ssh.xml",
     ],
     visibility = ["//visibility:public"],
 )

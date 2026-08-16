@@ -90,6 +90,7 @@ jvm_library(
 exports_files(
     [
         "intellij.evaluationPlugin.languages.kotlin.iml",
+        "resources/intellij.evaluationPlugin.languages.kotlin.xml",
     ],
     visibility = ["//visibility:public"],
 )

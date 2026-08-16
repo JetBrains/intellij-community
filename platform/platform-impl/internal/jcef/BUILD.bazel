@@ -144,6 +144,7 @@ jvm_library(
 exports_files(
     [
         "intellij.internal.jcef.iml",
+        "resources/intellij.internal.jcef.xml",
     ],
     visibility = ["//visibility:public"],
 )

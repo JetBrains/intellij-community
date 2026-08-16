@@ -51,6 +51,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.lvcs.iml",
+        "resources/intellij.platform.lvcs.xml",
     ],
     visibility = ["//visibility:public"],
 )

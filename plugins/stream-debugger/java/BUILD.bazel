@@ -113,6 +113,7 @@ jvm_library(
 exports_files(
     [
         "intellij.debugger.streams.java.iml",
+        "resources/intellij.debugger.streams.java.xml",
     ],
     visibility = ["//visibility:public"],
 )

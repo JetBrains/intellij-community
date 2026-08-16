@@ -59,6 +59,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.warmup.performanceTesting.iml",
+        "resources/intellij.platform.warmup.performanceTesting.xml",
     ],
     visibility = ["//visibility:public"],
 )

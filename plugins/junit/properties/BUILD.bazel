@@ -72,6 +72,7 @@ jvm_library(
 exports_files(
     [
         "intellij.junit.properties.iml",
+        "resources/intellij.junit.properties.xml",
     ],
     visibility = ["//visibility:public"],
 )

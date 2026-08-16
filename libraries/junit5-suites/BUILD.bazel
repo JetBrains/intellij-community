@@ -46,6 +46,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.junit5.suites.iml",
+        "resources/intellij.libraries.junit5.suites.xml",
     ],
     visibility = ["//visibility:public"],
 )

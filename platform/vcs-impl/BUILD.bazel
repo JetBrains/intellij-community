@@ -208,6 +208,10 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.vcs.impl.iml",
+        "resources/META-INF/VcsActions.xml",
+        "resources/META-INF/VcsExtensionPoints.xml",
+        "resources/META-INF/VcsExtensions.xml",
+        "resources/intellij.platform.vcs.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

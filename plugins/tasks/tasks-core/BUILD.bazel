@@ -121,6 +121,7 @@ jvm_library(
 exports_files(
     [
         "intellij.tasks.core.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -132,6 +132,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.jewel.ideLafBridge.iml",
+        "src/main/resources/intellij.platform.jewel.ideLafBridge.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -109,6 +109,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ui.webview.demo.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

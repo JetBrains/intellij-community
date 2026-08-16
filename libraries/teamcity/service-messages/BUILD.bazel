@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.teamcity.service.messages.iml",
+        "resources/intellij.libraries.teamcity.service.messages.xml",
     ],
     visibility = ["//visibility:public"],
 )

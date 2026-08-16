@@ -71,6 +71,7 @@ jvm_library(
 exports_files(
     [
         "intellij.markdown.projectView.iml",
+        "resources/intellij.markdown.projectView.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -75,6 +75,7 @@ jvm_library(
 exports_files(
     [
         "intellij.repository.search.completion.iml",
+        "resources/intellij.repository.search.completion.xml",
     ],
     visibility = ["//visibility:public"],
 )

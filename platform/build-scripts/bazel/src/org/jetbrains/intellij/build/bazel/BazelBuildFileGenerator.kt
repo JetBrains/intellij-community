@@ -26,11 +26,15 @@ import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Path
 import java.util.IdentityHashMap
 import java.util.TreeMap
+import java.util.TreeSet
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
 import kotlin.io.path.relativeTo
 import kotlin.io.path.walk
@@ -471,10 +475,7 @@ internal class BazelBuildFileGenerator(
 
         val imlTargetsBazel = BuildFile()
         imlTargetsBazel.exportFile(module.imlFile.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString)
-        for (resource in module.resources) {
-          val pluginXml = findMarkedPluginXmlFile(resource) ?: continue
-          imlTargetsBazel.exportFile(pluginXml.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString)
-        }
+        exportDescriptorFiles(module = module, buildFile = imlTargetsBazel, alreadyExported = fileUpdater.handWrittenExportedFiles())
 
         val testTargetsBazel = BuildFile()
         testTargetsBazel.generateTestTargets(module, list)
@@ -1550,3 +1551,47 @@ internal fun computePackageRelativeExcludes(
 private fun generateNameForPluginDirectory(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')
 
 private fun compileExcludeSortKey(pattern: String): String = pattern.lowercase().replace('/', '{')
+
+/**
+ * Exports the XML a dev-distribution assembly may read out of this module's production resources: content module
+ * descriptors, `META-INF/plugin.xml`, and the fragments those `xi:include`. All of them sit at the top level of a
+ * resource root or directly under its `META-INF/` - the two places `toLoadPath` resolves a descriptor reference to.
+ *
+ * Deliberately a superset. An `exports_files` entry costs nothing, and `build/dev_dist_plan.bzl` - written from the
+ * product model, which knows exactly which descriptors exist - decides which of them a fragment declares. Keeping
+ * the two rules independent is what makes them unable to disagree: this side only has to be wide enough.
+ */
+private fun exportDescriptorFiles(module: ModuleDescriptor, buildFile: BuildFile, alreadyExported: Set<String>) {
+  val exported = TreeSet<String>()
+  for (resource in module.resources) {
+    for (directory in listOf(resource.root, resource.root.resolve("META-INF"))) {
+      if (!directory.isDirectory()) {
+        continue
+      }
+
+      for (file in directory.listDirectoryEntries("*.xml")) {
+        if (!file.isRegularFile()) {
+          continue
+        }
+
+        val relative = file.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString
+        // A resource root outside the module's own Bazel package - the `dotenv-ultimate` shape, where an ultimate
+        // module keeps its resources in the community tree. Another package owns the file and `../` is not a label,
+        // so those descriptors stay on the module-output read they use today.
+        if (relative.startsWith("../")) {
+          continue
+        }
+
+        // Exporting a file twice in one package is an analysis error, so a hand-written `exports_files` wins - it
+        // is there to give that one file a narrower visibility than `//visibility:public`.
+        if (!alreadyExported.contains(relative)) {
+          exported.add(relative)
+        }
+      }
+    }
+  }
+
+  for (path in exported) {
+    buildFile.exportFile(path)
+  }
+}

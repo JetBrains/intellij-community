@@ -55,6 +55,7 @@ jvm_library(
 exports_files(
     [
         "intellij.searchEverywhereMl.ranking.java.iml",
+        "resources/intellij.searchEverywhereMl.ranking.java.xml",
     ],
     visibility = ["//visibility:public"],
 )

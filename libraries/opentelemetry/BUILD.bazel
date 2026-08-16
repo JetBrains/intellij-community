@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.opentelemetry.iml",
+        "resources/intellij.libraries.opentelemetry.xml",
     ],
     visibility = ["//visibility:public"],
 )

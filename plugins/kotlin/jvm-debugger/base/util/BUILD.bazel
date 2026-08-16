@@ -83,6 +83,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.jvm.debugger.base.util.iml",
+        "resources/intellij.kotlin.jvm.debugger.base.util.xml",
     ],
     visibility = ["//visibility:public"],
 )

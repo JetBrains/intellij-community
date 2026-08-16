@@ -102,6 +102,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.base.facet.iml",
+        "resources/intellij.kotlin.base.facet.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -55,6 +55,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.jsr223.plugin.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

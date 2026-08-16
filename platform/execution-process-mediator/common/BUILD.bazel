@@ -70,6 +70,7 @@ jvm_library(
 exports_files(
     [
         "intellij.execution.process.mediator.common.iml",
+        "resources/intellij.execution.process.mediator.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

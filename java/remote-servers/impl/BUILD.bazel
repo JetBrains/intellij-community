@@ -92,6 +92,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.remoteServers.impl.iml",
+        "resources/intellij.java.remoteServers.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -76,6 +76,8 @@ jvm_library(
 exports_files(
     [
         "intellij.java.codeserver.highlighting.iml",
+        "resources/META-INF/JavaCodeServerHighlighting.xml",
+        "resources/intellij.java.codeserver.highlighting.xml",
     ],
     visibility = ["//visibility:public"],
 )

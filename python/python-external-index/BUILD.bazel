@@ -69,6 +69,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.externalIndex.iml",
+        "resources/intellij.python.externalIndex.xml",
     ],
     visibility = ["//visibility:public"],
 )

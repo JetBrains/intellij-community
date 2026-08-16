@@ -63,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.apiDump.iml",
+        "resources/intellij.devkit.apiDump.xml",
     ],
     visibility = ["//visibility:public"],
 )

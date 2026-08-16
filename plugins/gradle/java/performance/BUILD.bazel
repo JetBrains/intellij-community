@@ -93,6 +93,7 @@ jvm_library(
 exports_files(
     [
         "intellij.gradle.java.performance.iml",
+        "resources/intellij.gradle.java.performance.xml",
     ],
     visibility = ["//visibility:public"],
 )

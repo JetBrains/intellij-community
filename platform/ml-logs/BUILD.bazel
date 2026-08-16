@@ -52,6 +52,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ml.logs.iml",
+        "resources/intellij.platform.ml.logs.xml",
     ],
     visibility = ["//visibility:public"],
 )

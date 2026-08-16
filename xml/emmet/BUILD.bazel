@@ -246,6 +246,7 @@ jvm_library(
 exports_files(
     [
         "intellij.xml.emmet.iml",
+        "resources/intellij.xml.emmet.xml",
     ],
     visibility = ["//visibility:public"],
 )

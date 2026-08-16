@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.hdr.histogram.iml",
+        "resources/intellij.libraries.hdr.histogram.xml",
     ],
     visibility = ["//visibility:public"],
 )

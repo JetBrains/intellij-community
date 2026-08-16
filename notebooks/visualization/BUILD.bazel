@@ -117,6 +117,7 @@ jvm_library(
 exports_files(
     [
         "intellij.notebooks.visualization.iml",
+        "resources/intellij.notebooks.visualization.xml",
     ],
     visibility = ["//visibility:public"],
 )

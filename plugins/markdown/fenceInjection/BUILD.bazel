@@ -57,6 +57,7 @@ jvm_library(
 exports_files(
     [
         "intellij.markdown.fenceInjection.iml",
+        "src/main/resources/intellij.markdown.fenceInjection.xml",
     ],
     visibility = ["//visibility:public"],
 )

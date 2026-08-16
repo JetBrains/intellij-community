@@ -35,6 +35,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.kotlinTestAssertionsCoreJvm.iml",
+        "resources/intellij.libraries.kotlinTestAssertionsCoreJvm.xml",
     ],
     visibility = ["//visibility:public"],
 )

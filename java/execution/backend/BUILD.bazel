@@ -82,6 +82,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.execution.impl.backend.iml",
+        "resources/intellij.java.execution.impl.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

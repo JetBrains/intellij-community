@@ -107,6 +107,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.codeInsight.postfixTemplates.iml",
+        "resources/intellij.kotlin.codeInsight.postfixTemplates.xml",
     ],
     visibility = ["//visibility:public"],
 )

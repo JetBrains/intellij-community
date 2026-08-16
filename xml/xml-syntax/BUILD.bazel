@@ -55,6 +55,7 @@ jvm_library(
 exports_files(
     [
         "intellij.xml.syntax.iml",
+        "resources/intellij.xml.syntax.xml",
     ],
     visibility = ["//visibility:public"],
 )

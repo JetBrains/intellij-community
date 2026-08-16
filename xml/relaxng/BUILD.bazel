@@ -117,6 +117,7 @@ jvm_library(
 exports_files(
     [
         "intellij.relaxng.iml",
+        "resources/intellij.relaxng.xml",
     ],
     visibility = ["//visibility:public"],
 )

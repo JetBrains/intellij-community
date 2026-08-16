@@ -35,6 +35,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.completion.ranking.php.iml",
+        "resources/intellij.libraries.completion.ranking.php.xml",
     ],
     visibility = ["//visibility:public"],
 )

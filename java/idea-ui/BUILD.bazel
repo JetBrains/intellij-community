@@ -179,6 +179,8 @@ jvm_library(
 exports_files(
     [
         "intellij.java.ui.iml",
+        "resources/META-INF/RegistryKeysJavaUi.xml",
+        "resources/intellij.java.ui.xml",
     ],
     visibility = ["//visibility:public"],
 )

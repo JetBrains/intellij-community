@@ -106,6 +106,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.pyrefly.iml",
+        "resources/intellij.python.pyrefly.xml",
     ],
     visibility = ["//visibility:public"],
 )

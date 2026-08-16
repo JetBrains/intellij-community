@@ -150,6 +150,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.j2k.iml",
+        "resources/intellij.kotlin.j2k.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -140,6 +140,7 @@ jvm_library(
 exports_files(
     [
         "kotlin.fir.frontend-independent.iml",
+        "resources-en/kotlin.fir.frontend-independent.xml",
     ],
     visibility = ["//visibility:public"],
 )

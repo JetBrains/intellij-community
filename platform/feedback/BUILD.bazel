@@ -82,6 +82,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.feedback.iml",
+        "resources/intellij.platform.feedback.xml",
     ],
     visibility = ["//visibility:public"],
 )

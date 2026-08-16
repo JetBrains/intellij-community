@@ -83,6 +83,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.terminal.shared.iml",
+        "resources/intellij.python.terminal.shared.xml",
     ],
     visibility = ["//visibility:public"],
 )

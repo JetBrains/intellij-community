@@ -53,6 +53,7 @@ jvm_library(
 exports_files(
     [
         "intellij.vcs.github.json.iml",
+        "resources/intellij.vcs.github.json.xml",
     ],
     visibility = ["//visibility:public"],
 )

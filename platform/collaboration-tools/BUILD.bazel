@@ -152,6 +152,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.collaborationTools.iml",
+        "resources/intellij.platform.collaborationTools.xml",
     ],
     visibility = ["//visibility:public"],
 )

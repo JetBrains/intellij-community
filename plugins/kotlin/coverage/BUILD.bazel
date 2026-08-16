@@ -76,6 +76,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.coverage.iml",
+        "resources/intellij.kotlin.coverage.xml",
     ],
     visibility = ["//visibility:public"],
 )

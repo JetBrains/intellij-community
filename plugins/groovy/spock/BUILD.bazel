@@ -75,6 +75,7 @@ jvm_library(
 exports_files(
     [
         "intellij.groovy.spock.iml",
+        "resources/intellij.groovy.spock.xml",
     ],
     visibility = ["//visibility:public"],
 )

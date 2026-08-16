@@ -83,6 +83,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.buildView.frontend.iml",
+        "resources/intellij.platform.buildView.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )

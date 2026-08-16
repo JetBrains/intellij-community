@@ -115,6 +115,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.analysis.platform.iml",
+        "resources/intellij.kotlin.analysis.platform.xml",
     ],
     visibility = ["//visibility:public"],
 )

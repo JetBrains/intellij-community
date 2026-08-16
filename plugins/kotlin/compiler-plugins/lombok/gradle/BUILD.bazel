@@ -49,6 +49,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.lombok.gradle.iml",
+        "resources/intellij.kotlin.compilerPlugins.lombok.gradle.xml",
     ],
     visibility = ["//visibility:public"],
 )

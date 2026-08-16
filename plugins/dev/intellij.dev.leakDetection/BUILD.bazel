@@ -77,6 +77,7 @@ jvm_library(
 exports_files(
     [
         "intellij.dev.leakDetection.iml",
+        "resources/intellij.dev.leakDetection.xml",
     ],
     visibility = ["//visibility:public"],
 )

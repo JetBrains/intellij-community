@@ -63,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.requirements.common.iml",
+        "resources/intellij.python.requirements.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

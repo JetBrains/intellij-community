@@ -50,6 +50,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.grpc.netty.shaded.iml",
+        "resources/intellij.libraries.grpc.netty.shaded.xml",
     ],
     visibility = ["//visibility:public"],
 )

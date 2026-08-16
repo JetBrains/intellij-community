@@ -93,6 +93,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.jewel.foundation.iml",
+        "src/main/resources/intellij.platform.jewel.foundation.xml",
     ],
     visibility = ["//visibility:public"],
 )

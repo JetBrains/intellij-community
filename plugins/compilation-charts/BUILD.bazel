@@ -101,6 +101,7 @@ jvm_library(
 exports_files(
     [
         "intellij.compilation.charts.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

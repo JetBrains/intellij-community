@@ -136,6 +136,7 @@ jvm_library(
 exports_files(
     [
         "intellij.editorconfig.backend.iml",
+        "resources/intellij.editorconfig.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

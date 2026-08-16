@@ -63,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.codeInsight.vcs.iml",
+        "resources/intellij.kotlin.codeInsight.vcs.xml",
     ],
     visibility = ["//visibility:public"],
 )

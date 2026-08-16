@@ -65,6 +65,7 @@ jvm_library(
 exports_files(
     [
         "intellij.jcef.frontend.iml",
+        "resources/intellij.jcef.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )

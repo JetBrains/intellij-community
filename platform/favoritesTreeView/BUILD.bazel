@@ -65,6 +65,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.favoritesTreeView.iml",
+        "resources/intellij.platform.ide.favoritesTreeView.xml",
     ],
     visibility = ["//visibility:public"],
 )

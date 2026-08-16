@@ -59,6 +59,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.references.iml",
+        "resources/intellij.kotlin.references.xml",
     ],
     visibility = ["//visibility:public"],
 )

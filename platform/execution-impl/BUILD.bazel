@@ -179,6 +179,8 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.execution.impl.iml",
+        "resources/intellij.platform.execution.impl.actions.xml",
+        "resources/intellij.platform.execution.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

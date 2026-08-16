@@ -112,6 +112,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.ty.iml",
+        "resources/intellij.python.ty.xml",
     ],
     visibility = ["//visibility:public"],
 )

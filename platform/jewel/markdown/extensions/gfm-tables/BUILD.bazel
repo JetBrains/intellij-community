@@ -87,6 +87,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.jewel.markdown.extensions.gfmTables.iml",
+        "src/main/resources/intellij.platform.jewel.markdown.extensions.gfmTables.xml",
     ],
     visibility = ["//visibility:public"],
 )

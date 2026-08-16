@@ -73,6 +73,7 @@ jvm_library(
 exports_files(
     [
         "intellij.pycharm.community.ide.impl.promotion.iml",
+        "resources/intellij.pycharm.community.ide.impl.promotion.xml",
     ],
     visibility = ["//visibility:public"],
 )

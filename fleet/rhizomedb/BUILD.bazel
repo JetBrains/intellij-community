@@ -95,6 +95,7 @@ jvm_library(
 exports_files(
     [
         "fleet.rhizomedb.iml",
+        "resources/fleet.rhizomedb.xml",
     ],
     visibility = ["//visibility:public"],
 )

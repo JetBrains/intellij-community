@@ -67,6 +67,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.pluginManager.shared.base.iml",
+        "resources/intellij.platform.pluginManager.shared.base.xml",
     ],
     visibility = ["//visibility:public"],
 )

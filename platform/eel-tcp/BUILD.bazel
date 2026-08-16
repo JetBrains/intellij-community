@@ -81,6 +81,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.eel.tcp.iml",
+        "resources/intellij.platform.eel.tcp.xml",
     ],
     visibility = ["//visibility:public"],
 )

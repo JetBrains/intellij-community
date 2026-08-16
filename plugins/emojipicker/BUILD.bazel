@@ -67,6 +67,7 @@ jvm_library(
 exports_files(
     [
         "intellij.emojipicker.iml",
+        "resources/intellij.emojipicker.xml",
     ],
     visibility = ["//visibility:public"],
 )

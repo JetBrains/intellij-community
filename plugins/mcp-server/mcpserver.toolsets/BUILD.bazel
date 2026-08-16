@@ -99,6 +99,7 @@ jvm_library(
 exports_files(
     [
         "intellij.mcpserver.toolsets.iml",
+        "resources/intellij.mcpserver.toolsets.xml",
     ],
     visibility = ["//visibility:public"],
 )

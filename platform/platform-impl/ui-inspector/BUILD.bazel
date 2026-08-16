@@ -86,6 +86,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.ui.inspector.iml",
+        "resources/intellij.platform.ide.ui.inspector.xml",
     ],
     visibility = ["//visibility:public"],
 )

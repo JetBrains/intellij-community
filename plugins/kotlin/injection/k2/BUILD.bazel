@@ -82,6 +82,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.injection.iml",
+        "resources/intellij.kotlin.injection.xml",
     ],
     visibility = ["//visibility:public"],
 )

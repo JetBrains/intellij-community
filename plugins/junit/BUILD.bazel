@@ -138,6 +138,7 @@ jvm_library(
 exports_files(
     [
         "intellij.junit.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

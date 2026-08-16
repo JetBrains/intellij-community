@@ -95,6 +95,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.diagnostic.telemetry.iml",
+        "resources/intellij.platform.diagnostic.telemetry.xml",
     ],
     visibility = ["//visibility:public"],
 )

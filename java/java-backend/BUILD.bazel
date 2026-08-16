@@ -133,6 +133,15 @@ jvm_library(
 exports_files(
     [
         "intellij.java.backend.iml",
+        "resources/META-INF/GlobalInspections.xml",
+        "resources/META-INF/InspectionGadgets.xml",
+        "resources/META-INF/Inspections.xml",
+        "resources/META-INF/IntentionPowerPack.xml",
+        "resources/META-INF/Intentions.xml",
+        "resources/META-INF/JavaActions.xml",
+        "resources/META-INF/JavaPlugin.xml",
+        "resources/META-INF/RegistryKeys.xml",
+        "resources/intellij.java.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

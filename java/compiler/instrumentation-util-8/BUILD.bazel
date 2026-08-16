@@ -43,6 +43,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.compiler.instrumentationUtil.java8.iml",
+        "resources/intellij.java.compiler.instrumentationUtil.java8.xml",
     ],
     visibility = ["//visibility:public"],
 )

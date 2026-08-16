@@ -57,6 +57,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.updateChecker.backend.iml",
+        "resources/intellij.platform.ide.updateChecker.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

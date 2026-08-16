@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.bouncy.castle.provider.iml",
+        "resources/intellij.libraries.bouncy.castle.provider.xml",
     ],
     visibility = ["//visibility:public"],
 )

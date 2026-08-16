@@ -33,6 +33,7 @@ jvm_library(
 exports_files(
     [
         "intellij.jcef.plugin.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -100,6 +100,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.vcs.impl.lang.iml",
+        "resources/intellij.platform.vcs.impl.lang.xml",
     ],
     visibility = ["//visibility:public"],
 )

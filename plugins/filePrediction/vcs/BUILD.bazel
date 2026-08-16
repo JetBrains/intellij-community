@@ -53,6 +53,7 @@ jvm_library(
 exports_files(
     [
         "intellij.filePrediction.vcs.iml",
+        "resources/intellij.filePrediction.vcs.xml",
     ],
     visibility = ["//visibility:public"],
 )

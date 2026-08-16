@@ -97,6 +97,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ijent.community.ui.iml",
+        "resources/intellij.platform.ijent.community.ui.xml",
     ],
     visibility = ["//visibility:public"],
 )

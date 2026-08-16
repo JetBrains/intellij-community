@@ -76,6 +76,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.vcs.log.graph.impl.iml",
+        "resources/intellij.platform.vcs.log.graph.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

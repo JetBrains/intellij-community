@@ -54,6 +54,7 @@ jvm_library(
 exports_files(
     [
         "intellij.terminal.emulator.iml",
+        "resources/intellij.terminal.emulator.xml",
     ],
     visibility = ["//visibility:public"],
 )

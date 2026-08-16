@@ -127,6 +127,7 @@ jvm_library(
 exports_files(
     [
         "intellij.restructuredtext.python.iml",
+        "resources/intellij.restructuredtext.python.xml",
     ],
     visibility = ["//visibility:public"],
 )

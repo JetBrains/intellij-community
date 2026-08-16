@@ -44,6 +44,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.maven.resolver.provider.iml",
+        "resources/intellij.libraries.maven.resolver.provider.xml",
     ],
     visibility = ["//visibility:public"],
 )

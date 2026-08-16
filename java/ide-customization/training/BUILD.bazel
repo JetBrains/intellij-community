@@ -55,6 +55,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.ide.customization.training.iml",
+        "resources/intellij.java.ide.customization.training.xml",
     ],
     visibility = ["//visibility:public"],
 )

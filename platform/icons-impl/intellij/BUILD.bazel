@@ -144,6 +144,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.icons.impl.intellij.iml",
+        "resources/intellij.platform.icons.impl.intellij.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -69,6 +69,7 @@ jvm_library(
 exports_files(
     [
         "intellij.performanceTesting.problemsView.iml",
+        "resources/intellij.performanceTesting.problemsView.xml",
     ],
     visibility = ["//visibility:public"],
 )

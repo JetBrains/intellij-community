@@ -76,6 +76,7 @@ jvm_library(
 exports_files(
     [
         "intellij.notebooks.ui.iml",
+        "resources/intellij.notebooks.ui.xml",
     ],
     visibility = ["//visibility:public"],
 )

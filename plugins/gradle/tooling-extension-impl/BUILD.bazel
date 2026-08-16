@@ -116,6 +116,7 @@ jvm_library(
 exports_files(
     [
         "intellij.gradle.toolingExtension.impl.iml",
+        "resources/intellij.gradle.toolingExtension.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

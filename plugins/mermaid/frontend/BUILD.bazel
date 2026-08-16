@@ -63,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.mermaid.frontend.iml",
+        "resources/intellij.mermaid.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )

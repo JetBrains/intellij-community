@@ -189,6 +189,8 @@ jvm_library(
 exports_files(
     [
         "intellij.terminal.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/META-INF/terminal.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.kotlinx.document.store.mvstore.iml",
+        "resources/intellij.libraries.kotlinx.document.store.mvstore.xml",
     ],
     visibility = ["//visibility:public"],
 )

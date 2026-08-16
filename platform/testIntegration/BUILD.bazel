@@ -50,6 +50,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.testIntegration.iml",
+        "resources/intellij.platform.testIntegration.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -35,6 +35,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.commons.pool2.iml",
+        "resources/intellij.libraries.commons.pool2.xml",
     ],
     visibility = ["//visibility:public"],
 )

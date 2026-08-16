@@ -139,6 +139,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.compose.iml",
+        "resources/intellij.devkit.compose.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -157,6 +157,10 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.externalSystem.impl.iml",
+        "resources/META-INF/ExternalSystemActions.xml",
+        "resources/META-INF/ExternalSystemExtensionPoints.xml",
+        "resources/META-INF/ExternalSystemExtensions.xml",
+        "resources/intellij.platform.externalSystem.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

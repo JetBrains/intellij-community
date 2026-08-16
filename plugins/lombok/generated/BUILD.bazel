@@ -35,6 +35,7 @@ jvm_library(
 exports_files(
     [
         "intellij.lombok.generated.iml",
+        "resources/intellij.lombok.generated.xml",
     ],
     visibility = ["//visibility:public"],
 )

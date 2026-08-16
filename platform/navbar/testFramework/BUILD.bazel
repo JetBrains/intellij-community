@@ -63,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.navbar.testFramework.iml",
+        "resources/intellij.platform.navbar.testFramework.xml",
     ],
     visibility = ["//visibility:public"],
 )

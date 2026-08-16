@@ -55,6 +55,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.spellchecker.iml",
+        "resources/intellij.kotlin.spellchecker.xml",
     ],
     visibility = ["//visibility:public"],
 )

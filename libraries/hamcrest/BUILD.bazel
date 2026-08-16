@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.hamcrest.iml",
+        "resources/intellij.libraries.hamcrest.xml",
     ],
     visibility = ["//visibility:public"],
 )

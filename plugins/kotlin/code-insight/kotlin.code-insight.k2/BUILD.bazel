@@ -191,6 +191,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.codeInsight.iml",
+        "resources/intellij.kotlin.codeInsight.xml",
     ],
     visibility = ["//visibility:public"],
 )

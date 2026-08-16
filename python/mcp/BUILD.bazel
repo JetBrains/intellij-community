@@ -76,6 +76,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.mcp.iml",
+        "resources/intellij.python.mcp.xml",
     ],
     visibility = ["//visibility:public"],
 )

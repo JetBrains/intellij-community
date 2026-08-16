@@ -118,6 +118,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.searching.base.iml",
+        "resources/intellij.kotlin.searching.base.xml",
     ],
     visibility = ["//visibility:public"],
 )

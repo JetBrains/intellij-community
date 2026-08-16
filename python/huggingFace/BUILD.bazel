@@ -84,6 +84,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.community.impl.huggingFace.iml",
+        "resources/intellij.python.community.impl.huggingFace.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -93,6 +93,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.featuresTrainer.iml",
+        "resources/intellij.kotlin.featuresTrainer.xml",
     ],
     visibility = ["//visibility:public"],
 )

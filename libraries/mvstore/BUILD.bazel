@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.mvstore.iml",
+        "resources/intellij.libraries.mvstore.xml",
     ],
     visibility = ["//visibility:public"],
 )

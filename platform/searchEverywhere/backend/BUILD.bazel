@@ -105,6 +105,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.searchEverywhere.backend.iml",
+        "resources/intellij.platform.searchEverywhere.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

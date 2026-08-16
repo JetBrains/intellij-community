@@ -120,6 +120,7 @@ jvm_library(
 exports_files(
     [
         "intellij.repository.search.common.iml",
+        "resources/intellij.repository.search.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

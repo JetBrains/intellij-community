@@ -48,6 +48,7 @@ jvm_library(
 exports_files(
     [
         "intellij.codeowners.iml",
+        "resources/intellij.codeowners.xml",
     ],
     visibility = ["//visibility:public"],
 )

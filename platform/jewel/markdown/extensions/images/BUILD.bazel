@@ -92,6 +92,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.jewel.markdown.extensions.images.iml",
+        "src/main/resources/intellij.platform.jewel.markdown.extensions.images.xml",
     ],
     visibility = ["//visibility:public"],
 )

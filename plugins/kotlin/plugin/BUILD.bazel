@@ -53,6 +53,14 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.plugin.iml",
+        "resources/META-INF/caches.xml",
+        "resources/META-INF/command-completion-k2.xml",
+        "resources/META-INF/file-types.xml",
+        "resources/META-INF/jps.xml",
+        "resources/META-INF/kotlin-core.xml",
+        "resources/META-INF/language.xml",
+        "resources/META-INF/plugin.xml",
+        "resources/META-INF/scripting-v1.xml",
     ],
     visibility = ["//visibility:public"],
 )

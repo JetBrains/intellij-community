@@ -75,6 +75,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.buildScripts.downloader.iml",
+        "resources/intellij.platform.buildScripts.downloader.xml",
     ],
     visibility = ["//visibility:public"],
 )

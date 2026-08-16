@@ -119,6 +119,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.testFramework.common.iml",
+        "resources/intellij.platform.testFramework.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

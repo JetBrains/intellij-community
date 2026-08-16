@@ -151,6 +151,8 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.debugger.impl.ui.iml",
+        "resources/intellij.platform.debugger.impl.ui.actions.xml",
+        "resources/intellij.platform.debugger.impl.ui.xml",
     ],
     visibility = ["//visibility:public"],
 )

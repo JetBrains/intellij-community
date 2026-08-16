@@ -66,6 +66,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.support.gradle.iml",
+        "resources/intellij.kotlin.compilerPlugins.support.gradle.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -159,6 +159,8 @@ jvm_library(
 exports_files(
     [
         "intellij.markdown.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/intellij.markdown.xml",
     ],
     visibility = ["//visibility:public"],
 )

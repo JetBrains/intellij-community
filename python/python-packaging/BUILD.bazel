@@ -57,6 +57,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.packaging.iml",
+        "resources/intellij.python.packaging.xml",
     ],
     visibility = ["//visibility:public"],
 )

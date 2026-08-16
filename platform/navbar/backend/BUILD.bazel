@@ -83,6 +83,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.navbar.backend.iml",
+        "resources/intellij.platform.navbar.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

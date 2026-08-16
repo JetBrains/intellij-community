@@ -209,6 +209,8 @@ jvm_library(
 exports_files(
     [
         "intellij.vcs.github.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/intellij.vcs.github.xml",
     ],
     visibility = ["//visibility:public"],
 )

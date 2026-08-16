@@ -75,6 +75,7 @@ jvm_library(
 exports_files(
     [
         "intellij.mcpserver.terminal.frontend.iml",
+        "resources/intellij.mcpserver.terminal.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )

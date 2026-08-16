@@ -136,6 +136,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.processOutput.frontend.iml",
+        "resources/intellij.python.processOutput.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )

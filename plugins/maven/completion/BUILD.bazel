@@ -79,6 +79,7 @@ jvm_library(
 exports_files(
     [
         "intellij.maven.completion.iml",
+        "resources/intellij.maven.completion.xml",
     ],
     visibility = ["//visibility:public"],
 )

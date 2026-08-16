@@ -80,6 +80,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.community.services.shared.iml",
+        "resources/intellij.python.community.services.shared.xml",
     ],
     visibility = ["//visibility:public"],
 )

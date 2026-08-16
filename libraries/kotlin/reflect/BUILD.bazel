@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.kotlin.reflect.iml",
+        "resources/intellij.libraries.kotlin.reflect.xml",
     ],
     visibility = ["//visibility:public"],
 )

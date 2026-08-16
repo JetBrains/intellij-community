@@ -81,6 +81,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.processOutput.common.iml",
+        "resources/intellij.python.processOutput.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

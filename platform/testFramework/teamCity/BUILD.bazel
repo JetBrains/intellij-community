@@ -49,6 +49,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.testFramework.teamCity.iml",
+        "resources/intellij.platform.testFramework.teamCity.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -152,6 +152,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.jvm.debugger.coroutines.iml",
+        "resources/intellij.kotlin.jvm.debugger.coroutines.xml",
     ],
     visibility = ["//visibility:public"],
 )

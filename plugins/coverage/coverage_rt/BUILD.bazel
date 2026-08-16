@@ -38,6 +38,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.coverage.rt.iml",
+        "resources/intellij.java.coverage.rt.xml",
     ],
     visibility = ["//visibility:public"],
 )

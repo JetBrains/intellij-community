@@ -85,6 +85,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.jewel.markdown.extensions.frontMatter.iml",
+        "src/main/resources/intellij.platform.jewel.markdown.extensions.frontMatter.xml",
     ],
     visibility = ["//visibility:public"],
 )

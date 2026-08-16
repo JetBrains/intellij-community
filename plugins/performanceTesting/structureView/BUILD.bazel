@@ -62,6 +62,7 @@ jvm_library(
 exports_files(
     [
         "intellij.performanceTesting.structureView.iml",
+        "resources/intellij.performanceTesting.structureView.xml",
     ],
     visibility = ["//visibility:public"],
 )

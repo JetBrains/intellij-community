@@ -124,6 +124,10 @@ jvm_library(
 exports_files(
     [
         "intellij.tools.ide.starter.iml",
+        "resources/ide.general.xml",
+        "resources/intellij.tools.ide.starter.xml",
+        "resources/trusted-paths.xml",
+        "resources/trustedSolutions.xml",
     ],
     visibility = ["//visibility:public"],
 )

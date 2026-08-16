@@ -104,6 +104,7 @@ jvm_library(
 exports_files(
     [
         "intellij.spellchecker.iml",
+        "resources/intellij.spellchecker.xml",
     ],
     visibility = ["//visibility:public"],
 )

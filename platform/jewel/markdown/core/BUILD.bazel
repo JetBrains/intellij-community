@@ -89,6 +89,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.jewel.markdown.core.iml",
+        "src/main/resources/intellij.platform.jewel.markdown.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

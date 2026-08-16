@@ -65,6 +65,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.preferences.iml",
+        "resources/intellij.kotlin.preferences.xml",
     ],
     visibility = ["//visibility:public"],
 )

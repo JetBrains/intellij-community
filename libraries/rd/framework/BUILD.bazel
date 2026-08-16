@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.rd.framework.iml",
+        "resources/intellij.libraries.rd.framework.xml",
     ],
     visibility = ["//visibility:public"],
 )

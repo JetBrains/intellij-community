@@ -90,6 +90,7 @@ jvm_library(
 exports_files(
     [
         "intellij.dev.psiViewer.iml",
+        "resources/intellij.dev.psiViewer.xml",
     ],
     visibility = ["//visibility:public"],
 )

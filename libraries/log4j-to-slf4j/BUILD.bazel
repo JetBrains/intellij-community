@@ -35,6 +35,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.log4j.to.slf4j.iml",
+        "resources/intellij.libraries.log4j.to.slf4j.xml",
     ],
     visibility = ["//visibility:public"],
 )

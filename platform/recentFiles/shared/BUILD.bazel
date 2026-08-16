@@ -77,6 +77,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.recentFiles.iml",
+        "resources/intellij.platform.recentFiles.xml",
     ],
     visibility = ["//visibility:public"],
 )

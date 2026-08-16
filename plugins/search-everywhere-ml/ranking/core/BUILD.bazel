@@ -130,6 +130,7 @@ jvm_library(
 exports_files(
     [
         "intellij.searchEverywhereMl.ranking.core.iml",
+        "resources/intellij.searchEverywhereMl.ranking.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

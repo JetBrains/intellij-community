@@ -63,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.pluginSignatureVerifier.iml",
+        "resources/intellij.platform.ide.pluginSignatureVerifier.xml",
     ],
     visibility = ["//visibility:public"],
 )

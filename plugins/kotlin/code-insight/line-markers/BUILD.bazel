@@ -124,6 +124,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.codeInsight.lineMarkers.iml",
+        "resources/intellij.kotlin.codeInsight.lineMarkers.xml",
     ],
     visibility = ["//visibility:public"],
 )

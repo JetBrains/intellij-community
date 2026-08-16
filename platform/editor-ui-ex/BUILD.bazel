@@ -78,6 +78,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.editor.ex.iml",
+        "resources/intellij.platform.editor.ex.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -58,6 +58,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.langInjection.iml",
+        "resources/intellij.python.langInjection.xml",
     ],
     visibility = ["//visibility:public"],
 )

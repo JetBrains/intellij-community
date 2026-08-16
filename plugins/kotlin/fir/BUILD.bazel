@@ -182,6 +182,7 @@ jvm_library(
 exports_files(
     [
         "kotlin.fir.iml",
+        "resources/kotlin.fir.xml",
     ],
     visibility = ["//visibility:public"],
 )

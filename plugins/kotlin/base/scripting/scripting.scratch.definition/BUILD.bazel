@@ -44,6 +44,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.base.scripting.scratch.definition.iml",
+        "resources/intellij.kotlin.base.scripting.scratch.definition.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -97,6 +97,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.uast.iml",
+        "resources/intellij.kotlin.uast.xml",
     ],
     visibility = ["//visibility:public"],
 )

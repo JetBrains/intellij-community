@@ -60,6 +60,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.lombok.maven.iml",
+        "resources/intellij.kotlin.compilerPlugins.lombok.maven.xml",
     ],
     visibility = ["//visibility:public"],
 )

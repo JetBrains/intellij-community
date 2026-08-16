@@ -82,6 +82,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.plugin.updater.iml",
+        "resources/intellij.kotlin.plugin.updater.xml",
     ],
     visibility = ["//visibility:public"],
 )

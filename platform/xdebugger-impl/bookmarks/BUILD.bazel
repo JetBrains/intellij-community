@@ -85,6 +85,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.debugger.impl.bookmarks.iml",
+        "resources/intellij.platform.debugger.impl.bookmarks.xml",
     ],
     visibility = ["//visibility:public"],
 )

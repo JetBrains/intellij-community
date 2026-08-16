@@ -96,6 +96,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.dev.iml",
+        "resources/intellij.java.dev.xml",
     ],
     visibility = ["//visibility:public"],
 )

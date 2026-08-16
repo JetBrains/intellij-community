@@ -103,6 +103,7 @@ jvm_library(
 exports_files(
     [
         "intellij.notebooks.visualization.testFramework.iml",
+        "resources/intellij.notebooks.visualization.testFramework.xml",
     ],
     visibility = ["//visibility:public"],
 )

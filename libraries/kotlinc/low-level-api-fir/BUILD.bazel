@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.kotlinc.low.level.api.fir.iml",
+        "resources/intellij.libraries.kotlinc.low.level.api.fir.xml",
     ],
     visibility = ["//visibility:public"],
 )

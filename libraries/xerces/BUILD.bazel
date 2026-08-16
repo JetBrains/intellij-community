@@ -35,6 +35,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.xerces.iml",
+        "resources/intellij.libraries.xerces.xml",
     ],
     visibility = ["//visibility:public"],
 )

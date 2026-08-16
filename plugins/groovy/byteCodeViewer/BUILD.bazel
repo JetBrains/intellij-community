@@ -56,6 +56,7 @@ jvm_library(
 exports_files(
     [
         "intellij.groovy.byteCodeViewer.iml",
+        "resources/intellij.groovy.byteCodeViewer.xml",
     ],
     visibility = ["//visibility:public"],
 )

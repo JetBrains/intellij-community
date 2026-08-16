@@ -91,6 +91,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.parcelize.iml",
+        "resources/intellij.kotlin.compilerPlugins.parcelize.xml",
     ],
     visibility = ["//visibility:public"],
 )

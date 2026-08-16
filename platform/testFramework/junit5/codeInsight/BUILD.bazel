@@ -69,6 +69,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.testFramework.junit5.codeInsight.iml",
+        "resources/intellij.platform.testFramework.junit5.codeInsight.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -76,6 +76,7 @@ jvm_library(
 exports_files(
     [
         "fleet.bifurcan.iml",
+        "resources/fleet.bifurcan.xml",
     ],
     visibility = ["//visibility:public"],
 )

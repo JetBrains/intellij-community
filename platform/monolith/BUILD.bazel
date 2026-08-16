@@ -42,6 +42,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.monolith.iml",
+        "resources/intellij.platform.monolith.xml",
     ],
     visibility = ["//visibility:public"],
 )

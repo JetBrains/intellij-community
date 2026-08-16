@@ -145,6 +145,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.langInjection.backend.iml",
+        "resources/intellij.platform.langInjection.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

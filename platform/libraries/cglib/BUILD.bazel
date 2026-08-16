@@ -59,6 +59,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.cglib.iml",
+        "resources/intellij.libraries.cglib.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -80,6 +80,8 @@ jvm_library(
 exports_files(
     [
         "intellij.java.codeserver.core.iml",
+        "resources/META-INF/JavaCodeServerCore.xml",
+        "resources/intellij.java.codeserver.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

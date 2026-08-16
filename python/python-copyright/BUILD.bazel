@@ -53,6 +53,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.copyright.iml",
+        "resources/intellij.python.copyright.xml",
     ],
     visibility = ["//visibility:public"],
 )

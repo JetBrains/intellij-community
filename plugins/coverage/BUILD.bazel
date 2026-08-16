@@ -159,6 +159,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.coverage.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -35,6 +35,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.search.everywhere.find.ec.model.iml",
+        "resources/intellij.libraries.search.everywhere.find.ec.model.xml",
     ],
     visibility = ["//visibility:public"],
 )

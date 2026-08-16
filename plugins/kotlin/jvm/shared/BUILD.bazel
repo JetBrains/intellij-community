@@ -185,6 +185,7 @@ jvm_library(
 exports_files(
     [
         "kotlin.jvm.shared.iml",
+        "resources/kotlin.jvm.shared.xml",
     ],
     visibility = ["//visibility:public"],
 )

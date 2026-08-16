@@ -43,6 +43,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.jing.iml",
+        "resources/intellij.libraries.jing.xml",
     ],
     visibility = ["//visibility:public"],
 )

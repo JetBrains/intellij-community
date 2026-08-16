@@ -145,6 +145,7 @@ jvm_library(
 exports_files(
     [
         "intellij.grid.impl.iml",
+        "resources/intellij.grid.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

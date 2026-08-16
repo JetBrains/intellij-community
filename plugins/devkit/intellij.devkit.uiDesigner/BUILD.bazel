@@ -79,6 +79,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.uiDesigner.iml",
+        "resources/intellij.devkit.uiDesigner.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -45,6 +45,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.junit5.pioneer.iml",
+        "resources/intellij.libraries.junit5.pioneer.xml",
     ],
     visibility = ["//visibility:public"],
 )

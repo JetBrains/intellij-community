@@ -74,6 +74,7 @@ jvm_library(
 exports_files(
     [
         "intellij.vcs.git.coverage.iml",
+        "resources/intellij.vcs.git.coverage.xml",
     ],
     visibility = ["//visibility:public"],
 )

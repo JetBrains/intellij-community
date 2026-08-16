@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.fastutil.iml",
+        "resources/intellij.libraries.fastutil.xml",
     ],
     visibility = ["//visibility:public"],
 )

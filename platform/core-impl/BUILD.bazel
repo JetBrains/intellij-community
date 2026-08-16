@@ -93,6 +93,9 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.core.impl.iml",
+        "resources/META-INF/CoreImpl.analyzer.xml",
+        "resources/META-INF/CoreImpl.xml",
+        "resources/intellij.platform.core.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

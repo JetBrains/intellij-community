@@ -129,6 +129,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.testFramework.junit5.iml",
+        "resources/intellij.platform.testFramework.junit5.xml",
     ],
     visibility = ["//visibility:public"],
 )

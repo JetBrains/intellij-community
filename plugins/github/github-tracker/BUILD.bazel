@@ -76,6 +76,7 @@ jvm_library(
 exports_files(
     [
         "intellij.vcs.github.tracker.iml",
+        "resources/intellij.vcs.github.tracker.xml",
     ],
     visibility = ["//visibility:public"],
 )

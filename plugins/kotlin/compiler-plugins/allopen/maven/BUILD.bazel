@@ -60,6 +60,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.allopen.maven.iml",
+        "resources/intellij.kotlin.compilerPlugins.allopen.maven.xml",
     ],
     visibility = ["//visibility:public"],
 )

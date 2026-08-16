@@ -43,6 +43,7 @@ jvm_library(
 exports_files(
     [
         "intellij.maven.model.iml",
+        "resources/intellij.maven.model.xml",
     ],
     visibility = ["//visibility:public"],
 )

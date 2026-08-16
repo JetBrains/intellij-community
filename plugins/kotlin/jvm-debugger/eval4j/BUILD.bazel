@@ -60,6 +60,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.jvm.debugger.eval4j.iml",
+        "resources/intellij.kotlin.jvm.debugger.eval4j.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -43,6 +43,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.system.stubs.jupiter.iml",
+        "resources/intellij.libraries.system.stubs.jupiter.xml",
     ],
     visibility = ["//visibility:public"],
 )

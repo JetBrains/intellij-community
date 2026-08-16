@@ -284,6 +284,7 @@ jvm_library(
 exports_files(
     [
         "intellij.maven.iml",
+        "src/main/resources/intellij.maven.xml",
     ],
     visibility = ["//visibility:public"],
 )

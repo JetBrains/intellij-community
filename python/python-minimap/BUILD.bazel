@@ -57,6 +57,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.minimap.iml",
+        "resources/intellij.python.minimap.xml",
     ],
     visibility = ["//visibility:public"],
 )

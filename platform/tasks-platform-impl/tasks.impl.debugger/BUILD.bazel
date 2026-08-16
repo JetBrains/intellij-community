@@ -66,6 +66,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.tasks.impl.debugger.iml",
+        "resources/intellij.platform.tasks.impl.debugger.xml",
     ],
     visibility = ["//visibility:public"],
 )

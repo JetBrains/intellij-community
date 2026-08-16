@@ -73,6 +73,8 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.debugger.impl.rpc.iml",
+        "resources/intellij.platform.debugger.impl.rpc.content.xml",
+        "resources/intellij.platform.debugger.impl.rpc.xml",
     ],
     visibility = ["//visibility:public"],
 )

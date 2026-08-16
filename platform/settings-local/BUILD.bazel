@@ -106,6 +106,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.settings.local.iml",
+        "resources/intellij.platform.settings.local.xml",
     ],
     visibility = ["//visibility:public"],
 )

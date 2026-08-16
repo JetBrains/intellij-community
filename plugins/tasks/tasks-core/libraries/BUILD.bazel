@@ -35,6 +35,7 @@ jvm_library(
 exports_files(
     [
         "intellij.tasks.core.libraries.commonsDiscovery.iml",
+        "resources/intellij.tasks.core.libraries.commonsDiscovery.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -56,6 +56,7 @@ jvm_library(
 exports_files(
     [
         "intellij.compose.ide.plugin.gradleTooling.rt.iml",
+        "resources/intellij.compose.ide.plugin.gradleTooling.rt.xml",
     ],
     visibility = ["//visibility:public"],
 )

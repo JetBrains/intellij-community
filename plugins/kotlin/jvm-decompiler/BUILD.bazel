@@ -85,6 +85,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.jvm.decompiler.iml",
+        "resources/intellij.kotlin.jvm.decompiler.xml",
     ],
     visibility = ["//visibility:public"],
 )

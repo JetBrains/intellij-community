@@ -73,6 +73,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.jewel.markdown.extensions.gfmStrikethrough.iml",
+        "src/main/resources/intellij.platform.jewel.markdown.extensions.gfmStrikethrough.xml",
     ],
     visibility = ["//visibility:public"],
 )

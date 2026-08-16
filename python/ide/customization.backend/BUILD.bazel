@@ -42,6 +42,7 @@ jvm_library(
 exports_files(
     [
         "intellij.pycharm.community.customization.backend.iml",
+        "resources/intellij.pycharm.community.customization.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

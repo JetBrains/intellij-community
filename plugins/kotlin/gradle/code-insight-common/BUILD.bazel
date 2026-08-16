@@ -121,6 +121,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.gradle.codeInsight.common.iml",
+        "resources/intellij.kotlin.gradle.codeInsight.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -59,6 +59,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.community.impl.pipenv.iml",
+        "resources/intellij.python.community.impl.pipenv.xml",
     ],
     visibility = ["//visibility:public"],
 )

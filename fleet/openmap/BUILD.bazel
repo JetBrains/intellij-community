@@ -78,6 +78,7 @@ jvm_library(
 exports_files(
     [
         "fleet.openmap.iml",
+        "resources/fleet.openmap.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -84,6 +84,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.uv.backend.iml",
+        "resources/intellij.python.uv.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

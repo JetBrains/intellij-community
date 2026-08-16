@@ -90,6 +90,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.impl.wsl.iml",
+        "resources/intellij.platform.ide.impl.wsl.xml",
     ],
     visibility = ["//visibility:public"],
 )

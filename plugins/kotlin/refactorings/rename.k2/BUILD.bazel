@@ -97,6 +97,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.refactorings.rename.iml",
+        "resources/intellij.kotlin.refactorings.rename.xml",
     ],
     visibility = ["//visibility:public"],
 )

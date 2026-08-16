@@ -104,6 +104,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.i18n.iml",
+        "resources/intellij.devkit.i18n.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -83,6 +83,7 @@ jvm_library(
 exports_files(
     [
         "intellij.tools.ide.starter.driver.iml",
+        "resources/intellij.tools.ide.starter.driver.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -32,6 +32,8 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.intelliLang.iml",
+        "resources/devkit-xmlInjections.xml",
+        "resources/intellij.devkit.intelliLang.xml",
     ],
     visibility = ["//visibility:public"],
 )

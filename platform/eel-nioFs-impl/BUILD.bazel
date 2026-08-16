@@ -61,6 +61,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.eel.nioFs.impl.iml",
+        "resources/intellij.platform.eel.nioFs.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

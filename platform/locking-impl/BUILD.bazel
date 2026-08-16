@@ -56,6 +56,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.locking.impl.iml",
+        "resources/intellij.platform.locking.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

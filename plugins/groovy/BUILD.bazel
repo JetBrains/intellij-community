@@ -202,6 +202,15 @@ jvm_library(
 exports_files(
     [
         "intellij.groovy.iml",
+        "resources/META-INF/gant-support.xml",
+        "resources/META-INF/geb-support.xml",
+        "resources/META-INF/groovy-console.xml",
+        "resources/META-INF/groovy-dynamic-members.xml",
+        "resources/META-INF/groovy-indexed-property-support.xml",
+        "resources/META-INF/groovy-intentions.xml",
+        "resources/META-INF/groovy-logback-support.xml",
+        "resources/META-INF/groovy-templates.xml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

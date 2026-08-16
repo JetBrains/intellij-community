@@ -106,6 +106,7 @@ jvm_library(
 exports_files(
     [
         "intellij.tips.iml",
+        "resources/intellij.tips.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -75,6 +75,7 @@ jvm_library(
 exports_files(
     [
         "fleet.radixTrie.iml",
+        "resources/fleet.radixTrie.xml",
     ],
     visibility = ["//visibility:public"],
 )

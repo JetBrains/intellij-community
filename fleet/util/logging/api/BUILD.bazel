@@ -91,6 +91,7 @@ jvm_library(
 exports_files(
     [
         "fleet.util.logging.api.iml",
+        "resources/fleet.util.logging.api.xml",
     ],
     visibility = ["//visibility:public"],
 )

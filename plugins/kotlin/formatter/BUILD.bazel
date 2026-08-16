@@ -94,6 +94,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.formatter.iml",
+        "resources/intellij.kotlin.formatter.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -336,6 +336,7 @@ jvm_library(
 exports_files(
     [
         "jvm-rules/dependency-graph/intellij.platform.jps.build.dependencyGraph.iml",
+        "jvm-rules/dependency-graph/resources/intellij.platform.jps.build.dependencyGraph.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -388,6 +389,7 @@ jvm_library(
 exports_files(
     [
         "jvm-rules/jps-builders-6/intellij.platform.jps.build.javac.rt.iml",
+        "jvm-rules/jps-builders-6/resources/intellij.platform.jps.build.javac.rt.xml",
     ],
     visibility = ["//visibility:public"],
 )

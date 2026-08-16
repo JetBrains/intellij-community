@@ -71,6 +71,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.ffmpeg.iml",
+        "resources/intellij.libraries.ffmpeg.xml",
     ],
     visibility = ["//visibility:public"],
 )

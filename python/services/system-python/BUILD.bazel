@@ -90,6 +90,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.community.services.systemPython.iml",
+        "resources/intellij.python.community.services.systemPython.xml",
     ],
     visibility = ["//visibility:public"],
 )

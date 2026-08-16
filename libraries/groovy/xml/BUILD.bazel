@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.groovy.xml.iml",
+        "resources/intellij.libraries.groovy.xml.xml",
     ],
     visibility = ["//visibility:public"],
 )

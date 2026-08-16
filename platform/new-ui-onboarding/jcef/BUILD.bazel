@@ -58,6 +58,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.newUiOnboarding.jcef.iml",
+        "resources/intellij.platform.ide.newUiOnboarding.jcef.xml",
     ],
     visibility = ["//visibility:public"],
 )

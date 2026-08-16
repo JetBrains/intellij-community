@@ -79,6 +79,7 @@ jvm_library(
 exports_files(
     [
         "fleet.reporting.shared.iml",
+        "resources/fleet.reporting.shared.xml",
     ],
     visibility = ["//visibility:public"],
 )

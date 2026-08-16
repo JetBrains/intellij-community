@@ -35,6 +35,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.debugger.libraries.jb.jdi.iml",
+        "resources/intellij.java.debugger.libraries.jb.jdi.xml",
     ],
     visibility = ["//visibility:public"],
 )

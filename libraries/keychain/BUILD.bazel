@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.keychain.iml",
+        "resources/intellij.libraries.keychain.xml",
     ],
     visibility = ["//visibility:public"],
 )

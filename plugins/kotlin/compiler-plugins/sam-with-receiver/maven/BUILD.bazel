@@ -60,6 +60,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.samWithReceiver.maven.iml",
+        "resources/intellij.kotlin.compilerPlugins.samWithReceiver.maven.xml",
     ],
     visibility = ["//visibility:public"],
 )

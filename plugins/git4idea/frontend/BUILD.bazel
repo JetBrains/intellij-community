@@ -81,6 +81,7 @@ jvm_library(
 exports_files(
     [
         "intellij.vcs.git.frontend.iml",
+        "resources/intellij.vcs.git.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )

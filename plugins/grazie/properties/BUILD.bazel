@@ -61,6 +61,7 @@ jvm_library(
 exports_files(
     [
         "intellij.grazie.properties.iml",
+        "src/main/resources/intellij.grazie.properties.xml",
     ],
     visibility = ["//visibility:public"],
 )

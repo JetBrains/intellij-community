@@ -101,6 +101,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.black.iml",
+        "resources/intellij.python.black.xml",
     ],
     visibility = ["//visibility:public"],
 )

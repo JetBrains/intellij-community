@@ -61,6 +61,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.util.coroutines.iml",
+        "resources/intellij.platform.util.coroutines.xml",
     ],
     visibility = ["//visibility:public"],
 )

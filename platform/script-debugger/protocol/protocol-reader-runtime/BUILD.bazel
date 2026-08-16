@@ -57,6 +57,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.scriptDebugger.protocolReaderRuntime.iml",
+        "resources/intellij.platform.scriptDebugger.protocolReaderRuntime.xml",
     ],
     visibility = ["//visibility:public"],
 )

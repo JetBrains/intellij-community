@@ -59,6 +59,7 @@ jvm_library(
 exports_files(
     [
         "intellij.execution.process.mediator.daemon.iml",
+        "resources/intellij.execution.process.mediator.daemon.xml",
     ],
     visibility = ["//visibility:public"],
 )

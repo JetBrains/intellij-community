@@ -149,6 +149,7 @@ jvm_library(
 exports_files(
     [
         "intellij.remoteDev.util.iml",
+        "resources/intellij.remoteDev.util.xml",
     ],
     visibility = ["//visibility:public"],
 )

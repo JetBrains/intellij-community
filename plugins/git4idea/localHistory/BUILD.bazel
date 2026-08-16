@@ -42,6 +42,7 @@ jvm_library(
 exports_files(
     [
         "intellij.vcs.git.localHistory.iml",
+        "resources/intellij.vcs.git.localHistory.xml",
     ],
     visibility = ["//visibility:public"],
 )

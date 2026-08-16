@@ -83,6 +83,7 @@ jvm_library(
 exports_files(
     [
         "intellij.minimap.core.iml",
+        "resources/intellij.minimap.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -85,6 +85,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.jewel.markdown.extensions.autolink.iml",
+        "src/main/resources/intellij.platform.jewel.markdown.extensions.autolink.xml",
     ],
     visibility = ["//visibility:public"],
 )

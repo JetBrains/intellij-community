@@ -84,6 +84,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.testExtensions.iml",
+        "resources/intellij.platform.testExtensions.xml",
     ],
     visibility = ["//visibility:public"],
 )

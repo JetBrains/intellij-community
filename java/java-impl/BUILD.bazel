@@ -371,6 +371,10 @@ jvm_library(
 exports_files(
     [
         "intellij.java.impl.iml",
+        "resources/META-INF/RegistryKeysJavaImpl.xml",
+        "resources/META-INF/UsageData.xml",
+        "resources/intellij.java.impl.analyzer.xml",
+        "resources/intellij.java.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

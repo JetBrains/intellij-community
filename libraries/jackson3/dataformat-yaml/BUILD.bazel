@@ -44,6 +44,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.jackson3.dataformat.yaml.iml",
+        "resources/intellij.libraries.jackson3.dataformat.yaml.xml",
     ],
     visibility = ["//visibility:public"],
 )

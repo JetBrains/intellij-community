@@ -81,6 +81,7 @@ jvm_library(
 exports_files(
     [
         "fleet.multiplatform.shims.iml",
+        "resources/fleet.multiplatform.shims.xml",
     ],
     visibility = ["//visibility:public"],
 )

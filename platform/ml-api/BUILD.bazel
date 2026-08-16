@@ -51,6 +51,8 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ml.iml",
+        "resources/META-INF/ml-api.xml",
+        "resources/intellij.platform.ml.xml",
     ],
     visibility = ["//visibility:public"],
 )

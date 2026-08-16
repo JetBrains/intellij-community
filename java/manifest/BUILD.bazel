@@ -92,6 +92,8 @@ jvm_library(
 exports_files(
     [
         "intellij.java.manifest.iml",
+        "resources/META-INF/ManifestSupport.xml",
+        "resources/intellij.java.manifest.xml",
     ],
     visibility = ["//visibility:public"],
 )

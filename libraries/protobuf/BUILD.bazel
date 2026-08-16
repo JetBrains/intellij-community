@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.protobuf.iml",
+        "resources/intellij.libraries.protobuf.xml",
     ],
     visibility = ["//visibility:public"],
 )

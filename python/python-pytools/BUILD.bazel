@@ -90,6 +90,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.pytools.iml",
+        "resources/intellij.python.pytools.xml",
     ],
     visibility = ["//visibility:public"],
 )

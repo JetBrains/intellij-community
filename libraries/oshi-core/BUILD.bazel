@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.oshi.core.iml",
+        "resources/intellij.libraries.oshi.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

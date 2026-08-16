@@ -97,6 +97,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.searchEverywhere.iml",
+        "resources/intellij.platform.searchEverywhere.xml",
     ],
     visibility = ["//visibility:public"],
 )

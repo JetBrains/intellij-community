@@ -74,6 +74,7 @@ jvm_library(
 exports_files(
     [
         "intellij.gradle.dependencyUpdater.iml",
+        "resources/intellij.gradle.dependencyUpdater.xml",
     ],
     visibility = ["//visibility:public"],
 )

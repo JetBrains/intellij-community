@@ -61,6 +61,7 @@ jvm_library(
 exports_files(
     [
         "fleet.fastutil.iml",
+        "resources/fleet.fastutil.xml",
     ],
     visibility = ["//visibility:public"],
 )

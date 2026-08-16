@@ -67,6 +67,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.experiment.iml",
+        "resources/intellij.platform.experiment.xml",
     ],
     visibility = ["//visibility:public"],
 )

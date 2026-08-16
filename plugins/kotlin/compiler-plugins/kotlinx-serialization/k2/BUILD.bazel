@@ -88,6 +88,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.serialization.iml",
+        "resources/intellij.kotlin.compilerPlugins.serialization.xml",
     ],
     visibility = ["//visibility:public"],
 )

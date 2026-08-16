@@ -35,6 +35,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.awaitility.iml",
+        "resources/intellij.libraries.awaitility.xml",
     ],
     visibility = ["//visibility:public"],
 )

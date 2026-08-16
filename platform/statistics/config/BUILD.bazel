@@ -59,6 +59,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.statistics.config.iml",
+        "resources/intellij.platform.statistics.config.xml",
     ],
     visibility = ["//visibility:public"],
 )

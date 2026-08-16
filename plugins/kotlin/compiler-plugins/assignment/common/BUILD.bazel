@@ -79,6 +79,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.assignment.fixes.iml",
+        "resources/intellij.kotlin.compilerPlugins.assignment.fixes.xml",
     ],
     visibility = ["//visibility:public"],
 )

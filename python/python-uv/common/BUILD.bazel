@@ -55,6 +55,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.uv.common.iml",
+        "resources/intellij.python.uv.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -97,6 +97,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.gradle.tooling.impl.iml",
+        "resources/intellij.kotlin.gradle.tooling.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

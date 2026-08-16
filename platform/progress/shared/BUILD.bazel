@@ -65,6 +65,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.progress.iml",
+        "resources/intellij.platform.ide.progress.xml",
     ],
     visibility = ["//visibility:public"],
 )

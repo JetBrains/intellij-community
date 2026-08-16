@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.java.websocket.iml",
+        "resources/intellij.libraries.java.websocket.xml",
     ],
     visibility = ["//visibility:public"],
 )

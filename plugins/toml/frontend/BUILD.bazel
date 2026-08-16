@@ -63,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.toml.frontend.iml",
+        "resources/intellij.toml.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )

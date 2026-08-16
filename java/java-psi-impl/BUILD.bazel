@@ -86,6 +86,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.psi.impl.iml",
+        "resources/intellij.java.psi.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

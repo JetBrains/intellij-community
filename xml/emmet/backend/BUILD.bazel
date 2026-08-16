@@ -150,6 +150,7 @@ jvm_library(
 exports_files(
     [
         "intellij.xml.emmet.backend.iml",
+        "resources/intellij.xml.emmet.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

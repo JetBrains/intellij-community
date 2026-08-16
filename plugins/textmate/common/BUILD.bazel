@@ -43,6 +43,7 @@ jvm_library(
 exports_files(
     [
         "intellij.textmate.common.iml",
+        "resources/intellij.textmate.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

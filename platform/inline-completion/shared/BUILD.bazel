@@ -73,6 +73,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.inline.completion.iml",
+        "resources/intellij.platform.inline.completion.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -82,6 +82,7 @@ jvm_library(
 exports_files(
     [
         "intellij.xml.ui.common.iml",
+        "resources/intellij.xml.ui.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

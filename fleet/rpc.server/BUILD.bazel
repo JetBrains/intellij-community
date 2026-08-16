@@ -90,6 +90,7 @@ jvm_library(
 exports_files(
     [
         "fleet.rpc.server.iml",
+        "resources/fleet.rpc.server.xml",
     ],
     visibility = ["//visibility:public"],
 )

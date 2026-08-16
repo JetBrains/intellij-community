@@ -57,6 +57,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.builtInServer.iml",
+        "resources/intellij.platform.builtInServer.xml",
     ],
     visibility = ["//visibility:public"],
 )

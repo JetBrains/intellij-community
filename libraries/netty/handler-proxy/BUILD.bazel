@@ -46,6 +46,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.netty.handler.proxy.iml",
+        "resources/intellij.libraries.netty.handler.proxy.xml",
     ],
     visibility = ["//visibility:public"],
 )

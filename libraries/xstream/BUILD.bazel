@@ -44,6 +44,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.xstream.iml",
+        "resources/intellij.libraries.xstream.xml",
     ],
     visibility = ["//visibility:public"],
 )

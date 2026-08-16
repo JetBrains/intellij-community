@@ -105,6 +105,7 @@ jvm_library(
 exports_files(
     [
         "fleet.andel.iml",
+        "resources/fleet.andel.xml",
     ],
     visibility = ["//visibility:public"],
 )

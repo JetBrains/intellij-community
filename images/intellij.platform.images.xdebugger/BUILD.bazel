@@ -54,6 +54,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.images.xdebugger.iml",
+        "resources/intellij.platform.images.xdebugger.xml",
     ],
     visibility = ["//visibility:public"],
 )

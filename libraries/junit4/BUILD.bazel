@@ -53,6 +53,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.junit4.iml",
+        "resources/intellij.libraries.junit4.xml",
     ],
     visibility = ["//visibility:public"],
 )

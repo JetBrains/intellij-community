@@ -55,6 +55,7 @@ jvm_library(
 exports_files(
     [
         "intellij.pycharm.community.ide.implTraining.iml",
+        "resources/intellij.pycharm.community.ide.implTraining.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.hash4j.iml",
+        "resources/intellij.libraries.hash4j.xml",
     ],
     visibility = ["//visibility:public"],
 )

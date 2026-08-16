@@ -59,6 +59,7 @@ jvm_library(
 exports_files(
     [
         "intellij.gradle.toolingProxy.iml",
+        "resources/intellij.gradle.toolingProxy.xml",
     ],
     visibility = ["//visibility:public"],
 )

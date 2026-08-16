@@ -72,6 +72,7 @@ jvm_library(
 exports_files(
     [
         "intellij.tools.ide.starter.bus.iml",
+        "resources/intellij.tools.ide.starter.bus.xml",
     ],
     visibility = ["//visibility:public"],
 )

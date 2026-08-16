@@ -103,6 +103,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.lsp.core.iml",
+        "resources/intellij.python.lsp.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

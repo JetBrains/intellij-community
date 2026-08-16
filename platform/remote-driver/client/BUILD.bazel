@@ -48,6 +48,7 @@ jvm_library(
 exports_files(
     [
         "intellij.driver.client.iml",
+        "resources/intellij.driver.client.xml",
     ],
     visibility = ["//visibility:public"],
 )

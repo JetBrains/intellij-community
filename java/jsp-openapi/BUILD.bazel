@@ -60,6 +60,7 @@ jvm_library(
 exports_files(
     [
         "intellij.jsp.iml",
+        "resources/intellij.jsp.xml",
     ],
     visibility = ["//visibility:public"],
 )

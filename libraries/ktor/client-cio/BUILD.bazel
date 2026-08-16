@@ -58,6 +58,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.ktor.client.cio.iml",
+        "resources/intellij.libraries.ktor.client.cio.xml",
     ],
     visibility = ["//visibility:public"],
 )

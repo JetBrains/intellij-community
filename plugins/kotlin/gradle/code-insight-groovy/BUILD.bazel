@@ -96,6 +96,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.gradle.codeInsight.groovy.iml",
+        "resources/intellij.kotlin.gradle.codeInsight.groovy.xml",
     ],
     visibility = ["//visibility:public"],
 )

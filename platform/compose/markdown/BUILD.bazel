@@ -89,6 +89,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.compose.markdown.iml",
+        "resources/intellij.platform.compose.markdown.xml",
     ],
     visibility = ["//visibility:public"],
 )

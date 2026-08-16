@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.opentelemetry.sdk.autoconfigure.spi.iml",
+        "resources/intellij.libraries.opentelemetry.sdk.autoconfigure.spi.xml",
     ],
     visibility = ["//visibility:public"],
 )

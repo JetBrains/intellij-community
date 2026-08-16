@@ -110,6 +110,7 @@ jvm_library(
 exports_files(
     [
         "intellij.evaluationPlugin.languages.java.iml",
+        "resources/intellij.evaluationPlugin.languages.java.xml",
     ],
     visibility = ["//visibility:public"],
 )

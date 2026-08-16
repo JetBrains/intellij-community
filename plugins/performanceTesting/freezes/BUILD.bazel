@@ -77,6 +77,7 @@ jvm_library(
 exports_files(
     [
         "intellij.performanceTesting.freezes.iml",
+        "resources/intellij.performanceTesting.freezes.xml",
     ],
     visibility = ["//visibility:public"],
 )

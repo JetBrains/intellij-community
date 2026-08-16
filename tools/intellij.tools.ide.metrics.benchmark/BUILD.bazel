@@ -90,6 +90,7 @@ jvm_library(
 exports_files(
     [
         "intellij.tools.ide.metrics.benchmark.iml",
+        "resources/intellij.tools.ide.metrics.benchmark.xml",
     ],
     visibility = ["//visibility:public"],
 )

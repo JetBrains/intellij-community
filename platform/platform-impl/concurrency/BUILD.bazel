@@ -81,6 +81,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.concurrency.iml",
+        "resources/intellij.platform.ide.concurrency.xml",
     ],
     visibility = ["//visibility:public"],
 )

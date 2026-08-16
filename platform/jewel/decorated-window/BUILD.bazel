@@ -86,6 +86,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.jewel.decoratedWindow.iml",
+        "src/main/resources/intellij.platform.jewel.decoratedWindow.xml",
     ],
     visibility = ["//visibility:public"],
 )

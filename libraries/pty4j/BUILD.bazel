@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.pty4j.iml",
+        "resources/intellij.libraries.pty4j.xml",
     ],
     visibility = ["//visibility:public"],
 )

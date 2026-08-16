@@ -60,6 +60,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.assignment.maven.iml",
+        "resources/intellij.kotlin.compilerPlugins.assignment.maven.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.jsch.agent.proxy.iml",
+        "resources/intellij.libraries.jsch.agent.proxy.xml",
     ],
     visibility = ["//visibility:public"],
 )

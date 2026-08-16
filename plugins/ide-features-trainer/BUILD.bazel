@@ -142,6 +142,7 @@ jvm_library(
 exports_files(
     [
         "intellij.featuresTrainer.iml",
+        "res/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

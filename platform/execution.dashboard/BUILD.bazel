@@ -106,6 +106,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.execution.dashboard.iml",
+        "resources/intellij.platform.execution.dashboard.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -54,6 +54,7 @@ jvm_library(
 exports_files(
     [
         "intellij.community.wintools.iml",
+        "resources/intellij.community.wintools.xml",
     ],
     visibility = ["//visibility:public"],
 )

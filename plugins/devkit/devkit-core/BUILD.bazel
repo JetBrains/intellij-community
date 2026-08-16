@@ -241,6 +241,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.core.iml",
+        "resources/intellij.devkit.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -49,6 +49,7 @@ jvm_library(
 exports_files(
     [
         "intellij.json.networknt.wrapper.libraries.jsonSchemaValidator.iml",
+        "resources/intellij.json.networknt.wrapper.libraries.jsonSchemaValidator.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -129,6 +129,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.jps.build.iml",
+        "resources/intellij.platform.jps.build.xml",
     ],
     visibility = ["//visibility:public"],
 )

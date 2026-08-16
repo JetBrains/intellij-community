@@ -142,6 +142,7 @@ jvm_library(
 exports_files(
     [
         "intellij.lambda.testFramework.iml",
+        "resources/intellij.lambda.testFramework.xml",
     ],
     visibility = ["//visibility:public"],
 )

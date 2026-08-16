@@ -32,6 +32,7 @@ jvm_library(
 exports_files(
     [
         "intellij.color.scheme.warmNeon.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -178,6 +178,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.refactorings.iml",
+        "resources/intellij.kotlin.refactorings.xml",
     ],
     visibility = ["//visibility:public"],
 )

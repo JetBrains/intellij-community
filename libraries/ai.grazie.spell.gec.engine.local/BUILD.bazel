@@ -82,6 +82,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.ai.grazie.spell.gec.engine.local.iml",
+        "resources/intellij.libraries.ai.grazie.spell.gec.engine.local.xml",
     ],
     visibility = ["//visibility:public"],
 )

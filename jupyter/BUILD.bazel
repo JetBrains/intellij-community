@@ -65,6 +65,7 @@ jvm_library(
 exports_files(
     [
         "intellij.notebooks.jupyter.core.iml",
+        "resources/intellij.notebooks.jupyter.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

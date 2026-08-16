@@ -48,6 +48,8 @@ jvm_library(
 exports_files(
     [
         "intellij.idea.community.customization.iml",
+        "resources/META-INF/IdeaPlugin.xml",
+        "resources/META-INF/community-customization.xml",
     ],
     visibility = ["//visibility:public"],
 )

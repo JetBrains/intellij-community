@@ -47,6 +47,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.klogger.iml",
+        "resources/intellij.platform.klogger.xml",
     ],
     visibility = ["//visibility:public"],
 )

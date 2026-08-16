@@ -60,6 +60,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.tasks.impl.bookmarks.iml",
+        "resources/intellij.platform.tasks.impl.bookmarks.xml",
     ],
     visibility = ["//visibility:public"],
 )

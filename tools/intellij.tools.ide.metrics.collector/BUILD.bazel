@@ -95,6 +95,7 @@ jvm_library(
 exports_files(
     [
         "intellij.tools.ide.metrics.collector.iml",
+        "resources/intellij.tools.ide.metrics.collector.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -44,6 +44,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.kotlin.gradle.plugin.idea.proto.iml",
+        "resources/intellij.libraries.kotlin.gradle.plugin.idea.proto.xml",
     ],
     visibility = ["//visibility:public"],
 )

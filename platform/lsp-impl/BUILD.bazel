@@ -117,6 +117,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.lsp.impl.iml",
+        "resources/intellij.platform.lsp.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

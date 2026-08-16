@@ -136,6 +136,8 @@ jvm_library(
 exports_files(
     [
         "intellij.java.impl.refactorings.iml",
+        "resources/META-INF/RegistryKeysRefactorings.xml",
+        "resources/intellij.java.impl.refactorings.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -187,6 +187,8 @@ jvm_library(
 exports_files(
     [
         "intellij.vcs.gitlab.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/intellij.vcs.gitlab.xml",
     ],
     visibility = ["//visibility:public"],
 )

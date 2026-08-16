@@ -153,6 +153,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.workspaceModel.iml",
+        "resources/intellij.devkit.workspaceModel.xml",
     ],
     visibility = ["//visibility:public"],
 )

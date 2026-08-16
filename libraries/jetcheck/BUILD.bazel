@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.jetcheck.iml",
+        "resources/intellij.libraries.jetcheck.xml",
     ],
     visibility = ["//visibility:public"],
 )

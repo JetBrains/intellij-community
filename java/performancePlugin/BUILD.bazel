@@ -90,6 +90,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.performancePlugin.iml",
+        "resources/intellij.java.performancePlugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

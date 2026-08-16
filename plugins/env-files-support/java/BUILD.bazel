@@ -60,6 +60,7 @@ jvm_library(
 exports_files(
     [
         "intellij.dotenv.java.iml",
+        "resources/intellij.dotenv.java.xml",
     ],
     visibility = ["//visibility:public"],
 )

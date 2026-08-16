@@ -57,6 +57,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.git.iml",
+        "resources/intellij.kotlin.git.xml",
     ],
     visibility = ["//visibility:public"],
 )

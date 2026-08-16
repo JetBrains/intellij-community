@@ -62,6 +62,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.mcp.inspections.iml",
+        "resources/intellij.devkit.mcp.inspections.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -124,6 +124,7 @@ jvm_library(
 exports_files(
     [
         "intellij.mermaid.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

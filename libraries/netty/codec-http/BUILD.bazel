@@ -44,6 +44,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.netty.codec.http.iml",
+        "resources/intellij.libraries.netty.codec.http.xml",
     ],
     visibility = ["//visibility:public"],
 )

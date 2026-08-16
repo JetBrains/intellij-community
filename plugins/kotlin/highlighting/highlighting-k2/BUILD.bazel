@@ -135,6 +135,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.highlighting.iml",
+        "resources/intellij.kotlin.highlighting.xml",
     ],
     visibility = ["//visibility:public"],
 )

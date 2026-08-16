@@ -62,6 +62,7 @@ jvm_library(
 exports_files(
     [
         "intellij.tasks.bugzilla.iml",
+        "resources/intellij.tasks.bugzilla.xml",
     ],
     visibility = ["//visibility:public"],
 )

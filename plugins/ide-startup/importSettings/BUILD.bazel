@@ -129,6 +129,7 @@ jvm_library(
 exports_files(
     [
         "intellij.ide.startup.importSettings.iml",
+        "resources/intellij.ide.startup.importSettings.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -99,6 +99,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.onboarding.gradle.iml",
+        "resources/intellij.kotlin.onboarding.gradle.xml",
     ],
     visibility = ["//visibility:public"],
 )

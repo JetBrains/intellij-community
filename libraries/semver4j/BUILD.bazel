@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.semver4j.iml",
+        "resources/intellij.libraries.semver4j.xml",
     ],
     visibility = ["//visibility:public"],
 )

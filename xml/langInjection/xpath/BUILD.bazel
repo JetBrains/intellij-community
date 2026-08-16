@@ -62,6 +62,7 @@ jvm_library(
 exports_files(
     [
         "intellij.xml.langInjection.xpath.iml",
+        "resources/intellij.xml.langInjection.xpath.xml",
     ],
     visibility = ["//visibility:public"],
 )

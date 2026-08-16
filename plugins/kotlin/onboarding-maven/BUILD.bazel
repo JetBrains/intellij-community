@@ -91,6 +91,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.onboarding.maven.iml",
+        "resources/intellij.kotlin.onboarding.maven.xml",
     ],
     visibility = ["//visibility:public"],
 )

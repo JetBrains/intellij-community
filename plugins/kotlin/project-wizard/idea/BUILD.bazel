@@ -140,6 +140,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.projectWizard.idea.iml",
+        "resources/intellij.kotlin.projectWizard.idea.xml",
     ],
     visibility = ["//visibility:public"],
 )

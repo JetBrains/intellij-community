@@ -128,6 +128,9 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.iml",
+        "resources/PlatformProductivityFeatures.xml",
+        "resources/intellij.platform.ide.actions.xml",
+        "resources/intellij.platform.ide.xml",
     ],
     visibility = ["//visibility:public"],
 )

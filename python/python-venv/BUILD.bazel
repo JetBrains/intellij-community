@@ -79,6 +79,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.venv.iml",
+        "resources/intellij.python.venv.xml",
     ],
     visibility = ["//visibility:public"],
 )

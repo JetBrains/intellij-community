@@ -79,6 +79,7 @@ jvm_library(
 exports_files(
     [
         "intellij.performanceTesting.frontend.iml",
+        "resources/intellij.performanceTesting.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )

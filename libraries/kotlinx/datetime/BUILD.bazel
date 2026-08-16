@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.kotlinx.datetime.iml",
+        "resources/intellij.libraries.kotlinx.datetime.xml",
     ],
     visibility = ["//visibility:public"],
 )

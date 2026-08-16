@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.test.discovery.iml",
+        "resources/intellij.libraries.test.discovery.xml",
     ],
     visibility = ["//visibility:public"],
 )

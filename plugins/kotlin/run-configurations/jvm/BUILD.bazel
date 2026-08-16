@@ -122,6 +122,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.runConfigurations.jvm.iml",
+        "resources/intellij.kotlin.runConfigurations.jvm.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -47,6 +47,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.debugger.memory.agent.iml",
+        "resources/intellij.java.debugger.memory.agent.xml",
     ],
     visibility = ["//visibility:public"],
 )

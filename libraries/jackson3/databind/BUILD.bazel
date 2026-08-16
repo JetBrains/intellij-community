@@ -55,6 +55,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.jackson3.databind.iml",
+        "resources/intellij.libraries.jackson3.databind.xml",
     ],
     visibility = ["//visibility:public"],
 )

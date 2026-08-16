@@ -57,6 +57,7 @@ jvm_library(
 exports_files(
     [
         "intellij.groovy.copyright.iml",
+        "resources/intellij.groovy.copyright.xml",
     ],
     visibility = ["//visibility:public"],
 )

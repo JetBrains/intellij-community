@@ -70,6 +70,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.support.bundled.iml",
+        "resources/intellij.kotlin.compilerPlugins.support.bundled.xml",
     ],
     visibility = ["//visibility:public"],
 )

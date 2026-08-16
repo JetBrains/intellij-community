@@ -71,6 +71,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.base.indices.iml",
+        "resources/intellij.kotlin.base.indices.xml",
     ],
     visibility = ["//visibility:public"],
 )

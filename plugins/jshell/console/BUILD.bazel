@@ -86,6 +86,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.jshell.console.iml",
+        "resources/intellij.java.jshell.console.xml",
     ],
     visibility = ["//visibility:public"],
 )

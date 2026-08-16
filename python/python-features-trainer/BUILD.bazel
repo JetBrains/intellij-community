@@ -112,6 +112,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.featuresTrainer.iml",
+        "resources/intellij.python.featuresTrainer.xml",
     ],
     visibility = ["//visibility:public"],
 )

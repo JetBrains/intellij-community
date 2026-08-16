@@ -53,6 +53,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.opentelemetry.extension.kotlin.iml",
+        "resources/intellij.libraries.opentelemetry.extension.kotlin.xml",
     ],
     visibility = ["//visibility:public"],
 )

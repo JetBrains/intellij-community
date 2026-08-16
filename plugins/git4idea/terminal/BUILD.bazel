@@ -76,6 +76,7 @@ jvm_library(
 exports_files(
     [
         "intellij.vcs.git.terminal.iml",
+        "resources/intellij.vcs.git.terminal.xml",
     ],
     visibility = ["//visibility:public"],
 )

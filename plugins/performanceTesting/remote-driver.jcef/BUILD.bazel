@@ -61,6 +61,7 @@ jvm_library(
 exports_files(
     [
         "intellij.performanceTesting.remoteDriver.jcef.iml",
+        "resources/intellij.performanceTesting.remoteDriver.jcef.xml",
     ],
     visibility = ["//visibility:public"],
 )

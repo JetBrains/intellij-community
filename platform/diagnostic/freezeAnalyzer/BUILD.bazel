@@ -48,6 +48,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.diagnostic.freezeAnalyzer.iml",
+        "resources/intellij.platform.diagnostic.freezeAnalyzer.xml",
     ],
     visibility = ["//visibility:public"],
 )

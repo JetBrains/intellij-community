@@ -91,6 +91,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.runConfigurations.testng.iml",
+        "resources/intellij.kotlin.runConfigurations.testng.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -76,6 +76,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.navigation.iml",
+        "resouces/intellij.kotlin.navigation.xml",
     ],
     visibility = ["//visibility:public"],
 )

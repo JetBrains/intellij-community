@@ -89,6 +89,7 @@ jvm_library(
 exports_files(
     [
         "intellij.mcpserver.testFramework.iml",
+        "resources/intellij.mcpserver.testFramework.xml",
     ],
     visibility = ["//visibility:public"],
 )

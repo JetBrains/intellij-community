@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.groovy.jsr223.iml",
+        "resources/intellij.libraries.groovy.jsr223.xml",
     ],
     visibility = ["//visibility:public"],
 )

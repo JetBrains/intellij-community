@@ -95,6 +95,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.decompiler.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

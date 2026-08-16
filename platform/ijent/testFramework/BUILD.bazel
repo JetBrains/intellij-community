@@ -59,6 +59,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ijent.community.testFramework.iml",
+        "resources/intellij.platform.ijent.community.testFramework.xml",
     ],
     visibility = ["//visibility:public"],
 )

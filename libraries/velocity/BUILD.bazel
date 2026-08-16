@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.velocity.iml",
+        "resources/intellij.libraries.velocity.xml",
     ],
     visibility = ["//visibility:public"],
 )

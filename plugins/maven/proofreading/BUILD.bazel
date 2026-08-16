@@ -67,6 +67,7 @@ jvm_library(
 exports_files(
     [
         "intellij.maven.proofreading.iml",
+        "resources/intellij.maven.proofreading.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -69,6 +69,7 @@ jvm_library(
 exports_files(
     [
         "intellij.execution.process.elevation.iml",
+        "resources/intellij.execution.process.elevation.xml",
     ],
     visibility = ["//visibility:public"],
 )

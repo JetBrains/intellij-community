@@ -118,6 +118,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.ruff.iml",
+        "resources/intellij.python.ruff.xml",
     ],
     visibility = ["//visibility:public"],
 )

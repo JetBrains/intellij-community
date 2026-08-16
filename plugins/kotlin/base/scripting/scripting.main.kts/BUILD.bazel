@@ -100,6 +100,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.base.scripting.main.kts.iml",
+        "resources/intellij.kotlin.base.scripting.main.kts.xml",
     ],
     visibility = ["//visibility:public"],
 )

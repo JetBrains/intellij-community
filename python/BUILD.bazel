@@ -66,6 +66,10 @@ jvm_library(
 exports_files(
     [
         "intellij.pycharm.community.iml",
+        "ide-common/resources/META-INF/PyCharmCorePlugin.xml",
+        "ide-common/resources/META-INF/pycharm-core-customization.xml",
+        "resources/META-INF/pycharm-core.xml",
+        "resources/ProductivityFeaturesRegistry.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -117,6 +121,7 @@ jvm_library(
 exports_files(
     [
         "intellij.pycharm.community.customization.iml",
+        "ide/resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -682,6 +687,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.community.impl.iml",
+        "pluginResources/intellij.python.community.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -1620,6 +1626,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.pydev.iml",
+        "pydevSrc/resources/intellij.python.pydev.xml",
     ],
     visibility = ["//visibility:public"],
 )

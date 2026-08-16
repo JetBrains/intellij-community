@@ -63,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.credentialStore.ui.iml",
+        "resources/intellij.platform.credentialStore.ui.xml",
     ],
     visibility = ["//visibility:public"],
 )

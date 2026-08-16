@@ -58,6 +58,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module.iml",
+        "resources/intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module.xml",
     ],
     visibility = ["//visibility:public"],
 )

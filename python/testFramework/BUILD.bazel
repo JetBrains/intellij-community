@@ -84,6 +84,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.community.testFramework.iml",
+        "resources/intellij.python.community.testFramework.xml",
     ],
     visibility = ["//visibility:public"],
 )

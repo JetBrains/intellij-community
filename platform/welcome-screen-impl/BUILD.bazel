@@ -63,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.welcomeScreen.impl.iml",
+        "resources/intellij.platform.welcomeScreen.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -62,6 +62,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.rpc.iml",
+        "resources/intellij.platform.rpc.xml",
     ],
     visibility = ["//visibility:public"],
 )

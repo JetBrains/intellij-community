@@ -132,6 +132,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.bootstrap.iml",
+        "resources/intellij.platform.ide.bootstrap.xml",
     ],
     visibility = ["//visibility:public"],
 )

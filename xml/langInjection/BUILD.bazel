@@ -80,6 +80,7 @@ jvm_library(
 exports_files(
     [
         "intellij.xml.langInjection.iml",
+        "resources/intellij.xml.langInjection.xml",
     ],
     visibility = ["//visibility:public"],
 )

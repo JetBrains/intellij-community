@@ -60,6 +60,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.compose.foundation.desktop.iml",
+        "resources/intellij.libraries.compose.foundation.desktop.xml",
     ],
     visibility = ["//visibility:public"],
 )

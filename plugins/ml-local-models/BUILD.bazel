@@ -63,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.ml.models.local.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

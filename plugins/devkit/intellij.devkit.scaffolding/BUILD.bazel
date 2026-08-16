@@ -87,6 +87,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.scaffolding.iml",
+        "resources/intellij.devkit.scaffolding.xml",
     ],
     visibility = ["//visibility:public"],
 )

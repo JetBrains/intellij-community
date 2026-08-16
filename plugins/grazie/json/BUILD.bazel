@@ -55,6 +55,7 @@ jvm_library(
 exports_files(
     [
         "intellij.grazie.json.iml",
+        "src/main/resources/intellij.grazie.json.xml",
     ],
     visibility = ["//visibility:public"],
 )

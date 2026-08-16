@@ -55,6 +55,7 @@ jvm_library(
 exports_files(
     [
         "intellij.jvm.analysis.refactoring.iml",
+        "resources/intellij.jvm.analysis.refactoring.xml",
     ],
     visibility = ["//visibility:public"],
 )

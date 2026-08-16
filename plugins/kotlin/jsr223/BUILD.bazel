@@ -51,6 +51,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.jsr223.iml",
+        "resources/intellij.kotlin.jsr223.xml",
     ],
     visibility = ["//visibility:public"],
 )

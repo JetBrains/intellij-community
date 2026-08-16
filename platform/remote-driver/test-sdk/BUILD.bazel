@@ -75,6 +75,7 @@ jvm_library(
 exports_files(
     [
         "intellij.driver.sdk.iml",
+        "resources/intellij.driver.sdk.xml",
     ],
     visibility = ["//visibility:public"],
 )

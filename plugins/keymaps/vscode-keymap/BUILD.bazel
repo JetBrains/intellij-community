@@ -32,6 +32,7 @@ jvm_library(
 exports_files(
     [
         "intellij.keymap.vscode.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

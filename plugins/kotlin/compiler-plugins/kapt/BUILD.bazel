@@ -60,6 +60,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.kapt.iml",
+        "resources/intellij.kotlin.compilerPlugins.kapt.xml",
     ],
     visibility = ["//visibility:public"],
 )

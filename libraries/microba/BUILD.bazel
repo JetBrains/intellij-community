@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.microba.iml",
+        "resources/intellij.libraries.microba.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -79,6 +79,7 @@ jvm_library(
 exports_files(
     [
         "intellij.json.networknt.wrapper.iml",
+        "resources/intellij.json.networknt.wrapper.xml",
     ],
     visibility = ["//visibility:public"],
 )

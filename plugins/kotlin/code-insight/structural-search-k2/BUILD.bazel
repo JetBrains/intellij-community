@@ -99,6 +99,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.codeInsight.structuralSearch.iml",
+        "resources/intellij.kotlin.codeInsight.structuralSearch.xml",
     ],
     visibility = ["//visibility:public"],
 )

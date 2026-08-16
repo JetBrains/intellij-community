@@ -73,6 +73,7 @@ jvm_library(
 exports_files(
     [
         "intellij.debugger.streams.shared.iml",
+        "resources/intellij.debugger.streams.shared.xml",
     ],
     visibility = ["//visibility:public"],
 )

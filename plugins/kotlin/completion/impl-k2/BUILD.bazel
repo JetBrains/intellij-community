@@ -159,6 +159,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.completion.impl.iml",
+        "resources/intellij.kotlin.completion.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -115,6 +115,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.gradle.iml",
+        "resources/intellij.devkit.gradle.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -90,6 +90,7 @@ jvm_library(
 exports_files(
     [
         "intellij.tools.testsBootstrap.iml",
+        "resources/intellij.tools.testsBootstrap.xml",
     ],
     visibility = ["//visibility:public"],
 )

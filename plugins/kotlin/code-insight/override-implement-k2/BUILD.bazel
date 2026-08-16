@@ -102,6 +102,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.codeInsight.overrideImplement.iml",
+        "resources/intellij.kotlin.codeInsight.overrideImplement.xml",
     ],
     visibility = ["//visibility:public"],
 )

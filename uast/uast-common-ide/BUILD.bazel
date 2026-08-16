@@ -63,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.uast.ide.iml",
+        "resources/intellij.platform.uast.ide.xml",
     ],
     visibility = ["//visibility:public"],
 )

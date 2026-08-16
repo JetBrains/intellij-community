@@ -79,6 +79,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.uast.idea.base.iml",
+        "resources/intellij.kotlin.uast.idea.base.xml",
     ],
     visibility = ["//visibility:public"],
 )

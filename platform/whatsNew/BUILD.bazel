@@ -102,6 +102,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.whatsNew.iml",
+        "resources/intellij.platform.whatsNew.xml",
     ],
     visibility = ["//visibility:public"],
 )

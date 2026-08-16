@@ -88,6 +88,8 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.langInjection.iml",
+        "resources/LanguageInjectionConfiguration.xml",
+        "resources/intellij.platform.langInjection.xml",
     ],
     visibility = ["//visibility:public"],
 )

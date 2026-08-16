@@ -76,6 +76,8 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.initialConfigImport.iml",
+        "resources/intellij.platform.ide.initialConfigImport.actions.xml",
+        "resources/intellij.platform.ide.initialConfigImport.xml",
     ],
     visibility = ["//visibility:public"],
 )

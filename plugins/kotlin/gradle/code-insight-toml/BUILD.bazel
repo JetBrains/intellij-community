@@ -74,6 +74,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.gradle.codeInsight.toml.iml",
+        "resources/intellij.kotlin.gradle.codeInsight.toml.xml",
     ],
     visibility = ["//visibility:public"],
 )

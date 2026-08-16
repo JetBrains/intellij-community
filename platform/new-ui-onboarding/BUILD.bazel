@@ -71,6 +71,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.newUiOnboarding.iml",
+        "resources/intellij.platform.ide.newUiOnboarding.xml",
     ],
     visibility = ["//visibility:public"],
 )

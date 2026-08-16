@@ -118,6 +118,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.typeEngine.iml",
+        "resources/intellij.python.typeEngine.xml",
     ],
     visibility = ["//visibility:public"],
 )

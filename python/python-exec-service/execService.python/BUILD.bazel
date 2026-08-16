@@ -69,6 +69,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.community.execService.python.iml",
+        "resources/intellij.python.community.execService.python.xml",
     ],
     visibility = ["//visibility:public"],
 )

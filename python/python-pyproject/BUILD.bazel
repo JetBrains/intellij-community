@@ -118,6 +118,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.pyproject.iml",
+        "resources/intellij.python.pyproject.xml",
     ],
     visibility = ["//visibility:public"],
 )

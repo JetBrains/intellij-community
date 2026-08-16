@@ -92,6 +92,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.community.impl.conda.iml",
+        "resources/intellij.python.community.impl.conda.xml",
     ],
     visibility = ["//visibility:public"],
 )

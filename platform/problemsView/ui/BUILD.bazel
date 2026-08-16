@@ -135,6 +135,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.problemView.ui.iml",
+        "resources/intellij.platform.problemView.ui.xml",
     ],
     visibility = ["//visibility:public"],
 )

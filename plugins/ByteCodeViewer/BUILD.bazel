@@ -99,6 +99,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.byteCodeViewer.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

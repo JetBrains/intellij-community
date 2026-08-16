@@ -59,6 +59,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.scripting.iml",
+        "resources/intellij.kotlin.compilerPlugins.scripting.xml",
     ],
     visibility = ["//visibility:public"],
 )

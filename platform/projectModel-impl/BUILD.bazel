@@ -101,6 +101,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.projectModel.impl.iml",
+        "resources/intellij.platform.projectModel.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

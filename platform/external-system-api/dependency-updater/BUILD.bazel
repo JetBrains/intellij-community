@@ -66,6 +66,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.externalSystem.dependencyUpdater.iml",
+        "resources/intellij.platform.externalSystem.dependencyUpdater.xml",
     ],
     visibility = ["//visibility:public"],
 )

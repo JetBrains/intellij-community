@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.zstd.jni.iml",
+        "resources/intellij.libraries.zstd.jni.xml",
     ],
     visibility = ["//visibility:public"],
 )

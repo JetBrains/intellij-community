@@ -75,6 +75,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.sdk.frontend.iml",
+        "resources/intellij.python.sdk.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )

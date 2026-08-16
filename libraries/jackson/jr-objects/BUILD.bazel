@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.jackson.jr.objects.iml",
+        "resources/intellij.libraries.jackson.jr.objects.xml",
     ],
     visibility = ["//visibility:public"],
 )

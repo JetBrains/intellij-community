@@ -64,6 +64,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.statistics.uploader.iml",
+        "resources/intellij.platform.statistics.uploader.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -78,6 +78,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.ml.features.iml",
+        "resources/intellij.python.ml.features.xml",
     ],
     visibility = ["//visibility:public"],
 )

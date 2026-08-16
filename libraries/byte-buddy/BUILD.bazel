@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.byte.buddy.iml",
+        "resources/intellij.libraries.byte.buddy.xml",
     ],
     visibility = ["//visibility:public"],
 )

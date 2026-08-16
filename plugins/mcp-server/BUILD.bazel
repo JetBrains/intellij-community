@@ -140,6 +140,7 @@ jvm_library(
 exports_files(
     [
         "intellij.mcpserver.iml",
+        "resources/intellij.mcpserver.xml",
     ],
     visibility = ["//visibility:public"],
 )

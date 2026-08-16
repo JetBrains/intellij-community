@@ -76,6 +76,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.jewel.samples.showcase.iml",
+        "src/main/resources/intellij.platform.jewel.samples.showcase.xml",
     ],
     visibility = ["//visibility:public"],
 )
