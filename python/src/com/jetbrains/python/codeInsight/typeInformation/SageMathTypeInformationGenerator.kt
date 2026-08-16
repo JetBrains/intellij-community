@@ -52,8 +52,8 @@ internal class SageMathTypeInformationGenerator : PyTypeInformationGenerator {
   )
 
   companion object {
-    private const val ENGINE_PACKAGE = "sage-pycharm-stubgen"
-    private const val ENGINE_MODULE = "sage_pycharm_stubgen"
+    internal const val ENGINE_PACKAGE = "sage-pycharm-stubgen"
+    internal const val ENGINE_MODULE = "sage_pycharm_stubgen"
     private val INSTALL_TIMEOUT = 10.minutes
     private val GENERATION_TIMEOUT = 60.minutes
     private val SAGE_DISTRIBUTIONS = setOf("sage", "sagemath", "sagemath-standard")
@@ -62,7 +62,7 @@ internal class SageMathTypeInformationGenerator : PyTypeInformationGenerator {
       return packageNames.any { normalizePackageName(it) in SAGE_DISTRIBUTIONS }
     }
 
-    private fun normalizePackageName(name: String): String {
+    internal fun normalizePackageName(name: String): String {
       return name.lowercase().replace('_', '-').replace('.', '-')
     }
   }

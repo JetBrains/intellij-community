@@ -1218,6 +1218,11 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
+    <action id="Python.PreparseSageFile"
+            class="com.jetbrains.python.codeInsight.typeInformation.PyPreparseSageFileAction">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+
     <action id="ExecuteInPyConsoleAction"
             class="com.jetbrains.python.actions.PyExecuteSelectionAction">
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>
