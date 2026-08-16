@@ -1466,6 +1466,83 @@ tasks.named("compileKotlin", org.jetbrains.kotlin.gradle.tasks.KotlinCompile::cl
         }
     }
 
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    @TargetVersions("8.11+", "<9.0.0")
+    fun testLanguageVersionWithElvisExpression(gradleVersion: GradleVersion) {
+        runTest(
+            gradleVersion,
+            BASIC_PROJECT_FIXTURE
+        ) {
+            testIntention(
+                createBuildScript(
+                    """
+tasks.withType<KotlinCompile>().configureEach {
+    <caret>kotlinOptions {
+        languageVersion = (project.findProperty("kotlin.language.version") as? String) ?: "2.0"
+    }
+}
+                    """.trimIndent(),
+                    listOf("org.jetbrains.kotlin.gradle.tasks.KotlinCompile")
+                ),
+                createBuildScript(
+                    """
+tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions {
+        languageVersion.set(
+            KotlinVersion.fromVersion(
+                (project.findProperty("kotlin.language.version") as? String) ?: "2.0"
+            )
+        )
+    }
+}
+                    """.trimIndent(),
+                    listOf(
+                        "org.jetbrains.kotlin.gradle.dsl.KotlinVersion",
+                        "org.jetbrains.kotlin.gradle.tasks.KotlinCompile"
+                    )
+                ),
+                "Replace 'kotlinOptions' with 'compilerOptions'"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    @TargetVersions("8.11+", "<9.0.0")
+    fun testAllWarningsAsErrorsWithElvisExpression(gradleVersion: GradleVersion) {
+        runTest(
+            gradleVersion,
+            BASIC_PROJECT_FIXTURE
+        ) {
+            testIntention(
+                createBuildScript(
+                    """
+tasks.withType<KotlinCompile>().configureEach {
+    val warningsAsErrors: Boolean? = project.findProperty("warningsAsErrors")?.toString()?.toBoolean()
+    <caret>kotlinOptions {
+        allWarningsAsErrors = warningsAsErrors ?: false
+    }
+}
+                    """.trimIndent(),
+                    listOf("org.jetbrains.kotlin.gradle.tasks.KotlinCompile")
+                ),
+                createBuildScript(
+                    """
+tasks.withType<KotlinCompile>().configureEach {
+    val warningsAsErrors: Boolean? = project.findProperty("warningsAsErrors")?.toString()?.toBoolean()
+    compilerOptions {
+        allWarningsAsErrors.set(warningsAsErrors ?: false)
+    }
+}
+                    """.trimIndent(),
+                    listOf("org.jetbrains.kotlin.gradle.tasks.KotlinCompile")
+                ),
+                "Replace 'kotlinOptions' with 'compilerOptions'"
+            )
+        }
+    }
+
     private fun getBuildScriptPartGetByNameAndLambda(): String =
         """
 tasks.named("compileKotlin", org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java) {
