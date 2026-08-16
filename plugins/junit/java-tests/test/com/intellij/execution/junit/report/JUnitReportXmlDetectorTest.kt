@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.report
 
+import com.intellij.testFramework.BinaryLightVirtualFile
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -39,10 +40,7 @@ class JUnitReportXmlDetectorTest {
 
   @Test
   fun `utf8 bom`() {
-    val inner = "<testsuite></testsuite>".toByteArray(StandardCharsets.UTF_8)
-    val bom = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
-    val bytes = bom + inner
-    assertTrue(JUnitReportXmlDetector.looksLikeJUnitReportXml(bytes, bytes.size))
+    assertDetected("\uFEFF<testsuite></testsuite>")
   }
 
   @Test
@@ -56,12 +54,13 @@ class JUnitReportXmlDetectorTest {
   }
 
   private fun assertDetected(xml: String) {
-    val bytes = xml.toByteArray(StandardCharsets.UTF_8)
-    assertTrue(JUnitReportXmlDetector.looksLikeJUnitReportXml(bytes, bytes.size))
+    assertTrue(JUnitReportXmlDetector.looksLikeJUnitReportXml(createVirtualFile(xml)))
   }
 
   private fun assertNotDetected(xml: String) {
-    val bytes = xml.toByteArray(StandardCharsets.UTF_8)
-    assertFalse(JUnitReportXmlDetector.looksLikeJUnitReportXml(bytes, bytes.size))
+    assertFalse(JUnitReportXmlDetector.looksLikeJUnitReportXml(createVirtualFile(xml)))
   }
+
+  private fun createVirtualFile(xml: String) =
+    BinaryLightVirtualFile("report.xml", xml.toByteArray(StandardCharsets.UTF_8))
 }
