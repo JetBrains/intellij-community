@@ -28,7 +28,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.mockito.kotlin",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-mockito-kotlin-mockito-kotlin"],

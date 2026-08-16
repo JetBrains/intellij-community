@@ -17,7 +17,7 @@
           </verification>
         </properties>
         <ANNOTATIONS>
-          <root url="file://$PROJECT_DIR$/community/plugins/gradle/anno" />
+          <root url="file://$MODULE_DIR$/../../plugins/gradle/anno" />
         </ANNOTATIONS>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.7.0/gradle-api-9.7.0.jar!/" />
