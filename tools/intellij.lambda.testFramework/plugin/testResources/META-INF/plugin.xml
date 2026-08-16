@@ -72,8 +72,6 @@
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.byte.buddy"/>
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
-    <module name="intellij.libraries.gradle"/>
-    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.hamcrest"/>
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.junit4"/>
