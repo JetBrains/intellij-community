@@ -1,71 +1,99 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.report
 
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.testFramework.replaceService
-import com.intellij.ui.EditorNotificationProvider
-import com.intellij.ui.EditorNotifications
+import com.intellij.testFramework.runInEdtAndWait
 import java.io.InputStream
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 class JUnitReportXmlDetectionCacheTest : BasePlatformTestCase() {
   override fun runInDispatchThread(): Boolean = false
 
-  fun testChangedFileRevisionIsRetried() {
-    val notifications = TestEditorNotifications()
-    project.replaceService(EditorNotifications::class.java, notifications, testRootDisposable)
+  fun testRevisionChangedDuringDetectionIsRetried() {
     val file = BlockingLightVirtualFile()
-    val provider = JUnitReportFileEditorNotificationProvider()
 
-    assertNull(provider.collectNotificationData(project, file))
-    assertTrue(file.awaitDetectionStarted())
+    try {
+      // A cache miss schedules detection for the initial file revision.
+      assertFalse(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+      file.awaitDetectionStarted()
+      file.changeRevision()
+    }
+    finally {
+      file.continueDetection()
+    }
 
-    file.changeRevisionAndContinueDetection()
+    waitForDetection()
+    assertEquals(1, file.inputStreamAccessCount)
+    // The stale result was discarded, so this lookup schedules detection for the current file revision.
+    assertFalse(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
 
-    assertSame(file, notifications.awaitUpdate())
-    assertNull(provider.collectNotificationData(project, file))
-    assertSame(file, notifications.awaitUpdate())
-    assertNotNull(provider.collectNotificationData(project, file))
+    waitForDetection()
+    // The retried detection result is now cached.
+    assertTrue(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+    assertEquals(2, file.inputStreamAccessCount)
   }
 
-  private class BlockingLightVirtualFile : LightVirtualFile("report.xml", "<testsuite/>") {
-    private val detectionStarted = CountDownLatch(1)
-    private val continueDetection = CountDownLatch(1)
+  fun testDetectionResultIsCachedUntilFileRevisionChanges() {
+    val file = TrackingLightVirtualFile()
+
+    // A cache miss schedules detection for the initial file revision.
+    assertFalse(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+    waitForDetection()
+    // Repeated lookups reuse the cached result without reopening the file.
+    assertTrue(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+    assertTrue(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+    assertEquals(1, file.inputStreamAccessCount)
+
+    file.changeRevision()
+
+    // The revision mismatch discards the cached result and schedules detection again.
+    assertFalse(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+    waitForDetection()
+    // Repeated lookups reuse the new cached result without reopening the file.
+    assertTrue(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+    assertTrue(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+    assertEquals(2, file.inputStreamAccessCount)
+  }
+
+  private open class TrackingLightVirtualFile : LightVirtualFile("report.xml", "<testsuite/>") {
+    private val inputStreamAccesses = AtomicInteger()
+
+    val inputStreamAccessCount: Int
+      get() = inputStreamAccesses.get()
 
     override fun getInputStream(): InputStream {
-      detectionStarted.countDown()
-      check(continueDetection.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)) { "Timed out waiting to continue detection" }
+      inputStreamAccesses.incrementAndGet()
       return super.getInputStream()
     }
 
-    fun awaitDetectionStarted(): Boolean = detectionStarted.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)
-
-    fun changeRevisionAndContinueDetection() {
+    fun changeRevision() {
       modificationStamp += 1
-      continueDetection.countDown()
     }
   }
 
-  private class TestEditorNotifications : EditorNotifications() {
-    private val updatedFiles = LinkedBlockingQueue<VirtualFile>()
+  private class BlockingLightVirtualFile : TrackingLightVirtualFile() {
+    private val detectionStarted = CountDownLatch(1)
+    private val detectionMayContinue = CountDownLatch(1)
 
-    override fun updateNotifications(file: VirtualFile) {
-      updatedFiles.add(file)
+    override fun getInputStream(): InputStream {
+      detectionStarted.countDown()
+      detectionMayContinue.await()
+      return super.getInputStream()
     }
 
-    @Suppress("OVERRIDE_DEPRECATION")
-    override fun updateNotifications(provider: EditorNotificationProvider) = Unit
+    fun awaitDetectionStarted() {
+      detectionStarted.await()
+    }
 
-    override fun updateAllNotifications() = Unit
-
-    fun awaitUpdate(): VirtualFile? = updatedFiles.poll(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    fun continueDetection() = detectionMayContinue.countDown()
   }
 
-  private companion object {
-    const val TIMEOUT_SECONDS = 10L
+  private fun waitForDetection() {
+    runInEdtAndWait {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    }
   }
 }

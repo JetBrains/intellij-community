@@ -22,7 +22,8 @@ import java.util.concurrent.ConcurrentHashMap
  * Checks whether the first element is `testsuite` or `testsuites`.
  */
 object JUnitReportXmlDetector {
-  internal fun looksLikeJUnitReportFile(project: Project, file: VirtualFile): Boolean =
+  @VisibleForTesting
+  fun looksLikeJUnitReportFile(project: Project, file: VirtualFile): Boolean =
     project.service<DetectionCache>().getOrScheduleDetection(file) == true
 
   private fun detectJUnitReportFile(file: VirtualFile): Boolean {
