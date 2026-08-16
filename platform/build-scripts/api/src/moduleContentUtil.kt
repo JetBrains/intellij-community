@@ -31,6 +31,20 @@ suspend fun getUnprocessedPluginXmlContent(module: JpsModule, outputProvider: Mo
 
 suspend fun findUnprocessedDescriptorContent(module: JpsModule, path: String, outputProvider: ModuleOutputProvider): ByteArray? {
   try {
+    // The same bytes, without opening the module's jar. That matters inside a dev-distribution fragment: computing
+    // the product layout reads hundreds of descriptors out of modules the fragment does not pack, and every one of
+    // those jars - and its compilation - then becomes an input of the fragment. The project model tree the fragment
+    // already reads carries the descriptors instead (see `intellij_project_model_tree`).
+    //
+    // Production roots only: falling through to the module output reaches test output solely when
+    // `isTestCompilationOutputEnabled`, and an unrestricted source search would not honour that.
+    //
+    // Scrambling is not a hazard here - this reads *module output*, which scrambling never rewrites; scrambled
+    // descriptors reach a distribution through `CachedDescriptorContainer`, consulted before this function.
+    findFileInModuleSources(module = module, relativePath = path, onlyProductionSources = true)?.let {
+      return Files.readAllBytes(it)
+    }
+
     val result = outputProvider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
     if (result == null && outputProvider.isTestCompilationOutputEnabled(module)) {
       return outputProvider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = true)
