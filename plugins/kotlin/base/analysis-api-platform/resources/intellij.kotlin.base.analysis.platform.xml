@@ -59,7 +59,8 @@
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinPackageProviderFactory"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.base.analysisApiPlatform.KotlinModulePackageNamesProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModulePackageNamesProvider"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModulePackageNamesProvider"
+            open="true"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderMerger"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinPackageProviderMerger"/>
@@ -68,7 +69,8 @@
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinPackagePartProviderFactory"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAccessibilityChecker"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.java.IdeKotlinJavaModuleAccessibilityChecker"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.java.IdeKotlinJavaModuleAccessibilityChecker"
+            open="true"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAnnotationsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.java.IdeKotlinJavaModuleAnnotationsProvider"/>
