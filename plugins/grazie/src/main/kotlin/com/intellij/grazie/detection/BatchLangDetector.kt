@@ -1,6 +1,7 @@
 package com.intellij.grazie.detection
 
 import ai.grazie.detector.ChainLanguageDetector.ChainDetectionResult
+import ai.grazie.detector.LanguageDetector.Type
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.tokenizer.word.StandardWordTokenizer.words
 import com.intellij.grazie.config.DetectionContext
@@ -9,7 +10,6 @@ import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.HighlightingUtil.getCheckedFileTexts
 import com.intellij.grazie.utils.HighlightingUtil.grazieConfigTracker
 import com.intellij.grazie.utils.LanguageDetectorHolder
-import com.intellij.grazie.utils.NaturalTextDetector
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
@@ -22,9 +22,9 @@ private typealias DetectionResults = Map<String, ChainDetectionResult>
 object BatchLangDetector {
   private val CACHE = Key.create<CachedValue<ResultHolder>>("grazie reliable language detection cache")
 
-  fun getLanguage(content: TextContent, offset: Int): Language? {
-    val text = content.substring(offset).take(LanguageDetectorHolder.LIMIT)
-    if (!NaturalTextDetector.seemsNatural(text)) return null
+  @JvmOverloads
+  fun getLanguage(content: TextContent, offset: Int? = null): Language? {
+    val text = LangDetector.getCleanText(content, offset ?: HighlightingUtil.stripPrefix(content)) ?: return null
     val language = detectForFile(content.containingFile)[text]?.result?.preferred
     return if (language == Language.UNKNOWN) null else language
   }
@@ -39,15 +39,25 @@ object BatchLangDetector {
   private fun detectForFile(file: PsiFile): DetectionResults =
     CachedValuesManager.getCachedValue(file, CACHE) {
       val texts = getCleanTexts(file)
-      val languages = LanguageDetectorHolder.get().detectWithDetails(texts, true) { ProgressManager.checkCanceled() }
+      val languages = detectWithDetails(texts)
       CachedValueProvider.Result.create(ResultHolder(file, texts, languages), file, grazieConfigTracker())
     }.get()
 
   private fun getCleanTexts(file: PsiFile): List<String> =
-    getCheckedFileTexts(file.viewProvider)
-      .map { it.substring(HighlightingUtil.stripPrefix(it)) }
-      .map { it.take(LanguageDetectorHolder.LIMIT) }
-      .filter { NaturalTextDetector.seemsNatural(it) }
+    getCheckedFileTexts(file.viewProvider).mapNotNull { LangDetector.getCleanText(it) }
+
+  private fun detectWithDetails(inputs: List<String>): List<ChainDetectionResult> {
+    val chainResults = inputs.map {
+      ProgressManager.checkCanceled()
+      LangDetector.detectWithDetails(it)
+    }
+    val detectionResults = LanguageDetectorHolder.get().contextualize(inputs, chainResults.map { it.result })
+    return chainResults.mapIndexed { index, chain ->
+      val language = detectionResults[index]
+      if (language.preferred == Language.UNKNOWN || language.type != Type.Neighbor) return@mapIndexed chain
+      chain.withResult(language)
+    }
+  }
 
   private data class ResultHolder(val psiFile: PsiFile, val texts: List<String>, val languages: List<ChainDetectionResult>) {
     override fun toString(): String {

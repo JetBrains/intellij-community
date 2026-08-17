@@ -129,17 +129,12 @@ private fun buildProblemMap(
 fun getLanguageIfAvailable(text: TextContent, strippedOffset: Int? = null): Language? {
   val offset = strippedOffset ?: HighlightingUtil.stripPrefix(text)
   // Rider `ExternalTextContent` doesn't support view providers, hence batch detection is not available
-  if (text is TextContentImpl) {
-    return BatchLangDetector.getLanguage(text, offset)?.takeIf { findInstalledLang(it) != null }
+  val language = if (text is TextContentImpl) {
+    BatchLangDetector.getLanguage(text, offset)
   } else {
-    @Suppress("DEPRECATION")
-    return getLanguageIfAvailable(text.toString().substring(offset))
+    LangDetector.getLanguage(text, offset)
   }
-}
-
-@Deprecated("Use getLanguageIfAvailable(TextContent) instead")
-fun getLanguageIfAvailable(text: String): Language? {
-  return LangDetector.getLanguage(text)?.takeIf { findInstalledLang(it) != null }
+  return language?.takeIf { findInstalledLang(it) != null }
 }
 
 fun GrazieTextRange.Companion.coveringIde(ranges: Array<GrazieTextRange>): TextRange? {

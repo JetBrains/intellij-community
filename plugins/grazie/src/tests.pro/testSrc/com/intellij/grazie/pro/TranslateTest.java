@@ -91,7 +91,7 @@ public class TranslateTest extends BaseTestCase {
     UiInterceptors.register(
       new ChooserInterceptor(
         StreamEx.of(Language.getEntries())
-          .filter(l -> l != Language.UNKNOWN && l != Language.ENGLISH)
+          .filter(l -> l != Language.UNKNOWN)
           .map(it -> TranslateAction.presentableLanguageName(it))
           .toList(),
         "Deutsch"

@@ -11,7 +11,7 @@ import com.intellij.grazie.GrazieBundle;
 import com.intellij.grazie.cloud.APIQueries;
 import com.intellij.grazie.cloud.GrazieCloudConnector;
 import com.intellij.grazie.cloud.TaskServerException;
-import com.intellij.grazie.detection.LangDetector;
+import com.intellij.grazie.detection.BatchLangDetector;
 import com.intellij.grazie.ide.fus.GrazieFUSCounter;
 import com.intellij.grazie.ide.ui.PaddedListCellRenderer;
 import com.intellij.grazie.rule.ParsedSentence;
@@ -75,7 +75,7 @@ public class RephraseAction extends IntentionAndQuickFixAction implements DumbAw
     if (content == null || !NaturalTextDetector.seemsNatural(content)) return false;
     TextRange range = content.fileRangeToText(HighlightingUtil.selectionRange(editor));
     if (range == null) return false;
-    if (LangDetector.INSTANCE.getLanguage(content.toString()) == null) return false;
+    if (BatchLangDetector.INSTANCE.getLanguage(content) == null) return false;
 
     return ContainerUtil.exists(
       SentenceTokenizer.tokenize(content),
@@ -112,7 +112,12 @@ public class RephraseAction extends IntentionAndQuickFixAction implements DumbAw
           return new SuggestionsWithLanguage(Language.UNKNOWN, Collections.emptyList(), sentenceLength, null, null);
         }
 
-        Language iso = LangDetector.INSTANCE.getLanguage(sentence.text);
+        TextContent content = TextExtractor.findTextAt(psiFile, editor.getCaretModel().getOffset(), TextContent.TextDomain.ALL);
+        if (content == null) {
+          return new SuggestionsWithLanguage(Language.UNKNOWN, Collections.emptyList(), sentenceLength, null, null);
+        }
+
+        Language iso = BatchLangDetector.INSTANCE.getLanguage(content);
         if (iso == null) {
           return new SuggestionsWithLanguage(Language.UNKNOWN, Collections.emptyList(), sentenceLength, null, null);
         }
@@ -147,7 +152,7 @@ public class RephraseAction extends IntentionAndQuickFixAction implements DumbAw
       return new SuggestionsWithLanguage(Language.UNKNOWN, Collections.emptyList(), null, null, null);
     }
 
-    Language iso = LangDetector.INSTANCE.getLanguage(text.toString());
+    Language iso = BatchLangDetector.INSTANCE.getLanguage(text);
     if (iso == null) {
       return new SuggestionsWithLanguage(Language.UNKNOWN, Collections.emptyList(), text.length(), null, null);
     }
