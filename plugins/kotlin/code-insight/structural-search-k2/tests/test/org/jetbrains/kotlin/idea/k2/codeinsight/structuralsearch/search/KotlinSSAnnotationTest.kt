@@ -92,7 +92,7 @@ class KotlinSSAnnotationTest : KotlinStructuralSearchTest() {
         @Target(AnnotationTarget.FUNCTION)
         annotation class Ann
 
-        fun annotatedLambda() = <warning descr="SSR">@Ann <warning descr="SSR">{ println() }</warning></warning>
+        fun annotatedLambda() = <warning descr="SSR"><warning descr="[RUNTIME_ANNOTATION_ON_LAMBDA_IS_NOT_RETAINED]">@Ann</warning> <warning descr="SSR">{ println() }</warning></warning>
         fun notAnnotatedLambda() = <warning descr="SSR">{ println() }</warning>
     """.trimIndent()) }
 
@@ -100,7 +100,7 @@ class KotlinSSAnnotationTest : KotlinStructuralSearchTest() {
         @Target(AnnotationTarget.FUNCTION)
         annotation class Ann
 
-        fun annotatedLambda() = @Ann { println() }
+        fun annotatedLambda() = <warning descr="[RUNTIME_ANNOTATION_ON_LAMBDA_IS_NOT_RETAINED]">@Ann</warning> { println() }
         <warning descr="SSR">fun notAnnotatedLambda() = { println() }</warning>
     """.trimIndent()) }
 }
