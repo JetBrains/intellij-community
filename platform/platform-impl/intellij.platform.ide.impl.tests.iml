@@ -164,6 +164,7 @@
     <orderEntry type="module" module-name="intellij.platform.syntax.tree" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.pasta" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.pluginSystem.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.pluginSystem.parser.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.syntax.extensions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.eel" scope="TEST" />

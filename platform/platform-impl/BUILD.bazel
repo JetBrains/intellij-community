@@ -696,6 +696,8 @@ jvm_library(
         "//platform/kernel/pasta:pasta_test_lib",
         "//platform/workspace/storage",
         "//platform/workspace/storage:storage_test_lib",
+        "//platform/pluginSystem/testFramework",
+        "//platform/pluginSystem/testFramework:testFramework_test_lib",
         "//platform/pluginSystem/parser/impl",
         "//platform/pluginSystem/parser/impl:impl_test_lib",
         "//platform/eel",
