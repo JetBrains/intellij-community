@@ -143,7 +143,7 @@ class PluginDependenciesValidator private constructor(
       if (rootReason.isIgnoredByBuildValidation() || rootReason.isHostSpecificIncompatibility()) {
         return
       }
-      val errorMessage = PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(pluginSet.resolvedPluginSet, plugin)
+      val errorMessage = PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(pluginSet, plugin)
                          ?: return
       if (!reportedMessages.add(errorMessage)) {
         return

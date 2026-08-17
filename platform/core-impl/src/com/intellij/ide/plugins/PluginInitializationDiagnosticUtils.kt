@@ -113,6 +113,16 @@ object PluginInitializationDiagnosticUtils {
   }
 
   fun buildSingleExclusionChainMessage(
+    pluginSet: PluginSet,
+    descriptor: IdeaPluginDescriptorImpl
+  ): String? {
+    if (descriptor.getMainDescriptor() in pluginSet.excludedFromCandidateSubset) {
+      return pluginSet.excludedFromCandidateSubset[descriptor.getMainDescriptor()]!!.logMessage()
+    }
+    return buildSingleExclusionChainMessage(pluginSet.resolvedPluginSet, descriptor)
+  }
+
+  fun buildSingleExclusionChainMessage(
     resolvedPluginSet: ResolvedPluginSet,
     descriptor: IdeaPluginDescriptorImpl,
   ): String? {
