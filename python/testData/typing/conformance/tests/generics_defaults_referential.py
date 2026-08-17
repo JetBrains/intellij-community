@@ -20,7 +20,6 @@ StepT = TypeVar("StepT", default=int | None)
 class slice(Generic[StartT, StopT, StepT]): ...
 
 
-assert_type(slice, type[slice[int, int, int | None]])
 assert_type(slice(), slice[int, int, int | None])
 assert_type(slice[str](), slice[str, str, int | None])
 assert_type(slice[str, bool, complex](), slice[str, bool, complex])

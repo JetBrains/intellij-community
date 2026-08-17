@@ -114,7 +114,7 @@ v2_good1: Template2 = Concrete2_Good1()  # OK
 v2_bad1: Template2 = Concrete2_Bad1()  # E
 v2_bad2: Template2 = Concrete2_Bad2()  # E
 v2_bad3: Template2 = Concrete2_Bad3()  # E
-v2_bad4: Template2 = Concrete2_Bad4()  # E
+v2_bad4: Template2 = Concrete2_Bad4()  # E?: Explicit ClassVar matching is unspecified
 
 
 class Template3(Protocol):
@@ -339,3 +339,32 @@ v6_good3: Template6 = Concrete6_Good3()  # OK
 v6_bad1: Template6 = Concrete6_Bad1()  # E
 v6_bad2: Template6 = Concrete6_Bad2()  # E: named tuple is immutable
 v6_bad3: Template6 = Concrete6_Bad3()  # E: dataclass is frozen
+
+
+# The specification leaves two possible interpretations of a ClassVar protocol
+# member. One interpretation requires the implementing attribute to be explicitly
+# declared with ClassVar. The other interpretation imposes only structural
+# requirements: the attribute must be readable and writable on the class object
+# and readable on instances of the class. Both interpretations therefore require
+# the following assignments to be rejected.
+
+
+class Template7(Protocol):
+    val1: ClassVar[int]
+
+
+class Concrete7_Bad1:
+    def __init__(self) -> None:
+        self.val1: int = 42
+
+
+class Concrete7Meta(type):
+    val1: int = 42
+
+
+class Concrete7_Bad2(metaclass=Concrete7Meta):
+    pass
+
+
+v7_bad1: Template7 = Concrete7_Bad1()  # E: val1 is not readable on the class object
+v7_bad2: Template7 = Concrete7_Bad2()  # E: val1 is not readable on instances
