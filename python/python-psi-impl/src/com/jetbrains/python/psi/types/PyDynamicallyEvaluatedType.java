@@ -34,7 +34,7 @@ public final class PyDynamicallyEvaluatedType extends PyUnionType {
     else {
       members.add(type);
     }
-    members.add(null);
+    members.add(PyAnyType.getUnknown());
     return new PyDynamicallyEvaluatedType(members);
   }
 

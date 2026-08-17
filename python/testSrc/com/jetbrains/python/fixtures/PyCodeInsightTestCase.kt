@@ -2,6 +2,7 @@ package com.jetbrains.python.fixtures
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.lang.annotation.HighlightSeverity
@@ -185,6 +186,9 @@ abstract class PyCodeInsightTestCase {
 
   protected var testCallCount = 0
 
+  /** A Python triple quote, for a docstring inside a Kotlin raw string: `"""$tripleQuote doc $tripleQuote"""`. */
+  protected val tripleQuote: String = "\"\"\""
+
 
   @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
   @Retention(AnnotationRetention.RUNTIME)
@@ -359,7 +363,7 @@ abstract class PyCodeInsightTestCase {
       },
       { if (myFixture.module != null) PyNamespacePackagesService.getInstance(myFixture.module).resetAllNamespacePackages() },
       { waitUntilIndexesAreReady(myFixture.project) },
-      { Assertions.assertTrue(testCallCount < 2, "Test method `test` should be called only once per JUnit test") },
+      { Assertions.assertTrue(testCallCount < 2, "One of `test`, `testQuickFix` and `assertNoQuickFix` should be called only once per JUnit test") },
     )
   }
 
@@ -409,6 +413,51 @@ abstract class PyCodeInsightTestCase {
   }
 
   protected fun test(@Language("Python") fileContent: String, vararg otherFiles: Pair<String, String>) {
+    runTestBody {
+      doTest(fileContent, otherFiles)
+    }
+  }
+
+  /**
+   * Applies the quick fix named [quickFixName] and asserts that the file then reads as [expectedContent].
+   *
+   * The fix is looked up among the quick fixes of every issue reported in the file, so [fileContent] has to make
+   * one of the enabled inspections fire. Unlike [test], [fileContent] is plain Python without inline assertions;
+   * a `<caret>` marker is still honoured for fixes that need one.
+   */
+  protected fun testQuickFix(
+    @Language("Python") fileContent: String,
+    quickFixName: String,
+    @Language("Python") expectedContent: String,
+    vararg otherFiles: Pair<String, String>,
+  ) {
+    runTestBody {
+      withQuickFixes(fileContent, otherFiles) { quickFixes ->
+        val matching = quickFixes.filter { it.text == quickFixName }
+        if (matching.size != 1) {
+          fail("Expected exactly one quick fix named '$quickFixName', got ${quickFixes.map { it.text }}")
+        }
+        myFixture.launchAction(matching.single())
+        myFixture.checkResult(expectedContent.trimIndent(), true)
+      }
+    }
+  }
+
+  /** Asserts that no quick fix named [quickFixName] is offered for any issue reported in [fileContent]. */
+  protected fun assertNoQuickFix(
+    @Language("Python") fileContent: String,
+    quickFixName: String,
+    vararg otherFiles: Pair<String, String>,
+  ) {
+    runTestBody {
+      withQuickFixes(fileContent, otherFiles) { quickFixes ->
+        val names = quickFixes.map { it.text }
+        Assertions.assertFalse(quickFixName in names, "Quick fix '$quickFixName' was not expected, offered fixes: $names")
+      }
+    }
+  }
+
+  private fun runTestBody(body: () -> Unit) {
     // using the shared `myFixture.projectDisposable` would accumulate flag modifications
     // across all tests and dispose them only at @AfterAll, which can leave them non-nested and
     // trip RecursionManager's "Non-nested assertion flag modifications" check.
@@ -425,7 +474,7 @@ abstract class PyCodeInsightTestCase {
 
     try {
       setAdditionalSdkRoots(myTestCaseOptions.additionalSdkRoots, true)
-      doTest(fileContent, otherFiles)
+      body()
     }
     finally {
       setAdditionalSdkRoots(myTestCaseOptions.additionalSdkRoots, false)
@@ -446,23 +495,46 @@ abstract class PyCodeInsightTestCase {
     val assertions = PyTestAssertionParser.maskAssertions(originalText, expectedAssertions)
     val currentFile = myFixture.configureByText(myTestCaseOptions.testFileName, assertions)
 
-    val testInspections =
-      defaultInspections - myTestInspections.disableInspectionsAsClasses() + myTestInspections.enableInspectionsAsClasses()
-
-    val inspectionInstances = testInspections.map { it.getDeclaredConstructor().newInstance() }.toTypedArray()
-    myFixture.enableInspections(*inspectionInstances)
-
-    try {
+    withInspections {
       collectAndCheckHighlighting(originalText, expectedAssertions)
-    }
-    finally {
-      myFixture.disableInspections(*inspectionInstances)
     }
 
     if (myTestCaseOptions.assertSdkRootsNotParsed) {
       runReadActionBlocking {
         assertSdkRootsNotParsed(currentFile)
       }
+    }
+  }
+
+  private fun withQuickFixes(
+    fileContent: String,
+    otherFiles: Array<out Pair<String, String>>,
+    check: (List<IntentionAction>) -> Unit,
+  ) {
+    for (copyDirectory in myTestCaseOptions.copyDirectoryToProject) {
+      myFixture.copyDirectoryToProject(copyDirectory.source, copyDirectory.destination)
+    }
+    for ((filename, content) in otherFiles) {
+      myFixture.createFile(filename, content.trimIndent())
+    }
+    myFixture.configureByText(myTestCaseOptions.testFileName, fileContent.trimIndent())
+
+    withInspections {
+      check(myFixture.getAllQuickFixes())
+    }
+  }
+
+  private fun withInspections(body: () -> Unit) {
+    val testInspections =
+      defaultInspections - myTestInspections.disableInspectionsAsClasses() + myTestInspections.enableInspectionsAsClasses()
+
+    val inspectionInstances = testInspections.map { it.getDeclaredConstructor().newInstance() }.toTypedArray()
+    myFixture.enableInspections(*inspectionInstances)
+    try {
+      body()
+    }
+    finally {
+      myFixture.disableInspections(*inspectionInstances)
     }
   }
 

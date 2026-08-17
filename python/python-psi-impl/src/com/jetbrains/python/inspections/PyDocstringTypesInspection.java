@@ -97,7 +97,8 @@ public final class PyDocstringTypesInspection extends PyInspection {
     private @Nullable String getShortestImportableName(@Nullable PsiElement anchor, @NotNull String type) {
       final PyType pyType = PyTypeParser.getTypeByName(anchor, type, myTypeEvalContext);
       if (pyType instanceof PyClassType) {
-        return ((PyClassType)pyType).getPyClass().getQualifiedName();
+        // a builtin is spelled without its module both in docstrings and in the message
+        return PyNames.FQN.unqualifyBuiltinName(((PyClassType)pyType).getPyClass().getQualifiedName());
       }
 
       if (pyType != null) {
