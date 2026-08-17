@@ -220,8 +220,8 @@ private const val KOTLINC_KOTLIN_COMPILER_COMMON_MODULE = "intellij.libraries.ko
 private const val KOTLINC_KOTLIN_COMPILER_COMMON_JAR = "intellij.libraries.kotlinc.kotlin.compiler.common.jar"
 
 private fun withKotlincInPluginDirectory(libName: String = "kotlin-dist", target: String = "kotlinc", spec: PluginLayout.PluginLayoutSpec) {
-  spec.withGeneratedResources { targetDir, context ->
-    val distLibName = "kotlinc.$libName"
+  val distLibName = "kotlinc.$libName"
+  spec.withGeneratedResources(inputProjectLibraries = listOf(distLibName)) { targetDir, context ->
     val jars = context.outputProvider.findLibraryRoots(distLibName, moduleLibraryModuleName = null)
     if (jars.size != 1) {
       throw IllegalStateException("$distLibName is expected to have only one jar")

@@ -1593,6 +1593,7 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.python.community.services.internal.impl.tests",
   "intellij.python.community.services.shared.tests",
   "intellij.python.processOutput.frontend.tests",
+  "intellij.python.pyproject.tests",
   "intellij.python.sdk.tests",
   "intellij.python.test.env.junit5",
   "intellij.python.pytools.tests",
@@ -1690,4 +1691,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.debugger.impl.tests",
   "intellij.platform.workspace.jps.tests",
   "intellij.platform.workspace.storage.tests",
+  "intellij.platform.util.tests",
 )

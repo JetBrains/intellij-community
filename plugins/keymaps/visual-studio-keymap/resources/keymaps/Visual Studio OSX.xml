@@ -536,4 +536,5 @@
     <keyboard-shortcut first-keystroke="meta K" second-keystroke="meta V"/>
   </action>
 
+  <action id="MoveToolWindowTabToEditorAction"/>
 </keymap>

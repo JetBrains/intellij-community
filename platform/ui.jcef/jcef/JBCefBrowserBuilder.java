@@ -23,7 +23,7 @@ public class JBCefBrowserBuilder {
   boolean myCreateImmediately;
   boolean myEnableOpenDevToolsMenuItem;
   boolean myMouseWheelEventEnable = true;
-  int myWindowlessFrameRate = RegistryManager.getInstance().intValue("ide.browser.jcef.osr.framerate", 0);
+  int myWindowlessFrameRate = RegistryManager.getInstance().intValue("ide.browser.jcef.osr.framerate", 120);
 
   /**
    * Sets whether the browser is rendered off-screen.

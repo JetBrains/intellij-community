@@ -28,6 +28,7 @@ jvm_library(
         "//platform/lang-impl",
         "//platform/project/shared:project",
         "//fleet/rhizomedb",
+        "//platform/kernel/rpc.backend",
     ],
 )
 
@@ -51,6 +52,7 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/project/shared:project_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildView.backend` end

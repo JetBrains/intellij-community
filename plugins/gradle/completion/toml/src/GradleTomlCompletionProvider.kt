@@ -63,6 +63,8 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
       return
     }
 
+    result.restartCompletionOnAnyPrefixChange()
+
     val completionService = service<DependencyCompletionService>()
 
     val resultSet = result.withPrefixMatcher(GradleDependencyCompletionFuzzyMatcher(text))

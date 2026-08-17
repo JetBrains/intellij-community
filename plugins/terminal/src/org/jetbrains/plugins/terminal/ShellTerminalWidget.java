@@ -236,11 +236,16 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
   @Override
   public List<TerminalAction> getActions() {
     List<TerminalAction> actions = new ArrayList<>(super.getActions());
-    if (TerminalToolWindowManager.isInTerminalToolWindow(this)) {
-      ContainerUtil.addIfNotNull(actions, TerminalActionUtil.createTerminalAction(this, "Terminal.RenameSession", true));
-    }
     JBTerminalWidgetListener listener = getListener();
     JBTerminalSystemSettingsProvider settingsProvider = getSettingsProvider();
+    if (TerminalToolWindowManager.isInTerminalToolWindow(this)) {
+      ContainerUtil.addIfNotNull(actions, TerminalActionUtil.createTerminalAction(this, "Terminal.RenameSession", true));
+
+      actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getMoveToolWindowTabToEditorActionPresentation(), l -> {
+        l.moveToolWindowTabToEditor();
+        return true;
+      }));
+    }
     actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getNewTabActionPresentation(), l -> {
       l.onNewSession();
       return true;

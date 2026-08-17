@@ -1,6 +1,19 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "kt_javac_options", "resourcegroup")
 
+jps_test(
+    name = "util-tests_test",
+    timeout = "long",
+    jvm_flags = [
+        "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
+        "-Duser.country=US",
+        "-Duser.language=en",
+    ],
+    tags = ["community-aggregator"],
+    runtime_deps = [":util-tests_test_lib"],
+)
+### skip generation section `test intellij.platform.util.tests`
+
 ### auto-generated section `build intellij.platform.util` start
 jvm_provided_library(
     name = "platform_util_troveCompileOnly_provided",
@@ -288,13 +301,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.util.tests` end
-
-### auto-generated section `test intellij.platform.util.tests` start
-jps_test(
-    name = "util-tests_test",
-    runtime_deps = [":util-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.util.tests` end
 
 ### auto-generated section `build intellij.platform.util.ui` start
 kt_javac_options(

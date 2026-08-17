@@ -6,6 +6,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.TerminalLibGhosttyVtDownloader
 import org.jetbrains.intellij.build.dependencies.archiveCacheKey
 import org.jetbrains.intellij.build.dependencies.extractToCacheLocation
+import org.jetbrains.intellij.build.impl.BazelBuildInputs
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import kotlin.io.path.exists
@@ -47,6 +48,10 @@ object NativeBinaryDownloader {
   }
 
   private fun findLocalLauncher(context: BuildContext, os: OsFamily): Triple<Path, Path, Path?>? {
+    // Explicit Bazel inputs are the complete readable universe of a cacheable assembly. Even if a future project-model
+    // tree happens to contain a local launcher, it is neither declared as a binary input nor writable for a license stub.
+    if (BazelBuildInputs.isConfigured) return null
+
     val targetDir = context.paths.communityHomeDirRoot.communityRoot.resolve("native/XPlatLauncher/target/debug")
     if (targetDir.isDirectory()) {
       val executableFile = targetDir.resolve(os.binaryName("xplat-launcher"))

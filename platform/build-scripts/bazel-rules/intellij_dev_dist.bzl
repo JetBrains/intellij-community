@@ -11,6 +11,57 @@ scrambling require both component layouts in one process.
 load("@community//build:project_model_manifest.bzl", "write_project_model_manifest")
 load("//build:dev_launch_dependencies.bzl", "platform_parts")
 
+IntellijDevBuildInputsInfo = provider(
+    doc = "The exact Bazel inputs and label-to-path manifest made available to one dev-build fragment.",
+    fields = {
+        "files": "The input files named by the manifest.",
+        "manifest": "The logical Bazel input label to execution path manifest.",
+    },
+)
+
+def _dev_build_inputs_impl(ctx):
+    entries = {}
+    for target in ctx.attr.inputs:
+        logical_key = str(target.label)
+        files = target[DefaultInfo].files.to_list()
+        if len(files) != 1:
+            fail("%s: %s must provide exactly one file, got %s" % (ctx.label, target.label, files))
+        file = files[0]
+        previous = entries.get(logical_key)
+        if previous == None:
+            entries[logical_key] = file
+        elif previous != file:
+            fail("%s: logical input '%s' is provided by both %s and %s" % (
+                ctx.label,
+                logical_key,
+                previous.owner,
+                target.label,
+            ))
+
+    lines = []
+    files = []
+    for logical_key in sorted(entries.keys()):
+        file = entries[logical_key]
+        lines.append("%s\t%s" % (logical_key, file.path))
+        files.append(file)
+    manifest = ctx.actions.declare_file(ctx.label.name + ".bazel-inputs")
+    ctx.actions.write(manifest, "\n".join(lines) + "\n")
+
+    return [
+        DefaultInfo(files = depset([manifest])),
+        IntellijDevBuildInputsInfo(files = depset(files), manifest = manifest),
+    ]
+
+intellij_dev_build_inputs = rule(
+    doc = "Groups a fragment's derived raw labels behind one typed, validated input boundary.",
+    implementation = _dev_build_inputs_impl,
+    attrs = {
+        # Inputs are direct generated labels, never aliases: configured Target.label is the manifest key. The Kotlin
+        # resolver adds apparent-repository aliases for canonical external-repository labels.
+        "inputs": attr.label_list(allow_files = True),
+    },
+)
+
 IntellijDevFragmentInfo = provider(
     fields = {
         "name": "The fragment name, which is also the `kind` of its manifest.",
@@ -36,6 +87,19 @@ IntellijProjectModelTreeInfo = provider(
     },
 )
 
+# Not `local`, which is what these actions used to say. Verified against the shipped `JetBrains/9.1.0-jb` binary rather
+# than the documentation: `Spawns.mayBeCached` is `!containsKey("no-cache") && !containsKey("local")`, and
+# `RemoteExecutionService.getRead/WriteCachePolicy` gates **`--disk_cache`** on exactly that - so `local` was throwing
+# away the local disk cache in order to keep gigabytes off the shared remote one. This says only the second thing.
+# Fragment outputs stay in the local disk cache: they are too large for the shared cache, and remote execution is out of
+# scope until the inputs are represented by platform-independent plans. Network access is blocked as a second line of
+# defence behind `--preloaded-only`; an accidentally incomplete preload set must fail instead of poisoning the cache.
+_LOCAL_DISK_CACHE_ONLY = {
+    "block-network": "1",
+    "no-remote-cache": "1",
+    "no-remote-exec": "1",
+}
+
 def _project_model_tree_impl(ctx):
     tree = ctx.actions.declare_directory(ctx.label.name + ".tree")
     project_files = ctx.files.project_model_files + ctx.files.extra_project_files
@@ -49,7 +113,9 @@ def _project_model_tree_impl(ctx):
         outputs = [tree],
         executable = ctx.executable.materializer,
         arguments = [args],
-        execution_requirements = {"local": "1"},
+        # No execution requirements: this one is hermetic. It reads its manifest and the execroot-relative sources that
+        # manifest names, writes only under its output directory, and consults no environment variable, no home
+        # directory and no network - so it may be sandboxed, and both caches may keep it.
         mnemonic = "IntellijProjectModelTree",
         progress_message = "Materializing the project model tree %s" % ctx.label,
     )
@@ -82,22 +148,6 @@ _PLATFORM_SELECTORS = ["", "all", "core", "content-modules", "remaining-content-
 
 _PLUGIN_SELECTORS = ["", "all", "named", "remaining"]
 
-def _write_bazel_inputs_manifest(ctx):
-    if len(ctx.attr.module_outputs) != len(ctx.attr.module_output_labels):
-        fail("module_outputs and module_output_labels must have the same length")
-    lines = []
-    files = []
-    for target, label in zip(ctx.attr.module_outputs, ctx.attr.module_output_labels):
-        target_files = target[DefaultInfo].files.to_list()
-        if len(target_files) != 1:
-            fail("%s must provide exactly one file, got %s" % (target.label, target_files))
-        file = target_files[0]
-        files.append(file)
-        lines.append("%s\t%s" % (label, file.path))
-    manifest = ctx.actions.declare_file(ctx.label.name + ".bazel-inputs")
-    ctx.actions.write(manifest, "\n".join(lines) + "\n")
-    return manifest, files
-
 def _add_target_platform_args(args, target_platform):
     if target_platform:
         target_parts = platform_parts(target_platform)
@@ -111,15 +161,23 @@ def _mnemonic(fragment_name):
 def _fragment_impl(ctx):
     if not ctx.attr.platform and not ctx.attr.platform_resources and not ctx.attr.plugins:
         fail("%s selects nothing: set platform, platform_resources or plugins" % ctx.label)
+    if not ctx.files.preloaded_manifests:
+        fail("%s must declare at least one preloaded download manifest" % ctx.label)
 
     home = ctx.actions.declare_directory(ctx.label.name + ".home")
     component_manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
     scratch = ctx.actions.declare_directory(ctx.label.name + ".scratch")
+
+    # Which declared inputs the assembly never resolved. It used to be `unused_inputs_list`, pruning the action key
+    # after the fact - which can skip a re-run in one output base but never produce a disk- or remote-cache hit, since
+    # the key is computed over the full declared set before the action runs. Narrowing what is *declared* replaced it.
+    # The file stays as the measurement of how honest a declaration is: declared minus unused is what a fragment used.
     unused_inputs = ctx.actions.declare_file(ctx.label.name + ".unused-inputs")
     outputs = [home, component_manifest, scratch, unused_inputs]
 
     project_tree = ctx.attr.project_model_tree[IntellijProjectModelTreeInfo].tree
-    bazel_inputs_manifest, module_outputs = _write_bazel_inputs_manifest(ctx)
+    build_inputs = ctx.attr.build_inputs[IntellijDevBuildInputsInfo]
+    bazel_inputs_manifest = build_inputs.manifest
 
     args = ctx.actions.args()
     args.add("--project-dir=" + project_tree.path)
@@ -172,8 +230,7 @@ def _fragment_impl(ctx):
         outputs.append(plugin_classpath_prefix)
 
     args.add_all(ctx.files.preloaded_manifests, format_each = "--preloaded-manifest=%s")
-    if ctx.attr.preloaded_only:
-        args.add("--preloaded-only")
+    args.add("--preloaded-only")
 
     ctx.actions.run(
         inputs = depset(
@@ -181,13 +238,13 @@ def _fragment_impl(ctx):
                 project_tree,
                 bazel_inputs_manifest,
                 ctx.file.bazel_targets_json,
-            ] + module_outputs + ctx.files.preloaded_downloads + ctx.files.preloaded_manifests + ctx.files.ijent_binaries,
+            ] + ctx.files.preloaded_downloads + ctx.files.preloaded_manifests + ctx.files.ijent_binaries,
+            transitive = [build_inputs.files],
         ),
         outputs = outputs,
         executable = ctx.executable.assembler,
         arguments = [args],
-        execution_requirements = {"local": "1"},
-        unused_inputs_list = unused_inputs,
+        execution_requirements = _LOCAL_DISK_CACHE_ONLY,
         mnemonic = _mnemonic(ctx.attr.fragment_name),
         progress_message = "Assembling %s dev fragment %s" % (ctx.attr.platform_prefix, ctx.label),
     )
@@ -236,11 +293,9 @@ intellij_dev_fragment = rule(
         "test_output_modules": attr.string_list(),
         "project_model_tree": attr.label(providers = [IntellijProjectModelTreeInfo], mandatory = True, doc = "The materialized project model tree this fragment reads, shared with the other fragments of its product."),
         "bazel_targets_json": attr.label(allow_single_file = True, mandatory = True),
-        "module_outputs": attr.label_list(allow_files = True),
-        "module_output_labels": attr.string_list(),
+        "build_inputs": attr.label(providers = [IntellijDevBuildInputsInfo], mandatory = True),
         "preloaded_downloads": attr.label_list(allow_files = True),
         "preloaded_manifests": attr.label_list(allow_files = True),
-        "preloaded_only": attr.bool(default = False),
         "ijent_binaries": attr.label_list(allow_files = True, doc = "The unpacked IJent binaries the assembly bundles at `lib/ijent/`, so that it extracts nothing itself."),
     },
 )
@@ -280,6 +335,9 @@ def _compose(ctx, fragment_targets):
         outputs = [home, ide_config, fingerprint],
         executable = ctx.executable.composer,
         arguments = [args],
+        # Composed distributions are large and intended for local consumption. Until a producer and delivery policy
+        # exist, the local disk cache is the only intended cache.
+        execution_requirements = {"no-remote-cache": "1"},
         mnemonic = "IntellijDevDistCompose",
         progress_message = "Composing dev distribution %s" % ctx.label,
     )

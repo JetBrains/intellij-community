@@ -148,6 +148,17 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
         updateAvailability()
         GrazieConfig.subscribe(disposable!!) { updateAvailability() }
       }
+
+      separator()
+
+      row {
+        checkBox(GrazieBundle.message("grazie.settings.specification.analysis.checkbox"))
+          .comment(GrazieBundle.message("grazie.settings.specification.analysis.comment"))
+          .bindSelected(
+            getter = { GrazieConfig.get().specificationAnalysisEnabled },
+            setter = { GrazieConfig.update { state -> state.copy(specificationAnalysisEnabled = it) } }
+          )
+      }
     }
   }
 

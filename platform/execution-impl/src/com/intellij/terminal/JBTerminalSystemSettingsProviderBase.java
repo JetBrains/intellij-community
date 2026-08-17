@@ -215,6 +215,10 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
                                           getKeyStrokesByActionId(ShowContentAction.ACTION_ID));
   }
 
+  public @NotNull TerminalActionPresentation getMoveToolWindowTabToEditorActionPresentation() {
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.MoveToolWindowTabToEditorAction.text"),
+                                          getKeyStrokesByActionId("MoveToolWindowTabToEditorAction"));
+  }
 
   @Override
   public float getLineSpacing() {

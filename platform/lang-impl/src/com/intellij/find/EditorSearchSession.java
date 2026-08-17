@@ -415,7 +415,8 @@ public class EditorSearchSession implements SearchSession,
                  : cursorIndex != -1
                    ? ApplicationBundle.message("editorsearch.current.cursor.position", cursorIndex, matches)
                    : ApplicationBundle.message("editorsearch.matches", matches);
-        if (!tooManyMatches && matches <= 0) {
+        // A search still in progress reports the matches it has found so far, so no match yet does not mean no match.
+        if (!tooManyMatches && matches <= 0 && !sr.isUpdating()) {
           myComponent.setNotFoundBackground();
         }
         else {

@@ -139,7 +139,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift V",                  "Graph.DistributeNodes.Vertically", "JupyterNotebookPasteCellAboveCommandModeAction"},
       {"shift alt A", "NotebookInsertCodeCellAboveAction", "VcsHistory.ShowAllAffected"},
       {"shift alt B", "NotebookInsertCodeCellAction", "tasks.open.in.browser", "sql.SelectInDatabaseView"},
-      {"shift alt ENTER",          "AIAssistant.Editor.AcceptMultiLineCompletion", "Console.TableResult.EditValueMaximized", "JupyterDebugAction", "SplitChooser"},
+      {"shift alt ENTER",          "AIAssistant.Editor.AcceptMultiLineCompletion", "Console.TableResult.EditValueMaximized", "JupyterDebugAction", "SplitChooser", "MoveToolWindowTabToEditorAction"},
       {"shift alt F7",             "ForceStepInto", "StepIntoMyCode"},
       {"shift alt G",              "EditorAddCaretPerSelectedLine", "hg4idea.QGotoFromPatches"},
       {"shift alt M",              "ChangesView.Move", "Vcs.MoveChangedLinesToChangelist"},

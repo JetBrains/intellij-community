@@ -1950,6 +1950,7 @@
   EditorStickyLinesDisable
 [group EditorTabActionGroup]
 [group EditorTabPopupMenu]
+  Terminal.RenameSessionInEditor
   CloseEditorsGroup
   <separator>
   CopyPaths

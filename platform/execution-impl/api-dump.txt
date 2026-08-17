@@ -624,6 +624,7 @@ c:com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 - com.jediterm.terminal.ui.settings.DefaultSettingsProvider
 - <init>():V
 - getCursorShape():com.jediterm.terminal.CursorShape
+- getMoveToolWindowTabToEditorActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
 - getTerminalFont():java.awt.Font
 c:com.intellij.terminal.JBTerminalWidget
 - com.jediterm.terminal.ui.JediTermWidget
@@ -648,6 +649,7 @@ com.intellij.terminal.JBTerminalWidgetListener
 - isGotoNextSplitTerminalAvailable():Z
 - moveTabLeft():V
 - moveTabRight():V
+- moveToolWindowTabToEditor():V
 - a:onNewSession():V
 - a:onNextTabSelected():V
 - a:onPreviousTabSelected():V

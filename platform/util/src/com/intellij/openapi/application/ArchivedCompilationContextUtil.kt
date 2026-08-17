@@ -85,9 +85,18 @@ object ArchivedCompilationContextUtil {
   const val BAZEL_TARGETS_JSON_FILE_PROPERTY: String = "intellij.build.bazel.targets.json.file"
 
   fun getBazelTargetsJsonPath(projectRoot: Path): Path {
+    val configuredLocation = System.getProperty(BAZEL_TARGETS_JSON_FILE_PROPERTY)
+    if (configuredLocation != null) {
+      val configuredPath = Paths.get(configuredLocation)
+      if (configuredPath.isAbsolute) {
+        log("Using explicitly configured absolute targets file: $configuredPath")
+        return configuredPath.normalize()
+      }
+    }
+
     if (BazelRunfiles.isRunningFromBazel) {
       // relative path, resolve against JAVA_RUNFILES or RUNFILES_MANIFEST_FILE
-      val location = System.getProperty(BAZEL_TARGETS_JSON_FILE_PROPERTY)
+      val location = configuredLocation
                      ?: error("Missing property $BAZEL_TARGETS_JSON_FILE_PROPERTY, it's required when running under Bazel")
       log("Running under Bazel, using targets file from Bazel dependencies: rlocationpath=$location")
 

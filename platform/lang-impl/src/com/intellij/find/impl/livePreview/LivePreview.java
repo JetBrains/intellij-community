@@ -93,6 +93,24 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
     updateCursorHighlighting();
   }
 
+  @Override
+  public void searchResultsAppended(@NotNull SearchResults sr, @NotNull List<FindResult> added) {
+    if (!isBelowMatchesLimit()) {
+      // Same call as a full update would make: past the limit nothing is highlighted at all.
+      dropHighlighters();
+      return;
+    }
+    // Only the appended occurrences can need a highlighter, and none of the existing ones can have become stale, so
+    // there is nothing to look for among the occurrences already on screen. The same goes for the in-selection
+    // highlighting: neither the selection nor the cursor moves while a search streams - the cursor is only settled once
+    // the whole search is over - so the highlighters already on screen keep whatever they were given. Revisiting them
+    // per chunk would make a streamed search quadratic in the number of matches. The cursor being unsettled is also why
+    // there is no cursor highlighting to redo here.
+    List<RangeHighlighter> newHighlighters = addNewHighlighters(added);
+    myHighlighters.addAll(newHighlighters);
+    updateInSelectionHighlighters(newHighlighters);
+  }
+
   private void dumpState() {
     if (ApplicationManager.getApplication().isUnitTestMode() && ourTestOutput != null) {
       dumpEditorMarkupAndSelection(ourTestOutput);
@@ -244,10 +262,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   public void dispose() {
     hideBalloon();
 
-    for (RangeHighlighter h : myHighlighters) {
-      removeHighlighterWithDependent(h);
-    }
-    myHighlighters.clear();
+    dropHighlighters();
 
     if (myCursorHighlighter != null) {
       removeHighlighter(myCursorHighlighter);
@@ -260,15 +275,25 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   }
 
   private void highlightUsages() {
-    List<RangeHighlighter> newHighlighters = mySearchResults.getMatchesCount() < mySearchResults.getMatchesLimit()
-                                             ? addNewHighlighters() : Collections.emptyList();
+    List<RangeHighlighter> newHighlighters = isBelowMatchesLimit()
+                                             ? addNewHighlighters(mySearchResults.getOccurrences()) : Collections.emptyList();
     clearUnusedHighlighters();
     myHighlighters.addAll(newHighlighters);
     updateInSelectionHighlighters();
   }
 
-  private List<RangeHighlighter> addNewHighlighters() {
-    List<FindResult> occurrences = mySearchResults.getOccurrences();
+  private boolean isBelowMatchesLimit() {
+    return mySearchResults.getMatchesCount() < mySearchResults.getMatchesLimit();
+  }
+
+  private void dropHighlighters() {
+    for (RangeHighlighter h : myHighlighters) {
+      removeHighlighterWithDependent(h);
+    }
+    myHighlighters.clear();
+  }
+
+  private List<RangeHighlighter> addNewHighlighters(@NotNull List<FindResult> occurrences) {
     List<RangeHighlighter> newHighlighters = new ArrayList<>(occurrences.size());
     for (FindResult range : occurrences) {
       if (range.getEndOffset() > mySearchResults.getEditor().getDocument().getTextLength()) continue;
@@ -317,11 +342,15 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   }
 
   private void updateInSelectionHighlighters() {
+    updateInSelectionHighlighters(myHighlighters);
+  }
+
+  private void updateInSelectionHighlighters(@NotNull List<RangeHighlighter> highlighters) {
     final SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
     int[] starts = selectionModel.getBlockSelectionStarts();
     int[] ends = selectionModel.getBlockSelectionEnds();
 
-    for (RangeHighlighter highlighter : myHighlighters) {
+    for (RangeHighlighter highlighter : highlighters) {
       if (!highlighter.isValid()) continue;
       boolean needsAdditionalHighlighting = false;
       TextRange cursor = mySearchResults.getCursor();

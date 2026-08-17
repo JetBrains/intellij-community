@@ -10,7 +10,7 @@
 
   <properties>
     <maven.compiler.release>25</maven.compiler.release>
-    <bootstrap.intellij.version>261.20525</bootstrap.intellij.version>
+    <bootstrap.intellij.version>263.3305</bootstrap.intellij.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 

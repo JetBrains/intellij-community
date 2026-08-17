@@ -181,6 +181,9 @@
     <action id="Terminal.RenameSession" class="com.intellij.terminal.frontend.action.TerminalRenameTabAction">
       <add-to-group group-id="ToolWindowTabContextMenu" anchor="first"/>
     </action>
+    <action id="Terminal.RenameSessionInEditor" class="com.intellij.terminal.frontend.action.RenameTerminalEditorTabAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="first"/>
+    </action>
     <action id="Terminal.MoveToEditor" class="com.intellij.terminal.frontend.action.MoveTerminalSessionToEditorAction">
       <add-to-group group-id="ToolWindowTabContextMenu" anchor="last"/>
     </action>

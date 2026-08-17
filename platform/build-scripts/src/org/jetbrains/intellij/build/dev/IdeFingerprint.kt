@@ -11,7 +11,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
-private const val IDE_FINGERPRINT_VERSION = "v3"
+private const val IDE_FINGERPRINT_VERSION = "v5"
 
 private val ideFingerprintEntryComparator = Comparator<IdeFingerprintEntry> { first, second ->
   var result = first.relativePath.compareTo(second.relativePath)
@@ -21,6 +21,9 @@ private val ideFingerprintEntryComparator = Comparator<IdeFingerprintEntry> { fi
   if (result == 0) {
     result = first.hash.compareTo(second.hash)
   }
+  if (result == 0) {
+    result = first.executable.compareTo(second.executable)
+  }
   result
 }
 
@@ -28,6 +31,7 @@ internal class IdeFingerprintEntry(
   @JvmField val relativePath: String,
   @JvmField val type: String,
   @JvmField val hash: Long,
+  @JvmField val executable: Boolean = false,
 )
 
 internal suspend fun writeIdeFingerprint(
@@ -45,8 +49,9 @@ internal suspend fun writeIdeFingerprint(
 }
 
 /**
- * Hashes the identity of every distribution entry, not merely its bytes. Paths and types are part of the input so a
- * move, rename, or change in packaging semantics invalidates a running IDE even when the payload itself is unchanged.
+ * Hashes the identity of every distribution entry, not merely its bytes. Paths, types, and executable mode are part of
+ * the input so a move, rename, or change in packaging semantics invalidates a running IDE even when the payload itself
+ * is unchanged.
  */
 @VisibleForTesting
 internal fun computeIdeFingerprint(
@@ -63,6 +68,7 @@ internal fun computeIdeFingerprint(
       relativePath = relativePath.invariantSeparatorsPathString,
       type = entry.type,
       hash = entry.hash,
+      executable = computeDevBuildExecutableBit(entry.distributionPath.toAbsolutePath().normalize()),
     )
   }.toList()
   return computeIdeFingerprint(fingerprintEntries, debug)
@@ -89,7 +95,9 @@ internal fun computeIdeFingerprint(entries: List<IdeFingerprintEntry>, debug: St
     hasher.putString(entry.relativePath)
     hasher.putString(entry.type)
     hasher.putLong(entry.hash)
+    hasher.putInt(if (entry.executable) 1 else 0)
     debug?.append(java.lang.Long.toUnsignedString(entry.hash, Character.MAX_RADIX))
+      ?.append(' ')?.append(if (entry.executable) "executable" else "regular")
       ?.append(' ')?.append(entry.type)?.append(' ')?.append(entry.relativePath)?.append('\n')
   }
   return "$IDE_FINGERPRINT_VERSION:${java.lang.Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX)}"

@@ -654,6 +654,8 @@ jvm_library(
         "//plugins/toml/tests:tests_test_lib",
         "//plugins/maven/src/test:maven-tests",
         "//plugins/maven/src/test:maven-tests_test_lib",
+        "//plugins/maven/src/integrationTest:maven-integration-tests",
+        "//plugins/maven/src/integrationTest:maven-integration-tests_test_lib",
         "//plugins/gradle/java:java-tests",
         "//plugins/gradle/java:java-tests_test_lib",
         "//plugins/gradle/completion/toml:gradle-completion-toml-tests",

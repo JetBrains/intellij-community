@@ -1539,6 +1539,7 @@ plugins/maven/model
 plugins/maven/performanceTesting
 plugins/maven/plugin
 plugins/maven/proofreading
+plugins/maven/src/integrationTest
 plugins/maven/src/test
 plugins/maven/testFramework
 plugins/mcp-server

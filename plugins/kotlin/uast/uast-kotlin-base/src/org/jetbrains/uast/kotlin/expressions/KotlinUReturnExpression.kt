@@ -21,6 +21,7 @@ class KotlinUReturnExpression(
 ) : KotlinAbstractUExpression(givenParent), UReturnExpression, KotlinUElementWithType {
 
     private val returnExpressionPart = UastLazyPart<UExpression?>()
+    private val jumpTargetPart = UastLazyPart<UElement?>()
 
     override val returnExpression: UExpression?
         get() = returnExpressionPart.getOrBuild {
@@ -31,24 +32,26 @@ class KotlinUReturnExpression(
         get() = sourcePsi.getTargetLabel()?.getReferencedName()
 
     override val jumpTarget: UElement?
-        get() = generateSequence(uastParent) { it.uastParent }
-            .find {
-                it is ULabeledExpression && it.label == label ||
-                        it is UMethod && it.name == label ||
-                        (it is UMethod || it is KotlinLocalFunctionULambdaExpression) && label == null ||
-                        it is ULambdaExpression && it.uastParent.let { parent ->
-                            parent is UCallExpression &&
-                                    (
-                                            // Regular function call
-                                            parent.methodName == label ||
-                                            // Constructor (whose `methodName` is `<init>`)
-                                            parent.methodIdentifier?.name == label
-                                    )
-                        }
-            }.let { target ->
-                when(target) {
-                    is ULabeledExpression -> target.expression
-                    else -> target
+        get() = jumpTargetPart.getOrBuild {
+            generateSequence(uastParent) { it.uastParent }
+                .find {
+                    it is ULabeledExpression && it.label == label ||
+                            it is UMethod && it.name == label ||
+                            (it is UMethod || it is KotlinLocalFunctionULambdaExpression) && label == null ||
+                            it is ULambdaExpression && it.uastParent.let { parent ->
+                        parent is UCallExpression &&
+                                (
+                                        // Regular function call
+                                        parent.methodName == label ||
+                                                // Constructor (whose `methodName` is `<init>`)
+                                                parent.methodIdentifier?.name == label
+                                        )
+                    }
+                }.let { target ->
+                    when (target) {
+                        is ULabeledExpression -> target.expression
+                        else -> target
+                    }
                 }
-            }
+        }
 }

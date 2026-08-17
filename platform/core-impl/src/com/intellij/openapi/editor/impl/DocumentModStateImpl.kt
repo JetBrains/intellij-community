@@ -32,22 +32,21 @@ internal class DocumentModStateImpl private constructor(
     return modifiedLines != null && modifiedLines.isModified(line)
   }
 
-  override fun lineCount(): Int? {
-    return modifiedLines?.lineCount
-  }
-
-  override fun withPatch(text: DocumentText, patch: DocumentTextPatch): DocumentModState {
-    val oldModifiedLines = getModifiedLines(text)
+  override fun withPatch(before: DocumentText, after: DocumentText, diff: DocumentTextPatch): DocumentModState {
+    val oldModifiedLines = getModifiedLines(before)
     var newModifiedLines = oldModifiedLines.update(
-      text,
-      patch.startOffset(),
-      patch.endOffset(),
-      patch.newFragment(),
+      before,
+      diff.startOffset(),
+      diff.endOffset(),
+      diff.newFragment(),
     )
-    if (patch.clearLineFlags()) {
+    if (diff.clearLineFlags()) {
       newModifiedLines = newModifiedLines.clearModificationFlags(0, Int.MAX_VALUE)
     }
-    return DocumentModStateImpl(patch.newModStamp(), modSequence + 1, newModifiedLines)
+    assert(newModifiedLines.lineCount == after.lineCount()) {
+      "after.lineCount() = " + after.lineCount() + "; modState.lineCount() = " + newModifiedLines.lineCount
+    }
+    return DocumentModStateImpl(diff.newModStamp(), modSequence + 1, newModifiedLines)
   }
 
   override fun withStamp(newStamp: Long, incrementSequence: Boolean): DocumentModState {
@@ -90,6 +89,9 @@ internal class DocumentModStateImpl private constructor(
     }
     modifiedLines = modifiedLines.clearModificationFlags(startLine, endLine)
     modifiedLines = modifiedLines.setModified(modifiedLineIndices)
+    assert(modifiedLines.lineCount == text.lineCount()) {
+      "text.lineCount() = " + text.lineCount() + "; modState.lineCount() = " + modifiedLines.lineCount
+    }
     return DocumentModStateImpl(modStamp, modSequence, modifiedLines)
   }
 

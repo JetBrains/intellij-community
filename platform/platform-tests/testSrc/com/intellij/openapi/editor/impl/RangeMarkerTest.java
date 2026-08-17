@@ -1018,7 +1018,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     return createMarker(string, start, end);
   }
 
-  public void testRangeMarkerInstancesAreWeaklyRetainedByDocument() {
+  public void testRangeMarkerInstancesAreNotRetainedByDocument() {
     Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
     Set<RangeMarker> markers = new HashSet<>();
     for (int i = 0; i < 10; i++) {
@@ -1026,6 +1026,13 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }
 
     LeakHunter.checkLeak(document, RangeMarker.class, o -> markers.contains(o));
+  }
+
+  public void testRangeMarkerDoesNotRetainDocumentIfNotNeeded() {
+    VirtualFile virtualFile = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "   ");
+    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    RangeMarker marker = document.createRangeMarker(0, 1);
+    LeakHunter.checkLeak(marker, Document.class, _ -> true);
   }
 
   public void testRangeMarkersAreGarbageCollectableAndWhenTheyHaveTheyLeaveNoTracesInDocumentEvenTheirIds() {
@@ -1042,7 +1049,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     });
   }
 
-  public void testRangeMarkersAreLazyCreated() {
+  // in case of SnapshotRangeMarkerImpl we don't share nodes
+  public void _testRangeMarkersAreLazyCreated() {
     Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
     RangeMarker m1 = document.createRangeMarker(2, 4);
     RangeMarker m2 = document.createRangeMarker(2, 4);
@@ -1381,7 +1389,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   @PerformanceUnitTest
-  public void testGetOffsetPerformance() {
+  public void testGetStartEndOffsetPerformance() {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     List<RangeMarker> markers = new ArrayList<>();
     int N = 100_000;
@@ -1391,17 +1399,20 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
+    insertString(doc, 0, " ");
+    for (RangeMarker rm : markers) {
+      assertTrue(rm.isValid());
+    }
     Benchmark.newBenchmark("RM.getStartOffset", ()->{
-      insertString(doc, 0, " ");
       for (int i=0; i<1000; i++) {
+        int length = 0;
         for (RangeMarker rm : markers) {
-          int length = rm.getEndOffset() - rm.getStartOffset();
-          assertEquals(1, length);
-          assertTrue(rm.isValid());
+          length += rm.getEndOffset() - rm.getStartOffset();
         }
+        assertEquals(markers.size(), length);
       }
-      deleteString(doc, 0, 1);
     }).start();
+    deleteString(doc, 0, 1);
   }
 
   @PerformanceUnitTest

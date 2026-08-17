@@ -129,8 +129,8 @@ interface DocumentMutator {
   /**
    * Atomically replaces the current snapshot with the result of [updateFunc] and returns it.
    *
-   * The general escape hatch for snapshot state that has no dedicated method here, an aspect above all:
-   * `updateSnapshotAndGet { it.withAspect(key, aspect) }`.
+   * The general escape hatch for snapshot state that has no dedicated method here, a sputnik above all:
+   * `updateSnapshotAndGet { it.withSputnik(key, sputnik) }`.
    *
    * [updateFunc] must keep the characters of the snapshot it is given: a text change published this way
    * would fire no [com.intellij.openapi.editor.event.DocumentListener], leaving every listener-backed model
@@ -139,7 +139,7 @@ interface DocumentMutator {
    * [updateFunc] must also be side-effect free: publishing goes through a compare-and-set, so a lost race
    * re-applies it against the newly found snapshot.
    *
-   * @see DocumentSnapshot.withAspect
+   * @see DocumentSnapshot.withSputnik
    */
   fun updateSnapshotAndGet(updateFunc: UnaryOperator<DocumentSnapshot>): DocumentSnapshot
 }

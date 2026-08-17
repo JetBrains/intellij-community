@@ -32,6 +32,7 @@ import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
@@ -71,6 +72,11 @@ internal class TerminalMouseEventsHandlingTest {
     private const val TOUCH_BEGIN = 2
     private const val TOUCH_UPDATE = 3
     private const val TOUCH_END = 4
+
+    private fun repeatedReportBytes(n: Int): ByteArray {
+      val unit = RecordingTerminalSession.REPORTED_EVENT_BYTES
+      return ByteArray(n * unit.size) { unit[it % unit.size] }
+    }
   }
 
   private val project: Project by projectFixture
@@ -254,6 +260,19 @@ internal class TerminalMouseEventsHandlingTest {
           assertThat(consumed).isFalse()
           assertThat(fixture.reportedEvents).isEmpty()
         }
+
+      @Test
+      fun `a wheel delta too small to cross a row is not consumed when nothing would handle it`(): Unit =
+        doTest(simulateMouseScrollWithArrowKeysInAlternateScreen = false) { fixture ->
+          fixture.setText("plain text")
+
+          // Zero rotation deterministically produces a zero-pixel delta under either platform's formula,
+          // regardless of the real font's line height - i.e., it never crosses a row.
+          val consumed = fixture.wheelUnitScroll(scrollAmount = 1, wheelRotation = 0)
+
+          assertThat(consumed).isFalse()
+          assertThat(fixture.reportedEvents).isEmpty()
+        }
     }
 
     @Nested
@@ -274,7 +293,8 @@ internal class TerminalMouseEventsHandlingTest {
           val consumed = fixture.wheelUnitScroll(scrollAmount = 3, wheelRotation = wheelRotation)
 
           assertThat(consumed).isTrue()
-          assertThat(fixture.reportedEvents).hasSize(expectedLines).containsOnly(MouseEventKind.WHEEL)
+          assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.WHEEL)
+          assertThat(fixture.receiveSentBytes()).isEqualTo(repeatedReportBytes(expectedLines))
         }
 
       @Test
@@ -286,7 +306,8 @@ internal class TerminalMouseEventsHandlingTest {
           val consumed = fixture.wheelUnitScroll(scrollAmount = 3, wheelRotation = 1)
 
           assertThat(consumed).isTrue()
-          assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.WHEEL, MouseEventKind.WHEEL, MouseEventKind.WHEEL)
+          assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.WHEEL)
+          assertThat(fixture.receiveSentBytes()).isEqualTo(repeatedReportBytes(3))
         }
 
       @Test
@@ -298,7 +319,8 @@ internal class TerminalMouseEventsHandlingTest {
           val consumed = fixture.wheelUnitScroll(scrollAmount = 2, wheelRotation = -1)
 
           assertThat(consumed).isTrue()
-          assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.WHEEL, MouseEventKind.WHEEL)
+          assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.WHEEL)
+          assertThat(fixture.receiveSentBytes()).isEqualTo(repeatedReportBytes(2))
         }
 
       // Block scroll (WHEEL_BLOCK_SCROLL): treated as one full page.
@@ -312,7 +334,8 @@ internal class TerminalMouseEventsHandlingTest {
           val consumed = fixture.wheelBlockScroll(direction = 1)
 
           assertThat(consumed).isTrue()
-          assertThat(fixture.reportedEvents).hasSize(rows).containsOnly(MouseEventKind.WHEEL)
+          assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.WHEEL)
+          assertThat(fixture.receiveSentBytes()).isEqualTo(repeatedReportBytes(rows))
         }
 
       @Test
@@ -324,40 +347,64 @@ internal class TerminalMouseEventsHandlingTest {
           val consumed = fixture.wheelBlockScroll(direction = -1)
 
           assertThat(consumed).isTrue()
-          assertThat(fixture.reportedEvents).hasSize(rows).containsOnly(MouseEventKind.WHEEL)
+          assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.WHEEL)
+          assertThat(fixture.receiveSentBytes()).isEqualTo(repeatedReportBytes(rows))
+        }
+
+      @Test
+      fun `a wheel event with delta too small to cross a row is still consumed, without sending anything`(): Unit =
+        doTest(isMouseReportingEnabled = true) { fixture ->
+          fixture.setText("plain text")
+          val rows = fixture.alternateBufferEditor.calculateTerminalSize()!!.rows
+
+          // Zero rotation never crosses a row on either platform's formula.
+          val consumed = fixture.wheelUnitScroll(scrollAmount = 1, wheelRotation = 0)
+          fixture.wheelBlockScroll(direction = 1) // sentinel: definitely sends something
+
+          assertThat(consumed).isTrue()
+          // Check that sentinel block scroll report is sent - there is nothing else.
+          assertThat(fixture.receiveSentBytes()).isEqualTo(repeatedReportBytes(rows))
         }
 
       // Touch-phase scroll
 
       @Test
-      fun `a burst of small precise trackpad deltas is reported far fewer times than events dispatched`(): Unit =
+      fun `a burst of small precise trackpad deltas sends far fewer scroll reports than events dispatched`(): Unit =
         doTest(isMouseReportingEnabled = true) { fixture ->
           fixture.setText("plain text")
           val rowHeight = fixture.alternateBufferEditor.lineHeight
+          val rows = fixture.alternateBufferEditor.calculateTerminalSize()!!.rows
 
-          // Many small per-event deltas (well under one row each) simulate a fast trackpad fling; despite
-          // firing a callback per frame, the number of actual scroll reports must track total physical
-          // distance scrolled, not the number of callbacks - this is the core of the fix for IJPL-251729.
+          // Many small per-event deltas (well under one row each) simulate a fast trackpad fling; the number
+          // of actual scroll reports must track total physical distance, not the number of callbacks.
           val eventCount = 20
           val perEventPixels = 5.0
           repeat(eventCount) { fixture.wheelTouchUpdate(pixels = perEventPixels) }
+          fixture.wheelBlockScroll(direction = 1) // sentinel: definitely sends something
 
           val expectedLines = (eventCount * perEventPixels / rowHeight).toInt()
           assertThat(expectedLines).isLessThan(eventCount) // sanity: the scenario must actually exercise smoothing
-          assertThat(fixture.reportedEvents.count { it == MouseEventKind.WHEEL }).isEqualTo(expectedLines)
+          repeat(expectedLines) {
+            assertThat(fixture.receiveSentBytes()).isEqualTo(repeatedReportBytes(1))
+          }
+          // Check that sentinel block scroll report is sent - there is nothing else.
+          assertThat(fixture.receiveSentBytes()).isEqualTo(repeatedReportBytes(rows))
         }
 
       @Test
-      fun `touch begin and end markers carry no delta of their own, so they are not consumed or reported`(): Unit =
+      fun `touch begin and end markers carry no delta of their own, so nothing is sent for them, though the gesture is still consumed`(): Unit =
         doTest(isMouseReportingEnabled = true) { fixture ->
           fixture.setText("plain text")
+          val rows = fixture.alternateBufferEditor.calculateTerminalSize()!!.rows
 
           val beginConsumed = fixture.wheelTouchPhase(scrollType = TOUCH_BEGIN, pixels = 0.0)
           val endConsumed = fixture.wheelTouchPhase(scrollType = TOUCH_END, pixels = 0.0)
+          fixture.wheelBlockScroll(direction = 1) // sentinel: definitely sends something
 
-          assertThat(beginConsumed).isFalse()
-          assertThat(endConsumed).isFalse()
-          assertThat(fixture.reportedEvents).isEmpty()
+          assertThat(beginConsumed).isTrue()
+          assertThat(endConsumed).isTrue()
+          // Check that sentinel block scroll report is sent - there is nothing else.
+          assertThat(fixture.receiveSentBytes()).isEqualTo(repeatedReportBytes(rows))
         }
 
       @Test
@@ -931,6 +978,14 @@ internal class TerminalMouseEventsHandlingTest {
     val reportedEvents: List<MouseEventKind>
       get() = session.reportedEvents
 
+    /**
+     * Suspends until the next raw byte payload actually reaches [com.intellij.terminal.frontend.view.impl.TerminalInput]
+     * and is forwarded to the session and returns it. Unlike [reportedEvents], this observes what TerminalInput
+     * really sent downstream - e.g., a multi-row wheel gesture's repeated bytes - rather than how many times the
+     * fake session's `processMouseEvent` itself was called.
+     */
+    suspend fun receiveSentBytes(): ByteArray = session.receiveSentBytes()
+
     /** How many times a hyperlink's action actually ran, i.e. the link was really opened. */
     var linkFollowedCount: Int = 0
       private set
@@ -1106,13 +1161,30 @@ internal class TerminalMouseEventsHandlingTest {
   ) : TerminalSession {
     val reportedEvents: MutableList<MouseEventKind> = mutableListOf()
 
+    /**
+     * Backs [getInputChannel].
+     * Use [receiveSentBytes] to observe what input is sent to the terminal.
+     */
+    private val inputEvents = Channel<TerminalInputEvent>(capacity = Channel.UNLIMITED)
+
     override val eelDescriptor: EelDescriptor get() = LocalEelDescriptor
     override val processId: Long get() = -1
     override val isClosed: Boolean get() = false
 
-    override suspend fun getInputChannel(): SendChannel<TerminalInputEvent> = Channel(capacity = Channel.UNLIMITED)
+    override suspend fun getInputChannel(): SendChannel<TerminalInputEvent> = inputEvents
     override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> = emptyFlow()
     override suspend fun hasRunningCommands(): Boolean = false
+
+    /**
+     * Suspends until the next [TerminalWriteBytesEvent] arrives and returns its payload,
+     * skipping any other event kind.
+     */
+    suspend fun receiveSentBytes(): ByteArray {
+      while (true) {
+        val event = inputEvents.receive()
+        if (event is TerminalWriteBytesEvent) return event.bytes
+      }
+    }
 
     /**
      * TODO: now we mock terminal session responses, so these tests are not really end-to-end
@@ -1142,7 +1214,7 @@ internal class TerminalMouseEventsHandlingTest {
     override fun processKeyEvent(e: KeyEvent): KeyEventProcessingResultDto = KeyEventProcessingResultDto.Unhandled
 
     companion object {
-      private val REPORTED_EVENT_BYTES = byteArrayOf(1)
+      val REPORTED_EVENT_BYTES = byteArrayOf(1)
     }
   }
 }

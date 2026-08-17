@@ -30,6 +30,9 @@ class MarkdownIncorrectListNumberingInspectionTest: LightPlatformCodeInsightFixt
   fun `test no warning for list starting from zero`() = doTest()
 
   @Test
+  fun `test no warning for all ones list in sequential mode`() = doTest()
+
+  @Test
   fun `test no warning for ordered marker inside unordered list`() = doTest()
 
   @Test
@@ -39,7 +42,12 @@ class MarkdownIncorrectListNumberingInspectionTest: LightPlatformCodeInsightFixt
   fun `test problem registered in ordered sublist of unordered list`() = doTest()
 
   @Test
-  fun `test warning for list starting from zero in ones mode`() = doTest(ListNumberingType.ONES)
+  fun `test no warning for sequential list in ones mode`() = doTest(ListNumberingType.ONES)
+
+  @Test
+  fun `test all numbering styles accepted regardless of setting`() {
+    ListNumberingType.entries.forEach(::doTest)
+  }
 
   @Test
   fun `test no warning in previous number mode`() = doTest(ListNumberingType.PREVIOUS_NUMBER)

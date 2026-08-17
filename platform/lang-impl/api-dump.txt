@@ -2406,6 +2406,7 @@ f:com.intellij.find.impl.livePreview.LivePreview
 - com.intellij.openapi.editor.colors.EditorColorsListener
 - com.intellij.openapi.editor.event.DocumentListener
 - com.intellij.openapi.editor.event.SelectionListener
+- searchResultsAppended(com.intellij.find.impl.livePreview.SearchResults,java.util.List):V
 f:com.intellij.find.impl.livePreview.LivePreviewController
 - dispose():V
 - moveCursor(com.intellij.find.impl.livePreview.SearchResults$Direction):V
@@ -2433,6 +2434,7 @@ com.intellij.find.impl.livePreview.SearchResults$SearchResultsListener
 - afterSelectionUpdate():V
 - beforeSelectionUpdate():V
 - a:cursorMoved():V
+- searchResultsAppended(com.intellij.find.impl.livePreview.SearchResults,java.util.List):V
 - a:searchResultsUpdated(com.intellij.find.impl.livePreview.SearchResults):V
 - updateFinished():V
 c:com.intellij.find.replaceInProject.ReplaceInProjectManager

@@ -182,11 +182,12 @@ fun isRunningFromBazelOut(): Boolean = bazelOutputRoot != null
  *
  * [isRunningFromBazelOut] alone cannot answer this: it reads the path of the jar this class was loaded from, and
  * that path stops pointing into `bazel-out` as soon as anything copies the jar - the AIR UI test daemon localizes
- * its stable classpath tier onto guest-local storage. The runfiles environment survives such a copy, so it counts
- * too; the two predicates used to disagree and the dev build silently took the JPS branch.
+ * its stable classpath tier onto guest-local storage. The runfiles environment or an explicit Bazel input manifest
+ * survives such a copy, so either counts too; the predicates used to disagree and the dev build silently took the
+ * JPS branch.
  */
 @Internal
-fun isDevBuildBazelBacked(): Boolean = isRunningFromBazelOut() || BazelRunfiles.isRunningFromBazel
+fun isDevBuildBazelBacked(): Boolean = isRunningFromBazelOut() || BazelRunfiles.isRunningFromBazel || BazelBuildInputs.isConfigured
 
 internal val bazelOutputRoot: Path? by lazy {
   val url = BazelCompilationContext::class.java.getResource("${BazelCompilationContext::class.java.simpleName}.class")

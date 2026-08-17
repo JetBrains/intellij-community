@@ -75,7 +75,7 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
         }
         val analyzer = getAnalyzer(file) ?: return
         val dependencies = getDependencies(file)
-        val issues = SpecificationAnalyzer.analyze(analyzer, file, dependencies , client)
+        val issues = SpecificationAnalyzer.analyze(analyzer, file, dependencies, client)
         reportProblems(holder, file, dependencies, issues)
       }
     }

@@ -48,6 +48,7 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
 
     result.stopHere()
     result.restartCompletionWhenNothingMatches()
+    result.restartCompletionOnAnyPrefixChange()
 
     val request = DependencyCompletionRequest(searchString, parameters.getCompletionContext())
     val resultSet = result.withPrefixMatcher(DependencyCompletionFuzzyMatcher(searchString))

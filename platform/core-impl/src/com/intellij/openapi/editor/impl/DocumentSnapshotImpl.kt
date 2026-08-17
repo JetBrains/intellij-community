@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
-import com.intellij.openapi.editor.ex.DocumentAspect
-import com.intellij.openapi.editor.ex.DocumentAspectList
+import com.intellij.openapi.editor.ex.DocumentSputnik
+import com.intellij.openapi.editor.ex.DocumentSputniks
 import com.intellij.openapi.editor.ex.DocumentModState
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
@@ -12,13 +12,13 @@ import com.intellij.openapi.util.Key
 internal class DocumentSnapshotImpl private constructor(
   private val text: DocumentText,
   private val modState: DocumentModState,
-  private val aspects: DocumentAspectList,
+  private val sputniks: DocumentSputniks,
 ) : DocumentSnapshot {
 
   constructor(text: DocumentText) : this(
     text = text,
     modState = DocumentModStateImpl(),
-    aspects = DocumentAspectListImpl.EMPTY,
+    sputniks = DocumentSputniksImpl.EMPTY,
   )
 
   override fun text(): DocumentText {
@@ -34,33 +34,32 @@ internal class DocumentSnapshotImpl private constructor(
     if (newModState === modState) {
       return this
     }
-    return DocumentSnapshotImpl(text, newModState, aspects)
+    return DocumentSnapshotImpl(text, newModState, sputniks)
   }
 
   override fun withClearedLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray): DocumentSnapshot {
     val newModState = modState.withClearedLineFlags(text, startLine, endLine, exceptLines)
-    assertLineCountsAgree(text, newModState)
     if (newModState === modState) {
       return this
     }
-    return DocumentSnapshotImpl(text, newModState, aspects)
+    return DocumentSnapshotImpl(text, newModState, sputniks)
   }
 
-  override fun <A : DocumentAspect> aspect(key: Key<A>): A? {
-    @Suppress("UNCHECKED_CAST") // sound because withAspect associates an aspect only with a key of its own type
-    return aspects.get(key) as A?
+  override fun <S : DocumentSputnik> sputnik(key: Key<S>): S? {
+    @Suppress("UNCHECKED_CAST") // sound because withSputnik associates a sputnik only with a key of its own type
+    return sputniks.get(key) as S?
   }
 
-  override fun <A : DocumentAspect> withAspect(key: Key<A>, aspect: A?): DocumentSnapshot {
-    val newAspects = if (aspect == null) {
-      aspects.remove(key)
+  override fun <S : DocumentSputnik> withSputnik(key: Key<S>, sputnik: S?): DocumentSnapshot {
+    val newSputniks = if (sputnik == null) {
+      sputniks.remove(key)
     } else {
-      aspects.add(key, aspect)
+      sputniks.add(key, sputnik)
     }
-    if (newAspects === aspects) {
+    if (newSputniks === sputniks) {
       return this
     }
-    return DocumentSnapshotImpl(text, modState, newAspects)
+    return DocumentSnapshotImpl(text, modState, newSputniks)
   }
 
   override fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot {
@@ -72,32 +71,25 @@ internal class DocumentSnapshotImpl private constructor(
       return metadata
     }
     val newModState = modState.withMetadata(metadata.modState())
-    assertLineCountsAgree(text, newModState)
     if (newModState === modState) {
       return this
     }
-    return DocumentSnapshotImpl(text, newModState, aspects)
+    return DocumentSnapshotImpl(text, newModState, sputniks)
   }
 
   override fun withPatch(patch: DocumentTextPatch): DocumentSnapshot {
     val newText = text.withPatch(patch)
-    val newModState = modState.withPatch(text, patch)
-    assertLineCountsAgree(newText, newModState)
-    val newAspects = aspects.transform {
-      it.withTextChange(text, newText, patch)
+    if (newText === text) {
+      return this
     }
-    return DocumentSnapshotImpl(newText, newModState, newAspects)
-  }
-
-  /**
-   * Guards against [DocumentModState]'s independently-maintained line structure (see [ModifiedLineSet])
-   * silently drifting from [text]'s -- both must agree on line count whenever [modState]'s tracking has
-   * actually been built (`null` means it hasn't, and there is nothing yet to compare).
-   */
-  private fun assertLineCountsAgree(text: DocumentText, modState: DocumentModState) {
-    val modStateLineCount = modState.lineCount()
-    assert(modStateLineCount == null || modStateLineCount == text.lineCount()) {
-      "text.lineCount() = " + text.lineCount() + "; modState.lineCount() = " + modStateLineCount
+    val newModState = modState.withPatch(text, newText, patch)
+    val oldSnapshot = this
+    val newSnapshot = DocumentSnapshotImpl(newText, newModState, sputniks)
+    if (sputniks === DocumentSputniksImpl.EMPTY) {
+      return newSnapshot
+    }
+    return sputniks.withTextChange(oldSnapshot, newSnapshot, patch) { newSputniks ->
+      DocumentSnapshotImpl(newText, newModState, newSputniks)
     }
   }
 
@@ -122,7 +114,7 @@ internal class DocumentSnapshotImpl private constructor(
 
   override fun toString(): String {
     val id = Integer.toHexString(System.identityHashCode(this))
-    val aspectsId = Integer.toHexString(System.identityHashCode(aspects))
-    return "DocumentSnapshot@$id{text=$text, modState=$modState, aspects=@$aspectsId}"
+    val sputnikId = Integer.toHexString(System.identityHashCode(sputniks))
+    return "DocumentSnapshot@$id{text=$text, modState=$modState, sputniks=@$sputnikId}"
   }
 }

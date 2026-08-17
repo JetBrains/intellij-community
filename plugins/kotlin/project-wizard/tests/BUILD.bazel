@@ -144,6 +144,8 @@ jvm_library(
         "//plugins/maven:maven_test_lib",
         "//plugins/maven/src/test:maven-tests",
         "//plugins/maven/src/test:maven-tests_test_lib",
+        "//plugins/maven/src/integrationTest:maven-integration-tests",
+        "//plugins/maven/src/integrationTest:maven-integration-tests_test_lib",
         "//plugins/kotlin/gradle/gradle-java/tests.shared",
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
         "//plugins/kotlin/project-configuration",

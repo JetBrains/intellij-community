@@ -147,6 +147,12 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
     private set
 
+  private val resourceGeneratorProjectLibraries = LinkedHashSet<String>()
+
+  /** Project-library inputs read by opaque [resourceGenerators], which cannot be inferred from packaged output. */
+  @Internal
+  fun getResourceGeneratorProjectLibraries(): Set<String> = resourceGeneratorProjectLibraries
+
   internal var customAssets: PersistentList<CustomAssetDescriptor> = persistentListOf()
     private set
 
@@ -322,6 +328,11 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
 
     fun withGeneratedResources(generator: ResourceGenerator) {
+      withGeneratedResources(inputProjectLibraries = emptyList(), generator = generator)
+    }
+
+    fun withGeneratedResources(inputProjectLibraries: Collection<String>, generator: ResourceGenerator) {
+      layout.resourceGeneratorProjectLibraries.addAll(inputProjectLibraries)
       layout.resourceGenerators += generator
     }
 

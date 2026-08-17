@@ -341,6 +341,7 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
 
   private fun notifyWorkingTreeDeletedSuccess(project: Project, repository: GitRepository, tree: GitWorkingTree) {
     repository.workingTreeHolder.scheduleReload()
+    RecentProjectsManager.getInstance().removePath(tree.path.path)
     VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.WORKING_TREE_DELETED,
                                                    "",
                                                    GitBundle.message("Git.WorkingTrees.delete.worktree.success.message",

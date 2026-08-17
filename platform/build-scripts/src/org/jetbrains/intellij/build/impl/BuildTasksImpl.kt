@@ -28,6 +28,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.DistFileContent
 import org.jetbrains.intellij.build.InMemoryDistFileContent
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -1217,8 +1218,18 @@ internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext)
   }
 }
 
-internal fun copyDistFiles(newDir: Path, os: OsFamily, arch: JvmArchitecture, libcImpl: LibcImpl, context: BuildContext) {
+internal fun copyDistFiles(
+  newDir: Path,
+  os: OsFamily,
+  arch: JvmArchitecture,
+  libcImpl: LibcImpl,
+  context: BuildContext,
+  include: (DistFile) -> Boolean = { true },
+) {
   for (item in context.getDistFiles(os, arch, libcImpl)) {
+    if (!include(item)) {
+      continue
+    }
     val targetFile = newDir.resolve(item.relativePath)
     Files.createDirectories(targetFile.parent)
     if (item.content is LocalDistFileContent) {

@@ -75,7 +75,7 @@ class AppIdleMemoryCleaner(private val cs: CoroutineScope) {
     }.launchIn(cs)
   }
 
-  private class MyApplicationActivationListener : ApplicationActivationListener {
+  internal class MyApplicationActivationListener : ApplicationActivationListener {
     override fun applicationActivated(ideFrame: IdeFrame) {
       serviceIfCreated<AppIdleMemoryCleaner>()?.apply {
         isDeactivated.value = false

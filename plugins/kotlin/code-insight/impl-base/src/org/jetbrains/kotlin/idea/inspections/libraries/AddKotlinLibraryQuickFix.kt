@@ -7,6 +7,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.Presentation
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
@@ -19,21 +20,22 @@ class AddKotlinLibraryQuickFix(
     @IntentionName
     private val quickFixText: String
 ) : ModCommandAction, HighPriorityAction {
+
+    private fun isApplicable(module: Module): Boolean =
+        dependencyManager.isApplicable(module) && !dependencyManager.isProjectSyncPendingOrInProgress()
+
     override fun getPresentation(context: ActionContext): Presentation? {
-        val file = context.file
-        val module = file.module ?: return null
-        return quickFixText
-            .takeIf { dependencyManager.isApplicable(module) && !dependencyManager.isProjectSyncPendingOrInProgress() }
-            ?.let(Presentation::of)
+        val module = context.file.module ?: return null
+        return Presentation.of(familyName).takeIf { isApplicable(module) }
     }
+
     override fun getFamilyName(): String = quickFixText
+
+    override fun availableInBatchMode(): Boolean = false
 
     override fun perform(context: ActionContext): ModCommand {
         val file = context.file
-        val module = file.module ?: return ModCommand.nop()
-        val element = file
-            .takeIf { dependencyManager.isApplicable(module) && !dependencyManager.isProjectSyncPendingOrInProgress() } ?:
-            return ModCommand.nop()
+        val module = file.module?.takeIf { isApplicable(it) } ?: return ModCommand.nop()
 
         val addDependencyModCommand =
             dependencyManager.addDependencyModCommand(file, module, libraryDescriptor)
@@ -41,7 +43,7 @@ class AddKotlinLibraryQuickFix(
         return if (addDependencyModCommand != ModCommand.nop()) {
             addDependencyModCommand
         } else {
-            KotlinDependencyProvider.addLibraryModCommand(element, libraryDescriptor)
+            KotlinDependencyProvider.addLibraryModCommand(file, libraryDescriptor)
         }
     }
 }

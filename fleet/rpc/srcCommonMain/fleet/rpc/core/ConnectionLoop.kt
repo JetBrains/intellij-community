@@ -76,14 +76,16 @@ fun <T> connectionLoop(
           ex
         }
         attempt++
+        val reason = ex.causeOfType<TransportDisconnectedException>() ?: ex
         val delayJob = launch {
-          ConnectionLoop.logger.info { "Reconnect by <${coroutineName.name}> attempt #$attempt in $curDelay" }
+          ConnectionLoop.logger.debug(reason) { "Connection broken <${coroutineName.name}>" }
+          ConnectionLoop.logger.info { "Reconnect by <${coroutineName.name}> attempt #$attempt in $curDelay, reason: $reason" }
           delay(curDelay)
         }
         status.value = ConnectionStatus.TemporarilyDisconnected(
           connectionScheduledFor = Clock.System.now() + curDelay,
           delayJob = delayJob,
-          reason = ex.causeOfType<TransportDisconnectedException>() ?: ex)
+          reason = reason)
         delayJob.join()
         curDelay = delayStrategy.nextDelay(curDelay)
       }
@@ -117,7 +119,7 @@ suspend fun <T> serviceConnectionLoop(
     val reason = ex.causeOfType<TransportDisconnectedException>() ?: ex
     ConnectionLoop.logger.debug(reason) { "Connection broken <${debugName}>" }
     attempt++
-    ConnectionLoop.logger.info { "Reconnect by <${debugName}> attempt #$attempt in $curDelay" }
+    ConnectionLoop.logger.info { "Reconnect by <${debugName}> attempt #$attempt in $curDelay, reason: $reason" }
     delay(curDelay)
     curDelay = delayStrategy.nextDelay(curDelay)
   }
