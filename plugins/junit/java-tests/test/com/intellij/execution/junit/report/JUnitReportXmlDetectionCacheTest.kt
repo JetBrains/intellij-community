@@ -17,7 +17,7 @@ class JUnitReportXmlDetectionCacheTest : BasePlatformTestCase() {
 
     try {
       // A cache miss schedules detection for the initial file revision.
-      assertFalse(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+      assertNull(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
       file.awaitDetectionStarted()
       file.changeRevision()
     }
@@ -28,11 +28,11 @@ class JUnitReportXmlDetectionCacheTest : BasePlatformTestCase() {
     waitForDetection()
     assertEquals(1, file.inputStreamAccessCount)
     // The stale result was discarded, so this lookup schedules detection for the current file revision.
-    assertFalse(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+    assertNull(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
 
     waitForDetection()
     // The retried detection result is now cached.
-    assertTrue(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+    assertEquals(true, JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
     assertEquals(2, file.inputStreamAccessCount)
   }
 
@@ -40,21 +40,21 @@ class JUnitReportXmlDetectionCacheTest : BasePlatformTestCase() {
     val file = TrackingLightVirtualFile()
 
     // A cache miss schedules detection for the initial file revision.
-    assertFalse(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+    assertNull(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
     waitForDetection()
     // Repeated lookups reuse the cached result without reopening the file.
-    assertTrue(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
-    assertTrue(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+    assertEquals(true, JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+    assertEquals(true, JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
     assertEquals(1, file.inputStreamAccessCount)
 
     file.changeRevision()
 
     // The revision mismatch discards the cached result and schedules detection again.
-    assertFalse(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+    assertNull(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
     waitForDetection()
     // Repeated lookups reuse the new cached result without reopening the file.
-    assertTrue(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
-    assertTrue(JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+    assertEquals(true, JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
+    assertEquals(true, JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file))
     assertEquals(2, file.inputStreamAccessCount)
   }
 

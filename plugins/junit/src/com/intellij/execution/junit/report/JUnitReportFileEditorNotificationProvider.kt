@@ -21,7 +21,7 @@ class JUnitReportFileEditorNotificationProvider : EditorNotificationProvider, Du
     project: Project,
     file: VirtualFile,
   ): Function<in FileEditor, out JComponent?>? {
-    if (!JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file)) return null
+    if (JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file) != true) return null
     return Function { fileEditor ->
       if (JUnitReportEditorBannerDismissState.isDismissed(fileEditor, file)) null
       else JUnitReportEditorNotificationPanel(project, file, fileEditor)

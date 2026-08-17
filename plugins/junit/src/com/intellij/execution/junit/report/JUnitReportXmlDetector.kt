@@ -22,9 +22,14 @@ import java.util.concurrent.ConcurrentHashMap
  * Checks whether the first element is `testsuite` or `testsuites`.
  */
 object JUnitReportXmlDetector {
+  /**
+   * Identify whether a file looks like a JUnit report file.
+   *
+   * @return `null` detection is pending, `true` it looks like a JUnit report file, `false` otherwise.
+   */
   @VisibleForTesting
-  fun looksLikeJUnitReportFile(project: Project, file: VirtualFile): Boolean =
-    project.service<DetectionCache>().getOrScheduleDetection(file) == true
+  fun looksLikeJUnitReportFile(project: Project, file: VirtualFile): Boolean? =
+    project.service<DetectionCache>().getOrScheduleDetection(file)
 
   private fun detectJUnitReportFile(file: VirtualFile): Boolean {
     if (!file.isValid || file.isDirectory || !file.name.endsWith(".xml", ignoreCase = true)) return false
