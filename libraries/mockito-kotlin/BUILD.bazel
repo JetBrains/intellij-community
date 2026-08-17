@@ -43,6 +43,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.mockito.kotlin.iml",
+        "resources/intellij.libraries.mockito.kotlin.xml",
     ],
     visibility = ["//visibility:public"],
 )

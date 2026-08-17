@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.kodein.di.jvm.iml",
+        "resources/intellij.libraries.kodein.di.jvm.xml",
     ],
     visibility = ["//visibility:public"],
 )
