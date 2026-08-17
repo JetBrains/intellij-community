@@ -52,7 +52,12 @@ public class XExpressionImpl implements XExpression {
 
   @Contract("null -> null; !null -> !null")
   public static XExpressionImpl fromText(@Nullable String text) {
-    return text != null ? new XExpressionImpl(text, null, null, EvaluationMode.EXPRESSION) : null;
+    return fromTextAndLanguage(text, null);
+  }
+
+  @Contract("null, _ -> null; !null, _ -> !null")
+  public static XExpressionImpl fromTextAndLanguage(@Nullable String text, @Nullable Language language) {
+    return text != null ? new XExpressionImpl(text, language, null, EvaluationMode.EXPRESSION) : null;
   }
 
   @Contract("null, _ -> null; !null, _ -> !null")
