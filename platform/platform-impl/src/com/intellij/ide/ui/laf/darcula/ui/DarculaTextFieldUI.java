@@ -3,10 +3,10 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.DrawUtil;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MacUIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
@@ -19,7 +19,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.geom.RoundRectangle2D;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW;
@@ -93,9 +92,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
         return;
       }
 
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                          MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+      DrawUtil.setupRenderingHints(g2);
 
       g2.translate(r.x, r.y);
 

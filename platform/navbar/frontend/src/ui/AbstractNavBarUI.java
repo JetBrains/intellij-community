@@ -2,13 +2,13 @@
 package com.intellij.platform.navbar.frontend.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ui.DrawUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -38,8 +38,7 @@ public abstract class AbstractNavBarUI {
   public static void paintHighlight(@NotNull Graphics2D g, @NotNull Rectangle rectangle, @NotNull Color color) {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+      DrawUtil.setupRenderingHints(g2);
 
       g2.setColor(color);
 

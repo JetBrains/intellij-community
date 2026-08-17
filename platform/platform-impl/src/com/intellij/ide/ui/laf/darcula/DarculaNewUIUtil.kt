@@ -1,17 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula
 
-import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil.drawRoundedComponentRectangle
-import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil.paintComponentBorder
+import com.intellij.ui.DrawUtil
 import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.MacUIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Insets
 import java.awt.Rectangle
-import java.awt.RenderingHints
 import java.awt.geom.Path2D
 import java.awt.geom.RoundRectangle2D
 import kotlin.math.max
@@ -26,7 +23,7 @@ object DarculaNewUIUtil {
     val g2 = g.create() as Graphics2D
 
     try {
-      setupRenderingHints(g2)
+      DrawUtil.setupRenderingHints(g2)
 
       val lw = DarculaUIUtil.LW.get()
 
@@ -56,7 +53,7 @@ object DarculaNewUIUtil {
     val g2 = g.create() as Graphics2D
 
     try {
-      setupRenderingHints(g2)
+      DrawUtil.setupRenderingHints(g2)
 
       g2.color = color
       paintComponentRectangle(g2, rect, arc, thick)
@@ -84,7 +81,7 @@ object DarculaNewUIUtil {
     val g2 = g.create() as Graphics2D
 
     try {
-      setupRenderingHints(g2)
+      DrawUtil.setupRenderingHints(g2)
 
       val border = Path2D.Float(Path2D.WIND_EVEN_ODD)
       // Reduce size a little bit, so inside background is not protruded outside the border near rounded corners
@@ -98,32 +95,11 @@ object DarculaNewUIUtil {
     }
   }
 
-  fun fillRoundedRectangle(g: Graphics, rect: Rectangle, color: Color, arc: Float = DarculaUIUtil.COMPONENT_ARC.float) {
-    if (rect.width <= 0 || rect.height <= 0) {
-      return
-    }
-
-    val g2 = g.create() as Graphics2D
-
-    try {
-      setupRenderingHints(g2)
-
-      val border = Path2D.Float(Path2D.WIND_EVEN_ODD)
-      border.append(RoundRectangle2D.Float(0f, 0f, rect.width.toFloat(), rect.height.toFloat(), arc, arc), false)
-      g2.translate(rect.x, rect.y)
-      g2.color = color
-      g2.fill(border)
-    }
-    finally {
-      g2.dispose()
-    }
-  }
-
   fun drawRoundedRectangle(g: Graphics, rect: Rectangle, color: Color, arc: Float, thick: Float) {
     val g2 = g.create() as Graphics2D
 
     try {
-      setupRenderingHints(g2)
+      DrawUtil.setupRenderingHints(g2)
 
       g2.color = color
       paintRectangleImpl(g2, rect, arc, thick)
@@ -133,10 +109,10 @@ object DarculaNewUIUtil {
     }
   }
 
+  @Deprecated("Use DrawUtil.setupRenderingHints instead")
+  @ApiStatus.ScheduledForRemoval
   fun setupRenderingHints(g: Graphics2D) {
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                        if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+    DrawUtil.setupRenderingHints(g)
   }
 
   private fun paintComponentRectangle(g: Graphics2D, rect: Rectangle, arc: Float, thick: Int) {

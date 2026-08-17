@@ -2,8 +2,8 @@
 package com.intellij.ui.components
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.DrawUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.Badge.ColorType
 import com.intellij.ui.scale.JBUIScale
@@ -97,7 +97,7 @@ class Badge(
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     val g2 = g.create() as Graphics2D
     try {
-      DarculaNewUIUtil.setupRenderingHints(g2)
+      DrawUtil.setupRenderingHints(g2)
       g2.translate(x, y)
 
       val width = iconWidth
@@ -106,7 +106,7 @@ class Badge(
 
       val colorPair = if (enabled) enabledColorPair(colorType) else disabledColorPair()
 
-      DarculaNewUIUtil.fillRoundedRectangle(g2, Rectangle(0, 0, width, height), colorPair.background, arc * 2)
+      DrawUtil.fillRoundedRectangle(g2, Rectangle(0, 0, width, height), colorPair.background, arc * 2)
 
       g2.color = colorPair.foreground
       g2.font = getTextFont()

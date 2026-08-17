@@ -4,12 +4,12 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.DrawUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LafIconLookup;
-import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +26,6 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 import java.beans.PropertyChangeListener;
@@ -130,9 +129,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
                                                   JBUIScale.scale(14), JBUIScale.scale(14),
                                                   JBUIScale.scale(4), JBUIScale.scale(4)), false);
 
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                            MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+        DrawUtil.setupRenderingHints(g2);
         g2.fill(outline);
       }
     }

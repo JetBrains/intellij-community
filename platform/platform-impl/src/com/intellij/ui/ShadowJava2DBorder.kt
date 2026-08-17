@@ -31,7 +31,7 @@ class ShadowJava2DBorder(private val arc: Int, private val background: Color, pr
       val rect = Rectangle(x + insets.left - lw, y + insets.top - lw, width - insets.width + lw * 2, height - insets.height + lw * 2)
 
       if (borderColor == null) {
-        DarculaNewUIUtil.fillRoundedRectangle(g2, rect, background, arc.toFloat())
+        DrawUtil.fillRoundedRectangle(g2, rect, background, arc.toFloat())
       } else {
         DarculaNewUIUtil.fillInsideComponentBorder(g2, rect, background, arc.toFloat())
         DarculaNewUIUtil.drawRoundedComponentRectangle(g2, rect, borderColor, arc.toFloat(), DarculaUIUtil.LW.get())

@@ -4,19 +4,18 @@ package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.rd.paint2DLine
+import com.intellij.ui.DrawUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.MacUIUtil
 import java.awt.Component
 import java.awt.GradientPaint
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Paint
 import java.awt.Rectangle
-import java.awt.RenderingHints
 import java.awt.Shape
 import java.awt.geom.Area
 import java.awt.geom.Path2D
@@ -60,9 +59,7 @@ internal class SegmentedBarPainter {
 
       val g2 = g.create() as Graphics2D
       try {
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                            if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+        DrawUtil.setupRenderingHints(g2)
         g2.translate(r.x, r.y)
         val arc = DarculaUIUtil.BUTTON_ARC.float
         val bw: Float = 0f //if (DarculaButtonUI.isSmallVariant(c)) 0f else DarculaUIUtil.BW.float
@@ -82,9 +79,7 @@ internal class SegmentedBarPainter {
     }
 
   private fun paintComponent(g2: Graphics2D, r: Rectangle, position: String) {
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                        if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+    DrawUtil.setupRenderingHints(g2)
     g2.translate(r.x, r.y)
     val arc = DarculaUIUtil.BUTTON_ARC.float
 
@@ -133,11 +128,7 @@ internal class SegmentedBarPainter {
   fun paintActionBarBorder(component: JComponent, g: Graphics) {
     val g2 = g.create() as Graphics2D
     try {
-
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                          if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
-
+      DrawUtil.setupRenderingHints(g2)
 
       val paint = getGradientPaint(component)
 
@@ -170,10 +161,7 @@ internal class SegmentedBarPainter {
 
   private fun componentBorder(g: Graphics, h: Int, shape: Shape) {
     val g2 = g.create() as Graphics2D
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                        if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
-
+    DrawUtil.setupRenderingHints(g2)
 
     val paint = GradientPaint(bw, bw,
                               JBColor.namedColor(
@@ -195,11 +183,7 @@ internal class SegmentedBarPainter {
   fun paintActionBarBackground(component: JComponent, g: Graphics) {
     val g2 = g.create() as Graphics2D
     try {
-
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                          if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
-
+      DrawUtil.setupRenderingHints(g2)
 
       val arc = DarculaUIUtil.BUTTON_ARC.float
 

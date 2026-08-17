@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.laf.macos;
 
+import com.intellij.ui.DrawUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MacUIUtil;
 
 import javax.swing.ComboBoxEditor;
 import javax.swing.JComboBox;
@@ -15,7 +15,6 @@ import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.geom.Area;
 import java.awt.geom.Path2D;
@@ -41,9 +40,7 @@ public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
       boolean focused = isFocused(c);
       if (!isTableCellEditor(c)) {
         g2.translate(x, y);
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                            MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+        DrawUtil.setupRenderingHints(g2);
 
         Shape clip = g2.getClip();
         Area area = new Area(new Rectangle2D.Double(0, 0, width, height));
