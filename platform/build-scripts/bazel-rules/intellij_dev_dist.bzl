@@ -36,6 +36,14 @@ IntellijProjectModelTreeInfo = provider(
     },
 )
 
+# Not `local`, which is what these actions used to say. Verified against the shipped `JetBrains/9.1.0-jb` binary rather
+# than the documentation: `Spawns.mayBeCached` is `!containsKey("no-cache") && !containsKey("local")`, and
+# `RemoteExecutionService.getRead/WriteCachePolicy` gates **`--disk_cache`** on exactly that - so `local` was throwing
+# away the local disk cache in order to keep gigabytes off the shared remote one. This says only the second thing.
+# `no-sandbox` costs no caching at all and leaves the assembly running exactly as it does today; it is here because the
+# fragment action is not hermetic yet, not because sandboxing would be expensive.
+_UNSANDBOXED_DISK_CACHEABLE = {"no-sandbox": "1", "no-remote-cache": "1"}
+
 def _project_model_tree_impl(ctx):
     tree = ctx.actions.declare_directory(ctx.label.name + ".tree")
     project_files = ctx.files.project_model_files + ctx.files.extra_project_files
@@ -49,7 +57,9 @@ def _project_model_tree_impl(ctx):
         outputs = [tree],
         executable = ctx.executable.materializer,
         arguments = [args],
-        execution_requirements = {"local": "1"},
+        # No execution requirements: this one is hermetic. It reads its manifest and the execroot-relative sources that
+        # manifest names, writes only under its output directory, and consults no environment variable, no home
+        # directory and no network - so it may be sandboxed, and both caches may keep it.
         mnemonic = "IntellijProjectModelTree",
         progress_message = "Materializing the project model tree %s" % ctx.label,
     )
@@ -115,6 +125,11 @@ def _fragment_impl(ctx):
     home = ctx.actions.declare_directory(ctx.label.name + ".home")
     component_manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
     scratch = ctx.actions.declare_directory(ctx.label.name + ".scratch")
+
+    # Which declared inputs the assembly never resolved. It used to be `unused_inputs_list`, pruning the action key
+    # after the fact - which can skip a re-run in one output base but never produce a disk- or remote-cache hit, since
+    # the key is computed over the full declared set before the action runs. Narrowing what is *declared* replaced it.
+    # The file stays as the measurement of how honest a declaration is: declared minus unused is what a fragment used.
     unused_inputs = ctx.actions.declare_file(ctx.label.name + ".unused-inputs")
     outputs = [home, component_manifest, scratch, unused_inputs]
 
@@ -186,8 +201,7 @@ def _fragment_impl(ctx):
         outputs = outputs,
         executable = ctx.executable.assembler,
         arguments = [args],
-        execution_requirements = {"local": "1"},
-        unused_inputs_list = unused_inputs,
+        execution_requirements = _UNSANDBOXED_DISK_CACHEABLE,
         mnemonic = _mnemonic(ctx.attr.fragment_name),
         progress_message = "Assembling %s dev fragment %s" % (ctx.attr.platform_prefix, ctx.label),
     )
