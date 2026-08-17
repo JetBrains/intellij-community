@@ -40,6 +40,8 @@
 - f:getFunctionCall-0d7_KjU():J
 - f:getKeyword-0d7_KjU():J
 - f:getNumber-0d7_KjU():J
+- f:getOperator-0d7_KjU():J
+- f:getPropertyKey-0d7_KjU():J
 - f:getString-0d7_KjU():J
 - f:getType-0d7_KjU():J
 - hashCode():I
@@ -60,6 +62,8 @@
 - f:functionDeclaration(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
 - f:keyword(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
 - f:number(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
+- f:operator(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
+- f:propertyKey(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
 - f:string(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
 - f:type(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
 - f:typeDeclaration(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
@@ -71,6 +75,8 @@
 - sf:FUNCTION_CALL:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
 - sf:KEYWORD:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
 - sf:NUMBER:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
+- sf:OPERATOR:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
+- sf:PROPERTY_KEY:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
 - sf:STRING:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
 - sf:TYPE:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
 - s:getEntries():kotlin.enums.EnumEntries

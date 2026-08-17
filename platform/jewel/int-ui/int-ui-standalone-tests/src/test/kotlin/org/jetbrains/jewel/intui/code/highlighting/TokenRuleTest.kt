@@ -50,6 +50,18 @@ internal class TokenRuleTest {
     }
 
     @Test
+    fun `propertyKey factory colors entire match`() {
+        val rule = TokenRule.propertyKey("\"(?:[^\"\\\\]|\\\\.)*\"(?=\\s*:)")
+        assertEquals(mapOf(0 to TokenType.PROPERTY_KEY), rule.captures)
+    }
+
+    @Test
+    fun `operator factory colors entire match`() {
+        val rule = TokenRule.operator("&&|\\|\\|")
+        assertEquals(mapOf(0 to TokenType.OPERATOR), rule.captures)
+    }
+
+    @Test
     fun `functionCall factory colors group 1`() {
         val rule = TokenRule.functionCall("\\b([A-Za-z_]\\w*)\\s*(?=\\()")
         assertEquals(mapOf(1 to TokenType.FUNCTION_CALL), rule.captures)
@@ -62,8 +74,8 @@ internal class TokenRuleTest {
     }
 
     @Test
-    fun `typeDeclaration factory colors group 1 as keyword and group 2 as builtin`() {
+    fun `typeDeclaration factory colors group 1 as keyword and group 2 as type`() {
         val rule = TokenRule.typeDeclaration("\\b(class)\\s+([A-Za-z_]\\w*)")
-        assertEquals(mapOf(1 to TokenType.KEYWORD, 2 to TokenType.BUILTIN), rule.captures)
+        assertEquals(mapOf(1 to TokenType.KEYWORD, 2 to TokenType.TYPE), rule.captures)
     }
 }

@@ -93,7 +93,7 @@ internal class KotlinGrammarTest {
     fun `class declaration colors keyword and class name separately`() = runTest {
         val result = highlight("class MyClass")
         assertEquals(testColors.keyword, result.spanColorAt(0)) // "class" → keyword
-        assertEquals(testColors.builtin, result.spanColorAt(1)) // "MyClass" → builtin
+        assertEquals(testColors.type, result.spanColorAt(1)) // "MyClass" → type
     }
 
     @Test
@@ -146,9 +146,10 @@ internal class KotlinGrammarTest {
     }
 
     @Test
-    fun `built-in types are colored as type`() = runTest {
+    fun `built-in types are colored as builtin`() = runTest {
+        // support.type is IntelliJ's predefined-symbol key, not its class-reference key
         for (type in listOf("String", "Int", "Long", "Boolean", "List", "Map", "Unit", "Any")) {
-            assertEquals(testColors.type, highlight(type).colorAt(0), "'$type' should be colored as type")
+            assertEquals(testColors.builtin, highlight(type).colorAt(0), "'$type' should be a builtin")
         }
     }
 
@@ -199,6 +200,6 @@ internal class KotlinGrammarTest {
 
         assertEquals(testColors.keyword, spanStyles.spanColorAt(0))
         assertEquals(testColors.keyword, spanStyles.spanColorAt(1))
-        assertEquals(testColors.builtin, spanStyles.spanColorAt(2))
+        assertEquals(testColors.type, spanStyles.spanColorAt(2))
     }
 }

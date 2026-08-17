@@ -137,13 +137,15 @@ package org.jetbrains.jewel.intui.standalone.code.highlighting {
   }
 
   @SuppressCompatibility @androidx.compose.runtime.Immutable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class SyntaxHighlightColors {
-    ctor @KotlinOnly public SyntaxHighlightColors(androidx.compose.ui.graphics.Color keyword, androidx.compose.ui.graphics.Color type, androidx.compose.ui.graphics.Color constant, androidx.compose.ui.graphics.Color functionCall, androidx.compose.ui.graphics.Color string, androidx.compose.ui.graphics.Color comment, androidx.compose.ui.graphics.Color number, androidx.compose.ui.graphics.Color builtin);
+    ctor @KotlinOnly public SyntaxHighlightColors(androidx.compose.ui.graphics.Color keyword, androidx.compose.ui.graphics.Color type, androidx.compose.ui.graphics.Color constant, androidx.compose.ui.graphics.Color functionCall, androidx.compose.ui.graphics.Color string, androidx.compose.ui.graphics.Color comment, androidx.compose.ui.graphics.Color number, androidx.compose.ui.graphics.Color builtin, androidx.compose.ui.graphics.Color propertyKey, androidx.compose.ui.graphics.Color operator);
     property public androidx.compose.ui.graphics.Color builtin;
     property public androidx.compose.ui.graphics.Color comment;
     property public androidx.compose.ui.graphics.Color constant;
     property public androidx.compose.ui.graphics.Color functionCall;
     property public androidx.compose.ui.graphics.Color keyword;
     property public androidx.compose.ui.graphics.Color number;
+    property public androidx.compose.ui.graphics.Color operator;
+    property public androidx.compose.ui.graphics.Color propertyKey;
     property public androidx.compose.ui.graphics.Color string;
     property public androidx.compose.ui.graphics.Color type;
     field public static final org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors.Companion Companion;
@@ -171,6 +173,8 @@ package org.jetbrains.jewel.intui.standalone.code.highlighting {
     method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule functionDeclaration(@org.intellij.lang.annotations.Language("RegExp") String pattern);
     method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule keyword(@org.intellij.lang.annotations.Language("RegExp") String pattern);
     method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule number(@org.intellij.lang.annotations.Language("RegExp") String pattern);
+    method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule operator(@org.intellij.lang.annotations.Language("RegExp") String pattern);
+    method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule propertyKey(@org.intellij.lang.annotations.Language("RegExp") String pattern);
     method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule string(@org.intellij.lang.annotations.Language("RegExp") String pattern);
     method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule type(@org.intellij.lang.annotations.Language("RegExp") String pattern);
     method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule typeDeclaration(@org.intellij.lang.annotations.Language("RegExp") String pattern);
@@ -183,6 +187,8 @@ package org.jetbrains.jewel.intui.standalone.code.highlighting {
     enum_constant public static final org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType FUNCTION_CALL;
     enum_constant public static final org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType KEYWORD;
     enum_constant public static final org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType NUMBER;
+    enum_constant public static final org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType OPERATOR;
+    enum_constant public static final org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType PROPERTY_KEY;
     enum_constant public static final org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType STRING;
     enum_constant public static final org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType TYPE;
   }

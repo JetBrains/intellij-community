@@ -20,16 +20,19 @@ import org.jetbrains.jewel.foundation.ExperimentalJewelApi
  * A single rule can produce multiple spans — for example, a rule that matches `fun myFunc` can color `fun` as
  * [TokenType.KEYWORD] (group 1) and `myFunc` as [TokenType.FUNCTION_CALL] (group 2) in one pass.
  *
- * Patterns use Java's `java.util.regex` engine, which supports lookahead (`(?=...)`) and fixed-width lookbehind
- * (`(?<=...)`, `(?<!...)`). This covers the vast majority of tmLanguage-style patterns.
+ * Patterns use Java's `java.util.regex` engine, which covers the vast majority of tmLanguage-style patterns, including
+ * variable-length lookbehind.
  *
  * **Known limitations compared to PCRE/Oniguruma** (used by TextMate grammars):
  * - **POSIX character classes** (`[[:alpha:]]`, `[[:digit:]]`, etc.) are not supported — replace with their Unicode
  *   equivalents (`[a-zA-Z]`, `[0-9]`, etc.).
- * - **Variable-length lookbehind** is not supported — only fixed-width lookbehind (e.g., `(?<=fun )` but not
- *   `(?<=fun\s+)`). Rewrite as a capturing-group rule instead.
+ * - **Open-ended repetition** (`\d{,2}`) raises "Illegal repetition" — write `\d{0,2}`.
+ * - Under `(?x)`, `#` and spaces inside a character class need escaping (`[\#0\-\ +']`); Java strips them.
  * - **Named backreferences** and **conditional patterns** (`(?(condition)yes|no)`) are not supported.
  * - **Subroutine calls** (`\g<name>`) and **recursive patterns** are not supported.
+ *
+ * See `docs/standalone-code-highlighting.md` for the full list and for what Java accepts that you might expect it not
+ * to.
  *
  * @param pattern The regex pattern string used to match against the source code.
  * @param captures A map from capture group index to [TokenType]. Groups not listed here produce no colored span.
@@ -73,6 +76,25 @@ public class TokenRule(@Language("RegExp") public val pattern: String, captures:
             TokenRule(pattern, mapOf(0 to TokenType.BUILTIN))
 
         /**
+         * Colors the entire match as [TokenType.PROPERTY_KEY].
+         *
+         * Use a zero-width lookahead for the trailing separator so it stays outside the match, e.g.
+         * `"(?:[^"\\]|\\.)*"(?=\s*:)` colors a JSON key without coloring the colon.
+         */
+        public fun propertyKey(@Language("RegExp") pattern: String): TokenRule =
+            TokenRule(pattern, mapOf(0 to TokenType.PROPERTY_KEY))
+
+        /**
+         * Colors the entire match as [TokenType.OPERATOR].
+         *
+         * This is the `keyword.operator.*` family, which IntelliJ maps to its own `DEFAULT_OPERATION_SIGN` key rather
+         * than to keywords. Neither default palette gives that key a color, so operators are unstyled unless a theme
+         * defines one.
+         */
+        public fun operator(@Language("RegExp") pattern: String): TokenRule =
+            TokenRule(pattern, mapOf(0 to TokenType.OPERATOR))
+
+        /**
          * Colors **group 1** of the match as [TokenType.FUNCTION_CALL].
          *
          * Use a capturing group to isolate the function name, excluding any surrounding context such as trailing
@@ -91,12 +113,12 @@ public class TokenRule(@Language("RegExp") public val pattern: String, captures:
             TokenRule(pattern, mapOf(1 to TokenType.KEYWORD, 2 to TokenType.FUNCTION_CALL))
 
         /**
-         * Colors **group 1** as [TokenType.KEYWORD] and **group 2** as [TokenType.BUILTIN] in a single match.
+         * Colors **group 1** as [TokenType.KEYWORD] and **group 2** as [TokenType.TYPE] in a single match.
          *
          * Use this for type declaration keywords followed by the type name, e.g. `class MyClass` or `interface Foo`.
          * Group 1 should capture the keyword, group 2 the type name.
          */
         public fun typeDeclaration(@Language("RegExp") pattern: String): TokenRule =
-            TokenRule(pattern, mapOf(1 to TokenType.KEYWORD, 2 to TokenType.BUILTIN))
+            TokenRule(pattern, mapOf(1 to TokenType.KEYWORD, 2 to TokenType.TYPE))
     }
 }

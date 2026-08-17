@@ -35,7 +35,19 @@ plugins/textmate/lib/bundles/java/syntaxes/java.tmLanguage.json
 
 The fields you need: `match` (single-line pattern), `begin`/`end` (block patterns like strings and comments), and
 `captures` (group-to-scope mappings). Look for scopes that map to `TokenType` values: `keyword.*`, `string.*`,
-`comment.*`, `storage.type`/`support.type`, `constant.*`, `constant.numeric`, and `entity.name.function`.
+`comment.*`, `storage.type`/`support.type`, `support.type.property-name` (data-language keys), `constant.*`,
+`constant.numeric`, and `entity.name.function`.
+
+Scopes with no `TokenType` equivalent are meant to be skipped: `meta.*` (structural context), `punctuation.*`, and
+`invalid.*` (error highlighting, which this highlighter deliberately doesn't do).
+
+When a scope could plausibly map to more than one `TokenType`, check what the TextMate plugin itself does before
+deciding. `plugins/textmate/src/.../highlighting/TextMateDefaultColorsProvider.java` maps each scope prefix to a
+`TextAttributesKey`; `platform/core-api/src/com/intellij/openapi/editor/DefaultLanguageHighlighterColors.java` gives
+that key its fallback; and `platform/platform-resources/src/DefaultColorSchemesManager.xml` holds the values for both
+Default and Darcula. Two mappings there are easy to get wrong from intuition: `storage.type` is a **keyword**, not a
+type, so C's `int` and `size_t` are keywords; and `keyword.operator` is `DEFAULT_OPERATION_SIGN`, a key of its own that
+neither default scheme colors, which is what `TokenType.OPERATOR` exists for.
 
 If the IntelliJ bundle doesn't cover your language, check the
 [shikijs/textmate-grammars-themes](https://github.com/shikijs/textmate-grammars-themes) repo or the
@@ -43,6 +55,19 @@ If the IntelliJ bundle doesn't cover your language, check the
 
 tmLanguage grammars use [Oniguruma](https://macromates.com/manual/en/regular_expressions) RegEx library. See [Regex engine limitations](#regex-engine-limitations) for what breaks
 when porting to Java's regex engine.
+
+### Watch for patterns that rely on the grammar tree
+
+A tmLanguage grammar is a set of regexes **plus a tree** deciding which of them are eligible where. We only have
+the regexes: our rule list is flat and every rule is tried at every position. So a pattern that was safe upstream
+because it could only be reached in one context may misfire once it's tried everywhere.
+
+For example, CSS scopes `#tag-names` under `#selector` and `#property-values` under `#rule-list`, so they can
+never both apply. Flattened, the ~20 words that are in both lists collide, and `display: table` colors `table` as
+an HTML tag.
+
+When a pattern depends on context, re-encode that context in the pattern, or leave the rule out. Either way, say
+which you did in the file header, and mark any lookaround you add as yours rather than the bundle's.
 
 Add a comment at the top of the file pointing to the source:
 
@@ -110,18 +135,30 @@ internal object BuiltInLanguageGrammars {
 }
 ```
 
-When opening the PR, make sure to test all possible keywords for a language. Feel free to mix and match regexes,
-sometimes TextMate won't highlight a keyword that GitHub does, and vice versa. Just make sure the highlighting is being
-properly applied. Here's a very simple template for testing:
+When opening the PR, run a sample of real code through the grammar and check every `TokenType` the language can
+produce. Reading the patterns is not enough — the flat-model misfires described above only show up in the output.
+Here's a very simple template for testing:
 
 ```
-Keywords, types, constants:
+Keywords (control flow, declarations, modifiers):
+<add examples>
+
+Types:
+<add examples>
+
+Constants and language literals:
+<add examples>
+
+Builtins (support.type and support.function: stdlib types, well-known globals):
 <add examples>
 
 Method declarations + calls:
 <add examples>
 
-Control flow:
+Property keys (JSON/YAML/TOML keys, CSS property names, HTML attributes):
+<add examples>
+
+Operators (`+`, `==`, `&&`, `|`, and word operators like `instanceof`, `typeof`, `in`):
 <add examples>
 
 Comments:
@@ -133,6 +170,9 @@ Numbers:
 Strings:
 <add examples>
 ```
+
+It goes without saying but do leave out the sections a language doesn't have. Most have no property keys, and Kotlin has
+no operator rules, for instance.
 
 #### Registering as an additional language or overriding the LanguageGrammar for a built-in language
 
@@ -221,9 +261,11 @@ pattern is compiled once when the `TokenRule` is created.
 | `constant(pattern)` | group 0 → CONSTANT | Entire match colored as constant |
 | `number(pattern)` | group 0 → NUMBER | Entire match colored as number |
 | `builtin(pattern)` | group 0 → BUILTIN | Entire match colored as builtin |
+| `propertyKey(pattern)` | group 0 → PROPERTY_KEY | Entire match colored as a data-language key (JSON/YAML/TOML) |
+| `operator(pattern)` | group 0 → OPERATOR | Entire match colored as an operator (`+`, `==`, `&&`, `\|`) |
 | `functionCall(pattern)` | group 1 → FUNCTION_CALL | Group 1 must isolate the function name |
 | `functionDeclaration(pattern)` | group 1 → KEYWORD, group 2 → FUNCTION_CALL | Group 1 = keyword, group 2 = name |
-| `typeDeclaration(pattern)` | group 1 → KEYWORD, group 2 → BUILTIN | Group 1 = keyword, group 2 = type name |
+| `typeDeclaration(pattern)` | group 1 → KEYWORD, group 2 → TYPE | Group 1 = keyword, group 2 = type name |
 
 If the regex has fewer groups than the factory expects, the missing groups are silently skipped and no span is emitted.
 
@@ -238,14 +280,26 @@ TokenRule(
 
 ## Regex engine limitations
 
-Patterns run through Java's `java.util.regex`. Most tmLanguage patterns work, but a few `PCRE`/`Oniguruma` features
-don't exist in Java:
+Patterns run through Java's `java.util.regex`. Most tmLanguage patterns work as written. These do not:
 
 - **POSIX character classes** (`[[:alpha:]]`, etc.) -> use `[a-zA-Z]` etc. instead.
-- **Variable-length lookbehind** -> only fixed-width works (`(?<=fun )` is fine, `(?<=fun\s+)` is not). Rewrite as
-  a capturing-group rule.
-- **Named backreferences**, **conditional patterns**, **subroutine calls**, and **recursive patterns** -> not
-  supported.
+- **`\p{Surrogate}`** -> use `\p{Cs}`.
+- **Multi-codepoint escapes** (`\x{FEFF FFFE FFFF}`) -> split into one escape each.
+- **Open-ended repetition** (`\d{,2}`) -> Oniguruma reads that as `{0,2}`; Java raises "Illegal repetition".
+  Write the zero.
+- **`#` and spaces inside a character class under `(?x)`** -> Java strips both, Oniguruma does not. The C
+  bundle's printf rule contains `[#0\- +']`, where the `#` opens a comment that swallows the rest of the line
+  and leaves the class unclosed. Escape them: `[\#0\-\ +']`.
+- **Named backreferences**, **conditional patterns**, **subroutine calls** and **recursive patterns** -> not
+  supported. Plain numeric backreferences (`\2`) are fine, which is what lets a heredoc rule match its own
+  closing delimiter.
+- **`\G`** -> anchors to the search start, so it pins a rule to the cursor and breaks earliest-match-wins. Drop
+  it and re-encode whatever context it stood for.
+
+Java is more permissive than the usual rule of thumb in several places, so test before rewriting a pattern. It
+accepts variable-length lookbehind, including `+` and `*` (`(?<=fun\s+)x` both compiles and matches), and
+alternations of differing length inside one (`(?<=^|[;&]|then )`). It also accepts `(?-mix:...)`, possessive
+quantifiers, atomic groups, `\p{Cntrl}`, `\x{85}` and nested class unions like `[\x{85}[^abc]]`.
 
 `additionalGrammars` is searched before the built-in list, so you can also use it to override a built-in grammar for
 an existing language.

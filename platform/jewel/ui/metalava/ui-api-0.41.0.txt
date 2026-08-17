@@ -3708,7 +3708,7 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Add;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey AddJdk;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Add_20x20;
-    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Alpha;
+    field @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.ScheduledForRemoval public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Alpha;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ArrowDown;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ArrowDownSmall;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ArrowLeft;
@@ -3723,7 +3723,7 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey BalloonInformation;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey BalloonWarning;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey BalloonWarning12;
-    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Beta;
+    field @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.ScheduledForRemoval public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Beta;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ButtonDropTriangle;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ChevronDown;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ChevronDownLargeWhite;
@@ -3809,7 +3809,7 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ModifiedSelected;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoreTabs;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Mouse;
-    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey New_badge;
+    field @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.ScheduledForRemoval public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey New_badge;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Note;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey NotificationError;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey NotificationInfo;
@@ -3854,7 +3854,7 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Tree;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey TreeHovered;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey TreeSelected;
-    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey TrialBadge;
+    field @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.ScheduledForRemoval public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey TrialBadge;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey User;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Vcs;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Warning;

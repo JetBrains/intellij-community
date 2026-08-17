@@ -21,6 +21,8 @@ internal val testColors =
         comment = Color.Gray,
         number = Color.Magenta,
         builtin = Color.White,
+        propertyKey = Color.Black,
+        operator = Color.DarkGray,
     )
 
 /** All [SpanStyle]s covering character offset [index], in [spanStyles] order. */
