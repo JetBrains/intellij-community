@@ -1018,7 +1018,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     return createMarker(string, start, end);
   }
 
-  public void testRangeMarkerInstancesAreWeaklyRetainedByDocument() {
+  public void testRangeMarkerInstancesAreNotRetainedByDocument() {
     Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
     Set<RangeMarker> markers = new HashSet<>();
     for (int i = 0; i < 10; i++) {
@@ -1026,6 +1026,13 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }
 
     LeakHunter.checkLeak(document, RangeMarker.class, o -> markers.contains(o));
+  }
+
+  public void testRangeMarkerDoesNotRetainDocumentIfNotNeeded() {
+    VirtualFile virtualFile = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "   ");
+    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    RangeMarker marker = document.createRangeMarker(0, 1);
+    LeakHunter.checkLeak(marker, Document.class, _ -> true);
   }
 
   public void testRangeMarkersAreGarbageCollectableAndWhenTheyHaveTheyLeaveNoTracesInDocumentEvenTheirIds() {
