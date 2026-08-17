@@ -387,6 +387,27 @@ abstract class PyCodeInsightTestCase {
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
   }
 
+  /**
+   * Configures [fileContent] as the test file and puts the caret where its `CARET` marker points.
+   *
+   * The marker is a comment line below the code line, for example `#     └ CARET`. Use `#\ CARET` for column 0.
+   * The marker line is removed, so the file holds the code alone. Call this on the EDT.
+   */
+  protected fun configureWithCaret(@Language("Python") fileContent: String): PsiFile {
+    val text = fileContent.trimIndent()
+    val markers = parseAssertions(text).filter { it.type == PyTestAssertionType.CARET.name }
+    val marker = markers.singleOrNull() ?: fail("Expected one CARET marker, found ${markers.size}")
+    if (marker.isInlineAssertion()) fail("The CARET marker must be on its own comment line below the code")
+
+    val markerStart = text.lastIndexOf(NEWLINE, marker.assertionOffsetStart - 1) + 1
+    val markerLineEnd = text.indexOf(NEWLINE, marker.assertionOffsetEnd)
+    // The marker line comes after the code line, so its removal does not move the caret offset.
+    val code = if (markerLineEnd < 0) text.substring(0, markerStart - 1) else text.removeRange(markerStart, markerLineEnd + 1)
+    val file = myFixture.configureByText(myTestCaseOptions.testFileName, code)
+    myFixture.editor.caretModel.moveToOffset(marker.codeOffsetStart)
+    return file
+  }
+
   protected fun test(@Language("Python") fileContent: String, vararg otherFiles: Pair<String, String>) {
     // using the shared `myFixture.projectDisposable` would accumulate flag modifications
     // across all tests and dispose them only at @AfterAll, which can leave them non-nested and
@@ -655,6 +676,7 @@ abstract class PyCodeInsightTestCase {
       PyTestAssertionType.EXPECTED_VARIANCE -> assertExpectedVariance(parent)
       PyTestAssertionType.INFERRED_VARIANCE -> assertInferredVariance(parent)
       PyTestAssertionType.ISSUES -> expectedAssertion.content
+      PyTestAssertionType.CARET -> expectedAssertion.content
       else -> "Unknown assertion type: ${expectedAssertion.type}"
     }
 

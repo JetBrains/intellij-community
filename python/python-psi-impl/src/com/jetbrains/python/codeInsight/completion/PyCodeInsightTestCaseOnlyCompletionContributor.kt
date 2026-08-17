@@ -33,6 +33,9 @@ enum class PyTestAssertionType {
   EXPECTED_VARIANCE,
   INFERRED_VARIANCE,
   ISSUES,
+
+  /** Puts the caret at the marked position, see `PyCodeInsightTestCase.configureWithCaret`. It asserts nothing. */
+  CARET,
   ;
 
   companion object {
