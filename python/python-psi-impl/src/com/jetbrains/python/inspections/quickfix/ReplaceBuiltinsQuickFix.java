@@ -34,7 +34,7 @@ public class ReplaceBuiltinsQuickFix extends PsiUpdateModCommandQuickFix {
           if ("__builtin__".equals(importReference.getName())) {
             importReference.replace(elementGenerator.createExpressionFromText(LanguageLevel.getDefault(), "builtins"));
           }
-          if ("builtins".equals(importReference.getName())) {
+          else if ("builtins".equals(importReference.getName())) {
             importReference.replace(elementGenerator.createExpressionFromText(LanguageLevel.getDefault(), "__builtin__"));
           }
         }
