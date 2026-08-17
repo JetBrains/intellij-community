@@ -22,9 +22,9 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="Pythonid">
-    <evoTreeElementProvider id="HatchEvoProvider"
+    <evoEnvironmentProvider id="HatchEvoProvider"
                             order="after CondaEvoProvider"
-                            implementation="com.intellij.python.hatch.sdk.evolution.HatchSelectSdkProvider"/>
+                            implementation="com.intellij.python.hatch.sdk.evolution.HatchEvoEnvironmentProvider"/>
 
     <pySdkProvider implementation="com.intellij.python.hatch.impl.sdk.HatchSdkProvider"/>
     <pythonFlavorProvider implementation="com.intellij.python.hatch.impl.sdk.HatchSdkFlavorProvider"/>

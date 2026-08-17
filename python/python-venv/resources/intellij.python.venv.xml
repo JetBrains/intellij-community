@@ -21,6 +21,6 @@
 
   <extensions defaultExtensionNs="Pythonid">
     <pythonSdkFlavor implementation="com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor"/>
-    <evoTreeElementProvider implementation="com.intellij.python.venv.evolution.VenvEvoSelectSdkProvider"/>
+    <evoEnvironmentProvider implementation="com.intellij.python.venv.evolution.VenvEvoEnvironmentProvider"/>
   </extensions>
 </idea-plugin>

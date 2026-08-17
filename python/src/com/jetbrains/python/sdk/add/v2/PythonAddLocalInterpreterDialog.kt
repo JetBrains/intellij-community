@@ -26,7 +26,11 @@ import javax.swing.JComponent
 /**
  * @see PythonAddLocalInterpreterPresenter
  */
-internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: PythonAddLocalInterpreterPresenter) : DialogWrapper(dialogPresenter.moduleOrProject.project) {
+internal class PythonAddLocalInterpreterDialog(
+  private val dialogPresenter: PythonAddLocalInterpreterPresenter,
+  /** Environment manager to preselect (e.g. when opened from a specific tool's "add new environment" row); `null` keeps the dialog default. */
+  private val preselectManager: PythonSupportedEnvironmentManagers? = null,
+) : DialogWrapper(dialogPresenter.moduleOrProject.project) {
 
   private lateinit var mainPanel: PythonAddCustomInterpreter<PathHolder.Eel>
   private lateinit var model: PythonLocalAddInterpreterModel<PathHolder.Eel>
@@ -74,6 +78,14 @@ internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: Pyth
       supervisorScope {
         model.initialize(this@supervisorScope)
         mainPanel.onShown(this@supervisorScope)
+        // Preselect the requested manager last, so it wins over any restored last-used selection.
+        preselectManager?.let {
+          model.navigator.navigateTo(
+            newMode = PythonInterpreterSelectionMode.CUSTOM,
+            newMethod = PythonInterpreterSelectionMethod.CREATE_NEW,
+            newManager = it,
+          )
+        }
       }
     }
 

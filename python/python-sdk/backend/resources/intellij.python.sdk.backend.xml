@@ -49,8 +49,8 @@
     <extensionPoint qualifiedName="Pythonid.pySdkProvider"
                     interface="com.jetbrains.python.sdk.PySdkProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.evoTreeElementProvider"
-                    interface="com.intellij.python.sdk.backend.evolution.EvoSelectSdkProvider"
+    <extensionPoint qualifiedName="Pythonid.evoEnvironmentProvider"
+                    interface="com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -58,7 +58,9 @@
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.WinPythonSdkFlavor"/>
-    <evoTreeElementProvider implementation="com.intellij.python.sdk.backend.evolution.AutoconfigEvoSelectSdkProvider" order="last"/>
+    <evoEnvironmentProvider id="AutoconfigEvoProvider"
+                            implementation="com.intellij.python.sdk.backend.evolution.AutoconfigEvoEnvironmentProvider"
+                            order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -74,7 +76,4 @@
                  description="Timeout (ms) for reading a Python interpreter's activation environment (e.g. conda activate). Increase it if slow conda activation times out and the launched process is missing environment variables."/>
   </extensions>
 
-  <extensions defaultExtensionNs="com.intellij.platform">
-    <rpc.backend.remoteApiProvider implementation="com.intellij.python.sdk.backend.evolution.PyEvoSdkApiProvider"/>
-  </extensions>
 </idea-plugin>

@@ -58,8 +58,10 @@
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.macro"/>
     <module name="intellij.platform.ml"/>
+    <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.remote.core"/>
+    <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.structureView"/>
@@ -1033,24 +1035,28 @@
 
   </extensionPoints>
 
+  <extensions defaultExtensionNs="com.intellij.platform">
+    <rpc.backend.remoteApiProvider implementation="com.jetbrains.python.sdk.evolution.PyEvoSdkApiProvider"/>
+  </extensions>
+
   <extensions defaultExtensionNs="Pythonid">
     <pyRunToolProvider implementation="com.jetbrains.python.sdk.uv.run.UvRunToolProvider"/>
     <pythonDebugBackendRunner implementation="com.jetbrains.python.debugger.PydevdDebugBackendRunner"/>
     <pyRunToolProvider implementation="com.jetbrains.python.hatch.run.HatchRunToolProvider"/>
 
-    <evoTreeElementProvider id="UvEvoProvider"
+    <evoEnvironmentProvider id="UvEvoProvider"
                             order="first"
-                            implementation="com.jetbrains.python.uv.sdk.evolution.UvSelectSdkProvider"/>
+                            implementation="com.jetbrains.python.uv.sdk.evolution.UvEvoEnvironmentProvider"/>
 
-    <evoTreeElementProvider id="PoetryEvoProvider"
-                            implementation="com.jetbrains.python.poetry.sdk.evolution.PoetrySelectSdkProvider"/>
+    <evoEnvironmentProvider id="PoetryEvoProvider"
+                            implementation="com.jetbrains.python.poetry.sdk.evolution.PoetryEvoEnvironmentProvider"/>
 
-    <evoTreeElementProvider id="CondaEvoProvider"
-                            implementation="com.jetbrains.python.conda.sdk.evolution.CondaSelectSdkProvider"/>
+    <evoEnvironmentProvider id="CondaEvoProvider"
+                            implementation="com.jetbrains.python.conda.sdk.evolution.CondaEvoEnvironmentProvider"/>
 
-    <evoTreeElementProvider id="AdvancedEvoProvider"
+    <evoEnvironmentProvider id="AdvancedEvoProvider"
                             order="before AutoconfigEvoProvider,last"
-                            implementation="com.jetbrains.python.sdk.evolution.AdvancedSelectSdkProvider"/>
+                            implementation="com.jetbrains.python.sdk.evolution.AdvancedEvoEnvironmentProvider"/>
 
     <pyReferenceCustomTargetChecker implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureTargetChecker"/>
 

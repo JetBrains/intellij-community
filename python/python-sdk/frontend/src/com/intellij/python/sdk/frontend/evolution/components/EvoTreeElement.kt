@@ -7,11 +7,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsActions.ActionDescription
+import com.intellij.openapi.application.EDT
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import javax.swing.Icon
@@ -46,6 +48,15 @@ sealed class EvoTreeElement(
 
 class EvoTreeLeafElement(val action: AnAction) : EvoTreeElement(action.templatePresentation)
 
+/**
+ * Implemented by a leaf [AnAction] whose secondary detail (e.g. the interpreter version) is resolved lazily when
+ * its row is focused, so the popup never probes every environment up front. The popup invokes [resolveOnFocus]
+ * on selection change; the action updates its own presentation and calls [onResolved] (on EDT) to repaint.
+ */
+interface EvoLazyDetail {
+  fun resolveOnFocus(onResolved: () -> Unit)
+}
+
 sealed class EvoTreeNodeElement(
   text: String,
   icon: Icon,
@@ -55,6 +66,9 @@ sealed class EvoTreeNodeElement(
   init {
     presentation.icon = icon
   }
+
+  /** Whether this node has any leaf to show — a guard against opening an empty submenu (which crashes Swing layout). */
+  fun hasContent(): Boolean = sections.any { it.elements.isNotEmpty() }
 }
 
 class EvoTreeStaticNodeElement(
@@ -67,11 +81,18 @@ class EvoTreeStaticNodeElement(
   }
 }
 
+/** Result of a lazy node's [EvoTreeLazyNodeElement.loader]: its sections plus whether the backend measured it slow. */
+class EvoLoadedNode(val sections: List<EvoTreeSection>, val refreshable: Boolean)
+
 class EvoTreeLazyNodeElement(
   text: String,
   icon: Icon,
-  val loader: suspend () -> List<EvoTreeSection>,
+  val loader: suspend (forceRefresh: Boolean) -> EvoLoadedNode,
 ) : EvoTreeNodeElement(text, icon) {
+  /** Set from the last load: true once the backend measured this tool as slow, so it shows an inline reload icon. */
+  var refreshable: Boolean = false
+    private set
+
   init {
     presentation.isEnabled = false
   }
@@ -90,28 +111,46 @@ class EvoTreeLazyNodeElement(
     listeners.forEach { it.onModelChanged() }
   }
 
-  override fun load(project: Project, scope: CoroutineScope, listeners: List<ListPopupStep.ListPopupModelListener>) {
+  override fun load(project: Project, scope: CoroutineScope, listeners: List<ListPopupStep.ListPopupModelListener>): Unit =
+    load(project, scope, listeners, forceRefresh = false)
+
+  /** Reloads bypassing any backend cache (the tool's reload icon), so a long-cached tool (conda) re-scans. */
+  fun reload(project: Project, scope: CoroutineScope, listeners: List<ListPopupStep.ListPopupModelListener>): Unit =
+    load(project, scope, listeners, forceRefresh = true)
+
+  private fun load(project: Project, scope: CoroutineScope, listeners: List<ListPopupStep.ListPopupModelListener>, forceRefresh: Boolean) {
     scope.launch(Dispatchers.IO) {
       loadMutex.withLock {
-        updateState(State.LOADING, listeners)
-        sections.clear()
+        // The [sections] list backs the popup's Swing model (via EvoActionPopupStep.getValues) and updateState fires
+        // ListPopupModelListener.onModelChanged. Both must run on the EDT — mutating the model off-EDT corrupts the
+        // list UI (transient duplicated rows, wrong size, AIOOBE in WideSelectionListUI). Only the loader runs on IO.
+        withContext(Dispatchers.EDT) { updateState(State.LOADING, listeners) }
         try {
-          val elements = withBackgroundProgress(project, PySdkFrontendBundle.message("evolution.progress.title.loading", presentation.text), true) {
-            loader.invoke()
+          val loaded = withBackgroundProgress(project, PySdkFrontendBundle.message("evolution.progress.title.loading", presentation.text), true) {
+            loader.invoke(forceRefresh)
           }
-          sections.addAll(elements)
-          presentation.isEnabled = true
-          updateState(State.DONE, listeners)
+          withContext(Dispatchers.EDT) {
+            refreshable = loaded.refreshable
+            // Swap in the new data only once it's ready, so an open submenu never flashes empty during a reload.
+            sections.clear()
+            sections.addAll(loaded.sections)
+            presentation.isEnabled = true
+            updateState(State.DONE, listeners)
+          }
         }
         catch (warning: EvoWarningException) {
-          presentation.isEnabled = false
-          presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, warning.message)
-          updateState(State.NOT_AVAILABLE, listeners)
+          withContext(Dispatchers.EDT) {
+            presentation.isEnabled = false
+            presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, warning.message)
+            updateState(State.NOT_AVAILABLE, listeners)
+          }
         }
         catch (error: Exception) {
-          presentation.isEnabled = false
-          presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, error.message)
-          updateState(State.ERROR, listeners)
+          withContext(Dispatchers.EDT) {
+            presentation.isEnabled = false
+            presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, error.message)
+            updateState(State.ERROR, listeners)
+          }
         }
       }
     }

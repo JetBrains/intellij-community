@@ -46,45 +46,43 @@ open class EvoActionPopupStep(
     listeners.add(listener)
   }
 
+  /** The chosen leaf's action, queued to run once the popup has closed (see [getFinalRunnable]); null for a node. */
+  private var finalRunnable: Runnable? = null
+
   override fun onChosen(
     selectedValue: EvoTreeItem,
     finalChoice: Boolean
   ): PopupStep<*>? {
+    finalRunnable = null
     if (!node.isEnabled) return PopupStep.FINAL_CHOICE
 
-    val step = when (val element = selectedValue.element) {
-      is EvoTreeNodeElement -> {
-        when {
-          element.isEnabled -> {
-            EvoActionPopupStep(
-              null, //element.presentation.text,
-              element,
-              dataContext,
-              scope
-            )
-          }
-          else -> null
-          //  finalChoice == false {
-          //  EvoActionPopupStep(
-          //    "Settings of ${element.presentation.text}",
-          //    element,
-          //    dataContext,
-          //    scope
-          //  )
-          //}
-        }
-      }
+    return when (val element = selectedValue.element) {
+      // Only open a submenu for a loaded, non-empty node — an empty popup crashes Swing layout (AIOOBE 0).
+      is EvoTreeNodeElement ->
+        if (element.isEnabled && element.hasContent()) EvoActionPopupStep(null, element, dataContext, scope) else null
       is EvoTreeLeafElement -> {
-        performActionItem(element, null)
+        // Run the action only after the whole popup closes (via getFinalRunnable), so a tool window or dialog
+        // it opens never appears behind a still-visible popup. FINAL_CHOICE is null; see EvoTreePopup.handleNextStep.
+        finalRunnable = Runnable { performActionItem(element, null) }
         PopupStep.FINAL_CHOICE
       }
     }
-    val result = step
-
-    return result
   }
 
-  override fun getTooltipTextFor(value: EvoTreeItem): @NlsContexts.Tooltip String? = value.tooltip
+  /** True when the last [onChosen] chose a leaf and queued its action — so the popup should close (and then run it). */
+  fun hasPendingFinalAction(): Boolean = finalRunnable != null
+
+  /** True if [item] is a refreshable tool node (shows an inline reload icon). */
+  fun isReloadable(item: EvoTreeItem?): Boolean = (item?.element as? EvoTreeLazyNodeElement)?.refreshable == true
+
+  /** Force-reloads (re-scans, bypassing the backend cache) just the tool of [item] — its reload icon was clicked. */
+  fun reloadItem(item: EvoTreeItem) {
+    val node = item.element as? EvoTreeLazyNodeElement ?: return
+    val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return
+    node.reload(project, scope, listeners)
+  }
+
+  override fun getTooltipTextFor(value: EvoTreeItem?): @NlsContexts.Tooltip String? = value?.tooltip
 
   override fun setEmptyText(emptyText: StatusText) {}
 
@@ -99,34 +97,38 @@ open class EvoActionPopupStep(
   }
 
   // set to true if we need actions '...' on disabled items too
-  override fun isSelectable(value: EvoTreeItem): Boolean = value.element.state == State.DONE && value.isEnabled
+  override fun isSelectable(value: EvoTreeItem?): Boolean = value != null && value.element.state == State.DONE && value.isEnabled
 
-  override fun getIconFor(value: EvoTreeItem): Icon? = value.icon
+  override fun getIconFor(value: EvoTreeItem?): Icon? = value?.icon
 
-  override fun getTextFor(value: EvoTreeItem): @ListItem String = value.text
+  override fun getTextFor(value: EvoTreeItem?): @ListItem String = value?.text ?: ""
 
-  override fun getSecondaryTextFor(value: EvoTreeItem): @Nls String? = value.secondaryText
+  override fun getSecondaryTextFor(value: EvoTreeItem?): @Nls String? = value?.secondaryText
 
-  override fun getSecondaryIconFor(t: EvoTreeItem): @Nls Icon? = when(t.element.state) {
+  override fun getSecondaryIconFor(t: EvoTreeItem?): @Nls Icon? = when (t?.element?.state) {
     State.LOADING -> AnimatedIcon.Default.INSTANCE
     State.ERROR -> AllIcons.General.Error
     else -> null
   }
 
-  override fun getSeparatorAbove(value: EvoTreeItem): ListSeparator? = value.separatorAbove
+  override fun getSeparatorAbove(value: EvoTreeItem?): ListSeparator? = value?.separatorAbove
 
   override fun getDefaultOptionIndex(): Int = 0
 
   override fun getTitle(): @PopupTitle String? = myTitle
 
-  override fun isFinal(value: EvoTreeItem): Boolean {
+  // The platform passes a null value during layout measurement, so the param must be nullable.
+  override fun isFinal(value: EvoTreeItem?): Boolean {
+    value ?: return true
     // to make ... actions menu even for non-disabled items all steps have to be final
-    //return true
     return value.element is EvoTreeLeafElement || value.element.state != State.DONE
   }
 
-  override fun hasSubstep(selectedValue: EvoTreeItem): Boolean {
-    return selectedValue.isSubstepSuppressed && selectedValue.element is EvoTreeNodeElement // && selectedValue.element.state == State.DONE
+  // The platform passes a null value during layout measurement, so the param must be nullable. Offer a submenu only
+  // for a loaded, non-empty node — otherwise an empty child popup can crash Swing layout.
+  override fun hasSubstep(selectedValue: EvoTreeItem?): Boolean {
+    val element = selectedValue?.element as? EvoTreeNodeElement ?: return false
+    return selectedValue.isSubstepSuppressed && element.state == State.DONE && element.hasContent()
   }
 
   override fun canceled() {}
@@ -135,13 +137,16 @@ open class EvoActionPopupStep(
 
   override fun getMnemonicNavigationFilter(): MnemonicNavigationFilter<EvoTreeItem?>? = null
 
-  override fun isSpeedSearchEnabled(): Boolean = false
+  override fun isSpeedSearchEnabled(): Boolean = true
 
-  override fun getSpeedSearchFilter(): SpeedSearchFilter<EvoTreeItem?>? = null
+  // Filter the list as you type — match the row title and (once resolved) its secondary text.
+  override fun getSpeedSearchFilter(): SpeedSearchFilter<EvoTreeItem?> = SpeedSearchFilter { value ->
+    value?.let { listOfNotNull(it.text, it.secondaryText).joinToString(" ") } ?: ""
+  }
 
   override fun isAutoSelectionEnabled(): Boolean = false
 
-  override fun getFinalRunnable(): Runnable? = null
+  override fun getFinalRunnable(): Runnable? = finalRunnable
 
   fun performActionItem(item: EvoTreeLeafElement, inputEvent: InputEvent?) {
     val action = item.action
