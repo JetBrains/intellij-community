@@ -41,6 +41,7 @@ import com.intellij.platform.debugger.impl.rpc.XLineBreakpointVariantDto
 import com.intellij.platform.debugger.impl.rpc.XNoBreakpointPossibleResponse
 import com.intellij.platform.debugger.impl.rpc.XRemoveBreakpointResponse
 import com.intellij.platform.debugger.impl.rpc.XToggleLineBreakpointResponse
+import com.intellij.platform.debugger.impl.rpc.xExpression
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.util.DocumentUtil
@@ -250,7 +251,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
       setVerticalPlacement(placement)
       if (request.isLogging) {
         setSuspendPolicy(SuspendPolicy.NONE)
-        setLogExpressionIfEnabled(request.logExpression)
+        setLogExpressionIfEnabled(request.logExpression?.xExpression())
       }
       setTemporary(request.isTemporary)
     }

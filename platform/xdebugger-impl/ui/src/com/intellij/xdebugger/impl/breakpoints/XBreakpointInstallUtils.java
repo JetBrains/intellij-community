@@ -24,6 +24,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement;
 import com.intellij.xdebugger.impl.FrontendXLineBreakpointVariant;
@@ -63,7 +64,7 @@ public final class XBreakpointInstallUtils {
     final @Nullable Editor editor,
     boolean canRemove,
     boolean isLogging,
-    @Nullable String logExpression
+    @Nullable XExpression logExpression
   ) {
     var breakpointInfo = new XLineBreakpointInstallationInfo(types, position, XLineBreakpointVerticalPlacement.ON_LINE, temporary, isLogging, logExpression, canRemove);
     return toggleAndReturnLineBreakpointProxy(project, editor, breakpointInfo, selectVariantByPositionColumn);

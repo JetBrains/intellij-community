@@ -149,7 +149,7 @@ data class XLineBreakpointInstallationRequest(
     val placement: XLineBreakpointVerticalPlacement,
     val isTemporary: Boolean,
     val isLogging: Boolean,
-    val logExpression: String?,
+    val logExpression: XExpressionDto?,
     val hasBreakpoints: Boolean,
 )
 

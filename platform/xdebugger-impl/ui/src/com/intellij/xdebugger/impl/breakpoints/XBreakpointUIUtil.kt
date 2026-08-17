@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.codeInsight.folding.impl.FoldingUtil
 import com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction
 import com.intellij.icons.AllIcons
+import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -131,8 +132,9 @@ object XBreakpointUIUtil {
         }
         val lineStart = position.line
         val winPosition = if (lineStart == lineWinner) position else XSourcePositionImpl.create(position.file, lineWinner)
+        val logExpressionObject = XExpressionImpl.fromTextAndLanguage(logExpression, LanguageUtil.getFileLanguage(position.file))
         val breakpointInfo =
-          XLineBreakpointInstallationInfo(typeWinner, winPosition, placement, temporary, isLogging, logExpression, canRemove)
+          XLineBreakpointInstallationInfo(typeWinner, winPosition, placement, temporary, isLogging, logExpressionObject, canRemove)
         val res = XBreakpointInstallUtils.toggleAndReturnLineBreakpointProxy(project, editor, breakpointInfo, selectVariantByPositionColumn)
         if (lineStart != lineWinner) {
           val offset = editor.document.getLineStartOffset(lineWinner)
