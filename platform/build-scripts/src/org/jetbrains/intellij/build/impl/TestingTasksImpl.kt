@@ -1607,6 +1607,7 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.searchEverywhereMl.tests",
   "intellij.searchEverywhereMl.typos.tests",
   "intellij.statsCollector.tests",
+  "intellij.platform.builtInServer.tests",
   "intellij.platform.core.nio.fs",
   "intellij.platform.jewel.ui.tests",
   "intellij.platform.jps.model.tests",
