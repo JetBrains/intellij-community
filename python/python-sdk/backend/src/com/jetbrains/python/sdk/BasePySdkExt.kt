@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
+import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntityIfNotDisposed
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Deprecated("Use PyProject instead")
 val Module.baseDir: VirtualFile?
   get() {
-    val entity = findModuleEntity() ?: return null
+    val entity = findModuleEntityIfNotDisposed()
     val roots = entity.contentRoots.asSequence().mapNotNull { it.url.virtualFile }
     val moduleFile = moduleFile ?: return roots.firstOrNull()
     return roots.firstOrNull { VfsUtil.isAncestor(it, moduleFile, true) } ?: roots.firstOrNull()

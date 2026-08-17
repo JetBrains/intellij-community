@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.facet;
 
@@ -19,7 +19,12 @@ public interface FacetModel {
   Facet<?> @NotNull [] getSortedFacets();
 
   /**
+   * All other methods of this interface are computed from this one, so they share its contract.
+   *
    * @return all facets in the module
+   * @throws com.intellij.serviceContainer.AlreadyDisposedException if the module has been removed or disposed. Either check the module
+   * existence in advance (in a {@code readAction}), or stop all the activities for the module: it makes no sense to work with facets
+   * of a module which doesn't exist anymore
    */
   Facet<?> @NotNull [] getAllFacets();
 
