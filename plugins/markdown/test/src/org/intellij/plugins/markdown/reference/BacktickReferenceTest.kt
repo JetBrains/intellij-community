@@ -43,6 +43,12 @@ class BacktickReferenceTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `test short class reference is not resolved`() {
+    createJavaClass("SS")
+    assertNull(configureAndGetReferenceAtCaret("There is an `S<caret>S` backtick")?.resolve())
+  }
+
+  @Test
   fun `test reference with extension resolves to original element`() {
     val file = createFile("JavaClass.java", "class JavaClass {}")
     val reference = configureAndGetReferenceAtCaret("There is an `JavaClass.ja<caret>va` backtick")
@@ -87,11 +93,11 @@ class BacktickReferenceTest : BasePlatformTestCase() {
       "JavaClass1.java",
       """
         class JavaClass1 {
-           public void longlonglong() {}
+           public void longLongLong() {}
         }
       """.trimIndent()
     )
-    assertResolvesToPsiMethod("some1.md", "There is an `longlo<caret>nglong` backtick")
+    assertResolvesToPsiMethod("some1.md", "There is an `longLong<caret>Long` backtick")
   }
 
   @Test
@@ -100,21 +106,21 @@ class BacktickReferenceTest : BasePlatformTestCase() {
       "JavaClass.java",
       """
         class JavaClass {
-           public void sho_test() {}
+           public void boundary_test() {}
         }
       """.trimIndent()
     )
-    assertResolvesToPsiMethod("some.md", "There is an `sho<caret>_test` backtick")
+    assertResolvesToPsiMethod("some.md", "There is an `boundary<caret>_test` backtick")
 
     createFile(
       "JavaClass1.java",
       """
         class JavaClass1 {
-           public void shoTest() {}
+           public void boundaryTest() {}
         }
       """.trimIndent()
     )
-    assertResolvesToPsiMethod("some1.md", "There is an `sho<caret>Test` backtick")
+    assertResolvesToPsiMethod("some1.md", "There is an `boundary<caret>Test` backtick")
   }
 
   @Test
@@ -371,8 +377,8 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     assertNull(reference?.resolve())
   }
 
-  private fun createJavaClass(): PsiClass {
-    val file = createFile("JavaClass.java", "class JavaClass {}")
+  private fun createJavaClass(name: String = "JavaClass"): PsiClass {
+    val file = createFile("$name.java", "class $name {}")
     return file.children.single { it is PsiClass } as PsiClass
   }
 
