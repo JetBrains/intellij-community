@@ -1,17 +1,18 @@
 import datetime
 from collections.abc import Awaitable, Callable, Iterable, Iterator, Mapping, Sequence
 from re import Pattern
-from typing import Any, BinaryIO, Literal, NoReturn, Protocol, TypeAlias, overload, type_check_only
+from typing import Any, BinaryIO, Literal, NoReturn, Protocol, Self, TypeAlias, overload, type_check_only
 
 from django.contrib.auth.models import _AnyUser
 from django.contrib.sessions.backends.base import SessionBase
 from django.contrib.sites.models import Site
 from django.core.files import uploadedfile, uploadhandler
+from django.http.multipartparser import MultiPartParser
 from django.urls import ResolverMatch
 from django.utils.datastructures import CaseInsensitiveMapping, ImmutableList, MultiValueDict
 from django.utils.functional import cached_property
 from django.views.debug import ExceptionReporter, SafeExceptionReporterFilter
-from typing_extensions import Self, TypeVar, override
+from typing_extensions import TypeVar, override
 
 RAISE_ERROR: object
 host_validation_re: Pattern[str]
@@ -94,6 +95,10 @@ class HttpRequest:
     def upload_handlers(self) -> _UploadHandlerList: ...
     @upload_handlers.setter
     def upload_handlers(self, upload_handlers: _UploadHandlerList) -> None: ...
+    @property
+    def multipart_parser_class(self) -> MultiPartParser: ...
+    @multipart_parser_class.setter
+    def multipart_parser_class(self, multipart_parser_class: MultiPartParser) -> None: ...
     @cached_property
     def accepted_types(self) -> list[MediaType]: ...
     @cached_property

@@ -4,6 +4,7 @@ from django.core.management.color import Style
 from django.db.backends.base.operations import BaseDatabaseOperations
 from django.db.backends.mysql.base import DatabaseWrapper
 from django.db.models.constants import OnConflict
+from django.db.models.sql.compiler import SQLCompiler
 from typing_extensions import override
 
 class DatabaseOperations(BaseDatabaseOperations):
@@ -55,7 +56,7 @@ class DatabaseOperations(BaseDatabaseOperations):
     def convert_datetimefield_value(self, value: Any, expression: Any, connection: Any) -> Any: ...
     def convert_uuidfield_value(self, value: Any, expression: Any, connection: Any) -> Any: ...
     @override
-    def binary_placeholder_sql(self, value: Any) -> Any: ...
+    def binary_placeholder_sql(self, value: Any, compiler: SQLCompiler) -> Any: ...
     @override
     def subtract_temporals(self, internal_type: Any, lhs: Any, rhs: Any) -> Any: ...
     @override

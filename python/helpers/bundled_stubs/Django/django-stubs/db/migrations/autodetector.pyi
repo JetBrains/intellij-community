@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterable
 from enum import Enum
-from typing import Any
+from typing import Any, Self
 
 from django.db.migrations.graph import MigrationGraph
 from django.db.migrations.migration import Migration
@@ -9,7 +9,6 @@ from django.db.migrations.questioner import MigrationQuestioner
 from django.db.migrations.state import ProjectState
 from django.db.models.fields import Field
 from django.utils.functional import cached_property
-from typing_extensions import Self
 
 class OperationDependency(tuple[str, str, str | None, OperationDependency.Type]):
     class Type(Enum):

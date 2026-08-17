@@ -5,6 +5,9 @@ from . import signals as signals
 from .aggregates import Aggregate as Aggregate
 from .aggregates import AnyValue as AnyValue
 from .aggregates import Avg as Avg
+from .aggregates import BitAnd as BitAnd
+from .aggregates import BitOr as BitOr
+from .aggregates import BitXor as BitXor
 from .aggregates import Count as Count
 from .aggregates import Max as Max
 from .aggregates import Min as Min
@@ -19,6 +22,9 @@ from .constraints import CheckConstraint as CheckConstraint
 from .constraints import Deferrable as Deferrable
 from .constraints import UniqueConstraint as UniqueConstraint
 from .deletion import CASCADE as CASCADE
+from .deletion import DB_CASCADE as DB_CASCADE
+from .deletion import DB_SET_DEFAULT as DB_SET_DEFAULT
+from .deletion import DB_SET_NULL as DB_SET_NULL
 from .deletion import DO_NOTHING as DO_NOTHING
 from .deletion import PROTECT as PROTECT
 from .deletion import RESTRICT as RESTRICT
@@ -37,6 +43,7 @@ from .expressions import ExpressionList as ExpressionList
 from .expressions import ExpressionWrapper as ExpressionWrapper
 from .expressions import F as F
 from .expressions import Func as Func
+from .expressions import JSONNull as JSONNull
 from .expressions import OrderBy as OrderBy
 from .expressions import OuterRef as OuterRef
 from .expressions import RowRange as RowRange
@@ -47,7 +54,11 @@ from .expressions import When as When
 from .expressions import Window as Window
 from .expressions import WindowFrame as WindowFrame
 from .expressions import WindowFrameExclusion as WindowFrameExclusion
+from .fetch_modes import FETCH_ONE as FETCH_ONE
+from .fetch_modes import FETCH_PEERS as FETCH_PEERS
+from .fetch_modes import FETCH_RAISE as FETCH_RAISE
 from .fields import BLANK_CHOICE_DASH as BLANK_CHOICE_DASH
+from .fields import BLANK_CHOICE_LABEL as BLANK_CHOICE_LABEL
 from .fields import NOT_PROVIDED as NOT_PROVIDED
 from .fields import AutoField as AutoField
 from .fields import BigAutoField as BigAutoField
@@ -106,9 +117,16 @@ from .query_utils import Q as Q
 
 __all__ = [
     "BLANK_CHOICE_DASH",
+    "BLANK_CHOICE_LABEL",
     "CASCADE",
+    "DB_CASCADE",
+    "DB_SET_DEFAULT",
+    "DB_SET_NULL",
     "DEFERRED",
     "DO_NOTHING",
+    "FETCH_ONE",
+    "FETCH_PEERS",
+    "FETCH_RAISE",
     "NOT_PROVIDED",
     "PROTECT",
     "RESTRICT",
@@ -123,6 +141,9 @@ __all__ = [
     "BigAutoField",
     "BigIntegerField",
     "BinaryField",
+    "BitAnd",
+    "BitOr",
+    "BitXor",
     "BooleanField",
     "Case",
     "CharField",
@@ -160,6 +181,7 @@ __all__ = [
     "IntegerChoices",
     "IntegerField",
     "JSONField",
+    "JSONNull",
     "Lookup",
     "Manager",
     "ManyToManyField",

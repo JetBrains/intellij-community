@@ -1,6 +1,6 @@
-import sys
 from io import BytesIO, IOBase
 from typing import Any
+from wsgiref.types import StartResponse, WSGIEnvironment
 
 from django.core.files import uploadedfile
 from django.core.handlers import base
@@ -10,11 +10,6 @@ from django.http.response import HttpResponseBase
 from django.utils.datastructures import MultiValueDict
 from django.utils.functional import cached_property
 from typing_extensions import override
-
-if sys.version_info >= (3, 11):
-    from wsgiref.types import StartResponse, WSGIEnvironment
-else:
-    from _typeshed.wsgi import StartResponse, WSGIEnvironment
 
 class LimitedStream(IOBase):
     limit: int

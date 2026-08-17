@@ -1,8 +1,8 @@
 from collections.abc import Sequence
-from typing import Any, TypeAlias
+from typing import Any, Self, TypeAlias
 
 from django.db.models.sql.where import NothingNode
-from typing_extensions import Self, override
+from typing_extensions import override
 
 _NodeChildren: TypeAlias = list[Node | NothingNode | Sequence[Any]]
 

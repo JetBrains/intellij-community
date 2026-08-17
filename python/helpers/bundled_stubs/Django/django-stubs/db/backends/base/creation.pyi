@@ -1,16 +1,27 @@
-from typing import Any
+from typing import Any, ClassVar, overload
 
 from django.db.backends.base.base import BaseDatabaseWrapper
+from typing_extensions import deprecated
 
 TEST_DATABASE_PREFIX: str
 
 class BaseDatabaseCreation:
+    destroy_test_db_connection_close_method: ClassVar[str | None]
     connection: BaseDatabaseWrapper
     def __init__(self, connection: BaseDatabaseWrapper) -> None: ...
     def __del__(self) -> None: ...
     def log(self, msg: str) -> None: ...
+    @overload
+    @deprecated(
+        "DatabaseCreation.create_test_db(serialize) is deprecated. Call DatabaseCreation.serialize_test_db() once all "
+        "test databases are set up instead if you need fixtures persistence between tests."
+    )
     def create_test_db(
-        self, verbosity: int = 1, autoclobber: bool = False, serialize: bool | None = None, keepdb: bool = False
+        self, verbosity: int = 1, autoclobber: bool = False, serialize: bool = ..., keepdb: bool = False
+    ) -> str: ...
+    @overload
+    def create_test_db(
+        self, verbosity: int = 1, autoclobber: bool = False, serialize: None = None, keepdb: bool = False
     ) -> str: ...
     def set_as_test_mirror(self, primary_settings_dict: dict[str, dict[str, None] | int | str | None]) -> None: ...
     def serialize_db_to_string(self) -> str: ...

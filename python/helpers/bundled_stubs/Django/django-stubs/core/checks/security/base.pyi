@@ -25,6 +25,7 @@ E023: Error
 E024: Error
 W025: Warning
 E026: Error
+W027: Warning
 
 def check_security_middleware(app_configs: Sequence[AppConfig] | None, **kwargs: object) -> list[CheckMessage]: ...
 def check_xframe_options_middleware(
@@ -45,3 +46,6 @@ def check_cross_origin_opener_policy(
     app_configs: Sequence[AppConfig] | None, **kwargs: object
 ) -> list[CheckMessage]: ...
 def check_csp_settings(app_configs: Sequence[AppConfig] | None, **kwargs: object) -> list[CheckMessage]: ...
+def check_csp_nonce_context_processor(
+    app_configs: Sequence[AppConfig] | None, **kwargs: object
+) -> list[CheckMessage]: ...

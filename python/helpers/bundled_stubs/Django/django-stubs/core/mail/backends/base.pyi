@@ -1,13 +1,19 @@
 from collections.abc import Sequence
 from types import TracebackType
-from typing import Any
+from typing import Any, Self
 
 from django.core.mail.message import EmailMessage
-from typing_extensions import Self
 
 class BaseEmailBackend:
     fail_silently: bool
-    def __init__(self, fail_silently: bool = False, **kwargs: Any) -> None: ...
+    def __init__(
+        self,
+        fail_silently: bool | object = ...,
+        *,
+        alias: str | None = None,
+        _ignore_unknown_kwargs: set[str] | None = None,
+        **kwargs: Any,
+    ) -> None: ...
     def open(self) -> bool | None: ...
     def close(self) -> None: ...
     def __enter__(self) -> Self: ...

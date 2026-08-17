@@ -14,7 +14,13 @@ class InclusionAdminNode(InclusionNode):
     takes_context: bool
     template_name: str
     def __init__(
-        self, parser: Parser, token: Token, func: Callable[..., Any], template_name: str, takes_context: bool = ...
+        self,
+        name: str,
+        parser: Parser,
+        token: Token,
+        func: Callable[..., Any],
+        template_name: str,
+        takes_context: bool = ...,
     ) -> None: ...
     @override
     def render(self, context: Context) -> SafeString: ...

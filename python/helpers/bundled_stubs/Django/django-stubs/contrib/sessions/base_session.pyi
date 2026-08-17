@@ -1,10 +1,10 @@
 import datetime as dt
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Self
 
 from django.contrib.sessions.backends.base import SessionBase
 from django.db import models
 from django.db.models.expressions import Combinable
-from typing_extensions import Self, TypeVar
+from typing_extensions import TypeVar
 
 _T = TypeVar("_T", bound=AbstractBaseSession)
 

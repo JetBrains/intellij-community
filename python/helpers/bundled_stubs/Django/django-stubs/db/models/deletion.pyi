@@ -1,8 +1,9 @@
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Iterator, Sequence
-from typing import Any
+from typing import Any, TypeAlias
 
 from django.db import IntegrityError
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.models.base import Model
 from django.db.models.fields import Field
 from django.db.models.options import Options
@@ -46,6 +47,25 @@ def RESTRICT(
     using: str,
 ) -> None: ...
 def SET(value: Any) -> Callable[..., Any]: ...
+
+_Collector: TypeAlias = Callable[[Collector, Field[Any, Any], QuerySet[Model], str], None]
+
+class DatabaseOnDelete:
+    operation: str
+    forced_collector: _Collector | None
+
+    def __init__(self, operation: str, name: str, forced_collector: _Collector | None = ...) -> None: ...
+
+    __call__: _Collector
+
+    def on_delete_sql(self, schema_editor: BaseDatabaseSchemaEditor) -> str: ...
+
+DB_CASCADE: DatabaseOnDelete
+DB_SET_DEFAULT: DatabaseOnDelete
+DB_SET_NULL: DatabaseOnDelete
+
+SKIP_COLLECTION: frozenset[_Collector | DatabaseOnDelete]
+
 def get_candidate_relations_to_delete(opts: Options[Model]) -> Iterable[Field[Any, Any]]: ...
 
 class ProtectedError(IntegrityError):
@@ -64,7 +84,9 @@ class Collector:
     restricted_objects: defaultdict[Model, defaultdict[Field[Any, Any], set[Model]]]
     fast_deletes: list[QuerySet[Model]]
     dependencies: defaultdict[Model, set[Model]]
-    def __init__(self, using: str, origin: Model | QuerySet[Model] | None = None) -> None: ...
+    def __init__(
+        self, using: str, origin: Model | QuerySet[Model] | None = None, force_collection: bool = ...
+    ) -> None: ...
     def add(
         self,
         objs: _IndexableCollection[Model],

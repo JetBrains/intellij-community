@@ -1,4 +1,4 @@
-from typing import Any, Literal, overload
+from typing import Any, Literal, Self, overload
 
 from django.contrib.gis.gdal import CoordTransform, SpatialReference
 from django.contrib.gis.gdal.geometries import OGRGeometry
@@ -8,7 +8,7 @@ from django.contrib.gis.geos.mutable_list import ListMixin
 from django.contrib.gis.geos.point import Point
 from django.contrib.gis.geos.prepared import PreparedGeometry
 from django.utils.deconstruct import _Deconstructible
-from typing_extensions import Self, override
+from typing_extensions import override
 
 class GEOSGeometryBase(GEOSBase):
     ptr_type: Any
@@ -153,4 +153,10 @@ class LinearGeometryMixin:
     def closed(self) -> bool: ...
 
 class GEOSGeometry(_Deconstructible, GEOSGeometryBase, ListMixin):
-    def __init__(self, geo_input: Any, srid: int | None = ...) -> None: ...
+    def __init__(
+        self,
+        geo_input: Any,
+        srid: int | None = ...,
+        *,
+        max_geom_collections: int | None = ...,
+    ) -> None: ...

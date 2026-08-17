@@ -3,6 +3,10 @@ from typing import Any
 
 from django.utils.functional import _StrOrPromise
 
+from .backends.base import BaseEmailBackend
+from .exceptions import InvalidMailer as InvalidMailer
+from .exceptions import MailerDoesNotExist as MailerDoesNotExist
+from .handler import MailersHandler
 from .message import DEFAULT_ATTACHMENT_MIME_TYPE as DEFAULT_ATTACHMENT_MIME_TYPE
 from .message import BadHeaderError as BadHeaderError
 from .message import EmailAlternative as EmailAlternative
@@ -16,7 +20,9 @@ from .message import make_msgid as make_msgid
 from .utils import DNS_NAME as DNS_NAME
 from .utils import CachedDnsName as CachedDnsName
 
-def get_connection(backend: str | None = None, *, fail_silently: bool = False, **kwds: Any) -> Any: ...
+mailers: MailersHandler
+
+def get_connection(backend: str | None = None, *, fail_silently: bool = False, **kwds: Any) -> BaseEmailBackend: ...
 def send_mail(
     subject: _StrOrPromise,
     message: _StrOrPromise,
@@ -26,8 +32,9 @@ def send_mail(
     fail_silently: bool = False,
     auth_user: str | None = None,
     auth_password: str | None = None,
-    connection: Any | None = None,
+    connection: BaseEmailBackend | None = None,
     html_message: str | None = None,
+    using: str | None = None,
 ) -> int: ...
 def send_mass_mail(
     datatuple: Iterable[tuple[str, str, str | None, list[str]]],
@@ -35,23 +42,26 @@ def send_mass_mail(
     fail_silently: bool = False,
     auth_user: str | None = None,
     auth_password: str | None = None,
-    connection: Any | None = None,
+    connection: BaseEmailBackend | None = None,
+    using: str | None = None,
 ) -> int: ...
 def mail_admins(
     subject: _StrOrPromise,
     message: _StrOrPromise,
     *,
     fail_silently: bool = False,
-    connection: Any | None = None,
+    connection: BaseEmailBackend | None = None,
     html_message: str | None = None,
+    using: str | None = None,
 ) -> None: ...
 def mail_managers(
     subject: _StrOrPromise,
     message: _StrOrPromise,
     *,
     fail_silently: bool = False,
-    connection: Any | None = None,
+    connection: BaseEmailBackend | None = None,
     html_message: str | None = None,
+    using: str | None = None,
 ) -> None: ...
 
 outbox: list[EmailMessage | EmailMultiAlternatives]
@@ -65,12 +75,15 @@ __all__ = [
     "EmailAttachment",
     "EmailMessage",
     "EmailMultiAlternatives",
+    "InvalidMailer",
+    "MailerDoesNotExist",
     "SafeMIMEMultipart",
     "SafeMIMEText",
     "forbid_multi_line_headers",
     "get_connection",
     "mail_admins",
     "mail_managers",
+    "mailers",
     "make_msgid",
     "send_mail",
     "send_mass_mail",

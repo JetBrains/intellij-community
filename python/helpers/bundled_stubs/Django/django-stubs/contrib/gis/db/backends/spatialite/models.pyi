@@ -1,8 +1,7 @@
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Self
 
 from django.contrib.gis.db.backends.base.models import SpatialRefSysMixin
 from django.db import models
-from typing_extensions import Self
 
 class SpatialiteGeometryColumns(models.Model):
     f_table_name: Any

@@ -3,6 +3,7 @@ from typing import NamedTuple
 from django.db.backends.base.introspection import BaseDatabaseIntrospection
 from django.db.backends.postgresql.base import DatabaseWrapper
 from django.db.backends.utils import CursorWrapper
+from django.db.models.deletion import DatabaseOnDelete, _Collector
 from typing_extensions import override
 
 class FieldInfo(NamedTuple):
@@ -28,6 +29,7 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
     data_types_reverse: dict[int, str]
     index_default_access_method: str
     ignored_tables: list[str]
+    on_delete_types: dict[str, _Collector | DatabaseOnDelete]
 
     @override
     def get_table_description(self, cursor: CursorWrapper, table_name: str) -> list[FieldInfo]: ...

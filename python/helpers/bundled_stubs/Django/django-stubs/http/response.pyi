@@ -139,7 +139,12 @@ class FileResponse(StreamingHttpResponse):
 class HttpResponseRedirectBase(HttpResponse):
     allowed_schemes: list[str]
     def __init__(
-        self, redirect_to: _StrOrPromise, preserve_request: bool = False, *args: Any, **kwargs: Any
+        self,
+        redirect_to: _StrOrPromise,
+        preserve_request: bool = False,
+        *args: Any,
+        max_length: int = ...,
+        **kwargs: Any,
     ) -> None: ...
     @property
     def url(self) -> str: ...

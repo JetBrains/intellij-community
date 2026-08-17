@@ -1,7 +1,7 @@
-import sys
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 from urllib.parse import ParseResult
+from wsgiref.types import StartResponse, WSGIEnvironment
 
 from django.core.handlers.asgi import ASGIHandler
 from django.core.handlers.base import BaseHandler
@@ -9,11 +9,6 @@ from django.core.handlers.wsgi import WSGIHandler
 from django.http import HttpRequest
 from django.http.response import FileResponse, HttpResponse, HttpResponseBase
 from typing_extensions import override
-
-if sys.version_info >= (3, 11):
-    from wsgiref.types import StartResponse, WSGIEnvironment
-else:
-    from _typeshed.wsgi import StartResponse, WSGIEnvironment
 
 class StaticFilesHandlerMixin:
     handles_files: bool

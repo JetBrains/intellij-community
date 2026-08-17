@@ -1,8 +1,7 @@
 from enum import IntEnum
-from typing import Any, AnyStr, cast
+from typing import Any, AnyStr, Self, cast
 
 from django.contrib.gis.gdal.base import GDALBase
-from typing_extensions import Self
 
 class AxisOrder(IntEnum):
     TRADITIONAL = cast(int, ...)

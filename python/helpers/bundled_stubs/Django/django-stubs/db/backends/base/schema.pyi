@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from contextlib import AbstractContextManager
 from logging import Logger
 from types import TracebackType
-from typing import Any
+from typing import Any, Self
 
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.ddl_references import Statement
@@ -11,7 +11,7 @@ from django.db.models.constraints import BaseConstraint
 from django.db.models.fields import Field
 from django.db.models.indexes import Index
 from django.db.models.sql.compiler import _AsSqlType
-from typing_extensions import Self, override
+from typing_extensions import override
 
 logger: Logger
 
