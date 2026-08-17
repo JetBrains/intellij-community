@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.io.FileUtilRt
@@ -134,8 +134,15 @@ class LspClientImpl internal constructor(
   override fun getDocumentIdentifier(file: VirtualFile): TextDocumentIdentifier =
     TextDocumentIdentifier(descriptor.getFileUri(file))
 
-  override fun getDocumentVersion(document: Document): Int =
-    (document as? DocumentEx)?.modificationSequence ?: document.modificationStamp.toInt()
+  override fun getDocumentVersion(document: Document): Int {
+    val file = FileDocumentManager.getInstance().getFile(document) ?: return -1
+    return documentSyncManager.currentDocumentVersion(file)
+  }
+
+  override fun nextDocumentVersion(document: Document): Int {
+    val file = FileDocumentManager.getInstance().getFile(document) ?: return -1
+    return documentSyncManager.nextDocumentVersion(file)
+  }
 
   @RequiresReadLock
   @RequiresBackgroundThread
