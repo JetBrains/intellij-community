@@ -69,11 +69,13 @@ abstract class TextEditorWithPreviewProvider(private val previewProvider: FileEd
   private fun readFirstProviderState(sourceElement: Element, project: Project, file: Lazy<VirtualFile?>): FileEditorState? {
     val child = sourceElement.getChild(FIRST_EDITOR) ?: return null
     return mainProvider.readState(/* sourceElement = */ child, /* project = */ project, /* file = */ file)
+      .takeIf { it !== FileEditorState.NO_STATE }
   }
 
   private fun readSecondProviderState(sourceElement: Element, project: Project, file: Lazy<VirtualFile?>): FileEditorState? {
     val child = sourceElement.getChild(SECOND_EDITOR) ?: return null
     return previewProvider.readState(/* sourceElement = */ child, /* project = */ project, /* file = */ file)
+      .takeIf { it !== FileEditorState.NO_STATE }
   }
 
   private fun writeFirstProviderState(state: FileEditorState?, project: Project, targetElement: Element) {

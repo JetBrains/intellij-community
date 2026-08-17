@@ -1471,7 +1471,7 @@ open class FileEditorManagerImpl(
       for (editorWithProvider in composite.allEditorsWithProviders) {
         val state = fileEntry.providers.get(editorWithProvider.provider.editorTypeId)
           ?.let { editorWithProvider.provider.readState(it, project, lazyOf(file)) }
-        if (state != null && state != FileEditorState.INSTANCE) {
+        if (state != null && state !== FileEditorState.INSTANCE && state !== FileEditorState.NO_STATE) {
           restoreEditorState(
             fileEditorWithProvider = editorWithProvider,
             state = state,

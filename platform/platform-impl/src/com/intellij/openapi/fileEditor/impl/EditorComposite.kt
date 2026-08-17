@@ -381,7 +381,9 @@ open class EditorComposite internal constructor(
         EditorHistoryManager.getInstance(project).getState(file, provider)
       }
       else {
-        state.providers.get(provider.editorTypeId)?.let { provider.readState(it, project, lazyOf(file)) }
+        state.providers.get(provider.editorTypeId)
+          ?.let { provider.readState(it, project, lazyOf(file)) }
+          ?.takeIf { it !== FileEditorState.NO_STATE }
       }
     }
     return states
@@ -563,7 +565,7 @@ open class EditorComposite internal constructor(
           lambda = { provider.readState(it, project, lazyOf(file)) },
           errorMessage = { "failed to read editor state" },
         )
-      }
+      }?.takeIf { it !== FileEditorState.NO_STATE }
     }
     else {
       // We have to try to get state from the history only in case of the editor is not opened.

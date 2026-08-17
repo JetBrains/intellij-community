@@ -2380,6 +2380,7 @@ com.intellij.openapi.fileEditor.FileEditorNavigatable
 - isUsePreviewTab():Z
 com.intellij.openapi.fileEditor.FileEditorState
 - sf:INSTANCE:com.intellij.openapi.fileEditor.FileEditorState
+- sf:NO_STATE:com.intellij.openapi.fileEditor.FileEditorState
 - a:canBeMergedWith(com.intellij.openapi.fileEditor.FileEditorState,com.intellij.openapi.fileEditor.FileEditorStateLevel):Z
 e:com.intellij.openapi.fileEditor.FileEditorStateLevel
 - java.lang.Enum

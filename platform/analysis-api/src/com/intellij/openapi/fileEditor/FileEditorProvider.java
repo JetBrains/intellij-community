@@ -88,7 +88,7 @@ public interface FileEditorProvider extends PossiblyDumbAware {
     }
 
     var vFile = file.getValue();
-    if (vFile == null) return FileEditorState.INSTANCE;
+    if (vFile == null) return FileEditorState.NO_STATE;
 
     return readState(sourceElement, project, vFile);
   }

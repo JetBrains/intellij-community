@@ -155,6 +155,9 @@ private fun parseEntry(
     val stateElement = providerElement.getChild(STATE_ELEMENT)
     val state = provider.readState(stateElement ?: EMPTY_ELEMENT, project,
                                    lazy { VirtualFileManager.getInstance().findFileByUrl(urlString) })
+    // The provider reported that there is nothing to restore (e.g. it has no deserialization or the file is gone).
+    // Don't keep it: such a state must never be handed back to writeState/setState (it isn't of the provider's own type).
+    if (state === FileEditorState.NO_STATE) continue
     providerStates = providerStates.adding(provider to state)
   }
 
