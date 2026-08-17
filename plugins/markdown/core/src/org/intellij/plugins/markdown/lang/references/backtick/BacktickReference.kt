@@ -94,11 +94,11 @@ class BacktickReference(element: MarkdownCodeSpan, range: TextRange) :
             items.add(item)
             items.size <= MAX_RESOLVED_ITEMS
           },
-          FindSymbolParameters.wrap(pattern, project, true)
+          FindSymbolParameters.wrap(pattern, project, false)
         )
       }
       else {
-        items.addAll(contributor.getItemsByName(name, pattern, project, true))
+        items.addAll(contributor.getItemsByName(name, pattern, project, false))
       }
       if (items.size > MAX_RESOLVED_ITEMS) break
     }
@@ -124,6 +124,6 @@ class BacktickReference(element: MarkdownCodeSpan, range: TextRange) :
   }
 
   private companion object {
-    private const val MAX_RESOLVED_ITEMS = 100
+    private const val MAX_RESOLVED_ITEMS = 5
   }
 }
