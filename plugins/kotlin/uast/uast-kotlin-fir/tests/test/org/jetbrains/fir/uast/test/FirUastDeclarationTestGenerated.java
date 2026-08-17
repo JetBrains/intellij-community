@@ -43,6 +43,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
         runTest("testData/declaration/annotationUseSites.kt");
     }
 
+    @TestMetadata("breakAndContinue.kt")
+    public void testBreakAndContinue() throws Exception {
+        runTest("testData/declaration/breakAndContinue.kt");
+    }
+
     @TestMetadata("build.gradle.kts")
     public void testBuild_gradle() throws Exception {
         runTest("testData/declaration/build.gradle.kts");

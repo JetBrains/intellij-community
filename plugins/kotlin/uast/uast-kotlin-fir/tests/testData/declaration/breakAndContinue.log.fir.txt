@@ -1,0 +1,186 @@
+UFile (package = )
+    UClass (name = BreakAndContinueKt)
+        UMethod (name = testWhileBreak)
+            UBlockExpression
+                UWhileExpression
+                    ULiteralExpression (value = true)
+                    UBlockExpression
+                        UBreakExpression (label = null)
+        UMethod (name = testWhileContinue)
+            UBlockExpression
+                UWhileExpression
+                    ULiteralExpression (value = true)
+                    UBlockExpression
+                        UContinueExpression (label = null)
+        UMethod (name = testDoWhileBreak)
+            UBlockExpression
+                UDoWhileExpression
+                    ULiteralExpression (value = true)
+                    UBlockExpression
+                        UBreakExpression (label = null)
+        UMethod (name = testDoWhileContinue)
+            UBlockExpression
+                UDoWhileExpression
+                    ULiteralExpression (value = true)
+                    UBlockExpression
+                        UContinueExpression (label = null)
+        UMethod (name = testForBreak)
+            UBlockExpression
+                UForEachExpression
+                    UBinaryExpression (operator = ..)
+                        ULiteralExpression (value = 0)
+                        ULiteralExpression (value = 10)
+                    UBlockExpression
+                        UBreakExpression (label = null)
+        UMethod (name = testForContinue)
+            UBlockExpression
+                UForEachExpression
+                    UBinaryExpression (operator = ..)
+                        ULiteralExpression (value = 0)
+                        ULiteralExpression (value = 10)
+                    UBlockExpression
+                        UContinueExpression (label = null)
+        UMethod (name = testLabeledBreak)
+            UBlockExpression
+                ULabeledExpression (label = outer)
+                    UWhileExpression
+                        ULiteralExpression (value = true)
+                        UBlockExpression
+                            ULabeledExpression (label = inner)
+                                UForEachExpression
+                                    UBinaryExpression (operator = ..)
+                                        ULiteralExpression (value = 0)
+                                        ULiteralExpression (value = 10)
+                                    UBlockExpression
+                                        UBreakExpression (label = outer)
+        UMethod (name = testLabeledContinue)
+            UBlockExpression
+                ULabeledExpression (label = outer)
+                    UForEachExpression
+                        UBinaryExpression (operator = ..)
+                            ULiteralExpression (value = 0)
+                            ULiteralExpression (value = 10)
+                        UBlockExpression
+                            ULabeledExpression (label = inner)
+                                UWhileExpression
+                                    ULiteralExpression (value = true)
+                                    UBlockExpression
+                                        UContinueExpression (label = outer)
+        UMethod (name = testNestedBreak)
+            UBlockExpression
+                UWhileExpression
+                    ULiteralExpression (value = true)
+                    UBlockExpression
+                        UForEachExpression
+                            UBinaryExpression (operator = ..)
+                                ULiteralExpression (value = 0)
+                                ULiteralExpression (value = 10)
+                            UBlockExpression
+                                UBreakExpression (label = null)
+        UMethod (name = testNestedContinue)
+            UBlockExpression
+                UForEachExpression
+                    UBinaryExpression (operator = ..)
+                        ULiteralExpression (value = 0)
+                        ULiteralExpression (value = 10)
+                    UBlockExpression
+                        UWhileExpression
+                            ULiteralExpression (value = true)
+                            UBlockExpression
+                                UContinueExpression (label = null)
+        UMethod (name = testBreakContinueInWhen)
+            UBlockExpression
+                ULabeledExpression (label = outer)
+                    UWhileExpression
+                        ULiteralExpression (value = true)
+                        UBlockExpression
+                            ULabeledExpression (label = mid)
+                                UForEachExpression
+                                    UBinaryExpression (operator = ..)
+                                        ULiteralExpression (value = 0)
+                                        ULiteralExpression (value = 10)
+                                    UBlockExpression
+                                        USwitchExpression
+                                            UDeclarationsExpression
+                                                ULocalVariable (name = x)
+                                                    ULiteralExpression (value = 1)
+                                            UExpressionList (when)
+                                                USwitchClauseExpressionWithBody
+                                                    ULiteralExpression (value = 1)
+                                                    UExpressionList (when_entry)
+                                                        UYieldExpression
+                                                            UBreakExpression (label = null)
+                                                USwitchClauseExpressionWithBody
+                                                    ULiteralExpression (value = 2)
+                                                    UExpressionList (when_entry)
+                                                        UYieldExpression
+                                                            UContinueExpression (label = null)
+                                                USwitchClauseExpressionWithBody
+                                                    ULiteralExpression (value = 3)
+                                                    UExpressionList (when_entry)
+                                                        UYieldExpression
+                                                            UBreakExpression (label = outer)
+                                                USwitchClauseExpressionWithBody
+                                                    ULiteralExpression (value = 4)
+                                                    UExpressionList (when_entry)
+                                                        UYieldExpression
+                                                            UContinueExpression (label = outer)
+                                                USwitchClauseExpressionWithBody
+                                                    ULiteralExpression (value = 5)
+                                                    UExpressionList (when_entry)
+                                                        UYieldExpression
+                                                            UBreakExpression (label = mid)
+                                                USwitchClauseExpressionWithBody
+                                                    ULiteralExpression (value = 6)
+                                                    UExpressionList (when_entry)
+                                                        UYieldExpression
+                                                            UContinueExpression (label = mid)
+                                        ULabeledExpression (label = inner)
+                                            UWhileExpression
+                                                ULiteralExpression (value = true)
+                                                UBlockExpression
+                                                    USwitchExpression
+                                                        UDeclarationsExpression
+                                                            ULocalVariable (name = x)
+                                                                ULiteralExpression (value = 1)
+                                                        UExpressionList (when)
+                                                            USwitchClauseExpressionWithBody
+                                                                ULiteralExpression (value = 1)
+                                                                UExpressionList (when_entry)
+                                                                    UYieldExpression
+                                                                        UBreakExpression (label = null)
+                                                            USwitchClauseExpressionWithBody
+                                                                ULiteralExpression (value = 2)
+                                                                UExpressionList (when_entry)
+                                                                    UYieldExpression
+                                                                        UContinueExpression (label = null)
+                                                            USwitchClauseExpressionWithBody
+                                                                ULiteralExpression (value = 3)
+                                                                UExpressionList (when_entry)
+                                                                    UYieldExpression
+                                                                        UBreakExpression (label = outer)
+                                                            USwitchClauseExpressionWithBody
+                                                                ULiteralExpression (value = 4)
+                                                                UExpressionList (when_entry)
+                                                                    UYieldExpression
+                                                                        UContinueExpression (label = outer)
+                                                            USwitchClauseExpressionWithBody
+                                                                ULiteralExpression (value = 5)
+                                                                UExpressionList (when_entry)
+                                                                    UYieldExpression
+                                                                        UBreakExpression (label = mid)
+                                                            USwitchClauseExpressionWithBody
+                                                                ULiteralExpression (value = 6)
+                                                                UExpressionList (when_entry)
+                                                                    UYieldExpression
+                                                                        UContinueExpression (label = mid)
+                                                            USwitchClauseExpressionWithBody
+                                                                ULiteralExpression (value = 7)
+                                                                UExpressionList (when_entry)
+                                                                    UYieldExpression
+                                                                        UBreakExpression (label = inner)
+                                                            USwitchClauseExpressionWithBody
+                                                                ULiteralExpression (value = 8)
+                                                                UExpressionList (when_entry)
+                                                                    UYieldExpression
+                                                                        UContinueExpression (label = inner)
