@@ -2,7 +2,6 @@
 package com.intellij.ui.messager;
 
 
-import com.intellij.ui.DrawUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LineEndDecorator;
 import com.intellij.ui.ScreenUtil;
@@ -10,6 +9,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.paint.LinePainter2D;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -45,6 +45,7 @@ import java.awt.geom.Line2D;
 /**
  * @author kir
  */
+@ApiStatus.Internal
 public class CalloutComponent {
 
   private static final int POINTER_LENGTH = 20;
@@ -355,7 +356,7 @@ public class CalloutComponent {
       g.setColor(getFillColor());
       g.fillRect(1, 1, getWidth() - 2, getHeight() - 2);
 
-      DrawUtil.drawRoundRect(g, 0, 0, getWidth() - 1, getHeight() - 1, getBoundsColor());
+      drawRoundRect(g, 0, 0, getWidth() - 1, getHeight() - 1, getBoundsColor());
 
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
     }
@@ -402,6 +403,24 @@ public class CalloutComponent {
     }
 
     return null;
+  }
+
+  private static void drawRoundRect(Graphics g, double x1d, double y1d, double x2d, double y2d, Color color) {
+    final Color oldColor = g.getColor();
+    g.setColor(color);
+
+    int x1 = (int)Math.round(x1d);
+    int x2 = (int)Math.round(x2d);
+    int y1 = (int)Math.round(y1d);
+    int y2 = (int)Math.round(y2d);
+
+    LinePainter2D.paint((Graphics2D)g, x1 + 1, y1, x2 - 1, y1);
+    LinePainter2D.paint((Graphics2D)g, x1 + 1, y2, x2 - 1, y2);
+
+    LinePainter2D.paint((Graphics2D)g, x1, y1 + 1, x1, y2 - 1);
+    LinePainter2D.paint((Graphics2D)g, x2, y1 + 1, x2, y2 - 1);
+
+    g.setColor(oldColor);
   }
 
 }
