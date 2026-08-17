@@ -1,7 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
-import com.intellij.platform.ijent.IjentLog
+import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -112,4 +112,4 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
   }
 }
 
-private val LOG = IjentLog.getInstance<IjentThreadPool>()
+private val LOG = IjentLogger.OTHER_LOG

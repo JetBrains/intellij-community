@@ -12,7 +12,7 @@ import com.intellij.platform.eel.channels.EelSendChannelException
 import com.intellij.platform.eel.channels.sendWholeBuffer
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import com.intellij.platform.eel.provider.utils.sendWholeText
-import com.intellij.platform.ijent.IjentLog
+import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.IjentUnavailableException.CommunicationFailure
@@ -105,7 +105,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
   private val myContext: Deferred<DeployingContextAndShell> = run {
     var createdShellProcess: ShellProcessWrapper? = null
     val context = scope.s.async(currentDispatcher, start = CoroutineStart.LAZY) {
-      val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(scope, ijentLabel, LOG)
+      val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(scope, ijentLabel)
       val processFacade = createShellProcessFacade(ijentProcessScope)
       val mediator = IjentSessionProcessMediator.create(
         parentScope = scope,
@@ -594,7 +594,7 @@ private suspend fun DeployingContextAndShell.execIjentWithTcp(
  * we see the situation of compiling a shell with a problematic version and increased global buffer as improbable.
  */
 private val BUGGY_DASH_BUFFER_FILLER: String get() = "\n".repeat(8192)
-private val LOG = IjentLog.getInstance<IjentDeployingOverShellProcessStrategy>()
+private val LOG = IjentLogger.LIFETIME_LOG
 
 private const val TLS_HEREDOC_DELIMITER: String = "~IJENT_TLS_BOOTSTRAP"
 

@@ -12,7 +12,7 @@ import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import com.intellij.platform.ijent.IJENT_DEAD_SESSION_SAFE_DEFERRED_MAPPER
 import com.intellij.platform.ijent.IjentChildProcessAdapter
-import com.intellij.platform.ijent.IjentLog
+import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.ParentOfIjentScopes
@@ -166,7 +166,7 @@ class IjentSessionProcessMediator private constructor(
       isExpectedProcessExit: suspend (exitCode: Int) -> Boolean = { it == 0 },
       exitsOnStdinEof: Boolean = true,
     ): IjentSessionProcessMediator {
-      val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(parentScope, ijentLabel, LOG)
+      val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(parentScope, ijentLabel)
       return create(
         parentScope,
         ijentProcessScope,
@@ -302,4 +302,4 @@ private fun OutputStream.extractRawProcessStream(): WritableByteChannel {
   }
 }
 
-private val LOG = IjentLog.getInstance<IjentSessionProcessMediator>()
+private val LOG = IjentLogger.LIFETIME_LOG

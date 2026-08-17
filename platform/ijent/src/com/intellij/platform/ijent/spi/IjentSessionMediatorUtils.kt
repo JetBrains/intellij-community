@@ -50,7 +50,7 @@ import kotlin.time.toKotlinDuration
 object IjentSessionMediatorUtils {
   private val loggedErrors = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap<Throwable, Boolean>())
 
-  fun createProcessScope(parentScope: ParentOfIjentScopes, ijentLabel: String, logger: IjentLog): IjentScope {
+  fun createProcessScope(parentScope: ParentOfIjentScopes, ijentLabel: String): IjentScope {
     val context = IjentThreadPool.coroutineContext
     // Prevents from logging the error by the default exception handler.
     // Errors are logged explicitly in this function.
@@ -94,14 +94,14 @@ object IjentSessionMediatorUtils {
         }
 
         // TODO Callers should be able to define their own exception handlers.
-        logIjentError(logger, ijentLabel, err)
+        logIjentError(ijentLabel, err)
       }
     }
     @OptIn(EelDelicateApi::class)
     return IjentScope(parentScope, ijentProcessScope)
   }
 
-  fun logIjentError(logger: IjentLog, ijentLabel: String, exception: Throwable) {
+  fun logIjentError(ijentLabel: String, exception: Throwable) {
     // Wrapped in a non-cancellable section because this can be called from `invokeOnCompletion`
     // of an already-cancelled scope, and `logger.error(...)` may create application services
     // (e.g. error-report submitters) that the service container refuses to instantiate under a
@@ -113,7 +113,7 @@ object IjentSessionMediatorUtils {
 
           is IjentUnavailableException.CommunicationFailure -> {
             if (!exception.exitedExpectedly && loggedErrors.add(exception)) {
-              logger.error("Exception in connection with IJent $ijentLabel: ${exception.message}", exception)
+              IjentLogger.OTHER_LOG.error("Exception in connection with IJent $ijentLabel: ${exception.message}", exception)
             }
           }
         }
@@ -122,7 +122,7 @@ object IjentSessionMediatorUtils {
 
         else -> {
           if (loggedErrors.add(exception)) {
-            logger.error("Unexpected error during communnication with IJent $ijentLabel", exception)
+            IjentLogger.OTHER_LOG.error("Unexpected error during communnication with IJent $ijentLabel", exception)
           }
         }
       }
