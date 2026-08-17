@@ -6,6 +6,8 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import org.jetbrains.annotations.NotNull;
 
 final class GuardedBlock extends PersistentRangeMarker {
+  static final byte GUARD_BLOCK_FLAVOR_FLAG = IntervalTreeImpl.nextAvailableFlavorFlag();
+
   static boolean isGuard(@NotNull RangeMarker rangeMarker) {
     return rangeMarker instanceof GuardedBlock;
   }
@@ -16,7 +18,7 @@ final class GuardedBlock extends PersistentRangeMarker {
 
   @Override
   public byte getFlavorFlags() {
-    return PersistentRangeMarkerTree.GUARD_BLOCK_FLAVOR_FLAG;
+    return GUARD_BLOCK_FLAVOR_FLAG;
   }
 
   @Override
