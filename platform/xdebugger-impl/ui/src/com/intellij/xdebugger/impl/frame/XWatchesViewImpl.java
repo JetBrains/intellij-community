@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -116,6 +117,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 @ApiStatus.Internal
 public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView, XInlineWatchesView {
@@ -309,15 +311,29 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
           });
           XDebugSessionProxy session = getSessionProxy();
           if (session != null) {
-            CoroutineScope scope = session.getCoroutineScope();
-            Disposable disposable = CoroutineScopeKt.asDisposable(scope);
-            InlineCompletion.INSTANCE.install(editor, scope);
-            Disposer.register(disposable, () -> {
-              ApplicationManager.getApplication().invokeLater(() -> {
-                InlineCompletion.INSTANCE.remove(editor);
-              });
-            });
+            installInlineCompletion(editor, session.getCoroutineScope());
           }
+        }
+
+        private static void installInlineCompletion(EditorEx editor, CoroutineScope scope) {
+          InlineCompletion.INSTANCE.install(editor, scope);
+
+          // The session and editor have independent lifecycles. Run removal once and drop the editor-capturing runnable so the
+          // surviving lifecycle listener does not retain a disposed editor.
+          final AtomicReference<Runnable> disposeInlineCompletionRef = new AtomicReference<>(
+            () -> { InlineCompletion.INSTANCE.remove(editor); }
+          );
+          final Runnable doDisposeInlineCompletion = () -> {
+            final Runnable disposeImpl = disposeInlineCompletionRef.getAndSet(null);
+            if (disposeImpl != null) {
+              ApplicationManager.getApplication().invokeLater(disposeImpl);
+            }
+          };
+
+          // The debugger session can end while the watches editor is still alive.
+          Disposer.register(CoroutineScopeKt.asDisposable(scope), () -> { doDisposeInlineCompletion.run(); });
+          // The watches editor can be recreated while the debugger session is still active.
+          EditorUtil.disposeWithEditor(editor, () -> { doDisposeInlineCompletion.run(); });
         }
       };
     final JComponent editorComponent = myEvaluateComboBox.getEditorComponent();
