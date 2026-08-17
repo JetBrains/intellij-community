@@ -88,5 +88,5 @@ interface DocumentText {
    * @see DocumentTextPatch.toOps
    */
   @Contract(pure = true)
-  fun applyOp(op: DocumentTextOp): DocumentText
+  fun applyOp(op: DocumentOp): DocumentText
 }

@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.mock.MockDocument;
 import com.intellij.openapi.editor.ex.DocumentText;
-import com.intellij.openapi.editor.ex.DocumentTextOp;
+import com.intellij.openapi.editor.ex.DocumentOp;
 import com.intellij.openapi.editor.ex.DocumentTextPatch;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PerformanceUnitTest;
@@ -685,7 +685,7 @@ public class ModifiedLineSetTest {
   }
 
   private static DocumentText applyPatch(DocumentText text, DocumentTextPatch patch) {
-    for (DocumentTextOp op : patch.toOps()) {
+    for (DocumentOp op : patch.toOps()) {
       text = text.applyOp(op);
     }
     return text;

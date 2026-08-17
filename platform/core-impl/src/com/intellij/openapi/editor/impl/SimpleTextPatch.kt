@@ -2,8 +2,9 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.ex.DocumentNewOps
-import com.intellij.openapi.editor.ex.DocumentTextOp
+import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentTextPatch
+import com.intellij.util.ArrayUtil
 
 internal open class SimpleTextPatch(
   private val startOffset: Int,
@@ -17,30 +18,72 @@ internal open class SimpleTextPatch(
   final override fun newFragment(): CharSequence = newFragment
   final override fun newModStamp(): Long = newModStamp
   final override fun clearLineFlags(): Boolean = clearLineFlags
-  final override fun toOps(): List<DocumentTextOp> = patchToOps(this)
+  final override fun toOps(): List<DocumentOp> = patchToOps(this)
   override fun originStartOffset(): Int = startOffset
   override fun originEndOffset(): Int = endOffset
   override fun moveOffset(): Int = startOffset
 
-  private fun patchToOps(patch: DocumentTextPatch): List<DocumentTextOp> {
+  private fun patchToOps(patch: DocumentTextPatch): List<DocumentOp> {
     val newOps = DocumentNewOps.getInstance()
     val startOffset = patch.startOffset()
     val endOffset = patch.endOffset()
     val newFragment = patch.newFragment()
     val newFragmentLength = newFragment.length
+    val modStampOp = newOps.createModStampOp(newModStamp, false)
     if (startOffset == endOffset && newFragmentLength == 0) {
-      return newOps.createOps()
+      return if (clearLineFlags) {
+        newOps.createOps(modStampOp, clearLineFlagsOp())
+      } else {
+        newOps.createOps(modStampOp)
+      }
     }
     if (startOffset == endOffset) {
-      return newOps.createOps(newOps.createInsertOp(startOffset, newFragment))
+      return if (clearLineFlags) {
+        newOps.createOps(
+          newOps.createInsertOp(startOffset, newFragment),
+          modStampOp,
+          clearLineFlagsOp(),
+        )
+      } else {
+        newOps.createOps(
+          newOps.createInsertOp(startOffset, newFragment),
+          modStampOp,
+        )
+      }
     }
     if (newFragmentLength == 0) {
-      return newOps.createOps(newOps.createDeleteOp(startOffset, endOffset - startOffset))
+      return if (clearLineFlags) {
+        newOps.createOps(
+          newOps.createDeleteOp(startOffset, endOffset - startOffset),
+          modStampOp,
+          clearLineFlagsOp(),
+        )
+      } else {
+        newOps.createOps(
+          newOps.createDeleteOp(startOffset, endOffset - startOffset),
+          modStampOp,
+        )
+      }
     }
-    return newOps.createOps(
-      newOps.createDeleteOp(startOffset, endOffset - startOffset),
-      newOps.createInsertOp(startOffset, newFragment),
-    )
+    return if (clearLineFlags) {
+      newOps.createOps(
+        newOps.createDeleteOp(startOffset, endOffset - startOffset),
+        newOps.createInsertOp(startOffset, newFragment),
+        modStampOp,
+        clearLineFlagsOp(),
+      )
+    } else {
+      newOps.createOps(
+        newOps.createDeleteOp(startOffset, endOffset - startOffset),
+        newOps.createInsertOp(startOffset, newFragment),
+        modStampOp,
+      )
+    }
+  }
+
+  private fun clearLineFlagsOp(): DocumentOp.UnmodifiedLines {
+    val newOps = DocumentNewOps.getInstance()
+    return newOps.createUnmodifiedLinesOp(0, Int.MAX_VALUE, ArrayUtil.EMPTY_INT_ARRAY)
   }
 
   final override fun toString(): String {

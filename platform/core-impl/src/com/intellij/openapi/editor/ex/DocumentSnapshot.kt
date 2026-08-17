@@ -39,7 +39,6 @@ interface DocumentSnapshot {
    * Returns snapshot with specified `newModStamp`. The sputniks are kept, the characters do not change.
    *
    * @param incrementModSeq whether [DocumentModState.sequence] should be incremented
-   * @see DocumentModState.withStamp
    */
   @Contract(pure = true)
   fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentSnapshot
@@ -48,7 +47,6 @@ interface DocumentSnapshot {
    * Returns snapshot with cleared specified line flags. The sputniks are kept, the characters do not change.
    *
    * @param endLine is exclusive. Two special values `0` and `Int.MAX_VALUE` ignoring range checks
-   * @see DocumentModState.withClearedLineFlags
    */
   @Contract(pure = true)
   fun withClearedLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray): DocumentSnapshot

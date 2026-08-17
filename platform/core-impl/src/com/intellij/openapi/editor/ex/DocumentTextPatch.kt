@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.impl.SimpleTextPatch
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Snapshot-update instruction of a text change, converted to [DocumentTextOp]s via [toOps] and applied
+ * Snapshot-update instruction of a text change, converted to [DocumentOp]s via [toOps] and applied
  * through [DocumentText.applyOp].
  *
  * [startOffset], [endOffset] and [newFragment] describe the applied replacement.
@@ -31,7 +31,7 @@ interface DocumentTextPatch { // TODO: implement DocumentEventImpl via DocumentT
   fun originStartOffset(): Int
   fun originEndOffset(): Int
   fun moveOffset(): Int
-  fun toOps(): List<DocumentTextOp>
+  fun toOps(): List<DocumentOp>
 
   companion object {
 

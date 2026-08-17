@@ -4,14 +4,25 @@ package com.intellij.openapi.editor.ex
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-sealed interface DocumentTextOp {
-  interface Insert : DocumentTextOp {
+sealed interface DocumentOp {
+  interface Insert : DocumentOp {
     fun offset(): Int
     fun fragment(): CharSequence
   }
 
-  interface Delete : DocumentTextOp {
+  interface Delete : DocumentOp {
     fun offset(): Int
     fun length(): Int
+  }
+
+  interface ModStamp : DocumentOp {
+    fun modStamp(): Long
+    fun incSequence(): Boolean
+  }
+
+  interface UnmodifiedLines : DocumentOp {
+    fun startLine(): Int
+    fun endLine(): Int
+    fun exceptLines(): IntArray
   }
 }

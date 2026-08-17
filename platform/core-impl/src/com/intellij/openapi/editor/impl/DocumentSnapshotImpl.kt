@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.ex.DocumentModState
+import com.intellij.openapi.editor.ex.DocumentNewOps
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentSputnik
 import com.intellij.openapi.editor.ex.DocumentSputniks
@@ -30,7 +31,9 @@ internal class DocumentSnapshotImpl private constructor(
   }
 
   override fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentSnapshot {
-    val newModState = modState.withStamp(newModStamp, incrementModSeq)
+    val newOps = DocumentNewOps.getInstance()
+    val op = newOps.createModStampOp(newModStamp, incrementModSeq)
+    val newModState = modState.applyOp(text, text, op)
     if (newModState === modState) {
       return this
     }
@@ -38,7 +41,9 @@ internal class DocumentSnapshotImpl private constructor(
   }
 
   override fun withClearedLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray): DocumentSnapshot {
-    val newModState = modState.withClearedLineFlags(text, startLine, endLine, exceptLines)
+    val newOps = DocumentNewOps.getInstance()
+    val op = newOps.createUnmodifiedLinesOp(startLine, endLine, exceptLines)
+    val newModState = modState.applyOp(text, text, op)
     if (newModState === modState) {
       return this
     }
@@ -75,13 +80,18 @@ internal class DocumentSnapshotImpl private constructor(
 
   override fun withPatch(patch: DocumentTextPatch): DocumentSnapshot {
     var newText = text
+    var newModState = modState
     for (op in patch.toOps()) {
+      val before = newText
       newText = newText.applyOp(op)
+      newModState = newModState.applyOp(before, newText, op)
     }
-    if (newText === text) {
+    if (newText === text && newModState === modState) {
       return this
     }
-    val newModState = modState.withPatch(text, newText, patch)
+    if (newText === text) {
+      return DocumentSnapshotImpl(text, newModState, sputniks)
+    }
     val oldSnapshot = this
     val newSnapshot = DocumentSnapshotImpl(newText, newModState, sputniks)
     if (sputniks === DocumentSputniksImpl.EMPTY) {

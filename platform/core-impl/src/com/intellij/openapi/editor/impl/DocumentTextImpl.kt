@@ -2,7 +2,7 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.ex.DocumentText
-import com.intellij.openapi.editor.ex.DocumentTextOp
+import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.LineIterator
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.text.CharArrayUtil
@@ -96,10 +96,11 @@ internal class DocumentTextImpl private constructor(
     return getLineSet().createIterator()
   }
 
-  override fun applyOp(op: DocumentTextOp): DocumentText {
+  override fun applyOp(op: DocumentOp): DocumentText {
     return when(op) {
-      is DocumentTextOp.Insert -> applyInsert(op)
-      is DocumentTextOp.Delete -> applyDelete(op)
+      is DocumentOp.Insert -> applyInsert(op)
+      is DocumentOp.Delete -> applyDelete(op)
+      else -> this
     }
   }
 
@@ -120,7 +121,7 @@ internal class DocumentTextImpl private constructor(
     return lineSet
   }
 
-  private fun applyInsert(op: DocumentTextOp.Insert): DocumentText {
+  private fun applyInsert(op: DocumentOp.Insert): DocumentText {
     val offset = op.offset()
     val newFragment = op.fragment()
     if (newFragment.isEmpty()) {
@@ -149,7 +150,7 @@ internal class DocumentTextImpl private constructor(
     return DocumentTextImpl(newText, newLineSet, null)
   }
 
-  private fun applyDelete(op: DocumentTextOp.Delete): DocumentText {
+  private fun applyDelete(op: DocumentOp.Delete): DocumentText {
     val offset = op.offset()
     val length = op.length()
     if (length == 0) {

@@ -37,35 +37,16 @@ interface DocumentModState {
   fun isLineModified(line: Int): Boolean
 
   /**
-   * Returns state with [diff] applied: line-modification tracking is updated to reflect the lines [diff]
-   * touches, and [stamp]/[sequence] are taken from [diff].
-   *
-   * @param before the pre-patch text this instance's line-modification tracking was built against -- the same
-   *             [DocumentText] that [diff] is about to be applied to via [DocumentText.applyOp]. Passing any
-   *             other text silently mispairs this instance's tracked line structure with the wrong offsets.
-   * @param after the post-patch text, i.e. [before] with [diff] applied; used only to cross-check the rebuilt
-   *             line tracking against it, guarding against the two silently drifting apart.
+   * Returns state with [op] applied. What [before]/[after] must be depends on [op]:
+   * - [DocumentOp.Insert]/[DocumentOp.Delete]: [before] must be the same [DocumentText] this
+   *   instance's line-modification tracking was built against, and [after] must be [before] with [op]
+   *   applied. Passing any other text silently mispairs this instance's tracked line structure with the
+   *   wrong offsets.
+   * - [DocumentOp.ModStamp]: neither [before] nor [after] is read.
+   * - [DocumentOp.UnmodifiedLines]: only [before] is read, and it must be the current [DocumentText]
+   *   this instance's line-modification tracking is paired with. Passing any other text silently mispairs
+   *   this instance's tracked line structure with the wrong line count/offsets.
    */
   @Contract(pure = true)
-  fun withPatch(before: DocumentText, after: DocumentText, diff: DocumentTextPatch): DocumentModState
-
-  @Contract(pure = true)
-  fun withStamp(newStamp: Long, incrementSequence: Boolean): DocumentModState
-
-  /**
-   * Returns state with line-modification flags cleared in `[startLine, endLine)`, except lines in
-   * [exceptLines] keep whatever modification flag they currently have.
-   *
-   * @param text the current text this instance's line-modification tracking is paired with -- the same
-   *             [DocumentText] as the enclosing snapshot's. Passing any other text silently mispairs this
-   *             instance's tracked line structure with the wrong line count/offsets.
-   * @param endLine is exclusive. Two special values `0` and `Int.MAX_VALUE` ignoring range checks
-   */
-  @Contract(pure = true)
-  fun withClearedLineFlags(
-    text: DocumentText,
-    startLine: Int,
-    endLine: Int,
-    exceptLines: IntArray,
-  ): DocumentModState
+  fun applyOp(before: DocumentText, after: DocumentText, op: DocumentOp): DocumentModState
 }
