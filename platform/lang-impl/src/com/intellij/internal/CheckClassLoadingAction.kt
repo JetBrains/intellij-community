@@ -26,7 +26,8 @@ internal class CheckClassLoadingAction : DumbAwareAction(), ActionRemoteBehavior
     val classLoadingMap = buildClassLoadingMap(className)
 
     val columns = arrayOf("Module", "Class Loader", "Loading Result")
-    val data = classLoadingMap.map { (module, clazz) -> // keep topological order
+    val data = classLoadingMap.map { (module, loadingResult) -> // keep topological order
+      val clazz = loadingResult.getOrNull()
       val classLoaderDesc = when (clazz) {
         null -> "null"
         else -> when (val cl = clazz.classLoader) {
@@ -37,7 +38,10 @@ internal class CheckClassLoadingAction : DumbAwareAction(), ActionRemoteBehavior
       arrayOf(
         module.fullId,
         module.pluginClassLoader?.addressTag ?: "null",
-        if (clazz != null) "Instance ${clazz.addressTag} loaded by ${clazz.classLoader.addressTag}$classLoaderDesc" else "null"
+        loadingResult.fold(
+          onSuccess = { if (clazz != null) "Instance ${clazz.addressTag} loaded by ${clazz.classLoader.addressTag}$classLoaderDesc" else "null" },
+          onFailure = { it.message ?: it.toString() },
+        )
       )
     }.toTypedArray()
 
@@ -54,7 +58,7 @@ internal class CheckClassLoadingAction : DumbAwareAction(), ActionRemoteBehavior
     table.columnModel.getColumn(1).preferredWidth = 90
     table.columnModel.getColumn(2).preferredWidth = 670
 
-    val distinct = classLoadingMap.entries.groupBy { it.value }
+    val distinct = classLoadingMap.entries.groupBy { it.value.getOrNull() }
       .mapValues { it.value.map { it.key } }
       .filter { it.key != null }
     val distinctCount = distinct.size
@@ -92,18 +96,21 @@ internal class CheckClassLoadingAction : DumbAwareAction(), ActionRemoteBehavior
 
   private val Any.addressTag: String get() = "@" + System.identityHashCode(this).toString(16)
 
-  private fun PluginModuleDescriptor.tryLoadClass(className: String): Class<*>? {
-    if (pluginClassLoader == null) return null
+  private fun PluginModuleDescriptor.tryLoadClass(className: String): Result<Class<*>?> {
+    if (pluginClassLoader == null) return Result.success(null)
     return try {
-      Class.forName(className, false, pluginClassLoader)
+      Result.success(Class.forName(className, false, pluginClassLoader))
     }
-    catch (e: ClassNotFoundException) {
-      null
+    catch (_: ClassNotFoundException) {
+      Result.success(null)
+    }
+    catch (e: Throwable) {
+      Result.failure(e)
     }
   }
 
-  private fun buildClassLoadingMap(className: String): Map<PluginModuleDescriptor, Class<*>?> {
-    val loadingResults = mutableMapOf<PluginModuleDescriptor, Class<*>?>()
+  private fun buildClassLoadingMap(className: String): Map<PluginModuleDescriptor, Result<Class<*>?>> {
+    val loadingResults = mutableMapOf<PluginModuleDescriptor, Result<Class<*>?>>()
     val pluginSet = PluginManagerCore.getPluginSet().resolvedPluginSet
     for (moduleGroup in pluginSet.runtimeModuleGroupGraph.sortedGroups) {
       for (module in moduleGroup.sortedDescriptors) {
