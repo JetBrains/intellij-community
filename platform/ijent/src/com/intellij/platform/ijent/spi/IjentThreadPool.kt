@@ -45,7 +45,7 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
   fun checkCurrentThreadIsInPool() {
     val currentThread = Thread.currentThread()
     if (currentThread !in threads) {
-      LOG.error("Not in IJent thread pool: $currentThread")
+      IjentLogger.OTHER_LOG.error("Not in IJent thread pool: $currentThread")
     }
   }
 
@@ -74,7 +74,7 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
     val exceptionHandler = CoroutineExceptionHandler { context, exception ->
       // IjentUnavailableException is silently ignored - it's already logged during its creation.
       if (exception !is IjentUnavailableException) {
-        LOG.error("Uncaught exception in IJent coroutine $context", exception)
+        IjentLogger.OTHER_LOG.error("Uncaught exception in IJent coroutine $context", exception)
       }
     }
 
@@ -111,5 +111,3 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
     }
   }
 }
-
-private val LOG = IjentLogger.OTHER_LOG

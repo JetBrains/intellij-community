@@ -206,18 +206,17 @@ class IjentSessionProcessMediator private constructor(
       // intention of the stderr logger is to write logs of the remote process, which come from the remote machine to the local one with
       // a delay.
       GlobalScope.launch(IjentThreadPool.coroutineContext + ijentProcessScope.s.coroutineNameAppended("stderr logger")) {
-        IjentSessionMediatorUtils.ijentProcessStderrLogger(process.stderr, ijentLabel, lastStderrMessages, LOG)
+        IjentSessionMediatorUtils.ijentProcessStderrLogger(process.stderr, ijentLabel, lastStderrMessages)
       }
 
       val mediator = IjentSessionProcessMediator(ijentProcessScope, process, exitsOnStdinEof)
 
       val awaiterScope = ijentProcessScope.s.launch(context = context + ijentProcessScope.s.coroutineNameAppended("exit awaiter scope")) {
         @Suppress("checkedExceptions") val exitCode = process.exitCode.await()
-        LOG.debug { "IJent process $ijentLabel exited with code $exitCode" }
+        IjentLogger.LIFETIME_LOG.debug { "IJent process $ijentLabel exited with code $exitCode" }
         IjentSessionMediatorUtils.ijentProcessExitCodeHandler(
           ijentLabel,
           lastStderrMessages,
-          LOG,
           exitCode,
           isExpectedProcessExit(exitCode),
         )
@@ -243,7 +242,7 @@ private suspend fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSes
   if (!process.isAlive) return
 
   try {
-    LOG.debug { "Closing stdin of $ijentLabel" }
+    IjentLogger.LIFETIME_LOG.debug { "Closing stdin of $ijentLabel" }
     runCatching { process.stdin.close(null) }
 
     // On Windows process.destroy() is an abrupt kill, so if ijent can react to stdin EOF, let's wait for a bit before destroying
@@ -257,7 +256,7 @@ private suspend fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSes
     awaitProcessExit(process, 1.5.seconds)
 
     if (process.isAlive) {
-      LOG.warn("The process $ijentLabel is still alive, it will be killed")
+      IjentLogger.LIFETIME_LOG.warn("The process $ijentLabel is still alive, it will be killed")
       process.destroyForcibly()
     }
   }
@@ -265,7 +264,7 @@ private suspend fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSes
     throw e
   }
   catch (e: Throwable) {
-    LOG.warn("Failed to terminate $ijentLabel", e)
+    IjentLogger.LIFETIME_LOG.warn("Failed to terminate $ijentLabel", e)
   }
 }
 
@@ -301,5 +300,3 @@ private fun OutputStream.extractRawProcessStream(): WritableByteChannel {
     else -> throw IllegalStateException("Unexpected stream type: ${this::class.java}")
   }
 }
-
-private val LOG = IjentLogger.LIFETIME_LOG
