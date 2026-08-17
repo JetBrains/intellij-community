@@ -28,7 +28,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlin.test.junit",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlin-test-junit-kotlin-test-junit"],
