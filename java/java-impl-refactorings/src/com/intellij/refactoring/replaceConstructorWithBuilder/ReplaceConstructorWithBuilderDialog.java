@@ -98,7 +98,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   private static final String RECENT_KEYS = "ReplaceConstructorWithBuilder.RECENT_KEYS";
   private static final String SETTER_PREFIX_KEY = "ConstructorWithBuilder.SetterPrefix";
 
-  protected ReplaceConstructorWithBuilderDialog(@NotNull Project project, PsiMethod[] constructors) {
+  public ReplaceConstructorWithBuilderDialog(@NotNull Project project, PsiMethod[] constructors) {
     super(project, false, true);
     myConstructors = constructors;
     {

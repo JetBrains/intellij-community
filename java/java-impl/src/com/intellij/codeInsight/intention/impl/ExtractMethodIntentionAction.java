@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.extractMethod.ExtractMethodIntentionService;
+import com.intellij.refactoring.JavaRefactoringService;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.util.IncorrectOperationException;
@@ -41,15 +41,15 @@ public final class ExtractMethodIntentionAction implements IntentionAction, Icon
     }
     SelectionModel model = editor.getSelectionModel();
     if (!model.hasSelection()) return false;
-    ExtractMethodIntentionService support = ExtractMethodIntentionService.getInstance();
-    return support != null && support.isAvailable(project, editor, psiFile);
+    JavaRefactoringService refactoringService = JavaRefactoringService.getInstance();
+    return refactoringService != null && refactoringService.canExtractMethod(project, editor, psiFile);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
-    ExtractMethodIntentionService extractMethodIntentionService = ExtractMethodIntentionService.getInstance();
-    if (extractMethodIntentionService == null) return;
-    extractMethodIntentionService.extractMethod(project, editor, psiFile);
+    JavaRefactoringService refactoringService = JavaRefactoringService.getInstance();
+    if (refactoringService == null) return;
+    refactoringService.extractMethod(project, editor, psiFile);
   }
 
   @Override

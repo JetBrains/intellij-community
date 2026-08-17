@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.refactoring.introduceVariable;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.refactoring;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -9,11 +9,15 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.PsiDocumentManager;
@@ -22,6 +26,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
@@ -32,20 +37,32 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
+import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
+import com.intellij.refactoring.extractMethod.PrepareFailedException;
+import com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.duplicates.Match;
+import com.intellij.refactoring.util.duplicates.MatchProvider;
+import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.util.CommonJavaRefactoringUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 
-public class IntroduceEmptyVariableHandlerImpl implements JavaIntroduceEmptyVariableHandlerBase {
+final class JavaRefactoringServiceImpl implements JavaRefactoringService {
   private static final String VARIABLE_NAME = "IntroducedVariable";
   private static final String TYPE_NAME = "Type";
 
   @Override
-  public IntentionPreviewInfo generatePreview(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiType type) {
+  public IntentionPreviewInfo generateIntroduceEmptyVariablePreview(@NotNull Editor editor,
+                                                                   @NotNull PsiFile file,
+                                                                   @NotNull PsiType type) {
     Project project = file.getProject();
     int offset = editor.getCaretModel().getOffset();
     PsiElement at = file.findElementAt(offset);
@@ -66,7 +83,7 @@ public class IntroduceEmptyVariableHandlerImpl implements JavaIntroduceEmptyVari
   }
 
   @Override
-  public void invoke(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiType type) {
+  public void introduceEmptyVariable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiType type) {
     Project project = file.getProject();
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     int offset = editor.getCaretModel().getOffset();
@@ -107,6 +124,53 @@ public class IntroduceEmptyVariableHandlerImpl implements JavaIntroduceEmptyVari
     });
   }
 
+  @Override
+  public boolean canExtractMethod(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiElement[] elements = ExtractMethodHandler.getElements(project, editor, file);
+    if (elements.length == 0) return false;
+    if (PsiTreeUtil.getParentOfType(elements[0], PsiClass.class) == null) return false;
+    ExtractMethodProcessor processor = ExtractMethodHandler.getProcessor(project, elements, file, false);
+    if (processor == null) return false;
+    try {
+      return processor.prepare(null);
+    }
+    catch (PrepareFailedException e) {
+      return false;
+    }
+  }
+
+  @Override
+  public void extractMethod(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    new ExtractMethodHandler().invoke(project, editor, file, null);
+  }
+
+  @Override
+  public void replaceConstructorWithBuilder(@NotNull Project project, PsiMethod @NotNull [] constructors) {
+    new ReplaceConstructorWithBuilderDialog(project, constructors).show();
+  }
+
+  @Override
+  public void replaceMethodDuplicates(@NotNull PsiMethod method) {
+    Project project = method.getProject();
+    final Callable<@Nullable MatchProvider> runnable = () -> {
+      if (!method.isValid()) return null;
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) return null;
+
+      final List<Match> duplicates = MethodDuplicatesHandler.hasDuplicates(containingClass, method);
+      duplicates.removeIf(match -> PsiTreeUtil.isAncestor(method, match.getMatchStart(), false));
+      return duplicates.isEmpty() ? null : MatchProvider.create(method, duplicates);
+    };
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.nonBlocking(runnable)
+        .finishOnUiThread(ModalityState.nonModal(), matchProvider -> {
+          MethodDuplicatesHandler.replaceDuplicate(project, ContainerUtil.createMaybeSingletonList(matchProvider));
+        })
+        .expireWhen(() -> !method.isValid())
+        .submit(AppExecutorUtil.getAppExecutorService()),
+      JavaRefactoringBundle.message("replace.method.code.duplicates.title"), true, project);
+  }
+
   private static String insertArgument(Project project, Document document, int offset, SuggestedNameInfo suggestedNameInfo) {
     String initialVariableName = suggestedNameInfo.names[0];
     document.insertString(offset, initialVariableName);
@@ -140,5 +204,4 @@ public class IntroduceEmptyVariableHandlerImpl implements JavaIntroduceEmptyVari
     SuggestedNameInfo.Delegate delegate = new SuggestedNameInfo.Delegate(strings, nameInfo);
     return codeStyleManager.suggestUniqueVariableName(delegate, at, true);
   }
-
 }

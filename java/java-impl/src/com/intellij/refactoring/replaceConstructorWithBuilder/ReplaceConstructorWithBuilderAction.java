@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.JavaRefactoringService;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -33,7 +34,7 @@ public final class ReplaceConstructorWithBuilderAction extends PsiElementBaseInt
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    return getConstructor(element) != null && ReplaceConstructorWithBuilderService.getInstance() != null;
+    return getConstructor(element) != null && JavaRefactoringService.getInstance() != null;
   }
 
   @Override
@@ -42,13 +43,13 @@ public final class ReplaceConstructorWithBuilderAction extends PsiElementBaseInt
     if (constructor == null) {
       return;
     }
-    ReplaceConstructorWithBuilderService constructorWithBuilderService = ReplaceConstructorWithBuilderService.getInstance();
-    if (constructorWithBuilderService == null) {
+    JavaRefactoringService refactoringService = JavaRefactoringService.getInstance();
+    if (refactoringService == null) {
       return;
     }
 
     PsiClass aClass = constructor.getContainingClass();
-    constructorWithBuilderService.showDialog(project, Objects.requireNonNull(aClass).getConstructors());
+    refactoringService.replaceConstructorWithBuilder(project, Objects.requireNonNull(aClass).getConstructors());
   }
 
   @Override

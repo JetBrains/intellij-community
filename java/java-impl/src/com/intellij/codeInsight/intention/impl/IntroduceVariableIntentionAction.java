@@ -31,8 +31,8 @@ import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
+import com.intellij.refactoring.JavaRefactoringService;
 import com.intellij.refactoring.PreviewableRefactoringActionHandler;
-import com.intellij.refactoring.introduceVariable.JavaIntroduceEmptyVariableHandlerBase;
 import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
@@ -58,7 +58,7 @@ public final class IntroduceVariableIntentionAction extends BaseRefactoringInten
       return false;
     }
 
-    if (JavaIntroduceEmptyVariableHandlerBase.getInstance() == null) {
+    if (JavaRefactoringService.getInstance() == null) {
       return false;
     }
 
@@ -93,10 +93,10 @@ public final class IntroduceVariableIntentionAction extends BaseRefactoringInten
     if (element == null) return IntentionPreviewInfo.EMPTY;
     PsiType type = getTypeOfUnfilledParameter(editor, element);
     if (type != null) {
-      JavaIntroduceEmptyVariableHandlerBase emptyVariableHandler = JavaIntroduceEmptyVariableHandlerBase.getInstance();
-      return emptyVariableHandler == null
+      JavaRefactoringService refactoringService = JavaRefactoringService.getInstance();
+      return refactoringService == null
              ? IntentionPreviewInfo.EMPTY
-             : emptyVariableHandler.generatePreview(editor, element.getContainingFile(), type);
+             : refactoringService.generateIntroduceEmptyVariablePreview(editor, element.getContainingFile(), type);
     }
     final PsiExpression expression = detectExpressionStatement(element);
     if (expression == null) return IntentionPreviewInfo.EMPTY;
@@ -111,9 +111,9 @@ public final class IntroduceVariableIntentionAction extends BaseRefactoringInten
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiType type = getTypeOfUnfilledParameter(editor, element);
     if (type != null) {
-      JavaIntroduceEmptyVariableHandlerBase emptyVariableHandler = JavaIntroduceEmptyVariableHandlerBase.getInstance();
-      if (emptyVariableHandler != null) {
-        emptyVariableHandler.invoke(editor, element.getContainingFile(), type);
+      JavaRefactoringService refactoringService = JavaRefactoringService.getInstance();
+      if (refactoringService != null) {
+        refactoringService.introduceEmptyVariable(editor, element.getContainingFile(), type);
       }
       return;
     }

@@ -34,11 +34,11 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.JavaRefactoringService;
 import com.intellij.refactoring.extractMethod.ControlFlowWrapper;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
-import com.intellij.refactoring.util.duplicates.MethodDuplicatesService;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -67,7 +67,7 @@ public final class ExtractToMethodReferenceIntention extends BaseElementAtCaretI
 
   @Override
   public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
-    if (MethodDuplicatesService.getInstance() == null) return false;
+    if (JavaRefactoringService.getInstance() == null) return false;
     final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, false);
     if (lambdaExpression != null) {
       PsiElement body = lambdaExpression.getBody();
@@ -185,9 +185,9 @@ public final class ExtractToMethodReferenceIntention extends BaseElementAtCaretI
             if (super.performRefactoring()) {
               ApplicationManager.getApplication().invokeLater(() -> {
                 PsiMethod restored = pointer.getElement();
-                MethodDuplicatesService methodDuplicatesService = MethodDuplicatesService.getInstance();
-                if (restored != null && methodDuplicatesService != null) {
-                  methodDuplicatesService.replaceMethodDuplicates(restored);
+                JavaRefactoringService refactoringService = JavaRefactoringService.getInstance();
+                if (restored != null && refactoringService != null) {
+                  refactoringService.replaceMethodDuplicates(restored);
                 }
               });
               return true;
