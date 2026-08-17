@@ -64,8 +64,8 @@
     <action id="Mermaid.ExportDiagram"
             icon="AllIcons.ToolbarDecorator.Export"
             class="com.intellij.mermaid.markdown.preview.ExportDiagramAction">
-      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Github.PullRequest.Changed.MarkViewed.Toggle"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="Github.Create.Gist"/>
     </action>
   </actions>
 </idea-plugin>

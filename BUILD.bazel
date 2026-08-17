@@ -64,6 +64,14 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 
+jps_test(
+    name = "main-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":main-tests_test_lib"],
+)
+### skip generation section `test intellij.idea.community.main.tests`
+
 ### auto-generated section `build intellij.idea.community.main` start
 jvm_library(
     name = "main",
@@ -1175,10 +1183,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.idea.community.main.tests` end
-
-### auto-generated section `test intellij.idea.community.main.tests` start
-jps_test(
-    name = "main-tests_test",
-    runtime_deps = [":main-tests_test_lib"],
-)
-### auto-generated section `test intellij.idea.community.main.tests` end
