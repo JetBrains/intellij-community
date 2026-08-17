@@ -450,6 +450,12 @@ public final class TerminalToolWindowManager implements Disposable {
         performAction(actionId);
       }
 
+      @Override
+      public void moveToolWindowTabToEditor() {
+        var actionId = "MoveToolWindowTabToEditorAction";
+        performAction(actionId);
+      }
+
       private boolean isActionEnabled(@NotNull String actionId) {
         AnAction action = ActionManager.getInstance().getAction(actionId);
         if (action == null) return false;

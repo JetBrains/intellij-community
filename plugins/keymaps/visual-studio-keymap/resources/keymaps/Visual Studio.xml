@@ -619,6 +619,7 @@
   <action id="ZoomOutIdeAction"/>
   <action id="Console.Open"/>
 
+  <action id="MoveToolWindowTabToEditorAction"/>
 
   <!--KNOWN CONFLICTS: https://youtrack.jetbrains.com/issue/IDEA-268674-->
   <!--MISSING VISUAL STUDIO SHORTCUTS-->
