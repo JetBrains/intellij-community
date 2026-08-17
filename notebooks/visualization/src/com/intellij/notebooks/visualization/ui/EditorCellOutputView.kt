@@ -6,6 +6,7 @@ import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKey
 import com.intellij.notebooks.visualization.outputs.NotebookOutputInlayShowable
 import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
 import com.intellij.notebooks.visualization.ui.NotebookUiUtils.intersectsEvenIfEmpty
+import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDragAssistant
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -20,6 +21,7 @@ class EditorCellOutputView internal constructor(
   private val editor: EditorImpl,
   private val output: EditorCellOutput,
   private val component: CollapsingComponent,
+  dragAssistant: EditorCellDragAssistant?,
   private val toDispose: Disposable?,
   internal val gutterRenderer: GutterIconRenderer?,
 ) : EditorCellViewComponent() {
@@ -31,7 +33,7 @@ class EditorCellOutputView internal constructor(
     }
 
   // Real UI Panel will be created lazily when folding became visible.
-  val folding: EditorCellFoldingBar = EditorCellFoldingBar(editor, null, ::getFoldingBounds) {
+  val folding: EditorCellFoldingBar = EditorCellFoldingBar(editor, dragAssistant, ::getFoldingBounds) {
     component.isSeen = !component.isSeen
   }
     .also {

@@ -14,6 +14,7 @@ import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
 import com.intellij.notebooks.visualization.outputs.impl.InnerComponent
 import com.intellij.notebooks.visualization.outputs.impl.SurroundingComponent
 import com.intellij.notebooks.visualization.settings.NotebookSettings
+import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDragAssistant
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeNotifier
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
@@ -35,6 +36,7 @@ import javax.swing.JComponent
 class EditorCellOutputsView(
   private val editor: EditorImpl,
   private val cell: EditorCell,
+  private val dragAssistant: EditorCellDragAssistant?,
   private val onInlayDisposed: (EditorCellOutputsView) -> Unit = {},
 ) : EditorCellViewComponent(), Disposable {
 
@@ -289,7 +291,14 @@ class EditorCellOutputsView(
       }
     }
 
-    val outputComponent = EditorCellOutputView(editor, output, collapsingComponent, newComponent.disposable, newComponent.gutterRenderer)
+    val outputComponent = EditorCellOutputView(
+      editor,
+      output,
+      collapsingComponent,
+      dragAssistant,
+      newComponent.disposable,
+      newComponent.gutterRenderer,
+    )
 
     innerComponent.add(
       collapsingComponent,
