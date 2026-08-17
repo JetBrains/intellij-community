@@ -250,7 +250,7 @@ public class ProjectViewDirectoryHelper {
 
     for (VirtualFile root : prm.getContentRoots()) {
       VirtualFile parent = root.getParent();
-      if (!isFileUnderContentRoot(parent)) {
+      if (isFileNotUnderContentRoot(parent)) {
         topLevelContentRoots.add(root);
       }
     }
@@ -260,7 +260,7 @@ public class ProjectViewDirectoryHelper {
         VirtualFile root = pointer.getFile();
         if (root != null) {
           VirtualFile parent = root.getParent();
-          if (!isFileUnderContentRoot(parent)) {
+          if (isFileNotUnderContentRoot(parent)) {
             topLevelContentRoots.add(root);
           }
         }
@@ -275,7 +275,7 @@ public class ProjectViewDirectoryHelper {
     // membership in the (loaded-only) BaseProjectDirectories set - is needed to correctly detect nested roots.
     Set<VirtualFile> result = new LinkedHashSet<>();
     for (VirtualFile root : BaseProjectDirectories.getBaseDirectories(myProject)) {
-      if (!isFileUnderContentRoot(root.getParent())) {
+      if (isFileNotUnderContentRoot(root.getParent())) {
         result.add(root);
       }
     }
@@ -285,7 +285,7 @@ public class ProjectViewDirectoryHelper {
     for (UnloadedModuleDescription description : ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions()) {
       for (VirtualFilePointer pointer : description.getContentRoots()) {
         VirtualFile root = pointer.getFile();
-        if (root != null && !isFileUnderContentRoot(root.getParent())) {
+        if (root != null && isFileNotUnderContentRoot(root.getParent())) {
           result.add(root);
         }
       }
@@ -314,8 +314,8 @@ public class ProjectViewDirectoryHelper {
       .collect(Collectors.toList());
   }
 
-  boolean isFileUnderContentRoot(@Nullable VirtualFile file) {
-    return file != null && file.isValid() && myFileIndex.getContentRootForFile(file, false) != null;
+  private boolean isFileNotUnderContentRoot(@Nullable VirtualFile file) {
+    return file != null && file.isValid() && myFileIndex.getContentRootForFile(file, false) == null;
   }
 
   private PsiElement @NotNull [] directoryChildrenInProject(PsiDirectory psiDirectory, final ViewSettings settings) {
