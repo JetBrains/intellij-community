@@ -433,20 +433,24 @@ abstract class PyCodeInsightTestCase {
    * The fix is looked up among the quick fixes of every issue reported in the file, so [fileContent] has to make
    * one of the enabled inspections fire. Unlike [test], [fileContent] is plain Python without inline assertions;
    * a `<caret>` marker is still honoured for fixes that need one.
+   *
+   * A fix that an inspection and an annotator both offer for the same code is reported once per reporter; pass
+   * [expectedMatchCount] to state how many are expected, and the first of them is applied.
    */
   protected fun testQuickFix(
     @Language("Python") fileContent: String,
     quickFixName: String,
     @Language("Python") expectedContent: String,
     vararg otherFiles: Pair<String, String>,
+    expectedMatchCount: Int = 1,
   ) {
     runTestBody {
       withQuickFixes(fileContent, otherFiles) { quickFixes ->
         val matching = quickFixes.filter { it.text == quickFixName }
-        if (matching.size != 1) {
-          fail("Expected exactly one quick fix named '$quickFixName', got ${quickFixes.map { it.text }}")
+        if (matching.size != expectedMatchCount) {
+          fail("Expected $expectedMatchCount quick fix(es) named '$quickFixName', got ${quickFixes.map { it.text }}")
         }
-        myFixture.launchAction(matching.single())
+        myFixture.launchAction(matching.first())
         myFixture.checkResult(expectedContent.trimIndent(), true)
       }
     }

@@ -73,6 +73,16 @@ class PyQuickFixApplicationTest : PyCodeInsightTestCase() {
     """)
   }
 
+  // Subtraction is not commutative, so a target on the right of it cannot be moved into the operator.
+  @Test
+  @TestInspections(enableInspections = [PyAugmentAssignmentInspection::class])
+  fun `an assignment subtracting its own target is left alone`() {
+    assertNoQuickFix("""
+      i = 0
+      i = 1 - i
+    """, AUGMENT_ASSIGNMENT)
+  }
+
   @Test
   @TestInspections(enableInspections = [PySimplifyBooleanCheckInspection::class])
   fun `a comparison to True is replaced with the operand itself`() {
@@ -302,6 +312,15 @@ class PyQuickFixApplicationTest : PyCodeInsightTestCase() {
   @TestInspections(enableInspections = [PyCompatibilityInspection::class])
   fun `an import of the python 3 builtins module is converted to its python 2 name`() {
     testQuickFix("import builtins", "Convert builtin module import to supported form", "import __builtin__")
+  }
+
+  // The Python 2 name is missing from the version of the file as well, so the `UnsupportedFeatures` annotator reports
+  // the import next to the inspection and the same fix is offered by both.
+  @Test
+  @TestInspections(enableInspections = [PyCompatibilityInspection::class])
+  fun `an import of the python 2 builtin module is converted to its python 3 name`() {
+    testQuickFix("import __builtin__", "Convert builtin module import to supported form", "import builtins",
+                 expectedMatchCount = 2)
   }
 
   private fun simplifyBooleanExpression(replacement: String): String = "Replace boolean expression with '$replacement'"
