@@ -64,6 +64,8 @@ public abstract class ActionPlaces {
   public static final String NEW_UI_RUN_TOOLBAR = "NewUiRunToolbar";
 
   public static final String PROJECT_VIEW_POPUP = "ProjectViewPopup";
+  @ApiStatus.Internal
+  public static final String REPOSITORY_VIEW_POPUP = "RepositoryViewPopup";
   public static final String PROJECT_VIEW_TOOLBAR = "ProjectViewToolbar";
 
   public static final String REVEAL_IN_POPUP = "RevealInPopup";
