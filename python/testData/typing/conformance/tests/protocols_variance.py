@@ -4,14 +4,15 @@ Tests type variable variance inference for generic protocols.
 
 # Specification: https://typing.readthedocs.io/en/latest/spec/protocol.html#generic-protocols
 
-from typing import ParamSpec, Protocol, TypeVar
+from typing import Protocol, TypeVar
+from typing_extensions import ParamSpec
 
 T1 = TypeVar("T1")
 T2 = TypeVar("T2", bound=int)
 T3 = TypeVar("T3", bytes, str)
 T1_co = TypeVar("T1_co", covariant=True)
 T1_contra = TypeVar("T1_contra", contravariant=True)
-P = ParamSpec("P")
+P = ParamSpec("P", contravariant=True)
 R = TypeVar("R", covariant=True)
 
 # > Type checkers will warn if the inferred variance is different from the

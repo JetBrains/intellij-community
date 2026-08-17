@@ -105,5 +105,5 @@ pc1: ProtoC1 = ConcreteC1  # E
 pc2: ProtoC2 = ConcreteC1  # OK
 pc3: ProtoC1 = ConcreteC2  # E
 pc4: ProtoC2 = ConcreteC2  # E
-pc5: ProtoC1 = ConcreteC3  # E
+pc5: ProtoC1 = ConcreteC3  # E?: Explicit ClassVar matching is unspecified
 pc6: ProtoC2 = ConcreteC3  # OK

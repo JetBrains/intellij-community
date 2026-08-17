@@ -111,7 +111,7 @@ class Proto3(Protocol):
     def __call__(self, a: int, *args: Any, **kwargs: Any) -> None: ...
 
 
-class Proto4(Protocol[P]):
+class Proto4[**P](Protocol):
     def __call__(self, a: int, *args: P.args, **kwargs: P.kwargs) -> None: ...
 
 
