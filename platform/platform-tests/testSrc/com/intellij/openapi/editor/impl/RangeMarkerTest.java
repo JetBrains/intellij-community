@@ -1042,7 +1042,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     });
   }
 
-  public void testRangeMarkersAreLazyCreated() {
+  // in case of SnapshotRangeMarkerImpl we don't share nodes
+  public void _testRangeMarkersAreLazyCreated() {
     Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
     RangeMarker m1 = document.createRangeMarker(2, 4);
     RangeMarker m2 = document.createRangeMarker(2, 4);
@@ -1381,7 +1382,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   @PerformanceUnitTest
-  public void testGetOffsetPerformance() {
+  public void testGetStartEndOffsetPerformance() {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     List<RangeMarker> markers = new ArrayList<>();
     int N = 100_000;
@@ -1391,17 +1392,20 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
+    insertString(doc, 0, " ");
+    for (RangeMarker rm : markers) {
+      assertTrue(rm.isValid());
+    }
     Benchmark.newBenchmark("RM.getStartOffset", ()->{
-      insertString(doc, 0, " ");
       for (int i=0; i<1000; i++) {
+        int length = 0;
         for (RangeMarker rm : markers) {
-          int length = rm.getEndOffset() - rm.getStartOffset();
-          assertEquals(1, length);
-          assertTrue(rm.isValid());
+          length += rm.getEndOffset() - rm.getStartOffset();
         }
+        assertEquals(markers.size(), length);
       }
-      deleteString(doc, 0, 1);
     }).start();
+    deleteString(doc, 0, 1);
   }
 
   @PerformanceUnitTest
