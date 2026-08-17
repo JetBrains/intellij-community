@@ -1,93 +1,94 @@
-from typing import Any
+from _typeshed import Incomplete
+from typing import ClassVar
 
 class Token:
-    start_mark: Any
-    end_mark: Any
+    start_mark: Incomplete
+    end_mark: Incomplete
     def __init__(self, start_mark, end_mark) -> None: ...
 
 class DirectiveToken(Token):
-    id: Any
-    name: Any
-    value: Any
-    start_mark: Any
-    end_mark: Any
+    id: ClassVar[str]
+    name: Incomplete
+    value: Incomplete
+    start_mark: Incomplete
+    end_mark: Incomplete
     def __init__(self, name, value, start_mark, end_mark) -> None: ...
 
 class DocumentStartToken(Token):
-    id: Any
+    id: ClassVar[str]
 
 class DocumentEndToken(Token):
-    id: Any
+    id: ClassVar[str]
 
 class StreamStartToken(Token):
-    id: Any
-    start_mark: Any
-    end_mark: Any
-    encoding: Any
+    id: ClassVar[str]
+    start_mark: Incomplete
+    end_mark: Incomplete
+    encoding: Incomplete
     def __init__(self, start_mark=None, end_mark=None, encoding=None) -> None: ...
 
 class StreamEndToken(Token):
-    id: Any
+    id: ClassVar[str]
 
 class BlockSequenceStartToken(Token):
-    id: Any
+    id: ClassVar[str]
 
 class BlockMappingStartToken(Token):
-    id: Any
+    id: ClassVar[str]
 
 class BlockEndToken(Token):
-    id: Any
+    id: ClassVar[str]
 
 class FlowSequenceStartToken(Token):
-    id: Any
+    id: ClassVar[str]
 
 class FlowMappingStartToken(Token):
-    id: Any
+    id: ClassVar[str]
 
 class FlowSequenceEndToken(Token):
-    id: Any
+    id: ClassVar[str]
 
 class FlowMappingEndToken(Token):
-    id: Any
+    id: ClassVar[str]
 
 class KeyToken(Token):
-    id: Any
+    id: ClassVar[str]
 
 class ValueToken(Token):
-    id: Any
+    id: ClassVar[str]
 
 class BlockEntryToken(Token):
-    id: Any
+    id: ClassVar[str]
 
 class FlowEntryToken(Token):
-    id: Any
+    id: ClassVar[str]
 
 class AliasToken(Token):
-    id: Any
-    value: Any
-    start_mark: Any
-    end_mark: Any
+    id: ClassVar[str]
+    value: Incomplete
+    start_mark: Incomplete
+    end_mark: Incomplete
     def __init__(self, value, start_mark, end_mark) -> None: ...
 
 class AnchorToken(Token):
-    id: Any
-    value: Any
-    start_mark: Any
-    end_mark: Any
+    id: ClassVar[str]
+    value: Incomplete
+    start_mark: Incomplete
+    end_mark: Incomplete
     def __init__(self, value, start_mark, end_mark) -> None: ...
 
 class TagToken(Token):
-    id: Any
-    value: Any
-    start_mark: Any
-    end_mark: Any
+    id: ClassVar[str]
+    value: Incomplete
+    start_mark: Incomplete
+    end_mark: Incomplete
     def __init__(self, value, start_mark, end_mark) -> None: ...
 
 class ScalarToken(Token):
-    id: Any
-    value: Any
-    plain: Any
-    start_mark: Any
-    end_mark: Any
-    style: Any
+    id: ClassVar[str]
+    value: Incomplete
+    plain: Incomplete
+    start_mark: Incomplete
+    end_mark: Incomplete
+    style: Incomplete
     def __init__(self, value, plain, start_mark, end_mark, style=None) -> None: ...

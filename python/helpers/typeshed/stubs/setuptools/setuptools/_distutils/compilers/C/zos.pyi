@@ -5,6 +5,8 @@ from typing import ClassVar, Literal
 from . import unix
 
 class Compiler(unix.Compiler):
+    compiler_type: ClassVar[str]
+    description: ClassVar[str]
     src_extensions: ClassVar[list[str]]
     zos_compiler: Literal["ibm-openxl", "ibm-xlclang", "ibm-xlc"]
     def __init__(self, verbose: bool = False, force: bool = False) -> None: ...

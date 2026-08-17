@@ -3,6 +3,11 @@
 # `respect-type-ignore-comments` setting in ty.toml.
 enabled-ignores = ["pyrefly"]
 
+# pyrefly excludes "**/venv/**/*" by default, which matches "stdlib/venv",
+# a proper stdlib module.
+project-excludes = ["**/__pycache__", "**/.[!/.]*/**"]
+disable-project-excludes-heuristics = true
+
 # These imports are intentionally optional and are also ignored by mypy and pyright.
 ignore-missing-imports = [
     "branca",

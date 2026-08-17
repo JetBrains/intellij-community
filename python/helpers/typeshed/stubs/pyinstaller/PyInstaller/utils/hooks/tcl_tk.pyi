@@ -12,6 +12,8 @@ class TclTkInfo:
     tcl_data_dir: str | None
     tk_data_dir: str | None
     tcl_module_dir: str | None
+    tcl_data_missing: bool
+    tk_data_missing: bool
     is_macos_system_framework: bool
     tcl_shared_library: str | None
     tk_shared_library: str | None

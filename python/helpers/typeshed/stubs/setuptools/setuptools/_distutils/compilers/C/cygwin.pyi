@@ -11,6 +11,7 @@ def get_msvcr() -> list[str]: ...
 
 class Compiler(unix.Compiler):
     compiler_type: ClassVar[str]
+    description: ClassVar[str]
     obj_extension: ClassVar[str]
     static_lib_extension: ClassVar[str]
     shared_lib_extension: ClassVar[str]
@@ -55,7 +56,9 @@ class Compiler(unix.Compiler):
 
 class MinGW32Compiler(Compiler):
     compiler_type: ClassVar[str]
+    description: ClassVar[str]
     def __init__(self, verbose: bool = False, force: bool = False) -> None: ...
+    def configure_system(self) -> None: ...
     def runtime_library_dir_option(self, dir: str) -> Never: ...
 
 CONFIG_H_OK: Final = "ok"

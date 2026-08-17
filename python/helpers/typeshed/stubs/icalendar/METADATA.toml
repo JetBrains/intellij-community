@@ -1,7 +1,0 @@
-version = "6.3.2"
-upstream-repository = "https://github.com/collective/icalendar"
-dependencies = ["types-python-dateutil", "types-pytz"]
-obsolete-since = { version = "7.0.0", date = "2026-02-11" }
-
-[tool.stubtest]
-stubtest-dependencies = ["pytz"]

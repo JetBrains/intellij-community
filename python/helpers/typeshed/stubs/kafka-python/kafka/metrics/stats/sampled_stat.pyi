@@ -4,6 +4,7 @@ from _typeshed import Incomplete
 from kafka.metrics.measurable_stat import AbstractMeasurableStat
 
 class AbstractSampledStat(AbstractMeasurableStat, metaclass=abc.ABCMeta):
+    __slots__ = ("_initial_value", "_samples", "_current")
     def __init__(self, initial_value) -> None: ...
     @abc.abstractmethod
     def update(self, sample, config, value, time_ms): ...

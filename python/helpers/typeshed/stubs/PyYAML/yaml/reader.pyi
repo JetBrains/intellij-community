@@ -1,40 +1,41 @@
-from _typeshed import SupportsRead
-from typing import Any, TypeAlias
+from _typeshed import Incomplete, SupportsRead
+from re import Pattern
+from typing import Final, TypeAlias
 
-from yaml.error import YAMLError
+from yaml.error import Mark, YAMLError
 
 _ReadStream: TypeAlias = str | bytes | SupportsRead[str] | SupportsRead[bytes]
 
 class ReaderError(YAMLError):
-    name: Any
-    character: Any
-    position: Any
-    encoding: Any
-    reason: Any
+    name: Incomplete
+    character: Incomplete
+    position: Incomplete
+    encoding: Incomplete
+    reason: Incomplete
     def __init__(self, name, position, character, encoding, reason) -> None: ...
 
 class Reader:
-    name: Any
+    name: Incomplete
     stream: SupportsRead[str] | SupportsRead[bytes] | None
-    stream_pointer: Any
-    eof: Any
-    buffer: Any
-    pointer: Any
-    raw_buffer: Any
-    raw_decode: Any
-    encoding: Any
-    index: Any
-    line: Any
-    column: Any
+    stream_pointer: Incomplete
+    eof: Incomplete
+    buffer: Incomplete
+    pointer: Incomplete
+    raw_buffer: Incomplete
+    raw_decode: Incomplete
+    encoding: Incomplete
+    index: Incomplete
+    line: Incomplete
+    column: Incomplete
     def __init__(self, stream: _ReadStream) -> None: ...
-    def peek(self, index=0): ...
-    def prefix(self, length=1): ...
-    def forward(self, length=1): ...
-    def get_mark(self): ...
-    def determine_encoding(self): ...
-    NON_PRINTABLE: Any
-    def check_printable(self, data): ...
-    def update(self, length): ...
-    def update_raw(self, size=4096): ...
+    def peek(self, index: int = 0): ...
+    def prefix(self, length: int = 1): ...
+    def forward(self, length: int = 1) -> None: ...
+    def get_mark(self) -> Mark: ...
+    def determine_encoding(self) -> None: ...
+    NON_PRINTABLE: Final[Pattern[str]]
+    def check_printable(self, data: str) -> None: ...
+    def update(self, length: int) -> None: ...
+    def update_raw(self, size: int = 4096) -> None: ...
 
 __all__ = ["Reader", "ReaderError"]

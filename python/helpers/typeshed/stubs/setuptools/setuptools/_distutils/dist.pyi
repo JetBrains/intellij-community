@@ -1,5 +1,5 @@
 from _typeshed import Incomplete, StrOrBytesPath, StrPath, SupportsWrite
-from collections.abc import Iterable, MutableMapping
+from collections.abc import Iterable, Mapping, MutableMapping
 from re import Pattern
 from typing import IO, ClassVar, Literal, TypeAlias, TypeVar, overload
 
@@ -81,16 +81,16 @@ class Distribution:
     dist_files: list[tuple[str, str, str]]
     packages: list[str] | None
     package_data: dict[str, list[str]]
-    package_dir: dict[str, str] | None
+    package_dir: Mapping[str, str] | None
     py_modules: list[str] | None
-    libraries: Incomplete
-    headers: Incomplete
+    libraries: list[tuple[str, dict[str, Incomplete]]] | None
+    headers: list[str] | None
     ext_modules: list[Extension] | None
-    ext_package: Incomplete
-    include_dirs: Incomplete
+    ext_package: str | None
+    include_dirs: list[str] | None
     extra_path: Incomplete
-    scripts: Incomplete
-    data_files: list[str | tuple[Incomplete, ...]] | None
+    scripts: list[str] | None
+    data_files: list[tuple[str, list[str]]] | None
     password: str
     command_obj: dict[str, Command]
     have_run: dict[str, bool]

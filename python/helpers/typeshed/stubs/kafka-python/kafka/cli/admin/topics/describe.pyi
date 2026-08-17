@@ -1,3 +1,10 @@
+from argparse import ArgumentParser, Namespace
+from typing import ClassVar
+
 class DescribeTopics:
+    COMMAND: ClassVar[str]
+    HELP: ClassVar[str]
     @classmethod
-    def add_subparser(cls, subparsers): ...
+    def add_arguments(cls, parser: ArgumentParser) -> None: ...
+    @classmethod
+    def command(cls, client, args: Namespace): ...

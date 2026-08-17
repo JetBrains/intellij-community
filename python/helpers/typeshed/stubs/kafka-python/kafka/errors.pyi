@@ -1,60 +1,46 @@
 from _typeshed import Incomplete
 
-class KafkaError(RuntimeError):
+class KafkaError(Exception):
     retriable: bool
     invalid_metadata: bool
     def __eq__(self, other): ...
 
-class Cancelled(KafkaError):
+class RetriableError(KafkaError):
     retriable: bool
+
+class InvalidMetadataError(RetriableError):
+    invalid_metadata: bool
+
+class Cancelled(RetriableError): ...
 
 class CommitFailedError(KafkaError):
     def __init__(self, *args) -> None: ...
 
 class IllegalArgumentError(KafkaError): ...
 class IllegalStateError(KafkaError): ...
-class IncompatibleBrokerVersion(KafkaError): ...
 class KafkaConfigurationError(KafkaError): ...
-
-class KafkaConnectionError(KafkaError):
-    retriable: bool
-    invalid_metadata: bool
-
-class KafkaProtocolError(KafkaError):
-    retriable: bool
-
-class CorrelationIdError(KafkaProtocolError):
-    retriable: bool
-
+class KafkaConnectionError(InvalidMetadataError): ...
+class KafkaProtocolError(KafkaError): ...
+class CorrelationIdError(RetriableError, KafkaProtocolError): ...
 class InvalidReceiveError(KafkaProtocolError): ...
-
-class KafkaTimeoutError(KafkaError):
-    retriable: bool
-
-class MetadataEmptyBrokerList(KafkaError):
-    retriable: bool
-
-class NoBrokersAvailable(KafkaError):
-    retriable: bool
-    invalid_metadata: bool
-
+class KafkaTimeoutError(KafkaError): ...
+class MetadataEmptyBrokerList(KafkaError): ...
 class NoOffsetForPartitionError(KafkaError): ...
 
-class NodeNotReadyError(KafkaError):
-    retriable: bool
+class LogTruncationError(KafkaError):
+    divergent_offsets: Incomplete
+    def __init__(self, divergent_offsets, *args): ...
 
+class NodeNotReadyError(RetriableError): ...
+class UnknownBrokerIdError(KafkaError): ...
 class QuotaViolationError(KafkaError): ...
-
-class StaleMetadata(KafkaError):
-    retriable: bool
-    invalid_metadata: bool
-
-class TooManyInFlightRequests(KafkaError):
-    retriable: bool
-
+class StaleMetadata(InvalidMetadataError): ...
+class TooManyInFlightRequests(RetriableError): ...
 class UnrecognizedBrokerVersion(KafkaError): ...
 class UnsupportedCodecError(KafkaError): ...
-class TransactionAbortedError(KafkaError): ...
+
+class TransactionAbortedError(KafkaError):
+    message: str
 
 class BrokerResponseError(KafkaError):
     errno: Incomplete
@@ -85,49 +71,40 @@ class CorruptRecordError(BrokerResponseError):
 
 CorruptRecordException = CorruptRecordError
 
-class UnknownTopicOrPartitionError(BrokerResponseError):
+class UnknownTopicOrPartitionError(InvalidMetadataError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
-    invalid_metadata: bool
 
 class InvalidFetchRequestError(BrokerResponseError):
     errno: int
     message: str
     description: str
 
-class LeaderNotAvailableError(BrokerResponseError):
+class LeaderNotAvailableError(InvalidMetadataError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
-    invalid_metadata: bool
 
-class NotLeaderForPartitionError(BrokerResponseError):
+class NotLeaderForPartitionError(InvalidMetadataError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
-    invalid_metadata: bool
 
-class RequestTimedOutError(BrokerResponseError):
+class RequestTimedOutError(RetriableError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class BrokerNotAvailableError(BrokerResponseError):
     errno: int
     message: str
     description: str
 
-class ReplicaNotAvailableError(BrokerResponseError):
+class ReplicaNotAvailableError(InvalidMetadataError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
-    invalid_metadata: bool
 
 class MessageSizeTooLargeError(BrokerResponseError):
     errno: int
@@ -144,29 +121,24 @@ class OffsetMetadataTooLargeError(BrokerResponseError):
     message: str
     description: str
 
-class NetworkExceptionError(BrokerResponseError):
+class NetworkExceptionError(InvalidMetadataError, BrokerResponseError):
     errno: int
     message: str
-    retriable: bool
-    invalid_metadata: bool
 
-class CoordinatorLoadInProgressError(BrokerResponseError):
+class CoordinatorLoadInProgressError(RetriableError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class CoordinatorNotAvailableError(BrokerResponseError):
+class CoordinatorNotAvailableError(RetriableError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class NotCoordinatorError(BrokerResponseError):
+class NotCoordinatorError(RetriableError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class InvalidTopicError(BrokerResponseError):
     errno: int
@@ -178,17 +150,15 @@ class RecordListTooLargeError(BrokerResponseError):
     message: str
     description: str
 
-class NotEnoughReplicasError(BrokerResponseError):
+class NotEnoughReplicasError(RetriableError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class NotEnoughReplicasAfterAppendError(BrokerResponseError):
+class NotEnoughReplicasAfterAppendError(RetriableError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class InvalidRequiredAcksError(BrokerResponseError):
     errno: int
@@ -265,6 +235,8 @@ class UnsupportedVersionError(BrokerResponseError):
     message: str
     description: str
 
+class IncompatibleBrokerVersion(UnsupportedVersionError): ...
+
 class TopicAlreadyExistsError(BrokerResponseError):
     errno: int
     message: str
@@ -290,11 +262,10 @@ class InvalidConfigurationError(BrokerResponseError):
     message: str
     description: str
 
-class NotControllerError(BrokerResponseError):
+class NotControllerError(RetriableError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class InvalidRequestError(BrokerResponseError):
     errno: int
@@ -310,514 +281,421 @@ class PolicyViolationError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class OutOfOrderSequenceNumberError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class DuplicateSequenceNumberError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class InvalidProducerEpochError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class InvalidTxnStateError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class InvalidProducerIdMappingError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class InvalidTransactionTimeoutError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class ConcurrentTransactionsError(BrokerResponseError):
+class ConcurrentTransactionsError(RetriableError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class TransactionCoordinatorFencedError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class TransactionalIdAuthorizationFailedError(AuthorizationError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class SecurityDisabledError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class OperationNotAttemptedError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class KafkaStorageError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
-    invalid_metadata: bool
 
 class LogDirNotFoundError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class SaslAuthenticationFailedError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class UnknownProducerIdError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class ReassignmentInProgressError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class DelegationTokenAuthDisabledError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class DelegationTokenNotFoundError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class DelegationTokenOwnerMismatchError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class DelegationTokenRequestNotAllowedError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class DelegationTokenAuthorizationFailedError(AuthorizationError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class DelegationTokenExpiredError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class InvalidPrincipalTypeError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class NonEmptyGroupError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class GroupIdNotFoundError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class FetchSessionIdNotFoundError(BrokerResponseError):
+class FetchSessionIdNotFoundError(RetriableError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class InvalidFetchSessionEpochError(BrokerResponseError):
+class InvalidFetchSessionEpochError(RetriableError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class ListenerNotFoundError(BrokerResponseError):
+class ListenerNotFoundError(InvalidMetadataError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
-    invalid_metadata: bool
 
 class TopicDeletionDisabledError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class FencedLeaderEpochError(BrokerResponseError):
+class FencedLeaderEpochError(InvalidMetadataError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
-    invalid_metadata: bool
 
-class UnknownLeaderEpochError(BrokerResponseError):
+class UnknownLeaderEpochError(InvalidMetadataError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
-    invalid_metadata: bool
 
 class UnsupportedCompressionTypeError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class StaleBrokerEpochError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class OffsetNotAvailableError(BrokerResponseError):
+class OffsetNotAvailableError(RetriableError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class MemberIdRequiredError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class PreferredLeaderNotAvailableError(BrokerResponseError):
+class PreferredLeaderNotAvailableError(InvalidMetadataError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
-    invalid_metadata: bool
 
 class GroupMaxSizeReachedError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class FencedInstanceIdError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class EligibleLeadersNotAvailableError(BrokerResponseError):
+class EligibleLeadersNotAvailableError(InvalidMetadataError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
-    invalid_metadata: bool
 
-class ElectionNotNeededError(BrokerResponseError):
+class ElectionNotNeededError(InvalidMetadataError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
-    invalid_metadata: bool
 
 class NoReassignmentInProgressError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class GroupSubscribedToTopicError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class InvalidRecordError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class UnstableOffsetCommitError(BrokerResponseError):
+class UnstableOffsetCommitError(RetriableError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class ThrottlingQuotaExceededError(BrokerResponseError):
+class ThrottlingQuotaExceededError(RetriableError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class ProducerFencedError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class ResourceNotFoundError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class DuplicateResourceError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class UnacceptableCredentialError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class InconsistentVoterSetError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class InvalidUpdateVersionError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class FeatureUpdateFailedError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class PrincipalDeserializationFailureError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class SnapshotNotFoundError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class PositionOutOfRangeError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class UnknownTopicIdError(BrokerResponseError):
+class UnknownTopicIdError(InvalidMetadataError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
-    invalid_metadata: bool
 
 class DuplicateBrokerRegistrationError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class BrokerIdNotRegisteredError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class InconsistentTopicIdError(BrokerResponseError):
+class InconsistentTopicIdError(InvalidMetadataError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
-    invalid_metadata: bool
 
 class InconsistentClusterIdError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class TransactionalIdNotFoundError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class FetchSessionTopicIdError(BrokerResponseError):
+class FetchSessionTopicIdError(RetriableError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class IneligibleReplicaError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class NewLeaderElectedError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class OffsetMovedToTieredStorageError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class FencedMemberEpochError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class UnreleasedInstanceIdError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class UnsupportedAssignorError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class StaleMemberEpochError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class MismatchedEndpointTypeError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class UnsupportedEndpointTypeError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class UnknownControllerIdError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class UnknownSubscriptionIdError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class TelemetryTooLargeError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class InvalidRegistrationError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class TransactionAbortableError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class InvalidRecordStateError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class ShareSessionNotFoundError(BrokerResponseError):
+class ShareSessionNotFoundError(RetriableError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
-class InvalidShareSessionEpochError(BrokerResponseError):
+class InvalidShareSessionEpochError(RetriableError, BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class FencedStateEpochError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class InvalidVoterKeyError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class DuplicateVoterError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 class VoterNotFoundError(BrokerResponseError):
     errno: int
     message: str
     description: str
-    retriable: bool
 
 kafka_errors: Incomplete
 

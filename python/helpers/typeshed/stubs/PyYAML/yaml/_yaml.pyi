@@ -12,12 +12,12 @@ def get_version() -> tuple[int, int, int]: ...
 
 @disjoint_base
 class Mark:
-    name: Any
+    name: Incomplete
     index: int
     line: int
     column: int
-    buffer: Any
-    pointer: Any
+    buffer: Incomplete
+    pointer: Incomplete
     def __init__(self, name, index: int, line: int, column: int, buffer, pointer) -> None: ...
     def get_snippet(self): ...
 
@@ -42,14 +42,14 @@ class CEmitter:
     def __init__(
         self,
         stream: IO[Any],
-        canonical: Incomplete | None = ...,
+        canonical=...,
         indent: int | None = ...,
         width: int | None = ...,
-        allow_unicode: Incomplete | None = ...,
+        allow_unicode=...,
         line_break: str | None = ...,
         encoding: str | None = ...,
-        explicit_start: Incomplete | None = ...,
-        explicit_end: Incomplete | None = ...,
+        explicit_start=...,
+        explicit_end=...,
         version: Sequence[int] | None = ...,
         tags: Mapping[str, str] | None = ...,
     ) -> None: ...

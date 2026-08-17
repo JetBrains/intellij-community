@@ -13,6 +13,7 @@ def search_dates(
     settings: Settings | dict[str, Any] | None,
     add_detected_language: Literal[True],
     detect_languages_function: _DetectLanguagesFunction | None = None,
+    strategy: Literal["split", "ngram"] = "split",
 ) -> list[tuple[str, datetime, str]] | None: ...
 @overload
 def search_dates(
@@ -21,4 +22,5 @@ def search_dates(
     settings: Settings | dict[str, Any] | None = None,
     add_detected_language: Literal[False] = False,
     detect_languages_function: _DetectLanguagesFunction | None = None,
+    strategy: Literal["split", "ngram"] = "split",
 ) -> list[tuple[str, datetime]] | None: ...

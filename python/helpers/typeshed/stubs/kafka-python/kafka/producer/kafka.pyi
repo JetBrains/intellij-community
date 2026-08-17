@@ -2,90 +2,89 @@ import selectors
 import ssl
 from _typeshed import Incomplete
 from collections.abc import Callable, Mapping, Sequence
-from typing import Literal, TypeAlias, TypedDict, type_check_only
-from typing_extensions import Unpack
+from types import TracebackType
+from typing import Literal, TypeAlias
+from typing_extensions import Self
 
 from kafka.producer.future import FutureRecordMetadata
+from kafka.producer.record_accumulator import AtomicInteger
 from kafka.serializer.abstract import Serializer
-from kafka.structs import OffsetAndMetadata, TopicPartition
+from kafka.structs import ConsumerGroupMetadata, OffsetAndMetadata, TopicPartition
 
-_ApiVersion: TypeAlias = tuple[int, ...]
-_BootstrapServers: TypeAlias = str | Sequence[str]
-_KafkaClientFactory: TypeAlias = Callable[..., object]
 _Partitioner: TypeAlias = Callable[[bytes | None, Sequence[int], Sequence[int]], int]
 _ProducerSerializer: TypeAlias = Serializer | Callable[[object], bytes]
-_SaslMechanism: TypeAlias = Literal["PLAIN", "GSSAPI", "OAUTHBEARER", "SCRAM-SHA-256", "SCRAM-SHA-512"]
-_SecurityProtocol: TypeAlias = Literal["PLAINTEXT", "SSL", "SASL_PLAINTEXT", "SASL_SSL"]
-_SocketOption: TypeAlias = tuple[int, int, int]
 
-@type_check_only
-class _KafkaProducerConfig(TypedDict, total=False):
-    bootstrap_servers: _BootstrapServers
-    client_id: str | None
-    key_serializer: _ProducerSerializer | None
-    value_serializer: _ProducerSerializer | None
-    enable_idempotence: bool
-    transactional_id: str | None
-    transaction_timeout_ms: int
-    delivery_timeout_ms: float
-    acks: int | Literal["all"]
-    bootstrap_topics_filter: set[str]
-    compression_type: Literal["gzip", "snappy", "lz4", "zstd"] | None
-    retries: int | float
-    batch_size: int
-    linger_ms: int
-    partitioner: _Partitioner
-    connections_max_idle_ms: int
-    max_block_ms: int
-    max_request_size: int
-    allow_auto_create_topics: bool
-    metadata_max_age_ms: int
-    retry_backoff_ms: int
-    request_timeout_ms: int
-    receive_buffer_bytes: int | None
-    send_buffer_bytes: int | None
-    socket_options: Sequence[_SocketOption]
-    sock_chunk_bytes: int
-    sock_chunk_buffer_count: int
-    reconnect_backoff_ms: int
-    reconnect_backoff_max_ms: int
-    max_in_flight_requests_per_connection: int
-    security_protocol: _SecurityProtocol
-    ssl_context: ssl.SSLContext | None
-    ssl_check_hostname: bool
-    ssl_cafile: str | None
-    ssl_certfile: str | None
-    ssl_keyfile: str | None
-    ssl_crlfile: str | None
-    ssl_password: str | None
-    ssl_ciphers: str | None
-    api_version: _ApiVersion | None
-    api_version_auto_timeout_ms: int
-    metric_reporters: Sequence[type[object]]
-    metrics_enabled: bool
-    metrics_num_samples: int
-    metrics_sample_window_ms: int
-    selector: type[selectors.BaseSelector]
-    sasl_mechanism: _SaslMechanism | None
-    sasl_plain_username: str | None
-    sasl_plain_password: str | None
-    sasl_kerberos_name: object | None
-    sasl_kerberos_service_name: str
-    sasl_kerberos_domain_name: str | None
-    sasl_oauth_token_provider: object | None
-    socks5_proxy: str | None
-    kafka_client: _KafkaClientFactory
-
-log: Incomplete
-PRODUCER_CLIENT_ID_SEQUENCE: Incomplete
+PRODUCER_CLIENT_ID_SEQUENCE: AtomicInteger
 
 class KafkaProducer:
-    DEFAULT_CONFIG: Incomplete
-    DEPRECATED_CONFIGS: Incomplete
-    config: Incomplete
-    def __init__(self, **configs: Unpack[_KafkaProducerConfig]) -> None: ...
-    def bootstrap_connected(self): ...
+    DEFAULT_CONFIG: dict[str, Incomplete]
+    DEPRECATED_CONFIGS: tuple[str, ...]
+    config: dict[str, Incomplete]
+    def __init__(
+        self,
+        *,
+        bootstrap_servers: str | Sequence[str] = "localhost",
+        client_id: str | None = None,
+        key_serializer: _ProducerSerializer | None = None,
+        value_serializer: _ProducerSerializer | None = None,
+        enable_idempotence: bool = True,
+        transactional_id: str | None = None,
+        transaction_timeout_ms: int = 60000,
+        delivery_timeout_ms: float = 120000,
+        acks: int | Literal["all"] = -1,
+        compression_type: Literal["gzip", "snappy", "lz4", "zstd"] | None = None,
+        retries: int | float = ...,
+        batch_size: int = 16384,
+        linger_ms: int = 0,
+        partitioner: _Partitioner = ...,
+        connections_max_idle_ms: int = 540000,
+        max_block_ms: int = 60000,
+        max_request_size: int = 1048576,
+        allow_auto_create_topics: bool = True,
+        metadata_max_age_ms: int = 300000,
+        client_dns_lookup: str = "use_all_dns_ips",
+        retry_backoff_ms: int = 100,
+        request_timeout_ms: int = 30000,
+        receive_message_max_bytes: int = 100_000_000,
+        receive_buffer_bytes: int | None = None,
+        send_buffer_bytes: int | None = None,
+        socket_options: Sequence[tuple[int, int, int]] = ...,
+        reconnect_backoff_ms: int = 50,
+        reconnect_backoff_max_ms: int = 30000,
+        max_in_flight_requests_per_connection: int = 5,
+        security_protocol: Literal["PLAINTEXT", "SSL", "SASL_PLAINTEXT", "SASL_SSL"] = "PLAINTEXT",
+        ssl_context: ssl.SSLContext | None = None,
+        ssl_check_hostname: bool = True,
+        ssl_cafile: str | None = None,
+        ssl_certfile: str | None = None,
+        ssl_keyfile: str | None = None,
+        ssl_crlfile: str | None = None,
+        ssl_password: str | None = None,
+        ssl_ciphers: str | None = None,
+        api_version: tuple[int, ...] | None = None,
+        bootstrap_timeout_ms: int = 30000,
+        metric_reporters: Sequence[type[object]] = [],
+        metrics_enabled: bool = True,
+        metrics_num_samples: int = 2,
+        metrics_sample_window_ms: int = 30000,
+        selector: type[selectors.BaseSelector] = selectors.DefaultSelector,
+        sasl_mechanism: Literal["PLAIN", "GSSAPI", "OAUTHBEARER", "SCRAM-SHA-256", "SCRAM-SHA-512"] | None = None,
+        sasl_plain_username: str | None = None,
+        sasl_plain_password: str | None = None,
+        sasl_kerberos_name: object | None = None,
+        sasl_kerberos_service_name: str = "kafka",
+        sasl_kerberos_domain_name: str | None = None,
+        sasl_oauth_token_provider: object | None = None,
+        proxy_url: str | None = None,
+        socks5_proxy: str | None = None,
+        kafka_client: Callable[..., object] = ...,
+    ) -> None: ...
+    def bootstrap_connected(self) -> bool: ...
     def __del__(self) -> None: ...
+    def __enter__(self) -> Self: ...
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+    ) -> None: ...
     def close(self, timeout: float | None = None, null_logger: bool = False) -> None: ...
     def partitions_for(self, topic: str) -> set[int]: ...
     @classmethod
@@ -93,7 +92,7 @@ class KafkaProducer:
     def init_transactions(self) -> None: ...
     def begin_transaction(self) -> None: ...
     def send_offsets_to_transaction(
-        self, offsets: Mapping[TopicPartition, OffsetAndMetadata], consumer_group_id: str
+        self, offsets: Mapping[TopicPartition, OffsetAndMetadata], group_metadata: str | ConsumerGroupMetadata
     ) -> None: ...
     def commit_transaction(self) -> None: ...
     def abort_transaction(self) -> None: ...

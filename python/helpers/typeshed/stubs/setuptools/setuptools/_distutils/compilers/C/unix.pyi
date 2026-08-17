@@ -3,6 +3,8 @@ from typing import ClassVar
 from . import base
 
 class Compiler(base.Compiler):
+    compiler_type: ClassVar[str]
+    description: ClassVar[str]
     src_extensions: ClassVar[list[str]]
     obj_extension: ClassVar[str]
     static_lib_extension: ClassVar[str]
@@ -13,4 +15,5 @@ class Compiler(base.Compiler):
     shared_lib_format: ClassVar[str]
     dylib_lib_format: ClassVar[str]
     xcode_stub_lib_format: ClassVar[str]
+    def configure_system(self) -> None: ...
     def runtime_library_dir_option(self, dir: str) -> str | list[str]: ...  # type: ignore[override]

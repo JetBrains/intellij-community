@@ -1,7 +1,3 @@
-from _typeshed import Incomplete
-
-logger: Incomplete
-
 class Metrics:
     def __init__(self, default_config=None, reporters=None, enable_expiration: bool = False) -> None: ...
     @property
