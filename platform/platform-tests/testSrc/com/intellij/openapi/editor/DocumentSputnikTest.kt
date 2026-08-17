@@ -340,15 +340,16 @@ internal class DocumentSputnikTest {
     val originEndOffset: Int = -1,
   ) : DocumentSputnik {
     override fun withTextChange(
-      before: DocumentText,
-      after: DocumentText,
+      before: DocumentSnapshot,
+      after: DocumentSnapshot,
       diff: DocumentTextPatch,
     ): DocumentSputnik {
-      val newWholeText = before.chars().replace(diff.startOffset(), diff.endOffset(), diff.newFragment())
+      val beforeText = before.text()
+      val newWholeText = beforeText.chars().replace(diff.startOffset(), diff.endOffset(), diff.newFragment())
       return TestSputnik(
         rebuildCount + 1,
-        before,
-        after,
+        beforeText,
+        after.text(),
         newWholeText,
         diff.startOffset(),
         diff.endOffset(),
@@ -362,8 +363,8 @@ internal class DocumentSputnikTest {
 
   private class UnaffectedSputnik : DocumentSputnik {
     override fun withTextChange(
-      before: DocumentText,
-      after: DocumentText,
+      before: DocumentSnapshot,
+      after: DocumentSnapshot,
       diff: DocumentTextPatch,
     ): DocumentSputnik {
       return this

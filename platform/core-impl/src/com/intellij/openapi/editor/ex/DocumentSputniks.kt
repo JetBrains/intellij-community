@@ -25,8 +25,18 @@ internal interface DocumentSputniks {
   fun remove(key: Key<out DocumentSputnik>): DocumentSputniks
 
   /**
-   * Returns a list where every sputnik is replaced with the result of [action], keeping the keys
+   * Returns the snapshot obtained by rebuilding every sputnik against [before]/[diff], threading the result
+   * through [nextSnapshot] after each sputnik that actually changes -- so that later sputniks rebuilt in this
+   * same call can observe earlier ones' rebuilt state via the snapshot passed as `after` to
+   * [DocumentSputnik.withTextChange] (see there for what that visibility does and does not guarantee).
+   *
+   * Returns [after] itself if no sputnik changes.
    */
   @Contract(pure = true)
-  fun transform(action: (DocumentSputnik) -> DocumentSputnik): DocumentSputniks
+  fun withTextChange(
+    before: DocumentSnapshot,
+    after: DocumentSnapshot,
+    diff: DocumentTextPatch,
+    nextSnapshot: (DocumentSputniks) -> DocumentSnapshot,
+  ): DocumentSnapshot
 }

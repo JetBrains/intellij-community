@@ -1,8 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentSputnik
 import com.intellij.openapi.editor.ex.DocumentSputniks
+import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.util.Key
 import com.intellij.util.ArrayUtil
 
@@ -52,23 +54,26 @@ internal class DocumentSputniksImpl private constructor(
     return DocumentSputniksImpl(newKeys, newValues)
   }
 
-  override fun transform(action: (DocumentSputnik) -> DocumentSputnik): DocumentSputniks {
-    var newValues: Array<DocumentSputnik>? = null
+  override fun withTextChange(
+    before: DocumentSnapshot,
+    after: DocumentSnapshot,
+    diff: DocumentTextPatch,
+    nextSnapshot: (DocumentSputniks) -> DocumentSnapshot,
+  ): DocumentSnapshot {
+    var result = after
+    var currentSputniks = this
     for (i in values.indices) {
       val sputnik = values[i]
-      val newSputnik = action(sputnik)
+      val newSputnik = sputnik.withTextChange(before, result, diff)
       if (newSputnik === sputnik) {
         continue
       }
-      if (newValues == null) {
-        newValues = values.copyOf()
-      }
+      val newValues = currentSputniks.values.copyOf()
       newValues[i] = newSputnik
+      currentSputniks = DocumentSputniksImpl(keys, newValues)
+      result = nextSnapshot.invoke(currentSputniks)
     }
-    if (newValues == null) {
-      return this
-    }
-    return DocumentSputniksImpl(keys, newValues)
+    return result
   }
 
   /**

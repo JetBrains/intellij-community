@@ -81,12 +81,19 @@ internal class DocumentSnapshotImpl private constructor(
 
   override fun withPatch(patch: DocumentTextPatch): DocumentSnapshot {
     val newText = text.withPatch(patch)
+    if (newText === text) {
+      return this
+    }
     val newModState = modState.withPatch(text, patch)
     assertLineCountsAgree(newText, newModState)
-    val newSputniks = sputniks.transform {
-      it.withTextChange(text, newText, patch)
+    val oldSnapshot = this
+    val newSnapshot = DocumentSnapshotImpl(newText, newModState, sputniks)
+    if (sputniks === DocumentSputniksImpl.EMPTY) {
+      return newSnapshot
     }
-    return DocumentSnapshotImpl(newText, newModState, newSputniks)
+    return sputniks.withTextChange(oldSnapshot, newSnapshot, patch) { newSputniks ->
+      DocumentSnapshotImpl(newText, newModState, newSputniks)
+    }
   }
 
   /**

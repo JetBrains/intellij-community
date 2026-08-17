@@ -17,25 +17,22 @@ import org.jetbrains.annotations.Contract
 interface DocumentSputnik {
 
   /**
-   * Returns the state of this sputnik consistent with [after], the text produced by applying [diff] to [before].
+   * Returns the state of this sputnik consistent with [after], the snapshot produced by applying [diff] to [before].
    *
-   * The method runs on the writer thread inside the document mutation producing the next [DocumentSnapshot],
-   * so implementations must:
-   * - be fast: this call is on the critical path of every document change;
-   * - not throw: an exception aborts the text change halfway through;
-   * - tolerate being called more than once per change: the mutation publishes its snapshot with a
-   *   compare-and-set, and a lost race re-applies the whole update, rebuilding the sputniks again;
-   * - compute the new state only from [before], [after] and [diff]: the snapshot holding the result
-   *   does not exist yet, so a sputnik cannot observe the other sputniks of the document;
-   * - return a sputnik of the same type as `this`: the result stays associated with the same key.
+   * Runs on the writer thread, on the critical path of every document change: implementations must be fast, must
+   * not throw (an exception aborts the change halfway through), must tolerate being called more than once per
+   * change (a lost publish race rebuilds the sputniks again), and must return a sputnik of the same type as `this`.
    *
-   * [DocumentTextPatch.originStartOffset]/[DocumentTextPatch.originEndOffset] expose the requested range before
-   * prefix/suffix trimming, so an implementation can distinguish a narrowed change from an untrimmed one.
+   * [before] is the snapshot prior to the change. [after] already has the final post-change text/mod state, but
+   * its sputniks reflect only whichever ones were rebuilt earlier in this same call -- an incidental order, not a
+   * declared dependency graph, so this sputnik's own key in [after] still holds the pre-change value too. An
+   * implementation may opportunistically read an already-rebuilt sibling off [after], but must stay correct even
+   * when none have been.
    */
   @Contract(pure = true)
   fun withTextChange(
-    before: DocumentText,
-    after: DocumentText,
+    before: DocumentSnapshot,
+    after: DocumentSnapshot,
     diff: DocumentTextPatch,
   ): DocumentSputnik
 }
