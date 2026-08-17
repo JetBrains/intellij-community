@@ -46,9 +46,11 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Handles non-write access typed events for command-based code completion functionality.
@@ -83,6 +85,19 @@ internal class CommandCompletionNonWriteAccessTypedHandler : NonWriteAccessTyped
 
 internal val INSTALLED_EDITOR = Key.create<Inlay<ComponentInlayRenderer<LanguageTextField>>>("completion.command.non.writable.editor")
 internal val ORIGINAL_EDITOR = Key.create<Pair<Editor, Int>>("completion.command.original.editor")
+
+/** The inline editor of the last command inlay, while it is still waiting out [INLINE_EDITOR_RELEASE_DELAY]. */
+private val PENDING_INLINE_EDITOR = Key.create<Disposable>("completion.command.non.writable.pending.inline.editor")
+
+/**
+ * How long the command inlay's inline editor outlives the inlay itself, so that a remote insert forwarded to the
+ * backend still finds its bound document and editor.
+ *
+ * Only the editor is kept: the inlay's disposal already removed the text field from the editor's component hierarchy,
+ * and `EditorTextField.removeNotify` keeps the editor alive once `setDisposedWith` put the field into manual mode,
+ * so nothing is visible during this window.
+ */
+private val INLINE_EDITOR_RELEASE_DELAY = 5.seconds
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
@@ -145,14 +160,35 @@ class NonWriteAccessCommandCompletionService(
     Disposer.register(componentInlay) {
       editor.replace(INSTALLED_EDITOR, componentInlay, null)
     }
-    // the editor lifetime is only a backstop for "the file is closed while the inlay is still shown":
-    // normally the inlay is disposed much earlier, together with the lookup
     EditorUtil.disposeWithEditor(editor, componentInlay)
-    // tie the inline text field's editor to the inlay, so that it is released as soon as the inlay is gone
-    // and not kept alive until the file is closed
-    textField.setDisposedWith(componentInlay)
+    // The inline editor must outlive the inlay: in the remote flow the command is executed by the *backend*
+    // CommandInsertHandler, from a ChooseItemAction forwarded over the protocol, which lands after the frontend
+    // lookup — and with it the inlay — is gone. Releasing the field here tears down its backend binding while
+    // that action is still in flight, and the command is silently dropped. The backend itself gives up on the
+    // insert after 2s (ACCEPT_INSERT_TIMEOUT in BackendCompletionLookupMirror), so waiting out
+    // [INLINE_EDITOR_RELEASE_DELAY] covers the whole window; the host editor's lifetime is just a backstop.
+    // At most one inline editor ever lingers per host editor: the [INSTALLED_EDITOR] guard above means no inlay is
+    // shown right now, so anything still parked here belongs to an already disposed inlay and is released at once
+    // instead of waiting out its own delay. Disposal is idempotent, so its pending release is a no-op.
+    editor.getUserData(PENDING_INLINE_EDITOR)?.let { Disposer.dispose(it) }
+    val textFieldDisposable = Disposer.newDisposable("command completion non-writable inline editor")
+    EditorUtil.disposeWithEditor(editor, textFieldDisposable)
+    editor.putUserData(PENDING_INLINE_EDITOR, textFieldDisposable)
+    Disposer.register(textFieldDisposable) {
+      editor.replace(PENDING_INLINE_EDITOR, textFieldDisposable, null)
+    }
+    textField.setDisposedWith(textFieldDisposable)
+    Disposer.register(componentInlay) {
+      coroutineScope.launch(Dispatchers.EDT) {
+        delay(INLINE_EDITOR_RELEASE_DELAY)
+        Disposer.dispose(textFieldDisposable)
+      }
+    }
 
-    val inlayedEditor = textField.getEditor(true) ?: return
+    val inlayedEditor = textField.getEditor(true) ?: run {
+      Disposer.dispose(componentInlay)
+      return
+    }
     inlayedEditor.putUserData(ORIGINAL_EDITOR, Pair(editor, offset))
 
     if (prepareCompletion != null) {

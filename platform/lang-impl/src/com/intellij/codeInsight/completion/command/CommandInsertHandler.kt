@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
@@ -47,6 +48,11 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
         }
       }
       else {
+        if (NonWriteAccessCommandCompletionSupport.Backend.isRemoteBackendEditor(context.editor)) {
+          logger<CommandInsertHandler>().warn(
+            "command completion: the original editor is gone, skipping ${completionCommand.javaClass.name}")
+          return
+        }
         commandProcessor.executeCommand(context.project, {
           // Remove the dots and command text from the document
           startOffset = removeCommandText(context)
