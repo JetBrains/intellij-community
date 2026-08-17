@@ -1597,6 +1597,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     groupDeletions(events, startIndex, endIndex, outValidatedEvents, outApplyActions, toIgnore);
     groupOthers(events, startIndex, endIndex, outValidatedEvents, outApplyActions);
 
+    Set<VirtualFile> inducedDeleteFiles = createSmallMemoryFootprintSet();
     for (int i = startIndex; i < endIndex; i++) {
       CompoundVFileEvent event = events.get(i);
 
@@ -1607,6 +1608,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
 
       for (VFileEvent jarDeleteEvent : event.getInducedEvents()) {
+        if (!jarDeleteEvent.isValid()) continue;
+
+        if (jarDeleteEvent instanceof VFileDeleteEvent deleteEvent) {
+          VirtualFile file = deleteEvent.getFile();
+          if (toDelete.contains(file) || !inducedDeleteFiles.add(file)) continue;
+        }
+
         outApplyActions.add((Runnable)() -> applyEvent(jarDeleteEvent));
         outValidatedEvents.add(jarDeleteEvent);
       }
