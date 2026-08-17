@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.GHRepositoryConnectionManager
@@ -121,9 +122,28 @@ class GHPRProjectViewModel(private val project: Project, parentCs: CoroutineScop
     _activationRequests.tryEmit(Unit)
   }
 
-  fun activateAndAwaitProject(action: GHPRConnectedProjectViewModel.() -> Unit) {
+  /**
+   * @param preferredRepoAndAccount when the connection isn't already established, connects using this repository
+   * (matched by [GHRepositoryCoordinates] against [GHHostedRepositoriesManager.knownRepositoriesState]) and account
+   * directly, instead of relying on the [selectorVm] auto-connect heuristics, which only fire when exactly one
+   * repository and account are known - a condition a freshly opened PR worktree (origin + newly added head remote)
+   * no longer satisfies.
+   */
+  fun activateAndAwaitProject(
+    preferredRepoAndAccount: Pair<GHRepositoryCoordinates, GithubAccount>? = null,
+    action: GHPRConnectedProjectViewModel.() -> Unit,
+  ) {
     cs.launch {
       _activationRequests.emit(Unit)
+      if (preferredRepoAndAccount != null && connectionManager.connectionState.value == null) {
+        val (repositoryCoordinates, account) = preferredRepoAndAccount
+        val mapping = repositoriesManager.knownRepositoriesState
+          .first { repos -> repos.any { it.repository == repositoryCoordinates } }
+          .find { it.repository == repositoryCoordinates }
+        if (mapping != null) {
+          connect(mapping, account)
+        }
+      }
       connectedProjectVm.filterNotNull().first().action()
     }
   }

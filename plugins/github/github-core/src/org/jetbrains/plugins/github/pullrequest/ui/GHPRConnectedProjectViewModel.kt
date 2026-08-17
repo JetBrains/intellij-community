@@ -159,7 +159,11 @@ abstract class GHPRConnectedProjectViewModelBase(
   override fun checkoutPullRequestInNewWorktree(id: GHPRIdentifier) {
     cs.launch {
       val details = dataContext.dataProviderRepository.getDataProvider(id, cs).detailsData.loadDetails()
-      GHPRBranchesViewModel.fetchAndCheckoutBranchInNewWorktree(dataContext.repositoryDataService.repositoryMapping.remote, details)
+      GHPRBranchesViewModel.fetchAndCheckoutBranchInNewWorktree(
+        remoteUrlCoordinates = dataContext.repositoryDataService.repositoryMapping.remote,
+        details = details,
+        preferredRepoAndAccount = repository to dataContext.securityService.account,
+      )
       GHPRStatisticsCollector.logDetailsBranchCheckedOut(project)
     }
   }

@@ -62,6 +62,7 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     parentDir: Path,
     worktreeName: String,
     place: String,
+    newBranchName: String? = null,
     onProjectOpened: ((Project) -> Unit)? = null,
   ) {
     if (!GitWorkingTreesService.isWorktreeCreationSupported(repository)) return
@@ -81,7 +82,13 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
       Files.createDirectories(parentDir)
       parentDir.resolve(UniqueNameGenerator.generateUniqueName(dirName) { !parentDir.resolve(it).exists() })
     }
-    val workingTreeData = GitWorkingTreeDialogData.createForExistingBranch(VcsUtil.getFilePath(worktreeDir, true), branch)
+    val workingTreePath = VcsUtil.getFilePath(worktreeDir, true)
+    val workingTreeData = if (newBranchName != null) {
+      GitWorkingTreeDialogData.createForNewBranch(workingTreePath, branch, newBranchName)
+    }
+    else {
+      GitWorkingTreeDialogData.createForExistingBranch(workingTreePath, branch)
+    }
     val ideActivity = GitOperationsCollector.logCreateWorktreeActionInvoked(repository.project, place, branch)
     doCreateWorkingTree(repository.project, repository, ideActivity, workingTreeData, onProjectOpened)
   }
