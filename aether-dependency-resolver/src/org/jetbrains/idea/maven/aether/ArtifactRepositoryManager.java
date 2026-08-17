@@ -22,6 +22,7 @@ import org.eclipse.aether.graph.DependencyFilter;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.graph.Exclusion;
+import org.eclipse.aether.internal.impl.synccontext.named.NamedLockFactoryAdapter;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
@@ -54,6 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -93,19 +95,20 @@ public final class ArtifactRepositoryManager {
   }
 
   public ArtifactRepositoryManager(@NotNull File localRepositoryPath, List<RemoteRepository> remoteRepositories, @NotNull ProgressConsumer progressConsumer, boolean offline) {
-    this(localRepositoryPath, remoteRepositories, progressConsumer, offline, RetryProvider.disabled());
+    this(localRepositoryPath, remoteRepositories, progressConsumer, offline, RetryProvider.disabled(), null);
   }
 
   public ArtifactRepositoryManager(@NotNull File localRepositoryPath, List<RemoteRepository> remoteRepositories,
                                    @NotNull ProgressConsumer progressConsumer, @NotNull Retry retry) {
-    this(localRepositoryPath, remoteRepositories, progressConsumer, false, retry);
+    this(localRepositoryPath, remoteRepositories, progressConsumer, false, retry, null);
   }
 
   public ArtifactRepositoryManager(@NotNull File localRepositoryPath, List<RemoteRepository> remoteRepositories,
-                                   @NotNull ProgressConsumer progressConsumer, boolean offline, @NotNull Retry retry) {
+                                   @NotNull ProgressConsumer progressConsumer, boolean offline, @NotNull Retry retry,
+                                   @Nullable Duration namedLockTimeout) {
     myRemoteRepositories.addAll(remoteRepositories);
     myRetry = retry;
-    mySessionFactory = new RepositorySystemSessionFactory(localRepositoryPath, progressConsumer, offline);
+    mySessionFactory = new RepositorySystemSessionFactory(localRepositoryPath, progressConsumer, offline, namedLockTimeout);
   }
 
 
@@ -114,7 +117,8 @@ public final class ArtifactRepositoryManager {
 
     private RepositorySystemSessionFactory(@NotNull File localRepositoryPath,
                                            @NotNull ProgressConsumer progressConsumer,
-                                           boolean offline) {
+                                           boolean offline,
+                                           @Nullable Duration namedLockTimeout) {
       DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
       if (progressConsumer != ProgressConsumer.DEAF) {
         session.setTransferListener(new TransferListener() {
@@ -154,6 +158,9 @@ public final class ArtifactRepositoryManager {
       session.setLocalRepositoryManager(RepositorySystemHolder.getInstance().newLocalRepositoryManager(session, new LocalRepository(localRepositoryPath)));
       session.setProxySelector(ourProxySelector);
       session.setOffline(offline);
+      if (namedLockTimeout != null) {
+        session.setConfigProperty(NamedLockFactoryAdapter.TIME_KEY, namedLockTimeout.toSeconds());
+      }
 
       // Disable transfer errors caching to force re-request missing artifacts and metadata on network failures.
       // Despite this, some errors are still cached in session data, and for proper retries work we must reset this data after failure
