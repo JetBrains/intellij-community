@@ -1,5 +1,6 @@
 package com.intellij.grazie.ide.language.markdown.semantics.utils
 
+import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.hasQuota
 import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.seemsCloudConnected
 import com.intellij.openapi.util.registry.Registry
@@ -11,8 +12,9 @@ internal object SpecificationUtils {
     RegexOption.IGNORE_CASE,
   )
 
-  internal fun isAnalysisEnabled(): Boolean =
-    Registry.`is`("grazie.specification.semantics.enabled") && seemsCloudConnected() && hasQuota()
+  internal fun isAnalysisAvailable(): Boolean = seemsCloudConnected() && hasQuota()
+
+  internal fun isAnalysisEnabled(): Boolean = isAnalysisAvailable() && GrazieConfig.get().specificationAnalysisEnabled
 
   internal fun isSpecificationLikeFile(file: PsiFile): Boolean {
     if (SPECIFICATION_LIKE_PATTERN.matches(file.name)) return true

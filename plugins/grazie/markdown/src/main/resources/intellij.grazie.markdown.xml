@@ -24,7 +24,6 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="grazie.specification.semantics.enabled" defaultValue="true" description="Whether to enable semantic agentic Markdown checks"/>
     <registryKey key="grazie.specification.semantics.specification.pattern" defaultValue="(?i).*\/\.(agents|claude|codex|junie)\/.*"
                  description="Regex pattern to define specification-like files"/>
 

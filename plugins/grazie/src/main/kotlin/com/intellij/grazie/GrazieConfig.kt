@@ -104,6 +104,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     @Property val useOxfordSpelling: Boolean = false,
     @Property val autoFix: Boolean = false,
     @Property val autoUpdateLanguages: Boolean = false,
+    @Property val specificationAnalysisEnabled: Boolean = false,
     // Ex. Grazie Cloud
     @Property val explicitlyChosenProcessing: Processing? = null,
   ) : VersionedState<Version, State> {
