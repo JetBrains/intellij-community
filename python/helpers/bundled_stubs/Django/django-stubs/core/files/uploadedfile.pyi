@@ -1,8 +1,8 @@
-from typing import IO, Any
+from typing import IO, Any, Self
 
 from django.core.files.base import File
 from django.utils.functional import cached_property
-from typing_extensions import Self, TypeVar, override
+from typing_extensions import TypeVar, override
 
 # `typing.AnyStr` is deprecated from 3.16+, so we define our own equivalent constrained TypeVar.
 _AnyStr = TypeVar("_AnyStr", str, bytes)

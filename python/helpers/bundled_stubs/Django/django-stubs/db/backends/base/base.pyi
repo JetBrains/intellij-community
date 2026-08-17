@@ -3,7 +3,7 @@ from collections.abc import Callable, Iterable
 from contextlib import AbstractContextManager
 from datetime import tzinfo
 from logging import Logger
-from typing import Any, TypeAlias
+from typing import Any, Self, TypeAlias
 
 from django.db.backends.base.client import BaseDatabaseClient
 from django.db.backends.base.creation import BaseDatabaseCreation
@@ -16,7 +16,6 @@ from django.db.backends.utils import CursorDebugWrapper, CursorWrapper
 from django.db.transaction import Atomic
 from django.db.utils import DatabaseErrorWrapper
 from django.utils.functional import cached_property
-from typing_extensions import Self
 
 NO_DB_ALIAS: str
 RAN_DB_VERSION_CHECK: set[str]

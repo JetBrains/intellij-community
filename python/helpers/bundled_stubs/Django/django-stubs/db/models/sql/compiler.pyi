@@ -13,7 +13,7 @@ from django.db.models.expressions import BaseExpression, Expression, Ref
 from django.db.models.sql.query import Query
 from django.db.models.sql.subqueries import AggregateQuery, DeleteQuery, InsertQuery, UpdateQuery
 from django.utils.functional import cached_property
-from typing_extensions import override
+from typing_extensions import deprecated, override
 
 _ParamT: TypeAlias = str | int
 
@@ -54,6 +54,8 @@ class SQLCompiler:
     def collapse_group_by(
         self, expressions: list[Expression], having: list[Expression] | tuple[Any, ...]
     ) -> list[Expression]: ...
+    @classmethod
+    def get_select_from_parent(cls, klass_info: dict[str, Any]) -> None: ...
     def get_select(
         self,
         with_col_aliases: bool = False,
@@ -65,6 +67,8 @@ class SQLCompiler:
         order_by: list[tuple[Expression, tuple[str, _ParamsT, bool]]],
         select: list[tuple[Expression, _AsSqlType, str | None]],
     ) -> list[tuple[Expression, _AsSqlType, None]]: ...
+    def quote_name(self, name: str) -> str: ...
+    @deprecated("SQLCompiler.quote_name_unless_alias() is deprecated. Use .quote_name() instead.")
     def quote_name_unless_alias(self, name: str) -> str: ...
     def compile(self, node: BaseExpression) -> _AsSqlType: ...
     def get_combinator_sql(self, combinator: str, all: bool) -> tuple[list[str], list[int] | list[str]]: ...
@@ -144,7 +148,7 @@ class SQLInsertCompiler(SQLCompiler):
     def field_as_sql(
         self,
         field: Field[Any, Any] | None,
-        get_placeholder: Callable[[Any, SQLInsertCompiler, BaseDatabaseWrapper], str],
+        get_placeholder_sql: Callable[[Any, SQLInsertCompiler, BaseDatabaseWrapper], _AsSqlType],
         val: Any,
     ) -> _AsSqlType: ...
     def prepare_value(self, field: Any, value: Any) -> Any: ...

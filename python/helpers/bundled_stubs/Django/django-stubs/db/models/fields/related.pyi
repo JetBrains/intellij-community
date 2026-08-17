@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, Generic, Literal, overload
+from typing import Any, Generic, Literal, Self, overload
 from uuid import UUID
 
 from django import forms
@@ -24,7 +24,7 @@ from django.db.models.sql.where import WhereNode
 from django.forms.widgets import Widget
 from django.utils.choices import _Choices
 from django.utils.functional import _StrOrPromise, cached_property
-from typing_extensions import Self, TypeVar, override
+from typing_extensions import TypeVar, override
 
 RECURSIVE_RELATIONSHIP_CONSTANT: Literal["self"]
 

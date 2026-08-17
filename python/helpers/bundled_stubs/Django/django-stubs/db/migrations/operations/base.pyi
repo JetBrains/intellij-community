@@ -1,14 +1,13 @@
 from collections.abc import Sequence
-from enum import Enum
-from typing import Any, ClassVar
+from enum import StrEnum
+from typing import Any, ClassVar, Self
 
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.migrations.state import ProjectState
 from django.db.models import Model
-from typing_extensions import Self
 
-class OperationCategory(str, Enum):
+class OperationCategory(StrEnum):
     ADDITION = "+"
     REMOVAL = "-"
     ALTERATION = "~"

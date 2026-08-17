@@ -27,14 +27,14 @@ class TaskResultStatus(TextChoices):
 _P = ParamSpec("_P")
 _R = TypeVar("_R")
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class Task(Generic[_P, _R]):
-    priority: int
     # Loose: `_P` excludes `TaskContext` when `takes_context=True`, so `func` may have an extra leading param.
     func: Callable[..., _R]
-    backend: str
-    queue_name: str
-    run_after: datetime | None
+    priority: int = ...
+    backend: str = ...
+    queue_name: str = ...
+    run_after: datetime | None = None
     takes_context: bool = ...
     def __post_init__(self) -> None: ...
     @property

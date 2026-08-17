@@ -1,10 +1,9 @@
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Self
 
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models.base import Model
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
-from typing_extensions import Self
 
 class MigrationRecorder:
     class Migration(Model):

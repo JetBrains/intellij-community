@@ -1,11 +1,11 @@
 from collections.abc import Callable, Sequence
 from contextlib import AbstractContextManager
 from types import TracebackType
-from typing import Any, TypeAlias
+from typing import Any, Self, TypeAlias
 
 from _typeshed import Self as MetaclassSelf  # noqa: TID251
 from django.test import LiveServerTestCase
-from typing_extensions import Self, TypeVar
+from typing_extensions import TypeVar
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 

@@ -4,10 +4,8 @@ from contextlib import AbstractContextManager
 from decimal import Decimal
 from logging import Logger
 from types import TracebackType
-from typing import Any, Literal, Protocol, TypeAlias, overload, type_check_only
+from typing import Any, Literal, Protocol, Self, TypeAlias, overload, type_check_only
 from uuid import UUID
-
-from typing_extensions import Self
 
 logger: Logger
 

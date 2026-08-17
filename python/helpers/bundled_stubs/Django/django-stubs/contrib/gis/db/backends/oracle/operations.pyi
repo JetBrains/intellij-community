@@ -3,6 +3,7 @@ from typing import Any
 from django.contrib.gis.db.backends.base.operations import BaseSpatialOperations
 from django.contrib.gis.db.backends.utils import SpatialOperator
 from django.db.backends.oracle.operations import DatabaseOperations
+from django.db.models.sql.compiler import _AsSqlType
 from typing_extensions import override
 
 DEFAULT_TOLERANCE: str
@@ -41,7 +42,7 @@ class OracleOperations(BaseSpatialOperations, DatabaseOperations):
     @override
     def get_distance(self, f: Any, value: Any, lookup_type: Any) -> Any: ...
     @override
-    def get_geom_placeholder(self, f: Any, value: Any, compiler: Any) -> Any: ...
+    def get_geom_placeholder_sql(self, f: Any, value: Any, compiler: Any) -> _AsSqlType: ...
     @override
     def spatial_aggregate_name(self, agg_name: Any) -> Any: ...
     @override

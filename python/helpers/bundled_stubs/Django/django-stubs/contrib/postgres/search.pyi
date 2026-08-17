@@ -1,5 +1,5 @@
 import re
-from typing import Any, ClassVar, TypeAlias
+from typing import Any, ClassVar, Self, TypeAlias
 
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models import Expression, Field, FloatField, TextField
@@ -7,7 +7,7 @@ from django.db.models.expressions import Combinable, CombinedExpression, Func, V
 from django.db.models.lookups import Lookup
 from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
 from psycopg.adapt import Dumper
-from typing_extensions import Self, TypeVar, override
+from typing_extensions import TypeVar, override
 
 from .utils import CheckPostgresInstalledMixin
 

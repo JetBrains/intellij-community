@@ -27,6 +27,7 @@ def redirect(
     *args: Any,
     permanent: Literal[True],
     preserve_request: bool = False,
+    max_length: int = ...,
     **kwargs: Any,
 ) -> HttpResponsePermanentRedirect: ...
 @overload

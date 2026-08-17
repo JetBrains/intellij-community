@@ -78,6 +78,8 @@ from .text import StrIndex as StrIndex
 from .text import Substr as Substr
 from .text import Trim as Trim
 from .text import Upper as Upper
+from .uuid import UUID4 as UUID4
+from .uuid import UUID7 as UUID7
 from .window import CumeDist as CumeDist
 from .window import DenseRank as DenseRank
 from .window import FirstValue as FirstValue
@@ -91,20 +93,19 @@ from .window import Rank as Rank
 from .window import RowNumber as RowNumber
 
 __all__ = [
-    # text
     "MD5",
     "SHA1",
     "SHA224",
     "SHA256",
     "SHA384",
     "SHA512",
+    "UUID4",
+    "UUID7",
     "ACos",
     "ASin",
     "ATan",
     "ATan2",
-    # math
     "Abs",
-    # comparison and conversion
     "Cast",
     "Ceil",
     "Chr",
@@ -114,12 +115,10 @@ __all__ = [
     "ConcatPair",
     "Cos",
     "Cot",
-    # window
     "CumeDist",
     "Degrees",
     "DenseRank",
     "Exp",
-    # datetime
     "Extract",
     "ExtractDay",
     "ExtractHour",
@@ -135,7 +134,6 @@ __all__ = [
     "FirstValue",
     "Floor",
     "Greatest",
-    # json
     "JSONArray",
     "JSONObject",
     "LPad",

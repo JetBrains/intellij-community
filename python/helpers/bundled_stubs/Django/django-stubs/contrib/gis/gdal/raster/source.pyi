@@ -7,8 +7,11 @@ from django.contrib.gis.gdal.driver import Driver
 from django.contrib.gis.gdal.raster.band import BandList
 from django.contrib.gis.gdal.raster.base import GDALRasterBase
 from django.contrib.gis.gdal.srs import SpatialReference
+from django.core.exceptions import SuspiciousOperation
 from django.utils.functional import cached_property
 from typing_extensions import override
+
+class DisallowedRasterLookup(SuspiciousOperation): ...
 
 class TransformPoint(list[Sequence[float]]):
     indices: dict[str, tuple[int, int]]
@@ -27,6 +30,8 @@ class GDALRaster(GDALRasterBase):
     def __init__(self, ds_input: str | Path | bytes | dict[str, Any] | c_void_p, write: bool = ...) -> None: ...
     @override
     def __del__(self) -> None: ...
+    @classmethod
+    def check_raster_lookup_value(cls, ds_input: Any) -> None: ...
     @property
     def vsi_buffer(self) -> bytes | None: ...
     @cached_property

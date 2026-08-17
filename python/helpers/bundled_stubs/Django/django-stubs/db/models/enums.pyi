@@ -1,22 +1,13 @@
 import enum
 import sys
+from enum import EnumType, IntEnum, StrEnum
+from enum import property as enum_property
 from typing import Any, Literal, overload, type_check_only
 
 from _typeshed import ConvertibleToInt
 from _typeshed import Self as MetaclassSelf  # noqa: TID251
 from django.utils.functional import _StrOrPromise
 from typing_extensions import override
-
-if sys.version_info >= (3, 11):
-    from enum import EnumType, IntEnum, StrEnum
-    from enum import property as enum_property
-else:
-    from enum import EnumMeta as EnumType
-    from types import DynamicClassAttribute as enum_property
-
-    class ReprEnum(enum.Enum): ...  # type: ignore[misc]
-    class IntEnum(int, ReprEnum): ...  # type: ignore[misc]
-    class StrEnum(str, ReprEnum): ...  # type: ignore[misc]
 
 class ChoicesType(EnumType):
     __empty__: _StrOrPromise

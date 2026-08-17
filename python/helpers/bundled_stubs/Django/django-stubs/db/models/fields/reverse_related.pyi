@@ -75,7 +75,7 @@ class ForeignObjectRel(FieldCacheMixin):
     def get_choices(
         self,
         include_blank: bool = True,
-        blank_choice: _ChoicesList = ...,
+        blank_choice: _ChoicesList | None = None,
         limit_choices_to: _LimitChoicesTo | None = None,
         ordering: Sequence[_OrderByFieldName] = (),
     ) -> _ChoicesList: ...

@@ -78,8 +78,6 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     @override
     def has_select_for_update_of(self) -> bool: ...  # type: ignore[override]
     @cached_property
-    def supports_explain_analyze(self) -> bool: ...
-    @cached_property
     @override
     def supported_explain_formats(self) -> set[str]: ...  # type: ignore[override]
     @cached_property
@@ -121,3 +119,12 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     @cached_property
     @override
     def supports_any_value(self) -> bool: ...  # type: ignore[override]
+    @cached_property
+    @override
+    def supports_uuid4_function(self) -> bool: ...  # type: ignore[override]
+    @property
+    @override
+    def supports_uuid4_function_in_default(self) -> bool: ...  # type: ignore[override]
+    @cached_property
+    @override
+    def supports_uuid7_function(self) -> bool: ...  # type: ignore[override]

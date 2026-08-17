@@ -1,6 +1,5 @@
-import sys
 from collections.abc import Callable, Iterable
-from typing import Any, Protocol, overload, type_check_only
+from typing import Any, Protocol, Self, overload, type_check_only
 
 from _typeshed import StrPath
 from django.core.files.base import File
@@ -14,7 +13,7 @@ from django.db.models.query_utils import DeferredAttribute
 from django.db.models.utils import AltersData
 from django.utils.choices import _Choices
 from django.utils.functional import _StrOrPromise
-from typing_extensions import Self, TypeVar, override
+from typing_extensions import TypeVar, override
 
 class FieldFile(File[Any], AltersData):
     instance: Model
@@ -41,11 +40,8 @@ class FieldFile(File[Any], AltersData):
     @property
     @override
     def closed(self) -> bool: ...
-    if sys.version_info >= (3, 11):
-        @override
-        def __getstate__(self) -> dict[str, Any]: ...
-    else:
-        def __getstate__(self) -> dict[str, Any]: ...
+    @override
+    def __getstate__(self) -> dict[str, Any]: ...
     def __setstate__(self, state: dict[str, Any]) -> None: ...
 
 class FileDescriptor(DeferredAttribute):

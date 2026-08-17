@@ -6,10 +6,10 @@ from typing_extensions import override
 
 class WKBReader(_WKBReader):
     @override
-    def read(self, wkb: bytes | str) -> GEOSGeometry: ...
+    def read(self, wkb: bytes | str) -> GEOSGeometry: ...  # type: ignore[override]
 
 class WKTReader(_WKTReader):
     @override
-    def read(self, wkt: bytes | str) -> GEOSGeometry: ...
+    def read(self, wkt: bytes | str) -> GEOSGeometry: ...  # type: ignore[override]
 
 __all__ = ["WKBReader", "WKBWriter", "WKTReader", "WKTWriter"]
