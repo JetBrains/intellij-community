@@ -33,6 +33,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import javax.swing.JComponent
@@ -471,6 +472,20 @@ sealed interface UpdateQueue<T> {
   fun cancelOnDispose(disposable: Disposable): UpdateQueue<T>
 
   /**
+   * Drops all items that were queued but not yet passed to the action.
+   *
+   * This includes items that are still waiting for the debounce delay to expire, so it is safe to call
+   * at any moment after [queue].
+   *
+   * An action that has already started is **not** interrupted: use a cancellable action or a separate
+   * [Job] if the running work has to be stopped as well.
+   *
+   * The debounce timer is not reset, and the queue stays usable: items queued after this call are
+   * processed as usual.
+   */
+  fun cancelPending()
+
+  /**
    * Waits for all queued items to be processed.
    * This is a blocking call intended for testing.
    *
@@ -537,6 +552,10 @@ private abstract class BaseUpdateQueue<T>(
   // Notifies the processor that a new item was queued, before it is consumed from the main channel.
   protected val notifyChannel: Channel<Unit> = Channel(capacity = channelCapacity)
 
+  // Incremented by cancelPending() to invalidate items that were already taken out of the channel
+  // by the collector but not yet dispatched to the action.
+  private val epoch = AtomicLong(0)
+
   protected abstract val job: Job
 
   // Track the currently running processing job for tests
@@ -561,6 +580,21 @@ private abstract class BaseUpdateQueue<T>(
   override fun cancelOnDispose(disposable: Disposable): UpdateQueue<T> {
     job.cancelOnDispose(disposable)
     return this
+  }
+
+  override fun cancelPending() {
+    // Invalidate the items the collector is holding before draining, so that an item claimed
+    // concurrently with the drain is dropped instead of being dispatched.
+    epoch.incrementAndGet()
+
+    // Signals must be drained first: the reverse order could leave a concurrently queued item
+    // with no signal, and nothing would wake the collector up for it.
+    while (notifyChannel.tryReceive().isSuccess) {
+      // drop
+    }
+    while (channel.tryReceive().isSuccess) {
+      // drop
+    }
   }
 
   /**
@@ -655,19 +689,34 @@ private abstract class BaseUpdateQueue<T>(
    * @param onReceive Called when a new item is received. Should either add to the buffer or replace the current item.
    * @param onPrepare Called to prepare the batch after delay expires. Runs in the collector coroutine to ensure happens-before.
    * @param onProcess Called to process the prepared batch. Runs in a separate coroutine with the specified context.
+   * @param onCancel Called instead of [onPrepare] when [cancelPending] invalidated the collected items. Should discard them.
    */
-  @OptIn(ExperimentalCoroutinesApi::class)
   protected suspend fun <R> processWithDelay(
     delay: Duration,
     context: CoroutineContext,
     restartTimerOnAdd: Boolean,
     onReceive: (T) -> Unit,
     onPrepare: () -> R,
-    onProcess: suspend (R) -> Unit
+    onProcess: suspend (R) -> Unit,
+    onCancel: () -> Unit
   ) {
     while (true) {
       // Wait for sync signal that indicates an item was queued
       notifyChannel.receive()
+
+      // Taken before claiming an item, so that a concurrent cancelPending() is always observed below.
+      var cycleEpoch = epoch.get()
+
+      // Discards the items collected so far when cancelPending() was called after they were claimed,
+      // and keeps the ones that arrived after the cancellation.
+      fun receiveItem(item: T) {
+        val currentEpoch = epoch.get()
+        if (currentEpoch != cycleEpoch) {
+          onCancel()
+          cycleEpoch = currentEpoch
+        }
+        onReceive(item)
+      }
 
       // Must be set before reading the channel to avoid a window where channel.isEmpty=true and isCollecting=false.
       isCollecting = true
@@ -681,7 +730,7 @@ private abstract class BaseUpdateQueue<T>(
         isCollecting = false
         continue
       }
-      onReceive(first.getOrThrow())
+      receiveItem(first.getOrThrow())
 
       if (restartTimerOnAdd) {
         // Debounce mode: restart timer on each new item
@@ -697,7 +746,7 @@ private abstract class BaseUpdateQueue<T>(
           // Wait for remaining delay or new item, whichever comes first
           withTimeoutOrNull(remainingDelay.nanoseconds) {
             notifyChannel.receive()
-            onReceive(channel.receive())
+            receiveItem(channel.receive())
             lastItemTime = System.nanoTime()
           } ?: break // Timeout - process collected items
         }
@@ -711,9 +760,16 @@ private abstract class BaseUpdateQueue<T>(
         while (notifyChannel.tryReceive().isSuccess) {
           val next = channel.tryReceive()
           if (next.isSuccess) {
-            onReceive(next.getOrThrow())
+            receiveItem(next.getOrThrow())
           }
         }
+      }
+
+      // cancelPending() dropped the items of this cycle: discard them instead of running the action.
+      if (epoch.get() != cycleEpoch) {
+        onCancel()
+        isCollecting = false
+        continue
       }
 
       // Prepare the data in the current coroutine (ensures happens-before with onReceive)
@@ -743,7 +799,6 @@ private abstract class BaseUpdateQueue<T>(
   /**
    * Process latest item only (replaces previous item with new one).
    */
-  @OptIn(ExperimentalCoroutinesApi::class)
   protected suspend fun processLatest(
     delay: Duration,
     context: CoroutineContext,
@@ -764,14 +819,14 @@ private abstract class BaseUpdateQueue<T>(
       onProcess = { item ->
         action(item)
         latestItem = null
-      }
+      },
+      onCancel = { latestItem = null }
     )
   }
 
   /**
    * Process all items as a batch (collects all items into a list).
    */
-  @OptIn(ExperimentalCoroutinesApi::class)
   protected suspend fun processBatched(
     delay: Duration,
     context: CoroutineContext,
@@ -790,14 +845,14 @@ private abstract class BaseUpdateQueue<T>(
         buffer.clear()
         batch
       },
-      onProcess = { batch -> action(batch) }
+      onProcess = { batch -> action(batch) },
+      onCancel = { buffer.clear() }
     )
   }
 
   /**
    * Process all items as a deduplicated batch (collects all items into a set).
    */
-  @OptIn(ExperimentalCoroutinesApi::class)
   protected suspend fun processBatchedDistinct(
     delay: Duration,
     context: CoroutineContext,
@@ -816,7 +871,8 @@ private abstract class BaseUpdateQueue<T>(
         buffer.clear()
         batch
       },
-      onProcess = { batch -> action(batch) }
+      onProcess = { batch -> action(batch) },
+      onCancel = { buffer.clear() }
     )
   }
 }
@@ -901,6 +957,17 @@ private class SingleComponentQueue<T>(
     }
   }
 
+  override fun cancelPending() {
+    super.cancelPending()
+
+    // The action processor has its own stage: items already forwarded to it are waiting for the
+    // component to show, and pendingItem is kept to retry an action canceled by hiding the component.
+    while (processingChannel.tryReceive().isSuccess) {
+      // drop
+    }
+    pendingItem = null
+  }
+
   /**
    * Process items from the main channel and forward to the processing channel.
    * Runs in global scope, never canceled.
@@ -924,7 +991,8 @@ private class SingleComponentQueue<T>(
       onProcess = { item ->
         processingChannel.send(item)
         latestItem = null
-      }
+      },
+      onCancel = { latestItem = null }
     )
   }
 
