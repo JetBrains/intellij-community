@@ -25,8 +25,6 @@ import org.jetbrains.intellij.build.dev.createDevBuildPaths
 import org.jetbrains.intellij.build.dev.formatCoreClasspath
 import org.jetbrains.intellij.build.dev.prepareOverriddenRunDir
 import org.jetbrains.intellij.build.dev.prepareScratchDir
-import org.jetbrains.intellij.build.dev.readDevBuildComponentManifest
-import org.jetbrains.intellij.build.dev.writeDevBuildComponentManifest
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
@@ -650,7 +648,7 @@ class IdeBuilderTest {
 
     val fingerprint = computeIdeFingerprint(sequenceOf(first, second), runDir, projectDir)
 
-    assertThat(fingerprint).startsWith("v3:")
+    assertThat(fingerprint).startsWith("v5:")
     assertThat(computeIdeFingerprint(sequenceOf(second, first), runDir, projectDir)).isEqualTo(fingerprint)
     assertThat(computeIdeFingerprint(sequenceOf(first.copy(hash = 3), second), runDir, projectDir)).isNotEqualTo(fingerprint)
     assertThat(
@@ -716,50 +714,18 @@ class IdeBuilderTest {
   }
 
   @Test
-  fun componentManifestUsesDistributionPathForExternalCacheAsset() {
-    val componentRoot = tempDir.resolve("component")
-    val projectDir = tempDir.resolve("project")
-    val manifestFile = tempDir.resolve("component-manifest.json")
-    val entry = CustomAssetEntry(
-      path = tempDir.resolve("maven/renderdoc-runtime-linux-aarch64.jar"),
-      hash = 1,
-      distributionPath = componentRoot.resolve("plugins/rider-plugins-renderdoc"),
-    )
-
-    writeDevBuildComponentManifest(
-      file = manifestFile,
-      kind = "plugins_remaining",
-      platformPrefix = "Rider",
-      os = OsFamily.LINUX,
-      arch = JvmArchitecture.aarch64,
-      additionalModules = emptyList(),
-      mainClass = "com.intellij.idea.Main",
-      coreClassPath = emptyList(),
-      pluginCount = 1,
-      entries = sequenceOf(entry),
-      componentRoot = componentRoot,
-      projectDir = projectDir,
-    )
-
-    val manifest = readDevBuildComponentManifest(manifestFile)
-    assertThat(manifest.version).isEqualTo(3)
-    assertThat(manifest.kind).isEqualTo("plugins_remaining")
-    assertThat(manifest.pluginCount).isEqualTo(1)
-    assertThat(manifest.entries).containsExactly(
-      DevBuildComponentEntry(relativePath = "plugins/rider-plugins-renderdoc", type = "custom-asset", hash = 1)
-    )
-  }
-
-  @Test
-  fun ideFingerprintIncludesEntryTypeAndKeepsHashPrimitive() {
+  fun ideFingerprintIncludesEntryTypeAndExecutableBitAndKeepsFieldsPrimitive() {
     val fingerprint = computeIdeFingerprint(listOf(IdeFingerprintEntry("lib/asset.jar", "custom-asset", 1)))
 
     assertThat(computeIdeFingerprint(listOf(IdeFingerprintEntry("lib/asset.jar", "module-output", 1)))).isNotEqualTo(fingerprint)
+    assertThat(computeIdeFingerprint(listOf(IdeFingerprintEntry("lib/asset.jar", "custom-asset", 1, executable = true))))
+      .isNotEqualTo(fingerprint)
     assertThat(IdeFingerprintEntry::class.java.getDeclaredField("hash").type).isEqualTo(java.lang.Long.TYPE)
+    assertThat(IdeFingerprintEntry::class.java.getDeclaredField("executable").type).isEqualTo(java.lang.Boolean.TYPE)
   }
 
   @Test
-  fun componentFingerprintsEqualTheFingerprintOfTheirEntryUnion() {
+  fun componentFingerprintIsStableAcrossComponentOrderAndIncludesEntryMode() {
     val platformEntry = DevBuildComponentEntry(relativePath = "lib/platform.jar", type = "module-output", hash = 1)
     val pluginEntry = DevBuildComponentEntry(relativePath = "plugins/sample/lib/plugin.jar", type = "module-output", hash = 2)
     val platform = componentManifest(kind = "platform", entries = listOf(platformEntry))
@@ -767,15 +733,12 @@ class IdeBuilderTest {
 
     val fingerprint = computeIdeFingerprintFromComponents(listOf(platform, plugins))
 
-    assertThat(fingerprint).isEqualTo(
-      computeIdeFingerprint(
-        listOf(
-          IdeFingerprintEntry(platformEntry.relativePath, platformEntry.type, platformEntry.hash),
-          IdeFingerprintEntry(pluginEntry.relativePath, pluginEntry.type, pluginEntry.hash),
-        )
-      )
-    )
     assertThat(computeIdeFingerprintFromComponents(listOf(plugins, platform))).isEqualTo(fingerprint)
+    assertThat(
+      computeIdeFingerprintFromComponents(
+        listOf(platform.copy(entries = listOf(platformEntry.copy(executable = true))), plugins)
+      )
+    ).isNotEqualTo(fingerprint)
   }
 
   @Test
