@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
-import com.intellij.openapi.editor.ex.DocumentSputnik
-import com.intellij.openapi.editor.ex.DocumentSputniks
 import com.intellij.openapi.editor.ex.DocumentModState
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentSputnik
+import com.intellij.openapi.editor.ex.DocumentSputniks
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.util.Key
@@ -78,7 +78,10 @@ internal class DocumentSnapshotImpl private constructor(
   }
 
   override fun withPatch(patch: DocumentTextPatch): DocumentSnapshot {
-    val newText = text.withPatch(patch)
+    var newText = text
+    for (op in patch.toOps()) {
+      newText = newText.applyOp(op)
+    }
     if (newText === text) {
       return this
     }

@@ -66,6 +66,15 @@ internal class DocumentSnapshotTest {
   }
 
   @Test
+  fun `withPatch after a line query keeps the resulting line count correct`() {
+    val snapshot = snapshot("a\nb")
+    snapshot.text().lineCount() // force lineSet computation before the insert
+    val patched = insertString(snapshot, fragment = "xy")
+    assertEquals("xya\nb", patched.text().string())
+    assertEquals(2, patched.text().lineCount())
+  }
+
+  @Test
   fun `withMetadata with a different, longer text keeps line-modification tracking consistent`() {
     val patched = insertString(snapshot("a"), fragment = "z") // builds modState().lineSet for a 1-line text
     val longText = snapshot("a\nb\nc\nd\ne") // unrelated, never patched, 5 real lines

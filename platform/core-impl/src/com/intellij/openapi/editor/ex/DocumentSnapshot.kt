@@ -96,7 +96,8 @@ interface DocumentSnapshot {
    * Returns snapshot with [patch] applied: the text is this snapshot's text after the replacement described
    * by [patch], and every sputnik is rebuilt against the same patch to stay consistent with the new text.
    *
-   * @see DocumentText.withPatch
+   * @see DocumentText.applyOp
+   * @see DocumentTextPatch.toOps
    * @see DocumentSputnik.withTextChange
    */
   @Contract(pure = true)

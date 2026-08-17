@@ -41,7 +41,7 @@ interface DocumentModState {
    * touches, and [stamp]/[sequence] are taken from [diff].
    *
    * @param before the pre-patch text this instance's line-modification tracking was built against -- the same
-   *             [DocumentText] that [diff] is about to be applied to via [DocumentText.withPatch]. Passing any
+   *             [DocumentText] that [diff] is about to be applied to via [DocumentText.applyOp]. Passing any
    *             other text silently mispairs this instance's tracked line structure with the wrong offsets.
    * @param after the post-patch text, i.e. [before] with [diff] applied; used only to cross-check the rebuilt
    *             line tracking against it, guarding against the two silently drifting apart.

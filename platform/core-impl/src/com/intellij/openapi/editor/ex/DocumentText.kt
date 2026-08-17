@@ -83,9 +83,10 @@ interface DocumentText {
   fun lineIterator(): LineIterator
 
   /**
-   * Returns snapshot with [patch] applied: the result's text is this snapshot's text after replacing
-   * `[patch.startOffset, patch.endOffset)` with [DocumentTextPatch.newFragment].
+   * Returns text with [op] applied.
+   *
+   * @see DocumentTextPatch.toOps
    */
   @Contract(pure = true)
-  fun withPatch(patch: DocumentTextPatch): DocumentText
+  fun applyOp(op: DocumentTextOp): DocumentText
 }
