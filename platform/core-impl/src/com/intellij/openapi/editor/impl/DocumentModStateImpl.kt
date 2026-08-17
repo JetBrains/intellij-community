@@ -95,18 +95,6 @@ internal class DocumentModStateImpl private constructor(
     return DocumentModStateImpl(modStamp, modSequence, modifiedLines)
   }
 
-  override fun withMetadata(other: DocumentModState): DocumentModState {
-    if (this === other) {
-      return this
-    }
-    val otherStamp = other.stamp()
-    val otherSequence = other.sequence()
-    if (modStamp == otherStamp && modSequence == otherSequence) {
-      return this
-    }
-    return DocumentModStateImpl(otherStamp, otherSequence, modifiedLines)
-  }
-
   private fun getModifiedLines(text: DocumentText): ModifiedLineSet {
     var modifiedLines = this.modifiedLines
     if (modifiedLines != null) {

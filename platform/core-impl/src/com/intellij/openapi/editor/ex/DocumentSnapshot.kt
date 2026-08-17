@@ -72,22 +72,17 @@ interface DocumentSnapshot {
   fun <S : DocumentSputnik> withSputnik(key: Key<S>, sputnik: S?): DocumentSnapshot
 
   /**
-   * Returns snapshot with the text of this snapshot and the text metadata taken from the other snapshot.
-   * This method is used to preserve the semantics of metadata being a tracker of text timeline.
+   * Returns [metadata] if it still has this snapshot's text, otherwise returns this snapshot unchanged
+   * and drops [metadata] entirely.
    *
-   * Sputniks follow the newest snapshot whose text survives:
-   * - if [metadata] has the same characters as this snapshot, the result takes [metadata]'s sputniks --
-   *   the latest document state, including sputniks attached during before-change listeners
-   *   (sputnik updates never change the text instance);
-   * - otherwise this snapshot's sputniks are kept, because [metadata]'s sputniks
-   *   correspond to its discarded text
-   *
-   * The [DocumentModState.stamp]/[DocumentModState.sequence] always come from [metadata], but
-   * line-modification tracking always stays this snapshot's own: it is tied to the text that survives,
-   * never to [metadata]'s discarded one.
+   * This is how a document mutator reconciles the snapshot a change was computed against with whatever
+   * snapshot is current at publish time: a metadata-only update that raced the change -- a modification
+   * stamp set from another thread, say -- shares this snapshot's text, so [metadata] survives and is taken
+   * as a whole, sputniks included. But if [metadata]'s text has already moved on to some other change, it
+   * is talking about a text this snapshot no longer has, so it is discarded wholesale -- stamp, sequence,
+   * and sputniks alike -- rather than mixed with this snapshot's own.
    *
    * @param metadata latest version of the document
-   * @see DocumentModState.withMetadata
    */
   @Contract(pure = true)
   fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot

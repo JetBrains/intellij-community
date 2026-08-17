@@ -316,11 +316,11 @@ internal abstract class DocumentMutatorImpl(
   }
 
   /**
-   * Returns the snapshot of [snapshotBefore] updated by [patch], carrying the modification stamp/sequence
-   * of [latest].
+   * Returns [patch] applied on top of [latest] if [latest] still has [snapshotBefore]'s text -- e.g. the
+   * stamp changed during before-change listeners -- or on top of [snapshotBefore] otherwise, i.e. once some
+   * other text mutation has already won the race and [latest] no longer applies.
    *
-   * The stamp could be changed during before-change listeners, so [latest]'s stamp/sequence is merged in
-   * before the patch is applied; line-modification tracking stays [snapshotBefore]'s own.
+   * @see DocumentSnapshot.withMetadata
    */
   protected fun mergeAndPatch(
     snapshotBefore: DocumentSnapshot,

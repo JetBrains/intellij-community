@@ -38,11 +38,12 @@ import java.util.function.UnaryOperator
  * cases (5) and (6) are T_O_D_O to be fixed
  *
  * A change is computed against the snapshot captured at the start of the operation, but published against the
- * snapshot found at CAS time. The two are reconciled by [DocumentSnapshot.withMetadata]: the modification
- * stamp/sequence of the latest snapshot is taken, but its text -- and the line-modification tracking paired
- * with it -- is discarded, and the change is applied to the text the operation started from. That is how a
- * losing text mutation is overridden in cases (1) and (2), while a metadata-only update that raced the change
- * -- a modification stamp set from another thread, say -- still survives.
+ * snapshot found at CAS time. The two are reconciled by [DocumentSnapshot.withMetadata]: if the snapshot found
+ * at CAS time still has the same text the operation started from, it is taken as a whole and the change is
+ * applied on top of it -- that is how a metadata-only update that raced the change, a modification stamp set
+ * from another thread say, survives. Otherwise that snapshot's text has already moved on to some other change,
+ * so it is discarded wholesale, metadata included, and the change is applied to the text the operation started
+ * from instead. That is how a losing text mutation is overridden in cases (1) and (2).
  */
 @ApiStatus.Internal
 interface DocumentMutator {

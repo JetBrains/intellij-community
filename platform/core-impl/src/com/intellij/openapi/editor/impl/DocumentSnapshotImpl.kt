@@ -70,11 +70,7 @@ internal class DocumentSnapshotImpl private constructor(
     if (text.chars() === metadataText.chars()) {
       return metadata
     }
-    val newModState = modState.withMetadata(metadata.modState())
-    if (newModState === modState) {
-      return this
-    }
-    return DocumentSnapshotImpl(text, newModState, sputniks)
+    return this
   }
 
   override fun withPatch(patch: DocumentTextPatch): DocumentSnapshot {

@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 import kotlin.test.assertSame
 
 @TestApplication
@@ -30,7 +29,7 @@ internal class DocumentTextTest {
   }
 
   @Test
-  fun `withMetadata with a different text keeps this text and takes the other metadata`() {
+  fun `withMetadata with a different text drops the other snapshot entirely`() {
     val base = snapshot("a\nb")
     val changed = base.withPatch(
       DocumentTextPatch.simple(
@@ -41,15 +40,8 @@ internal class DocumentTextTest {
         clearLineFlags = false,
       )
     )
-    val metadata = base
-      .withModStamp(42L, true)
-      .withModStamp(43L, true) // twice, so that modSequence differs from the one of `changed`
-    val merged = changed.withMetadata(metadata)
-    assertEquals("a\nb\nc", merged.text().string()) // this text survives
-    assertEquals(3, merged.text().lineCount()) // and so does its line structure
-    assertEquals(43L, merged.modState().stamp()) // metadata is taken from the other snapshot
-    assertEquals(metadata.modState().sequence(), merged.modState().sequence())
-    assertNotEquals(changed.modState().sequence(), merged.modState().sequence())
+    val metadata = base.withModStamp(42L, true)
+    assertSame(changed, changed.withMetadata(metadata))
   }
 
   private fun snapshot(text: String): DocumentSnapshot {

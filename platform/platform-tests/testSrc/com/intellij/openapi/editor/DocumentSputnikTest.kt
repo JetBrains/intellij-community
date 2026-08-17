@@ -16,7 +16,6 @@ import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 
@@ -230,16 +229,11 @@ internal class DocumentSputnikTest {
   }
 
   @Test
-  fun `withMetadata with different text keeps sputniks of this snapshot`() {
+  fun `withMetadata with different text drops the other snapshot entirely`() {
     val before = snapshot("abc").withSputnik(KEY_1, TestSputnik())
     val changed = insertString(before, offset = 0, fragment = "x")
     val metadata = withModStamp(snapshot("abc").withSputnik(KEY_2, TestSputnik()))
-    val merged = changed.withMetadata(metadata)
-    assertEquals(MOD_STAMP, merged.modState().stamp())
-    val kept = merged.sputnik(KEY_1)
-    assertNotNull(kept) // this text survives, so this sputniks survive
-    assertSame(changed.sputnik(KEY_1), kept)
-    assertNull(merged.sputnik(KEY_2)) // metadata sputniks correspond to its discarded text
+    assertSame(changed, changed.withMetadata(metadata))
   }
 
   @Test

@@ -68,14 +68,4 @@ interface DocumentModState {
     endLine: Int,
     exceptLines: IntArray,
   ): DocumentModState
-
-  /**
-   * Returns state with [stamp]/[sequence] taken from [other], keeping this instance's own
-   * line-modification tracking: it stays paired with the text this instance was built against,
-   * never with [other]'s, which the caller is about to discard.
-   *
-   * @see DocumentSnapshot.withMetadata
-   */
-  @Contract(pure = true)
-  fun withMetadata(other: DocumentModState): DocumentModState
 }
