@@ -54,7 +54,7 @@ internal class IDEReportingDataRegistry(
       }
 
       val testMethod = currentTestMethod?.run {
-        TestMethodIdentity(
+        TestMethodReportingIdentity(
           className = clazzSimpleName,
           displayName = displayName,
           executionIndex = registered.count { registration -> registration.testMethodId != null } + 1,

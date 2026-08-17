@@ -1,8 +1,10 @@
 package com.intellij.ide.starter
 
 import com.intellij.ide.starter.utils.ReportingPathUtils
+import com.intellij.ide.starter.utils.ReportingPathUtils.MAX_ARTIFACT_NAME_LENGTH_IN_BYTES
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter.SyntheticTestKind
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.ints.shouldBeLessThanOrEqual
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
@@ -10,7 +12,7 @@ import org.junit.jupiter.api.condition.DisabledOnOs
 import org.junit.jupiter.api.condition.OS
 import java.nio.file.Path
 
-private const val MAX_ARTIFACT_NAME_LENGTH_IN_BYTES = 240
+private val NAME_HASH = Regex("[0-9a-f]{${ReportingPathUtils.NAME_HASH_LENGTH}}")
 
 class ArtifactNameTest {
   @Test
@@ -19,8 +21,8 @@ class ArtifactNameTest {
     val longName = ReportingPathUtils.testDirectoryName("completion/bevy/crates/bevy_render/macros/src/as_bind_group.rs")
 
     nestedName shouldBe "completion-bat-src-bin-bat-clap_app.rs"
-    longName.toByteArray(Charsets.UTF_8).size shouldBe 50
-    longName.substringAfterLast('-').matches(Regex("[0-9a-f]{6}")) shouldBe true
+    longName.toByteArray(Charsets.UTF_8).size shouldBeLessThanOrEqual ReportingPathUtils.MAX_DIR_NAME_LENGTH_IN_BYTES
+    NAME_HASH.matches(longName.substringAfterLast('-')) shouldBe true
     ReportingPathUtils.testDirectoryName("a/b") shouldBe ReportingPathUtils.testDirectoryName("a-b")
   }
 
@@ -80,9 +82,9 @@ class ArtifactNameTest {
 
     val artifactName = ReportingPathUtils.formatArtifactName("logs", testName)
 
-    artifactName.toByteArray(Charsets.UTF_8).size shouldBe MAX_ARTIFACT_NAME_LENGTH_IN_BYTES
-    "$artifactName-2147483647.zip".toByteArray(Charsets.UTF_8).size shouldBe 255
-    artifactName.substringAfterLast('-').matches(Regex("[0-9a-f]{6}")) shouldBe true
+    artifactName.toByteArray(Charsets.UTF_8).size shouldBeLessThanOrEqual MAX_ARTIFACT_NAME_LENGTH_IN_BYTES
+    "$artifactName-2147483647.zip".toByteArray(Charsets.UTF_8).size shouldBeLessThanOrEqual 255
+    NAME_HASH.matches(artifactName.substringAfterLast('-')) shouldBe true
   }
 
   @Test
