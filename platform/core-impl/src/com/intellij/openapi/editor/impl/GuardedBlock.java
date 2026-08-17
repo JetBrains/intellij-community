@@ -15,6 +15,11 @@ final class GuardedBlock extends PersistentRangeMarker {
   }
 
   @Override
+  public byte getFlavorFlags() {
+    return PersistentRangeMarkerTree.GUARD_BLOCK_FLAVOR_FLAG;
+  }
+
+  @Override
   public @NotNull String toString() {
     return super.toString().replace("PersistentRangeMarker", "GuardedBlock");
   }

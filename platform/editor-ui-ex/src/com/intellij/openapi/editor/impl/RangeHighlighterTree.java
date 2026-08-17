@@ -26,12 +26,6 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
   }
 
   @Override
-  protected byte getFlavorFlags(@NotNull RangeHighlighterEx highlighter) {
-    return (byte)((highlighter.getErrorStripeMarkColor(null) != null ? ERROR_STRIPE_FLAVOR_FLAG : 0) |
-                  (highlighter.isRenderedInGutter() ? RENDER_IN_GUTTER_FLAVOR_FLAG : 0));
-  }
-
-  @Override
   protected int compareEqualStartIntervals(@NotNull IntervalNode<RangeHighlighterEx> i1, @NotNull IntervalNode<RangeHighlighterEx> i2) {
     return ((RHNode)i1).compareTo((RHNode)i2);
   }

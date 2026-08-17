@@ -51,7 +51,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     int delta;  // delta of startOffset. getStartOffset() = myStartOffset + Sum of deltas up to root
     private byte flavorBeneath; // including this node
 
-    /// combined bits of [IntervalTreeImpl#getFlavorFlags] for all intervals
+    /// combined bits of [RangeMarkerEx#getFlavorFlags] for all intervals
     private byte flavor;
 
     private volatile long cachedDeltaUpToRoot;
@@ -165,7 +165,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
         assert myTree.keySize > 0 : myTree.keySize;
         myTree.keySize--;
       }
-      byte oldFlavor = oldInterval == null ? -1 : myTree.getFlavorFlags(oldInterval);
+      byte oldFlavor = oldInterval == null ? -1 : oldInterval.getFlavorFlags();
       if (oldFlavor != 0) {
         updateFlavor();
       }
@@ -196,7 +196,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
         Supplier<? extends E> interval = intervals.get(i);
         E e = interval.get();
         if (e != null) {
-          r |= myTree.getFlavorFlags(e);
+          r |= e.getFlavorFlags();
         }
       }
       return r;
@@ -815,7 +815,8 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
   }
 
   /**
-   * return an iterator containing only intervals marked with some "flavor" flags, according to the "tastePreference" bitmask, see {@link #getFlavorFlags}
+   * return an iterator containing only intervals marked with some "flavor" flags, according to the "tastePreference" bitmask,
+   * see {@link RangeMarkerEx#getFlavorFlags()}
    */
   @ApiStatus.Internal
   protected MarkupIterator<T> overlappingDeliciousIterator(@NotNull TextRange range, byte tastePreference) {
@@ -893,19 +894,6 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     });
   }
 
-  /**
-   * Some intervals could be marked with one or several "flavor" flags,
-   * because some range markers can taste bitter, while others are sweet, I mean some range highlighters should be shown on the gutter area, while some others - on the error stripe area only.
-   * It's assumed the flags are remained constant after the marker is inserted into the tree (meaning this method will return the same value when called several times during various points in the marker lifecycle), unless marker attributes are changed.
-   * These flags are maintained during the tree transformations, and allows for faster iteration of these marked intervals, see {@link #overlappingIterator(TextRange, byte)}.
-   * For example, this feature can be used to store highlighters (among all others) that are shown at the error stripe, and iterate them quickly during the editor redraw.
-   * This method must return `0` if the interval has no flavor, or one or several flags `OR`ed together, if this interval has these flavors.
-   * See {@link #nextAvailableFlavorFlag()} on how to create the flag in the first place.
-   */
-  protected byte getFlavorFlags(@NotNull T interval) {
-    return 0;
-  }
-
   protected @NotNull IntervalNode<T> addInterval(@NotNull T interval, int start, int end,
                                                  boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     return runUnderWriteLock(()->{
@@ -924,8 +912,8 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
         // merged
         insertedNode.addInterval(interval);
       }
-      // call getFlavorFlags() as late as possible because it could depend on the (not-yet-set?)node attributes
-      byte flavor = getFlavorFlags(interval);
+      // call getFlavorFlags() as late as possible because it could depend on the (not-yet-set?) node attributes
+      byte flavor = interval.getFlavorFlags();
       insertedNode.flavor |= flavor;
       insertedNode.updateFlavorFromChildrenUp();
       checkMax(true);
@@ -1409,7 +1397,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
   }
 
   private boolean isDeliciousInterval(@NotNull T t, byte tastePreference) {
-    return tastePreference == 0 || (tastePreference & getFlavorFlags(t)) == tastePreference;
+    return tastePreference == 0 || (tastePreference & t.getFlavorFlags()) == tastePreference;
   }
 
   void changeData(@NotNull T interval, int start, int end,

@@ -22,8 +22,4 @@ final class PersistentRangeMarkerTree extends RangeMarkerTree<RangeMarkerEx> {
     // prevent guarded blocks to be collected by gc
     return !GuardedBlock.isGuard(interval);
   }
-  @Override
-  protected byte getFlavorFlags(@NotNull RangeMarkerEx marker) {
-    return GuardedBlock.isGuard(marker) ? GUARD_BLOCK_FLAVOR_FLAG : 0;
-  }
 }
