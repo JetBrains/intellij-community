@@ -14,7 +14,8 @@ import kotlin.concurrent.Volatile
  * Default implementation of [DocumentImpl]
  */
 internal class DocumentCoreImpl private constructor(
-  @Volatile private var snapshot: DocumentSnapshot, // mutable via SNAPSHOT_UPDATER
+  /** mutable via [SNAPSHOT_UPDATER] */
+  @Volatile private var snapshot: DocumentSnapshot,
   private val settings: DocumentSettings,
   private val dispatcher: DocumentEventDispatcherImpl,
 ) : DocumentCore {
