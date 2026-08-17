@@ -1,8 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.properties
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import org.jetbrains.plugins.gradle.properties.models.getBooleanProperty
 import org.jetbrains.plugins.gradle.properties.models.getStringProperty
 import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
@@ -31,7 +34,7 @@ object GradlePropertiesFile {
 
   @JvmStatic
   fun getProperties(serviceDirectory: String?, projectPath: Path): GradleProperties {
-    val propertyPaths = getPropertyPaths(serviceDirectory, projectPath, null)
+    val propertyPaths = getPropertyPaths(serviceDirectory, projectPath, null, projectPath.getEelDescriptor())
     return loadAndMergeProperties(propertyPaths)
   }
 
@@ -40,12 +43,17 @@ object GradlePropertiesFile {
     val linkedProjectPath = resolveGradleProjectRoot(projectPath).toCanonicalPath()
     val serviceDirectory = GradleSettings.getInstance(project).serviceDirectoryPath
     val gradleHome = GradleLocalSettings.getInstance(project).getGradleHome(linkedProjectPath)
-    return getPropertyPaths(serviceDirectory, projectPath, gradleHome)
+    return getPropertyPaths(serviceDirectory, projectPath, gradleHome, project.getEelDescriptor())
   }
 
-  private fun getPropertyPaths(serviceDirectory: String?, projectPath: Path, gradleHome: String?): List<Path> {
+  private fun getPropertyPaths(
+    serviceDirectory: String?,
+    projectPath: Path,
+    gradleHome: String?,
+    eelDescriptor: EelDescriptor,
+  ): List<Path> {
     return listOfNotNull(
-      getPropertyPathInGradleUserHome(serviceDirectory),
+      getPropertyPathInGradleUserHome(serviceDirectory, eelDescriptor),
       getPropertyPathInGradleProjectRoot(projectPath),
       getPropertyPathInGradleHome(gradleHome)
     ).map {
@@ -53,12 +61,9 @@ object GradlePropertiesFile {
     }
   }
 
-  fun getPropertyPathInGradleUserHome(serviceDirectory: String?): Path? {
-    val gradleUserHome = serviceDirectory ?: gradleUserHomeDir().path
-    if (gradleUserHome != null) {
-      return Paths.get(gradleUserHome, GRADLE_PROPERTIES_FILE_NAME)
-    }
-    return null
+  fun getPropertyPathInGradleUserHome(serviceDirectory: String?, eelDescriptor: EelDescriptor): Path {
+    val gradleUserHome = serviceDirectory?.toNioPathOrNull() ?: gradleUserHomeDir(eelDescriptor)
+    return gradleUserHome.resolve(GRADLE_PROPERTIES_FILE_NAME)
   }
 
   private fun getPropertyPathInGradleProjectRoot(projectPath: Path): Path {

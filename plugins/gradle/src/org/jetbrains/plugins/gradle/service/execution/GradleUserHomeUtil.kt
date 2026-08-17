@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GradleUserHomeUtil")
 
 package org.jetbrains.plugins.gradle.service.execution
@@ -18,6 +18,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants.USER_HOME_PROPERTY_KEY
 import java.io.File
 import java.nio.file.Path
 
+@Deprecated("Use GradleUserHomeUtil#gradleUserHomeDir(EelDescriptor) instead")
 fun gradleUserHomeDir(): File {
   var gradleUserHome = Environment.getProperty(GRADLE_USER_HOME_PROPERTY_KEY)
   if (gradleUserHome == null) {
@@ -32,7 +33,7 @@ fun gradleUserHomeDir(): File {
 
 fun gradleUserHomeDir(descriptor: EelDescriptor): Path {
   if (descriptor == LocalEelDescriptor) {
-    return gradleUserHomeDir().toPath()
+    return gradleUserHomeDirLocalFS()
   }
   return runBlockingMaybeCancellable {
     val eel = descriptor.toEelApi()
@@ -44,6 +45,18 @@ fun gradleUserHomeDir(descriptor: EelDescriptor): Path {
         return@runBlockingMaybeCancellable nioUserHome
       }
     }
-    return@runBlockingMaybeCancellable eel.userInfo.home.asNioPath().resolve(".gradle")
+    return@runBlockingMaybeCancellable eel.userInfo.home.asNioPath().resolve(GRADLE_CACHE_DIR_NAME)
   }
+}
+
+private fun gradleUserHomeDirLocalFS(): Path {
+  val gradleUserHome = Environment.getProperty(GRADLE_USER_HOME_PROPERTY_KEY) ?: Environment.getVariable(GRADLE_USER_HOME_ENV_KEY)
+  if (gradleUserHome != null) {
+    val nioUserHome = gradleUserHome.toNioPathOrNull()
+    if (nioUserHome != null) {
+      return nioUserHome.normalize()
+    }
+  }
+  val userHome = checkNotNull(Environment.getProperty(USER_HOME_PROPERTY_KEY)) { "Environment variable 'user.home' is not set" }
+  return Path.of(userHome, GRADLE_CACHE_DIR_NAME).normalize()
 }

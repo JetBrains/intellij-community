@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.platform.eel.provider.EelProviderProjectUtilKt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -144,7 +145,7 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
       paths.addAll(GradlePropertiesFile.getPropertyPaths(project, projectPath));
       paths.add(GradleLocalPropertiesFile.getPropertyPath(projectPath));
       paths.add(GradleDaemonJvmPropertiesFile.getPropertyPath(projectPath));
-      paths.add(GradleUserHomeUtil.gradleUserHomeDir().toPath().resolve("init.gradle"));
+      paths.add(GradleUserHomeUtil.gradleUserHomeDir(EelProviderProjectUtilKt.getEelDescriptor(project)).resolve("init.gradle"));
       return paths;
     }
   }
