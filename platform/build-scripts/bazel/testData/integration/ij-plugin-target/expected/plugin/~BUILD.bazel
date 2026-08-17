@@ -33,6 +33,7 @@ ij_plugin(
     name = "plugin_plugin",
     descriptor_module = ":plugin",
     content_modules = ["//module"],
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.plugin` end
 

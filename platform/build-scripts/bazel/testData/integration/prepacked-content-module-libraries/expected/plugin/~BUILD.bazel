@@ -38,6 +38,7 @@ ij_plugin(
         "//content:libraries-example",
         "//refused",
     ],
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.example.plugin` end
 

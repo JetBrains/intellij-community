@@ -39,6 +39,7 @@ ij_plugin(
         "//conventional",
         "//conflicting",
     ],
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.example.plugin` end
 

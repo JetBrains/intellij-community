@@ -1150,6 +1150,9 @@ internal class BazelBuildFileGenerator(
           val contentModuleLabels = pluginDescriptorContentData.contentModuleNames.map { getBazelDependencyLabel(moduleList.getModuleDescriptor(it), moduleDescriptor) }
           option("content_modules", contentModuleLabels.unsorted())
         }
+        // the distribution is consumed from other packages: by the build scripts building this plugin by Bazel,
+        // and by the test comparing the result with the build scripts' own output
+        visibility(arrayOf("//visibility:public"))
       }
       val label = BazelLabel(moduleDescriptor.targetName + "_plugin", moduleDescriptor)
       PluginDistributionTarget(
