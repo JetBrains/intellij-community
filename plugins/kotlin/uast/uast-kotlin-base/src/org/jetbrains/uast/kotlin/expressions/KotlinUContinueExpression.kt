@@ -8,22 +8,28 @@ import org.jetbrains.uast.UContinueExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.ULabeledExpression
 import org.jetbrains.uast.ULoopExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class KotlinUContinueExpression(
     override val sourcePsi: KtContinueExpression,
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UContinueExpression {
+    private val jumpTargetPart = UastLazyPart<UElement?>()
+
     override val label: String?
         get() = sourcePsi.getLabelName()
 
     override val jumpTarget: UElement?
-        get() = generateSequence(uastParent) { it.uastParent }
-            .firstNotNullOfOrNull {
-                when (it) {
-                    is ULabeledExpression if it.label == label -> it.expression
-                    is ULoopExpression if label == null -> it
-                    else -> null
+        get() = jumpTargetPart.getOrBuild {
+            generateSequence(uastParent) { it.uastParent }
+                .firstNotNullOfOrNull {
+                    when (it) {
+                        is ULabeledExpression if it.label == label -> it.expression
+                        is ULoopExpression if label == null -> it
+                        else -> null
+                    }
                 }
-            }
+        }
 }
