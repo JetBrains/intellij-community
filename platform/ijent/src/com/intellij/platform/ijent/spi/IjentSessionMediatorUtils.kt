@@ -133,9 +133,8 @@ object IjentSessionMediatorUtils {
     errorStream: EelReceiveChannel,
     ijentLabel: String,
     lastStderrMessages: MutableSharedFlow<String?>,
-    logger: IjentLog,
   ) {
-    val lineConsumer = createIjentStderrLineConsumer(ijentLabel, lastStderrMessages, logger)
+    val lineConsumer = createIjentStderrLineConsumer(ijentLabel, lastStderrMessages)
     try {
       // `useLines` reads the stderr stream with a blocking call that parks its thread for the whole IJent
       // session. Keep that thread on `IjentThreadPool` instead of the default `Dispatchers.IO`, otherwise a
@@ -148,7 +147,7 @@ object IjentSessionMediatorUtils {
       }
     }
     catch (err: IOException) {
-      logger.debug { "$ijentLabel bootstrap got an error: $err" }
+      IjentLogger.LIFETIME_LOG.debug { "$ijentLabel bootstrap got an error: $err" }
     }
     finally {
       lineConsumer.complete()
@@ -158,9 +157,8 @@ object IjentSessionMediatorUtils {
   fun createIjentStderrLineConsumer(
     ijentLabel: String,
     lastStderrMessages: MutableSharedFlow<String?>,
-    logger: IjentLog,
   ): IjentStderrLineConsumer {
-    val logIjentStderr = LogIjentStderr(logger)
+    val logIjentStderr = LogIjentStderr()
     return IjentStderrLineConsumer(lastStderrMessages) { line ->
       logIjentStderr(ijentLabel, line)
     }
@@ -200,7 +198,7 @@ object IjentSessionMediatorUtils {
     }
   }
 
-  private class LogIjentStderr(private val logger: IjentLog) {
+  private class LogIjentStderr {
     private var lastLoggingHandler: ((String) -> Unit)? = null
 
     operator fun invoke(ijentLabel: String, line: String) {
@@ -213,7 +211,7 @@ object IjentSessionMediatorUtils {
           // It's important to always log such messages,
           // but if logs are supposed to be written to a separate file in debug level,
           // they're logged in debug level.
-          val logger = lastLoggingHandler ?: logger::info
+          val logger = lastLoggingHandler ?: IjentLogger.OTHER_LOG::info
           logger(message)
           return
         }
@@ -222,7 +220,7 @@ object IjentSessionMediatorUtils {
         java.time.Duration.between(hostDateTime, ZonedDateTime.parse(rawRemoteDateTime)).toKotlinDuration()
       }
       catch (_: DateTimeParseException) {
-        val logger = lastLoggingHandler ?: logger::info
+        val logger = lastLoggingHandler ?: IjentLogger.OTHER_LOG::info
         logger(message)
         return
       }
@@ -271,7 +269,6 @@ object IjentSessionMediatorUtils {
   suspend fun ijentProcessExitCodeHandler(
     ijentLabel: String,
     lastStderrMessages: MutableSharedFlow<String?>,
-    logger: IjentLog,
     exitCode: Int,
     isExitExpected: Boolean,
   ): Nothing {
@@ -302,10 +299,10 @@ object IjentSessionMediatorUtils {
 
     // TODO IJPL-198706 When IJent unexpectedly terminates, users should be asked for further actions.
     if (isExitExpected) {
-      logger.info(error)
+      IjentLogger.OTHER_LOG.info(error)
     }
     else {
-      logger.warn(error)
+      IjentLogger.OTHER_LOG.warn(error)
     }
     throw error
   }
