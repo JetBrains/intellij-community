@@ -3,6 +3,7 @@ package com.intellij.gradle.codeInsight.groovy.backend.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.gradle.codeInsight.backend.inspections.GradleDslInspectionProvider
+import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleRedundantKotlinStdLibInspection.Companion.KOTLIN_STDLIB_DEFAULT_DEPENDENCY_PROPERTY
 import com.intellij.gradle.codeInsight.groovy.backend.inspections.visitors.GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor
 import com.intellij.gradle.codeInsight.groovy.backend.inspections.visitors.GroovyConfigurationAvoidanceVisitor
 import com.intellij.gradle.codeInsight.groovy.backend.inspections.visitors.GroovyDeprecatedConfigurationInspectionVisitor
@@ -10,7 +11,7 @@ import com.intellij.gradle.codeInsight.groovy.backend.inspections.visitors.Groov
 import com.intellij.gradle.codeInsight.groovy.backend.inspections.visitors.GroovyIncorrectDependencyNotationArgumentInspectionVisitor
 import com.intellij.gradle.codeInsight.groovy.backend.inspections.visitors.GroovyPluginDslStructureInspectionVisitor
 import com.intellij.gradle.codeInsight.groovy.backend.inspections.visitors.GroovyRedundantKotlinStdLibInspectionVisitor
-import com.intellij.gradle.properties.gradlePropertiesStream
+import com.intellij.gradle.properties.findGradleProperty
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -41,13 +42,8 @@ internal class GroovyGradleDslInspectionProvider : GradleDslInspectionProvider {
     GroovyPsiElementVisitor(GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder))
 
   override fun isRedundantKotlinStdLibInspectionAvailable(file: PsiFile): Boolean {
-    if (!FileUtilRt.extensionEquals(file.name, GradleConstants.EXTENSION)) return false
-
-    val kotlinStdlibDefaultDependencyProp = gradlePropertiesStream(file).firstNotNullOfOrNull {
-      it.findPropertyByKey("kotlin.stdlib.default.dependency")?.value
-    }
-    // the default value is "true"
-    return kotlinStdlibDefaultDependencyProp != "false"
+    return FileUtilRt.extensionEquals(file.name, GradleConstants.EXTENSION)
+           && findGradleProperty(file, KOTLIN_STDLIB_DEFAULT_DEPENDENCY_PROPERTY) != "false"
   }
 
   override fun getRedundantKotlinStdLibInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =

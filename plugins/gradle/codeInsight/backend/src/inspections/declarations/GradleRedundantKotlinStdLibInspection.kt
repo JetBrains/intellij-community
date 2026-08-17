@@ -19,4 +19,8 @@ class GradleRedundantKotlinStdLibInspection : LocalInspectionTool() {
     val inspectionProvider = GradleDslInspectionProvider.INSTANCE.forLanguage(language) ?: return PsiElementVisitor.EMPTY_VISITOR
     return inspectionProvider.getRedundantKotlinStdLibInspectionVisitor(holder, isOnTheFly)
   }
+
+  companion object {
+    const val KOTLIN_STDLIB_DEFAULT_DEPENDENCY_PROPERTY: String = "kotlin.stdlib.default.dependency"
+  }
 }

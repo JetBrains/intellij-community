@@ -3,6 +3,7 @@ package com.intellij.gradle.codeInsight.kotlin.backend.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.gradle.codeInsight.backend.inspections.GradleDslInspectionProvider
+import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleRedundantKotlinStdLibInspection.Companion.KOTLIN_STDLIB_DEFAULT_DEPENDENCY_PROPERTY
 import com.intellij.gradle.codeInsight.kotlin.backend.inspections.visitors.KotlinAvoidApplyPluginMethodInspectionVisitor
 import com.intellij.gradle.codeInsight.kotlin.backend.inspections.visitors.KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor
 import com.intellij.gradle.codeInsight.kotlin.backend.inspections.visitors.KotlinAvoidDuplicateDependenciesInspectionVisitor
@@ -10,7 +11,7 @@ import com.intellij.gradle.codeInsight.kotlin.backend.inspections.visitors.Kotli
 import com.intellij.gradle.codeInsight.kotlin.backend.inspections.visitors.KotlinAvoidRepositoriesInBuildGradleInspectionVisitor
 import com.intellij.gradle.codeInsight.kotlin.backend.inspections.visitors.KotlinTaskMissingDescriptionInspectionVisitor
 import com.intellij.gradle.codeInsight.kotlin.backend.inspections.visitors.RedundantKotlinStdLibInspectionVisitor
-import com.intellij.gradle.properties.gradlePropertiesStream
+import com.intellij.gradle.properties.findGradleProperty
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -67,13 +68,7 @@ internal class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
   }
 
   override fun isRedundantKotlinStdLibInspectionAvailable(file: PsiFile): Boolean {
-    if (!isSuitableGradleKtsFile(file)) return false
-
-    val kotlinStdlibDefaultDependencyProp = gradlePropertiesStream(file).firstNotNullOfOrNull {
-      it.findPropertyByKey("kotlin.stdlib.default.dependency")?.value
-    }
-    // the default value is "true"
-    return kotlinStdlibDefaultDependencyProp != "false"
+    return isSuitableGradleKtsFile(file) && findGradleProperty(file, KOTLIN_STDLIB_DEFAULT_DEPENDENCY_PROPERTY) != "false"
   }
 
   override fun getRedundantKotlinStdLibInspectionVisitor(
