@@ -78,8 +78,6 @@ fun main(args: Array<String>) {
   val buildDateInSeconds = options.optional("--build-date-seconds")?.let {
     it.toLongOrNull() ?: error("--build-date-seconds must be an integer number of seconds since the epoch, but got '$it'")
   }
-  // a dev run directory is disposable and may share bytes with the jar cache, but a Bazel output must own its bytes
-  val linkCacheEntries = options.optionalBoolean("--link-cache-entries") ?: false
   // Unlike a dev run directory, which is rebuilt in place over and over and reuses a jar cache shared with every other
   // product, an assembly here is produced once per change by a caller that caches the whole result. A local disk cache would
   // only add a second copy of every jar, and a directory that concurrent assemblies mutate while its cleanup prunes it.
@@ -137,7 +135,6 @@ fun main(args: Array<String>) {
         runDirOverride = outputDir,
         scratchDir = scratchDir,
         buildDateInSeconds = buildDateInSeconds,
-        linkImmutableCacheEntries = linkCacheEntries,
         jarCacheDir = jarCacheDir,
         fragment = fragment,
         componentManifestFile = componentManifest,

@@ -251,36 +251,6 @@ class IdeBuilderTest {
   }
 
   @Test
-  fun configureDevModeBuildOptionsLinksImmutableCacheEntriesByDefault() {
-    val options = BuildOptions().apply {
-      linkImmutableCacheEntries = false
-    }
-
-    configureDevModeBuildOptions(
-      options = options,
-      request = createBuildRequest(),
-      buildOptionsTemplate = BuildOptions(),
-    )
-
-    assertThat(options.linkImmutableCacheEntries).isTrue()
-  }
-
-  @Test
-  fun configureDevModeBuildOptionsKeepsImmutableCacheEntryLinkingDisabledOnRequest() {
-    val options = BuildOptions().apply {
-      linkImmutableCacheEntries = true
-    }
-
-    configureDevModeBuildOptions(
-      options = options,
-      request = createBuildRequest(linkImmutableCacheEntries = false),
-      buildOptionsTemplate = BuildOptions(),
-    )
-
-    assertThat(options.linkImmutableCacheEntries).isFalse()
-  }
-
-  @Test
   fun contentModuleFragmentDoesNotInlineTheProductDescriptor() {
     val options = BuildOptions()
 
@@ -754,7 +724,6 @@ class IdeBuilderTest {
     classesOutputDirectory: Path? = null,
     scratchDir: Path? = null,
     buildDateInSeconds: Long? = null,
-    linkImmutableCacheEntries: Boolean = true,
     os: OsFamily = OsFamily.currentOs,
     arch: JvmArchitecture = JvmArchitecture.currentJvmArch,
     fragment: DevBuildFragment = DevBuildFragment.COMPLETE,
@@ -767,7 +736,6 @@ class IdeBuilderTest {
       classesOutputDirectory = classesOutputDirectory,
       scratchDir = scratchDir,
       buildDateInSeconds = buildDateInSeconds,
-      linkImmutableCacheEntries = linkImmutableCacheEntries,
       os = os,
       arch = arch,
       fragment = fragment,

@@ -37,7 +37,6 @@ internal fun tryUseCacheEntry(
   cleanupCandidateIndex: CleanupCandidateIndex,
   deleteInvalidEntry: Boolean,
   failOnCacheIoErrors: Boolean,
-  linkCacheEntries: Boolean,
 ): Path? {
   // Lock-free path is only safe for materializing into an external target file.
   // If the caller wants cache file as target, keep lock-protected path to avoid
@@ -74,7 +73,7 @@ internal fun tryUseCacheEntry(
   }
   else {
     try {
-      createLinkOrCopy(targetFile = targetFile, cacheFile = paths.payloadFile, linkCacheEntries = linkCacheEntries)
+      copyCacheEntryPayload(targetFile = targetFile, cacheFile = paths.payloadFile)
       targetFile
     }
     catch (e: IOException) {
@@ -109,7 +108,6 @@ internal suspend fun produceAndCache(
   tempFilePrefix: String,
   metadataTouchTracker: MetadataTouchTracker,
   cleanupCandidateIndex: CleanupCandidateIndex,
-  linkCacheEntries: Boolean,
 ): Path = withContext(Dispatchers.IO) {
   Files.createDirectories(paths.entryShardDir)
   val tempPayloadFileName = buildTempSiblingFileName(
@@ -156,7 +154,7 @@ internal suspend fun produceAndCache(
   notifyAboutMetadata(sources = sourceCacheItems, items = items, nativeFiles = nativeFiles, producer = producer)
 
   if (!producer.useCacheAsTargetFile) {
-    createLinkOrCopy(targetFile = targetFile, cacheFile = paths.payloadFile, linkCacheEntries = linkCacheEntries)
+    copyCacheEntryPayload(targetFile = targetFile, cacheFile = paths.payloadFile)
   }
 
   if (producer.useCacheAsTargetFile) paths.payloadFile else targetFile
@@ -190,27 +188,20 @@ private suspend fun reconcileMetadataPublishFailure(
 }
 
 /**
- * Materializes a cache payload as [targetFile]: a hardlink when [linkCacheEntries] allows it, a copy otherwise.
+ * Copies a cache payload to [targetFile], so that the layout owns bytes the cache does not share.
  *
- * A hardlink makes the two one file on disk, so it is only safe where the target is disposable and nothing rewrites it in place -
- * see [org.jetbrains.intellij.build.BuildOptions.linkImmutableCacheEntries] for who may say yes.
+ * This is the only path by which a module or library jar reaches a distribution, so it is also the one place where
+ * [StandardCopyOption.COPY_ATTRIBUTES] earns the whole jar set: the option is what makes the JDK attempt the host's
+ * copy-on-write path (see `org.jetbrains.intellij.build.io.copyFile`), turning the copy into a metadata-only clone on
+ * APFS or a reflinking Linux filesystem. Dropping it would make every dev build write the whole jar set again.
  */
-private fun createLinkOrCopy(targetFile: Path, cacheFile: Path, linkCacheEntries: Boolean) {
+private fun copyCacheEntryPayload(targetFile: Path, cacheFile: Path) {
   if (targetFile == cacheFile) {
     return
   }
 
   Files.createDirectories(targetFile.parent)
-  if (linkCacheEntries) {
-    try {
-      Files.deleteIfExists(targetFile)
-      Files.createLink(targetFile, cacheFile)
-      return
-    }
-    catch (_: IOException) {
-    }
-  }
-  Files.copy(cacheFile, targetFile, StandardCopyOption.REPLACE_EXISTING)
+  Files.copy(cacheFile, targetFile, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
 }
 
 private fun touchMetadataFileIfRequired(paths: CacheEntryPaths, span: Span, metadataTouchTracker: MetadataTouchTracker): Boolean {

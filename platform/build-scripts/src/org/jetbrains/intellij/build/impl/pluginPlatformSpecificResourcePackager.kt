@@ -11,8 +11,6 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntr
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFile
-import org.jetbrains.intellij.build.materializeCacheDir
-import org.jetbrains.intellij.build.materializeCacheFile
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
@@ -107,8 +105,7 @@ internal suspend fun handleCustomPlatformSpecificAssets(
             val dirPrefix = dir.toString().length + 1
             val filter = source.filter
             if (filter == null) {
-              // the whole of an extract-cache directory, so a dev run directory may share its bytes
-              materializeCacheDir(sourceDir = dir, targetDir = rootDir, context = context)
+              copyDir(sourceDir = dir, targetDir = rootDir, overwrite = true)
             }
             else {
               copyDir(
@@ -136,12 +133,7 @@ internal suspend fun handleCustomPlatformSpecificAssets(
 
           is FileSource -> {
             val targetFile = rootDir.resolve(source.relativePath)
-            if (source.fromImmutableCache) {
-              materializeCacheFile(source = source.file, target = targetFile, context = context)
-            }
-            else {
-              copyFile(source.file, targetFile)
-            }
+            copyFile(file = source.file, target = targetFile, overwrite = true)
             distEntries.add(
               CustomAssetEntry(
                 path = targetFile,
