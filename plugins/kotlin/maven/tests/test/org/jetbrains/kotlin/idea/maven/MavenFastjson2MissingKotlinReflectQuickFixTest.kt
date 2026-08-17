@@ -34,4 +34,9 @@ class MavenFastjson2MissingKotlinReflectQuickFixTest(mavenVersion: String, model
     fun testNoWarningWhenKotlinReflectTransitive() = runBlocking {
         doTest("Add 'kotlin-reflect.jar' to the classpath", shouldBeAvailable = false)
     }
+
+    @Test
+    fun testFixAllIsNotAvailable() = runBlocking {
+        doTest("Fix all 'The kotlin-reflect library is required for fastjson2-kotlin' problems in file", shouldBeAvailable = false)
+    }
 }

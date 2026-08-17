@@ -31,6 +31,8 @@ class AddKotlinLibraryQuickFix(
 
     override fun getFamilyName(): String = quickFixText
 
+    override fun availableInBatchMode(): Boolean = false
+
     override fun perform(context: ActionContext): ModCommand {
         val file = context.file
         val module = file.module?.takeIf { isApplicable(it) } ?: return ModCommand.nop()
