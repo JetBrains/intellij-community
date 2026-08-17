@@ -88,6 +88,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyTypedElement
@@ -279,6 +280,14 @@ abstract class PyCodeInsightTestCase {
     @JvmStatic
     protected val myFixture: CodeInsightTestFixture
       get() = cachedFixture?.fixture ?: error("No fixture set up")
+
+    /** Looks a function up in [file] by its name, or by `<class>.<method>` for a method. */
+    @JvmStatic
+    protected fun findFunction(file: PyFile, name: String): PyFunction {
+      val parts = name.split('.')
+      return if (parts.size == 1) file.findTopLevelFunction(name)!!
+      else file.findTopLevelClass(parts[0])!!.findMethodByName(parts[1], false, null)!!
+    }
 
     @BeforeAll
     @JvmStatic
