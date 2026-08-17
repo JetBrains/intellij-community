@@ -100,8 +100,7 @@ public final class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLoc
       @Override
       public void visitTryStatement(@NotNull PsiTryStatement statement) {
         super.visitTryStatement(statement);
-        final PsiCatchSection[] catchSections = statement.getCatchSections();
-        for (final PsiCatchSection section : catchSections) {
+        for (PsiCatchSection section : statement.getCatchSections()) {
           checkCatchSection(section);
         }
       }
@@ -213,14 +212,13 @@ public final class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLoc
     protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
       Instruction instruction = instructionState.getInstruction();
       DfaMemoryState memState = instructionState.getMemoryState();
-      if (instruction instanceof EnsureInstruction) {
-        if (((EnsureInstruction)instruction).getProblem() instanceof ContractFailureProblem &&
-            memState.peek().getDfType().equals(DfType.FAIL)) {
+      if (instruction instanceof EnsureInstruction i) {
+        if (i.getProblem() instanceof ContractFailureProblem && memState.peek().getDfType().equals(DfType.FAIL)) {
           cancel();
         }
       }
-      if (instruction instanceof MethodCallInstruction) {
-        if (myMethods.contains(((MethodCallInstruction)instruction).getTargetMethod())) {
+      if (instruction instanceof MethodCallInstruction i) {
+        if (myMethods.contains(i.getTargetMethod())) {
           DfaValue qualifier = memState.peek();
           // Methods like "getCause" and "getMessage" return "null" for our test exception
           if (memState.areEqual(qualifier, myExceptionVar)) {
@@ -240,17 +238,17 @@ public final class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLoc
       if (instruction instanceof FlushFieldsInstruction || instruction instanceof ThrowInstruction) {
         return true;
       }
-      if (instruction instanceof FlushVariableInstruction) {
-        return !isModificationAllowed(((FlushVariableInstruction)instruction).getVariable());
+      if (instruction instanceof FlushVariableInstruction i) {
+        return !isModificationAllowed(i.getVariable());
       }
       if (instruction instanceof AssignInstruction) {
         return !isModificationAllowed(memState.getStackValue(1));
       }
-      if (instruction instanceof ReturnInstruction) {
-        return ((ReturnInstruction)instruction).getAnchor() != null;
+      if (instruction instanceof ReturnInstruction i) {
+        return i.getAnchor() != null;
       }
-      if (instruction instanceof MethodCallInstruction) {
-        return !((MethodCallInstruction)instruction).getMutationSignature().isPure();
+      if (instruction instanceof MethodCallInstruction i) {
+        return !i.getMutationSignature().isPure();
       }
       if (instruction instanceof ArrayStoreInstruction) {
         return true;
@@ -259,8 +257,8 @@ public final class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLoc
     }
 
     protected boolean isModificationAllowed(DfaValue variable) {
-      if (!(variable instanceof DfaVariableValue)) return false;
-      PsiElement owner = ((DfaVariableValue)variable).getPsiVariable();
+      if (!(variable instanceof DfaVariableValue value)) return false;
+      PsiElement owner = value.getPsiVariable();
       return owner == myParameter || owner != null && PsiTreeUtil.isAncestor(myBlock, owner, false);
     }
   }
