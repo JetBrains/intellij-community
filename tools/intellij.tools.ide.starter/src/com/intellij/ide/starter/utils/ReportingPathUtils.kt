@@ -100,12 +100,15 @@ object ReportingPathUtils {
   }
 
   /**
-   * The file name a published artifact takes: `<type>-<timestamp>`, timestamped so that several artifacts of one type can land in one
-   * directory, and short enough for the suffix TeamCity appends. [testName] qualifies it for whoever publishes without a directory of their
-   * own to tell the tests apart.
+   * The file name a published artifact takes: `<type>-<time>`, timed so that several artifacts of one type can land in one directory, and
+   * short enough for the suffix TeamCity appends. [testName] qualifies it for whoever publishes without a directory of their own to tell the
+   * tests apart.
+   *
+   * The time comes without a date, which the artifacts of one run have no use for and a path on Windows has no room for: two artifacts of one
+   * type would have to land in one directory a whole day apart, to the second, to take the same name.
    */
   fun formatArtifactName(artifactType: String, testName: String = ""): String {
-    val time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
+    val time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"))
     val name = listOf(artifactType, testName.replace("/", "-").replace(" ", ""), time)
       .filter(String::isNotEmpty)
       .joinToString("-")

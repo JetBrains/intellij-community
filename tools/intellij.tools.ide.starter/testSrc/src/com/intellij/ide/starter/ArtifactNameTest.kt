@@ -65,8 +65,9 @@ class ArtifactNameTest {
 
   /** A launch publishes into a directory of its own, so its artifacts only need a name that stays unique in time. */
   @Test
-  fun `an unqualified artifact name is the type and a timestamp`() {
-    ReportingPathUtils.formatArtifactName("logs").matches(Regex("logs-\\d{14}")) shouldBe true
+  fun `an unqualified artifact name is the type and the time of day`() {
+    // the date the name goes without is 8 characters of a path that has Windows' limit to fit in
+    ReportingPathUtils.formatArtifactName("logs").matches(Regex("logs-\\d{6}")) shouldBe true
   }
 
   @Test

@@ -500,7 +500,7 @@ class IDEReportingDataTest {
     val invocation = mockingDetails(testContext).invocations.single()
     invocation.arguments[0] shouldBe reportingData.logsDir
     invocation.arguments[1] shouldBe "split-mode-test"
-    Regex("logs-frontend-[0-9]{14}").matches(invocation.arguments[2] as String) shouldBe true
+    Regex("logs-frontend-[0-9]{6}").matches(invocation.arguments[2] as String) shouldBe true
   }
 
   // endregion
