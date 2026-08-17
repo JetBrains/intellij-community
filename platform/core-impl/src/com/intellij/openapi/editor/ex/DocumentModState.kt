@@ -37,15 +37,17 @@ interface DocumentModState {
   fun isLineModified(line: Int): Boolean
 
   /**
-   * Returns state with [patch] applied: line-modification tracking is updated to reflect the lines [patch]
-   * touches, and [stamp]/[sequence] are taken from [patch].
+   * Returns state with [diff] applied: line-modification tracking is updated to reflect the lines [diff]
+   * touches, and [stamp]/[sequence] are taken from [diff].
    *
-   * @param text the pre-patch text this instance's line-modification tracking was built against -- the same
-   *             [DocumentText] that [patch] is about to be applied to via [DocumentText.withPatch]. Passing any
+   * @param before the pre-patch text this instance's line-modification tracking was built against -- the same
+   *             [DocumentText] that [diff] is about to be applied to via [DocumentText.withPatch]. Passing any
    *             other text silently mispairs this instance's tracked line structure with the wrong offsets.
+   * @param after the post-patch text, i.e. [before] with [diff] applied; used only to cross-check the rebuilt
+   *             line tracking against it, guarding against the two silently drifting apart.
    */
   @Contract(pure = true)
-  fun withPatch(text: DocumentText, patch: DocumentTextPatch): DocumentModState
+  fun withPatch(before: DocumentText, after: DocumentText, diff: DocumentTextPatch): DocumentModState
 
   @Contract(pure = true)
   fun withStamp(newStamp: Long, incrementSequence: Boolean): DocumentModState
@@ -76,15 +78,4 @@ interface DocumentModState {
    */
   @Contract(pure = true)
   fun withMetadata(other: DocumentModState): DocumentModState
-
-  /**
-   * Number of lines this instance's line-modification tracking currently reflects, or `null` if that tracking
-   * hasn't been built yet (no edit or line-flag operation has touched this instance since it was created fresh).
-   *
-   * For debug-assertion cross-checks against [DocumentText.lineCount] only, guarding against [withPatch]'s
-   * independently-maintained line structure silently drifting from the paired [DocumentText]'s -- see
-   * [DocumentSnapshot.withPatch]. Not a general-purpose line-count query; use [DocumentText.lineCount] for that.
-   */
-  @Contract(pure = true)
-  fun lineCount(): Int?
 }

@@ -39,7 +39,6 @@ internal class DocumentSnapshotImpl private constructor(
 
   override fun withClearedLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray): DocumentSnapshot {
     val newModState = modState.withClearedLineFlags(text, startLine, endLine, exceptLines)
-    assertLineCountsAgree(text, newModState)
     if (newModState === modState) {
       return this
     }
@@ -72,7 +71,6 @@ internal class DocumentSnapshotImpl private constructor(
       return metadata
     }
     val newModState = modState.withMetadata(metadata.modState())
-    assertLineCountsAgree(text, newModState)
     if (newModState === modState) {
       return this
     }
@@ -84,8 +82,7 @@ internal class DocumentSnapshotImpl private constructor(
     if (newText === text) {
       return this
     }
-    val newModState = modState.withPatch(text, patch)
-    assertLineCountsAgree(newText, newModState)
+    val newModState = modState.withPatch(text, newText, patch)
     val oldSnapshot = this
     val newSnapshot = DocumentSnapshotImpl(newText, newModState, sputniks)
     if (sputniks === DocumentSputniksImpl.EMPTY) {
@@ -93,18 +90,6 @@ internal class DocumentSnapshotImpl private constructor(
     }
     return sputniks.withTextChange(oldSnapshot, newSnapshot, patch) { newSputniks ->
       DocumentSnapshotImpl(newText, newModState, newSputniks)
-    }
-  }
-
-  /**
-   * Guards against [DocumentModState]'s independently-maintained line structure (see [ModifiedLineSet])
-   * silently drifting from [text]'s -- both must agree on line count whenever [modState]'s tracking has
-   * actually been built (`null` means it hasn't, and there is nothing yet to compare).
-   */
-  private fun assertLineCountsAgree(text: DocumentText, modState: DocumentModState) {
-    val modStateLineCount = modState.lineCount()
-    assert(modStateLineCount == null || modStateLineCount == text.lineCount()) {
-      "text.lineCount() = " + text.lineCount() + "; modState.lineCount() = " + modStateLineCount
     }
   }
 
