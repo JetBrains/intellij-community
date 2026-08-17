@@ -18,7 +18,8 @@ class CoroutinesIntegrationBenchmarkTest {
 
   @Test
   fun `performance of strict UI dispatcher`() {
-    Assumptions.assumeTrue { System.getProperty("kotlinx.coroutines.debug") == "off" }
+    val debugProperty = System.getProperty("kotlinx.coroutines.debug")
+    Assumptions.assumeTrue({ debugProperty == "off" }, "Existing system properties: ${System.getProperties()}")
     Benchmark.newBenchmark("Frequent dispatch on Dispatchers.UI") {
       runUiDispatcherBenchmark()
     }
