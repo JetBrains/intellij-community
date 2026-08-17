@@ -406,9 +406,8 @@ public class ProjectViewDirectoryHelper {
       if (child instanceof PsiFile) {
         container.add(new PsiFileNode(child.getProject(), (PsiFile) child, viewSettings));
       }
-      else if (child instanceof PsiDirectory) {
+      else if (child instanceof PsiDirectory dir) {
         if (withSubDirectories) {
-          PsiDirectory dir = (PsiDirectory)child;
           if (!vFile.equals(projectFileIndex.getSourceRootForFile(vFile))) { // if is not a source root
             if (viewSettings.isHideEmptyMiddlePackages() && !skipDirectory(psiDir) && isEmptyMiddleDirectory(dir, true, filter)) {
               processPsiDirectoryChildren(
@@ -417,7 +416,7 @@ public class ProjectViewDirectoryHelper {
               continue;
             }
           }
-          container.add(new PsiDirectoryNode(child.getProject(), (PsiDirectory)child, viewSettings, filter));
+          container.add(new PsiDirectoryNode(child.getProject(), dir, viewSettings, filter));
         }
       }
     }
