@@ -128,4 +128,30 @@ internal class SimpleCodeHighlighterTest {
         assertEquals(Color.Red, result.colorAt(0)) // Red = keyword in testColors
         assertNull(result.colorAt(4)) // "myFunc" — no span for missing group 2
     }
+
+    @Test
+    fun `a rule that only matches late in the input is still applied`() = runTest {
+        // The tokenizer caches each rule's next match. A rule whose first match is far from the start must
+        // not be dropped, and a rule that has already matched must keep matching after the cursor passes it.
+        val grammar =
+            LanguageGrammar(
+                name = "test",
+                rules = listOf(TokenRule.keyword("\\bfun\\b"), TokenRule.number("\\b\\d+\\b")),
+            )
+        val code = "fun " + "a ".repeat(400) + "42"
+        val result = SimpleCodeHighlighter(testColors, listOf(grammar)).highlight(code, "test").first()
+
+        assertEquals(Color.Red, result.colorAt(0)) // "fun" at the very start
+        assertEquals(Color.Magenta, result.colorAt(code.length - 1)) // "42" at the very end
+    }
+
+    @Test
+    fun `every occurrence of a repeating rule is matched`() = runTest {
+        // Guards the cache invalidation: the cached match must be refreshed once the cursor passes it
+        val grammar = LanguageGrammar(name = "test", rules = listOf(TokenRule.keyword("\\bfun\\b")))
+        val code = List(50) { "fun x" }.joinToString(" ")
+        val result = SimpleCodeHighlighter(testColors, listOf(grammar)).highlight(code, "test").first()
+
+        assertEquals(50, result.spanStyles.size)
+    }
 }

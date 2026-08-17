@@ -38,8 +38,8 @@ internal val KOTLIN =
                 TokenRule.functionCall("\\b([A-Za-z_][A-Za-z0-9_]*)\\s*(?=\\()"),
                 // constant.language.kotlin
                 TokenRule.constant("\\b(true|false|null)\\b"),
-                // support.type.kotlin
-                TokenRule.type(
+                // support.type.kotlin — IntelliJ's predefined-symbol key, which is our BUILTIN
+                TokenRule.builtin(
                     "\\b(String|Int|Long|Double|Float|Boolean|Char|Byte|Short|Unit|Any|Nothing|Array|" +
                         "List|MutableList|Map|MutableMap|Set|MutableSet|Pair)\\b"
                 ),
