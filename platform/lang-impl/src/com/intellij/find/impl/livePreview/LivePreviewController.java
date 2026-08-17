@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -124,6 +125,11 @@ public final class LivePreviewController implements LivePreview.Delegate, FindUt
     myUserActivityDelay = userActivityDelay;
   }
 
+  /**
+   * Has to be called on the EDT: it updates the search toolbar, and it is re-entered from the rejection handler below
+   * to run the search again, which is why {@link SearchResults#updateThreadSafe} completes its callback there.
+   */
+  @RequiresEdt
   public void updateInBackground(@NotNull FindModel findModel, final boolean allowedToChangedEditorSelection) {
     final int stamp = mySearchResults.getStamp();
     myLivePreviewAlarm.cancelAllRequests();

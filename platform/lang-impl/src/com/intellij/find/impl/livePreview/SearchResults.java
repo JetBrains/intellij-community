@@ -6,6 +6,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindUtil;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
@@ -20,22 +21,26 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.SwingUtilities;
 import java.awt.Point;
@@ -80,6 +85,23 @@ public class SearchResults implements DocumentListener, CaretListener {
 
   public enum Direction {UP, DOWN}
 
+  private static final long CHUNK_TIME_BUDGET_MS = 50;
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static final int CHUNK_MATCH_LIMIT = 2000;
+
+  /**
+   * Where a chunked scan of a {@link SearchArea} resumes: the index of the range being scanned, and the offset inside
+   * the document to continue that range from.
+   */
+  private record SearchPosition(int rangeIndex, int offset) {}
+
+  /**
+   * One chunk of a chunked search: the occurrences it found, where the next chunk has to resume ({@code null} once the
+   * whole {@link SearchArea} is scanned), and the document stamp the chunk was computed against.
+   */
+  private record SearchChunk(@NotNull List<FindResult> results, @Nullable SearchPosition resumeAt, long documentTimeStamp) {}
+
   private final List<SearchResultsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private @Nullable FindResult myCursor;
@@ -104,6 +126,9 @@ public class SearchResults implements DocumentListener, CaretListener {
   private long myDocumentTimestamp;
   private boolean myUpdating;
   private SearchResults.Direction myPendingSearch;
+
+  private int myChunkMatchLimit = Integer.MAX_VALUE;
+  private @Nullable Runnable myChunkHook;
 
   private final Stack<Pair<FindModel, FindResult>> myCursorPositions = new Stack<>();
 
@@ -173,6 +198,15 @@ public class SearchResults implements DocumentListener, CaretListener {
     void searchResultsUpdated(@NotNull SearchResults sr);
     void cursorMoved();
 
+    /**
+     * Reports the occurrences a still running search has just appended to {@link #getOccurrences()}, so that partial
+     * results become visible before the search is over. A listener that can render the new occurrences on their own
+     * should do so here instead of rescanning the ones it has already seen; the default refreshes everything.
+     */
+    default void searchResultsAppended(@NotNull SearchResults sr, @NotNull List<FindResult> added) {
+      searchResultsUpdated(sr);
+    }
+
     default void updateFinished() {}
     default void beforeSelectionUpdate() {}
     default void afterSelectionUpdate() {}
@@ -213,13 +247,29 @@ public class SearchResults implements DocumentListener, CaretListener {
     return myEditor;
   }
 
+  /** Drops every occurrence, as if a search that found nothing had just completed. Has to be called on the EDT. */
   public void clear() {
-    searchCompleted(new ArrayList<>(), getEditor(), null, false, null, getStamp());
+    myLastUpdatedStamp = getStamp();
+    if (myDisposed || getEditor().isDisposed()) {
+      return;
+    }
+    searchFinished(false, null, searchStarted(null));
   }
 
+  /**
+   * Runs the search in chunks, publishing each one as soon as it is found so that a slow search shows its matches
+   * while it is still running instead of staying blank until the very end.
+   * <p>
+   * Every chunk is a separate cancellable read action over a {@linkplain #findNextChunk pure} step function, so the
+   * read lock is only ever held for one chunk at a time and a long search cannot stall a write action.
+   *
+   * @return a callback that is done once the results are applied, and rejected when the search has to be run again
+   *         because the document changed or a write action took priority. It is always completed on the EDT, whichever
+   *         thread the search itself ran on - see {@link #rejectLater}.
+   */
   @NotNull
   ActionCallback updateThreadSafe(@NotNull FindModel findModel, boolean toChangeSelection, @Nullable TextRange next, int stamp) {
-    if (myDisposed) return ActionCallback.DONE;
+    if (myDisposed || getProject().isDisposed()) return ActionCallback.DONE;
 
     ActionCallback result = new ActionCallback();
     Editor editor = getEditor();
@@ -227,31 +277,163 @@ public class SearchResults implements DocumentListener, CaretListener {
     updatePreviousFindModel(findModel);
     SearchArea searchArea = getSearchArea(editor, findModel);
 
-    List<FindResult> results = new ArrayList<>();
-    ReadAction.runBlocking(() -> {
-      Project project = getProject();
-      if (myDisposed || project.isDisposed()) return;
+    SearchStreamer streamer = new SearchStreamer(editor, findModel, toChangeSelection, next, stamp, result);
+    long budget = chunkTimeBudgetMs();
+    int maxMatches = chunkMatchLimit();
+    SearchPosition from = new SearchPosition(0, searchArea.startOffsets[0]);
+    long documentTimeStamp = -1;
+    boolean first = true;
 
-      int[] starts = searchArea.startOffsets;
-      int[] ends = searchArea.endOffsets;
-      for (int i = 0; i < starts.length; ++i) {
-        findInRange(new TextRange(starts[i], ends[i]), editor, findModel, results);
+    while (from != null) {
+      SearchChunk chunk;
+      try {
+        if (myChunkHook != null) myChunkHook.run();
+        chunk = computeChunk(editor, findModel, searchArea, from, maxMatches, budget);
+      }
+      catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException e) {
+        // A write action took priority over this chunk's read action: the read job is cancelled but this thread's own
+        // job is not, so the re-check below returns and the search is simply run again. Nothing has been half-applied,
+        // because the step function keeps its results to itself until it returns them.
+        ProgressManager.checkCanceled();
+        rejectLater(result);
+        return result;
+      }
+      // Leave the callback uncompleted on disposal: there is nothing left to apply, and nothing to retry either.
+      if (myDisposed || getProject().isDisposed()) return result;
+      if (!first && chunk.documentTimeStamp() != documentTimeStamp) {
+        // The document changed between two chunks, so the offsets published so far are stale.
+        rejectLater(result);
+        return result;
+      }
+      documentTimeStamp = chunk.documentTimeStamp();
+      from = chunk.resumeAt();
+      streamer.publish(chunk.results(), first, from == null, documentTimeStamp);
+      first = false;
+    }
+    return result;
+  }
+
+  /**
+   * Rejects on the EDT under write intent, which is where {@link SearchStreamer#apply} would have completed the
+   * callback had the search got that far.
+   * <p>
+   * Which thread the callback completes on is part of the contract rather than an accident of where a chunk happened
+   * to fail: the caller retries the whole search from its rejection handler, and that path drives the find toolbar.
+   * Going through the event queue also queues the rejection behind the chunks already published, so the results found
+   * so far are applied before the search starts over.
+   */
+  private static void rejectLater(@NotNull ActionCallback callback) {
+    UIUtil.invokeLaterIfNeeded(() -> WriteIntentReadAction.run(callback::setRejected));
+  }
+
+  /**
+   * Whether this thread can hand the read lock over to a pending write action at a chunk boundary.
+   * <p>
+   * It cannot on the EDT, which is where a write action would be waiting, nor under a read lock this thread already
+   * holds and will keep holding either way - and {@link ReadAction#computeCancellableUnsafe} is declared
+   * {@link com.intellij.util.concurrency.annotations.RequiresBackgroundThread} for exactly that reason.
+   */
+  private static boolean canYieldToWriteAction() {
+    Application application = ApplicationManager.getApplication();
+    return !application.isDispatchThread() && !application.isReadAccessAllowed();
+  }
+
+  /**
+   * Whether a search runs in chunks at all. Where the read lock cannot be yielded, chunking would only cost
+   * publications, so the whole search runs as one chunk exactly as it did before the search became chunked.
+   */
+  private static boolean isChunked() {
+    return Registry.is("ide.find.incremental.results") && canYieldToWriteAction();
+  }
+
+  /** How long a single chunk may hold the read lock. */
+  private static long chunkTimeBudgetMs() {
+    return isChunked() ? CHUNK_TIME_BUDGET_MS : Long.MAX_VALUE;
+  }
+
+  /**
+   * How many occurrences a single chunk may carry.
+   * <p>
+   * The time budget alone does not bound a chunk usefully: a plain-text scan over a big file finds tens of thousands of
+   * matches well inside it, and applying them is the expensive half - every occurrence becomes a range highlighter on
+   * the EDT. Capping the matches too keeps each publication's EDT event short, which is the whole point of streaming
+   * the results in the first place.
+   */
+  private int chunkMatchLimit() {
+    if (myChunkMatchLimit != Integer.MAX_VALUE) return myChunkMatchLimit; // a test drives the chunk boundaries itself
+    return isChunked() ? CHUNK_MATCH_LIMIT : Integer.MAX_VALUE;
+  }
+
+  private @NotNull SearchChunk computeChunk(@NotNull Editor editor,
+                                            @NotNull FindModel findModel,
+                                            @NotNull SearchArea searchArea,
+                                            @NotNull SearchPosition from,
+                                            int maxMatches,
+                                            long budgetMs) {
+    return canYieldToWriteAction()
+           ? ReadAction.computeCancellableUnsafe(() -> findNextChunk(editor, findModel, searchArea, from, maxMatches, budgetMs))
+           : ReadAction.computeBlocking(() -> findNextChunk(editor, findModel, searchArea, from, maxMatches, budgetMs));
+  }
+
+  /**
+   * Applies the chunks of one streamed search to the state of the enclosing {@link SearchResults}.
+   * <p>
+   * The background driver only calls {@link #publish}; everything else, including the fields of this class, is touched
+   * on the EDT alone, and the chunks are applied in the order they were published.
+   */
+  private final class SearchStreamer {
+    private final @NotNull Editor myTargetEditor;
+    private final @NotNull FindModel myModel;
+    private final boolean myToChangeSelection;
+    private final @Nullable TextRange myNext;
+    private final int myStamp;
+    private final @NotNull ActionCallback myCallback;
+
+    private @Nullable TextRange myOldCursorRange;
+
+    private SearchStreamer(@NotNull Editor editor,
+                           @NotNull FindModel model,
+                           boolean toChangeSelection,
+                           @Nullable TextRange next,
+                           int stamp,
+                           @NotNull ActionCallback callback) {
+      myTargetEditor = editor;
+      myModel = model;
+      myToChangeSelection = toChangeSelection;
+      myNext = next;
+      myStamp = stamp;
+      myCallback = callback;
+    }
+
+    void publish(@NotNull List<FindResult> chunk, boolean first, boolean last, long documentTimeStamp) {
+      UIUtil.invokeLaterIfNeeded(() -> WriteIntentReadAction.run(() -> apply(chunk, first, last, documentTimeStamp)));
+    }
+
+    @RequiresEdt
+    private void apply(@NotNull List<FindResult> chunk, boolean first, boolean last, long documentTimeStamp) {
+      if (myStamp < myLastUpdatedStamp) {
+        return;
+      }
+      myLastUpdatedStamp = myStamp;
+      if (myTargetEditor != getEditor() || myDisposed || myTargetEditor.isDisposed()) {
+        return;
       }
 
-      long documentTimeStamp = editor.getDocument().getModificationStamp();
+      if (first) {
+        myOldCursorRange = searchStarted(myModel);
+      }
+      searchAdvanced(chunk, first);
 
-      UIUtil.invokeLaterIfNeeded(() ->
-                                   WriteIntentReadAction.run(() -> {
-                                     if (editor.getDocument().getModificationStamp() == documentTimeStamp) {
-                                       searchCompleted(results, editor, findModel, toChangeSelection, next, stamp);
-                                       result.setDone();
-                                     }
-                                     else {
-                                       result.setRejected();
-                                     }
-                                   }));
-    });
-    return result;
+      if (last) {
+        if (myTargetEditor.getDocument().getModificationStamp() == documentTimeStamp) {
+          searchFinished(myToChangeSelection, myNext, myOldCursorRange);
+          myCallback.setDone();
+        }
+        else {
+          myCallback.setRejected();
+        }
+      }
+    }
   }
 
   private void updatePreviousFindModel(@NotNull FindModel model) {
@@ -400,7 +582,58 @@ public class SearchResults implements DocumentListener, CaretListener {
     }
   }
 
-  private void findInRange(@NotNull TextRange range, @NotNull Editor editor, @NotNull FindModel findModel, @NotNull List<? super FindResult> results) {
+  /**
+   * Scans {@code searchArea} forward from {@code from}, stopping as soon as the area is exhausted, {@code maxMatches}
+   * occurrences are collected, or {@code budgetMs} milliseconds have passed.
+   * <p>
+   * This is the single step of a chunked search, and it is deliberately pure: it allocates its own result list and
+   * reads no mutable state of this {@link SearchResults}. That is what makes a chunk safe to run inside a cancellable
+   * read action - an attempt that loses to a write action leaves nothing half-written behind and can just be repeated.
+   *
+   * @param maxMatches how many occurrences one chunk may collect before it yields; only tests pass anything but
+   *                   {@link Integer#MAX_VALUE} here
+   */
+  @RequiresReadLock
+  private @NotNull SearchChunk findNextChunk(@NotNull Editor editor,
+                                             @NotNull FindModel findModel,
+                                             @NotNull SearchArea searchArea,
+                                             @NotNull SearchPosition from,
+                                             int maxMatches,
+                                             long budgetMs) {
+    int[] starts = searchArea.startOffsets;
+    int[] ends = searchArea.endOffsets;
+    long deadline = budgetMs == Long.MAX_VALUE ? Long.MAX_VALUE : System.currentTimeMillis() + budgetMs;
+    List<FindResult> results = new ArrayList<>();
+
+    int offset = from.offset();
+    for (int i = from.rangeIndex(); i < starts.length; ++i) {
+      if (i != from.rangeIndex()) {
+        offset = starts[i];
+      }
+      int resumeFrom = findInRange(new TextRange(offset, ends[i]), editor, findModel, results, maxMatches, deadline);
+      if (resumeFrom >= 0) {
+        return new SearchChunk(results, new SearchPosition(i, resumeFrom), editor.getDocument().getModificationStamp());
+      }
+    }
+    return new SearchChunk(results, null, editor.getDocument().getModificationStamp());
+  }
+
+  /**
+   * Collects the occurrences of {@code findModel} inside {@code range} into {@code results}, yielding early once
+   * {@code results} holds {@code maxMatches} occurrences or {@code deadline} has passed.
+   * <p>
+   * A cancellation of the enclosing read action is left to propagate: {@link FindManager#findString} checks for it
+   * between search attempts, and for a regular expression also from inside the match itself, so that the search is
+   * retried rather than published with the occurrences it had found so far.
+   *
+   * @return the offset this range has to be resumed from, or {@code -1} once the range is scanned to its end
+   */
+  private int findInRange(@NotNull TextRange range,
+                          @NotNull Editor editor,
+                          @NotNull FindModel findModel,
+                          @NotNull List<? super FindResult> results,
+                          int maxMatches,
+                          long deadline) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
 
     // Document can change even while we're holding read lock (example case - console), so we're taking an immutable snapshot of text here
@@ -411,13 +644,13 @@ public class SearchResults implements DocumentListener, CaretListener {
     FindManager findManager = FindManager.getInstance(getProject());
 
     while (offset < maxOffset) {
+      if (results.size() >= maxMatches || System.currentTimeMillis() >= deadline) return offset;
+
       FindResult result;
       try {
-        CharSequence bombedCharSequence = StringUtil.newBombedCharSequence(charSequence, 3000);
-        result = findManager.findString(bombedCharSequence, offset, findModel, virtualFile);
-        ((StringUtil.BombedCharSequence)bombedCharSequence).defuse();
+        result = findManager.findString(charSequence, offset, findModel, virtualFile);
       }
-      catch(PatternSyntaxException | ProcessCanceledException e) {
+      catch (PatternSyntaxException e) {
         result = null;
       }
       if (result == null || !result.isStringFound()) break;
@@ -431,6 +664,29 @@ public class SearchResults implements DocumentListener, CaretListener {
       }
       results.add(result);
     }
+    return -1;
+  }
+
+  /**
+   * Forces a search to publish a chunk every {@code maxMatches} occurrences, so that tests can drive the chunked path
+   * without depending on how long a search happens to take. Overrides {@link #CHUNK_MATCH_LIMIT}, and applies even
+   * where a search would otherwise run {@linkplain #isChunked() unchunked}, as it does on the EDT.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  public void setChunkMatchLimit(int maxMatches) {
+    myChunkMatchLimit = maxMatches;
+  }
+
+  /**
+   * Runs {@code hook} once per chunk, where the chunk is computed, so that tests can make a search fail partway
+   * through at a defined point rather than by racing it. A hook that throws {@link ProcessCanceledException} stands in
+   * for a chunk whose read action lost to a write action.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  public void setChunkHook(@Nullable Runnable hook) {
+    myChunkHook = hook;
   }
 
   public void dispose() {
@@ -439,22 +695,49 @@ public class SearchResults implements DocumentListener, CaretListener {
     myEditor.getDocument().removeDocumentListener(this);
   }
 
-  @Contract(mutates = "this,param1")
-  private void searchCompleted(@NotNull List<FindResult> occurrences, @NotNull Editor editor, @Nullable FindModel findModel,
-                               boolean toChangeSelection, @Nullable TextRange next, int stamp) {
-    if (stamp < myLastUpdatedStamp){
-      return;
-    }
-    myLastUpdatedStamp = stamp;
-    if (editor != getEditor() || myDisposed || editor.isDisposed()) {
-      return;
-    }
-    setUpdating(false);
-    myOccurrences = occurrences;
+  /**
+   * Drops the results of the previous search and takes the model the new one runs with.
+   * <p>
+   * The model has to be in place before the first chunk is published rather than once the search is over: everything
+   * that reacts to an occurrence reads the model to interpret it, from {@link SelectionManager} to the status text of
+   * the find bar, so an occurrence that is visible while the model is not yet is an occurrence nobody can act on.
+   *
+   * @return the cursor range {@link #searchFinished} should try to restore afterwards. It has to be taken now, because
+   *         the chunks published while the search runs must not be indexed against a cursor of the previous search.
+   */
+  @RequiresEdt
+  private @Nullable TextRange searchStarted(@Nullable FindModel findModel) {
     TextRange oldCursorRange = myCursor;
+    myOccurrences = new ArrayList<>();
+    myCursor = null;
+    myFindModel = findModel;
+    return oldCursorRange;
+  }
+
+  /**
+   * Appends one chunk of occurrences so that the listeners can render it before the search is over.
+   * <p>
+   * The first chunk is reported as a full update, which is what makes the listeners drop whatever the previous search
+   * left behind; the ones after it are reported as appends, which a listener can apply without revisiting the
+   * occurrences it has already seen.
+   */
+  @RequiresEdt
+  private void searchAdvanced(@NotNull List<FindResult> chunk, boolean first) {
+    myOccurrences.addAll(chunk);
+    if (first) {
+      notifyChanged();
+    }
+    else if (!chunk.isEmpty()) {
+      notifyAppended(chunk);
+    }
+  }
+
+  /** Settles the cursor, the selection and the listeners once every chunk of a search has been applied. */
+  @RequiresEdt
+  private void searchFinished(boolean toChangeSelection, @Nullable TextRange next, @Nullable TextRange oldCursorRange) {
+    setUpdating(false);
     myOccurrences.sort(Comparator.comparingInt(TextRange::getStartOffset));
 
-    myFindModel = findModel;
     myDocumentTimestamp = myEditor.getDocument().getModificationStamp();
     updateCursor(oldCursorRange, next);
     updateExcluded();
@@ -580,6 +863,12 @@ public class SearchResults implements DocumentListener, CaretListener {
   private void notifyChanged() {
     for (SearchResultsListener listener : myListeners) {
       listener.searchResultsUpdated(this);
+    }
+  }
+
+  private void notifyAppended(@NotNull List<FindResult> added) {
+    for (SearchResultsListener listener : myListeners) {
+      listener.searchResultsAppended(this, added);
     }
   }
 
