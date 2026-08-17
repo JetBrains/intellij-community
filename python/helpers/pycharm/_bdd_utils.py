@@ -219,10 +219,18 @@ class BddRunner(object):
         """
         num_of_steps = 0
         for feature in self._get_features_to_run():
-            if feature.background:
-                num_of_steps += len(list(feature.background.steps)) * len(list(feature.scenarios))
+            feature_background_steps = len(list(feature.background.steps)) if feature.background else 0
             for scenario in feature.scenarios:
-                num_of_steps += len(list(scenario.steps))
+                all_steps = getattr(scenario, 'all_steps', None)
+                if all_steps is None:
+                    # The scenario does not know its background, so the one of the
+                    # feature is the only one we can account for
+                    num_of_steps += feature_background_steps + len(list(scenario.steps))
+                else:
+                    # "all_steps" already includes the steps of the background this
+                    # scenario runs with, which is the background of its rule rather
+                    # than of its feature when the rule has one
+                    num_of_steps += len(list(all_steps))
         return num_of_steps
 
     @abc.abstractmethod
