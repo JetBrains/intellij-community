@@ -49,6 +49,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.sequenceOfNotNull
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.withContext
 
@@ -59,35 +60,30 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
    * - [BufferOverflow.DROP_OLDEST] makes each new navigation request cancel the previous one.
    */
   private val semaphore: OverflowSemaphore = OverflowSemaphore(permits = 1, overflow = BufferOverflow.DROP_OLDEST)
+  private val isInNavigation: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
 
   private val taskCoordinator: NavigationTaskCoordinator
     get() = NavigationTaskCoordinator.getInstance(project)
 
   override suspend fun navigateRequests(options: NavigationOptions, supplier: suspend () -> Collection<NavigationRequest>): Boolean {
-    return taskCoordinator.runWithTracking {
-      semaphore.withPermit {
-        val requests = withContext(Dispatchers.Default) { supplier() }
-        requests.isNotEmpty() && withHistoryIfNeeded(options) {
-          navigate(project = project, requests = requests, options = options)
-        }
+    return doExclusively {
+      val requests = withContext(Dispatchers.Default) { supplier() }
+      requests.isNotEmpty() && withHistoryIfNeeded(options) {
+        navigate(project = project, requests = requests, options = options)
       }
     }
   }
 
   override suspend fun navigate(options: NavigationOptions, supplier: suspend () -> Collection<Navigatable>): Boolean {
-    return taskCoordinator.runWithTracking {
-      semaphore.withPermit {
-        val navigatables = withContext(Dispatchers.Default) { supplier() }
-        navigatables.isNotEmpty() && doNavigate(navigatables.toList(), options)
-      }
+    return doExclusively {
+      val navigatables = withContext(Dispatchers.Default) { supplier() }
+      navigatables.isNotEmpty() && doNavigate(navigatables.toList(), options)
     }
   }
 
   override suspend fun navigate(navigatables: List<Navigatable>, options: NavigationOptions): Boolean {
-    return taskCoordinator.runWithTracking {
-      semaphore.withPermit {
-        doNavigate(navigatables, options)
-      }
+    return doExclusively {
+      doNavigate(navigatables, options)
     }
   }
 
@@ -107,10 +103,25 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
   }
 
   override suspend fun navigate(requests: Collection<NavigationRequest>, options: NavigationOptions): Boolean {
+    return doExclusively {
+      withHistoryIfNeeded(options) {
+        navigate(project = project, requests = requests, options = options)
+      }
+    }
+  }
+
+  /**
+   * Re-entering the permit would cancel the very navigation the caller is running inside and reset the options.
+   */
+  private suspend inline fun doExclusively(crossinline action: suspend () -> Boolean): Boolean {
+    if (isInNavigation.get()) {
+      LOG.error("Navigation is already running: use `NavigationRequest` instead of starting a navigation from `navigate()`")
+      return false
+    }
     return taskCoordinator.runWithTracking {
       semaphore.withPermit {
-        withHistoryIfNeeded(options) {
-          navigate(project = project, requests = requests, options = options)
+        withContext(isInNavigation.asContextElement(true)) {
+          action()
         }
       }
     }

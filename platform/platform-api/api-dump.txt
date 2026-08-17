@@ -5419,12 +5419,11 @@ com.intellij.platform.ide.navigation.NavigationService
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ide.navigation.NavigationService
 - navigate(com.intellij.platform.backend.navigation.NavigationRequest,com.intellij.platform.ide.navigation.NavigationOptions,com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
 - a:navigate(com.intellij.platform.backend.navigation.NavigationRequest,com.intellij.platform.ide.navigation.NavigationOptions,kotlin.coroutines.Continuation):java.lang.Object
+- navigate(com.intellij.platform.backend.navigation.NavigationRequest,kotlin.coroutines.Continuation):java.lang.Object
 - a:navigate(java.util.Collection,com.intellij.platform.ide.navigation.NavigationOptions,kotlin.coroutines.Continuation):java.lang.Object
-- bs:navigate$default(com.intellij.platform.ide.navigation.NavigationService,com.intellij.platform.backend.navigation.NavigationRequest,com.intellij.platform.ide.navigation.NavigationOptions,com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- bs:navigate$default(com.intellij.platform.ide.navigation.NavigationService,com.intellij.platform.backend.navigation.NavigationRequest,com.intellij.platform.ide.navigation.NavigationOptions,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- bs:navigate$default(com.intellij.platform.ide.navigation.NavigationService,java.util.Collection,com.intellij.platform.ide.navigation.NavigationOptions,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- navigate(java.util.Collection,kotlin.coroutines.Continuation):java.lang.Object
 - navigateRequests(com.intellij.platform.ide.navigation.NavigationOptions,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
-- bs:navigateRequests$default(com.intellij.platform.ide.navigation.NavigationService,com.intellij.platform.ide.navigation.NavigationOptions,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- navigateRequests(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.ide.navigation.NavigationService$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ide.navigation.NavigationService
 com.intellij.platform.ide.productMode.IdeProductMode

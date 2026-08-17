@@ -36,7 +36,7 @@ interface NavigationService {
    * The supplier is invoked exactly once, on a background thread inside the navigation task: resolving the target is therefore
    * awaited together with the navigation, and a newer navigation cancels a resolution which is still running.
    * The supplier may perform `ReadAction`s, but it must not initiate another navigation:
-   * a nested navigation request cancels the current one.
+   * a nested navigation is reported as an error and does nothing.
    *
    * The resolved requests are navigated as one batch: serialized as a whole, at most one
    * back-history entry, and a single split when [NavigationOptions.openInRightSplit] is enabled.
@@ -46,10 +46,16 @@ interface NavigationService {
    * @return `true` if at least one resolved request was handled
    */
   suspend fun navigateRequests(
-    options: NavigationOptions = NavigationOptions.defaultOptions(),
+    options: NavigationOptions,
     supplier: suspend () -> Collection<NavigationRequest>,
   ): Boolean {
     return navigate(supplier(), options)
+  }
+
+  suspend fun navigateRequests(
+    supplier: suspend () -> Collection<NavigationRequest>,
+  ): Boolean {
+    return navigateRequests(NavigationOptions.defaultOptions(), supplier)
   }
 
   /**
@@ -63,8 +69,12 @@ interface NavigationService {
    */
   suspend fun navigate(
     request: NavigationRequest,
-    options: NavigationOptions = NavigationOptions.defaultOptions(),
+    options: NavigationOptions,
   ): Boolean
+
+  suspend fun navigate(request: NavigationRequest): Boolean {
+    return navigate(request, NavigationOptions.defaultOptions())
+  }
 
   /**
    * Navigates to a batch of [requests] as one operation.
@@ -75,8 +85,12 @@ interface NavigationService {
    */
   suspend fun navigate(
     requests: Collection<NavigationRequest>,
-    options: NavigationOptions = NavigationOptions.defaultOptions(),
+    options: NavigationOptions,
   ): Boolean
+
+  suspend fun navigate(requests: Collection<NavigationRequest>): Boolean {
+    return navigate(requests, NavigationOptions.defaultOptions())
+  }
 
   /**
    * Navigates to a batch of [navigatables] as one operation.
@@ -112,7 +126,7 @@ interface NavigationService {
     "Prefer NavigationOptions instead of DataContext",
     ReplaceWith("navigate(request, dataContext.toNavigationOptions(options))"),
   )
-  suspend fun navigate(request: NavigationRequest, options: NavigationOptions = NavigationOptions.defaultOptions(), dataContext: DataContext? = null): Boolean {
+  suspend fun navigate(request: NavigationRequest, options: NavigationOptions, dataContext: DataContext?): Boolean {
     if (dataContext == null) {
       return navigate(request, options)
     }
