@@ -34,7 +34,7 @@ private const val PROFILER_SNAPSHOT_NAME = "RM-263.SNAPSHOT-completion-202608161
 private const val CI_GRADLE_REPORTING_ROOT_LENGTH = 115
 
 /** What the thread dump monitor writes below `log`, deeper than the reporting directories themselves. */
-private const val THREAD_DUMP_NAME = "monitoring-thread-dumps-ide/threadDump-1-09-53-17.txt"
+private const val THREAD_DUMP_NAME = "thread-dumps-ide/threadDump-1-09-53-17.txt"
 
 private fun longMethodName(distinguishedBy: String): String = "$LONG_NAME_PREFIX-$distinguishedBy"
 
@@ -127,7 +127,7 @@ class IDEReportingDataTest {
   /**
    * A test named after the whole method names the class too, so the class needs no directory below it. Keeping one cost 40 characters and
    * pushed a Gradle thread dump to exactly 260: `…\IU-LOCAL\delegate-run-a-gradle-task-to-idea-test-del-f9198e\
-   * delegate-run-a-gradle-task-to-idea-test\1_delegate-run-a-gradle-task-to-idea-wsl\log\monitoring-thread-dumps-ide\threadDump-…txt`.
+   * delegate-run-a-gradle-task-to-idea-test\1_delegate-run-a-gradle-task-to-idea-wsl\log\thread-dumps-ide\threadDump-…txt`.
    */
   @Test
   fun `a class the test name spells out along with the method is not repeated below it either`() {
