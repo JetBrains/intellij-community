@@ -92,6 +92,10 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
       } catch (e: Exception) {
         logger.warnInProduction(e)
       }
+      catch (e: LinkageError) {
+        // a broken listener classpath must not abort logging for the other listeners and the recorder
+        logger.warnInProduction(e)
+      }
     }
   }
 
