@@ -329,8 +329,8 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
 
     String relativeOrAbsolutePath = FileUtil.toSystemDependentName(element.getAttributeValue(FILE_PATH));
     Path file = Path.of(relativeOrAbsolutePath);
-    if (!Files.exists(file)) {
-      file = Path.of(PathManager.getSystemPath(), relativeOrAbsolutePath);
+    if (!file.isAbsolute() && !Files.exists(file)) {
+      file = PathManager.getSystemDir().resolve(relativeOrAbsolutePath);
     }
     return new DefaultCoverageFileProvider(file, sourceProvider);
   }
