@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.projectView
 
 import com.intellij.ide.projectView.PresentationData
@@ -14,7 +14,6 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.fileClasses.isJvmMultifileClassFile
 import org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService
@@ -35,8 +34,9 @@ class KtInternalFileTreeNode(
 ) : AbstractPsiBasedNode<KtLightClass>(project, lightClass, viewSettings), FileNodeWithNestedFileNodes {
 
     private val navigatablePsiElement: SmartPsiElementPointer<KtElement>? by lazy {
-        val ktClsFile = value?.navigationElement as? KtClsFile
-        val virtualFile = ktClsFile?.containingFile?.virtualFile ?: return@lazy null
+        val decompiledFile = value?.navigationElement as? KtFile
+        if (decompiledFile?.isCompiled == false) return@lazy null
+        val virtualFile = decompiledFile?.containingFile?.virtualFile ?: return@lazy null
         val prj = getProject()
         val baseName = virtualFile.nameWithoutExtension
         val smartPointerManager = SmartPointerManager.getInstance(prj)
@@ -44,7 +44,7 @@ class KtInternalFileTreeNode(
         if (scopes.isEmpty()) return@lazy null
         val scope = GlobalSearchScope.union(scopes)
 
-        val originalPackageName = ktClsFile.packageFqName
+        val originalPackageName = decompiledFile.packageFqName
         val filesFromFacade = SmartList<KtFile>()
         KotlinJvmNameAnnotationIndex.processElements(baseName.substringBefore(JvmStandardClassIds.MULTIFILE_PART_NAME_DELIMITER), prj, scope) {
             ProgressManager.checkCanceled()

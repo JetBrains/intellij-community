@@ -1,15 +1,12 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
-import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameter
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 class FirKotlinTargetElementEvaluator : KotlinTargetElementEvaluator() {
@@ -17,12 +14,13 @@ class FirKotlinTargetElementEvaluator : KotlinTargetElementEvaluator() {
         element: PsiElement,
         navElement: PsiElement?
     ): PsiElement? {
-        if (navElement is KtClsFile && element is KtLightClassForFacade && !element.multiFileClass) {
+        if (element is KtLightClassForFacade && navElement is KtFile && navElement.isCompiled && !element.multiFileClass) {
             val firstNavElement = navElement.declarations.firstOrNull()?.navigationElement
             if (firstNavElement != null) {
                 return firstNavElement.containingFile
             }
         }
+
         return super.getGotoDeclarationTarget(element, navElement)
     }
 

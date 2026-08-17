@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The package directive doesn't match the file location to prevent API breakage
 package org.jetbrains.kotlin.idea.debugger
@@ -79,10 +79,9 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.analysis.api.types.classId
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
-import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -662,7 +661,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
         if (psiFile is ClsFileImpl) {
             val decompiledPsiFile = runReadAction { psiFile.decompiledPsiFile }
-            if (decompiledPsiFile is KtClsFile && runReadAction { sourcePosition.line } == -1) {
+            if (decompiledPsiFile is KtFile && decompiledPsiFile.isCompiled && runReadAction { sourcePosition.line } == -1) {
                 val className = JvmFileClassUtil.getFileClassInternalName(decompiledPsiFile)
                 val vmProxy = VirtualMachineProxy.getCurrent()
                 return vmProxy.classesByName(className)

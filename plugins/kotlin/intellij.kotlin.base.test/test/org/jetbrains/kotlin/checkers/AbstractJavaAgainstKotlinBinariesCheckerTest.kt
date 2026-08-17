@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.checkers
 
 import com.intellij.ide.highlighter.JavaClassFileType
@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.test.AstAccessControl
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractJavaAgainstKotlinBinariesCheckerTest : AbstractJavaAgainstKotlinCheckerTest() {
@@ -58,12 +59,12 @@ abstract class AbstractJavaAgainstKotlinBinariesCheckerTest : AbstractJavaAgains
     }
 
     private fun assertTreeAccess(libraryUrl: String, allowAstForCompiledFile: Boolean, ktFilePath: String, ktFileText: String) {
-        val classFiles = mutableListOf<KtClsFile>()
+        val classFiles = mutableListOf<KtFile>()
         FileTypeIndex.processFiles(
             JavaClassFileType.INSTANCE,
             Processor {
                 if (it.url.startsWith(libraryUrl)) {
-                    (it.toPsiFile(project) as? KtClsFile)?.let(classFiles::add)
+                    (it.toPsiFile(project) as? KtFile)?.let(classFiles::add)
                 }
                 true
             },

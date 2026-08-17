@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFileClassProvider
 import org.jetbrains.kotlin.psi.analysisContext
 import org.jetbrains.kotlin.scripting.definitions.runReadAction
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KtFileClassProviderImpl(val project: Project) : KtFileClassProvider {
     /**
@@ -28,12 +27,19 @@ class KtFileClassProviderImpl(val project: Project) : KtFileClassProvider {
         if (!Registry.`is`("kotlin.analysis.allowRestrictedAnalysis", true) && file.project.isInDumbMode) return emptyArray()
 
         if (file.isCompiled) {
-            return file.safeAs<KtClsFile>()?.let {
-                DecompiledLightClassesFactory.createLightClassForDecompiledKotlinFile(it, project)
-            }?.let { arrayOf(it) } ?: emptyArray()
+            val lightClass = if (file is KtClsFile) {
+                DecompiledLightClassesFactory.createLightClassForDecompiledKotlinFile(file, project)
+            } else {
+                null
+            }
+            // TODO(KTIJ-39997): BUG! `createLightClassForDecompiledKotlinFile` must not be called directly. It currently forces creation of an incorrect light class
+            // in the case of a file facade
+//            val lightClass = file.findFacadeClass() ?: (file.declarations.singleOrNull() as? KtClassOrObject)?.toLightClass()
+            return lightClass?.let { arrayOf(it) } ?: PsiClass.EMPTY_ARRAY
         }
+
         // TODO We don't currently support finding light classes for scripts
-        if (runReadAction { file.isScript() }) return emptyArray()
+        if (runReadAction { file.isScript() }) return PsiClass.EMPTY_ARRAY
 
         val moduleInfo = file.getKaModule(project, useSiteModule = null)
 
@@ -41,7 +47,7 @@ class KtFileClassProviderImpl(val project: Project) : KtFileClassProvider {
         // common files might be in fact compiled to jvm and thus correspond to a PsiClass
         // this API does not provide context (like GSS) to be able to determine if this file is in fact seen through a jvm module
         // this also fixes a problem where a Java JUnit run configuration producer would produce run configurations for a common file
-        if (!moduleInfo.targetPlatform.isJvm()) return emptyArray()
+        if (!moduleInfo.targetPlatform.isJvm()) return PsiClass.EMPTY_ARRAY
 
         val result = arrayListOf<PsiClass>()
         file.declarations.filterIsInstance<KtClassOrObject>().mapNotNullTo(result) { it.toLightClass() }
