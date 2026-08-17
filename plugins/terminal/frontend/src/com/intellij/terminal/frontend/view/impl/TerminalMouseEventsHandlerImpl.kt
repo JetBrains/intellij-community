@@ -59,7 +59,7 @@ internal class TerminalMouseEventsHandlerImpl(
 
   /**
    * Normalizes [event]'s wheel delta into whole terminal rows via [wheelAccumulator] before asking [terminalSession] to encode anything.
-   * Replays single-unit encoding `abs(lines)` times, once per normalized row, instead of trusting the raw event's own magnitude.
+   * Replays single-unit encoded bytes `abs(lines)` times, once per normalized row, instead of trusting the raw event's own magnitude.
    *
    * Returns `null` if the terminal session didn't handle the event (mouse wheel events shouldn't be reported in the current state).
    *
@@ -71,15 +71,19 @@ internal class TerminalMouseEventsHandlerImpl(
     val lines = wheelAccumulator.consumeLines(event)
     if (lines == 0) return null
 
+    val linesToScroll = abs(lines)
     val sign = if (lines > 0) 1 else -1
-    var result: ByteArray? = null
-    repeat(abs(lines)) {
-      val encoded = terminalSession.processMouseEvent(synthesizeUnitWheelEvent(event, sign), x, y)
-      if (encoded != null) {
-        result = if (result == null) encoded else result + encoded
+    // We assume that `processMouseEvent` will return the same byte array for the same event and has no side effects.
+    val singleScrollBytes = terminalSession.processMouseEvent(synthesizeUnitWheelEvent(event, sign), x, y)
+    return when {
+      singleScrollBytes == null -> null
+      linesToScroll == 1 -> singleScrollBytes
+      else -> {
+        ByteArray(linesToScroll * singleScrollBytes.size) {
+          singleScrollBytes[it % singleScrollBytes.size]
+        }
       }
     }
-    return result
   }
 
   /** A single-notch, single-direction clone of [source], with scroll amount equal to 1 and direction of [sign]. */
