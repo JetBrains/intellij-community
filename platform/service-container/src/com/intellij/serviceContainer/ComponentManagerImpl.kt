@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "LeakingThis", "ReplaceJavaStaticMethodWithKotlinAnalog")
 @file:Internal
 package com.intellij.serviceContainer
@@ -1058,8 +1058,8 @@ abstract class ComponentManagerImpl(
 
   final override fun createError(message: String, pluginId: PluginId): PluginException = PluginException(message, pluginId)
 
-  final override fun createError(message: String, pluginId: PluginId, conflictingPluginIds: Collection<PluginId>): RuntimeException =
-    PluginConflictException(message, pluginId, conflictingPluginIds)
+  final override fun createError(message: String, pluginId: PluginId, conflictingPluginId: PluginId): RuntimeException =
+    PluginConflictException(message, pluginId, conflictingPluginId)
 
   final override fun createError(
     message: String,
