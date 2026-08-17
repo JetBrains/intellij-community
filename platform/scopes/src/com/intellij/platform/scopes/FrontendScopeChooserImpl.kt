@@ -12,7 +12,6 @@ import com.intellij.ide.util.scopeChooser.ScopesFilterConditionType
 import com.intellij.ide.util.scopeChooser.ScopesStateService
 import com.intellij.ide.util.scopeChooser.createScopeDescriptorRenderer
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -35,7 +34,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.await
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -80,7 +78,6 @@ class FrontendScopeChooserImpl(
 
   private val coroutineScope: CoroutineScope = project.service<FrontendScopeChooserScopeHolder>().coroutineScope
     .childScope("FrontendScopeChooserImpl")
-  private var scopeIdToDescriptor = mapOf<String, ScopeDescriptor>()
 
   init {
     _comboBox.renderer =
@@ -108,24 +105,7 @@ class FrontendScopeChooserImpl(
     // it's important to collect data context now,
     // because it's going to change with opening Find in Files dialog
     val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync.then { Utils.createAsyncDataContext(it) }
-    loadItemsAsync(modelId,
-                                filterConditionType,
-                                dataContextPromise,
-                                onScopesUpdate = { scopeIdToScopeDescriptor, selectedScopeId ->
-                                  scopesMap = scopeIdToScopeDescriptor ?: emptyMap()
-                                  val items = scopesMap.values.toList()
-                                  withContext(Dispatchers.EDT) {
-                                    initItems(items, selectedScopeId)
-                                  }
-                                })
-  }
 
-  private fun loadItemsAsync(
-    modelId: String,
-    filterConditionType: ScopesFilterConditionType,
-    dataContextPromise: Promise<DataContext>,
-    onScopesUpdate: suspend (Map<String, ScopeDescriptor>?, selectedScopeId: String?) -> Unit,
-  ) {
     coroutineScope.childScope("ScopesStateService.subscribeToScopeStates").launch {
       val dataContext = dataContextPromise.await()
       durable {
@@ -133,36 +113,44 @@ class FrontendScopeChooserImpl(
           project.projectId(), modelId, filterConditionType, dataContext.rpcId())
         if (scopesFlow == null) {
           LOG.error("Failed to subscribe to model updates for modelId: $modelId")
-          onScopesUpdate(null, null)
+          scopesMap = emptyMap()
+          withContext(Dispatchers.EDT) {
+            initItems(emptyList(), null)
+          }
           return@durable
         }
         scopesFlow.collect { scopesInfo ->
           val fetchedScopes = scopesInfo.getScopeDescriptors()
-          onScopesUpdate(fetchedScopes, scopesInfo.selectedScopeId)
+
+          scopesMap = fetchedScopes
+          val items = fetchedScopes.values.toList()
+          withContext(Dispatchers.EDT) {
+            initItems(items, scopesInfo.selectedScopeId)
+          }
+
           ScopesStateService.getInstance(project).getScopesState().updateIfNotExists(fetchedScopes)
-          scopeIdToDescriptor = fetchedScopes
         }
       }
     }
   }
 
-  private fun openEditScopesDialog(selectedScopeId: String?, modelId: String, onFinish: (selectedScopeId: String?) -> Unit) {
+  private fun editScopes() {
+    val currentSelectionId = selectedScopeId
+
     val projectId = project.projectId()
     coroutineScope.launch {
-      val deferred = try {
-        ScopeModelApi.getInstance().openEditScopesDialog(projectId, selectedScopeId, modelId)
+      try {
+        val deferred = ScopeModelApi.getInstance().openEditScopesDialog(projectId, currentSelectionId, modelId)
+        deferred.cancelOnDispose(project)
+
+        val result = deferred.await()
+        ApplicationManager.getApplication().invokeLater {
+          selectedItem = scopesMap[result]
+        }
       }
       catch (e: RpcTimeoutException) {
         LOG.warn("Failed to edit scopes", e)
-        null
       }
-      deferred?.cancelOnDispose(project)
-      deferred?.invokeOnCompletion { cause ->
-        if (cause != null) {
-          onFinish(null)
-        }
-      }
-      onFinish(deferred?.await())
     }
   }
 
@@ -224,15 +212,6 @@ class FrontendScopeChooserImpl(
   override fun dispose() {
     coroutineScope.cancel()
     editScopesButton.actionListeners.forEach { editScopesButton.removeActionListener(it) }
-  }
-
-  private fun editScopes() {
-    val selection = selectedScopeId
-    openEditScopesDialog(selection, modelId) { scopeId ->
-      ApplicationManager.getApplication().invokeLater {
-        scopeId?.let { selectedItem = scopesMap[it] }
-      }
-    }
   }
 }
 
