@@ -109,10 +109,16 @@ internal class JavaGrammarTest {
     }
 
     @Test
-    fun `primitive types are colored as type`() = runTest {
+    fun `primitive types are colored as keyword`() = runTest {
+        // storage.type is IntelliJ's keyword key, and its own Java lexer puts INT_KEYWORD in KEYWORD_BIT_SET
         for (type in listOf("boolean", "int", "long", "double", "float", "void", "char", "byte")) {
-            assertEquals(testColors.type, highlight(type).colorAt(0), "'$type' should be colored as type")
+            assertEquals(testColors.keyword, highlight(type).colorAt(0), "'$type' should be a keyword")
         }
+    }
+
+    @Test
+    fun `instanceof is colored as operator`() = runTest {
+        assertEquals(testColors.operator, highlight("x instanceof Foo").colorAt(2))
     }
 
     @Test

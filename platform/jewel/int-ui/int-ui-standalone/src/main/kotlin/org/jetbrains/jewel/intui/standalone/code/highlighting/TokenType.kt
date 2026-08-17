@@ -35,4 +35,10 @@ public enum class TokenType {
 
     /** Built-in functions or well-known standard library identifiers, e.g. `println`, `len`, `fmt.Println`. */
     BUILTIN,
+
+    /** Keys in data languages, e.g. the `"name"` in JSON's `"name": 1`, or a YAML/TOML key. */
+    PROPERTY_KEY,
+
+    /** Operators and the punctuation that carries meaning: `+`, `==`, `&&`, `|`, `->`, `<<`. */
+    OPERATOR,
 }
