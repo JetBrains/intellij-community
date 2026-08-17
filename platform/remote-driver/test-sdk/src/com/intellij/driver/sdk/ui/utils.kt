@@ -111,9 +111,9 @@ fun Driver.getSystemClipboard(): ClipboardRef = utility(ToolkitRef::class)
   .getSystemClipboard()
 
 
-fun Driver.syncVfs() {
+fun Driver.syncVfs(rdTarget: RdTarget = RdTarget.BACKEND) {
   withWriteAction {
-    service<VirtualFileManagerRemote>().syncRefresh()
+    service<VirtualFileManagerRemote>(rdTarget).syncRefresh()
   }
 }
 
@@ -142,7 +142,7 @@ interface ClipboardOwnerRef
 interface StringSelectionRef
 
 
-@Remote("com.intellij.openapi.vfs.VirtualFileManager", rdTarget = RdTarget.BACKEND)
+@Remote("com.intellij.openapi.vfs.VirtualFileManager")
 private interface VirtualFileManagerRemote {
   fun syncRefresh()
 }
