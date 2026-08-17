@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -51,6 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 
 /**
  * Author: msk
@@ -72,12 +72,12 @@ public abstract class GotoActionBase extends AnAction {
       myHistoryIndex = strings == null || strings.size() <= 1 || !ourLastStrings.containsKey(myInAction) ? 0 : 1;
       gotoActionPerformed(e);
     }
-    catch (ProcessCanceledException e1) {
-      myInAction = null;
-    }
     catch (Throwable t) {
-      LOG.error(t);
+      // reset first to avoid problems if LOG.error decides to rethrow the exception
       myInAction = null;
+      if (!(t instanceof CancellationException)) {
+        LOG.error(t);
+      }
     }
   }
 
