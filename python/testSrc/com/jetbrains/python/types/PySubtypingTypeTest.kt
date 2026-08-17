@@ -139,7 +139,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
         a += 1
 
         a = A()
-        a += "a" # WARNING FIXME Expected type 'int', got 'Literal["a"]' instead # PY-91385
+        a += "a" # WARNING Expected type 'int', got 'Literal["a"]' instead
         """.trimIndent())
     }
 
@@ -152,7 +152,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       a += 1
 
       a = A()
-      a += "a" # WARNING FIXME Expected type 'int', got 'Literal["a"]' instead # PY-91385
+      a += "a" # WARNING Expected type 'int', got 'Literal["a"]' instead
       """.trimIndent())
 
     @Test
@@ -184,7 +184,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       a: A = A()
       a.i += 1
-      a.i += "s" # WARNING FIXME Expected type 'int', got 'Literal["s"]' instead # PY-91385
+      a.i += "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
       """.trimIndent())
 
     @Test
@@ -195,7 +195,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       a: A = A()
       a.a += 1
-      a.a += "s" # FIXME WARNING Expected type 'int', got 'Literal["s"]' instead # PY-91385
+      a.a += "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
       """.trimIndent())
   }
 

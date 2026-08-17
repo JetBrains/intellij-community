@@ -1908,7 +1908,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
       a: A[int] = A()
       a.attr += 1
-      a.attr += "s" # WARNING FIXME Expected type 'int', got 'Literal["s"]' instead # PY-91385
+      a.attr += "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
 
       class B:
           def __add__(self, other) -> int: ...
@@ -1941,7 +1941,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
       a: A = A()
       a.attr += 1
-      a.attr += "s" # WARNING FIXME Expected type 'int', got 'Literal["s"]' instead # PY-91385
+      a.attr += "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
       a.attr += C() # WARNING Expected type 'int' (from '__set__'), got 'str' instead
       """.trimIndent())
   }

@@ -1342,6 +1342,29 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-80622"])
+    fun `augmented assignment radd defined but iadd missing on target`() = test("""
+      class A: pass
+      class B:
+          def __radd__(self, other: A) -> str: ...
+
+      a = A()
+      a += B()
+
+      b = B()
+      b += A() # WARNING Class 'B' does not define '__iadd__', so the '+=' operator cannot be used on its instances
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-80622"])
+    fun `augmented assignment iadd not defined on class`() = test("""
+      class A: pass
+
+      a = A()
+      a += a # WARNING Class 'A' does not define '__iadd__', so the '+=' operator cannot be used on its instances
+      """)
+
+    @Test
     @TestFor(issues = ["PY-6925"])
     fun `assigned operator`() = test("""
       def f(x):

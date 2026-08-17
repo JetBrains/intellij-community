@@ -176,15 +176,28 @@ object PyCallExpressionHelper {
   }
 
   private fun multiResolveOperator(operatorOwner: PyQualifiedElement, resolveContext: PyResolveContext): List<PyCallableType> {
+    return multiResolveOperatorGroupedByReceiver(operatorOwner, resolveContext).flatMap { it.second }
+  }
+
+  /**
+   * Like [multiResolveOperator], but keeps the resolved operator callables grouped by their receiver instead of
+   * flattening them. Each pair is a receiver type (a union member when the operand is a union) together with the
+   * operator callables bound to it. This lets a caller enforce union semantics — every union member must accept the
+   * other operand — by checking each group independently, rather than the any-match semantics of the flattened list.
+   */
+  @JvmStatic
+  fun multiResolveOperatorGroupedByReceiver(
+    operatorOwner: PyQualifiedElement,
+    resolveContext: PyResolveContext,
+  ): List<Pair<PyType, List<PyCallableType>>> {
     val context = resolveContext.typeEvalContext
 
     return PyOperatorReference(operatorOwner, resolveContext)
       .resolveGroupingByReceiver()
-      .asSequence()
       .map {
         val selfType = it.first
         val resolveResults = it.second
-        if (selfType is PyClassType) {
+        val boundType = if (selfType is PyClassType) {
           PyTypeUtil.getTypeOfBoundMember(selfType, resolveResults, context)
         }
         else {
@@ -202,9 +215,8 @@ object PyCallExpressionHelper {
             )
           }
         }
+        selfType to PyTypeUtil.getCallableItems(boundType).toList()
       }
-      .flatMap { PyTypeUtil.getCallableItems(it) }
-      .toList()
   }
 
   private fun getExplicitCalleeType(callee: PyExpression, resolveContext: PyResolveContext): PyType? {
@@ -245,13 +257,14 @@ object PyCallExpressionHelper {
         val resolveResults = ResolveResultList()
         PyResolveUtil.addImplicitResolveResults(referencedName, resolveResults, callee)
 
-        val callables = PyUtil.filterTopPriorityElements(forEveryScopeTakeOverloadsOtherwiseImplementations(resolveResults, context) { it.element })
-          .asSequence()
-          .filterIsInstance<PyTypedElement>()
-          .map { context.getType(it) }
-          .flatMap { it.toStream() }
-          .filterIsInstance<PyCallableType>()
-          .toList()
+        val callables =
+          PyUtil.filterTopPriorityElements(forEveryScopeTakeOverloadsOtherwiseImplementations(resolveResults, context) { it.element })
+            .asSequence()
+            .filterIsInstance<PyTypedElement>()
+            .map { context.getType(it) }
+            .flatMap { it.toStream() }
+            .filterIsInstance<PyCallableType>()
+            .toList()
         return if (callables.isEmpty()) null else PyUnionType.union(callables)
       }
     }
@@ -1097,7 +1110,8 @@ object PyCallExpressionHelper {
     }
   }
 
-  private fun isLegacyPositionalOnly(parameter: PyCallableParameter): Boolean = !parameter.isSelf && parameter.protectionLevel == ProtectionLevel.PRIVATE
+  private fun isLegacyPositionalOnly(parameter: PyCallableParameter): Boolean =
+    !parameter.isSelf && parameter.protectionLevel == ProtectionLevel.PRIVATE
 
   @JvmStatic
   fun analyzeArguments(
@@ -1449,7 +1463,10 @@ object PyCallExpressionHelper {
     return result
   }
 
-  private fun filterPositionalAndVariadicArguments(expressions: List<PyExpression>, context: TypeEvalContext): PositionalArgumentsAnalysisResults {
+  private fun filterPositionalAndVariadicArguments(
+    expressions: List<PyExpression>,
+    context: TypeEvalContext,
+  ): PositionalArgumentsAnalysisResults {
     val variadicArguments = ArrayList<PyExpression>()
     val allPositionalArguments = ArrayList<PyExpression?>()
     val componentsOfVariadicPositionalArguments = ArrayList<PyExpression?>()
@@ -1566,7 +1583,7 @@ object PyCallExpressionHelper {
         else {
           null
         }
-    }
+      }
 
     if (matchingOverloads.isEmpty()) {
       return null

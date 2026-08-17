@@ -1,12 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.idea.TestFor
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.psi.types.PyTypeChecker
+import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
@@ -340,6 +346,271 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
     data = [True]
     c.put(data)  # WARNING FIXME TOOLTIP invariant \n <code>_T</code> \n element/builtins.list # PY-89564
     """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-90532"])
+  fun `unsupported operator breakdown shows inline reason for single receiver`() {
+    // Only Single.__add__ can reject part of y, so there is a single problematic receiver member.
+    val tooltip = tooltipOf(
+      PyTypeCheckerInspection(),
+      "is not supported between",
+      """
+    class A: ...
+    class B: ...
+
+    class Both:
+        def __add__(self, other: A | B) -> "Both": ...
+
+    class Single:
+        def __add__(self, other: A) -> "Single": ...
+
+    def f(x: Both | Single, y: A | B):
+        _ = x + y
+    """
+    )
+
+    assertContainsOrdered(
+      tooltip,
+      "is not supported between", "Single", "and", "B",
+      "is not assignable to parameter", "other", "of", "Single.__add__", "with type", "A",
+      "B", "is not assignable to", "A",
+    )
+    assertFalse("does not support" in tooltip,
+                "Single receiver member must not get a grouping node: $tooltip")
+
+    assertFalse("Both" in tooltip, "Non-rejecting union member must not appear: $tooltip")
+
+    assertTrue("parameter <code>other</code>" in tooltip,
+               "Must name __add__'s actual parameter ('other'), not the caller's argument name: $tooltip")
+    assertTrue("href=\"#element/a.Single.__add__\"" in tooltip, tooltip)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-90532"])
+  fun `unsupported operator breakdown groups by receiver when multiple members fail`() {
+    val tooltip = tooltipOf(
+      PyTypeCheckerInspection(),
+      "is not supported between",
+      """
+    class Operand: ...
+    class BadArg: ...
+
+    class Left1:
+        def __add__(self, other: Operand) -> "Left1": ...
+
+    class Left2:
+        def __add__(self, other: Operand) -> "Left2": ...
+
+    def f(x: Left1 | Left2, y: BadArg):
+        _ = x + y
+    """
+    )
+
+    assertEquals(
+      1,
+      tooltip.occurrencesOf("is not supported between"),
+      "Headline must not be duplicated per combination: $tooltip"
+    )
+
+    assertEquals(2, tooltip.occurrencesOf("does not support"), tooltip)
+    assertEquals(2, tooltip.occurrencesOf("is not assignable to parameter"), tooltip)
+    assertEquals(2, tooltip.occurrencesOf("parameter <code>other</code>"),
+                 "Both groups must name __add__'s actual parameter ('other'): $tooltip")
+
+    assertContainsOrdered(
+      tooltip,
+      "is not supported between", "Left1", "Left2", "and", "BadArg",
+      "Member", "Left1", "of", "Left1", "Left2", "does not support", "with", "BadArg",
+      "BadArg", "is not assignable to parameter", "other", "of", "Left1.__add__", "with type", "Operand",
+      "BadArg", "is not assignable to", "Operand",
+      "Member", "Left2", "of", "Left1", "Left2", "does not support", "with", "BadArg",
+      "BadArg", "is not assignable to parameter", "other", "of", "Left2.__add__", "with type", "Operand",
+      "BadArg", "is not assignable to", "Operand",
+    )
+
+    assertTrue("Left1.__add__" in tooltip, tooltip)
+    assertTrue("Left2.__add__" in tooltip, tooltip)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-90532"])
+  fun `unsupported operator breakdown names missing dunders when no overloads exist`() {
+    val tooltip = tooltipOf(
+      PyTypeCheckerInspection(),
+      "is not supported between",
+      """
+    class Operand: ...
+
+    class NoAdd: ...
+    class HasAdd:
+        def __add__(self, other: Operand) -> "HasAdd": ...
+
+    def f(x: HasAdd | NoAdd, y: Operand):
+        _ = x + y
+    """
+    )
+
+    assertContainsOrdered(
+      tooltip,
+      "is not supported between", "NoAdd", "and", "Operand",
+      "NoAdd", "does not define", "__add__", "and", "Operand", "does not define", "__radd__",
+    )
+    assertEquals(2, tooltip.occurrencesOf("does not define"), tooltip)
+
+    assertFalse("HasAdd" in tooltip, "Non-rejecting union member must not appear: $tooltip")
+  }
+
+  @Test
+  @TestFor(issues = ["PY-90532"])
+  fun `unsupported operator between large unions is reported without a breakdown`() {
+    val tooltip = tooltipOf(
+      PyTypeCheckerInspection(),
+      "is not supported between",
+      """
+    class Operand1: ...
+    class Operand2: ...
+    class Operand3: ...
+    class Operand4: ...
+
+    class L1:
+        def __add__(self, other: Operand1 | Operand2 | Operand3 | Operand4) -> "L1": ...
+    class L2:
+        def __add__(self, other: Operand1 | Operand2 | Operand3 | Operand4) -> "L2": ...
+    class L3:
+        def __add__(self, other: Operand1 | Operand2 | Operand3 | Operand4) -> "L3": ...
+    class L4:
+        def __add__(self, other: Operand1 | Operand2 | Operand3 | Operand4) -> "L4": ...
+    class NoAdd: ...
+
+    def f(x: L1 | L2 | L3 | L4 | NoAdd, y: Operand1 | Operand2 | Operand3 | Operand4):
+        _ = x + y
+    """
+    )
+
+    assertContainsOrdered(
+      tooltip,
+      "is not supported between",
+      "L1", "L2", "L3", "L4", "NoAdd", "and",
+      "Operand1", "Operand2", "Operand3", "Operand4",
+    )
+
+    assertFalse("does not define" in tooltip, "Large unions must not get a breakdown: $tooltip")
+    assertFalse("does not support" in tooltip, "Large unions must not get a breakdown: $tooltip")
+    assertFalse("is not assignable to parameter" in tooltip, "Large unions must not get a breakdown: $tooltip")
+    assertFalse("<br/>" in tooltip, "Large unions must stay a single-line message: $tooltip")
+  }
+
+  @Test
+  @TestFor(issues = ["PY-90532"])
+  fun `unsupported in breakdown does not misname the contained value as the receiver`() {
+    val tooltip = tooltipOf(
+      PyTypeCheckerInspection(),
+      "is not supported between",
+      """
+    class Elem: ...
+    class Bad1: ...
+    class Bad2: ...
+
+    class Box:
+        def __contains__(self, item: Elem) -> bool: ...
+
+    def f(x: Bad1 | Bad2, y: Box):
+        _ = x in y
+    """
+    )
+
+    assertContainsOrdered(
+      tooltip,
+      "is not supported between", "Bad1", "Bad2", "and", "Box",
+      "Member", "Bad1", "of", "Bad1", "Bad2",
+      "is not assignable to parameter", "item", "of", "Box.__contains__", "with type", "Elem",
+      "Bad1", "is not assignable to", "Elem",
+      "Member", "Bad2", "of", "Bad1", "Bad2",
+      "is not assignable to parameter", "item", "of", "Box.__contains__", "with type", "Elem",
+      "Bad2", "is not assignable to", "Elem",
+    )
+    assertFalse("does not support" in tooltip,
+                "Single receiver (Box) must not get a grouping node: $tooltip")
+
+    assertEquals(2, tooltip.occurrencesOf("parameter <code>item</code>"),
+                 "Both members must name __contains__'s actual parameter ('item'), not the caller's 'x': $tooltip")
+    assertTrue("Box.__contains__" in tooltip, tooltip)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-90532"])
+  fun `unsupported in breakdown groups by the container union, not the contained value`() {
+    val tooltip = tooltipOf(
+      PyTypeCheckerInspection(),
+      "is not supported between",
+      """
+    class Elem: ...
+    class Bad: ...
+
+    class Box1:
+        def __contains__(self, item: Elem) -> bool: ...
+    class Box2:
+        def __contains__(self, item: Elem) -> bool: ...
+
+    def f(x: Bad, y: Box1 | Box2):
+        _ = x in y
+    """
+    )
+
+    assertContainsOrdered(
+      tooltip,
+      "is not supported between", "Bad", "and", "Box1", "Box2",
+      "Member", "Box1", "of", "Box1", "Box2", "does not support", "with", "Bad",
+      "Bad", "is not assignable to parameter", "item", "of", "Box1.__contains__", "with type", "Elem",
+      "Bad", "is not assignable to", "Elem",
+      "Member", "Box2", "of", "Box1", "Box2", "does not support", "with", "Bad",
+      "Bad", "is not assignable to parameter", "item", "of", "Box2.__contains__", "with type", "Elem",
+      "Bad", "is not assignable to", "Elem",
+    )
+
+    assertEquals(2, tooltip.occurrencesOf("does not support"), tooltip)
+    assertEquals(2, tooltip.occurrencesOf("parameter <code>item</code>"),
+                 "Both groups must name __contains__'s actual parameter ('item'), not the caller's 'x': $tooltip")
+    assertTrue("Box1.__contains__" in tooltip, tooltip)
+    assertTrue("Box2.__contains__" in tooltip, tooltip)
+  }
+
+  private fun String.occurrencesOf(fragment: String): Int {
+    var count = 0
+    var from = indexOf(fragment)
+    while (from >= 0) {
+      count++
+      from = indexOf(fragment, from + fragment.length)
+    }
+    return count
+  }
+
+  /** Enables [inspection], highlights [code] and returns the tooltip of the single problem whose description contains [descriptionMarker]. */
+  private fun tooltipOf(inspection: com.intellij.codeInspection.LocalInspectionTool,
+                        descriptionMarker: String,
+                        @Language("Python") code: String): String {
+    myFixture.enableInspections(inspection)
+    try {
+      myFixture.configureByText("a.py", code.trimIndent())
+      val info: HighlightInfo = myFixture.doHighlighting().single { it.description?.contains(descriptionMarker) == true }
+      assertFalse("not assignable" in info.description!!, "Description must stay flat: ${info.description}")
+      val tooltip = info.toolTip
+      assertNotNull(tooltip, "Expected a tooltip with the breakdown")
+      return tooltip!!
+    }
+    finally {
+      myFixture.disableInspections(inspection)
+    }
+  }
+
+  private fun assertContainsOrdered(text: String, vararg fragments: String) {
+    var from = 0
+    for (fragment in fragments) {
+      val index = text.indexOf(fragment, from)
+      assertTrue(index >= 0, "Expected to find '$fragment' after index $from in:\n$text")
+      from = index + fragment.length
+    }
+  }
 
   /**
    * Sibling of [generic argument mismatch with an invariant type carries the breakdown in its tooltip]:
