@@ -8,6 +8,7 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -39,7 +40,17 @@ public final class PyGlobalVariableRedeclarationInNotebookInspection extends PyI
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                   boolean isOnTheFly,
                                                   @NotNull LocalInspectionToolSession session) {
+    // the visitor is applied to every element on its own, so gating it from visitPyFile would not stop the target visits
+    if (!isNotebook(session.getFile())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
+  }
+
+  // the session file is the base-language root of the notebook's view provider, i.e. a Jupyter file rather than the
+  // Python one the targets below come from, so only its name can tell a notebook apart
+  private static boolean isNotebook(@NotNull PsiFile file) {
+    return "ipynb".equals(FileUtilRt.getExtension(file.getName()));
   }
 
   private static class Visitor extends PyInspectionVisitor {
@@ -51,14 +62,6 @@ public final class PyGlobalVariableRedeclarationInNotebookInspection extends PyI
 
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
-    }
-
-    @Override
-    public void visitPyFile(@NotNull PyFile file) {
-      if (!isNotebook(file)) {
-        return;
-      }
-      super.visitPyFile(file);
     }
 
     @Override
@@ -99,10 +102,6 @@ public final class PyGlobalVariableRedeclarationInNotebookInspection extends PyI
                                       PyStatement.class)
         );
       }
-    }
-
-    private static boolean isNotebook(@NotNull PyFile file) {
-      return "ipynb".equals(FileUtilRt.getExtension(file.getName()));
     }
 
     private static boolean isDefinedInLoop(@NotNull PyTargetExpression node) {
