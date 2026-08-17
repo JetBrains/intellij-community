@@ -9300,17 +9300,6 @@ f:com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 - setShowImage(Z):com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 - s:setShowText(com.intellij.openapi.actionSystem.AnAction,Z):com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 - setShowText(Z):com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
-f:com.intellij.ui.messager.Callout
-- sf:NORTH_EAST:I
-- sf:NORTH_WEST:I
-- sf:SOUTH_EAST:I
-- sf:SOUTH_WEST:I
-- <init>():V
-- s:main(java.lang.String[]):V
-- s:showText(com.intellij.ui.awt.RelativePoint,I,java.lang.String):V
-- s:showText(javax.swing.JComponent,I,java.lang.String):V
-- s:showText(javax.swing.JTree,javax.swing.tree.TreePath,I,java.lang.String):V
-- s:showTextBelow(javax.swing.JComponent,java.lang.String):V
 f:com.intellij.ui.navigation.BackAction
 - com.intellij.ui.navigation.NavigationAction
 - <init>(javax.swing.JComponent,com.intellij.openapi.Disposable):V
