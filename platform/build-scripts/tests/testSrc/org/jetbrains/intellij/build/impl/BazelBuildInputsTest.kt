@@ -10,6 +10,27 @@ import java.nio.file.Path
 
 internal class BazelBuildInputsTest {
   @Test
+  fun `explicit input configuration follows the manifest property`(@TempDir tempDir: Path) {
+    val propertyName = "intellij.build.bazel.inputs.manifest"
+    val previousValue = System.getProperty(propertyName)
+    try {
+      System.clearProperty(propertyName)
+      assertThat(BazelBuildInputs.isConfigured).isFalse()
+
+      System.setProperty(propertyName, tempDir.resolve("inputs.manifest").toString())
+      assertThat(BazelBuildInputs.isConfigured).isTrue()
+    }
+    finally {
+      if (previousValue == null) {
+        System.clearProperty(propertyName)
+      }
+      else {
+        System.setProperty(propertyName, previousValue)
+      }
+    }
+  }
+
+  @Test
   fun `unused inputs retain sorted deduplicated Bazel exec paths`(@TempDir tempDir: Path) {
     val usedExecPath = "bazel-out/jvm-fastbuild/bin/platform/used.jar"
     val firstUnusedExecPath = "bazel-out/jvm-fastbuild/bin/plugins/a.jar"

@@ -18,6 +18,9 @@ private const val BAZEL_BUILD_INPUTS_MANIFEST_PROPERTY = "intellij.build.bazel.i
 
 @Internal
 object BazelBuildInputs {
+  val isConfigured: Boolean
+    get() = System.getProperty(BAZEL_BUILD_INPUTS_MANIFEST_PROPERTY) != null
+
   private val resolver: ExplicitBazelInputResolver? by lazy {
     System.getProperty(BAZEL_BUILD_INPUTS_MANIFEST_PROPERTY)?.let { ExplicitBazelInputResolver.load(Path.of(it)) }
   }
@@ -97,8 +100,8 @@ class BazelModuleOutputProviderState(
   private val index = ModuleOutputProviderIndex(modules)
 
   /**
-   * Demanded only to locate library jars outside Bazel runfiles - under runfiles every path comes from a label.
-   * Resolving it lazily lets a build whose own jars were copied out of `bazel-out` use the runfiles without
+   * Demanded only to locate library jars outside explicit Bazel inputs and runfiles, where every path comes from a
+   * label. Resolving it lazily lets a build whose own jars were copied out of `bazel-out` use those inputs without
    * inventing another way to derive the output root.
    */
   private val lazyBazelOutputRoot = lazy { bazelOutputRootResolver() }
@@ -188,7 +191,7 @@ internal class BazelModuleOutputProvider(
       "Cannot find $libraryMoniker"
     )
 
-    val paths = if (BazelRunfiles.isRunningFromBazel) {
+    val paths = if (BazelBuildInputs.isConfigured || BazelRunfiles.isRunningFromBazel) {
       library.jarTargets.map(BazelBuildInputs::resolve)
     }
     else {
@@ -232,7 +235,7 @@ internal class BazelModuleOutputProvider(
       )
     }
 
-    return if (BazelRunfiles.isRunningFromBazel) {
+    return if (BazelBuildInputs.isConfigured || BazelRunfiles.isRunningFromBazel) {
       val targets = if (forTests) moduleDescription.testTargets else moduleDescription.productionTargets
       targets.map(BazelBuildInputs::resolve)
     }

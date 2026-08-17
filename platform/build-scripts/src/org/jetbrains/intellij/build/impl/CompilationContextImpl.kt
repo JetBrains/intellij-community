@@ -180,6 +180,11 @@ private suspend fun doCreateCompilationContext(
   val mavenLibrariesDownloadLocation = options.mavenLibrariesDownloadLocation
   val mavenRepositoryPath = when {
     mavenLibrariesDownloadLocation != null -> mavenLibrariesDownloadLocation.absolutePathString()
+    // A manifest-backed Bazel build must not inspect ~/.m2, MAVEN_OPTS or a system Maven installation. The project
+    // model still needs a value for $MAVEN_REPOSITORY$, so point it at a deliberately absent path in declared scratch.
+    BazelBuildInputs.isConfigured -> requireNotNull(customBuildPaths) {
+      "Manifest-backed Bazel builds must declare scratch build paths"
+    }.tempDir.resolve("maven-repository-do-not-use").absolutePathString()
     // set this to a missing path, so the code won't access library downloaded by maven
     isBazelBacked -> getMavenRepositoryPath() + "-do-not-use-maven-repository-with-bazel"
     else -> getMavenRepositoryPath()
