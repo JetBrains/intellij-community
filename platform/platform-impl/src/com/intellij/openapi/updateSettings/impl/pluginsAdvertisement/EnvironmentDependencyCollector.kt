@@ -14,6 +14,11 @@ internal class EnvironmentDependencyCollector : DependencyCollector {
     "podman",
     "terraform",
 
+    // AI coding CLIs
+    "copilot",
+    "codex",
+    "claude",
+
     // Reserved for Cloud vendors only
     "az",
     "gcloud",
