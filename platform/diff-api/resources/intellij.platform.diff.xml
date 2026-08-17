@@ -19,6 +19,8 @@
     <extensionPoint qualifiedName="com.intellij.diff.merge.MergeTool" interface="com.intellij.diff.merge.MergeTool" dynamic="true"/>
     <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.diff.DiffExtension" interface="com.intellij.diff.DiffExtension" dynamic="true"/>
+    <extensionPoint name="diff.frontendDiffExtension" interface="com.intellij.diff.frontend.FrontendDiffExtension" dynamic="true"/>
+    <extensionPoint name="diff.frontendUserDataKey" interface="com.intellij.diff.frontend.FrontendDiffUserDataKey" dynamic="true"/>
     <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.diff.merge.external.AutomaticExternalMergeTool" interface="com.intellij.diff.merge.external.AutomaticExternalMergeTool" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.diffPreviewProvider" interface="com.intellij.openapi.diff.impl.settings.DiffPreviewProvider"/>
