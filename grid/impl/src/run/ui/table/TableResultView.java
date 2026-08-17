@@ -1788,7 +1788,7 @@ public final class TableResultView extends JBTableWithResizableCells
 
   private boolean isArrayViewCell(int row, int column) {
     var settings = GridUtil.getSettings(myResultPanel);
-    if (Registry.is("database.new.arrays.editor") && (settings != null && !settings.isEditArrayAsText())) {
+    if (Registry.is("database.new.arrays.editor", false) && (settings != null && !settings.isEditArrayAsText())) {
       int modelColumnIdx = convertColumnIndexToModel(column);
       int modelRowIdx = convertRowIndexToModel(row);
       var columnIndex = ModelIndex.forColumn(myResultPanel, modelColumnIdx);
