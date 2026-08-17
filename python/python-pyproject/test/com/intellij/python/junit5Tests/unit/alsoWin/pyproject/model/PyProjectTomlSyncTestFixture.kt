@@ -33,6 +33,7 @@ import com.intellij.testFramework.utils.vfs.createFile
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.toPath
+import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import org.assertj.core.api.Assertions.assertThat
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -42,7 +43,7 @@ import kotlin.io.path.name
 internal const val PYPROJECT = "PYPROJECT"
 
 /** Standard Python module type ID. */
-internal const val PYTHON = "PYTHON_MODULE"
+internal const val PYTHON = PYTHON_MODULE_ID
 
 /** Standard Java module type ID. */
 internal const val JAVA = "JAVA_MODULE"
