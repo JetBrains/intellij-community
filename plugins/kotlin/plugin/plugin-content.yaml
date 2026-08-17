@@ -212,7 +212,6 @@
   modules:
   - name: intellij.kotlin.plugin
   contentModules:
-  - name: intellij.kotlin.duplicate.scope
   - name: intellij.debugger.jvm.advanced.kotlin
   - name: intellij.debugger.logpoints.kotlin
 - name: lib/kotlin.fir.frontend-independent.jar
@@ -421,6 +420,9 @@
 - name: lib/modules/intellij.kotlin.coverage.jar
   contentModules:
   - name: intellij.kotlin.coverage
+- name: lib/modules/intellij.kotlin.duplicate.scope.jar
+  contentModules:
+  - name: intellij.kotlin.duplicate.scope
 - name: lib/modules/intellij.kotlin.featuresTrainer.jar
   contentModules:
   - name: intellij.kotlin.featuresTrainer

@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+<idea-plugin allow-bundled-update="true">
   <id>org.jetbrains.kotlin</id>
   <name>Kotlin</name>
   <category>Languages</category>
@@ -27,9 +27,6 @@
                     beanClass="org.jetbrains.kotlin.idea.base.plugin.SupportsKotlinPluginMode">
     </extensionPoint>
   </extensionPoints>
-
-  <!-- comes from the Kotlin compiler -->
-  <xi:include href="/META-INF/analysis-api/analysis-api-fir.xml"/>
 
   <content namespace="jetbrains">
     <module name="intellij.kotlin.base.projectModel" loading="required"/>

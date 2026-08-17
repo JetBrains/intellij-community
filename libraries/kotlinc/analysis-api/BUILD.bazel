@@ -14,7 +14,12 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-analysis-api-kotlinc-analysis-api"],
-    runtime_deps = ["@lib//:libraries-kotlinc-analysis-api-kotlinc-analysis-api"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-kotlinc-analysis-api-kotlinc-analysis-api",
+        "//platform/backend",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+    ],
 )
 
 jvm_library(
@@ -28,7 +33,12 @@ jvm_library(
     module_name = "intellij.libraries.kotlinc.analysis.api",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-analysis-api-kotlinc-analysis-api"],
-    runtime_deps = [":libraries-kotlinc-analysis-api"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-kotlinc-analysis-api",
+        "//platform/backend:backend_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.analysis.api` end
 

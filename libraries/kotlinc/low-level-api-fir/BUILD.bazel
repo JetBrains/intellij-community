@@ -14,7 +14,13 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-low-level-api-fir-kotlinc-low-level-api-fir"],
-    runtime_deps = ["@lib//:libraries-kotlinc-low-level-api-fir-kotlinc-low-level-api-fir"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-kotlinc-low-level-api-fir-kotlinc-low-level-api-fir",
+        "//platform/backend",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+    ],
 )
 
 jvm_library(
@@ -28,7 +34,13 @@ jvm_library(
     module_name = "intellij.libraries.kotlinc.low.level.api.fir",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-low-level-api-fir-kotlinc-low-level-api-fir"],
-    runtime_deps = [":libraries-kotlinc-low-level-api-fir"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-kotlinc-low-level-api-fir",
+        "//platform/backend:backend_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.low.level.api.fir` end
 
