@@ -3,7 +3,6 @@ package com.intellij.ui.jcef;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -257,15 +256,15 @@ public final class JBCefScrollbarsHelper {
   }
 
   private static int getTrackSizePx() {
-    return (int)(JBCefApp.normalizeScaledSize(SystemInfo.isMac ? 14 : 10) * UISettingsUtils.getInstance().getCurrentIdeScale());
+    return JBCefApp.normalizeScaledSize(14);
   }
 
   private static int getThumbPaddingPx() {
-    return (int)(JBCefApp.normalizeScaledSize(SystemInfo.isMac ? 3 : 1) * UISettingsUtils.getInstance().getCurrentIdeScale());
+    return JBCefApp.normalizeScaledSize(3);
   }
 
   private static int getThumbRadiusPx() {
-    return (int)(JBCefApp.normalizeScaledSize(SystemInfo.isMac ? 7 : 0) * UISettingsUtils.getInstance().getCurrentIdeScale());
+    return JBCefApp.normalizeScaledSize(7);
   }
 
 
