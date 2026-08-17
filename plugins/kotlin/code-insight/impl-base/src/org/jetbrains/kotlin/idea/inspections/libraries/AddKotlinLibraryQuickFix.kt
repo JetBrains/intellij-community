@@ -26,14 +26,15 @@ class AddKotlinLibraryQuickFix(
             .takeIf { dependencyManager.isApplicable(module) && !dependencyManager.isProjectSyncPendingOrInProgress() }
             ?.let(Presentation::of)
     }
+
     override fun getFamilyName(): String = quickFixText
 
     override fun perform(context: ActionContext): ModCommand {
         val file = context.file
         val module = file.module ?: return ModCommand.nop()
         val element = file
-            .takeIf { dependencyManager.isApplicable(module) && !dependencyManager.isProjectSyncPendingOrInProgress() } ?:
-            return ModCommand.nop()
+            .takeIf { dependencyManager.isApplicable(module) && !dependencyManager.isProjectSyncPendingOrInProgress() }
+            ?: return ModCommand.nop()
 
         val addDependencyModCommand =
             dependencyManager.addDependencyModCommand(file, module, libraryDescriptor)
