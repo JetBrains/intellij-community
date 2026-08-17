@@ -122,10 +122,25 @@ private fun composePluginClassPath(components: List<DevBuildComponent>, target: 
   }
 }
 
+/**
+ * Links every file of [source] into [target].
+ *
+ * A composition is a view, not a second distribution. The fragments already published these bytes as Bazel outputs, and
+ * copying them would write another 4 GB per product to say nothing new - so each entry becomes a symlink instead.
+ *
+ * The link is **relative**, which is the whole point of doing this deliberately. Composition used to copy, and never
+ * did: under a sandbox every input is itself a symlink, so the branch below reproduced Bazel's own link verbatim and
+ * the copy was dead code. Those links were absolute, naming one machine's output base, which left the composed IDE
+ * unusable anywhere but the execution root that built it. A relative link describes the layout instead of the machine,
+ * and stays correct wherever that layout is reproduced.
+ *
+ * Falls back to a copy where a symlink cannot be created - Windows without the privilege - so the result is always a
+ * whole distribution rather than a partial one.
+ */
 @ApiStatus.Internal
 fun mergeDevBuildComponent(source: Path, target: Path) {
   mergeDevBuildComponent(source = source, target = target) { destination, file ->
-    Files.copy(file, destination, StandardCopyOption.COPY_ATTRIBUTES)
+    Files.createSymbolicLink(destination, destination.parent.relativize(file))
   }
 }
 
@@ -152,16 +167,14 @@ internal fun mergeDevBuildComponent(
         }
         return FileVisitResult.CONTINUE
       }
-      if (Files.isSymbolicLink(file)) {
-        Files.createSymbolicLink(destination, Files.readSymbolicLink(file))
+      // A symlink among the sources - Bazel's own, or a relative one an archive extractor left inside a fragment - is
+      // linked like anything else rather than reproduced: pointing at the file resolves through it either way, and
+      // copying its target verbatim is what used to put absolute paths into the composition.
+      try {
+        linkFile(destination, file)
       }
-      else {
-        try {
-          linkFile(destination, file)
-        }
-        catch (_: IOException) {
-          Files.copy(file, destination, StandardCopyOption.COPY_ATTRIBUTES)
-        }
+      catch (_: IOException) {
+        Files.copy(file, destination, StandardCopyOption.COPY_ATTRIBUTES)
       }
       return FileVisitResult.CONTINUE
     }

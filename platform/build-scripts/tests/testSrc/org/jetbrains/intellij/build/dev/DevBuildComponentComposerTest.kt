@@ -39,17 +39,36 @@ internal class DevBuildComponentComposerTest {
   }
 
   @Test
-  fun `component merge copies owned bytes`(@TempDir tempDir: Path) {
+  fun `component merge links owned bytes relatively`(@TempDir tempDir: Path) {
     val source = tempDir.resolve("source")
-    Files.createDirectories(source)
-    val sourceFile = source.resolve("file.txt")
-    Files.writeString(sourceFile, "before")
+    Files.createDirectories(source.resolve("lib"))
+    Files.writeString(source.resolve("lib/file.txt"), "bytes")
     val target = tempDir.resolve("target")
 
     mergeDevBuildComponent(source, target)
-    Files.writeString(sourceFile, "after")
 
-    assertThat(Files.readString(target.resolve("file.txt"))).isEqualTo("before")
+    val linked = target.resolve("lib/file.txt")
+    assertThat(Files.readString(linked)).isEqualTo("bytes")
+    if (supportsSymbolicLinks(tempDir)) {
+      // Relative, so the composition describes the layout rather than the machine: an absolute link names the output
+      // base that composed it, which is what left the composed IDE unusable in any other execution root.
+      assertThat(Files.readSymbolicLink(linked)).isEqualTo(Path.of("../../source/lib/file.txt"))
+    }
+  }
+
+  private fun supportsSymbolicLinks(tempDir: Path): Boolean {
+    val probe = tempDir.resolve("symlink-probe")
+    return try {
+      Files.createSymbolicLink(probe, tempDir)
+      Files.delete(probe)
+      true
+    }
+    catch (_: IOException) {
+      false
+    }
+    catch (_: UnsupportedOperationException) {
+      false
+    }
   }
 
   @Test

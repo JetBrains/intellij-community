@@ -280,6 +280,10 @@ def _compose(ctx, fragment_targets):
         outputs = [home, ide_config, fingerprint],
         executable = ctx.executable.composer,
         arguments = [args],
+        # A composition is a view: its entries are relative links into the fragments, which publish the bytes
+        # themselves. Sharing it would carry the same content through the cache a second time to say nothing new, and
+        # rebuilding it from fragments that did come from the cache is a few thousand `symlink` calls.
+        execution_requirements = {"no-remote-cache": "1"},
         mnemonic = "IntellijDevDistCompose",
         progress_message = "Composing dev distribution %s" % ctx.label,
     )
