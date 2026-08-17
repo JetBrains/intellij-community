@@ -22,7 +22,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-kotlin-compiler-fir",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
         "//plugins/kotlin:kotlin-plugin-community-main",
     ],
 )
@@ -55,7 +55,8 @@ jvm_library(
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-fir",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",

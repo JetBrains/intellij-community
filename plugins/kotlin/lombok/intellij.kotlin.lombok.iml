@@ -46,7 +46,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-fir" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.fir" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.kotlin.base.psi" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />

@@ -20,6 +20,7 @@ jvm_library(
         "//platform/backend",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
     ],
 )
 
@@ -40,6 +41,7 @@ jvm_library(
         "//platform/backend:backend_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.low.level.api.fir` end

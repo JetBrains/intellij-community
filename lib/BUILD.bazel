@@ -7461,28 +7461,6 @@ java_library(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232_http//file",
-    out = "org.jetbrains.kotlin/kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlinc-kotlin-compiler-fir",
-    jar = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kotlinc-kotlin-compiler-fir-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-compiler-fir"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlin/kotlin-compiler-ir-for-ide-2.5.0-dev-4232.jar_copy",
     src = "@org_jetbrains_kotlin-kotlin-compiler-ir-for-ide-2_5_0-dev-4232_http//file",
     out = "org.jetbrains.kotlin/kotlin-compiler-ir-for-ide-2.5.0-dev-4232.jar",
@@ -13345,6 +13323,21 @@ jvm_import(
     name = "libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
     jar = "@org_jetbrains_kotlin-kotlin-compiler-common-for-ide-2_5_0-dev-4232_http//file",
     source_jar = "@org_jetbrains_kotlin-kotlin-compiler-common-for-ide-2_5_0-dev-4232-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlin/kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232_http//file",
+    out = "org.jetbrains.kotlin/kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlinc-kotlin-compiler-fir-kotlinc-kotlin-compiler-fir",
+    jar = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

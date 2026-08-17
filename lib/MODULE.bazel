@@ -5902,20 +5902,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232_http",
-    downloaded_file_path = "kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar",
-    sha256 = "430fc9bfbaef3988025eaf8e175c01b36c71394027e08e1baba67b64e123121e",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-dev-4232/kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232-sources_http",
-    downloaded_file_path = "kotlin-compiler-fir-for-ide-2.5.0-dev-4232-sources.jar",
-    sha256 = "0dc7d3ea464700e19b34752711a5a6b33714a7d5abfed2e79b23621984a1dfe6",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-dev-4232/kotlin-compiler-fir-for-ide-2.5.0-dev-4232-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_kotlin-kotlin-compiler-ir-for-ide-2_5_0-dev-4232_http",
     downloaded_file_path = "kotlin-compiler-ir-for-ide-2.5.0-dev-4232.jar",
     sha256 = "fead46eb1be5cf77b40169e2b4a7c71da4c5f9496d208178dbac6e7e0bcd8228",
@@ -10638,6 +10624,20 @@ http_file(
     downloaded_file_path = "kotlin-compiler-common-for-ide-2.5.0-dev-4232-sources.jar",
     sha256 = "387c3b3c88aa8a037e741071ef21a94e082d63bb9b2d9894555a48a4d7e8ec70",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.5.0-dev-4232/kotlin-compiler-common-for-ide-2.5.0-dev-4232-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232_http",
+    downloaded_file_path = "kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar",
+    sha256 = "430fc9bfbaef3988025eaf8e175c01b36c71394027e08e1baba67b64e123121e",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-dev-4232/kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232-sources_http",
+    downloaded_file_path = "kotlin-compiler-fir-for-ide-2.5.0-dev-4232-sources.jar",
+    sha256 = "0dc7d3ea464700e19b34752711a5a6b33714a7d5abfed2e79b23621984a1dfe6",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-dev-4232/kotlin-compiler-fir-for-ide-2.5.0-dev-4232-sources.jar",
 )
 
 http_file(

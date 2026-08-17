@@ -527,6 +527,7 @@ libraries/kotlinc/analysis-api-impl-base
 libraries/kotlinc/analysis-api-k2
 libraries/kotlinc/analysis-api-platform-interface
 libraries/kotlinc/kotlin-compiler-common
+libraries/kotlinc/kotlin-compiler-fir
 libraries/kotlinc/kotlinx-serialization-compiler-plugin
 libraries/kotlinc/low-level-api-fir
 libraries/kotlinc/symbol-light-classes

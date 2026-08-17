@@ -148,6 +148,12 @@
     libraries:
       kotlinc.kotlin-compiler-common:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2/kotlin-compiler-common-for-ide-2.jar
+- name: lib/intellij.libraries.kotlinc.kotlin.compiler.fir.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.kotlin.compiler.fir
+    libraries:
+      kotlinc.kotlin-compiler-fir:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2/kotlin-compiler-fir-for-ide-2.jar
 - name: lib/intellij.libraries.kotlinc.low.level.api.fir.jar
   contentModules:
   - name: intellij.libraries.kotlinc.low.level.api.fir
@@ -188,9 +194,6 @@
   - name: kotlinc.kotlin-build-tools-impl
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-impl/2/kotlin-build-tools-impl-2.jar
-  - name: kotlinc.kotlin-compiler-fir
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2/kotlin-compiler-fir-for-ide-2.jar
   - name: kotlinc.kotlin-gradle-statistics
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2/kotlin-gradle-statistics-for-ide-2.jar

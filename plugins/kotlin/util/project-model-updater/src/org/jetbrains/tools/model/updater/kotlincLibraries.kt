@@ -83,7 +83,7 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-tests", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-common", kotlincCoordinates, convertedToModuleLibrary = true)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fe10", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fir", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fir", kotlincCoordinates, convertedToModuleLibrary = true)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-ir", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-gradle-statistics", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlinx-serialization-compiler-plugin", kotlincCoordinates, convertedToModuleLibrary = true)

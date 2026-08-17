@@ -1,10 +1,15 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.compilerPlugins.serialization` start
 create_kotlinc_options(
     name = "custom_kotlin-compilerPlugins-serialization",
     x_context_parameters = True,
+)
+
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-fir_provided",
+    lib = "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
 )
 
 jvm_library(
@@ -32,7 +37,6 @@ jvm_library(
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
         "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin",
-        "@lib//:kotlinc-kotlin-compiler-fir-provided",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/frontend-independent",
         "//platform/analysis-api:analysis",
@@ -46,6 +50,7 @@ jvm_library(
         "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
         "//plugins/kotlin/base/resources:kotlin-base-resources",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
+        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-fir_provided",
     ],
 )
 
@@ -66,8 +71,9 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir_test_lib",
         "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-fir-provided",
         "//plugins/kotlin/base/util:util_test_lib",
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
         "//platform/analysis-api:analysis_test_lib",

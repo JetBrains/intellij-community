@@ -24,26 +24,23 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library name="kotlinc.low-level-api-fir" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:low-level-api-fir-for-ide:2.5.0-dev-4232">
+      <library name="kotlinc.kotlin-compiler-fir" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fir-for-ide:2.5.0-dev-4232">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.5.0-dev-4232/low-level-api-fir-for-ide-2.5.0-dev-4232.jar">
-              <sha256sum>628d4cdeb17b914c1c2bb46197946ea8b2cc57e428115012016fc1f8866ad22d</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-dev-4232/kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar">
+              <sha256sum>430fc9bfbaef3988025eaf8e175c01b36c71394027e08e1baba67b64e123121e</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.5.0-dev-4232/low-level-api-fir-for-ide-2.5.0-dev-4232.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-dev-4232/kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.5.0-dev-4232/low-level-api-fir-for-ide-2.5.0-dev-4232-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-dev-4232/kotlin-compiler-fir-for-ide-2.5.0-dev-4232-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.fir" scope="RUNTIME" />
   </component>
 </module>

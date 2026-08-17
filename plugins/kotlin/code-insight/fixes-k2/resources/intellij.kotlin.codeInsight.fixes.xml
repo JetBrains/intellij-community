@@ -22,11 +22,12 @@
     <module name="intellij.kotlin.refactorings.base"/>
     <module name="intellij.kotlin.references"/>
     <module name="intellij.kotlin.searching"/>
+    <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.kotlinc.analysis.api"/>
     <module name="intellij.libraries.kotlinc.analysis.api.impl.base"/>
     <module name="intellij.libraries.kotlinc.analysis.api.k2"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
-    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.fir"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
     <module name="intellij.platform.core"/>

@@ -48,7 +48,7 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.gradle" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-fir" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.fir" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-jps-common" level="project" />
