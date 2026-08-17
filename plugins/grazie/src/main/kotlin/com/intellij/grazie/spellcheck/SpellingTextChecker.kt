@@ -5,8 +5,6 @@ import ai.grazie.gec.model.problem.ProblemFix
 import ai.grazie.gec.model.problem.SentenceWithProblems
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.LanguageWithVariant
-import ai.grazie.nlp.tokenizer.Tokenizer
-import ai.grazie.nlp.utils.checkedEndExclusive
 import ai.grazie.rules.common.KnownPhrases
 import ai.grazie.spell.Speller
 import ai.grazie.spell.text.TextSpeller
@@ -19,6 +17,7 @@ import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.mlec.LanguageHolder
 import com.intellij.grazie.rule.SentenceBatcher
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
+import com.intellij.grazie.spellcheck.engine.MAX_WORD_LENGTH
 import com.intellij.grazie.text.ExternalTextChecker
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.TextChecker.ProofreadingContext
@@ -74,6 +73,7 @@ internal class SpellingTextChecker : ExternalTextChecker() {
     if (cache == null) {
       cache = action(file.project)
         .filterNot { it.word.length < MINIMAL_TYPO_LENGTH }
+        .filterNot { it.word.length > MAX_WORD_LENGTH }
         .filterNot { hasUnknownFragments(it) }
       context.text.putUserData(spellingKey, CachedResults(configStamp, cache))
     }
@@ -93,6 +93,7 @@ internal class SpellingTextChecker : ExternalTextChecker() {
     if (cache == null) {
       cache = action(toCheck, file.project)
         .filterNot { it.word.length < MINIMAL_TYPO_LENGTH }
+        .filterNot { it.word.length > MAX_WORD_LENGTH }
         .filterNot { hasUnknownFragments(it) }
       file.putUserData(spellingKey, CachedResults(configStamp, cache))
     }
