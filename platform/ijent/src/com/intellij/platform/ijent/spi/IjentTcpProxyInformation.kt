@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.spi
 
 import com.intellij.platform.ijent.tcp.TcpDeployInfo
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * An interface that represents information about a used proxy for Ijent Connection.
@@ -10,4 +11,5 @@ import com.intellij.platform.ijent.tcp.TcpDeployInfo
  */
 sealed interface IjentTcpProxyInformation {
   data class SOCKS5(val hostInfo: TcpDeployInfo.FixedPort) : IjentTcpProxyInformation
+  data class SOCKS5Dynamic(val hostInfo: StateFlow<TcpDeployInfo.FixedPort?>) : IjentTcpProxyInformation
 }

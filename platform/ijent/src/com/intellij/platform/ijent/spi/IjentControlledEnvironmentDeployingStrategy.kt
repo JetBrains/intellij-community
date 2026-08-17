@@ -9,6 +9,7 @@ import com.intellij.platform.ijent.spi.IjentDeployingStrategy.Companion.deployEv
 import com.intellij.platform.ijent.spi.IjentDeployingStrategy.DeployEvent
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.CHECK_CODE
+import kotlinx.coroutines.CompletableDeferred
 import java.nio.file.Path
 
 /**
@@ -88,6 +89,12 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
    */
   open suspend fun isExpectedProcessExit(exitCode: Int): Boolean = exitCode == 0
 
+  /** See [IjentConnectionContext.noShutdownOnDisconnect]: whether closing the session terminates IJent in-band. */
+  protected open val noShutdownOnDisconnect: Boolean get() = false
+
+  /** See [IjentConnectionContext.remoteTerminationSettled]; exposed so a deployer's own teardown can await it. */
+  protected val remoteTerminationSettled: CompletableDeferred<Unit> = CompletableDeferred()
+
   override suspend fun createIjentSession(provider: IjentSessionProvider): IjentSession.Posix =
     try {
       deployEvents.emit(DeployEvent.DEPLOY_STARTED)
@@ -102,6 +109,8 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
         mediator = mediator,
         targetPlatform = targetPlatform,
         connectionStrategy = connectionStrategy,
+        noShutdownOnDisconnect = noShutdownOnDisconnect,
+        remoteTerminationSettled = remoteTerminationSettled,
       ))
       deployEvents.emit(DeployEvent.CONNECT_FINISHED)
       ijentSession as IjentSession.Posix

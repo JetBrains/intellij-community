@@ -78,11 +78,23 @@ abstract class IjentDeployingOverShellProcessStrategy(
     /**
      * [tlsCertificates] intentionally has no default value: every deployer must state explicitly whether the TCP socket
      * of IJent is protected with mutual TLS or is left plaintext and unauthenticated.
+     *
+     * [noShutdownOnDisconnect] makes IJent outlive the death of its gRPC peer; in exchange, an explicit close asks it
+     * to terminate in-band (the flag is mirrored into [IjentConnectionContext.noShutdownOnDisconnect]). Only a deployer
+     * that supervises the transport may set it: for everyone else a lost connection is the only stop signal there is,
+     * and losing it would leave an orphan behind.
      */
-    data class Tcp(val deployInfo: TcpDeployInfo, val tlsCertificates: MutualTlsCertificates?) : ExecutionStrategy
+    data class Tcp(
+      val deployInfo: TcpDeployInfo,
+      val tlsCertificates: MutualTlsCertificates?,
+      val noShutdownOnDisconnect: Boolean = false,
+    ) : ExecutionStrategy
   }
 
   protected open val executionStrategy: ExecutionStrategy = ExecutionStrategy.Default
+
+  final override val noShutdownOnDisconnect: Boolean
+    get() = (executionStrategy as? ExecutionStrategy.Tcp)?.noShutdownOnDisconnect == true
 
   /**
    * Interruption strategy for the initial shell setup.
@@ -150,10 +162,24 @@ abstract class IjentDeployingOverShellProcessStrategy(
     val targetPlatform = getTargetPlatform()
     return getMyContext().execCommand {
       when (val strategy = executionStrategy) {
-        is ExecutionStrategy.Tcp -> execIjentWithTcp(binaryPath, strategy.deployInfo, targetPlatform, strategy.tlsCertificates)
+        is ExecutionStrategy.Tcp -> execIjentWithTcp(binaryPath, strategy, targetPlatform)
         else -> execIjent(binaryPath, targetPlatform)
       }
     }
+  }
+
+  // A member rather than a file-level helper because the strategy type is protected.
+  private suspend fun DeployingContextAndShell.execIjentWithTcp(
+    remotePathToBinary: String,
+    strategy: ExecutionStrategy.Tcp,
+    targetPlatform: EelPlatform.Posix,
+  ): IjentSessionProcessMediator {
+    val joinedCmd = getIjentGrpcArgv(remotePathToBinary,
+                                     selfDeleteOnExit = true,
+                                     noShutdownOnDisconnect = strategy.noShutdownOnDisconnect,
+                                     deployInfo = strategy.deployInfo,
+                                     useTLS = strategy.tlsCertificates != null).joinToString(" ")
+    return createMediator(remotePathToBinary, joinedCmd, targetPlatform, strategy.tlsCertificates)
   }
 
   final override suspend fun copyFile(file: Path): String {
@@ -569,20 +595,6 @@ private suspend fun DeployingContextAndShell.createMediator(
     process.write(commandLineArgs)
   }
   return process.extractProcess()
-}
-
-
-private suspend fun DeployingContextAndShell.execIjentWithTcp(
-  remotePathToBinary: String,
-  deployInfo: TcpDeployInfo,
-  targetPlatform: EelPlatform.Posix,
-  tlsCertificates: MutualTlsCertificates?,
-): IjentSessionProcessMediator {
-  val joinedCmd = getIjentGrpcArgv(remotePathToBinary,
-                                   selfDeleteOnExit = true,
-                                   deployInfo = deployInfo,
-                                   useTLS = tlsCertificates != null).joinToString(" ")
-  return createMediator(remotePathToBinary, joinedCmd, targetPlatform, tlsCertificates)
 }
 
 /**
