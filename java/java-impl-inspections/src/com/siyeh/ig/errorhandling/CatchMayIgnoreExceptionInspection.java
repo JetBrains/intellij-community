@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.Nullability;
@@ -133,7 +133,7 @@ public final class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLoc
         SuppressForTestsScopeFix fix = SuppressForTestsScopeFix.build(CatchMayIgnoreExceptionInspection.this, section);
         if (ControlFlowUtils.isEmpty(block, m_ignoreCatchBlocksWithComments, true)) {
           var renameFix = RenameToIgnoredFix.createRenameToIgnoreFix(parameter, false);
-          AddCatchBodyFix addBodyFix = getAddBodyFix(block);
+          AddCatchBodyFix addBodyFix = ControlFlowUtils.isEmpty(block, true, true) ? new AddCatchBodyFix() : null;
           holder.problem(catchToken, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.empty.message"))
               .fix(renameFix).maybeFix(addBodyFix).maybeFix(fix).register();
         }
@@ -151,20 +151,6 @@ public final class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLoc
             holder.registerProblem(catchToken, message, LocalQuickFix.notNullElements(fix));
           }
         }
-      }
-
-      private @Nullable AddCatchBodyFix getAddBodyFix(PsiCodeBlock block) {
-        if (ControlFlowUtils.isEmpty(block, true, true)) {
-          try {
-            FileTemplate template =
-              FileTemplateManager.getInstance(holder.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
-            if (!StringUtil.isEmptyOrSpaces(template.getText())) {
-              return new AddCatchBodyFix();
-            }
-          }
-          catch (IllegalStateException ignored) { }
-        }
-        return null;
       }
 
       /**
@@ -294,24 +280,31 @@ public final class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLoc
       String parameterName = parameter.getName();
       FileTemplate template = FileTemplateManager.getInstance(project).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
 
-      Map<String, Object> props = FileTemplateManager.getInstance(project).getDefaultContextMap();
-      props.put(FileTemplate.ATTRIBUTE_EXCEPTION, parameterName);
-      props.put(FileTemplate.ATTRIBUTE_EXCEPTION_TYPE, parameter.getType().getCanonicalText());
-      PsiDirectory directory = catchSection.getContainingFile().getContainingDirectory();
-      if (directory != null) {
-        JavaTemplateUtil.setPackageNameAttribute(props, directory);
-      }
+      if (!StringUtil.isEmptyOrSpaces(template.getText())) {
+        Map<String, Object> props = FileTemplateManager.getInstance(project).getDefaultContextMap();
+        props.put(FileTemplate.ATTRIBUTE_EXCEPTION, parameterName);
+        props.put(FileTemplate.ATTRIBUTE_EXCEPTION_TYPE, parameter.getType().getCanonicalText());
+        PsiDirectory directory = catchSection.getContainingFile().getContainingDirectory();
+        if (directory != null) {
+          JavaTemplateUtil.setPackageNameAttribute(props, directory);
+        }
 
-      try {
+        try {
+          PsiCodeBlock block =
+            PsiElementFactory.getInstance(project).createCodeBlockFromText("{\n" + template.getText(props) + "\n}", null);
+          Objects.requireNonNull(catchSection.getCatchBlock()).replace(block);
+        }
+        catch (ProcessCanceledException ce) {
+          throw ce;
+        }
+        catch (Exception e) {
+          throw new IncorrectOperationException("Incorrect file template", e);
+        }
+      }
+      else {
         PsiCodeBlock block =
-          PsiElementFactory.getInstance(project).createCodeBlockFromText("{\n" + template.getText(props) + "\n}", null);
+          PsiElementFactory.getInstance(project).createCodeBlockFromText("{\nthrow new RuntimeException(" + parameterName + ");\n}", null);
         Objects.requireNonNull(catchSection.getCatchBlock()).replace(block);
-      }
-      catch (ProcessCanceledException ce) {
-        throw ce;
-      }
-      catch (Exception e) {
-        throw new IncorrectOperationException("Incorrect file template", (Throwable)e);
       }
     }
   }
