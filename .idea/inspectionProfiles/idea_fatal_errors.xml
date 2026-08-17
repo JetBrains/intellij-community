@@ -3402,6 +3402,14 @@
     <inspection_tool class="RuntimeExec" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="RuntimeExecWithNonConstantString" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SSBasedInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <searchConfiguration name="Specify return type explicitly on CLion's JUnit5 methods" uuid="b6c22af8-66a9-31b8-8509-2c9180ad1e3d" text="@$Annotation$&#10;fun $Name$($Param$): $Type$ = $Expr$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Name" target="true" within="" contains="" />
+        <constraint name="Param" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Type" minCount="0" maxCount="0" within="" contains="" />
+        <constraint name="Expr" regexp="clionTimeoutRunBlocking.*" within="" contains="" />
+        <constraint name="Annotation" regexp="org.junit.jupiter.api.Test" reference="annotations" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="Do not use runCatching in CLion code" description="Prefer to use regular exception handling to make it explicit which exceptions are handled, rethrown and/or ignored.&#10;runCatching is also bad for coroutine code and cancellation handling." text="runCatching {&#10;    $statement$&#10;}" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="statement" minCount="0" maxCount="2147483647" within="" contains="" />
@@ -4324,6 +4332,9 @@
     <inspection_tool class="YAMLUnusedAnchor" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="YARDTagsInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ZeroLengthArrayInitialization" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="b6c22af8-66a9-31b8-8509-2c9180ad1e3d" enabled="true" level="WARNING" enabled_by_default="false">
+      <scope name="CLion Tests" level="WARNING" enabled="true" />
+    </inspection_tool>
     <inspection_tool class="dependsOnMethodTestNG" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="fbc8965d-fc40-3664-8936-d49c1751dad5" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="CLion" level="WARNING" enabled="true" />
