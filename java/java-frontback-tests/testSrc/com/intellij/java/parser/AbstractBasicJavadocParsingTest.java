@@ -246,6 +246,7 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
 
   public void testNestedTag0Markdown() { doTest(true); }
   public void testNestedTag1Markdown() { doTest(true); }
+  public void testNestedTag2Markdown() { doTest(true); }
   
   public void testEscapedCharsMarkdown() { doTest(true); }
 

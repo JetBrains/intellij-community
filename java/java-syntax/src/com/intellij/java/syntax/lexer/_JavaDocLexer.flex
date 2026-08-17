@@ -63,10 +63,9 @@ import kotlin.jvm.JvmStatic
 %state DOC_TAG_VALUE_IN_PAREN
 %state DOC_TAG_VALUE_IN_LTGT
 %state INLINE_TAG_NAME
-%state CODE_TAG
-%state CODE_TAG_SPACE
 %state SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON
-%state SNIPPET_TAG_BODY_DATA
+%state INLINE_TAG_LITERAL_SPACE
+%state INLINE_TAG_LITERAL_TEXT
 %state SNIPPET_ATTRIBUTE_VALUE_DOUBLE_QUOTES
 %state SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES
 
@@ -259,7 +258,7 @@ LEADING_TOKEN_MARKDOWN="///"
       }
 }
 
-<COMMENT_DATA_START, COMMENT_DATA, CODE_TAG> "{" {
+<COMMENT_DATA_START, COMMENT_DATA> "{" {
   if (checkAhead('@')) {
     yybegin(INLINE_TAG_NAME)
     return JavaDocSyntaxTokenType.DOC_INLINE_TAG_START
@@ -270,16 +269,16 @@ LEADING_TOKEN_MARKDOWN="///"
   }
 }
 
-<INLINE_TAG_NAME> "@"("code"|"literal") { yybegin(CODE_TAG_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME }
+<INLINE_TAG_NAME> "@"("code"|"literal") { yybegin(INLINE_TAG_LITERAL_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME }
 <INLINE_TAG_NAME> "@"("return"|"summary") { yybegin(DOC_TAG_VALUE); return JavaDocSyntaxTokenType.DOC_TAG_NAME }
 <INLINE_TAG_NAME> "@snippet" { yybegin(SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON); return JavaDocSyntaxTokenType.DOC_TAG_NAME }
 <INLINE_TAG_NAME> "@value" { inValueTag = true; yybegin(TAG_DOC_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME }
 <INLINE_TAG_NAME> "@"{INLINE_TAG_IDENTIFIER} { yybegin(TAG_DOC_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME }
-<COMMENT_DATA_START, COMMENT_DATA, TAG_DOC_SPACE, DOC_TAG_VALUE, CODE_TAG, CODE_TAG_SPACE, SNIPPET_ATTRIBUTE_VALUE_DOUBLE_QUOTES,
+<COMMENT_DATA_START, COMMENT_DATA, TAG_DOC_SPACE, DOC_TAG_VALUE, INLINE_TAG_LITERAL_SPACE, SNIPPET_ATTRIBUTE_VALUE_DOUBLE_QUOTES,
 SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON, DOC_TAG_VALUE_IN_LTGT, INLINE_TAG_NAME> "}" { inValueTag = false; yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_INLINE_TAG_END }
 
-<CODE_TAG, CODE_TAG_SPACE> {WHITE_DOC_SPACE_CHAR}+ { yybegin(CODE_TAG); return JavaDocSyntaxTokenType.DOC_SPACE }
-<CODE_TAG, CODE_TAG_SPACE> . { yybegin(CODE_TAG); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA }
+<INLINE_TAG_LITERAL_SPACE> {WHITE_DOC_SPACE_CHAR}+ { yybegin(INLINE_TAG_LITERAL_TEXT); return JavaDocSyntaxTokenType.DOC_SPACE }
+<INLINE_TAG_LITERAL_SPACE> . { yybegin(INLINE_TAG_LITERAL_TEXT); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA }
 
 <COMMENT_DATA_START, COMMENT_DATA, DOC_TAG_VALUE> . { yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA }
 <COMMENT_DATA_START> "@"("author"|"deprecated"|"hidden"|"index"|"implNote"|"return"|"serial") { yybegin(DOC_TAG_VALUE); return JavaDocSyntaxTokenType.DOC_TAG_NAME }
@@ -302,7 +301,7 @@ SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON, DOC
       = { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN }
       \" { yybegin(SNIPPET_ATTRIBUTE_VALUE_DOUBLE_QUOTES); return JavaDocSyntaxTokenType.DOC_TAG_VALUE_QUOTE }
       ' { yybegin(SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES); return JavaDocSyntaxTokenType.DOC_TAG_VALUE_QUOTE }
-      : { yybegin(SNIPPET_TAG_BODY_DATA); return JavaDocSyntaxTokenType.DOC_TAG_VALUE_COLON }
+      : { yybegin(INLINE_TAG_LITERAL_TEXT); return JavaDocSyntaxTokenType.DOC_TAG_VALUE_COLON }
 
       {LEADING_TOKEN_HTML} {
         if (myMarkdownMode) {
@@ -323,7 +322,7 @@ SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON, DOC
       [^\/\/\/] { yybegin(SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA }
 }
 
-<SNIPPET_TAG_BODY_DATA> {
+<INLINE_TAG_LITERAL_TEXT> {
       \} {
         if (mySnippetBracesLevel > 0) {
           mySnippetBracesLevel--
