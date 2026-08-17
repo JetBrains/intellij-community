@@ -1,12 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
+import com.intellij.ide.CopyProvider
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.contentModuleName
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.Messages
@@ -16,13 +23,15 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
 import java.awt.Dimension
+import java.awt.datatransfer.StringSelection
+import javax.swing.JTable
 import javax.swing.table.DefaultTableModel
 
 internal class CheckClassLoadingAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Duplicated {
   override fun actionPerformed(e: AnActionEvent) {
     val className = Messages.showInputDialog(e.project, "Enter class name:", "Check Class Loading", Messages.getQuestionIcon())
     if (className.isNullOrBlank()) return
-    
+
     val classLoadingMap = buildClassLoadingMap(className)
 
     val columns = arrayOf("Module", "Class Loader", "Loading Result")
@@ -50,10 +59,17 @@ internal class CheckClassLoadingAction : DumbAwareAction(), ActionRemoteBehavior
     for (row in data) {
       model.addRow(row)
     }
-    val table = object : JBTable(model) {
+    val table = object : JBTable(model), UiDataProvider {
+      private val copyProvider = TableCopyProvider(this)
+
       override fun isCellEditable(row: Int, column: Int): Boolean = false
+
+      override fun uiDataSnapshot(sink: DataSink) {
+        sink[PlatformDataKeys.COPY_PROVIDER] = copyProvider
+      }
     }
     TableSpeedSearch.installOn(table)
+    table.cellSelectionEnabled = true
     table.columnModel.getColumn(0).preferredWidth = 370
     table.columnModel.getColumn(1).preferredWidth = 90
     table.columnModel.getColumn(2).preferredWidth = 670
@@ -89,10 +105,11 @@ internal class CheckClassLoadingAction : DumbAwareAction(), ActionRemoteBehavior
     }
   }
 
-  private val PluginModuleDescriptor.fullId: String get() = buildString {
-    append(pluginId)
-    if (contentModuleName != null) append(":${contentModuleName}")
-  }
+  private val PluginModuleDescriptor.fullId: String
+    get() = buildString {
+      append(pluginId)
+      if (contentModuleName != null) append(":${contentModuleName}")
+    }
 
   private val Any.addressTag: String get() = "@" + System.identityHashCode(this).toString(16)
 
@@ -119,5 +136,23 @@ internal class CheckClassLoadingAction : DumbAwareAction(), ActionRemoteBehavior
       }
     }
     return loadingResults
+  }
+
+  private class TableCopyProvider(private val table: JTable) : CopyProvider {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+    override fun performCopy(dataContext: DataContext) {
+      val text = table.selectedRows.joinToString("\n") { row ->
+        table.selectedColumns.joinToString("\t") { column ->
+          table.getValueAt(row, column)?.toString().orEmpty()
+        }
+      }
+      CopyPasteManager.getInstance().setContents(StringSelection(text))
+    }
+
+    override fun isCopyEnabled(dataContext: DataContext): Boolean =
+      table.selectedRowCount > 0 && table.selectedColumnCount > 0
+
+    override fun isCopyVisible(dataContext: DataContext): Boolean = true
   }
 }
