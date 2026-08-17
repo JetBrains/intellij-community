@@ -142,7 +142,7 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     public @NotNull List<Path> collectSettingsFiles(@NotNull Project project, @NotNull GradleProjectSettings projectSettings) {
       Path projectPath = Path.of(projectSettings.getExternalProjectPath());
       List<Path> paths = new SmartList<>();
-      paths.addAll(GradlePropertiesFile.getPropertyPaths(project, projectPath));
+      paths.addAll(GradlePropertiesFile.getPropertyPathsInBuildRoot(project, projectPath));
       paths.add(GradleLocalPropertiesFile.getPropertyPath(projectPath));
       paths.add(GradleDaemonJvmPropertiesFile.getPropertyPath(projectPath));
       paths.add(GradleUserHomeUtil.gradleUserHomeDir(EelProviderProjectUtilKt.getEelDescriptor(project)).resolve("init.gradle"));

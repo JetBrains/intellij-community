@@ -18,7 +18,7 @@ fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> {
   val module = findModuleForPsiElement(place)
   val projectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module) ?: return emptySequence()
   val project = place.project
-  return GradlePropertiesFile.getPropertyPaths(project, Path.of(projectPath)).asSequence()
+  return GradlePropertiesFile.getPropertyPathsInBuildRoot(project, Path.of(projectPath)).asSequence()
     .mapNotNull { it.findVirtualFileOrDirectory() }
     .mapNotNull { it.findPsiFile(project) }
     .filterIsInstance<PropertiesFile>()
