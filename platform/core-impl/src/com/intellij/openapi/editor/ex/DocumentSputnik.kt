@@ -7,27 +7,27 @@ import org.jetbrains.annotations.Contract
 /**
  * Immutable state attached to [DocumentSnapshot] and rebuilt on every text change to stay consistent with the text.
  *
- * Aspects are identified by [com.intellij.openapi.util.Key] identity.
- * Keep keys in static fields: a garbage-collected key leaves its aspect unreachable and unremovable.
+ * Sputniks are identified by [com.intellij.openapi.util.Key] identity.
+ * Keep keys in static fields: a garbage-collected key leaves its sputnik unreachable and unremovable.
  *
- * @see DocumentSnapshot.aspect
- * @see DocumentSnapshot.withAspect
+ * @see DocumentSnapshot.sputnik
+ * @see DocumentSnapshot.withSputnik
  */
 @ApiStatus.Internal
-interface DocumentAspect {
+interface DocumentSputnik {
 
   /**
-   * Returns the state of this aspect consistent with [after], the text produced by applying [diff] to [before].
+   * Returns the state of this sputnik consistent with [after], the text produced by applying [diff] to [before].
    *
    * The method runs on the writer thread inside the document mutation producing the next [DocumentSnapshot],
    * so implementations must:
    * - be fast: this call is on the critical path of every document change;
    * - not throw: an exception aborts the text change halfway through;
    * - tolerate being called more than once per change: the mutation publishes its snapshot with a
-   *   compare-and-set, and a lost race re-applies the whole update, rebuilding the aspects again;
+   *   compare-and-set, and a lost race re-applies the whole update, rebuilding the sputniks again;
    * - compute the new state only from [before], [after] and [diff]: the snapshot holding the result
-   *   does not exist yet, so an aspect cannot observe the other aspects of the document;
-   * - return an aspect of the same type as `this`: the result stays associated with the same key.
+   *   does not exist yet, so a sputnik cannot observe the other sputniks of the document;
+   * - return a sputnik of the same type as `this`: the result stays associated with the same key.
    *
    * [DocumentTextPatch.originStartOffset]/[DocumentTextPatch.originEndOffset] expose the requested range before
    * prefix/suffix trimming, so an implementation can distinguish a narrowed change from an untrimmed one.
@@ -37,5 +37,5 @@ interface DocumentAspect {
     before: DocumentText,
     after: DocumentText,
     diff: DocumentTextPatch,
-  ): DocumentAspect
+  ): DocumentSputnik
 }

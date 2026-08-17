@@ -1,20 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
-import com.intellij.openapi.editor.ex.DocumentAspect
-import com.intellij.openapi.editor.ex.DocumentAspectList
+import com.intellij.openapi.editor.ex.DocumentSputnik
+import com.intellij.openapi.editor.ex.DocumentSputniks
 import com.intellij.openapi.util.Key
 import com.intellij.util.ArrayUtil
 
-internal class DocumentAspectListImpl private constructor(
+internal class DocumentSputniksImpl private constructor(
   // Invariant: keys are sorted Key.hashCode() indices; values is parallel to keys; neither array is mutated in place
   private val keys: IntArray,
-  private val values: Array<DocumentAspect>,
-) : DocumentAspectList {
+  private val values: Array<DocumentSputnik>,
+) : DocumentSputniks {
 
   private constructor() : this(intArrayOf(), emptyArray())
 
-  override fun get(key: Key<out DocumentAspect>): DocumentAspect? {
+  override fun get(key: Key<out DocumentSputnik>): DocumentSputnik? {
     val index = indexOf(key.hashCode())
     if (index < 0) {
       return null
@@ -22,24 +22,24 @@ internal class DocumentAspectListImpl private constructor(
     return values[index]
   }
 
-  override fun add(key: Key<out DocumentAspect>, aspect: DocumentAspect): DocumentAspectList {
+  override fun add(key: Key<out DocumentSputnik>, sputnik: DocumentSputnik): DocumentSputniks {
     val keyCode = key.hashCode()
     val index = indexOf(keyCode)
     if (index >= 0) {
-      if (values[index] === aspect) {
+      if (values[index] === sputnik) {
         return this
       }
       val newValues = values.copyOf()
-      newValues[index] = aspect
-      return DocumentAspectListImpl(keys, newValues)
+      newValues[index] = sputnik
+      return DocumentSputniksImpl(keys, newValues)
     }
     val insertionIndex = -index - 1
     val newKeys = ArrayUtil.insert(keys, insertionIndex, keyCode)
-    val newValues = ArrayUtil.insert(values, insertionIndex, aspect)
-    return DocumentAspectListImpl(newKeys, newValues)
+    val newValues = ArrayUtil.insert(values, insertionIndex, sputnik)
+    return DocumentSputniksImpl(newKeys, newValues)
   }
 
-  override fun remove(key: Key<out DocumentAspect>): DocumentAspectList {
+  override fun remove(key: Key<out DocumentSputnik>): DocumentSputniks {
     val index = indexOf(key.hashCode())
     if (index < 0) {
       return this
@@ -49,26 +49,26 @@ internal class DocumentAspectListImpl private constructor(
     }
     val newKeys = ArrayUtil.remove(keys, index)
     val newValues = ArrayUtil.remove(values, index)
-    return DocumentAspectListImpl(newKeys, newValues)
+    return DocumentSputniksImpl(newKeys, newValues)
   }
 
-  override fun transform(action: (DocumentAspect) -> DocumentAspect): DocumentAspectList {
-    var newValues: Array<DocumentAspect>? = null
+  override fun transform(action: (DocumentSputnik) -> DocumentSputnik): DocumentSputniks {
+    var newValues: Array<DocumentSputnik>? = null
     for (i in values.indices) {
-      val aspect = values[i]
-      val newAspect = action(aspect)
-      if (newAspect === aspect) {
+      val sputnik = values[i]
+      val newSputnik = action(sputnik)
+      if (newSputnik === sputnik) {
         continue
       }
       if (newValues == null) {
         newValues = values.copyOf()
       }
-      newValues[i] = newAspect
+      newValues[i] = newSputnik
     }
     if (newValues == null) {
       return this
     }
-    return DocumentAspectListImpl(keys, newValues)
+    return DocumentSputniksImpl(keys, newValues)
   }
 
   /**
@@ -89,6 +89,6 @@ internal class DocumentAspectListImpl private constructor(
   }
 
   companion object {
-    val EMPTY = DocumentAspectListImpl()
+    val EMPTY = DocumentSputniksImpl()
   }
 }
