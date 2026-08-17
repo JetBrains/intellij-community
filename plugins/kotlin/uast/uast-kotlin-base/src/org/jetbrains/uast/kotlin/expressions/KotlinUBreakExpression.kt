@@ -6,6 +6,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtBreakExpression
 import org.jetbrains.uast.UBreakExpression
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.ULabeledExpression
+import org.jetbrains.uast.ULoopExpression
 
 @ApiStatus.Internal
 class KotlinUBreakExpression(
@@ -14,4 +16,14 @@ class KotlinUBreakExpression(
 ) : KotlinAbstractUExpression(givenParent), UBreakExpression {
     override val label: String?
         get() = sourcePsi.getLabelName()
+
+    override val jumpTarget: UElement?
+        get() = generateSequence(uastParent) { it.uastParent }
+            .firstNotNullOfOrNull {
+                when (it) {
+                    is ULabeledExpression if it.label == label -> it.expression
+                    is ULoopExpression if label == null -> it
+                    else -> null
+                }
+            }
 }
