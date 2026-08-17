@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -32,6 +31,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiVersioningService;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -359,8 +359,7 @@ public final class HighlightManagerImpl extends HighlightManager {
     }
 
     private void requestHideHighlights(@NotNull DataContext dataContext) {
-      // IJPL-238922 Assignee Konstantin Nisht, Dmitry Batkovich Committed 23b8b153d746db03ed793ba0286074bf376a1b82
-      Editor editor = Elf.getElf().runReadAction(() -> CommonDataKeys.EDITOR.getData(dataContext));
+      Editor editor = PsiVersioningService.freezePsiVersion(() -> CommonDataKeys.EDITOR.getData(dataContext));
       if (editor != null) {
         hideHighlights(editor, HIDE_BY_ANY_KEY);
       }
