@@ -69,8 +69,14 @@ class FileNavigatorImpl : FileNavigator {
     return navigateInRequestedEditor(descriptor, requestedEditor, requestFocus) || navigateInAnyFileEditor(descriptor, requestFocus)
   }
 
+  /**
+   * @see editorSuppressionCoroutineContext
+   */
   private val contextEditor: Editor?
     get() {
+      if (isContextEditorSuppressed) {
+        return null
+      }
       @Suppress("DEPRECATION")
       val dataContext = DataManager.getInstance().dataContext
       val e = OpenFileDescriptor.NAVIGATE_IN_EDITOR.getData(dataContext) ?: return null

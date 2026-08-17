@@ -307,7 +307,7 @@ private fun fetchDataContext(project: Project): DataContext? {
  */
 @ApiStatus.Internal
 fun DataContext?.toNavigationOptions(options: NavigationOptions = NavigationOptions.requestFocus()): NavigationOptions {
-  if ((options as NavigationOptions.Impl).requestedEditor != null) {
+  if ((options as NavigationOptions.Impl).requestedEditor != RequestedEditor.Unspecified) {
     return options
   }
   val contextEditor = this?.getData(OpenFileDescriptor.NAVIGATE_IN_EDITOR)
@@ -315,6 +315,6 @@ fun DataContext?.toNavigationOptions(options: NavigationOptions = NavigationOpti
   return if (contextEditor == null) {
     options
   } else {
-    options.requestedEditor(contextEditor)
+    options.requestedEditor(RequestedEditor.Specific(contextEditor))
   }
 }

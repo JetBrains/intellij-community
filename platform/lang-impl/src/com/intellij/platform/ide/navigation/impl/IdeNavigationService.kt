@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileNavigatorImpl
 import com.intellij.openapi.fileEditor.NavigatableFileEditor
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.editorSuppressionCoroutineContext
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorComposite
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
@@ -39,6 +40,7 @@ import com.intellij.platform.ide.navigation.CaretPlacement
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.ide.navigation.NavigationTaskCoordinator
+import com.intellij.platform.ide.navigation.RequestedEditor
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.pom.Navigatable
@@ -125,10 +127,20 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
 
 private val LOG: Logger = Logger.getInstance("#com.intellij.platform.ide.navigation.impl")
 
+private suspend fun navigate(project: Project, requests: Collection<NavigationRequest>, options: NavigationOptions): Boolean {
+  options as NavigationOptions.Impl
+  return if (options.requestedEditor != RequestedEditor.None) {
+    doNavigate(project = project, requests = requests, options = options)
+  } // navigating by itself cannot be told which editor to use, so the ambient one is ignored
+  else withContext(editorSuppressionCoroutineContext()) {
+    doNavigate(project = project, requests = requests, options = options)
+  }
+}
+
 /**
  * Navigates to all sources from [requests], or navigates to first non-source request.
  */
-private suspend fun navigate(project: Project, requests: Collection<NavigationRequest>, options: NavigationOptions): Boolean {
+private suspend fun doNavigate(project: Project, requests: Collection<NavigationRequest>, options: NavigationOptions): Boolean {
   val maxSourceRequests = if (requests.size == 1) Int.MAX_VALUE else Registry.intValue("ide.source.file.navigation.limit", 100)
   var nonSourceRequest: Pair<NavigationRequest, NavigationOptions.Impl>? = null
 
@@ -341,7 +353,7 @@ private suspend fun navigateToSourceImpl(
       }
     }
     else {
-      val requestedEditor = options.requestedEditor
+      val requestedEditor = (options.requestedEditor as? RequestedEditor.Specific)?.editor
       if (requestedEditor != null) {
         val descriptor = OpenFileDescriptor(project, request.file, offset)
         val fileNavigator = serviceAsync<FileNavigator>()

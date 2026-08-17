@@ -15,14 +15,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.ide.navigation.RequestedEditor
 import com.intellij.platform.ide.navigation.impl.performNavigationHistoryAware
+import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.awaitPendingNavigation
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
-import com.intellij.util.OpenSourceUtil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
@@ -394,6 +395,44 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
       assertThat(result.get()).isTrue()
       assertThat(fileEditorManager.windowSplitCount).isEqualTo(2)
       assertThat(fileEditorManager.currentWindow!!.fileList).contains(target1, target2)
+    }
+  }
+
+  /**
+   * A navigatable which navigates by itself cannot be told which editor to use, so [RequestedEditor.None] reaches it
+   * as the suppression of the ambient one; this is what keeps such a navigation out of the editor a diff viewer publishes.
+   */
+  fun testRequestedEditorNoneReachesANavigatableWhichNavigatesByItself() {
+    withNavigationRequests(isAsync = true) {
+      myFixture.configureByText("${getTestName(false)}.txt", "source<caret>")
+      @Suppress("UsagesOfObsoleteApi")
+      val scope = (project as ComponentManagerEx).getCoroutineScope()
+      val suppressed = AtomicReference<Boolean>()
+      val navigatable = object : Navigatable {
+        override fun navigate(requestFocus: Boolean) {
+          suppressed.set(isContextEditorSuppressed)
+        }
+
+        override fun canNavigate(): Boolean = true
+
+        override fun canNavigateToSource(): Boolean = false
+      }
+
+      scope.launch {
+        project.serviceAsync<NavigationService>().navigate(
+          listOf(navigatable),
+          NavigationOptions.defaultOptions().requestedEditor(RequestedEditor.None),
+        )
+      }
+      waitUntil("Navigation with no requested editor did not reach the navigatable") { suppressed.get() != null }
+      assertThat(suppressed.get()).isTrue()
+
+      suppressed.set(null)
+      scope.launch {
+        project.serviceAsync<NavigationService>().navigate(listOf(navigatable), NavigationOptions.defaultOptions())
+      }
+      waitUntil("Navigation did not reach the navigatable") { suppressed.get() != null }
+      assertThat(suppressed.get()).isFalse()
     }
   }
 
