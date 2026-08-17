@@ -1,12 +1,12 @@
 from collections.abc import Mapping
-from typing import Any, TypeAlias
+from typing import TypeAlias
 
 from yaml.emitter import Emitter
 from yaml.representer import BaseRepresenter, Representer, SafeRepresenter
 from yaml.resolver import BaseResolver, Resolver
 from yaml.serializer import Serializer
 
-from .emitter import _WriteStream
+from .emitter import _WriteStream, _YAMLObject
 
 # Ideally, there would be a way to limit these values to only +/- float("inf"),
 # but that's not possible at the moment (https://github.com/python/typing/issues/1160).
@@ -15,7 +15,7 @@ _Inf: TypeAlias = float
 class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseResolver):
     def __init__(
         self,
-        stream: _WriteStream[Any],
+        stream: _WriteStream[_YAMLObject],
         default_style: str | None = None,
         default_flow_style: bool | None = False,
         canonical: bool | None = None,
@@ -34,7 +34,7 @@ class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseResolver):
 class SafeDumper(Emitter, Serializer, SafeRepresenter, Resolver):
     def __init__(
         self,
-        stream: _WriteStream[Any],
+        stream: _WriteStream[_YAMLObject],
         default_style: str | None = None,
         default_flow_style: bool | None = False,
         canonical: bool | None = None,
@@ -53,7 +53,7 @@ class SafeDumper(Emitter, Serializer, SafeRepresenter, Resolver):
 class Dumper(Emitter, Serializer, Representer, Resolver):
     def __init__(
         self,
-        stream: _WriteStream[Any],
+        stream: _WriteStream[_YAMLObject],
         default_style: str | None = None,
         default_flow_style: bool | None = False,
         canonical: bool | None = None,

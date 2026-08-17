@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any, ClassVar
 
 from yaml.error import Mark
@@ -7,7 +8,7 @@ from yaml.error import Mark
 # Permissive Unions could also be useful here.
 class Node:
     tag: str
-    value: Any
+    value: Incomplete
     start_mark: Mark | Any
     end_mark: Mark | Any
     def __init__(self, tag: str, value, start_mark: Mark | None, end_mark: Mark | None) -> None: ...

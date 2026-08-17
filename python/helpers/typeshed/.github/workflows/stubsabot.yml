@@ -1,4 +1,4 @@
-name: Run stubsabot daily
+name: Stubsabot
 
 on:
   workflow_dispatch:

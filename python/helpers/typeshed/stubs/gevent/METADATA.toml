@@ -1,4 +1,4 @@
-version = "26.7.*"
+version = "26.8.*"
 upstream-repository = "https://github.com/gevent/gevent"
 dependencies = ["types-greenlet", "types-psutil>=7.2.0"]
 

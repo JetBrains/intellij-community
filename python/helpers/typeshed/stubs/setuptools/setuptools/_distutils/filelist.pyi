@@ -19,7 +19,7 @@ class FileList:
 
     @overload
     def include_pattern(
-        self, pattern: str, anchor: bool = True, prefix: str | None = None, is_regex: Literal[False] = False
+        self, pattern: str | None, anchor: bool = True, prefix: str | None = None, is_regex: Literal[False] = False
     ) -> bool: ...
     @overload
     def include_pattern(
@@ -30,7 +30,7 @@ class FileList:
 
     @overload
     def exclude_pattern(
-        self, pattern: str, anchor: bool = True, prefix: str | None = None, is_regex: Literal[False] = False
+        self, pattern: str | None, anchor: bool = True, prefix: str | None = None, is_regex: Literal[False] = False
     ) -> bool: ...
     @overload
     def exclude_pattern(

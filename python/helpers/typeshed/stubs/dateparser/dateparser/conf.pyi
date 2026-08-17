@@ -20,6 +20,7 @@ class Settings:
     RELATIVE_BASE: datetime.datetime
     STRICT_PARSING: bool
     REQUIRE_PARTS: list[Literal["day", "month", "year"]]
+    IGNORE_SURROUNDING_TEXT: bool
     SKIP_TOKENS: list[str]
     NORMALIZE: bool
     RETURN_TIME_AS_PERIOD: bool

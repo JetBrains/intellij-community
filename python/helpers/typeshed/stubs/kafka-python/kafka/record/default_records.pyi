@@ -3,6 +3,7 @@ from _typeshed import Incomplete
 from kafka.record.abc import ABCRecord, ABCRecordBatch, ABCRecordBatchBuilder
 
 class DefaultRecordBase:
+    __slots__ = ()
     HEADER_STRUCT: Incomplete
     ATTRIBUTES_OFFSET: Incomplete
     CRC_OFFSET: Incomplete
@@ -23,6 +24,7 @@ class DefaultRecordBase:
     MAX_INT: int
 
 class DefaultRecordBatch(DefaultRecordBase, ABCRecordBatch):
+    __slots__ = ("_buffer", "_header_data", "_pos", "_num_records", "_next_record_index", "_decompressed")
     def __init__(self, buffer) -> None: ...
     @property
     def base_offset(self): ...
@@ -73,6 +75,7 @@ class DefaultRecordBatch(DefaultRecordBase, ABCRecordBatch):
     def validate_crc(self): ...
 
 class DefaultRecord(ABCRecord):
+    __slots__ = ("_size_in_bytes", "_offset", "_timestamp", "_timestamp_type", "_key", "_value", "_headers")
     def __init__(self, size_in_bytes, offset, timestamp, timestamp_type, key, value, headers) -> None: ...
     @property
     def size_in_bytes(self): ...
@@ -93,6 +96,7 @@ class DefaultRecord(ABCRecord):
     def validate_crc(self): ...
 
 class ControlRecord(DefaultRecord):
+    __slots__ = ("_size_in_bytes", "_offset", "_timestamp", "_timestamp_type", "_key", "_value", "_headers", "_version", "_type")
     KEY_STRUCT: Incomplete
     def __init__(self, size_in_bytes, offset, timestamp, timestamp_type, key, value, headers) -> None: ...
     @property
@@ -105,6 +109,20 @@ class ControlRecord(DefaultRecord):
     def commit(self): ...
 
 class DefaultRecordBatchBuilder(DefaultRecordBase, ABCRecordBatchBuilder):
+    __slots__ = (
+        "_magic",
+        "_compression_type",
+        "_batch_size",
+        "_is_transactional",
+        "_producer_id",
+        "_producer_epoch",
+        "_base_sequence",
+        "_first_timestamp",
+        "_max_timestamp",
+        "_last_offset",
+        "_num_records",
+        "_buffer",
+    )
     MAX_RECORD_OVERHEAD: int
     def __init__(
         self, magic, compression_type, is_transactional, producer_id, producer_epoch, base_sequence, batch_size
@@ -114,6 +132,8 @@ class DefaultRecordBatchBuilder(DefaultRecordBase, ABCRecordBatchBuilder):
     def producer_id(self): ...
     @property
     def producer_epoch(self): ...
+    @property
+    def base_sequence(self): ...
     def append(  # type: ignore[override]
         self,
         offset,
@@ -144,6 +164,7 @@ class DefaultRecordBatchBuilder(DefaultRecordBase, ABCRecordBatchBuilder):
     def estimate_size_in_bytes(cls, key, value, headers): ...
 
 class DefaultRecordMetadata:
+    __slots__ = ("_size", "_timestamp", "_offset")
     def __init__(self, offset, size, timestamp) -> None: ...
     @property
     def offset(self): ...

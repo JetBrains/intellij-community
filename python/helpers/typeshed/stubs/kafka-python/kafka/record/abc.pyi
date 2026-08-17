@@ -1,6 +1,7 @@
 import abc
 
 class ABCRecord(metaclass=abc.ABCMeta):
+    __slots__ = ()
     @property
     @abc.abstractmethod
     def size_in_bytes(self): ...
@@ -29,6 +30,7 @@ class ABCRecord(metaclass=abc.ABCMeta):
     def headers(self): ...
 
 class ABCRecordBatchBuilder(metaclass=abc.ABCMeta):
+    __slots__ = ()
     @abc.abstractmethod
     def append(self, offset, timestamp, key, value, headers=None): ...
     @abc.abstractmethod
@@ -37,6 +39,7 @@ class ABCRecordBatchBuilder(metaclass=abc.ABCMeta):
     def build(self): ...
 
 class ABCRecordBatch(metaclass=abc.ABCMeta):
+    __slots__ = ()
     @abc.abstractmethod
     def __iter__(self): ...
     @property
@@ -50,6 +53,7 @@ class ABCRecordBatch(metaclass=abc.ABCMeta):
     def magic(self): ...
 
 class ABCRecords(metaclass=abc.ABCMeta):
+    __slots__ = ()
     @abc.abstractmethod
     def __init__(self, buffer): ...
     @abc.abstractmethod

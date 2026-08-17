@@ -13,8 +13,8 @@ class install(Command):
     exec_prefix: Incomplete
     home: str | None
     user: bool
-    install_base: Incomplete
-    install_platbase: Incomplete
+    install_base: str | None
+    install_platbase: str | None
     root: str | None
     install_purelib: str | None
     install_platlib: str | None

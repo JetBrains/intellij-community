@@ -1,3 +1,0 @@
-class DeleteConsumerGroups:
-    @classmethod
-    def add_subparser(cls, subparsers): ...

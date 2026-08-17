@@ -1,0 +1,13 @@
+from _typeshed import Incomplete
+
+from .abstract import Deserializer, Serializer
+
+class DeserializeWrapper(Deserializer):
+    fn: Incomplete
+    def __init__(self, fn) -> None: ...
+    def deserialize(self, topic: str, headers: list[tuple[str, bytes]], data): ...
+
+class SerializeWrapper(Serializer):
+    fn: Incomplete
+    def __init__(self, fn) -> None: ...
+    def serialize(self, topic: str, headers: list[tuple[str, bytes]], data): ...

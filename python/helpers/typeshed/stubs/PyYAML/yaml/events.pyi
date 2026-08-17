@@ -1,59 +1,59 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class Event:
-    start_mark: Any
-    end_mark: Any
+    start_mark: Incomplete
+    end_mark: Incomplete
     def __init__(self, start_mark=None, end_mark=None) -> None: ...
 
 class NodeEvent(Event):
-    anchor: Any
-    start_mark: Any
-    end_mark: Any
+    anchor: Incomplete
+    start_mark: Incomplete
+    end_mark: Incomplete
     def __init__(self, anchor, start_mark=None, end_mark=None) -> None: ...
 
 class CollectionStartEvent(NodeEvent):
-    anchor: Any
-    tag: Any
-    implicit: Any
-    start_mark: Any
-    end_mark: Any
-    flow_style: Any
+    anchor: Incomplete
+    tag: Incomplete
+    implicit: Incomplete
+    start_mark: Incomplete
+    end_mark: Incomplete
+    flow_style: Incomplete
     def __init__(self, anchor, tag, implicit, start_mark=None, end_mark=None, flow_style=None) -> None: ...
 
 class CollectionEndEvent(Event): ...
 
 class StreamStartEvent(Event):
-    start_mark: Any
-    end_mark: Any
-    encoding: Any
+    start_mark: Incomplete
+    end_mark: Incomplete
+    encoding: Incomplete
     def __init__(self, start_mark=None, end_mark=None, encoding=None) -> None: ...
 
 class StreamEndEvent(Event): ...
 
 class DocumentStartEvent(Event):
-    start_mark: Any
-    end_mark: Any
-    explicit: Any
-    version: Any
-    tags: Any
+    start_mark: Incomplete
+    end_mark: Incomplete
+    explicit: Incomplete
+    version: Incomplete
+    tags: Incomplete
     def __init__(self, start_mark=None, end_mark=None, explicit=None, version=None, tags=None) -> None: ...
 
 class DocumentEndEvent(Event):
-    start_mark: Any
-    end_mark: Any
-    explicit: Any
+    start_mark: Incomplete
+    end_mark: Incomplete
+    explicit: Incomplete
     def __init__(self, start_mark=None, end_mark=None, explicit=None) -> None: ...
 
 class AliasEvent(NodeEvent): ...
 
 class ScalarEvent(NodeEvent):
-    anchor: Any
-    tag: Any
-    implicit: Any
-    value: Any
-    start_mark: Any
-    end_mark: Any
-    style: Any
+    anchor: Incomplete
+    tag: Incomplete
+    implicit: Incomplete
+    value: Incomplete
+    start_mark: Incomplete
+    end_mark: Incomplete
+    style: Incomplete
     def __init__(self, anchor, tag, implicit, value, start_mark=None, end_mark=None, style=None) -> None: ...
 
 class SequenceStartEvent(CollectionStartEvent): ...

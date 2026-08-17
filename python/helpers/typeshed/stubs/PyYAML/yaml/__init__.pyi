@@ -1,6 +1,7 @@
+from _typeshed import Incomplete
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from re import Pattern
-from typing import Any, TypeVar, overload
+from typing import Final, TypeVar, overload
 
 from . import resolver as resolver  # Help mypy a bit; this is implied by loader and dumper
 from .constructor import BaseConstructor
@@ -8,7 +9,7 @@ from .cyaml import *
 from .cyaml import _CLoader
 from .dumper import *
 from .dumper import _Inf
-from .emitter import _WriteStream
+from .emitter import _WriteStream, _YAMLObject
 from .error import *
 from .events import *
 from .loader import *
@@ -23,25 +24,25 @@ _T = TypeVar("_T")
 _Constructor = TypeVar("_Constructor", bound=BaseConstructor)
 _Representer = TypeVar("_Representer", bound=BaseRepresenter)
 
-__with_libyaml__: bool
-__version__: str
+__with_libyaml__: Final[bool]
+__version__: Final[str]
 
 def warnings(settings=None): ...
 def scan(stream, Loader: type[_Loader | _CLoader] = ...): ...
 def parse(stream, Loader: type[_Loader | _CLoader] = ...): ...
 def compose(stream, Loader: type[_Loader | _CLoader] = ...): ...
 def compose_all(stream, Loader: type[_Loader | _CLoader] = ...): ...
-def load(stream: _ReadStream, Loader: type[_Loader | _CLoader]) -> Any: ...
-def load_all(stream: _ReadStream, Loader: type[_Loader | _CLoader]) -> Iterator[Any]: ...
-def full_load(stream: _ReadStream) -> Any: ...
-def full_load_all(stream: _ReadStream) -> Iterator[Any]: ...
-def safe_load(stream: _ReadStream) -> Any: ...
-def safe_load_all(stream: _ReadStream) -> Iterator[Any]: ...
-def unsafe_load(stream: _ReadStream) -> Any: ...
-def unsafe_load_all(stream: _ReadStream) -> Iterator[Any]: ...
+def load(stream: _ReadStream, Loader: type[_Loader | _CLoader]) -> _YAMLObject: ...
+def load_all(stream: _ReadStream, Loader: type[_Loader | _CLoader]) -> Iterator[_YAMLObject]: ...
+def full_load(stream: _ReadStream) -> _YAMLObject: ...
+def full_load_all(stream: _ReadStream) -> Iterator[_YAMLObject]: ...
+def safe_load(stream: _ReadStream) -> _YAMLObject: ...
+def safe_load_all(stream: _ReadStream) -> Iterator[_YAMLObject]: ...
+def unsafe_load(stream: _ReadStream) -> _YAMLObject: ...
+def unsafe_load_all(stream: _ReadStream) -> Iterator[_YAMLObject]: ...
 def emit(
     events,
-    stream: _WriteStream[Any] | None = None,
+    stream: _WriteStream[_YAMLObject] | None = None,
     Dumper=...,
     canonical: bool | None = None,
     indent: int | None = None,
@@ -53,7 +54,7 @@ def emit(
 @overload
 def serialize_all(
     nodes,
-    stream: _WriteStream[Any],
+    stream: _WriteStream[_YAMLObject],
     Dumper=...,
     *,
     canonical: bool | None = None,
@@ -105,7 +106,7 @@ def serialize_all(
 @overload
 def serialize(
     node,
-    stream: _WriteStream[Any],
+    stream: _WriteStream[_YAMLObject],
     Dumper=...,
     *,
     canonical: bool | None = None,
@@ -156,8 +157,8 @@ def serialize(
 
 @overload
 def dump_all(
-    documents: Iterable[Any],
-    stream: _WriteStream[Any],
+    documents: Iterable[_YAMLObject],
+    stream: _WriteStream[_YAMLObject],
     Dumper=...,
     *,
     default_style: str | None = None,
@@ -176,7 +177,7 @@ def dump_all(
 ) -> None: ...
 @overload
 def dump_all(
-    documents: Iterable[Any],
+    documents: Iterable[_YAMLObject],
     stream: None = None,
     Dumper=...,
     *,
@@ -196,7 +197,7 @@ def dump_all(
 ) -> str: ...
 @overload
 def dump_all(
-    documents: Iterable[Any],
+    documents: Iterable[_YAMLObject],
     stream: None = None,
     Dumper=...,
     *,
@@ -217,8 +218,8 @@ def dump_all(
 
 @overload
 def dump(
-    data: Any,
-    stream: _WriteStream[Any],
+    data: _YAMLObject,
+    stream: _WriteStream[_YAMLObject],
     Dumper=...,
     *,
     default_style: str | None = None,
@@ -237,7 +238,7 @@ def dump(
 ) -> None: ...
 @overload
 def dump(
-    data: Any,
+    data: _YAMLObject,
     stream: None = None,
     Dumper=...,
     *,
@@ -257,7 +258,7 @@ def dump(
 ) -> str: ...
 @overload
 def dump(
-    data: Any,
+    data: _YAMLObject,
     stream: None = None,
     Dumper=...,
     *,
@@ -278,8 +279,8 @@ def dump(
 
 @overload
 def safe_dump_all(
-    documents: Iterable[Any],
-    stream: _WriteStream[Any],
+    documents: Iterable[_YAMLObject],
+    stream: _WriteStream[_YAMLObject],
     *,
     default_style: str | None = None,
     default_flow_style: bool | None = False,
@@ -297,7 +298,7 @@ def safe_dump_all(
 ) -> None: ...
 @overload
 def safe_dump_all(
-    documents: Iterable[Any],
+    documents: Iterable[_YAMLObject],
     stream: None = None,
     *,
     default_style: str | None = None,
@@ -316,7 +317,7 @@ def safe_dump_all(
 ) -> str: ...
 @overload
 def safe_dump_all(
-    documents: Iterable[Any],
+    documents: Iterable[_YAMLObject],
     stream: None = None,
     *,
     default_style: str | None = None,
@@ -336,8 +337,8 @@ def safe_dump_all(
 
 @overload
 def safe_dump(
-    data: Any,
-    stream: _WriteStream[Any],
+    data: _YAMLObject,
+    stream: _WriteStream[_YAMLObject],
     *,
     default_style: str | None = None,
     default_flow_style: bool | None = False,
@@ -355,7 +356,7 @@ def safe_dump(
 ) -> None: ...
 @overload
 def safe_dump(
-    data: Any,
+    data: _YAMLObject,
     stream: None = None,
     *,
     default_style: str | None = None,
@@ -374,7 +375,7 @@ def safe_dump(
 ) -> str: ...
 @overload
 def safe_dump(
-    data: Any,
+    data: _YAMLObject,
     stream: None = None,
     *,
     default_style: str | None = None,
@@ -395,32 +396,32 @@ def safe_dump(
 def add_implicit_resolver(
     tag: str,
     regexp: Pattern[str],
-    first: Iterable[Any] | None = None,
+    first: Iterable[Incomplete] | None = None,
     Loader: type[BaseResolver] | None = None,
     Dumper: type[BaseResolver] = ...,
 ) -> None: ...
 def add_path_resolver(
     tag: str,
-    path: Iterable[Any],
-    kind: type[Any] | None = None,
+    path: Iterable[Incomplete],
+    kind: type | None = None,
     Loader: type[BaseResolver] | None = None,
     Dumper: type[BaseResolver] = ...,
 ) -> None: ...
 
 @overload
 def add_constructor(
-    tag: str, constructor: Callable[[Loader | FullLoader | UnsafeLoader, Node], Any], Loader: None = None
+    tag: str, constructor: Callable[[Loader | FullLoader | UnsafeLoader, Node], Incomplete], Loader: None = None
 ) -> None: ...
 @overload
-def add_constructor(tag: str, constructor: Callable[[_Constructor, Node], Any], Loader: type[_Constructor]) -> None: ...
+def add_constructor(tag: str, constructor: Callable[[_Constructor, Node], Incomplete], Loader: type[_Constructor]) -> None: ...
 
 @overload
 def add_multi_constructor(
-    tag_prefix: str, multi_constructor: Callable[[Loader | FullLoader | UnsafeLoader, str, Node], Any], Loader: None = None
+    tag_prefix: str, multi_constructor: Callable[[Loader | FullLoader | UnsafeLoader, str, Node], Incomplete], Loader: None = None
 ) -> None: ...
 @overload
 def add_multi_constructor(
-    tag_prefix: str, multi_constructor: Callable[[_Constructor, str, Node], Any], Loader: type[_Constructor]
+    tag_prefix: str, multi_constructor: Callable[[_Constructor, str, Node], Incomplete], Loader: type[_Constructor]
 ) -> None: ...
 
 @overload
@@ -440,10 +441,10 @@ class YAMLObjectMetaclass(type):
 
 class YAMLObject(metaclass=YAMLObjectMetaclass):
     __slots__ = ()
-    yaml_loader: Any
-    yaml_dumper: Any
-    yaml_tag: Any
-    yaml_flow_style: Any
+    yaml_loader: Incomplete
+    yaml_dumper: Incomplete
+    yaml_tag: Incomplete
+    yaml_flow_style: Incomplete
     @classmethod
     def from_yaml(cls, loader, node): ...
     @classmethod

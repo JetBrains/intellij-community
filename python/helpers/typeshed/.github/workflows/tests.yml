@@ -1,4 +1,4 @@
-name: Test
+name: Type check, regression tests
 
 on:
   workflow_dispatch:
@@ -38,7 +38,7 @@ jobs:
           ./tests/check_typeshed_structure.py
 
   mypy:
-    name: "mypy: Check stubs"
+    name: "mypy: type check"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -66,7 +66,7 @@ jobs:
         run: python ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=${{ matrix.python-version }}
 
   regression-tests:
-    name: "mypy: Run test cases"
+    name: "mypy: regression tests"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -83,7 +83,7 @@ jobs:
           --verbosity=QUIET
 
   ty:
-    name: "ty: Check stubs"
+    name: "ty: type check"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -116,7 +116,7 @@ jobs:
         run: python tests/ty_test.py --platform=${{ matrix.platform }} --python-version=${{ matrix.python-version }} --python=.venv
 
   pyrefly:
-    name: "pyrefly: Check stubs"
+    name: "pyrefly: type check"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -149,7 +149,7 @@ jobs:
         run: python tests/pyrefly_test.py --platform=${{ matrix.platform }} --python-version=${{ matrix.python-version }} --python=.venv/bin/python
 
   pyright:
-    name: "pyright: Run test cases"
+    name: "pyright: regression tests"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -214,7 +214,7 @@ jobs:
           project: ./pyrightconfig.testcases.json
 
   stub-uploader:
-    name: stub_uploader tests
+    name: "stub uploader: tests"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout typeshed
