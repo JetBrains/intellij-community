@@ -260,6 +260,19 @@ internal class TerminalMouseEventsHandlingTest {
           assertThat(consumed).isFalse()
           assertThat(fixture.reportedEvents).isEmpty()
         }
+
+      @Test
+      fun `a wheel delta too small to cross a row is not consumed when nothing would handle it`(): Unit =
+        doTest(simulateMouseScrollWithArrowKeysInAlternateScreen = false) { fixture ->
+          fixture.setText("plain text")
+
+          // Zero rotation deterministically produces a zero-pixel delta under either platform's formula,
+          // regardless of the real font's line height - i.e., it never crosses a row.
+          val consumed = fixture.wheelUnitScroll(scrollAmount = 1, wheelRotation = 0)
+
+          assertThat(consumed).isFalse()
+          assertThat(fixture.reportedEvents).isEmpty()
+        }
     }
 
     @Nested
@@ -338,37 +351,60 @@ internal class TerminalMouseEventsHandlingTest {
           assertThat(fixture.receiveSentBytes()).isEqualTo(repeatedReportBytes(rows))
         }
 
+      @Test
+      fun `a wheel event with delta too small to cross a row is still consumed, without sending anything`(): Unit =
+        doTest(isMouseReportingEnabled = true) { fixture ->
+          fixture.setText("plain text")
+          val rows = fixture.alternateBufferEditor.calculateTerminalSize()!!.rows
+
+          // Zero rotation never crosses a row on either platform's formula.
+          val consumed = fixture.wheelUnitScroll(scrollAmount = 1, wheelRotation = 0)
+          fixture.wheelBlockScroll(direction = 1) // sentinel: definitely sends something
+
+          assertThat(consumed).isTrue()
+          // Check that sentinel block scroll report is sent - there is nothing else.
+          assertThat(fixture.receiveSentBytes()).isEqualTo(repeatedReportBytes(rows))
+        }
+
       // Touch-phase scroll
 
       @Test
-      fun `a burst of small precise trackpad deltas is reported far fewer times than events dispatched`(): Unit =
+      fun `a burst of small precise trackpad deltas sends far fewer scroll reports than events dispatched`(): Unit =
         doTest(isMouseReportingEnabled = true) { fixture ->
           fixture.setText("plain text")
           val rowHeight = fixture.alternateBufferEditor.lineHeight
+          val rows = fixture.alternateBufferEditor.calculateTerminalSize()!!.rows
 
-          // Many small per-event deltas (well under one row each) simulate a fast trackpad fling; despite
-          // firing a callback per frame, the number of actual scroll reports must track total physical
-          // distance scrolled, not the number of callbacks - this is the core of the fix for IJPL-251729.
+          // Many small per-event deltas (well under one row each) simulate a fast trackpad fling; the number
+          // of actual scroll reports must track total physical distance, not the number of callbacks.
           val eventCount = 20
           val perEventPixels = 5.0
           repeat(eventCount) { fixture.wheelTouchUpdate(pixels = perEventPixels) }
+          fixture.wheelBlockScroll(direction = 1) // sentinel: definitely sends something
 
           val expectedLines = (eventCount * perEventPixels / rowHeight).toInt()
           assertThat(expectedLines).isLessThan(eventCount) // sanity: the scenario must actually exercise smoothing
-          assertThat(fixture.reportedEvents.count { it == MouseEventKind.WHEEL }).isEqualTo(expectedLines)
+          repeat(expectedLines) {
+            assertThat(fixture.receiveSentBytes()).isEqualTo(repeatedReportBytes(1))
+          }
+          // Check that sentinel block scroll report is sent - there is nothing else.
+          assertThat(fixture.receiveSentBytes()).isEqualTo(repeatedReportBytes(rows))
         }
 
       @Test
-      fun `touch begin and end markers carry no delta of their own, so they are not consumed or reported`(): Unit =
+      fun `touch begin and end markers carry no delta of their own, so nothing is sent for them, though the gesture is still consumed`(): Unit =
         doTest(isMouseReportingEnabled = true) { fixture ->
           fixture.setText("plain text")
+          val rows = fixture.alternateBufferEditor.calculateTerminalSize()!!.rows
 
           val beginConsumed = fixture.wheelTouchPhase(scrollType = TOUCH_BEGIN, pixels = 0.0)
           val endConsumed = fixture.wheelTouchPhase(scrollType = TOUCH_END, pixels = 0.0)
+          fixture.wheelBlockScroll(direction = 1) // sentinel: definitely sends something
 
-          assertThat(beginConsumed).isFalse()
-          assertThat(endConsumed).isFalse()
-          assertThat(fixture.reportedEvents).isEmpty()
+          assertThat(beginConsumed).isTrue()
+          assertThat(endConsumed).isTrue()
+          // Check that sentinel block scroll report is sent - there is nothing else.
+          assertThat(fixture.receiveSentBytes()).isEqualTo(repeatedReportBytes(rows))
         }
 
       @Test
