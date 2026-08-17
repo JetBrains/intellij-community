@@ -30,6 +30,12 @@ private const val CI_REPORTING_ROOT_LENGTH = 92
 /** What the async profiler writes into `snapshots`: `<build>-<activity>-<timestamp>.jfr`. */
 private const val PROFILER_SNAPSHOT_NAME = "RM-263.SNAPSHOT-completion-20260816193137.jfr"
 
+/** The length of `C:\BuildAgent\temp\buildTmp\test<random>\ide-tests\tests\PS-LOCAL\kunstmaan_without_composer` on a Windows CI agent. */
+private const val CI_PHPSTORM_REPORTING_ROOT_LENGTH = 97
+
+/** What the async profiler the starter injects writes below `snapshots`: `<type>-<test>-<time>` in a directory of its own. */
+private const val ASYNC_SNAPSHOT_NAME = "async/async-kunstmaan_without_composer-200251.jfr"
+
 /** The length of `Z:\BuildAgent\…\ide-tests\tests\IU-LOCAL\delegate-run-a-gradle-task-to-idea-test-f919` on a Windows CI agent. */
 private const val CI_GRADLE_REPORTING_ROOT_LENGTH = 115
 
@@ -551,6 +557,26 @@ class IDEReportingDataTest {
 
     val snapshot = reportingRoot.relativize(reportingData.snapshotsDir).resolve(PROFILER_SNAPSHOT_NAME)
     CI_REPORTING_ROOT_LENGTH + 1 + snapshot.toString().length shouldBeLessThan ReportingPathUtils.PATH_LENGTH_LIMIT
+  }
+
+  /**
+   * `StartupTestRunnerPsTest.measureStartupTimeWithKunstmaanWithoutComposer` came to 269 characters:
+   * `…\PS-LOCAL\kunstmaan_without_composer\startup-test-runner-ps-test\1_measure-startup-time-with-kunstmaan-witho-ac8624\measureStartup\
+   * snapshots\async-snapshots\async-kunstmaan_without_composer-20260817200251.jfr`. The launch directory is what tells this launch from the
+   * other launches of the method, so what gave way was the second `snapshots` in the path and the date inside one run's own directory.
+   */
+  @Test
+  fun `the async snapshot of a startup launch fits within the limit`() {
+    val reportingData = reportingDataOf(
+      testName = "kunstmaan_without_composer",
+      testMethod = testMethodIdentity("StartupTestRunnerPsTest/measureStartupTimeWithKunstmaanWithoutComposer", index = 1),
+      requestedLaunchName = "measureStartup",
+    )
+
+    // the method says every word of the launch name, but it says as much about the other launches, so the name stays
+    reportingData.launchDirSegments().last() shouldBe "measureStartup"
+    val snapshot = reportingRoot.relativize(reportingData.snapshotsDir).resolve(ASYNC_SNAPSHOT_NAME)
+    CI_PHPSTORM_REPORTING_ROOT_LENGTH + 1 + snapshot.toString().length shouldBeLessThan ReportingPathUtils.PATH_LENGTH_LIMIT
   }
 
   /** The thread dumps go deeper than the reporting dirs, so the launch has to leave room for them as well as for its own logs. */
