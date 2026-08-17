@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
 
-private const val TIMESTAMP = "20260816193137"
+private const val TIMESTAMP = "193137"
 
 /** How much of a file name survives the directory it goes into. Named after the profiler snapshots that run into the limit first. */
 class PathLengthTest {
@@ -47,16 +47,16 @@ class PathLengthTest {
 
   /**
    * `RustRoverLocalInspectionWithStmtTypingTest` reported into a 228-character directory, and
-   * `RR-263.SNAPSHOT-local_inspections_open_file-20260817045919.jfr` on top of it came to 291. async-profiler answered with
+   * `RR-263.SNAPSHOT-local_inspections_open_file-045919.jfr` on top of it came to 291. async-profiler answered with
    * `Could not open Flight Recorder output file`, so the run kept no profile at all.
    */
   @Test
   fun aSnapshotOfADeeplyNestedRustRoverLaunchFitsWithinTheLimit() {
     val dir = dirOfLength(228)
 
-    val path = pathThatFits(dir, "20260817045919.jfr", "RR-263.SNAPSHOT", "local_inspections_open_file")
+    val path = pathThatFits(dir, "045919.jfr", "RR-263.SNAPSHOT", "local_inspections_open_file")
 
-    assertEquals(pathIn(dir, "local_inspe-20260817045919.jfr"), path)
+    assertEquals(pathIn(dir, "local_inspections_o-045919.jfr"), path)
     assertTrue(path.length < LIMIT, path)
   }
 
