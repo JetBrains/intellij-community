@@ -226,7 +226,7 @@ class GotItTooltip @ApiStatus.Internal constructor(@NonNls val id: String,
    * Add optional icon on the left of the header or description.
    * Is not compatible with step number.
    *
-   * @throws IllegalStateException if step number already specified using [withStepNumber].
+   * @throws IllegalStateException if step number already specified using [withStepText].
    */
   fun withIcon(icon: Icon): GotItTooltip {
     gotItBuilder.withIcon(icon)
@@ -234,17 +234,12 @@ class GotItTooltip @ApiStatus.Internal constructor(@NonNls val id: String,
   }
 
   /**
-   * Add optional step number on the left of the header or description.
-   * The step will be rendered with one zero predecessor if step number is lower than 10.
-   * For example: 01, 02, 10, 12.
-   * The step number should be in the range [1, 99].
-   * Is not compatible with icon.
+   * Add an optional step text on the left of the header or description.
    *
    * @throws IllegalStateException if icon already specified using [withIcon].
-   * @throws IllegalArgumentException if [step] is not in a range [1, 99].
    */
-  private fun withStepNumber(step: Int): GotItTooltip {
-    gotItBuilder.withStepNumber(step)
+  fun withStepText(step: String): GotItTooltip {
+    gotItBuilder.withStepText(step)
     return this
   }
 

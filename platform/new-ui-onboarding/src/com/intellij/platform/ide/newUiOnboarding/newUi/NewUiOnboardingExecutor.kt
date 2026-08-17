@@ -65,7 +65,7 @@ internal class NewUiOnboardingExecutor(private val project: Project,
 
     val showInCenter = gotItData.position == null
     val builder = gotItData.builder
-    builder.withStepNumber("${ind + 1}/${steps.size}")
+    builder.withStepText("${ind + 1}/${steps.size}")
       .onEscapePressed {
         finishOnboarding()
         NewUiOnboardingStatistics.logOnboardingStopped(project, stepId, OnboardingStopReason.ESCAPE_PRESSED,

@@ -4849,6 +4849,7 @@ f:com.intellij.ui.GotItTooltip
 - f:withPosition(com.intellij.openapi.ui.popup.Balloon$Position):com.intellij.ui.GotItTooltip
 - f:withShortcut(com.intellij.openapi.actionSystem.Shortcut):com.intellij.ui.GotItTooltip
 - f:withShowCount(I):com.intellij.ui.GotItTooltip
+- f:withStepText(java.lang.String):com.intellij.ui.GotItTooltip
 - f:withTimeout(I):com.intellij.ui.GotItTooltip
 a:com.intellij.ui.GroupedComboBoxRenderer
 - com.intellij.ui.GroupedElementsRenderer
