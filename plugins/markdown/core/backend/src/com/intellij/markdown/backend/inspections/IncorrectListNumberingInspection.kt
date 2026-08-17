@@ -24,7 +24,7 @@ import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings.ListNu
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * In sequential numbering mode, items in ordered lists are expected to have straight numeration starting from 0 or 1.
+ * Items in ordered lists are expected to use either sequential or constant numbering.
  */
 @ApiStatus.Internal
 class IncorrectListNumberingInspection: LocalInspectionTool() {
@@ -43,11 +43,14 @@ class IncorrectListNumberingInspection: LocalInspectionTool() {
           return
         }
         val listNumberingIsSequential = settings.state.listNumberingType == ListNumberingType.SEQUENTIAL
-        val startNumber = when {
-          !listNumberingIsSequential -> 1
+        val sequentialStartNumber = when {
           list.items.firstOrNull()?.obtainMarkerNumber() == 0 -> 0
           else -> list.continuationStartNumber() ?: 1
         }
+        if (list.hasCorrectNumbering(sequentialStartNumber)) {
+          return
+        }
+        val startNumber = if (listNumberingIsSequential) sequentialStartNumber else 1
         val quickFix by lazy { ListNumberingFix(list, listNumberingIsSequential) }
         for ((index, item) in list.items.withIndex()) {
           val actualNumber = item.obtainMarkerNumber() ?: continue
@@ -64,6 +67,13 @@ class IncorrectListNumberingInspection: LocalInspectionTool() {
         }
       }
     }
+  }
+
+  private fun MarkdownList.hasCorrectNumbering(sequentialStartNumber: Int): Boolean {
+    val firstNumber = items.firstOrNull()?.obtainMarkerNumber()
+    val hasConstantNumbering = items.size > 1 && firstNumber != null && items.all { it.obtainMarkerNumber() == firstNumber }
+    val hasSequentialNumbering = items.withIndex().all { (index, item) -> item.obtainMarkerNumber() == sequentialStartNumber + index }
+    return hasConstantNumbering || hasSequentialNumbering
   }
 
   private fun MarkdownList.continuationStartNumber(): Int? {
