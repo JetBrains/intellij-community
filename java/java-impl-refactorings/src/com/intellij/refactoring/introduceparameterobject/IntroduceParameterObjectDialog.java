@@ -64,23 +64,19 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 public class IntroduceParameterObjectDialog
   extends AbstractIntroduceParameterObjectDialog<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor, VariableData> {
 
-
   private final JRadioButton useExistingClassButton;
   private final JPanel myUseExistingPanel;
-
   private final JRadioButton createNewClassButton;
   private final JTextField classNameField;
-
   private final JPanel myCreateNewClassPanel;
-
   private final JRadioButton myCreateInnerClassRadioButton;
   private final JTextField myInnerClassNameTextField;
   private final JPanel myInnerClassPanel;
-
   private final JPanel myWholePanel;
   private final ReferenceEditorComboWithBrowseButton packageTextField;
   private final ReferenceEditorComboWithBrowseButton existingClassField;
@@ -90,8 +86,11 @@ public class IntroduceParameterObjectDialog
   private static final String RECENTS_KEY = "IntroduceParameterObject.RECENTS_KEY";
   private static final String EXISTING_KEY = "IntroduceParameterObject.EXISTING_KEY";
 
-  public IntroduceParameterObjectDialog(PsiMethod sourceMethod) {
+  private final Set<PsiParameter> mySelectedParameters;
+
+  public IntroduceParameterObjectDialog(PsiMethod sourceMethod, Set<PsiParameter> selectedParameters) {
     super(sourceMethod);
+    mySelectedParameters = selectedParameters;
     {
       final PsiFile file = mySourceMethod.getContainingFile();
       packageTextField =
@@ -407,13 +406,16 @@ public class IntroduceParameterObjectDialog
     final PsiParameter[] parameters = parameterList.getParameters();
     VariableData[] parameterInfo = new VariableData[parameters.length];
     for (int i = 0; i < parameterInfo.length; i++) {
-      parameterInfo[i] = new VariableData(parameters[i]);
-      parameterInfo[i].name = parameters[i].getName();
-      parameterInfo[i].passAsParameter = true;
+      PsiParameter parameter = parameters[i];
+      parameterInfo[i] = new VariableData(parameter);
+      parameterInfo[i].name = parameter.getName();
+      parameterInfo[i].passAsParameter = mySelectedParameters.isEmpty() || mySelectedParameters.contains(parameter);
     }
     return new ParameterTablePanel(myProject, parameterInfo) {
       @Override
-      protected void updateSignature() { }
+      protected void updateSignature() {
+        validateButtons();
+      }
 
       @Override
       protected void doEnterAction() { }
@@ -464,8 +466,7 @@ public class IntroduceParameterObjectDialog
     }
     final ParameterInfoImpl[] infos = parameters.toArray(new ParameterInfoImpl[0]);
     return new JavaIntroduceParameterObjectClassDescriptor(className, packageName, moveDestination, useExistingClass, createInnerClass,
-                                                           newVisibility, infos, mySourceMethod,
-                                                           myGenerateAccessorsCheckBox.isSelected());
+                                                           newVisibility, infos, mySourceMethod, myGenerateAccessorsCheckBox.isSelected());
   }
 
   @Override
@@ -491,7 +492,6 @@ public class IntroduceParameterObjectDialog
           JavaRefactoringBundle.message("introduce.parameter.object.error.invalid.parameter.class.name", className));
       }
       final String packageName = getPackageName();
-
       if (packageName.isEmpty() || !nameHelper.isQualifiedName(packageName)) {
         throw new ConfigurationException(
           JavaRefactoringBundle.message("introduce.parameter.object.error.invalid.parameter.class.package.name", packageName));

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
@@ -7,12 +7,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -20,8 +20,13 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class IntroduceParameterObjectHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   @Override
@@ -36,16 +41,18 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    final ScrollingModel scrollingModel = editor.getScrollingModel();
-    scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE);
-    PsiMethod selectedMethod = getSelectedMethod(editor, file);
+    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    List<PsiMember> elements =
+      CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, null,
+                                                                e -> e instanceof PsiParameter || e instanceof PsiMethod);
+    PsiMethod selectedMethod = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(elements), PsiMethod.class, false);
     if (selectedMethod == null) {
       final String message = RefactorJBundle.message("cannot.perform.the.refactoring") +
                              RefactorJBundle.message("the.caret.should.be.positioned.within.a.method.declaration.to.be.refactored");
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.IntroduceParameterObject);
       return;
     }
-    invoke(project, selectedMethod, editor);
+    invoke(project, editor, selectedMethod, new HashSet<>(ContainerUtil.filterIsInstance(elements, PsiParameter.class)));
   }
 
   private static PsiMethod getSelectedMethod(Editor editor, PsiFile file) {
@@ -64,10 +71,10 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
       return;
     }
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    invoke(project, method, editor);
+    invoke(project, editor, method, Set.of());
   }
 
-  private static void invoke(final Project project, final PsiMethod selectedMethod, Editor editor) {
+  private static void invoke(Project project, Editor editor, PsiMethod selectedMethod, Set<PsiParameter> selectedParameters) {
     PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(selectedMethod);
     if (newMethod == null) return;
     final String message = getErrorMessage(newMethod);
@@ -77,7 +84,7 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     }
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, newMethod)) return;
 
-    new IntroduceParameterObjectDialog(newMethod).show();
+    new IntroduceParameterObjectDialog(newMethod, selectedParameters).show();
   }
 
   private static @NlsContexts.DialogMessage String getErrorMessage(PsiMethod newMethod) {
