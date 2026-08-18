@@ -11,7 +11,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.VetoableProjectManagerListener
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Key
-import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.view.TerminalView
@@ -59,11 +58,6 @@ internal object TerminalProcessesClosingNotifier : VetoableProjectManagerListene
   }
 
   override fun canClose(project: Project): Boolean {
-    if (!IdeProductMode.isFrontend) {
-      // Processes closing notification is enabled only in RemDev for now
-      return true
-    }
-
     // This logic can be called multiple times during the IDE closing process:
     // during `canExitApplication` and `canClose` checks in `ApplicationImpl.canExit`,
     // then during `canClose` check in `ProjectManagerImpl.closeProject`.
