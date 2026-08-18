@@ -267,7 +267,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  defaultValue="false"
                  description="UI progress retrieves its state directly from Rhizome TaskInfoEntity, avoiding the obsolete use of ProgressIndicator."/>
     <registryKey key="ide.idle.memory.cleaner.enabled"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Actively return memory to OS when the IDE becomes idle"/>
     <registryKey key="ide.idle.memory.cleaner.delay"
                  defaultValue="5000"
