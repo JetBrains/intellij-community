@@ -1,16 +1,20 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.siblings
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import com.intellij.util.takeWhileInclusive
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
+import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
 import org.jetbrains.kotlin.idea.core.createKotlinFile
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
@@ -19,6 +23,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationD
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.kdoc.psi.api.KDocElement
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -74,6 +79,21 @@ internal fun KtFile.updatePackageDirective(pkgName: FqName) {
         val newPackageDirective = KtPsiFactory(project).createPackageDirective(pkgName.quoteIfNeeded())
         packageDirective?.replace(newPackageDirective)
     }
+}
+
+/**
+ * Checks whether the given elements can be used in the move refactoring.
+ * @see org.jetbrains.kotlin.idea.k2.refactoring.move.K2MoveHandler.canMove
+ */
+@ApiStatus.Internal
+fun canMove(elements: Array<out PsiElement>): Boolean {
+    if (elements.any { it !is KtElement && it !is PsiFile && it !is PsiClass && it !is PsiDirectory }) return false
+    if (elements.none { it is KtElement }) return false // only handle the refactoring if it includes Kotlin elements
+    (elements.firstOrNull()?.containingFile as? KtFile)?.let { if (!KotlinSupportAvailability.isSupported(it)) return false }
+
+    // We allow declarations to be moved into non-source roots here,
+    // but in this case they will be moved as files rather than individual declarations.
+    return true
 }
 
 @JvmOverloads

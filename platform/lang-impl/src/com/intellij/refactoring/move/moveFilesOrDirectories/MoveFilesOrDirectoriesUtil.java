@@ -30,6 +30,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.refactoring.move.moveClassesOrPackages.MovedFileProvider;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -496,12 +497,11 @@ public final class MoveFilesOrDirectoriesUtil {
         progressIndicator.setText2(movedFile.getVirtualFile().getPresentableUrl());
         MoveFileHandler.forElement(movedFile).prepareMovedFile(movedFile, newParent, oldToNewMap);
 
-        // FIXME probably it should use MovedFileProvider
         PsiFile moving = newParent.findFile(movedFile.getName());
         if (moving == null) {
           doMoveFile(movedFile, newParent);
         }
-        moving = newParent.findFile(movedFile.getName());
+        moving = MovedFileProvider.getInstance().getUpdatedFile(newParent, movedFile);
         if (moving != null) {
           movedFiles.add(SmartPointerManager.createPointer(moving));
         }
@@ -626,11 +626,10 @@ public final class MoveFilesOrDirectoriesUtil {
     }
   }
 
-  // TODO: this class code be possibly private
   @ApiStatus.Internal
-  static final class MovedFileOrDirectoryUsageInfo extends UsageInfo {
-    final PsiElement myTarget;
-    final PsiReference myReference;
+  private static final class MovedFileOrDirectoryUsageInfo extends UsageInfo {
+    private final PsiElement myTarget;
+    private final PsiReference myReference;
 
     MovedFileOrDirectoryUsageInfo(@NotNull PsiReference reference, @NotNull PsiElement target) {
       super(reference);
