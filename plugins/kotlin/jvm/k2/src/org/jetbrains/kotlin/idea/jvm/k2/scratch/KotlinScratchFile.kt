@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptServi
 import org.jetbrains.kotlin.idea.core.script.v1.ScratchFileOptionsByFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 
-class K2KotlinScratchFile(project: Project, virtualFile: VirtualFile, val coroutineScope: CoroutineScope) :
+class KotlinScratchFile(project: Project, virtualFile: VirtualFile, val coroutineScope: CoroutineScope) :
     ScratchFile(project, virtualFile) {
     val executor: K2ScratchExecutor = K2ScratchExecutor(this, project, coroutineScope)
 

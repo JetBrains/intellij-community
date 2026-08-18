@@ -42,9 +42,9 @@ abstract class AbstractK2ScratchRunActionTest : FileEditorManagerTestCase() {
     fun doScratchTest(unused: String) {
         val fileName = getTestDataFileName(this::class.java, this.name) ?: error("scratch file not found")
         val editorWithPreview = configureScratchEditor(fileName)
-        val scratchFile = editorWithPreview.scratchFile as? K2KotlinScratchFile ?: error("scratch file not found")
+        val scratchFile = editorWithPreview.scratchFile as? KotlinScratchFile ?: error("scratch file not found")
 
-        launchAction(RunScratchActionK2())
+        launchAction(RunKotlinScratchAction())
 
         PlatformTestUtil.waitWhileBusy {
             scratchFile.executor.scope.coroutineContext.job.children.any { it.isActive }

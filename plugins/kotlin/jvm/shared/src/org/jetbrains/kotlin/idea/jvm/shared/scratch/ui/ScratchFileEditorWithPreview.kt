@@ -15,19 +15,14 @@ import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileAutoRunner
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ExplainInfo
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.InlayScratchOutputHandler
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.PreviewEditorScratchOutputHandler
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.PreviewOutputBlocksManager
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutput
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputHandler
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputHandlerAdapter
 import org.jetbrains.kotlin.psi.UserDataProperty
 
 abstract class ScratchFileEditorWithPreview(
@@ -49,17 +44,11 @@ abstract class ScratchFileEditorWithPreview(
     private val previewOutputManager: PreviewOutputBlocksManager = PreviewOutputBlocksManager(_previewEditor)
 
     protected val toolWindowHandler: ScratchOutputHandler = requestOutputHandler()
-    private val inlayScratchOutputHandler = InlayScratchOutputHandler(sourceTextEditor, toolWindowHandler)
     protected val previewEditorScratchOutputHandler: PreviewEditorScratchOutputHandler = PreviewEditorScratchOutputHandler(
         previewOutputManager, toolWindowHandler, previewTextEditor as Disposable
     )
 
     protected abstract fun requestOutputHandler(): ScratchOutputHandler
-
-    protected val commonPreviewOutputHandler: LayoutDependantOutputHandler = LayoutDependantOutputHandler(
-        noPreviewOutputHandler = inlayScratchOutputHandler,
-        previewOutputHandler = previewEditorScratchOutputHandler,
-        layoutProvider = { getLayout()!! })
 
     init {
         sourceTextEditor.parentScratchEditorWithPreview = this
@@ -125,7 +114,7 @@ abstract class ScratchFileEditorWithPreview(
     }
 
     fun clearOutputHandlers() {
-        commonPreviewOutputHandler.clear(scratchFile)
+        previewEditorScratchOutputHandler.clear(scratchFile)
     }
 
     override val isShowActionsInTabs: Boolean
@@ -179,53 +168,6 @@ fun TextEditor.findScratchFileEditorWithPreview(): ScratchFileEditorWithPreview?
 
 var TextEditor.parentScratchEditorWithPreview: ScratchFileEditorWithPreview? by UserDataProperty(Key.create("parent.preview.editor"))
 
-
-/**
- * Redirects output to [noPreviewOutputHandler] or [previewOutputHandler] depending on the result of [layoutProvider] call.
- *
- * However, clears both handlers to simplify clearing when switching between layouts.
- */
-class LayoutDependantOutputHandler(
-    private val noPreviewOutputHandler: ScratchOutputHandler,
-    private val previewOutputHandler: ScratchOutputHandler,
-    private val layoutProvider: () -> TextEditorWithPreview.Layout?
-) : ScratchOutputHandlerAdapter() {
-
-    override fun onStart(file: ScratchFile) {
-        targetHandler.onStart(file)
-    }
-
-    override fun handle(file: ScratchFile, expression: ScratchExpression, output: ScratchOutput) {
-        targetHandler.handle(file, expression, output)
-    }
-
-    override fun error(file: ScratchFile, message: String) {
-        targetHandler.error(file, message)
-    }
-
-    override fun handle(file: ScratchFile, output: ScratchOutput) {
-        targetHandler.handle(file, output)
-    }
-
-    override fun handle(file: ScratchFile, explanations: List<ExplainInfo>, scope: CoroutineScope) {
-        targetHandler.handle(file, explanations, scope)
-    }
-
-    override fun onFinish(file: ScratchFile) {
-        targetHandler.onFinish(file)
-    }
-
-    override fun clear(file: ScratchFile) {
-        noPreviewOutputHandler.clear(file)
-        previewOutputHandler.clear(file)
-    }
-
-    private val targetHandler
-        get() = when (layoutProvider()) {
-            TextEditorWithPreview.Layout.SHOW_EDITOR -> noPreviewOutputHandler
-            else -> previewOutputHandler
-        }
-}
 
 /**
  * Checks if [ScratchExpression.element] is actually starts at the [ScratchExpression.lineStart]

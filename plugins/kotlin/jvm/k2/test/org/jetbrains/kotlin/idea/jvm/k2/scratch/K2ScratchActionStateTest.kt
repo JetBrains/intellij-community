@@ -29,7 +29,7 @@ class K2ScratchActionStateTest : FileEditorManagerTestCase() {
         scratchFile.setModule(myFixture.module) // baseline: with a module bound the action would be enabled
         scratchFile.saveOptions { copy(isMakeBeforeRun = false, isInteractiveMode = true) }
 
-        val presentation = updateAndGetPresentation(RunScratchActionK2())
+        val presentation = updateAndGetPresentation(RunKotlinScratchAction())
 
         assertFalse(
             "Run action must be disabled while interactive mode is on",

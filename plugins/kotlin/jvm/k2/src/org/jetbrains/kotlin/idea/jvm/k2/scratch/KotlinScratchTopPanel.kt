@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.JdksComboBoxAction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.ModulesComboBoxAction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.updateToolbar
 
-class ScratchTopPanelK2(val scratchFile: K2KotlinScratchFile) {
+class KotlinScratchTopPanel(val scratchFile: KotlinScratchFile) {
     val actionsToolbar: ActionToolbar
 
     init {
@@ -27,7 +27,7 @@ class ScratchTopPanelK2(val scratchFile: K2KotlinScratchFile) {
         }
 
         val toolbarGroup = DefaultActionGroup().apply {
-            addAction(RunScratchActionK2())
+            addAction(RunKotlinScratchAction())
             addAction(ClearScratchAction())
             addSeparator()
             addAction(modulesComboBoxAction)

@@ -49,7 +49,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <scratch.creationHelper language="kotlin"
-                            implementationClass="org.jetbrains.kotlin.idea.jvm.k2.scratch.KotlinK2ScratchFileCreationHelper"/>
+                            implementationClass="org.jetbrains.kotlin.idea.jvm.k2.scratch.KotlinScratchFileCreationHelper"/>
 
     <fileEditorProvider id="KtsScratchFileEditorProvider"
                         implementation="org.jetbrains.kotlin.idea.jvm.k2.scratch.KotlinScratchFileEditorProvider"/>
@@ -65,7 +65,7 @@
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 
   <actions>
-    <action id="Kotlin.RunScratch" class="org.jetbrains.kotlin.idea.jvm.k2.scratch.RunScratchActionK2" icon="AllIcons.Actions.Execute">
+    <action id="Kotlin.RunScratch" class="org.jetbrains.kotlin.idea.jvm.k2.scratch.RunKotlinScratchAction" icon="AllIcons.Actions.Execute">
       <keyboard-shortcut first-keystroke="control alt W" keymap="$default"/>
       <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
     </action>

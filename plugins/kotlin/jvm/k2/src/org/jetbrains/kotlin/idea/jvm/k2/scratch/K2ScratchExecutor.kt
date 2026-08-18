@@ -52,7 +52,7 @@ import kotlin.io.path.readLines
 
 private val log = Logger.getInstance(K2ScratchExecutor::class.java)
 
-class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val project: Project, val scope: CoroutineScope) :
+class K2ScratchExecutor(override val scratchFile: KotlinScratchFile, val project: Project, val scope: CoroutineScope) :
     ScratchExecutor(scratchFile) {
     override fun execute() {
         if (scratchFile.jdk == null) {

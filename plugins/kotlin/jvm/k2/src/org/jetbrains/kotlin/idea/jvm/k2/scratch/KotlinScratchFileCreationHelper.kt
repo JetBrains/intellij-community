@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.KtFile
 
-class KotlinK2ScratchFileCreationHelper : ScratchFileCreationHelper() {
+class KotlinScratchFileCreationHelper : ScratchFileCreationHelper() {
 
     override fun prepareText(project: Project, context: Context, dataContext: DataContext): Boolean {
         KotlinCreateFileFUSCollector.logFileTemplate("Kotlin Scratch")

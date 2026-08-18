@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.findScratchFileEditorWith
 
 @OptIn(FlowPreview::class)
 class ScratchFileAutoRunnerK2(private val project: Project, private val scope: CoroutineScope) : ScratchFileAutoRunner {
-    private val flow = MutableSharedFlow<K2KotlinScratchFile>()
+    private val flow = MutableSharedFlow<KotlinScratchFile>()
 
     init {
         scope.launch {
@@ -28,7 +28,7 @@ class ScratchFileAutoRunnerK2(private val project: Project, private val scope: C
         }
     }
 
-    fun submitRun(file: K2KotlinScratchFile) {
+    fun submitRun(file: KotlinScratchFile) {
         scope.launch {
             flow.emit(file)
         }
@@ -38,7 +38,7 @@ class ScratchFileAutoRunnerK2(private val project: Project, private val scope: C
         val file = FileDocumentManager.getInstance().getFile(event.document) ?: return
 
         if (project.isDisposed) return
-        val scratchFile = getScratchFile(file, project) as? K2KotlinScratchFile ?: return
+        val scratchFile = getScratchFile(file, project) as? KotlinScratchFile ?: return
         if (!scratchFile.options.isInteractiveMode) return
 
         scope.launch {

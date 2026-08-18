@@ -51,10 +51,6 @@ abstract class ScratchExecutor(protected open val scratchFile: ScratchFile) {
             handlers.add(handler)
         }
 
-        fun remove(handler: ScratchOutputHandler) {
-            handlers.remove(handler)
-        }
-
         override fun onStart(file: ScratchFile) {
             handlers.forEach { it.onStart(file) }
         }

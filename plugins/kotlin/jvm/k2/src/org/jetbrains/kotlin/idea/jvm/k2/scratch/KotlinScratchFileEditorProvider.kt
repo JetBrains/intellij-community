@@ -13,13 +13,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.TextEditor
@@ -63,12 +61,12 @@ internal class KotlinScratchFileEditorProvider : AsyncFileEditorProvider, Struct
         val textEditorProvider = TextEditorProvider.getInstance()
 
         val scratchFile =
-            K2KotlinScratchFile(project, file, editorCoroutineScope.childScope(K2KotlinScratchFile::class.java.simpleName))
+            KotlinScratchFile(project, file, editorCoroutineScope.childScope(KotlinScratchFile::class.java.simpleName))
 
         val mainEditor = textEditorProvider.createFileEditor(
             project = project,
             file = scratchFile.virtualFile,
-            document = readAction { FileDocumentManager.getInstance().getDocument(scratchFile.virtualFile) },
+            document = document,
             editorCoroutineScope = editorCoroutineScope,
         )
 
@@ -84,7 +82,7 @@ internal class KotlinScratchFileEditorProvider : AsyncFileEditorProvider, Struct
 }
 
 class K2ScratchFileEditorWithPreview(
-    val kotlinScratchFile: K2KotlinScratchFile, sourceTextEditor: TextEditor, previewTextEditor: TextEditor
+    val kotlinScratchFile: KotlinScratchFile, sourceTextEditor: TextEditor, previewTextEditor: TextEditor
 ) : ScratchFileEditorWithPreview(
     kotlinScratchFile,
     sourceTextEditor,
@@ -106,7 +104,9 @@ class K2ScratchFileEditorWithPreview(
         super.dispose()
     }
 
-    override fun createToolbar(): ActionToolbar = ScratchTopPanelK2(kotlinScratchFile).actionsToolbar
+    override fun createToolbar(): ActionToolbar {
+        return KotlinScratchTopPanel(kotlinScratchFile).actionsToolbar
+    }
 
     override fun createViewActionGroup(): ActionGroup = DefaultActionGroup(
         MakeBeforeRunToggleAction(),
