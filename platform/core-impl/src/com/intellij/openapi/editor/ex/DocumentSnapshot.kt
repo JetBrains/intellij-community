@@ -44,16 +44,6 @@ interface DocumentSnapshot {
   fun <S : DocumentSputnik> sputnik(key: Key<S>): S?
 
   /**
-   * Returns a snapshot where [key] is associated with [sputnik], replacing the current association if any,
-   * or without any association for [key] if [sputnik] is `null`.
-   *
-   * Keep [key] in a static field: keys are compared by identity,
-   * and a garbage-collected key leaves its sputnik unreachable and unremovable
-   */
-  @Contract(pure = true)
-  fun <S : DocumentSputnik> withSputnik(key: Key<S>, sputnik: S?): DocumentSnapshot
-
-  /**
    * Returns [metadata] if it still has this snapshot's text, otherwise returns this snapshot unchanged
    * and drops [metadata] entirely.
    *

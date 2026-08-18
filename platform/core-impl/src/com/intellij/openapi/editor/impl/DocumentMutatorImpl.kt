@@ -14,9 +14,11 @@ import com.intellij.openapi.editor.ex.DocumentMutator
 import com.intellij.openapi.editor.ex.DocumentNewOps
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentSputnik
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.util.text.ImmutableCharSequence
 import java.util.function.UnaryOperator
@@ -43,14 +45,10 @@ internal abstract class DocumentMutatorImpl(
     updateAndGet { it.applyOp(op) }
   }
 
-  override fun updateSnapshotAndGet(updateFunc: UnaryOperator<DocumentSnapshot>): DocumentSnapshot {
-    return updateAndGet { snapshot ->
-      val updated = updateFunc.apply(snapshot)
-      if (snapshot.text().chars() !== updated.text().chars()) {
-        throw IllegalArgumentException("text change is not allowed because it bypasses DocumentListener")
-      }
-      updated
-    }
+  override fun <S : DocumentSputnik> setSputnik(key: Key<S>, sputnik: S?): DocumentSnapshot {
+    val newOps = DocumentNewOps.getInstance()
+    val op = newOps.createSetSputnikOp(key, sputnik)
+    return updateAndGet { it.applyOp(op) }
   }
 
   override fun insertString(

@@ -2,8 +2,8 @@
 package com.intellij.openapi.editor.ex
 
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
-import java.util.function.UnaryOperator
 
 /**
  * This interface is responsible for the document write path.
@@ -127,20 +127,5 @@ interface DocumentMutator {
     wholeTextReplaced: Boolean,
   )
 
-  /**
-   * Atomically replaces the current snapshot with the result of [updateFunc] and returns it.
-   *
-   * The general escape hatch for snapshot state that has no dedicated method here, a sputnik above all:
-   * `updateSnapshotAndGet { it.withSputnik(key, sputnik) }`.
-   *
-   * [updateFunc] must keep the characters of the snapshot it is given: a text change published this way
-   * would fire no [com.intellij.openapi.editor.event.DocumentListener], leaving every listener-backed model
-   * stale, so it is rejected with an [IllegalArgumentException]. Use the text methods of this interface instead.
-   *
-   * [updateFunc] must also be side-effect free: publishing goes through a compare-and-set, so a lost race
-   * re-applies it against the newly found snapshot.
-   *
-   * @see DocumentSnapshot.withSputnik
-   */
-  fun updateSnapshotAndGet(updateFunc: UnaryOperator<DocumentSnapshot>): DocumentSnapshot
+  fun <S : DocumentSputnik> setSputnik(key: Key<S>, sputnik: S?): DocumentSnapshot
 }

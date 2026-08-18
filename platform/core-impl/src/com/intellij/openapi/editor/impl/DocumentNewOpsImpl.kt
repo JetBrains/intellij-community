@@ -3,6 +3,8 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.ex.DocumentNewOps
 import com.intellij.openapi.editor.ex.DocumentOp
+import com.intellij.openapi.editor.ex.DocumentSputnik
+import com.intellij.openapi.util.Key
 
 internal class DocumentNewOpsImpl : DocumentNewOps {
   override fun createInsertOp(offset: Int, fragment: CharSequence): DocumentOp.Insert {
@@ -24,6 +26,10 @@ internal class DocumentNewOpsImpl : DocumentNewOps {
     require(startLine >= 0)
     require(endLine >= 0)
     return UnmodifiedLinesImpl(startLine, endLine, exceptLines)
+  }
+
+  override fun <S : DocumentSputnik> createSetSputnikOp(key: Key<S>, sputnik: S?): DocumentOp.SetSputnik {
+    return SetSputnikImpl(key, sputnik)
   }
 
   override fun createOps(): List<DocumentOp> {
@@ -91,6 +97,14 @@ internal class DocumentNewOpsImpl : DocumentNewOps {
     override fun startLine(): Int = startLine
     override fun endLine(): Int = endLine
     override fun exceptLines(): IntArray = exceptLines
+  }
+
+  private class SetSputnikImpl(
+    private val key: Key<out DocumentSputnik>,
+    private val sputnik: DocumentSputnik?,
+  ) : DocumentOp.SetSputnik {
+    override fun key(): Key<out DocumentSputnik> = key
+    override fun sputnik(): DocumentSputnik? = sputnik
   }
 
   private class TwoElementsList(

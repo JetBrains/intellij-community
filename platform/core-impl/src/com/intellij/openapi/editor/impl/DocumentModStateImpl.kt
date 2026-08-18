@@ -38,6 +38,7 @@ internal class DocumentModStateImpl private constructor(
       is DocumentOp.Delete -> applyDelete(before, after, op)
       is DocumentOp.ModStamp -> applyModStamp(op)
       is DocumentOp.UnmodifiedLines -> applyUnmodifiedLines(before, op)
+      is DocumentOp.SetSputnik -> this
     }
   }
 

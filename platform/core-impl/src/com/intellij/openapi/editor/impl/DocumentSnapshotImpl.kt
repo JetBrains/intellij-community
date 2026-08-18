@@ -30,20 +30,8 @@ internal class DocumentSnapshotImpl private constructor(
   }
 
   override fun <S : DocumentSputnik> sputnik(key: Key<S>): S? {
-    @Suppress("UNCHECKED_CAST") // sound because withSputnik associates a sputnik only with a key of its own type
+    @Suppress("UNCHECKED_CAST") // sound because setSputnik associates a sputnik only with a key of its own type
     return sputniks.get(key) as S?
-  }
-
-  override fun <S : DocumentSputnik> withSputnik(key: Key<S>, sputnik: S?): DocumentSnapshot {
-    val newSputniks = if (sputnik == null) {
-      sputniks.remove(key)
-    } else {
-      sputniks.add(key, sputnik)
-    }
-    if (newSputniks === sputniks) {
-      return this
-    }
-    return DocumentSnapshotImpl(text, modState, newSputniks)
   }
 
   override fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot {
@@ -56,12 +44,17 @@ internal class DocumentSnapshotImpl private constructor(
   override fun applyOp(op: DocumentOp): DocumentSnapshot {
     val newText = text.applyOp(op)
     val newModState = modState.applyOp(text, newText, op)
-    if (newText === text && newModState === modState) {
+    val canAffectSputniks = op is DocumentOp.SetSputnik
+    if (newText === text && newModState === modState && !canAffectSputniks) {
       return this
     }
     val oldSnapshot = this
-    val newSnapshot = DocumentSnapshotImpl(newText, newModState, sputniks)
-    if (newText === text || sputniks === DocumentSputniksImpl.EMPTY) {
+    val newSnapshot = if (newText === text && newModState === modState) {
+      this
+    } else {
+      DocumentSnapshotImpl(newText, newModState, sputniks)
+    }
+    if (sputniks === DocumentSputniksImpl.EMPTY && !canAffectSputniks) {
       return newSnapshot
     }
     return sputniks.applyOp(oldSnapshot, newSnapshot, op) { newSputniks ->

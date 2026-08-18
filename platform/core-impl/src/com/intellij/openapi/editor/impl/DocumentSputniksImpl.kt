@@ -24,37 +24,40 @@ internal class DocumentSputniksImpl private constructor(
     return values[index]
   }
 
-  override fun add(key: Key<out DocumentSputnik>, sputnik: DocumentSputnik): DocumentSputniks {
-    val keyCode = key.hashCode()
-    val index = indexOf(keyCode)
-    if (index >= 0) {
-      if (values[index] === sputnik) {
-        return this
-      }
-      val newValues = values.copyOf()
-      newValues[index] = sputnik
-      return DocumentSputniksImpl(keys, newValues)
-    }
-    val insertionIndex = -index - 1
-    val newKeys = ArrayUtil.insert(keys, insertionIndex, keyCode)
-    val newValues = ArrayUtil.insert(values, insertionIndex, sputnik)
-    return DocumentSputniksImpl(newKeys, newValues)
-  }
-
-  override fun remove(key: Key<out DocumentSputnik>): DocumentSputniks {
-    val index = indexOf(key.hashCode())
-    if (index < 0) {
-      return this
-    }
-    if (keys.size == 1) {
-      return EMPTY
-    }
-    val newKeys = ArrayUtil.remove(keys, index)
-    val newValues = ArrayUtil.remove(values, index)
-    return DocumentSputniksImpl(newKeys, newValues)
-  }
-
   override fun applyOp(
+    before: DocumentSnapshot,
+    after: DocumentSnapshot,
+    op: DocumentOp,
+    nextSnapshot: (DocumentSputniks) -> DocumentSnapshot,
+  ): DocumentSnapshot {
+    return when (op) {
+      is DocumentOp.Insert,
+      is DocumentOp.Delete -> applyText(before, after, op, nextSnapshot)
+      is DocumentOp.SetSputnik -> applySetSputnik(after, op, nextSnapshot)
+      is DocumentOp.ModStamp,
+      is DocumentOp.UnmodifiedLines -> after
+    }
+  }
+
+  private fun applySetSputnik(
+    snapshot: DocumentSnapshot,
+    op: DocumentOp.SetSputnik,
+    nextSnapshot: (DocumentSputniks) -> DocumentSnapshot,
+  ): DocumentSnapshot {
+    val key = op.key()
+    val sputnik = op.sputnik()
+    val sputniks = if (sputnik == null) {
+      remove(key)
+    } else {
+      add(key, sputnik)
+    }
+    if (sputniks === this) {
+      return snapshot
+    }
+    return nextSnapshot.invoke(sputniks)
+  }
+
+  private fun applyText(
     before: DocumentSnapshot,
     after: DocumentSnapshot,
     op: DocumentOp,
@@ -74,6 +77,36 @@ internal class DocumentSputniksImpl private constructor(
       result = nextSnapshot.invoke(currentSputniks)
     }
     return result
+  }
+
+  private fun add(key: Key<out DocumentSputnik>, sputnik: DocumentSputnik): DocumentSputniks {
+    val keyCode = key.hashCode()
+    val index = indexOf(keyCode)
+    if (index >= 0) {
+      if (values[index] === sputnik) {
+        return this
+      }
+      val newValues = values.copyOf()
+      newValues[index] = sputnik
+      return DocumentSputniksImpl(keys, newValues)
+    }
+    val insertionIndex = -index - 1
+    val newKeys = ArrayUtil.insert(keys, insertionIndex, keyCode)
+    val newValues = ArrayUtil.insert(values, insertionIndex, sputnik)
+    return DocumentSputniksImpl(newKeys, newValues)
+  }
+
+  private fun remove(key: Key<out DocumentSputnik>): DocumentSputniks {
+    val index = indexOf(key.hashCode())
+    if (index < 0) {
+      return this
+    }
+    if (keys.size == 1) {
+      return EMPTY
+    }
+    val newKeys = ArrayUtil.remove(keys, index)
+    val newValues = ArrayUtil.remove(values, index)
+    return DocumentSputniksImpl(newKeys, newValues)
   }
 
   /**

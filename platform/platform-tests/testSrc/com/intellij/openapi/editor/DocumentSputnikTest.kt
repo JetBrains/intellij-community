@@ -5,8 +5,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.ex.DocumentNewOps
 import com.intellij.openapi.editor.ex.DocumentOp
-import com.intellij.openapi.editor.ex.DocumentSputnik
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentSputnik
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -17,7 +17,6 @@ import com.intellij.util.text.ImmutableCharSequence
 import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 
@@ -34,7 +33,7 @@ internal class DocumentSputnikTest {
   fun `sputnik is attached and retrieved by key`() {
     val sputnik = TestSputnik()
     val snapshot = snapshot("abc")
-    val newSnapshot = snapshot.withSputnik(KEY_1, sputnik)
+    val newSnapshot = snapshot.applyOp(sputnikOp(KEY_1, sputnik))
     assertSame(sputnik, newSnapshot.sputnik(KEY_1))
     assertNull(newSnapshot.sputnik(KEY_2))
     assertNull(snapshot.sputnik(KEY_1)) // the original snapshot is unaffected
@@ -46,9 +45,9 @@ internal class DocumentSputnikTest {
     val sputnik2 = TestSputnik()
     val sputnik3 = TestSputnik()
     val snapshot = snapshot("abc")
-      .withSputnik(KEY_3, sputnik3)
-      .withSputnik(KEY_1, sputnik1)
-      .withSputnik(KEY_2, sputnik2)
+      .applyOp(sputnikOp(KEY_3, sputnik3))
+      .applyOp(sputnikOp(KEY_1, sputnik1))
+      .applyOp(sputnikOp(KEY_2, sputnik2))
     assertSame(sputnik1, snapshot.sputnik(KEY_1))
     assertSame(sputnik2, snapshot.sputnik(KEY_2))
     assertSame(sputnik3, snapshot.sputnik(KEY_3))
@@ -60,9 +59,9 @@ internal class DocumentSputnikTest {
     val sputnik2 = TestSputnik()
     val other = TestSputnik()
     val snapshot = snapshot("abc")
-      .withSputnik(KEY_2, other)
-      .withSputnik(KEY_1, sputnik1)
-      .withSputnik(KEY_1, sputnik2)
+      .applyOp(sputnikOp(KEY_2, other))
+      .applyOp(sputnikOp(KEY_1, sputnik1))
+      .applyOp(sputnikOp(KEY_1, sputnik2))
     assertSame(sputnik2, snapshot.sputnik(KEY_1))
     assertSame(other, snapshot.sputnik(KEY_2))
   }
@@ -72,9 +71,9 @@ internal class DocumentSputnikTest {
     val sputnik1 = TestSputnik()
     val sputnik2 = TestSputnik()
     val snapshot = snapshot("abc")
-      .withSputnik(KEY_1, sputnik1)
-      .withSputnik(KEY_2, sputnik2)
-      .withSputnik(KEY_1, null)
+      .applyOp(sputnikOp(KEY_1, sputnik1))
+      .applyOp(sputnikOp(KEY_2, sputnik2))
+      .applyOp(sputnikOp(KEY_1, null))
     assertNull(snapshot.sputnik(KEY_1))
     assertSame(sputnik2, snapshot.sputnik(KEY_2))
   }
@@ -82,38 +81,38 @@ internal class DocumentSputnikTest {
   @Test
   fun `removing the last sputnik works`() {
     val snapshot = snapshot("abc")
-      .withSputnik(KEY_1, TestSputnik())
-      .withSputnik(KEY_1, null)
+      .applyOp(sputnikOp(KEY_1, TestSputnik()))
+      .applyOp(sputnikOp(KEY_1, null))
     assertNull(snapshot.sputnik(KEY_1))
   }
 
   @Test
   fun `attaching the same sputnik is a no-op`() {
     val sputnik = TestSputnik()
-    val snapshot = snapshot("abc").withSputnik(KEY_1, sputnik)
-    assertSame(snapshot, snapshot.withSputnik(KEY_1, sputnik))
+    val snapshot = snapshot("abc").applyOp(sputnikOp(KEY_1, sputnik))
+    assertSame(snapshot, snapshot.applyOp(sputnikOp(KEY_1, sputnik)))
   }
 
   @Test
   fun `removing an absent sputnik is a no-op`() {
     val snapshot = snapshot("abc")
-    assertSame(snapshot, snapshot.withSputnik(KEY_1, null))
-    val withSputnik = snapshot.withSputnik(KEY_2, TestSputnik())
-    assertSame(withSputnik, withSputnik.withSputnik(KEY_1, null)) // KEY_1 sorts before the attached KEY_2
+    assertSame(snapshot, snapshot.applyOp(sputnikOp(KEY_1, null)))
+    val withSputnik = snapshot.applyOp(sputnikOp(KEY_2, TestSputnik()))
+    assertSame(withSputnik, withSputnik.applyOp(sputnikOp(KEY_1, null))) // KEY_1 sorts before the attached KEY_2
   }
 
   @Test
   fun `a key ordered after the attached ones is absent`() {
     // the lookup runs off the end of the sorted keys, unlike `removing an absent sputnik is a no-op`
-    val snapshot = snapshot("abc").withSputnik(KEY_1, TestSputnik())
+    val snapshot = snapshot("abc").applyOp(sputnikOp(KEY_1, TestSputnik()))
     assertNull(snapshot.sputnik(KEY_UNAFFECTED)) // KEY_UNAFFECTED sorts after the attached KEY_1
-    assertSame(snapshot, snapshot.withSputnik(KEY_UNAFFECTED, null))
+    assertSame(snapshot, snapshot.applyOp(sputnikOp(KEY_UNAFFECTED, null)))
   }
 
   @Test
   fun `text insertion rebuilds sputnik with change parameters`() {
     val sputnik = TestSputnik()
-    val before = snapshot("abc").withSputnik(KEY_1, sputnik)
+    val before = snapshot("abc").applyOp(sputnikOp(KEY_1, sputnik))
     val after = insertString(before, offset = 1, fragment = "XY")
     val rebuilt = after.sputnik(KEY_1)!!
     assertEquals(1, rebuilt.rebuildCount)
@@ -128,7 +127,7 @@ internal class DocumentSputnikTest {
 
   @Test
   fun `text replacement rebuilds sputnik with change parameters`() {
-    val before = snapshot("abcdef").withSputnik(KEY_1, TestSputnik())
+    val before = snapshot("abcdef").applyOp(sputnikOp(KEY_1, TestSputnik()))
     val after = replaceString(before, startOffset = 1, endOffset = 3, fragment = "ZZZ")
     val rebuilt = after.sputnik(KEY_1)!!
     // a range replacement lowers to Delete then Insert, so the sputnik is rebuilt twice: once per op
@@ -143,7 +142,7 @@ internal class DocumentSputnikTest {
   @Test
   fun `unaffected sputnik instance survives text change`() {
     val sputnik = UnaffectedSputnik()
-    val before = snapshot("abc").withSputnik(KEY_UNAFFECTED, sputnik)
+    val before = snapshot("abc").applyOp(sputnikOp(KEY_UNAFFECTED, sputnik))
     val after = insertString(before, offset = 0, fragment = "x")
     assertSame(sputnik, after.sputnik(KEY_UNAFFECTED))
   }
@@ -154,9 +153,9 @@ internal class DocumentSputnikTest {
     val affected2 = TestSputnik()
     val unaffected = UnaffectedSputnik()
     val before = snapshot("abc")
-      .withSputnik(KEY_1, affected1)
-      .withSputnik(KEY_2, affected2)
-      .withSputnik(KEY_UNAFFECTED, unaffected)
+      .applyOp(sputnikOp(KEY_1, affected1))
+      .applyOp(sputnikOp(KEY_2, affected2))
+      .applyOp(sputnikOp(KEY_UNAFFECTED, unaffected))
     val after = insertString(before, offset = 1, fragment = "x")
     assertSame(unaffected, after.sputnik(KEY_UNAFFECTED))
     assertEquals(1, after.sputnik(KEY_1)!!.rebuildCount)
@@ -168,8 +167,8 @@ internal class DocumentSputnikTest {
     val unaffected = UnaffectedSputnik()
     val affected = TestSputnik()
     val before = snapshot("abc")
-      .withSputnik(KEY_UNAFFECTED_LOW, unaffected)
-      .withSputnik(KEY_1, affected)
+      .applyOp(sputnikOp(KEY_UNAFFECTED_LOW, unaffected))
+      .applyOp(sputnikOp(KEY_1, affected))
     val after = insertString(before, offset = 1, fragment = "x")
     assertSame(unaffected, after.sputnik(KEY_UNAFFECTED_LOW))
     assertEquals(1, after.sputnik(KEY_1)!!.rebuildCount)
@@ -178,7 +177,7 @@ internal class DocumentSputnikTest {
   @Test
   fun `sputnik survives modStamp update`() {
     val sputnik = TestSputnik()
-    val snapshot = withModStamp(snapshot("abc").withSputnik(KEY_1, sputnik))
+    val snapshot = withModStamp(snapshot("abc").applyOp(sputnikOp(KEY_1, sputnik)))
     assertSame(sputnik, snapshot.sputnik(KEY_1))
     assertEquals(0, sputnik.rebuildCount)
   }
@@ -186,7 +185,7 @@ internal class DocumentSputnikTest {
   @Test
   fun `sputnik survives line flags update`() {
     val sputnik = UnaffectedSputnik()
-    val before = insertString(snapshot("a\nb\nc").withSputnik(KEY_UNAFFECTED, sputnik), offset = 2, fragment = "x")
+    val before = insertString(snapshot("a\nb\nc").applyOp(sputnikOp(KEY_UNAFFECTED, sputnik)), offset = 2, fragment = "x")
     val op = DocumentNewOps.getInstance().createUnmodifiedLinesOp(0, Int.MAX_VALUE, IntArray(0))
     val after = before.applyOp(op)
     assertSame(sputnik, after.sputnik(KEY_UNAFFECTED))
@@ -195,7 +194,7 @@ internal class DocumentSputnikTest {
   @Test
   fun `withMetadata with same text takes sputniks of metadata`() {
     val base = snapshot("abc")
-    val withSputnik = base.withSputnik(KEY_1, TestSputnik())
+    val withSputnik = base.applyOp(sputnikOp(KEY_1, TestSputnik()))
     val metadata = withModStamp(base) // shares the text characters with `withSputnik`
     val merged = withSputnik.withMetadata(metadata)
     assertEquals(MOD_STAMP, merged.modState().stamp())
@@ -205,7 +204,7 @@ internal class DocumentSputnikTest {
   @Test
   fun `withMetadata with same text yields the metadata snapshot itself`() {
     val base = snapshot("abc")
-    val withSputnik = base.withSputnik(KEY_1, TestSputnik())
+    val withSputnik = base.applyOp(sputnikOp(KEY_1, TestSputnik()))
     val metadata = withModStamp(base)
     // unlike the other `with*` methods, withMetadata does not return `this` when nothing else changes
     assertSame(metadata, withSputnik.withMetadata(metadata))
@@ -213,53 +212,33 @@ internal class DocumentSputnikTest {
 
   @Test
   fun `withMetadata with different text drops the other snapshot entirely`() {
-    val before = snapshot("abc").withSputnik(KEY_1, TestSputnik())
+    val before = snapshot("abc").applyOp(sputnikOp(KEY_1, TestSputnik()))
     val changed = insertString(before, offset = 0, fragment = "x")
-    val metadata = withModStamp(snapshot("abc").withSputnik(KEY_2, TestSputnik()))
+    val metadata = withModStamp(snapshot("abc").applyOp(sputnikOp(KEY_2, TestSputnik())))
     assertSame(changed, changed.withMetadata(metadata))
   }
 
   @Test
-  fun `updateSnapshotAndGet attaches a sputnik visible through the document snapshot`() {
+  fun `setSputnik attaches a sputnik visible through the document snapshot`() {
     val document = DocumentImpl("abc")
     val sputnik = TestSputnik()
-    val updated = document.core.mutator().updateSnapshotAndGet { it.withSputnik(KEY_1, sputnik) }
+    val updated = document.core.mutator().setSputnik(KEY_1, sputnik)
     assertSame(sputnik, updated.sputnik(KEY_1))
     assertSame(updated, document.core.snapshot()) // the returned snapshot is the published one
   }
 
   @Test
-  fun `updateSnapshotAndGet detaches a sputnik`() {
+  fun `setSputnik detaches a sputnik`() {
     val document = DocumentImpl("abc")
-    document.core.mutator().updateSnapshotAndGet { it.withSputnik(KEY_1, TestSputnik()) }
-    document.core.mutator().updateSnapshotAndGet { it.withSputnik(KEY_1, null) }
+    document.core.mutator().setSputnik(KEY_1, TestSputnik())
+    document.core.mutator().setSputnik(KEY_1, null)
     assertNull(document.core.snapshot().sputnik(KEY_1))
-  }
-
-  @Test
-  fun `updateSnapshotAndGet rejects a change of the characters`() {
-    val document = DocumentImpl("abc")
-    val mutator = document.core.mutator()
-    val patch = DocumentTextPatch.simple(
-      startOffset = 0,
-      endOffset = 0,
-      newFragment = "x",
-      newModStamp = document.core.snapshot().modState().stamp() + 1,
-      clearLineFlags = false,
-    )
-    val snapshotBefore = document.core.snapshot()
-    // a text change published this way would fire no DocumentListener
-    assertFailsWith<IllegalArgumentException> {
-      mutator.updateSnapshotAndGet { it.applyOps(patch.toOps()) }
-    }
-    assertSame(snapshotBefore, document.core.snapshot()) // nothing was published
-    assertEquals("abc", document.text)
   }
 
   @Test
   fun `attached sputnik is rebuilt by a document text change`() = runOnEdt {
     val document = DocumentImpl("abc")
-    document.core.mutator().updateSnapshotAndGet { it.withSputnik(KEY_1, TestSputnik()) }
+    document.core.mutator().setSputnik(KEY_1, TestSputnik())
     val textBefore = document.core.snapshot().text()
     WriteCommandAction.runWriteCommandAction(null) {
       document.insertString(1, "XY")
@@ -303,6 +282,10 @@ internal class DocumentSputnikTest {
         originEndOffset = endOffset,
       ).toOps()
     )
+  }
+
+  private fun <S : DocumentSputnik> sputnikOp(key: Key<S>, sputnik: S?): DocumentOp.SetSputnik {
+    return DocumentNewOps.getInstance().createSetSputnikOp(key, sputnik)
   }
 
   private class TestSputnik(

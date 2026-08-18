@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Contract
  * Keep keys in static fields: a garbage-collected key leaves its sputnik unreachable and unremovable.
  *
  * @see DocumentSnapshot.sputnik
- * @see DocumentSnapshot.withSputnik
+ * @see DocumentMutator.setSputnik
  */
 @ApiStatus.Internal
 interface DocumentSputnik {
