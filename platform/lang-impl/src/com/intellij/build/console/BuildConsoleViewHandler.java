@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.console;
 
 import com.intellij.build.BuildTextConsoleView;
@@ -10,7 +10,6 @@ import com.intellij.execution.actions.ClearConsoleAction;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ConsoleViewWithDelegateKt;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -43,6 +42,8 @@ import java.awt.BorderLayout;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+
+import static com.intellij.execution.ui.ConsoleViewWithDelegateKt.unwrapDelegate;
 
 @ApiStatus.Internal
 public final class BuildConsoleViewHandler implements Disposable.Default {
@@ -122,12 +123,10 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
     textConsoleToolbarActionGroup.add(new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
       @Override
       protected @Nullable Editor getEditor(@NotNull AnActionEvent e) {
-        var editor = BuildConsoleViewHandler.this.getEditor();
-        if (editor == null) return null;
-        return ClientEditorManager.getClientEditor(editor, ClientId.getCurrentOrNull());
+        return BuildConsoleViewHandler.this.getCurrentConsoleEditor();
       }
     });
-    textConsoleToolbarActionGroup.add(new ScrollToTheEndToolbarAction(getEditor()));
+    textConsoleToolbarActionGroup.add(new ScrollToTheEndToolbarAction(getCurrentConsoleEditor()));
     textConsoleToolbarActionGroup.add(new ClearConsoleAction());
     return textConsoleToolbarActionGroup;
   }
@@ -140,7 +139,7 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
 
   @TestOnly
   public @NotNull ExecutionConsole getCurrentConsoleOrEmpty() {
-    var currentConsole = ObjectUtils.doIfNotNull(getCurrentConsole(), it -> ConsoleViewWithDelegateKt.unwrapDelegate(it));
+    var currentConsole = ObjectUtils.doIfNotNull(getCurrentConsole(), it -> unwrapDelegate(it));
     var console = ObjectUtils.notNull(currentConsole, () -> new ConsoleViewImpl(myProject, GlobalSearchScope.EMPTY_SCOPE, true, false));
     if (console instanceof ConsoleViewImpl consoleImpl) {
       consoleImpl.flushDeferredText();
@@ -148,10 +147,12 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
     return console;
   }
 
-  private @Nullable Editor getEditor() {
-    ExecutionConsole console = getCurrentConsole();
-    if (console instanceof ConsoleViewImpl) {
-      return ((ConsoleViewImpl)console).getEditor();
+  private @Nullable Editor getCurrentConsoleEditor() {
+    var currentConsole = ObjectUtils.doIfNotNull(getCurrentConsole(), it -> unwrapDelegate(it));
+    if (currentConsole instanceof ConsoleViewImpl) {
+      Editor editor = ((ConsoleViewImpl)currentConsole).getEditor();
+      if (editor == null) return null;
+      return ClientEditorManager.getClientEditor(editor, ClientId.getCurrentOrNull());
     }
     return null;
   }
