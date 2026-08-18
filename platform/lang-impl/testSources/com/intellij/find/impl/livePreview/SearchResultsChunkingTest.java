@@ -61,23 +61,43 @@ public class SearchResultsChunkingTest extends LightPlatformCodeInsightTestCase 
     assertEmpty(search.appended);
   }
 
+  /**
+   * A full update makes a listener walk every occurrence on screen - {@link LivePreview} turns each of them into a
+   * range highlighter - so one extra costs the EDT a whole pass over the result set, and
+   * {@code FindInEditorPerformanceTest#testEditingWithSearchResultsShown} pays it per keystroke. A settled search makes
+   * two of them either way, one for the result set and one for the cursor it picked, and a search that fits in a single
+   * chunk must not add a third by publishing that same result set again as its first chunk.
+   */
+  public void testASearchThatFitsInOneChunkIsPublishedInFullNoMoreThanASettledSearchIs() {
+    configureFromText(TEXT);
+    assertEquals(2, runSearch("ab", Integer.MAX_VALUE).fullUpdates);
+  }
+
+  /** A streamed search adds exactly one to those: its first chunk, which is what makes listeners drop the stale results. */
+  public void testAStreamedSearchIsPublishedInFullOnceMoreThanASettledSearchIs() {
+    configureFromText(TEXT);
+    assertEquals(3, runSearch("ab", 1).fullUpdates);
+  }
+
   public void testEveryChunkAfterTheFirstReachesTheListenersAsAnAppend() {
     configureFromText(TEXT);
     Search search = runSearch("ab", 1);
 
     // The first chunk is reported as a full update so that listeners drop what the previous search left behind; every
-    // chunk after it is reported as an append, in the order the chunks were found.
+    // chunk after it is reported as an append, in the order the chunks were found - bar the last one, which the full
+    // update the search settles with carries anyway.
     assertEquals(5, search.occurrences.size());
-    assertEquals(search.occurrences.subList(1, search.occurrences.size()), flatten(search.appended));
+    assertEquals(search.occurrences.subList(1, search.occurrences.size() - 1), flatten(search.appended));
   }
 
   public void testMatchesBecomeVisibleWhileTheSearchIsStillRunning() {
     configureFromText(TEXT);
     Search search = runSearch("ab", 1);
 
-    // Every notification sees more matches than the previous one, and the last one sees them all.
-    assertEquals(List.of(1, 2, 3, 4, 5), search.countsWhileRunning);
-    assertEquals(search.occurrences.size(), (int)search.countsWhileRunning.get(search.countsWhileRunning.size() - 1));
+    // Every notification sees more matches than the previous one. The counts stop one short of the total because the
+    // last chunk is not published while the search is still running: the full update it settles with carries it.
+    assertEquals(List.of(1, 2, 3, 4), search.countsWhileRunning);
+    assertEquals(5, search.occurrences.size());
   }
 
   public void testTheCursorIsOnlySettledOnceEveryChunkIsIn() {
@@ -181,7 +201,7 @@ public class SearchResultsChunkingTest extends LightPlatformCodeInsightTestCase 
    * running it off the EDT: that is the only place a search is chunked at all.
    */
   public void testAProductionChunkIsBoundedByItsMatchCountAndNotOnlyByItsTimeBudget() {
-    int matches = SearchResults.CHUNK_MATCH_LIMIT * 2 + 1; // enough to need three chunks, so one of them is a middle one
+    int matches = LivePreviewController.MATCHES_LIMIT * 2 + 1; // enough to need three chunks, so one of them is a middle one
     configureFromText("ab ".repeat(matches));
 
     SearchResults searchResults = new SearchResults(getEditor(), getProject());
@@ -201,12 +221,12 @@ public class SearchResultsChunkingTest extends LightPlatformCodeInsightTestCase 
       assertEquals(matches, searchResults.getMatchesCount());
       assertNotEmpty(search.appended); // the search really did take more than one chunk
       for (List<TextRange> chunk : search.appended) {
-        assertTrue("a chunk carried " + chunk.size() + " occurrences", chunk.size() <= SearchResults.CHUNK_MATCH_LIMIT);
+        assertTrue("a chunk carried " + chunk.size() + " occurrences", chunk.size() <= LivePreviewController.MATCHES_LIMIT);
       }
       // The first chunk reaches the listeners as a full update rather than an append, so its size is the count the
       // first notification saw.
       int firstChunk = search.countsWhileRunning.getFirst();
-      assertTrue("the first chunk carried " + firstChunk + " occurrences", firstChunk <= SearchResults.CHUNK_MATCH_LIMIT);
+      assertTrue("the first chunk carried " + firstChunk + " occurrences", firstChunk <= LivePreviewController.MATCHES_LIMIT);
     }
     finally {
       searchResults.dispose();
@@ -272,12 +292,14 @@ public class SearchResultsChunkingTest extends LightPlatformCodeInsightTestCase 
     private final List<Integer> countsWhileRunning = new ArrayList<>();
     private final List<FindResult> cursorsWhileRunning = new ArrayList<>();
     private final List<Integer> occurrencesSeenWithoutAFindModel = new ArrayList<>();
+    private int fullUpdates;
 
     private List<TextRange> occurrences;
     private FindResult cursorWhenFinished;
 
     @Override
     public void searchResultsUpdated(@NotNull SearchResults sr) {
+      fullUpdates++; // counted whether or not the search has settled, unlike everything record() below keeps
       record(sr);
     }
 

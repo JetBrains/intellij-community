@@ -22,8 +22,10 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,6 +39,17 @@ import java.util.List;
 public final class LivePreviewController implements LivePreview.Delegate, FindUtil.ReplaceDelegate {
   public static final int USER_ACTIVITY_TRIGGERING_DELAY = 30;
   public static final int MATCHES_LIMIT = 10000;
+
+  /**
+   * Makes an update in a test run where a production one runs - on the pooled alarm thread, which is the only place a
+   * search is {@linkplain SearchResults#updateThreadSafe chunked} - instead of running synchronously on the EDT.
+   * <p>
+   * The typing debounce goes with it: a test types far faster than a human, so keeping it would coalesce away the very
+   * updates the test means to trigger. A test that sets this has to pump the event queue for a search to make progress
+   * and for its chunks to be applied.
+   */
+  @ApiStatus.Internal
+  public static final Key<Boolean> ourTestingBackgroundUpdate = Key.create("find.live.preview.testing.background.update");
   private final SearchSession myComponent;
 
   private int myUserActivityDelay = USER_ACTIVITY_TRIGGERING_DELAY;
@@ -141,11 +154,12 @@ public final class LivePreviewController implements LivePreview.Delegate, FindUt
     }
     Runnable request = () -> mySearchResults.updateThreadSafe(copy, allowedToChangedEditorSelection, null, stamp)
       .doWhenRejected(() -> updateInBackground(findModel, allowedToChangedEditorSelection));
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    boolean backgroundInTest = TestModeFlags.is(ourTestingBackgroundUpdate);
+    if (ApplicationManager.getApplication().isUnitTestMode() && !backgroundInTest) {
       request.run();
     }
     else {
-      myLivePreviewAlarm.addRequest(request, myUserActivityDelay);
+      myLivePreviewAlarm.addRequest(request, backgroundInTest ? 0 : myUserActivityDelay);
     }
   }
 
