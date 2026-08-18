@@ -4,21 +4,17 @@ package com.intellij.terminal.frontend
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabPresentation
 import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabSupport
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.coroutines.flow.throttleLatest
-import com.intellij.terminal.frontend.toolwindow.getTerminalTab
-import com.intellij.terminal.frontend.toolwindow.impl.TerminalTabCloseListenerImpl
+import com.intellij.terminal.frontend.toolwindow.impl.TerminalTabContent
+import com.intellij.terminal.frontend.toolwindow.impl.TerminalTabContent.ClosingConfirmationDetails
 import com.intellij.terminal.frontend.toolwindow.impl.confirmTermination
-import com.intellij.terminal.frontend.toolwindow.impl.getFullTitleText
-import com.intellij.terminal.frontend.toolwindow.impl.getTitleText
-import com.intellij.terminal.frontend.toolwindow.impl.titleStateFlow
-import com.intellij.terminal.frontend.view.TerminalView
-import com.intellij.terminal.ui.TerminalWidget
+import com.intellij.terminal.frontend.toolwindow.impl.isTerminalTabContent
+import com.intellij.terminal.frontend.toolwindow.impl.toTerminalTabContent
 import com.intellij.ui.content.Content
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -29,16 +25,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
-import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.TITLE_UPDATE_DELAY
-import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareFullTitle
-import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareTitle
-import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.stateFlow
 import java.beans.PropertyChangeListener
 import javax.swing.Icon
 import kotlin.coroutines.cancellation.CancellationException
@@ -47,7 +38,7 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
   override fun filterTabsToClose(project: Project, contents: List<Content>): List<Content> {
     if (contents.isEmpty()) return contents
     val terminalContents = contents.map { content ->
-      content.toTerminalContent()
+      content.toTerminalTabContent()
     }
 
     val contentsToConfirm = try {
@@ -64,11 +55,11 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
       return contents
     }
 
-    if (confirmTermination(project, contentsToConfirm.map(ConfirmationDetails::fullTitle))) {
+    if (confirmTermination(project, contentsToConfirm.map(ClosingConfirmationDetails::fullTitle))) {
       return contents
     }
 
-    val contentsToKeepOpen = contentsToConfirm.mapTo(HashSet(contentsToConfirm.size), ConfirmationDetails::content)
+    val contentsToKeepOpen = contentsToConfirm.mapTo(HashSet(contentsToConfirm.size), ClosingConfirmationDetails::content)
     return contents.filterNot(contentsToKeepOpen::contains)
   }
 
@@ -96,11 +87,11 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
   }
 
   override fun canBeMovedToEditor(content: Content): Boolean {
-    return content.isTerminalContent()
+    return content.isTerminalTabContent()
   }
 
   private fun buildTabPresentation(project: Project, content: Content): ToolWindowEditorTabPresentation {
-    val terminalContent = content.toTerminalContent()
+    val terminalContent = content.toTerminalTabContent()
     return ToolWindowEditorTabPresentation(
       title = terminalContent.getTabTitle(),
       icon = content.icon ?: getToolWindowIcon(project),
@@ -115,86 +106,17 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
   }
 
   private fun titleUpdatesFlow(content: Content): Flow<Unit> {
-    return content.toTerminalContent().titleUpdatesFlow()
+    return content.toTerminalTabContent().titleUpdatesFlow()
   }
 
   private suspend fun collectContentsToConfirm(
-    terminalContents: List<TerminalContent>,
-  ): List<ConfirmationDetails> = coroutineScope {
+    terminalContents: List<TerminalTabContent>,
+  ): List<ClosingConfirmationDetails> = coroutineScope {
     terminalContents.map { terminalContent ->
-      async { terminalContent.getConfirmationDetails() }
+      async { terminalContent.getClosingConfirmationDetails() }
     }.awaitAll().filterNotNull()
   }
 }
-
-private sealed interface TerminalContent {
-  val content: Content
-
-  @NlsSafe
-  fun getTabTitle(): String
-
-  @NlsSafe
-  fun getFullTabTitle(): String
-
-  fun titleUpdatesFlow(): Flow<Unit>
-  suspend fun getConfirmationDetails(): ConfirmationDetails?
-
-  class Reworked(override val content: Content, val view: TerminalView) : TerminalContent {
-    override fun getTabTitle(): String = view.getTitleText()
-
-    override fun getFullTabTitle(): String = view.getFullTitleText()
-
-    override fun titleUpdatesFlow(): Flow<Unit> = view.titleStateFlow().map { }
-
-    override suspend fun getConfirmationDetails(): ConfirmationDetails? {
-      return if (TerminalTabCloseListenerImpl.shouldConfirmClosing(view)) {
-        ConfirmationDetails(content, view.getFullTitleText())
-      }
-      else {
-        null
-      }
-    }
-  }
-
-  class Classic(override val content: Content, val widget: TerminalWidget) : TerminalContent {
-    override fun getTabTitle(): String = widget.terminalTitle.buildSettingsAwareTitle()
-
-    override fun getFullTabTitle(): String = widget.terminalTitle.buildSettingsAwareFullTitle()
-
-    override fun titleUpdatesFlow(): Flow<Unit> = widget.terminalTitle.stateFlow(
-      buildCroppedTitle = { it.buildSettingsAwareTitle() },
-      buildFullTitle = { it.buildSettingsAwareFullTitle() },
-    ).map { }
-
-    override suspend fun getConfirmationDetails(): ConfirmationDetails? = withContext(Dispatchers.IO) {
-      if (widget.isCommandRunning()) {
-        ConfirmationDetails(content, widget.terminalTitle.buildFullTitle())
-      }
-      else {
-        null
-      }
-    }
-  }
-}
-
-private fun Content.toTerminalContentOrNull(): TerminalContent? {
-  getTerminalTab()?.view?.let {
-    return TerminalContent.Reworked(this, it)
-  }
-
-  TerminalToolWindowManager.findWidgetByContent(this)?.let {
-    return TerminalContent.Classic(this, it)
-  }
-
-  return null
-}
-
-private fun Content.toTerminalContent(): TerminalContent =
-  toTerminalContentOrNull()
-  ?: error("Content $this is not a terminal tab")
-
-private fun Content.isTerminalContent(): Boolean =
-  toTerminalContentOrNull() != null
 
 private fun Content.propertyUpdatesFlow(targetPropertyName: String): Flow<Unit> = callbackFlow {
   val listener = PropertyChangeListener { event ->
@@ -207,8 +129,3 @@ private fun Content.propertyUpdatesFlow(targetPropertyName: String): Flow<Unit> 
     removePropertyChangeListener(listener)
   }
 }
-
-private data class ConfirmationDetails(
-  val content: Content,
-  val fullTitle: String,
-)
