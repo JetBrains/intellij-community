@@ -44,8 +44,15 @@ internal class BackendTaskInfoApi : TaskInfoApi {
     // an RPC call carries no kernel context of its own, unlike a service coroutine scope
     @Suppress("DEPRECATION")
     withKernel {
+      // A task is served for as long as it lives, so that work must not run in the rete match scope the
+      // `collect` lambda gets: `Query.collect` invokes the lambda under `Match.withMatch`, which awaits
+      // that scope, and a child outliving the lambda would stall the sequential collection and let only
+      // the oldest task through. This scope is a sibling of the collection and still carries the kernel
+      // context. `tryWithEntities` below is what ends a task's work once its entity is gone.
+      val tasksScope = this
+
       activeTasks.collect { task ->
-        launch {
+        tasksScope.launch {
           val taskId = registry.register(task)
           try {
             tryWithEntities(task) {
