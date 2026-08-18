@@ -1030,7 +1030,6 @@ public abstract class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     }
   }
 
-  @TestOnly
   public void setInterpreterPath(@NlsSafe @NotNull String interpreterPath) {
     myInterpreterPathField.setText(interpreterPath);
   }

@@ -237,7 +237,6 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
     return myProject;
   }
 
-  @TestOnly
   public CreateRemoteSdkForm<T> getRemoteSdkForm() {
     return myInterpreterForm;
   }
