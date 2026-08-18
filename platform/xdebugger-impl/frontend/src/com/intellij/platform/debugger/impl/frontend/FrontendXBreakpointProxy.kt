@@ -63,7 +63,7 @@ internal open class FrontendXBreakpointProxy(
   override val id: XBreakpointId = dto.id
 
   protected val cs = parentCs.childScope("FrontendXBreakpointProxy#$id")
-  private val sequentialExecutor = SequentialRpcRequestsExecutor.create(cs)
+  protected val sequentialExecutor = SequentialRpcRequestsExecutor.create(cs)
 
   /**
    * Updates should be performed only via [updateStateIfNeeded].
