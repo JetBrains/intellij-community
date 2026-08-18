@@ -10206,9 +10206,9 @@ jvm_import(
 )
 
 copy_file(
-    name = "dev.matkov.compose.swing/swing-ui-0.1.0-alpha03.jar_copy",
-    src = "@dev_matkov_compose_swing-swing-ui-0_1_0-alpha03_http//file",
-    out = "dev.matkov.compose.swing/swing-ui-0.1.0-alpha03.jar",
+    name = "dev.matkov.compose.swing/swing-ui-0.1.0-alpha04.jar_copy",
+    src = "@dev_matkov_compose_swing-swing-ui-0_1_0-alpha04_http//file",
+    out = "dev.matkov.compose.swing/swing-ui-0.1.0-alpha04.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -10226,15 +10226,15 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":dev_matkov_compose_swing-swing-ui-0_1_0-alpha03_http_import",
+        ":dev_matkov_compose_swing-swing-ui-0_1_0-alpha04_http_import",
         ":org_jetbrains_kotlinx-kotlinx-coroutines-swing-1_9_0_http_import",
     ],
 )
 
 jvm_import(
-    name = "dev_matkov_compose_swing-swing-ui-0_1_0-alpha03_http_import",
-    jar = "@dev_matkov_compose_swing-swing-ui-0_1_0-alpha03_http//file",
-    source_jar = "@dev_matkov_compose_swing-swing-ui-0_1_0-alpha03-sources_http//file",
+    name = "dev_matkov_compose_swing-swing-ui-0_1_0-alpha04_http_import",
+    jar = "@dev_matkov_compose_swing-swing-ui-0_1_0-alpha04_http//file",
+    source_jar = "@dev_matkov_compose_swing-swing-ui-0_1_0-alpha04-sources_http//file",
 )
 
 jvm_import(
@@ -10244,9 +10244,9 @@ jvm_import(
 )
 
 copy_file(
-    name = "dev.matkov.compose.swing/swing-ui-test-0.1.0-alpha03.jar_copy",
-    src = "@dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha03_http//file",
-    out = "dev.matkov.compose.swing/swing-ui-test-0.1.0-alpha03.jar",
+    name = "dev.matkov.compose.swing/swing-ui-test-0.1.0-alpha04.jar_copy",
+    src = "@dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha04_http//file",
+    out = "dev.matkov.compose.swing/swing-ui-test-0.1.0-alpha04.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -10272,7 +10272,7 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha03_http_import",
+        ":dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha04_http_import",
         ":org_jetbrains_kotlin-kotlin-test-2_3_20_http_import",
         ":org_jetbrains_kotlinx-kotlinx-coroutines-test-jvm-1_9_0_http_import",
         ":org_jetbrains_kotlinx-kotlinx-coroutines-swing-1_9_0_http_import",
@@ -10280,9 +10280,9 @@ java_library(
 )
 
 jvm_import(
-    name = "dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha03_http_import",
-    jar = "@dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha03_http//file",
-    source_jar = "@dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha03-sources_http//file",
+    name = "dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha04_http_import",
+    jar = "@dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha04_http//file",
+    source_jar = "@dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha04-sources_http//file",
 )
 
 jvm_import(

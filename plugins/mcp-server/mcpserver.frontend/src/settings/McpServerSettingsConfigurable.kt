@@ -37,10 +37,10 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.compose.swing.ComposeSwingSearchableConfigurable
 import com.intellij.platform.compose.swing.components.BrowserLink
 import com.intellij.platform.compose.swing.components.Comment
-import com.intellij.platform.compose.swing.components.OptionButton
 import com.intellij.platform.compose.swing.components.FormGap
 import com.intellij.platform.compose.swing.components.FormPanel
 import com.intellij.platform.compose.swing.components.FormScope
+import com.intellij.platform.compose.swing.components.OptionButton
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -153,16 +153,19 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
     FormRow(bottomGap = FormGap.SMALL) {
       // The label reads as a caption for the links that follow it, so they keep a small gap from it and
       // from each other rather than the gap that separates two unrelated controls.
-      SmallGapAfter {
-        CheckBox(
-          text = if (serverRunning) McpServerBundle.message("enable.mcp.server.when.enabled")
-          else McpServerBundle.message("enable.mcp.server"),
-          checked = enabled,
-          onCheckedChange = ::requestEnabledChange,
-        )
-      }
+      CheckBox(
+        text = if (serverRunning) McpServerBundle.message("enable.mcp.server.when.enabled")
+        else McpServerBundle.message("enable.mcp.server"),
+        checked = enabled,
+        modifier = SwingModifier.cell(smallGapAfter = true),
+        onCheckedChange = ::requestEnabledChange,
+      )
       if (enabled) {
-        SmallGapAfter { BrowserLink(text = sseUrl, url = sseUrl, modifier = SwingModifier.toolTip(sseUrl)) }
+        BrowserLink(
+          text = sseUrl,
+          url = sseUrl,
+          modifier = SwingModifier.cell(smallGapAfter = true).toolTip(sseUrl),
+        )
         BrowserLink(text = streamUrl, url = streamUrl, modifier = SwingModifier.toolTip(streamUrl))
       }
     }
@@ -259,7 +262,9 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
         addSeparator = false,
         onClick = state.onAutoConfigure,
       )
-      state.statusIcon?.let { SmallGapAfter { Label(text = "", modifier = SwingModifier.icon(it)) } }
+      state.statusIcon?.let {
+        Label(text = "", modifier = SwingModifier.cell(smallGapAfter = true).icon(it))
+      }
       if (state.statusText.isNotEmpty()) {
         if (state.statusIsComment) Comment(state.statusText) else Label(state.statusText)
       }

@@ -7974,10 +7974,10 @@ http_file(
 )
 
 http_file(
-    name = "dev_matkov_compose_swing-swing-ui-0_1_0-alpha03_http",
-    downloaded_file_path = "swing-ui-0.1.0-alpha03.jar",
-    sha256 = "df86c1035aa26ee375abb4ffd03af5b924c7755a96d4edb6559b8e0ae365f4db",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/matkov/compose/swing/swing-ui/0.1.0-alpha03/swing-ui-0.1.0-alpha03.jar",
+    name = "dev_matkov_compose_swing-swing-ui-0_1_0-alpha04_http",
+    downloaded_file_path = "swing-ui-0.1.0-alpha04.jar",
+    sha256 = "a393d998c6241014250433d4447ac3d7ba7385b1f4980ca21fa9120b419b2b02",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/matkov/compose/swing/swing-ui/0.1.0-alpha04/swing-ui-0.1.0-alpha04.jar",
 )
 
 http_file(
@@ -7988,10 +7988,10 @@ http_file(
 )
 
 http_file(
-    name = "dev_matkov_compose_swing-swing-ui-0_1_0-alpha03-sources_http",
-    downloaded_file_path = "swing-ui-0.1.0-alpha03-sources.jar",
-    sha256 = "ce12ebaa66e949c98d53d9349fb53109fed933b295eafdfbc166ac1101fcff2f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/matkov/compose/swing/swing-ui/0.1.0-alpha03/swing-ui-0.1.0-alpha03-sources.jar",
+    name = "dev_matkov_compose_swing-swing-ui-0_1_0-alpha04-sources_http",
+    downloaded_file_path = "swing-ui-0.1.0-alpha04-sources.jar",
+    sha256 = "9c4031ea97ecbbbedad940fc1ceed63bcc40cb96d09c4f0eb374faf2b5beceb8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/matkov/compose/swing/swing-ui/0.1.0-alpha04/swing-ui-0.1.0-alpha04-sources.jar",
 )
 
 http_file(
@@ -8002,10 +8002,10 @@ http_file(
 )
 
 http_file(
-    name = "dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha03_http",
-    downloaded_file_path = "swing-ui-test-0.1.0-alpha03.jar",
-    sha256 = "841f3573119049995ebd62a461b784c8ad3793306db128ff51f71265f218363d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/matkov/compose/swing/swing-ui-test/0.1.0-alpha03/swing-ui-test-0.1.0-alpha03.jar",
+    name = "dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha04_http",
+    downloaded_file_path = "swing-ui-test-0.1.0-alpha04.jar",
+    sha256 = "4a09a907787ceb8d7891062aba9d0b7cc60702e635b996f9bf272266ad7af5d3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/matkov/compose/swing/swing-ui-test/0.1.0-alpha04/swing-ui-test-0.1.0-alpha04.jar",
 )
 
 http_file(
@@ -8023,10 +8023,10 @@ http_file(
 )
 
 http_file(
-    name = "dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha03-sources_http",
-    downloaded_file_path = "swing-ui-test-0.1.0-alpha03-sources.jar",
-    sha256 = "8f30f893d3595cca60d5e5edf9640bcb04ecabe0317527a7e7b73b645ad34354",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/matkov/compose/swing/swing-ui-test/0.1.0-alpha03/swing-ui-test-0.1.0-alpha03-sources.jar",
+    name = "dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha04-sources_http",
+    downloaded_file_path = "swing-ui-test-0.1.0-alpha04-sources.jar",
+    sha256 = "3d07648085b0c555c475196e77c369def76c3d1070de37546539d41469d14c9a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/matkov/compose/swing/swing-ui-test/0.1.0-alpha04/swing-ui-test-0.1.0-alpha04-sources.jar",
 )
 
 http_file(

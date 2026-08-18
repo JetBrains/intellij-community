@@ -4,13 +4,13 @@ package com.intellij.platform.compose.swing.components
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.intellij.ui.SearchTextField as IdeaSearchTextField
 import com.intellij.ui.components.JBTextField
 import org.jetbrains.compose.swing.test.onNodeOfType
 import org.jetbrains.compose.swing.test.runComposeSwingTest
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import com.intellij.ui.SearchTextField as IdeaSearchTextField
 
 class SearchTextFieldTest {
 

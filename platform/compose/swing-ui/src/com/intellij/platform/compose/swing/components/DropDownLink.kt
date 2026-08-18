@@ -5,18 +5,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.ui.components.DropDownLink as IdeaDropDownLink
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.compose.swing.SwingNode
-import org.jetbrains.compose.swing.declare
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.modifier.listener.listener
-import org.jetbrains.compose.swing.rememberAppliedValue
+import org.jetbrains.compose.swing.node.SwingNode
+import org.jetbrains.compose.swing.node.declare
+import org.jetbrains.compose.swing.node.rememberAppliedValue
 import java.awt.event.ItemEvent
 import java.awt.event.ItemListener
 import javax.swing.AbstractButton
+import com.intellij.ui.components.DropDownLink as IdeaDropDownLink
 
 /**
  * A link that drops a list of [items] down when clicked and stands for the item currently chosen.

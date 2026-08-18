@@ -4,12 +4,12 @@ package com.intellij.platform.compose.swing.components
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.intellij.ui.components.ActionLink as IdeaActionLink
 import org.jetbrains.compose.swing.test.runComposeSwingTest
 import org.jetbrains.compose.swing.test.screenshot.assertImageMatches
 import org.jetbrains.compose.swing.test.screenshot.captureToImage
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import com.intellij.ui.components.ActionLink as IdeaActionLink
 
 class ActionLinkTest {
 

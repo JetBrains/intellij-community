@@ -6,12 +6,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.compose.swing.SwingNode
-import org.jetbrains.compose.swing.declare
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.modifier.listener.actionListener
-import org.jetbrains.compose.swing.rememberAppliedValue
+import org.jetbrains.compose.swing.node.SwingNode
+import org.jetbrains.compose.swing.node.declare
+import org.jetbrains.compose.swing.node.rememberAppliedValue
 import java.awt.event.ActionListener
 import com.intellij.util.ui.ThreeStateCheckBox as IdeaThreeStateCheckBox
 

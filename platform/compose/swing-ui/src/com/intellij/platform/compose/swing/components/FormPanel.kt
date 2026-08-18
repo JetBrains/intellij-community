@@ -12,10 +12,11 @@ import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.compose.swing.SwingNode
-import org.jetbrains.compose.swing.core.SwingConstraint
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.applyModifier
+import org.jetbrains.compose.swing.modifier.layout.layoutConstraint
+import org.jetbrains.compose.swing.node.SwingNode
+import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import com.intellij.ui.TitledSeparator as IdeaTitledSeparator
@@ -38,7 +39,7 @@ import com.intellij.ui.TitledSeparator as IdeaTitledSeparator
  *             FormRow("Host:") { TextField(host, onValueChange = { host = it }) }
  *         }
  *     }
- *     FormRow("Log:", resizable = true) { FillWidth { LogView() } }
+ *     FormRow("Log:", resizable = true) { LogView(SwingModifier.cell(fillWidth = true)) }
  * }
  * ```
  *
@@ -56,7 +57,7 @@ import com.intellij.ui.TitledSeparator as IdeaTitledSeparator
  * | Kotlin UI DSL | here |
  * |---|---|
  * | `row("Name:") { textField() }` | `FormRow("Name:") { TextField(name, ::setName) }` |
- * | `cell(c).align(AlignX.FILL)` | `FillWidth { C() }` |
+ * | `cell(c).align(AlignX.FILL)` | `C(SwingModifier.cell(fillWidth = true))` |
  * | `.comment("...")`, `.rowComment("...")` | `FormRow(comment = "...")` |
  * | `.resizableRow()` | `FormRow(resizable = true)` |
  * | `.topGap(TopGap.SMALL)`, `.bottomGap(...)` | `FormRow(topGap = FormGap.SMALL)`, `bottomGap = ...` |
@@ -116,8 +117,9 @@ public sealed interface FormScope {
    * every other row. A row without a label lays its controls out independently of the other rows.
    *
    * Each control [content] emits takes a column of the row, in the order they are emitted; how a control
-   * looks is its own `modifier`'s business. [resizable] gives the row the vertical space the form has left
-   * over, which is what a row holding a list or a log wants.
+   * looks is its own `modifier`'s business, and [FormRowScope.cell] is what a control says about the cell
+   * it is given. [resizable] gives the row the vertical space the form has left over, which is what a row
+   * holding a list or a log wants.
    *
    * [topGap] and [bottomGap] set the row apart from its neighbours, for a row that starts a block of its
    * own without a group's separator to announce it. Two neighbours that both ask are one gap apart, not
@@ -202,32 +204,35 @@ public enum class FormGap {
 /**
  * What a [FormScope.FormRow] holds: the controls of that row, emitted in the order they take its columns.
  *
+ * A control that wants nothing of its cell is emitted plainly; one that does says so with [cell] on its own
+ * modifier.
+ *
  * @see com.intellij.ui.dsl.builder.Row
  */
 @ApiStatus.Experimental
 public sealed interface FormRowScope {
   /**
-   * A control that fills the width it is given rather than the width it asks for - a text field that
-   * should reach the edge of the page, a scroll pane, a table.
+   * What this control asks of the cell it is given.
    *
-   * A comment or a label that wraps to the width it is given already fills without being asked.
+   * [fillWidth] gives it the width of the cell rather than the width it asks for - a text field that should
+   * reach the edge of the page, a scroll pane, a table. A comment or a label that wraps to the width it is
+   * given already fills without being asked.
+   *
+   * [smallGapAfter] leaves only a small gap to the control after it, rather than the gap that separates two
+   * unrelated ones - an icon standing before the text it belongs to. The gap is
+   * [com.intellij.ui.dsl.builder.SpacingConfiguration.horizontalSmallGap], and a control at the end of its
+   * row keeps no gap either way.
+   *
+   * A control declares its cell once: a chain carrying two of these keeps the last, as any two placements
+   * on one chain do.
    *
    * @see com.intellij.ui.dsl.builder.AlignX.FILL
-   */
-  @Composable
-  public fun FillWidth(content: @Composable () -> Unit)
-
-  /**
-   * A control that keeps only a small gap from the control after it, rather than the gap that separates two
-   * unrelated ones - an icon standing before the text it belongs to.
-   *
-   * The gap is [com.intellij.ui.dsl.builder.SpacingConfiguration.horizontalSmallGap], and a control at the
-   * end of its row keeps no gap either way.
-   *
    * @see com.intellij.ui.dsl.builder.RightGap.SMALL
    */
-  @Composable
-  public fun SmallGapAfter(content: @Composable () -> Unit)
+  public fun SwingModifier.cell(
+    fillWidth: Boolean = false,
+    smallGapAfter: Boolean = false,
+  ): SwingModifier
 }
 
 /**
@@ -239,53 +244,55 @@ public sealed interface FormRowScope {
 private fun newFormLayout(): GridLayout =
   FormGridLayout().apply { respectMinimumSize = true }
 
-// --- What a component emits alongside itself ----------------------------------------------------
+// --- What a component says about the row it is in -----------------------------------------------
 
 /**
  * The identity of a group, for as long as it is declared, and where it stands in the form around it.
  * [parent] is the group it is nested in, or `null` for a group of the form itself.
  *
- * A group has no component of its own - it is a grid - so the form learns of it only from the slots of
- * the components inside it.
+ * A group has no component of its own - it is a grid - so the form learns of it only from the rows inside
+ * it.
  */
 internal class FormGroupToken(val parent: FormGroupToken?, val indent: Int)
 
 /**
- * The identity of a row, for as long as it is declared. It lives with the row: a row that goes takes its
- * identity with it, and a row that stays keeps the same one however the rows around it change.
+ * What a component the form itself emits says about the row it opens or closes. It travels as the
+ * component's layout constraint, so the form reads its structure back off the panel and the grid is
+ * rebuilt whenever any of it changes.
+ *
+ * A control the caller emits carries a [FormCellMark] or nothing at all, and belongs to whichever row is
+ * open where it stands - which is what makes the panel's own child order, the order the components were
+ * composed in, the whole of what the form is read from.
  */
-internal class FormRowToken
+internal sealed interface FormMark
 
 /**
- * What a component is in the form it was emitted into: which group and row it belongs to, and what part it
- * plays there. The form reads these off its children and works the grid out from all of them together.
- *
- * A row's own properties travel on every slot of that row, so the form learns them from whichever it
- * reads first. Two slots that say the same thing are equal, so a recomposition that changes nothing
- * leaves the component's placement untouched.
+ * Opens a row. The component carrying it is the row's label when [labeled], and otherwise a
+ * [FormRowBoundary] that marks where the row begins.
  */
-internal data class FormSlot(
+internal data class FormRowMark(
   val group: FormGroupToken?,
-  val row: FormRowToken,
-  val role: FormRole,
+  val labeled: Boolean,
   val indent: Int,
   val resizable: Boolean,
-  val topGap: FormGap? = null,
-  val bottomGap: FormGap? = null,
-  val fill: Boolean = false,
-  val smallGapAfter: Boolean = false,
-)
+  val topGap: FormGap?,
+  val bottomGap: FormGap?,
+) : FormMark
 
-internal enum class FormRole {
-  /** The label of a row, which lines up with the labels of the rows around it. */
-  LABEL,
+/** The comment of the row that is open, which goes under what it holds rather than under its label. */
+internal data object FormCommentMark : FormMark
 
-  /** A control of a row, taking a column of it. */
-  CONTROL,
+/**
+ * Closes the row that is open. Every row ends with one, so a component standing between two rows belongs to
+ * neither and is reported rather than taken for a control of the row above it.
+ */
+internal data object FormRowEndMark : FormMark
 
-  /** The comment under a row, which goes under what the row holds rather than under its label. */
-  COMMENT,
-}
+/** What one control asks of its cell. */
+internal data class FormCellMark(
+  val fillWidth: Boolean,
+  val smallGapAfter: Boolean,
+) : FormMark
 
 private class FormScopeInstance(
   private val group: FormGroupToken?,
@@ -300,25 +307,18 @@ private class FormScopeInstance(
     bottomGap: FormGap?,
     content: @Composable FormRowScope.() -> Unit,
   ) {
-    val row = remember { FormRowToken() }
-    val rowScope =
-      remember(group, indentLevel, row, resizable, topGap, bottomGap) {
-        FormRowScopeInstance(group, row, indentLevel, resizable, topGap, bottomGap)
-      }
+    val mark = FormRowMark(group, label != null, indentLevel, resizable, topGap, bottomGap)
 
-    if (label != null) {
-      SwingConstraint(FormSlot(group, row, FormRole.LABEL, indentLevel, resizable, topGap, bottomGap)) {
-        FormLabel(label)
-      }
-    }
-    SwingConstraint(FormSlot(group, row, FormRole.CONTROL, indentLevel, resizable, topGap, bottomGap)) {
-      rowScope.content()
-    }
+    FormRowStart(label, SwingModifier.layoutConstraint(mark))
+    FormRowScopeInstance.content()
     if (comment != null) {
-      SwingConstraint(FormSlot(group, row, FormRole.COMMENT, indentLevel, resizable, topGap, bottomGap)) {
-        Comment(comment, maxLineLength = DEFAULT_COMMENT_WIDTH)
-      }
+      Comment(
+        comment,
+        maxLineLength = DEFAULT_COMMENT_WIDTH,
+        modifier = SwingModifier.layoutConstraint(FormCommentMark),
+      )
     }
+    FormRowBoundary(SwingModifier.layoutConstraint(FormRowEndMark))
   }
 
   @Composable
@@ -334,7 +334,7 @@ private class FormScopeInstance(
 
     with(scope) {
       if (title != null) {
-        FormRow { FillWidth { FormTitledSeparator(title) } }
+        FormRow { FormTitledSeparator(title, SwingModifier.cell(fillWidth = true)) }
       }
       if (indent) FormIndent(content) else content()
     }
@@ -348,44 +348,38 @@ private class FormScopeInstance(
 
   @Composable
   override fun FormSeparator() {
-    FormRow { FillWidth { FormSeparatorComponent() } }
+    FormRow { FormSeparatorComponent(SwingModifier.cell(fillWidth = true)) }
   }
 
   @Composable
   override fun FormComment(text: @NlsContexts.DetailedDescription String) {
-    FormRow { FillWidth { Comment(text, maxLineLength = MAX_LINE_LENGTH_WORD_WRAP) } }
+    FormRow {
+      Comment(text, maxLineLength = MAX_LINE_LENGTH_WORD_WRAP, modifier = SwingModifier.cell(fillWidth = true))
+    }
   }
 }
 
-private class FormRowScopeInstance(
-  private val group: FormGroupToken?,
-  private val row: FormRowToken,
-  private val indentLevel: Int,
-  private val resizable: Boolean,
-  private val topGap: FormGap?,
-  private val bottomGap: FormGap?,
-) : FormRowScope {
-  @Composable
-  override fun FillWidth(content: @Composable () -> Unit) {
-    SwingConstraint(FormSlot(group, row, FormRole.CONTROL, indentLevel, resizable, topGap, bottomGap, fill = true)) {
-      content()
-    }
-  }
-
-  @Composable
-  override fun SmallGapAfter(content: @Composable () -> Unit) {
-    SwingConstraint(
-      FormSlot(group, row, FormRole.CONTROL, indentLevel, resizable, topGap, bottomGap, smallGapAfter = true)
-    ) {
-      content()
-    }
-  }
+/**
+ * The row scope holds nothing: a cell reaches the grid on the control's own chain, so one instance serves
+ * every row of every form.
+ */
+private object FormRowScopeInstance : FormRowScope {
+  override fun SwingModifier.cell(fillWidth: Boolean, smallGapAfter: Boolean): SwingModifier =
+    layoutConstraint(FormCellMark(fillWidth, smallGapAfter))
 }
 
 // --- The components a form supplies itself ------------------------------------------------------
 
+/**
+ * The component that opens a row: its label, or - for a row that has no label to mark it - a
+ * [FormRowBoundary].
+ */
 @Composable
-private fun FormLabel(text: @NlsContexts.Label String) {
+private fun FormRowStart(text: @NlsContexts.Label String?, modifier: SwingModifier) {
+  if (text == null) {
+    FormRowBoundary(modifier)
+    return
+  }
   SwingNode(
     factory = {
       JLabel().apply {
@@ -395,22 +389,41 @@ private fun FormLabel(text: @NlsContexts.Label String) {
       }
     },
     // A label spells a mnemonic the way every other IDE label does, with an ampersand before the letter.
-    update = { set(text) { this.text = BundleBase.replaceMnemonicAmpersand(it) } },
+    update = {
+      set(text) { this.text = BundleBase.replaceMnemonicAmpersand(it) }
+      applyModifier(modifier)
+    },
   )
 }
 
+/**
+ * Where a row begins or ends. The form is read off its panel's children in the order they were composed in,
+ * and a row is the span between its boundaries; a boundary is given no cell, so it has no size, paints
+ * nothing and takes no focus.
+ */
 @Composable
-private fun FormSeparatorComponent() {
+private fun FormRowBoundary(modifier: SwingModifier) {
+  SwingNode(factory = { FormRowBoundaryComponent() }, update = { applyModifier(modifier) })
+}
+
+internal class FormRowBoundaryComponent : JComponent()
+
+@Composable
+private fun FormSeparatorComponent(modifier: SwingModifier) {
   SwingNode(
     factory = { SeparatorComponent(0, 0, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), null) },
+    update = { applyModifier(modifier) },
   )
 }
 
 @Composable
-private fun FormTitledSeparator(title: @NlsContexts.Separator String) {
+private fun FormTitledSeparator(title: @NlsContexts.Separator String, modifier: SwingModifier) {
   // A titled separator draws space of its own above and below, and a form decides that space.
   SwingNode(
     factory = { IdeaTitledSeparator().apply { border = null } },
-    update = { set(title) { this.text = it } },
+    update = {
+      set(title) { this.text = it }
+      applyModifier(modifier)
+    },
   )
 }

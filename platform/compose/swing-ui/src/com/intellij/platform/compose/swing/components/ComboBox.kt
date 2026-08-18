@@ -4,22 +4,22 @@ package com.intellij.platform.compose.swing.components
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import com.intellij.openapi.ui.ComboBox as IdeaComboBox
 import com.intellij.openapi.util.Key
 import com.intellij.ui.ClientProperty
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.compose.swing.SwingNode
-import org.jetbrains.compose.swing.SwingNodeUpdater
-import org.jetbrains.compose.swing.declare
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.modifier.listener.actionListener
-import org.jetbrains.compose.swing.rememberAppliedValue
+import org.jetbrains.compose.swing.node.SwingNode
+import org.jetbrains.compose.swing.node.SwingNodeUpdater
+import org.jetbrains.compose.swing.node.declare
+import org.jetbrains.compose.swing.node.rememberAppliedValue
 import java.awt.event.ActionListener
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComboBox
 import javax.swing.ListCellRenderer
+import com.intellij.openapi.ui.ComboBox as IdeaComboBox
 
 /**
  * A drop-down of [items] the user picks one of, on the IDE's own combo box rather than a plain

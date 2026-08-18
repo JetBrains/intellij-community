@@ -5,13 +5,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.components.ActionLink as IdeaActionLink
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.compose.swing.SwingNode
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.modifier.listener.actionListener
+import org.jetbrains.compose.swing.node.SwingNode
 import java.awt.event.ActionListener
+import com.intellij.ui.components.ActionLink as IdeaActionLink
 
 /**
  * @see com.intellij.ui.components.ActionLink

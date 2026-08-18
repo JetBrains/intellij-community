@@ -7,8 +7,8 @@ import androidx.compose.runtime.setValue
 import org.jetbrains.compose.swing.test.onNodeOfType
 import org.jetbrains.compose.swing.test.runComposeSwingTest
 import org.junit.jupiter.api.Test
-import com.intellij.ui.TitledSeparator as IdeaTitledSeparator
 import kotlin.test.assertEquals
+import com.intellij.ui.TitledSeparator as IdeaTitledSeparator
 
 class TitledSeparatorTest {
 

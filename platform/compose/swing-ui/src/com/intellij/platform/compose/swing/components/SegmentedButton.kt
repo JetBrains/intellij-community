@@ -15,13 +15,13 @@ import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.compose.swing.SwingNode
-import org.jetbrains.compose.swing.declare
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.modifier.listener.actionListener
 import org.jetbrains.compose.swing.modifier.listener.listener
-import org.jetbrains.compose.swing.rememberAppliedValue
+import org.jetbrains.compose.swing.node.SwingNode
+import org.jetbrains.compose.swing.node.declare
+import org.jetbrains.compose.swing.node.rememberAppliedValue
 import java.awt.event.ActionListener
 import java.util.Vector
 import javax.swing.DefaultComboBoxModel

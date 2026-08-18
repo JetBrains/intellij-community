@@ -32,9 +32,9 @@ import javax.swing.JComponent
  *
  * A component cannot be given a cell as it arrives, because where it belongs depends on the whole form: the
  * column count is the widest row's, a group has columns of its own, and the space between two rows is the
- * larger of what the two ask for. So a component arrives saying where it was declared and what it plays there
- * - see [FormSlot] - and the grid is built from all of them together, as late as the first measurement and
- * again whenever they change.
+ * larger of what the two ask for. So the components arrive in the order they were declared in, each saying
+ * what it is - see [FormMark] - and the grid is built from all of them together, as late as the first
+ * measurement and again whenever they change.
  *
  * Where the cells then go is not decided here: the form is handed to [buildGridForm], the same code
  * `panel { }` is laid out by, so a page written in Compose is laid out by the rules every other settings page
@@ -194,7 +194,7 @@ internal class FormGridLayout : GridLayout() {
    * it replaces holds one per state and hides all but the applicable one, so the same comment that fills a
    * middle column there would fill to the end of the row here - and a row whose last cell claims the rest of
    * the width stands 3px narrower and shorter than its neighbours. A row that wants it says
-   * [FormRowScope.FillWidth].
+   * [FormRowScope.cell] with `fillWidth`.
    */
   private fun JComponent.wrapsToTheWidthItIsGiven(): Boolean =
     this is DslLabel && maxLineLength == MAX_LINE_LENGTH_WORD_WRAP
@@ -219,42 +219,66 @@ internal class FormGridLayout : GridLayout() {
     )
 
   /**
-   * Reads the form's declared structure off the children of [parent]: each names the row it was declared in
-   * and the group that row belongs to, so the rows and the groups are what the children say they are. They
-   * arrive in the order they were composed in, which is the order they were declared in, so the items of a
-   * group and the controls of a row come out in that order too.
+   * Reads the form's declared structure off the children of [parent], in the order they were composed in.
+   *
+   * A component the form itself emitted carries a [FormMark] saying what it is: [FormRowMark] opens a row -
+   * as its label, or as a boundary standing in for a row that has none - [FormCommentMark] is that row's
+   * comment, and [FormRowEndMark] closes it. Everything between the two boundaries is a control of that row,
+   * taking a column of it and asking of its cell whatever [FormCellMark] says.
+   *
+   * A component standing outside every row belongs nowhere, and is reported rather than shown in a place it
+   * was not declared in.
    */
   private fun readItems(parent: Container): List<FormItem> {
     val root = mutableListOf<FormItem>()
     val groups = IdentityHashMap<FormGroupToken, FormGroupContent>()
-    val rows = IdentityHashMap<FormRowToken, FormRowContent>()
+    var open: FormRowContent? = null
 
     for (component in parent.components) {
       val child = component as? JComponent
-      val slot = child?.let { marks[it] } as? FormSlot
-      if (child == null || slot == null) {
-        // Reported the way the rest of the grid reports a form it cannot make sense of: this runs from the
-        // layout of a page, and a page missing one component is worth more to whoever is looking at it than
-        // an exception thrown again on every measurement.
-        errorInInternalOrLogWarn("Every component of a form belongs to a row. Emit this one inside FormRow { ... }: $component")
+      if (child == null) {
+        reportOrphan(component)
         continue
       }
 
-      val row =
-        rows.getOrPut(slot.row) {
-          FormRowContent(slot.indent, slot.resizable, slot.topGap, slot.bottomGap)
-            .also { itemsOf(slot.group, root, groups) += it }
-        }
+      val mark = marks[child]
+      if (mark is FormRowMark) {
+        val row = FormRowContent(mark.indent, mark.resizable, mark.topGap, mark.bottomGap)
+        if (mark.labeled) row.label = child
+        itemsOf(mark.group, root, groups) += row
+        open = row
+        continue
+      }
+      if (mark == FormRowEndMark) {
+        open = null
+        continue
+      }
 
-      when (slot.role) {
-        FormRole.LABEL -> row.label = child
-        FormRole.CONTROL -> row.cells += FormCellContent(child, slot.fill, slot.smallGapAfter)
+      val row = open
+      if (row == null) {
+        reportOrphan(child)
+        continue
+      }
+      when (mark) {
         // The only comment a form makes is the one FormRow asks for, and that is a DslLabel.
-        FormRole.COMMENT -> row.comment = child as DslLabel
+        FormCommentMark -> row.comment = child as DslLabel
+        is FormCellMark -> row.cells += FormCellContent(child, mark.fillWidth, mark.smallGapAfter)
+        else -> row.cells += FormCellContent(child, fill = false, smallGapAfter = false)
       }
     }
 
     return root
+  }
+
+  /**
+   * Reported the way the rest of the grid reports a form it cannot make sense of: this runs from the layout
+   * of a page, and a page missing one component is worth more to whoever is looking at it than an exception
+   * thrown again on every measurement.
+   */
+  private fun reportOrphan(component: Component) {
+    errorInInternalOrLogWarn(
+      "Every component of a form belongs to a row. Emit this one inside FormRow { ... }: $component"
+    )
   }
 
   /**

@@ -12,7 +12,6 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import javax.swing.JCheckBox
 import javax.swing.JComponent
@@ -20,9 +19,12 @@ import javax.swing.JComponent
 /**
  * What Settings search can find on the MCP page.
  *
- * Both tests are disabled because the page composes only once it reaches a window, and the search traversal
- * builds pages off-screen and never shows them - so it walks an empty panel. They are written against the
- * behaviour that is wanted, not the behaviour there is, and they are what says so when the mount arrives.
+ * The traversal builds a page off-screen and never shows it, so what it reads is whatever the page holds
+ * before it reaches a window - which for a Compose page is everything, because the composition runs on the
+ * call that builds it.
+ *
+ * What it reads is the components the page holds, so an option the page does not compose is not indexed. The
+ * page composes the groups behind the server being enabled, and these run against a page with it off.
  */
 @TestApplication
 class McpServerSettingsSearchTest {
@@ -30,28 +32,22 @@ class McpServerSettingsSearchTest {
   private fun optionsOf(configurable: McpServerSettingsConfigurable, component: JComponent): Set<OptionDescription> =
     mutableSetOf<OptionDescription>().also { SearchUtil.processComponent(configurable, it, component, false) }
 
-  // TODO Enable once compose-swing-ui exposes a public mount-immediately entry point and
-  //  ComposeSwingSearchableConfigurable.createComponent mounts synchronously. Until then the traversal sees
-  //  no components and this finds nothing.
-  @Disabled("The page composes when it reaches a window, so an off-screen traversal indexes nothing")
   @Test
   fun theOptionsOnThePageAreIndexed(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     val configurable = McpServerSettingsConfigurable()
     try {
-      val options = optionsOf(configurable, configurable.createComponent())
-      val labels = options.mapNotNull { it.option }
+      // An option is indexed once per word of its text, and every one of them carries the whole text as
+      // the hit, which is what the search results show.
+      val hits = optionsOf(configurable, configurable.createComponent()).map { it.hit }
 
-      assertThat(labels).anyMatch { it.contains(McpServerBundle.message("settings.enable.mcp.server"), ignoreCase = true) }
-      assertThat(labels).anyMatch { it.contains(McpServerBundle.message("settings.enable.brave.mode"), ignoreCase = true) }
+      assertThat(hits).contains(McpServerBundle.message("enable.mcp.server"))
+      assertThat(hits).contains(McpServerBundle.message("settings.terminal.promotion.show"))
     }
     finally {
       configurable.disposeUIResources()
     }
   }
 
-  // TODO Enable together with the test above - spotlight walks the live Swing tree, so it has the same
-  //  dependency on the page having composed.
-  @Disabled("The page composes when it reaches a window, so there is nothing for spotlight to walk")
   @Test
   fun spotlightHighlightsARealCheckBox(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     val configurable = McpServerSettingsConfigurable()
@@ -64,7 +60,7 @@ class McpServerSettingsSearchTest {
         ComponentHighlightingListener { component, _ -> highlighted += component },
       )
       try {
-        SearchUtil.lightOptions(configurable, component, "brave")
+        SearchUtil.lightOptions(configurable, component, "terminal")
       }
       finally {
         connection.disconnect()

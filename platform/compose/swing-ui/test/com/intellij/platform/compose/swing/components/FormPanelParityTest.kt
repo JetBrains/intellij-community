@@ -13,9 +13,10 @@ import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
-import org.jetbrains.compose.swing.SwingNode
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.appearance.testTag
+import org.jetbrains.compose.swing.modifier.applyModifier
+import org.jetbrains.compose.swing.node.SwingNode
 import org.jetbrains.compose.swing.test.runComposeSwingTest
 import org.jetbrains.compose.swing.test.screenshot.assertImagesPixelPerfect
 import org.jetbrains.compose.swing.test.screenshot.captureToImage
@@ -38,7 +39,7 @@ import kotlin.test.assertTrue
 /**
  * Asserts that a form built with [FormPanel] is laid out exactly as the same form built with `panel {}`.
  *
- * The platform is its own reference. Both sides are built by the same
+ * The platform is its own reference. Both sides are laid out by the same
  * [com.intellij.ui.dsl.builder.impl.buildGridForm] and measured by the same grid, so nothing either of
  * them shares can break this test. What it reports is a form described wrongly: [FormGridLayout] reading a
  * row, a group or a comment off the children as something other than what the `panel {}` declaration beside
@@ -104,10 +105,10 @@ class FormPanelParityTest {
       }
     },
     form = {
-      FormRow("Filled:") { FillWidth { TextFieldControl() } }
-      FormRow { FillWidth { TextFieldControl() } }
+      FormRow("Filled:") { TextFieldControl(SwingModifier.cell(fillWidth = true)) }
+      FormRow { TextFieldControl(SwingModifier.cell(fillWidth = true)) }
       FormRow("Filled, then not:") {
-        FillWidth { TextFieldControl() }
+        TextFieldControl(SwingModifier.cell(fillWidth = true))
         LabelControl("after")
       }
     },
@@ -237,7 +238,7 @@ class FormPanelParityTest {
    * the controls it was written with, where the row it replaces holds one comment per state and hides all but
    * one, so a comment that fills a middle column there fills to the end of the row here - and a row whose last
    * cell claims the rest of the width stands 3px narrower and shorter than the rows around it. A row that
-   * wants the width says `FillWidth`.
+   * wants the width says `cell(fillWidth = true)`.
    *
    * Which is why only the `panel {}` side names a line length: it fills whenever the length is
    * [com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP], so it has to be told not to. `Comment` keeps that
@@ -279,7 +280,7 @@ class FormPanelParityTest {
     form = {
       FormRow {
         TextFieldControl()
-        SmallGapAfter { IconControl() }
+        IconControl(SwingModifier.cell(smallGapAfter = true))
         Comment("Something is wrong with it")
       }
       FormRow {
@@ -379,7 +380,7 @@ class FormPanelParityTest {
       row("After:") { cell(newTextField()) }
     },
     form = {
-      FormRow("Log:", resizable = true) { FillWidth { ScrollPaneControl() } }
+      FormRow("Log:", resizable = true) { ScrollPaneControl(SwingModifier.cell(fillWidth = true)) }
       FormRow("After:") { TextFieldControl() }
     },
   )
@@ -449,7 +450,11 @@ class FormPanelParityTest {
    */
   private fun assertBoundsMatch(dslPanel: JComponent, formPanel: JComponent) {
     val expected = dslPanel.components.groupBy(::kindOf)
-    val actual = formPanel.components.groupBy(::kindOf)
+    // A row boundary is bookkeeping rather than a component of the form: it is given no cell, so it has no
+    // bounds to compare and the screenshot the two sides are also held to is what says it draws nothing.
+    val actual = formPanel.components
+      .filterNot { it is FormRowBoundaryComponent }
+      .groupBy(::kindOf)
 
     assertEquals(expected.keys, actual.keys, "the two forms hold different kinds of component")
     for ((kind, expectedOfKind) in expected) {
@@ -498,19 +503,24 @@ class FormPanelParityTest {
   private fun newIcon(): JLabel = JBLabel(AllIcons.General.Error)
 
   @Composable
-  private fun TextFieldControl() = SwingNode(factory = { newTextField() })
+  private fun TextFieldControl(modifier: SwingModifier = SwingModifier) =
+    SwingNode(factory = { newTextField() }, update = { applyModifier(modifier) })
 
   @Composable
-  private fun CheckBoxControl(text: String) = SwingNode(factory = { newCheckBox(text) })
+  private fun CheckBoxControl(text: String, modifier: SwingModifier = SwingModifier) =
+    SwingNode(factory = { newCheckBox(text) }, update = { applyModifier(modifier) })
 
   @Composable
-  private fun LabelControl(text: String) = SwingNode(factory = { newLabel(text) })
+  private fun LabelControl(text: String, modifier: SwingModifier = SwingModifier) =
+    SwingNode(factory = { newLabel(text) }, update = { applyModifier(modifier) })
 
   @Composable
-  private fun ScrollPaneControl() = SwingNode(factory = { newScrollPane() })
+  private fun ScrollPaneControl(modifier: SwingModifier = SwingModifier) =
+    SwingNode(factory = { newScrollPane() }, update = { applyModifier(modifier) })
 
   @Composable
-  private fun IconControl() = SwingNode(factory = { newIcon() })
+  private fun IconControl(modifier: SwingModifier = SwingModifier) =
+    SwingNode(factory = { newIcon() }, update = { applyModifier(modifier) })
 }
 
 private const val FORM_TAG = "form-under-test"

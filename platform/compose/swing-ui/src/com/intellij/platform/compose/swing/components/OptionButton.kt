@@ -10,10 +10,10 @@ import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.compose.swing.SwingNode
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.modifier.listener.actionListener
+import org.jetbrains.compose.swing.node.SwingNode
 import java.awt.event.ActionListener
 
 /**

@@ -2,26 +2,31 @@
 package com.intellij.platform.compose.swing
 
 import androidx.compose.runtime.Composable
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.newEditor.ExternalUpdateRequest
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.DisposableHandle
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.compose.swing.annotations.InternalSwingUiApi
+import org.jetbrains.compose.swing.core.SwingRecomposer
+import org.jetbrains.compose.swing.setContent
+import java.awt.BorderLayout
 import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
 import javax.swing.JComponent
+import javax.swing.JPanel
 import kotlin.reflect.KMutableProperty0
 
 /**
  * A [SearchableConfigurable] whose UI is rendered with the Swing-Compose runtime.
  *
  * Subclasses implement [ComposeContent] and provide [getId]/[getDisplayName]; the composition is
- * hosted and disposed by [composeSwingPanel].
+ * hosted and disposed by the page, and composes as the page is built rather than when it is shown, so
+ * Settings search finds what is on a page it never displayed.
  *
  * The page stands where a page written with `panel { }` stands.
  *
@@ -34,10 +39,12 @@ import kotlin.reflect.KMutableProperty0
  * @see com.intellij.openapi.options.BoundSearchableConfigurable
  */
 @ApiStatus.Experimental
+@OptIn(InternalSwingUiApi::class)
 public abstract class ComposeSwingSearchableConfigurable : SearchableConfigurable, Configurable.NoMargin {
   private val bindings = mutableListOf<SettingState<*>>()
-  private var uiDisposable: Disposable? = null
   private var page: JComponent? = null
+  private var composition: DisposableHandle? = null
+  private var recomposer: SwingRecomposer? = null
 
   /** Content of this configurable. */
   @Composable
@@ -60,14 +67,19 @@ public abstract class ComposeSwingSearchableConfigurable : SearchableConfigurabl
     SettingState(get, set).also { bindings += it }
 
   final override fun createComponent(): JComponent {
-    val uiDisposable = Disposer.newDisposable(javaClass.name)
-    this.uiDisposable = uiDisposable
-    return composeSwingPanel(uiDisposable) { ComposeContent() }
-      // The Settings dialog margins a page by the runtime type and the layout of the component it is handed,
-      // which a panel hosting a composition cannot be, so the page states its own margins and opts out of the
-      // dialog's with NoMargin.
-      .apply { addContainerListener(PageMargins) }
-      .also { page = it }
+    // The Settings dialog margins a page by the runtime type and the layout of the component it is handed,
+    // which a panel hosting a composition cannot be, so the page states its own margins and opts out of the
+    // dialog's with NoMargin.
+    val panel = JPanel(BorderLayout()).apply { addContainerListener(PageMargins) }
+    // A runtime of the page's own, named as the parent of the mount, is what composes the content on this
+    // call: a mount left to resolve its parent from the Swing tree waits for a window, and Settings search
+    // builds a page and walks it without ever showing it. Content that is only ever shown stays on the
+    // runtime its window shares, which is what composeSwingPanel gives it.
+    val recomposer = SwingRecomposer.create(panel)
+    this.recomposer = recomposer
+    composition = panel.setContent(recomposer.compositionContext) { ComposeContent() }
+    page = panel
+    return panel
   }
 
   /**
@@ -76,16 +88,16 @@ public abstract class ComposeSwingSearchableConfigurable : SearchableConfigurabl
    * `super`.
    */
   override fun disposeUIResources() {
-    uiDisposable?.let(Disposer::dispose)
-    uiDisposable = null
+    composition?.dispose()
+    composition = null
+    recomposer?.dispose()
+    recomposer = null
     page = null
   }
 
   /**
    * The first component on the page that can take focus, which is what the dialog focuses when the page is
    * opened. A page whose first field is not the one to start in overrides this.
-   *
-   * The page composes when it reaches a window, so this returns `null` for a page that has not been shown.
    */
   override fun getPreferredFocusedComponent(): JComponent? =
     page?.let { IdeFocusTraversalPolicy.getPreferredFocusedComponent(it) }

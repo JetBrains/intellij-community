@@ -4,13 +4,12 @@ package com.intellij.platform.compose.swing.components
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
-import com.intellij.testFramework.junit5.TestApplication
-import org.jetbrains.compose.swing.SwingNode
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.appearance.name
 import org.jetbrains.compose.swing.modifier.appearance.testTag
 import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.modifier.layout.visible
+import org.jetbrains.compose.swing.node.SwingNode
 import org.jetbrains.compose.swing.test.ComposeSwingTest
 import org.jetbrains.compose.swing.test.runComposeSwingTest
 import org.junit.jupiter.api.Test
@@ -34,7 +33,6 @@ import kotlin.test.assertTrue
  * used to be. Each structure here is reached by more than one route, and the layout it produces has to be
  * the same every time it is reached, whatever the form held in between.
  */
-@TestApplication
 class FormPanelStructureTest {
 
   @Test
@@ -201,6 +199,28 @@ class FormPanelStructureTest {
 
     assertNotEquals(packed, form().layOut(spareHeight = 100).describeComponents(), "the row takes the height it now asks for")
     assertSame(field, onNodeWithTag("log").fetch<JTextField>(), "and keeps the component it was already holding")
+  }
+
+  @Test
+  fun changingWhatAControlAsksOfItsCellLaysItOutAgainWithoutTakingItOut() = runComposeSwingTest {
+    val fill = mutableStateOf(false)
+
+    setContent {
+      Form {
+        FormRow("Log:") {
+          TextFieldControl("log", if (fill.value) SwingModifier.cell(fillWidth = true) else SwingModifier)
+        }
+      }
+    }
+
+    val field = onNodeWithTag("log").fetch<JTextField>()
+    val asked = form().layOut().describeComponents()
+
+    fill.value = true
+    awaitIdle()
+
+    assertNotEquals(asked, form().layOut().describeComponents(), "the control takes the width it now asks for")
+    assertSame(field, onNodeWithTag("log").fetch<JTextField>(), "and is the component it already was")
   }
 
   // --- Helpers ----------------------------------------------------------------------------------

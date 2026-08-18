@@ -4,9 +4,9 @@ package com.intellij.platform.compose.swing.components
 import androidx.compose.runtime.Composable
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.compose.swing.SwingNode
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.applyModifier
+import org.jetbrains.compose.swing.node.SwingNode
 import com.intellij.ui.TitledSeparator as IdeaTitledSeparator
 
 /**

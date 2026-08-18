@@ -4,12 +4,12 @@ package com.intellij.platform.compose.swing.components
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.intellij.ui.components.DropDownLink as IdeaDropDownLink
 import org.jetbrains.compose.swing.test.ComposeSwingTest
 import org.jetbrains.compose.swing.test.onNodeOfType
 import org.jetbrains.compose.swing.test.runComposeSwingTest
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import com.intellij.ui.components.DropDownLink as IdeaDropDownLink
 
 class DropDownLinkTest {
 

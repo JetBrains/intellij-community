@@ -5,17 +5,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import com.intellij.ui.SearchTextField as IdeaSearchTextField
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.compose.swing.SwingNode
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.modifier.listener.listener
-import org.jetbrains.compose.swing.rememberAppliedValue
+import org.jetbrains.compose.swing.node.SwingNode
+import org.jetbrains.compose.swing.node.rememberAppliedValue
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 import javax.swing.text.Document
+import com.intellij.ui.SearchTextField as IdeaSearchTextField
 
 /**
  * A single-line search field: a text field carrying the search icon, a clear button and a drop-down of

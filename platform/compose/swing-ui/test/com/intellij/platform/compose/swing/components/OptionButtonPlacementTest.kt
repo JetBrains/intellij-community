@@ -4,7 +4,6 @@ package com.intellij.platform.compose.swing.components
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.components.JBOptionButton
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.appearance.testTag
@@ -25,7 +24,6 @@ import kotlin.test.assertEquals
  * the room it reserves. Read off the component, that reserve would depend on when the options arrived: a row
  * would shift as they loaded, and rows whose options loaded either side of a rebuild would not line up.
  */
-@TestApplication
 class OptionButtonPlacementTest {
 
   @Test

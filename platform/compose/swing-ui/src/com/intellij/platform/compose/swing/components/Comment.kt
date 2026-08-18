@@ -8,9 +8,9 @@ import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.compose.swing.SwingNode
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.applyModifier
+import org.jetbrains.compose.swing.node.SwingNode
 
 /**
  * A secondary "comment" label: smaller, dimmed text that renders HTML and opens `<a href>` links in a

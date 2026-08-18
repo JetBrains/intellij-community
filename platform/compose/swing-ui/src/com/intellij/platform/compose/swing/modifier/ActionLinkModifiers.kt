@@ -67,11 +67,13 @@ private class ActionLinkPropertyNode<V>(
   }
 }
 
-private class ActionLinkPropertyElement<V>(
+// The declared value is compared structurally, and the accessors by identity: each builder passes
+// non-capturing lambdas, so a rebuilt element carries the very same pair.
+private data class ActionLinkPropertyElement<V>(
   private val value: V,
   private val read: (ActionLink) -> V,
   private val write: (ActionLink, V) -> Unit,
-) : SwingModifier.Element<ActionLink, ActionLinkPropertyNode<V>> {
+) : SwingModifier.NodeElement<ActionLink, ActionLinkPropertyNode<V>>() {
   override val targetType: Class<ActionLink> = ActionLink::class.java
 
   // Each builder declares its own write lambda (its own class), so distinct properties never share a
@@ -113,7 +115,7 @@ private sealed interface ActionLinkIcon {
     }
   }
 
-  class Custom(private val icon: Icon, private val atRight: Boolean) : ActionLinkIcon {
+  data class Custom(private val icon: Icon, private val atRight: Boolean) : ActionLinkIcon {
     override fun apply(actionLink: ActionLink) {
       actionLink.setIcon(icon, atRight)
     }
@@ -149,8 +151,8 @@ private class ActionLinkIconNode : SwingModifier.Node<ActionLink>() {
   }
 }
 
-private class ActionLinkIconElement(private val icon: ActionLinkIcon) :
-  SwingModifier.Element<ActionLink, ActionLinkIconNode> {
+private data class ActionLinkIconElement(private val icon: ActionLinkIcon) :
+  SwingModifier.NodeElement<ActionLink, ActionLinkIconNode>() {
   override val targetType: Class<ActionLink> = ActionLink::class.java
 
   override fun create(): ActionLinkIconNode = ActionLinkIconNode()

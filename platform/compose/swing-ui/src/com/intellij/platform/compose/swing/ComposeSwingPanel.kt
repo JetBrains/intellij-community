@@ -13,15 +13,17 @@ import javax.swing.JPanel
 /**
  * Creates a Swing [JComponent] hosting the given Compose [content].
  *
+ * The content joins the composition the host's own place in the Swing hierarchy resolves to: an enclosing
+ * composition when the host is nested under one, otherwise the one its window shares. Every island in a
+ * window then recomposes on that window's single recomposer and frame clock, and the clock is paced to the
+ * display the window is on. The content is mounted once the host reaches a window, and a host disposed before
+ * that mounts nothing.
+ *
  * The composition belongs to [parentDisposable] and to nothing else. It is torn down when that is
  * disposed, and never by the host leaving the Swing hierarchy, so a host that is taken out of one
  * container and put into another - a tool window whose tab is switched away and back - keeps the state it
  * remembered and the effects it had running. A host whose disposable is never disposed keeps its
  * composition for the lifetime of the process.
- *
- * The content is mounted once the host reaches a window, and a host disposed before that mounts nothing.
- * A page built off-screen therefore holds no components until it is shown, which is what settings search
- * sees when it walks a page it never displayed.
  *
  * Composable code and effects run on the EDT with no read or write lock held and `ModalityState.any()`
  * semantics. They may read and write Swing and snapshot state freely, and must not touch PSI, VFS,
@@ -40,7 +42,7 @@ public fun composeSwingPanel(
   content: @Composable () -> Unit,
 ): JComponent {
   val panel = JPanel(BorderLayout())
-  val handle = panel.setContent(content)
+  val handle = panel.setContent(content = content)
   Disposer.register(parentDisposable, Disposable { handle.dispose() })
   return panel
 }

@@ -8,8 +8,8 @@ import com.intellij.util.ui.ThreeStateCheckBox.State
 import org.jetbrains.compose.swing.test.onNodeOfType
 import org.jetbrains.compose.swing.test.runComposeSwingTest
 import org.junit.jupiter.api.Test
-import com.intellij.util.ui.ThreeStateCheckBox as IdeaThreeStateCheckBox
 import kotlin.test.assertEquals
+import com.intellij.util.ui.ThreeStateCheckBox as IdeaThreeStateCheckBox
 
 class ThreeStateCheckBoxTest {
 

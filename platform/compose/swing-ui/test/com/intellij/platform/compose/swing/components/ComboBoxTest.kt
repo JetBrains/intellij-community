@@ -4,7 +4,6 @@ package com.intellij.platform.compose.swing.components
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.intellij.openapi.ui.ComboBox as IdeaComboBox
 import org.jetbrains.compose.swing.test.onNodeOfType
 import org.jetbrains.compose.swing.test.runComposeSwingTest
 import org.junit.jupiter.api.Test
@@ -17,6 +16,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertSame
+import com.intellij.openapi.ui.ComboBox as IdeaComboBox
 
 class ComboBoxTest {
 

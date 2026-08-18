@@ -1,24 +1,28 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.compose.swing
 
+import androidx.compose.runtime.Composable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
+import org.jetbrains.compose.swing.components.Label
 import org.junit.jupiter.api.Test
 import java.awt.Component
+import java.awt.Container
+import javax.swing.JLabel
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * The lifetime of a hosted composition: it ends with the [com.intellij.openapi.Disposable] it was given,
- * and with nothing else.
+ * When a hosted composition runs, and when it ends.
  *
- * A host built away from any window holds a mount waiting for one - the state a settings page is in
- * between `createComponent()` and being shown, and the state it stays in for good if it is never shown at
- * all. Whether that waiting mount is still armed is what these tests read, because it is the part of the
- * lifetime that is observable without a display.
+ * A plain host joins the composition its window shares, so a host built away from any window holds a mount
+ * waiting for one. A page does not wait: it composes as it is built, because Settings search walks a page it
+ * never displays. Either way the lifetime ends with the [com.intellij.openapi.Disposable] the host was given,
+ * and with nothing else.
  */
 @TestApplication
 class ComposeSwingPanelTest {
@@ -26,9 +30,18 @@ class ComposeSwingPanelTest {
   private class TestConfigurable : ComposeSwingSearchableConfigurable() {
     override fun getId(): String = "test.compose.swing.host"
     override fun getDisplayName(): String = "Test"
+
+    @Composable
+    override fun ComposeContent() {
+      Label("page")
+    }
   }
 
   private val Component.awaitsAWindow: Boolean get() = hierarchyListeners.isNotEmpty()
+
+  /** The text of every label the host holds, which is what an off-screen traversal of it would read. */
+  private val Container.labels: List<String>
+    get() = components.filterIsInstance<JLabel>().map { it.text }
 
   @Test
   fun theHostIsTornDownWithTheDisposableItWasGiven() = timeoutRunBlocking(context = Dispatchers.EDT) {
@@ -54,19 +67,28 @@ class ComposeSwingPanelTest {
   }
 
   /**
-   * A page disposed before it was ever shown still owes the teardown: the mount it left waiting would
-   * compose into a page the Settings dialog has already let go of.
+   * A page the Settings dialog has never shown holds its components all the same, which is what settings
+   * search walks when it indexes the page and when it spotlights an option on it.
    */
   @Test
-  fun aDisposedPageLeavesNothingArmed() = timeoutRunBlocking(context = Dispatchers.EDT) {
+  fun anUnshownPageHoldsItsComponents() = timeoutRunBlocking(context = Dispatchers.EDT) {
     val configurable = TestConfigurable()
-    val component = configurable.createComponent()
+    try {
+      assertEquals(listOf("page"), configurable.createComponent().labels)
+    }
+    finally {
+      configurable.disposeUIResources()
+    }
+  }
 
-    assertTrue(component.awaitsAWindow, "the mount waits for the page to reach a window")
+  @Test
+  fun aDisposedPageHoldsNothing() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val configurable = TestConfigurable()
+    val page = configurable.createComponent()
 
     configurable.disposeUIResources()
 
-    assertFalse(component.awaitsAWindow, "disposing the page disarms the pending mount")
+    assertTrue(page.labels.isEmpty(), "disposing the page takes its composition down with it")
   }
 
   /** The Settings dialog builds a page again after disposing it, so disposal has to leave it buildable. */
@@ -78,10 +100,10 @@ class ComposeSwingPanelTest {
     configurable.disposeUIResources()
 
     val second = configurable.createComponent()
-    assertTrue(second.awaitsAWindow, "the rebuilt page has a mount of its own")
-    assertFalse(first.awaitsAWindow, "the page it replaced stays disposed")
+    assertEquals(listOf("page"), second.labels, "the rebuilt page composed content of its own")
+    assertTrue(first.labels.isEmpty(), "the page it replaced stays disposed")
 
     configurable.disposeUIResources()
-    assertFalse(second.awaitsAWindow)
+    assertTrue(second.labels.isEmpty())
   }
 }
