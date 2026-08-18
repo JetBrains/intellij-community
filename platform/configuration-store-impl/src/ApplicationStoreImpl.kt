@@ -32,6 +32,9 @@ import java.nio.file.Path
 const val APP_CONFIG: String = $$"$APP_CONFIG$"
 
 @Internal
+const val APP_CACHE_FILENAME: String = "app-cache.xml"
+
+@Internal
 @VisibleForTesting
 @Suppress("NonDefaultConstructor")
 open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
@@ -61,7 +64,7 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
       // at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
       Macro(APP_CONFIG, path.resolve(PathManager.OPTIONS_DIRECTORY)),
       Macro(ROOT_CONFIG, path),
-      Macro(StoragePathMacros.CACHE_FILE, getSystemDir().resolve("app-cache.xml"))
+      Macro(StoragePathMacros.CACHE_FILE, getSystemDir().resolve(APP_CACHE_FILENAME))
     ))
     isStoreInitialized = true
   }

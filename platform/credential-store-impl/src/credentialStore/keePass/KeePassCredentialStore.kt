@@ -58,7 +58,8 @@ internal class KeePassCredentialStore(
     if (dbFile.exists()) {
       val mainPassword = mainKeyStorage.load() ?: throw IncorrectMainPasswordException(isFileMissed = true)
       if (app != null) {
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(dbFile.toString())
+        VirtualFileManager.getInstance().getFileSystem(LocalFileSystem.PROTOCOL)
+          .refreshAndFindFileByPath(dbFile.toString())
       }
       loadKdbx(dbFile, KdbxPassword.createAndClear(mainPassword))
     }
