@@ -1098,6 +1098,7 @@ public final class TreeUtil {
       for (TreePath anchor : anchors) {
         // N.B.: isDescendant is very poorly named: a.isDescendant(b) means "b is a descendant of a".
         if (path.equals(anchor)) return true;
+        // Included by default, unless the node can and does tell us otherwise.
         if (anchor.isDescendant(path) && isIncludedInExpandAll(path)) return true;
         // TreeUtil won't visit children if the parent doesn't match, so ancestors of the anchors must be included.
         if (path.isDescendant(anchor)) return true;
