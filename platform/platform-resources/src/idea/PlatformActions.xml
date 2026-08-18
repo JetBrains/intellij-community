@@ -544,7 +544,6 @@
             <reference ref="ChangeMainMenuModeActionGroup"/>
             <reference ref="ViewNewToolbarAction"/>
             <reference ref="ViewObsoleteToolbarAction"/>
-            <reference ref="ViewObsoleteNavBarAction"/>
             <reference ref="ViewToolbarActionsGroup"/>
             <reference ref="ViewToolButtons"/>
             <reference ref="ViewStatusBar"/>

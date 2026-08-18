@@ -41,5 +41,31 @@
       <add-to-group group-id="EditorPopupMenu.GoTo" anchor="first"/>
       <add-to-group group-id="GoToCodeGroup" relative-to-action="SelectIn" anchor="after"/>
     </action>
+    <action id="ViewNavigationBar" class="com.intellij.platform.navbar.frontend.actions.ViewNavigationBarAction">
+      <override-text place="NavBar"/>
+      <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewToolBar"/>
+    </action>
+    <group id="NavbarLocationGroup" popup="true" class="com.intellij.platform.navbar.frontend.actions.NavBarLocationGroup">
+      <action id="NavBarLocationTop" class="com.intellij.platform.navbar.frontend.actions.NavBarTopLocationAction"/>
+      <action id="NavBarLocationBottom" class="com.intellij.platform.navbar.frontend.actions.NavBarBottomLocationAction"/>
+      <action id="NavBarLocationHide" class="com.intellij.platform.navbar.frontend.actions.HideNavBarAction"/>
+      <separator/>
+      <action id="ShowMembersInNavigationBar" class="com.intellij.platform.navbar.frontend.actions.ShowNavigationBarMembersAction"/>
+      <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewNavigationBar"/>
+    </group>
+    <action id="ViewMembersInNavigationBar" class="com.intellij.platform.navbar.frontend.actions.ViewNavigationBarMembersAction">
+      <override-text place="NavBar"/>
+      <add-to-group group-id="UIToggleActions" relative-to-action="NavbarLocationGroup" anchor="after"/>
+    </action>
+    <action id="ViewObsoleteNavBarAction" class="com.intellij.platform.navbar.frontend.actions.ViewObsoleteNavBarAction">
+      <add-to-group group-id="UIToggleActions" relative-to-action="ViewObsoleteToolbarAction" anchor="after"/>
+    </action>
+
+    <group id="OldUIViewNavigationBarGroup" searchable="false">
+      <separator/>
+      <reference ref="ViewNavigationBar"/>
+      <reference ref="ViewMembersInNavigationBar"/>
+      <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="EditSource"/>
+    </group>
   </actions>
 </idea-plugin>

@@ -188,18 +188,6 @@
     <reference ref="FixDocComment"/>
     <reference ref="QuickPreview"/>
 
-    <reference ref="ViewNavigationBar">
-      <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewToolBar"/>
-    </reference>
-
-    <reference ref="NavbarLocationGroup">
-      <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewNavigationBar"/>
-    </reference>
-
-    <reference ref="ViewMembersInNavigationBar">
-      <add-to-group group-id="UIToggleActions" relative-to-action="NavbarLocationGroup" anchor="after"/>
-    </reference>
-
     <reference ref="ViewImportPopups">
       <add-to-group group-id="EditorToggleActions" anchor="after" relative-to-action="EditorToggleShowIndentLines"/>
     </reference>
@@ -572,9 +560,6 @@
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
       <reference ref="EditSource"/>
-      <separator/>
-      <reference ref="ViewNavigationBar"/>
-      <reference ref="ViewMembersInNavigationBar"/>
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
