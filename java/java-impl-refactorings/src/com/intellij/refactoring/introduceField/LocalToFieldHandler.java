@@ -63,10 +63,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.InitializationPlace;
-import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.InitializationPlace.IN_CONSTRUCTOR;
-import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.InitializationPlace.IN_FIELD_DECLARATION;
-import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.VariableToFieldCandidatesContext;
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandService.InitializationPlace;
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandService.InitializationPlace.IN_CONSTRUCTOR;
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandService.InitializationPlace.IN_FIELD_DECLARATION;
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandService.VariableToFieldCandidatesContext;
 
 public abstract class LocalToFieldHandler {
   private static final Logger LOG = Logger.getInstance(LocalToFieldHandler.class);

@@ -175,7 +175,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
 
   private void updateInitializer(PsiElementFactory elementFactory, PsiField variable) {
     if (variable != null) {
-      if (myIntroduceFieldPanel.getInitializerPlace() == JavaIntroduceFieldService.InitializationPlace.IN_FIELD_DECLARATION) {
+      if (myIntroduceFieldPanel.getInitializerPlace() == JavaIntroduceFieldModCommandService.InitializationPlace.IN_FIELD_DECLARATION) {
         variable.setInitializer(elementFactory.createExpressionFromText(myExprText, variable));
       } else {
         variable.setInitializer(null);
@@ -188,7 +188,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
     return "IntroduceField";
   }
 
-  public JavaIntroduceFieldService.InitializationPlace getInitializerPlace() {
+  public JavaIntroduceFieldModCommandService.InitializationPlace getInitializerPlace() {
     return myIntroduceFieldPanel.getInitializerPlace();
   }
 

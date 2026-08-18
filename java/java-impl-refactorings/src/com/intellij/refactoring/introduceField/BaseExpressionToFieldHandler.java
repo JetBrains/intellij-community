@@ -80,8 +80,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.InitializationPlace;
-import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.ToFieldContext;
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandService.InitializationPlace;
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandService.ToFieldContext;
 
 public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase {
   private static final Logger LOG = Logger.getInstance(BaseExpressionToFieldHandler.class);

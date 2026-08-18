@@ -25,7 +25,7 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ItemListener;
 
-import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.InitializationPlace;
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandService.InitializationPlace;
 
 public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
   private JRadioButton myRbInConstructor;

@@ -163,16 +163,16 @@ public abstract class IntroduceFieldCentralPanel {
     return true;
   }
 
-  public abstract JavaIntroduceFieldService.InitializationPlace getInitializerPlace();
+  public abstract JavaIntroduceFieldModCommandService.InitializationPlace getInitializerPlace();
   protected abstract void initializeInitializerPlace(PsiExpression initializerExpression,
-                                                     JavaIntroduceFieldService.InitializationPlace ourLastInitializerPlace);
+                                                     JavaIntroduceFieldModCommandService.InitializationPlace ourLastInitializerPlace);
   protected abstract JComponent createInitializerPlacePanel(ItemListener itemListener, ItemListener finalUpdater);
   public abstract void setInitializeInFieldDeclaration();
 
   public abstract String getFieldVisibility();
 
   protected void initializeControls(PsiExpression initializerExpression,
-                                    JavaIntroduceFieldService.InitializationPlace ourLastInitializerPlace) {
+                                    JavaIntroduceFieldModCommandService.InitializationPlace ourLastInitializerPlace) {
     myCbFinal.setSelected(myCbFinal.isEnabled() && ourLastCbFinalState);
   }
 

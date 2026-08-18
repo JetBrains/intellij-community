@@ -18,7 +18,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
@@ -331,9 +330,9 @@ public final class IntroduceVariableUtil {
       tempExpr.putUserData(ElementToWorkOn.PREFIX, prefix);
       tempExpr.putUserData(ElementToWorkOn.SUFFIX, suffix);
 
-      Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-      RangeMarker rangeMarker = document != null ? document.createRangeMarker(startOffset, endOffset) : null;
-      tempExpr.putUserData(ElementToWorkOn.TEXT_RANGE, rangeMarker);
+      // The document of the analysed file itself: the offsets are its own, and it may be a non-physical copy, which
+      // PsiDocumentManager does not know, e.g. the copy a ModCommand updates.
+      tempExpr.putUserData(ElementToWorkOn.TEXT_RANGE, file.getFileDocument().createRangeMarker(startOffset, endOffset));
 
       if (parent != null) {
         tempExpr.putUserData(ElementToWorkOn.PARENT, parent);
@@ -487,9 +486,8 @@ public final class IntroduceVariableUtil {
         if (start != parameters.length - 1 || end != args.length - 1) return null;
         final PsiExpression expressionFromText =
           elementFactory.createExpressionFromText("new " + componentType.getCanonicalText() + "[]{" + text + "}", parent);
-        Document document = FileDocumentManager.getInstance().getDocument(containingFile.getOriginalFile().getVirtualFile());
-        if (document == null) return null;
-        final RangeMarker rangeMarker = document.createRangeMarker(startOffset, endOffset);
+        // The document of the analysed file itself, not of its original, see the marker of a partial selection above.
+        final RangeMarker rangeMarker = containingFile.getFileDocument().createRangeMarker(startOffset, endOffset);
         expressionFromText.putUserData(ElementToWorkOn.TEXT_RANGE, rangeMarker);
         expressionFromText.putUserData(ElementToWorkOn.PARENT, parent);
         return expressionFromText;
@@ -626,6 +624,9 @@ public final class IntroduceVariableUtil {
 
       LOG.assertTrue(parent != null, expr1);
       LOG.assertTrue(rangeMarker != null, expr1);
+      // The marker is compared against the text of the parent below, so the document has to have caught up with the
+      // changes made to the PSI so far, like a field added above the parent.
+      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(rangeMarker.getDocument());
       final TextRange textRange = rangeMarker.getTextRange();
       return parent.replace(createReplacement(ref.getText(), project, prefix, suffix, parent, textRange, new int[1]));
     }

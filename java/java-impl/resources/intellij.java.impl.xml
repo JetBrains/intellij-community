@@ -225,11 +225,11 @@
 
     <applicationService
       open="true"
-      serviceImplementation="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableService"/>
+      serviceImplementation="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableModCommandService"/>
 
     <applicationService
       open="true"
-      serviceImplementation="com.intellij.refactoring.introduceField.JavaIntroduceFieldService"/>
+      serviceImplementation="com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandService"/>
 
     <codeInsight.completion.command.factory language="JAVA"
                                             implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaCommandCompletionFactory"/>
