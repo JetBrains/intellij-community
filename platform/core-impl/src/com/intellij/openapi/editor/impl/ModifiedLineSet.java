@@ -16,30 +16,18 @@ import java.util.Arrays;
 
 /**
  * Minimal counterpart to {@link LineSet} for {@link DocumentModStateImpl}: tracks only the per-line
- * "modified" bit, not line offsets.
+ * "modified" bit, not line offsets. {@link LineSet#update} is the only modification-tracking method that needs
+ * offsets, to map an edit's offsets to line indices in the *old*, pre-edit text; since
+ * {@link DocumentModStateImpl#applyOp} already passes that old text in as a {@link DocumentText}, this class
+ * reuses its {@link DocumentText#lineNumber}/{@link DocumentText#lineStartOffset} instead of keeping a second
+ * copy of the offsets.
  * <p/>
- * {@link LineSet}'s own modification-tracking methods ({@link LineSet#isModified}, {@link LineSet#setModified},
- * {@link LineSet#clearModificationFlags}, {@link LineSet#getLineCount}) never read its offsets ({@code myStarts})
- * -- only {@link LineSet#update} needs them, to convert an edit's offsets into line indices for the *old*, pre-edit
- * text. Since {@link DocumentModStateImpl#withPatch} is already handed that old text as a {@link DocumentText}, this
- * class delegates those specific lookups to it ({@link DocumentText#lineNumber}, {@link DocumentText#lineStartOffset})
- * instead of keeping a second copy of the offsets: the {@link DocumentText}'s own {@code LineSet} already computed
- * them for real offset mapping, so re-deriving them here would be exactly the duplicated work this class exists to
- * avoid. This is safe because a {@link com.intellij.openapi.editor.ex.DocumentModState} and its paired
- * {@link DocumentText} are always fed the identical sequence of patches (see {@link DocumentSnapshotImpl#withPatch}),
- * so the old text's line structure is always exactly what this instance's own state was built against.
+ * Per-line separator length isn't tracked either: only the *last* line's separator is ever queried, so a single
+ * {@link #myLastLineHasSeparator} flag replaces {@link LineSet}'s per-line {@code SEPARATOR_MASK}.
  * <p/>
- * Per-line separator length ({@link LineSet}'s {@code SEPARATOR_MASK}) isn't tracked at all: every call site of
- * {@link LineSet}'s {@code hasEol}/{@code isLastEmptyLine} only ever inspects the separator of the *last* line, so a
- * single {@link #myLastLineHasSeparator} flag replaces what {@link LineSet} encodes per line.
- * <p/>
- * <b>Immutable and safe for racy publication</b>, same contract as {@link LineSet}: all fields are {@code final} and
- * the backing array is never mutated after construction -- every "mutator" returns a fresh instance. This is relied
- * upon by {@link DocumentModStateImpl}, which caches an instance in a non-volatile field.
- * <p/>
- * Public only so {@code ModifiedLineSetTest} (in the {@code intellij.platform.tests} module) can compare it
- * against {@link LineSet} directly -- same treatment as {@link LineSet#update}'s own {@link VisibleForTesting}.
- * The only real caller remains {@link DocumentModStateImpl}, in the same package and module.
+ * Immutable, like {@link LineSet}: every "mutator" returns a fresh instance. Public only so
+ * {@code ModifiedLineSetTest} can compare it against {@link LineSet} directly; the only real caller is
+ * {@link DocumentModStateImpl}.
  */
 @ApiStatus.Internal
 public final class ModifiedLineSet {
