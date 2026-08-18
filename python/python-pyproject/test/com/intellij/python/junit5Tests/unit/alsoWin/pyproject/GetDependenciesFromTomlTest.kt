@@ -8,6 +8,7 @@ import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
 import com.intellij.testFramework.common.timeoutRunBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -127,6 +128,45 @@ internal class GetDependenciesFromTomlTest {
 
     val result = getDependenciesFromToml(entries, rootIndex, specs)
     assertThat(result.map[mainName]).containsExactly(libName)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-91195"])
+  @Disabled(
+    "PY-91195: getToolSpecificDependenciesFromTomlTable reads `<dep>.path` as a single string, so an " +
+    "array-of-tables value is dropped and `main` ends up with no dependency at all. The array-aware " +
+    "half of the fix landed only in UvPyProjectManager#getUvDependencies, which runs for workspace " +
+    "members only. Enable this test with the fix; it needs no changes of its own."
+  )
+  fun `tool PathDependency as an array of tables`(@TempDir tempDir: Path): Unit = timeoutRunBlocking {
+    val mainDir = tempDir.resolve("main").createDirectories()
+    val libLinuxDir = tempDir.resolve("lib-linux").createDirectories()
+    val libWinDir = tempDir.resolve("lib-win").createDirectories()
+
+    val toml = PyProjectToml.parse("""
+      [project]
+      name = "main"
+      version = "1.0"
+
+      [tool.uv.sources]
+      lib = [
+          { path = "../lib-linux", marker = "sys_platform == 'linux'" },
+          { path = "../lib-win", marker = "sys_platform == 'win32'" },
+      ]
+    """.trimIndent())!!
+
+    val mainName = ProjectName("main")
+    val libLinuxName = ProjectName("lib-linux")
+    val libWinName = ProjectName("lib-win")
+
+    val entries = mapOf(mainName to TestProject(toml, mainDir))
+    val rootIndex = mapOf(libLinuxDir to libLinuxName, libWinDir to libWinName)
+    val specs = listOf(TomlDependencySpecification.PathDependency("tool.uv.sources"))
+
+    val result = getDependenciesFromToml(entries, rootIndex, specs)
+    // Exactness rather than containment: the defect drops array elements, so a containment check would
+    // also be satisfied by a fix that honours only the first table in the array.
+    assertThat(result.map[mainName]).containsExactlyInAnyOrder(libLinuxName, libWinName)
   }
 
   @Test
