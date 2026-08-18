@@ -3,9 +3,11 @@ package git4idea.workingTrees
 
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.vcs.test.vcsTestProjectPathFixture
 import git4idea.GitWorkingTree
 import git4idea.actions.ref.GitSingleRefAction
 import git4idea.config.GitSaveChangesPolicy
+import git4idea.test.gitPlatformContextFixture
 import git4idea.update.GitSubmoduleProjectContext
 import git4idea.update.gitSubmoduleProjectFixture
 import org.assertj.core.api.Assertions.assertThat
@@ -13,7 +15,7 @@ import org.junit.jupiter.api.Test
 
 @TestApplication
 internal class GitSubmoduleWorkingTreeTest {
-  private val contextFixture = gitWorkingTreePlatformFixture(saveChangesPolicy = GitSaveChangesPolicy.STASH)
+  private val contextFixture = gitPlatformContextFixture(vcsTestProjectPathFixture(), saveChangesPolicy = GitSaveChangesPolicy.STASH)
     .gitSubmoduleProjectFixture(checkoutSubmoduleBranch = true, updateSubmoduleRepo = true)
   private val context: GitSubmoduleProjectContext get() = contextFixture.get()
 

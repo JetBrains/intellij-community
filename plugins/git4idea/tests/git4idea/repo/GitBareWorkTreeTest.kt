@@ -2,36 +2,36 @@
 package git4idea.repo
 
 import com.intellij.testFramework.junit5.TestApplication
-import git4idea.test.GitPlatformTestContext
 import git4idea.test.cd
 import git4idea.test.cloneRepo
+import git4idea.test.gitPlatformContextFixture
 import git4idea.test.initRepo
 import git4idea.test.tac
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
-import java.nio.file.Path
 
 @TestApplication
-internal class GitBareWorkTreeTest : GitWorkTreeBaseTest() {
+internal class GitBareWorkTreeTest {
 
-  override fun GitPlatformTestContext.initMainRepo(): Path {
+  private val contextFixture = gitPlatformContextFixture().gitWorkTreeFixture {
     val sourceRepo = testNioRoot.resolve("source")
     Files.createDirectories(testNioRoot)
     initRepo(project, sourceRepo, true)
 
     val mainDir = testNioRoot.resolve("main.git")
     cloneRepo(project, sourceRepo.toString(), mainDir.toString(), true)
-    return mainDir
+    mainDir
   }
+  private val context: GitWorkTreeContext get() = contextFixture.get()
 
   // IDEA-151598
   @Test
   fun `test current revision`(): Unit = with(context) {
-    cd(myRepo)
+    cd(repo)
     val hash = tac("file.txt")
-    myRepo.update()
+    repo.update()
 
-    assertThat(myRepo.currentRevision).describedAs("Current revision identified incorrectly").isEqualTo(hash)
+    assertThat(repo.currentRevision).describedAs("Current revision identified incorrectly").isEqualTo(hash)
   }
 }

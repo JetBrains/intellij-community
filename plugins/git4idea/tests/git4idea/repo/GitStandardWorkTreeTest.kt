@@ -3,37 +3,36 @@ package git4idea.repo
 
 import com.intellij.testFramework.junit5.TestApplication
 import git4idea.branch.GitBranchUtil
-import git4idea.test.GitPlatformTestContext
 import git4idea.test.cd
 import git4idea.test.git
+import git4idea.test.gitPlatformContextFixture
 import git4idea.test.initRepo
 import git4idea.test.last
 import git4idea.test.tac
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
-import java.nio.file.Path
 
 @TestApplication
-internal class GitStandardWorkTreeTest : GitWorkTreeBaseTest() {
-
-  override fun GitPlatformTestContext.initMainRepo(): Path {
+internal class GitStandardWorkTreeTest {
+  private val contextFixture = gitPlatformContextFixture().gitWorkTreeFixture {
     val mainDir = testNioRoot.resolve("main")
     Files.createDirectories(mainDir)
     initRepo(project, mainDir, true)
-    return mainDir
+    mainDir
   }
+  private val context: GitWorkTreeContext get() = contextFixture.get()
 
   @Test
   fun `test local branches`(): Unit = with(context) {
-    cd(myMainRoot)
+    cd(mainRoot)
     val masterHead = last()
     git("checkout -b feature")
     val featureHead = tac("f.txt")
 
-    myRepo.update()
+    repo.update()
 
-    val branches = myRepo.branches
+    val branches = repo.branches
     // 'project' is created automatically by `git worktree add`
     assertThat(branches.localBranches.map { it.name })
       .describedAs("Local branches are identified incorrectly")
@@ -51,9 +50,9 @@ internal class GitStandardWorkTreeTest : GitWorkTreeBaseTest() {
     val featureHead = tac("f.txt")
     git("push origin feature")
 
-    myRepo.update()
+    repo.update()
 
-    val branches = myRepo.branches
+    val branches = repo.branches
     assertThat(branches.remoteBranches.map { it.nameForLocalOperations })
       .describedAs("Remote branches are identified incorrectly")
       .containsExactlyInAnyOrder("origin/master", "origin/feature")
@@ -63,30 +62,30 @@ internal class GitStandardWorkTreeTest : GitWorkTreeBaseTest() {
 
   @Test
   fun `test HEAD`(): Unit = with(context) {
-    cd(myRepo)
+    cd(repo)
     git("checkout -b feature")
     val featureHead = tac("f.txt")
-    myRepo.update()
+    repo.update()
 
-    assertThat(myRepo.currentBranchName).describedAs("Incorrect current branch").isEqualTo("feature")
-    assertThat(myRepo.currentRevision).describedAs("Incorrect current revision").isEqualTo(featureHead)
+    assertThat(repo.currentBranchName).describedAs("Incorrect current branch").isEqualTo("feature")
+    assertThat(repo.currentRevision).describedAs("Incorrect current revision").isEqualTo(featureHead)
   }
 
   @Test
   fun `test tracked branch`(): Unit = with(context) {
     setUpRemote()
 
-    myRepo.update()
+    repo.update()
 
-    val masterBranch = myRepo.branches.findLocalBranch("master")!!
-    val trackInfo = GitBranchUtil.getTrackInfoForBranch(myRepo, masterBranch)!!
+    val masterBranch = repo.branches.findLocalBranch("master")!!
+    val trackInfo = GitBranchUtil.getTrackInfoForBranch(repo, masterBranch)!!
     assertThat(trackInfo.remoteBranch.nameForLocalOperations).isEqualTo("origin/master")
   }
 
-  private fun GitPlatformTestContext.setUpRemote(): String {
+  private fun GitWorkTreeContext.setUpRemote(): String {
     cd(testNioRoot)
-    git("clone --bare $myMainRoot parent.git")
-    cd(myMainRoot)
+    git("clone --bare $mainRoot parent.git")
+    cd(mainRoot)
     val parentPath = testNioRoot.resolve("parent.git").toString()
     git("remote add origin $parentPath")
     git("push origin -u master")

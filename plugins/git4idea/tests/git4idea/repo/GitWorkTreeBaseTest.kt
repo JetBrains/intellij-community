@@ -2,53 +2,61 @@
 package git4idea.repo
 
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
 import git4idea.GitUtil
 import git4idea.branch.GitBranchesCollection
 import git4idea.config.GitVersion
 import git4idea.test.GitPlatformTestContext
 import git4idea.test.git
-import git4idea.test.gitPlatformContextFixture
 import git4idea.test.registerRepo
 import git4idea.test.setupDefaultUsername
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assumptions
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import java.nio.file.Path
 
 private val WORKTREE_SUPPORT_VERSION = GitVersion(2, 5, 0, 0)
 
-@TestApplication
-abstract class GitWorkTreeBaseTest {
+internal interface GitWorkTreeContext : GitPlatformTestContext {
+  /** The repository the project working tree is linked to. It lives in [testNioRoot], outside of the project. */
+  val mainRoot: Path
 
-  private val contextFixture = gitPlatformContextFixture()
-  protected val context: GitPlatformTestContext get() = contextFixture.get()
+  /** The repository of the linked working tree, which is the project root. */
+  val repo: GitRepository
+}
 
-  protected lateinit var myMainRoot: Path
-  protected lateinit var myRepo: GitRepository
+/**
+ * A project whose root is a linked working tree of the repository prepared by [initMainRepo] outside of the project.
+ *
+ * The test is skipped if the Git version at hand doesn't support working trees.
+ */
+internal fun TestFixture<GitPlatformTestContext>.gitWorkTreeFixture(
+  initMainRepo: GitPlatformTestContext.() -> Path,
+): TestFixture<GitWorkTreeContext> = testFixture {
+  val platformContext = init()
+  with(platformContext) {
+    assumeTrue(vcs.version.isLaterOrEqual(WORKTREE_SUPPORT_VERSION), "Worktrees are not supported in ${vcs.version}")
 
-  @BeforeEach
-  fun setUp() {
-    with(context) {
-      Assumptions.assumeTrue(vcs.version.isLaterOrEqual(WORKTREE_SUPPORT_VERSION), "Worktrees are not supported in ${vcs.version}")
+    cd(testNioRoot)
+    val mainRoot = initMainRepo()
 
-      cd(testNioRoot)
-      myMainRoot = initMainRepo()
-
-      cd(myMainRoot)
-      git("worktree add $projectPath")
-      checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectNioRoot.resolve(GitUtil.DOT_GIT))) {
-        "'git worktree add' didn't create ${GitUtil.DOT_GIT} in $projectPath"
-      }
-
-      myRepo = registerRepo(project, projectNioRoot)
-      setupDefaultUsername()
-      assertThat(repositoryManager.repositories).hasSize(1)
-      assertThat(repositoryManager.getRepositoryForRoot(projectRoot)).isNotNull()
+    cd(mainRoot)
+    git("worktree add $projectPath")
+    checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectNioRoot.resolve(GitUtil.DOT_GIT))) {
+      "'git worktree add' didn't create ${GitUtil.DOT_GIT} in $projectPath"
     }
-  }
 
-  protected abstract fun GitPlatformTestContext.initMainRepo(): Path
+    val repo = registerRepo(project, projectNioRoot)
+    setupDefaultUsername()
+    assertThat(repositoryManager.repositories).hasSize(1)
+    assertThat(repositoryManager.getRepositoryForRoot(projectRoot)).isNotNull()
+
+    val result = object : GitWorkTreeContext, GitPlatformTestContext by platformContext {
+      override val mainRoot = mainRoot
+      override val repo = repo
+    }
+    initialized(result) {}
+  }
 }
 
 internal fun assertBranchHash(expectedHash: String, branches: GitBranchesCollection, branchName: String) {
