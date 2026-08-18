@@ -4,12 +4,11 @@ package org.jetbrains.plugins.gradle.issue
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.build.issue.quickfix.OpenFileQuickFix
-import com.intellij.openapi.util.io.toCanonicalPath
 import java.nio.file.Path
 
 internal fun BuildIssue.quickFixIds(): List<String> =
   quickFixes.map { it.id.replace("\\(\\d+\\)$".toRegex(), "") }
 
 internal fun BuildIssueQuickFix.isOpenFileQuickFix(path: Path): Boolean =
-  this is OpenFileQuickFix && id == path.toCanonicalPath()
+  this is OpenFileQuickFix && Path.of(id).normalize() == path.normalize()
 
