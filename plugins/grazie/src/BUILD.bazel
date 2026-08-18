@@ -21,6 +21,7 @@ jvm_library(
     exports = [
         # do not sort,
         "@lib//:grazie-core-ai-grazie-api-gateway-client-jvm",
+        "@lib//:grazie-core-ai-grazie-nlp-common-jvm",
         "@lib//:grazie-core-ai-grazie-client-ktor-jvm",
         "@lib//:grazie-core-ai-grazie-tasks-library-api-jvm",
         "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",
@@ -64,6 +65,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
         "//platform/platform-api:ide",
         "@lib//:grazie-core-ai-grazie-api-gateway-client-jvm",
+        "@lib//:grazie-core-ai-grazie-nlp-common-jvm",
         "@lib//:grazie-core-ai-grazie-client-ktor-jvm",
         "@lib//:grazie-core-ai-grazie-tasks-library-api-jvm",
         "@lib//:grazie-core-ai-grazie-tasks-library-model-jvm",
@@ -131,6 +133,7 @@ jvm_library(
     exports = [
         # do not sort,
         "@lib//:grazie-core-ai-grazie-api-gateway-client-jvm",
+        "@lib//:grazie-core-ai-grazie-nlp-common-jvm",
         "@lib//:grazie-core-ai-grazie-client-ktor-jvm",
         "@lib//:grazie-core-ai-grazie-tasks-library-api-jvm",
         "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",
