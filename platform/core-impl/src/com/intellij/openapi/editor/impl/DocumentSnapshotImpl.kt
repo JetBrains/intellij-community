@@ -68,11 +68,7 @@ internal class DocumentSnapshotImpl private constructor(
   }
 
   override fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot {
-    if (this === metadata) {
-      return this
-    }
-    val metadataText = metadata.text()
-    if (text.chars() === metadataText.chars()) {
+    if (this === metadata || text === metadata.text()) {
       return metadata
     }
     return this
