@@ -35,8 +35,12 @@ internal class IjentNioFileChannel private constructor(
 ) : FileChannel() {
   companion object {
     @JvmStatic
-    internal fun createReading(nioFs: IjentNioFileSystem, path: EelPath): IjentNioFileChannel =
-      IjentNioFileChannel(nioFs.ijentFs.openForReading(path).getOrThrowFileSystemExceptionBlocking())
+    internal fun createReading(nioFs: IjentNioFileSystem, path: EelPath, autoCloseAfterEof: Boolean?): IjentNioFileChannel =
+      IjentNioFileChannel(
+        nioFs.ijentFs.openForReading(path)
+          .autoCloseAfterEof(autoCloseAfterEof)
+          .getOrThrowFileSystemExceptionBlocking()
+      )
 
     @JvmStatic
     internal fun createWriting(

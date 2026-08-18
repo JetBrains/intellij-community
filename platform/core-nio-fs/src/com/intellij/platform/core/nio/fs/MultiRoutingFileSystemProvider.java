@@ -8,17 +8,28 @@ import org.jetbrains.annotations.VisibleForTesting;
 import sun.nio.fs.DefaultFileTypeDetector;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.FileChannel;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
 import java.nio.file.spi.FileTypeDetector;
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -169,6 +180,101 @@ public final class MultiRoutingFileSystemProvider
     }
 
     throw new IllegalArgumentException(String.format("Provider mismatch: %s != %s", provider1, provider2));
+  }
+
+  @Override
+  public InputStream newInputStream(Path path, OpenOption... options) throws IOException {
+    return super.newInputStream(path, filterOpenOptions(path, options));
+  }
+
+  @Override
+  public OutputStream newOutputStream(Path path, OpenOption... options) throws IOException {
+    return super.newOutputStream(path, filterOpenOptions(path, options));
+  }
+
+  @Override
+  public FileChannel newFileChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+    return super.newFileChannel(path, filterOpenOptions(path, options), attrs);
+  }
+
+  @Override
+  public AsynchronousFileChannel newAsynchronousFileChannel(
+    Path path,
+    Set<? extends OpenOption> options,
+    ExecutorService executor,
+    FileAttribute<?>... attrs
+  ) throws IOException {
+    return super.newAsynchronousFileChannel(path, filterOpenOptions(path, options), executor, attrs);
+  }
+
+  @Override
+  public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+    return super.newByteChannel(path, filterOpenOptions(path, options), attrs);
+  }
+
+  /**
+   * Removes an open option that the local file system cannot know, because {@link #myLocalProvider} throws
+   * {@link UnsupportedOperationException} for it. A backend registered with
+   * {@link MultiRoutingFileSystem#setBackendProvider} gets every option and ignores what it does not use.
+   *
+   * @return {@code options} itself when nothing is removed.
+   */
+  private @NotNull Set<? extends OpenOption> filterOpenOptions(@NotNull Path path, @NotNull Set<? extends OpenOption> options) {
+    if (!needsFiltering(path, options)) {
+      return options;
+    }
+    Set<OpenOption> filtered = new LinkedHashSet<>();
+    for (OpenOption option : options) {
+      if (isKnownToLocalProvider(option)) {
+        filtered.add(option);
+      }
+    }
+    return filtered;
+  }
+
+  /** @see #filterOpenOptions(Path, Set) */
+  private OpenOption @NotNull [] filterOpenOptions(@NotNull Path path, OpenOption @NotNull [] options) {
+    if (!needsFiltering(path, List.of(options))) {
+      return options;
+    }
+    int accepted = 0;
+    for (OpenOption option : options) {
+      if (isKnownToLocalProvider(option)) {
+        ++accepted;
+      }
+    }
+    OpenOption[] filtered = new OpenOption[accepted];
+    int index = 0;
+    for (OpenOption option : options) {
+      if (isKnownToLocalProvider(option)) {
+        filtered[index++] = option;
+      }
+    }
+    return filtered;
+  }
+
+  /**
+   * Almost every call passes only options that the local provider knows. That case costs one short loop,
+   * and it resolves no backend.
+   */
+  private boolean needsFiltering(@NotNull Path path, @NotNull Collection<? extends OpenOption> options) {
+    boolean hasUnknownOption = false;
+    for (OpenOption option : options) {
+      if (!isKnownToLocalProvider(option)) {
+        hasUnknownOption = true;
+        break;
+      }
+    }
+    return hasUnknownOption && getDelegate(path, null) == myLocalProvider;
+  }
+
+  /**
+   * The package {@code java.nio.file} covers {@link java.nio.file.StandardOpenOption} and {@link java.nio.file.LinkOption}.
+   * The package {@code com.sun.nio.file} covers {@code ExtendedOpenOption}.
+   */
+  private static boolean isKnownToLocalProvider(@NotNull OpenOption option) {
+    String packageName = option.getClass().getPackageName();
+    return "java.nio.file".equals(packageName) || "com.sun.nio.file".equals(packageName);
   }
 
   private static boolean canHandleRouting(FileSystemProvider provider, @NotNull Path path) {
