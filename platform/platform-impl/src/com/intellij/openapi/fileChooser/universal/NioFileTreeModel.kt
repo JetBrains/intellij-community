@@ -126,7 +126,13 @@ class NioFileTreeModel(
   private fun getEntry(node: Node, loadChildren: Boolean): Entry<Node>? {
     val r = roots ?: return null
     for (root in r) {
-      val entry = root.tree.getEntry(node)
+      // VirtualRoot has no path, so MapBasedTree can't look it up by key.
+      // Match it directly by identity to avoid the "key function provides null" warning.
+      val entry = when {
+        node === root -> root.tree.rootEntry
+        node.path == null -> null
+        else -> root.tree.getEntry(node)
+      }
       if (entry != null) {
         if (loadChildren && entry.isLoadingRequired) {
           root.updateChildren(state, entry)
