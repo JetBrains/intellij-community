@@ -4,7 +4,7 @@ package com.intellij.json.networknt.wrapper
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.runWithCheckCanceled
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -23,7 +23,6 @@ import com.networknt.schema.SpecificationVersion
 import com.networknt.schema.path.NodePath
 import com.networknt.schema.path.PathType
 import kotlinx.coroutines.runInterruptible
-import org.jetbrains.annotations.VisibleForTesting
 import tools.jackson.databind.JsonNode
 import java.util.concurrent.CancellationException
 
@@ -256,8 +255,7 @@ class NetworkntValidationService(private val project: Project) {
   }
 
   // Bridge progress cancellation to coroutine cancellation, then interrupt Joni's blocking matcher.
-  @VisibleForTesting
-  fun <T> runInterruptibleValidation(action: () -> T): T = runWithCheckCanceled {
+  private fun <T> runInterruptibleValidation(action: () -> T): T = runBlockingCancellable {
     runInterruptible { action() }
   }
 }
