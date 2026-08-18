@@ -191,7 +191,7 @@ public class MarkdownDocumentationCommentsMigration {
   /// object. In other words, this method returns a string equal to the
   /// value of:
   /// {@snippet lang = java:
-  ///  getClass().getName() + '@' + Integer.toHexString(hashCode())
+  /// getClass().getName() + '@' + Integer.toHexString(hashCode())
   /// }
   /// The [`Objects.toIdentityString`][Objects#toIdentityString(Object)] method returns the string for an
   /// object equal to the string that would be returned if neither
@@ -269,14 +269,14 @@ public class MarkdownDocumentationCommentsMigration {
   /// the subclass should use a `try-finally` block to ensure
   /// `super.finalize()` is always invoked. For example,
   /// {@snippet lang = "java":
-  ///      @Override
-  ///      protected void finalize() throws Throwable {
-  ///          try {
-  ///              ... // cleanup subclass state
-  ///          } finally {
-  ///              super.finalize();
-  ///          }
-  ///      }
+  ///     @Override
+  ///     protected void finalize() throws Throwable {
+  ///         try {
+  ///             ... // cleanup subclass state
+  ///         } finally {
+  ///             super.finalize();
+  ///         }
+  ///     }
   /// }
   /// @jls 12.6 Finalization of Class Instances
   /// @see WeakReference

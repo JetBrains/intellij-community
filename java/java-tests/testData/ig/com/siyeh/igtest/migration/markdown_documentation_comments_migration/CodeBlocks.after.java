@@ -6,7 +6,7 @@
 /// For example,
 ///
 /// ```
-/// class KeyUsage {
+///   class KeyUsage {
 ///     private static final Key<String> MY_NAME_KEY = Key.create("my name");
 ///     String getName() { return getData(MY_NAME_KEY); }
 ///   }
@@ -38,7 +38,7 @@ class CodeBlocks {}
 ///
 /// <pre>
 /// {@code AccumulativeRunnable<String> doSetTextImpl =
-///   new  AccumulativeRunnable<String>()} {
+///  new  AccumulativeRunnable<String>()} {
 ///    {@literal @Override}
 ///    {@code protected void run(List<String> args)} {
 ///         //set to the last string being passed
@@ -130,7 +130,7 @@ class File {
 /// The UUID string representation is as described by this BNF:
 ///
 /// ```
-/// UUID                   = <time_low> "-" <time_mid> "-"
+///  UUID                   = <time_low> "-" <time_mid> "-"
 ///                          <time_high_and_version> "-"
 ///                          <variant_and_sequence> "-"
 ///                          <node>
@@ -146,3 +146,18 @@ class File {
 ///       | "A" | "B" | "C" | "D" | "E" | "F"
 /// ```
 interface UUIDFromStandarLibrary<A> {}
+
+
+/// ```
+/// {@literal @Inject}
+/// public class Foo
+/// ```
+interface TagsInCodeBlocks {}
+
+/// ```
+///   class Clazzz {
+///     def f[U](u: U) {}
+///     val a = 1
+///   }
+/// ```
+interface WeLoveIndents {}

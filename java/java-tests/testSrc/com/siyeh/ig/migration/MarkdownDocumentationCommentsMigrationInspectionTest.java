@@ -16,6 +16,9 @@ public class MarkdownDocumentationCommentsMigrationInspectionTest extends LightJ
   public void testReferencesNoEscape() { check(); }
   public void testCodeBlocks() { check(); }
   public void testDeprecatedUsages() { check(); }
+  
+  public void testAllTags() { check(); }
+  
 
   @Override
   protected @Nullable InspectionProfileEntry getInspection() {

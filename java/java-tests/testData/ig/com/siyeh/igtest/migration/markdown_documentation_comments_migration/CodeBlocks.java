@@ -155,3 +155,27 @@ class File {
  * }</pre></blockquote>
  */
 interface UUIDFromStandarLibrary<A> {}
+
+
+<warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+ * <pre>
+ * {@code
+ * {@literal @Inject}
+ * public class Foo
+ * }
+ * </pre>
+ */
+interface TagsInCodeBlocks {}
+
+<warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+   * <pre>
+   * {@code
+   *   class Clazzz {
+            *     def f[U](u: U) {}
+   *
+   *     val a = 1
+   *   }
+   * }
+   * </pre>
+  */
+interface WeLoveIndents {}
