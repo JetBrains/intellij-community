@@ -38,6 +38,12 @@ interface PluginUpdateSourceService {
       return isFunctionalitySupported() && Registry.`is`("platform.make.plugin.update.source.visible.in.ui", false)
     }
 
+    fun isMissingUpdateSourceWarningEnabled(): Boolean {
+      return isFunctionalitySupported() &&
+             isPluginUpdateSourceShownInUI() &&
+             isPluginUpdateFilteredAgainstPluginUpdateSource()
+    }
+
     @JvmStatic
     fun addPluginUpdateSourceFilteringRegistryListener(coroutineScope: CoroutineScope, listener: (Boolean) -> Unit) {
       RegistryManager.getInstance().get(REGISTRY_KEY_FILTER_UPDATES_SETTING).addListener(

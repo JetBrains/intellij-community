@@ -115,13 +115,15 @@ interface UiPluginManagerController {
   suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean)
 
   suspend fun getPendingPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId?
+  suspend fun getPendingPluginUpdateSources(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, PluginUpdateSourceId>
   suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?)
   suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?)
   fun isPluginUpdateSourceVisibleInUI(): Boolean
+  fun isMissingUpdateSourceWarningEnabled(): Boolean
   suspend fun getAllPluginUpdateSources(): List<PluginUpdateSourceId>
 
   companion object {
-    val EP_NAME: ExtensionPointName<UiPluginManagerController> = ExtensionPointName<UiPluginManagerController>("com.intellij.uiPluginManagerController")
+    val EP_NAME: ExtensionPointName<UiPluginManagerController> = ExtensionPointName("com.intellij.uiPluginManagerController")
   }
 }
 

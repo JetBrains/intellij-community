@@ -296,6 +296,10 @@ class UiPluginManager {
     return getController().getPendingPluginUpdateSource(sessionId, pluginId)
   }
 
+  fun getPendingPluginUpdateSourcesSync(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, PluginUpdateSourceId> {
+    return runBlockingMaybeCancellable { getController().getPendingPluginUpdateSources(sessionId, pluginIds)}
+  }
+
   suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
     getController().setPendingPluginUpdateSourceInSession(sessionId, pluginId, pluginUpdateSource)
   }
@@ -306,6 +310,10 @@ class UiPluginManager {
 
   fun isPluginUpdateSourceVisibleInUI(): Boolean {
     return getController().isPluginUpdateSourceVisibleInUI()
+  }
+
+  fun isMissingUpdateSourceWarningEnabled(): Boolean {
+    return getController().isMissingUpdateSourceWarningEnabled()
   }
 
   suspend fun getAllPluginUpdateSources(): List<PluginUpdateSourceId> {

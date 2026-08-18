@@ -978,13 +978,13 @@ class PluginDetailsPageComponent private constructor(
         text(sourceId.getShortenedPresentableName())
       })
       .setItemChosenCallback { pluginUpdateSource ->
-        val pluginToHandle = plugin
-        if (pluginToHandle != null) {
+        val pluginId = plugin?.pluginId
+        if (pluginId != null) {
           link.text = pluginUpdateSource.getShortenedPresentableName()
           link.selectedItem = pluginUpdateSource
-          unknownUpdateSourceBanner?.isVisible = false
+          pluginModel.getModel().updateUiAfterUpdateSourceChange(pluginId, pluginUpdateSource)
           coroutineScope.launch(Dispatchers.IO) {
-            pluginModel.setPendingPluginUpdateSourceInSession(pluginToHandle.pluginId, pluginUpdateSource)
+            pluginModel.setPendingPluginUpdateSourceInSession(pluginId, pluginUpdateSource)
           }
         }
         onSelectionCallback.invoke()
@@ -1284,7 +1284,7 @@ class PluginDetailsPageComponent private constructor(
       this.text = IdeBundle.message("plugins.configurable.additional.info.plugin.id.label", pluginModel.pluginId)
     }
 
-    updatePluginUpdateSourceUI()
+    refreshPluginUpdateSourceUI()
 
     val tags = pluginModel.calculateTags(this@PluginDetailsPageComponent.pluginModel.getModel().sessionId)
 
@@ -1395,21 +1395,21 @@ class PluginDetailsPageComponent private constructor(
     }
   }
 
-  internal suspend fun updatePluginUpdateSourceUI(
-    installedPluginForMarketplace: PluginUiModel? = installedDescriptorForMarketplace,
-  ) {
+  private suspend fun refreshPluginUpdateSourceUI() {
     val pluginId = plugin?.pluginId
     if (pluginId == null) {
-      updatePluginUpdateSourceUI(PluginUpdateSourceState(null), null, true)
+      updatePluginUpdateSourceUI(null, null, true)
       return
     }
-    val state = PluginUpdateSourceState(pluginModel.getPendingPluginUpdateSource(pluginId))
-    updatePluginUpdateSourceUI(state, installedPluginForMarketplace)
+    val source = withContext(Dispatchers.IO) {
+      pluginModel.getPendingPluginUpdateSource(pluginId)
+    }
+    updatePluginUpdateSourceUI(source)
   }
 
   internal fun updatePluginUpdateSourceUI(
-    pluginUpdateSourceState: PluginUpdateSourceState,
-    installedPluginForMarketplace: PluginUiModel? = installedDescriptorForMarketplace,
+    pluginUpdateSource: PluginUpdateSourceId?,
+    installedPluginForMarketplace: PluginUiModel? = null,
     forceHideUpdateSourceUi: Boolean = false,
   ) {
     val currentPlugin = plugin
@@ -1420,16 +1420,17 @@ class PluginDetailsPageComponent private constructor(
       return
     }
 
-    val pluginUpdateSource = pluginUpdateSourceState.value
     myPluginUpdateSourceId?.apply {
       selectedItem = pluginUpdateSource
       text = pluginUpdateSource.getShortenedPresentableName()
     }
 
-    val isPluginUpdateSourceVisible: Boolean = !isMarketplace || installedPluginForMarketplace != null
+    val isPluginUpdateSourceVisible: Boolean = (!isMarketplace && currentPlugin.isUpdateable) ||
+                                               installedPluginForMarketplace != null || installedDescriptorForMarketplace != null
     myPluginUpdateSourcePanel?.isVisible = isPluginUpdateSourceVisible
-    unknownUpdateSourceBanner?.isVisible = isPluginUpdateSourceVisible && pluginUpdateSource == null &&
-                                           !(!isMarketplace && currentPlugin.isBundled && !currentPlugin.allowBundledUpdate)
+    unknownUpdateSourceBanner?.isVisible = isPluginUpdateSourceVisible &&
+                                           pluginUpdateSource == null &&
+                                           UiPluginManager.getInstance().isMissingUpdateSourceWarningEnabled()
     updateSourceInitializedBanner?.isVisible = false
   }
 
@@ -1903,8 +1904,8 @@ class PluginDetailsPageComponent private constructor(
     installedPlugin: PluginUiModel? = null,
   ) {
     if (pluginId != null) {
-      val state = PluginUpdateSourceState(pluginModel.getPendingPluginUpdateSource(pluginId))
-      updatePluginUpdateSourceUI(state, installedPlugin)
+      val source = pluginModel.getPendingPluginUpdateSource(pluginId)
+      pluginModel.getModel().updateUiAfterUpdateSourceChange(pluginId, source, installedPlugin)
     }
 
     if (pluginManagerCustomizer != null) {

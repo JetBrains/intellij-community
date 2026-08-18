@@ -70,9 +70,11 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun updateCustomRepositories(addedRepositoryUrls: List<String>, removedRepositoryUrls: List<String>, ): List<String>
   suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean)
   suspend fun getPendingPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId?
+  suspend fun getPendingPluginUpdateSources(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, PluginUpdateSourceId>
   suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?)
   suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?)
   suspend fun isPluginUpdateSourceVisibleInUI(): Boolean
+  suspend fun isMissingUpdateSourceWarningEnabled(): Boolean
   suspend fun getAllPluginUpdateSources(): List<PluginUpdateSourceId>
 
   companion object {

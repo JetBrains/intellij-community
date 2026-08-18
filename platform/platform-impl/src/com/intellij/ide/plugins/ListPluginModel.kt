@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.util.text.HtmlChunk
 import org.jetbrains.annotations.ApiStatus
 
@@ -12,6 +13,7 @@ data class ListPluginModel(
   val installedModels: MutableMap<PluginId, PluginUiModel> = mutableMapOf(),
   val errors: MutableMap<PluginId, List<HtmlChunk>> = mutableMapOf(),
   val pluginInstallationStates: MutableMap<PluginId, PluginInstallationState> = mutableMapOf(),
+  val updateSources: MutableMap<PluginId, PluginUpdateSourceId> = mutableMapOf(),
 ) {
 
   fun setInstalledPlugins(models: Map<PluginId, PluginUiModel>) {
@@ -35,6 +37,11 @@ data class ListPluginModel(
 
   fun setPluginInstallationState(pluginId: PluginId, state: PluginInstallationState) {
     pluginInstallationStates[pluginId] = state
+  }
+
+  fun setPluginUpdateSources(models: Map<PluginId, PluginUpdateSourceId>) {
+    updateSources.clear()
+    updateSources.putAll(models)
   }
 
   fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {

@@ -127,6 +127,7 @@ abstract class SearchQueryParser {
   open class Installed(query: String) : SearchQueryParser() {
     @JvmField val vendors: MutableSet<String> = HashSet()
     @JvmField val tags: MutableSet<String> = HashSet()
+    @JvmField val updateSources: MutableSet<String> = HashSet()
     @JvmField var enabled: Boolean = false
     @JvmField var disabled: Boolean = false
     @JvmField var bundled: Boolean = false
@@ -152,7 +153,10 @@ abstract class SearchQueryParser {
       while (index < size) {
         val name = words[index++]
         if (name.startsWith("/")) {
-          if (name == SearchWords.VENDOR.value || name == SearchWords.TAG.value) {
+          if (name == SearchWords.VENDOR.value ||
+              name == SearchWords.TAG.value ||
+              name == SearchWords.PLUGIN_UPDATE_SOURCE.value
+          ) {
             if (index < size) {
               handleAttribute(name, words[index++])
             }
@@ -200,6 +204,10 @@ abstract class SearchQueryParser {
       }
       else if (SearchWords.TAG.value == name) {
         tags.add(value)
+      }
+      else if (SearchWords.PLUGIN_UPDATE_SOURCE.value == name &&
+               UiPluginManager.getInstance().isPluginUpdateSourceVisibleInUI()) {
+        updateSources.add(value)
       }
     }
   }

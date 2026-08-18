@@ -961,9 +961,21 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override suspend fun getPendingPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId? {
     val session = findSession(sessionId) ?: return null
+    return getPendingUpdateSource(session, pluginId)
+  }
+
+  private fun getPendingUpdateSource(session: PluginManagerSession, pluginId: PluginId): PluginUpdateSourceId? {
     val changedValue = session.pluginUpdateSourceStatesDiff[pluginId]
     if (changedValue != null) return changedValue.newValue.value
     return session.pluginUpdateSourceStates[pluginId]?.value
+  }
+
+  override suspend fun getPendingPluginUpdateSources(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, PluginUpdateSourceId> {
+    val session = findSession(sessionId) ?: return emptyMap()
+    return pluginIds.mapNotNull { pluginId ->
+      val pendingUpdateSource = getPendingUpdateSource(session, pluginId)
+      if (pendingUpdateSource != null) pluginId to pendingUpdateSource else null
+    }.toMap()
   }
 
   override suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
@@ -994,6 +1006,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override fun isPluginUpdateSourceVisibleInUI(): Boolean {
     return PluginUpdateSourceService.isPluginUpdateSourceShownInUI()
+  }
+
+  override fun isMissingUpdateSourceWarningEnabled(): Boolean {
+    return PluginUpdateSourceService.isMissingUpdateSourceWarningEnabled()
   }
 
   override suspend fun getAllPluginUpdateSources(): List<PluginUpdateSourceId> {

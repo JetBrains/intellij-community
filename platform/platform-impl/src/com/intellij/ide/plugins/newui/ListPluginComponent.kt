@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.HtmlChunk
@@ -39,6 +40,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.OnOffButton
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -51,6 +53,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.system.OS
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
@@ -88,6 +91,7 @@ import javax.swing.SwingConstants
 import javax.swing.UIManager
 import javax.swing.plaf.ButtonUI
 import javax.swing.text.BadLocationException
+import javax.swing.text.JTextComponent
 
 /** Constructor-time row semantics which do not have a complete in-place update operation. */
 internal data class PluginRowRenderKey(
@@ -273,6 +277,7 @@ class ListPluginComponent private constructor(
   private var myUpdateLicensePanel: LicensePanel? = null
   private var myErrorPanel: JPanel? = null
   private var myErrorComponent: ErrorComponent? = null
+  private var myUnknownUpdateSourceWarningPane: JTextComponent? = null
   private var myIndicator: ProgressIndicatorEx? = null
   private var myIndicatorReadOnly = false
   private var myEventHandler: EventHandler? = null
@@ -320,6 +325,9 @@ class ListPluginComponent private constructor(
     else {
       updateErrors(listModel.errors.getOrDefault(pluginId, Collections.emptyList()))
     }
+
+    createUnknownUpdateSourceWarningPanel(listModel.updateSources[pluginId])
+
     if (myModelFacade.isPluginInstallingOrUpdating(pluginUiModel)) {
       showProgress(false)
     }
@@ -877,6 +885,35 @@ class ListPluginComponent private constructor(
     if (myUpdateLicensePanel != null) {
       myUpdateLicensePanel!!.isVisible = !hasErrors && !myIsNotFreeInFreeMode
     }
+  }
+
+  private fun createUnknownUpdateSourceWarningPanel(pluginUpdateSource: PluginUpdateSourceId?) {
+    val pane = JBTextArea(IdeBundle.message("plugins.configurable.plugin.list.unknown.update.source.warning")).apply {
+      lineWrap = true
+      wrapStyleWord = true
+      isEditable = false
+      isOpaque = false
+      background = null
+      foreground = JBUI.CurrentTheme.Label.warningForeground()
+      font = JBFont.label()
+      border = JBUI.Borders.emptyTop(12)
+      caret = EmptyCaret.INSTANCE
+    }
+
+    myLayout.addLineComponent(pane)
+    myUnknownUpdateSourceWarningPane = pane
+    updateUnknownUpdateSourceWarning(pluginUpdateSource == null, null)
+  }
+
+  internal fun updateUnknownUpdateSourceWarning(isUnknown: Boolean, providedInstalledPluginForMarketplace: PluginUiModel?) {
+    val isVisible = when {
+      !UiPluginManager.getInstance().isMissingUpdateSourceWarningEnabled() -> false
+      !isUnknown -> false
+      !myPlugin.isUpdateable -> false
+      myMarketplace && providedInstalledPluginForMarketplace == null && myInstalledDescriptorForMarketplace == null -> false
+      else -> true
+    }
+    myUnknownUpdateSourceWarningPane?.isVisible = isVisible
   }
 
   /**
@@ -1932,12 +1969,20 @@ class ListPluginComponent private constructor(
         }
       }
 
+      withNonNullAndVisible(myUnknownUpdateSourceWarningPane) {
+        description.add(it.getText())
+      }
+
       //noinspection HardCodedStringLiteral
       return description.toString()
     }
 
     private fun isNotNullAndVisible(component: JComponent?): Boolean {
       return component != null && component.isVisible
+    }
+
+    private fun <T : JComponent> withNonNullAndVisible(component: T?, block: (T) -> Unit) {
+      if (component != null && component.isVisible) block(component)
     }
   }
 

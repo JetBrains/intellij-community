@@ -343,6 +343,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().getPendingPluginUpdateSource(sessionId, pluginId)
   }
 
+  override suspend fun getPendingPluginUpdateSources(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, PluginUpdateSourceId> {
+    return PluginManagerApi.getInstance().getPendingPluginUpdateSources(sessionId, pluginIds)
+  }
+
   override suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
     PluginManagerApi.getInstance().setPendingPluginUpdateSourceInSession(sessionId, pluginId, pluginUpdateSource)
   }
@@ -353,6 +357,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
 
   override fun isPluginUpdateSourceVisibleInUI(): Boolean {
     return awaitForResult {  PluginManagerApi.getInstance().isPluginUpdateSourceVisibleInUI() }
+  }
+
+  override fun isMissingUpdateSourceWarningEnabled(): Boolean {
+    return awaitForResult { PluginManagerApi.getInstance().isMissingUpdateSourceWarningEnabled() }
   }
 
   override suspend fun getAllPluginUpdateSources(): List<PluginUpdateSourceId> {

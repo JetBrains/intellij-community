@@ -12,13 +12,13 @@ import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollect
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.plugins.newui.MultiSelectionEventHandler
 import com.intellij.ide.plugins.newui.MyPluginModel
-import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginLogo
 import com.intellij.ide.plugins.newui.PluginModelFacade
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUpdateSubscription
+import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.ide.plugins.newui.PluginsGroup
 import com.intellij.ide.plugins.newui.PluginsGroupComponent
 import com.intellij.ide.plugins.newui.PluginsGroupComponentWithProgress
@@ -41,6 +41,8 @@ import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.getPresentableName
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
@@ -160,15 +162,18 @@ class InstalledPluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 
     val installedPlugins = pluginManager.getInstalledPlugins()
     val visiblePlugins = pluginManager.getVisiblePlugins(Registry.`is`("plugins.show.implementation.details"))
     val errorCheckResults = pluginManager.loadErrors(myPluginModel.mySessionId.toString())
-    val visiblePluginsRequiresUltimate = pluginManager.getPluginsRequiresUltimateMap(visiblePlugins.map { it.pluginId })
+    val pluginIds = visiblePlugins.map { it.pluginId }
+    val visiblePluginsRequiresUltimate = pluginManager.getPluginsRequiresUltimateMap(pluginIds)
     val errors = MyPluginModel.getErrors(errorCheckResults)
     val installationStates = pluginManager.getInstallationStates()
+    val updateSources = pluginModelFacade.getPendingPluginUpdateSourcesSync(pluginIds)
     return CreateInstalledPanelModel(
       installedPlugins,
       visiblePlugins,
       errors,
       visiblePluginsRequiresUltimate,
       installationStates,
+      updateSources,
     )
   }
 
@@ -190,8 +195,7 @@ class InstalledPluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 
   private fun applyInstalledPanelModel(model: CreateInstalledPanelModel) {
     try {
       pluginModelFacade.getModel().setDownloadedGroup(installedPanel, userInstalled, installing)
-      installing.getPreloadedModel().setErrors(model.errors)
-      installing.getPreloadedModel().setPluginInstallationStates(model.installationStates)
+      installing.loadIntoPreloadedModel(model)
       installing.addModels(MyPluginModel.installingPlugins)
       if (!installing.getModels().isEmpty()) {
         installing.sortByName()
@@ -199,12 +203,10 @@ class InstalledPluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 
         installedPanel.addGroup(installing)
       }
 
-      userInstalled.getPreloadedModel().setErrors(model.errors)
-      userInstalled.getPreloadedModel().setPluginInstallationStates(model.installationStates)
+      userInstalled.loadIntoPreloadedModel(model)
       userInstalled.addModels(model.installedPlugins)
 
-      bundledUpdateGroup.getPreloadedModel().setErrors(model.errors)
-      bundledUpdateGroup.getPreloadedModel().setPluginInstallationStates(model.installationStates)
+      bundledUpdateGroup.loadIntoPreloadedModel(model)
 
       // bundled includes bundled plugin updates
       val visibleNonBundledPlugins = ArrayList<PluginUiModel>()
@@ -291,8 +293,7 @@ class InstalledPluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 
         // Add priority groups with promotion panel before userInstalled
         for (group in sortedBundledGroups) {
           if (group.promotionPanel != null) {
-            group.getPreloadedModel().setErrors(model.errors)
-            group.getPreloadedModel().setPluginInstallationStates(model.installationStates)
+            group.loadIntoPreloadedModel(model)
             installedPanel.addGroup(group)
             pluginModelFacade.getModel().addEnabledGroup(group)
           }
@@ -317,15 +318,14 @@ class InstalledPluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 
 
       for (group in sortedBundledGroups) {
         if (!Registry.`is`("ide.plugins.category.promotion.enabled") || group.promotionPanel == null) {
-          group.getPreloadedModel().setErrors(model.errors)
-          group.getPreloadedModel().setPluginInstallationStates(model.installationStates)
+          group.loadIntoPreloadedModel(model)
           installedPanel.addGroup(group)
           pluginModelFacade.getModel().addEnabledGroup(group)
         }
       }
 
       pluginUpdateSubscription = PluginUpdatesService.getInstance().subscribe { updates ->
-        val updateModels = updates.all.filter{ plugin -> pluginModelFacade.isEnabled(plugin) }
+        val updateModels = updates.all.filter { plugin -> pluginModelFacade.isEnabled(plugin) }
         setUpdateDescriptors(installedPanel, updateModels)
         setUpdateDescriptors(searchPanel.panel, updateModels)
         applyBundledUpdates(updateModels)
@@ -402,17 +402,20 @@ class InstalledPluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 
   private fun createSearchPanel(selectionListener: Consumer<in PluginsGroupComponent?>): InstalledPluginsTabSearchResultPanel {
     val installedController = object : SearchUpDownPopupController(searchTextField) {
       override fun getAttributes(): List<String> {
-        return listOf(
-          "/userInstalled",
-          "/outdated",
-          "/enabled",
-          "/disabled",
-          "/invalid",
-          "/bundled",
-          "/updatedBundled",
-          SearchWords.VENDOR.value,
-          SearchWords.TAG.value,
-        )
+        return buildList {
+          add("/userInstalled")
+          add("/outdated")
+          add("/enabled")
+          add("/disabled")
+          add("/invalid")
+          add("/bundled")
+          add("/updatedBundled")
+          add(SearchWords.VENDOR.value)
+          add(SearchWords.TAG.value)
+          if (UiPluginManager.getInstance().isPluginUpdateSourceVisibleInUI()) {
+            add(SearchWords.PLUGIN_UPDATE_SOURCE.value)
+          }
+        }
       }
 
       override fun getValues(attribute: String): SortedSet<String>? {
@@ -422,6 +425,9 @@ class InstalledPluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 
         }
         else if (SearchWords.TAG.value == attribute) {
           pluginModelFacade.getModel().tags as SortedSet<String>?
+        }
+        else if (SearchWords.PLUGIN_UPDATE_SOURCE.value == attribute && UiPluginManager.getInstance().isPluginUpdateSourceVisibleInUI()) {
+          sortedSetOf(null.getPresentableName())
         }
         else {
           null
@@ -457,7 +463,7 @@ class InstalledPluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 
       installedSearchGroup,
       Supplier { installedPanel },
       selectionListener,
-      if (searchInMarketplaceTabHandler == null) null else Consumer<String?> { query -> searchInMarketplaceTabHandler.accept(query!!) },
+      if (searchInMarketplaceTabHandler == null) null else Consumer { query -> searchInMarketplaceTabHandler.accept(query!!) },
       pluginModelFacade,
       ::waitForInstalledPanelModel,
     )
@@ -738,4 +744,12 @@ private data class CreateInstalledPanelModel(
   val errors: Map<PluginId, List<HtmlChunk>>,
   val visiblePluginsRequiresUltimate: Map<PluginId, Boolean>,
   val installationStates: Map<PluginId, PluginInstallationState>,
+  val updateSources: Map<PluginId, PluginUpdateSourceId>,
 )
+
+private fun PluginsGroup.loadIntoPreloadedModel(model: CreateInstalledPanelModel) {
+  val preloadedModel = getPreloadedModel()
+  preloadedModel.setErrors(model.errors)
+  preloadedModel.setPluginInstallationStates(model.installationStates)
+  preloadedModel.setPluginUpdateSources(model.updateSources)
+}
