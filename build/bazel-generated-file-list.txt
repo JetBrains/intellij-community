@@ -430,6 +430,7 @@ libraries/download-pgp-verifier
 libraries/ec4j/core
 libraries/fastutil
 libraries/ffmpeg
+libraries/flexmark
 libraries/gradle
 libraries/groovy
 libraries/groovy/ant

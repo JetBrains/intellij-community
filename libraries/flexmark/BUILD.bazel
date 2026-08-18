@@ -1,0 +1,42 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.flexmark` start
+jvm_library(
+    name = "flexmark",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.flexmark",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-flexmark-flexmark"],
+    runtime_deps = ["@lib//:libraries-flexmark-flexmark"],
+)
+
+jvm_library(
+    name = "flexmark_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.flexmark",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-flexmark-flexmark"],
+    runtime_deps = [":flexmark"],
+)
+### auto-generated section `build intellij.libraries.flexmark` end
+
+### auto-generated section `iml intellij.libraries.flexmark` start
+exports_files(
+    [
+        "intellij.libraries.flexmark.iml",
+        "resources/intellij.libraries.flexmark.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.flexmark` end

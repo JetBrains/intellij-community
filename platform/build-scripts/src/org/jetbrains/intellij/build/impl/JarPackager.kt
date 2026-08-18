@@ -112,8 +112,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "com.jetbrains.fus.reporting.ap.validation.all",
   "cucumber-core-1",
   "external-symbols",
-  // `alwaysPackToPlugin` also covers it, but without the sibling-module deduplication of the implicit collection
-  "flexmark",
   "git-learning-project",
   "github.javafaker",
   "google.protobuf.java.util",

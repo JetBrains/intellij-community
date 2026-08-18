@@ -242,7 +242,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: Map<Str
   layout.libAsProductModule = libAsProductModule
 
   // sqlite - used by DB and "import settings" (temporarily)
-  layout.alwaysPackToPlugin(listOf("flexmark", "sqlite"))
+  layout.alwaysPackToPlugin(listOf("sqlite"))
   val violations = TreeMap<String, Set<String>>()
   for ((libName, dependentModules) in projectLibrariesUsedByPlugins) {
     if (layout.hasLibrary(libName) ||
