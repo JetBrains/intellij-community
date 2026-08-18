@@ -245,7 +245,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     val elg = EventLogGroup("system.keys.group", 1)
 
     val platformDataKeys: List<String> =
-      listOf("plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place")
+      listOf("plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place", "initiated_by")
 
     for (platformDataKey in platformDataKeys) {
       assertEventDataAccepted(validator, elg, platformDataKey, "<validated>")

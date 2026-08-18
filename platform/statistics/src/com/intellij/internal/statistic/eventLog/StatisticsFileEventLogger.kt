@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.concurrency.ExecutionInitiator
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
@@ -62,6 +63,7 @@ open class StatisticsFileEventLogger(
   ): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
     group.validateEventId(eventId)
+    val initiator = ExecutionInitiator.currentOrNull()?.takeIf { !isState }
     return try {
       CompletableFuture.runAsync(Runnable {
         val validator = IntellijSensitiveDataValidator.getInstance(recorderId)
@@ -70,6 +72,7 @@ open class StatisticsFileEventLogger(
         }
         val data = dataProvider() ?: return@Runnable
         val eventData = HashMap(data).also { it.remove(FeatureUsageData.JCP_DATA_KEY) }
+          .also { data -> initiator?.let { data["initiated_by"] = it.id } }
         val event = LogEvent(
           session = sessionId,
           build = build,
