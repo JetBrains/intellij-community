@@ -47,11 +47,14 @@ data class RemoteArchiveProjectInfo(
 
     val zipFile = globalPaths.cacheDirForProjects.resolve("zip").resolve(projectURL.transformUrlToZipName())
 
-    try {
+    val isDownloaded = try {
       HttpClient.downloadIfMissing(url = projectURL, targetFile = zipFile, timeout = downloadTimeout)
     }
     catch (e: Exception) {
-      throw SetupException("Failed to download the project from $projectURL: ${e.message}")
+      throw SetupException("Failed to download the project from $projectURL: ${e.message}", e)
+    }
+    if (!isDownloaded) {
+      throw SetupException("Failed to download $zipFile from $projectURL: see the download failures logged above")
     }
     check(zipFile.isRegularFile()) { "Expected .zip file, got: $zipFile" }
 
