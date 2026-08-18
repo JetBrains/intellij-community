@@ -123,6 +123,8 @@ def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags
     # handled by com.intellij.tests.JUnit5BazelRunner.main
     all_env["JB_TEST_SANDBOX"] = str(sandbox)
 
+    all_tags.append("jetbrains_test_runner")
+
     classes_duration_data = _classes_duration_data()
     if classes_duration_data != None:
         all_data.append(classes_duration_data)
