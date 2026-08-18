@@ -94,7 +94,15 @@ private class SurefireTestRunProfileState(
   private val configuration: MavenSurefireRunConfiguration,
   private val executor: Executor,
   private val testModuleDirectory: String,
-) : RunProfileState {
+) : RunProfileState, RemoteConnectionCreator {
+
+  // Delegate debug-connection creation to the inner Maven state so GenericDebuggerRunner can attach.
+  // MavenShCommandLineState (script mode) and MavenCommandLineState both implement RemoteConnectionCreator.
+  override fun createRemoteConnection(environment: ExecutionEnvironment): RemoteConnection? =
+    (delegate as? RemoteConnectionCreator)?.createRemoteConnection(environment)
+
+  override fun isPollConnection(): Boolean =
+    (delegate as? RemoteConnectionCreator)?.isPollConnection() ?: true
 
   override fun execute(executor: Executor, runner: ProgramRunner<*>): ExecutionResult? {
     // Run Maven and discard its BuildView console; we replace it with the SM test runner.

@@ -59,12 +59,10 @@ class MavenTestNGConfigurationExecutionEnvironmentProvider : MavenExecutionEnvir
     })
 
     val resolvedExecutor = executor ?: DefaultRunExecutor.getRunExecutorInstance()
+    val runner = ProgramRunner.getRunner(resolvedExecutor.id, runnerAndConfigurationSettings.configuration) ?: return null
     return ExecutionEnvironmentBuilder(project, resolvedExecutor)
       .runProfile(mavenRunConfiguration)
-      .runnerAndSettings(
-        ProgramRunner.getRunner(resolvedExecutor.id, runnerAndConfigurationSettings.configuration)!!,
-        runnerAndConfigurationSettings,
-      )
+      .runnerAndSettings(runner, runnerAndConfigurationSettings)
       .build()
   }
 

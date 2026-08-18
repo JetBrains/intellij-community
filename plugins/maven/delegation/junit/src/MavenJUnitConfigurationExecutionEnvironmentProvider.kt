@@ -14,7 +14,10 @@ import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.idea.maven.execution.MavenSurefireConfigurationFactory
 import org.jetbrains.idea.maven.execution.MavenSurefireRunConfiguration
 import org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider
+import org.jetbrains.idea.maven.model.MavenSource
+import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import java.nio.file.Path
 
 class MavenJUnitConfigurationExecutionEnvironmentProvider : MavenExecutionEnvironmentProvider {
 
@@ -35,7 +38,7 @@ class MavenJUnitConfigurationExecutionEnvironmentProvider : MavenExecutionEnviro
     val leafProject = mavenProjectsManager.findProject(module) ?: return null
     val rootProject = mavenProjectsManager.findRootProject(leafProject)
 
-    val testParam = buildTestParam(junitConfig) ?: return null
+    val testParam = buildTestParam(junitConfig, leafProject) ?: return null
 
     val configurationFactory = MavenSurefireConfigurationFactory(junitConfig.name, junitConfig.alternativeJrePath)
     val runnerAndConfigurationSettings =
@@ -68,12 +71,10 @@ class MavenJUnitConfigurationExecutionEnvironmentProvider : MavenExecutionEnviro
     runnerParameters.setGoals(goals)
 
     val resolvedExecutor = executor ?: DefaultRunExecutor.getRunExecutorInstance()
+    val runner = ProgramRunner.getRunner(resolvedExecutor.id, runnerAndConfigurationSettings.configuration) ?: return null
     return ExecutionEnvironmentBuilder(project, resolvedExecutor)
       .runProfile(mavenRunConfiguration)
-      .runnerAndSettings(
-        ProgramRunner.getRunner(resolvedExecutor.id, runnerAndConfigurationSettings.configuration)!!,
-        runnerAndConfigurationSettings
-      )
+      .runnerAndSettings(runner, runnerAndConfigurationSettings)
       .build()
   }
 }
@@ -83,7 +84,7 @@ class MavenJUnitConfigurationExecutionEnvironmentProvider : MavenExecutionEnviro
  * Returns null for test types that cannot be expressed as a Surefire filter
  * (e.g. unique ID, tags) — in that case the IDE runner will be used instead.
  */
-private fun buildTestParam(config: JUnitConfiguration): String? {
+private fun buildTestParam(config: JUnitConfiguration, leafProject: MavenProject): String? {
   val data = config.persistentData
   return when (data.TEST_OBJECT) {
     JUnitConfiguration.TEST_CLASS -> data.mainClassName.ifEmpty { null }
@@ -106,7 +107,12 @@ private fun buildTestParam(config: JUnitConfiguration): String? {
       patterns.joinToString("+") { patternToSurefireSpec(it) }
     }
 
-    // TEST_UNIQUE_ID, TEST_TAGS, TEST_DIRECTORY, BY_SOURCE_POSITION, BY_SOURCE_CHANGES
+    JUnitConfiguration.TEST_DIRECTORY -> {
+      val dirName = data.dirName.ifEmpty { return null }
+      packageFromDirectory(dirName, leafProject) ?: return null
+    }
+
+    // TEST_UNIQUE_ID, TEST_TAGS, BY_SOURCE_POSITION, BY_SOURCE_CHANGES
     // are not expressible as simple Surefire -Dtest= filters; fall back to IDE runner
     else -> null
   }
@@ -127,4 +133,25 @@ private fun patternToSurefireSpec(pattern: String): String {
   else {
     pattern
   }
+}
+
+/**
+ * Derives a Surefire `-Dtest=` pattern for running all tests under [dirPath].
+ *
+ * Resolves [dirPath] relative to the Maven project's test source roots; returns
+ * `"<package>.*"` for a subdirectory or `"*"` if the directory is the root itself.
+ * Returns null when [dirPath] is not under any known test source root (fall back to IDE runner).
+ */
+private fun packageFromDirectory(dirPath: String, leafProject: MavenProject): String? {
+  val dir = Path.of(dirPath).normalize()
+  for (src in leafProject.mavenSources) {
+    if (!MavenSource.isTestSource(src)) continue
+    val root = Path.of(src.directory).normalize()
+    if (dir == root) return "*"
+    if (dir.startsWith(root)) {
+      val pkg = root.relativize(dir).toString().replace('/', '.').replace('\\', '.')
+      return "$pkg.*"
+    }
+  }
+  return null
 }

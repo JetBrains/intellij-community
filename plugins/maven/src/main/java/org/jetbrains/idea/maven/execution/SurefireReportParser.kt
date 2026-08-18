@@ -55,7 +55,7 @@ internal object SurefireReportParser {
     root.getChild("system-out")?.textTrim?.takeIf { it.isNotEmpty() }?.let { messages += it }
     root.getChild("system-err")?.textTrim?.takeIf { it.isNotEmpty() }?.let { messages += it }
 
-    messages += "##teamcity[testSuiteStarted name='${escape(suiteName)}']"
+    messages += "##teamcity[testSuiteStarted name='${escape(suiteName)}' locationHint='java:suite://${escape(suiteName)}']"
 
     for (testcase in root.getChildren("testcase")) {
       val name = testcase.getAttributeValue("name") ?: continue
@@ -63,7 +63,7 @@ internal object SurefireReportParser {
       val durationMs = testcase.getAttributeValue("time")?.toDoubleOrNull()?.let { (it * 1000).toLong() }
       val displayName = "$classname.$name"
 
-      messages += "##teamcity[testStarted name='${escape(displayName)}']"
+      messages += "##teamcity[testStarted name='${escape(displayName)}' locationHint='java:test://${escape(classname)}/${escape(name)}']"
 
       testcase.getChild("system-out")?.textTrim?.takeIf { it.isNotEmpty() }?.let {
         messages += "##teamcity[testStdOut name='${escape(displayName)}' out='${escape(it)}']"

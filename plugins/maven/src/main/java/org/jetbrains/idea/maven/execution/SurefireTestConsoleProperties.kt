@@ -2,14 +2,18 @@
 package org.jetbrains.idea.maven.execution
 
 import com.intellij.execution.Executor
+import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
+import com.intellij.execution.testframework.sm.runner.SMTestLocator
 import com.intellij.execution.ui.ConsoleView
 
 internal class SurefireTestConsoleProperties(
   private val mavenConfiguration: MavenSurefireRunConfiguration,
   executor: Executor,
 ) : SMTRunnerConsoleProperties(mavenConfiguration, "Maven Surefire", executor) {
+
+  override fun getTestLocator(): SMTestLocator = JavaTestLocator.INSTANCE
 
   override fun createRerunFailedTestsAction(consoleView: ConsoleView): AbstractRerunFailedTestsAction =
     SurefireRerunFailedTestsAction(consoleView, mavenConfiguration).also { it.init(this) }
