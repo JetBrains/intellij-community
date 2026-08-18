@@ -11,6 +11,7 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
@@ -42,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.asNioPath
@@ -63,6 +65,7 @@ import com.intellij.util.application
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
@@ -74,7 +77,9 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.Path
 import kotlin.io.path.copyToRecursively
 import kotlin.io.path.createDirectory
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
+import kotlin.time.Duration.Companion.milliseconds
 
 @JvmOverloads
 @TestOnly
@@ -354,7 +359,31 @@ fun TestFixture<Module>.sourceRootFixture(
           model.contentEntries.firstOrNull { it.file == directoryVfs }?.let(model::removeContentEntry)
         }
       }
+    }
+
+    val nioDir = directory.virtualFile.toNioPathOrNull()
+    if (nioDir != null) {
+      doBestDeletingDirectory(nioDir)
+    }
+    writeAction {
       directory.delete()
+    }
+  }
+}
+
+/**
+ * [directory] might be locked on Windows. Before using `com.intellij.community.wintools` to unlock it, we try to wait a little
+ */
+private suspend fun doBestDeletingDirectory(directory: Path): Unit = withContext(Dispatchers.IO) {
+  for (i in (0..10)) {
+    try {
+      @OptIn(ExperimentalPathApi::class)
+      directory.deleteRecursively()
+      break
+    }
+    catch (e: IOException) {
+      fileLogger().warn("Can't delete $directory try $i", e)
+      delay(500.milliseconds)
     }
   }
 }
