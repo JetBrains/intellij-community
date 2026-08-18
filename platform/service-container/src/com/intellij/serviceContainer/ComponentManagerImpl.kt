@@ -4,6 +4,8 @@ package com.intellij.serviceContainer
 
 import com.intellij.codeWithMe.ClientIdContextElement
 import com.intellij.codeWithMe.ClientIdContextElementPrecursor
+import com.intellij.concurrency.ExecutionInitiatorElement
+import com.intellij.concurrency.ExecutionInitiatorElementPrecursor
 import com.intellij.concurrency.ExternalIntelliJContextElement
 import com.intellij.concurrency.currentTemporaryThreadContextOrNull
 import com.intellij.concurrency.currentThreadContext
@@ -250,9 +252,14 @@ abstract class ComponentManagerImpl(
   private val scopeHolder: ScopeHolder = ScopeHolder(
     parentScope = parentScope,
     additionalContext = (additionalContext + this.asContextElement()).let { context ->
-      val clientIdContextElement = context[ClientIdContextElement.Key]
-      return@let if (clientIdContextElement == null) context + ClientIdContextElementPrecursor
-      else context
+      var result = context
+      if (context[ClientIdContextElement.Key] == null) {
+        result += ClientIdContextElementPrecursor
+      }
+      if (context[ExecutionInitiatorElement] == null) {
+        result += ExecutionInitiatorElementPrecursor
+      }
+      result
     },
     containerName = debugString(short = true),
   )
