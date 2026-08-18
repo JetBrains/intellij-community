@@ -15,7 +15,9 @@ import org.mockito.Answers
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.FileTime
 
 class TimeoutAnalyzerTest {
 
@@ -55,6 +57,90 @@ class TimeoutAnalyzerTest {
     val error = TimeoutAnalyzer.analyzeTimeout(runContextMock)
     error.shouldNotBeNull().messageText.shouldContain("due to a dialog being shown")
   }
+
+  /**
+   * A dump name carries a hash once it has been shortened to fit a path, so the name no longer says which dump came last. Both directions
+   * are asserted, one dump showing a dialog and the other not: a selector that answered with the wrong file would report the wrong thing
+   * one way round, and report nothing the other way round.
+   */
+  @Test
+  fun testLatestMonitoringThreadDumpUsesModificationTime() {
+    setUpLogsDir("no-kill-dump")
+    val threadDumpsDirectory = logsDir.resolve("thread-dumps-ide")
+    val withDialog = Files.list(threadDumpsDirectory).use { it.findFirst().orElseThrow() }
+    val withoutDialog = threadDumpsDirectory.resolve("threadDump-cafe.txt")
+    Files.copy(monitoringDumpWithoutDialog(), withoutDialog)
+
+    Files.setLastModifiedTime(withDialog, FileTime.fromMillis(1))
+    Files.setLastModifiedTime(withoutDialog, FileTime.fromMillis(2))
+    TimeoutAnalyzer.analyzeTimeout(runContextMock).shouldBeNull()
+
+    Files.setLastModifiedTime(withDialog, FileTime.fromMillis(3))
+    TimeoutAnalyzer.analyzeTimeout(runContextMock)
+      .shouldNotBeNull().messageText.shouldContain("due to a dialog being shown")
+  }
+
+  /** With one modification time between two dumps, the greater name is the one to answer with. */
+  @Test
+  fun testLatestMonitoringThreadDumpUsesNameWhenModificationTimesMatch() {
+    setUpLogsDir("no-kill-dump")
+    val threadDumpsDirectory = logsDir.resolve("thread-dumps-ide")
+    val fixtureDump = Files.list(threadDumpsDirectory).use { it.findFirst().orElseThrow() }
+    val dumpShowingDialog = Files.readAllBytes(fixtureDump)
+    Files.delete(fixtureDump)
+
+    val lesserName = threadDumpsDirectory.resolve("threadDump-0000.txt")
+    val greaterName = threadDumpsDirectory.resolve("threadDump-ffff.txt")
+
+    // the greater name shows no dialog, so the analyzer must report none
+    writeDumpsSharingOneTime(lesserName to dumpShowingDialog, greaterName to dumpShowingNoDialog())
+    TimeoutAnalyzer.analyzeTimeout(runContextMock).shouldBeNull()
+
+    // the greater name shows the dialog, so the analyzer must report it
+    writeDumpsSharingOneTime(lesserName to dumpShowingNoDialog(), greaterName to dumpShowingDialog)
+    TimeoutAnalyzer.analyzeTimeout(runContextMock)
+      .shouldNotBeNull().messageText.shouldContain("due to a dialog being shown")
+  }
+
+  private fun writeDumpsSharingOneTime(vararg dumps: Pair<Path, ByteArray>) {
+    val sameTime = FileTime.fromMillis(1)
+    dumps.forEach { (path, content) ->
+      Files.write(path, content)
+      Files.setLastModifiedTime(path, sameTime)
+    }
+  }
+
+  @Test
+  fun testLatestKillThreadDumpUsesModificationTime() {
+    setUpLogsDir("all-data")
+    val withDialog = Files.list(logsDir)
+      .use { files -> files.filter { it.fileName.toString().startsWith("threadDump-before-kill") }.findFirst().orElseThrow() }
+    val withoutDialog = logsDir.resolve("threadDump-before-kill-cafe.txt")
+    Files.copy(killDumpWithoutDialog(), withoutDialog)
+
+    Files.setLastModifiedTime(withDialog, FileTime.fromMillis(1))
+    Files.setLastModifiedTime(withoutDialog, FileTime.fromMillis(2))
+    TimeoutAnalyzer.analyzeTimeout(runContextMock).shouldBeNull()
+
+    Files.setLastModifiedTime(withDialog, FileTime.fromMillis(3))
+    TimeoutAnalyzer.analyzeTimeout(runContextMock)
+      .shouldNotBeNull().messageText.shouldContain("due to a dialog being shown")
+  }
+
+  /**
+   * The monitoring dump of the `no-dialog` fixture: an EDT thread that is not showing a dialog. Paired with a dump that is, it tells a
+   * selector that answered with the right dump from one that answered with any dump at all.
+   *
+   * `extractResource` resolves the resource name below the temp dir, so this lands beside the fixture the test reports from.
+   */
+  private fun monitoringDumpWithoutDialog(): Path =
+    JarUtils.extractResource("no-dialog", tempDir).resolve("thread-dumps-ide").resolve("threadDump-1-1725404956966.txt")
+
+  /** The kill dump of the `no-dialog` fixture, for the same reason. */
+  private fun killDumpWithoutDialog(): Path =
+    JarUtils.extractResource("no-dialog", tempDir).resolve("threadDump-before-kill-1725405196582.txt")
+
+  private fun dumpShowingNoDialog(): ByteArray = Files.readAllBytes(monitoringDumpWithoutDialog())
 
   @Test
   fun testNoDialog() {

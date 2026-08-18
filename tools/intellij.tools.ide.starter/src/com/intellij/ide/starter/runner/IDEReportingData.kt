@@ -5,6 +5,7 @@ import com.intellij.ide.starter.path.FrontendIDEDataPaths
 import com.intellij.ide.starter.report.ErrorReporter
 import com.intellij.ide.starter.utils.ReportingPathUtils
 import com.intellij.ide.starter.utils.ReportingPathUtils.checkPathLength
+import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.flattened
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
@@ -137,14 +138,19 @@ class IDEReportingData internal constructor(
   val logsDir: Path = createReportingDirectory("log")
 
   /**
-   * Where the JVM of this launch writes its crash log if it crashes. Only named here; whoever points the JVM at it creates it, so an empty
-   * directory never looks like a lost crash log. That same writer checks the directory against
-   * [ReportingPathUtils.WIDEST_CRASH_LOG_NAME], because the name is only worth reserving once something is about to write it.
+   * Where the JVM writes a crash log. The segment adds six characters of headroom compared with the former `jvm-crash` segment. A crash log
+   * name is the one name no helper can shorten, the JVM expanding `%p` only once it has already crashed, so a shorter parent is the only
+   * lever this path has.
+   *
+   * The VM options create this directory and check the final path. An empty directory therefore never looks like a lost crash log.
    */
-  val jvmCrashLogDir: Path = logsDir.resolve("jvm-crash")
+  val jvmCrashLogDir: Path = logsDir.resolve("jvm")
 
-  /** Where the crash logs this launch left in the home directory are copied, if it left any. Created on demand, like [jvmCrashLogDir]. */
-  val jbrDiagnosticDir: Path = logsDir.resolve("jbrDiagnostic")
+  /**
+   * Where the crash logs this launch left in the home directory are copied, if it left any. Created on demand, like [jvmCrashLogDir], and
+   * kept just as short: it holds the same `java_error_in_idea_<pid>.log` name, one level deeper than the JVM writes it.
+   */
+  val jbrDiagnosticDir: Path = logsDir.resolve("jbr")
 
   private fun createReportingDirectory(name: String): Path =
     checkPathLength(launchReportingDir.resolve(name)).createDirectories()
@@ -202,7 +208,10 @@ class IDEReportingData internal constructor(
       userHome.resolve("java_error_in_idea_$javaProcessId.log"),
       userHome.resolve("jbr_err_pid$javaProcessId.log"),
     ).filter { it.exists() }.forEach { crashFile ->
-      crashFile.copyTo(jbrDiagnosticDir.createDirectories().resolve(crashFile.name), overwrite = true)
+      val target = checkPathLength(jbrDiagnosticDir.createDirectories().resolve(crashFile.name))
+      // this runs in the `finally` of a run that has already failed, and that block reports what it catches: a copy that cannot name its
+      // target has to lose the crash log rather than the failure the run is really about
+      catchAll { crashFile.copyTo(target, overwrite = true) }
     }
   }
 

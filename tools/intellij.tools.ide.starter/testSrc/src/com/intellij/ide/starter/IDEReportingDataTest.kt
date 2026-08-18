@@ -23,21 +23,23 @@ import kotlin.io.path.exists
 
 private const val LONG_NAME_PREFIX = "reused-ide-process-reports-into-a-dir-of-its-own-per-test-method"
 private val HASH_SUFFIX = Regex("-[0-9a-f]{$NAME_HASH_LENGTH}$")
+/** What `log/jvm` saves over the former `log/jvm-crash`, and the headroom a crash log path is expected to keep. */
+private const val JVM_CRASH_DIRECTORY_SAVING: Int = 6
 
-/** The length of `Z:\BuildAgent\temp\buildTmp\test<random>\ide-tests\tests\RM-LOCAL\diaspora-project-test` on a Windows CI agent. */
-private const val CI_REPORTING_ROOT_LENGTH = 92
+/** The length of `Z:\BuildAgent\temp\buildTmp\test<8 chars>\ide-tests\tests\RM-LOCAL\diaspora-project-test` on a Windows CI agent. */
+private const val CI_REPORTING_ROOT_LENGTH = 87
 
 /** What the async profiler writes into `snapshots`: `<build>-<activity>-<timestamp>.jfr`. */
 private const val PROFILER_SNAPSHOT_NAME = "RM-263.SNAPSHOT-completion-20260816193137.jfr"
 
-/** The length of `C:\BuildAgent\temp\buildTmp\test<random>\ide-tests\tests\PS-LOCAL\kunstmaan_without_composer` on a Windows CI agent. */
-private const val CI_PHPSTORM_REPORTING_ROOT_LENGTH = 97
+/** The length of `C:\BuildAgent\temp\buildTmp\test<8 chars>\ide-tests\tests\PS-LOCAL\kunstmaan_without_composer` on a Windows CI agent. */
+private const val CI_PHPSTORM_REPORTING_ROOT_LENGTH = 92
 
 /** What the async profiler the starter injects writes below `snapshots`: `<type>-<test>-<time>` in a directory of its own. */
 private const val ASYNC_SNAPSHOT_NAME = "async/async-kunstmaan_without_composer-200251.jfr"
 
-/** The length of `Z:\BuildAgent\…\ide-tests\tests\IU-LOCAL\delegate-run-a-gradle-task-to-idea-test-f919` on a Windows CI agent. */
-private const val CI_GRADLE_REPORTING_ROOT_LENGTH = 115
+/** The length of `Z:\BuildAgent\…\ide-tests\tests\IU-LOCAL\delegate-run-a-gradle-task-to-idea-test-f919` with the short temp suffix. */
+private const val CI_GRADLE_REPORTING_ROOT_LENGTH = 110
 
 /** What the thread dump monitor writes below `log`, deeper than the reporting directories themselves. */
 private const val THREAD_DUMP_NAME = "thread-dumps-ide/threadDump-1-09-53-17.txt"
@@ -525,8 +527,8 @@ class IDEReportingDataTest {
     reportingRoot.relativize(reportingData.reportsDir) shouldBe launchDir.resolve("reports")
     reportingRoot.relativize(reportingData.snapshotsDir) shouldBe launchDir.resolve("snapshots")
     reportingData.logsDir.exists() shouldBe true
-    reportingData.jvmCrashLogDir shouldBe reportingData.logsDir.resolve("jvm-crash")
-    reportingData.jbrDiagnosticDir shouldBe reportingData.logsDir.resolve("jbrDiagnostic")
+    reportingData.jvmCrashLogDir shouldBe reportingData.logsDir.resolve("jvm")
+    reportingData.jbrDiagnosticDir shouldBe reportingData.logsDir.resolve("jbr")
     // unlike the three reporting dirs, the crash dirs are only created once the launch has a crash to write into them
     reportingData.jvmCrashLogDir.exists() shouldBe false
     reportingData.jbrDiagnosticDir.exists() shouldBe false
@@ -596,7 +598,24 @@ class IDEReportingDataTest {
     val reportingData = diasporaCompletionLaunch(cache = "Cold")
 
     val crashLog = reportingRoot.relativize(reportingData.jvmCrashLogDir).resolve(ReportingPathUtils.WIDEST_CRASH_LOG_NAME)
-    CI_REPORTING_ROOT_LENGTH + 1 + crashLog.toString().length shouldBeLessThan ReportingPathUtils.PATH_LENGTH_LIMIT
+    val formerCrashLog = reportingRoot.relativize(reportingData.logsDir.resolve("jvm-crash"))
+      .resolve(ReportingPathUtils.WIDEST_CRASH_LOG_NAME)
+    formerCrashLog.toString().length - crashLog.toString().length shouldBe JVM_CRASH_DIRECTORY_SAVING
+    CI_REPORTING_ROOT_LENGTH + 1 + crashLog.toString().length shouldBeLessThanOrEqual
+      ReportingPathUtils.PATH_LENGTH_LIMIT - 1 - JVM_CRASH_DIRECTORY_SAVING
+  }
+
+  /**
+   * The copy of a crash log needs the same room as the crash log itself, being the same name one level deeper: a directory that holds what
+   * the JVM wrote but not the copy of it reports a path instead of keeping the diagnostics.
+   */
+  @Test
+  fun `the copied JBR crash log of a deeply nested performance launch fits within the limit`() {
+    val reportingData = diasporaCompletionLaunch(cache = "Cold")
+
+    val copiedCrashLog = reportingRoot.relativize(reportingData.jbrDiagnosticDir).resolve(ReportingPathUtils.WIDEST_CRASH_LOG_NAME)
+    CI_REPORTING_ROOT_LENGTH + 1 + copiedCrashLog.toString().length shouldBeLessThanOrEqual
+      ReportingPathUtils.PATH_LENGTH_LIMIT - 1 - JVM_CRASH_DIRECTORY_SAVING
   }
 
   /** A launch name is a path of its own, so the level of it that becomes a directory has to be kept from pointing above the launch. */

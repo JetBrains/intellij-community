@@ -19,8 +19,7 @@ private const val TEAMCITY_ARTIFACT_SUFFIX = "-2147483647.zip"
  * Limits are exclusive. Child file names are shortened against their actual absolute directory so that the complete path stays below
  * [PATH_LENGTH_LIMIT].
  *
- * Shortening happens the same way everywhere, so that a path names the same thing on every OS; only failing over a path that came out too
- * long anyway is conditional, since [PATH_LENGTH_LIMIT] is not every OS's limit — see [isPathLengthLimitEnforced].
+ * Shortening follows the same platform policy as reporting. Linux and macOS CI agents keep supported names unchanged.
  */
 @ApiStatus.Internal
 object ReportingPathUtils {
@@ -60,7 +59,11 @@ object ReportingPathUtils {
    * that is the last place it is cheap to fix. The alternative is hearing about it from a Windows build.
    */
   private val isPathLengthLimitEnforced: Boolean
-    get() = SystemInfoRt.isWindows || !CIServer.instance.isBuildRunningOnCI
+    get() = shouldEnforcePathLength(SystemInfoRt.isWindows, CIServer.instance.isBuildRunningOnCI)
+
+  /** Returns true when Starter must enforce the Windows path limit. Local runs enforce the limit on every OS. */
+  internal fun shouldEnforcePathLength(isWindows: Boolean, isBuildRunningOnCI: Boolean): Boolean =
+    isWindows || !isBuildRunningOnCI
 
   /**
    * Reports a path that does not fit within [PATH_LENGTH_LIMIT] as a test infrastructure failure, where the limit is enforced at all — see
@@ -113,6 +116,58 @@ object ReportingPathUtils {
       .filter(String::isNotEmpty)
       .joinToString("-")
     return shortenWithHashIfNeeded(name, MAX_ARTIFACT_NAME_LENGTH_IN_BYTES)
+  }
+
+  /**
+   * Shortens [fileStem] against its actual [directory], so that the complete path stays below [PATH_LENGTH_LIMIT] where that limit is
+   * enforced — see [isPathLengthLimitEnforced]. On a Linux or macOS CI agent the stem comes back unchanged, a path there being no problem
+   * at the length Windows refuses.
+   *
+   * [extension] includes its dot and remains unchanged. [preservedPrefix] remains unchanged and omits its trailing separator.
+   *
+   * The function returns [fileStem] when the prefix and hash cannot fit. [checkPathLength] can then report the complete path.
+   */
+  fun shortenFileStemIn(
+    directory: Path,
+    fileStem: String,
+    extension: String = "",
+    preservedPrefix: String = "",
+    /** Only a test passes this. The platform decides by default — see [isPathLengthLimitEnforced]. */
+    enforcePathLengthLimit: Boolean = isPathLengthLimitEnforced,
+  ): String {
+    require(fileStem.startsWith(preservedPrefix)) { "The file stem must start with the preserved prefix" }
+    require(preservedPrefix.isEmpty() || preservedPrefix.last() !in "-/\\") {
+      "The preserved prefix must omit its trailing separator"
+    }
+    if (!enforcePathLengthLimit) return fileStem
+
+    // The budget bounds a path, counted in characters, which is the unit of the Windows limit. A file name is bounded in bytes instead, by
+    // MAX_FILE_NAME_LENGTH_IN_BYTES: a different limit in a different unit.
+    // Reserve one character for the separator. Reserve one more because the limit is exclusive.
+    val pathBudget = PATH_LENGTH_LIMIT - 2 - directory.toAbsolutePath().normalize().toString().length - extension.length
+    if (fileStem.length <= pathBudget) return fileStem
+
+    val hashSuffix = "-${nameHash(fileStem)}"
+    val retainedSuffixLength = pathBudget - preservedPrefix.length - hashSuffix.length
+    if (retainedSuffixLength < 0) return fileStem
+
+    val retainedSuffix = fileStem.removePrefix(preservedPrefix)
+      .take(retainedSuffixLength)
+      .trimEnd('-', '/')
+    return "$preservedPrefix$retainedSuffix$hashSuffix"
+  }
+
+  /**
+   * Creates an artifact name for [directory], so that the complete path stays below [PATH_LENGTH_LIMIT] where that limit is enforced —
+   * see [shortenFileStemIn]. One test therefore publishes a longer name on a Linux CI agent than on a Windows one.
+   *
+   * [formatArtifactName] only enforces the file-name limit. It cannot measure the parent directory.
+   *
+   * [extension] includes its dot and remains unchanged. [checkPathLength] reports a directory that cannot hold the name and hash.
+   */
+  fun formatArtifactNameIn(directory: Path, artifactType: String, testName: String = "", extension: String = ""): String {
+    val name = formatArtifactName(artifactType, testName)
+    return shortenFileStemIn(directory, name, extension)
   }
 
   /**

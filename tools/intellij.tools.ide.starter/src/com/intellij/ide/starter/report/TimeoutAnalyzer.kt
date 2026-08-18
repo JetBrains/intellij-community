@@ -2,6 +2,8 @@ package com.intellij.ide.starter.report
 
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.ci.teamcity.TeamCityClient
+import com.intellij.ide.starter.process.KILL_THREAD_DUMP_FILE_PREFIX
+import com.intellij.ide.starter.process.THREAD_DUMP_FILE_PREFIX
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.utils.beforeKillScreenshotName
 import com.intellij.ide.starter.utils.threadDumpParser.ThreadDumpParser
@@ -139,16 +141,31 @@ object TimeoutAnalyzer {
 
   private fun getLastThreadDump(runContext: IDERunContext): String? {
     val logs = runContext.lastIdeReportingData.logsDir
-    val killThreadDump = logs.listDirectoryEntries("threadDump-before-kill*.txt").firstOrNull()
+    val killThreadDump = latestDump(logs.listDirectoryEntries("$KILL_THREAD_DUMP_FILE_PREFIX*.txt"))
 
     val threadDumpsDirectory = logs.resolve("thread-dumps-ide")
     val lastThreadDump = threadDumpsDirectory
       .takeIf { it.exists() }
-      ?.listDirectoryEntries("threadDump*.txt")
-      ?.maxByOrNull { it.name }
+      ?.let { latestDump(it.listDirectoryEntries("$THREAD_DUMP_FILE_PREFIX*.txt")) }
 
     return (killThreadDump ?: lastThreadDump)?.let(Files::readString)
   }
+
+  /**
+   * The last of [entries] to be written: the greatest modification time, and the greatest name where two of them share one. A dump name
+   * carries a hash once it has been shortened to fit a path, so the name alone no longer orders the dumps by the time they were taken.
+   *
+   * Each time is read once, and a file the file system will not report on is treated as the oldest: naming the last dump is worth no
+   * exception, this being called while a run is already reporting a timeout.
+   */
+  private fun latestDump(entries: List<Path>): Path? =
+    entries
+      .map { it to lastModifiedMillis(it) }
+      .maxWithOrNull(compareBy<Pair<Path, Long>> { it.second }.thenBy { it.first.name })
+      ?.first
+
+  private fun lastModifiedMillis(path: Path): Long =
+    runCatching { Files.getLastModifiedTime(path).toMillis() }.getOrDefault(Long.MIN_VALUE)
 
   private fun getLastCommand(runContext: IDERunContext): String? {
     return getLogsFromNewToOld(runContext).firstNotNullOfOrNull { logFile ->

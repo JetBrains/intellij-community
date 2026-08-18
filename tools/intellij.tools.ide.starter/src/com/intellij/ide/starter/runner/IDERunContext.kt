@@ -13,6 +13,7 @@ import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.models.VMOptions.Companion.TEST_SCRIPT_FILE_OPTION
 import com.intellij.ide.starter.path.IDEDataPaths
+import com.intellij.ide.starter.process.KILL_THREAD_DUMP_FILE_PREFIX
 import com.intellij.ide.starter.process.collectJavaThreadDumpSuspendable
 import com.intellij.ide.starter.process.collectJavaThreadDumpsWhileAlive
 import com.intellij.ide.starter.process.collectMemoryDump
@@ -23,6 +24,8 @@ import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.ide.starter.screenRecorder.IDEScreenRecorder
 import com.intellij.ide.starter.utils.FileSystem.listDirectoryEntriesQuietly
+import com.intellij.ide.starter.utils.ReportingPathUtils.checkPathLength
+import com.intellij.ide.starter.utils.ReportingPathUtils.shortenFileStemIn
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.startProfileNativeThreads
 import com.intellij.ide.starter.utils.stopProfileNativeThreads
@@ -52,6 +55,8 @@ import kotlin.io.path.walk
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+
+private const val KILL_MEMORY_DUMP_FILE_PREFIX: String = "memoryDump-before-kill"
 
 /**
  * One run of an IDE: what to start it with, and what the launches of that run report.
@@ -272,8 +277,21 @@ data class IDERunContext(
       delay(15.seconds)
       stopProfileNativeThreads(ideProcessId.toString(), fileToStoreNativeThreads.toAbsolutePath().toString())
     }
-    val dumpFile = logsDir.resolve("threadDump-before-kill-${System.currentTimeMillis()}.txt")
-    val memoryDumpFile = snapshotsDir.resolve("memoryDump-before-kill-${System.currentTimeMillis()}.hprof.gz")
+    val timestamp = System.currentTimeMillis()
+    val dumpFileStem = shortenFileStemIn(
+      logsDir,
+      "$KILL_THREAD_DUMP_FILE_PREFIX-$timestamp",
+      extension = ".txt",
+      preservedPrefix = KILL_THREAD_DUMP_FILE_PREFIX,
+    )
+    val dumpFile = checkPathLength(logsDir.resolve("$dumpFileStem.txt"))
+    val memoryDumpFileStem = shortenFileStemIn(
+      snapshotsDir,
+      "$KILL_MEMORY_DUMP_FILE_PREFIX-$timestamp",
+      extension = ".hprof.gz",
+      preservedPrefix = KILL_MEMORY_DUMP_FILE_PREFIX,
+    )
+    val memoryDumpFile = checkPathLength(snapshotsDir.resolve("$memoryDumpFileStem.hprof.gz"))
     catchAll {
       collectJavaThreadDumpSuspendable(jdkHome, startConfig.workDir, ideProcessId, dumpFile)
     }

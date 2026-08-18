@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
-import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -23,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 
 @SuppressWarnings("rawtypes")
 public final class ScriptRunnerUtil {
@@ -115,7 +115,7 @@ public final class ScriptRunnerUtil {
     String[] options,
     boolean withPty
   ) throws ExecutionException {
-    var winExePath = OS.CURRENT == OS.Windows && !OSAgnosticPathUtil.isAbsolute(exePath) ? PathEnvironmentVariableUtil.findFirst(exePath) : null;
+    var winExePath = findWindowsExecutableInPath(exePath);
     var commandLine = new GeneralCommandLine(winExePath != null ? winExePath.toString() : exePath);
     if (options != null) {
       commandLine.addParameters(options);
@@ -155,6 +155,13 @@ public final class ScriptRunnerUtil {
     }
 
     return processHandler;
+  }
+
+  /// Resolves an executable name against `PATH` on Windows, or returns `null` when there is nothing to resolve.
+  private static @Nullable Path findWindowsExecutableInPath(@NotNull String exePath) {
+    if (OS.CURRENT != OS.Windows) return null;
+    if (exePath.isBlank() || exePath.indexOf('\\') >= 0 || exePath.indexOf('/') >= 0) return null;
+    return PathEnvironmentVariableUtil.findFirst(exePath);
   }
 
   /// @deprecated use `PathEnvironmentVariableUtil.findFirst(exeName) != null` instead

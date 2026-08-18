@@ -13,6 +13,7 @@ import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.utils.ReportingPathUtils.checkPathLength
+import com.intellij.ide.starter.utils.ReportingPathUtils.shortenFileStemIn
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter.SyntheticTestKind
 import com.intellij.tools.ide.util.common.PrintFailuresMode
@@ -39,6 +40,9 @@ import kotlin.io.path.readLines
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTimedValue
+
+internal const val THREAD_DUMP_FILE_PREFIX: String = "threadDump"
+internal const val KILL_THREAD_DUMP_FILE_PREFIX: String = "threadDump-before-kill"
 
 suspend fun getProcessList(processName: String? = null): List<ProcessInfo> =
   if (processName == null) getFilteredProcessList()
@@ -311,9 +315,14 @@ suspend fun collectJavaThreadDumpsWhileAlive(
     delay(ConfigurationStorage.monitoringDumpsIntervalSeconds().seconds)
     if (!isAlive()) return
 
-    val dumpFile = checkPathLength(
-      threadDumpsDir().resolve("threadDump-${++dumpIndex}-${LocalTime.now().format(timestampFormatter)}.txt")
+    val directory = threadDumpsDir()
+    val fileStem = shortenFileStemIn(
+      directory,
+      "$THREAD_DUMP_FILE_PREFIX-${++dumpIndex}-${LocalTime.now().format(timestampFormatter)}",
+      extension = ".txt",
+      preservedPrefix = THREAD_DUMP_FILE_PREFIX,
     )
+    val dumpFile = checkPathLength(directory.resolve("$fileStem.txt"))
     dumpFile.parent.createDirectories()
     logOutput("Dumping threads to $dumpFile")
     catchAll {
