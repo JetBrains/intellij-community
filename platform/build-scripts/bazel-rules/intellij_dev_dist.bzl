@@ -312,26 +312,31 @@ def _compose(ctx, fragment_targets):
     if parts and len(prefixes) != 1:
         fail("%s: exactly one fragment must set produces_plugin_classpath_prefix, got %d" % (ctx.label, len(prefixes)))
 
-    args = ctx.actions.args()
-    for fragment in fragments:
-        args.add("--component-dir=" + fragment.home.path)
-    for fragment in fragments:
-        args.add("--component-manifest=" + fragment.manifest.path)
-    if parts:
-        # Positional, one per component, empty where a component built no plugin.
-        for fragment in fragments:
-            part = fragment.plugin_classpath_part
-            args.add("--plugin-classpath-part=" + (part.path if part else ""))
-        args.add("--plugin-classpath-prefix=" + prefixes[0].path)
+    composition_spec = ctx.actions.declare_file(ctx.label.name + ".composition.json")
+    ctx.actions.write(
+        composition_spec,
+        json.encode({
+            "version": 1,
+            "expectedFragments": ctx.attr.expect_fragments,
+            "components": [
+                {
+                    "root": fragment.home.path,
+                    "manifest": fragment.manifest.path,
+                    "pluginClasspathPart": fragment.plugin_classpath_part.path if fragment.plugin_classpath_part else None,
+                }
+                for fragment in fragments
+            ],
+            "pluginClasspathPrefix": prefixes[0].path if prefixes else None,
+        }),
+    )
 
-    # Declared by whoever wired this distribution, not derived from `fragments`: a fragment dropped from that list
-    # disappears from the component arguments too, so a list built from it could never notice the omission.
-    args.add_all(ctx.attr.expect_fragments, format_each = "--expect-fragment=%s")
+    args = ctx.actions.args()
+    args.add("--composition-spec=" + composition_spec.path)
     args.add("--output-dir=" + home.path)
     args.add("--ide-config=" + ide_config.path)
     args.add("--fingerprint=" + fingerprint.path)
     ctx.actions.run(
-        inputs = [file for fragment in fragments for file in [fragment.home, fragment.manifest]] + parts + prefixes,
+        inputs = [composition_spec] + [file for fragment in fragments for file in [fragment.home, fragment.manifest]] + parts + prefixes,
         outputs = [home, ide_config, fingerprint],
         executable = ctx.executable.composer,
         arguments = [args],

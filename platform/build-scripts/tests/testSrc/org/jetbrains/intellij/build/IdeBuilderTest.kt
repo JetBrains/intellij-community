@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.DevBuildComponentEntry
 import org.jetbrains.intellij.build.dev.DevBuildComponentManifest
 import org.jetbrains.intellij.build.dev.DevBuildFragment
+import org.jetbrains.intellij.build.dev.DevBuildOutput
 import org.jetbrains.intellij.build.dev.IdeFingerprintEntry
 import org.jetbrains.intellij.build.dev.PlatformFragmentSelector
 import org.jetbrains.intellij.build.dev.PluginFragmentSelector
@@ -55,6 +56,33 @@ class IdeBuilderTest {
         plugins = null,
       ).isComplete
     ).isFalse()
+  }
+
+  @Test
+  fun componentOutputRejectsIncompleteComponentContracts() {
+    val pluginFragment = DevBuildFragment(
+      name = "plugins_air",
+      platform = null,
+      platformResources = false,
+      plugins = PluginFragmentSelector.Named(setOf("intellij.air.plugin")),
+    )
+
+    assertThatThrownBy {
+      DevBuildOutput.Component(
+        fragment = DevBuildFragment.COMPLETE,
+        manifestFile = tempDir.resolve("complete.json"),
+      )
+    }
+      .isInstanceOf(IllegalArgumentException::class.java)
+      .hasMessageContaining("must use DevBuildOutput.Complete")
+    assertThatThrownBy {
+      DevBuildOutput.Component(
+        fragment = pluginFragment,
+        manifestFile = tempDir.resolve("plugins.json"),
+      )
+    }
+      .isInstanceOf(IllegalArgumentException::class.java)
+      .hasMessageContaining("plugin-classpath part file")
   }
 
   @Test
@@ -738,9 +766,12 @@ class IdeBuilderTest {
       buildDateInSeconds = buildDateInSeconds,
       os = os,
       arch = arch,
-      fragment = fragment,
-      componentManifestFile = if (fragment.isComplete) null else tempDir.resolve("${fragment.name}.component.json"),
-      pluginClasspathPrefixFile = pluginClasspathPrefixFile,
+      output = if (fragment.isComplete) DevBuildOutput.Complete else DevBuildOutput.Component(
+        fragment = fragment,
+        manifestFile = tempDir.resolve("${fragment.name}.component.json"),
+        pluginClasspathPartFile = if (fragment.ownsPlugins) tempDir.resolve("${fragment.name}.plugin-classpath-part") else null,
+        pluginClasspathPrefixFile = pluginClasspathPrefixFile,
+      ),
     )
   }
 

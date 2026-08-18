@@ -89,7 +89,7 @@ internal class DevBuildComponentComposerTest {
     )
 
     val manifest = readDevBuildComponentManifest(manifestFile)
-    assertThat(manifest.version).isEqualTo(5)
+    assertThat(manifest.version).isEqualTo(7)
     assertThat(manifest.entries).anySatisfy { entry ->
       assertThat(entry.relativePath).isEqualTo("lib/ijent/ijent-x86_64-unknown-linux-musl-release")
       assertThat(entry.type).isEqualTo("component-file")
@@ -477,6 +477,53 @@ internal class DevBuildComponentComposerTest {
       .isInstanceOf(IllegalStateException::class.java)
       .hasMessageContaining("different products")
     assertThat(Files.exists(target)).isFalse()
+  }
+
+  @Test
+  fun `composition spec decodes its versioned contract`(@TempDir tempDir: Path) {
+    val file = tempDir.resolve("composition.json")
+    Files.writeString(
+      file,
+      """
+        {
+          "version": 1,
+          "expectedFragments": ["platform_core", "plugins_rest"],
+          "components": [
+            {"root": "core", "manifest": "core.json"},
+            {"root": "plugins", "manifest": "plugins.json", "pluginClasspathPart": "plugins.part"}
+          ],
+          "pluginClasspathPrefix": "prefix.bin"
+        }
+      """.trimIndent(),
+    )
+
+    val spec = readDevBuildCompositionSpec(file)
+
+    assertThat(spec.expectedFragments).containsExactly("platform_core", "plugins_rest")
+    assertThat(spec.components).containsExactly(
+      DevBuildCompositionComponent(root = "core", manifest = "core.json"),
+      DevBuildCompositionComponent(root = "plugins", manifest = "plugins.json", pluginClasspathPart = "plugins.part"),
+    )
+    assertThat(spec.pluginClasspathPrefix).isEqualTo("prefix.bin")
+  }
+
+  @Test
+  fun `composition spec rejects an unsupported version`(@TempDir tempDir: Path) {
+    val file = tempDir.resolve("composition.json")
+    Files.writeString(
+      file,
+      """
+        {
+          "version": 2,
+          "expectedFragments": ["platform_core"],
+          "components": [{"root": "core", "manifest": "core.json"}]
+        }
+      """.trimIndent(),
+    )
+
+    assertThatThrownBy { readDevBuildCompositionSpec(file) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("Unsupported dev-build composition spec version 2")
   }
 
   private fun writeManifest(file: Path, componentRoot: Path) {

@@ -244,12 +244,13 @@ class JarPackager private constructor(
         searchableOptionSet = searchableOptionSet,
         cachedDescriptorWriterProvider = descriptorCache
       )
-      packager.computeModuleCustomLibrarySources(layout)
+      packager.computeModuleCustomLibrarySources(layout, assetFilter)
 
       packager.computeProjectLibrariesSources(
         outDir = outputDir,
         layout = layout,
         copiedFiles = packager.copiedFiles,
+        assetFilter = assetFilter,
       )
 
       // The whole layout is computed above, but only the owned jars are packed and reported: everything downstream -
@@ -686,11 +687,8 @@ class JarPackager private constructor(
     }
   }
 
-  private fun computeModuleCustomLibrarySources(layout: BaseLayout) {
+  private fun computeModuleCustomLibrarySources(layout: BaseLayout, assetFilter: DistributionAssetFilter?) {
     for (item in layout.includedModuleLibraries) {
-      val library = context.outputProvider.findRequiredModule(item.moduleName).libraryCollection.libraries.find { getLibraryFileName(it) == item.libraryName }
-                    ?: throw IllegalArgumentException("Cannot find library ${item.libraryName} in '${item.moduleName}' module")
-
       var relativePath = item.relativeOutputPath
       val targetFile: Path
       if (relativePath.endsWith(".jar")) {
@@ -710,6 +708,9 @@ class JarPackager private constructor(
         }
       }
 
+      if (assetFilter != null && !assetFilter.accept(relativePath, emptyList())) continue
+      val library = context.outputProvider.findRequiredModule(item.moduleName).libraryCollection.libraries.find { getLibraryFileName(it) == item.libraryName }
+                    ?: throw IllegalArgumentException("Cannot find library ${item.libraryName} in '${item.moduleName}' module")
       val asset = getJarAsset(targetFile, relativePath)
       val files = copiedFiles.getLibraryFiles(library = library, targetFile = targetFile, outputProvider = context.outputProvider)
       filesToSourceWithMapping(asset = asset, files = files, library = library, relativeOutputFile = relativePath, projectLibraryData = null)
@@ -720,6 +721,7 @@ class JarPackager private constructor(
     outDir: Path,
     layout: BaseLayout,
     copiedFiles: LibraryFileCopyTracker,
+    assetFilter: DistributionAssetFilter?,
   ) {
     if (layout.includedProjectLibraries.isEmpty()) {
       return
@@ -736,6 +738,7 @@ class JarPackager private constructor(
       if (outPath != null) {
         if (outPath.endsWith(".jar")) {
           val targetFile = outDir.resolve(outPath)
+          if (assetFilter != null && !assetFilter.accept(outPath, emptyList())) continue
           val asset = getJarAsset(targetFile, outPath)
           val files = copiedFiles.getLibraryFiles(library = library, targetFile = targetFile, outputProvider = outputProvider)
           filesToSourceWithMapping(asset, files, library, outPath, libraryData)
@@ -752,7 +755,8 @@ class JarPackager private constructor(
 
       if (libraryData.packMode == LibraryPackMode.STANDALONE_MERGED) {
         val targetFile = libOutputDir.resolve(nameToJarFileName(libName))
-        val relativeOutputFile = if (outDir == libOutputDir) "" else outDir.relativize(targetFile).invariantSeparatorsPathString
+        val relativeOutputFile = outDir.relativize(targetFile).invariantSeparatorsPathString
+        if (assetFilter != null && !assetFilter.accept(relativeOutputFile, emptyList())) continue
         addLibrary(
           targetFile = targetFile,
           relativeOutputFile = relativeOutputFile,
@@ -760,9 +764,10 @@ class JarPackager private constructor(
         )
       }
       else {
+        if (assetFilter != null && !assetFilter.accept(nameToJarFileName(libName), emptyList())) continue
         for (file in getLibraryRoots(library, outputProvider)) {
           val targetFile = libOutputDir.resolve(file.fileName.toString())
-          val relativeOutputFile = if (outDir == libOutputDir) "" else outDir.relativize(targetFile).invariantSeparatorsPathString
+          val relativeOutputFile = outDir.relativize(targetFile).invariantSeparatorsPathString
           addLibrary(targetFile = targetFile, relativeOutputFile = relativeOutputFile, files = listOf(file))
         }
       }

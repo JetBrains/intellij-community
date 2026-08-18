@@ -80,12 +80,21 @@ suspend fun readDescriptor(module: JpsModule, path: String, outputProvider: Modu
       // Scrambling is not a hazard here - this reads *module output*, which scrambling never rewrites; scrambled
       // descriptors reach a distribution through `CachedDescriptorContainer`, consulted before this function.
       DescriptorSearchPass.MODULE_OUTPUT -> {
-        val result = outputProvider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
-        if (result == null && outputProvider.isTestCompilationOutputEnabled(module)) {
+        // A test-only module has no production payload to search, and asking for it is not free: under an explicit
+        // Bazel input manifest that resolution is the declaration, so probing the empty production stub of a
+        // `.tests` module makes a jar nobody packs an input - and fails when it was never declared. Packing agrees
+        // (see `JarPackagerDependencyHelper.isTestPluginModule`), so descriptor search must not disagree.
+        if (isTestOnlyPluginModule(moduleName = module.name, module = module, outputProvider = outputProvider)) {
           outputProvider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = true)
         }
         else {
-          result
+          val result = outputProvider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
+          if (result == null && outputProvider.isTestCompilationOutputEnabled(module)) {
+            outputProvider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = true)
+          }
+          else {
+            result
+          }
         }
       }
     }

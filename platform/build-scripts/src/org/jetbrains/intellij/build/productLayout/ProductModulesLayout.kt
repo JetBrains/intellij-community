@@ -98,6 +98,9 @@ class ProductModulesLayout {
    */
   internal val moduleExcludes: MutableMap<String, MutableList<String>> = LinkedHashMap()
 
+  @ApiStatus.Internal
+  fun getModuleExcludesModuleNames(): Set<String> = moduleExcludes.keys
+
   /**
    * Additional customizations of platform JARs. **This is a temporary property added to keep layout of some products.**
    */

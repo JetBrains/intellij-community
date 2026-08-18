@@ -628,13 +628,19 @@ internal suspend fun layoutPlatformDistribution(
   assetFilter: DistributionAssetFilter? = null,
   context: BuildContext,
 ): List<DistributionFileEntry> {
+  val selectedModules = includedModules ?: platform.includedModules
+  val selectedModuleNames = selectedModules.mapTo(HashSet(), ModuleItem::moduleName)
   if (copyFiles) {
     coroutineScope {
-      createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPatcher, context)
-      launch(CoroutineName("patch keymap with Alt click reassigned to multiple carets")) {
-        patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher, context)
+      if (selectedModuleNames.contains("intellij.platform.ide.impl")) {
+        createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPatcher, context)
       }
-      launch(CoroutineName("write patched app info")) {
+      if (selectedModuleNames.contains("intellij.platform.resources")) {
+        launch(CoroutineName("patch keymap with Alt click reassigned to multiple carets")) {
+          patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher, context)
+        }
+      }
+      if (selectedModuleNames.contains("intellij.platform.core")) launch(CoroutineName("write patched app info")) {
         spanBuilder("write patched app info").use {
           val moduleName = "intellij.platform.core"
           val module = context.outputProvider.findRequiredModule(moduleName)
@@ -669,7 +675,7 @@ internal suspend fun layoutPlatformDistribution(
         targetDir = targetDir,
         copyFiles = copyFiles,
         moduleOutputPatcher = moduleOutputPatcher,
-        includedModules = includedModules ?: platform.includedModules,
+        includedModules = selectedModules,
         searchableOptionSet = searchableOptionSet,
         cachedDescriptorWriterProvider = null,
         assetFilter = assetFilter,
@@ -808,9 +814,11 @@ internal suspend fun layoutDistribution(
     withContext(Dispatchers.IO) {
       Files.createDirectories(targetDir)
 
-      if (!layout.moduleExcludes.isEmpty()) {
+      val includedModuleNames = includedModules.mapTo(HashSet(), ModuleItem::moduleName)
+      val relevantModuleExcludes = layout.moduleExcludes.filterKeys(includedModuleNames::contains)
+      if (relevantModuleExcludes.isNotEmpty()) {
         launch(CoroutineName("check module excludes")) {
-          checkModuleExcludes(layout.moduleExcludes, context.outputProvider)
+          checkModuleExcludes(relevantModuleExcludes, context.outputProvider)
         }
       }
 
