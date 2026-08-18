@@ -15,6 +15,7 @@ import com.intellij.python.sdk.common.evolution.EvoLeafKind
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoNodeDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
+import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.getOrNull
@@ -95,29 +96,65 @@ data class DiscoveredVenv(
   val createdByUv: Boolean get() = "uv" in config
 }
 
+/** Well-known heavy/irrelevant directories that never hold a user-selectable venv; never descended into. */
+private val PRUNED_SCAN_DIRS = setOf(
+  ".git", ".hg", ".svn", ".idea",
+  "node_modules", "__pycache__",
+  ".mypy_cache", ".pytest_cache", ".ruff_cache",
+)
+
 /**
- * Discovers all virtualenvs directly under [baseDirs], skipping any child in [excludedRoots] (content roots of
- * other modules — we do not descend into inner modules). No python is executed; the display version is read
- * from `pyvenv.cfg`.
+ * Discovers virtualenvs under [baseDirs], descending into nested subfolders (up to [maxDepth] levels) so envs kept in
+ * a project subdirectory are found too — not just those directly under a base dir. Directories in [excludedRoots]
+ * (content roots of other modules) are skipped, a directory that is itself a venv is never descended into, and
+ * [PRUNED_SCAN_DIRS] are pruned. The walk is breadth-first so shallower envs (the common case: a project-root `.venv`)
+ * are always found first, and it is capped at [maxDirs] directories. No python is executed; the display version is
+ * read from `pyvenv.cfg`.
+ *
+ * [maxDepth] and [maxDirs] default to the registry-backed [PyEvoRegistry.scanMaxDepth]/[PyEvoRegistry.scanMaxDirs];
+ * they are parameters so tests can drive the walk without a loaded registry.
  */
 @ApiStatus.Internal
-suspend fun discoverVenvs(baseDirs: List<Path>, excludedRoots: Set<Path>): List<DiscoveredVenv> = withContext(Dispatchers.IO) {
+suspend fun discoverVenvs(
+  baseDirs: List<Path>,
+  excludedRoots: Set<Path>,
+  maxDepth: Int = PyEvoRegistry.scanMaxDepth,
+  maxDirs: Int = PyEvoRegistry.scanMaxDirs,
+): List<DiscoveredVenv> = withContext(Dispatchers.IO) {
   val reader = VirtualEnvReader()
-  baseDirs.flatMap { baseDir ->
-    val children = try {
-      baseDir.listDirectoryEntries()
+  val found = mutableListOf<DiscoveredVenv>()
+
+  fun childDirs(dir: Path): List<Path> {
+    val entries = try {
+      dir.listDirectoryEntries()
     }
     catch (_: IOException) {
-      emptyList()
+      return emptyList()
     }
-    children
-      .filter { it.isDirectory() && it !in excludedRoots }
-      .mapNotNull { dir ->
-        val binary = reader.findPythonInPythonRoot(dir) ?: return@mapNotNull null
-        val config = parsePyvenvCfg(dir.resolve("pyvenv.cfg"))
-        DiscoveredVenv(binary, config, config.pyvenvVersion())
-      }
+    return entries.filter { it.isDirectory() && it.fileName?.toString() !in PRUNED_SCAN_DIRS }
   }
+
+  // The base dir itself is never treated as a venv (matching the previous behavior); scanning starts at its children.
+  var frontier = baseDirs.flatMap { childDirs(it) }
+  var budget = maxDirs
+  var depth = 1
+  while (frontier.isNotEmpty() && depth <= maxDepth && budget > 0) {
+    val next = mutableListOf<Path>()
+    for (dir in frontier) {
+      if (budget-- <= 0) break
+      if (dir in excludedRoots) continue
+      val binary = reader.findPythonInPythonRoot(dir)
+      if (binary != null) {
+        val config = parsePyvenvCfg(dir.resolve("pyvenv.cfg"))
+        found += DiscoveredVenv(binary, config, config.pyvenvVersion())
+        continue // a venv is a leaf: never descend into its internals
+      }
+      if (depth < maxDepth) next += childDirs(dir)
+    }
+    frontier = next
+    depth++
+  }
+  found
 }
 
 private fun parsePyvenvCfg(path: Path): Map<String, String> {
