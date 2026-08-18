@@ -4,6 +4,7 @@ package com.jetbrains.performancePlugin.remotedriver.fixtures
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
+import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ReflectionUtil
@@ -107,6 +108,25 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
 
   fun expandAll(timeoutMs: Int) {
     computeOnEdt { TreeUtil.promiseExpandAll(component) }.blockingGet(timeoutMs)
+  }
+
+  fun expandRowRecursively(row: Int, timeoutMs: Int) {
+    val selectedPath = computeOnEdt {
+      require(row in 0 until component.rowCount) {
+        "The given row $row should be between 0 and ${component.rowCount - 1}"
+      }
+      requireNotNull(component.getPathForRow(row))
+    }
+    computeOnEdt {
+      TreeUtil.promiseExpand(component, Int.MAX_VALUE) { path ->
+        when {
+          path == selectedPath -> true
+          selectedPath.isDescendant(path) -> (TreeUtil.getLastUserObject(path) as? AbstractTreeNode<*>)?.isIncludedInExpandAll != false
+          path.isDescendant(selectedPath) -> true
+          else -> false
+        }
+      }
+    }.blockingGet(timeoutMs)
   }
 
   fun collectIconsAtRow(row: Int): List<Icon> {
