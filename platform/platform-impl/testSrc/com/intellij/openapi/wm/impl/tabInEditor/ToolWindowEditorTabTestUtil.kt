@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.flowOf
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
+import org.jdom.Element
 
 /**
  * A configurable [ToolWindowEditorTabSupport] used by the `tabInEditor` tests.
@@ -65,6 +66,38 @@ internal class FakeToolWindowEditorTabSupport(
 }
 
 /**
+ * A configurable [ToolWindowEditorTabPersistenceProvider] used by the `tabInEditor` tests.
+ *
+ * [canSerializeResult] controls the default [canSerialize] behavior.
+ * [serializeAction] and [deserializeAction] can emulate specific conversion logic and return custom results.
+ * [serializeInvocations] and [deserializeInvocations] record the arguments passed to the provider,
+ * allowing tests to verify that the platform attempts to save/restore the correct contents.
+ */
+internal class FakeToolWindowEditorTabPersistenceProvider(
+  private val canSerializeResult: Boolean = true,
+  private val serializeAction: ((Content) -> Element)? = null,
+  private val deserializeAction: ((Project, Element) -> Content?)? = null,
+) : ToolWindowEditorTabPersistenceProvider {
+
+  val serializeInvocations: MutableList<Content> = mutableListOf()
+  val deserializeInvocations: MutableList<Element> = mutableListOf()
+
+  override fun canSerialize(content: Content): Boolean {
+    return canSerializeResult
+  }
+
+  override fun serialize(content: Content): Element {
+    serializeInvocations += content
+    return serializeAction?.invoke(content) ?: Element("fake-state")
+  }
+
+  override fun deserialize(project: Project, element: Element): Content? {
+    deserializeInvocations += element
+    return deserializeAction?.invoke(project, element)
+  }
+}
+
+/**
  * Registers [support] for [toolWindowId] on the `com.intellij.toolWindowEditorTabSupport` keyed
  * extension point so that [ToolWindowEditorTabSupportUtil.getSupport] resolves it.
  *
@@ -78,6 +111,14 @@ internal fun registerFakeToolWindowEditorTabSupport(
   disposable: Disposable,
 ) {
   ToolWindowEditorTabSupportUtil.registerForTest(toolWindowId, support, disposable)
+}
+
+internal fun registerFakeToolWindowEditorTabPersistenceProvider(
+  toolWindowId: String,
+  provider: ToolWindowEditorTabPersistenceProvider,
+  disposable: Disposable,
+) {
+  ToolWindowEditorTabPersistenceProviderUtil.registerForTest(toolWindowId, provider, disposable)
 }
 
 internal fun createTabContent(component: JComponent = JPanel(), displayName: String = "tab"): Content =
