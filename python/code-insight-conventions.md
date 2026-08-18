@@ -122,8 +122,8 @@ To run one checker by hand: `uvx ty check test.py`, `uvx pyrefly check test.py`,
   the test is testing the boundary of a feature: that a new feature is not supported in an older
   version of the language, or a deprecated feature is no longer supported in a newer version.
 - When selecting a suitable test class for new tests, start with checking newer code 
-  insight tests, inheriting from `PyCodeInsightTestCase` (many are listed in
-  `PyPureTypingTestSuite`). Update the legacy tests, inheriting from `PyTestCase`, only if the
+  insight tests, inheriting from `PyCodeInsightTestCase` (many live in
+  `community/python/testSrc/com/jetbrains/python/types`). Update the legacy tests, inheriting from `PyTestCase`, only if the
   changed functionality is something not covered by `PyCodeInsightTestCase`, e.g. formatting,
   refactorings, editing actions, etc. or there are many related test cases already present in one
   of the legacy tests that is yet to be ported.
@@ -133,11 +133,11 @@ To run one checker by hand: `uvx ty check test.py`, `uvx pyrefly check test.py`,
   version of the standard library in the bundled copy of Typeshed. 
   When extending a legacy test, use the "Py3" version of a test class whenever it's available.
 
-### Update the standard test suites
+### Update the standard test run configurations
 
-- Add all new tests to the relevant standard test suites, in particular `PythonAllTestsSuite` for
-  all tests and `PyPureTypingTestSuite` and `PythonAllTypesTestSuite` for tests involving type 
-  inference and type checking.
+- "Python All Types Tests" and "Python All Completion Tests" are pattern lists of
+  explicit class names, because their membership is a curated selection that does
+  not follow package boundaries. these need to be updated explicitly for new test classes
 
 ### Add multifile tests for changes involving PSI stubs
 
