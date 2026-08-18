@@ -1,402 +1,301 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.changes;
+package com.intellij.openapi.vcs.changes
 
-import com.intellij.CommonBundle;
-import com.intellij.concurrency.SensitiveProgressWrapper;
-import com.intellij.internal.statistic.StructuredIdeActivity;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCloseListener;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.util.registry.RegistryValueListener;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsConnectionProblem;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value;
-import com.intellij.openapi.vcs.changes.ChangeListWorker.ChangeListUpdater;
-import com.intellij.openapi.vcs.changes.actions.ChangeListRemoveConfirmation;
-import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
-import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector;
-import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
-import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
-import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
-import com.intellij.openapi.vcs.impl.VcsEP;
-import com.intellij.openapi.vcs.impl.VcsInitObject;
-import com.intellij.openapi.vcs.impl.VcsRootIterator;
-import com.intellij.openapi.vcs.impl.VcsStartupActivity;
-import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.vcs.changes.ChangeListManagerState;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SlowOperations;
-import com.intellij.util.ThreeState;
-import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.messages.Topic;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.VcsConfirmationUtil;
-import com.intellij.vcs.commit.ChangeListCommitState;
-import com.intellij.vcs.commit.CommitModeManager;
-import com.intellij.vcs.commit.LocalChangesCommitter;
-import com.intellij.vcs.commit.ShowNotificationCommitResultHandler;
-import com.intellij.vcs.commit.SingleChangeListCommitter;
-import com.intellij.vcsUtil.VcsUtil;
-import com.intellij.xml.util.XmlStringUtil;
-import kotlinx.coroutines.CoroutineScope;
-import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.Unmodifiable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
+import com.intellij.CommonBundle
+import com.intellij.concurrency.SensitiveProgressWrapper
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.AbstractVcsHelper
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsConnectionProblem
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsMappingListener
+import com.intellij.openapi.vcs.VcsShowConfirmationOption
+import com.intellij.openapi.vcs.changes.ChangeListWorker.ChangeListUpdater
+import com.intellij.openapi.vcs.changes.ChangeListWorker.PartialChangeTracker
+import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder.VcsManagedFilesHolderListener
+import com.intellij.openapi.vcs.changes.actions.ChangeListRemoveConfirmation
+import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector
+import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker
+import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener
+import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl
+import com.intellij.openapi.vcs.impl.VcsEP
+import com.intellij.openapi.vcs.impl.VcsInitObject
+import com.intellij.openapi.vcs.impl.VcsRootIterator
+import com.intellij.openapi.vcs.impl.VcsStartupActivity
+import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
+import com.intellij.openapi.vfs.ReadonlyStatusHandler
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.vcs.changes.ChangeListManagerState
+import com.intellij.platform.vcs.changes.ChangeListManagerState.FileHoldersState
+import com.intellij.util.EventDispatcher
+import com.intellij.util.SlowOperations
+import com.intellij.util.ThreeState
+import com.intellij.util.application
+import com.intellij.util.asSafely
+import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.MultiMap
+import com.intellij.util.messages.Topic
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.VcsConfirmationUtil
+import com.intellij.vcs.commit.ChangeListCommitState
+import com.intellij.vcs.commit.CommitModeManager
+import com.intellij.vcs.commit.ShowNotificationCommitResultHandler
+import com.intellij.vcs.commit.SingleChangeListCommitter.Companion.create
+import com.intellij.vcsUtil.VcsUtil
+import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.CoroutineScope
+import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import java.io.File
+import java.util.concurrent.CountDownLatch
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.function.Supplier;
-
-import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled;
-import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
-import static com.intellij.util.containers.ContainerUtil.mapNotNull;
-import static com.intellij.util.ui.UIUtil.BR;
-import static java.util.stream.Collectors.toSet;
+private val LOG = logger<ChangeListManagerImpl>()
+private const val DEADLOCK_ADVICE =
+  "A lock may not be taken while ChangeListManagerImpl.dataLock is held, as this might lead to a deadlock"
 
 @ApiStatus.Internal
-@State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public final class ChangeListManagerImpl extends ChangeListManagerEx implements PersistentStateComponent<Element>, Disposable {
-  private static final Logger LOG = Logger.getInstance(ChangeListManagerImpl.class);
-  private static final String DEADLOCK_ADVICE =
-    "A lock may not be taken while com.intellij.openapi.vcs.changes.ChangeListManagerImpl.myDataLock is held, as this might lead to a deadlock";
+@State(name = "ChangeListManager", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+class ChangeListManagerImpl(
+  private val project: Project,
+  coroutineScope: CoroutineScope,
+) : ChangeListManagerEx(),
+    PersistentStateComponent<Element>,
+    Disposable {
+  private val scheduler = ChangeListScheduler(coroutineScope)
+  private val updateDisposable = Disposer.newDisposable()
 
-  @Topic.ProjectLevel
-  public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED =
-    new Topic<>(LocalChangeListsLoadedListener.class, Topic.BroadcastDirection.NONE);
-
-  private final Project project;
-  private final ChangelistConflictTracker myConflictTracker;
-
-  private final ChangeListScheduler myScheduler; // update thread
-  private final Disposable myUpdateDisposable = Disposer.newDisposable();
-
-  private final EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
-  private final DelayedNotificator myDelayedNotificator; // notifies myListeners on the update thread
-
-  private final Object myDataLock = new Object();
-
-  private final UpdateRequestsQueue myUpdater;
-  private final Modifier myModifier;
-
-  private FileHolderComposite myComposite;
-  private final ChangeListWorker myWorker;
-
-  private @Nullable List<LocalChangeListImpl> myDisabledWorkerState;
-
-  private boolean myInitialUpdate = true;
-  private VcsException myUpdateException;
-  private volatile boolean myShowLocalChangesInvalidated;
-
-  private final @NotNull ChangesListManagerStateProviderImpl myStateProvider;
-
-  private final @NotNull Set<String> myListsToBeDeletedSilently = new HashSet<>();
-  private final @NotNull Set<String> myListsToBeDeleted = new HashSet<>();
-  private boolean myEmptyListDeletionScheduled;
-
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private boolean myModalNotificationsBlocked;
-
-  public static ChangeListManagerImpl getInstanceImpl(@NotNull Project project) {
-    return (ChangeListManagerImpl)getInstance(project);
-  }
-
-  public ChangeListManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
-    this.project = project;
-    myStateProvider = ChangesListManagerStateProviderImpl.getInstance(project);
-    myConflictTracker = new ChangelistConflictTracker(project, this);
-
-    myComposite = FileHolderComposite.create(project);
-    myScheduler = new ChangeListScheduler(coroutineScope);
-    myDelayedNotificator = new DelayedNotificator(this.project, this, myScheduler);
-    myWorker = new ChangeListWorker(this.project, myDelayedNotificator);
-
-    myUpdater = new UpdateRequestsQueue(this.project, myScheduler, this::updateImmediately, this::hasNothingToUpdate);
-    myModifier = new Modifier(myWorker, myDelayedNotificator);
-
-    MessageBusConnection busConnection = this.project.getMessageBus().connect(this);
-    busConnection.subscribe(ChangeListListener.TOPIC, myListeners.getMulticaster());
-    myListeners.addListener(new ChangeListAdapter() {
-      @Override
-      public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList, boolean automatic) {
-        LocalChangeList oldList = (LocalChangeList)oldDefaultList;
-        if (automatic || oldDefaultList == null || oldDefaultList.equals(newDefaultList)) {
-          return;
-        }
-
-        scheduleAutomaticEmptyChangeListDeletion(oldList);
-      }
-    });
-
-    busConnection.subscribe(VcsManagedFilesHolder.TOPIC, () -> myStateProvider.setFileHolderState(getFileHoldersState()));
-
-    VcsManagedFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.addChangeListener(this.project, () -> {
-      VcsDirtyScopeManager.getInstance(this.project).markEverythingDirty();
-    }, this);
-    VcsEP.EP_NAME.addChangeListener(coroutineScope, () -> {
-      resetChangedFiles();
-      VcsDirtyScopeManager.getInstance(this.project).markEverythingDirty();
-    });
-
-    CommitModeManager.subscribeOnCommitModeChange(busConnection, () -> updateChangeListAvailability());
-    Registry.get("vcs.disable.changelists").addListener(new RegistryValueListener() {
-      @Override
-      public void afterValueChanged(@NotNull RegistryValue value) {
-        updateChangeListAvailability();
-      }
-    }, this);
-
-    Disposer.register(this, myUpdateDisposable); // register defensively, in case "projectClosing" won't be called
-    busConnection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
-      @Override
-      public void projectClosing(@NotNull Project project) {
-        if (project == ChangeListManagerImpl.this.project) {
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
-            //noinspection TestOnlyProblems
-            waitEverythingDoneInTestMode();
-          }
-          // Can't use Project disposable - it will be called after pending tasks are finished
-          Disposer.dispose(myUpdateDisposable);
-        }
-      }
-    });
-  }
-
-  @Override
-  public void dispose() {
-    myUpdater.stop();
-  }
-
-  @Override
-  public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list) {
-    scheduleAutomaticEmptyChangeListDeletion(list, false);
-  }
-
-  @Override
-  public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList oldList, boolean silently) {
-    if (!silently && oldList.hasDefaultName()) return;
-    synchronized (myDataLock) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(String.format("Schedule empty changelist deletion: %s, silently = %s", oldList.getName(), silently));
-      }
-
-      if (silently) {
-        myListsToBeDeletedSilently.add(oldList.getId());
-      }
-      else {
-        myListsToBeDeleted.add(oldList.getId());
-      }
-
-      if (!myEmptyListDeletionScheduled) {
-        myEmptyListDeletionScheduled = true;
-        invokeAfterUpdate(true, this::deleteEmptyChangeLists);
-      }
-    }
-  }
-
-  @RequiresEdt
-  private void deleteEmptyChangeLists() {
-    VcsConfiguration config = VcsConfiguration.getInstance(project);
-
-    List<LocalChangeList> listsToBeDeletedSilently;
-    List<LocalChangeList> listsToBeDeleted;
-
-    Function<String, LocalChangeList> toDeleteMapping = id -> {
-      LocalChangeList list = getChangeList(id);
-      if (list == null || list.isDefault() || list.isReadOnly() || !list.getChanges().isEmpty()) return null;
-      return list;
-    };
-
-    synchronized (myDataLock) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(String.format("Empty changelist deletion, scheduled:\nsilently: %s\nasking: %s",
-                                myListsToBeDeletedSilently, myListsToBeDeleted));
-      }
-
-      myListsToBeDeleted.removeAll(myListsToBeDeletedSilently);
-
-      listsToBeDeletedSilently = mapNotNull(myListsToBeDeletedSilently, toDeleteMapping);
-      myListsToBeDeletedSilently.clear();
-
-      boolean askLater = myModalNotificationsBlocked &&
-                         config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.SHOW_CONFIRMATION;
-      if (!askLater) {
-        listsToBeDeleted = mapNotNull(myListsToBeDeleted, toDeleteMapping);
-        myListsToBeDeleted.clear();
-      }
-      else {
-        listsToBeDeleted = Collections.emptyList();
-      }
-
-      myEmptyListDeletionScheduled = false;
-
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(String.format("Empty changelist deletion, to be deleted:\nsilently: %s\nasking: %s",
-                                listsToBeDeletedSilently, listsToBeDeleted));
-      }
-    }
-
-    if (config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.DO_NOTHING_SILENTLY ||
-        config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.SHOW_CONFIRMATION &&
-        ApplicationManager.getApplication().isUnitTestMode()) {
-      listsToBeDeleted = Collections.emptyList();
-    }
-
-    ChangeListRemoveConfirmation.deleteEmptyInactiveLists(project, listsToBeDeletedSilently, toAsk -> true);
-
-    ChangeListRemoveConfirmation.deleteEmptyInactiveLists(project, listsToBeDeleted,
-                                                          toAsk -> config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.DO_ACTION_SILENTLY ||
-                                                                   showRemoveEmptyChangeListsProposal(project, config, toAsk));
-  }
+  private val listeners = EventDispatcher.create(ChangeListListener::class.java)
 
   /**
-   * Shows the proposal to delete one or more changelists that were default and became empty.
-   *
-   * @return true if the changelists have to be deleted, false if not.
+   * Notifies [listeners] on [scheduler]
    */
-  private static boolean showRemoveEmptyChangeListsProposal(@NotNull Project project,
-                                                            final @NotNull VcsConfiguration config,
-                                                            @NotNull Collection<? extends ChangeList> lists) {
-    if (lists.isEmpty()) {
-      return false;
-    }
+  private val delayedNotificator = DelayedNotificator(project, this, scheduler)
 
+  private val worker = ChangeListWorker(project, delayedNotificator)
 
-    String changeListName = lists.size() == 1
-                            ? StringUtil.first(lists.iterator().next().getName(), 30, true)
-                            : StringUtil.join(lists, list -> StringUtil.first(list.getName(), 30, true), BR);
-    String question = VcsBundle.message("changes.empty.changelists.no.longer.active", lists.size(), changeListName);
+  private val updateRequestsQueue = UpdateRequestsQueue(project, scheduler, ::updateImmediately, ::hasNothingToUpdate)
+  private val modifier = Modifier(worker, delayedNotificator)
 
-    VcsShowConfirmationOption option = new VcsShowConfirmationOption() {
-      @Override
-      public Value getValue() {
-        return config.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
+  private val dataLock = Any()
+
+  private var filesHolder = FileHolderComposite.create(project)
+
+  private var disabledWorkerState: List<LocalChangeListImpl>? = null
+
+  private var initialUpdate = true
+  private var _updateException: VcsException? = null
+
+  @Volatile
+  private var showLocalChangesInvalidated = false
+
+  private val stateProvider = ChangesListManagerStateProviderImpl.getInstance(project)
+
+  private val listsToBeDeletedSilently = HashSet<String>()
+  private val listsToBeDeleted = HashSet<String>()
+  private var emptyListDeletionScheduled = false
+
+  private var modalNotificationsBlocked = false
+
+  val conflictTracker: ChangelistConflictTracker = ChangelistConflictTracker(project, this)
+
+  init {
+    val busConnection = project.getMessageBus().connect(coroutineScope)
+    busConnection.subscribe(ChangeListListener.TOPIC, listeners.getMulticaster())
+    listeners.addListener(object : ChangeListAdapter() {
+      override fun defaultListChanged(oldDefaultList: ChangeList?, newDefaultList: ChangeList?, automatic: Boolean) {
+        if (automatic || oldDefaultList == null || oldDefaultList == newDefaultList || oldDefaultList !is LocalChangeList) {
+          return
+        }
+        scheduleAutomaticEmptyChangeListDeletion(oldDefaultList)
       }
+    })
 
-      @Override
-      public void setValue(Value value) {
-        config.REMOVE_EMPTY_INACTIVE_CHANGELISTS = value;
+    busConnection.subscribe(VcsManagedFilesHolder.TOPIC,
+                            VcsManagedFilesHolderListener {
+                              val ignoredInUpdateMode = filesHolder.ignoredFileHolder.isInUpdatingMode
+                              val unversionedInUpdateMode = filesHolder.unversionedFileHolder.isInUpdatingMode
+                              stateProvider.setFileHolderState(FileHoldersState(unversionedInUpdateMode, ignoredInUpdateMode))
+                            })
+
+    VcsManagedFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.addChangeListener(project, Runnable {
+      VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
+    }, this)
+    VcsEP.EP_NAME.addChangeListener(coroutineScope, Runnable {
+      resetChangedFiles()
+      VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
+    })
+
+    CommitModeManager.subscribeOnCommitModeChange(busConnection, CommitModeManager.CommitModeListener { updateChangeListAvailability() })
+    Registry.get("vcs.disable.changelists").addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) {
+        updateChangeListAvailability()
       }
+    }, this)
 
-      @Override
-      public boolean isPersistent() {
-        return true;
+    Disposer.register(this, updateDisposable) // register defensively, in case "projectClosing" won't be called
+    busConnection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      override fun projectClosing(project: Project) {
+        if (project === this@ChangeListManagerImpl.project) {
+          if (application.isUnitTestMode()) {
+            @Suppress("TestOnlyProblems")
+            waitEverythingDoneInTestMode()
+          }
+          // Can't use Project disposable - it will be called after pending tasks are finished
+          Disposer.dispose(updateDisposable)
+        }
       }
-    };
-
-    return VcsConfirmationUtil.requestConfirmation(
-      option,
-      project,
-      XmlStringUtil.wrapInHtml(question),
-      VcsBundle.message("dialog.title.remove.empty.changelist"),
-      Messages.getQuestionIcon(),
-      VcsBundle.message("button.remove"),
-      CommonBundle.getCancelButtonText()
-    );
+    })
   }
 
-  @Override
+  override fun dispose() {
+    updateRequestsQueue.stop()
+  }
+
+  override fun scheduleAutomaticEmptyChangeListDeletion(list: LocalChangeList) {
+    scheduleAutomaticEmptyChangeListDeletion(list, false)
+  }
+
+  override fun scheduleAutomaticEmptyChangeListDeletion(oldList: LocalChangeList, silently: Boolean) {
+    if (!silently && oldList.hasDefaultName()) return
+    synchronized(dataLock) {
+      LOG.debug { "Schedule empty changelist deletion: ${oldList.getName()}, silently = $silently" }
+      if (silently) {
+        listsToBeDeletedSilently.add(oldList.id)
+      }
+      else {
+        listsToBeDeleted.add(oldList.id)
+      }
+
+      if (!emptyListDeletionScheduled) {
+        emptyListDeletionScheduled = true
+        invokeAfterUpdate(true) {
+          deleteEmptyChangeLists()
+        }
+      }
+    }
+  }
+
   @RequiresEdt
-  public void blockModalNotifications() {
-    myModalNotificationsBlocked = true;
+  private fun deleteEmptyChangeLists() {
+    val config = VcsConfiguration.getInstance(project)
+
+    val toBeDeletedSilently: List<LocalChangeList>
+    val toBeDeleted: List<LocalChangeList>
+
+    val toDeleteMapping = { id: String? ->
+      getChangeList(id)?.takeIf {
+        !it.isDefault && !it.isReadOnly && it.changes.isEmpty()
+      }
+    }
+
+    synchronized(dataLock) {
+      LOG.debug {
+        "Empty changelist deletion, scheduled:\nsilently: ${listsToBeDeletedSilently}\nasking: ${listsToBeDeleted}"
+      }
+
+      listsToBeDeleted.removeAll(listsToBeDeletedSilently)
+
+      toBeDeletedSilently = listsToBeDeletedSilently.mapNotNullAndClear(toDeleteMapping)
+
+      val askLater = modalNotificationsBlocked &&
+                     config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION
+      val dontDelete = config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY ||
+                       config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION && application.isUnitTestMode()
+      toBeDeleted = when {
+        askLater -> listOf()
+        dontDelete -> {
+          listsToBeDeleted.clear()
+          listOf()
+        }
+        else -> listsToBeDeleted.mapNotNullAndClear(toDeleteMapping)
+      }
+
+      emptyListDeletionScheduled = false
+      LOG.debug {
+        "Empty changelist deletion, to be deleted:\nsilently: $toBeDeletedSilently\nasking: $toBeDeleted"
+      }
+    }
+
+    ChangeListRemoveConfirmation.deleteEmptyInactiveLists(project, toBeDeletedSilently) { _ -> true }
+
+    ChangeListRemoveConfirmation.deleteEmptyInactiveLists(project, toBeDeleted) { toAsk: List<LocalChangeList> ->
+      config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY ||
+      showRemoveEmptyChangeListsProposal(project, config, toAsk)
+    }
   }
 
-  @Override
   @RequiresEdt
-  public void unblockModalNotifications() {
-    myModalNotificationsBlocked = false;
-    deleteEmptyChangeLists();
+  override fun blockModalNotifications() {
+    modalNotificationsBlocked = true
   }
 
-  private void startUpdater() {
-    myUpdater.initialized();
-    project.getMessageBus().syncPublisher(LISTS_LOADED).processLoadedLists(getChangeLists());
+  @RequiresEdt
+  override fun unblockModalNotifications() {
+    modalNotificationsBlocked = false
+    deleteEmptyChangeLists()
+  }
 
-    MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(VCS_CONFIGURATION_CHANGED, () -> VcsDirtyScopeManager.getInstance(project).markEverythingDirty());
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      myConflictTracker.startTracking();
+  private fun startUpdater() {
+    updateRequestsQueue.initialized()
+    project.getMessageBus().syncPublisher(LISTS_LOADED_TOPIC).processLoadedLists(getChangeLists())
+
+    val connection = project.getMessageBus().connect(this)
+    connection.subscribe(
+      ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED,
+      VcsMappingListener { VcsDirtyScopeManager.getInstance(project).markEverythingDirty() })
+    if (!application.isUnitTestMode()) {
+      conflictTracker.startTracking()
     }
   }
 
-  static final class MyStartupActivity implements VcsStartupActivity {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      getInstanceImpl(project).startUpdater();
-    }
-
-    @Override
-    public int getOrder() {
-      return VcsInitObject.CHANGE_LIST_MANAGER.getOrder();
+  fun registerChangeTracker(filePath: FilePath, tracker: PartialChangeTracker) {
+    synchronized(dataLock) {
+      worker.registerChangeTracker(filePath, tracker)
     }
   }
 
-  @ApiStatus.Internal
-  public void registerChangeTracker(@NotNull FilePath filePath, @NotNull ChangeListWorker.PartialChangeTracker tracker) {
-    synchronized (myDataLock) {
-      myWorker.registerChangeTracker(filePath, tracker);
-    }
-  }
-
-  @ApiStatus.Internal
-  public void unregisterChangeTracker(@NotNull FilePath filePath, @NotNull ChangeListWorker.PartialChangeTracker tracker) {
-    synchronized (myDataLock) {
-      myWorker.unregisterChangeTracker(filePath, tracker);
+  fun unregisterChangeTracker(filePath: FilePath, tracker: PartialChangeTracker) {
+    synchronized(dataLock) {
+      worker.unregisterChangeTracker(filePath, tracker)
     }
   }
 
@@ -404,1160 +303,1081 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
    * update itself might produce actions done on AWT thread (invoked-after),
    * so waiting for its completion on AWT thread is not good runnable is invoked on AWT thread
    */
-  @Override
-  public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
-                                @NotNull InvokeAfterUpdateMode mode,
-                                @Nullable String title,
-                                @Nullable ModalityState state) {
-    myUpdater.invokeAfterUpdate(afterUpdate, mode, title);
+  override fun invokeAfterUpdate(afterUpdate: Runnable, mode: InvokeAfterUpdateMode, title: String?, state: ModalityState?) {
+    updateRequestsQueue.invokeAfterUpdate(afterUpdate, mode, title)
   }
 
-  @Override
-  public void freeze(@NotNull String reason) {
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      ApplicationManager.getApplication().assertIsNonDispatchThread();
+  override fun freeze(reason: String) {
+    if (!application.isHeadlessEnvironment()) {
+      application.assertIsNonDispatchThread()
     }
 
-    myUpdater.setIgnoreBackgroundOperation(true);
-    Semaphore sem = new Semaphore(1);
+    updateRequestsQueue.setIgnoreBackgroundOperation(true)
+    val sem = Semaphore(1)
 
-    invokeAfterUpdate(false, () -> {
-      myUpdater.setIgnoreBackgroundOperation(false);
-      myUpdater.pause();
-      myStateProvider.setFreezeReason(reason);
-      sem.up();
-    });
+    invokeAfterUpdate(false, Runnable {
+      updateRequestsQueue.setIgnoreBackgroundOperation(false)
+      updateRequestsQueue.pause()
+      stateProvider.setFreezeReason(reason)
+      sem.up()
+    })
 
-    awaitWithCheckCanceled(sem, ProgressManager.getInstance().getProgressIndicator());
+    ProgressIndicatorUtils.awaitWithCheckCanceled(sem, ProgressManager.getInstance().getProgressIndicator())
   }
 
-  @Override
-  public void unfreeze() {
-    myUpdater.go();
-    myStateProvider.setFreezeReason(null);
+  override fun unfreeze() {
+    updateRequestsQueue.go()
+    stateProvider.setFreezeReason(null)
   }
 
-  @Override
-  public void waitForUpdate() {
-    assert !ApplicationManager.getApplication().isReadAccessAllowed();
-    CountDownLatch waiter = new CountDownLatch(1);
-    invokeAfterUpdate(false, waiter::countDown);
-    awaitWithCheckCanceled(waiter);
+  override fun waitForUpdate() {
+    assert(!application.isReadAccessAllowed())
+    val waiter = CountDownLatch(1)
+    invokeAfterUpdate(false, Runnable { waiter.countDown() })
+    ProgressIndicatorUtils.awaitWithCheckCanceled(waiter)
   }
 
-  @Override
-  public @NotNull Promise<?> promiseWaitForUpdate() {
-    AsyncPromise<Boolean> promise = new AsyncPromise<>();
-    invokeAfterUpdate(false, () -> promise.setResult(true));
-    return promise;
+  override fun promiseWaitForUpdate(): Promise<*> {
+    val promise = AsyncPromise<Boolean?>()
+    invokeAfterUpdate(false, Runnable { promise.setResult(true) })
+    return promise
   }
 
-  @Override
-  public @Nullable String isFreezed() {
-    ChangeListManagerState.Frozen frozen = ObjectUtils.tryCast(myStateProvider.getState().getValue(), ChangeListManagerState.Frozen.class);
-    return frozen == null ? null : frozen.getReason();
+  override fun isFreezed(): String? = stateProvider.state.value.asSafely<ChangeListManagerState.Frozen>()?.reason
+
+  override fun isFreezedWithNotification(modalTitle: @Nls String?): Boolean {
+    val freezeReason = isFreezed() ?: return false
+
+    if (modalTitle != null) {
+      Messages.showErrorDialog(project, freezeReason, modalTitle)
+    }
+    else {
+      VcsBalloonProblemNotifier.showOverChangesView(project, freezeReason, MessageType.WARNING)
+    }
+    return true
   }
 
-  public void executeOnUpdaterThread(@NotNull Runnable r) {
-    myScheduler.submit(r);
+  fun executeOnUpdaterThread(operation: () -> Unit) {
+    scheduler.submit(operation)
   }
 
-  public void executeUnderDataLock(@NotNull Runnable r) {
-    ReadAction.runBlocking(() -> {
-      synchronized (myDataLock) {
-        r.run();
+  fun executeUnderDataLock(operation: () -> Unit) {
+    runReadActionBlocking {
+      synchronized(dataLock) {
+        operation()
       }
-    });
+    }
   }
 
-  @ApiStatus.Internal
-  public void scheduleUpdateImpl() {
-    myUpdater.schedule();
+  fun scheduleUpdateImpl() {
+    updateRequestsQueue.schedule()
   }
 
-  private void resetChangedFiles() {
+  private fun resetChangedFiles() {
     try {
-      synchronized (myDataLock) {
-        DataHolder dataHolder = new DataHolder(myComposite.copy(), new ChangeListUpdater(myWorker), true);
-        dataHolder.notifyStart();
-        dataHolder.notifyEnd();
-
-        dataHolder.finish();
-        myWorker.applyChangesFromUpdate(dataHolder.getUpdatedWorker(), new MyChangesDeltaForwarder(project, myScheduler));
-        myComposite = dataHolder.getComposite();
-
-        myUpdateException = null;
+      synchronized(dataLock) {
+        val dataHolder = DataHolder(filesHolder.copy(), ChangeListUpdater(worker), true).apply {
+          notifyStart()
+          notifyEnd()
+          finish()
+        }
+        worker.applyChangesFromUpdate(dataHolder.updatedWorker, ChangesDeltaForwarder(project, scheduler))
+        filesHolder = dataHolder.composite
+        _updateException = null
       }
 
       // can be done with delay if plugin unloader can handle that - have to check
-      project.getMessageBus().syncPublisher(ChangeListListener.TOPIC).changeListsInvalidated();
-      myDelayedNotificator.changedFileStatusChanged(true);
-      myDelayedNotificator.unchangedFileStatusChanged(true);
-      myDelayedNotificator.changeListUpdateDone();
+      project.getMessageBus().syncPublisher(ChangeListListener.TOPIC).changeListsInvalidated()
+      delayedNotificator.changedFileStatusChanged(true)
+      delayedNotificator.unchangedFileStatusChanged(true)
+      delayedNotificator.changeListUpdateDone()
     }
-    catch (Exception | AssertionError ex) {
-      LOG.error(ex);
+    catch (ex: Exception) {
+      LOG.error(ex)
+    }
+    catch (ex: AssertionError) {
+      LOG.error(ex)
     }
   }
 
   /**
-   * @return true if {@link #updateImmediately()} can be skipped.
+   * @return true if [updateImmediately] can be skipped.
    */
-  private boolean hasNothingToUpdate() {
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    if (!vcsManager.hasActiveVcss()) return true;
+  private fun hasNothingToUpdate(): Boolean {
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    if (!vcsManager.hasActiveVcss()) return true
 
-    VcsDirtyScopeManagerImpl dirtyScopeManager = VcsDirtyScopeManagerImpl.getInstanceImpl(project);
-    return !dirtyScopeManager.hasDirtyScopes();
+    val dirtyScopeManager = VcsDirtyScopeManagerImpl.getInstanceImpl(project)
+    return !dirtyScopeManager.hasDirtyScopes()
   }
 
   /**
    * @return false if update was re-scheduled due to new 'markEverythingDirty' event, true otherwise.
    */
-  private boolean updateImmediately() {
-    return BackgroundTaskUtil.runUnderDisposeAwareIndicator(myUpdateDisposable, this::doUpdate);
-  }
+  private fun updateImmediately() = BackgroundTaskUtil.runUnderDisposeAwareIndicator(updateDisposable, ::doUpdate)
 
-  private @NotNull Boolean doUpdate() {
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    if (!vcsManager.hasActiveVcss()) return true;
+  private fun doUpdate(): Boolean {
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    if (!vcsManager.hasActiveVcss()) return true
 
-    VcsDirtyScopeManagerImpl dirtyScopeManager = VcsDirtyScopeManagerImpl.getInstanceImpl(project);
-    final VcsInvalidated invalidated = dirtyScopeManager.retrieveScopes();
-    if (checkScopeIsEmpty(invalidated)) {
-      LOG.debug("[update] - dirty scope is empty");
-      dirtyScopeManager.changesProcessed();
-      return true;
+    val dirtyScopeManager = VcsDirtyScopeManagerImpl.getInstanceImpl(project)
+    val invalidated = dirtyScopeManager.retrieveScopes()
+    if (invalidated == null || (!invalidated.isEverythingDirty && invalidated.isEmpty())) {
+      LOG.debug("[update] - dirty scope is empty")
+      dirtyScopeManager.changesProcessed()
+      return true
     }
 
-    final boolean wasEverythingDirty = invalidated.isEverythingDirty();
-    final List<VcsModifiableDirtyScope> scopes = invalidated.getScopes();
-
-    boolean isInitialUpdate;
     try {
-      if (myUpdater.isStopped()) return true;
+      if (updateRequestsQueue.isStopped) return true
 
+      val wasEverythingDirty = invalidated.isEverythingDirty
+      val scopes = invalidated.scopes
       // copy existing data to objects that would be updated.
       // mark for "modifier" that update started (it would create duplicates of modification commands done by user during update;
       // after update of copies of objects is complete, it would apply the same modifications to copies.)
-      final DataHolder dataHolder;
-      synchronized (myDataLock) {
-        dataHolder = new DataHolder(myComposite.copy(), new ChangeListUpdater(myWorker), wasEverythingDirty);
-        myModifier.enterUpdate();
-        myStateProvider.setInUpdateMode(true);
+      val newDataHolder: DataHolder
+      val isInitialUpdate: Boolean
+      synchronized(dataLock) {
+        newDataHolder = DataHolder(filesHolder.copy(), ChangeListUpdater(worker), wasEverythingDirty)
+        modifier.enterUpdate()
+        stateProvider.setInUpdateMode(true)
         if (wasEverythingDirty) {
-          myUpdateException = null;
+          _updateException = null
         }
 
-        if (LOG.isDebugEnabled()) {
-          String scopeInString = StringUtil.join(scopes, Object::toString, "->\n");
-          LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
-                    "\nignored: " + myComposite.getIgnoredFileHolder().getFiles().size() +
-                    "\nunversioned: " + myComposite.getUnversionedFileHolder().getFiles().size() +
-                    "\ncurrent changes: " + myWorker);
+        LOG.debug {
+          val scope = scopes.joinToString(separator = "->\n") {
+            it.toString()
+          }
+          val ignoredFilesCount = filesHolder.ignoredFileHolder.getFiles().size
+          val unversionedFilesCount = filesHolder.unversionedFileHolder.getFiles().size
+
+          "refresh procedure started, everything: $wasEverythingDirty dirty scope: $scope\n" +
+          "ignored: $ignoredFilesCount\n" +
+          "unversioned: $unversionedFilesCount\n" +
+          "current changes: $worker"
         }
 
-        isInitialUpdate = myInitialUpdate;
-        myInitialUpdate = false;
+        isInitialUpdate = initialUpdate
+        initialUpdate = false
       }
       // already on scheduler thread, so can just do a sync call
-      project.getMessageBus().syncPublisher(ChangeListListener.TOPIC).changeListUpdateRunning();
+      project.getMessageBus().syncPublisher(ChangeListListener.TOPIC).changeListUpdateRunning()
 
-      SensitiveProgressWrapper vcsIndicator = new SensitiveProgressWrapper(ProgressManager.getInstance().getProgressIndicator());
-      if (!isInitialUpdate) invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
+      val vcsIndicator = SensitiveProgressWrapper(ProgressManager.getInstance().getProgressIndicator())
+      if (!isInitialUpdate) {
+        invalidated.doWhenCanceled(Runnable { vcsIndicator.cancel() })
+      }
 
       try {
-        ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-          iterateScopes(dataHolder, scopes, vcsIndicator);
-        }, vcsIndicator);
+        ProgressManager.getInstance().executeProcessUnderProgress(Runnable {
+          iterateScopes(newDataHolder, scopes, vcsIndicator)
+        }, vcsIndicator)
       }
-      catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException ignore) {
+      catch (@Suppress("IncorrectCancellationExceptionHandling") _: ProcessCanceledException) {
       }
-      boolean wasCancelled = vcsIndicator.isCanceled();
+      val wasCancelled = vcsIndicator.isCanceled()
 
       // for the case of project being closed we need a read action here -> to be more consistent
-      ReadAction.runBlocking(() -> {
-        if (project.isDisposed()) return;
+      runReadActionBlocking {
+        if (project.isDisposed()) return@runReadActionBlocking
 
-        synchronized (myDataLock) {
-          ChangeListWorker updatedWorker = dataHolder.getUpdatedWorker();
-          boolean takeChanges = myUpdateException == null && !wasCancelled &&
-                                updatedWorker.areChangeListsEnabled() == myWorker.areChangeListsEnabled();
+        synchronized(dataLock) {
+          val updatedWorker = newDataHolder.updatedWorker
+          val takeChanges =
+            _updateException == null
+            && !wasCancelled
+            && updatedWorker.areChangeListsEnabled() == worker.areChangeListsEnabled()
 
           // update member from copy
           if (takeChanges) {
-            dataHolder.finish();
+            newDataHolder.finish()
             // do same modifications to change lists as was done during update + do delayed notifications
-            myModifier.finishUpdate(updatedWorker);
+            modifier.finishUpdate(updatedWorker)
 
-            myWorker.applyChangesFromUpdate(updatedWorker, new MyChangesDeltaForwarder(project, myScheduler));
+            worker.applyChangesFromUpdate(updatedWorker, ChangesDeltaForwarder(project, scheduler))
 
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("refresh procedure finished, unversioned size: " +
-                        dataHolder.getComposite().getUnversionedFileHolder().getFiles().size() +
-                        "\nchanges: " + myWorker);
+            LOG.debug {
+              val unversionedFilesCount = newDataHolder.composite.unversionedFileHolder.getFiles().size
+              "refresh procedure finished, unversioned size: $unversionedFilesCount\n" +
+              "changes: $worker"
             }
-            final boolean statusChanged = !myComposite.equals(dataHolder.getComposite());
-            myComposite = dataHolder.getComposite();
+
+            val statusChanged = filesHolder != newDataHolder.composite
+            filesHolder = newDataHolder.composite
             if (statusChanged) {
-              boolean isUnchangedUpdating = isInUpdate() || isUnversionedInUpdateMode() || isIgnoredInUpdateMode();
-              myDelayedNotificator.unchangedFileStatusChanged(!isUnchangedUpdating);
+              val isUnchangedUpdating = isInUpdate || isUnversionedInUpdateMode || isIgnoredInUpdateMode
+              delayedNotificator.unchangedFileStatusChanged(!isUnchangedUpdating)
             }
-            LOG.debug("[update] - success");
+            LOG.debug("[update] - success")
           }
           else {
-            myModifier.finishUpdate(null);
-            LOG.debug(String.format("[update] - aborted, wasCancelled: %s", wasCancelled));
+            modifier.finishUpdate(null)
+            LOG.debug { "[update] - aborted, wasCancelled: $wasCancelled" }
           }
-          myShowLocalChangesInvalidated = false;
-        }
-      });
-
-      for (VcsDirtyScope scope : scopes) {
-        if (scope.getVcs().isTrackingUnchangedContent()) {
-          VcsRootIterator.iterateExistingInsideScope(scope, file -> {
-            LastUnchangedContentTracker.markUntouched(file); //todo what if it has become dirty again during update?
-            return true;
-          });
+          showLocalChangesInvalidated = false
         }
       }
 
-      return !wasCancelled;
+      for (scope in scopes) {
+        if (scope.getVcs().isTrackingUnchangedContent) {
+          VcsRootIterator.iterateExistingInsideScope(scope) { file ->
+            //todo: what if it has become dirty again during update?
+            LastUnchangedContentTracker.markUntouched(file)
+            true
+          }
+        }
+      }
+
+      return !wasCancelled
     }
-    catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException e) {
+    catch (@Suppress("IncorrectCancellationExceptionHandling") _: ProcessCanceledException) {
       // OK, we're finishing all the stuff now.
     }
-    catch (Exception | AssertionError ex) {
-      LOG.error(ex);
+    catch (ex: Exception) {
+      LOG.error(ex)
+    }
+    catch (ex: AssertionError) {
+      LOG.error(ex)
     }
     finally {
-      dirtyScopeManager.changesProcessed();
+      dirtyScopeManager.changesProcessed()
 
-      myDelayedNotificator.changedFileStatusChanged(!isInUpdate());
-      myDelayedNotificator.changeListUpdateDone();
+      delayedNotificator.changedFileStatusChanged(!isInUpdate)
+      delayedNotificator.changeListUpdateDone()
 
-      myStateProvider.setInUpdateMode(false);
+      stateProvider.setInUpdateMode(false)
     }
-    return true;
+    return true
   }
 
-  private static boolean checkScopeIsEmpty(VcsInvalidated invalidated) {
-    if (invalidated == null) return true;
-    if (invalidated.isEverythingDirty()) return false;
-    return invalidated.isEmpty();
-  }
+  private fun iterateScopes(dataHolder: DataHolder, scopes: List<VcsModifiableDirtyScope>, indicator: ProgressIndicator) {
+    val updater = dataHolder.changeListUpdater
+    val composite = dataHolder.composite
 
-  private void iterateScopes(@NotNull DataHolder dataHolder,
-                             @NotNull List<? extends VcsModifiableDirtyScope> scopes,
-                             @NotNull ProgressIndicator indicator) {
-    ChangeListUpdater updater = dataHolder.getChangeListUpdater();
-    FileHolderComposite composite = dataHolder.getComposite();
-    Supplier<Boolean> disposedGetter = () -> project.isDisposed() || myUpdater.isStopped();
-
-    dataHolder.notifyStart();
+    dataHolder.notifyStart()
     try {
-      for (VcsModifiableDirtyScope scope : scopes) {
-        indicator.checkCanceled();
+      for (scope in scopes) {
+        indicator.checkCanceled()
 
         // do actual requests about file statuses
-        UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(scope, updater, composite, disposedGetter);
-        actualUpdate(builder, scope, dataHolder, updater, indicator);
+        val builder = UpdatingChangeListBuilder(scope, updater, composite) {
+          project.isDisposed() || updateRequestsQueue.isStopped
+        }
+        dataHolder.notifyStartProcessingChanges(scope)
 
-        synchronized (myDataLock) {
-          if (myUpdateException != null) break;
+        try {
+          val vcs = scope.getVcs()
+          val changeProvider = vcs.getChangeProvider()
+          if (changeProvider != null) {
+            val activity = VcsStatisticsCollector.logClmRefresh(project, vcs, scope.wasEveryThingDirty())
+            changeProvider.getChanges(scope, builder, indicator, updater)
+            activity.finished()
+          }
+        }
+        catch (e: VcsException) {
+          handleUpdateException(e)
+        }
+        catch (t: Throwable) {
+          rethrowControlFlowException(t)
+          LOG.debug(t)
+          throw t
+        }
+        finally {
+          if (!updateRequestsQueue.isStopped) {
+            dataHolder.notifyDoneProcessingChanges(scope)
+          }
+        }
+
+        synchronized(dataLock) {
+          if (_updateException != null) break
         }
       }
     }
     finally {
-      dataHolder.notifyEnd();
+      dataHolder.notifyEnd()
     }
   }
 
-  private final class DataHolder {
-    private final boolean myWasEverythingDirty;
-    private final FileHolderComposite myComposite;
-    private final ChangeListUpdater myChangeListUpdater;
+  private fun handleUpdateException(e: VcsException) {
+    LOG.info(e)
 
-    private DataHolder(FileHolderComposite composite, ChangeListUpdater changeListUpdater, boolean wasEverythingDirty) {
-      myComposite = composite;
-      myChangeListUpdater = changeListUpdater;
-      myWasEverythingDirty = wasEverythingDirty;
+    if (e is VcsConnectionProblem) {
+      application.invokeLater { e.attemptQuickFix(false) }
     }
 
-    private void notifyStart() {
-      if (myWasEverythingDirty) {
-        myComposite.cleanAll();
-        myChangeListUpdater.notifyStartProcessingChanges(null);
+    if (application.isUnitTestMode()) {
+      val helper = AbstractVcsHelper.getInstance(project)
+      if (helper is AbstractVcsHelperImpl && helper.handleCustom(e)) {
+        return
       }
+      e.printStackTrace()
     }
 
-    private void notifyStartProcessingChanges(@NotNull VcsModifiableDirtyScope scope) {
-      if (!myWasEverythingDirty) {
-        myComposite.cleanUnderScope(scope);
-        myChangeListUpdater.notifyStartProcessingChanges(scope);
-      }
-
-      myComposite.notifyVcsStarted(scope.getVcs());
-    }
-
-    private void notifyDoneProcessingChanges(@NotNull VcsDirtyScope scope) {
-      if (!myWasEverythingDirty) {
-        myChangeListUpdater.notifyDoneProcessingChanges(myDelayedNotificator, scope);
-      }
-    }
-
-    void notifyEnd() {
-      if (myWasEverythingDirty) {
-        myChangeListUpdater.notifyDoneProcessingChanges(myDelayedNotificator, null);
-      }
-    }
-
-    public void finish() {
-      myChangeListUpdater.finish();
-    }
-
-    public @NotNull FileHolderComposite getComposite() {
-      return myComposite;
-    }
-
-    public @NotNull ChangeListUpdater getChangeListUpdater() {
-      return myChangeListUpdater;
-    }
-
-    public @NotNull ChangeListWorker getUpdatedWorker() {
-      return myChangeListUpdater.getUpdatedWorker();
+    synchronized(dataLock) {
+      _updateException = e
     }
   }
 
-  private void actualUpdate(@NotNull UpdatingChangeListBuilder builder,
-                            @NotNull VcsModifiableDirtyScope scope,
-                            @NotNull DataHolder dataHolder,
-                            @NotNull ChangeListManagerGate gate,
-                            @NotNull ProgressIndicator indicator) {
-    dataHolder.notifyStartProcessingChanges(scope);
-    try {
-      AbstractVcs vcs = scope.getVcs();
-      ChangeProvider changeProvider = vcs.getChangeProvider();
-      if (changeProvider != null) {
-        StructuredIdeActivity activity = VcsStatisticsCollector.logClmRefresh(project, vcs, scope.wasEveryThingDirty());
-        changeProvider.getChanges(scope, builder, indicator, gate);
-        activity.finished();
+  override fun getChangeLists(): List<LocalChangeList> =
+    synchronized(dataLock) {
+      worker.getChangeLists()
+    }
+
+  @Suppress("IO_FILE_USAGE")
+  override fun getAffectedPaths(): List<File> =
+    synchronized(dataLock) {
+      worker.getAffectedPaths()
+    }.mapNotNull {
+      it.ioFile
+    }
+
+  override fun getAffectedFiles(): List<VirtualFile> =
+    synchronized(dataLock) {
+      worker.getAffectedPaths()
+    }.mapNotNull {
+      it.virtualFile
+    }
+
+  override fun getAllChanges(): Collection<Change> =
+    synchronized(dataLock) {
+      worker.getAllChanges()
+    }
+
+  override fun getUnversionedFilesPaths(): List<FilePath> =
+    runReadActionBlocking {
+      synchronized(dataLock) {
+        filesHolder.unversionedFileHolder.getFiles().toList()
       }
     }
-    catch (VcsException e) {
-      handleUpdateException(e);
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Throwable t) {
-      LOG.debug(t);
-      ExceptionUtil.rethrow(t);
-    }
-    finally {
-      if (!myUpdater.isStopped()) {
-        dataHolder.notifyDoneProcessingChanges(scope);
+
+  override fun isResolvedConflict(file: FilePath): Boolean {
+    val vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(file) ?: return false
+    return runReadActionBlocking {
+      synchronized(dataLock) {
+        filesHolder.resolvedMergeFilesHolder.containsFile(file, vcsRoot)
       }
     }
   }
 
-  private void handleUpdateException(final VcsException e) {
-    LOG.info(e);
-
-    if (e instanceof VcsConnectionProblem) {
-      ApplicationManager.getApplication().invokeLater(() -> ((VcsConnectionProblem)e).attemptQuickFix(false));
+  override fun getResolvedConflictPaths(): List<FilePath> =
+    runReadActionBlocking {
+      synchronized(dataLock) {
+        filesHolder.resolvedMergeFilesHolder.getFiles().toList()
+      }
     }
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
-      if (helper instanceof AbstractVcsHelperImpl && ((AbstractVcsHelperImpl)helper).handleCustom(e)) {
-        return;
+  override fun getModifiedWithoutEditing(): List<VirtualFile> =
+    runReadActionBlocking {
+      synchronized(dataLock) {
+        filesHolder.modifiedWithoutEditingFileHolder.files
       }
-      //noinspection CallToPrintStackTrace
-      e.printStackTrace();
     }
 
-    synchronized (myDataLock) {
-      myUpdateException = e;
+  override fun getIgnoredFilePaths(): List<FilePath> =
+    runReadActionBlocking {
+      synchronized(dataLock) {
+        filesHolder.ignoredFileHolder.getFiles().toList()
+      }
     }
-  }
 
-  public static boolean isUnder(@NotNull Change change, @NotNull VcsDirtyScope scope) {
-    final ContentRevision before = change.getBeforeRevision();
-    final ContentRevision after = change.getAfterRevision();
-    return before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile());
-  }
-
-  @Override
-  public @NotNull @Unmodifiable List<LocalChangeList> getChangeLists() {
-    synchronized (myDataLock) {
-      return myWorker.getChangeLists();
+  val isUnversionedInUpdateMode: Boolean
+    get() = runReadActionBlocking {
+      synchronized(dataLock) {
+        filesHolder.unversionedFileHolder.isInUpdatingMode()
+      }
     }
-  }
 
-  @Override
-  public @NotNull @Unmodifiable List<File> getAffectedPaths() {
-    List<FilePath> filePaths;
-    synchronized (myDataLock) {
-      filePaths = myWorker.getAffectedPaths();
+  val isIgnoredInUpdateMode: Boolean
+    get() = runReadActionBlocking {
+      synchronized(dataLock) {
+        filesHolder.ignoredFileHolder.isInUpdatingMode()
+      }
     }
-    return mapNotNull(filePaths, FilePath::getIOFile);
-  }
 
-  @Override
-  public @NotNull @Unmodifiable List<VirtualFile> getAffectedFiles() {
-    List<FilePath> filePaths;
-    synchronized (myDataLock) {
-      filePaths = myWorker.getAffectedPaths();
+  val lockedFolders: List<VirtualFile>
+    get() = runReadActionBlocking {
+      synchronized(dataLock) {
+        filesHolder.lockedFileHolder.files
+      }
     }
-    return mapNotNull(filePaths, FilePath::getVirtualFile);
-  }
 
-  @Override
-  public @NotNull Collection<Change> getAllChanges() {
-    synchronized (myDataLock) {
-      return myWorker.getAllChanges();
+  val logicallyLockedFolders: Map<VirtualFile, LogicalLock>
+    get() = runReadActionBlocking {
+      synchronized(dataLock) {
+        filesHolder.logicallyLockedFileHolder.map.toMap()
+      }
     }
-  }
 
-  public boolean isUnversionedInUpdateMode() {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myComposite.getUnversionedFileHolder().isInUpdatingMode();
+  fun isLogicallyLocked(file: VirtualFile): Boolean =
+    runReadActionBlocking {
+      synchronized(dataLock) {
+        filesHolder.logicallyLockedFileHolder.containsKey(file)
       }
-    });
-  }
+    }
 
-  @Override
-  public @NotNull List<FilePath> getUnversionedFilesPaths() {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return new ArrayList<>(myComposite.getUnversionedFileHolder().getFiles());
+  fun isContainedInLocallyDeleted(filePath: FilePath): Boolean =
+    runReadActionBlocking {
+      synchronized(dataLock) {
+        filesHolder.deletedFileHolder.isContainedInLocallyDeleted(filePath)
       }
-    });
-  }
+    }
 
-  @Override
-  public boolean isResolvedConflict(@NotNull FilePath file) {
-    VcsRoot vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(file);
-    if (vcsRoot == null) return false;
-
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myComposite.getResolvedMergeFilesHolder().containsFile(file, vcsRoot);
+  val deletedFiles: List<LocallyDeletedChange>
+    get() = runReadActionBlocking {
+      synchronized(dataLock) {
+        filesHolder.deletedFileHolder.getFiles()
       }
-    });
-  }
+    }
 
-  @Override
-  public @NotNull List<FilePath> getResolvedConflictPaths() {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return new ArrayList<>(myComposite.getResolvedMergeFilesHolder().getFiles());
+  val switchedFilesMap: MultiMap<String, VirtualFile>
+    get() = runReadActionBlocking {
+      synchronized(dataLock) {
+        filesHolder.switchedFileHolder.getBranchToFileMap()
       }
-    });
-  }
+    }
 
-  @Override
-  public @NotNull @Unmodifiable List<VirtualFile> getModifiedWithoutEditing() {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myComposite.getModifiedWithoutEditingFileHolder().getFiles();
+  val switchedRoots: MutableMap<VirtualFile, String>
+    get() = runReadActionBlocking {
+      synchronized(dataLock) {
+        filesHolder.rootSwitchFileHolder.getFilesMapCopy()
       }
-    });
-  }
+    }
 
-  @Override
-  public @NotNull List<FilePath> getIgnoredFilePaths() {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return new ArrayList<>(myComposite.getIgnoredFileHolder().getFiles());
-      }
-    });
-  }
+  override fun getUpdateException(): VcsException? =
+    synchronized(dataLock) {
+      _updateException
+    }
 
-  public boolean isIgnoredInUpdateMode() {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myComposite.getIgnoredFileHolder().isInUpdatingMode();
-      }
-    });
-  }
-
-  public List<VirtualFile> getLockedFolders() {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myComposite.getLockedFileHolder().getFiles();
-      }
-    });
-  }
-
-  public Map<VirtualFile, LogicalLock> getLogicallyLockedFolders() {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return new HashMap<>(myComposite.getLogicallyLockedFileHolder().getMap());
-      }
-    });
-  }
-
-  public boolean isLogicallyLocked(final VirtualFile file) {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myComposite.getLogicallyLockedFileHolder().containsKey(file);
-      }
-    });
-  }
-
-  public boolean isContainedInLocallyDeleted(final FilePath filePath) {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myComposite.getDeletedFileHolder().isContainedInLocallyDeleted(filePath);
-      }
-    });
-  }
-
-  public List<LocallyDeletedChange> getDeletedFiles() {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myComposite.getDeletedFileHolder().getFiles();
-      }
-    });
-  }
-
-  public MultiMap<String, VirtualFile> getSwitchedFilesMap() {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myComposite.getSwitchedFileHolder().getBranchToFileMap();
-      }
-    });
-  }
-
-  public @Nullable Map<VirtualFile, String> getSwitchedRoots() {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myComposite.getRootSwitchFileHolder().getFilesMapCopy();
-      }
-    });
-  }
-
-  @Override
-  public @Nullable VcsException getUpdateException() {
-    synchronized (myDataLock) {
-      return myUpdateException;
+  override fun isFileAffected(file: VirtualFile): Boolean {
+    if (!file.isInLocalFileSystem) return false
+    synchronized(dataLock) {
+      return worker.getStatus(file) != null
     }
   }
 
-  @Override
-  public boolean isFileAffected(@NotNull VirtualFile file) {
-    if (!file.isInLocalFileSystem()) return false;
-    synchronized (myDataLock) {
-      return myWorker.getStatus(file) != null;
+  override fun findChangeList(name: String?): LocalChangeList? =
+    synchronized(dataLock) {
+      worker.getChangeListByName(name)
+    }
+
+  override fun getChangeList(id: String?): LocalChangeList? =
+    synchronized(dataLock) {
+      worker.getChangeListById(id)
+    }
+
+  override fun addChangeList(name: String, comment: String?): LocalChangeList = addChangeList(name, comment, null)
+
+  override fun addChangeList(name: String, comment: String?, data: ChangeListData?): LocalChangeList {
+    return runReadActionBlocking {
+      synchronized(dataLock) {
+        modifier.addChangeList(name, comment, data)
+      }
     }
   }
 
-  @Override
-  public @Nullable LocalChangeList findChangeList(final String name) {
-    synchronized (myDataLock) {
-      return myWorker.getChangeListByName(name);
+
+  override fun removeChangeList(name: String) {
+    runReadActionBlocking {
+      synchronized(dataLock) {
+        modifier.removeChangeList(name)
+      }
     }
   }
 
-  @Override
-  public @Nullable LocalChangeList getChangeList(@Nullable String id) {
-    synchronized (myDataLock) {
-      return myWorker.getChangeListById(id);
+  override fun removeChangeList(list: LocalChangeList) {
+    removeChangeList(list.getName())
+  }
+
+  fun setDefaultChangeList(name: String, automatic: Boolean) {
+    runReadActionBlocking {
+      synchronized(dataLock) {
+        modifier.setDefault(name, automatic)
+      }
     }
   }
 
-  @Override
-  public @NotNull LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
-    return addChangeList(name, comment, null);
+  override fun setDefaultChangeList(name: String) {
+    setDefaultChangeList(name, false)
   }
 
-  @Override
-  public @NotNull LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myModifier.addChangeList(name, comment, data);
+  override fun setDefaultChangeList(list: LocalChangeList) {
+    setDefaultChangeList(list, false)
+  }
+
+  override fun setDefaultChangeList(list: LocalChangeList, automatic: Boolean) {
+    setDefaultChangeList(list.getName(), automatic)
+  }
+
+  override fun setReadOnly(name: String, value: Boolean): Boolean {
+    return runReadActionBlocking {
+      synchronized(dataLock) {
+        modifier.setReadOnly(name, value)
       }
-    });
-  }
-
-
-  @Override
-  public void removeChangeList(@NotNull String name) {
-    ReadAction.runBlocking(() -> {
-      synchronized (myDataLock) {
-        myModifier.removeChangeList(name);
-      }
-    });
-  }
-
-  @Override
-  public void removeChangeList(@NotNull LocalChangeList list) {
-    removeChangeList(list.getName());
-  }
-
-  public void setDefaultChangeList(@NotNull String name, boolean automatic) {
-    ReadAction.runBlocking(() -> {
-      synchronized (myDataLock) {
-        myModifier.setDefault(name, automatic);
-      }
-    });
-  }
-
-  @Override
-  public void setDefaultChangeList(@NotNull String name) {
-    setDefaultChangeList(name, false);
-  }
-
-  @Override
-  public void setDefaultChangeList(final @NotNull LocalChangeList list) {
-    setDefaultChangeList(list, false);
-  }
-
-  @Override
-  public void setDefaultChangeList(final @NotNull LocalChangeList list, boolean automatic) {
-    setDefaultChangeList(list.getName(), automatic);
-  }
-
-  @Override
-  public boolean setReadOnly(@NotNull String name, final boolean value) {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myModifier.setReadOnly(name, value);
-      }
-    });
-  }
-
-  @Override
-  public boolean editName(final @NotNull String fromName, final @NotNull String toName) {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myModifier.editName(fromName, toName);
-      }
-    });
-  }
-
-  @Override
-  public String editComment(@NotNull String name, String newComment) {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myModifier.editComment(name, StringUtil.notNullize(newComment));
-      }
-    });
-  }
-
-  @Override
-  public boolean editChangeListData(@NotNull String name, @Nullable ChangeListData newData) {
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myModifier.editData(name, newData);
-      }
-    });
-  }
-
-  @Override
-  public void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes) {
-    moveChangesTo(list, ContainerUtil.skipNulls(Arrays.asList(changes)));
-  }
-
-  @Override
-  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<? extends @NotNull Change> changes) {
-    ReadAction.runBlocking(() -> {
-      synchronized (myDataLock) {
-        myModifier.moveChangesTo(list.getName(), changes);
-      }
-    });
-  }
-
-  @Override
-  public @NotNull LocalChangeList getDefaultChangeList() {
-    synchronized (myDataLock) {
-      return myWorker.getDefaultList();
     }
   }
 
-  @Override
-  public @NotNull String getDefaultListName() {
-    synchronized (myDataLock) {
-      return myWorker.getDefaultList().getName();
+  override fun editName(fromName: String, toName: String): Boolean {
+    return runReadActionBlocking {
+      synchronized(dataLock) {
+        modifier.editName(fromName, toName)
+      }
     }
   }
 
-  @ApiStatus.Internal
-  public void notifyChangelistsChanged(@NotNull FilePath path,
-                                       @NotNull List<String> beforeChangeListsIds,
-                                       @NotNull List<String> afterChangeListsIds) {
-    myWorker.notifyChangelistsChanged(path, beforeChangeListsIds, afterChangeListsIds);
+  override fun editComment(name: String, newComment: String?): String? {
+    return runReadActionBlocking {
+      synchronized(dataLock) {
+        modifier.editComment(name, newComment.orEmpty())
+      }
+    }
+  }
+
+  override fun editChangeListData(name: String, newData: ChangeListData?): Boolean {
+    return runReadActionBlocking {
+      synchronized(dataLock) {
+        modifier.editData(name, newData)
+      }
+    }
+  }
+
+  override fun moveChangesTo(list: LocalChangeList, vararg changes: Change?) {
+    moveChangesTo(list, changes.filterNotNull())
+  }
+
+  override fun moveChangesTo(list: LocalChangeList, changes: List<Change>) {
+    runReadActionBlocking {
+      synchronized(dataLock) {
+        modifier.moveChangesTo(list.getName(), changes)
+      }
+    }
+  }
+
+  override fun getDefaultChangeList(): LocalChangeList =
+    synchronized(dataLock) {
+      worker.getDefaultList()
+    }
+
+  override fun getDefaultListName(): String =
+    synchronized(dataLock) {
+      worker.getDefaultList().getName()
+    }
+
+  fun notifyChangelistsChanged(path: FilePath, beforeChangeListsIds: List<String>, afterChangeListsIds: List<String>) {
+    worker.notifyChangelistsChanged(path, beforeChangeListsIds, afterChangeListsIds)
   }
 
   /**
-   * Notify that {@link VcsManagedFilesHolder} state was changed.
+   * Notify that [VcsManagedFilesHolder] state was changed.
    */
-  public void notifyUnchangedFileStatusChanged() {
-    boolean isUnchangedUpdating = isInUpdate() || isUnversionedInUpdateMode() || isIgnoredInUpdateMode();
-    myDelayedNotificator.unchangedFileStatusChanged(!isUnchangedUpdating);
-    myDelayedNotificator.changeListUpdateDone();
+  fun notifyUnchangedFileStatusChanged() {
+    val isUnchangedUpdating = isInUpdate || isUnversionedInUpdateMode || isIgnoredInUpdateMode
+    delayedNotificator.unchangedFileStatusChanged(!isUnchangedUpdating)
+    delayedNotificator.changeListUpdateDone()
   }
 
-  @Override
-  public String getChangeListNameIfOnlyOne(final Change[] changes) {
-    synchronized (myDataLock) {
-      List<LocalChangeList> lists = myWorker.getAffectedLists(Arrays.asList(changes));
-      return lists.size() == 1 ? lists.get(0).getName() : null;
+  override fun getChangeListNameIfOnlyOne(changes: Array<Change>): String? =
+    synchronized(dataLock) {
+      return worker.getAffectedLists(changes.asList()).singleOrNull()?.name
+    }
+
+  override fun isInUpdate(): Boolean {
+    return modifier.isInsideUpdate || showLocalChangesInvalidated
+  }
+
+  override fun getChange(file: VirtualFile): Change? {
+    if (!file.isInLocalFileSystem) return null
+    return getChange(VcsUtil.getFilePath(file))
+  }
+
+  override fun getAffectedLists(changes: Collection<Change>): List<LocalChangeList> {
+    synchronized(dataLock) {
+      return worker.getAffectedLists(changes)
     }
   }
 
-  @Override
-  public boolean isInUpdate() {
-    return myModifier.isInsideUpdate() || myShowLocalChangesInvalidated;
-  }
+  override fun getChangeLists(change: Change): List<LocalChangeList> = getAffectedLists(listOf(change))
 
-  @Override
-  public @Nullable Change getChange(@NotNull VirtualFile file) {
-    if (!file.isInLocalFileSystem()) return null;
-    return getChange(VcsUtil.getFilePath(file));
-  }
-
-  @Override
-  public @NotNull @Unmodifiable List<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes) {
-    synchronized (myDataLock) {
-      return myWorker.getAffectedLists(changes);
+  override fun getChangeLists(file: VirtualFile): List<LocalChangeList> {
+    if (!file.isInLocalFileSystem) return listOf()
+    synchronized(dataLock) {
+      val change = worker.getChangeForPath(VcsUtil.getFilePath(file)) ?: return listOf()
+      return getChangeLists(change)
     }
   }
 
-  @Override
-  public @NotNull @Unmodifiable List<LocalChangeList> getChangeLists(@NotNull Change change) {
-    return getAffectedLists(Collections.singletonList(change));
-  }
+  override fun getChangeList(change: Change): LocalChangeList? = getChangeLists(change).firstOrNull()
 
-  @Override
-  public @NotNull @Unmodifiable List<LocalChangeList> getChangeLists(@NotNull VirtualFile file) {
-    if (!file.isInLocalFileSystem()) return Collections.emptyList();
-    synchronized (myDataLock) {
-      Change change = myWorker.getChangeForPath(VcsUtil.getFilePath(file));
-      if (change == null) return Collections.emptyList();
-      return getChangeLists(change);
-    }
-  }
+  override fun getChangeList(file: VirtualFile): LocalChangeList? = getChangeLists(file).firstOrNull()
 
-  @Override
-  public @Nullable LocalChangeList getChangeList(@NotNull Change change) {
-    return ContainerUtil.getFirstItem(getChangeLists(change));
-  }
-
-  @Override
-  public @Nullable LocalChangeList getChangeList(@NotNull VirtualFile file) {
-    return ContainerUtil.getFirstItem(getChangeLists(file));
-  }
-
-  @Override
-  public @Nullable Change getChange(final FilePath file) {
-    synchronized (myDataLock) {
-      return myWorker.getChangeForPath(file);
-    }
-  }
-
-  @Override
-  public boolean isUnversioned(@NotNull VirtualFile file) {
-    if (!file.isInLocalFileSystem()) return false;
-    VcsRoot vcsRoot;
-    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-322445, EA-857508")) {
-      vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(file);
-      if (vcsRoot == null) return false;
+  override fun getChange(file: FilePath?): Change? =
+    synchronized(dataLock) {
+      return worker.getChangeForPath(file)
     }
 
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myComposite.getUnversionedFileHolder().containsFile(VcsUtil.getFilePath(file), vcsRoot);
+  override fun isUnversioned(file: VirtualFile): Boolean {
+    if (!file.isInLocalFileSystem()) return false
+    val vcsRoot = SlowOperations.knownIssue("IDEA-322445, EA-857508").use {
+      ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(file)
+    } ?: return false
+    val filePath = VcsUtil.getFilePath(file)
+    return runReadActionBlocking {
+      synchronized(dataLock) {
+        filesHolder.unversionedFileHolder.containsFile(filePath, vcsRoot)
       }
-    });
+    }
   }
 
-  @Override
-  public @NotNull FileStatus getStatus(@NotNull FilePath path) {
-    return getStatus(path, path.getVirtualFile());
+  override fun getStatus(path: FilePath): FileStatus = getStatus(path, path.getVirtualFile())
+
+  override fun getStatus(file: VirtualFile): FileStatus {
+    if (!file.isInLocalFileSystem) return FileStatus.NOT_CHANGED
+    return getStatus(VcsUtil.getFilePath(file), file)
   }
 
-  @Override
-  public @NotNull FileStatus getStatus(@NotNull VirtualFile file) {
-    if (!file.isInLocalFileSystem()) return FileStatus.NOT_CHANGED;
-    return getStatus(VcsUtil.getFilePath(file), file);
-  }
+  private fun getStatus(path: FilePath, file: VirtualFile?): FileStatus {
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    val vcsRoot = if (file != null) vcsManager.getVcsRootObjectFor(file) else vcsManager.getVcsRootObjectFor(path)
+    if (vcsRoot == null) return FileStatus.NOT_CHANGED
 
-  private @NotNull FileStatus getStatus(@NotNull FilePath path, @Nullable VirtualFile file) {
-    VcsRoot vcsRoot = file != null ? ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(file)
-                                   : ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(path);
-    if (vcsRoot == null) return FileStatus.NOT_CHANGED;
-
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        if (myComposite.getUnversionedFileHolder().containsFile(path, vcsRoot)) return FileStatus.UNKNOWN;
-        if (myComposite.getResolvedMergeFilesHolder().containsFile(path, vcsRoot)) return FileStatus.MERGE;
-        if (file != null && myComposite.getModifiedWithoutEditingFileHolder().containsFile(file)) return FileStatus.HIJACKED;
-        if (myComposite.getIgnoredFileHolder().containsFile(path, vcsRoot)) return FileStatus.IGNORED;
-
-        FileStatus status = ObjectUtils.notNull(myWorker.getStatus(path), FileStatus.NOT_CHANGED);
-
-        if (file != null && FileStatus.NOT_CHANGED.equals(status)) {
-          boolean switched = myComposite.getSwitchedFileHolder().containsFile(file);
-          if (switched) return FileStatus.SWITCHED;
+    return runReadActionBlocking {
+      synchronized(dataLock) {
+        when {
+          filesHolder.unversionedFileHolder.containsFile(path, vcsRoot) -> {
+            FileStatus.UNKNOWN
+          }
+          filesHolder.resolvedMergeFilesHolder.containsFile(path, vcsRoot) -> {
+            FileStatus.MERGE
+          }
+          file != null && filesHolder.modifiedWithoutEditingFileHolder.containsFile(file) -> {
+            FileStatus.HIJACKED
+          }
+          filesHolder.ignoredFileHolder.containsFile(path, vcsRoot) -> {
+            FileStatus.IGNORED
+          }
+          else -> {
+            val status = worker.getStatus(path) ?: FileStatus.NOT_CHANGED
+            if (file != null && FileStatus.NOT_CHANGED == status && filesHolder.switchedFileHolder.containsFile(file)) {
+              FileStatus.SWITCHED
+            }
+            else {
+              status
+            }
+          }
         }
-
-        return status;
       }
-    });
-  }
-
-  @Override
-  public @NotNull @Unmodifiable Collection<Change> getChangesIn(@NotNull VirtualFile dir) {
-    if (!dir.isInLocalFileSystem()) return Collections.emptySet();
-    return getChangesIn(VcsUtil.getFilePath(dir));
-  }
-
-  @Override
-  public @NotNull ThreeState haveChangesUnder(final @NotNull VirtualFile vf) {
-    if (!vf.isValid() || !vf.isDirectory()) return ThreeState.NO;
-    synchronized (myDataLock) {
-      return myWorker.haveChangesUnder(vf);
     }
   }
 
-  @Override
-  public @NotNull @Unmodifiable Collection<Change> getChangesIn(@NotNull FilePath dirPath) {
-    return getAllChanges().stream().filter(change -> isChangeUnder(dirPath, change)).collect(toSet());
+  override fun getChangesIn(dir: VirtualFile): Collection<Change> {
+    if (!dir.isInLocalFileSystem) return emptySet()
+    return getChangesIn(VcsUtil.getFilePath(dir))
   }
 
-  private static boolean isChangeUnder(@NotNull FilePath parent, @NotNull Change change) {
-    FilePath after = ChangesUtil.getAfterPath(change);
-    FilePath before = ChangesUtil.getBeforePath(change);
-    return after != null && after.isUnder(parent, false) ||
-           !Comparing.equal(before, after) && before != null && before.isUnder(parent, false);
+  override fun haveChangesUnder(vf: VirtualFile): ThreeState {
+    if (!vf.isValid() || !vf.isDirectory()) return ThreeState.NO
+    synchronized(dataLock) {
+      return worker.haveChangesUnder(vf)
+    }
   }
 
-  @Override
-  public void addUnversionedFiles(final @Nullable LocalChangeList list, final @NotNull List<? extends VirtualFile> files) {
-    ScheduleForAdditionAction.Manager.addUnversionedFilesToVcs(project, list, files);
+  override fun getChangesIn(dirPath: FilePath): Collection<Change> =
+    allChanges.asSequence().filter { isChangeUnder(dirPath, it) }.toSet()
+
+  override fun addUnversionedFiles(list: LocalChangeList?, files: List<VirtualFile>) {
+    ScheduleForAdditionAction.Manager.addUnversionedFilesToVcs(project, list, files)
   }
 
-  @Override
-  public void addChangeListListener(@NotNull ChangeListListener listener, @NotNull Disposable disposable) {
-    myListeners.addListener(listener, disposable);
+  override fun addChangeListListener(listener: ChangeListListener, disposable: Disposable) {
+    listeners.addListener(listener, disposable)
   }
 
-  @Override
-  public void addChangeListListener(@NotNull ChangeListListener listener) {
-    myListeners.addListener(listener);
+  override fun addChangeListListener(listener: ChangeListListener) {
+    listeners.addListener(listener)
   }
 
-  @Override
-  public void removeChangeListListener(@NotNull ChangeListListener listener) {
-    myListeners.removeListener(listener);
+  override fun removeChangeListListener(listener: ChangeListListener) {
+    listeners.removeListener(listener)
   }
 
-  @Override
-  public void commitChanges(@NotNull LocalChangeList changeList, @NotNull @Unmodifiable List<? extends Change> changes) {
-    doCommit(changeList, changes, false);
+  override fun commitChanges(changeList: LocalChangeList, changes: List<Change>) {
+    doCommit(changeList, changes, false)
   }
 
-  private void doCommit(final LocalChangeList changeList, final @Unmodifiable List<? extends Change> changes, final boolean synchronously) {
-    FileDocumentManager.getInstance().saveAllDocuments();
+  private fun doCommit(changeList: LocalChangeList, changes: List<Change>, synchronously: Boolean) {
+    FileDocumentManager.getInstance().saveAllDocuments()
 
-    String commitMessage = StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment();
-    ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
-    LocalChangesCommitter committer = SingleChangeListCommitter.create(project, commitState, new CommitContext(), changeList.getName());
+    val name = changeList.name
+    val comment = changeList.comment
 
-    committer.addResultHandler(new ShowNotificationCommitResultHandler(committer));
-    committer.runCommit(changeList.getName(), synchronously);
+    val commitMessage = if (comment.isNullOrEmpty()) name else comment
+
+    val commitState = ChangeListCommitState(changeList, changes, commitMessage)
+    val committer = create(project, commitState, CommitContext(), name)
+
+    committer.addResultHandler(ShowNotificationCommitResultHandler(committer))
+    committer.runCommit(name, synchronously)
   }
 
-  @TestOnly
-  public void commitChangesSynchronouslyWithResult(@NotNull LocalChangeList changeList, @NotNull List<? extends Change> changes) {
-    doCommit(changeList, changes, true);
-  }
+  override fun loadState(element: Element) {
+    val changeLists = ChangeListManagerSerialization.readExternal(element, project)
 
-  @Override
-  public void loadState(@NotNull Element element) {
-    List<LocalChangeListImpl> changeLists = ChangeListManagerSerialization.readExternal(element, project);
-
-    synchronized (myDataLock) {
-      if (!myInitialUpdate) {
-        LOG.warn("Local changes overwritten");
-        VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
+    synchronized(dataLock) {
+      if (!initialUpdate) {
+        LOG.warn("Local changes overwritten")
+        VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
       }
-
-      boolean areChangeListsEnabled = shouldEnableChangeLists();
-      myWorker.setChangeListsEnabled(areChangeListsEnabled);
-
+      val areChangeListsEnabled = shouldEnableChangeLists()
+      worker.setChangeListsEnabled(areChangeListsEnabled)
       if (areChangeListsEnabled) {
-        myWorker.setChangeLists(changeLists);
+        worker.setChangeLists(changeLists)
       }
       else {
-        myDisabledWorkerState = changeLists;
+        disabledWorkerState = changeLists
       }
     }
-    myConflictTracker.loadState(element);
+    conflictTracker.loadState(element)
   }
 
-  @Override
-  public @NotNull Element getState() {
-    Element element = new Element("state");
+  override fun getState(): Element {
+    val element = Element("state")
 
-    boolean areChangeListsEnabled;
-    List<? extends LocalChangeList> changesToSave;
-    synchronized (myDataLock) {
-      areChangeListsEnabled = myWorker.areChangeListsEnabled();
-      changesToSave = areChangeListsEnabled ? myWorker.getChangeLists() : myDisabledWorkerState;
+    val areChangeListsEnabled: Boolean
+    val changesToSave: List<LocalChangeList>?
+    synchronized(dataLock) {
+      areChangeListsEnabled = worker.areChangeListsEnabled()
+      changesToSave = if (areChangeListsEnabled) worker.getChangeLists() else disabledWorkerState
     }
-    ChangeListManagerSerialization.writeExternal(element, changesToSave, areChangeListsEnabled);
-    myConflictTracker.saveState(element);
-    return element;
+    ChangeListManagerSerialization.writeExternal(element, changesToSave, areChangeListsEnabled)
+    conflictTracker.saveState(element)
+    return element
   }
 
-  // used in TeamCity
-  @SuppressWarnings("removal")
-  @Override
-  public void reopenFiles(@NotNull @Unmodifiable List<? extends FilePath> paths) {
-    final ReadonlyStatusHandlerImpl readonlyStatusHandler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(project);
-    final boolean savedOption = readonlyStatusHandler.getState().SHOW_DIALOG;
-    readonlyStatusHandler.getState().SHOW_DIALOG = false;
-    try {
-      readonlyStatusHandler.ensureFilesWritable(mapNotNull(paths, FilePath::getVirtualFile));
-    }
-    finally {
-      readonlyStatusHandler.getState().SHOW_DIALOG = savedOption;
-    }
+  override fun isIgnoredFile(file: VirtualFile): Boolean {
+    if (!file.isInLocalFileSystem) return false
+    return isIgnoredFile(VcsUtil.getFilePath(file))
   }
 
-  @Override
-  public boolean isIgnoredFile(@NotNull VirtualFile file) {
-    if (!file.isInLocalFileSystem()) return false;
-    return isIgnoredFile(VcsUtil.getFilePath(file));
-  }
-
-  @Override
-  public boolean isIgnoredFile(@NotNull FilePath file) {
-    VcsRoot vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(file);
-    if (vcsRoot == null) return false;
-
-    return ReadAction.computeBlocking(() -> {
-      synchronized (myDataLock) {
-        return myComposite.getIgnoredFileHolder().containsFile(file, vcsRoot);
-      }
-    });
-  }
-
-  @Override
-  public @Nullable String getSwitchedBranch(@NotNull VirtualFile file) {
-    if (!file.isInLocalFileSystem()) return null;
-    synchronized (myDataLock) {
-      return ApplicationManagerEx.getApplicationEx().withLocksProhibited(DEADLOCK_ADVICE, () -> {
-        return myComposite.getSwitchedFileHolder().getBranchForFile(file);
-      });
-    }
-  }
-
-  @TestOnly
-  public void waitUntilRefreshed() {
-    LOG.debug("waitUntilRefreshed");
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    project.getService(VcsDirtyScopeVfsListener.class).waitForAsyncTaskCompletion();
-    myUpdater.waitUntilRefreshed();
-    waitUpdateAlarm();
-  }
-
-  @TestOnly
-  private void waitUpdateAlarm() {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    myScheduler.submit(semaphore::up);
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      while (!semaphore.waitFor(100)) {
-        UIUtil.dispatchAllInvocationEvents();
+  override fun isIgnoredFile(file: FilePath): Boolean {
+    val vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(file) ?: return false
+    return runReadActionBlocking {
+      synchronized(dataLock) {
+        filesHolder.ignoredFileHolder.containsFile(file, vcsRoot)
       }
     }
-    else {
-      semaphore.waitFor();
+  }
+
+  override fun getSwitchedBranch(file: VirtualFile): String? {
+    if (!file.isInLocalFileSystem) return null
+    return synchronized(dataLock) {
+      ApplicationManagerEx.getApplicationEx().withLocksProhibited(DEADLOCK_ADVICE) {
+        filesHolder.switchedFileHolder.getBranchForFile(file)
+      }
     }
-    LOG.debug("waitUpdateAlarm - finished");
-  }
-
-  @TestOnly
-  public void stopEveryThingIfInTestMode() {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    myScheduler.cancelAll();
-  }
-
-  @TestOnly
-  public void waitEverythingDoneAndStopInTestMode() {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    myScheduler.awaitAllAndStop();
-    myUpdater.stop();
-  }
-
-  @TestOnly
-  public void waitEverythingDoneInTestMode() {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    myScheduler.awaitAll();
-    LOG.debug("waitEverythingDoneInTestMode - finished");
-  }
-
-  @TestOnly
-  public void forceStopInTestMode() {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    myUpdater.stop();
-  }
-
-  @TestOnly
-  public void forceGoInTestMode() {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    myUpdater.forceGo();
-  }
-
-  @TestOnly
-  public void ensureUpToDate() {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    waitUntilRefreshed();
   }
 
   @RequiresEdt
-  private void updateChangeListAvailability() {
-    if (project.isDisposed()) return;
+  private fun updateChangeListAvailability() {
+    if (project.isDisposed()) return
 
-    boolean enabled = shouldEnableChangeLists();
-    synchronized (myDataLock) {
-      if (enabled == myWorker.areChangeListsEnabled()) return;
+    val enabled = shouldEnableChangeLists()
+    synchronized(dataLock) {
+      if (enabled == worker.areChangeListsEnabled()) return
     }
 
-    project.getMessageBus().syncPublisher(ChangeListAvailabilityListener.TOPIC).onBefore(!enabled);
+    project.getMessageBus().syncPublisher(ChangeListAvailabilityListener.TOPIC).onBefore(!enabled)
 
-    synchronized (myDataLock) {
-      assert enabled != myWorker.areChangeListsEnabled();
-
+    synchronized(dataLock) {
+      assert(enabled != worker.areChangeListsEnabled())
       if (!enabled) {
-        myDisabledWorkerState = myWorker.getChangeListsImpl();
+        disabledWorkerState = worker.getChangeListsImpl()
       }
 
       // Schedule refresh to replace FakeRevisions with actual changes
       if (enabled) {
-        VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
+        VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
       }
 
-      myWorker.setChangeListsEnabled(enabled);
-
+      worker.setChangeListsEnabled(enabled)
       if (enabled) {
-        if (myDisabledWorkerState != null) {
-          myWorker.setChangeLists(myDisabledWorkerState);
+        disabledWorkerState?.let {
+          worker.setChangeLists(it)
         }
       }
     }
 
-    project.getMessageBus().syncPublisher(ChangeListAvailabilityListener.TOPIC).onAfter(enabled);
+    project.getMessageBus().syncPublisher(ChangeListAvailabilityListener.TOPIC).onAfter(enabled)
   }
 
-  private boolean shouldEnableChangeLists() {
-    boolean forceDisable = CommitModeManager.getInstance(project).getCurrentCommitMode().isLocalChangesTabHidden() ||
-                           Registry.is("vcs.disable.changelists", false);
-    return !forceDisable;
+  private fun shouldEnableChangeLists(): Boolean {
+    val forceDisable = CommitModeManager.getInstance(project).getCurrentCommitMode().isLocalChangesTabHidden ||
+                       Registry.`is`("vcs.disable.changelists", false)
+    return !forceDisable
   }
 
-  @Override
-  public boolean areChangeListsEnabled() {
-    synchronized (myDataLock) {
-      return myWorker.areChangeListsEnabled();
+  override fun areChangeListsEnabled(): Boolean {
+    synchronized(dataLock) {
+      return worker.areChangeListsEnabled()
     }
   }
 
-  @Override
-  public int getChangeListsNumber() {
-    synchronized (myDataLock) {
-      return myWorker.getChangeListsNumber();
+  override fun getChangeListsNumber(): Int {
+    synchronized(dataLock) {
+      return worker.changeListsNumber
     }
   }
 
   // only a light attempt to show that some dirty scope request is asynchronously coming
   // for users to see changes are not valid
   // (commit -> asynch sync VFS -> asynch vcs dirty scope)
-  public void showLocalChangesInvalidated() {
-    myShowLocalChangesInvalidated = true;
-    myStateProvider.setInUpdateMode(true);
+  fun showLocalChangesInvalidated() {
+    showLocalChangesInvalidated = true
+    stateProvider.setInUpdateMode(true)
   }
 
-  @ApiStatus.Internal
-  public ChangelistConflictTracker getConflictTracker() {
-    return myConflictTracker;
+  private inner class DataHolder(
+    val composite: FileHolderComposite,
+    val changeListUpdater: ChangeListUpdater,
+    private val wasEverythingDirty: Boolean,
+  ) {
+    val updatedWorker: ChangeListWorker
+      get() = changeListUpdater.getUpdatedWorker()
+
+    fun notifyStart() {
+      if (wasEverythingDirty) {
+        composite.cleanAll()
+        changeListUpdater.notifyStartProcessingChanges(null)
+      }
+    }
+
+    fun notifyStartProcessingChanges(scope: VcsModifiableDirtyScope) {
+      if (!wasEverythingDirty) {
+        composite.cleanUnderScope(scope)
+        changeListUpdater.notifyStartProcessingChanges(scope)
+      }
+
+      composite.notifyVcsStarted(scope.getVcs())
+    }
+
+    fun notifyDoneProcessingChanges(scope: VcsDirtyScope) {
+      if (!wasEverythingDirty) {
+        changeListUpdater.notifyDoneProcessingChanges(delayedNotificator, scope)
+      }
+    }
+
+    fun notifyEnd() {
+      if (wasEverythingDirty) {
+        changeListUpdater.notifyDoneProcessingChanges(delayedNotificator, null)
+      }
+    }
+
+    fun finish() {
+      changeListUpdater.finish()
+    }
   }
 
-  private static final class MyChangesDeltaForwarder implements ChangeListDeltaListener {
-    private final RemoteRevisionsCache myRevisionsCache;
-    private final ProjectLevelVcsManager myVcsManager;
-    private final Project myProject;
-    private final ChangeListScheduler myScheduler;
+  private class ChangesDeltaForwarder(
+    private val project: Project,
+    private val scheduler: ChangeListScheduler,
+  ) : ChangeListDeltaListener {
+    private val revisionsCache = RemoteRevisionsCache.getInstance(project)
+    private val vcsManager = ProjectLevelVcsManager.getInstance(project)
 
-    MyChangesDeltaForwarder(final Project project, @NotNull ChangeListScheduler scheduler) {
-      myProject = project;
-      myScheduler = scheduler;
-      myRevisionsCache = RemoteRevisionsCache.getInstance(project);
-      myVcsManager = ProjectLevelVcsManager.getInstance(project);
+    override fun modified(was: BaseRevision, become: BaseRevision) {
+      doModify(was, become)
     }
 
-    @Override
-    public void modified(@NotNull BaseRevision was, @NotNull BaseRevision become) {
-      doModify(was, become);
+    override fun added(baseRevision: BaseRevision) {
+      doModify(baseRevision, baseRevision)
     }
 
-    @Override
-    public void added(@NotNull BaseRevision baseRevision) {
-      doModify(baseRevision, baseRevision);
-    }
-
-    @Override
-    public void removed(@NotNull BaseRevision baseRevision) {
-      myScheduler.submit(() -> {
-        AbstractVcs vcs = getVcs(baseRevision);
+    override fun removed(baseRevision: BaseRevision) {
+      scheduler.submit(Runnable {
+        val vcs = getVcs(baseRevision)
         if (vcs != null) {
-          myRevisionsCache.changeRemoved(baseRevision.getPath(), vcs);
+          revisionsCache.changeRemoved(baseRevision.getPath(), vcs)
         }
-        myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
-      });
+        project.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath())
+      })
     }
 
-    private void doModify(BaseRevision was, BaseRevision become) {
-      myScheduler.submit(() -> {
-        final AbstractVcs vcs = getVcs(was);
+    private fun doModify(was: BaseRevision, become: BaseRevision) {
+      scheduler.submit(Runnable {
+        val vcs = getVcs(was)
         if (vcs != null) {
-          myRevisionsCache.changeUpdated(was.getPath(), vcs);
+          revisionsCache.changeUpdated(was.getPath(), vcs)
         }
-        myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
-      });
+        project.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become)
+      })
     }
 
-    private @Nullable AbstractVcs getVcs(@NotNull BaseRevision baseRevision) {
-      AbstractVcs vcs = baseRevision.getVcs();
-      if (vcs != null) return vcs;
-      return myVcsManager.getVcsFor(baseRevision.getFilePath());
+    private fun getVcs(baseRevision: BaseRevision): AbstractVcs? =
+      baseRevision.getVcs() ?: vcsManager.getVcsFor(baseRevision.getFilePath())
+  }
+
+  internal class MyStartupActivity : VcsStartupActivity {
+    override suspend fun execute(project: Project) {
+      getInstanceImpl(project).startUpdater()
+    }
+
+    override val order: Int
+      get() = VcsInitObject.CHANGE_LIST_MANAGER.order
+  }
+
+  companion object {
+    @Topic.ProjectLevel
+    val LISTS_LOADED_TOPIC: Topic<LocalChangeListsLoadedListener> =
+      Topic(LocalChangeListsLoadedListener::class.java, Topic.BroadcastDirection.NONE)
+
+    @JvmStatic
+    fun getInstanceImpl(project: Project): ChangeListManagerImpl {
+      return getInstance(project) as ChangeListManagerImpl
+    }
+
+    /**
+     * Shows the proposal to delete one or more changelists that were default and became empty.
+     *
+     * @return true if the changelists have to be deleted, false if not.
+     */
+    private fun showRemoveEmptyChangeListsProposal(project: Project, config: VcsConfiguration, lists: Collection<ChangeList>): Boolean {
+      if (lists.isEmpty()) return false
+
+      val changeListName = if (lists.size == 1) {
+        StringUtil.first(lists.first().name, 30, true)
+      }
+      else {
+        lists.joinToString(separator = UIUtil.BR) { StringUtil.first(it.name, 30, true) }
+      }
+      val question = VcsBundle.message("changes.empty.changelists.no.longer.active", lists.size, changeListName)
+
+      val option: VcsShowConfirmationOption = object : VcsShowConfirmationOption {
+        override fun getValue(): VcsShowConfirmationOption.Value? {
+          return config.REMOVE_EMPTY_INACTIVE_CHANGELISTS
+        }
+
+        override fun setValue(value: VcsShowConfirmationOption.Value?) {
+          config.REMOVE_EMPTY_INACTIVE_CHANGELISTS = value
+        }
+
+        override fun isPersistent(): Boolean = true
+      }
+
+      return VcsConfirmationUtil.requestConfirmation(
+        option = option,
+        project = project,
+        message = XmlStringUtil.wrapInHtml(question),
+        title = VcsBundle.message("dialog.title.remove.empty.changelist"),
+        icon = Messages.getQuestionIcon(),
+        okActionName = VcsBundle.message("button.remove"),
+        cancelActionName = CommonBundle.getCancelButtonText()
+      )
+    }
+
+    @JvmStatic
+    fun isUnder(change: Change, scope: VcsDirtyScope): Boolean {
+      val before = change.getBeforeRevision()
+      val after = change.getAfterRevision()
+      return before != null && scope.belongsTo(before.getFile())
+             || after != null && scope.belongsTo(after.getFile())
+    }
+
+    private fun isChangeUnder(parent: FilePath, change: Change): Boolean {
+      val after = ChangesUtil.getAfterPath(change)
+      val before = ChangesUtil.getBeforePath(change)
+      return after != null && after.isUnder(parent, false) ||
+             !Comparing.equal(before, after) && before != null && before.isUnder(parent, false)
     }
   }
 
-  @Override
-  public boolean isFreezedWithNotification(@Nls @Nullable String modalTitle) {
-    final String freezeReason = isFreezed();
-    if (freezeReason == null) return false;
+  //region Test-Only
+  @TestOnly
+  fun commitChangesSynchronouslyWithResult(changeList: LocalChangeList, changes: List<Change>) {
+    doCommit(changeList, changes, true)
+  }
 
-    if (modalTitle != null) {
-      Messages.showErrorDialog(project, freezeReason, modalTitle);
+  @TestOnly
+  fun waitUntilRefreshed() {
+    LOG.debug("waitUntilRefreshed")
+    assert(application.isUnitTestMode())
+    project.service<VcsDirtyScopeVfsListener>().waitForAsyncTaskCompletion()
+    updateRequestsQueue.waitUntilRefreshed()
+    waitUpdateAlarm()
+  }
+
+  @TestOnly
+  private fun waitUpdateAlarm() {
+    assert(application.isUnitTestMode())
+    val semaphore = Semaphore()
+    semaphore.down()
+    scheduler.submit(Runnable { semaphore.up() })
+    if (application.isDispatchThread()) {
+      while (!semaphore.waitFor(100)) {
+        UIUtil.dispatchAllInvocationEvents()
+      }
     }
     else {
-      VcsBalloonProblemNotifier.showOverChangesView(project, freezeReason, MessageType.WARNING);
+      semaphore.waitFor()
     }
-    return true;
+    LOG.debug("waitUpdateAlarm - finished")
   }
 
-  private @NotNull ChangeListManagerState.FileHoldersState getFileHoldersState() {
-    boolean ignoredInUpdateMode = myComposite.getIgnoredFileHolder().isInUpdatingMode();
-    boolean unversionedInUpdateMode = myComposite.getUnversionedFileHolder().isInUpdatingMode();
-    return new ChangeListManagerState.FileHoldersState(unversionedInUpdateMode, ignoredInUpdateMode);
+  @TestOnly
+  fun stopEveryThingIfInTestMode() {
+    assert(application.isUnitTestMode())
+    scheduler.cancelAll()
   }
+
+  @TestOnly
+  fun waitEverythingDoneAndStopInTestMode() {
+    assert(application.isUnitTestMode())
+    scheduler.awaitAllAndStop()
+    updateRequestsQueue.stop()
+  }
+
+  @TestOnly
+  fun waitEverythingDoneInTestMode() {
+    assert(application.isUnitTestMode())
+    scheduler.awaitAll()
+    LOG.debug("waitEverythingDoneInTestMode - finished")
+  }
+
+  @TestOnly
+  fun forceStopInTestMode() {
+    assert(application.isUnitTestMode())
+    updateRequestsQueue.stop()
+  }
+
+  @TestOnly
+  fun forceGoInTestMode() {
+    assert(application.isUnitTestMode())
+    updateRequestsQueue.forceGo()
+  }
+
+  @TestOnly
+  fun ensureUpToDate() {
+    assert(application.isUnitTestMode())
+    waitUntilRefreshed()
+  }
+  //endregion
+
+  // used in TeamCity
+  @Suppress("OVERRIDE_DEPRECATION", "removal")
+  override fun reopenFiles(paths: List<FilePath>) {
+    val readonlyStatusHandler = ReadonlyStatusHandler.getInstance(project) as ReadonlyStatusHandlerImpl
+    val savedOption = readonlyStatusHandler.state.SHOW_DIALOG
+    readonlyStatusHandler.state.SHOW_DIALOG = false
+    try {
+      readonlyStatusHandler.ensureFilesWritable(paths.mapNotNull { it.virtualFile })
+    }
+    finally {
+      readonlyStatusHandler.state.SHOW_DIALOG = savedOption
+    }
+  }
+}
+
+private fun <T, R> MutableCollection<T>.mapNotNullAndClear(mapper: (T) -> R?): List<R> {
+  val result = mapNotNull(mapper)
+  clear()
+  return result
 }
