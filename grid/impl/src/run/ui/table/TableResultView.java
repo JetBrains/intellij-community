@@ -112,6 +112,7 @@ import com.intellij.ui.TableUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.Magnificator;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
@@ -386,10 +387,6 @@ public final class TableResultView extends JBTableWithResizableCells
     return myIsFrozenStrip;
   }
 
-  public boolean hasFrozenColumns() {
-    return !myIsFrozenStrip && myFrozenColumnsController.hasFrozenColumns();
-  }
-
   public boolean isCellComponent(@Nullable Component component) {
     return myIsFrozenStrip ? component == this : myFrozenColumnsController.isCellComponent(component);
   }
@@ -412,14 +409,12 @@ public final class TableResultView extends JBTableWithResizableCells
     return primaryView == null ? this : primaryView;
   }
 
+  /** Unscaled width of the divider the pinned strip paints on its trailing edge. */
+  static final int PIN_DIVIDER_WIDTH = 1;
+
   /** Whether a pinned cell is being edited in the frozen region, so the grid reports editing regardless of view. */
   public boolean isEditingInFrozenView() {
     return !myIsFrozenStrip && myFrozenColumnsController.isEditingInFrozenView();
-  }
-
-  /** X (in the scroll pane's coordinates) of the frozen columns' trailing edge, where the divider is drawn, or -1. */
-  public int getFrozenColumnsRightEdge() {
-    return myIsFrozenStrip ? -1 : myFrozenColumnsController.getFrozenColumnsRightEdge();
   }
 
   @Override
@@ -445,6 +440,21 @@ public final class TableResultView extends JBTableWithResizableCells
     super.setShowVerticalLines(showVerticalLines);
     TableResultView frozenView = getPairedFrozenView();
     if (frozenView != null) frozenView.setShowVerticalLines(showVerticalLines);
+  }
+
+  /** The trailing blank rows grow the preferred height, so a strip without them ends above the main view. */
+  @Override
+  public void setAdditionalRowsCount(int additionalRowsCount) {
+    super.setAdditionalRowsCount(additionalRowsCount);
+    TableResultView frozenView = getPairedFrozenView();
+    if (frozenView != null) frozenView.setAdditionalRowsCount(additionalRowsCount);
+  }
+
+  @Override
+  public void setVisibleRowCount(int visibleRowCount) {
+    super.setVisibleRowCount(visibleRowCount);
+    TableResultView frozenView = getPairedFrozenView();
+    if (frozenView != null) frozenView.setVisibleRowCount(visibleRowCount);
   }
 
   @Override
@@ -503,6 +513,8 @@ public final class TableResultView extends JBTableWithResizableCells
     frozenView.myFontSizeScale = myFontSizeScale;
     frozenView.updateFonts();
     frozenView.setRowHeight(getRowHeight());
+    frozenView.setAdditionalRowsCount(getAdditionalRowsCount());
+    frozenView.setVisibleRowCount(getVisibleRowCount());
   }
 
   /** A plain gesture in the frozen view collapses to one cell across both regions by reducing the main column
@@ -938,6 +950,28 @@ public final class TableResultView extends JBTableWithResizableCells
     adjustCacheSize();
     super.paintComponent(g);
     paintCellsEffects(g);
+  }
+
+  @Override
+  public void paint(@NotNull Graphics g) {
+    super.paint(g);
+    if (myIsFrozenStrip) paintPinDivider(g, this, getLastRowBottom());
+  }
+
+  private int getLastRowBottom() {
+    if (getRowCount() == 0) return 0;
+    Rectangle lastRow = getCellRect(getRowCount() - 1, 0, true);
+    return lastRow.y + lastRow.height;
+  }
+
+  /**
+   * The pinned strip owns the pixel column the divider occupies, so any partial repaint that starts inside the strip
+   * paints the divider again. An overlay in an ancestor is skipped by such repaints and gets erased or ghosted.
+   */
+  private static void paintPinDivider(@NotNull Graphics g, @NotNull JComponent c, int height) {
+    int width = JBUIScale.scale(PIN_DIVIDER_WIDTH);
+    g.setColor(JBUI.CurrentTheme.EditorTabs.underlineColor());
+    g.fillRect(c.getComponentOrientation().isLeftToRight() ? c.getWidth() - width : 0, 0, width, Math.min(height, c.getHeight()));
   }
 
   private void adjustCacheSize() {
@@ -1662,6 +1696,7 @@ public final class TableResultView extends JBTableWithResizableCells
       clip.width = Math.max(0, Math.min(clip.width, getTable().getWidth() - clip.x));
       g.setClip(clip);
       super.paint(g);
+      if (myIsFrozenStrip) paintPinDivider(g, this, getHeight());
     }
   }
 

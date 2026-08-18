@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.Dimension
@@ -49,6 +50,7 @@ internal class FrozenColumnsController(
   private var frozenRowHeader: GridRowHeader? = null
   private var frozenModelSync: TableModelListener? = null
   private var originalCorner: Component? = null
+  private var originalLowerCorner: Component? = null
   private var mirroringSelection = false
   private var resizingFrozenColumn = false
   private var frozenResizeCursorShown = false
@@ -66,8 +68,6 @@ internal class FrozenColumnsController(
   fun getPrimaryView(): TableResultView = primaryView
 
   fun getFrozenView(): TableResultView? = frozenView
-
-  fun hasFrozenColumns(): Boolean = frozenView != null
 
   fun isCellComponent(component: Component?): Boolean = component === primaryView || component === frozenView
 
@@ -138,13 +138,6 @@ internal class FrozenColumnsController(
     return if (columns.columnCount == 0) null else columns.getColumn(columns.columnCount - 1) as TableResultViewColumn
   }
 
-  fun getFrozenColumnsRightEdge(): Int {
-    val frozen = frozenView ?: return -1
-    val scrollPane = findScrollPane() ?: return -1
-    val x = if (primaryView.componentOrientation.isLeftToRight) frozen.width else 0
-    return SwingUtilities.convertPoint(frozen, x, 0, scrollPane).x
-  }
-
   fun showRowNumbers(show: Boolean) {
     showRowNumbers = show
     val parent = findScrollPane() ?: return
@@ -207,6 +200,7 @@ internal class FrozenColumnsController(
 
   private fun createFrozenView(parent: TableScrollPane): TableResultView {
     originalCorner = parent.getCorner(ScrollPaneConstants.UPPER_LEADING_CORNER)
+    originalLowerCorner = parent.getCorner(ScrollPaneConstants.LOWER_LEADING_CORNER)
     val frozen = TableResultView(resultPanel, columnHeaderPopupActions, rowHeaderPopupActions, this)
     frozenView = frozen
     frozen.autoResizeMode = TableResultView.AUTO_RESIZE_OFF
@@ -244,6 +238,7 @@ internal class FrozenColumnsController(
     if (frozenView == null) return
     disposeFrozenView()
     parent.setCorner(ScrollPaneConstants.UPPER_LEADING_CORNER, originalCorner)
+    parent.setCorner(ScrollPaneConstants.LOWER_LEADING_CORNER, originalLowerCorner)
     showRowNumbers(showRowNumbers)
     parent.revalidate()
     parent.repaint()
@@ -271,9 +266,14 @@ internal class FrozenColumnsController(
   }
 
   override fun dispose() {
+    val parent = if (frozenView == null) null else findScrollPane()
     disposeFrozenView()
+    // Hand the corner slots back rather than leaving components around a disposed frozen view installed.
+    parent?.setCorner(ScrollPaneConstants.UPPER_LEADING_CORNER, originalCorner)
+    parent?.setCorner(ScrollPaneConstants.LOWER_LEADING_CORNER, originalLowerCorner)
     componentMouseListeners.clear()
     originalCorner = null
+    originalLowerCorner = null
   }
 
   private fun restorePreviouslyFrozenColumns() {
@@ -320,6 +320,7 @@ internal class FrozenColumnsController(
   }
 
   private fun renderFrozenRegion(parent: TableScrollPane, frozen: TableResultView, gutter: GridRowHeader?, originalCorner: Component?) {
+    val orientation = parent.componentOrientation
     var rowHeader: JComponent = frozen
     var corner: JComponent = frozen.tableHeader
     if (gutter != null) {
@@ -340,8 +341,24 @@ internal class FrozenColumnsController(
       cornerPanel.applyComponentOrientation(parent.componentOrientation)
       corner = cornerPanel
     }
+    // A JTableHeader is not a child of its table, so it never receives the orientation applied to the frozen view.
+    frozen.tableHeader.applyComponentOrientation(orientation)
     parent.setRowHeaderView(rowHeader)
     parent.setCorner(ScrollPaneConstants.UPPER_LEADING_CORNER, corner)
+    // Without a leading lower corner the horizontal scrollbar leaves a band under the strip painted in the scrollbar
+    // background, which reads as extra empty space once a column is widened.
+    parent.setCorner(ScrollPaneConstants.LOWER_LEADING_CORNER, FrozenLowerCorner())
+  }
+
+  /**
+   * Fills the band the horizontal scrollbar leaves beside the strip with the grid background.
+   */
+  private inner class FrozenLowerCorner : JPanel() {
+    init {
+      isOpaque = true
+    }
+
+    override fun getBackground(): Color? = primaryView.background
   }
 
   private fun getFrozenRowHeader(): GridRowHeader {
