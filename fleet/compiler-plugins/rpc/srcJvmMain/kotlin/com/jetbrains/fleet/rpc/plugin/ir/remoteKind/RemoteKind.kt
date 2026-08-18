@@ -3,13 +3,14 @@ package com.jetbrains.fleet.rpc.plugin.ir.remoteKind
 import com.jetbrains.fleet.rpc.plugin.REMOTE_KIND_DATA_CLASS_ID
 import com.jetbrains.fleet.rpc.plugin.REMOTE_KIND_RESOURCE_CLASS_ID
 import com.jetbrains.fleet.rpc.plugin.REMOTE_RESOURCE_FQN
+import com.jetbrains.fleet.rpc.plugin.RpcPluginDiagnostics
 import com.jetbrains.fleet.rpc.plugin.THROWING_SERIALIZER_CLASS_ID
 import com.jetbrains.fleet.rpc.plugin.ir.FileContext
 import com.jetbrains.fleet.rpc.plugin.ir.getDescriptorInstance
 import com.jetbrains.fleet.rpc.plugin.ir.singleOrNullOrThrow
 import com.jetbrains.fleet.rpc.plugin.ir.util.name
 import org.jetbrains.kotlin.backend.wasm.ir2wasm.allSuperInterfaces
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
+import org.jetbrains.kotlin.cli.report
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
 import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irCallConstructor
@@ -116,8 +117,8 @@ private fun IrBuilderWithScope.generateSerializerCall(
   return if (serializer == null) {
     val message = "Couldn't find serializer function on companion object for ${irClass.dumpKotlinLike()}\nAdditional info:\n$debugInfo"
     if (isTypeArgument) {
-      context.messageCollector.report(
-        CompilerMessageSeverity.WARNING,
+      context.configuration.report(
+        RpcPluginDiagnostics.RPC_PLUGIN_WARNING,
         message
       )
       val throwingSerializerConstructor = context.referenceClass(THROWING_SERIALIZER_CLASS_ID)!!.constructors.single()

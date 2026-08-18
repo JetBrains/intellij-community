@@ -1,11 +1,13 @@
 package com.jetbrains.fleet.rpc.plugin.fir
 
+import com.jetbrains.fleet.rpc.plugin.RpcPluginDiagnostics
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 
 class RpcFirExtensionRegistrar() : FirExtensionRegistrar() {
   override fun ExtensionRegistrarContext.configurePlugin() {
     //+::RpcCheckersComponent
     +::GenerateDescriptorObjectPass
+    registerDiagnosticContainers(RpcPluginDiagnostics)
   }
 }
 //

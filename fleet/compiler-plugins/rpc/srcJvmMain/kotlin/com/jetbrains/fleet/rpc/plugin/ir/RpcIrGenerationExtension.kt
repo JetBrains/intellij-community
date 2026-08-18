@@ -2,7 +2,7 @@ package com.jetbrains.fleet.rpc.plugin.ir
 
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
-import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.declarations.IrFile
@@ -14,16 +14,16 @@ import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 
-class RpcIrGenerationExtension(private val messageCollector: MessageCollector) : IrGenerationExtension {
+class RpcIrGenerationExtension(private val configuration: CompilerConfiguration) : IrGenerationExtension {
   override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
-    moduleFragment.accept(GenerateDescriptorImplsPass(pluginContext, messageCollector), null)
-    moduleFragment.accept(RewriteIntrinsicsPass(pluginContext, messageCollector), null)
+    moduleFragment.accept(GenerateDescriptorImplsPass(pluginContext, configuration), null)
+    moduleFragment.accept(RewriteIntrinsicsPass(pluginContext, configuration), null)
   }
 }
 
 data class FileContext(
   private val irContext: IrPluginContext,
-  val messageCollector: MessageCollector,
+  val configuration: CompilerConfiguration,
   val currentFile: IrFile,
 ) {
   val irBuiltIns: IrBuiltIns get() = irContext.irBuiltIns
