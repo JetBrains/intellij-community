@@ -3,8 +3,10 @@
 
 package com.intellij.openapi.editor.actions
 
+import com.intellij.idea.AppMode
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -24,9 +26,10 @@ object LockFreeEditorActions {
    * Too much of lock-protected entities are accessed during action update,
    * so for the time being we disable the possibility of lock-free update in remote development.
    * See IJPL-250526
+   * Also, rider and clion are also opted-out, as they use the same action update algorithm
    */
   private fun canUseLockFreeActionsInCurrentProductMode(): Boolean {
-    return IdeProductMode.isMonolith
+    return IdeProductMode.isMonolith && !PlatformUtils.isRider() && !PlatformUtils.isCLion()
   }
 }
 
