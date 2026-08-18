@@ -60,6 +60,25 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       expr = io.open('foo', 'rb')
       #└ TYPE BufferedReader[_BufferedReaderStream]
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-7757"])
+    fun `open read 2k`() = test("""
+      def f(s):
+          '''
+          :type s: str
+          '''
+          pass
+
+      def g(s):
+          '''
+          :type s: int
+          '''
+
+      f(open('foo').read()) # pass
+      g(open('foo').read())
+      # ^^^^^^^^^^^^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -70,6 +89,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       expr = input()
       #└ TYPE str
       """.trimIndent())
+
   }
 
   @Nested
@@ -195,6 +215,20 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       expr = [float]
       #└ TYPE list[type[float]]
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-10095"])
+    fun `string starts with`() = test("""
+      'foo'.startswith('bar')
+      'foo'.startswith(('bar', 'baz'))
+      'foo'.startswith(2)
+      #                └ WARNING Expected type 'str | tuple[str, ...]', got 'Literal[2]' instead
+
+      u'foo'.startswith(u'bar')
+      u'foo'.startswith((u'bar', u'baz'))
+      u'foo'.startswith(2)
+      #                 └ WARNING Expected type 'str | tuple[str, ...]', got 'Literal[2]' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -204,6 +238,20 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       from collections import defaultdict
       expr = defaultdict(dict)
       #└ TYPE defaultdict[Unknown, dict]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-19884"])
+    fun `abs set and mutable set`() = test("""
+      def f(xs, ys):
+          '''
+          :type xs: collections.Set[int]
+          :type ys: collections.MutableSet[int]
+          '''
+          pass
+
+      items = {4, 5}
+      f({1, 2, 3}, items)
       """.trimIndent())
   }
 
@@ -359,6 +407,32 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           def test(self, param):
               expr = param
       #       └ TYPE int
+      """.trimIndent())
+
+    @Test
+    fun simple() = test("""
+      def f1(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10=10, p11='11'):
+          '''
+          :type p1: integer
+          :type p2: integer
+          :type p3: float
+          :type p4: float
+          :type p5: int
+          :type p6: integer
+          :type p7: integer
+          :type p8: int
+          :type p9: int
+          :type p10: int
+          :type p11: string
+          '''
+          return p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + p10 + int(p11)
+
+      def test():
+          p7 = int('7')
+          f1(1, '2', 3.0, 4, 5, int('6'), p7, p8=-8, p9='foo', p10='foo')
+      #         │                                    │         ^^^^^^^^^ WARNING Expected type 'int', got 'Literal["foo"]' instead
+      #         │                                    ^^^^^^^^ WARNING Expected type 'int', got 'Literal["foo"]' instead
+      #         ^^^ WARNING Expected type 'int', got 'Literal["2"]' instead
       """.trimIndent())
   }
 
@@ -779,6 +853,153 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       expr = A() + x
       #└ TYPE str
       """.trimIndent())
+
+    @Test
+    fun `builtin numeric`() = test("""
+      def test():
+          abs(False)
+          int(10)
+          long(False)
+      #   ^^^^ ERROR Unresolved reference 'long'
+          float(False)
+          complex(False)
+          divmod(False, False)
+          divmod('foo', u'bar')
+      #         ^^^^^^^^^^^^^^^ WARNING No overload of 'divmod' matches the arguments. Argument types: (Literal["foo"], Literal["bar"]). Expected one of: (x: SupportsDivMod[_T_contra, _T_co], y: str), (x: str, y: SupportsRDivMod[str, _T_co])
+          pow(False, True)
+          round(False, 'foo')
+      #        ^^^^^^^^^^^^^^ WARNING No overload of 'round' matches the arguments. Argument types: (Literal[False], Literal["foo"]). Expected one of: (number: _SupportsRound1[int], ndigits: None), (number: _SupportsRound2[int], ndigits: SupportsIndex)
+      """.trimIndent())
+
+    @Test
+    fun `comparison operators`() = test("""
+      def test():
+          def f(x):
+              '''
+              :type x: str
+              '''
+              pass
+          class C(object):
+              def __gt__(self, other):
+                  return []
+          o = object()
+          c = C()
+          f(1 < 2)
+      #     ^^^^^ WARNING Expected type 'str', got 'bool' instead
+          f(o == o)
+      #     ^^^^^^ WARNING Expected type 'str', got 'bool' instead
+          f(o >= o)
+          f('foo' > 'bar')
+      #     ^^^^^^^^^^^^^ WARNING Expected type 'str', got 'bool' instead
+          f(c < 1)
+      #     └ WARNING Expected type 'int', got 'C' instead
+      #     ^^^^^ WARNING Expected type 'str', got 'bool' instead
+          f(c > 1)
+      #     ^^^^^ WARNING Expected type 'str', got 'list[Unknown]' instead
+          f(c == 1)
+      #     ^^^^^^ WARNING Expected type 'str', got 'bool' instead
+          f(c in [1, 2, 3])
+      #     ^^^^^^^^^^^^^^ WARNING Expected type 'str', got 'bool' instead
+      """.trimIndent())
+
+    @Test
+    fun `right operators`() = test("""
+      class C(object):
+          pass
+
+      def test_right_operators():
+          o = C()
+          xs = [ o * [], ]
+      #          └ WARNING Expected type 'SupportsIndex', got 'C' instead
+      """.trimIndent())
+
+    @Test
+    fun `string integer`() = test("""
+      def test():
+          print('foo' + 'bar')
+          print(2 + 3)
+          print('foo' + 3)
+      #                 └ WARNING No overload of '__add__' matches the arguments. Argument types: (Literal[3]). Expected one of: (value: LiteralString), (value: str)
+          print(3 + 'foo')
+      #             ^^^^^ WARNING Expected type 'int', got 'Literal["foo"]' instead
+          print(3 + 3.14)
+          print('foo' + 'bar' * 3)
+          print('foo' + 3 * 'bar')
+          print('foo' + 2 * 3)
+      #                 ^^^^^ WARNING No overload of '__add__' matches the arguments. Argument types: (int). Expected one of: (value: LiteralString), (value: str)
+      """.trimIndent())
+
+    @Test
+    fun `comparison operators for numeric types`() = test("""
+      def f(x):
+          print(x < 0, x <= 0, x > 0, x >= 0, x != 0)
+          print(x.foo)
+
+      print(f(True))
+      #       ^^^^ WARNING Type 'Literal[True]' doesn't have expected attribute 'foo'
+      print(f(0))
+      #       └ WARNING Type 'Literal[0]' doesn't have expected attribute 'foo'
+      print(f(3.14))
+      #       ^^^^ WARNING Type 'float' doesn't have expected attribute 'foo'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-23367"])
+    fun `comparing float and int`() = test("""
+      result = 0 > 0.0
+      result2 = 0 < 0.0
+
+      result3 = 0.0 > 0
+      result4 = 0.0 < 0
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-9662"])
+    fun `binary expression with unknown operand`() = test("""
+      from typing import Any
+
+      def f(x: Any) -> str:
+          return x * 2
+
+      def f(x: Any) -> str:
+          return 2 * x
+
+      def f(x) -> str:
+          return x * 2
+
+      def f(x) -> str:
+          return 2 * x
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-32205"])
+    fun `right shift operator accepts matching argument`() = test("""
+      class Bin:
+          def __rshift__(self, other: int):
+              pass
+
+      Bin() >> 1
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-13394"])
+    fun `contains arguments`() = test("""
+      class C(object):
+          def __contains__(self, item):
+              '''
+              :type item: int
+              '''
+              return False
+
+      def test():
+          c = C()
+          i = 10
+          s = 'string'
+          c in i
+          i in c
+          s in c
+      #   └ WARNING Expected type 'int', got 'Literal["string"]' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -1119,17 +1340,21 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       expr = x
       #└ TYPE str
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-6925"])
+    fun `assigned operator`() = test("""
+      def f(x):
+          return x
+
+      class C(object):
+          __div__, __rdiv__ = f(0)
+
+      c = C()
+      print(c / 2)
+      #     └ WARNING Expected type 'int', got 'C' instead
+      """.trimIndent())
   }
-
-  @Test
-  @TestFor(issues = ["PY-32205"])
-  fun `right shift operator accepts matching argument`() = test("""
-    class Bin:
-        def __rshift__(self, other: int):
-            pass
-
-    Bin() >> 1
-    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-7757"])

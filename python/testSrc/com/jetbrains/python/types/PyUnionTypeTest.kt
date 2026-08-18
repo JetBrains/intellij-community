@@ -6,6 +6,7 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -79,6 +80,40 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       myvar: Union[str, int]
       expr = myvar[0:3]
       #└ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestInspections(disableInspections = [PyUnresolvedReferencesInspection::class])
+    fun `union return types`() = test("""
+      def test(c):
+          def f1(c):
+              if c < 0:
+                  return []
+              elif c > 0:
+                  return 'foo'
+              else:
+                  return None
+          def f2(x):
+              '''
+              :type x: str
+              '''
+              pass
+          def f3(x):
+              '''
+              :type x: int
+              '''
+          x1 = f1(c)
+          f2(x1)
+      #      ^^ WARNING Expected type 'str', got 'list[Unknown] | Literal["foo"] | None' instead
+          f3(x1)
+      #      ^^ WARNING Expected type 'int', got 'list[Unknown] | Literal["foo"] | None' instead
+
+          f2(x1.count(''))
+      #      ^^^^^^^^^^^^ WARNING Expected type 'str', got 'int | Unknown' instead
+          f3(x1.count(''))
+          f2(x1.strip())
+          f3(x1.strip())
+      #      ^^^^^^^^^^ WARNING Expected type 'int', got 'LiteralString | Unknown' instead
       """.trimIndent())
   }
 
@@ -212,6 +247,42 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       expr = x.foo
       #│       ^^^ WEAK-WARNING Member 'Literal[42]' of 'Literal[42, "spam"]' does not have attribute 'foo'
       #└ TYPE Unknown
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-8182"])
+    fun `union with same methods`() = test("""
+      class C:
+          def g(self, x):
+              '''
+              :type x: int
+              '''
+              pass
+
+          def method_c(self):
+              pass
+
+      class D:
+          def g(self, x):
+              '''
+              :type x: list
+              '''
+              pass
+
+          def method_d(self):
+              pass
+
+      def f():
+          '''
+          :rtype: C or D
+          '''
+          pass
+
+      obj = f()
+      obj.g(10)
+      #     ^^ WARNING Expected type 'list', got 'Literal[10]' instead
+      obj.g([])
+      #     ^^ WARNING Expected type 'int', got 'list[Unknown]' instead
       """.trimIndent())
   }
 
@@ -452,6 +523,24 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       expr = f()
       # └ TYPE Never
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-5873"])
+    fun `type of raise exception`() = test("""
+      def test():
+          def f1(x):
+              '''
+              :type x: int
+              '''
+              pass
+
+          class C:
+              def f(self):
+                  raise NotImplementedError()
+
+          x = C()
+          f1(x.f())
+      """.trimIndent())
   }
 
   @Nested
@@ -559,6 +648,16 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
 
       def foo(path_or_buf: another_union[T] | None) -> None:
           print(path_or_buf)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-20364"])
+    fun `actual basestring expected union str unicode`() = test("""
+      def hello(filename):
+          '''
+          :type filename: basestring
+          '''
+          open(filename)
       """.trimIndent())
   }
 }

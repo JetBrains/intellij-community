@@ -846,6 +846,32 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       asdict(MyDataClass(name="Bob"))
       asdict("Bob") # WARNING Expected type 'DataclassInstance', got 'Literal["Bob"]' instead
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-55691"])
+    @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)])
+    fun `attrs dataclass protocol matching define`() = test("""
+      import attrs
+
+      @attrs.define
+      class User:
+          password: str
+
+      attrs.fields(User)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-55691"])
+    @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)])
+    fun `attrs dataclass protocol matching frozen`() = test("""
+      import attrs
+
+      @attrs.frozen
+      class User:
+          password: str
+
+      attrs.fields(User)
+      """.trimIndent())
   }
 
   @Nested

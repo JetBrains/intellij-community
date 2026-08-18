@@ -103,4 +103,18 @@ class PyTopTypeTest : PyCodeInsightTestCase() {
       assertSame(PyTopType, PyCloningTypeVisitor.clone(PyTopType, cloner))
     }
   }
+
+  @Test
+  fun `partly unknown type`() = test("""
+    def test():
+        def f():
+            '''
+            :rtype: None or unknown or int or long
+            '''
+        def g(x):
+            '''
+            :type x: object
+            '''
+        g(f())
+    """.trimIndent())
 }

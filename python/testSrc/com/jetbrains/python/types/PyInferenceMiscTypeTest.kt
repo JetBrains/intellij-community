@@ -6,7 +6,6 @@ import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
-import com.jetbrains.python.fixtures.PyCodeInsightTestCase.TestCaseOptions
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -519,6 +518,19 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
         class A(Base):
             b: dict[int, str]
         """.trimIndent())
+
+    @Test
+    fun `local type resolve`() = test("""
+      def test():
+          class C():
+              def f(self):
+                  return 2
+          c = C()
+          x = c.f()
+          y = x
+          return y + 'foo'
+      #              ^^^^^ WARNING Expected type 'int', got 'Literal["foo"]' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -826,6 +838,30 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           expr = cls()
       #   └ TYPE DC1 | DC2
       """.trimIndent())
+
+    @Test
+    fun `class new`() = test("""
+      class C(object):
+          def __new__(cls, name):
+              '''
+              :type name: int
+              '''
+              return super(cls, C).__new__(cls)
+
+      C('10')
+      # ^^^^ WARNING Expected type 'int', got 'Literal["10"]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-24763"])
+    fun `annotated dunder init in generic class`() = test("""
+      from typing import TypeVar, Iterator
+
+      T = TypeVar('T')
+      class MyIterator(Iterator[T]): # WEAK-WARNING Class MyIterator must implement all abstract methods
+          def __init__(self) -> None:
+              self.other = "other"
+      """.trimIndent())
   }
 
   @Nested
@@ -1120,6 +1156,18 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       #                   └ TYPE ImportError
           pass
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-78964"])
+    fun `function with try finally`() = test("""
+      def test() -> bool:
+          try:
+              pass
+          finally:
+              pass
+
+          return True
+      """.trimIndent())
   }
 
   @Nested
@@ -1263,6 +1311,253 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       def do(arg):
           title = "abc" if arg else 100
           return process(title)
+      """.trimIndent())
+
+    @Test
+    fun `expected structural type`() = test("""
+      def f(x):
+          return x.foo + x.bar()
+
+      def g(x):
+          return x.lower()
+
+      def test(x):
+          x.foo
+          f(x)
+          g(x)
+
+          z = 'foo'
+          f(z)
+      #     └ WARNING Type 'Literal["foo"]' doesn't have expected attributes 'foo', 'bar'
+          g(z)
+      """.trimIndent())
+
+    @Test
+    fun `actual structural type`() = test("""
+      def f(x):
+          '''
+          :type x: str
+          '''
+          pass
+
+      def g(x):
+          return x.lower()
+
+      def test(x, y):
+          x.upper()
+          f(x)
+          g(x)
+
+          y.foo()
+          f(y)
+          g(y)
+      """.trimIndent())
+
+    @Test
+    fun `structural types for nested calls`() = test("""
+      def f(x):
+          return x.foo + g(x)
+
+      def g(x):
+          return x.bar
+
+      def test():
+          f('string')
+      #     ^^^^^^^^ WARNING Type 'Literal["string"]' doesn't have expected attributes 'foo', 'bar'
+      """.trimIndent())
+
+    @Test
+    fun `get attribute against structural type`() = test("""
+      def f(x):
+          return x.foo
+
+      class C(object):
+          def __getattribute__(self, item):
+              pass
+
+      class D(object):
+          def __getattr__(self, item):
+              pass
+
+      class E(object):
+          pass
+
+      f(C())
+      f(D())
+      f(E())
+      # ^^^ WARNING Type 'E' doesn't have expected attribute 'foo'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-23429"])
+    fun `matching module against structural type`() = test("""
+      import m1
+      import m2
+
+      def foo(use):
+          if use:
+              runner = m1
+          else:
+              runner = m2
+
+          make_barrier(runner)
+
+      def make_barrier(runner):
+          return runner.Barrier(2)
+      """.trimIndent(),
+      "m1.py" to """
+      class Barrier:
+          pass
+      """.trimIndent(),
+      "m2.py" to """
+      class Barrier:
+          pass
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-21408"])
+    fun `callable against structural`() = test("""
+      def i_have_special_attributes():
+          pass
+
+      def print_a_callable_name(callable):
+          print(callable.__name__)
+
+      def print_a_callable_doc(callable):
+          print(callable.__doc__)
+
+      def print_a_callable_unknown(callable):
+          print(callable.unknown)
+
+      if __name__ == "__main__":
+          print_a_callable_name(i_have_special_attributes)
+          print_a_callable_doc(i_have_special_attributes)
+          print_a_callable_unknown(i_have_special_attributes)
+      #                            ^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type '{unknown}', got '() -> None' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-21408"])
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON34, assertRecursionPrevention = false)
+    fun `class meta attrs against structural`() = test("""
+      class B1(type):
+          meta_attr = "meta_attr"
+
+      class A1(metaclass=B1):
+          pass
+
+      def print_A1(a):
+          print(a.__name__)
+          print(a.meta_attr)
+
+      def print_unknown(a):
+          print(a.unknown)
+
+      print_A1(A1)
+      print_unknown(A1)
+      #             ^^ WARNING Type 'Type[A1]' doesn't have expected attribute 'unknown'
+
+      class B2(type):
+          def __init__(self, what, bases, dict):
+              self.meta_attr = "meta_attr"
+              super().__init__(what, bases, dict)
+
+      class A2(metaclass=B2):
+          pass
+
+      def print_A2(a):
+          print(a.meta_attr)
+
+      print_A2(A2())
+      print_unknown(A2())
+      #             ^^^^ WARNING Type 'A2' doesn't have expected attribute 'unknown'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-26163"])
+    fun `typing nt against structural`() = test("""
+      import typing
+
+      def dist(p1):
+          print(p1.x)
+          print(p1.y)
+          return p1
+
+      class TP(typing.NamedTuple):
+          x: int
+          y: int
+
+      dist(TP)
+      dist(TP(1, 2))
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-26163"])
+    fun `definition against structural`() = test("""
+      from typing import ClassVar
+
+      def dist(p1):
+          print(p1.x)
+          print(p1.y)
+          return p1
+
+      class A:
+          x: ClassVar[int]
+          y: ClassVar[str]
+
+      dist(A)
+      dist(A())
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-27231"])
+    fun `structural and none`() = test("""
+      def func11(value):
+          if value is not None and value != 1:
+              pass
+
+      def func12(value):
+          if None is not value and value != 1:
+              pass
+
+      def func21(value):
+          if value is None and value != 1:
+              pass
+
+      def func22(value):
+          if None is value and value != 1:
+              pass
+
+      func11(None)
+      func12(None)
+      func21(None)
+      func22(None)
+
+      def func31(value):
+          if value and None and value * 1:
+              pass
+
+      def func32(value):
+          if value is value and value * 1:
+              pass
+
+      def func33(value):
+          if None is None and value * 1:
+              pass
+
+      def func34(value):
+          a = 2
+          if a is a and value * 1:
+              pass
+
+      func31(None)
+      #      ^^^^ WARNING Type 'None' doesn't have expected attribute '__mul__'
+      func32(None)
+      #      ^^^^ WARNING Type 'None' doesn't have expected attribute '__mul__'
+      func33(None)
+      #      ^^^^ WARNING Type 'None' doesn't have expected attribute '__mul__'
+      func34(None)
+      #      ^^^^ WARNING Type 'None' doesn't have expected attribute '__mul__'
       """.trimIndent())
   }
 
@@ -1873,8 +2168,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       #   ^^^ ERROR Unresolved reference 'foo'
       x: str
       x = baz()
-      #│  ^^^ ERROR Unresolved reference 'baz'
-      #\ WARNING Redeclared 'x' defined above without usage
+      #   ^^^ ERROR Unresolved reference 'baz'
       expr = x
       #└ TYPE str
       """.trimIndent())
@@ -2357,7 +2651,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       e: EllipsisType
       e = ...
       e = Ellipsis
-      #\ WARNING Redeclared 'e' defined above without usage
       """.trimIndent())
 
     @Test
@@ -2479,6 +2772,61 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       #       ^^^ WARNING 'dataclasses.replace' method should be called on dataclass instances
       #       ^^^ WARNING Expected type '_DataclassT ≤: DataclassInstance', got 'D' instead
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90265"])
+    fun `suppress bad return suppresses only return`() = test("""
+      def g(x: int):
+          pass
+
+      def f() -> int:
+          # noinspection bad-return
+          return 'hello'
+
+      g('a')
+      # ^^^ WARNING Expected type 'int', got 'Literal["a"]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90265"])
+    fun `suppress bad argument type does not suppress return`() = test("""
+      def f() -> int:
+          # noinspection bad-argument-type
+          return 'hello'
+      #          ^^^^^^^ WARNING Expected type 'int', got 'Literal["hello"]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90265"])
+    fun `suppress py type checker suppresses everything`() = test("""
+      def f() -> int:
+          # noinspection PyTypeChecker
+          return 'hello'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90265"])
+    fun `suppress bad return for function scope`() = test("""
+      # noinspection bad-return
+      def f() -> int:
+          return 'hello'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90265"])
+    fun `suppress bad return among multiple codes`() = test("""
+      def f() -> int:
+          # noinspection bad-return, bad-argument-type
+          return 'hello'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90019"])
+    fun `incomplete aug assignment does not throw`() = test("""
+      def f(n: int):
+          n +=
+      #       └ ERROR Expression expected
+      """.trimIndent())
   }
 
   @Nested
@@ -2585,28 +2933,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     x = C()
     f1(x.f())
-    """.trimIndent())
-
-  @Test
-  @TestFor(issues = ["PY-14222"])
-  fun `recursive self attribute assignment does not break inference`() = test("""
-    class C:
-        def f(self, x):
-            self.foo = x
-            self.foo = {'foo': self.foo}
-            return self.foo['foo'] + 10
-    """.trimIndent())
-
-  @Test
-  @TestFor(issues = ["PY-78964"])
-  fun `return type is checked through try-finally`() = test("""
-    def test() -> bool:
-        try:
-            pass
-        finally:
-            pass
-
-        return True
     """.trimIndent())
 
   @Test

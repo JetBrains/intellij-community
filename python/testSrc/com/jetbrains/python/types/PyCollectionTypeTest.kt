@@ -103,6 +103,51 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
       l = [1, 2, 3]; expr = l[0:1]
       #              └ TYPE list[int]
       """.trimIndent())
+
+    @Test
+    fun `subscription expression`() = test("""
+      def test():
+          def f(x):
+              '''
+              :type x: str
+              '''
+          class C(object):
+              def __getitem__(self, item):
+                  '''
+                  :type item: str
+                  :rtype: int
+                  '''
+          xs = [1, 2, 3]
+          x = xs[0]
+          f(x)
+      #     └ WARNING Expected type 'str', got 'int' instead
+          c = C()
+          c_0 = c[0]
+      #           └ WARNING Expected type 'str', got 'Literal[0]' instead
+          f(c_0)
+      #     ^^^ WARNING Expected type 'str', got 'int' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-5474"])
+    fun `bad subscript expression`() = test("""
+      def test():
+          x = r'''\x''
+          r'''[\t\r\v]'''
+      #        │││││││^^^^^^^^^^^^^^^^^^^^ ERROR Missing closing triple quotes
+      #        │││││││└ ERROR Statement expected, found Py:RBRACKET
+      #        ││││││└ ERROR End of statement expected
+      #        │││││└ ERROR Statement expected, found Py:BACKSLASH
+      #        │││││└ ERROR Unresolved reference 'v'
+      #        ││││└ ERROR End of statement expected
+      #        │││└ ERROR Statement expected, found Py:BACKSLASH
+      #        │││└ ERROR Unresolved reference 'r'
+      #        ││└ ERROR End of statement expected
+      #        │└ ERROR Statement expected, found Py:BACKSLASH
+      #        │└ ERROR Unresolved reference 't'
+      #        └ ERROR Expression expected
+      """.trimIndent())
+
   }
 
   @Nested

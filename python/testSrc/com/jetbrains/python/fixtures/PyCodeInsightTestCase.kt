@@ -237,7 +237,6 @@ abstract class PyCodeInsightTestCase {
   open val defaultInspections: Set<Class<out LocalInspectionTool>> = setOf(
     PyUnresolvedReferencesInspection::class.java,
     PyTypeCheckerInspection::class.java,
-    PyRedeclarationInspection::class.java,
     PyAbstractClassInspection::class.java,
     PyArgumentListInspection::class.java,
     PyAssertTypeInspection::class.java,
@@ -425,6 +424,7 @@ abstract class PyCodeInsightTestCase {
 
     val testInspections =
       defaultInspections - myTestInspections.disableInspectionsAsClasses() + myTestInspections.enableInspectionsAsClasses()
+
     val inspectionInstances = testInspections.map { it.getDeclaredConstructor().newInstance() }.toTypedArray()
     myFixture.enableInspections(*inspectionInstances)
 

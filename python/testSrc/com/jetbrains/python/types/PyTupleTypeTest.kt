@@ -143,6 +143,15 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
           expr = xs
       #   └ TYPE tuple[int, ...]
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-10967"])
+    fun `default tuple parameter`() = test("""
+      def f(x=(), y=('foo', 'bar')):
+          pass
+
+      f([1, 2, 3], ['foo'])
+      """.trimIndent())
   }
 
   @Nested
@@ -341,6 +350,59 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       for ((_, expr)) in [(1, 'foo')]:
       #         └ TYPE str
           pass
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89352"])
+    fun `unpack target correct type`() = test("""
+      x: int
+      x, = "a",
+      #    ^^^ WARNING Expected type 'int', got 'Literal["a"]' instead
+      (x,) = "a",
+      #      ^^^ WARNING Expected type 'int', got 'Literal["a"]' instead
+      [x] = "a",
+      #     ^^^ WARNING Expected type 'int', got 'Literal["a"]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89352"])
+    fun `unpack target correct type starred`() = test("""
+      x: int
+      *x, = [1, 2, 3]
+      #     ^^^^^^^^^ WARNING Expected type 'int', got 'list[int]' instead
+      (*x,) = [1, 2, 3]
+      #       ^^^^^^^^^ WARNING Expected type 'int', got 'list[int]' instead
+      [*x] = [1, 2, 3]
+      #      ^^^^^^^^^ WARNING Expected type 'int', got 'list[int]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-12592"])
+    fun `spread operator`() = test("""
+      a = []
+      b, c, d = 1, *a
+
+      t = (1, 2)
+      b, c, d = 1, *t
+      b, c, d, e = 1, *t
+      #            ^^^^^ WARNING Not enough values to unpack from 'tuple[Literal[1], Literal[1], Literal[2]]': expected 4, got 3
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-12592"])
+    fun `starred target binds correct values`() = test("""
+      a: list[int | str]
+      b: bool
+
+      *a, b = 1, "a", False
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-12592"])
+    fun `starred target binds last value`() = test("""
+      b: bool
+      *a, b = 1, 2, "x"
+      #             ^^^ WARNING Expected type 'bool', got 'Literal["x"]' instead
       """.trimIndent())
   }
 
@@ -721,6 +783,45 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def f(a: dict[str, int]):
           b: tuple[int, ...] = tuple(a.values())
       """.trimIndent())
+
+    @Test
+    fun `list tuple`() = test("""
+      def f(spam, eggs):
+          '''
+          :type spam: list of string
+          :type eggs: (bool, int, dict)
+          '''
+          return spam, eggs
+
+      def test():
+          f([1, 2, 3], (False, 2, ''))
+      #     │          ^^^^^^^^^^^^^^ WARNING Expected type 'tuple[bool, int, dict]', got 'tuple[Literal[False], Literal[2], Literal[""]]' instead
+      #     ^^^^^^^^^ WARNING Expected type 'list[str]', got 'list[Literal[1, 2, 3]]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90219"])
+    fun `tuple not compatible with named tuple`() = test("""
+      from typing import NamedTuple
+
+      class N(NamedTuple):
+          a: int
+
+      n1: N = N(1)
+      n2: N = (1,)
+      #       ^^^^ WARNING Expected type 'N', got 'tuple[Literal[1]]' instead
+
+      class M(NamedTuple):
+          a: int
+
+      n3: N = M(1)
+      #       ^^^^ WARNING Expected type 'N', got 'M' instead
+
+      class N2(N): ...
+
+      def f(n2: N2):
+        n4: N = n2
+      """.trimIndent())
   }
 
   @Nested
@@ -948,6 +1049,82 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       xe = "1",
       foo(*xe, 2)
       foo(*xe, "2") # WARNING Expected type 'int', got 'Literal["2"]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-12592"])
+    fun `unpack annotated target mismatch`() = test("""
+    a = 1, 2
+    b: str
+    b, c = a
+    #      └ WARNING Expected type 'str', got 'int' instead
+    """.trimIndent())
+
+    @Test
+    fun `star operator type mismatch`() = test("""
+      def f(a, b, c): pass
+
+      f(*1)
+      #  └ WARNING Expected an iterable, got 'Literal[1]'
+      f(*(1))
+      #  ^^^ WARNING Expected an iterable, got 'Literal[1]'
+      (*1,)
+      # └ WARNING Expected an iterable, got 'Literal[1]'
+      [*1]
+      # └ WARNING Expected an iterable, got 'Literal[1]'
+      {*1}
+      # └ WARNING Expected an iterable, got 'Literal[1]'
+      {*(1)}
+      # ^^^ WARNING Expected an iterable, got 'Literal[1]'
+
+      def g(**kwargs): pass
+
+      g(**1)
+      #   └ WARNING Expected a mapping, got 'Literal[1]'
+      g(**(1))
+      #   ^^^ WARNING Expected a mapping, got 'Literal[1]'
+      {**1}
+      #  └ WARNING Expected a mapping, got 'Literal[1]'
+      {**(1)}
+      #  ^^^ WARNING Expected a mapping, got 'Literal[1]'
+      """.trimIndent())
+
+    @Test
+    fun `star operator type mismatch no false positive`() = test("""
+      def f(*args, **kwargs): pass
+
+      f(*(1, 2, 3))
+      f(**{"a": 1})
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-12592"])
+    fun `star unpack in type context`() = test("""
+      def f(*a: *tuple[int, str]): ...
+
+      x: tuple[*tuple[int, str]]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-4357", "PY-4360", "PY-12592"])
+    fun `tuple unpack count balance`() = test("""
+      a, b, c = 1, 2, 3, 4
+      #         ^^^^^^^^^^ WARNING Too many values to unpack from 'tuple[Literal[1], Literal[2], Literal[3], Literal[4]]': expected 3, got 4
+      a, b, c, d = 1, 2, 3, 4
+      a = 1, 2, 3, 4
+
+      c = 1, 2, 3
+      a, b = c
+      #      └ WARNING Too many values to unpack from 'tuple[Literal[1], Literal[2], Literal[3]]': expected 2, got 3
+      (a, b) = 1, 2, 3
+      #        ^^^^^^^ WARNING Too many values to unpack from 'tuple[Literal[1], Literal[2], Literal[3]]': expected 2, got 3
+
+      *a, b = 1, 2, 3
+      *a, b, c = 1, 2
+      b, c, *a, d = 1, 2
+      #             ^^^^ WARNING Not enough values to unpack from 'tuple[Literal[1], Literal[2]]': expected 3, got 2
+      a, *b, c, *d = 1, 2, 3, 4, 5, 6
+      #^^^^^^^^^^^ WARNING Only one starred expression allowed in assignment
       """.trimIndent())
   }
 

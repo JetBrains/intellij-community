@@ -188,6 +188,138 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       """.trimIndent(),
       "b.py" to OVERLOAD_TOPLEVEL_MODULE,
     )
+
+    @Test
+    @TestFor(issues = ["PY-22971"])
+    fun `top level overloads and implementation`() = test("""
+      from typing import overload
+
+      @overload
+      def foo(value: None) -> None:
+          pass
+
+      @overload
+      def foo(value: int) -> str:
+          pass
+
+      @overload
+      def foo(value: str) -> str:
+          pass
+
+      def foo(value):
+          return None
+
+      foo(None)
+      foo(5)
+      foo("5")
+      foo(object())
+      #   ^^^^^^^^ WARNING No overload of 'foo' matches the arguments. Argument types: (object). Expected one of: (value: None), (value: int), (value: str)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-22971"])
+    fun `overloads and implementation in class`() = test("""
+      from typing import overload
+
+      class A:
+          @overload
+          def foo(self, value: None) -> None:
+              pass
+
+          @overload
+          def foo(self, value: int) -> str:
+              pass
+
+          @overload
+          def foo(self, value: str) -> str:
+              pass
+
+          def foo(self, value):
+              return None
+
+      A().foo(None)
+      A().foo(5)
+      A().foo("5")
+      A().foo(A())
+      #       ^^^ WARNING No overload of 'foo' matches the arguments. Argument types: (A). Expected one of: (value: None), (value: int), (value: str)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-22971"])
+    fun `overloads and implementation in imported module`() = test("""
+      import b
+
+      b.foo(None)
+      b.foo(5)
+      b.foo("5")
+      b.foo(A()) # ERROR Unresolved reference 'A'
+      """.trimIndent(),
+      "b.py" to """
+      from typing import overload
+
+      @overload
+      def foo(value: None) -> None:
+          pass
+
+      @overload
+      def foo(value: int) -> str:
+          pass
+
+      @overload
+      def foo(value: str) -> str:
+          pass
+
+      def foo(value):
+          return None
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-22971"])
+    fun `overloads and implementation in imported class`() = test("""
+      import b
+
+      b.A().foo(None)
+      b.A().foo(5)
+      b.A().foo("5")
+      b.A().foo(b.A())
+      #         ^^^^^ WARNING No overload of 'foo' matches the arguments. Argument types: (A). Expected one of: (value: None), (value: int), (value: str)
+      """.trimIndent(),
+      "b.py" to """
+      from typing import overload
+
+      class A:
+          @overload
+          def foo(self, value: None) -> None:
+              pass
+
+          @overload
+          def foo(self, value: int) -> str:
+              pass
+
+          @overload
+          def foo(self, value: str) -> str:
+              pass
+
+          def foo(self, value):
+              return None
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-79220"])
+    fun `annotated self in overloads`() = test("""
+      from typing import overload
+
+      class A[T]:
+          @overload
+          def foo(self: A[int]) -> None: ...
+          @overload
+          def foo(self: A[str]) -> None: ...
+          def foo(self): ...
+
+      A[str]().foo()
+      A[float]().foo()
+      #^^^^^^^^^^^^^ WARNING Invalid self argument 'A[float | int]' to method 'A.foo' with type '(self: A[int]) -> None'
+      """.trimIndent())
   }
 
   @Nested
@@ -618,8 +750,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       c2: ConverterProtocol = IncompatibleCallable() # WARNING Expected type 'ConverterProtocol', got 'IncompatibleCallable' instead
       c3: ConverterProtocol = converter_func  # ok
       c3: ConverterProtocol = bad_converter_func
-      #│                      ^^^^^^^^^^^^^^^^^^ WARNING Expected type 'ConverterProtocol', got 'Overload[(x: str) -> str, (x: int) -> int]' instead
-      #\ WARNING Redeclared 'c3' defined above without usage
+      #                       ^^^^^^^^^^^^^^^^^^ WARNING Expected type 'ConverterProtocol', got 'Overload[(x: str) -> str, (x: int) -> int]' instead
 
       def t(c: ConverterProtocol):
           l3 = [converter_func]

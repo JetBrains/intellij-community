@@ -6,7 +6,6 @@ import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
-import com.jetbrains.python.fixtures.PyCodeInsightTestCase.TestCaseOptions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -301,6 +300,22 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       expr = A.attr
       # └ TYPE property
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-6803"])
+    fun `property and factory function`() = test("""
+      class C(object):
+          @property
+          def foo(self):
+              return 'bar'
+
+      def f():
+          return C()
+
+      def test():
+          f().foo + 1
+      #             └ WARNING No overload of '__add__' matches the arguments. Argument types: (Literal[1]). Expected one of: (value: LiteralString), (value: str)
+      """.trimIndent())
   }
 
   @Nested
@@ -566,6 +581,78 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
               expr = p.attr
       #       └ TYPE int
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-7340"])
+    fun `field with none in stub`() = test(
+      """
+      from m1 import C
+
+      def f(x):
+          '''
+          :type x: int
+          '''
+          pass
+
+      def test():
+          f(C.foo)
+      """.trimIndent(),
+      "m1.py" to """
+      class C(object):
+          foo = None
+      """.trimIndent(),
+    )
+
+    @Test
+    @TestFor(issues = ["PY-14222"])
+    fun `recursive dict attribute`() = test("""
+      class C:
+          def f(self, x):
+              self.foo = x
+              self.foo = {'foo': self.foo}
+              return self.foo['foo'] + 10
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-26354"])
+    @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)], assertRecursionPrevention = false)
+    fun `initializing attrs`() = test("""
+      import attr
+      import typing
+
+      @attr.s
+      class Weak1:
+          x = attr.ib()
+          y = attr.ib(default=0)
+          z = attr.ib(default=attr.Factory(list))
+
+      Weak1(1, "str", 2)
+      #        │      └ WARNING Expected type 'list', got 'Literal[2]' instead
+      #        ^^^^^ WARNING Expected type 'int', got 'Literal["str"]' instead
+
+
+      @attr.s
+      class Weak2:
+          x = attr.ib()
+
+          @x.default
+          def __init_x__(self):
+              return 1
+
+      Weak2("str")
+
+
+      @attr.s
+      class Strong:
+          x = attr.ib(type=int)
+          y = attr.ib(default=0, type=int)
+          z = attr.ib(default=attr.Factory(list), type=typing.List[int])
+
+      Strong(1, "str", ["str"])
+      #         │      ^^^^^^^ WARNING Expected type 'list[int]', got 'list[Literal["str"]]' instead
+      #         ^^^^^ WARNING Expected type 'int', got 'Literal["str"]' instead
+      """.trimIndent())
+
   }
 
   @Nested
@@ -629,6 +716,26 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       def foo(obj: MyClass):
           expr = obj.attr
       #   └ TYPE Any
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-28017"])
+    fun `module with get attr`() = test("""
+      import mymod
+
+      def foo(mod):
+          return mod.myfunc
+
+      print(foo(mymod)())
+      """.trimIndent(),
+      "mymod.py" to """
+      def myhiddenfunc():
+          return "ok"
+
+      def __getattr__(name):
+          if name == "myfunc":
+              return myhiddenfunc
+          raise AttributeError
       """.trimIndent())
   }
 
@@ -714,6 +821,40 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
           if isinstance(x, B):
               expr = x
       #       └ TYPE A & B
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-22222", "PY-29233"])
+    fun `pass class with dunder slots to method that uses slotted attribute`() = test("""
+      class A(object):
+          __slots__ = 'x', 'y'
+
+
+      class B(object):
+          __slots__ = ['x']
+
+      class C(B):
+          pass
+
+      class D(object):
+          pass
+
+      class E(D):
+          __slots__ = ['x']
+
+
+      class F:
+          __slots__ = ['x']
+
+
+      def copy_values(a):
+          print(a.x)
+
+      copy_values(A())
+      copy_values(C())
+      copy_values(E())
+      copy_values(D())
+      #           ^^^ WARNING Type 'D' doesn't have expected attribute 'x'
       """.trimIndent())
   }
 
@@ -1605,6 +1746,27 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
         class Test():
             member: MyDescriptor[int]
         """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-11977"])
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `metaclass instance members provided and no type check warning when pass into method use this members`() = test("""
+      def expecting(p):
+          print(p.meta_inst_lvl)
+          print(p.meta_cls_lvl)
+
+      class MyMeta(type):
+          meta_cls_lvl = 10
+
+          def __init__(cls, what, bases, dict):
+              super().__init__(what, bases, dict)
+              cls.meta_inst_lvl = 20
+
+      class MyClass(metaclass=MyMeta):
+          pass
+
+      expecting(MyClass)  # check that there is no warnings
+      """.trimIndent())
   }
 
   @Nested

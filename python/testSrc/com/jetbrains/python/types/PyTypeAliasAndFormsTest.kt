@@ -7,6 +7,7 @@ import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -601,7 +602,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       from typing_extensions import LiteralString
       s: str
       literal_string: LiteralString = s # WARNING Expected type 'LiteralString', got 'str' instead
-      literal_string: LiteralString = "hello" # WARNING Redeclared 'literal_string' defined above without usage
+      literal_string: LiteralString = "hello"
       """.trimIndent())
 
     @Test

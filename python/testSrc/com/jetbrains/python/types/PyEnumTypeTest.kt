@@ -134,6 +134,44 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       #  └ TYPE tuple[Literal["a", "b", "c"], int]
       """.trimIndent())
 
+
+    @Test
+    @TestFor(issues = ["PY-80837"])
+    fun `init enum member`() = test("""
+      from enum import Enum, IntEnum, StrEnum
+
+      class MyEnum(Enum):
+          A = 1
+          B = "string"
+          C = None
+
+      class MyIntEnum(IntEnum):
+          OK = 1
+          BAD = "string"
+      #         ^^^^^^^^ WARNING Expected type 'int', got 'Literal["string"]' instead
+      #         ^^^^^^^^ WARNING Type 'Literal["string"]' is not assignable to declared type 'int'
+
+      class MyStrEnum(StrEnum):
+          OK = "a"
+          BAD = 1
+      #         └ WARNING Expected type 'str', got 'Literal[1]' instead
+      #         └ WARNING Type 'Literal[1]' is not assignable to declared type 'str'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90192"])
+    fun `init enum member custom new`() = test("""
+      from enum import Enum
+
+      class A:
+          def __new__(cls, x: int, y: int):
+              return object.__new__(cls)
+
+      class MyEnum(A, Enum):
+          OK = 1, 2
+          BAD = 1, "abb"
+      #            ^^^^^ WARNING FIXME Expected type 'int', got 'str' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -408,6 +446,88 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       expr = Color.BLUE.value
       # └ TYPE tuple[Literal[2], Literal["blue"]]
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-59260"])
+    fun `enum value type inference`() = test("""
+      from enum import Enum, IntFlag, StrEnum
+
+      # IntFlag should infer int
+      class IF(IntFlag):
+          A = 1
+      i: int = IF.A.value
+
+      # StrEnum should infer str
+      class SE(StrEnum):
+          B = "b"
+      s: str = SE.B.value
+
+      # str mixin should infer str
+      class StrMixin(str, Enum):
+          C = "c"
+      s2: str = StrMixin.C.value
+      s3: int = StrMixin.C.value
+      #         ^^^^^^^^^^^^^^^^ WARNING Expected type 'int', got 'Literal["c"]' instead
+
+      # Empty str mixin should also infer str
+      class EmptyStrMixin(str, Enum):
+          pass
+      def test_empty(x: EmptyStrMixin):
+          s4: str = x.value
+          i2: int = x.value
+      #             ^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-59260"])
+    fun `empty enum value types`() = test("""
+      from enum import StrEnum, Enum
+
+      class EmptyStrEnum(StrEnum):
+          pass
+
+      class EmptyStrMixin(str, Enum):
+          pass
+
+      def test_empty_str_enum(x: EmptyStrEnum):
+          s: str = x.value
+          i: int = x.value
+      #            ^^^^^^^ WARNING Expected type 'int', got 'str' instead
+
+      def test_empty_str_mixin(x: EmptyStrMixin):
+          s: str = x.value
+          i: int = x.value
+      #            ^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-59260"])
+    fun `enum value type ignores non members`() = test("""
+      from enum import Enum, nonmember
+
+      # Simple enum with just integer members
+      class SimpleEnum(Enum):
+          A = 1
+          B = 2
+
+      # Should infer int
+      x: int = SimpleEnum.A.value
+      y: str = SimpleEnum.B.value
+      #        ^^^^^^^^^^^^^^^^^^ WARNING Expected type 'str', got 'Literal[2]' instead
+
+      # Enum with non-member first, then actual members
+      class E(Enum):
+          # This should be classified as a non-member
+          HELPER_CONSTANT = nonmember("not a member")
+          # These are the actual members - should infer int from first member
+          FIRST_MEMBER = 42
+          SECOND_MEMBER = 43
+
+      # Should infer int from FIRST_MEMBER (ignoring HELPER_CONSTANT)
+      a: int = E.FIRST_MEMBER.value
+      b: str = E.SECOND_MEMBER.value
+      #        ^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'str', got 'Literal[43]' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -556,6 +676,27 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
           def values(cls):
               expr = set(cls)
       #       └ TYPE set[Self@Variant]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-59260"])
+    fun `int flag value type`() = test("""
+      from enum import IntFlag, auto
+
+      # IntFlag should infer int
+      class IF(IntFlag):
+          FIRST = auto()
+          SECOND = auto()
+          THIRD = 42
+
+      # IntFlag.value should return int, so these should not produce type errors
+      variable: int = IF.FIRST.value
+      another_var: int = IF.SECOND.value
+      explicit_var: int = IF.THIRD.value
+
+      # This should produce a type error
+      wrong_var: str = IF.FIRST.value
+      #                ^^^^^^^^^^^^^^ WARNING Expected type 'str', got 'int' instead
       """.trimIndent())
   }
 
