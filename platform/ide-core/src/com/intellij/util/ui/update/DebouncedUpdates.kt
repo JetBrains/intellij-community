@@ -142,6 +142,9 @@ object DebouncedUpdates {
    *
    * Actions run on `Dispatchers.UI` by default. Use [ComponentBuilder.withContext] to override.
    *
+   * The component visibility gates the processing only, it is not a lifetime.
+   * Add [UpdateQueue.cancelOnDispose] if the action touches anything outside the component.
+   *
    * @param component The UI component whose visibility controls when items are processed
    * @param name Debug name for the coroutine
    * @param delay The delay as a [Duration]
