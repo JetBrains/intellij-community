@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -114,7 +115,7 @@ public final class ScriptRunnerUtil {
     String[] options,
     boolean withPty
   ) throws ExecutionException {
-    var winExePath = OS.CURRENT == OS.Windows ? PathEnvironmentVariableUtil.findFirst(exePath) : null;
+    var winExePath = OS.CURRENT == OS.Windows && !OSAgnosticPathUtil.isAbsolute(exePath) ? PathEnvironmentVariableUtil.findFirst(exePath) : null;
     var commandLine = new GeneralCommandLine(winExePath != null ? winExePath.toString() : exePath);
     if (options != null) {
       commandLine.addParameters(options);
