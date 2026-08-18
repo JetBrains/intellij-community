@@ -66,7 +66,7 @@ internal class DocumentSnapshotTest {
   }
 
   @Test
-  fun `withPatch after a line query keeps the resulting line count correct`() {
+  fun `applyOp after a line query keeps the resulting line count correct`() {
     val snapshot = snapshot("a\nb")
     snapshot.text().lineCount() // force lineSet computation before the insert
     val patched = insertString(snapshot, fragment = "xy")
@@ -91,14 +91,14 @@ internal class DocumentSnapshotTest {
   }
 
   private fun insertString(snapshot: DocumentSnapshot, fragment: String): DocumentSnapshot {
-    return snapshot.withPatch(
+    return snapshot.applyOps(
       DocumentTextPatch.simple(
         startOffset = 0,
         endOffset = 0,
         newFragment = fragment,
         newModStamp = snapshot.modState().stamp() + 1,
         clearLineFlags = false,
-      )
+      ).toOps()
     )
   }
 

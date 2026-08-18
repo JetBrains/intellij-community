@@ -17,22 +17,20 @@ import org.jetbrains.annotations.Contract
 interface DocumentSputnik {
 
   /**
-   * Returns the state of this sputnik consistent with [after], the snapshot produced by applying [diff] to [before].
+   * Returns the state of this sputnik consistent with [after], the snapshot produced by applying [op] to [before].
    *
-   * Runs on the writer thread, on the critical path of every document change: implementations must be fast, must
-   * not throw (an exception aborts the change halfway through), must tolerate being called more than once per
-   * change (a lost publish race rebuilds the sputniks again), and must return a sputnik of the same type as `this`.
+   * Only called for a text-changing [op] ([DocumentOp.Insert]/[DocumentOp.Delete]) -- [op] carries just the raw
+   * edit, none of a patch's origin range, move offset, or mod stamp.
    *
-   * [before] is the snapshot prior to the change. [after] already has the final post-change text/mod state, but
-   * its sputniks reflect only whichever ones were rebuilt earlier in this same call -- an incidental order, not a
-   * declared dependency graph, so this sputnik's own key in [after] still holds the pre-change value too. An
-   * implementation may opportunistically read an already-rebuilt sibling off [after], but must stay correct even
-   * when none have been.
+   * Runs on the writer thread, on the critical path of every document change: must be fast, must not throw (an
+   * exception aborts the change), must return a sputnik of the same type as `this`, and must tolerate being
+   * called more than once for what looks like one change -- [before] is not guaranteed to be the snapshot from
+   * right before it.
+   *
+   * [after]'s sputniks may be only partially rebuilt: other keys can still hold their pre-change value. An
+   * implementation may opportunistically read an already-rebuilt sibling off [after], but must stay correct if
+   * none have been.
    */
   @Contract(pure = true)
-  fun withTextChange(
-    before: DocumentSnapshot,
-    after: DocumentSnapshot,
-    diff: DocumentTextPatch,
-  ): DocumentSputnik
+  fun applyOp(before: DocumentSnapshot, after: DocumentSnapshot, op: DocumentOp): DocumentSputnik
 }

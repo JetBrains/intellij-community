@@ -3,11 +3,11 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.ex.DocumentModState
 import com.intellij.openapi.editor.ex.DocumentNewOps
+import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentSputnik
 import com.intellij.openapi.editor.ex.DocumentSputniks
 import com.intellij.openapi.editor.ex.DocumentText
-import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.util.Key
 
 internal class DocumentSnapshotImpl private constructor(
@@ -74,26 +74,18 @@ internal class DocumentSnapshotImpl private constructor(
     return this
   }
 
-  override fun withPatch(patch: DocumentTextPatch): DocumentSnapshot {
-    var newText = text
-    var newModState = modState
-    for (op in patch.toOps()) {
-      val before = newText
-      newText = newText.applyOp(op)
-      newModState = newModState.applyOp(before, newText, op)
-    }
+  override fun applyOp(op: DocumentOp): DocumentSnapshot {
+    val newText = text.applyOp(op)
+    val newModState = modState.applyOp(text, newText, op)
     if (newText === text && newModState === modState) {
       return this
     }
-    if (newText === text) {
-      return DocumentSnapshotImpl(text, newModState, sputniks)
-    }
     val oldSnapshot = this
     val newSnapshot = DocumentSnapshotImpl(newText, newModState, sputniks)
-    if (sputniks === DocumentSputniksImpl.EMPTY) {
+    if (newText === text || sputniks === DocumentSputniksImpl.EMPTY) {
       return newSnapshot
     }
-    return sputniks.withTextChange(oldSnapshot, newSnapshot, patch) { newSputniks ->
+    return sputniks.applyOp(oldSnapshot, newSnapshot, op) { newSputniks ->
       DocumentSnapshotImpl(newText, newModState, newSputniks)
     }
   }

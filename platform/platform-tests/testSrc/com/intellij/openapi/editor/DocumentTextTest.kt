@@ -31,14 +31,14 @@ internal class DocumentTextTest {
   @Test
   fun `withMetadata with a different text drops the other snapshot entirely`() {
     val base = snapshot("a\nb")
-    val changed = base.withPatch(
+    val changed = base.applyOps(
       DocumentTextPatch.simple(
         startOffset = 3,
         endOffset = 3,
         newFragment = "\nc",
         newModStamp = base.modState().stamp() + 1,
         clearLineFlags = false,
-      )
+      ).toOps()
     )
     val metadata = base.withModStamp(42L, true)
     assertSame(changed, changed.withMetadata(metadata))

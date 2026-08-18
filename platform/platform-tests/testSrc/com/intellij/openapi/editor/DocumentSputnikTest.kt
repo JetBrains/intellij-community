@@ -3,6 +3,7 @@ package com.intellij.openapi.editor
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentSputnik
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
@@ -121,7 +122,6 @@ internal class DocumentSputnikTest {
     assertEquals(1, rebuilt.startOffset)
     assertEquals(1, rebuilt.endOffset)
     assertEquals("XY", rebuilt.newFragment.toString())
-    assertEquals(before.modState().stamp() + 1, rebuilt.newModStamp)
     assertSame(sputnik, before.sputnik(KEY_1)) // the old snapshot keeps the old sputnik
   }
 
@@ -130,32 +130,13 @@ internal class DocumentSputnikTest {
     val before = snapshot("abcdef").withSputnik(KEY_1, TestSputnik())
     val after = replaceString(before, startOffset = 1, endOffset = 3, fragment = "ZZZ")
     val rebuilt = after.sputnik(KEY_1)!!
+    // a range replacement lowers to Delete then Insert, so the sputnik is rebuilt twice: once per op
+    assertEquals(2, rebuilt.rebuildCount)
     assertEquals("aZZZdef", rebuilt.newWholeText.toString())
     assertEquals("aZZZdef", rebuilt.newText!!.string())
     assertEquals(1, rebuilt.startOffset)
-    assertEquals(3, rebuilt.endOffset)
+    assertEquals(1, rebuilt.endOffset)
     assertEquals("ZZZ", rebuilt.newFragment.toString())
-  }
-
-  @Test
-  fun `sputnik receives origin range of a narrowed change`() {
-    val before = snapshot("abcdef").withSputnik(KEY_1, TestSputnik())
-    val after = before.withPatch(
-      DocumentTextPatch.complex(
-        startOffset = 2,
-        endOffset = 3,
-        newFragment = "Z",
-        newModStamp = before.modState().stamp() + 1,
-        clearLineFlags = false,
-        originStartOffset = 1,
-        originEndOffset = 4,
-      )
-    )
-    val rebuilt = after.sputnik(KEY_1)!!
-    assertEquals(2, rebuilt.startOffset)
-    assertEquals(3, rebuilt.endOffset)
-    assertEquals(1, rebuilt.originStartOffset)
-    assertEquals(4, rebuilt.originEndOffset)
   }
 
   @Test
@@ -267,7 +248,7 @@ internal class DocumentSputnikTest {
     val snapshotBefore = document.core.snapshot()
     // a text change published this way would fire no DocumentListener
     assertFailsWith<IllegalArgumentException> {
-      mutator.updateSnapshotAndGet { it.withPatch(patch) }
+      mutator.updateSnapshotAndGet { it.applyOps(patch.toOps()) }
     }
     assertSame(snapshotBefore, document.core.snapshot()) // nothing was published
     assertEquals("abc", document.text)
@@ -308,7 +289,7 @@ internal class DocumentSputnikTest {
   }
 
   private fun replaceString(snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int, fragment: String): DocumentSnapshot {
-    return snapshot.withPatch(
+    return snapshot.applyOps(
       DocumentTextPatch.complex(
         startOffset = startOffset,
         endOffset = endOffset,
@@ -317,7 +298,7 @@ internal class DocumentSputnikTest {
         clearLineFlags = false,
         originStartOffset = startOffset,
         originEndOffset = endOffset,
-      )
+      ).toOps()
     )
   }
 
@@ -329,37 +310,47 @@ internal class DocumentSputnikTest {
     val startOffset: Int = -1,
     val endOffset: Int = -1,
     val newFragment: CharSequence? = null,
-    val newModStamp: Long = -1L,
-    val originStartOffset: Int = -1,
-    val originEndOffset: Int = -1,
   ) : DocumentSputnik {
-    override fun withTextChange(
+    override fun applyOp(
       before: DocumentSnapshot,
       after: DocumentSnapshot,
-      diff: DocumentTextPatch,
+      op: DocumentOp,
     ): DocumentSputnik {
+      val startOffset: Int
+      val endOffset: Int
+      val fragment: CharSequence
+      when (op) {
+        is DocumentOp.Insert -> {
+          startOffset = op.offset()
+          endOffset = op.offset()
+          fragment = op.fragment()
+        }
+        is DocumentOp.Delete -> {
+          startOffset = op.offset()
+          endOffset = op.offset() + op.length()
+          fragment = ""
+        }
+        else -> return this
+      }
       val beforeText = before.text()
-      val newWholeText = beforeText.chars().replace(diff.startOffset(), diff.endOffset(), diff.newFragment())
+      val newWholeText = beforeText.chars().replace(startOffset, endOffset, fragment)
       return TestSputnik(
         rebuildCount + 1,
         beforeText,
         after.text(),
         newWholeText,
-        diff.startOffset(),
-        diff.endOffset(),
-        diff.newFragment(),
-        diff.newModStamp(),
-        diff.originStartOffset(),
-        diff.originEndOffset(),
+        startOffset,
+        endOffset,
+        fragment,
       )
     }
   }
 
   private class UnaffectedSputnik : DocumentSputnik {
-    override fun withTextChange(
+    override fun applyOp(
       before: DocumentSnapshot,
       after: DocumentSnapshot,
-      diff: DocumentTextPatch,
+      op: DocumentOp,
     ): DocumentSputnik {
       return this
     }
