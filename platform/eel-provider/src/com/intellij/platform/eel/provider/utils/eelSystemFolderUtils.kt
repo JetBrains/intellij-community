@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApiBlocking
@@ -26,7 +27,12 @@ object EelSystemFolderUtils {
   @RequiresBackgroundThread(generateAssertion = false)
   fun getSystemFolder(eel: EelApi): Path {
     val selector = PathManager.getPathsSelector() ?: "IJ-Platform"
-    val userHomeFolder = eel.userInfo.home.asNioPath().toString()
-    return Path.of(PathManager.getDefaultSystemPathFor(eel.platform.toOs(), userHomeFolder, selector, eel.exec.fetchLoginShellEnvVariablesBlocking()))
+    val systemPath = PathManager.getDefaultSystemPathFor(
+      eel.platform.toOs(),
+      eel.userInfo.home.toString(),
+      selector,
+      eel.exec.fetchLoginShellEnvVariablesBlocking()
+    )
+    return EelPath.parse(systemPath, eel.descriptor).asNioPath()
   }
 }
