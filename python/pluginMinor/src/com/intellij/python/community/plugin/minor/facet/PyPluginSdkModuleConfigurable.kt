@@ -30,7 +30,7 @@ internal class PyPluginSdkModuleConfigurable(project: Project?) : PyActiveSdkMod
         // getSdk() must also read from the facet to keep isModified() consistent.
         val facet = FacetManager.getInstance(module).getFacetByType(MinorPythonFacet.ID)
         return facet?.configuration?.sdk
-          ?: PyModuleService.getInstance(module.project).findPythonSdk(module)
+               ?: PyModuleService.getInstance(module.project).findPythonSdk(module)
       }
     }
   }
@@ -50,9 +50,11 @@ fun setSdkToFacet(item: Sdk?, module: Module) {
   }
 }
 
-private fun setFacetSdk(facet: MinorPythonFacet,
-                        item: Sdk?,
-                        module: Module) {
+private fun setFacetSdk(
+  facet: MinorPythonFacet,
+  item: Sdk?,
+  module: Module,
+) {
   removeTransferredRoots(module, facet.configuration.sdk)
   facet.configuration.sdk = item
   transferRoots(module, item)
@@ -61,9 +63,11 @@ private fun setFacetSdk(facet: MinorPythonFacet,
   PythonFacetUtil.updateLibrary(module, facet.configuration)
 }
 
-private fun addFacet(facetManager: FacetManager,
-                     sdk: Sdk?,
-                     module: Module) {
+private fun addFacet(
+  facetManager: FacetManager,
+  sdk: Sdk?,
+  module: Module,
+) {
   val facet = facetManager.addFacet(
     MinorPythonFacetType.getInstance(), "Python facet", null)
   setFacetSdk(facet, sdk, module)
