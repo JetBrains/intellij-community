@@ -162,6 +162,8 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration<Pytho
     myModuleMode = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, MODULE_MODE, "false"));
     myRedirectInput = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, REDIRECT_INPUT, "false"));
     myInputFile  = JDOMExternalizerUtil.readField(element, INPUT_FILE, "");
+    // Last, so that a migrated standalone `uv run` configuration wins over the fields it never stored.
+    LegacyUvRunConfigurationConverterKt.applyLegacyUvRunConfiguration(element, this);
   }
 
   @Override

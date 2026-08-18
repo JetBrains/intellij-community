@@ -901,9 +901,6 @@
 
     <registryKey key="python.typing.strict.unions" defaultValue="true" description="Enable strict union types semantics"/>
 
-    <!-- uv -->
-    <configurationType implementation="com.jetbrains.python.sdk.uv.run.UvRunConfigurationType"/>
-
     <python.processOutput.common.processOutputIconMapping implementation="com.jetbrains.python.sdk.SdkIconMapping"/>
 
     <!-- Debugger Show value tooltip -->
