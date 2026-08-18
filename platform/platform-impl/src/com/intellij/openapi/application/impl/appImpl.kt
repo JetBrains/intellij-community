@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.SuvorovProgress
 import com.intellij.openapi.util.Ref
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning
 import com.intellij.util.SlowOperations
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.AppScheduledExecutorService
@@ -202,6 +203,7 @@ object InternalThreading {
     assert(!EDT.isCurrentThreadEdt()) { "Transferring of write action to EDT is permitted only on background thread" }
     val exceptionRef = Ref.create<Throwable?>()
     val currentContext = currentThreadContext()
+    val currentVersion = InternalPsiVersioning.getCurrentPsiVersion()
     val capturedRunnable = Runnable {
       installThreadContext(currentContext, true) {
         try {
@@ -209,7 +211,9 @@ object InternalThreading {
           // the users have no control over computations that run inside transferred write action, hence we reset the slow-op section
           SlowOperations.startSection(SlowOperations.RESET).use {
             lock.withLockingProhibitionCleared {
-              (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(runnable)
+              InternalPsiVersioning.unsafeInstallThreadLocalVersion(currentVersion).use {
+                (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(runnable)
+              }
             }
           }
         }
@@ -265,12 +269,15 @@ object InternalThreading {
     }
     assert(EDT.isCurrentThreadEdt()) { "Transferring of write action to BG thread is permitted only on EDT" }
     val exceptionRef = Ref.create<Throwable?>()
+    val currentVersion = InternalPsiVersioning.getCurrentPsiVersion()
     val capturedRunnable = AppScheduledExecutorService.captureContextCancellationForRunnableThatDoesNotOutliveContextScope {
       try {
         // we can appear here if someone tries to acquire a read action in a forced slow-op section
         // the users have no control over computations that run inside transferred write action, hence we reset the slow-op section
         SlowOperations.startSection(SlowOperations.RESET).use {
-          runnable.run()
+          InternalPsiVersioning.unsafeInstallThreadLocalVersion(currentVersion).use {
+            runnable.run()
+          }
         }
       }
       catch (e: Throwable) {
