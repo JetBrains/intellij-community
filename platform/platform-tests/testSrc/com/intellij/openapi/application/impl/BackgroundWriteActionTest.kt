@@ -20,6 +20,7 @@ import com.intellij.openapi.application.useBackgroundWriteAction
 import com.intellij.openapi.application.useTrueSuspensionForWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
@@ -557,6 +558,55 @@ class BackgroundWriteActionTest {
 
     }
   }
+
+  /**
+   * Regression test for a missed write-action-priority cancellation during a suspending write action.
+   *
+   * A suspending write action ([com.intellij.openapi.application.ThreadingSupport.executeSuspendingWriteAction])
+   * temporarily downgrades the outer write action to a write-intent lock and advances the write-stack base past it. A
+   * write action that becomes pending inside that window is the outermost write action relative to the base, so it must
+   * fire `beforeWriteActionStart` -- the event [com.intellij.openapi.progress.util.ProgressIndicatorUtilService] uses to
+   * cancel read actions running with write-action priority.
+   *
+   * The firing used to be gated on a literally-empty write-action stack, which is never empty during the window (the
+   * downgraded outer write action is still on the stack). As a result the write-priority read was never canceled and the
+   * pending write upgrade waited forever on the never-draining read -- observed in the wild as an IDE freeze where a
+   * "Scanning" thread kept calling [ProgressManager.checkCanceled] under `runInReadActionWithWriteActionPriority` while
+   * the EDT was stuck trying to start a write action.
+   */
+  @Suppress("DEPRECATION")
+  @Test
+  fun `write action pending inside a suspending write action cancels a write-priority read`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.Default, timeout = 30.seconds) {
+      val readStarted = Job()
+      val readCanceled = AtomicBoolean(false)
+      edtWriteAction {
+        // downgrades the outer (EDT) write action to a write-intent lock and advances the write-stack base past it
+        getGlobalThreadingSupport().executeSuspendingWriteAction {
+          launch(Dispatchers.Default) {
+            ProgressIndicatorUtils.runInReadActionWithWriteActionPriority({
+              readStarted.complete()
+              // spin with write-action priority; a pending write action must cancel this read.
+              // bounded so that on the buggy code path the test fails with a clear assertion instead of hanging.
+              val deadlineNs = System.nanoTime() + 15.seconds.inWholeNanoseconds
+              try {
+                while (System.nanoTime() < deadlineNs) {
+                  ProgressManager.checkCanceled()
+                }
+              }
+              catch (_: ProcessCanceledException) {
+                readCanceled.set(true)
+              }
+            }, null)
+          }
+          // make sure the read holds a read permit and registered its write-action-priority cancellation
+          readStarted.asCompletableFuture().join()
+          // this write action becomes pending during the downgrade window; it must cancel the read above
+          application.runWriteAction { }
+        }
+      }
+      assertTrue(readCanceled.get(), "the write-priority read must be canceled by the write action pending inside the suspending write action")
+    }
 
   /**
    * This test is not set in stone; if you feel that the platform is ready to block same-level read actions, the feel free to adjust the test.
