@@ -118,6 +118,7 @@ class WindowsBufferedDirectoryStreamTest {
   }
 }
 
+@EnabledOnOs(OS.WINDOWS)
 class WindowsBufferedDirectoryStreamTestExceptions {
 
   @BeforeEach

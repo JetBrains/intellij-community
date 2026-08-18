@@ -15,6 +15,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Ignore;
 
 import javax.net.ssl.X509TrustManager;
 import java.security.cert.X509Certificate;
@@ -26,6 +27,8 @@ import static com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManag
 /**
  * @author Mikhail Golubev
  */
+// community/platform/testFramework/testResources/tests/testGroups.properties [DISABLED_TESTS]
+@Ignore("Disabled in testGroups.properties")
 public class CertificateTest extends LightPlatformTestCase {
   @NonNls private static final String AUTHORITY_CN = "certificates-tests.labs.intellij.net";
 

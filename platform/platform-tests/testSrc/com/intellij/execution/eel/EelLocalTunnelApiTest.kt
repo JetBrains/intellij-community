@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.eel
 
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelConnectionError
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelTunnelsApi
@@ -26,16 +27,37 @@ import kotlinx.coroutines.coroutineScope
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.AnnotatedElementContext
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.io.TempDir
+import org.junit.jupiter.api.io.TempDirFactory
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.net.UnixDomainSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+
+/**
+ * Creates a temp directory with a short path for Unix socket tests.
+ *
+ * Bazel sets java.io.tmpdir under the test tree. That path can be too long for Unix socket files.
+ * Use /tmp on Unix to keep the socket path below the platform limit.
+ */
+private class ShortUnixSocketTempDirFactory : TempDirFactory {
+  override fun createTempDirectory(elementContext: AnnotatedElementContext, extensionContext: ExtensionContext): Path {
+    return if (SystemInfoRt.isWindows) {
+      Files.createTempDirectory("eel-test-sockets-")
+    }
+    else {
+      Files.createTempDirectory(Path.of("/tmp"), "eel-test-sockets-")
+    }
+  }
+}
 
 @TestApplication
 class EelLocalTunnelApiTest {
@@ -102,13 +124,13 @@ class EelLocalTunnelApiTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun testUnixSocket(explicitSocket: Boolean, @TempDir tempDir: Path): Unit = timeoutRunBlocking {
+  fun testUnixSocket(explicitSocket: Boolean, @TempDir(factory = ShortUnixSocketTempDirFactory::class) tempDir: Path): Unit = timeoutRunBlocking {
     repeat(5) {
       val unixSocketResult =
         if (explicitSocket)
           localEel.tunnels.listenOnUnixSocket(tempDir.resolve("file.sock").asEelPath())
         else
-          localEel.tunnels.listenOnUnixSocket().eelIt()
+          localEel.tunnels.listenOnUnixSocket().parentDirectory(tempDir.asEelPath()).eelIt()
       val socketPathStr = unixSocketResult.unixSocketPath.toString()
       val tx = unixSocketResult.tx
       val rx = unixSocketResult.rx

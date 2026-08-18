@@ -90,7 +90,12 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
         // archived compilation output
         val mapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
         checkNotNull(mapping) { "Mapping cannot be null at this point" }
-        val key = mapping.entries.firstOrNull { (_, value) -> value == jarPathForClass }?.key
+        // Under Bazel the class can be loaded from a runfiles symlink while the mapping stores the canonical bazel-out path.
+        // ./bazel.cmd test --cache_test_results=no //platform/platform-tests:tests_test --test_filter=com.intellij.execution.eel.EelLocalTunnelApiTest
+        val jarRealPathForClass = path.toRealPath().pathString
+        val key = mapping.entries.firstOrNull { (_, value) ->
+          value == jarPathForClass || value == jarRealPathForClass
+        }?.key
         if (key == null) {
           throw IllegalStateException("Cannot find path '$jarPathForClass' in mapping values:'$mapping'")
         }
