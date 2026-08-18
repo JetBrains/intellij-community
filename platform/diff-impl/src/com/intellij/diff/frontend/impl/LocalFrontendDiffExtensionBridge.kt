@@ -17,10 +17,8 @@ import com.intellij.diff.frontend.FrontendDiffExtensionData
 import com.intellij.diff.frontend.FrontendDiffLineLocation
 import com.intellij.diff.frontend.FrontendDiffRequest
 import com.intellij.diff.frontend.FrontendDiffUserDataKey
-import com.intellij.diff.frontend.FrontendOneSideDiffViewer
-import com.intellij.diff.frontend.FrontendTwoSideDiffViewer
+import com.intellij.diff.frontend.FrontendDiffViewer
 import com.intellij.diff.frontend.FrontendUnifiedDiffMapping
-import com.intellij.diff.frontend.FrontendUnifiedDiffViewer
 import com.intellij.diff.requests.ContentDiffRequest
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
@@ -89,9 +87,9 @@ object LocalFrontendDiffExtensionBridge {
 
   private fun adaptOneSideViewer(
     viewer: SimpleOnesideDiffViewer,
-  ): FrontendOneSideDiffViewer {
+  ): FrontendDiffViewer.FrontendOneSideDiffViewer {
     val side = viewer.side
-    return object : FrontendOneSideDiffViewer {
+    return object : FrontendDiffViewer.FrontendOneSideDiffViewer {
       override val component: JComponent = viewer.component
       override val editor: FrontendDiffEditor = FrontendDiffEditor(
         editor = viewer.editor,
@@ -103,8 +101,8 @@ object LocalFrontendDiffExtensionBridge {
 
   private fun adaptTwoSideViewer(
     viewer: SimpleDiffViewer,
-  ): FrontendTwoSideDiffViewer {
-    return object : FrontendTwoSideDiffViewer {
+  ): FrontendDiffViewer.FrontendTwoSideDiffViewer {
+    return object : FrontendDiffViewer.FrontendTwoSideDiffViewer {
       override val component: JComponent = viewer.component
       override val left: FrontendDiffEditor = FrontendDiffEditor(
         editor = viewer.editor1,
@@ -126,9 +124,9 @@ object LocalFrontendDiffExtensionBridge {
   private fun adaptUnifiedViewer(
     viewer: UnifiedDiffViewer,
     parentDisposable: Disposable,
-  ): FrontendUnifiedDiffViewer {
+  ): FrontendDiffViewer.FrontendUnifiedDiffViewer {
     val mapping = LocalFrontendUnifiedDiffMapping(viewer, parentDisposable)
-    return object : FrontendUnifiedDiffViewer {
+    return object : FrontendDiffViewer.FrontendUnifiedDiffViewer {
       override val component: JComponent = viewer.component
       override val mapping: FrontendUnifiedDiffMapping = mapping
       override val editor: FrontendDiffEditor = FrontendDiffEditor(
@@ -192,6 +190,7 @@ private class LocalFrontendUnifiedDiffMapping(
     viewer.addListener(diffListener)
     Disposer.register(parentDisposable, Disposable { viewer.removeListener(diffListener) })
 
+    @Suppress("SplitModeApiUsage")
     val documentListener = object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         invalidate()

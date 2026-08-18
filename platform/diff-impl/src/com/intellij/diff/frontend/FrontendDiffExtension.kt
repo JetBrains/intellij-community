@@ -36,40 +36,26 @@ data class FrontendDiffContext(
 )
 
 @ApiStatus.Internal
-interface FrontendDiffViewer {
-  val kind: FrontendDiffViewerKind
+sealed interface FrontendDiffViewer {
   val component: JComponent
   val editors: List<FrontendDiffEditor>
-}
 
-@ApiStatus.Internal
-enum class FrontendDiffViewerKind {
-  ONE_SIDE,
-  TWO_SIDE,
-  UNIFIED,
-}
+  interface FrontendOneSideDiffViewer : FrontendDiffViewer {
+    val editor: FrontendDiffEditor
+    override val editors: List<FrontendDiffEditor> get() = listOf(editor)
+  }
 
-@ApiStatus.Internal
-interface FrontendOneSideDiffViewer : FrontendDiffViewer {
-  override val kind: FrontendDiffViewerKind get() = FrontendDiffViewerKind.ONE_SIDE
-  val editor: FrontendDiffEditor
-  override val editors: List<FrontendDiffEditor> get() = listOf(editor)
-}
+  interface FrontendTwoSideDiffViewer : FrontendDiffViewer {
+    val left: FrontendDiffEditor
+    val right: FrontendDiffEditor
+    override val editors: List<FrontendDiffEditor> get() = listOf(left, right)
+  }
 
-@ApiStatus.Internal
-interface FrontendTwoSideDiffViewer : FrontendDiffViewer {
-  override val kind: FrontendDiffViewerKind get() = FrontendDiffViewerKind.TWO_SIDE
-  val left: FrontendDiffEditor
-  val right: FrontendDiffEditor
-  override val editors: List<FrontendDiffEditor> get() = listOf(left, right)
-}
-
-@ApiStatus.Internal
-interface FrontendUnifiedDiffViewer : FrontendDiffViewer {
-  override val kind: FrontendDiffViewerKind get() = FrontendDiffViewerKind.UNIFIED
-  val editor: FrontendDiffEditor
-  val mapping: FrontendUnifiedDiffMapping
-  override val editors: List<FrontendDiffEditor> get() = listOf(editor)
+  interface FrontendUnifiedDiffViewer : FrontendDiffViewer {
+    val editor: FrontendDiffEditor
+    val mapping: FrontendUnifiedDiffMapping
+    override val editors: List<FrontendDiffEditor> get() = listOf(editor)
+  }
 }
 
 @ApiStatus.Internal
