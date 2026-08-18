@@ -478,8 +478,7 @@ public final class JBCefApp {
       LOG.info(logTxt);
 
       // Start internal jcef test
-      if (myIsRemoteEnabled)
-        JBCefHealthMonitor.getInstance().performStartupTestAsync();
+      JBCefHealthMonitor.getInstance().performStartupTestAsync(myIsRemoteEnabled);
 
       return true;
     }
