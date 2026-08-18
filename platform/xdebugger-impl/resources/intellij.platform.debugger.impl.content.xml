@@ -151,10 +151,16 @@
       <reference ref="Debugger.ThawSelectedThreads"/>
     </group>
 
+    <!-- Shared group. Actions added to this group are displayed in all ParallelStacks like implementations. E.g., Parallel Threads, Parallel Tasks (Rider specific), etc. -->
     <group id="XDebugger.ParallelStacks.Popup.Extra">
     </group>
 
+    <!-- Shared group. Actions added to this group are displayed in all ParallelStacks like implementations. E.g., Parallel Threads, Parallel Tasks (Rider specific), etc. -->
     <group id="XDebugger.ParallelStacks.ToolBar.Extra">
+    </group>
+
+    <!-- Actions added to this group are displayed ONLY in Parallel Threads -->
+    <group id="XDebugger.ParallelThreads.Popup.Extra">
     </group>
 
     <action class="com.intellij.xdebugger.impl.runToolbar.ConfigurationXDebuggerResumeAction">
