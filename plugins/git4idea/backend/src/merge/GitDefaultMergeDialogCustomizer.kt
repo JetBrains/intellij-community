@@ -4,6 +4,8 @@ package git4idea.merge
 import com.intellij.diff.DiffEditorTitleCustomizer
 import com.intellij.diff.util.DiffUtil
 import com.intellij.dvcs.repo.Repository
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
@@ -329,21 +331,21 @@ internal fun getTitleWithCommitDetailsCustomizer(
 ) = DiffEditorTitleCustomizer {
   getTitleWithShowDetailsAction(title) {
     val panel = LoadingCommittedChangeListPanel(repository.project)
-    panel.loadChangesInBackground {
-      val changeList = GitChangeUtils.getRevisionChanges(
-        repository.project,
-        repository.root,
-        commit,
-        true,
-        false,
-        false
-      )
-      LoadingCommittedChangeListPanel.ChangelistData(changeList, file)
-    }
 
     val dlg = ChangeListViewerDialog(repository.project, panel)
     dlg.title = StringUtil.stripHtml(title, false)
     dlg.isModal = true
+
+    ApplicationManager.getApplication().invokeLater(
+      {
+        panel.loadChangesInBackground {
+          val changeList = GitChangeUtils.getRevisionChanges(repository.project, repository.root, commit, true, false, false)
+          LoadingCommittedChangeListPanel.ChangelistData(changeList, file)
+        }
+      },
+      ModalityState.stateForComponent(dlg.rootPane),
+    )
+
     dlg.show()
   }
 }
