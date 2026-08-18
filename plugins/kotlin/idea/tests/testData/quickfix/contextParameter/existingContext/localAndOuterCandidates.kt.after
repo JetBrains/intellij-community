@@ -1,0 +1,17 @@
+// "Add 'outerLogger' as 'MyLogger' to existing context" "true"
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+interface MyLogger { fun log(msg: String) }
+class ConsoleLogger : MyLogger { override fun log(msg: String) {} }
+
+context(l: MyLogger) fun emit() { l.log("x") }
+
+fun repro() {
+    val outerLogger: MyLogger = ConsoleLogger()
+    context("hello", outerLogger) {
+        val innerLogger: MyLogger = ConsoleLogger()
+        emit()
+    }
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterToExistingContextFix

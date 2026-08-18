@@ -3808,6 +3808,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/infix.kt");
             }
 
+            @TestMetadata("localAndOuterCandidates.kt")
+            public void testLocalAndOuterCandidates() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/localAndOuterCandidates.kt");
+            }
+
             @TestMetadata("localValue.kt")
             public void testLocalValue() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/localValue.kt");
@@ -3874,6 +3879,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("lambda.kt")
             public void testLambda() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/surroundWithContext/lambda.kt");
+            }
+
+            @TestMetadata("localAndOuterCandidates.kt")
+            public void testLocalAndOuterCandidates() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/surroundWithContext/localAndOuterCandidates.kt");
+            }
+
+            @TestMetadata("localDeclaredInsideExistingContext.kt")
+            public void testLocalDeclaredInsideExistingContext() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/surroundWithContext/localDeclaredInsideExistingContext.kt");
             }
 
             @TestMetadata("noCandidateInScope.kt")
