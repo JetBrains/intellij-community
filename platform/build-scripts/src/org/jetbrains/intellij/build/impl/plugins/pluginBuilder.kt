@@ -80,7 +80,7 @@ internal suspend fun buildPlugins(
     }
   }
 
-  val resultsForPluginsBuiltByBazel = buildPluginsByBazel(pluginsBuildByBazel, targetDir, context)
+  val resultsForPluginsBuiltByBazel = buildPluginsByBazel(pluginsBuildByBazel, targetDir, descriptorCacheContainer, context)
   val results = (resultsForPluginsBuiltInProcess + resultsForPluginsBuiltByBazel.map { it to null }).sortedBy { it.first.mainModule }
 
   val scrambleTasks = results.mapNotNull { it.second }
