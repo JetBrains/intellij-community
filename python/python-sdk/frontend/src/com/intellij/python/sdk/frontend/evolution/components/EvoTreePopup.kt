@@ -54,6 +54,9 @@ private val SETTINGS_GEAR: Icon = AllIcons.General.GearPlain
 /** Distance (unscaled px) from the popup's right edge to the gear icon's right edge, tuned to sit over the `>` column. */
 private const val GEAR_RIGHT_INSET = 10
 
+/** Downward nudge (unscaled px) from vertical center, so the gear's optical center lines up with the caption text. */
+private const val GEAR_VERTICAL_OFFSET = 1
+
 /**
  * Sample string whose rendered width is reserved for the version column, so a resolved version fits without resize.
  * Wide enough for a `major.minor.patch` plus a pre-release suffix (e.g. `3.15.0rc1`, `3.15.0a0`).
@@ -83,12 +86,14 @@ private class GearGroupHeaderSeparator(labelInsets: Insets, private val gearCapt
 
   /**
    * The gear's bounds within this separator: its icon is right-aligned at [GEAR_RIGHT_INSET] so it sits over the rows'
-   * `>` arrow column, without measuring the rendered rows. Vertically centered.
+   * `>` arrow column, without measuring the rendered rows. Vertically centered, then nudged down by
+   * [GEAR_VERTICAL_OFFSET] to align with the caption text.
    */
   fun gearBounds(): Rectangle {
     val icon = gearIcon()
     val x = width - icon.iconWidth - JBUI.scale(GEAR_RIGHT_INSET)
-    return Rectangle(x, (height - icon.iconHeight) / 2, icon.iconWidth, icon.iconHeight)
+    val y = (height - icon.iconHeight) / 2 + JBUI.scale(GEAR_VERTICAL_OFFSET)
+    return Rectangle(x, y, icon.iconWidth, icon.iconHeight)
   }
 }
 
