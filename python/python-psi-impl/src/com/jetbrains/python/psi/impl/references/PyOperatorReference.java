@@ -146,11 +146,11 @@ public class PyOperatorReference extends PyReferenceBase {
 
     final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
     typeEvalContext.traceWithIndent("Trying to resolve inplace operator", () -> {
-      result.addAll(resolveMember(stmt.getReceiver(null), name));
+      result.addAll(resolveMember(stmt.getTarget(), name));
       return Unit.INSTANCE;
     });
     typeEvalContext.traceWithIndent("Trying to resolve left operator", () -> {
-      result.addAll(resolveMember(stmt.getReceiver(null), PyNames.inplaceToLeftOperatorName(name)));
+      result.addAll(resolveMember(stmt.getTarget(), PyNames.inplaceToLeftOperatorName(name)));
       return Unit.INSTANCE;
     });
     typeEvalContext.traceWithIndent("Trying to resolve right operator", () -> {

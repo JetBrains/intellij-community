@@ -39,7 +39,6 @@ public interface PyAstCallSiteExpression extends PyAstCallSiteOwner, PyAstExpres
    *
    * @param resolvedCallee optional callee corresponding to the call. Without it the receiver is deduced purely syntactically.
    */
-  @Override
   @Nullable
   PyAstExpression getReceiver(@Nullable PyAstCallable resolvedCallee);
 

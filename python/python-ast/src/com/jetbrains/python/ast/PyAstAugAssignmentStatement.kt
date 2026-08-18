@@ -54,10 +54,6 @@ interface PyAstAugAssignmentStatement : PyAstStatement, PyAstQualifiedExpression
     return operation?.getNode()
   }
 
-  override fun getReceiver(resolvedCallee: PyAstCallable?): PyAstExpression? {
-    return if (isRightOperator(resolvedCallee)) this.value else this.target
-  }
-
   override fun getArguments(resolvedCallee: PyAstCallable?): List<PyAstExpression?> {
     return listOf(if (isRightOperator(resolvedCallee)) this.target else this.value)
   }
