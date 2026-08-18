@@ -68,7 +68,7 @@ class EvaluateCompileTimeExpressionIntention : KotlinApplicableModCommandAction<
 
     private fun KtExpression?.isConstantExpression(): Boolean {
         return when (val expression = KtPsiUtil.deparenthesize(this)) {
-            is KtConstantExpression -> expression.elementType in constantNodeTypes
+            is KtConstantExpression -> expression.iElementType in constantNodeTypes
             is KtPrefixExpression -> expression.baseExpression.isConstantExpression()
             is KtBinaryExpression -> expression.left.isConstantExpression() && expression.right.isConstantExpression()
             else -> false
