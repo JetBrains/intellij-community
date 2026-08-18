@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.impl
 
+import com.intellij.concurrency.ExecutionInitiator
 import com.intellij.mcpserver.ClientInfo
 import com.intellij.mcpserver.McpCallAdditionalDataElement
 import com.intellij.mcpserver.McpCallHeaders
@@ -389,7 +390,9 @@ internal class McpSessionHandler(
         sessionHandler = this@McpSessionHandler
       }
 
-      val callResult = withContext(McpCallAdditionalDataElement(additionalData) + McpSessionElement(session, elicitationKind)) {
+      val callResult = withContext(
+        McpCallAdditionalDataElement(additionalData) + McpSessionElement(session, elicitationKind) + ExecutionInitiator.MCP.contextElement
+      ) {
         val toolExecution: suspend CoroutineScope.() -> McpToolCallResult = toolExecution@{
           val span = getTracer().spanBuilder("mcp.tool.call", TracerLevel.DEFAULT)
             .setAllAttributes(
