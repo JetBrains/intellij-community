@@ -50,13 +50,6 @@ internal class TerminalEdtLocksSpy(parentDisposable: Disposable) {
     hits.filter { it.kind == kind }
   }
 
-  fun signatures(kind: Kind): Set<String> = synchronized(hits) {
-    hits.asSequence()
-      .filter { it.kind == kind }
-      .map { it.signature }
-      .toSet()
-  }
-
   companion object {
     private val TERMINAL_PREFIXES = listOf(
       "com.intellij.terminal.",
