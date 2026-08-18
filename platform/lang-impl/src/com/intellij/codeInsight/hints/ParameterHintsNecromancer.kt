@@ -4,7 +4,7 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.ParameterHintsPass.HintData
-import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
@@ -23,7 +23,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.util.SmartList
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineScope
-
 
 internal class ParameterHintsNecromancerAwaker : NecromancerAwaker<ParameterHintsZombie> {
   override fun awake(project: Project, coroutineScope: CoroutineScope): Necromancer<ParameterHintsZombie> {
@@ -106,7 +105,7 @@ private class ParameterHintsNecromancer(
 
   private suspend fun isEnabledForLang(project: Project, file: VirtualFile): Boolean {
     val psiManager = project.serviceAsync<PsiManager>()
-    val language = readActionBlocking { psiManager.findFile(file)?.language }
+    val language = readAction { psiManager.findFile(file)?.language }
     return language != null &&
            InlayParameterHintsExtension.forLanguage(language) != null &&
            isParameterHintsEnabledForLanguage(language)
