@@ -1600,6 +1600,36 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(vf, marker, persistentMarker);
   }
 
+  public void testSnapshotRangeMarkerAloneUpdatesItselfWhenDocumentIsGCedAndVirtualFileChanges() throws IOException {
+    VirtualFile vf = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "blah");
+    PsiFile psiFile = Objects.requireNonNull(getPsiManager().findFile(vf));
+    RangeMarker marker = createMarker(psiFile, 1, 3);
+    int oldDocumentHash = System.identityHashCode(document);
+
+    gcDocument();
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(vf));
+    assertTrue(marker.isValid());
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(vf));
+
+    String newText = "0123blah";
+    WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Object, IOException>)() -> {
+      vf.setBinaryContent(newText.getBytes(StandardCharsets.UTF_8));
+      return null;
+    });
+
+    document = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
+    assertNotSame(oldDocumentHash, System.identityHashCode(document));
+    assertEquals(newText, document.getText());
+    assertTrue(marker.isValid());
+    assertEquals("la", marker.getTextRange().substring(document.getText()));
+
+    gcDocument();
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(vf));
+    assertTrue(marker.isValid());
+    assertEquals(new TextRange(5, 7), marker.getTextRange());
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(vf));
+  }
+
   public void testLazyPersistentRangeMarkerCreatedFromLineColumnMustRestoreItselfWhenDocumentIsLoaded() {
     // need to be physical file
     VirtualFile vf = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "blah\nblah2\nblah3");
