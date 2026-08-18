@@ -13,10 +13,12 @@ under a `private const BASE` when multiple variants share a parent folder, see
 @TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/<sample>")
 internal class MySampleTest {
   companion object {
-    private val tempDirFixture = tempPathFixture()
-    private val projectFixture = projectFixture(pathFixture = tempDirFixture)
+    // Class-level (static) project fixture: `PyDefaultTestApplication` looks one up to copy
+    // the `@TestDataPath` sample into before the class runs.
+    private val projectFixture = projectFixture()
   }
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -31,8 +33,13 @@ internal class MySampleTest {
 
 ## Conventions
 
-- The `$$"..."` Kotlin multi-dollar raw string on `@TestDataPath` is intentional
-  (it keeps `$CONTENT_ROOT` literal). IDE may flag it as a syntax error — ignore.
+- The `companion object` holding `projectFixture` is required here: the sample is copied into
+  whichever project fixture is declared as a *static* field, so an instance-level one (or none at
+  all) would leave `f` looking at an empty project. Outside this folder, where there is no test
+  data to copy, call `pyProjectTomlSyncFixture()` with no arguments — the sync root is then the
+  project base path.
+- The `$$"..."` Kotlin multi-dollar raw string on `@TestDataPath` is intentional (it keeps `$CONTENT_ROOT` literal). IDE may flag it as a
+  syntax error — ignore.
 - Join path segments with the `/` operator (from `...alsoWin.pyproject.div`) in
   `contentRoot` / `sourceRoots` for cross-platform path matching, e.g.
   `"sub" / "child"`. Never put a literal separator inside the string (no `"sub/child"`).

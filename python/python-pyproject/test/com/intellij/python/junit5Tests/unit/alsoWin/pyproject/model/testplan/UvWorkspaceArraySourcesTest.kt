@@ -9,7 +9,6 @@ import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTom
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Test
 
 /**
@@ -25,10 +24,10 @@ import org.junit.jupiter.api.Test
 @TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/PY-91089-uv-workspace-array-sources")
 internal class UvWorkspaceArraySourcesTest {
   companion object {
-    private val tempDirFixture = tempPathFixture()
-    private val projectFixture = projectFixture(pathFixture = tempDirFixture)
+    private val projectFixture = projectFixture()
   }
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -36,7 +35,10 @@ internal class UvWorkspaceArraySourcesTest {
     f.assertProjectStructure(
       ExpectedModule("orgwiki", contentRoot = ".", sourceRoots = listOf(".")),
       ExpectedModule("orgwiki-core", contentRoot = "orgwiki-core", sourceRoots = listOf("orgwiki-core" / "src")),
-      ExpectedModule("orgwiki-test", contentRoot = "orgwiki-test", deps = listOf("orgwiki-core"), sourceRoots = listOf("orgwiki-test" / "src")),
+      ExpectedModule("orgwiki-test",
+                     contentRoot = "orgwiki-test",
+                     deps = listOf("orgwiki-core"),
+                     sourceRoots = listOf("orgwiki-test" / "src")),
     )
   }
 }

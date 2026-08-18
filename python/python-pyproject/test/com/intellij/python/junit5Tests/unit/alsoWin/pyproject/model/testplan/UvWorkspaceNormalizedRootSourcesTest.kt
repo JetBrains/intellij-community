@@ -9,7 +9,6 @@ import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTom
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Test
 
 @PyDefaultTestApplication
@@ -17,10 +16,10 @@ import org.junit.jupiter.api.Test
 @TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/PY-90207-uv-workspace-normalized-root-sources")
 internal class UvWorkspaceNormalizedRootSourcesTest {
   companion object {
-    private val tempDirFixture = tempPathFixture()
-    private val projectFixture = projectFixture(pathFixture = tempDirFixture)
+    private val projectFixture = projectFixture()
   }
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
 
   /**
    * PY-90207: the workspace root declares its `[tool.uv.sources]` keys in normalized (PEP 503) form —
@@ -35,10 +34,19 @@ internal class UvWorkspaceNormalizedRootSourcesTest {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule("pycharm-uv-workspace-repro", contentRoot = ".", sourceRoots = listOf(".")),
-      ExpectedModule("example.failure", contentRoot = "packages" / "example" / "failure", sourceRoots = listOf("packages" / "example" / "failure" / "src")),
-      ExpectedModule("example.parent", contentRoot = "packages" / "example" / "parent", deps = listOf("example.failure", "example.success", "example.extra"), sourceRoots = listOf("packages" / "example" / "parent" / "src")),
-      ExpectedModule("example.success", contentRoot = "packages" / "example" / "success", sourceRoots = listOf("packages" / "example" / "success" / "src")),
-      ExpectedModule("example.extra", contentRoot = "packages" / "example" / "extra", sourceRoots = listOf("packages" / "example" / "extra" / "src")),
+      ExpectedModule("example.failure",
+                     contentRoot = "packages" / "example" / "failure",
+                     sourceRoots = listOf("packages" / "example" / "failure" / "src")),
+      ExpectedModule("example.parent",
+                     contentRoot = "packages" / "example" / "parent",
+                     deps = listOf("example.failure", "example.success", "example.extra"),
+                     sourceRoots = listOf("packages" / "example" / "parent" / "src")),
+      ExpectedModule("example.success",
+                     contentRoot = "packages" / "example" / "success",
+                     sourceRoots = listOf("packages" / "example" / "success" / "src")),
+      ExpectedModule("example.extra",
+                     contentRoot = "packages" / "example" / "extra",
+                     sourceRoots = listOf("packages" / "example" / "extra" / "src")),
     )
   }
 }

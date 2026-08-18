@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model
 
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.doNotEnableExternalStorageByDefaultInTestsSuspend
@@ -22,11 +22,13 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.ModuleTypeId
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.project.stateStore
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.internal.PY_PROJECT_SYSTEM_ID
 import com.intellij.python.pyproject.model.internal.autoImportBridge.PyExternalSystemProjectAware
 import com.intellij.python.pyproject.model.internal.workspaceBridge.pyProjectTomlEntity
 import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.testFramework.utils.vfs.createFile
@@ -70,8 +72,8 @@ internal const val BYSTANDER_JAVA = "_bystander_java"
 internal const val BYSTANDER_PYTHON = "_bystander_python"
 
 
-@RequiresWriteLock
 /** Creates a `pyproject.toml` with the given `[project].name` inside this directory. */
+@RequiresWriteLock
 internal fun VirtualFile.writePyprojectToml(name: String) {
   createFile(PY_PROJECT_TOML).writeText("[project]\nname = \"$name\"")
 }
@@ -108,15 +110,19 @@ internal fun VirtualFile.convertDirToUvWorkspace(workspaceName: String = name): 
 /**
  * Test fixture for pyproject.toml-based module synchronization tests.
  *
+ * The sync root is always the project base path, so the common case needs no arguments at all.
+ * Pass [projectFixture] only when the project must be created at class level (in a `companion object`):
+ * `PyDefaultTestApplication` looks up a *static* project fixture to copy the `@TestDataPath` sample into,
+ * see the tests under `model/testplan/`.
+ *
  * Creates bystander (non-pyproject) Java and Python modules on init,
  * and verifies they remain untouched on teardown.
  */
 internal fun pyProjectTomlSyncFixture(
-  projectFixture: TestFixture<Project>,
-  tempDirFixture: TestFixture<Path>,
-): TestFixture<PyProjectTomlSyncTestFixture> = testFixture { context ->
+  projectFixture: TestFixture<Project> = projectFixture(),
+): TestFixture<PyProjectTomlSyncTestFixture> = testFixture {
   val project = projectFixture.init()
-  val root = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(tempDirFixture.init())!!
+  val root = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(project.stateStore.projectBasePath)!!
   val implicitModuleName = project.modules.singleOrNull()?.name ?: ""
   val fixture = PyProjectTomlSyncTestFixture(project, root, implicitModuleName)
   fixture.setUp()

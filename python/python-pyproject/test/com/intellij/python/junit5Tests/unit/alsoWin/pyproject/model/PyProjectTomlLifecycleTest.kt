@@ -33,8 +33,6 @@ import com.intellij.python.pyproject.model.internal.autoImportBridge.createWsmTr
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
-import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.testFramework.utils.vfs.createFile
 import com.intellij.util.io.createDirectories
@@ -71,9 +69,7 @@ internal class PyProjectTomlLifecycleTest {
     }
   }
 
-  private val tempDirFixture = tempPathFixture()
-  private val projectFixture = projectFixture(pathFixture = tempDirFixture)
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+  private val f by pyProjectTomlSyncFixture()
 
 
   @Test
@@ -81,7 +77,7 @@ internal class PyProjectTomlLifecycleTest {
 
     val projectRebuiltTimesCounter = AtomicInteger()
     val projectRebuiltTwoTimes = CompletableDeferred<Unit>()
-    projectFixture.get().messageBus.connect(projectFixture.get())
+    f.project.messageBus.connect(f.project)
       .subscribe(MODEL_REBUILD,
                  ModelRebuiltListener {
                    if (projectRebuiltTimesCounter.incrementAndGet() == 2) { // <-- Wait for 2 rebuilds: initial and after new proj attached
@@ -99,11 +95,11 @@ internal class PyProjectTomlLifecycleTest {
       val workspace2Members = workspace2.convertDirToUvWorkspace()
       Pair(workspace2, workspace2Members)
     }
-    val scope = projectFixture.get().service<MyService>().scope
+    val scope = f.project.service<MyService>().scope
 
     // To be unlocked when WSM updated with new module
     val wsmTrackedDef = CompletableDeferred<Unit>()
-    val tracker = scope.createWsmTracker(projectFixture.get()) {
+    val tracker = scope.createWsmTracker(f.project) {
       scope.launch {
         // Project rebuild doesn't work in tests, so we listen for WSM and update it explicitly
         f.reloadProject() // <-- Reload 2

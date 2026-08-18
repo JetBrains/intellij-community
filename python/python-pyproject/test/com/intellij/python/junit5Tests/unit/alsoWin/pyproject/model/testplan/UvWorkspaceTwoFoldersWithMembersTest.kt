@@ -9,7 +9,6 @@ import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTom
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Test
 
 @PyDefaultTestApplication
@@ -17,10 +16,10 @@ import org.junit.jupiter.api.Test
 @TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/uv_workspace_two_folders_with_members")
 internal class UvWorkspaceTwoFoldersWithMembersTest {
   companion object {
-    private val tempDirFixture = tempPathFixture()
-    private val projectFixture = projectFixture(pathFixture = tempDirFixture)
+    private val projectFixture = projectFixture()
   }
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -29,7 +28,10 @@ internal class UvWorkspaceTwoFoldersWithMembersTest {
       ExpectedModule("workspace", contentRoot = ".", deps = listOf("nebula", "quasar", "abyss"), sourceRoots = listOf(".")),
       ExpectedModule("nebula", contentRoot = "cosmos" / "nebula", sourceRoots = listOf("cosmos" / "nebula" / "src")),
       ExpectedModule("quasar", contentRoot = "cosmos" / "quasar", sourceRoots = listOf("cosmos" / "quasar" / "src")),
-      ExpectedModule("abyss", contentRoot = "ocean" / "abyss", deps = listOf("nebula", "quasar"), sourceRoots = listOf("ocean" / "abyss" / "src")),
+      ExpectedModule("abyss",
+                     contentRoot = "ocean" / "abyss",
+                     deps = listOf("nebula", "quasar"),
+                     sourceRoots = listOf("ocean" / "abyss" / "src")),
     )
   }
 }

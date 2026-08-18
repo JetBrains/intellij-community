@@ -6,8 +6,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.vfs.createDirectory
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
@@ -20,9 +18,7 @@ import kotlin.time.Duration.Companion.seconds
 @TestApplication
 internal class PyProjectTomlRootModuleTest {
 
-  private val tempDirFixture = tempPathFixture()
-  private val projectFixture = projectFixture(pathFixture = tempDirFixture)
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+  private val f by pyProjectTomlSyncFixture()
 
   /** Moves the `pyproject.toml` of the project root into a freshly created `sub` directory. */
   private suspend fun movePyprojectTomlToSubDir(): VirtualFile = edtWriteAction {

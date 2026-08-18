@@ -9,7 +9,6 @@ import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTom
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -18,10 +17,10 @@ import org.junit.jupiter.api.assertThrows
 @TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/uv_workspace_dependency_groups_in_root")
 internal class UvWorkspaceDependencyGroupsInRootTest {
   companion object {
-    private val tempDirFixture = tempPathFixture()
-    private val projectFixture = projectFixture(pathFixture = tempDirFixture)
+    private val projectFixture = projectFixture()
   }
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -29,9 +28,18 @@ internal class UvWorkspaceDependencyGroupsInRootTest {
     // PY-89205 uv workspace: Dependencies which are defined in dependency groups are not shown in Project Structure settings
     assertThrows<AssertionError> {
       f.assertProjectStructure(
-        ExpectedModule("pythonproject", contentRoot = ".", deps = listOf("sub-project-a", "sub-project-b", "sub-project-c"), sourceRoots = emptyList()),
-        ExpectedModule("sub-project-a", contentRoot = "sub-projects" / "sub-project-a", deps = listOf("sub-project-b", "sub-project-c"), sourceRoots = emptyList()),
-        ExpectedModule("sub-project-b", contentRoot = "sub-projects" / "sub-project-b", deps = listOf("sub-project-c"), sourceRoots = emptyList()),
+        ExpectedModule("pythonproject",
+                       contentRoot = ".",
+                       deps = listOf("sub-project-a", "sub-project-b", "sub-project-c"),
+                       sourceRoots = emptyList()),
+        ExpectedModule("sub-project-a",
+                       contentRoot = "sub-projects" / "sub-project-a",
+                       deps = listOf("sub-project-b", "sub-project-c"),
+                       sourceRoots = emptyList()),
+        ExpectedModule("sub-project-b",
+                       contentRoot = "sub-projects" / "sub-project-b",
+                       deps = listOf("sub-project-c"),
+                       sourceRoots = emptyList()),
         ExpectedModule("sub-project-c", contentRoot = "sub-projects" / "sub-project-c", deps = listOf("."), sourceRoots = emptyList()),
       )
     }

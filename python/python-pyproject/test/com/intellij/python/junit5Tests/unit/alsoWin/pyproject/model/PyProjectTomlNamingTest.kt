@@ -9,8 +9,6 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.workspaceModel.ide.toPath
 import org.junit.jupiter.api.Test
@@ -23,9 +21,7 @@ import kotlin.time.Duration.Companion.seconds
 @TestApplication
 internal class PyProjectTomlNamingTest {
 
-  private val tempDirFixture = tempPathFixture()
-  private val projectFixture = projectFixture(pathFixture = tempDirFixture)
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+  private val f by pyProjectTomlSyncFixture()
 
   @Test
   fun `duplicate project names get sequential suffixes`(): Unit = timeoutRunBlocking(30.seconds) {
@@ -127,7 +123,8 @@ internal class PyProjectTomlNamingTest {
     }
 
     f.reloadProject()
-    f.assertProjectStructure(ExpectedModule("pythonproject13", contentRoot = "."), ExpectedModule("pythonproject13x", contentRoot = "second"))
+    f.assertProjectStructure(ExpectedModule("pythonproject13", contentRoot = "."),
+                             ExpectedModule("pythonproject13x", contentRoot = "second"))
 
     // Change sub-module to same name as root — "pythonproject13" is taken, gets suffix
     edtWriteAction {
@@ -135,7 +132,8 @@ internal class PyProjectTomlNamingTest {
     }
 
     f.reloadProject()
-    f.assertProjectStructure(ExpectedModule("pythonproject13", contentRoot = "."), ExpectedModule("pythonproject13@1", contentRoot = "second"))
+    f.assertProjectStructure(ExpectedModule("pythonproject13", contentRoot = "."),
+                             ExpectedModule("pythonproject13@1", contentRoot = "second"))
   }
 
   /**
