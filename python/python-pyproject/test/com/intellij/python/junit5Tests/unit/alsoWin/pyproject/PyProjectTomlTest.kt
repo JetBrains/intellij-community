@@ -28,7 +28,7 @@ internal class PyProjectTomlTest {
     val configContents = "[proj"
 
     // WHEN
-    val result = PyProjectToml.parse(configContents)
+    val result = PyProjectToml.parse(tomlFileContent = configContents, "someProject")
 
     // THEN
     org.junit.jupiter.api.Assertions.assertNull(result)
@@ -49,7 +49,7 @@ internal class PyProjectTomlTest {
       bar="test bar"
       baz="test baz"
     """.trimIndent()
-    val pyproject = PyProjectToml.parse(configContents)!!
+    val pyproject = PyProjectToml.parse(tomlFileContent = configContents, "someProject")!!
 
     // WHEN
     val testTool = pyproject.getTool(TestPyProject)
@@ -73,7 +73,7 @@ internal class PyProjectTomlTest {
     """.trimIndent()
 
     // WHEN
-    val pyproject = PyProjectToml.parse(configContents)
+    val pyproject = PyProjectToml.parse(tomlFileContent = configContents, "someProject")
     org.junit.jupiter.api.Assertions.assertNull(pyproject)
   }
 
@@ -92,7 +92,7 @@ internal class PyProjectTomlTest {
     """.trimIndent()
 
     // WHEN
-    val pyproject = PyProjectToml.parse(configContents)
+    val pyproject = PyProjectToml.parse(tomlFileContent = configContents, "someProject")
 
 
     // THEN
@@ -107,7 +107,7 @@ internal class PyProjectTomlTest {
       name="Some project"
       version="1.2.3"
     """.trimIndent()
-    val pyproject = PyProjectToml.parse(configContents)!!
+    val pyproject = PyProjectToml.parse(tomlFileContent = configContents, "someProject")!!
 
     // WHEN
     val testTool = pyproject.getTool(TestPyProject)
@@ -126,7 +126,7 @@ internal class PyProjectTomlTest {
     expectedIssues: List<PyProjectIssue>?,
     expectedDepGroups: Map<String, List<String>>,
   ) {
-    val result = PyProjectToml.parse(pyprojectToml)
+    val result = PyProjectToml.parse(tomlFileContent = pyprojectToml, "someProject")
 
     assertEquals(expectedProjectTable, result?.project)
     if (result != null) {
@@ -143,7 +143,7 @@ internal class PyProjectTomlTest {
     toolSpecificGroups: List<String>,
     expectedNames: List<String>,
   ) {
-    val result = PyProjectToml.parse(pyprojectToml)!!
+    val result = PyProjectToml.parse(pyprojectToml, "someProject")!!
 
     // Order is part of the contract, so compare lists rather than sets.
     assertEquals(expectedNames, result.getDependencyGroupNames(toolSpecificGroups))

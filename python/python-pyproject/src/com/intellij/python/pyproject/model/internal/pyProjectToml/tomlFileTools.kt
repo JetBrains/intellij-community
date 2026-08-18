@@ -23,7 +23,6 @@ import java.nio.file.FileVisitResult
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.name
-import kotlin.io.path.readText
 import kotlin.io.path.toPath
 import kotlin.io.path.visitFileTree
 
@@ -108,15 +107,8 @@ private fun walkFileSystemNoTomlContent(
 private val logger = fileLogger()
 
 private suspend fun readFile(file: Path): PyProjectToml? {
-  val content = try {
-    withContext(Dispatchers.IO) { file.readText() }
-  }
-  catch (e: IOException) {
-    logger.warn("Can't read $file", e)
-    return null
-  }
   return withContext(Dispatchers.Default) {
-    val toml = PyProjectToml.parse(content) ?: return@withContext null
+    val toml = PyProjectToml.parseOrNull(file) ?: return@withContext null
     val errors = toml.issues.joinToString(", ")
     if (errors.isNotBlank()) {
       logger.warn("Errors on $file: $errors")
@@ -200,7 +192,8 @@ private fun getToolSpecificDependenciesFromTomlTable(root: Path, tomlTable: Toml
   return tomlTable.keySet().asSequence().mapNotNull {
     // PY-91089: safeGet instead of getString, which throws when `<dep>.path` holds a non-string value.
     tomlTable.safeGet<String>("${it}.path", unquotedDottedKey = true).successOrNull?.let { depPathString ->
-      parseDepFromPathString(root, depPathString)
+      parseDepFromPathString(root,
+                             depPathString)
     }
   }.toSet()
 }

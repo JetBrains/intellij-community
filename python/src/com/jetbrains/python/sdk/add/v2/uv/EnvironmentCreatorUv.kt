@@ -57,8 +57,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import kotlin.io.path.exists
-import kotlin.io.path.readText
 
 /**
  * Creates a UV environment creator for the given model.
@@ -181,12 +179,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
           val pyProjectTomlPath = projectPath.resolve(PY_PROJECT_TOML)
 
           val pythonVersions = withContext(Dispatchers.IO) {
-            val versionRequest = if (pyProjectTomlPath.exists()) {
-              PyProjectToml.parse(pyProjectTomlPath.readText())?.project?.requiresPython
-            }
-            else {
-              null
-            }
+            val versionRequest = PyProjectToml.parseOrNull(pyProjectTomlPath)?.project?.requiresPython
 
             val cli = validateAndCreateUvCli(executable.pathHolder, model.fileSystem).getOr { return@withContext emptyList() }
             val cwd = Path.of("")

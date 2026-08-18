@@ -26,12 +26,12 @@ internal class GetDependenciesFromTomlTest {
     val libDir = tempDir.resolve("lib").createDirectories()
 
     val libUri = libDir.toUri()
-    val toml = PyProjectToml.parse("""
-      [project]
-      name = "main"
-      version = "1.0"
-      dependencies = ["lib @ $libUri"]
-    """.trimIndent())!!
+    val toml = PyProjectToml.parse(tomlFileContent = """
+          [project]
+          name = "main"
+          version = "1.0"
+          dependencies = ["lib @ $libUri"]
+        """.trimIndent(), "someProject")!!
 
     val mainName = ProjectName("main")
     val libName = ProjectName("lib")
@@ -53,16 +53,16 @@ internal class GetDependenciesFromTomlTest {
     val siblingDir = packagesDir.resolve("sibling").createDirectories()
     val sharedDir = workspaceDir.resolve("shared").createDirectories()
 
-    val toml = PyProjectToml.parse("""
-      [project]
-      name = "main"
-      version = "1.0"
-      dependencies = [
-        "child @ {root:uri}/child",
-        "sibling @ {root:parent:uri}/sibling",
-        "shared @ {root:parent:parent:uri}/shared",
-      ]
-    """.trimIndent())!!
+    val toml = PyProjectToml.parse(tomlFileContent = """
+          [project]
+          name = "main"
+          version = "1.0"
+          dependencies = [
+            "child @ {root:uri}/child",
+            "sibling @ {root:parent:uri}/sibling",
+            "shared @ {root:parent:parent:uri}/shared",
+          ]
+        """.trimIndent(), "someProject")!!
 
     val mainName = ProjectName("main")
     val childName = ProjectName("child")
@@ -83,15 +83,15 @@ internal class GetDependenciesFromTomlTest {
 
     val libUri = libDir.toUri()
     val testLibUri = testLibDir.toUri()
-    val toml = PyProjectToml.parse("""
-      [project]
-      name = "main"
-      version = "1.0"
-      
-      [dependency-groups]
-      dev = ["lib @ $libUri"]
-      test = ["test-lib @ $testLibUri"]
-    """.trimIndent())!!
+    val toml = PyProjectToml.parse(tomlFileContent = """
+          [project]
+          name = "main"
+          version = "1.0"
+          
+          [dependency-groups]
+          dev = ["lib @ $libUri"]
+          test = ["test-lib @ $testLibUri"]
+        """.trimIndent(), "someProject")!!
 
     val mainName = ProjectName("main")
     val libName = ProjectName("lib")
@@ -109,14 +109,14 @@ internal class GetDependenciesFromTomlTest {
     val mainDir = tempDir.resolve("main").createDirectories()
     val libDir = tempDir.resolve("lib").createDirectories()
 
-    val toml = PyProjectToml.parse("""
-      [project]
-      name = "main"
-      version = "1.0"
-      
-      [tool.poetry.dependencies]
-      lib = {path = "../lib"}
-    """.trimIndent())!!
+    val toml = PyProjectToml.parse(tomlFileContent = """
+          [project]
+          name = "main"
+          version = "1.0"
+          
+          [tool.poetry.dependencies]
+          lib = {path = "../lib"}
+        """.trimIndent(), "someProject")!!
 
     val mainName = ProjectName("main")
     val libName = ProjectName("lib")
@@ -135,14 +135,14 @@ internal class GetDependenciesFromTomlTest {
     val libDir = tempDir.resolve("lib").createDirectories()
 
     val libUri = libDir.toUri()
-    val toml = PyProjectToml.parse("""
-      [project]
-      name = "main"
-      version = "1.0"
-      
-      [tool.uv]
-      dev-dependencies = ["lib @ $libUri"]
-    """.trimIndent())!!
+    val toml = PyProjectToml.parse(tomlFileContent = """
+          [project]
+          name = "main"
+          version = "1.0"
+          
+          [tool.uv]
+          dev-dependencies = ["lib @ $libUri"]
+        """.trimIndent(), "someProject")!!
 
     val mainName = ProjectName("main")
     val libName = ProjectName("lib")
@@ -160,14 +160,14 @@ internal class GetDependenciesFromTomlTest {
     val mainDir = tempDir.resolve("main").createDirectories()
     val libDir = tempDir.resolve("lib").createDirectories()
 
-    val toml = PyProjectToml.parse("""
-      [project]
-      name = "main"
-      version = "1.0"
-      
-      [tool.poetry.group.test.dependencies]
-      lib = {path = "../lib"}
-    """.trimIndent())!!
+    val toml = PyProjectToml.parse(tomlFileContent = """
+          [project]
+          name = "main"
+          version = "1.0"
+          
+          [tool.poetry.group.test.dependencies]
+          lib = {path = "../lib"}
+        """.trimIndent(), "someProject")!!
 
     val mainName = ProjectName("main")
     val libName = ProjectName("lib")
@@ -187,17 +187,17 @@ internal class GetDependenciesFromTomlTest {
     val mainDir = workspaceDir.resolve("main").createDirectories()
     val libDir = workspaceDir.resolve("lib").createDirectories()
 
-    val toml = PyProjectToml.parse("""
-      [project]
-      name = "main"
-      version = "1.0"
-
-      [tool.hatch.envs.default]
-      dependencies = [
-        "pytest>=8",
-        "lib @ {root:parent:uri}/lib",
-      ]
-    """.trimIndent())!!
+    val toml = PyProjectToml.parse(tomlFileContent = """
+          [project]
+          name = "main"
+          version = "1.0"
+    
+          [tool.hatch.envs.default]
+          dependencies = [
+            "pytest>=8",
+            "lib @ {root:parent:uri}/lib",
+          ]
+        """.trimIndent(), "someProject")!!
 
     val mainName = ProjectName("main")
     val libName = ProjectName("lib")
@@ -213,15 +213,15 @@ internal class GetDependenciesFromTomlTest {
   fun `non-path dependencies are ignored`(@TempDir tempDir: Path): Unit = timeoutRunBlocking {
     val mainDir = tempDir.resolve("main").createDirectories()
 
-    val toml = PyProjectToml.parse("""
-      [project]
-      name = "main"
-      version = "1.0"
-      dependencies = ["pytest>=7", "requests"]
-      
-      [dependency-groups]
-      dev = ["black>=23"]
-    """.trimIndent())!!
+    val toml = PyProjectToml.parse(tomlFileContent = """
+          [project]
+          name = "main"
+          version = "1.0"
+          dependencies = ["pytest>=7", "requests"]
+          
+          [dependency-groups]
+          dev = ["black>=23"]
+        """.trimIndent(), "someProject")!!
 
     val mainName = ProjectName("main")
     val entries = mapOf(mainName to TestProject(toml, mainDir))
@@ -234,11 +234,11 @@ internal class GetDependenciesFromTomlTest {
   fun `empty and missing sections`(@TempDir tempDir: Path): Unit = timeoutRunBlocking {
     val mainDir = tempDir.resolve("main").createDirectories()
 
-    val toml = PyProjectToml.parse("""
-      [project]
-      name = "main"
-      version = "1.0"
-    """.trimIndent())!!
+    val toml = PyProjectToml.parse(tomlFileContent = """
+          [project]
+          name = "main"
+          version = "1.0"
+        """.trimIndent(), "someProject")!!
 
     val mainName = ProjectName("main")
     val entries = mapOf(mainName to TestProject(toml, mainDir))
@@ -261,18 +261,18 @@ internal class GetDependenciesFromTomlTest {
 
     val pep621Uri = pep621Lib.toUri()
     val groupUri = groupLib.toUri()
-    val toml = PyProjectToml.parse("""
-      [project]
-      name = "main"
-      version = "1.0"
-      dependencies = ["pep621-lib @ $pep621Uri"]
-      
-      [dependency-groups]
-      dev = ["group-lib @ $groupUri"]
-      
-      [tool.poetry.dependencies]
-      tool-lib = {path = "../tool-lib"}
-    """.trimIndent())!!
+    val toml = PyProjectToml.parse(tomlFileContent = """
+          [project]
+          name = "main"
+          version = "1.0"
+          dependencies = ["pep621-lib @ $pep621Uri"]
+          
+          [dependency-groups]
+          dev = ["group-lib @ $groupUri"]
+          
+          [tool.poetry.dependencies]
+          tool-lib = {path = "../tool-lib"}
+        """.trimIndent(), "someProject")!!
 
     val mainName = ProjectName("main")
     val pep621Name = ProjectName("pep621-lib")

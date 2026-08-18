@@ -2,6 +2,8 @@
 package com.intellij.python.pyproject
 
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -21,8 +23,11 @@ import org.apache.tuweni.toml.TomlInvalidTypeException
 import org.apache.tuweni.toml.TomlParseResult
 import org.apache.tuweni.toml.TomlTable
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
+import kotlin.io.path.readText
 
 /**
  * Stores the file name of `pyproject.toml`.
@@ -141,7 +146,7 @@ data class PyProjectToml internal constructor(
       return readAction {
         val psiFile = PsiManager.getInstance(project).findFile(pyProjectFile) ?: return@readAction null
         CachedValuesManager.getManager(project).getCachedValue(psiFile, CACHE_KEY, {
-          CachedValueProvider.Result.create(parse(psiFile.text), psiFile)
+          CachedValueProvider.Result.create(parse(psiFile.text, psiFile.parent?.name ?: project.name), psiFile)
         }, false)
       }
     }
@@ -158,7 +163,7 @@ data class PyProjectToml internal constructor(
      * val hatch = pyProject.getTool(HatchPyProject)
      * ```
      */
-    fun parse(tomlFileContent: String): PyProjectToml? {
+    fun parse(tomlFileContent: String, fallbackName: String): PyProjectToml? {
       val issues = mutableListOf<PyProjectIssue>()
       val toml = Toml.parse(tomlFileContent)
 
@@ -255,6 +260,24 @@ data class PyProjectToml internal constructor(
         toml,
         depGroupsToDeps = depsFromGroups ?: emptyMap(),
       )
+    }
+
+    private val logger = fileLogger()
+
+    /**
+     * Same as [parse] but returns `null` if fail can't be read
+     */
+    suspend fun parseOrNull(file: Path): PyProjectToml? {
+      val content = try {
+        withContext(Dispatchers.IO) {
+          file.readText()
+        }
+      }
+      catch (e: IOException) {
+        logger.debug(e) { "Error reading $file" }
+        return null
+      }
+      return parse(content, file.parent.name)
     }
 
     /**
