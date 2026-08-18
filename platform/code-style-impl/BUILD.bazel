@@ -71,7 +71,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.codeStyle.impl.iml",
-        "resources/META-INF/CodeStyle.xml",
+        "resources/intellij.platform.codeStyle.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

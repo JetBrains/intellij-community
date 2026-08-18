@@ -217,6 +217,7 @@
     <module name="intellij.platform.experiment" loading="embedded"/>
     <module name="intellij.platform.project" loading="embedded"/>
     <module name="intellij.platform.ide.progress" loading="embedded"/>
+    <module name="intellij.platform.codeStyle.impl" loading="embedded"/>
     <module name="intellij.platform.ide.impl" loading="embedded"/>
     <module name="intellij.platform.ide.pluginSignatureVerifier"/>
     <module name="intellij.libraries.zip.signer"/>

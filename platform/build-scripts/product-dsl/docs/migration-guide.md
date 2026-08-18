@@ -272,11 +272,11 @@ override fun getProductContentDescriptor(): ProductModulesContentSpec = productM
   
   // Keep deprecatedInclude only for modules NOT in corePlatform
   deprecatedInclude("intellij.platform.indexing", "META-INF/Indexing.xml")
-  deprecatedInclude("intellij.platform.codeStyle.impl", "META-INF/CodeStyle.xml")
   deprecatedInclude("intellij.platform.refactoring", "META-INF/RefactoringExtensionPoints.xml")
   deprecatedInclude("intellij.codeServer.core", "META-INF/codeserver-customization.xml")
   
   // Product-specific modules
+  embeddedModule("intellij.platform.codeStyle.impl")
   module("intellij.grid")
   module("intellij.grid.types")
   module("intellij.grid.csv.core.impl")

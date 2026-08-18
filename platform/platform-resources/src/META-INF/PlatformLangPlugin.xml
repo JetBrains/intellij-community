@@ -39,8 +39,6 @@
 
   <xi:include href="/META-INF/Refactoring.xml"/>
   <xi:include href="/META-INF/RefactoringExtensionPoints.xml"/>
-  <xi:include href="/META-INF/CodeStyle.xml"/>
-
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
 
 </idea-plugin>
