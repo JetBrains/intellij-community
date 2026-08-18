@@ -107,7 +107,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "air.acp.ktor",
   "antlr4-runtime",
   "apache.avro",
-  "apache.commons.collections4",
   "assertj-swing",
   "brotli.dec",
   "com.jetbrains.fus.reporting.ap.validation.all",
