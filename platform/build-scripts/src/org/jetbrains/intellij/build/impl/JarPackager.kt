@@ -108,7 +108,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "antlr4-runtime",
   "apache.avro",
   "assertj-swing",
-  "brotli.dec",
   "com.jetbrains.fus.reporting.ap.validation.all",
   "cucumber-core-1",
   "external-symbols",
