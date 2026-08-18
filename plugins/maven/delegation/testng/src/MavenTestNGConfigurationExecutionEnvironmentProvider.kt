@@ -39,6 +39,7 @@ class MavenTestNGConfigurationExecutionEnvironmentProvider : MavenExecutionEnvir
     val runnerAndConfigurationSettings = getInstance(project).createConfiguration(testNgConfiguration.name, configurationFactory)
     val mavenRunConfiguration = runnerAndConfigurationSettings.configuration as MavenSurefireRunConfiguration
     mavenRunConfiguration.beforeRunTasks = emptyList<BeforeRunTask<*>>()
+    mavenRunConfiguration.testModuleDirectory = leafProject.directory
 
     val runnerParameters = mavenRunConfiguration.runnerParameters
     // Run from root reactor so upstream modules are built fresh.

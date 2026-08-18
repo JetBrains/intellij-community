@@ -1,0 +1,116 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.execution
+
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.JDOMUtil
+import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
+
+private val LOG = logger<SurefireReportParser>()
+
+/**
+ * Parses Maven Surefire XML reports into TeamCity service message strings for the SM test runner.
+ *
+ * Suite-level `system-out` is emitted as plain text before `testSuiteStarted`, so it is visible when
+ * clicking the root "Test Results" node in the SM runner tree.  Per-test output is emitted as
+ * `testStdOut`/`testStdErr` events and is visible when clicking individual test nodes.
+ */
+internal object SurefireReportParser {
+
+  fun collectMessages(testModuleDirectory: Path): List<String> {
+    val reportsDir = testModuleDirectory.resolve("target/surefire-reports")
+    if (!reportsDir.exists() || !reportsDir.isDirectory()) return emptyList()
+
+    val xmlFiles = try {
+      reportsDir.listDirectoryEntries("*.xml")
+    }
+    catch (e: Exception) {
+      LOG.warn("Cannot list surefire reports in $reportsDir", e)
+      return emptyList()
+    }
+    if (xmlFiles.isEmpty()) return emptyList()
+
+    val messages = mutableListOf<String>()
+    for (xmlFile in xmlFiles.sortedBy { it.fileName.toString() }) {
+      try {
+        parseReport(xmlFile, messages)
+      }
+      catch (e: Exception) {
+        LOG.warn("Failed to parse surefire report $xmlFile", e)
+      }
+    }
+    return messages
+  }
+
+  private fun parseReport(xmlFile: Path, messages: MutableList<String>) {
+    val root = xmlFile.inputStream().use { JDOMUtil.load(it) } ?: return
+    if (root.name != "testsuite") return
+
+    val suiteName = root.getAttributeValue("name") ?: return
+
+    // Suite-level output emitted before testSuiteStarted shows in the root node's Output tab.
+    root.getChild("system-out")?.textTrim?.takeIf { it.isNotEmpty() }?.let { messages += it }
+    root.getChild("system-err")?.textTrim?.takeIf { it.isNotEmpty() }?.let { messages += it }
+
+    messages += "##teamcity[testSuiteStarted name='${escape(suiteName)}']"
+
+    for (testcase in root.getChildren("testcase")) {
+      val name = testcase.getAttributeValue("name") ?: continue
+      val classname = testcase.getAttributeValue("classname") ?: suiteName
+      val durationMs = testcase.getAttributeValue("time")?.toDoubleOrNull()?.let { (it * 1000).toLong() }
+      val displayName = "$classname.$name"
+
+      messages += "##teamcity[testStarted name='${escape(displayName)}']"
+
+      testcase.getChild("system-out")?.textTrim?.takeIf { it.isNotEmpty() }?.let {
+        messages += "##teamcity[testStdOut name='${escape(displayName)}' out='${escape(it)}']"
+      }
+      testcase.getChild("system-err")?.textTrim?.takeIf { it.isNotEmpty() }?.let {
+        messages += "##teamcity[testStdErr name='${escape(displayName)}' out='${escape(it)}']"
+      }
+
+      val failure = testcase.getChild("failure")
+      val error = testcase.getChild("error")
+      val skipped = testcase.getChild("skipped")
+
+      when {
+        failure != null -> {
+          val msg = failure.getAttributeValue("message") ?: ""
+          val details = failure.textTrim ?: ""
+          messages += "##teamcity[testFailed name='${escape(displayName)}' message='${escape(msg)}' details='${escape(details)}']"
+        }
+        error != null -> {
+          val msg = error.getAttributeValue("message") ?: ""
+          val details = error.textTrim ?: ""
+          messages += "##teamcity[testFailed name='${escape(displayName)}' message='${escape(msg)}' details='${escape(details)}' error='true']"
+        }
+        skipped != null -> {
+          val msg = skipped.getAttributeValue("message") ?: skipped.textTrim ?: ""
+          messages += "##teamcity[testIgnored name='${escape(displayName)}' message='${escape(msg)}']"
+        }
+      }
+
+      val durationAttr = if (durationMs != null) " duration='$durationMs'" else ""
+      messages += "##teamcity[testFinished name='${escape(displayName)}'$durationAttr]"
+    }
+
+    messages += "##teamcity[testSuiteFinished name='${escape(suiteName)}']"
+  }
+
+  private fun escape(s: String): String = buildString {
+    for (c in s) {
+      when (c) {
+        '|' -> append("||")
+        '\'' -> append("|'")
+        '\n' -> append("|n")
+        '\r' -> append("|r")
+        '[' -> append("|[")
+        ']' -> append("|]")
+        else -> append(c)
+      }
+    }
+  }
+}
