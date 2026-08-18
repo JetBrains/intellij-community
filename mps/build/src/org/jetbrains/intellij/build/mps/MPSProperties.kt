@@ -198,6 +198,10 @@ class MPSProperties : JetBrainsProductProperties() {
 
         module("intellij.platform.customization.min")
         module("intellij.idea.customization.base")
+
+      module("intellij.platform.ide.nonModalWelcomeScreen")
+      module("intellij.platform.ide.nonModalWelcomeScreen.frontend")
+      module("intellij.platform.ide.nonModalWelcomeScreen.backend")
     }
 
     override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {

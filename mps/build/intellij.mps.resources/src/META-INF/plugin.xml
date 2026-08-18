@@ -13,6 +13,9 @@
     <module name="intellij.ide.startup.importSettings"/>
     <module name="intellij.platform.customization.min"/>
     <module name="intellij.idea.customization.base"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen.frontend"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
   </content>
   <!-- endregion -->
 </idea-plugin>

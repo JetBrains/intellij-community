@@ -304,6 +304,7 @@ java/execution/impl
 java/execution/openapi
 java/execution/shared
 java/ide-customization
+java/ide-customization/backend
 java/ide-customization/training
 java/ide-resources
 java/idea-ui

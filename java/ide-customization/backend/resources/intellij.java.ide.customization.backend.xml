@@ -1,0 +1,21 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij.platform.ide">
+    <welcomeScreenFeatureBackend implementation="com.intellij.java.ide.customization.backend.welcomeScreen.IdeaTerminalFeatureBackend"/>
+
+    <welcomeScreenFeatureBackend implementation="com.intellij.java.ide.customization.backend.welcomeScreen.IdeaPluginsWelcomeScreenFeature"/>
+  </extensions>
+</idea-plugin>
