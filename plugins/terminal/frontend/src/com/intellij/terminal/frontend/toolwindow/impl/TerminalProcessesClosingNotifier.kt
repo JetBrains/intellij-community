@@ -3,7 +3,6 @@ package com.intellij.terminal.frontend.toolwindow.impl
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -11,20 +10,16 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.VetoableProjectManagerListener
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
-import com.intellij.terminal.frontend.view.TerminalView
-import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.plugins.terminal.TerminalBundle
-import org.jetbrains.plugins.terminal.TerminalToolWindowManager
+import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import java.time.LocalDateTime
 
 /**
@@ -69,16 +64,14 @@ internal object TerminalProcessesClosingNotifier : VetoableProjectManagerListene
     }
 
     // canClose() is invoked on EDT during project close, so reading the tool window tabs here is safe.
-    // Use serviceIfCreated to avoid creating a terminal service just to close a project without terminals.
-    val reworkedViews = (project.serviceIfCreated<TerminalToolWindowTabsManager>()?.tabs ?: emptyList()).map { it.view }
-    val classicWidgets = (project.serviceIfCreated<TerminalToolWindowManager>()?.terminalWidgets?.toList() ?: emptyList())
-    if (reworkedViews.isEmpty() && classicWidgets.isEmpty()) {
+    val terminalTabs = collectTerminalTabs(project)
+    if (terminalTabs.isEmpty()) {
       return true
     }
 
     val tabTitlesToConfirm = try {
       runWithModalProgressBlocking(project, TerminalBundle.message("checking.running.terminal.processes.progress")) {
-        collectTabTitlesToConfirm(reworkedViews, classicWidgets)
+        collectTabTitlesToConfirm(terminalTabs)
       }
     }
     catch (_: CancellationException) {
@@ -101,30 +94,21 @@ internal object TerminalProcessesClosingNotifier : VetoableProjectManagerListene
     return terminationConfirmed
   }
 
-  private suspend fun collectTabTitlesToConfirm(
-    reworkedTabs: List<TerminalView>,
-    classicWidgets: List<TerminalWidget>,
-  ): List<String> = coroutineScope {
-    val tasks = mutableListOf<Deferred<String?>>()
+  private fun collectTerminalTabs(project: Project): List<TerminalTabContent> {
+    val terminalToolWindow = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID)
+                             ?: return emptyList()
+    // Use `contentManagerIfCreated` to avoid initializing the tool window if it is not yet created.
+    val contents = terminalToolWindow.contentManagerIfCreated?.contentsRecursively ?: return emptyList()
+    return contents.mapNotNull { it.toTerminalTabContentOrNull() }
+  }
 
-    for (view in reworkedTabs) {
-      tasks += async {
-        if (TerminalTabCloseListenerImpl.shouldConfirmClosing(view)) {
-          view.getFullTitleText()
-        }
-        else null
+  private suspend fun collectTabTitlesToConfirm(tabs: List<TerminalTabContent>): List<String> = coroutineScope {
+    val tasks = tabs.map {
+      async {
+        it.getClosingConfirmationDetails()
       }
     }
-    for (widget in classicWidgets) {
-      tasks += async(Dispatchers.IO) {
-        if (widget.isCommandRunning()) {
-          widget.terminalTitle.buildFullTitle()
-        }
-        else null
-      }
-    }
-
-    tasks.awaitAll().filterNotNull()
+    tasks.awaitAll().mapNotNull { it?.fullTitle }
   }
 }
 
