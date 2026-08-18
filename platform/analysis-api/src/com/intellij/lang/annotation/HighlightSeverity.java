@@ -39,8 +39,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
    * The standard severity level for information annotations.
    */
   @SuppressWarnings("UnresolvedPropertyKey")
-  @NotNull
-  public static final HighlightSeverity INFORMATION =
+  public static final @NotNull HighlightSeverity INFORMATION =
     new HighlightSeverity(
       "INFORMATION",
       10,
@@ -49,8 +48,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
       InspectionsBundle.messagePointer("information.severity.count.message"));
   
   @SuppressWarnings("UnresolvedPropertyKey")
-  @NotNull
-  public static final HighlightSeverity TEXT_ATTRIBUTES =
+  public static final @NotNull HighlightSeverity TEXT_ATTRIBUTES =
     new HighlightSeverity(
       "TEXT ATTRIBUTES",
       11,
@@ -62,8 +60,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
    * The severity level for errors or warnings obtained from server.
    */
   @SuppressWarnings("UnresolvedPropertyKey")
-  @NotNull
-  public static final HighlightSeverity GENERIC_SERVER_ERROR_OR_WARNING =
+  public static final @NotNull HighlightSeverity GENERIC_SERVER_ERROR_OR_WARNING =
     new HighlightSeverity(
       "SERVER PROBLEM",
       100,
@@ -75,8 +72,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
   /** @deprecated use {@link #WEAK_WARNING} */
   @Deprecated
   @SuppressWarnings("UnresolvedPropertyKey")
-  @NotNull
-  public static final HighlightSeverity INFO =
+  public static final @NotNull HighlightSeverity INFO =
     new HighlightSeverity(
       "INFO",
       200,
@@ -86,8 +82,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
     );
 
   @SuppressWarnings("UnresolvedPropertyKey")
-  @NotNull
-  public static final HighlightSeverity WEAK_WARNING =
+  public static final @NotNull HighlightSeverity WEAK_WARNING =
     new HighlightSeverity(
       "WEAK WARNING",
       200,
@@ -100,8 +95,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
    * The standard severity level for warning annotations.
    */
   @SuppressWarnings("UnresolvedPropertyKey")
-  @NotNull
-  public static final HighlightSeverity WARNING =
+  public static final @NotNull HighlightSeverity WARNING =
     new HighlightSeverity(
       "WARNING",
       300,
@@ -114,8 +108,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
    * The standard severity level for error annotations.
    */
   @SuppressWarnings("UnresolvedPropertyKey")
-  @NotNull
-  public static final HighlightSeverity ERROR =
+  public static final @NotNull HighlightSeverity ERROR =
     new HighlightSeverity(
       "ERROR",
       400,
