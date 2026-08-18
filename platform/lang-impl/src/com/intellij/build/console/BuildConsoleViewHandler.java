@@ -35,6 +35,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -137,7 +138,11 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
     return myView.getView(nodeConsoleViewName);
   }
 
+  /**
+   * @deprecated use {@link #getCurrentConsole()}
+   */
   @TestOnly
+  @Deprecated
   public @NotNull ExecutionConsole getCurrentConsoleOrEmpty() {
     var currentConsole = ObjectUtils.doIfNotNull(getCurrentConsole(), it -> unwrapDelegate(it));
     var console = ObjectUtils.notNull(currentConsole, () -> new ConsoleViewImpl(myProject, GlobalSearchScope.EMPTY_SCOPE, true, false));
@@ -147,7 +152,15 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
     return console;
   }
 
-  private @Nullable Editor getCurrentConsoleEditor() {
+  @TestOnly
+  @ApiStatus.Internal
+  public @NotNull DefaultActionGroup getConsoleToolbarActionGroup() {
+    return myConsoleToolbarActionGroup;
+  }
+
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public @Nullable Editor getCurrentConsoleEditor() {
     var currentConsole = ObjectUtils.doIfNotNull(getCurrentConsole(), it -> unwrapDelegate(it));
     if (currentConsole instanceof ConsoleViewImpl) {
       Editor editor = ((ConsoleViewImpl)currentConsole).getEditor();

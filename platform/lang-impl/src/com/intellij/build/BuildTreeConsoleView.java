@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.console.BuildConsoleViewHandler;
@@ -46,6 +46,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
@@ -589,8 +590,30 @@ public final class BuildTreeConsoleView
 
   @TestOnly
   @ApiStatus.Internal
+  public @Nullable ExecutionConsole getCurrentConsole() {
+    return myConsoleViewHandler.getCurrentConsole();
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public @Nullable Editor getCurrentConsoleEditor() {
+    return myConsoleViewHandler.getCurrentConsoleEditor();
+  }
+
+  /**
+   * @deprecated use {@link #getCurrentConsole()}
+   */
+  @TestOnly
+  @Deprecated
+  @ApiStatus.Internal
   public @NotNull ExecutionConsole getSelectedNodeConsole() {
     return myConsoleViewHandler.getCurrentConsoleOrEmpty();
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public @NotNull DefaultActionGroup getConsoleToolbarActionGroup() {
+    return myConsoleViewHandler.getConsoleToolbarActionGroup();
   }
 
   private static @NotNull EventResult calculateFinishResult(

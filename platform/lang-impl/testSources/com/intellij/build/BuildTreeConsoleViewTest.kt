@@ -7,12 +7,23 @@ import com.intellij.build.events.impl.FailureResultImpl
 import com.intellij.build.events.impl.SuccessResultImpl
 import com.intellij.build.progress.BuildProgressDescriptorImpl
 import com.intellij.build.progress.BuildRootProgressImpl
+import com.intellij.execution.impl.ConsoleViewImpl
+import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.execution.ui.unwrapDelegate
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction
+import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
 import com.intellij.platform.testFramework.assertion.BuildViewNodeAssertion
 import com.intellij.platform.testFramework.assertion.assertIsNodeExpanded
 import com.intellij.platform.testFramework.assertion.treeAssertion.userObject
+import com.intellij.testFramework.TestActionEvent
+import com.intellij.testFramework.assertInstanceOf
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
@@ -21,6 +32,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
 
 @TestApplication
@@ -182,6 +196,114 @@ class BuildTreeConsoleViewTest {
         }
       }
     }
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `test globally soft wraps are initialized in the selected console`(initGlobalSoftWraps: Boolean): Unit = timeoutRunBlocking {
+    val editorSettings = EditorSettingsExternalizable.getInstance()
+    val globalSoftWraps = editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE)
+    withContext(Dispatchers.EDT) {
+      try {
+        editorSettings.setUseSoftWraps(initGlobalSoftWraps, SoftWrapAppliancePlaces.CONSOLE)
+
+        startBuild()
+        val editor = getSelectedConsoleEditor()
+
+        assertThat(editor.settings.isUseSoftWraps)
+          .describedAs("Console editor should have soft wraps initialized to '$initGlobalSoftWraps' from global settings")
+          .isEqualTo(initGlobalSoftWraps)
+      }
+      finally {
+        editorSettings.setUseSoftWraps(globalSoftWraps, SoftWrapAppliancePlaces.CONSOLE)
+      }
+    }
+  }
+
+  @Test
+  fun `test soft wrap action toggles soft wraps of the selected console`(): Unit = timeoutRunBlocking {
+    val editorSettings = EditorSettingsExternalizable.getInstance()
+    val globalSoftWraps = editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE)
+    withContext(Dispatchers.EDT) {
+      try {
+        editorSettings.setUseSoftWraps(true, SoftWrapAppliancePlaces.CONSOLE)
+
+        startBuild()
+        val editor = getSelectedConsoleEditor()
+        val softWrapAction = findToolbarAction<ToggleUseSoftWrapsToolbarAction>()
+
+        softWrapAction.setSelected(TestActionEvent.createTestEvent(softWrapAction), false)
+        assertThat(editor.settings.isUseSoftWraps)
+          .describedAs("Soft-Wrap action should toggle soft wraps of the console editor to off")
+          .isFalse()
+
+        softWrapAction.setSelected(TestActionEvent.createTestEvent(softWrapAction), true)
+        assertThat(editor.settings.isUseSoftWraps)
+          .describedAs("Soft-Wrap action should toggle soft wraps of the console editor back to on")
+          .isTrue()
+      }
+      finally {
+        editorSettings.setUseSoftWraps(globalSoftWraps, SoftWrapAppliancePlaces.CONSOLE)
+      }
+    }
+  }
+
+  @Test
+  fun `test scroll to the end action moves the caret to the end of the selected console`(): Unit = timeoutRunBlocking {
+    startBuild()
+    printToSelectedConsole { console ->
+      repeat(10) {
+        console.print("build output line $it\n", ConsoleViewContentType.NORMAL_OUTPUT)
+      }
+    }
+    val editor = getSelectedConsoleEditor()
+    val scrollToTheEndAction = findToolbarAction<ScrollToTheEndToolbarAction>()
+
+    withContext(Dispatchers.EDT) {
+      assertThat(editor.document.textLength)
+        .describedAs("The console should contain the printed build output")
+        .isGreaterThan(0)
+
+      editor.caretModel.moveToOffset(0)
+      assertThat(editor.caretModel.offset).isEqualTo(0)
+
+      scrollToTheEndAction.actionPerformed(TestActionEvent.createTestEvent(scrollToTheEndAction))
+
+      assertThat(editor.caretModel.offset)
+        .describedAs("Scroll to End action should move the caret to the end of the console editor")
+        .isEqualTo(editor.document.textLength)
+    }
+  }
+
+  private fun startBuild() {
+    BuildRootProgressImpl(treeConsoleView)
+      .start("build started", BuildProgressDescriptorImpl(buildDescriptor))
+  }
+
+  /**
+   * Prints [printOutput] into the currently selected console
+   */
+  private suspend fun printToSelectedConsole(printOutput: (ConsoleViewImpl) -> Unit = {}) {
+    withContext(Dispatchers.EDT) {
+      val console = assertInstanceOf<ConsoleViewImpl>(treeConsoleView.currentConsole?.unwrapDelegate())
+      printOutput(console)
+      console.flushDeferredText()
+    }
+  }
+
+  private suspend fun getSelectedConsoleEditor(): Editor = withContext(Dispatchers.EDT) {
+    val editor = treeConsoleView.currentConsoleEditor
+    assertNotNull(editor) { "The current console editor is expected to be initialized" }
+    return@withContext editor
+  }
+
+  private inline fun <reified T : Any> findToolbarAction(): T {
+    val actions = treeConsoleView.consoleToolbarActionGroup.childActionsOrStubs.toList()
+    val matched = actions.filterIsInstance<T>()
+    assertThat(matched)
+      .describedAs("Expected a single ${T::class.java.simpleName} in the console toolbar, but got: $actions")
+      .hasSize(1)
+    return matched.single()
   }
 
   companion object {
