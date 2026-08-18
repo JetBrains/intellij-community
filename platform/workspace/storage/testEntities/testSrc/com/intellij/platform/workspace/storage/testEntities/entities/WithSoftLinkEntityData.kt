@@ -135,3 +135,8 @@ interface PcdChildEntity : WorkspaceEntityWithSymbolicId {
   override val symbolicId: PCDIdChild
     get() = PCDIdChild(data, parent1.symbolicId, parent2.symbolicId)
 }
+
+interface PcdChildReferencer : WorkspaceEntity {
+  val data: String
+  val relatedChildEntity: PCDIdChild
+}
