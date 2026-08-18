@@ -11,7 +11,8 @@ import kotlin.jvm.JvmStatic
 
 %{
   private val myJdk1_5Enabled: Boolean
-  private var mySnippetBracesLevel = 0
+  /** Nesting level of braces of inline tags having literal text */
+  private var myLiteralTextContentBracesLevel = 0
   /* Enable markdown support for java 23 */
   private var myMarkdownMode = false
   /** Whether comment data should take into account spaces, on used with [myMarkdownMode] */
@@ -30,7 +31,7 @@ import kotlin.jvm.JvmStatic
     myMarkdownMode = isMarkdownModeEnabled
     // Reset the internal states of the lexer.
     // Such behavior relies on the lexer only lexing the entire comment at once
-    mySnippetBracesLevel = 0
+    myLiteralTextContentBracesLevel = 0
     commentDataWithSpaces = false
     inValueTag = false
     genericNestingLevel = 0
@@ -120,7 +121,7 @@ LEADING_TOKEN_MARKDOWN="///"
 <DOC_TAG_VALUE> [/] { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_SLASH }
 <DOC_TAG_VALUE> "##" { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN }
 <DOC_TAG_VALUE> [#] { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN }
-<DOC_TAG_VALUE, DOC_TAG_VALUE_IN_PAREN> [,] { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_COMMA }
+<DOC_TAG_VALUE, DOC_TAG_VALUE_IN_PAREN, DOC_TAG_VALUE_IN_LTGT> [,] { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_COMMA }
 <DOC_TAG_VALUE_IN_PAREN> {WHITE_DOC_SPACE_CHAR}+ { return JavaDocSyntaxTokenType.DOC_SPACE }
 
 // Allowed since JDK 15
@@ -151,6 +152,9 @@ LEADING_TOKEN_MARKDOWN="///"
           yybegin(COMMENT_DATA)
         }
         return JavaDocSyntaxTokenType.DOC_TAG_VALUE_GT
+      }
+<DOC_TAG_VALUE_IN_LTGT> [\ ] {
+        return JavaDocSyntaxTokenType.DOC_SPACE
       }
 
 <COMMENT_DATA_START, COMMENT_DATA> {
@@ -324,15 +328,15 @@ SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON, DOC
 
 <INLINE_TAG_LITERAL_TEXT> {
       \} {
-        if (mySnippetBracesLevel > 0) {
-          mySnippetBracesLevel--
+        if (myLiteralTextContentBracesLevel > 0) {
+          myLiteralTextContentBracesLevel--
           return JavaDocSyntaxTokenType.DOC_COMMENT_DATA
         } else {
           yybegin(COMMENT_DATA)
           return JavaDocSyntaxTokenType.DOC_INLINE_TAG_END
         }
       }
-      \{ { mySnippetBracesLevel++; return JavaDocSyntaxTokenType.DOC_COMMENT_DATA }
+      \{ { myLiteralTextContentBracesLevel++; return JavaDocSyntaxTokenType.DOC_COMMENT_DATA }
       {WHITE_DOC_SPACE_CHAR}+ { return JavaDocSyntaxTokenType.DOC_SPACE }
       [^{}\n]+ {return JavaDocSyntaxTokenType.DOC_COMMENT_DATA }
 }
