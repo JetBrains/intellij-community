@@ -1,6 +1,6 @@
 ---
 name: kotlin-ui-dsl
-description: Write IntelliJ dialogs, settings, and forms with Kotlin UI DSL v2 panels, rows, cells, and bindings.
+description: Write IntelliJ dialogs and settings with Kotlin UI DSL v2 panels.
 ---
 
 # Kotlin UI DSL

@@ -1,6 +1,6 @@
 ---
 name: writing-tests
-description: Write IntelliJ JUnit 5 tests with fixtures, lifecycle, EDT, and registry.
+description: Write IntelliJ JUnit 5 tests with fixtures, lifecycle, and EDT.
 ---
 
 # Writing Tests

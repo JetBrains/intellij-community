@@ -1,6 +1,6 @@
 ---
 name: poly-context
-description: Implement PolyContext feature gating, environment detection, or language substitution.
+description: Implement PolyContext feature gating and environment detection.
 ---
 
 # PolyContext

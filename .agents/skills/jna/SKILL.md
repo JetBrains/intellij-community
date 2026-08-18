@@ -1,6 +1,6 @@
 ---
 name: jna
-description: Implement or debug JNA bindings in Kotlin or Java, including structures, JVM visibility, callbacks, pointers, ABI layouts, and native-library tests.
+description: Implement or debug JNA bindings and ABI layouts in Kotlin or Java.
 ---
 
 # JNA bindings

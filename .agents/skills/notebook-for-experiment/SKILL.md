@@ -1,6 +1,6 @@
 ---
 name: notebook-for-experiment
-description: Create reproducible Jupyter notebooks for performance or benchmark experiments.
+description: Create reproducible Jupyter notebooks for performance experiments.
 ---
 
 # Notebook for experiment
