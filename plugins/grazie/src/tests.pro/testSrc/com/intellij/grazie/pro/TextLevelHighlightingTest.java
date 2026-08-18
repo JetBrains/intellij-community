@@ -52,6 +52,22 @@ public class TextLevelHighlightingTest extends BaseTestCase {
 
   @NeedsCloud
   @Test
+  public void testJavadocInlineHtmlTag() {
+    myFixture.configureByText("a.java", """
+      /**
+       * <p>
+       *   <em>Implementation note:</em> even though this class implements an interface with a "panel" in its name,
+       *   it's not a Swing component itself, and therefore can be instantiated or accessed from a background thread.
+       *   Implementations, therefore, should NOT instantiate Swing objects in the constructors and/or
+       *   field/property initializers. They should be instantiated in the {@link #createPanel()} method instead.
+       */
+      class A {}
+      """);
+    myFixture.checkHighlighting();
+  }
+
+  @NeedsCloud
+  @Test
   public void testGermanSentenceCapitalization() {
     HighlightingTest.enableLanguages(Set.of(Lang.GERMANY_GERMAN), getTestRootDisposable());
     myFixture.configureByText("a.md", """
