@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.concurrency.ExecutionInitiator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.TestOnlyThreading;
@@ -37,6 +38,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 public class IdeEventQueueTest extends LightPlatformTestCase {
@@ -112,6 +114,33 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
 
     assertEquals(posted+2, ideEventQueue.keyboardEventPosted.get());
     assertEquals(dispatched+2, ideEventQueue.keyboardEventDispatched.get());
+  }
+
+  public void testInputEventIsAttributedToUser() {
+    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
+    AtomicReference<ExecutionInitiator> initiator = new AtomicReference<>();
+    KeyEvent inputEvent = new KeyEvent(new JLabel(), KeyEvent.KEY_PRESSED, 1, 0, KeyEvent.VK_X, 'x');
+    eventQueue.addPreprocessor(event -> {
+      if (event == inputEvent) {
+        initiator.set(ExecutionInitiator.Companion.currentOrNull());
+      }
+      return false;
+    }, getTestRootDisposable());
+
+    eventQueue.dispatchEvent(inputEvent);
+
+    assertSame(ExecutionInitiator.Companion.getUSER(), initiator.get());
+    assertNull(ExecutionInitiator.Companion.currentOrNull());
+  }
+
+  public void testInvocationEventIsNotAttributedToUser() {
+    AtomicReference<ExecutionInitiator> initiator = new AtomicReference<>();
+    InvocationEvent invocationEvent = new InvocationEvent(this, () -> initiator.set(ExecutionInitiator.Companion.currentOrNull()));
+
+    IdeEventQueue.getInstance().dispatchEvent(invocationEvent);
+
+    assertNull(initiator.get());
+    assertNull(ExecutionInitiator.Companion.currentOrNull());
   }
 
   private static void postCarefully(AWTEvent event) {

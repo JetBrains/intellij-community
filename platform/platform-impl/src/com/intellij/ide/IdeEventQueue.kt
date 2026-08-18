@@ -6,9 +6,12 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.currentOrNull
 import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
 import com.intellij.concurrency.ContextAwareRunnable
+import com.intellij.concurrency.ExecutionInitiator
+import com.intellij.concurrency.ExecutionInitiatorElement
 import com.intellij.concurrency.ExternalIntelliJContextElement
 import com.intellij.concurrency.captureThreadContext
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.concurrency.installThreadContext
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.EventWatcher
@@ -61,6 +64,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.SmartList
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.unwrapContextRunnable
 import com.intellij.util.containers.ContainerUtil
@@ -119,6 +123,22 @@ import javax.swing.plaf.basic.ComboPopup
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
+
+private val initiatorAttributionEnabled =
+  SystemProperties.getBooleanProperty("ide.initiator.attribution", true)
+
+private fun userInitiatorContextOrNull(event: AWTEvent): CoroutineContext? {
+  if (!initiatorAttributionEnabled || event !is InputEvent) return null
+  val ambient = currentThreadContextOrNull()
+  if (ambient?.get(ExecutionInitiatorElement) != null) return null
+  return (ambient ?: EmptyCoroutineContext) + ExecutionInitiator.USER.contextElement
+}
+
+private inline fun <T> withUserInitiatorContext(event: AWTEvent, crossinline action: () -> T): T {
+  val context = userInitiatorContextOrNull(event) ?: return action()
+  @Suppress("DEPRECATION")
+  return installThreadContext(context, replace = true).use { action() }
+}
 
 @Suppress("FunctionName")
 class IdeEventQueue private constructor() : EventQueue() {
@@ -372,35 +392,37 @@ class IdeEventQueue private constructor() : EventQueue() {
       val nakedRunnable = runnable is NakedRunnable
       val processEventRunnable = Runnable {
         withAttachedClientId(finalEvent).use {
-          val progressManager = ProgressManager.getInstanceOrNull()
-          try {
-            runCustomProcessors(finalEvent, preProcessors)
-            performActivity(finalEvent) {
-              if (progressManager == null || (runnable != null && InvocationUtil.isFlushNow(runnable))) {
-                _dispatchEvent(finalEvent)
-              }
-              else {
-                progressManager.computePrioritized(ThrowableComputable {
+          withUserInitiatorContext(finalEvent) {
+            val progressManager = ProgressManager.getInstanceOrNull()
+            try {
+              runCustomProcessors(finalEvent, preProcessors)
+              performActivity(finalEvent) {
+                if (progressManager == null || (runnable != null && InvocationUtil.isFlushNow(runnable))) {
                   _dispatchEvent(finalEvent)
-                  null
-                })
+                }
+                else {
+                  progressManager.computePrioritized(ThrowableComputable {
+                    _dispatchEvent(finalEvent)
+                    null
+                  })
+                }
               }
             }
-          }
-          catch (t: Throwable) {
-            processException(t)
-          }
-          finally {
-            trueCurrentEvent = oldEvent
-            SequencedEventNestedFieldHolder.eventDispatched(finalEvent)
-            runCustomProcessors(finalEvent, postProcessors)
-            if (finalEvent is KeyEvent) {
-              maybeReady()
+            catch (t: Throwable) {
+              processException(t)
             }
-            if (eventWatcher != null && runnable != null && !InvocationUtil.isFlushNow(runnable)) {
-              eventWatcher.logTimeMillis(if (runnableClass == Runnable::class.java) finalEvent.toString() else runnableClass.name,
-                                         startedAt,
-                                         runnableClass)
+            finally {
+              trueCurrentEvent = oldEvent
+              SequencedEventNestedFieldHolder.eventDispatched(finalEvent)
+              runCustomProcessors(finalEvent, postProcessors)
+              if (finalEvent is KeyEvent) {
+                maybeReady()
+              }
+              if (eventWatcher != null && runnable != null && !InvocationUtil.isFlushNow(runnable)) {
+                eventWatcher.logTimeMillis(if (runnableClass == Runnable::class.java) finalEvent.toString() else runnableClass.name,
+                                           startedAt,
+                                           runnableClass)
+              }
             }
           }
         }
