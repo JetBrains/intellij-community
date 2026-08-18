@@ -1721,7 +1721,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
   public void testGetTextRangeMustBeAtomic_Stress() throws ExecutionException, InterruptedException {
     int len = 1000;
-    RangeMarkerEx marker = createMarker(" ".repeat(len), 10, 11);
+    DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(" ".repeat(len));
+    RangeMarker marker = document.createRangeMarker(10, 11);
+
     TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       while (!t.isTimedOut()) {
@@ -1730,11 +1732,12 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       }
     });
     while (!t.isTimedOut()) {
-      insertString(marker.getDocument(), 0, "x");
+      insertString(document, 0, "x");
       Thread.yield();
-      deleteString(marker.getDocument(), 0,1);
+      deleteString(document, 0, 1);
     }
     future.get();
+    Reference.reachabilityFence(document);
   }
 
   public void testRangeMarkerMustPreserveItsOffsetsSomeTimeAfterDeath() {
