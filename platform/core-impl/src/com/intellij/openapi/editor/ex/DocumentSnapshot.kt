@@ -44,22 +44,6 @@ interface DocumentSnapshot {
   fun <S : DocumentSputnik> sputnik(key: Key<S>): S?
 
   /**
-   * Returns [metadata] if it still has this snapshot's text, otherwise returns this snapshot unchanged
-   * and drops [metadata] entirely.
-   *
-   * This is how a document mutator reconciles the snapshot a change was computed against with whatever
-   * snapshot is current at publish time: a metadata-only update that raced the change -- a modification
-   * stamp set from another thread, say -- shares this snapshot's text, so [metadata] survives and is taken
-   * as a whole, sputniks included. But if [metadata]'s text has already moved on to some other change, it
-   * is talking about a text this snapshot no longer has, so it is discarded wholesale -- stamp, sequence,
-   * and sputniks alike -- rather than mixed with this snapshot's own.
-   *
-   * @param metadata latest version of the document
-   */
-  @Contract(pure = true)
-  fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot
-
-  /**
    * Returns this snapshot with [op] applied: text and mod state reflect [op], and sputniks are rebuilt to
    * stay consistent with it.
    *
@@ -80,6 +64,22 @@ interface DocumentSnapshot {
     }
     return newSnapshot
   }
+
+  /**
+   * Returns [metadata] if it still has this snapshot's text, otherwise returns this snapshot unchanged
+   * and drops [metadata] entirely.
+   *
+   * This is how a document mutator reconciles the snapshot a change was computed against with whatever
+   * snapshot is current at publish time: a metadata-only update that raced the change -- a modification
+   * stamp set from another thread, say -- shares this snapshot's text, so [metadata] survives and is taken
+   * as a whole, sputniks included. But if [metadata]'s text has already moved on to some other change, it
+   * is talking about a text this snapshot no longer has, so it is discarded wholesale -- stamp, sequence,
+   * and sputniks alike -- rather than mixed with this snapshot's own.
+   *
+   * @param metadata latest version of the document
+   */
+  @Contract(pure = true)
+  fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot
 
   /**
    * Returns a human-readable dump of the snapshot state, used for diagnostics only
