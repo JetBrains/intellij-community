@@ -252,8 +252,14 @@ object DebouncedUpdates {
      * Adds the modality state derived from the given component to the current context.
      * The modality state is combined with any previously set context.
      *
+     * The modality state is resolved right before every dispatch, not when the queue is created:
+     * a queue is usually created in a constructor, when the component has no window yet and therefore
+     * reports [ModalityState.nonModal].
+     *
      * Call `withContext()` first to set the dispatcher (e.g., Dispatchers.EDT), then call this method
      * to add the component's modality state.
+     *
+     * The component is retained for the lifetime of the queue, so the scope of the queue must not outlive it.
      *
      * Example:
      * ```kotlin
@@ -374,6 +380,7 @@ object DebouncedUpdates {
 
     private var context: CoroutineContext = EmptyCoroutineContext
     private var restartTimerOnAdd: Boolean = false
+    private var modalityComponent: JComponent? = null
 
     override fun withContext(context: CoroutineContext): ScopeBuilderImpl<T> {
       this.context = context
@@ -381,7 +388,7 @@ object DebouncedUpdates {
     }
 
     override fun withComponentModality(component: JComponent): ScopeBuilderImpl<T> {
-      this.context += ModalityState.stateForComponent(component).asContextElement()
+      this.modalityComponent = component
       return this
     }
 
@@ -392,7 +399,7 @@ object DebouncedUpdates {
 
     @JvmSynthetic
     override fun runLatest(action: suspend (T) -> Unit): UpdateQueue<T> {
-      return SingleScopeQueue(scope, name, delay, context, restartTimerOnAdd, action)
+      return SingleScopeQueue(scope, name, delay, context, restartTimerOnAdd, action, modalityComponent)
     }
 
     override fun runLatest(action: Consumer<T>): UpdateQueue<T> {
@@ -401,7 +408,7 @@ object DebouncedUpdates {
 
     @JvmSynthetic
     override fun runBatched(action: suspend (List<T>) -> Unit): UpdateQueue<T> {
-      return BatchedScopeQueue(scope, name, delay, context, restartTimerOnAdd, action)
+      return BatchedScopeQueue(scope, name, delay, context, restartTimerOnAdd, action, modalityComponent)
     }
 
     override fun runBatched(action: Consumer<List<T>>): UpdateQueue<T> {
@@ -410,7 +417,7 @@ object DebouncedUpdates {
 
     @JvmSynthetic
     override fun runBatchedDistinct(action: suspend (Set<T>) -> Unit): UpdateQueue<T> {
-      return BatchedDistinctScopeQueue(scope, name, delay, context, restartTimerOnAdd, action)
+      return BatchedDistinctScopeQueue(scope, name, delay, context, restartTimerOnAdd, action, modalityComponent)
     }
 
     override fun runBatchedDistinct(action: Consumer<Set<T>>): UpdateQueue<T> {
@@ -690,6 +697,10 @@ private abstract class BaseUpdateQueue<T>(
    * @param onPrepare Called to prepare the batch after delay expires. Runs in the collector coroutine to ensure happens-before.
    * @param onProcess Called to process the prepared batch. Runs in a separate coroutine with the specified context.
    * @param onCancel Called instead of [onPrepare] when [cancelPending] invalidated the collected items. Should discard them.
+   * @param modalityComponent If not null, the modality state of this component is resolved right before every
+   *                          dispatch and added to [context]. Resolving it once upfront would be wrong: a queue is
+   *                          usually created in a constructor, when the component has no window yet and therefore
+   *                          reports [ModalityState.nonModal].
    */
   protected suspend fun <R> processWithDelay(
     delay: Duration,
@@ -698,7 +709,8 @@ private abstract class BaseUpdateQueue<T>(
     onReceive: (T) -> Unit,
     onPrepare: () -> R,
     onProcess: suspend (R) -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    modalityComponent: JComponent? = null
   ) {
     while (true) {
       // Wait for sync signal that indicates an item was queued
@@ -775,10 +787,13 @@ private abstract class BaseUpdateQueue<T>(
       // Prepare the data in the current coroutine (ensures happens-before with onReceive)
       val data = onPrepare()
 
+      val dispatchContext = if (modalityComponent == null) context
+      else context + ModalityState.stateForComponent(modalityComponent).asContextElement()
+
       // Process the data in a separate coroutine
       supervisorScope {
         val job = launch(CoroutineExceptionHandler { _, e -> logger<DebouncedUpdates>().error(e) }) {
-          withContext(context) {
+          withContext(dispatchContext) {
             onProcess(data)
           }
         }
@@ -803,7 +818,8 @@ private abstract class BaseUpdateQueue<T>(
     delay: Duration,
     context: CoroutineContext,
     restartTimerOnAdd: Boolean,
-    action: suspend (T) -> Unit
+    action: suspend (T) -> Unit,
+    modalityComponent: JComponent? = null
   ) {
     var latestItem: T? = null
 
@@ -820,7 +836,8 @@ private abstract class BaseUpdateQueue<T>(
         action(item)
         latestItem = null
       },
-      onCancel = { latestItem = null }
+      onCancel = { latestItem = null },
+      modalityComponent = modalityComponent
     )
   }
 
@@ -831,7 +848,8 @@ private abstract class BaseUpdateQueue<T>(
     delay: Duration,
     context: CoroutineContext,
     restartTimerOnAdd: Boolean,
-    action: suspend (List<T>) -> Unit
+    action: suspend (List<T>) -> Unit,
+    modalityComponent: JComponent? = null
   ) {
     val buffer = mutableListOf<T>()
 
@@ -846,7 +864,8 @@ private abstract class BaseUpdateQueue<T>(
         batch
       },
       onProcess = { batch -> action(batch) },
-      onCancel = { buffer.clear() }
+      onCancel = { buffer.clear() },
+      modalityComponent = modalityComponent
     )
   }
 
@@ -857,7 +876,8 @@ private abstract class BaseUpdateQueue<T>(
     delay: Duration,
     context: CoroutineContext,
     restartTimerOnAdd: Boolean,
-    action: suspend (Set<T>) -> Unit
+    action: suspend (Set<T>) -> Unit,
+    modalityComponent: JComponent? = null
   ) {
     val buffer = HashSet<T>()
 
@@ -872,7 +892,8 @@ private abstract class BaseUpdateQueue<T>(
         batch
       },
       onProcess = { batch -> action(batch) },
-      onCancel = { buffer.clear() }
+      onCancel = { buffer.clear() },
+      modalityComponent = modalityComponent
     )
   }
 }
@@ -887,11 +908,12 @@ private class SingleScopeQueue<T>(
   delay: Duration,
   context: CoroutineContext,
   restartTimerOnAdd: Boolean,
-  action: suspend (T) -> Unit
+  action: suspend (T) -> Unit,
+  modalityComponent: JComponent?
 ) : BaseUpdateQueue<T>(name, context, channelCapacity = 1) {
 
   override val job: Job = scope.launch(CoroutineName(name)) {
-    processLatest(delay, context, restartTimerOnAdd, action)
+    processLatest(delay, context, restartTimerOnAdd, action, modalityComponent)
   }
 }
 
@@ -905,11 +927,12 @@ private class BatchedScopeQueue<T>(
   delay: Duration,
   context: CoroutineContext,
   restartTimerOnAdd: Boolean,
-  action: suspend (List<T>) -> Unit
+  action: suspend (List<T>) -> Unit,
+  modalityComponent: JComponent?
 ) : BaseUpdateQueue<T>(name, context, channelCapacity = Channel.UNLIMITED) {
 
   override val job: Job = scope.launch(CoroutineName(name)) {
-    processBatched(delay, context, restartTimerOnAdd, action)
+    processBatched(delay, context, restartTimerOnAdd, action, modalityComponent)
   }
 }
 
@@ -1048,10 +1071,11 @@ private class BatchedDistinctScopeQueue<T>(
   delay: Duration,
   context: CoroutineContext,
   restartTimerOnAdd: Boolean,
-  action: suspend (Set<T>) -> Unit
+  action: suspend (Set<T>) -> Unit,
+  modalityComponent: JComponent?
 ) : BaseUpdateQueue<T>(name, context, channelCapacity = Channel.UNLIMITED) {
 
   override val job: Job = scope.launch(CoroutineName(name)) {
-    processBatchedDistinct(delay, context, restartTimerOnAdd, action)
+    processBatchedDistinct(delay, context, restartTimerOnAdd, action, modalityComponent)
   }
 }

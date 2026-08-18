@@ -1227,6 +1227,35 @@ class DebouncedUpdatesTest {
     }
   }
 
+  @Test
+  fun `test the modality component is not retained after the scope is cancelled`() {
+    timeoutRunBlocking {
+      // The component is stored by the queue to resolve its modality state on every dispatch,
+      // so it must be released together with the queue.
+      class ModalityComponent : JLabel()
+
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+      val executedValues = CopyOnWriteArrayList<Int>()
+
+      val queue = DebouncedUpdates.forScope<Int>(scope, "test-modality-retention", 50.milliseconds)
+        .withContext(Dispatchers.EDT)
+        .withComponentModality(ModalityComponent())
+        .runLatest { value ->
+          executedValues.add(value)
+        }
+
+      queue.queue(1)
+      assertEquals(listOf(1), awaitValue(listOf(1)) { executedValues.toList() })
+
+      scope.cancel()
+      delay(100.milliseconds)
+
+      // The queue itself keeps the component until it is collected, but nothing must keep the queue:
+      // once the scope is cancelled, the component is reachable neither from the scope nor from its jobs.
+      LeakHunter.checkLeak(scope, ModalityComponent::class.java)
+    }
+  }
+
   private fun edtTest(block: suspend CoroutineScope.() -> Unit) {
     timeoutRunBlocking(timeout = 30.seconds) {
       withForcedRespectIsShowingClientProperty {
