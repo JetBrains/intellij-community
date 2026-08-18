@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -1033,6 +1034,22 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     RangeMarker marker = document.createRangeMarker(0, 1);
     LeakHunter.checkLeak(marker, Document.class, _ -> true);
+  }
+
+  public void testRangeMarkerUserDataIsAvailableWhenProcessingOverlappingMarkers() {
+    RangeMarker marker = createMarker("0123456789", 2, 5);
+    Key<Object> key = Key.create("range.marker.test.data");
+    Object value = new Object();
+    marker.putUserData(key, value);
+
+    Ref<RangeMarker> processedMarker = new Ref<>();
+    assertTrue(((DocumentEx)document).processRangeMarkersOverlappingWith(2, 5, candidate -> {
+      processedMarker.set(candidate);
+      return true;
+    }));
+
+    assertNotNull(processedMarker.get());
+    assertSame(value, processedMarker.get().getUserData(key));
   }
 
   public void testRangeMarkersAreGarbageCollectableAndWhenTheyHaveTheyLeaveNoTracesInDocumentEvenTheirIds() {
