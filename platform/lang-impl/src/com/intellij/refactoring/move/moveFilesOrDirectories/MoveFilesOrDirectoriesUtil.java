@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -14,25 +14,33 @@ import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.IoErrorText;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -354,5 +362,77 @@ public final class MoveFilesOrDirectoriesUtil {
       }
       container = container.getParent();
     }
+  }
+
+  /**
+   * Searches for usages of the elements to move in the target directory.
+   */
+  public static @NotNull UsagesContext findUsages(@NotNull Project project,
+                                                  @NotNull PsiElement @NotNull [] elementsToMove,
+                                                  @NotNull PsiDirectory target,
+                                                  boolean isSearchForReference,
+                                                  boolean isSearchForComments,
+                                                  boolean isSearchForNonJavaFiles) {
+    UsagesContext context = new UsagesContext(
+      new ArrayList<>(),
+      new HashMap<>()
+    );
+    for (PsiElement element : elementsToMove) {
+      if (isSearchForReference) {
+        for (PsiReference reference : ReferencesSearch.search(element, GlobalSearchScope.projectScope(project)).asIterable()) {
+          context.allUsages().add(new MovedFileOrDirectoryUsageInfo(reference, element));
+        }
+      }
+      findElementUsages(context, element, target, isSearchForReference, isSearchForComments, isSearchForNonJavaFiles);
+    }
+    return context;
+  }
+
+  private static void findElementUsages(UsagesContext context,
+                                        @NotNull PsiElement element,
+                                        @NotNull PsiDirectory target,
+                                        boolean isSearchForReference,
+                                        boolean isSearchForComments,
+                                        boolean isSearchForNonJavaFiles) {
+    if (!isSearchForReference) {
+      return;
+    }
+    if (element instanceof PsiFile) {
+      final List<UsageInfo> usages = MoveFileHandler.forElement((PsiFile)element)
+        .findUsages((PsiFile)element, target, isSearchForComments, isSearchForNonJavaFiles);
+      if (usages != null) {
+        context.allUsages().addAll(usages);
+        context.classifiedUsages().put((PsiFile)element, usages);
+      }
+    }
+    else if (element instanceof PsiDirectory) {
+      for (PsiElement childElement : element.getChildren()) {
+        findElementUsages(context, childElement, target, isSearchForReference, isSearchForComments, isSearchForNonJavaFiles);
+      }
+    }
+  }
+
+  /**
+   * Represents usages collected in {@link findUsages}.
+   * @param allUsages all usages that participate in conflict detection
+   * @param classifiedUsages code usages grouped by the file that contains them
+   */
+  public record UsagesContext(@NotNull List<UsageInfo> allUsages, @NotNull Map<PsiFile, @Unmodifiable List<UsageInfo>> classifiedUsages) {
+  }
+
+  // TODO: this class code be possibly private
+  @ApiStatus.Internal
+  static final class MovedFileOrDirectoryUsageInfo extends UsageInfo {
+    final PsiElement myTarget;
+    final PsiReference myReference;
+
+    MovedFileOrDirectoryUsageInfo(@NotNull PsiReference reference, @NotNull PsiElement target) {
+      super(reference);
+      myReference = reference;
+      myTarget = target;
+    }
+
+    public PsiElement getTarget() { return myTarget; }
+    public PsiReference getUpdatedReference() { return myReference; }
   }
 }

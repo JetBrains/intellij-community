@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.EditorHelper;
@@ -16,12 +16,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -36,7 +33,6 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -101,36 +97,15 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected UsageInfo @NotNull [] findUsages() {
-    List<UsageInfo> result = new ArrayList<>();
-    for (PsiElement element : myElementsToMove) {
-      if (mySearchForReferences) {
-        for (PsiReference reference : ReferencesSearch.search(element, GlobalSearchScope.projectScope(myProject)).asIterable()) {
-          result.add(new MovedFileOrDirectoryUsageInfo(reference, element));
-        }
-      }
-      findElementUsages(result, element);
-    }
+    MoveFilesOrDirectoriesUtil.UsagesContext context = MoveFilesOrDirectoriesUtil.findUsages(myProject,
+                                                                                             myElementsToMove,
+                                                                                             myNewParent,
+                                                                                             mySearchForReferences,
+                                                                                             mySearchInComments,
+                                                                                             mySearchInNonJavaFiles);
 
-    return result.toArray(UsageInfo.EMPTY_ARRAY);
-  }
-
-  private void findElementUsages(@NotNull List<? super UsageInfo> result, @NotNull PsiElement element) {
-    if (!mySearchForReferences) {
-      return;
-    }
-    if (element instanceof PsiFile) {
-      final List<UsageInfo> usages = MoveFileHandler.forElement((PsiFile)element)
-        .findUsages((PsiFile)element, myNewParent, mySearchInComments, mySearchInNonJavaFiles);
-      if (usages != null) {
-        result.addAll(usages);
-        myFoundUsages.put((PsiFile)element, usages);
-      }
-    }
-    else if (element instanceof PsiDirectory) {
-      for (PsiElement childElement : element.getChildren()) {
-        findElementUsages(result, childElement);
-      }
-    }
+    myFoundUsages.putAll(context.classifiedUsages());
+    return context.allUsages().toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @Override
@@ -349,7 +324,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
   protected void retargetUsages(UsageInfo @NotNull [] usages, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
     for (UsageInfo usageInfo : usages) {
-      if (usageInfo instanceof MovedFileOrDirectoryUsageInfo info) {
+      if (usageInfo instanceof MoveFilesOrDirectoriesUtil.MovedFileOrDirectoryUsageInfo info) {
         PsiElement element = info.myTarget;
 
         if (info.getReference() instanceof FileReference || info.getReference() instanceof PsiDynaReference) {
@@ -379,20 +354,5 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   protected boolean shouldDisableAccessChecks() {
     // No need to check access for files before move
     return true;
-  }
-
-  @ApiStatus.Internal
-  protected static final class MovedFileOrDirectoryUsageInfo extends UsageInfo {
-    private final PsiElement myTarget;
-    final PsiReference myReference;
-
-    MovedFileOrDirectoryUsageInfo(@NotNull PsiReference reference, @NotNull PsiElement target) {
-      super(reference);
-      myReference = reference;
-      myTarget = target;
-    }
-
-    public PsiElement getTarget() { return myTarget; }
-    public PsiReference getUpdatedReference() { return myReference; }
   }
 }
