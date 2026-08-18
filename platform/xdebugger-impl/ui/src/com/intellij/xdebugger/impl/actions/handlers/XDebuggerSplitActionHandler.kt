@@ -25,7 +25,7 @@ abstract class XDebuggerSplitActionHandler : DebuggerActionHandler() {
 
   override fun perform(project: Project, event: AnActionEvent) {
     val session = DebuggerUIUtil.getSessionProxy(event) ?: return
-    perform(session, event.dataContext)
+    perform(session, event)
   }
 
   override fun isEnabled(project: Project, event: AnActionEvent): Boolean {
@@ -36,5 +36,5 @@ abstract class XDebuggerSplitActionHandler : DebuggerActionHandler() {
 
   protected abstract fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean
 
-  protected abstract fun perform(session: XDebugSessionProxy, dataContext: DataContext)
+  protected abstract fun perform(session: XDebugSessionProxy, event: AnActionEvent)
 }

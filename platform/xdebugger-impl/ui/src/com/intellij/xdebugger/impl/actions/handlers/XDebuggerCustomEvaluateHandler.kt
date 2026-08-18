@@ -4,8 +4,6 @@ package com.intellij.xdebugger.impl.actions.handlers
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -15,7 +13,6 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomEvaluateHandler.Companion.EP_NAME
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -47,8 +44,7 @@ internal fun getAvailableCustomEvaluateHandler(project: Project, event: AnAction
 }
 
 internal fun XDebuggerCustomEvaluateHandler.showCustomEvaluateDialog(project: Project, event: AnActionEvent) {
-  val cs = project.service<XDebuggerCustomEvaluateHandlerProjectCoroutineScope>().cs
-  cs.launch {
+  event.coroutineScope.launch {
     withContext(Dispatchers.EDT) {
       val disposable = Disposer.newDisposable()
       val data = createEvaluationDialogData(disposable, project, event) ?: run {
@@ -70,6 +66,3 @@ data class CustomEvaluationDialogData(
   val sourcePosition: XSourcePosition?,
   val isCodeFragmentEvaluationSupported: Boolean,
 )
-
-@Service(Service.Level.PROJECT)
-private class XDebuggerCustomEvaluateHandlerProjectCoroutineScope(val project: Project, val cs: CoroutineScope)

@@ -55,13 +55,14 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSplitActionHandler 
   }
 
   @Override
-  protected void perform(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
+  protected void perform(@NotNull XDebugSessionProxy session, @NotNull AnActionEvent event) {
     final XDebuggerEditorsProvider editorsProvider = session.getEditorsProvider();
     final XStackFrame stackFrame = session.getCurrentStackFrame();
     final XDebuggerEvaluator evaluator = session.getCurrentEvaluator();
     if (evaluator == null) {
       return;
     }
+    DataContext dataContext = event.getDataContext();
     DataContext focusedDataContext = extractFocusedDataContext(dataContext);
     if (focusedDataContext != null) {
       dataContext = focusedDataContext;

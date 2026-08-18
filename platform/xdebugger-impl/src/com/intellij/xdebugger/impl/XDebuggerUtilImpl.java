@@ -339,7 +339,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
    * @see DebuggerAsyncActionUtilsKt#performDebuggerActionAsync
    */
   public static void performDebuggerAction(@NotNull AnActionEvent e, @NotNull Runnable action) {
-    DebuggerAsyncActionUtilsKt.performDebuggerAction(e.getProject(), e.getDataContext(), () -> {
+    DebuggerAsyncActionUtilsKt.performDebuggerAction(e, () -> {
       action.run();
       return Unit.INSTANCE;
     });

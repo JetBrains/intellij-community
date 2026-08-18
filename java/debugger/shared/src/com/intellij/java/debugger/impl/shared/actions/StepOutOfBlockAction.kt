@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 internal class StepOutOfBlockAction : AnAction(), DumbAware, SplitDebuggerAction {
   override fun actionPerformed(e: AnActionEvent) {
     val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return
-    sessionProxy.coroutineScope.launch {
+    e.coroutineScope.launch {
       JavaDebuggerSessionApi.getInstance().stepOutOfCodeBlock(sessionProxy.id)
     }
   }

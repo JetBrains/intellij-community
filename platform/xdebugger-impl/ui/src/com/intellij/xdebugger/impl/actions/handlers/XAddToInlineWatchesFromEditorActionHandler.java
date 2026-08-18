@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions.handlers;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -25,7 +26,8 @@ public class XAddToInlineWatchesFromEditorActionHandler extends XDebuggerSplitAc
   }
 
   @Override
-  protected void perform(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
+  protected void perform(@NotNull XDebugSessionProxy session, @NotNull AnActionEvent event) {
+    DataContext dataContext = event.getDataContext();
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return;
 

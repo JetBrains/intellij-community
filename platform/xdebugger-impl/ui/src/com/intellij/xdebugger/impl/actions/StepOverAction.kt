@@ -20,8 +20,8 @@ open class StepOverAction : XDebuggerActionBase(), DumbAware, SplitDebuggerActio
 }
 
 private val ourHandler = object : XDebuggerProxySuspendedActionHandler() {
-  override fun perform(session: XDebugSessionProxy, dataContext: DataContext) {
-    performDebuggerActionAsync(session.project, dataContext) {
+  override fun perform(session: XDebugSessionProxy, event: AnActionEvent) {
+    performDebuggerActionAsync(event) {
       session.stepOver(ignoreBreakpoints = false)
     }
   }

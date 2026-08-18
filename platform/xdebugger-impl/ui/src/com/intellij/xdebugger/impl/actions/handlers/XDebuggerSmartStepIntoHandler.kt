@@ -13,6 +13,7 @@ import com.intellij.ide.rpc.util.textRange
 import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT
@@ -100,8 +101,8 @@ internal open class XDebuggerSmartStepIntoHandler : XDebuggerProxySuspendedActio
     return super.isEnabled(session, dataContext) && session.smartStepIntoHandlerEntry != null
   }
 
-  override fun perform(session: XDebugSessionProxy, dataContext: DataContext) {
-    performDebuggerActionAsync(session.project, dataContext) {
+  override fun perform(session: XDebugSessionProxy, event: AnActionEvent) {
+    performDebuggerActionAsync(event) {
       val position = session.getTopFramePosition()
       if (position != null) {
         val editor = FileEditorManager.getInstance(session.project).getSelectedEditor(position.getFile())
@@ -558,4 +559,3 @@ private fun shouldShowElementDescription(editor: Editor): Boolean {
 
 private val SMART_STEP_INPLACE_DATA = Key.create<SmartStepData?>("SMART_STEP_INPLACE_DATA")
 private val SMART_STEP_HINT_DATA = Key.create<Hint?>("SMART_STEP_HINT_DATA")
-
