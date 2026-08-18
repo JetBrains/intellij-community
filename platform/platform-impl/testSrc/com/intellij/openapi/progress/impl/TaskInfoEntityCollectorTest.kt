@@ -14,6 +14,10 @@ import com.jetbrains.rhizomedb.entities
 import com.jetbrains.rhizomedb.exists
 import fleet.kernel.change
 import fleet.util.UID
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -23,14 +27,15 @@ import kotlin.time.Duration.Companion.seconds
  * Pins down why [TaskInfoEntity.projectId] is a plain value and not a ref to [ProjectEntity]:
  * a project's entity may legitimately be deleted and re-created with the same id (both peers create
  * one; in IJ Light the id is re-bound on connect), and a `CASCADE_DELETE_BY` ref silently wiped the
- * tasks on every such replacement. Cleanup is explicit instead — see [removeTasksForUnregisteredProjects].
+ * tasks on every such replacement. Cleanup is explicit instead — see [collectStaleProjectTasks] and
+ * the [removeTasksForUnregisteredProjects] decision it drives.
  */
 @TestApplication
 @Suppress("DEPRECATION")
 internal class TaskInfoEntityCollectorTest {
 
   @Test
-  fun `removes task info entities when project entity is removed`(): Unit = runBlocking {
+  fun `the collector removes task info entities once the project entity is gone`(): Unit = runBlocking {
     withKernel {
       registerEntityTypes()
 
@@ -38,21 +43,18 @@ internal class TaskInfoEntityCollectorTest {
       val projectEntity = createProjectEntity(projectId)
       val taskInfoEntity = createTaskInfoEntity(projectId)
 
-      assertTrue(taskInfoEntity.exists())
+      withCollector {
+        change { projectEntity.delete() }
 
-      change {
-        projectEntity.delete()
-      }
-      removeTasksForUnregisteredProjects(setOf(projectId))
-
-      waitUntil("TaskInfoEntity should be removed after ProjectEntity deregistration", timeout = 5.seconds) {
-        !taskInfoEntity.exists() && entities(TaskInfoEntity.ProjectIdType, projectId).isEmpty()
+        waitUntil("TaskInfoEntity should be removed after ProjectEntity deregistration", timeout = TIMEOUT) {
+          !taskInfoEntity.exists() && entities(TaskInfoEntity.ProjectIdType, projectId).isEmpty()
+        }
       }
     }
   }
 
   @Test
-  fun `keeps task info entities when project entity is replaced with the same id`(): Unit = runBlocking {
+  fun `the collector keeps task info entities when the project entity is replaced with the same id`(): Unit = runBlocking {
     withKernel {
       registerEntityTypes()
 
@@ -60,9 +62,36 @@ internal class TaskInfoEntityCollectorTest {
       val projectEntity = createProjectEntity(projectId)
       val taskInfoEntity = createTaskInfoEntity(projectId)
 
-      assertTrue(taskInfoEntity.exists())
+      withCollector {
+        // one transaction: the collector sees the old entity retracted and the new one asserted together
+        val replacement = change {
+          projectEntity.delete()
+          ProjectEntity.new {
+            it[ProjectEntity.ProjectIdValue] = projectId
+          }
+        }
 
-      val replacementProjectEntity = change {
+        // there is nothing to wait for here — an unwanted removal can only be observed by not happening,
+        // so drive a second, unambiguous change through the collector and assert the task outlived both
+        change { replacement.delete() }
+
+        waitUntil("TaskInfoEntity should be removed after the replacement ProjectEntity is removed", timeout = TIMEOUT) {
+          !taskInfoEntity.exists()
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `tasks of a project whose entity was replaced under the same id are not removed`(): Unit = runBlocking {
+    withKernel {
+      registerEntityTypes()
+
+      val projectId = newProjectId()
+      val projectEntity = createProjectEntity(projectId)
+      val taskInfoEntity = createTaskInfoEntity(projectId)
+
+      change {
         projectEntity.delete()
         ProjectEntity.new {
           it[ProjectEntity.ProjectIdValue] = projectId
@@ -71,14 +100,24 @@ internal class TaskInfoEntityCollectorTest {
       removeTasksForUnregisteredProjects(setOf(projectId))
 
       assertTrue(taskInfoEntity.exists(), "TaskInfoEntity should survive same-id ProjectEntity replacement")
+    }
+  }
 
-      change {
-        replacementProjectEntity.delete()
+  /**
+   * Runs [body] with [collectStaleProjectTasks] observing the DB.
+   *
+   * [CoroutineStart.UNDISPATCHED] is what makes this deterministic: the collector runs up to its first
+   * real suspension — that is, past subscribing to `ProjectEntity.each()` — before [body] gets to change
+   * anything. A dispatched start could queue behind the change and miss the entity it is supposed to track.
+   */
+  private suspend fun withCollector(body: suspend () -> Unit) {
+    coroutineScope {
+      val collector: Job = launch(start = CoroutineStart.UNDISPATCHED) { collectStaleProjectTasks() }
+      try {
+        body()
       }
-      removeTasksForUnregisteredProjects(setOf(projectId))
-
-      waitUntil("TaskInfoEntity should be removed after the replacement ProjectEntity is removed", timeout = 5.seconds) {
-        !taskInfoEntity.exists() && entities(TaskInfoEntity.ProjectIdType, projectId).isEmpty()
+      finally {
+        collector.cancel()
       }
     }
   }
@@ -113,3 +152,5 @@ internal class TaskInfoEntityCollectorTest {
     }
   }
 }
+
+private val TIMEOUT = 10.seconds

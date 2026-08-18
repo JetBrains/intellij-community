@@ -46,7 +46,7 @@ internal class TaskInfoEntityCollector(cs: CoroutineScope) {
   init {
     LOG.trace { "TaskInfoEntityCollector started for application"}
     collectActiveTasks(cs, project = null)
-    collectStaleProjectTasks(cs)
+    cs.launch { collectStaleProjectTasks() }
   }
 }
 
@@ -75,25 +75,23 @@ private fun collectActiveTasks(cs: CoroutineScope, project: Project?) {
  * (both peers create one; in IJ Light the id itself is re-bound on connect), which used to trip the
  * cascade delete and silently wipe the tasks.
  */
-private fun collectStaleProjectTasks(cs: CoroutineScope) {
-  cs.launch {
-    val projectIdsByEntity = mutableMapOf<EID, ProjectId>()
-    ProjectEntity.each().tokenSetsFlow().collect { tokenSet ->
-      val removedProjectIds = tokenSet.retracted
-        .map { it.value }
-        .mapNotNull { projectEntity ->
-          projectIdsByEntity.remove(projectEntity.eid)
-        }.toSet()
+internal suspend fun collectStaleProjectTasks() {
+  val projectIdsByEntity = mutableMapOf<EID, ProjectId>()
+  ProjectEntity.each().tokenSetsFlow().collect { tokenSet ->
+    val removedProjectIds = tokenSet.retracted
+      .map { it.value }
+      .mapNotNull { projectEntity ->
+        projectIdsByEntity.remove(projectEntity.eid)
+      }.toSet()
 
-      tokenSet.asserted
-        .map { it.value }
-        .filter { it.exists() }
-        .forEach { projectEntity ->
-          projectIdsByEntity[projectEntity.eid] = projectEntity.projectId
-        }
+    tokenSet.asserted
+      .map { it.value }
+      .filter { it.exists() }
+      .forEach { projectEntity ->
+        projectIdsByEntity[projectEntity.eid] = projectEntity.projectId
+      }
 
-      removeTasksForUnregisteredProjects(removedProjectIds)
-    }
+    removeTasksForUnregisteredProjects(removedProjectIds)
   }
 }
 
