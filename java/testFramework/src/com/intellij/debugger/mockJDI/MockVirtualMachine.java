@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -60,6 +61,15 @@ public class MockVirtualMachine implements VirtualMachine {
   private final MockType myVoidType = new MockVoidType(this);
   private final Map<Class, ClassReader> myClass2Reader = new HashMap<>();
   private final List<ThreadReference> myThreads = Collections.singletonList(new MockThreadReference(this, Thread.currentThread()));
+  private final EventRequestManager myEventRequestManager = (EventRequestManager)Proxy.newProxyInstance(
+    EventRequestManager.class.getClassLoader(),
+    new Class<?>[]{EventRequestManager.class},
+    (_, method, _) -> {
+      if (method.getName().equals("stepRequests")) {
+        return Collections.emptyList();
+      }
+      throw new UnsupportedOperationException("Not implemented: \"" + method.getName() + "\" in " + getClass().getName());
+    });
 
   public MockVirtualMachine() {
   }
@@ -129,7 +139,7 @@ public class MockVirtualMachine implements VirtualMachine {
 
   @Override
   public EventRequestManager eventRequestManager() {
-    throw new UnsupportedOperationException("Not implemented: \"eventRequestManager\" in " + getClass().getName());
+    return myEventRequestManager;
   }
 
   @Override
