@@ -1093,7 +1093,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     finally {
       drainWriteActionFollowups()
       writeIntentInitResult.release()
-      if (myWriteActionsStack.isEmpty()) {
+      if (isOutermostWriteAction()) {
         fireAfterWriteActionFinished(writeIntentInitResult.listeners, newlyArrivedListeners, clazz)
       }
     }
@@ -1162,7 +1162,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       if (pendingWriteActionInitiated.get() && !actionStartedSuccessfully.get()) {
         endPendingWriteAction(computationState)
       }
-      if (myWriteActionsStack.isEmpty()) {
+      if (isOutermostWriteAction()) {
         fireAfterWriteActionFinished(frozenListeners, newlyArrivedListeners, clazz)
       }
     }
@@ -1226,7 +1226,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
 
         if (!pendingWriteActionInitiated.get()) {
           startPendingWriteAction(computationState)
-          if (myWriteActionsStack.isEmpty()) {
+          if (isOutermostWriteAction()) {
             fireBeforeWriteActionStart(frozenListeners, clazz)
           }
           pendingWriteActionInitiated.set(true)
@@ -1398,7 +1398,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     if (startPendingWa) {
       startPendingWriteAction(state)
 
-      if (myWriteActionsStack.isEmpty()) {
+      if (isOutermostWriteAction()) {
         fireBeforeWriteActionStart(frozenListeners, clazz)
       }
     }
@@ -1525,6 +1525,18 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       }
     }
   }
+
+  /**
+   * A write action is the outermost one when the write-action stack holds no entries above [myWriteStackBase].
+   *
+   * In the common case [myWriteStackBase] is `0`, so this is equivalent to [myWriteActionsStack] being empty.
+   * During a suspending write action the outer write action is downgraded to a write-intent lock and the base is
+   * advanced past it (see [downgradeWriteLockToWriteIntent]) without popping it from the stack; a write action that
+   * starts inside that window is therefore outermost relative to the base even though the stack is not literally
+   * empty. The outermost-boundary listeners ([fireBeforeWriteActionStart]/[fireAfterWriteActionFinished]) must fire
+   * for it so that write-action-priority reads get cancelled.
+   */
+  private fun isOutermostWriteAction(): Boolean = myWriteActionsStack.size == myWriteStackBase
 
   fun downgradeWriteLockToWriteIntent(): AccessToken {
     val state = getComputationState()
