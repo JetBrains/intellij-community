@@ -2,9 +2,13 @@
 <!--suppress PluginXmlPluginLogo -->
 <idea-plugin>
   <id>intellij.navbar.plugin</id>
-  <name>Navbar</name>
-  <description>Provides Navigation Bar platform modules.</description>
+  <name>Navigation Bar</name>
   <vendor>JetBrains</vendor>
+  <description><![CDATA[
+  The navigation bar is a quick alternative to the Project view, where you can go through the structure of your project,
+  open specific files, and jump to specific code elements in the current file.
+  ]]></description>
+
   <content namespace="jetbrains">
     <module name="intellij.platform.navbar" loading="required"/>
     <module name="intellij.platform.navbar.backend"/>
