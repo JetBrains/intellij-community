@@ -84,9 +84,11 @@ import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.io.IOException
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.util.function.Consumer
 import kotlin.io.path.exists
+import kotlin.io.path.isSameFileAs
 
 @RunWith(Parameterized::class)
 abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
@@ -431,12 +433,18 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
 
     if (EelTestUtil.isLocalRun() && !gradleJarPath.exists()) {
       val localDistributionRoot = getLocalGradleDistributionRoot(currentGradleVersion)
-      if (localDistributionRoot != gradleDistributionRootPath && localDistributionRoot.exists()) {
+      if (localDistributionRoot.exists() && !isSameFile(localDistributionRoot, gradleDistributionRootPath)) {
         gradleDistributionRootPath.delete(true)
         localDistributionRoot.copyRecursively(gradleDistributionRootPath)
       }
     }
     return gradleDistributionRootPath
+  }
+
+  private fun isSameFile(first: Path, second: Path): Boolean {
+    if (first == second) return true
+    if (!first.exists(LinkOption.NOFOLLOW_LINKS) || !second.exists(LinkOption.NOFOLLOW_LINKS)) return false
+    return first.isSameFileAs(second)
   }
 
   private fun tearDownGradleVmOptions() {
