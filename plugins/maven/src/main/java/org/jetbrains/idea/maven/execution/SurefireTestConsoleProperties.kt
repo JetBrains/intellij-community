@@ -12,5 +12,5 @@ internal class SurefireTestConsoleProperties(
 ) : SMTRunnerConsoleProperties(mavenConfiguration, "Maven Surefire", executor) {
 
   override fun createRerunFailedTestsAction(consoleView: ConsoleView): AbstractRerunFailedTestsAction =
-    SurefireRerunFailedTestsAction(consoleView, mavenConfiguration)
+    SurefireRerunFailedTestsAction(consoleView, mavenConfiguration).also { it.init(this) }
 }

@@ -13,28 +13,20 @@ import com.intellij.execution.configurations.RemoteConnection
 import com.intellij.execution.configurations.RemoteConnectionCreator
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunProfileState
-import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.testDiscovery.JvmToggleAutoTestAction
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil
-import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.execution.ui.RunContentManager
 import com.intellij.execution.util.JavaParametersUtil
-import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.idea.maven.project.MavenProjectBundle
+import java.io.OutputStream
 import java.nio.file.Path
-
-private val LOG = logger<MavenSurefireRunConfiguration>()
 
 class MavenSurefireConfigurationFactory(
   private val configurationName: String,
@@ -63,7 +55,7 @@ class MavenSurefireRunConfiguration(
   override fun getState(executor: Executor, env: ExecutionEnvironment): RunProfileState? {
     val delegate = super.getState(executor, env) ?: return null
     val testDir = testModuleDirectory ?: return delegate
-    return SurefireTestRunProfileState(delegate, this, env, executor, testDir)
+    return SurefireTestRunProfileState(delegate, this, executor, testDir)
   }
 
   override fun createRemoteConnectionCreator(javaParameters: JavaParameters): RemoteConnectionCreator {
@@ -100,67 +92,70 @@ class MavenSurefireRunConfiguration(
 private class SurefireTestRunProfileState(
   private val delegate: RunProfileState,
   private val configuration: MavenSurefireRunConfiguration,
-  private val env: ExecutionEnvironment,
   private val executor: Executor,
   private val testModuleDirectory: String,
 ) : RunProfileState {
 
   override fun execute(executor: Executor, runner: ProgramRunner<*>): ExecutionResult? {
-    val result = delegate.execute(executor, runner) ?: return null
-    val processHandler = (result as? DefaultExecutionResult)?.processHandler
-    processHandler?.addProcessListener(object : ProcessListener {
-      override fun processTerminated(event: ProcessEvent) {
-        val messages = SurefireReportParser.collectMessages(Path.of(testModuleDirectory))
-        if (messages.isEmpty()) return
-        ApplicationManager.getApplication().invokeLater {
-          if (env.project.isDisposed) return@invokeLater
-          showTestResults(messages)
-        }
-      }
-    })
+    // Run Maven and discard its BuildView console; we replace it with the SM test runner.
+    val mavenResult = delegate.execute(executor, runner) ?: return null
+    val mavenHandler = (mavenResult as? DefaultExecutionResult)?.processHandler ?: return mavenResult
+
+    val proxy = SurefireProcessProxy(mavenHandler, testModuleDirectory)
+    val properties = SurefireTestConsoleProperties(configuration, this.executor)
+    val console = SMTestRunnerConnectionUtil.createConsole(properties)
+    console.attachToProcess(proxy)
+
+    val rerunAction = properties.createRerunFailedTestsAction(console)
+    rerunAction.setModelProvider { console.resultsViewer }
+
+    val result = DefaultExecutionResult(console, proxy)
+    result.setRestartActions(rerunAction, JvmToggleAutoTestAction())
     return result
   }
+}
 
-  private fun showTestResults(messages: List<String>) {
-    val nopHandler = NopProcessHandler()
-    val properties = SurefireTestConsoleProperties(configuration, executor)
-    val console = SMTestRunnerConnectionUtil.createConsole(properties)
-    console.attachToProcess(nopHandler)
-    nopHandler.startNotify()
-    for (message in messages) {
-      nopHandler.notifyTextAvailable("$message\n", ProcessOutputTypes.STDOUT)
-    }
-    nopHandler.destroyProcess()
+/**
+ * Wraps the Maven [ProcessHandler] to present a unified lifecycle to the SM test runner console.
+ *
+ * - `startNotify()` starts the proxy AND the Maven handler so output begins to flow.
+ * - On Maven termination, surefire reports are parsed and fed as TC service messages before the
+ *   proxy signals its own termination.  This keeps everything in a single Run toolwindow tab.
+ * - `destroyProcess()` / `detachProcess()` delegate to the Maven handler so the Stop button works.
+ */
+private class SurefireProcessProxy(
+  private val mavenHandler: ProcessHandler,
+  private val testModuleDirectory: String,
+) : ProcessHandler() {
 
-    val descriptor = RunContentDescriptor(
-      console, nopHandler, console.component,
-      MavenProjectBundle.message("maven.surefire.test.results"),
-      null, null,
-      arrayOf(RerunAllAction()),
-    )
-    descriptor.executionId = env.executionId
+  init {
+    mavenHandler.addProcessListener(object : ProcessListener {
+      override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+        // Forward Maven build output (compilation, downloading, etc.) to the proxy so it
+        // appears in the SM console.  Text arriving before testSuiteStarted is attributed
+        // to the root "Test Results" node, which is exactly where the user expects it.
+        notifyTextAvailable(event.text, outputType)
+      }
 
-    RunContentManager.getInstance(env.project).showRunContent(executor, descriptor)
+      override fun processTerminated(event: ProcessEvent) {
+        val messages = SurefireReportParser.collectMessages(Path.of(testModuleDirectory))
+        for (message in messages) {
+          notifyTextAvailable("$message\n", ProcessOutputTypes.STDOUT)
+        }
+        notifyProcessTerminated(event.exitCode)
+      }
+    })
   }
 
-  private inner class RerunAllAction : AnAction(
-    MavenProjectBundle.message("maven.surefire.rerun.all"),
-    null,
-    AllIcons.Actions.Rerun,
-  ) {
-    override fun actionPerformed(e: AnActionEvent) {
-      try {
-        val newEnv = ExecutionEnvironmentBuilder(env.project, executor)
-          .runProfile(configuration)
-          .runner(env.runner)
-          .build()
-        env.runner.execute(newEnv)
-      }
-      catch (ex: ExecutionException) {
-        LOG.warn("Failed to rerun Surefire tests", ex)
-      }
-    }
+  override fun startNotify() {
+    super.startNotify()           // fires startNotified on proxy listeners (SM console)
+    mavenHandler.startNotify()    // starts event dispatching on the Maven process
   }
+
+  override fun destroyProcessImpl() = mavenHandler.destroyProcess()
+  override fun detachProcessImpl() = mavenHandler.detachProcess()
+  override fun detachIsDefault(): Boolean = false
+  override fun getProcessInput(): OutputStream? = null
 }
 
 /** Identifies a [MavenRunConfiguration] that runs tests through Maven Surefire. */
