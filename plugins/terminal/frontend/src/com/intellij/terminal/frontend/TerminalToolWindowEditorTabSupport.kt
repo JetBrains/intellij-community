@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabPresentation
 import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabSupport
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.coroutines.flow.throttleLatest
 import com.intellij.terminal.frontend.toolwindow.getTerminalTab
 import com.intellij.terminal.frontend.toolwindow.impl.TerminalTabCloseListenerImpl
 import com.intellij.terminal.frontend.toolwindow.impl.confirmTermination
@@ -34,6 +35,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.TITLE_UPDATE_DELAY
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareFullTitle
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareTitle
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.stateFlow
@@ -84,7 +86,8 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
       emit(buildPresentation())
 
       merge(
-        titleUpdatesFlow(content),
+        titleUpdatesFlow(content)
+          .throttleLatest(TITLE_UPDATE_DELAY),
         content.propertyUpdatesFlow(Content.PROP_ICON),
       ).collect {
         emit(buildPresentation())
