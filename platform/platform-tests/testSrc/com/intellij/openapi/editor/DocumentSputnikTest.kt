@@ -222,7 +222,7 @@ internal class DocumentSputnikTest {
   fun `setSputnik attaches a sputnik visible through the document snapshot`() {
     val document = DocumentImpl("abc")
     val sputnik = TestSputnik()
-    val updated = document.core.mutator().setSputnik(KEY_1, sputnik)
+    val updated = document.core.mutator().setSputnik(KEY_1) { sputnik }
     assertSame(sputnik, updated.sputnik(KEY_1))
     assertSame(updated, document.core.snapshot()) // the returned snapshot is the published one
   }
@@ -230,15 +230,15 @@ internal class DocumentSputnikTest {
   @Test
   fun `setSputnik detaches a sputnik`() {
     val document = DocumentImpl("abc")
-    document.core.mutator().setSputnik(KEY_1, TestSputnik())
-    document.core.mutator().setSputnik(KEY_1, null)
+    document.core.mutator().setSputnik(KEY_1) { TestSputnik() }
+    document.core.mutator().setSputnik(KEY_1) { null }
     assertNull(document.core.snapshot().sputnik(KEY_1))
   }
 
   @Test
   fun `attached sputnik is rebuilt by a document text change`() = runOnEdt {
     val document = DocumentImpl("abc")
-    document.core.mutator().setSputnik(KEY_1, TestSputnik())
+    document.core.mutator().setSputnik(KEY_1) { TestSputnik() }
     val textBefore = document.core.snapshot().text()
     WriteCommandAction.runWriteCommandAction(null) {
       document.insertString(1, "XY")

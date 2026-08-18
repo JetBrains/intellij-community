@@ -45,10 +45,13 @@ internal abstract class DocumentMutatorImpl(
     updateAndGet { it.applyOp(op) }
   }
 
-  override fun <S : DocumentSputnik> setSputnik(key: Key<S>, sputnik: S?): DocumentSnapshot {
+  override fun <S : DocumentSputnik> setSputnik(key: Key<S>, sputnik: (DocumentSnapshot) -> S?): DocumentSnapshot {
     val newOps = DocumentNewOps.getInstance()
-    val op = newOps.createSetSputnikOp(key, sputnik)
-    return updateAndGet { it.applyOp(op) }
+    return updateAndGet { snapshot ->
+      val s = sputnik.invoke(snapshot)
+      val op = newOps.createSetSputnikOp(key, s)
+      snapshot.applyOp(op)
+    }
   }
 
   override fun insertString(

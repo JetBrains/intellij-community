@@ -127,5 +127,14 @@ interface DocumentMutator {
     wholeTextReplaced: Boolean,
   )
 
-  fun <S : DocumentSputnik> setSputnik(key: Key<S>, sputnik: S?): DocumentSnapshot
+  /**
+   * Atomically attaches the sputnik returned by [sputnik] under [key], or detaches it if [sputnik] returns
+   * `null`.
+   *
+   * [sputnik] may be invoked more than once per call -- a lost publish race re-invokes it against the newly
+   * found snapshot -- so it must be pure and side-effect free.
+   *
+   * @see DocumentSnapshot.applyOp
+   */
+  fun <S : DocumentSputnik> setSputnik(key: Key<S>, sputnik: (DocumentSnapshot) -> S?): DocumentSnapshot
 }

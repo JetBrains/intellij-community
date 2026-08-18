@@ -103,7 +103,7 @@ internal abstract class DocumentElfMutator(
     throw UnsupportedOperationException("ElfDocument does not support clearLineFlags yet")
   }
 
-  final override fun <S : DocumentSputnik> setSputnik(key: Key<S>, sputnik: S?): DocumentSnapshot {
+  final override fun <S : DocumentSputnik> setSputnik(key: Key<S>, sputnik: (DocumentSnapshot) -> S?): DocumentSnapshot {
     assertIsInElfScope()
     throw UnsupportedOperationException("ElfDocument does not support setSputnik yet")
   }
