@@ -52,7 +52,7 @@
                             implementationClass="org.jetbrains.kotlin.idea.jvm.k2.scratch.KotlinK2ScratchFileCreationHelper"/>
 
     <fileEditorProvider id="KtsScratchFileEditorProvider"
-                        implementation="org.jetbrains.kotlin.idea.jvm.k2.scratch.K2ScratchFileEditorProvider"/>
+                        implementation="org.jetbrains.kotlin.idea.jvm.k2.scratch.KotlinScratchFileEditorProvider"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileAutoRunner"
                     serviceImplementation="org.jetbrains.kotlin.idea.jvm.k2.scratch.ScratchFileAutoRunnerK2"/>

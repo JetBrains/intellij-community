@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.jvm.k2.scratch
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
+import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -17,9 +18,12 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -34,10 +38,23 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileAutoRunner
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.isKotlinScratch
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputHandler
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchToolWindowHandlerKeeper
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.KtScratchFileEditorProvider
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.ScratchFileEditorWithPreview
 
-internal class K2ScratchFileEditorProvider : KtScratchFileEditorProvider() {
+internal class KotlinScratchFileEditorProvider : AsyncFileEditorProvider, StructureViewFileEditorProvider {
+    private val KTS_SCRATCH_EDITOR_PROVIDER: String = "KtsScratchFileEditorProvider"
+
+    override fun getEditorTypeId(): String = KTS_SCRATCH_EDITOR_PROVIDER
+
+    override fun acceptRequiresReadAction(): Boolean = false
+
+    override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+
+    override fun getStructureViewBuilder(project: Project, file: VirtualFile): StructureViewBuilder? =
+        TextEditorProvider.getInstance().getStructureViewBuilder(project, file)
+
+    override fun createEditor(project: Project, file: VirtualFile): FileEditor =
+        TextEditorProvider.getInstance().createEditor(project, file)
+
     override fun accept(project: Project, file: VirtualFile): Boolean = file.isValid && file.isKotlinScratch
 
     override suspend fun createFileEditor(
@@ -63,13 +80,6 @@ internal class K2ScratchFileEditorProvider : KtScratchFileEditorProvider() {
             val previewEditor = textEditorProvider.getTextEditor(viewer)
             K2ScratchFileEditorWithPreview(scratchFile, mainEditor, previewEditor)
         }
-    }
-
-    override fun createEditor(
-        project: Project,
-        file: VirtualFile
-    ): FileEditor {
-        TODO("suspend createFileEditor should be used")
     }
 }
 
