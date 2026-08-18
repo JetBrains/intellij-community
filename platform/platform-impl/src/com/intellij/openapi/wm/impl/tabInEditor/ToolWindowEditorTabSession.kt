@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 /**
@@ -38,7 +39,9 @@ import javax.swing.JComponent
  * @param coroutineScope the scope owning asynchronous work associated with this session; it is cancelled
  * when the session is closed
  */
-internal class ToolWindowEditorTabSession(
+@ApiStatus.Experimental
+@ApiStatus.Internal
+class ToolWindowEditorTabSession(
   val project: Project,
   val file: ToolWindowEditorTabFile,
   val content: Content,

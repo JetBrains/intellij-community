@@ -39,7 +39,7 @@ class ToolWindowEditorTabManager(
   /**
    * Returns the state of [file] while its tool window content is attached, or `null` if it is not.
    */
-  internal fun getSession(file: ToolWindowEditorTabFile): ToolWindowEditorTabSession? = sessionByFile[file]
+  fun getSession(file: ToolWindowEditorTabFile): ToolWindowEditorTabSession? = sessionByFile[file]
 
   /**
    * Returns the current presentation of [file], or `null` if the file has no attached content yet.

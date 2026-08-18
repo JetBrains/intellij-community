@@ -3,7 +3,9 @@ package com.intellij.terminal.frontend.toolwindow.impl
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -11,7 +13,10 @@ import com.intellij.openapi.project.VetoableProjectManagerListener
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabFile
+import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabManager
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.ui.content.Content
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -95,11 +100,33 @@ internal object TerminalProcessesClosingNotifier : VetoableProjectManagerListene
   }
 
   private fun collectTerminalTabs(project: Project): List<TerminalTabContent> {
+    val contents = getTerminalToolWindowContents(project) + getTerminalEditorTabContents(project)
+    return contents.mapNotNull { it.toTerminalTabContentOrNull() }
+  }
+
+  private fun getTerminalToolWindowContents(project: Project): List<Content> {
     val terminalToolWindow = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID)
                              ?: return emptyList()
     // Use `contentManagerIfCreated` to avoid initializing the tool window if it is not yet created.
-    val contents = terminalToolWindow.contentManagerIfCreated?.contentsRecursively ?: return emptyList()
-    return contents.mapNotNull { it.toTerminalTabContentOrNull() }
+    return terminalToolWindow.contentManagerIfCreated?.contentsRecursively ?: emptyList()
+  }
+
+  private fun getTerminalEditorTabContents(project: Project): List<Content> {
+    // Use `serviceIfCreated` to avoid initializing the services if they are not yet created.
+    val fileEditorManager = project.serviceIfCreated<FileEditorManager>()
+    val editorTabsManager = project.serviceIfCreated<ToolWindowEditorTabManager>()
+    if (fileEditorManager == null || editorTabsManager == null) {
+      // If these services are not yet created, there are definitely no related editor tabs.
+      return emptyList()
+    }
+
+    return fileEditorManager.openFiles
+      .asSequence()
+      .filterIsInstance<ToolWindowEditorTabFile>()
+      .filter { file -> file.toolWindowId == TerminalToolWindowFactory.TOOL_WINDOW_ID }
+      .mapNotNull { file -> editorTabsManager.getSession(file) }
+      .map { session -> session.content }
+      .toList()
   }
 
   private suspend fun collectTabTitlesToConfirm(tabs: List<TerminalTabContent>): List<String> = coroutineScope {
