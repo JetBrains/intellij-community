@@ -44,7 +44,7 @@ UBlockExpression -> UQualifiedReferenceExpression -> SymbolLightSimpleMethod of 
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:setValue) -> USimpleNameReferenceExpression (identifier = setValue) -> PsiMethod:setValue: setValue
     UTypeReferenceExpression (name = kotlin.ranges.ClosedRange<java.lang.Long>) -> USimpleNameReferenceExpression (identifier = ClosedRange) -> KtLightClassForDecompiledDeclaration of PsiFile:ClosedRange.class: ClosedRange
     UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> PsiClass:Long: Long
-    UBinaryExpression (operator = ..) -> USimpleNameReferenceExpression (identifier = ..) -> FUN: rangeTo
+    UBinaryExpression (operator = ..) -> USimpleNameReferenceExpression (identifier = ..) -> FUNCTION: rangeTo
     UBlockExpression -> UQualifiedReferenceExpression -> UastFakeDeserializedSourceLightMethod of contains: contains
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = intRange) -> LightVariableBuilder:intRange: intRange
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to UastFakeDeserializedSourceLightMethod of contains) -> USimpleNameReferenceExpression (identifier = contains) -> UastFakeDeserializedSourceLightMethod of contains: contains
