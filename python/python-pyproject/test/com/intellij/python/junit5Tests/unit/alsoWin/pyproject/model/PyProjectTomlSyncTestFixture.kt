@@ -72,10 +72,17 @@ internal const val BYSTANDER_JAVA = "_bystander_java"
 internal const val BYSTANDER_PYTHON = "_bystander_python"
 
 
-/** Creates a `pyproject.toml` with the given `[project].name` inside this directory. */
+/** Creates or modifies a `pyproject.toml` with the given `[project].name` inside this directory. */
 @RequiresWriteLock
-internal fun VirtualFile.writePyprojectToml(name: String) {
-  createFile(PY_PROJECT_TOML).writeText("[project]\nname = \"$name\"")
+internal fun VirtualFile.writePyprojectTomlWithProject(projectName: String) {
+  writePyprojectToml("[project]\nname = \"$projectName\"")
+}
+
+/** Creates a `pyproject.toml` with the given  [content] this directory. */
+@RequiresWriteLock
+internal fun VirtualFile.writePyprojectToml(content: String) {
+  val tomlFile = findChild(PY_PROJECT_TOML) ?: createFile(PY_PROJECT_TOML)
+  tomlFile.writeText(content)
 }
 
 
@@ -102,8 +109,8 @@ internal fun VirtualFile.convertDirToUvWorkspace(workspaceName: String = name): 
       ]
 
     """.trimIndent())
-  createChildDirectory("", member1Name).writePyprojectToml(member1Name)
-  createChildDirectory("", member2Name).writePyprojectToml(member2Name)
+  createChildDirectory("", member1Name).writePyprojectTomlWithProject(member1Name)
+  createChildDirectory("", member2Name).writePyprojectTomlWithProject(member2Name)
   return listOf(member1Name, member2Name)
 }
 

@@ -26,10 +26,10 @@ internal class PyProjectTomlNamingTest {
   @Test
   fun `duplicate project names get sequential suffixes`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("a").writePyprojectToml("dup")
-      f.root.createDirectory("b").writePyprojectToml("dup")
-      f.root.createDirectory("c").writePyprojectToml("dup")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("a").writePyprojectTomlWithProject("dup")
+      f.root.createDirectory("b").writePyprojectTomlWithProject("dup")
+      f.root.createDirectory("c").writePyprojectTomlWithProject("dup")
     }
 
     f.reloadProject()
@@ -46,8 +46,8 @@ internal class PyProjectTomlNamingTest {
   fun `adding duplicate modules on re-sync does not crash`(): Unit = timeoutRunBlocking(30.seconds) {
     // Initial sync: two modules with unique names
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("first").writePyprojectToml("lib")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("first").writePyprojectTomlWithProject("lib")
     }
 
     f.reloadProject()
@@ -55,8 +55,8 @@ internal class PyProjectTomlNamingTest {
 
     // Add two more modules with the same name as the existing one
     edtWriteAction {
-      f.root.createDirectory("second").writePyprojectToml("lib")
-      f.root.createDirectory("third").writePyprojectToml("lib")
+      f.root.createDirectory("second").writePyprojectTomlWithProject("lib")
+      f.root.createDirectory("third").writePyprojectTomlWithProject("lib")
     }
 
     f.reloadProject()
@@ -71,8 +71,8 @@ internal class PyProjectTomlNamingTest {
   @Test
   fun `renaming a module via pyproject name change works`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("sub").writePyprojectToml("old-name")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("sub").writePyprojectTomlWithProject("old-name")
     }
 
     f.reloadProject()
@@ -90,9 +90,9 @@ internal class PyProjectTomlNamingTest {
   @Test
   fun `renaming a module to an existing duplicate name gets suffix`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("a").writePyprojectToml("alpha")
-      f.root.createDirectory("b").writePyprojectToml("beta")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("a").writePyprojectTomlWithProject("alpha")
+      f.root.createDirectory("b").writePyprojectTomlWithProject("beta")
     }
 
     f.reloadProject()
@@ -118,8 +118,8 @@ internal class PyProjectTomlNamingTest {
   @Test
   fun `renaming sub-module to match root module name gets suffix`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("pythonproject13")
-      f.root.createDirectory("second").writePyprojectToml("pythonproject13x")
+      f.root.writePyprojectTomlWithProject("pythonproject13")
+      f.root.createDirectory("second").writePyprojectTomlWithProject("pythonproject13x")
     }
 
     f.reloadProject()
@@ -143,9 +143,9 @@ internal class PyProjectTomlNamingTest {
   @Test
   fun `swapping module names produces suffixes`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("a").writePyprojectToml("alpha")
-      f.root.createDirectory("b").writePyprojectToml("beta")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("a").writePyprojectTomlWithProject("alpha")
+      f.root.createDirectory("b").writePyprojectTomlWithProject("beta")
     }
 
     f.reloadProject()
@@ -180,9 +180,9 @@ internal class PyProjectTomlNamingTest {
   fun `suffix dropped when duplicates resolved`(): Unit = timeoutRunBlocking(30.seconds) {
     // Initial sync: root + two entries named "dup"
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("a").writePyprojectToml("dup")
-      f.root.createDirectory("b").writePyprojectToml("dup")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("a").writePyprojectTomlWithProject("dup")
+      f.root.createDirectory("b").writePyprojectTomlWithProject("dup")
     }
 
     f.reloadProject()
@@ -228,7 +228,7 @@ internal class PyProjectTomlNamingTest {
 
     // Sync with one pyproject.toml also named "lib"
     edtWriteAction {
-      f.root.writePyprojectToml("lib")
+      f.root.writePyprojectTomlWithProject("lib")
     }
 
     f.reloadProject()
@@ -247,9 +247,9 @@ internal class PyProjectTomlNamingTest {
 
     // Initial sync: root + two pyproject entries named "lib"
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("a").writePyprojectToml("lib")
-      f.root.createDirectory("b").writePyprojectToml("lib")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("a").writePyprojectTomlWithProject("lib")
+      f.root.createDirectory("b").writePyprojectTomlWithProject("lib")
     }
 
     f.reloadProject()

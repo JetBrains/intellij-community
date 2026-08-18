@@ -145,8 +145,8 @@ internal class PyProjectTomlLifecycleTest {
   @Test
   fun `excluded folder pyproject is ignored and restored on un-exclude`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("sub").writePyprojectToml("child")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("sub").writePyprojectTomlWithProject("child")
     }
 
     f.reloadProject()
@@ -211,8 +211,8 @@ internal class PyProjectTomlLifecycleTest {
     }
 
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      libDir.writePyprojectToml("lib")
+      f.root.writePyprojectTomlWithProject("root")
+      libDir.writePyprojectTomlWithProject("lib")
     }
 
     f.reloadProject()
@@ -235,9 +235,9 @@ internal class PyProjectTomlLifecycleTest {
 
     // Create pyproject.toml at same location (adopts "lib") + another module "app"
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      libDir.writePyprojectToml("lib")
-      f.root.createDirectory("app").writePyprojectToml("old-app")
+      f.root.writePyprojectTomlWithProject("root")
+      libDir.writePyprojectTomlWithProject("lib")
+      f.root.createDirectory("app").writePyprojectTomlWithProject("old-app")
     }
 
     f.reloadProject()
@@ -299,9 +299,9 @@ internal class PyProjectTomlLifecycleTest {
 
     // Initial sync: A depends on B
     edtWriteAction {
-      f.root.writePyprojectToml("root")
+      f.root.writePyprojectTomlWithProject("root")
       aDir.createFile(PY_PROJECT_TOML).writeText("[project]\nname = \"A\"\ndependencies = [\"B @ $bUri\"]")
-      bDir.writePyprojectToml("B")
+      bDir.writePyprojectTomlWithProject("B")
     }
 
     f.reloadProject()
@@ -346,8 +346,8 @@ internal class PyProjectTomlLifecycleTest {
   @Test
   fun `source roots and excluded folders relocated to parent on module deletion`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("sub").writePyprojectToml("child")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("sub").writePyprojectTomlWithProject("child")
     }
 
     f.reloadProject()
@@ -392,8 +392,8 @@ internal class PyProjectTomlLifecycleTest {
   @Test
   fun `non-existing source roots and excludes are not relocated on module deletion`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("sub").writePyprojectToml("child")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("sub").writePyprojectTomlWithProject("child")
     }
 
     f.reloadProject()

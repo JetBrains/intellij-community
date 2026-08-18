@@ -22,8 +22,8 @@ internal class PyProjectTomlNameCharactersTest {
   @Test
   fun `plain ascii name flows through unchanged`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("sub").writePyprojectToml("simple_pkg")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("sub").writePyprojectTomlWithProject("simple_pkg")
     }
 
     f.reloadProject()
@@ -37,8 +37,8 @@ internal class PyProjectTomlNameCharactersTest {
   @Test
   fun `dotted name becomes module name with dotted iml`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("sub").writePyprojectToml("my.namespace.pkg")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("sub").writePyprojectTomlWithProject("my.namespace.pkg")
     }
 
     f.reloadProject()
@@ -52,9 +52,9 @@ internal class PyProjectTomlNameCharactersTest {
   @Test
   fun `dash and underscore variants are distinct sibling modules`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("dash").writePyprojectToml("my-pkg")
-      f.root.createDirectory("under").writePyprojectToml("my_pkg")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("dash").writePyprojectTomlWithProject("my-pkg")
+      f.root.createDirectory("under").writePyprojectTomlWithProject("my_pkg")
     }
 
     f.reloadProject()
@@ -69,9 +69,9 @@ internal class PyProjectTomlNameCharactersTest {
   @Test
   fun `case-different names are distinct sibling modules`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("a").writePyprojectToml("Friendly-Bard")
-      f.root.createDirectory("b").writePyprojectToml("friendly-bard")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("a").writePyprojectTomlWithProject("Friendly-Bard")
+      f.root.createDirectory("b").writePyprojectTomlWithProject("friendly-bard")
     }
 
     f.reloadProject()
@@ -86,8 +86,8 @@ internal class PyProjectTomlNameCharactersTest {
   @Test
   fun `unicode name is preserved on disk`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("sub").writePyprojectToml("пакет")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("sub").writePyprojectTomlWithProject("пакет")
     }
 
     f.reloadProject()

@@ -41,14 +41,14 @@ internal class PyProjectTomlRelocationTest {
       val a = f.root.createDirectory("lib-a")
       a.createDirectory("src")
       a.createDirectory(".venv")
-      a.writePyprojectToml("lib-a")
+      a.writePyprojectTomlWithProject("lib-a")
       a
     }
     val libBDir = edtWriteAction {
       val b = f.root.createDirectory("lib-b")
       b.createDirectory("tests")
       b.createDirectory(".cache")
-      b.writePyprojectToml("lib-b")
+      b.writePyprojectTomlWithProject("lib-b")
       b
     }
 
@@ -93,9 +93,9 @@ internal class PyProjectTomlRelocationTest {
   @Test
   fun `source roots in sub-project are relocated to child module`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("parent")
+      f.root.writePyprojectTomlWithProject("parent")
       val sub = f.root.createDirectory("sub")
-      sub.writePyprojectToml("child")
+      sub.writePyprojectTomlWithProject("child")
       sub.createDirectory("src")
     }
 
@@ -113,9 +113,9 @@ internal class PyProjectTomlRelocationTest {
   @Test
   fun `template and resource roots in sub-project are relocated to child module`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("parent")
+      f.root.writePyprojectTomlWithProject("parent")
       val sub = f.root.createDirectory("sub")
-      sub.writePyprojectToml("child")
+      sub.writePyprojectTomlWithProject("child")
       sub.createDirectory("templates")
       sub.createDirectory("resources")
     }
@@ -158,9 +158,9 @@ internal class PyProjectTomlRelocationTest {
   @Test
   fun `excluded folders in sub-project are relocated to child module`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("parent")
+      f.root.writePyprojectTomlWithProject("parent")
       val sub = f.root.createDirectory("sub")
-      sub.writePyprojectToml("child")
+      sub.writePyprojectTomlWithProject("child")
       sub.createDirectory(".venv")
     }
 

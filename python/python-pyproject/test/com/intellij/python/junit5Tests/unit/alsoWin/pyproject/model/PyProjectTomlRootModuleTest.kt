@@ -33,7 +33,7 @@ internal class PyProjectTomlRootModuleTest {
    */
   @Test
   fun `root pyproject moved to subdirectory keeps a module at the project root`(): Unit = timeoutRunBlocking(30.seconds) {
-    edtWriteAction { f.root.writePyprojectToml("root") }
+    edtWriteAction { f.root.writePyprojectTomlWithProject("root") }
 
     f.reloadProject()
     f.assertProjectStructure(ExpectedModule("root", contentRoot = "."))
@@ -51,7 +51,7 @@ internal class PyProjectTomlRootModuleTest {
   /** The root module is created once and only once: repeated syncs must not add a second one nor move it away again. */
   @Test
   fun `module at the project root survives repeated syncs`(): Unit = timeoutRunBlocking(30.seconds) {
-    edtWriteAction { f.root.writePyprojectToml("root") }
+    edtWriteAction { f.root.writePyprojectTomlWithProject("root") }
     f.reloadProject()
     movePyprojectTomlToSubDir()
     repeat(10) {
@@ -69,7 +69,7 @@ internal class PyProjectTomlRootModuleTest {
   /** Deleting the root `pyproject.toml` orphans its module, but the project root must remain a module. */
   @Test
   fun `deleting the root pyproject keeps a plain module at the project root`(): Unit = timeoutRunBlocking(30.seconds) {
-    edtWriteAction { f.root.writePyprojectToml("root") }
+    edtWriteAction { f.root.writePyprojectTomlWithProject("root") }
 
     f.reloadProject()
     f.assertProjectStructure(ExpectedModule("root", contentRoot = "."))
@@ -84,7 +84,7 @@ internal class PyProjectTomlRootModuleTest {
   @Test
   fun `recreated root module gets a suffix when its name is taken`(): Unit = timeoutRunBlocking(30.seconds) {
     f.addNonPyprojectModule(f.root.name, "occupied", JAVA)
-    edtWriteAction { f.root.writePyprojectToml("root") }
+    edtWriteAction { f.root.writePyprojectTomlWithProject("root") }
 
     f.reloadProject()
 
@@ -100,7 +100,7 @@ internal class PyProjectTomlRootModuleTest {
   /** Nothing is invented for a project root that never had a module: only the subdirectory becomes a module. */
   @Test
   fun `no module is invented for a project root that never had one`(): Unit = timeoutRunBlocking(30.seconds) {
-    edtWriteAction { f.root.createDirectory("sub").writePyprojectToml("child") }
+    edtWriteAction { f.root.createDirectory("sub").writePyprojectTomlWithProject("child") }
 
     f.reloadProject()
     f.assertProjectStructure(ExpectedModule("child", contentRoot = "sub"))
