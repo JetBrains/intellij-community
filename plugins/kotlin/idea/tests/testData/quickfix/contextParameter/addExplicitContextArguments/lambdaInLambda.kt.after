@@ -4,7 +4,7 @@
 context(i: Int) fun execute(block: () -> Unit) { block() }
 
 val action = {
-    execute(i = <selection>TODO("Provide Int")</selection>) { println("hello") }
+    execute(i = <selection>TODO("Provide Int") as Int</selection>) { println("hello") }
 }
 
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExplicitContextArgumentFix

@@ -1,11 +1,14 @@
 // "Add explicit context arguments" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
-// DISABLE_K2_ERRORS
-context(x: String, y: Int)
-fun foo2(a: String): String = x + a
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+package app
 
-fun main() {
-    foo2(y = TODO("Provide Int") as Int, x = "Hello", a = "World")
+import lib.Session
+import lib.Tx
+import lib.commit
+
+fun useE() {
+    commit(tx = TODO("Provide Tx") as Tx, session = TODO("Provide Session") as Session)
 }
 
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExplicitContextArgumentFix

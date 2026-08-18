@@ -5,7 +5,7 @@ context(i: Int) fun bar() {}
 
 class MyClass {
     init {
-        bar(i = <selection>TODO("Provide Int")</selection>)
+        bar(i = <selection>TODO("Provide Int") as Int</selection>)
     }
 }
 

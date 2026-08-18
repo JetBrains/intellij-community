@@ -4,6 +4,6 @@
 context(i: Int)
 fun bar(): String = ""
 
-val result = bar(i = <selection>TODO("Provide Int")</selection>)
+val result = bar(i = <selection>TODO("Provide Int") as Int</selection>)
 
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExplicitContextArgumentFix

@@ -320,11 +320,10 @@ internal object NoContextParameterFixFactory {
             if (renameTarget != null) {
                 AddExplicitContextArgumentFix.ContextParameterFix.AddArgumentName(name, renameTarget.index)
             } else {
-                val type = paramSignature.returnType.render(
-                    KaTypeRendererForSource.WITH_SHORT_NAMES,
-                    Variance.INVARIANT
+                AddExplicitContextArgumentFix.ContextParameterFix.Insert(
+                    name = name,
+                    argument = contextArgument(candidateName = null, type = paramSignature.returnType),
                 )
-                AddExplicitContextArgumentFix.ContextParameterFix.Insert(name, type)
             }
         }
 

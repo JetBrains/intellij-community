@@ -1,11 +1,15 @@
-// "Add explicit context arguments" "true"
+// "Add explicit context argument" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
 // DISABLE_K2_ERRORS
-context(x: String, y: Int)
-fun foo2(a: String): String = x + a
+package app
 
-fun main() {
-    foo2(y = TODO("Provide Int") as Int, x = "Hello", a = "World")
+import lib.Tx
+import lib.commit
+
+class Tx
+
+fun useE() {
+    commit(tx = TODO("Provide Tx") as Tx)
 }
 
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExplicitContextArgumentFix

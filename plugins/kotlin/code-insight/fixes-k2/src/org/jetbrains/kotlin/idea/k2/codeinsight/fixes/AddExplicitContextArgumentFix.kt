@@ -5,6 +5,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumentName
@@ -21,7 +22,7 @@ internal class AddExplicitContextArgumentFix(
         val name: Name
 
         data class AddArgumentName(override val name: Name, val argumentIndex: Int) : ContextParameterFix
-        data class Insert(override val name: Name, val type: String) : ContextParameterFix
+        data class Insert(override val name: Name, val argument: ContextArgument) : ContextParameterFix
     }
 
     override fun invoke(
@@ -49,9 +50,9 @@ internal class AddExplicitContextArgumentFix(
         val insertActions = contextParameters.filterIsInstance<ContextParameterFix.Insert>()
         val originalFirstArgument = argumentList.arguments.firstOrNull()
         val anchor = originalFirstArgument ?: argumentList.rightParenthesis
-        insertActions.forEachIndexed { index, (name, type) ->
+        insertActions.forEachIndexed { index, (name, argument) ->
             val newArg = psiFactory.createArgument(
-                expression = psiFactory.createExpression("TODO(\"Provide $type\")"),
+                expression = psiFactory.createExpression(argument.renderExpression()),
                 name = name,
             )
             argumentList.addBefore(newArg, anchor)
@@ -61,7 +62,7 @@ internal class AddExplicitContextArgumentFix(
                 argumentList.addBefore(psiFactory.createComma(), anchor)
             }
         }
-
+        shortenReferences(argumentList)
         argumentList.arguments.firstOrNull()?.getArgumentExpression()?.let { updater.select(it) }
     }
 

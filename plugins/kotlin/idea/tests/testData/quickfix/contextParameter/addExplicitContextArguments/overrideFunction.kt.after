@@ -10,7 +10,7 @@ abstract class Base {
 
 class Derived : Base() {
     override fun foo() {
-        bar(i = <selection>TODO("Provide Int")</selection>)
+        bar(i = <selection>TODO("Provide Int") as Int</selection>)
     }
 }
 

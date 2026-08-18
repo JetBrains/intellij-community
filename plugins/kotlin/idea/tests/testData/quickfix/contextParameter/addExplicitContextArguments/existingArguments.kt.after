@@ -5,7 +5,7 @@ context(i: Int, s: String)
 fun bar(x: Int, y: String): String = ""
 
 fun foo() {
-    bar(i = <selection>TODO("Provide Int")</selection>, s = "hi", 42, "hello")
+    bar(i = <selection>TODO("Provide Int") as Int</selection>, s = "hi", 42, "hello")
 }
 
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExplicitContextArgumentFix

@@ -2897,6 +2897,26 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
         }
 
+        @TestMetadata("explicitMultipleContextTypesFromAnotherPackage.before.Main.kt")
+        public void testExplicitMultipleContextTypesFromAnotherPackage() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/contextParameter/addContextMultiFile/explicitMultipleContextTypesFromAnotherPackage.before.Main.kt");
+        }
+
+        @TestMetadata("explicitTypeAliasFromAnotherPackage.before.Main.kt")
+        public void testExplicitTypeAliasFromAnotherPackage() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/contextParameter/addContextMultiFile/explicitTypeAliasFromAnotherPackage.before.Main.kt");
+        }
+
+        @TestMetadata("explicitTypeFromAnotherPackage.before.Main.kt")
+        public void testExplicitTypeFromAnotherPackage() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/contextParameter/addContextMultiFile/explicitTypeFromAnotherPackage.before.Main.kt");
+        }
+
+        @TestMetadata("explicitTypeFromAnotherPackageNameClash.before.Main.kt")
+        public void testExplicitTypeFromAnotherPackageNameClash() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/contextParameter/addContextMultiFile/explicitTypeFromAnotherPackageNameClash.before.Main.kt");
+        }
+
         @TestMetadata("typeAliasFromOtherPackage.before.Main.kt")
         public void testTypeAliasFromOtherPackage() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/contextParameter/addContextMultiFile/typeAliasFromOtherPackage.before.Main.kt");
