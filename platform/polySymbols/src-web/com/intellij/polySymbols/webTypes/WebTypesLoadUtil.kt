@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.util.SortedMap
 import java.util.TreeMap
-import java.util.concurrent.CancellationException
+import kotlin.coroutines.cancellation.CancellationException
 
 @ApiStatus.Internal
 fun InputStream.readWebTypes(): WebTypes =
@@ -27,7 +27,7 @@ fun InputStream.readWebTypes(): WebTypes =
     // Better to close the stream and cancel reading.
     runWithCheckCanceled {
       try {
-        objectMapper.readValue(stream, WebTypes::class.java)
+        readWebTypesRaw(stream)
       }
       catch (e: CancellationException) {
         throw e
@@ -39,6 +39,10 @@ fun InputStream.readWebTypes(): WebTypes =
       }
     }
   }
+
+internal fun readWebTypesRaw(stream: InputStream): WebTypes {
+  return objectMapper.readValue(stream, WebTypes::class.java)
+}
 
 @ApiStatus.Internal
 class WebTypesVersionsRegistry<T> {
