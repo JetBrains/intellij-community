@@ -54,6 +54,7 @@
     <inspection_tool class="92d42a73-fb88-340b-88e5-4f09e27f9db6" enabled="true" level="WEAK WARNING" enabled_by_default="false" editorAttributes="INFO_ATTRIBUTES">
       <scope name="Go" level="WEAK WARNING" enabled="true" />
     </inspection_tool>
+    <inspection_tool class="959112ef-d77b-3be1-8a8c-9e70e3274220" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
     <inspection_tool class="AbstractMethodCallInConstructor" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AccessStaticViaInstance" enabled="true" level="Strong Warning" enabled_by_default="true" />
     <inspection_tool class="ActionIsNotPreviewFriendly" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
@@ -2780,6 +2781,11 @@
       <searchConfiguration name="Logger.getInstance(unknown class)" text="Logger.getInstance(&quot;#$c$&quot;)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def project = __context__.getProject();&#10;def fqn = c.getValue().substring(1);&#10;if (fqn.indexOf('.') == -1) return false;&#10;def shortName = com.intellij.openapi.util.text.StringUtil.getShortName(fqn);&#10;if (!shortName.equals(com.intellij.openapi.util.text.StringUtil.capitalize(shortName))) return false;&#10;&#10;def cClass = JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));&#10; cClass == null&#10;&quot;" within="" contains="" />
         <constraint name="c" target="true" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Logger.runCatching" uuid="959112ef-d77b-3be1-8a8c-9e70e3274220" description="&lt;code&gt;runCatching&lt;/code&gt; is often mistakenly used instead of &lt;code&gt;runAndLogException&lt;/code&gt;" suppressId="LoggerRunCatching" problemDescriptor="Did you mean to use 'runAndLogException'? If not, use the method call without the explicit receiver to avoid confusion." text="$Logger$.runCatching { $Code$ }" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Logger" nameOfExprType="com\.intellij\.openapi\.diagnostic\.Logger" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Code" within="" contains="" />
       </searchConfiguration>
       <replaceConfiguration name="Logger expression can be simplified" uuid="0befec03-d2b3-3838-ada0-363adc05fac7" text="com.intellij.openapi.diagnostic.Logger.getInstance(&quot;#&quot; + $c$.class.getName())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.diagnostic.Logger.getInstance($c$.class)">
         <constraint name="c" within="" contains="" />
