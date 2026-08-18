@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor
 
+import com.intellij.openapi.editor.ex.DocumentNewOps
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -21,7 +22,8 @@ internal class DocumentTextTest {
   @Test
   fun `withMetadata with the same text takes the metadata snapshot`() {
     val base = snapshot("abc")
-    val metadata = base.withModStamp(42L, true) // shares the text instance with `base`
+    val op = DocumentNewOps.getInstance().createModStampOp(42L, true)
+    val metadata = base.applyOp(op) // shares the text instance with `base`
     val merged = base.withMetadata(metadata)
     assertSame(metadata, merged)
     assertEquals(42L, merged.modState().stamp())
@@ -40,7 +42,8 @@ internal class DocumentTextTest {
         clearLineFlags = false,
       ).toOps()
     )
-    val metadata = base.withModStamp(42L, true)
+    val op = DocumentNewOps.getInstance().createModStampOp(42L, true)
+    val metadata = base.applyOp(op)
     assertSame(changed, changed.withMetadata(metadata))
   }
 

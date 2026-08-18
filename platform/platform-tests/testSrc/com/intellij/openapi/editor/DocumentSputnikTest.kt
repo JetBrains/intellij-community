@@ -3,6 +3,7 @@ package com.intellij.openapi.editor
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.ex.DocumentNewOps
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentSputnik
 import com.intellij.openapi.editor.ex.DocumentSnapshot
@@ -186,7 +187,8 @@ internal class DocumentSputnikTest {
   fun `sputnik survives line flags update`() {
     val sputnik = UnaffectedSputnik()
     val before = insertString(snapshot("a\nb\nc").withSputnik(KEY_UNAFFECTED, sputnik), offset = 2, fragment = "x")
-    val after = before.withClearedLineFlags(0, Int.MAX_VALUE, IntArray(0))
+    val op = DocumentNewOps.getInstance().createUnmodifiedLinesOp(0, Int.MAX_VALUE, IntArray(0))
+    val after = before.applyOp(op)
     assertSame(sputnik, after.sputnik(KEY_UNAFFECTED))
   }
 
@@ -281,7 +283,8 @@ internal class DocumentSputnikTest {
   }
 
   private fun withModStamp(snapshot: DocumentSnapshot): DocumentSnapshot {
-    return snapshot.withModStamp(MOD_STAMP, true)
+    val op = DocumentNewOps.getInstance().createModStampOp(MOD_STAMP, true)
+    return snapshot.applyOp(op)
   }
 
   private fun insertString(snapshot: DocumentSnapshot, offset: Int, fragment: String): DocumentSnapshot {

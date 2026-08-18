@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ReadOnlyFragmentModificationException
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentMutator
+import com.intellij.openapi.editor.ex.DocumentNewOps
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
@@ -31,11 +32,15 @@ internal abstract class DocumentMutatorImpl(
   protected abstract fun updateAndGet(update: UnaryOperator<DocumentSnapshot>): DocumentSnapshot
 
   override fun setModStamp(newModStamp: Long, incrementModSequence: Boolean) {
-    updateAndGet { it.withModStamp(newModStamp, incrementModSequence) }
+    val newOps = DocumentNewOps.getInstance()
+    val op = newOps.createModStampOp(newModStamp, incrementModSequence)
+    updateAndGet { it.applyOp(op) }
   }
 
   override fun clearLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray) {
-    updateAndGet { it.withClearedLineFlags(startLine, endLine, exceptLines) }
+    val newOps = DocumentNewOps.getInstance()
+    val op = newOps.createUnmodifiedLinesOp(startLine, endLine, exceptLines)
+    updateAndGet { it.applyOp(op) }
   }
 
   override fun updateSnapshotAndGet(updateFunc: UnaryOperator<DocumentSnapshot>): DocumentSnapshot {

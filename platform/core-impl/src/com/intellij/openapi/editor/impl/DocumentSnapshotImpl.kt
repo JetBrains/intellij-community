@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.ex.DocumentModState
-import com.intellij.openapi.editor.ex.DocumentNewOps
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentSputnik
@@ -28,26 +27,6 @@ internal class DocumentSnapshotImpl private constructor(
 
   override fun modState(): DocumentModState {
     return modState
-  }
-
-  override fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentSnapshot {
-    val newOps = DocumentNewOps.getInstance()
-    val op = newOps.createModStampOp(newModStamp, incrementModSeq)
-    val newModState = modState.applyOp(text, text, op)
-    if (newModState === modState) {
-      return this
-    }
-    return DocumentSnapshotImpl(text, newModState, sputniks)
-  }
-
-  override fun withClearedLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray): DocumentSnapshot {
-    val newOps = DocumentNewOps.getInstance()
-    val op = newOps.createUnmodifiedLinesOp(startLine, endLine, exceptLines)
-    val newModState = modState.applyOp(text, text, op)
-    if (newModState === modState) {
-      return this
-    }
-    return DocumentSnapshotImpl(text, newModState, sputniks)
   }
 
   override fun <S : DocumentSputnik> sputnik(key: Key<S>): S? {

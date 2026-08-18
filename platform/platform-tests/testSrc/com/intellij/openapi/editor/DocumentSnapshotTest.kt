@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor
 
+import com.intellij.openapi.editor.ex.DocumentNewOps
+import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -17,14 +19,14 @@ internal class DocumentSnapshotTest {
   @Test
   fun `withModStamp changing nothing returns the same snapshot`() {
     val snapshot = snapshot("abc")
-    assertSame(snapshot, snapshot.withModStamp(snapshot.modState().stamp(), false))
+    assertSame(snapshot, snapshot.applyOp(modStampOp(snapshot.modState().stamp(), false)))
   }
 
   @Test
   fun `withModStamp returns a snapshot carrying the new stamp`() {
     val snapshot = snapshot("abc")
     val originalStamp = snapshot.modState().stamp()
-    val updated = snapshot.withModStamp(42L, true)
+    val updated = snapshot.applyOp(modStampOp(42L, true))
     assertNotSame(snapshot, updated)
     assertEquals(42L, updated.modState().stamp())
     assertEquals(snapshot.modState().sequence() + 1, updated.modState().sequence())
@@ -35,7 +37,9 @@ internal class DocumentSnapshotTest {
   @Test
   fun `withClearedLineFlags of an untouched text returns the same snapshot`() {
     val snapshot = snapshot("a\nb\nc")
-    assertSame(snapshot, snapshot.withClearedLineFlags(0, Int.MAX_VALUE, IntArray(0)))
+    val newOps = DocumentNewOps.getInstance()
+    val op = newOps.createUnmodifiedLinesOp(0, Int.MAX_VALUE, IntArray(0))
+    assertSame(snapshot, snapshot.applyOp(op))
   }
 
   @Test
@@ -100,6 +104,10 @@ internal class DocumentSnapshotTest {
         clearLineFlags = false,
       ).toOps()
     )
+  }
+
+  private fun modStampOp(stamp: Long, incSequence: Boolean): DocumentOp.ModStamp {
+    return DocumentNewOps.getInstance().createModStampOp(stamp, incSequence)
   }
 
   private fun snapshot(text: String): DocumentSnapshot {
