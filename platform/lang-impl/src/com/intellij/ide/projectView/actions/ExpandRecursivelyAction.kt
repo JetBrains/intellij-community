@@ -2,7 +2,6 @@
 package com.intellij.ide.projectView.actions
 
 import com.intellij.ide.HelpTooltip
-import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -22,7 +21,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import javax.swing.JComponent
 import javax.swing.JTree
-import javax.swing.tree.TreePath
 
 @ApiStatus.Internal
 @Experimental
@@ -32,24 +30,7 @@ class ExpandRecursivelyAction : DumbAwareAction(), CustomComponentAction, Action
   override fun actionPerformed(e: AnActionEvent) {
     val c = e.dataContext.getData(CONTEXT_COMPONENT) as? JTree? ?: return
     val selection = c.selectionPaths ?: return
-    TreeUtil.promiseExpand(c, Int.MAX_VALUE) { path ->
-      selection.any { selectedPath ->
-        // N.B.: isDescendant is very poorly named: a.isDescendant(b) means "b is a descendant of a".
-        when {
-          // Selected paths are expanded unconditionally.
-          path == selectedPath -> true
-          // Descendants of the selected paths are expanded unless they explicitly don't want that.
-          selectedPath.isDescendant(path) -> path.isIncludedInExpandAll
-          // This unusual isDescendant condition is needed because TreeUtil won't even visit
-          // children if the parent doesn't match, so it'll just stop at the root node.
-          // So even though the parents of the selected paths are obviously already expanded,
-          // we still need to include them.
-          path.isDescendant(selectedPath) -> true
-          // Some irrelevant path from other parts of the tree, do not expand.
-          else -> false
-        }
-      }
-    }
+    TreeUtil.promiseExpandRecursively(c, *selection)
   }
 
   override fun update(e: AnActionEvent) {
@@ -76,10 +57,3 @@ class ExpandRecursivelyAction : DumbAwareAction(), CustomComponentAction, Action
       }
     }
 }
-
-private val TreePath.isIncludedInExpandAll: Boolean
-  get() {
-    // Include by default, unless the node can and does tell us otherwise.
-    val node = TreeUtil.getLastUserObject(this) as? AbstractTreeNode<*> ?: return true
-    return node.isIncludedInExpandAll
-  }

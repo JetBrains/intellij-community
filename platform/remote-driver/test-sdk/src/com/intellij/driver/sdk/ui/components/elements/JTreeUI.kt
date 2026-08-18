@@ -153,6 +153,10 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     return this
   }
 
+  /**
+   * Recursively expands the subtree rooted at [path] and waits for asynchronous expansion to complete.
+   * Unlike `expandRow`, which expands only one row, this expands all eligible descendants while leaving unrelated subtrees unchanged.
+   */
   fun expandPathRecursively(
     vararg path: String,
     fullMatch: Boolean = true,

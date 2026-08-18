@@ -1084,6 +1084,28 @@ public final class TreeUtil {
     return promiseExpand(tree, depth, path -> depth < Integer.MAX_VALUE || isIncludedInExpandAll(path));
   }
 
+  /**
+   * Promises to recursively expand the specified tree paths.
+   * Ancestors of the specified paths are visited to reach them, while unrelated subtrees are skipped.
+   *
+   * @param tree    a tree, which nodes should be expanded
+   * @param anchors roots of the subtrees to expand
+   * @return a promise that will be succeeded when all needed nodes are expanded
+   */
+  @ApiStatus.Internal
+  public static @NotNull Promise<?> promiseExpandRecursively(@NotNull JTree tree, @NotNull TreePath @NotNull ... anchors) {
+    return promiseExpand(tree, Integer.MAX_VALUE, path -> {
+      for (TreePath anchor : anchors) {
+        // N.B.: isDescendant is very poorly named: a.isDescendant(b) means "b is a descendant of a".
+        if (path.equals(anchor)) return true;
+        if (anchor.isDescendant(path) && isIncludedInExpandAll(path)) return true;
+        // TreeUtil won't visit children if the parent doesn't match, so ancestors of the anchors must be included.
+        if (path.isDescendant(anchor)) return true;
+      }
+      return false;
+    });
+  }
+
   @ApiStatus.Internal
   public static @NotNull Promise<?> promiseExpand(@NotNull JTree tree, int depth, @NotNull Predicate<@NotNull TreePath> predicate) {
     AsyncPromise<?> promise = new AsyncPromise<>();

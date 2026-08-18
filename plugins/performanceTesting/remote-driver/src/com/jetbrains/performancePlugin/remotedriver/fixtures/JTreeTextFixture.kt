@@ -4,7 +4,6 @@ package com.jetbrains.performancePlugin.remotedriver.fixtures
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
-import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ReflectionUtil
@@ -118,14 +117,7 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
       requireNotNull(component.getPathForRow(row))
     }
     computeOnEdt {
-      TreeUtil.promiseExpand(component, Int.MAX_VALUE) { path ->
-        when {
-          path == selectedPath -> true
-          selectedPath.isDescendant(path) -> (TreeUtil.getLastUserObject(path) as? AbstractTreeNode<*>)?.isIncludedInExpandAll != false
-          path.isDescendant(selectedPath) -> true
-          else -> false
-        }
-      }
+      TreeUtil.promiseExpandRecursively(component, selectedPath)
     }.blockingGet(timeoutMs)
   }
 
