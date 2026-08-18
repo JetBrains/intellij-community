@@ -98,6 +98,7 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
     DebouncedUpdates.forComponent<Unit>(topLevelPanel, "SearchLibs_" + moduleBuilder.builderId, 250.milliseconds)
       .withContext(Dispatchers.EDT)
       .runLatest { performSearch() }
+      .cancelOnDispose(parentDisposable)
   }
 
   override fun getComponent(): JComponent = topLevelPanel
