@@ -403,7 +403,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       # └ TYPE set[int]
       """.trimIndent())
 
-    @TestFor(issues = ["PY-87575"])
+    @TestFor(issues = ["PY-76927", "PY-87575"])
     @Test
     fun `dunder iter defined in metaclass has higher priority than inherited class`() = test("""
       from collections.abc import Iterator
@@ -418,6 +418,16 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
       expr = set(MyClass)
       # └ TYPE set[int]
+
+      iter_result = iter(MyClass)
+      # └ TYPE Iterator[int]
+
+      iter_method = MyClass.__iter__
+      # └ TYPE (self: MyClass) -> Iterator[str]
+
+      for e in MyClass:
+          expr = e
+      #   └ TYPE int
       """.trimIndent())
 
     @TestFor(issues = ["PY-87575"])
