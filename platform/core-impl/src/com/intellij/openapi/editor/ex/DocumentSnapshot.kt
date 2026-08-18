@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Contract
  * text across every change -- the sputniks. A document core publishes a new snapshot atomically, so a reader
  * observes the text and everything derived from it from the same document version.
  *
- * A `with*` method returns `this` when it changes nothing, and callers depend on that: a no-op update leaves
+ * A `with*` method or [applyOp] returns `this` when it changes nothing, and callers depend on that: a no-op update leaves
  * the core's snapshot field pointing at the same instance, and caches keyed by snapshot identity, such as the
  * frozen document of [DocumentCore.frozen], keep hitting. [withMetadata] is the exception -- when the
  * characters survive it yields the newest snapshot, which is the other one rather than `this`.
