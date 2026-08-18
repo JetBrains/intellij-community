@@ -225,6 +225,8 @@ jvm_library(
         "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//platform/todo/plugin",
         "//platform/todo/plugin:plugin_test_lib",
+        "//tools/intellij.tools.ide.starter:ide-starter",
+        "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` end
