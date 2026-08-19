@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.ExpectedTypeInfo
@@ -36,13 +36,13 @@ internal fun TemplateContext.setupParameters(method: PsiMethod, parameters: List
   if (parameters.isEmpty()) return
   val postprocessReformattingAspect = PostprocessReformattingAspect.getInstance(project)
   val parameterList = method.parameterList
-  val isInterface = targetClass.isInterface
+  val notFinal = targetClass.isInterface || method.hasModifierProperty(PsiModifier.ABSTRACT)
 
   //255 is the maximum number of method parameters
   for (i in 0 until minOf(parameters.size, 255)) {
     val parameterInfo = parameters[i]
     val dummyParameter = factory.createParameter("p$i", PsiTypes.voidType())
-    if (isInterface) {
+    if (notFinal) {
       PsiUtil.setModifierProperty(dummyParameter, PsiModifier.FINAL, false)
     }
     val parameter = postprocessReformattingAspect.postponeFormattingInside(Computable {
