@@ -6,8 +6,9 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
@@ -24,10 +25,12 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClassLiteralExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
+import org.jetbrains.kotlin.resolution.KtResolvable
 
 private val FILTER_IS_INSTANCE_CALLABLE_ID = CallableId(StandardClassIds.BASE_COLLECTIONS_PACKAGE, Name.identifier("filterIsInstance"))
 
@@ -103,10 +106,12 @@ private fun KtValueArgument.isClassLiteral(): Boolean =
 private fun KtValueArgument.classLiteral(): KtClassLiteralExpression? =
     (getArgumentExpression() as? KtDotQualifiedExpression)?.receiverExpression as? KtClassLiteralExpression
 
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 context(_: KaSession)
 private fun KtElement.resolveToClassSymbol(): KaNamedClassSymbol? =
-    mainReference?.resolveToSymbol() as? KaNamedClassSymbol
+    (this as? KtResolvable)?.resolveSymbol() as? KaNamedClassSymbol
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtCallExpression.resolveToFunctionSymbol(): KaNamedFunctionSymbol? =
-    calleeExpression?.mainReference?.resolveToSymbol() as? KaNamedFunctionSymbol
+    resolveSymbol() as? KaNamedFunctionSymbol

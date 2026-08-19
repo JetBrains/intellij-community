@@ -10,10 +10,11 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiModifier
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.realName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -276,11 +278,12 @@ internal class KotlinMisorderedAssertEqualsArgumentsInspection :
         return (constructorSymbol.returnType.symbol as? KaNamedClassSymbol)?.isData == true
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun KtNameReferenceExpression.looksLikeExpectedReference(
         parameterPosition: ParameterPosition,
         visited: MutableSet<KtExpression>,
-    ): Boolean = mainReference.resolveToSymbol()?.looksLikeExpectedSymbol(parameterPosition, visited) == true
+    ): Boolean = resolveSymbol()?.looksLikeExpectedSymbol(parameterPosition, visited) == true
 
     context(_: KaSession)
     private fun KaSymbol.looksLikeExpectedSymbol(
@@ -309,10 +312,11 @@ internal class KotlinMisorderedAssertEqualsArgumentsInspection :
         }
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.isClassLikeQualifier(): Boolean {
         return when (val expression = unwrapParentheses()) {
-            is KtNameReferenceExpression -> expression.mainReference.resolveToSymbol() is KaClassSymbol
+            is KtNameReferenceExpression -> expression.resolveSymbol() is KaClassSymbol
             is KtDotQualifiedExpression -> expression.selectorExpression?.isClassLikeQualifier() == true
             else -> false
         }

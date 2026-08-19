@@ -9,8 +9,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.isBackingFieldRequired
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -35,6 +37,7 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.resolution.KtResolvable
 
 internal class SetterBackingFieldAssignmentInspection : KotlinApplicableInspectionBase.Simple<KtPropertyAccessor, Unit>(),
                                                         CleanupLocalInspectionTool {
@@ -60,6 +63,7 @@ internal class SetterBackingFieldAssignmentInspection : KotlinApplicableInspecti
         return listOf(range)
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtPropertyAccessor): Unit? {
         val property = element.property
@@ -78,8 +82,7 @@ internal class SetterBackingFieldAssignmentInspection : KotlinApplicableInspecti
                 is KtCallExpression ->
                     expr.valueArguments.any { arg ->
                         val argumentSymbol = arg.getArgumentExpression()
-                            ?.mainReference
-                            ?.resolveToSymbol()
+                            ?.let { (it as? KtResolvable)?.resolveSymbol() }
 
                         argumentSymbol != null && argumentSymbol == parameter.symbol
                     }

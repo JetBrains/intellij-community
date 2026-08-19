@@ -12,8 +12,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
@@ -44,6 +45,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -355,6 +357,7 @@ private fun PsiElement.hasBadRefences(
     }
 }
 
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 private fun removeEntriesEntrySetInLoopRange(
     declaration: KtDeclaration
 ): Boolean {
@@ -364,7 +367,7 @@ private fun removeEntriesEntrySetInLoopRange(
     val selectorName = selectorExpression?.getReferencedName()
     if (selectorName == "entries" || selectorName == "entrySet") {
         analyze(selectorExpression) {
-            val callableSymbol = selectorExpression.mainReference.resolveToSymbol() as? KaCallableSymbol
+            val callableSymbol = selectorExpression.resolveSymbol() as? KaCallableSymbol
             if (callableSymbol != null) {
                 val containingSymbol = callableSymbol.containingSymbol as? KaClassSymbol
                 val mapEntrySymbol = findClass(StandardClassIds.Map)

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.dfa
 
+import org.jetbrains.kotlin.resolution.KtResolvable
 import com.intellij.codeInsight.Nullability
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind
 import com.intellij.codeInspection.dataFlow.TypeConstraint
@@ -106,7 +107,7 @@ import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.type
@@ -147,6 +148,7 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KtVariableDescripto
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -1510,6 +1512,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun processQualifiedReferenceExpression(expr: KtQualifiedExpression) {
         val receiver = expr.receiverExpression
@@ -1528,7 +1531,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         } else {
             selector.let(flow::startElement)
             if (!pushJavaClassField(receiver, selector, expr)) {
-                val specialField = (selector.mainReference?.resolveToSymbol() as? KaVariableSymbol)?.toSpecialField()
+                val specialField = ((selector as? KtResolvable)?.resolveSymbol() as? KaVariableSymbol)?.toSpecialField()
                 if (specialField != null) {
                     addInstruction(
                         GetQualifiedValueInstruction(specialField))

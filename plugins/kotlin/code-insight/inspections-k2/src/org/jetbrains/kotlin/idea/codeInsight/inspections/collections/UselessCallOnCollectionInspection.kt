@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.isClassType
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
@@ -121,6 +122,7 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
             else -> null
         }
 
+        @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
         context(_: KaSession)
         override fun createProblemDescriptor(
             manager: InspectionManager,
@@ -138,7 +140,7 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
                     val constantValue = returnExpression.constantBoolean() ?: return null
 
                     val label = statement.getTargetLabel() ?: return null
-                    val resolved = label.mainReference.resolveToSymbol()?.psi ?: return null
+                    val resolved = label.resolveSymbol()?.psi ?: return null
                     if (!resolved.isEquivalentTo(lambda.functionLiteral))
                         return null
 

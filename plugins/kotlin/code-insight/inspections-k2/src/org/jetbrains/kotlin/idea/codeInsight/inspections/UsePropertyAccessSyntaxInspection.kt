@@ -25,7 +25,7 @@ import org.jdom.Element
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.scopes.syntheticJavaPropertiesScope
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -153,7 +153,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
             val expectedType = callableReferenceExpression.singleExpression()?.expectedType
             if (expectedType?.isFunctionType != true && expectedType?.isFunctionalInterface != true) return
 
-            val symbol = mainReferenceOfCallableReference.resolveToSymbol() ?: return
+            val symbol = callableReferenceExpression.resolveSymbol() ?: return
 
             val symbolPsi = (symbol as? KaCallableSymbol)?.psi ?: return
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.collections
 
+import org.jetbrains.kotlin.resolution.KtResolvable
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
@@ -13,8 +14,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parents
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -35,6 +37,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.getTopmostParenthesizedExpres
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -185,10 +188,11 @@ class CollectionConcatenationToBuildCollectionInspection :
         return toOperationForPlus(isIterableOrSequence(type))
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.isBuildCollectionCall(collectionType: Context.CollectionType): Boolean {
         val callExpression = transformingCallExpression() ?: return false
-        val resolvedTo = callExpression.calleeExpression?.mainReference?.resolveToSymbol() as? KaCallableSymbol ?: return false
+        val resolvedTo = callExpression.resolveSymbol() as? KaCallableSymbol ?: return false
         return resolvedTo.callableId?.asSingleFqName()?.asString() == collectionType.buildCallFqName
     }
 
@@ -235,11 +239,12 @@ class CollectionConcatenationToBuildCollectionInspection :
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.toTransformingOperation(): Context.Operation.TransformingOperation? {
         if (this !is KtQualifiedExpression) return null
         val callExpression = selectorExpression as? KtCallExpression ?: return null
-        val resolvedTo = callExpression.calleeExpression?.mainReference?.resolveToSymbol() as? KaCallableSymbol ?: return null
+        val resolvedTo = callExpression.resolveSymbol() as? KaCallableSymbol ?: return null
         val fqName = resolvedTo.callableId?.asSingleFqName()?.asString() ?: return null
         val kind = Context.Operation.TransformingOperation.Kind.byCallFqName(fqName) ?: return null
         return Context.Operation.TransformingOperation(createSmartPointer(), kind)
@@ -249,9 +254,10 @@ class CollectionConcatenationToBuildCollectionInspection :
     /**
      * The `+`/`-` operators may be overridden by the user, so we ensure that these operations are from the standard library.
      */
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun KtOperationReferenceExpression.isDefaultStdlibCollectionOperation(): Boolean {
-        val resolvedTo = mainReference.resolveToSymbol() as? KaCallableSymbol ?: return false
+        val resolvedTo = resolveSymbol() as? KaCallableSymbol ?: return false
         return resolvedTo.callableId?.packageName == StandardNames.COLLECTIONS_PACKAGE_FQ_NAME
     }
 

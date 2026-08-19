@@ -9,12 +9,13 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.startOffset
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -28,9 +29,9 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.intentions.contexts.ContextParameterUtils.isKotlinContextCall
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtLambdaExpression
@@ -85,6 +86,7 @@ internal class ConvertExplicitContextArgumentToImplicitInspection :
         return argumentList.parent is KtCallExpression
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtValueArgument): Context? {
         val argumentExpression = element.getArgumentExpression() ?: return null
@@ -94,8 +96,8 @@ internal class ConvertExplicitContextArgumentToImplicitInspection :
         val contextParameter = originalCall.contextArgumentMapping[argumentExpression] ?: return null
 
         val expectedPsi = when (argumentExpression) {
-            is KtSimpleNameExpression -> argumentExpression.mainReference.resolveToSymbol()?.psi
-            is KtThisExpression -> argumentExpression.instanceReference.mainReference.resolveToSymbol()?.psi
+            is KtSimpleNameExpression -> argumentExpression.resolveSymbol()?.psi
+            is KtThisExpression -> argumentExpression.resolveSymbol()?.psi
             else -> null
         }
 
@@ -179,6 +181,7 @@ private fun KtCallExpression.buildCallTextWithoutArgument(selectedArgument: KtVa
     return "$callee$typeArgs($remainingArgs)$lambdaArgs"
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun KtCallExpression.resolvesToSameTargetWhenWrapped(
     selectedArgument: KtValueArgument,
     contextArgumentText: String,
@@ -198,8 +201,8 @@ private fun KtCallExpression.resolvesToSameTargetWhenWrapped(
     } ?: return false
 
     return analyze(wrappedCall) {
-        val originalSymbol = calleeExpression?.mainReference?.resolveToSymbol() ?: return@analyze false
-        val wrappedSymbol = wrappedCall.calleeExpression?.mainReference?.resolveToSymbol()
+        val originalSymbol = resolveSymbol() ?: return@analyze false
+        val wrappedSymbol = wrappedCall.resolveSymbol()
         wrappedSymbol == originalSymbol
     }
 }
@@ -218,6 +221,7 @@ private fun contextWrapNotNeeded(
     )
 }
 
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 context(session: KaSession)
 private fun isValueInEnclosingContextBlock(
     callExpression: KtCallExpression,
@@ -235,7 +239,7 @@ private fun isValueInEnclosingContextBlock(
                 val contextArgExpr = valueArg.getArgumentExpression() as? KtSimpleNameExpression ?: continue
                 val contextArgType = contextArgExpr.expressionType ?: continue
                 if (!contextArgType.isSubtypeOf(expectedType)) continue
-                if (contextArgExpr.mainReference.resolveToSymbol()?.psi == expectedPsi) {
+                if (contextArgExpr.resolveSymbol()?.psi == expectedPsi) {
                     return true
                 }
             }
@@ -244,6 +248,7 @@ private fun isValueInEnclosingContextBlock(
     }
 }
 
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 private fun isResolvedImplicitlyToSameValue(
     callExpression: KtCallExpression,
     selectedArgument: KtValueArgument,
@@ -265,7 +270,7 @@ private fun isResolvedImplicitlyToSameValue(
         val implicitArgument = resolvedCall.contextArguments.getOrNull(parameterIndex) ?: return@analyze false
         val implicitSymbol = when (val unwrapped = implicitArgument.unwrapSmartCasts()) {
             is KaImplicitReceiverValue -> unwrapped.symbol
-            is KaExplicitReceiverValue -> (unwrapped.expression as? KtSimpleNameExpression)?.mainReference?.resolveToSymbol()
+            is KaExplicitReceiverValue -> (unwrapped.expression as? KtSimpleNameExpression)?.resolveSymbol()
             else -> null
         }
         implicitSymbol?.psi == expectedPsi

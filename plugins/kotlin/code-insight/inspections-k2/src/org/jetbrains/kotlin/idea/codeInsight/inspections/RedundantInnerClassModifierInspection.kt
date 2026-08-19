@@ -24,7 +24,7 @@ import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.getThisReceiverOwner
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
@@ -189,11 +190,12 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), Cleanu
         return outerClassSymbols.any { outer -> outer.isSubClassOf(referenceClassDescriptor) }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtQualifiedExpression.hasThisReceiverOfOuterClass(outerClassSymbols: List<KaClassSymbol>): Boolean {
         return parent !is KtQualifiedExpression
                 && receiverExpression is KtThisExpression
-                && receiverExpression.mainReference?.resolveToSymbol() in outerClassSymbols
+                && (receiverExpression as KtThisExpression).resolveSymbol() in outerClassSymbols
     }
 
     private class RemoveInnerModifierFix : LocalQuickFix {

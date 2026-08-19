@@ -1,13 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.expressions
 
+import org.jetbrains.kotlin.resolution.KtResolvable
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
@@ -28,6 +30,7 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_SEQUENCES_PACKAGE
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -123,9 +126,10 @@ private fun checkFunctionCall(expression: KtCallExpression, nameToFqNameMap: Map
     return functionSymbol.callableId?.asSingleFqName() == fqName
 }
 
+@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun resolveToFunctionSymbol(expression: KtCallExpression): KaNamedFunctionSymbol? =
-    expression.calleeExpression?.mainReference?.resolveToSymbol() as? KaNamedFunctionSymbol
+    expression.resolveSymbol() as? KaNamedFunctionSymbol
 
 private val collectionTerminationFunctionNames: List<String> = listOf(
     "all",

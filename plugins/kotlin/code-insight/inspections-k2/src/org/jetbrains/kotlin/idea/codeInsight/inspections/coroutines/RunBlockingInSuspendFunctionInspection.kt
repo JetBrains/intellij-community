@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines
 
+import org.jetbrains.kotlin.resolution.KtResolvable
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
@@ -12,8 +13,9 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parents
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -33,6 +35,7 @@ import org.jetbrains.kotlin.idea.imports.addImportFor
 import org.jetbrains.kotlin.idea.refactoring.singleLambdaArgumentExpression
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
@@ -198,9 +201,10 @@ private fun isRunBlocking(function: KaNamedFunctionSymbol): Boolean {
 }
 
 
+@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun KtCallExpression.resolveToFunctionSymbol(): KaNamedFunctionSymbol? =
-    calleeExpression?.mainReference?.resolveToSymbol() as? KaNamedFunctionSymbol
+    resolveSymbol() as? KaNamedFunctionSymbol
 
 /**
  * Checks if the given element is in a suspend context (either in a suspend function or in a suspend lambda).
@@ -241,6 +245,7 @@ private fun isInSuspendContext(element: KtExpression): Boolean {
  * runBlocking { delay(1000) }         // false — delay is a top-level function, receiver unused
  * ```
  */
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtFunctionLiteral.usesCoroutineScopeReceiver(): Boolean {
     val lambdaReceiverParameter = symbol.receiverParameter ?: return false
@@ -249,7 +254,7 @@ private fun KtFunctionLiteral.usesCoroutineScopeReceiver(): Boolean {
     return bodyExpression.anyDescendantOfType<KtExpression> { expression ->
         when (expression) {
             is KtThisExpression -> {
-                val resolvedSymbol = expression.instanceReference.mainReference.resolveToSymbol()
+                val resolvedSymbol = expression.resolveSymbol()
                 resolvedSymbol == lambdaReceiverParameter
             }
 

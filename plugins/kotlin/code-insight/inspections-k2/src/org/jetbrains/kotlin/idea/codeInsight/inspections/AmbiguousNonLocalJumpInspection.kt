@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsInPlaceContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractInvocationKind
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddLoopLabelFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtBreakExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtContinueExpression
@@ -96,13 +97,14 @@ private fun findCallExprThatCausesUnlabeledNonLocalBreakOrContinueAmbiguity(jump
     .mapNotNull { checkAmbiguityForUnlabeledNonLocalBreakOrContinue(it) }
     .firstOrNull()
 
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 private fun checkAmbiguityForUnlabeledNonLocalBreakOrContinue(functionLiteral: PsiElement): AmbiguousCallInfo? {
     val callExpression = functionLiteral.findMatchingCallExpr() ?: return null
     analyze(callExpression) {
         val successfulCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val calleeExpression = callExpression.calleeExpression as? KtReferenceExpression ?: return null
         val lambdaParamName = successfulCall.valueArgumentMapping[functionLiteral]?.takeIf(::isInlinedParameter)?.name ?: return null
-        val calleeExpressionSymbol = calleeExpression.mainReference.resolveToSymbol()
+        val calleeExpressionSymbol = calleeExpression.resolveSymbol()
             ?.let { it as? KaNamedFunctionSymbol }
             ?.takeIf(KaNamedFunctionSymbol::isInline) ?: return null
         if (calleeExpressionSymbol.hasNoCallsInPlaceContract(lambdaParamName)) {

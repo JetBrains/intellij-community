@@ -7,10 +7,11 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.dataflow.implicitReceiverSmartCasts
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
@@ -474,6 +476,7 @@ private fun KtExpression.parenthesize(): KtExpression {
  * Resolves a target chunk to its underlying symbol for semantic comparison.
  * Returns null for 'this' expressions to rely on PSI-only comparison.
  */
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 context(session: KaSession)
 private fun resolve(chunk: TargetChunk): Any? {
     return when (chunk.expression) {
@@ -489,7 +492,7 @@ private fun resolve(chunk: TargetChunk): Any? {
         }
 
         is KtNameReferenceExpression -> {
-            chunk.expression.mainReference.resolveToSymbol()
+            chunk.expression.resolveSymbol()
         }
 
         else -> null

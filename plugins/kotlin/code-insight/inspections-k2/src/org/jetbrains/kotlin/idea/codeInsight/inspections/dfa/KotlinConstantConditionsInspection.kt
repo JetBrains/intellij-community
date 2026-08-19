@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -73,6 +73,7 @@ import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
@@ -626,6 +627,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return analyze(expression) { shouldSuppress(constant, expression, true) }
         }
 
+        @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
         context(_: KaSession)
         private fun shouldSuppress(value: ConstantValue, expression: KtExpression, ignoreSmartCasts: Boolean): Boolean {
             var parent = expression.parent
@@ -692,7 +694,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                             receiver = receiver.selectorExpression
                         }
                         if (receiver is KtSimpleNameExpression) {
-                            val symbol = receiver.mainReference.resolveToSymbol()
+                            val symbol = receiver.resolveSymbol()
                             if (symbol is KaEnumEntrySymbol) {
                                 // ordinal() call on explicit enum constant
                                 return true

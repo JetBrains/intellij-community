@@ -12,7 +12,8 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtClass
@@ -119,6 +121,7 @@ internal class CanBeParameterInspection : AbstractKotlinInspection() {
         }
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     private fun referencesWithSameNameResolveToNonLocalVariable(klass: KtClass, parameter: KtParameter): Boolean {
 
         val properties = klass.getProperties().asSequence()
@@ -140,7 +143,7 @@ internal class CanBeParameterInspection : AbstractKotlinInspection() {
                     it.text == parameter.name && !it.isPartOfQualifiedExpression()
                 }
                 for (nameReferenceExpression in nameReferenceExpressions) {
-                    val referenceSymbol = nameReferenceExpression.mainReference.resolveToSymbol() ?: continue
+                    val referenceSymbol = nameReferenceExpression.resolveSymbol() ?: continue
                     if (referenceSymbol != constructorPropertySymbol && referenceSymbol !is KaLocalVariableSymbol) {
                         return true
                     }
