@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -148,7 +149,7 @@ object TraceRawDataSharing {
     if (isForciblyDisabledForTests) {
       return false
     }
-    val consentOptions = application.getService(ConsentOptionsProvider::class.java) ?: return false
+    val consentOptions = application.serviceOrNull<ConsentOptionsProvider>() ?: return false
     return consentOptions.isTraceDataCollectionAllowed
   }
 }
