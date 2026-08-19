@@ -1,6 +1,6 @@
 [![JetBrains incubator](https://img.shields.io/badge/JetBrains-incubator-yellow?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMzIuMDAwMDEiIHZpZXdCb3g9IjAgMCAzMiAzMi4wMDAwMSIgd2lkdGg9IjMyIj48c2NyaXB0IHhtbG5zPSIiLz48cGF0aCBkPSJtMCAwaDMydjMyLjAwMDAxaC0zMnoiLz48cGF0aCBkPSJtNCAyNi4wMDAwMWgxMnYyaC0xMnoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=)](https://github.com/JetBrains#jetbrains-on-github)
 [![Licensed under Apache 2.0](https://img.shields.io/github/license/JetBrains/jewel?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRiIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMiIgZD0ibTMgNiAzIDFtMCAwLTMgOWE1LjAwMiA1LjAwMiAwIDAgMCA2LjAwMSAwTTYgN2wzIDlNNiA3bDYtMm02IDIgMy0xbS0zIDEtMyA5YTUuMDAyIDUuMDAyIDAgMCAwIDYuMDAxIDBNMTggN2wzIDltLTMtOS02LTJtMC0ydjJtMCAxNlY1bTAgMTZIOW0zIDBoMyIvPjwvc3ZnPg==)](https://github.com/JetBrains/intellij-community/blob/master/LICENSE.txt)
-[![Latest release](https://img.shields.io/badge/Latest%20Release-0.34.0-orange?logo=github)](RELEASE%20NOTES.md)
+[![Latest release](https://img.shields.io/maven-central/v/org.jetbrains.jewel/jewel-int-ui-standalone?label=Latest%20release&color=orange)](RELEASE%20NOTES.md)
 
 # Jewel: a Compose for Desktop theme
 
@@ -9,18 +9,29 @@
 Jewel aims at recreating the IntelliJ Platform's _New UI_ Swing Look and Feel in Compose for Desktop, providing a
 desktop-optimized theme and set of components.
 
+**Website: [jewel-ui.dev](https://jewel-ui.dev)**
+
 ---
+
+> [!IMPORTANT]
+>
+> Jewel is below 1.0 and still in active development, but that does not mean anything can move at any time.
+> What you can rely on:
+>
+> * **Stable APIs** — binary compatibility is guaranteed. Code compiled against a stable API keeps working
+>   across releases.
+> * **Experimental APIs** — kept binary-compatible wherever we can, but with no hard promise. They are
+>   annotated, so you always know which side of the line you are on.
+> * **Deprecated APIs** — typically removed after about two major IntelliJ Platform bumps, with a migration
+>   guide in the [release notes](RELEASE%20NOTES.md).
+> * **Source compatibility** — best effort, and mainly guaranteed for named-parameter usage.
+>
+> Both API surfaces are tracked per release, and an unintended change fails the build.
 
 > [!WARNING]
 >
-> This project experimental and in active development, and caution is advised when considering it for production
-> uses. You _can_ use it, but you should expect APIs to change often, things to move around and/or break, and all
-> that jazz. Binary compatibility is not guaranteed across releases, and APIs are still in flux and subject to change.
->
 > Writing 3rd party IntelliJ Plugins in Compose for Desktop is currently **not officially supported** by the IntelliJ
 > Platform. It should work, but your mileage may vary, and if things break you're on your own.
->
-> Use at your own risk!
 
 Jewel provides an implementation of the IntelliJ Platform themes that can be used in any Compose for Desktop
 application. Additionally, it has a Swing LaF Bridge that only works in the IntelliJ Platform (i.e., used to create IDE
@@ -69,10 +80,15 @@ Then add the necessary plugins in your `build.gradle.kts`:
 ```kotlin
 plugins {
     // MUST align with the Kotlin and Compose dependencies in Jewel
-    kotlin("jvm") version "..."
-    id("org.jetbrains.compose") version "..."
+    kotlin("jvm") version "..."                             // Kotlin version
+    id("org.jetbrains.compose") version "..."               // Compose Multiplatform version
+    id("org.jetbrains.kotlin.plugin.compose") version "..." // Kotlin version, not Compose
 }
 ```
+
+Both Compose plugins are needed. Since Kotlin 2.0 the Compose compiler ships in the Kotlin repository rather than
+with Compose Multiplatform, so `org.jetbrains.kotlin.plugin.compose` is applied separately and takes the **Kotlin**
+version, not the Compose one.
 
 > [!WARNING]
 > If you use convention plugins to configure your project you might run into issues such as
@@ -84,12 +100,12 @@ And the dependency:
 
 ```kotlin
 dependencies {
-    // Standalone versions follow the format [jewel-version]-[ijp-build] — see VERSIONS.md for the version mapping
+    // Standalone versions follow the format [jewel-version]-[ijp-build] — see the release notes for the mapping
     // See https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/RELEASE%20NOTES.md for the release notes
     implementation("org.jetbrains.jewel:jewel-int-ui-standalone:[jewel-version]-[ijp-build]")
 
     // Optional, for custom decorated windows:
-    implementation("org.jetbrains.jewel:jewel-int-ui-decorated-window:[jewel-version]-[ijp-build]")
+    implementation("org.jetbrains.jewel:jewel-decorated-window:[jewel-version]-[ijp-build]")
 
     // Do not bring in Material (we use Jewel)
     implementation(compose.desktop.currentOs) {
@@ -148,7 +164,9 @@ Standalone Jewel versions follow the format `[jewel-version]-[ijp-build]`, where
 build number the artifact was compiled against. For example, `0.34.0-253.31033.149` is Jewel 0.34 targeting IJP
 build `253.31033.149`.
 
-See [VERSIONS.md](VERSIONS.md) for the full mapping between Jewel and IJP versions.
+Each entry in the [release notes](RELEASE%20NOTES.md) records the minimum supported IntelliJ Platform version and the
+Compose Multiplatform version that release was built against. The published artifacts on
+[Maven Central](https://central.sonatype.com/namespace/org.jetbrains.jewel) are the authoritative list of what exists.
 
 ## Project structure
 
@@ -162,12 +180,12 @@ The project is split in modules:
    * A few other primitives
 2. `ui` contains all the styled components and custom painters logic
    * `ui-tests` contains all the tests for the `ui` module
-3. `decorated-window` contains basic, unstyled functionality to have custom window decoration on the JetBrains Runtime
+3. `decorated-window` contains the custom window decoration for the JetBrains Runtime, along with its Int UI styling
 4. `int-ui` contains two modules:
    * `int-ui-standalone` has a standalone version of the Int UI styling values that can be used in any Compose for
      Desktop app
-   * `int-ui-decorated-window` has a standalone version of the Int UI styling values for the custom window decoration
-     that can be used in any Compose for Desktop app
+   * `int-ui-decorated-window` is an older module kept only for compatibility. It carries no code of its own and
+     simply brings in `decorated-window`; new code should depend on `decorated-window` directly
 5. `ide-laf-bridge` contains the Swing LaF bridge to use in IntelliJ Platform plugins (see more below)
 6. `markdown` contains a few modules:
    * `core` the core logic for parsing and rendering Markdown documents with Jewel, using GitHub-like styling
@@ -367,9 +385,7 @@ val indeterminateHint =
 Icon(
     key = myKey,
     contentDescription = "My icon",
-    indeterminateHint,
-    Selected(myState),
-    Stateful(myState),
+    hints = arrayOf(indeterminateHint, Selected(myState), Stateful(myState)),
 )
 ```
 
@@ -377,7 +393,7 @@ Where the `IndeterminateHint` looks like this:
 
 ```kotlin
 private object IndeterminateHint : PainterSuffixHint() {
-    override fun suffix(): String = "Indeterminate"
+    override fun PainterProviderScope.suffix(): String = "Indeterminate"
 }
 ```
 
@@ -401,6 +417,11 @@ Beyond that, even in standalone, Jewel will pick up icons with the appropriate d
 and for bitmap icons it will try to pick the 2x variants based on the `LocalDensity`.
 
 ## Fonts
+
+The font APIs below come from Compose Multiplatform, not from Jewel: `FontFamily` and
+`EmbeddedFontFamily` are in `androidx.compose.ui.text.font`, and `asComposeFontFamily()` is in
+`androidx.compose.ui.text.platform`. Jewel only ships the `Inter` and `JetBrainsMono` families used by
+the Int UI defaults, in `org.jetbrains.jewel.intui.standalone`.
 
 To load a system font, you can obtain it by its family name:
 
