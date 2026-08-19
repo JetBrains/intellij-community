@@ -1,17 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.python.pyproject.dependencies
+package com.intellij.python.pyproject.dependencies.impl
 
+import com.intellij.python.pyproject.PY_PROJECT_DEFAULT_GROUP
+import com.intellij.python.pyproject.PY_PROJECT_DEPENDENCIES
+import com.intellij.python.pyproject.PY_PROJECT_OPTIONAL_DEPENDENCIES
+import com.intellij.python.pyproject.PY_PROJECT_TOML_DEPENDENCY_GROUPS
+import com.intellij.python.pyproject.PY_PROJECT_TOML_PROJECT
 import com.intellij.python.pyproject.dependencies.spi.PyDependencyGroupLocator
 
-private const val MAIN = "main"
-private const val PROJECT = "project"
-private const val DEPENDENCIES = "dependencies"
-private const val DEPENDENCY_GROUPS = "dependency-groups"
-private const val OPTIONAL_DEPENDENCIES = "optional-dependencies"
-private val DEPENDENCY_GROUPS_PATH = listOf(DEPENDENCY_GROUPS)
-private val PROJECT_PATH = listOf(PROJECT)
-private val PROJECT_DEPENDENCIES_PATH = listOf(PROJECT, DEPENDENCIES)
-private val PROJECT_OPTIONAL_DEPENDENCIES_PATH = listOf(PROJECT, OPTIONAL_DEPENDENCIES)
+private val DEPENDENCY_GROUPS_PATH = listOf(PY_PROJECT_TOML_DEPENDENCY_GROUPS)
+private val PROJECT_PATH = listOf(PY_PROJECT_TOML_PROJECT)
+private val PROJECT_DEPENDENCIES_PATH = listOf(PY_PROJECT_TOML_PROJECT, PY_PROJECT_DEPENDENCIES)
+private val PROJECT_OPTIONAL_DEPENDENCIES_PATH = listOf(PY_PROJECT_TOML_PROJECT, PY_PROJECT_OPTIONAL_DEPENDENCIES)
 
 /**
  * PEP 621 (`[project]`) + PEP 735 (`[dependency-groups]`) resolver. Backs pip / uv / Hatch /
@@ -32,10 +32,10 @@ private val PROJECT_OPTIONAL_DEPENDENCIES_PATH = listOf(PROJECT, OPTIONAL_DEPEND
 internal class PyProjectDependencyGroupLocator : PyDependencyGroupLocator {
   override fun resolveHeaderPath(path: List<String>): String? = when {
     // [project.dependencies] → the implicit "main" group (PEP 621 nested-header form).
-    path == PROJECT_DEPENDENCIES_PATH -> MAIN
+    path == PROJECT_DEPENDENCIES_PATH -> PY_PROJECT_DEFAULT_GROUP
     // [project.optional-dependencies.<name>] → the "<name>" extra (PEP 621). Fixed prefix,
     // exactly three segments so nested `[project.optional-dependencies.<name>.foo]` doesn't match.
-    path.size == 3 && path[0] == PROJECT && path[1] == OPTIONAL_DEPENDENCIES -> path[2]
+    path.size == 3 && path[0] == PY_PROJECT_TOML_PROJECT && path[1] == PY_PROJECT_OPTIONAL_DEPENDENCIES -> path[2]
     else -> null
   }
 
@@ -45,7 +45,7 @@ internal class PyProjectDependencyGroupLocator : PyDependencyGroupLocator {
     // [project.optional-dependencies]\n<name> = [...] (PEP 621 inline form).
     ownerPath == PROJECT_OPTIONAL_DEPENDENCIES_PATH -> keyName
     // [project]\ndependencies = [...] (PEP 621 flat form) → the implicit "main" group.
-    ownerPath == PROJECT_PATH && keyName == DEPENDENCIES -> MAIN
+    ownerPath == PROJECT_PATH && keyName == PY_PROJECT_DEPENDENCIES -> PY_PROJECT_DEFAULT_GROUP
     else -> null
   }
 }

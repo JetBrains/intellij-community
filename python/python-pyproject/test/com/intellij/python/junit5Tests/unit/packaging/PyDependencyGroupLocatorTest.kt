@@ -8,7 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.python.pyproject.dependencies.PyProjectDependencyGroupLocator
+import com.intellij.python.pyproject.dependencies.impl.PyProjectDependencyGroupLocator
 import com.intellij.python.pyproject.dependencies.spi.PyDependencyGroupLocator
 import com.intellij.python.pyproject.dependencies.spi.resolveGroupName
 import org.junit.jupiter.api.Assertions.assertEquals

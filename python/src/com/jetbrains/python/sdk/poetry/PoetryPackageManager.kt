@@ -7,7 +7,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.intellij.python.pyproject.PY_PROJECT_TOML_DEPENDENCY_GROUPS
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.api.getPyProjectTomlFile
@@ -320,15 +319,7 @@ private fun PyProjectToml.getPoetryGroupNames(): List<String> {
   val poetryTable = toml.getTable("tool")?.getTable("poetry")
   val legacyDev = listOfNotNull("dev".takeIf { poetryTable?.getTable("dev-dependencies") != null })
   val poetryGroups = poetryTable?.getTable("group")?.keySet().orEmpty()
-  val pep735Groups = toml.getTable(PY_PROJECT_TOML_DEPENDENCY_GROUPS)?.keySet().orEmpty()
-  val pep621Extras = project.dependencies.optional.keys
-  return buildList {
-    addAll(PyProjectToml.DEFAULT_GROUP_NAMES)
-    addAll(legacyDev)
-    addAll(poetryGroups)
-    addAll(pep735Groups)
-    addAll(pep621Extras)
-  }.distinct()
+  return getDependencyGroupNames(legacyDev + poetryGroups)
 }
 
 private class PoetryWorkspaceSupport(private val project: Project, private val sdk: Sdk) : PythonWorkspaceSupport {

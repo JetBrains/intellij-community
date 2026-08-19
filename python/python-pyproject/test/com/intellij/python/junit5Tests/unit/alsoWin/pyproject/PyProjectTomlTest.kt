@@ -135,6 +135,20 @@ internal class PyProjectTomlTest {
     }
   }
 
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("groupNamesTestCases")
+  fun dependencyGroupNames(
+    name: String,
+    pyprojectToml: String,
+    toolSpecificGroups: List<String>,
+    expectedNames: List<String>,
+  ) {
+    val result = PyProjectToml.parse(pyprojectToml)!!
+
+    // Order is part of the contract, so compare lists rather than sets.
+    assertEquals(expectedNames, result.getDependencyGroupNames(toolSpecificGroups))
+  }
+
   companion object {
     @JvmStatic
     fun parseTestCases(): List<Arguments> = listOf(
@@ -366,7 +380,7 @@ internal class PyProjectTomlTest {
           [project]
           name = "name"
           version = "123"
-          
+
           [dependency-groups]
           dev = 123
         """.trimIndent(),
@@ -374,7 +388,9 @@ internal class PyProjectTomlTest {
           name = "name",
           version = "123",
         ),
-        listOf(SafeGetError(UnexpectedType("dev", TomlArray::class, Long::class)))
+        listOf(SafeGetError(UnexpectedType("dev", TomlArray::class, Long::class))),
+        // The key exists, so the group exists; only its dependencies could not be read.
+        expectedDepGroups = mapOf("dev" to emptyList()),
       ),
 
       ParseTestCase(
@@ -683,7 +699,7 @@ internal class PyProjectTomlTest {
         expectedDepGroups = mapOf("dev" to listOf("sub-project-a", "sub-project-b"), "abc" to listOf("spam")),
       ),
       ParseTestCase(
-        "groups without string dependencies are skipped",
+        "groups without string dependencies are kept as empty groups",
         """
           [project]
           name = "name"
@@ -691,7 +707,7 @@ internal class PyProjectTomlTest {
           [dependency-groups]
           dev = ["a"]
           empty = []
-          # `include-group` is not supported yet, so the group holds no dependencies and is dropped
+          # `include-group` is not supported yet, so the group holds no dependencies but still exists
           includes = [{include-group = "dev"}]
         """.trimIndent(),
         PyProjectTable(
@@ -699,11 +715,158 @@ internal class PyProjectTomlTest {
           version = "123",
         ),
         expectedIssues = emptyList(),
-        expectedDepGroups = mapOf("dev" to listOf("a")),
+        expectedDepGroups = mapOf(
+          "dev" to listOf("a"),
+          "empty" to emptyList(),
+          "includes" to emptyList(),
+        ),
       ),
     ).map {
       Arguments.of(it.name, it.pyprojectToml, it.expectedProjectTable, it.expectedIssues, it.expectedDepGroups)
     }
+
+    @JvmStatic
+    fun groupNamesTestCases(): List<Arguments> = listOf(
+      GroupNamesTestCase(
+        "a project without groups only has main",
+        """
+          [project]
+          name = "name"
+          version = "123"
+          dependencies = ["a"]
+        """.trimIndent(),
+        expectedNames = listOf("main"),
+      ),
+
+      GroupNamesTestCase(
+        "PEP 735 groups follow main",
+        """
+          [project]
+          name = "name"
+          version = "123"
+
+          [dependency-groups]
+          dev = ["a"]
+          docs = ["b"]
+        """.trimIndent(),
+        expectedNames = listOf("main", "dev", "docs"),
+      ),
+
+      GroupNamesTestCase(
+        "PEP 621 extras follow PEP 735 groups",
+        """
+          [project]
+          name = "name"
+          version = "123"
+
+          [project.optional-dependencies]
+          gui = ["PyQt5"]
+
+          [dependency-groups]
+          dev = ["a"]
+        """.trimIndent(),
+        expectedNames = listOf("main", "dev", "gui"),
+      ),
+
+      // The three cases below guard the behaviour this class' `depGroupsToDeps` cases describe: a group is
+      // user-visible as soon as its key exists, even when no dependency string could be read from it.
+      GroupNamesTestCase(
+        "a PEP 735 group with an empty array is still a group",
+        """
+          [project]
+          name = "name"
+          version = "123"
+
+          [dependency-groups]
+          dev = ["a"]
+          empty = []
+        """.trimIndent(),
+        expectedNames = listOf("main", "dev", "empty"),
+      ),
+
+      GroupNamesTestCase(
+        "a PEP 735 group holding only include-group is still a group",
+        """
+          [project]
+          name = "name"
+          version = "123"
+
+          [dependency-groups]
+          dev = ["a"]
+          includes = [{include-group = "dev"}]
+        """.trimIndent(),
+        expectedNames = listOf("main", "dev", "includes"),
+      ),
+
+      GroupNamesTestCase(
+        "a PEP 735 group with a wrongly typed value is still a group",
+        """
+          [project]
+          name = "name"
+          version = "123"
+
+          [dependency-groups]
+          dev = 123
+        """.trimIndent(),
+        expectedNames = listOf("main", "dev"),
+      ),
+
+      GroupNamesTestCase(
+        "toolSpecificGroups sit between main and the PEP 735 groups",
+        """
+          [project]
+          name = "name"
+          version = "123"
+
+          [project.optional-dependencies]
+          gui = ["PyQt5"]
+
+          [dependency-groups]
+          dev = ["a"]
+        """.trimIndent(),
+        expectedNames = listOf("main", "legacy-dev", "poetry-docs", "dev", "gui"),
+        toolSpecificGroups = listOf("legacy-dev", "poetry-docs"),
+      ),
+
+      GroupNamesTestCase(
+        "a name declared in several places is reported once, at its earliest position",
+        """
+          [project]
+          name = "name"
+          version = "123"
+
+          [project.optional-dependencies]
+          dev = ["PyQt5"]
+
+          [dependency-groups]
+          dev = ["a"]
+        """.trimIndent(),
+        expectedNames = listOf("main", "dev"),
+      ),
+
+      GroupNamesTestCase(
+        "a tool-specific name that a PEP table repeats is reported once",
+        """
+          [project]
+          name = "name"
+          version = "123"
+
+          [dependency-groups]
+          dev = ["a"]
+        """.trimIndent(),
+        expectedNames = listOf("main", "dev"),
+        toolSpecificGroups = listOf("dev"),
+      ),
+    ).map {
+      Arguments.of(it.name, it.pyprojectToml, it.toolSpecificGroups, it.expectedNames)
+    }
+
+    data class GroupNamesTestCase(
+      val name: String,
+      val pyprojectToml: String,
+      val expectedNames: List<String>,
+      val toolSpecificGroups: List<String> = emptyList(),
+    )
 
     data class ParseTestCase(
       val name: String,

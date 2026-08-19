@@ -30,18 +30,6 @@ import kotlin.io.path.isRegularFile
 @Internal
 const val PY_PROJECT_TOML: String = "pyproject.toml"
 
-@Internal
-const val PY_PROJECT_TOML_PROJECT: String = "project"
-
-@Internal
-internal const val PY_PROJECT_TOML_BUILD_SYSTEM: String = "build-system"
-
-@Internal
-const val PY_PROJECT_TOML_DEPENDENCY_GROUPS: String = "dependency-groups"
-
-@Internal
-internal const val PY_PROJECT_TOML_TOOL_PREFIX: String = "tool"
-
 
 /**
  * Represents an issue that could occur in [PyProjectToml.parse].
@@ -90,7 +78,9 @@ data class PyProjectToml internal constructor(
 
   /**
    * PEP 735 groups (`dependency-groups`) mapped to their dependencies.
-   * Groups without any dependency string are omitted, so this may hold fewer groups than [getDependencyGroupNames].
+   *
+   * Every declared key is present, so a group may map to an empty list: either its array is empty, or it only holds
+   * still-unsupported `{include-group = "..."}` tables. A group is user-visible as soon as its key exists.
    */
   val depGroupsToDeps: Map<String, List<String>>,
 ) {
@@ -121,28 +111,30 @@ data class PyProjectToml internal constructor(
   }
 
   /**
-   * Returns dependency group names: PEP 735 `[dependency-groups]` keys plus PEP 621
-   * `[project.optional-dependencies]` keys. Always includes "main" as the first entry
-   * (representing `[project.dependencies]`).
+   * Returns dependency group names, in order: "main" (representing `[project.dependencies]`), then [toolSpecificGroups],
+   * then PEP 735 `[dependency-groups]` keys, then PEP 621 `[project.optional-dependencies]` keys.
    *
-   * Unlike [depGroupsToDeps], groups without dependencies are kept here: a user-visible group exists
-   * as soon as its key does.
+   * A name declared in several places (say, both a PEP 735 group and a PEP 621 extra) is reported once, at its
+   * earliest position.
+   *
+   * @param toolSpecificGroups tool-specific group names the caller contributes, e.g. Poetry's legacy `dev` and its
+   * `[tool.poetry.group]` keys, which no PEP describes.
    */
   @Internal
-  fun getDependencyGroupNames(): List<String> {
-    val groupsTable = toml.getTable(PY_PROJECT_TOML_DEPENDENCY_GROUPS)
-    val extraGroups = groupsTable?.keySet()?.toList() ?: emptyList()
+  fun getDependencyGroupNames(toolSpecificGroups: List<String> = emptyList()): List<String> {
+    val extraGroups = depGroupsToDeps.keys
     val optionalGroups = project.dependencies.optional.keys.toList()
     return buildList {
       addAll(DEFAULT_GROUP_NAMES)
+      addAll(toolSpecificGroups)
       addAll(extraGroups)
       addAll(optionalGroups)
-    }
+    }.distinct()
   }
 
   companion object {
     @Internal
-    val DEFAULT_GROUP_NAMES: List<String> = listOf("main")
+    private val DEFAULT_GROUP_NAMES: List<String> = listOf(PY_PROJECT_DEFAULT_GROUP)
     private val CACHE_KEY = Key.create<CachedValue<PyProjectToml>>("PyProjectTomlCache")
 
     /**
@@ -228,7 +220,7 @@ data class PyProjectToml internal constructor(
         }
       }
 
-      val projectDependencies = projectTable.safeGetArr<String>("dependencies").getOrIssue(issues) ?: listOf()
+      val projectDependencies = projectTable.safeGetArr<String>(PY_PROJECT_DEPENDENCIES).getOrIssue(issues) ?: listOf()
       val depGroups = toml
         .safeGet<TomlTable>(PY_PROJECT_TOML_DEPENDENCY_GROUPS)
         .getOrIssue(issues)
@@ -236,10 +228,10 @@ data class PyProjectToml internal constructor(
       val depsFromGroups = depGroups?.keySet()?.associate { depGroupName ->
         // Can't filter by string because there might be (still unsupported) { include-group = "" } tables
         depGroupName to (depGroups.safeGetArr<Any>(depGroupName).getOrIssue(issues)?.filterIsInstance<String>() ?: emptyList())
-      }?.filter { it.value.isNotEmpty() } // No need to have empty groups
+      }
       val optionalDependencies =
         projectTable
-          .safeGet<TomlTable>("optional-dependencies")
+          .safeGet<TomlTable>(PY_PROJECT_OPTIONAL_DEPENDENCIES)
           .getOrIssue(issues)
           ?.let { table ->
             mapOf(
