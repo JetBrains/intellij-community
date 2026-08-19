@@ -700,7 +700,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
       host.updateCustomRepositoryPlugins(state.settledRepositoryPlugins)
     }
     val data = state.listModelData
-    listModel.replaceAll(data.installedModels, data.errors, data.installationStates)
+    listModel.replaceAll(data.installedModels, data.errors, data.installationStates, data.updateSources)
     controller.replaceSourceState(state.query, state.sections, state.mayEstablishSelection, state.searchControls)
     renderControllerState()
     reportSourceFailures(state)

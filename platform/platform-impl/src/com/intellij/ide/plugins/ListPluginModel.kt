@@ -52,9 +52,11 @@ data class ListPluginModel(
     installedModels: Map<PluginId, PluginUiModel>,
     errors: Map<PluginId, List<HtmlChunk>>,
     installationStates: Map<PluginId, PluginInstallationState>,
+    updateSources: Map<PluginId, PluginUpdateSourceId>,
   ) {
     setInstalledPlugins(installedModels)
     setErrors(errors)
     setPluginInstallationStates(installationStates)
+    setPluginUpdateSources(updateSources)
   }
 }

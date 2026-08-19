@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.newui.PluginStatus
 import com.intellij.ide.plugins.newui.PluginUpdatesEvent
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
@@ -27,6 +28,7 @@ internal class UnifiedPluginLocalDataProviderTest {
     val inventory = UnifiedPluginInventory(listOf(installed, staged), listOf(bundled))
     val installedError = HtmlChunk.text("broken")
     val installedState = PluginInstallationState(true, PluginStatus.INSTALLED_WITHOUT_RESTART)
+    val updateSource = PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId("plugins.example.com")
     val update = plugin("custom.plugin", "Custom update")
 
     val snapshot = buildLocalSnapshot(
@@ -43,6 +45,7 @@ internal class UnifiedPluginLocalDataProviderTest {
         PluginId.getId("irrelevant.plugin") to listOf(HtmlChunk.text("irrelevant")),
       ),
       installationStates = mapOf(installed.model.pluginId to installedState),
+      updateSources = mapOf(installed.model.pluginId to updateSource),
       restrictions = mapOf(bundled.model.pluginId to true),
       tags = mapOf(installed.model.pluginId to listOf("Developer Tools")),
     )
@@ -76,6 +79,8 @@ internal class UnifiedPluginLocalDataProviderTest {
     assertThat(snapshot.listModelData.installationStates).containsEntry(installed.model.pluginId, installedState)
       .containsEntry(staged.model.pluginId, PluginInstallationState(false))
       .containsEntry(bundled.model.pluginId, PluginInstallationState(true))
+    assertThat(snapshot.listModelData.updateSources).containsOnlyKeys(installed.model.pluginId)
+      .containsEntry(installed.model.pluginId, updateSource)
   }
 
   @Test

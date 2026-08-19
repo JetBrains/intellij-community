@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.newui.PluginProgressState
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.SearchQueryParser
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.getPresentableName
 import com.intellij.openapi.util.text.StringUtil
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -592,6 +593,7 @@ internal fun mergePluginListModelData(
     installedModels = remote.installedModels + local.installedModels,
     errors = remote.errors + local.errors,
     installationStates = remote.installationStates + local.installationStates,
+    updateSources = remote.updateSources + local.updateSources,
   )
 }
 
@@ -619,7 +621,10 @@ private fun filterPluginItems(
       (!parser.updatedBundled || model.isBundledUpdate) &&
       (!parser.userInstalled || !model.isBundled && !model.isBundledUpdate) &&
       (!parser.invalid || input?.errors?.isNotEmpty() == true) &&
-      (!parser.needUpdate || input?.updateDescriptor != null)
+      (!parser.needUpdate || input?.updateDescriptor != null) &&
+      (parser.updateSources.isEmpty() ||
+       (parser.updateSources.contains(item.updateSourceId.getPresentableName()) &&
+        input?.installedPlugin?.isUpdateable == true))
     }
     .mapNotNull { item ->
       val searchQuery = parser.searchQuery ?: return@mapNotNull LocalPluginSearchMatch(item, 0.0)
