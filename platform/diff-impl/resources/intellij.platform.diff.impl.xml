@@ -43,6 +43,9 @@
     <registryKey key="diff.semantic.highlighting" defaultValue="false" description="Enables difference highlighting based on the semantics language"/>
     <registryKey key="diff.highlighting.level.visible" defaultValue="false"
                  description="Show the Highlighting Level option in the diff viewer settings menu"/>
+    <registryKey key="diff.frontend.debug.inlays" defaultValue="false"
+                 description="Show FrontendDiffExtension debug information in newly created diff editors"
+                 restartRequired="false"/>
 
     <editorActionHandler action="EditorEscape"
                          implementationClass="com.intellij.openapi.vcs.ex.LineStatusMakerEscEditorHandler"
@@ -83,6 +86,7 @@
     <projectService serviceInterface="com.intellij.openapi.diff.DirDiffManager"
                     serviceImplementation="com.intellij.openapi.diff.impl.dir.DirDiffManagerImpl"/>
     <diff.DiffExtension implementation="com.intellij.diff.actions.ShowBlankDiffWindowDiffExtension"/>
+    <diff.frontendDiffExtension implementation="com.intellij.diff.impl.FrontendDiffDebugExtension"/>
     <projectService serviceInterface="com.intellij.diff.editor.DiffEditorTabFilesManager"
                     serviceImplementation="com.intellij.diff.editor.DiffEditorTabFilesManagerImpl"/>
     <fileEditorProvider implementation="com.intellij.diff.editor.DiffFileEditorProvider"/>
