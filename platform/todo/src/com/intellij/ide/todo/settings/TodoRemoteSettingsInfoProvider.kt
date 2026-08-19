@@ -8,6 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class TodoRemoteSettingsInfoProvider : RemoteSettingInfoProvider {
   override fun getRemoteSettingsInfo(): Map<String, RemoteSettingInfo> = mapOf(
-    "TodoConfiguration" to RemoteSettingInfo(RemoteSettingInfo.Direction.InitialFromFrontend)
+    "TodoConfiguration" to RemoteSettingInfo(RemoteSettingInfo.Direction.OnlyFromBackend)
   )
 }

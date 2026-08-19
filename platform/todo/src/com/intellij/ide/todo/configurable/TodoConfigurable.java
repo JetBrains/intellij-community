@@ -3,9 +3,11 @@ package com.intellij.ide.todo.configurable;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.TodoConfiguration;
+import com.intellij.ide.todo.TodoDefaultPatternProvider;
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoPattern;
@@ -44,11 +46,13 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
   private final PatternsTableModel myPatternsModel;
   protected final List<TodoFilter> myFilters;
   private final FiltersTableModel myFiltersModel;
+  @NotNull private final Project myProject;
 
   /**
    * Invoked by reflection
    */
-  public TodoConfigurable() {
+  public TodoConfigurable(@NotNull Project project) {
+    myProject = project;
     myPatterns = new ArrayList<>();
     myFilters = new ArrayList<>();
     myFiltersModel = new FiltersTableModel(myFilters);
@@ -101,6 +105,7 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
       var filters = myFilters.toArray(new TodoFilter[0]);
       TodoConfiguration.getInstance().setTodoFilters(filters);
     }
+    TodoConfigurableProductCallbackService.getInstance(myProject).applyCallback();
   }
 
   @Override
@@ -352,7 +357,8 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
   }
 
   protected TodoPattern @NotNull [] getTodoPatternsToDisplay(TodoConfiguration todoConfiguration) {
-    return todoConfiguration.getTodoPatterns();
+    final var todoPatterns = TodoDefaultPatternProvider.getInstance().tryGetExternalTodoPatterns(myProject);
+    return todoPatterns == null ? todoConfiguration.getTodoPatterns() : todoPatterns;
   }
 
   private final class MyFilterNameTableCellRenderer extends DefaultTableCellRenderer {

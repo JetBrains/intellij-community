@@ -35,5 +35,9 @@
                         serviceImplementation="com.intellij.openapi.editor.highlighter.EditorHighlighterFactoryImpl"/>
     <applicationSettings service="com.intellij.openapi.editor.colors.impl.AppConsoleFontOptions"/>
     <applicationSettings service="com.intellij.openapi.editor.colors.impl.AppEditorFontOptions"/>
+    <applicationService
+      serviceInterface="com.intellij.ide.todo.TodoDefaultPatternProvider"
+      serviceImplementation="com.intellij.ide.todo.DefaultTodoDefaultPatternProvider"
+      open="true"/>
   </extensions>
 </idea-plugin>
