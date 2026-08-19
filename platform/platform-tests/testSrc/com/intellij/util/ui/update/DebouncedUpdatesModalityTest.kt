@@ -13,8 +13,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import java.awt.Frame
@@ -71,6 +73,65 @@ class DebouncedUpdatesModalityTest {
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             LaterInvocator.leaveModal(modalDialog)
             modalDialog.dispose()
+          }
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `test withComponentModality waits for modality when collector is already on EDT`() {
+    timeoutRunBlocking(timeout = 1.minutes) {
+      val component = JLabel()
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.EDT + ModalityState.any().asContextElement())
+      val executed = CompletableDeferred<Unit>()
+      var componentDialog: JDialog? = null
+      var blockingDialog: JDialog? = null
+
+      try {
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          val modalDialog = JDialog(null as Frame?, true)
+          componentDialog = modalDialog
+          modalDialog.contentPane.add(component)
+          LaterInvocator.enterModal(modalDialog)
+
+          val anotherModalDialog = JDialog(null as Frame?, true)
+          blockingDialog = anotherModalDialog
+          LaterInvocator.enterModal(anotherModalDialog)
+        }
+
+        val queue = DebouncedUpdates.forScope<Unit>(scope, "test-edt-collector-modality", 0.milliseconds)
+          .withContext(Dispatchers.EDT)
+          .withComponentModality(component)
+          .runLatest {
+            executed.complete(Unit)
+          }
+
+        queue.queue(Unit)
+        delay(200.milliseconds)
+
+        assertFalse(executed.isCompleted, "The action must wait until the blocking modal dialog is left")
+
+        val anotherModalDialog = blockingDialog!!
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          LaterInvocator.leaveModal(anotherModalDialog)
+          anotherModalDialog.dispose()
+          blockingDialog = null
+        }
+
+        withTimeoutOrNull(10.seconds) { executed.await() }
+        ?: fail("The action must run after the blocking modal dialog is left")
+      }
+      finally {
+        scope.cancel()
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          blockingDialog?.let {
+            LaterInvocator.leaveModal(it)
+            it.dispose()
+          }
+          componentDialog?.let {
+            LaterInvocator.leaveModal(it)
+            it.dispose()
           }
         }
       }

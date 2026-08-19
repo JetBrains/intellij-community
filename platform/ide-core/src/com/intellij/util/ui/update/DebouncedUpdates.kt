@@ -795,10 +795,8 @@ private abstract class BaseUpdateQueue<T>(
 
       // Process the data in a separate coroutine
       supervisorScope {
-        val job = launch(CoroutineExceptionHandler { _, e -> logger<DebouncedUpdates>().error(e) }) {
-          withContext(dispatchContext) {
-            onProcess(data)
-          }
+        val job = launch(dispatchContext + CoroutineExceptionHandler { _, e -> logger<DebouncedUpdates>().error(e) }) {
+          onProcess(data)
         }
 
         // Must set processingJob before clearing isCollecting to avoid a window where both are false/null.
