@@ -95,7 +95,8 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
   }
 
   public static @Nls @Nullable String filterInternalDocInfo(@Nls String text) {
-    return text == null ? null : PlatformDocumentationUtil.fixupText(text);
+    //TODO (mbo): reduce scope of usage to only externally sourced javadoc and re-enable
+    return text; // text == null ? null : PlatformDocumentationUtil.fixupText(text);
   }
 
   @Override

@@ -6,8 +6,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
-import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
-import com.intellij.codeInsight.javadoc.markdown.JavaDocMarkdownFlavourDescriptor;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.javadoc.JavadocGeneratorRunProfile;
@@ -18,7 +16,6 @@ import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlight
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.markdown.utils.MarkdownToHtmlConverter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -28,8 +25,6 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -79,7 +74,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiIntersectionType;
@@ -156,15 +150,10 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import kotlin.text.StringsKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
@@ -173,18 +162,15 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Color;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -200,9 +186,6 @@ import static com.intellij.codeInsight.javadoc.SnippetMarkup.LocationMarkupNode;
 import static com.intellij.codeInsight.javadoc.SnippetMarkup.PlainText;
 import static com.intellij.codeInsight.javadoc.SnippetMarkup.SnippetVisitor;
 import static com.intellij.codeInsight.javadoc.SnippetMarkup.fromElement;
-import static com.intellij.lang.documentation.DocumentationMarkup.BOTTOM_ELEMENT;
-import static com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledCodeBlock;
-import static com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledInlineCode;
 
 public class JavaDocInfoGenerator {
   private static final Logger LOG = Logger.getInstance(JavaDocInfoGenerator.class);
@@ -225,8 +208,6 @@ public class JavaDocInfoGenerator {
     T find(PsiDocCommentOwner owner, PsiDocComment comment);
   }
 
-  private static final String HREF_ATTRIBUTE_NAME = "href";
-  private static final String BR_TAG = "<br>";
   private static final String LINK_TAG = "link";
   private static final String LITERAL_TAG = "literal";
   private static final String CODE_TAG = "code";
@@ -239,16 +220,12 @@ public class JavaDocInfoGenerator {
   private static final String SUMMARY_TAG = "summary";
   private static final String SNIPPET_TAG = "snippet";
   private static final String RETURN_TAG = "return";
-  private static final String LT = "&lt;";
-  private static final String GT = "&gt;";
-  private static final String NBSP = "&nbsp;";
 
-  private static final String BLOCKQUOTE_PRE_PREFIX = "<blockquote><pre>";
-  private static final String BLOCKQUOTE_PRE_SUFFIX = "</pre></blockquote>";
+  static final String BLOCKQUOTE_PRE_PREFIX = "<blockquote><pre>";
+  static final String BLOCKQUOTE_PRE_SUFFIX = "</pre></blockquote>";
   private static final String PRE_CODE_PREFIX = "<pre><code>";
   private static final String PRE_CODE_SUFFIX = "</code></pre>";
 
-  private static final MarkdownToHtmlConverter ourMarkdownConverter = new MarkdownToHtmlConverter(new JavaDocMarkdownFlavourDescriptor());
   private static final @NotNull TokenSet INLINE_TAG_TOKENS = TokenSet.create(JavaDocTokenType.DOC_INLINE_TAG_END,
                                                                              JavaDocTokenType.DOC_INLINE_TAG_START,
                                                                              JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS);
@@ -302,6 +279,7 @@ public class JavaDocInfoGenerator {
   private final float myHighlightingSaturation;
 
   private boolean myIsSignatureGenerationInProgress;
+  private final @NotNull JavaDocInfoPrinter myPrinter;
 
   public JavaDocInfoGenerator(@NotNull Project project, @Nullable PsiElement element) {
     this(
@@ -313,7 +291,8 @@ public class JavaDocInfoGenerator {
       true,
       InlineCodeHighlightingMode.AS_DEFAULT_CODE,
       false,
-      1.0F);
+      1.0F,
+      new JavaDocInfoHtmlPrinter());
   }
 
   public JavaDocInfoGenerator(
@@ -327,6 +306,31 @@ public class JavaDocInfoGenerator {
     boolean doSemanticHighlightingOfLinks,
     float highlightingSaturationFactor
   ) {
+    this(
+      project,
+      element,
+      highlightingManager,
+      isGenerationForRenderedDoc,
+      doHighlightSignatures,
+      doHighlightCodeBlocks,
+      ignoredInlineCodeBlocksHighlightingMode,
+      doSemanticHighlightingOfLinks,
+      highlightingSaturationFactor,
+      new JavaDocInfoHtmlPrinter());
+  }
+
+  public JavaDocInfoGenerator(
+    @NotNull Project project,
+    @Nullable PsiElement element,
+    @NotNull JavaDocHighlightingManager highlightingManager,
+    boolean isGenerationForRenderedDoc,
+    boolean doHighlightSignatures,
+    boolean doHighlightCodeBlocks,
+    @NotNull InlineCodeHighlightingMode ignoredInlineCodeBlocksHighlightingMode,
+    boolean doSemanticHighlightingOfLinks,
+    float highlightingSaturationFactor,
+    @NotNull JavaDocInfoPrinter printer
+  ) {
     myProject = project;
     myElement = element;
     myIsRendered = isGenerationForRenderedDoc;
@@ -335,6 +339,7 @@ public class JavaDocInfoGenerator {
     myDoHighlightCodeBlocks = doHighlightCodeBlocks;
     myDoSemanticHighlightingOfLinks = doSemanticHighlightingOfLinks;
     myHighlightingSaturation = highlightingSaturationFactor;
+    myPrinter = printer;
 
     Sdk jdk = JavadocGeneratorRunProfile.getSdk(myProject);
     mySdkVersion = jdk == null ? null : JavaSdk.getInstance().getVersion(jdk);
@@ -370,13 +375,7 @@ public class JavaDocInfoGenerator {
     @NotNull TextAttributes attributes,
     @Nullable String value
   ) {
-    if (doHighlighting) {
-      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributes, value, getHighlightingSaturation());
-    }
-    else {
-      buffer.append(value);
-    }
-    return buffer;
+    return myPrinter.printStylizedText(buffer, doHighlighting, attributes, value, getHighlightingSaturation());
   }
 
   protected @NotNull StringBuilder appendStyledSpan(
@@ -385,26 +384,6 @@ public class JavaDocInfoGenerator {
     @Nullable String value
   ) {
     return appendStyledSpan(doHighlightSignatures(), buffer, attributes, value);
-  }
-
-  protected @NotNull StringBuilder appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-    boolean doHighlighting,
-    @NotNull StringBuilder buffer,
-    @NotNull Project project,
-    @NotNull Language language,
-    @Nullable String codeSnippet
-  ) {
-    if (doHighlighting) {
-      HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-        buffer, project, language, codeSnippet, getHighlightingSaturation());
-    }
-    else if (codeSnippet != null) {
-      codeSnippet = StringsKt.trimIndent(codeSnippet);
-      codeSnippet = StringUtil.escapeXmlEntities(codeSnippet);
-      codeSnippet = codeSnippet.replace("\n", BR_TAG);
-      buffer.append(codeSnippet);
-    }
-    return buffer;
   }
 
   protected @NotNull String getStyledSpan(boolean doHighlighting, @NotNull TextAttributes attributes, @Nullable String value) {
@@ -416,7 +395,8 @@ public class JavaDocInfoGenerator {
     @NotNull Language language,
     @Nullable String codeSnippet
   ) {
-    return appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(true, new StringBuilder(), project, language, codeSnippet).toString();
+    return myPrinter.printHighlightedText(new StringBuilder(), true, project, language, codeSnippet, getHighlightingSaturation())
+      .toString();
   }
 
   private static InheritDocProvider<PsiElement[]> mapProvider(InheritDocProvider<PsiDocTag> i, boolean dropFirst) {
@@ -508,66 +488,12 @@ public class JavaDocInfoGenerator {
     };
   }
 
-  private @Nls String sanitizeHtml(@Nls StringBuilder buffer) {
-    String text = buffer.toString();
-    if (text.isEmpty()) return null;
-    if (myElement != null) {  // PSI element refs can't be resolved without a context
-      StringBuilder result = new StringBuilder();
-      int lastRef = 0;
 
-      if (text.toUpperCase(Locale.ROOT).contains("HREF=\"")) {
-        PsiFile fromText = PsiFileFactory.getInstance(myProject)
-          .createFileFromText("DUMMY__.html", FileTypeManager.getInstance().getFileTypeByExtension("html"), text, System.currentTimeMillis(), false);
-        Collection<XmlTag> tags = PsiTreeUtil.findChildrenOfType(fromText, XmlTag.class);
-        for (XmlTag tag : tags) {
-          if (!tag.getName().toLowerCase(Locale.ROOT).equals("a")) {
-            continue;
-          }
-          final XmlAttribute hrefAttribute = tag.getAttribute(HREF_ATTRIBUTE_NAME);
-          if (hrefAttribute == null) {
-            continue;
-          }
-          XmlAttributeValue hrefAttributeValueElement = hrefAttribute.getValueElement();
-          if (hrefAttributeValueElement == null) {
-            continue;
-          }
-          int groupStart = hrefAttributeValueElement.getValueTextRange().getStartOffset();
-          int groupEnd = hrefAttributeValueElement.getValueTextRange().getEndOffset();
-          result.append(text, lastRef, groupStart);
-          String href = text.substring(groupStart, groupEnd);
-          String reference = "";
-          try {
-            reference = createReferenceForRelativeLink(href, myElement);
-          }
-          catch (IndexNotReadyException e) {
-            LOG.debug(e);
-            result.replace(result.length() - 6, result.length(), "wrong-href=\""); // display text instead of link
-          }
-          result.append(reference == null ? href : reference);
-          lastRef = groupEnd;
-        }
-      }
-
-      if (lastRef > 0) {  // don't copy text over if there are no matches
-        result.append(text, lastRef, text.length());
-        text = result.toString(); //NON-NLS
-      }
-    }
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Generated JavaDoc:");
-      LOG.debug(text);
-    }
-
-    text = StringUtil.replaceIgnoreCase(text, "<p/>", "<p></p>"); //NON-NLS
-    text = StringUtil.replace(text, "/>", ">");
-    return text;
-  }
-
-  /**
-   * Converts a relative link into {@link DocumentationManagerProtocol#PSI_ELEMENT_PROTOCOL PSI_ELEMENT_PROTOCOL}-type link if possible.
-   */
-  public static @Nullable String createReferenceForRelativeLink(@NotNull String relativeLink, @NotNull PsiElement contextElement) {
+  /// Returns [PsiElement] and string fragment pair for the given relative link, or `null` if it cannot be resolved.
+  ///
+  /// @see #createReferenceForRelativeLink
+  static @Nullable Pair<PsiElement, @Nullable String> getElementForRelativeLink(@NotNull String relativeLink,
+                                                                                @NotNull PsiElement contextElement) {
     String fragment = null;
     int hashPosition = relativeLink.indexOf('#');
     if (hashPosition >= 0) {
@@ -625,12 +551,22 @@ public class JavaDocInfoGenerator {
         }
       }
     }
+    return Pair.create(targetElement, fragment);
+  }
+  
+  
+  /**
+   * Converts a relative link into {@link DocumentationManagerProtocol#PSI_ELEMENT_PROTOCOL PSI_ELEMENT_PROTOCOL}-type link if possible.
+   */
+  public static @Nullable String createReferenceForRelativeLink(@NotNull String relativeLink, @NotNull PsiElement contextElement) {
+    Pair<PsiElement, @Nullable String> pair = getElementForRelativeLink(relativeLink, contextElement);
+    if (pair == null) return null;
 
     StringBuilder builder = new StringBuilder();
     builder.append(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL);
-    builder.append(JavaDocUtil.getReferenceText(targetElement.getProject(), targetElement));
-    if (fragment != null) {
-      builder.append(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR).append(fragment);
+    builder.append(JavaDocUtil.getReferenceText(pair.first.getProject(), pair.first));
+    if (pair.second != null) {
+      builder.append(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR).append(pair.second);
     }
     return builder.toString();
   }
@@ -722,7 +658,8 @@ public class JavaDocInfoGenerator {
     if (recordClass == null) return;
     String recordComponentJavadoc = getRecordComponentJavadocFromParameterTag(recordIndex, recordClass);
     if (recordComponentJavadoc != null) {
-      buffer.append(DocumentationMarkup.CONTENT_START).append(recordComponentJavadoc).append(DocumentationMarkup.CONTENT_END);
+      myPrinter.printContentStart(buffer).append(recordComponentJavadoc);
+      myPrinter.printContentEnd(buffer);
     }
   }
 
@@ -732,7 +669,8 @@ public class JavaDocInfoGenerator {
 
     String docForPattern = getDocForPattern(variable);
     if (docForPattern != null) {
-      buffer.append(DocumentationMarkup.CONTENT_START).append(docForPattern).append(DocumentationMarkup.CONTENT_END);
+      myPrinter.printContentStart(buffer).append(docForPattern);
+      myPrinter.printContentEnd(buffer);
     }
   }
 
@@ -754,7 +692,7 @@ public class JavaDocInfoGenerator {
     PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
     if (recordComponents.length <= recordComponentIndex) return null;
     PsiRecordComponent recordComponent = recordComponents[recordComponentIndex];
-    PsiDocComment classComment = recordClass.getDocComment();
+    PsiDocComment classComment = preProcessDocComment(recordClass.getDocComment());
     String recordComponentName = recordComponent.getName();
     if (classComment == null) return null;
     PsiDocTag tag = getParamTagByName(classComment, recordComponentName);
@@ -784,11 +722,11 @@ public class JavaDocInfoGenerator {
   public @Nls @Nullable String generateDocInfo(List<@NlsSafe String> docURLs) {
     @Nls StringBuilder buffer = new StringBuilder();
 
-    HtmlChunk containerInfo = generateContainerInfo(myElement);
     generatePrologue(buffer);
 
+    String containerInfo = generateContainerInfo(myElement);
     if (containerInfo != null) {
-      containerInfo.appendTo(buffer);
+      buffer.append(containerInfo);
     }
 
     if (!generateDocInfoCore(buffer, false)) {
@@ -809,7 +747,7 @@ public class JavaDocInfoGenerator {
       }
     }
 
-    return sanitizeHtml(buffer);
+    return myPrinter.postProcess(buffer, myProject, myElement);
   }
 
   public @Nls @Nullable String generateRenderedDocInfo() {
@@ -831,22 +769,15 @@ public class JavaDocInfoGenerator {
       }
     }
 
-    return sanitizeHtml(buffer);
+    return myPrinter.postProcess(buffer, myProject, myElement);
   }
 
-  private @Nullable HtmlChunk generateContainerInfo(@Nullable PsiElement element) {
-    JavaDocHighlightingManager highlightingManager = JavaDocHighlightingManagerImpl.getInstance();
-
+  private @Nullable String generateContainerInfo(@Nullable PsiElement element) {
     @NlsSafe String ownerLink = null;
-    String ownerIcon = null;
+    boolean ownerLinkIsCode = false;
 
     if (element instanceof PsiPackage pkg) {
-      return BOTTOM_ELEMENT
-        .children(
-          HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.Package"),
-          HtmlChunk.nbsp(),
-          HtmlChunk.tag("code").addText(pkg.getQualifiedName())
-        );
+      return myPrinter.printContainerInfo(new StringBuilder(), element, pkg.getQualifiedName(), true).toString();
     }
     else if (element instanceof PsiClass) {
       PsiFile file = element.getContainingFile();
@@ -856,15 +787,15 @@ public class JavaDocInfoGenerator {
           PsiPackage aPackage = JavaPsiFacade.getInstance(file.getProject()).findPackage(packageName);
           StringBuilder packageFqnBuilder = new StringBuilder();
           if (myDoSemanticHighlightingOfLinks) {
-            appendStyledSpan(packageFqnBuilder, highlightingManager.getClassNameAttributes(), packageName);
+            appendStyledSpan(packageFqnBuilder, myHighlightingManager.getClassNameAttributes(), packageName);
           }
           else {
             packageFqnBuilder.append(packageName);
           }
           ownerLink = aPackage != null
                       ? generateLink(aPackage, packageFqnBuilder.toString())
-                      : "<code>" + packageFqnBuilder + "</code>";
-          ownerIcon = "AllIcons.Nodes.Package";
+                      : packageFqnBuilder.toString();
+          ownerLinkIsCode = aPackage == null;
         }
       }
     }
@@ -875,25 +806,19 @@ public class JavaDocInfoGenerator {
         if (qName != null) {
           StringBuilder classFqnBuilder = new StringBuilder();
           if (myDoSemanticHighlightingOfLinks) {
-            appendStyledSpan(classFqnBuilder, highlightingManager.getClassNameAttributes(), qName);
+            appendStyledSpan(classFqnBuilder, myHighlightingManager.getClassNameAttributes(), qName);
           }
           else {
             classFqnBuilder.append(qName);
           }
           classFqnBuilder.append(generateTypeParameters(parentClass, false));
           ownerLink = generateLink(parentClass, classFqnBuilder.toString());
-          ownerIcon = "AllIcons.Nodes.Class";
         }
       }
     }
 
     if (ownerLink != null) {
-      return BOTTOM_ELEMENT
-        .children(
-          HtmlChunk.tag("icon").attr("src", ownerIcon),
-          HtmlChunk.nbsp(),
-          HtmlChunk.raw(ownerLink)
-        );
+      return myPrinter.printContainerInfo(new StringBuilder(), element, ownerLink, ownerLinkIsCode).toString();
     }
     return null;
   }
@@ -928,17 +853,17 @@ public class JavaDocInfoGenerator {
     if (generatePrologue) generatePrologue(buffer);
 
     if (!isRendered()) {
-      buffer.append(DocumentationMarkup.DEFINITION_START);
+      myPrinter.printDefinitionStart(buffer);
       myIsSignatureGenerationInProgress = true;
       if (generateClassSignature(buffer, aClass, SignaturePlace.Javadoc)) {
         myIsSignatureGenerationInProgress = false;
         return;
       }
       myIsSignatureGenerationInProgress = false;
-      buffer.append(DocumentationMarkup.DEFINITION_END);
+      myPrinter.printDefinitionEnd(buffer);
     }
 
-    PsiDocComment comment = getDocComment(aClass);
+    PsiDocComment comment = preProcessDocComment(getDocComment(aClass));
     if (comment != null) {
       generateCommonSection(buffer, comment);
       generateAuthorAndVersionSections(buffer, comment);
@@ -947,27 +872,27 @@ public class JavaDocInfoGenerator {
       generateUnknownTagsSections(buffer, comment);
     }
     else {
-      buffer.append(DocumentationMarkup.SECTIONS_START);
+      myPrinter.printSectionsStart(buffer);
     }
 
-    buffer.append(DocumentationMarkup.SECTIONS_END);
+    myPrinter.printSectionsEnd(buffer);
   }
 
   private void generateTypeParameterJavaDoc(StringBuilder buffer, PsiTypeParameter parameter, boolean generatePrologue) {
     if (generatePrologue) generatePrologue(buffer);
 
     if (!isRendered()) {
-      buffer.append(DocumentationMarkup.DEFINITION_START);
+      myPrinter.printDefinitionStart(buffer);
       generateTypeParameterSignature(buffer, parameter, SignaturePlace.Javadoc);
-      buffer.append(DocumentationMarkup.DEFINITION_END);
+      myPrinter.printDefinitionEnd(buffer);
     }
 
     if (parameter.getOwner() instanceof PsiJavaDocumentedElement documentedElement) {
-      final PsiDocComment docComment = getDocComment(documentedElement);
+      final PsiDocComment docComment = preProcessDocComment(getDocComment(documentedElement));
       PsiDocTag[] localTags = docComment != null ? docComment.getTags() : PsiDocTag.EMPTY_ARRAY;
       PsiDocTag tag = getTagByName(localTags, "<" + parameter.getName() + ">");
       if (tag != null) {
-        buffer.append("<p>");
+        myPrinter.printParagraph(buffer);
         final PsiElement[] elements = Arrays.stream(tag.getChildren())
           .skip(1)
           .filter(e -> e.getNode().getElementType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS &&
@@ -1080,10 +1005,13 @@ public class JavaDocInfoGenerator {
       if (i < refs.length - 1) {
         appendStyledSpan(buffer, getHighlightingManager().getCommaAttributes(), ",");
         if (refs.length <= 3) {
-          buffer.append(NBSP);
+          myPrinter.printEscapableChar(buffer, ' ');
         }
         else {
-          buffer.append('\n').repeat(NBSP, keyword.length() + 1);
+          buffer.append('\n');
+          for (int j = 0; j < keyword.length() + 1; j++) {
+            myPrinter.printEscapableChar(buffer, ' ');
+          }
         }
       }
     }
@@ -1121,12 +1049,12 @@ public class JavaDocInfoGenerator {
 
   private @NotNull String generateOneTypeParameterPresentableName(PsiTypeParameter typeParameter) {
     StringBuilder paramName = new StringBuilder();
-    paramName.append(LT);
+    myPrinter.printEscapableChar(paramName, '<');
     appendStyledSpan(
       paramName,
       getHighlightingManager().getTypeParameterNameAttributes(),
       Objects.requireNonNullElse(typeParameter.getName(), CommonBundle.getErrorTitle()));
-    paramName.append(GT);
+    myPrinter.printEscapableChar(paramName, '>');
     return paramName.toString();
   }
 
@@ -1143,7 +1071,7 @@ public class JavaDocInfoGenerator {
   }
 
   private @Nullable InheritDocContext<PsiDocTag> findInClassComment(PsiClass psiClass, DocTagLocator<PsiDocTag> locator) {
-    PsiDocTag tag = locator.find(psiClass, getDocComment(psiClass));
+    PsiDocTag tag = locator.find(psiClass, preProcessDocComment(getDocComment(psiClass)));
     if (tag != null) {
       return new InheritDocContext<>(tag, new InheritDocProvider<>() {
         @Override
@@ -1158,6 +1086,10 @@ public class JavaDocInfoGenerator {
       });
     }
     return null;
+  }
+
+  private @Nullable PsiDocComment preProcessDocComment(@Nullable PsiDocComment comment) {
+    return comment == null ? null : myPrinter.preProcess(comment);
   }
 
   public static @Nullable PsiDocComment getDocComment(PsiJavaDocumentedElement docOwner) {
@@ -1180,29 +1112,29 @@ public class JavaDocInfoGenerator {
     if (generatePrologue) generatePrologue(buffer);
 
     if (!isRendered()) {
-      buffer.append(DocumentationMarkup.DEFINITION_START);
+      myPrinter.printDefinitionStart(buffer);
       myIsSignatureGenerationInProgress = true;
       generateFieldSignature(buffer, field, SignaturePlace.Javadoc);
       myIsSignatureGenerationInProgress = false;
-      enumConstantOrdinal(buffer, field, field.getContainingClass(), "\n");
-      buffer.append(DocumentationMarkup.DEFINITION_END);
+      enumConstantOrdinal(buffer, field, field.getContainingClass(), "\n", myPrinter);
+      myPrinter.printDefinitionEnd(buffer);
     }
 
-    PsiDocComment comment = getDocComment(field);
+    PsiDocComment comment = preProcessDocComment(getDocComment(field));
     if (comment != null) {
       generateCommonSection(buffer, comment);
       generateAuthorAndVersionSections(buffer, comment);
       generateUnknownTagsSections(buffer, comment);
     }
     else {
-      buffer.append(DocumentationMarkup.SECTIONS_START);
+      myPrinter.printSectionsStart(buffer);
     }
 
     if (!isRendered()) {
       JavaDocColorUtil.appendColorPreview(field, buffer);
     }
 
-    buffer.append(DocumentationMarkup.SECTIONS_END);
+    myPrinter.printSectionsEnd(buffer);
   }
 
   private void generateFieldSignature(StringBuilder buffer, PsiField field, SignaturePlace place) {
@@ -1217,12 +1149,20 @@ public class JavaDocInfoGenerator {
   }
 
   public static void enumConstantOrdinal(@Nls StringBuilder buffer, PsiField field, PsiClass parentClass, String newLine) {
+    enumConstantOrdinal(buffer, field, parentClass, newLine, new JavaDocInfoHtmlPrinter());
+  }
+
+  static void enumConstantOrdinal(@Nls StringBuilder buffer,
+                                  PsiField field,
+                                  PsiClass parentClass,
+                                  String newLine,
+                                  @NotNull JavaDocInfoPrinter printer) {
     if (parentClass != null && field instanceof PsiEnumConstant) {
       int idx = ArrayUtilRt.find(parentClass.getFields(), field);
       if (idx >= 0) {
-        buffer.append(newLine).append(DocumentationMarkup.GRAYED_START).append("// ");
+        printer.printGrayedStart(buffer.append(newLine)).append("// ");
         buffer.append(JavaBundle.message("enum.constant.ordinal")).append(idx);
-        buffer.append(DocumentationMarkup.GRAYED_END);
+        printer.printGrayedEnd(buffer);
       }
     }
   }
@@ -1233,9 +1173,9 @@ public class JavaDocInfoGenerator {
 
     generateVariableDefinition(buffer, variable, false);
 
-    buffer.append(DocumentationMarkup.SECTIONS_START);
+    myPrinter.printSectionsStart(buffer);
     JavaDocColorUtil.appendColorPreview(variable, buffer);
-    buffer.append(DocumentationMarkup.SECTIONS_END);
+    myPrinter.printSectionsEnd(buffer);
   }
 
   private void generatePackageJavaDoc(StringBuilder buffer, PsiPackage psiPackage, boolean generatePrologue) {
@@ -1269,55 +1209,40 @@ public class JavaDocInfoGenerator {
     PsiClass[] classes = aPackage.getClasses();
     if (classes.length == 0) return;
     if (generatePrologue) generatePrologue(buffer);
-    HtmlBuilder hb = new HtmlBuilder();
-    hb.append(HtmlChunk.tag("h3").addText(JavaBundle.message("package.classes")));
+    myPrinter.printPackageClassesStart(buffer, JavaBundle.message("package.classes"));
     Comparator<PsiClass> comparator = Comparator.comparing(PsiClass::getName, Comparator.nullsLast(Comparator.naturalOrder()));
     Set<String> links = new HashSet<>();
     Arrays.stream(classes).sorted(comparator).forEach(psiClass -> {
       String link = generateLink(psiClass, psiClass.getName());
       if (link != null && links.add(link)) {
-        hb.append(HtmlChunk.tag("div")
-                    .children(
-                      HtmlChunk.tag("icon").attr("src", getIcon(psiClass)),
-                      HtmlChunk.nbsp(),
-                      HtmlChunk.raw(link)
-                    ));
+        myPrinter.printPackageClass(buffer, psiClass, link);
       }
     });
-    buffer.append(hb);
-    buffer.append(DocumentationMarkup.SECTIONS_END);
-  }
-
-  private static @NotNull String getIcon(@NotNull PsiClass psiClass) {
-    return psiClass.isEnum() ? "AllIcons.Nodes.Enum" :
-           psiClass.isRecord() ? "AllIcons.Nodes.Record" :
-           psiClass.isAnnotationType() ? "AllIcons.Nodes.Annotationtype" :
-           psiClass.isInterface() ? "AllIcons.Nodes.Interface" :
-           psiClass.hasModifierProperty(PsiModifier.ABSTRACT) ? "AllIcons.Nodes.AbstractClass" :
-           "AllIcons.Nodes.Class";
+    myPrinter.printSectionsEnd(buffer);
   }
 
   private void generatePackageJavaDoc(StringBuilder buffer, PsiDocComment comment, boolean generatePrologue) {
+    comment = preProcessDocComment(comment);
     if (generatePrologue) generatePrologue(buffer);
     generateCommonSection(buffer, comment);
-    buffer.append(DocumentationMarkup.SECTIONS_END);
+    myPrinter.printSectionsEnd(buffer);
   }
 
   private void generateModuleJavaDoc(StringBuilder buffer, PsiJavaModule module, boolean generatePrologue) {
     if (generatePrologue) generatePrologue(buffer);
 
     if (!isRendered()) {
-      buffer.append(DocumentationMarkup.DEFINITION_START);
+      myPrinter.printDefinitionStart(buffer);
       generateAnnotations(buffer, module, SignaturePlace.Javadoc, true, false, true);
       appendStyledSpan(buffer, getHighlightingManager().getKeywordAttributes(), "module ");
       appendStyledSpan(buffer, getHighlightingManager().getClassNameAttributes(), module.getName());
-      buffer.append(DocumentationMarkup.DEFINITION_END);
+      myPrinter.printDefinitionEnd(buffer);
     }
 
-    PsiDocComment comment = getDocComment(module);
+    PsiDocComment comment = preProcessDocComment(getDocComment(module));
     if (comment != null) {
       generateCommonSection(buffer, comment);
-      buffer.append(DocumentationMarkup.SECTIONS_END);
+      myPrinter.printSectionsEnd(buffer);
     }
   }
 
@@ -1335,12 +1260,13 @@ public class JavaDocInfoGenerator {
 
   public void generateCommonSection(StringBuilder buffer, PsiDocComment docComment) {
     if (!isEmptyDescription(docComment)) {
-      buffer.append(DocumentationMarkup.CONTENT_START);
+      myPrinter.printContentStart(buffer);
       generateDescription(buffer, docComment);
-      buffer.append(DocumentationMarkup.CONTENT_END);
+      myPrinter.printContentEnd(buffer);
     }
 
-    buffer.append(DocumentationMarkup.SECTIONS_START).append("<p>");
+    myPrinter.printSectionsStart(buffer);
+    myPrinter.printParagraph(buffer);
     generateApiSection(buffer, docComment);
     generateDeprecatedSection(buffer, docComment);
     generateSinceSection(buffer, docComment);
@@ -1384,9 +1310,10 @@ public class JavaDocInfoGenerator {
       return;
     }
 
+    docComment = preProcessDocComment(docComment);
     if (generatePrologue) generatePrologue(buffer);
     generateCommonSection(buffer, docComment);
-    buffer.append(DocumentationMarkup.SECTIONS_END);
+    myPrinter.printSectionsEnd(buffer);
   }
 
   public static @Nullable PsiExpression calcInitializerExpression(PsiVariable variable) {
@@ -1427,8 +1354,9 @@ public class JavaDocInfoGenerator {
     if (trunc) {
       text = text.substring(0, index);
     }
-    appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-      doHighlightSignatures(), buffer, initializer.getProject(), initializer.getLanguage(), text);
+
+    myPrinter.printHighlightedText(buffer, doHighlightSignatures(), initializer.getProject(), initializer.getLanguage(), text,
+                                   getHighlightingSaturation());
     if (trunc) {
       buffer.append("...");
     }
@@ -1444,22 +1372,25 @@ public class JavaDocInfoGenerator {
       }
       else {
         // initializer should be printed on the new line
-        buffer.append("\n").repeat(NBSP, CodeStyle.getIndentSize(variable.getContainingFile()));
+        buffer.append('\n');
+        for (int i = 0, indent = CodeStyle.getIndentSize(variable.getContainingFile()); i < indent; i++) {
+          myPrinter.printEscapableChar(buffer, ' ');
+        }
       }
       appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), "= ");
 
       int index = newLineIndex(initializerText);
       if (index < initializerText.length()) {
-        buffer.append(StringUtil.escapeXmlEntities(initializerText.substring(0, index))).append("...");
+        buffer.append(myPrinter.escapeIfNeeded(initializerText.substring(0, index))).append("...");
       }
       else {
         generateExpressionText(initializer, buffer);
       }
       PsiExpression constantInitializer = calcInitializerExpression(variable);
       if (constantInitializer != null) {
-        buffer.append(DocumentationMarkup.GRAYED_START);
+        myPrinter.printGrayedStart(buffer);
         appendExpressionValue(buffer, constantInitializer);
-        buffer.append(DocumentationMarkup.GRAYED_END);
+        myPrinter.printGrayedEnd(buffer);
       }
     }
     else if (variable instanceof PsiEnumConstant constant) {
@@ -1495,7 +1426,12 @@ public class JavaDocInfoGenerator {
     String modifiers = PsiFormatUtil.formatModifiers(owner, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     if (!modifiers.isEmpty()) {
       appendStyledSpan(buffer, getHighlightingManager().getKeywordAttributes(), modifiers);
-      buffer.append(nbsp ? NBSP : ' ');
+      if (nbsp) {
+        myPrinter.printEscapableChar(buffer, ' ');
+      }
+      else {
+        buffer.append(' ');
+      }
     }
     return modifiers.length();
   }
@@ -1510,14 +1446,15 @@ public class JavaDocInfoGenerator {
     int len = 0;
     List<AnnotationDocGenerator> generators = AnnotationDocGenerator.getAnnotationsToShow(owner, context);
     if (leadingSpace && !generators.isEmpty()) {
-      buffer.append(NBSP);
+      myPrinter.printEscapableChar(buffer, ' ');
       len++;
     }
     for (AnnotationDocGenerator anno : generators) {
       StringBuilder buf = new StringBuilder();
-      anno.generateAnnotation(buf, AnnotationFormat.JavaDocShort, generateLink, isRendered(), doHighlightSignatures());
+      anno.generateAnnotation(buf, AnnotationFormat.JavaDocShort, generateLink, isRendered(), doHighlightSignatures(), myPrinter);
       len += StringUtil.unescapeXmlEntities(StringUtil.stripHtml(buf.toString(), true)).length() + 1;
-      buffer.append(buf).append(NBSP);
+      buffer.append(buf);
+      myPrinter.printEscapableChar(buffer, ' ');
     }
     return len;
   }
@@ -1534,9 +1471,9 @@ public class JavaDocInfoGenerator {
     for (AnnotationDocGenerator anno : AnnotationDocGenerator.getAnnotationsToShow(owner)) {
       if (ignoreNonSourceAnnotations && (anno.isInferred() || anno.isExternal())) continue;
       if (anno.isInferredTypeUseAnnotation() && AnnotationDocGenerator.getContextType(owner) instanceof PsiArrayType) continue;
-      anno.generateAnnotation(buffer, format, generateLink, isRendered(), doHighlightSignatures());
+      anno.generateAnnotation(buffer, format, generateLink, isRendered(), doHighlightSignatures(), myPrinter);
 
-      buffer.append(NBSP);
+      myPrinter.printEscapableChar(buffer, ' ');
       if (splitAnnotations) buffer.append('\n');
     }
   }
@@ -1550,7 +1487,7 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateVariableDefinition(StringBuilder buffer, PsiVariable variable, boolean annotations) {
-    buffer.append(DocumentationMarkup.DEFINITION_START);
+    myPrinter.printDefinitionStart(buffer);
 
     StringBuilder signatureBuffer = new StringBuilder();
     generateModifiers(signatureBuffer, variable, false);
@@ -1566,7 +1503,7 @@ public class JavaDocInfoGenerator {
 
     appendInitializer(buffer, variable, StringUtil.removeHtmlTags(signatureBuffer.toString()).length());
 
-    buffer.append(DocumentationMarkup.DEFINITION_END);
+    myPrinter.printDefinitionEnd(buffer);
   }
 
   private void generateMethodParameterJavaDoc(StringBuilder buffer, PsiParameter parameter, boolean generatePrologue) {
@@ -1580,9 +1517,9 @@ public class JavaDocInfoGenerator {
       if (parameter.getParent() == parameterList) { // this can also be a parameter in foreach statement or in catch clause
         ParamInfo tagInfoProvider = findTagInfoProvider(parameter, psiMethod, parameterList);
         if (tagInfoProvider != null) {
-          buffer.append(DocumentationMarkup.CONTENT_START);
+          myPrinter.printContentStart(buffer);
           buffer.append(generateOneParameter(tagInfoProvider));
-          buffer.append(DocumentationMarkup.CONTENT_END);
+          myPrinter.printContentEnd(buffer);
         }
       }
     }
@@ -1610,7 +1547,7 @@ public class JavaDocInfoGenerator {
   }
 
   private ParamInfo findTagInfoProvider(PsiParameter parameter, PsiMethod method, PsiParameterList parameterList) {
-    PsiDocComment docComment = getDocComment(method);
+    PsiDocComment docComment = preProcessDocComment(getDocComment(method));
     PsiDocTag[] localTags = docComment != null ? docComment.getTags() : PsiDocTag.EMPTY_ARRAY;
     int parameterIndex = parameterList.getParameterIndex(parameter);
     return findDocTag(localTags, parameter.getName(), generateOneParameterPresentableName(parameter),
@@ -1621,19 +1558,19 @@ public class JavaDocInfoGenerator {
     if (generatePrologue) generatePrologue(buffer);
 
     if (!isRendered()) {
-      buffer.append(DocumentationMarkup.DEFINITION_START);
+      myPrinter.printDefinitionStart(buffer);
       myIsSignatureGenerationInProgress = true;
       generateMethodSignature(buffer, method, SignaturePlace.Javadoc);
       myIsSignatureGenerationInProgress = false;
-      buffer.append(DocumentationMarkup.DEFINITION_END);
+      myPrinter.printDefinitionEnd(buffer);
     }
 
     DocTagLocator<PsiElement[]> descriptionLocator =
       (owner, comment) -> comment != null && !isEmptyDescription(comment) ? comment.getDescriptionElements() : null;
 
-    PsiDocComment comment = getMethodDocComment(method);
+    PsiDocComment comment = preProcessDocComment(getMethodDocComment(method));
     if (comment != null && !isEmptyDescription(comment)) {
-      buffer.append(DocumentationMarkup.CONTENT_START);
+      myPrinter.printContentStart(buffer);
       generateValue(buffer, comment.getDescriptionElements(), new InheritDocProvider<>() {
         @Override
         public @Nullable InheritDocContext<PsiElement[]> getInheritDoc(@Nullable PsiDocTagValue target) {
@@ -1645,14 +1582,14 @@ public class JavaDocInfoGenerator {
           return method.getContainingClass();
         }
       });
-      buffer.append(DocumentationMarkup.CONTENT_END);
-      buffer.append(DocumentationMarkup.SECTIONS_START);
+      myPrinter.printContentEnd(buffer);
+      myPrinter.printSectionsStart(buffer);
     }
     else {
-      buffer.append(DocumentationMarkup.SECTIONS_START);
+      myPrinter.printSectionsStart(buffer);
 
       if (!isRendered()) {
-        buffer.append("<p>");
+        myPrinter.printParagraph(buffer);
         final InheritDocContext<PsiElement[]> inheritDocContext = findInheritDocTag(method, descriptionLocator, null);
         if (inheritDocContext != null) {
           PsiElement[] elements = inheritDocContext.element;
@@ -1660,16 +1597,16 @@ public class JavaDocInfoGenerator {
             PsiClass aClass = inheritDocContext.provider.getElement();
             if (aClass != null) {
               startHeaderSection(buffer, JavaBundle.message(aClass.isInterface() ? "javadoc.description.copied.from.interface"
-                                                                                 : "javadoc.description.copied.from.class"))
-                .append("<p>");
-              generateLink(buffer, aClass, getStyledSpan(doSemanticHighlightingOfLinks(),
+                                                                                 : "javadoc.description.copied.from.class"));
+              myPrinter.printParagraph(buffer);
+              String label = getStyledSpan(doSemanticHighlightingOfLinks(),
                                                          getHighlightingManager().getClassDeclarationAttributes(aClass),
-                                                         JavaDocUtil.getShortestClassName(aClass, method)),
-                           false);
+                                           JavaDocUtil.getShortestClassName(aClass, method));
+              myPrinter.printLink(buffer, aClass, label, false);
             }
-            buffer.append(BR_TAG);
+            myPrinter.printLineBreak(buffer);
             generateValue(buffer, elements, inheritDocContext.provider);
-            buffer.append(DocumentationMarkup.SECTION_END);
+            myPrinter.printSectionEnd(buffer);
           }
         }
         else {
@@ -1679,16 +1616,16 @@ public class JavaDocInfoGenerator {
           }
 
           if (field != null) {
-            PsiDocComment fieldDocComment = field.getDocComment();
+            PsiDocComment fieldDocComment = preProcessDocComment(field.getDocComment());
             if (fieldDocComment != null && !isEmptyDescription(fieldDocComment)) {
-              startHeaderSection(buffer, JavaBundle.message("javadoc.description.copied.from.field"))
-                .append("<p>");
-              generateLink(buffer, field, getStyledSpan(doSemanticHighlightingOfLinks(),
-                                                        getHighlightingManager().getFieldDeclarationAttributes(field), field.getName()),
-                           false);
-              buffer.append(BR_TAG);
+              startHeaderSection(buffer, JavaBundle.message("javadoc.description.copied.from.field"));
+              myPrinter.printParagraph(buffer);
+              String label = getStyledSpan(doSemanticHighlightingOfLinks(),
+                                           getHighlightingManager().getFieldDeclarationAttributes(field), field.getName());
+              myPrinter.printLink(buffer, field, label, false);
+              myPrinter.printLineBreak(buffer);
               generateValue(buffer, fieldDocComment.getDescriptionElements(), ourEmptyElementsProvider);
-              buffer.append(DocumentationMarkup.SECTION_END);
+              myPrinter.printSectionEnd(buffer);
             }
           }
         }
@@ -1717,7 +1654,7 @@ public class JavaDocInfoGenerator {
       generateUnknownTagsSections(buffer, comment);
     }
 
-    buffer.append(DocumentationMarkup.SECTIONS_END);
+    myPrinter.printSectionsEnd(buffer);
   }
 
   private void generateUnknownTagsSections(StringBuilder buffer, PsiDocComment comment) {
@@ -1732,10 +1669,9 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private static StringBuilder startHeaderSection(StringBuilder buffer, String message) {
-    return buffer.append(DocumentationMarkup.SECTION_HEADER_START)
-      .append(message)
-      .append(DocumentationMarkup.SECTION_SEPARATOR);
+  private StringBuilder startHeaderSection(StringBuilder buffer, String message) {
+    myPrinter.printSectionHeaderStart(buffer).append(message);
+    return myPrinter.printSectionSeparator(buffer);
   }
 
   private void generateMethodSignature(StringBuilder buffer, PsiMethod method, SignaturePlace place) {
@@ -1750,13 +1686,14 @@ public class JavaDocInfoGenerator {
 
     String typeParamsString = generateTypeParameters(method, isTooltip);
     if (!typeParamsString.isEmpty()) {
-      buffer.append(typeParamsString).append(NBSP);
+      buffer.append(typeParamsString);
+      myPrinter.printEscapableChar(buffer, ' ');
     }
 
     PsiType returnType = method.getOriginalElement() instanceof PsiMethod original ? original.getReturnType() : method.getReturnType();
     if (returnType != null) {
       generateType(buffer, returnType, method, generateLink, isTooltip);
-      buffer.append(NBSP);
+      myPrinter.printEscapableChar(buffer, ' ');
     }
     String name = method.getName();
     appendStyledSpan(buffer, getHighlightingManager().getMethodDeclarationAttributes(method), name);
@@ -1766,7 +1703,7 @@ public class JavaDocInfoGenerator {
     PsiFile file = method.getContainingFile();
     int indent = getIndent(isTooltip, file);
     if (parameters.length > 0 && !isTooltip) {
-      buffer.append(BR_TAG);
+      myPrinter.printLineBreak(buffer);
     }
     for (int i = 0; i < parameters.length; i++) {
       buffer.append(StringUtil.repeatSymbol(' ', indent));
@@ -1774,7 +1711,7 @@ public class JavaDocInfoGenerator {
       generateAnnotations(buffer, parm, place, false, false, true);
       generateType(buffer, ((PsiParameter)parm.getOriginalElement()).getType(), parm, generateLink, isTooltip);
       if (!isTooltip) {
-        buffer.append(NBSP);
+        myPrinter.printEscapableChar(buffer, ' ');
         appendStyledSpan(buffer, getHighlightingManager().getParameterAttributes(), parm.getName());
       }
       if (i < parameters.length - 1) {
@@ -1783,7 +1720,7 @@ public class JavaDocInfoGenerator {
       }
     }
     if (parameters.length > 0 && !isTooltip) {
-      buffer.append(BR_TAG);
+      myPrinter.printLineBreak(buffer);
     }
     appendStyledSpan(buffer, getHighlightingManager().getParenthesesAttributes(), ")");
 
@@ -1791,12 +1728,12 @@ public class JavaDocInfoGenerator {
     if (refs.length > 0) {
       buffer.append('\n');
       appendStyledSpan(buffer, getHighlightingManager().getKeywordAttributes(), "throws");
-      buffer.append(NBSP);
+      myPrinter.printEscapableChar(buffer, ' ');
       for (int i = 0; i < refs.length; i++) {
         generateLink(buffer, isTooltip ? refs[i].getPresentableText() : refs[i].getCanonicalText(), null, method, false);
         if (i < refs.length - 1) {
           appendStyledSpan(buffer, getHighlightingManager().getCommaAttributes(), ",");
-          buffer.append(NBSP);
+          myPrinter.printEscapableChar(buffer, ' ');
         }
       }
     }
@@ -1845,10 +1782,7 @@ public class JavaDocInfoGenerator {
   }
 
   private void generatePrologue(StringBuilder buffer) {
-    URL baseUrl = getBaseUrl();
-    if (baseUrl != null) {
-      buffer.append("<html><head><base href=\"").append(baseUrl).append("\"></head><body>"); // used to resolve URLs of local images
-    }
+    myPrinter.printPrologue(buffer, getBaseUrl());
   }
 
   private URL getBaseUrl() {
@@ -1971,7 +1905,7 @@ public class JavaDocInfoGenerator {
             if (provider == null) continue;
             InheritDocContext<PsiElement[]> inheritDocContext = provider.getInheritDoc(tag.getValueElement());
             if (inheritDocContext != null) {
-              flushSubBuffer(buffer, subBuffer, isMarkdown);
+              myPrinter.flushSubBuffer(buffer, subBuffer, isMarkdown);
               generateValue(buffer, inheritDocContext.element, inheritDocContext.provider);
             }
           }
@@ -1986,9 +1920,9 @@ public class JavaDocInfoGenerator {
       }
       else if (element instanceof PsiMarkdownCodeBlock markdownCodeBlock) {
         if (markdownCodeBlock.isInline()) {
-          appendStyledInlineCode(subBuffer, element.getProject(), markdownCodeBlock.getLanguage(), markdownCodeBlock.getCodeText());
+          myPrinter.printInlineCode(subBuffer, element.getProject(), markdownCodeBlock.getLanguage(), markdownCodeBlock.getCodeText());
         } else {
-          appendStyledCodeBlock(subBuffer, element.getProject(), markdownCodeBlock.getCodeLanguage(), markdownCodeBlock.getCodeText());
+          myPrinter.printCodeBlock(subBuffer, element.getProject(), markdownCodeBlock.getCodeLanguage(), markdownCodeBlock.getCodeText());
         }
       }
       else if (element instanceof PsiMarkdownReferenceLink link) {
@@ -2043,13 +1977,7 @@ public class JavaDocInfoGenerator {
       appendPlainText(subBuffer, htmlCodeBlockContents.toString());
     }
 
-    flushSubBuffer(buffer, subBuffer, isMarkdown);
-  }
-
-  @Contract(mutates = "param1, param2")
-  private static void flushSubBuffer(StringBuilder buffer, StringBuilder subBuffer, boolean flushAsMarkdown) {
-    buffer.append(flushAsMarkdown ? markdownToHtml(subBuffer.toString()) : subBuffer);
-    subBuffer.setLength(0);
+    myPrinter.flushSubBuffer(buffer, subBuffer, isMarkdown);
   }
 
   private @Nullable StringBuilder appendHtmlCodeBlockContents(@NotNull String text, @NotNull StringBuilder buffer,
@@ -2058,21 +1986,24 @@ public class JavaDocInfoGenerator {
     int suffixIndex = text.indexOf(suffix);
     if (suffixIndex >= 0) {
       htmlCodeBlockContents.append(text, 0, suffixIndex);
-      buffer.append(prefix);
+
       String contentString = htmlCodeBlockContents.toString();
       if (contentString.indexOf('<') >= 0 && BLOCKQUOTE_PRE_PREFIX.equals(prefix)) {
+        buffer.append(prefix);
         appendPlainText(buffer, contentString);
-      }
+        buffer.append(suffix);
+      } 
       else {
-        appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-          doHighlightCodeBlocks(), buffer, myProject, JavaLanguage.INSTANCE,
-          StringUtil.unescapeXmlEntities(StringUtil.replaceUnicodeEscapeSequences(contentString))
-            .replace("&nbsp;", " ")
-            .replace("&#64;", "@")
-        );
+        JavaDocInfoPrinter.CodeBlockType type = BLOCKQUOTE_PRE_PREFIX.equals(prefix)
+                                                ? JavaDocInfoPrinter.CodeBlockType.BLOCKQUOTE_PRE
+                                                : JavaDocInfoPrinter.CodeBlockType.PRE_CODE;
+        myPrinter.printCodeBlockStart(buffer, null, JavaLanguage.INSTANCE, type);
+        myPrinter.printHighlightedText(buffer, doHighlightCodeBlocks(), myProject, JavaLanguage.INSTANCE,
+                                       StringUtil.unescapeXmlEntities(StringUtil.replaceUnicodeEscapeSequences(contentString))
+                                         .replace("&nbsp;", " ")
+                                         .replace("&#64;", "@"), getHighlightingSaturation());
+        myPrinter.printCodeBlockEnd(buffer, type);
       }
-      buffer.append(suffix);
-      appendPlainText(buffer, text.substring(suffixIndex + suffix.length()));
       return null;
     }
     else {
@@ -2105,14 +2036,13 @@ public class JavaDocInfoGenerator {
     String region = (regionAttribute == null || regionAttribute.getValue() == null) ? null : regionAttribute.getValue().getValue();
     PsiSnippetAttribute idAttr = list.getAttribute(PsiSnippetAttribute.ID_ATTRIBUTE);
     String id = idAttr == null || idAttr.getValue() == null ? null : idAttr.getValue().getValue();
-    String preTag = id == null ? "<pre>" : "<pre id=\"" + StringUtil.escapeXmlEntities(id) + "\">";
     if (body != null) {
       List<Pair<PsiElement, TextRange>> files =
         InjectedLanguageManager.getInstance(snippetTag.getProject()).getInjectedPsiFiles(snippetTag);
       PsiElement element = files != null ? files.getFirst().first : null;
-      buffer.append(preTag);
+      myPrinter.printCodeBlockStart(buffer, id, getSnippetLanguage(list));
       generateSnippetBody(buffer, element != null ? element : body, region);
-      buffer.append("</pre>");
+      myPrinter.printCodeBlockEnd(buffer);
     }
     else {
       PsiSnippetAttribute refAttribute = list.getAttribute(PsiSnippetAttribute.CLASS_ATTRIBUTE);
@@ -2125,17 +2055,31 @@ public class JavaDocInfoGenerator {
           PsiReference ref = attrValue.getReference();
           PsiElement resolved = ref == null ? null : ref.resolve();
           if (resolved instanceof PsiFile file) {
-            buffer.append(preTag);
+            myPrinter.printCodeBlockStart(buffer, id, getSnippetLanguage(list));
             generateSnippetBody(buffer, file, region);
-            buffer.append("</pre>");
+            myPrinter.printCodeBlockEnd(buffer);
           }
           else {
             String message = JavaBundle.message("javadoc.snippet.not.found", attrValue.getValue());
-            buffer.append(getSpanForUnresolvedItem()).append(message).append("</span>");
+            myPrinter.printUnresolvedLink(buffer, message);
           }
         }
       }
     }
+  }
+
+  private static Language getSnippetLanguage(PsiSnippetAttributeList list) {
+    PsiSnippetAttribute langAttr = list.getAttribute(PsiSnippetAttribute.LANG_ATTRIBUTE);
+    if (langAttr == null) {
+      return JavaLanguage.INSTANCE;
+    }
+    PsiSnippetAttributeValue attributeValue = langAttr.getValue();
+    if (attributeValue == null) {
+      return JavaLanguage.INSTANCE;
+    }
+    Language language = Language.findLanguageByID(langAttr.getValue().getValue());
+
+    return language != null ? language : JavaLanguage.INSTANCE;
   }
 
   private void generateSnippetBody(@NotNull StringBuilder buffer, @NotNull PsiElement fileOrBody, @Nullable String region) {
@@ -2143,8 +2087,7 @@ public class JavaDocInfoGenerator {
     if (!markup.hasMarkup(region)) {
       TextRange range = markup.getRegionRange(region);
       if (range == null) {
-        buffer.append(getSpanForUnresolvedItem()).append(JavaBundle.message("javadoc.snippet.region.not.found", region))
-          .append("</span>");
+        myPrinter.printUnresolvedLink(buffer, JavaBundle.message("javadoc.snippet.region.not.found", region));
       }
       else if (fileOrBody instanceof PsiJavaFile) {
         // Normal Java highlighting is only for regions without markup
@@ -2168,8 +2111,8 @@ public class JavaDocInfoGenerator {
           UnaryOperator<String> replacement;
           if (node instanceof Highlight highlight) {
             replacement = switch (highlight.type()) {
-              case BOLD -> orig -> "<b>" + orig + "</b>";
-              case ITALIC -> orig -> "<i>" + orig + "</i>";
+              case BOLD -> orig -> myPrinter.printBoldText(new StringBuilder(), orig).toString();
+              case ITALIC -> orig -> myPrinter.printItalicText(new StringBuilder(), orig).toString();
               case HIGHLIGHTED -> {
                 TextAttributes attributes =
                   EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
@@ -2179,9 +2122,7 @@ public class JavaDocInfoGenerator {
           }
           else if (node instanceof Link link) {
             replacement = orig -> {
-              StringBuilder buffer = new StringBuilder();
-              DocumentationManagerUtil.createHyperlink(buffer, link.target(), orig, link.linkType() == LinkType.LINKPLAIN);
-              return buffer.toString();
+              return myPrinter.printLink(new StringBuilder(), link.target(), orig, link.linkType() == LinkType.LINKPLAIN).toString();
             };
           }
           else {
@@ -2202,7 +2143,7 @@ public class JavaDocInfoGenerator {
 
       @Override
       public void visitError(@NotNull ErrorMarkup errorMarkup) {
-        buffer.append(getSpanForUnresolvedItem()).append("[").append(errorMarkup.message()).append("]</span>\n");
+        myPrinter.printUnresolvedLink(buffer, "[" + errorMarkup.message() + "]").append('\n');
       }
     });
   }
@@ -2377,10 +2318,10 @@ public class JavaDocInfoGenerator {
       buffer.setLength(lastNonWhite + 1);
       // Remove preceding <pre> fragment
       StringUtil.trimEnd(buffer, "<pre>");
-      appendStyledCodeBlock(buffer, tag.getProject(), tag.getLanguage(), codeSnippetBuilder.toString());
+      myPrinter.printCodeBlock(buffer, tag.getProject(), tag.getLanguage(), codeSnippetBuilder.toString());
     } else {
       String codeSnippet = codeSnippetBuilder.toString().replace("\n", "").trim();
-      appendStyledInlineCode(buffer, tag.getProject(), tag.getLanguage(), codeSnippet);
+      myPrinter.printInlineCode(buffer, tag.getProject(), tag.getLanguage(), codeSnippet);
     }
   }
 
@@ -2418,10 +2359,6 @@ public class JavaDocInfoGenerator {
     buffer.append(StringUtil.replaceUnicodeEscapeSequences(text));
   }
 
-  private static String markdownToHtml(String markdownInput) {
-    return ourMarkdownConverter.convertMarkdownToHtml(markdownInput.stripIndent(), null);
-  }
-
   protected boolean isLeadingAsterisks(@Nullable PsiElement element) {
     return PsiDocToken.isDocToken(element, JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS);
   }
@@ -2437,7 +2374,7 @@ public class JavaDocInfoGenerator {
     else {
       collectElementText(b, tag, false);
     }
-    PsiElement context = tag;
+    PsiElement context = myElement != null ? myElement : tag;
     if (ref instanceof PsiDocFragmentRef) context = ref;
     generateLink(buffer, b.toString(), label, context, plainLink, !hasLinkLabel(tagElements, ref));
   }
@@ -2451,7 +2388,8 @@ public class JavaDocInfoGenerator {
 
     // JEP 467 requires reference brackets to be escaped, remove the escape to match the reference
     referenceText = referenceText.replace("\\[", "[").replace("\\]", "]");
-    generateLink(buffer, referenceText, labelText, referenceLink.getChildren()[0], !referenceLink.isShortLink());
+    generateLink(buffer, referenceText, labelText, myElement != null ? myElement : referenceLink.getChildren()[0],
+                 !referenceLink.isShortLink());
   }
 
   private void generateValueValue(PsiInlineDocTag tag, StringBuilder buffer, PsiElement element) {
@@ -2495,7 +2433,7 @@ public class JavaDocInfoGenerator {
         buffer.append(valueText); // don't generate link to itself
       }
       else {
-        generateLink(buffer, valueField, valueText, true);
+        myPrinter.printLink(buffer, valueField, valueText, true);
       }
     }
     else {
@@ -2595,14 +2533,15 @@ public class JavaDocInfoGenerator {
 
   private void generateSingleTagSection(StringBuilder buffer, Supplier<String> computePresentableName, PsiDocTag tag) {
     if (tag != null) {
-      startHeaderSection(buffer, computePresentableName.get()).append("<p>");
+      startHeaderSection(buffer, computePresentableName.get());
+      myPrinter.printParagraph(buffer);
       final PsiElement[] elements = Arrays.stream(tag.getChildren())
         .skip(1)
         .filter(e -> e.getNode().getElementType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)
         .toArray(PsiElement[]::new);
 
       generateValue(buffer, elements, ourEmptyElementsProvider);
-      buffer.append(DocumentationMarkup.SECTION_END);
+      myPrinter.printSectionEnd(buffer);
     }
   }
 
@@ -2613,7 +2552,8 @@ public class JavaDocInfoGenerator {
   protected void generateSeeAlsoSection(StringBuilder buffer, PsiDocComment comment) {
     PsiDocTag[] tags = comment.findTagsByName("see");
     if (tags.length > 0) {
-      startHeaderSection(buffer, JavaBundle.message("javadoc.see.also")).append("<p>");
+      startHeaderSection(buffer, JavaBundle.message("javadoc.see.also"));
+      myPrinter.printParagraph(buffer);
       StringBuilder subBuffer = new StringBuilder();
       for (int i = 0; i < tags.length; i++) {
         PsiDocTag tag = tags[i];
@@ -2629,22 +2569,25 @@ public class JavaDocInfoGenerator {
           }
           else {
             boolean plain = hasLinkLabel(elements, ref);
-            generateLink(subBuffer, ref != null ? ref.getText() : tag.getText(), plain ? linkLabel : null, tag, plain);
+            generateLink(subBuffer, ref != null ? ref.getText() : tag.getText(), plain ? linkLabel : null,
+                         myElement != null ? myElement : tag, plain);
           }
         }
-        flushSubBuffer(buffer, subBuffer, comment.isMarkdownComment());
+        myPrinter.flushSubBuffer(buffer, subBuffer, comment.isMarkdownComment());
         if (i < tags.length - 1) {
-          buffer.append(",").append(BR_TAG);
+          buffer.append(",");
+          myPrinter.printLineBreak(buffer);
         }
       }
-      buffer.append(DocumentationMarkup.SECTION_END);
+      myPrinter.printSectionEnd(buffer);
     }
   }
 
   protected void generateAuthorSection(StringBuilder buffer, PsiDocComment comment) {
     PsiDocTag[] tags = comment.findTagsByName("author");
     if (tags.length > 0) {
-      startHeaderSection(buffer, JavaBundle.message("javadoc.author")).append("<p>");
+      startHeaderSection(buffer, JavaBundle.message("javadoc.author"));
+      myPrinter.printParagraph(buffer);
       for (int i = 0; i < tags.length; i++) {
         StringBuilder tmp = new StringBuilder();
         generateValue(tmp, tags[i].getDataElements(), ourEmptyElementsProvider);
@@ -2653,7 +2596,7 @@ public class JavaDocInfoGenerator {
           buffer.append(", ");
         }
       }
-      buffer.append(DocumentationMarkup.SECTION_END);
+      myPrinter.printSectionEnd(buffer);
     }
   }
 
@@ -2691,9 +2634,12 @@ public class JavaDocInfoGenerator {
 
   private void generateParametersSection(StringBuilder buffer, String titleMessage, List<ParamInfo> collectedTags) {
     if (!collectedTags.isEmpty()) {
-      startHeaderSection(buffer, titleMessage)
-        .append(StringUtil.join(collectedTags, tag -> generateOneParameter(tag), "<br/>"))
-        .append(DocumentationMarkup.SECTION_END);
+      startHeaderSection(buffer, titleMessage);
+      for (int i = 0; i < collectedTags.size(); i++) {
+        if (i > 0) myPrinter.printLineBreak(buffer);
+        buffer.append(generateOneParameter(collectedTags.get(i)));
+      }
+      myPrinter.printSectionEnd(buffer);
     }
   }
 
@@ -2726,7 +2672,7 @@ public class JavaDocInfoGenerator {
     if (elements.length == 0) return "";
     String text = elements[0].getText();
     StringBuilder buffer = new StringBuilder();
-    buffer.append("<code>").append(tag.presentableName).append("</code>");
+    myPrinter.printParameterName(buffer, tag.presentableName);
     StringBuilder descriptionBuffer = new StringBuilder();
     generateValue(descriptionBuffer, tag, elements, text);
     if (!StringUtil.isEmptyOrSpaces(descriptionBuffer)) {
@@ -2754,9 +2700,10 @@ public class JavaDocInfoGenerator {
     }
 
     if (docInfo != null && docInfo.element != null) {
-      startHeaderSection(buffer, CodeInsightBundle.message("javadoc.returns")).append("<p>");
+      startHeaderSection(buffer, CodeInsightBundle.message("javadoc.returns"));
+      myPrinter.printParagraph(buffer);
       generateValue(buffer, dataElementWithSpaces(docInfo.element), mapProvider(docInfo.provider, false));
-      buffer.append(DocumentationMarkup.SECTION_END);
+      myPrinter.printSectionEnd(buffer);
     }
   }
 
@@ -2781,7 +2728,7 @@ public class JavaDocInfoGenerator {
     startHeaderSection(buffer, CodeInsightBundle.message("javadoc.throws"));
     Set<String> documentedExceptions = new HashSet<>(throwsJavadocTags.length);
     for (PsiDocTag tag : throwsJavadocTags) {
-      buffer.append("<p>");
+      myPrinter.printParagraph(buffer);
       PsiElement[] dataElements = dataElementWithSpaces(tag);
       if (dataElements.length == 0) continue;
       PsiElement child = dataElements[0].getFirstChild();
@@ -2828,11 +2775,11 @@ public class JavaDocInfoGenerator {
     }
     for (PsiJavaCodeReferenceElement exception : methodThrows) {
       if (documentedExceptions.contains(exception.getQualifiedName())) continue;
-      buffer.append("<p>");
+      myPrinter.printParagraph(buffer);
       if (exception.resolve() instanceof PsiClass target) generateLink(buffer, target);
       else generateLink(buffer, exception.getText(), null, method, false);
     }
-    buffer.append(DocumentationMarkup.SECTION_END);
+    myPrinter.printSectionEnd(buffer);
   }
 
   @Contract(mutates = "param1")
@@ -2841,14 +2788,10 @@ public class JavaDocInfoGenerator {
     appendMaybeUnresolvedLink(buffer, target, label, target.getProject(), false);
   }
 
-  private static @Nullable @NlsSafe String generateLink(@NotNull PsiElement element, String label) {
-    String refText = JavaDocUtil.getReferenceText(element.getProject(), element);
-    if (refText != null) {
-      StringBuilder linkBuilder = new StringBuilder();
-      DocumentationManagerUtil.createHyperlink(linkBuilder, refText, label, false);
-      return linkBuilder.toString();
-    }
-    return null;
+  private @Nullable @NlsSafe String generateLink(@NotNull PsiElement element, String label) {
+    StringBuilder linkBuilder = new StringBuilder();
+    myPrinter.printLink(linkBuilder, element, label, false);
+    return linkBuilder.isEmpty() ? null : linkBuilder.toString();
   }
 
   private void generateSuperMethodsSection(StringBuilder buffer, PsiMethod method, boolean overrides) {
@@ -2874,22 +2817,21 @@ public class JavaDocInfoGenerator {
       if (superClass == null) continue;
       if (!headerGenerated) {
         startHeaderSection(buffer, JavaBundle.message(overrides ? "javadoc.method.overrides" : "javadoc.method.specified.by"));
-        buffer.append("<p>");
+        myPrinter.printParagraph(buffer);
         headerGenerated = true;
       }
       else {
-        buffer.append(BR_TAG);
+        myPrinter.printLineBreak(buffer);
       }
 
       StringBuilder methodBuffer = new StringBuilder();
-      generateLink(
-        methodBuffer, superMethod,
-        getStyledSpan(doSemanticHighlightingOfLinks(),
-                      getHighlightingManager().getMethodDeclarationAttributes(superMethod), superMethod.getName()), false);
+      String label1 = getStyledSpan(doSemanticHighlightingOfLinks(),
+                                    getHighlightingManager().getMethodDeclarationAttributes(superMethod), superMethod.getName());
+      myPrinter.printLink(methodBuffer, superMethod, label1, false);
       StringBuilder classBuffer = new StringBuilder();
-      generateLink(classBuffer, superClass,
-                   getStyledSpan(doSemanticHighlightingOfLinks(),
-                                 getHighlightingManager().getClassDeclarationAttributes(superClass), superClass.getName()), false);
+      String label = getStyledSpan(doSemanticHighlightingOfLinks(),
+                                   getHighlightingManager().getClassDeclarationAttributes(superClass), superClass.getName());
+      myPrinter.printLink(classBuffer, superClass, label, false);
       if (superClass.isInterface()) {
         buffer.append(JavaBundle.message("javadoc.method.in.interface", methodBuffer.toString(), classBuffer.toString()));
       }
@@ -2898,14 +2840,7 @@ public class JavaDocInfoGenerator {
       }
     }
     if (headerGenerated) {
-      buffer.append(DocumentationMarkup.SECTION_END);
-    }
-  }
-
-  void generateLink(StringBuilder buffer, PsiElement element, String label, boolean plainLink) {
-    String refText = JavaDocUtil.getReferenceText(element.getProject(), element);
-    if (refText != null) {
-      DocumentationManagerUtil.createHyperlink(buffer, refText, label, plainLink);
+      myPrinter.printSectionEnd(buffer);
     }
   }
 
@@ -2915,7 +2850,7 @@ public class JavaDocInfoGenerator {
    * @return Length of the generated label.
    */
   int generateLink(StringBuilder buffer, String refText, String label, @NotNull PsiElement context, boolean plainLink) {
-    return generateLink(buffer, refText, label, context, plainLink, !plainLink);
+    return generateLink(buffer, refText, label, /* myElement != null ? myElement :*/ context, plainLink, !plainLink);
   }
 
   /**
@@ -2971,21 +2906,13 @@ public class JavaDocInfoGenerator {
       buffer.append(label);
     }
     else if (target == null) {
-      buffer.append(getSpanForUnresolvedItem()).append(label).append("</span>");
+      myPrinter.printUnresolvedLink(buffer, label);
     }
     else {
       boolean doHighlight = canHighlightLink && ((myIsSignatureGenerationInProgress && doHighlightSignatures() || doSemanticHighlightingOfLinks()));
       String highlightedLabel = doHighlight ? tryHighlightLinkLabel(target, label) : label;
-      generateLink(buffer, target, highlightedLabel, plainLink);
+      myPrinter.printLink(buffer, target, highlightedLabel, plainLink);
     }
-  }
-
-  static String getSpanForUnresolvedItem() {
-    TextAttributes attributes =
-      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
-    Color color = attributes.getForegroundColor();
-    String htmlColor = color == null ? "red" : ColorUtil.toHtmlColor(color);
-    return "<span style=\"color:" + htmlColor + "\">";
   }
 
   /**
@@ -2993,7 +2920,12 @@ public class JavaDocInfoGenerator {
    * In this case we should change link color to standard hyperlink color which we believe is apriori different.
    */
   private @NotNull TextAttributes tuneAttributesForLink(@NotNull TextAttributes attributes) {
-    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    EditorColorsManager manager = EditorColorsManager.getInstance();
+    if (manager == null) {
+      return attributes;
+    }
+
+    EditorColorsScheme globalScheme = manager.getGlobalScheme();
     TextAttributes defaultText = globalScheme.getAttributes(HighlighterColors.TEXT);
     TextAttributes identifier = globalScheme.getAttributes(DefaultLanguageHighlighterColors.IDENTIFIER);
 
@@ -3046,8 +2978,8 @@ public class JavaDocInfoGenerator {
     classNameIndex++;
     appendStyledSpan(true, buffer, labelAttributes, label.substring(classNameIndex, openParenIndex));
     if (openParenIndex == label.length()) return buffer.toString();
-    appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-      true, buffer, member.getProject(), member.getLanguage(), label.substring(openParenIndex));
+    myPrinter.printHighlightedText(buffer, true, member.getProject(), member.getLanguage(), label.substring(openParenIndex),
+                                   getHighlightingSaturation());
     return buffer.toString();
   }
 
@@ -3133,7 +3065,7 @@ public class JavaDocInfoGenerator {
           return typAnnoLength + text.length();
         }
         String canonicalText = type.getCanonicalText();
-        buffer.append(getSpanForUnresolvedItem()).append(StringUtil.escapeXmlEntities(canonicalText)).append("</span>");
+        myPrinter.printUnresolvedLink(buffer, StringUtil.escapeXmlEntities(canonicalText));
         return typAnnoLength + canonicalText.length();
       }
 
@@ -3161,7 +3093,7 @@ public class JavaDocInfoGenerator {
 
         PsiTypeParameter[] params = psiClass.getTypeParameters();
 
-        appendStyledSpan(subst, getHighlightingManager().getOperationSignAttributes(), LT);
+        appendStyledSpan(subst, getHighlightingManager().getOperationSignAttributes(), myPrinter.getEscapableChar('<'));
         length += 1;
         boolean goodSubst = true;
         for (int i = 0; i < params.length; i++) {
@@ -3180,7 +3112,7 @@ public class JavaDocInfoGenerator {
           }
         }
 
-        appendStyledSpan(subst, getHighlightingManager().getOperationSignAttributes(), GT);
+        appendStyledSpan(subst, getHighlightingManager().getOperationSignAttributes(), myPrinter.getEscapableChar('>'));
         length++;
         if (goodSubst) {
           buffer.append(subst);
@@ -3240,7 +3172,7 @@ public class JavaDocInfoGenerator {
       PsiTypeParameter[] parameters = originalOwner.getTypeParameters();
 
       StringBuilder buffer = new StringBuilder();
-      appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), LT);
+      appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), myPrinter.getEscapableChar('<'));
 
       PsiFile file = owner.getContainingFile();
       boolean allExtends =
@@ -3278,7 +3210,7 @@ public class JavaDocInfoGenerator {
         if (indent > 0) buffer.append("\n");
       }
 
-      appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), GT);
+      appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), myPrinter.getEscapableChar('>'));
       return buffer.toString();
     }
 
@@ -3471,20 +3403,20 @@ public class JavaDocInfoGenerator {
       appendStyledSpan(
         myBuffer,
         getHighlightingManager().getMethodCallAttributes(),
-        StringUtil.escapeXmlEntities(expression.getMethodExpression().getText()));
+        myPrinter.escapeIfNeeded(expression.getMethodExpression().getText()));
       expression.getArgumentList().accept(this);
     }
 
     @Override
     public void visitExpression(@NotNull PsiExpression expression) {
-      appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-        doHighlightSignatures(), myBuffer, expression.getProject(), expression.getLanguage(), expression.getText());
+      myPrinter.printHighlightedText(myBuffer, doHighlightSignatures(), expression.getProject(), expression.getLanguage(),
+                                     expression.getText(), getHighlightingSaturation());
     }
 
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-      appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-        doHighlightSignatures(), myBuffer, expression.getProject(), expression.getLanguage(), expression.getText());
+      myPrinter.printHighlightedText(myBuffer, doHighlightSignatures(), expression.getProject(), expression.getLanguage(),
+                                     expression.getText(), getHighlightingSaturation());
     }
   }
 

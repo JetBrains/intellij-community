@@ -8,6 +8,9 @@ import com.intellij.codeInsight.javadoc.AnnotationDocGenerator;
 import com.intellij.codeInsight.javadoc.NonCodeAnnotationGenerator;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -22,10 +25,10 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.java.codeInsight.javadoc.JavaDocInfoGeneratorTest.assertEqualsFileText;
 
 @TestDataPath("$CONTENT_ROOT/testData/codeInsight/javadocIG/")
 public class JavaDocInfoGeneratorTypeTest extends LightJavaCodeInsightFixtureTestCase {
@@ -150,5 +153,28 @@ public class JavaDocInfoGeneratorTypeTest extends LightJavaCodeInsightFixtureTes
 
   private void assertFileTextEquals(String docInfo, String expectedFile) {
     assertEqualsFileText(getTestDataPath() + TEST_DATA_FOLDER + expectedFile, docInfo);
+  }
+
+  static void assertEqualsFileText(@NotNull String expectedFile, @NotNull String actual) {
+    String actualText = replaceEnvironmentDependentContent(actual).replaceAll("[ \t]+\\n", "\n");
+    File htmlPath = new File(expectedFile);
+    String expectedText = loadFile(htmlPath);
+    if (!StringUtil.equals(expectedText, actualText)) {
+      String message = "Text mismatch in file: " + htmlPath.getName();
+      throw new FileComparisonFailedError(message, expectedText, actualText, FileUtil.toSystemIndependentName(htmlPath.getPath()));
+    }
+  }
+
+  private static String loadFile(File file) {
+      try {
+        return StringUtil.convertLineSeparators(FileUtil.loadFile(file).trim());
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+  private static String replaceEnvironmentDependentContent(String html) {
+    return html != null ? StringUtil.convertLineSeparators(html.trim()).replaceAll("<base href=\"[^\"]*\">", "<base href=\"placeholder\">") : null;
   }
 }

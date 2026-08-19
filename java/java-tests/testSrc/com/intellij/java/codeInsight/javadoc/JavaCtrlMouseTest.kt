@@ -3,7 +3,7 @@ package com.intellij.java.codeInsight.javadoc
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
-import com.intellij.java.codeInsight.javadoc.JavaDocInfoGeneratorTest.assertEqualsFileText
+import com.intellij.java.codeInsight.javadoc.JavaDocInfoGeneratorTypeTest.assertEqualsFileText
 import com.intellij.openapi.application.readAction
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.common.timeoutRunBlocking

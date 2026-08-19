@@ -3,22 +3,16 @@ package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.help.impl.HelpManagerImpl;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
-import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
-import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationSettings;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
-import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Predicates;
-import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationMemberValue;
@@ -40,8 +34,6 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiVariable;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -99,7 +91,7 @@ public final class AnnotationDocGenerator {
   public String getAnnotationQualifiedName() {
     return myAnnotation.getQualifiedName();
   }
-  
+
   boolean isInferredTypeUseAnnotation() {
     return isInferred() && AnnotationTargetUtil.isTypeAnnotation(myAnnotation);
   }
@@ -109,21 +101,24 @@ public final class AnnotationDocGenerator {
   }
 
   private static void appendStyledSpan(
+    JavaDocInfoPrinter printer,
     boolean doSyntaxHighlighting,
     boolean isForRenderedDoc,
     @NotNull StringBuilder buffer,
     @NotNull TextAttributesKey attributesKey,
     @Nullable String value
   ) {
-    if (doSyntaxHighlighting) {
-      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributesKey, value, DocumentationSettings.getHighlightingSaturation(isForRenderedDoc));
-    }
-    else {
-      buffer.append(value);
-    }
+    var manager = EditorColorsManager.getInstance();
+    TextAttributes attributes = manager != null
+                                ? manager.getGlobalScheme().getAttributes(attributesKey)
+                                : new TextAttributes();
+
+    printer.printStylizedText(buffer, doSyntaxHighlighting, attributes, value,
+                              DocumentationSettings.getHighlightingSaturation(isForRenderedDoc));
   }
 
   private static void appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+    JavaDocInfoPrinter printer,
     boolean doSyntaxHighlighting,
     boolean isForRenderedDoc,
     @NotNull StringBuilder buffer,
@@ -131,13 +126,8 @@ public final class AnnotationDocGenerator {
     @NotNull Language language,
     @Nullable String codeSnippet
   ) {
-    if (doSyntaxHighlighting) {
-      HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-        buffer, project, language, codeSnippet, DocumentationSettings.getHighlightingSaturation(isForRenderedDoc));
-    }
-    else if (codeSnippet != null) {
-      buffer.append(StringUtil.escapeXmlEntities(codeSnippet));
-    }
+    printer.printHighlightedText(buffer, doSyntaxHighlighting, project, language, codeSnippet,
+                                 DocumentationSettings.getHighlightingSaturation(isForRenderedDoc));
   }
 
   void generateAnnotation(
@@ -145,7 +135,8 @@ public final class AnnotationDocGenerator {
     AnnotationFormat format,
     boolean generateLink,
     boolean isForRenderedDoc,
-    boolean doSyntaxHighlighting) {
+    boolean doSyntaxHighlighting,
+    JavaDocInfoPrinter printer) {
     String qualifiedName = myAnnotation.getQualifiedName();
     PsiClassType type = myTargetClass != null && qualifiedName != null &&
                         JavaDocUtil.findReferenceTarget(myContext.getManager(), qualifiedName, myContext) != null
@@ -157,53 +148,44 @@ public final class AnnotationDocGenerator {
 
     boolean isNonCodeAnnotation = isInferred || isExternal();
     boolean highlightNonCodeAnnotations = format == AnnotationFormat.ToolTip && isNonCodeAnnotation;
-    if (highlightNonCodeAnnotations) buffer.append("<b>");
-    if (isInferred) buffer.append("<i>");
-    if (red) buffer.append(JavaDocInfoGenerator.getSpanForUnresolvedItem());
 
     boolean forceShortNames = format != AnnotationFormat.JavaDocComplete;
+    StringBuilder annotationBuffer = new StringBuilder();
 
     if (red) {
-      buffer.append("@");
+      annotationBuffer.append('@');
     }
     else {
-      appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, "@");
+      appendStyledSpan(printer, doSyntaxHighlighting, isForRenderedDoc, annotationBuffer,
+                       JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, "@");
     }
     String name = forceShortNames ? myNameReference.getReferenceName() : myNameReference.getText();
     if (type != null && generateLink) {
       StringBuilder styledNameBuilder = new StringBuilder();
-      appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, styledNameBuilder, JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, name);
+      appendStyledSpan(printer, doSyntaxHighlighting, isForRenderedDoc, styledNameBuilder,
+                       JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, name);
       String styledName = styledNameBuilder.toString();
-      JavaDocInfoGeneratorFactory.getBuilder(myContext.getProject())
-        .setIsGenerationForRenderedDoc(isForRenderedDoc)
-        .setDoHighlightSignatures(doSyntaxHighlighting)
-        .create()
-        .generateLink(buffer, myTargetClass, styledName, format == AnnotationFormat.JavaDocComplete);
+      printer.printLink(annotationBuffer, myTargetClass, styledName, format == AnnotationFormat.JavaDocComplete);
     }
     else if (name != null) {
-      appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, name);
+      appendStyledSpan(printer, doSyntaxHighlighting, isForRenderedDoc, annotationBuffer,
+                       JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, name);
     }
-    if (red) buffer.append("</span>");
 
-    generateAnnotationAttributes(buffer, generateLink, isForRenderedDoc, doSyntaxHighlighting);
-    if (isInferred) buffer.append("</i>");
-    if (highlightNonCodeAnnotations) buffer.append("</b>");
+    generateAnnotationAttributes(annotationBuffer, generateLink, isForRenderedDoc, doSyntaxHighlighting, printer);
+    String annotation = annotationBuffer.toString();
+    if (isInferred) {
+      annotation = printer.printItalicText(new StringBuilder(), annotation).toString();
+    }
+    if (highlightNonCodeAnnotations) {
+      annotation = printer.printBoldText(new StringBuilder(), annotation).toString();
+    }
+    if (red) {
+      annotation = printer.printUnresolvedLink(new StringBuilder(), annotation).toString();
+    }
+    buffer.append(annotation);
     if (generateLink && isNonCodeAnnotation && !isForRenderedDoc && format != AnnotationFormat.ToolTip) {
-      if (isInferred && ApplicationManager.getApplication().isInternal()) {
-        HtmlChunk.tag("sup").child(HtmlChunk.tag("font").attr("size", 3)
-                                     .attr("color", ColorUtil.toHex(JBColor.GRAY))
-                                     .child(HtmlChunk.tag("i")
-                                              .addRaw(JavaBundle.message("javadoc.description.inferred.annotation.hint"))))
-          .appendTo(buffer);
-      }
-      HelpManager helpManager = HelpManager.getInstance();
-      if (helpManager instanceof HelpManagerImpl) {
-        String id = isInferred ? "inferred.annotations" : "external.annotations";
-        String helpUrl = ApplicationManager.getApplication().isUnitTestMode() ? id : HelpManagerImpl.getHelpUrl(id);
-        if (helpUrl != null) {
-          HtmlChunk.link(helpUrl, DocumentationMarkup.EXTERNAL_LINK_ICON).appendTo(buffer);
-        }
-      }
+      printer.printAnnotationHint(buffer, isInferred);
     }
   }
 
@@ -211,18 +193,22 @@ public final class AnnotationDocGenerator {
     StringBuilder buffer,
     boolean generateLink,
     boolean isForRenderedDoc,
-    boolean doSyntaxHighlighting
+    boolean doSyntaxHighlighting,
+    JavaDocInfoPrinter printer
   ) {
     final PsiNameValuePair[] attributes = myAnnotation.getParameterList().getAttributes();
     if (attributes.length > 0) {
-      appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.PARENTHESES, "(");
+      appendStyledSpan(printer, doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.PARENTHESES, "(");
       boolean first = true;
       for (PsiNameValuePair pair : attributes) {
-        if (!first) appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.COMMA, ",&nbsp;");
+        if (!first) {
+          appendStyledSpan(printer, doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.COMMA,
+                           "," + printer.getEscapableChar(' '));
+        }
         first = false;
-        generateAnnotationAttribute(buffer, generateLink, pair, isForRenderedDoc, doSyntaxHighlighting);
+        generateAnnotationAttribute(buffer, generateLink, pair, isForRenderedDoc, doSyntaxHighlighting, printer);
       }
-      appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.PARENTHESES, ")");
+      appendStyledSpan(printer, doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.PARENTHESES, ")");
     }
   }
 
@@ -231,29 +217,31 @@ public final class AnnotationDocGenerator {
     boolean generateLink,
     PsiNameValuePair pair,
     boolean isForRenderedDoc,
-    boolean doSyntaxHighlighting
+    boolean doSyntaxHighlighting,
+    JavaDocInfoPrinter printer
   ) {
     final String name = pair.getName();
     if (name != null) {
-      appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES, name);
-      appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.OPERATION_SIGN, " = ");
+      appendStyledSpan(printer, doSyntaxHighlighting, isForRenderedDoc, buffer,
+                       JavaHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES, name);
+      appendStyledSpan(printer, doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.OPERATION_SIGN, " = ");
     }
     final PsiAnnotationMemberValue value = pair.getValue();
     if (value != null) {
       if (value instanceof PsiArrayInitializerMemberValue) {
-        appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.BRACES, "{");
+        appendStyledSpan(printer, doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.BRACES, "{");
         boolean firstMember = true;
         for (PsiAnnotationMemberValue memberValue : ((PsiArrayInitializerMemberValue)value).getInitializers()) {
           if (!firstMember) {
-            appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.COMMA, ",");
+            appendStyledSpan(printer, doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.COMMA, ",");
           }
           firstMember = false;
-          appendLinkOrText(buffer, memberValue, generateLink, isForRenderedDoc, doSyntaxHighlighting);
+          appendLinkOrText(buffer, memberValue, generateLink, isForRenderedDoc, doSyntaxHighlighting, printer);
         }
-        appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.BRACES, "}");
+        appendStyledSpan(printer, doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.BRACES, "}");
       }
       else {
-        appendLinkOrText(buffer, value, generateLink, isForRenderedDoc, doSyntaxHighlighting);
+        appendLinkOrText(buffer, value, generateLink, isForRenderedDoc, doSyntaxHighlighting, printer);
       }
     }
   }
@@ -263,7 +251,8 @@ public final class AnnotationDocGenerator {
     PsiAnnotationMemberValue memberValue,
     boolean generateLink,
     boolean isForRenderedDoc,
-    boolean doSyntaxHighlighting
+    boolean doSyntaxHighlighting,
+    JavaDocInfoPrinter printer
   ) {
     if (memberValue instanceof PsiQualifiedReferenceElement) {
       String text = ((PsiQualifiedReferenceElement)memberValue).getCanonicalText();
@@ -289,11 +278,13 @@ public final class AnnotationDocGenerator {
           JavaDocInfoGeneratorFactory.getBuilder(field.getProject())
             .setIsGenerationForRenderedDoc(isForRenderedDoc)
             .setDoHighlightSignatures(doSyntaxHighlighting)
+            .setPrinter(printer)
             .create()
             .generateLink(buffer, text, aClass != null ? aClass.getName() + '.' + field.getName() : null, memberValue, false);
         }
         else {
           appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+            printer,
             doSyntaxHighlighting,
             isForRenderedDoc,
             buffer,
@@ -306,6 +297,7 @@ public final class AnnotationDocGenerator {
     }
 
     appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+      printer,
       doSyntaxHighlighting,
       isForRenderedDoc,
       buffer,
