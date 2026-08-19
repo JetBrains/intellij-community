@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.RMTreeReference;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
+import com.intellij.openapi.editor.impl.marker.FileMarkerRoot;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable;
@@ -745,7 +746,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     private void prepareForRangeMarkerUpdate(@NotNull Map<? super VirtualFile, ? super Document> strongRefsToDocuments,
                                              @NotNull VirtualFile virtualFile) {
       Document document = myFileDocumentManager.getCachedDocument(virtualFile);
-      if (document == null && RMTreeReference.areRangeMarkersRetainedFor(virtualFile)) {
+      if (document == null && (RMTreeReference.areRangeMarkersRetainedFor(virtualFile) ||
+                               FileMarkerRoot.areRangeMarkersRetainedFor(virtualFile))) {
         // re-create document with the old contents prior to this event
         // then contentChanged() will diff the document with the new contents and update the markers
         document = myFileDocumentManager.getDocument(virtualFile);
