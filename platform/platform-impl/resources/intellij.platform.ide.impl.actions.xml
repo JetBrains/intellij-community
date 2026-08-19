@@ -800,6 +800,8 @@
            class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserEditorContextBarGroupAction"/>
     <action class="com.intellij.openapi.updateSettings.impl.PluginUpdateSourcesResetAction" internal="true"
             id="PluginUpdateSourcesResetAction"/>
+    <action class="com.intellij.openapi.updateSettings.impl.PluginUpdateSourcesReinitializeAction" internal="true"
+            id="PluginUpdateSourcesReinitializeAction"/>
     <group id="SettingsEntryPointGroup" class="com.intellij.ide.actions.SettingsEntryPointGroup" overrides="true" keep-content="true"/>
     <group id="Floating.CodeToolbar.Surround" class="com.intellij.ui.codeFloatingToolbar.RefactorDropdownActionGroup" overrides="true" keep-content="true"/>
     <group id="ChangeLineSeparators" class="com.intellij.ide.actions.NonTrivialActionGroup" overrides="true" keep-content="true"/>
