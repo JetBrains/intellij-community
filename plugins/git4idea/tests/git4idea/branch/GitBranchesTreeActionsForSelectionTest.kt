@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.ui.tree.TreeVisitor
@@ -20,6 +22,7 @@ import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitTag
+import git4idea.GitWorkingTree
 import git4idea.actions.branch.GitCheckoutAsNewBranch
 import git4idea.actions.branch.GitCheckoutWithRebaseAction
 import git4idea.actions.branch.GitCompareWithBranchAction
@@ -40,11 +43,13 @@ import git4idea.branch.GitBranchesTreeTestContext.Companion.NOT_ORIGIN
 import git4idea.branch.GitBranchesTreeTestContext.Companion.ORIGIN
 import git4idea.branch.GitBranchesTreeTestContext.Companion.branchInfo
 import git4idea.branch.GitBranchesTreeTestContext.Companion.tagInfo
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitBranchTrackInfo
 import git4idea.repo.GitRepositoryTagsHolder
 import git4idea.repo.GitRepositoryTagsHolderImpl
 import git4idea.test.MockGitRepository
 import git4idea.test.MockGitRepositoryModel
+import git4idea.ui.branch.GitBranchPopupActions.getSelectedBranchFullPresentation
 import git4idea.ui.branch.dashboard.BRANCHES_UI_CONTROLLER
 import git4idea.ui.branch.dashboard.BranchNodeDescriptor
 import git4idea.ui.branch.dashboard.BranchesDashboardActions
@@ -88,6 +93,42 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
       isEnabledAndVisible<GitRenameBranchAction>(),
       isEnabledAndVisible<GitDeleteRefAction>(),
     ))
+  }
+
+  fun `test update action enabled for branch checked out in another worktree`() = branchesTreeTest {
+    Registry.get("git.enable.working.trees.feature").setValue(true, testRootDisposable)
+    singleRepoTreeState()
+    select(BranchesTreeNodeMatchers.branchMatcher(local = true, shortName = "another"))
+
+    repo1.workingTrees = repo1.workingTrees + GitWorkingTree(
+      VcsContextFactory.getInstance().createFilePath("/other/worktree/for/another", true),
+      GitLocalBranch("another"),
+      isMain = false,
+      isCurrent = false,
+    )
+
+    val event = simpleEvent()
+    GitUpdateSelectedBranchAction().update(event)
+
+    assertTrue("Update action should be enabled for a branch checked out in another worktree", event.presentation.isEnabled)
+    assertTrue("Update action should stay visible", event.presentation.isVisible)
+  }
+
+  fun `test update action disabled without tracking info`() = branchesTreeTest {
+    singleRepoTreeState()
+    select(BranchesTreeNodeMatchers.branchMatcher(local = true, shortName = "another"))
+
+    repo1.branchTrackInfos = repo1.branchTrackInfos.filter { it.localBranch.name != "another" }
+
+    val event = simpleEvent()
+    GitUpdateSelectedBranchAction().update(event)
+
+    assertFalse("Update action should be disabled without tracking info", event.presentation.isEnabled)
+    assertTrue("Update action should stay visible with an explanatory tooltip", event.presentation.isVisible)
+    assertEquals(
+      GitBundle.message("branches.tracking.branch.doesn.t.configured.for.s", getSelectedBranchFullPresentation("another")),
+      event.presentation.description
+    )
   }
 
   fun `test select current branch actions`() = branchesTreeTest {

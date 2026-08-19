@@ -36,6 +36,7 @@ import git4idea.commands.GitCommandResult
 import git4idea.config.GitSharedSettings
 import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.test.GitPlatformTest
 import git4idea.test.GitScenarios.LOCAL_CHANGES_OVERWRITTEN_BY
@@ -54,6 +55,9 @@ import git4idea.test.commit
 import git4idea.test.file
 import git4idea.test.git
 import git4idea.test.tac
+import git4idea.ui.branch.updateBranches
+import git4idea.workingTrees.ensureWorkingTreesUpToDateForTests
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.file.Files
 
@@ -896,6 +900,98 @@ class GitBranchWorkerTest : GitPlatformTest() {
     })
 
     assertEquals("Merge in community should have been reset", firstTipAfterMerge, tip(first))
+  }
+
+  fun `test checkout branch already checked out in another worktree should confirm and retry`() {
+    branchWithCommit(myRepositories, "feature")
+
+    val worktreePath = FileUtil.toSystemIndependentName(testNioRoot.resolve("first-worktree").toString())
+    first.git("worktree add $worktreePath feature")
+    first.git("checkout master")
+
+    var dialogShown = false
+    checkoutBranch("feature", object : TestUiHandler(project) {
+      override fun showCheckoutBranchInOtherWorktreeDialog(branchName: String, worktreePath: String?): GitBranchUiHandler.CheckoutInOtherWorktreeDecision {
+        dialogShown = true
+        return GitBranchUiHandler.CheckoutInOtherWorktreeDecision.CHECKOUT_ANYWAY
+      }
+    })
+
+    assertTrue("Confirmation dialog for checking out a branch already checked out in another worktree was not shown", dialogShown)
+    assertCurrentBranch("feature")
+  }
+
+  fun `test cancel checkout branch already checked out in another worktree should show fatal error`() {
+    branchWithCommit(myRepositories, "feature")
+
+    val worktreePath = FileUtil.toSystemIndependentName(testNioRoot.resolve("first-worktree").toString())
+    first.git("worktree add $worktreePath feature")
+    first.git("checkout master")
+
+    checkoutBranch("feature", object : TestUiHandler(project) {
+      override fun showCheckoutBranchInOtherWorktreeDialog(branchName: String, worktreePath: String?): GitBranchUiHandler.CheckoutInOtherWorktreeDecision =
+        GitBranchUiHandler.CheckoutInOtherWorktreeDecision.CANCEL
+    })
+
+    first.assertCurrentBranch("master")
+    assertNotNull("Fatal error notification was not shown", vcsNotifier.lastNotification)
+  }
+
+  fun `test update branch checked out in another worktree should fast-forward it there`() {
+    branchWithCommit(first, "feature")
+
+    val parentRepo = prepareRemoteRepo(first)
+    first.git("push -u origin feature")
+    first.update()
+
+    val worktreePath = testNioRoot.resolve("first-worktree")
+    first.git("worktree add ${FileUtil.toSystemIndependentName(worktreePath.toString())} feature")
+    first.ensureWorkingTreesUpToDateForTests()
+
+    val broRepo = createBroRepo("bro", parentRepo)
+    cd(broRepo)
+    git("checkout feature")
+    val newHead = tac("new_on_remote.txt")
+    git("push")
+
+    runBlocking {
+      updateBranches(project, listOf(first), listOf("feature")).join()
+    }
+
+    cd(worktreePath)
+    assertEquals("Branch was not fast-forwarded in the other worktree", newHead, git("rev-list -1 feature"))
+  }
+
+  fun `test update diverged branch checked out in another worktree should show error notification`() {
+    branchWithCommit(first, "feature")
+
+    val parentRepo = prepareRemoteRepo(first)
+    first.git("push -u origin feature")
+    first.update()
+
+    val worktreePath = testNioRoot.resolve("first-worktree")
+    first.git("worktree add ${FileUtil.toSystemIndependentName(worktreePath.toString())} feature")
+    first.ensureWorkingTreesUpToDateForTests()
+
+    val broRepo = createBroRepo("bro", parentRepo)
+    cd(broRepo)
+    git("checkout feature")
+    tac("new_on_remote.txt")
+    git("push")
+
+    cd(worktreePath)
+    tac("diverged_locally.txt")
+
+    runBlocking {
+      updateBranches(project, listOf(first), listOf("feature")).join()
+    }
+
+    val notification = vcsNotifier.lastNotification
+    assertNotNull("Error notification for a failed other-worktree update was not shown", notification)
+    val openWorktreeAction = notification!!.actions.find {
+      it.templatePresentation.text == GitBundle.message("action.open.worktree.for.a.branch.text")
+    }
+    assertNotNull("'Open Worktree' action was not present on the failure notification", openWorktreeAction)
   }
 
   fun `test checkout in detached head`() {

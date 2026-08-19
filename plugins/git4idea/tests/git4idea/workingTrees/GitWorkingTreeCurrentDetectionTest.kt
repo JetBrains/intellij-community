@@ -50,6 +50,20 @@ internal class GitWorkingTreeCurrentDetectionTest {
   }
 
   @Test
+  fun `test branch checked out in multiple worktrees via ignore-other-worktrees override is reported for all of them`(): Unit = with(context) {
+    val featurePath = testNioRoot.resolve("feature")
+    git("worktree add -b feature $featurePath")
+
+    val feature2Path = testNioRoot.resolve("feature-2")
+    git("worktree add --force $feature2Path feature")
+    repo.ensureWorkingTreesUpToDateForTests()
+
+    val trees = GitSingleRefAction.findCheckedOutWorkingTrees(GitStandardLocalBranch("feature"), listOf(repo), skipCurrentWorkingTree = true)
+
+    assertThat(trees.map { it.path.path }).containsExactlyInAnyOrderElementsOf(listOf(featurePath.toString(), feature2Path.toString()))
+  }
+
+  @Test
   fun `test worktree nested inside the main repo directory is detected`(): Unit = with(context) {
     val nestedPath = projectNioRoot.resolve("nested")
     git("worktree add -b nested $nestedPath")

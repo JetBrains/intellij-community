@@ -3,6 +3,8 @@ package git4idea.remoteApi
 
 import com.intellij.dvcs.repo.repositoryId
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.platform.project.projectId
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.git.rpc.GitOperationsApi
@@ -22,6 +24,7 @@ import git4idea.test.resolveConflicts
 import git4idea.test.tac
 import git4idea.update.gitMultiRepoUpdateFixture
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -30,6 +33,11 @@ internal class GitCheckoutAndUpdateTest {
 
   private val contextFixture = gitPlatformContextFixture(saveChangesPolicy = GitSaveChangesPolicy.STASH).gitMultiRepoUpdateFixture()
   private val context get() = contextFixture.get()
+
+  @AfterEach
+  fun afterEach() {
+    TestDialogManager.setTestDialog(TestDialog.DEFAULT)
+  }
 
   @BeforeEach
   fun setUp() {
@@ -153,6 +161,22 @@ internal class GitCheckoutAndUpdateTest {
     repository.assertLatestSubjects("Merge remote-tracking branch 'origin/feature' into feature")
 
     community.assertCurrentBranch("feature")
+  }
+
+  @Test
+  fun `test checkoutAndUpdate confirms checkout of a branch already checked out in another worktree then updates it`(): Unit = with(context) {
+    repository.git("worktree add ../other-worktree feature")
+
+    cd(bro)
+    val newHash = tac("b.txt")
+    git("push origin feature")
+
+    TestDialogManager.setTestDialog(TestDialog.YES)
+
+    checkoutAndUpdateBranch(listOf(repository), "feature")
+
+    repository.assertCurrentBranch("feature")
+    repository.assertCurrentRevision(newHash)
   }
 
   private fun GitPlatformTestContext.checkoutAndUpdateBranch(
