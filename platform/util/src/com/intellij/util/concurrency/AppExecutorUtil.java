@@ -59,7 +59,9 @@ public final class AppExecutorUtil {
    * The created pool doesn't keep queued but not yet executed delayed tasks on shutdown,
    * which equivalent to having both {@code ExecuteExistingDelayedTasksAfterShutdownPolicy} and {@code ContinueExistingPeriodicTasksAfterShutdownPolicy} policies to false.
    * See {@link java.util.concurrent.ScheduledThreadPoolExecutor#getExecuteExistingDelayedTasksAfterShutdownPolicy()} and {@link ScheduledThreadPoolExecutor#getContinueExistingPeriodicTasksAfterShutdownPolicy()} for details.
-   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization
+   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization.
+   *             If more than one task can run simultaneously, a {@code "-<index>"} suffix is appended to the thread name
+   *             to make one thread of the pool distinguishable from another.
    *
    */
   public static @NotNull ScheduledExecutorService createBoundedScheduledExecutorService(@NotNull @NonNls String name, int maxThreads) {
@@ -78,7 +80,9 @@ public final class AppExecutorUtil {
    *
    * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the application pool
    *         (i.e., all tasks are run in the {@link #getAppExecutorService()} global thread pool).
-   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization
+   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization.
+   *             If more than one task can run simultaneously, a {@code "-<index>"} suffix is appended to the thread name
+   *             to make one thread of the pool distinguishable from another.
    * @see #getAppExecutorService()
    */
   @ApiStatus.Obsolete
@@ -99,7 +103,9 @@ public final class AppExecutorUtil {
    * See <b>obsolescence notice</b> on {@link #createBoundedApplicationPoolExecutor(String, int)}.
    * <hr>
    *
-   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization
+   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization.
+   *             If more than one task can run simultaneously, a {@code "-<index>"} suffix is appended to the thread name
+   *             to make one thread of the pool distinguishable from another.
    * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the {@code backendExecutor}
    */
   @ApiStatus.Obsolete
@@ -110,7 +116,9 @@ public final class AppExecutorUtil {
    * See <b>obsolescence notice</b> on {@link #createBoundedApplicationPoolExecutor(String, int)}.
    * <hr>
    *
-   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization
+   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization.
+   *             If more than one task can run simultaneously, a {@code "-<index>"} suffix is appended to the thread name
+   *             to make one thread of the pool distinguishable from another.
    * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the {@code backendExecutor}
    * which will shut down itself when {@code parentDisposable} gets disposed.
    */
@@ -125,7 +133,9 @@ public final class AppExecutorUtil {
   }
 
   /**
-   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization
+   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization.
+   *             If more than one task can run simultaneously, a {@code "-<index>"} suffix is appended to the thread name
+   *             to make one thread of the pool distinguishable from another.
    * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the {@code backendExecutor}.
    * Tasks are prioritized according to {@code comparator}.
    */

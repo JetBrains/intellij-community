@@ -18,9 +18,11 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -33,11 +35,19 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * An {@link ExecutorService} which limits the number of tasks running simultaneously.
  * The number of submitted tasks is unrestricted.
+ * <p>
+ * While a task is executed, the thread borrowed from the backend executor is renamed to the pool name
+ * (unless {@code changeThreadName} is false), so that the pool is recognizable in thread dumps.
+ * If the pool can run more than one task simultaneously, the name gets a {@code "-<index>"} suffix
+ * (e.g. {@code "Document Committing Pool-2"}), where the index is unique among the currently running
+ * threads of this pool. This makes one thread of the pool distinguishable from another in a thread dump.
+ * The index is released and reused as soon as the thread stops serving this pool.
  *
  * @see AppExecutorUtil#createBoundedApplicationPoolExecutor(String, Executor, int)
  */
@@ -50,6 +60,9 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   // high 32 bits: myTaskQueue modification stamp
   private final AtomicLong myStatus = new AtomicLong();
   private final BlockingQueue<Runnable> myTaskQueue;
+  // free list of thread name indices, to distinguish threads of this pool from each other in thread dumps
+  private final Queue<Integer> myFreeThreadIndices = new ConcurrentLinkedQueue<>();
+  private final AtomicInteger myThreadIndexCounter = new AtomicInteger();
 
   private final boolean myChangeThreadName;
 
@@ -217,6 +230,19 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     return null;
   }
 
+  /**
+   * @return an index which is unique among the threads currently serving this pool, to be used in their names.
+   * Usually it's in the {@code [0, myMaxThreads)} range, because no more than {@link #myMaxThreads} threads serve this pool simultaneously.
+   */
+  private int acquireThreadIndex() {
+    Integer reused = myFreeThreadIndices.poll();
+    return reused == null ? myThreadIndexCounter.getAndIncrement() : reused;
+  }
+
+  private void releaseThreadIndex(int threadIndex) {
+    myFreeThreadIndices.offer(threadIndex);
+  }
+
   private void wrapAndExecute(@NotNull Runnable firstTask, long status) {
     try {
       Runnable command = new ContextAwareRunnable() {
@@ -230,11 +256,21 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
             // This runnable is intended to be used for offloading the queue by executing stored tasks.
             // It means that it shall not possess a thread context,
             // but the executed tasks must have a context.
-            if (myChangeThreadName) {
+            if (!myChangeThreadName) {
+              executeFirstTaskAndHelpQueue();
+            }
+            else if (myMaxThreads == 1) {
+              // there's nothing to distinguish this thread from, so keep the name as is
               ConcurrencyUtil.runUnderThreadName(myName, this::executeFirstTaskAndHelpQueue);
             }
             else {
-              executeFirstTaskAndHelpQueue();
+              int threadIndex = acquireThreadIndex();
+              try {
+                ConcurrencyUtil.runUnderThreadName(myName + "-" + threadIndex, this::executeFirstTaskAndHelpQueue);
+              }
+              finally {
+                releaseThreadIndex(threadIndex);
+              }
             }
           }
           finally {
