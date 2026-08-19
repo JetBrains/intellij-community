@@ -11,14 +11,14 @@ fun Finder.pythonPackagesToolWindow(@Language("xpath") xpath: String? = null) =
 
 class PythonPackagesToolWindowUiComponent(data: ComponentData) : UiComponent(data) {
   val packagesTable
-    get() = x("//div[@class='PyPackagesTree']", UiComponent::class.java)
+    get() = x("//div[@class='JBScrollPane'][.//div[@class='PyPackagesTree']]", UiComponent::class.java)
 
   val searchField
     get() = x("//div[@class='PyPackageSearchTextField']", UiComponent::class.java)
 
-  // Gear button in the Python Packages tool window toolbar
-  val settingsButton
-    get() = x("//div[@myicon='settings.svg']", UiComponent::class.java)
+  // "Options" button in the Python Packages tool window toolbar (AllIcons.Actions.More since PY-89838)
+  val optionsButton
+    get() = x { and(byClass("ActionButton"), byAccessibleName("Options")) }
 
   val installButton = x { and((byClass("JBOptionButton")), (byAccessibleName("Install"))) }
 
