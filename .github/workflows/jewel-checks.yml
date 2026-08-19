@@ -288,6 +288,81 @@ jobs:
           fi
           echo "Bazel build files look up-to-date."
 
+  spectre_tests:
+    name: Jewel Spectre tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - uses: actions/checkout@v7.0.1
+        name: Check out repository
+
+      - name: Install Xvfb
+        # libxrandr2 and libxinerama1 are dlopened, so nothing reports them missing.
+        # language=bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            xvfb \
+            libxrender1 \
+            libxtst6 \
+            libxi6 \
+            libxrandr2 \
+            libxinerama1 \
+            libgl1 \
+            libfontconfig1
+
+      - name: Run the Spectre headful UI tests
+        run: |
+          xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" \
+            ./bazel.cmd test //platform/jewel/... \
+              --build_tests_only \
+              --test_tag_filters=requires-display \
+              --test_output=errors
+
+      - name: Upload Bazel test logs
+        uses: actions/upload-artifact@v7.0.1
+        if: failure()
+        with:
+          name: spectre-test-logs
+          path: out/bazel-testlogs/platform/jewel/**
+          retention-days: 7
+          if-no-files-found: ignore
+
+  spectre_tests_windows:
+    name: Jewel Spectre tests (Windows)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      # Kotlin test data blows past MAX_PATH, so checkout fails with "Filename too long" without this.
+      - name: Enable long paths
+        run: git config --global core.longpaths true
+
+      - uses: actions/checkout@v7.0.1
+        name: Check out repository
+
+      - name: Run the Spectre headful UI tests
+        # Not redundant: JDialogRenderer uses RenderSettings.SwingGraphics on Windows.
+        run: >
+          ./bazel.cmd test //platform/jewel/...
+          --build_tests_only
+          --test_tag_filters=requires-display
+          --test_output=errors
+
+      - name: Upload Bazel test logs
+        uses: actions/upload-artifact@v7.0.1
+        if: failure()
+        with:
+          name: spectre-test-logs-windows
+          path: out/bazel-testlogs/platform/jewel/**
+          retention-days: 7
+          if-no-files-found: ignore
+
   metalava:
     name: Check for breaking API changes with Metalava
     runs-on: ubuntu-latest

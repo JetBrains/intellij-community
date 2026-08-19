@@ -1,3 +1,6 @@
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
+
 filegroup(
     name = "jewel_build_metadata",
     srcs = [
@@ -6,4 +9,94 @@ filegroup(
         "gradle/libs.versions.toml",
     ],
     visibility = ["//visibility:public"],
+)
+
+# Spectre (JEWEL-1390). `testonly` is what keeps it out of the IDE and published artifacts.
+
+kt_jvm_import(
+    name = "spectre-core",
+    testonly = True,
+    jar = "@jewel_deps_spectre_core//file",
+    visibility = ["//visibility:private"],
+)
+
+kt_jvm_import(
+    name = "spectre-testing",
+    testonly = True,
+    jar = "@jewel_deps_spectre_testing//file",
+    visibility = ["//visibility:private"],
+)
+
+kt_jvm_import(
+    name = "spectre-agent",
+    testonly = True,
+    jar = "@jewel_deps_spectre_agent//file",
+    visibility = ["//visibility:private"],
+)
+
+kt_jvm_import(
+    name = "spectre-recording",
+    testonly = True,
+    jar = "@jewel_deps_spectre_recording//file",
+    visibility = ["//visibility:private"],
+)
+
+kt_jvm_import(
+    name = "androidx-tracing-wire-desktop",
+    testonly = True,
+    jar = "@jewel_deps_androidx_tracing_wire_desktop//file",
+    visibility = ["//visibility:private"],
+)
+
+kt_jvm_import(
+    name = "kotlinx-coroutines-swing",
+    testonly = True,
+    jar = "@jewel_deps_kotlinx_coroutines_swing//file",
+    visibility = ["//visibility:private"],
+)
+
+# Compose, coroutines and kotlin-stdlib are deliberately not exported: the tested module
+# brings them, and a second copy would shadow the monorepo's versions.
+java_library(
+    name = "spectre",
+    testonly = True,
+    visibility = ["//visibility:public"],
+    exports = [
+        ":spectre-core",
+        ":spectre-testing",
+    ],
+    runtime_deps = [
+        ":androidx-tracing-wire-desktop",
+        ":kotlinx-coroutines-swing",
+        ":spectre-agent",
+        ":spectre-recording",
+    ],
+)
+
+kt_jvm_import(
+    name = "junit-platform-console",
+    testonly = True,
+    jar = "@jewel_deps_junit_platform_console//file",
+    visibility = ["//visibility:private"],
+)
+
+kt_jvm_import(
+    name = "junit-platform-reporting",
+    testonly = True,
+    jar = "@jewel_deps_junit_platform_reporting//file",
+    visibility = ["//visibility:private"],
+)
+
+# Only the console front end is Jewel-local; the JUnit Platform itself comes from //libraries.
+java_library(
+    name = "spectre-junit-console",
+    testonly = True,
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":junit-platform-console",
+        ":junit-platform-reporting",
+        "//libraries/junit5",
+        "//libraries/junit5-jupiter",
+        "//libraries/junit5-launcher",
+    ],
 )
