@@ -14203,6 +14203,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/specifyAllRemainingArgumentsByName/conflictingSignatures.kt");
         }
 
+        @TestMetadata("defaultParams.kt")
+        public void testDefaultParams() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifyAllRemainingArgumentsByName/defaultParams.kt");
+        }
+
         @TestMetadata("emptyArguments.kt")
         public void testEmptyArguments() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/specifyAllRemainingArgumentsByName/emptyArguments.kt");
