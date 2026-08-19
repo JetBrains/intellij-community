@@ -34,6 +34,7 @@ jvm_library(
         "//platform/util/base",
         "//platform/util-rt",
         "//libraries/pty4j",
+        "//platform/util/annotations",
     ],
 )
 
@@ -65,6 +66,7 @@ jvm_library(
         "//platform/util/base:base_test_lib",
         "//platform/util-rt:util-rt_test_lib",
         "//libraries/pty4j:pty4j_test_lib",
+        "//platform/util/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ijent` end

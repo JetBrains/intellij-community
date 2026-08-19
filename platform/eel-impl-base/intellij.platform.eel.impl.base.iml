@@ -10,6 +10,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.annotations" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
   </component>
 </module>

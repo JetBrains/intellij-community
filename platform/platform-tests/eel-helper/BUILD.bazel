@@ -25,6 +25,7 @@ jvm_library(
         "//libraries/jackson/databind",
         "//libraries/kotlin/reflect",
         "//platform/util-rt",
+        "//platform/util/annotations",
         "//libraries/jetbrains/annotations",
         "@lib//:platform-eel_helper-jline-terminal",
         "@lib//:jline-terminal-jansi",
@@ -49,6 +50,7 @@ jvm_library(
         "//libraries/jackson/databind:databind_test_lib",
         "//libraries/kotlin/reflect:reflect_test_lib",
         "//platform/util-rt:util-rt_test_lib",
+        "//platform/util/annotations:annotations_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
