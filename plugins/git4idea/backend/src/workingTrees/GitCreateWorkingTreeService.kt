@@ -6,6 +6,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.StructuredIdeActivity
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -25,12 +26,16 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.VisibleForTesting
 import git4idea.GitBranch
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitReference
 import git4idea.GitOperationsCollector
 import git4idea.GitWorkingTree
 import git4idea.actions.ref.GitSingleRefAction
+import git4idea.branch.GitBranchUiHandler
+import git4idea.branch.GitCheckoutInOtherWorktreeDialogs
+import git4idea.commands.GitBranchAlreadyCheckedOutInOtherWorktreeDetector
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.workingTrees.dialog.GitWorkingTreeDialog
@@ -78,12 +83,15 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     if (!GitWorkingTreesService.isWorktreeCreationSupported(repository)) return
 
     val existingWorkingTree = GitSingleRefAction.findCheckedOutWorkingTree(branch, listOf(repository), skipCurrentWorkingTree = false)
+    var force = false
     if (existingWorkingTree != null) {
       // If the branch is checked out in the current worktree there's nothing to open; the popup item is hidden in that case.
-      if (!existingWorkingTree.isCurrent) {
+      if (existingWorkingTree.isCurrent) return
+      if (!confirmCreateNewWorktreeInsteadOfOpening(repository.project, branch, existingWorkingTree.path.path)) {
         GitWorkingTreesService.getInstance(repository.project).openWorkingTreeProject(existingWorkingTree, onProjectOpened)
+        return
       }
-      return
+      force = true
     }
 
     val dirName = sanitizeFileName(worktreeName, extraIllegalChars = { it.isWhitespace() })
@@ -95,7 +103,18 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     val branchSpec = if (newBranchName != null) WorktreeBranchSpec.CreateNewBranch(branch, newBranchName) else WorktreeBranchSpec.CheckoutExisting(branch)
     val request = GitWorktreeCreationRequest(repository, VcsUtil.getFilePath(worktreeDir, true), branchSpec)
     val ideActivity = GitOperationsCollector.logCreateWorktreeActionInvoked(repository.project, place, branch)
-    doCreateWorkingTree(ideActivity, request, onProjectOpened, reportOwnProgress = false)
+    doCreateWorkingTree(ideActivity, request, onProjectOpened, force, reportOwnProgress = false)
+  }
+
+  @VisibleForTesting
+  internal suspend fun confirmCreateNewWorktreeInsteadOfOpening(project: Project, branch: GitBranch, worktreePath: String?): Boolean {
+    val decision = withContext(Dispatchers.UI) {
+      GitCheckoutInOtherWorktreeDialogs.buildAndShow(
+        project, branch.name, worktreePath,
+        GitBundle.message("working.tree.dialog.branch.already.checked.out.confirm.create.anyway"),
+        GitCheckoutInOtherWorktreeDialogs.ButtonSet.PROCEED_OR_OPEN_EXISTING)
+    }
+    return decision == GitBranchUiHandler.CheckoutInOtherWorktreeDecision.CHECKOUT_ANYWAY
   }
 
   private fun loadLastParentPath(project: Project): String? =
@@ -165,6 +184,7 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     ideActivity: StructuredIdeActivity,
     request: GitWorktreeCreationRequest,
     onProjectOpened: ((Project) -> Unit)? = null,
+    force: Boolean = false,
     reportOwnProgress: Boolean = true,
   ) {
     GitOperationsCollector.logWorktreeCreationDialogExitedWithOk(ideActivity, request)
@@ -180,21 +200,22 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
       return
     }
 
-    rootsUnderCreation.add(request.workingTreePath)
     val gitWTService = GitWorkingTreesService.getInstance(project)
-    val result = try {
-      gitWTService.createWorkingTree(request, reportOwnProgress)
-    }
-    finally {
-      rootsUnderCreation.remove(request.workingTreePath)
-    }
+    var result = createWorkingTreeTracked(gitWTService, request, force, reportOwnProgress)
 
     if (!result.success) {
-      VcsNotifier.getInstance(project).notifyError(GitNotificationIdsHolder.WORKTREE_ADD_FAILED,
-                                                   GitBundle.message("notification.title.worktree.creation.failed"),
-                                                   result.errorOutputAsHtmlString,
-                                                   true)
-      return
+      val otherWorktreeMatch = GitBranchAlreadyCheckedOutInOtherWorktreeDetector.matchInOutput(result.errorOutput)
+      if (otherWorktreeMatch != null &&
+          confirmCreateWorktreeIgnoringOtherWorktree(project, otherWorktreeMatch.branchName, otherWorktreeMatch.worktreePath)) {
+        result = createWorkingTreeTracked(gitWTService, request, force = true, reportOwnProgress)
+      }
+      if (!result.success) {
+        VcsNotifier.getInstance(project).notifyError(GitNotificationIdsHolder.WORKTREE_ADD_FAILED,
+                                                     GitBundle.message("notification.title.worktree.creation.failed"),
+                                                     result.errorOutputAsHtmlString,
+                                                     true)
+        return
+      }
     }
 
     TrustedProjects.setProjectTrusted(Path(request.workingTreePath.path), true)
@@ -213,5 +234,35 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
         request.repository.workingTreeHolder.scheduleReload()
       }
     }
+  }
+
+  private suspend fun createWorkingTreeTracked(
+    gitWTService: GitWorkingTreesService,
+    request: GitWorktreeCreationRequest,
+    force: Boolean,
+    reportOwnProgress: Boolean,
+  ): GitWorkingTreesService.Result {
+    rootsUnderCreation.add(request.workingTreePath)
+    try {
+      return gitWTService.createWorkingTree(request, force, reportOwnProgress)
+    }
+    finally {
+      rootsUnderCreation.remove(request.workingTreePath)
+    }
+  }
+
+  @VisibleForTesting
+  internal suspend fun confirmCreateWorktreeIgnoringOtherWorktree(
+    project: Project,
+    branchName: String,
+    worktreePath: String?,
+  ): Boolean {
+    val decision = withContext(Dispatchers.UI) {
+      GitCheckoutInOtherWorktreeDialogs.buildAndShow(
+        project, branchName, worktreePath,
+        GitBundle.message("working.tree.dialog.branch.already.checked.out.confirm.create.anyway"),
+        GitCheckoutInOtherWorktreeDialogs.ButtonSet.PROCEED_OR_CANCEL)
+    }
+    return decision == GitBranchUiHandler.CheckoutInOtherWorktreeDecision.CHECKOUT_ANYWAY
   }
 }

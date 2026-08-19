@@ -83,6 +83,7 @@ internal class GitWorkingTreeDialog(
   private lateinit var projectNameCell: Cell<JBTextField>
   private lateinit var refComboBox: ComboBox<RefWithWorkingTree?>
   private lateinit var submoduleWarningRow: Row
+  private lateinit var existingRefCell: Cell<ComboBox<RefWithWorkingTree?>>
 
   private val validator = GitRefNameValidator.getInstance()
   private val existingRefWithWorkingTree: GraphProperty<RefWithWorkingTree?>
@@ -171,9 +172,13 @@ internal class GitWorkingTreeDialog(
       }
 
       row(GitBundle.message("working.tree.dialog.label.existing.branch")) {
-        createRefComboBox()
+        existingRefCell = createRefComboBox()
           .bindItem(existingRefWithWorkingTree)
           .align(Align.FILL)
+          .comment("", maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
+        updateExistingRefComment()
+        existingRefWithWorkingTree.afterChange { updateExistingRefComment() }
+        createNewBranch.afterChange { updateExistingRefComment() }
       }
 
       row {
@@ -237,7 +242,6 @@ internal class GitWorkingTreeDialog(
     return cell(component)
       .validationRequestor(WHEN_PROPERTY_CHANGED(createNewBranch))
       .validationRequestor(WHEN_PROPERTY_CHANGED(existingRefWithWorkingTree))
-      .validationOnInput { validateExistingRefOnInput() }
       .validationOnApply { validateExistingRefOnApply() }
   }
 
@@ -251,14 +255,21 @@ internal class GitWorkingTreeDialog(
     (refComboBox.renderer as RefWithTreeCellRenderer).updateRepository(getCurrentRepository())
   }
 
-  private fun ValidationInfoBuilder.validateExistingRefOnInput(): ValidationInfo? {
+  private fun supportExistingRefComment() {
+    updateExistingRefComment()
+    existingRefWithWorkingTree.afterChange { updateExistingRefComment() }
+    createNewBranch.afterChange { updateExistingRefComment() }
+  }
+
+  private fun updateExistingRefComment() {
     val value = existingRefWithWorkingTree.get()
-    return if (value?.workingTree != null && !createNewBranch.get()) {
-      error(GitBundle.message("working.tree.dialog.branch.validation.already.checked.out.in.working.tree")).asWarning()
+    val text = if (value?.workingTree != null && !createNewBranch.get()) {
+      GitBundle.message("working.tree.dialog.branch.validation.already.checked.out.in.working.tree")
     }
     else {
-      null
+      ""
     }
+    existingRefCell.comment?.text = text
   }
 
   private fun ValidationInfoBuilder.validateExistingRefOnApply(): ValidationInfo? {
