@@ -132,9 +132,6 @@
     <extensionPoint qualifiedName="com.intellij.commandLineEnvCustomizer"
                     interface="com.intellij.execution.process.CommandLineEnvCustomizer"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.fileChooserCustomizer"
-                    interface="com.intellij.openapi.fileChooser.FileChooserCustomizer"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.internal.performanceTests.projectInitializationDiagnosticHandler"
                     interface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticHandler"
                     dynamic="true"/>

@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserCustomizer;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileSystemTree;
@@ -259,15 +258,9 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myPath.setEditable(true);
     myPath.setRenderer(SimpleListCellRenderer.create((var label, @NlsContexts.Label var value, var index) -> {
       label.setText(value);
-      final var customIcon = FileChooserCustomizer.Util.fastGetFileIcon(myProject, Path.of(value));
-      if (customIcon != null) {
-        label.setIcon(customIcon);
-      }
-      else {
-        try (AccessToken ignore = SlowOperations.knownIssue("IDEA-338208, EA-831292")) {
-          VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(value));
-          label.setIcon(file == null ? EmptyIcon.ICON_16 : IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
-        }
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-338208, EA-831292")) {
+        VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(value));
+        label.setIcon(file == null ? EmptyIcon.ICON_16 : IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
       }
     }));
 
@@ -318,9 +311,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   @NotNull
   private List<String> getApplicableRecentPaths() {
-    return FileChooserUtil.getRecentPaths(getRecentPathsStorageKey()).stream().filter(
-      path -> FileChooserCustomizer.Util.isPathVisible(myProject, Path.of(path))
-    ).toList();
+    return FileChooserUtil.getRecentPaths(getRecentPathsStorageKey()).stream().toList();
   }
 
   protected @Nullable JPanel createExtraToolbarPanel() {
@@ -391,8 +382,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   protected JTree createTree() {
-    myChooserDescriptor.putUserData(FileTreeModel.SYSTEM_ROOTS_FILTER,
-                                    path -> FileChooserCustomizer.Util.isPathVisible(myProject, path));
     Tree internalTree = createInternalTree();
     myFileSystemTree = new FileSystemTreeImpl(myProject, myChooserDescriptor, internalTree, null, null, null);
     internalTree.setRootVisible(myChooserDescriptor.isTreeRootVisible());
