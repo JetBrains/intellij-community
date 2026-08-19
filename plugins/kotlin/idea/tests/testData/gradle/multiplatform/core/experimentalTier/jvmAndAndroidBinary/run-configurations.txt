@@ -3,7 +3,9 @@ project
 
 project.consumer
 
-project.consumer.androidTest
+project.consumer.androidHostTest
+
+project.consumer.androidMain
 
 project.consumer.commonMain
 
@@ -15,13 +17,11 @@ project.consumer.jvmMain
 
 project.consumer.jvmTest
 
-project.consumer.main
-
-project.consumer.unitTest
-
 project.producer
 
-project.producer.androidTest
+project.producer.androidHostTest
+
+project.producer.androidMain
 
 project.producer.commonMain
 
@@ -32,10 +32,6 @@ project.producer.jvmAndAndroidMain
 project.producer.jvmMain
 
 project.producer.jvmTest
-
-project.producer.main
-
-project.producer.unitTest
 
 
 Test configuration:

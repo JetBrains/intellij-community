@@ -1,15 +1,19 @@
 MODULES
 project.consumer
 
-project.consumer.androidTest
+project.consumer.androidHostTest
     transitive.commonMain (TEST)
     transitive.jvmMain (TEST)
 
-project.consumer.main
+project.consumer.androidMain
     transitive.commonMain (COMPILE)
     transitive.jvmMain (COMPILE)
 
-project.consumer.unitTest
+project.consumer.commonMain
+    transitive.commonMain (COMPILE)
+    transitive.jvmMain (COMPILE)
+
+project.consumer.commonTest
     transitive.commonMain (TEST)
     transitive.jvmMain (TEST)
 

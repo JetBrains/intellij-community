@@ -1,7 +1,12 @@
 MODULES
 project
 
-project.androidTest
+project.androidHostTest
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in project.Foo
+
+project.androidMain
     languageLevel = {{MINIMAL_SUPPORTED}}
     apiLevel = {{MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in project.Foo
@@ -96,22 +101,12 @@ project.jvmTest
     apiLevel = {{MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in project.Foo,jvm.Foo
 
-project.main
-    languageLevel = {{MINIMAL_SUPPORTED}}
-    apiLevel = {{MINIMAL_SUPPORTED}}
-    compilerSettings = -opt-in project.Foo
-
 project.nativeMain
     languageLevel = {{MINIMAL_SUPPORTED}}
     apiLevel = {{MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in project.Foo
 
 project.nativeTest
-    languageLevel = {{MINIMAL_SUPPORTED}}
-    apiLevel = {{MINIMAL_SUPPORTED}}
-    compilerSettings = -opt-in project.Foo
-
-project.unitTest
     languageLevel = {{MINIMAL_SUPPORTED}}
     apiLevel = {{MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in project.Foo

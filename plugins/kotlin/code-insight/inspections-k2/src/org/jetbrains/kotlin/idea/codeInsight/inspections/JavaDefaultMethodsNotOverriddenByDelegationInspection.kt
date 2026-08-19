@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections
 
+import org.jetbrains.kotlin.resolution.KtResolvable
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.NlsSafe
@@ -9,7 +10,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMemberInfo
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtGenerateMembersHandler
 import org.jetbrains.kotlin.idea.refactoring.isTrueJavaMethod
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
 import org.jetbrains.kotlin.psi.KtSuperTypeList
@@ -40,7 +42,7 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 internal class JavaDefaultMethodsNotOverriddenByDelegationInspection : AbstractKotlinInspection() {
 
-    @OptIn(KaExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : KtVisitorVoid() {
             override fun visitDelegatedSuperTypeEntry(specifier: KtDelegatedSuperTypeEntry) {
@@ -60,7 +62,7 @@ internal class JavaDefaultMethodsNotOverriddenByDelegationInspection : AbstractK
                     val delegateClass = delegateExpression.expressionType?.symbol as? KaClassSymbol ?: return
                     val javaDefaultMethodsToOverride = collectJavaDefaultMethodsToOverride(delegateClass, inheritedJavaDefaultMethods)
 
-                    val delegateSymbol = delegateExpression.mainReference?.resolveToSymbol()
+                    val delegateSymbol = (delegateExpression as? KtResolvable)?.resolveSymbol()
                     val delegateName = when (delegateSymbol) {
                         is KaVariableSymbol -> delegateSymbol.name.asString()
                         else -> null

@@ -4,6 +4,6 @@ pluginManagement {
     }
     plugins {
         kotlin("multiplatform") version "{{kgp_version}}"
-        id("com.android.library") version "{{agp_version}}"
+        {{android_library_plugin_id}} version "{{agp_version}}"
     }
 }

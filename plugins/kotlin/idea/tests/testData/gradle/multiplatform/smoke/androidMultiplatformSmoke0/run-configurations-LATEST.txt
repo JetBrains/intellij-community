@@ -1,0 +1,145 @@
+MODULES
+project
+
+project.androidApp
+
+project.androidApp.androidTest
+
+project.androidApp.main
+    fqName: null
+    name: AndriodApp_main
+    type: Android App
+
+
+project.androidApp.unitTest
+
+project.jvmLibrary
+
+project.jvmLibrary.main
+
+project.jvmLibrary.test
+
+project.multiplatformAndroidApp
+
+project.multiplatformAndroidApp.androidHostTest
+
+project.multiplatformAndroidApp.androidMain
+    fqName: null
+    name: MultiplatformAndroidApp_main
+    type: Android App
+
+
+project.multiplatformAndroidApp.commonMain
+
+project.multiplatformAndroidApp.commonTest
+    fqName: MultiplatformAndroidApp_commonTest
+    name: MultiplatformAndroidApp_commonTest
+    type: Gradle
+    tasks: [:multiplatformAndroidApp:cleanTestAndroidHostTest, :multiplatformAndroidApp:testAndroidHostTest, --tests, "MultiplatformAndroidApp_commonTest"]
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+    fqName: MultiplatformAndroidApp_commonTest.sayHello
+    name: MultiplatformAndroidApp_commonTest.sayHello
+    type: Gradle
+    tasks: [:multiplatformAndroidApp:cleanTestAndroidHostTest, :multiplatformAndroidApp:testAndroidHostTest, --tests, "MultiplatformAndroidApp_commonTest.sayHello"]
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+
+project.multiplatformAndroidJvmIosLibrary
+
+project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain
+
+project.multiplatformAndroidJvmIosLibrary.androidHostTest
+
+project.multiplatformAndroidJvmIosLibrary.androidMain
+
+project.multiplatformAndroidJvmIosLibrary.commonMain
+
+project.multiplatformAndroidJvmIosLibrary.commonTest
+
+project.multiplatformAndroidJvmIosLibrary.jvmMain
+
+project.multiplatformAndroidJvmIosLibrary.jvmTest
+
+project.multiplatformAndroidJvmIosLibrary.linuxX64Main
+
+project.multiplatformAndroidJvmIosLibrary.linuxX64Test
+
+project.multiplatformAndroidJvmIosLibrary2
+
+project.multiplatformAndroidJvmIosLibrary2.androidAndJvmMain
+
+project.multiplatformAndroidJvmIosLibrary2.androidHostTest
+
+project.multiplatformAndroidJvmIosLibrary2.androidMain
+
+project.multiplatformAndroidJvmIosLibrary2.commonMain
+
+project.multiplatformAndroidJvmIosLibrary2.commonTest
+    fqName: MultiplatformAndroidJvmIosLibrary2_commonTest
+    name: MultiplatformAndroidJvmIosLibrary2_commonTest
+    type: Gradle
+    tasks: [:multiplatformAndroidJvmIosLibrary2:cleanTestAndroidHostTest, :multiplatformAndroidJvmIosLibrary2:testAndroidHostTest, --tests, "MultiplatformAndroidJvmIosLibrary2_commonTest"]
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+    fqName: MultiplatformAndroidJvmIosLibrary2_commonTest.sayHello
+    name: MultiplatformAndroidJvmIosLibrary2_commonTest.sayHello
+    type: Gradle
+    tasks: [:multiplatformAndroidJvmIosLibrary2:cleanTestAndroidHostTest, :multiplatformAndroidJvmIosLibrary2:testAndroidHostTest, --tests, "MultiplatformAndroidJvmIosLibrary2_commonTest.sayHello"]
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+
+project.multiplatformAndroidJvmIosLibrary2.jvmMain
+
+project.multiplatformAndroidJvmIosLibrary2.jvmTest
+    fqName: MultiplatformAndroidJvmIosLibrary2_jvmTest
+    name: MultiplatformAndroidJvmIosLibrary2_jvmTest
+    type: Gradle
+    tasks: [:multiplatformAndroidJvmIosLibrary2:cleanJvmTest, :multiplatformAndroidJvmIosLibrary2:jvmTest, --tests, "MultiplatformAndroidJvmIosLibrary2_jvmTest"]
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+    fqName: MultiplatformAndroidJvmIosLibrary2_jvmTest.sayHello
+    name: MultiplatformAndroidJvmIosLibrary2_jvmTest.sayHello
+    type: Gradle
+    tasks: [:multiplatformAndroidJvmIosLibrary2:cleanJvmTest, :multiplatformAndroidJvmIosLibrary2:jvmTest, --tests, "MultiplatformAndroidJvmIosLibrary2_jvmTest.sayHello"]
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+
+project.multiplatformAndroidJvmIosLibrary2.linuxX64Main
+
+project.multiplatformAndroidJvmIosLibrary2.linuxX64Test
+
+project.multiplatformAndroidLibrary
+
+project.multiplatformAndroidLibrary.androidHostTest
+
+project.multiplatformAndroidLibrary.androidMain
+
+project.multiplatformAndroidLibrary.commonMain
+
+project.multiplatformAndroidLibrary.commonTest
+
+project.multiplatformJvmLibrary
+
+project.multiplatformJvmLibrary.commonMain
+
+project.multiplatformJvmLibrary.commonTest
+
+project.multiplatformJvmLibrary.jvmMain
+
+project.multiplatformJvmLibrary.jvmTest
+
+
+Test configuration:
+- Showing runConfiguration detail: name
+- Showing runConfiguration detail: type
+- Showing runConfiguration detail: tasks
+- Showing runConfiguration detail: scriptParameters
+- Showing runConfiguration detail: isDebugAllEnabled
+- Showing runConfiguration detail: isRunAsTest

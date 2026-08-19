@@ -149,6 +149,30 @@ fun KtDestructuringDeclaration.applyNameBasedDestructuringForm(
     return this
 }
 
+@ApiStatus.Internal
+fun dropDestructuringEntry(entry: KtDestructuringDeclarationEntry) {
+    val declaration = entry.parent as? KtDestructuringDeclaration ?: return
+    if (declaration.entries.size <= 1) {
+        declaration.delete()
+    } else {
+        EditCommaSeparatedListHelper.removeItem(entry)
+    }
+}
+
+@ApiStatus.Internal
+fun renameNameBasedDestructuringEntryToUnderscore(entry: KtDestructuringDeclarationEntry) {
+    val originalName = entry.nameIdentifier?.text ?: return
+    if (entry.initializer == null) {
+        val psiFactory = KtPsiFactory(entry.project)
+
+        val anchor = entry.typeReference ?: entry.nameIdentifier ?: return
+        val initializerSeparator = entry.addAfter(psiFactory.createEQ(), anchor)
+
+        entry.addAfter(psiFactory.createExpression(originalName), initializerSeparator)
+    }
+    renameToUnderscore(entry)
+}
+
 /**
  * Replaces parentheses with square brackets in a destructuring declaration (positional form).
  */

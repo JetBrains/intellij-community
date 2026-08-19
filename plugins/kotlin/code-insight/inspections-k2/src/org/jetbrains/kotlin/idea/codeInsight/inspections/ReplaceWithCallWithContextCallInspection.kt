@@ -11,7 +11,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
@@ -94,7 +94,7 @@ internal class ReplaceWithCallWithContextCallInspection :
         var usedAsContext = false
         val problem = bodyExpression.anyDescendantOfType<KtElement> { node ->
             when (node) {
-                is KtThisExpression -> node.instanceReference.mainReference.resolveToSymbol() == receiverParameter
+                is KtThisExpression -> node.resolveSymbol() == receiverParameter
                 is KtCallableReferenceExpression -> {
                     val appliedSymbol =
                         node.callableReference.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol

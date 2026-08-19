@@ -1,18 +1,17 @@
 plugins {
-    id("com.android.library")
+    {{android_library_plugin_id}}
     kotlin("multiplatform")
 }
 
-android {
-    compileSdkVersion({{compile_sdk_version}})
+{{android_library_configuration_open}}
+    {{android_compile_sdk}}
     namespace = "org.common.example"
-    val debug by buildTypes.getting
-    debug.matchingFallbacks += listOf("debug", "release")
-}
+    {{android_legacy_build_types}}
+{{android_library_configuration_close}}
 
 kotlin {
     jvm()
-    androidTarget()
+    {{android_target}}
     iosArm64()
     iosX64()
 

@@ -3,9 +3,13 @@ consumerBuild
 
 consumerBuild.consumerA
 
-consumerBuild.consumerA.androidTest
+consumerBuild.consumerA.androidHostTest
+    producerBuild.producerA.androidMain (TEST)
     producerBuild.producerA.commonMain (TEST)
-    producerBuild.producerA.main (TEST)
+
+consumerBuild.consumerA.androidMain
+    producerBuild.producerA.androidMain (COMPILE)
+    producerBuild.producerA.commonMain (COMPILE)
 
 consumerBuild.consumerA.commonMain
     producerBuild.producerA.commonMain (COMPILE)
@@ -20,14 +24,6 @@ consumerBuild.consumerA.jvmMain
 consumerBuild.consumerA.jvmTest
     producerBuild.producerA.commonMain (TEST)
     producerBuild.producerA.jvmMain (TEST)
-
-consumerBuild.consumerA.main
-    producerBuild.producerA.commonMain (COMPILE)
-    producerBuild.producerA.main (COMPILE)
-
-consumerBuild.consumerA.unitTest
-    producerBuild.producerA.commonMain (TEST)
-    producerBuild.producerA.main (TEST)
 
 
 Test configuration:

@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.isNameBased
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinKtDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -21,6 +22,8 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.Applicabilit
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.RemoveUnusedVariableFix
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
@@ -63,7 +66,8 @@ internal class UnusedVariableInspection :
 
     class Context(
         val couldBeAnExplicitlyIgnoredValue: Boolean,
-        val isSimpleCase: Boolean
+        val isSimpleCase: Boolean,
+        val isNameBasedDestructuringEntry: Boolean,
     )
 
     context(session: KaSession)
@@ -79,9 +83,21 @@ internal class UnusedVariableInspection :
                     && declaration.symbol.returnType.classId != KaStandardTypeClassIds.UNIT
         
         val isSimpleCase = isSimpleCaseVariable(declaration)
-        val typeReference = declaration.typeReference ?: return Context(couldBeAnExplicitlyIgnoredValue, isSimpleCase)
+        val entry = declaration as? KtDestructuringDeclarationEntry
+        val destructuring = entry?.parent as? KtDestructuringDeclaration
+        val isNameBasedDestructuringEntry = entry != null
+                && destructuring != null
+                && element.languageVersionSettings.supportsFeature(LanguageFeature.NameBasedDestructuring)
+                && !destructuring.hasSquareBrackets()
+                && (entry.isNameBased() || element.languageVersionSettings.supportsFeature(LanguageFeature.EnableNameBasedDestructuringShortForm))
+
+        val typeReference = declaration.typeReference ?: return Context(
+            couldBeAnExplicitlyIgnoredValue,
+            isSimpleCase,
+            isNameBasedDestructuringEntry
+        )
         return if (!declaration.isExplicitTypeReferenceNeededForTypeInference(typeReference)) {
-            Context(couldBeAnExplicitlyIgnoredValue, isSimpleCase)
+            Context(couldBeAnExplicitlyIgnoredValue, isSimpleCase, isNameBasedDestructuringEntry)
         } else {
             null
         }
@@ -116,5 +132,10 @@ internal class UnusedVariableInspection :
         element: KtNamedDeclaration,
         context: Context,
     ): KotlinModCommandQuickFix<KtNamedDeclaration> =
-        RemoveUnusedVariableFix(element, context.isSimpleCase, context.couldBeAnExplicitlyIgnoredValue)
+        RemoveUnusedVariableFix(
+            element = element,
+            isSimpleCase = context.isSimpleCase,
+            couldBeAnExplicitlyIgnoredValue = context.couldBeAnExplicitlyIgnoredValue,
+            isNameBasedDestructuringEntry = context.isNameBasedDestructuringEntry
+        )
 }

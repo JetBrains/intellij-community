@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.facet.FacetManager
@@ -11,8 +11,11 @@ import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
+import com.intellij.openapi.project.ModuleListener
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -213,6 +216,31 @@ class FacetModelBridgeTest {
       }
     }
     assertEquals("bar", facet.configuration.data)
+  }
+
+  @Test
+  fun `getting facets of a removed module`() {
+    val module = projectModel.createModule()
+    projectModel.addFacet(module, MockFacetType.getInstance(), MockFacetConfiguration("foo"))
+    // The facet manager is obtained while the module is still alive, as a client may keep such a reference
+    val facetManager = FacetManager.getInstance(module)
+    assertOneElement(facetManager.allFacets)
+
+    // Clients like FacetEventsPublisher query facets from `moduleRemoved`, which is fired before the module is disposed
+    val facetsInListener = mutableListOf<Int>()
+    projectModel.project.messageBus.connect(disposableRule.disposable).subscribe(ModuleListener.TOPIC, object : ModuleListener {
+      override fun moduleRemoved(project: Project, module: Module) {
+        facetsInListener.add(FacetManager.getInstance(module).allFacets.size)
+      }
+    })
+
+    projectModel.removeModule(module)
+
+    // ModuleBridgeCleaner pins the storage of a removed module to the snapshot taken before the removal, so the module entity is still
+    // resolvable and facets remain available instead of AlreadyDisposedException being thrown from FacetModelBridge.getAllFacets
+    assertEquals(listOf(1), facetsInListener)
+    assertTrue(module.isDisposed)
+    assertOneElement(facetManager.allFacets)
   }
 
   @Test

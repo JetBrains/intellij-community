@@ -50,7 +50,7 @@ import kotlin.time.toKotlinDuration
 object IjentSessionMediatorUtils {
   private val loggedErrors = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap<Throwable, Boolean>())
 
-  fun createProcessScope(parentScope: ParentOfIjentScopes, ijentLabel: String, logger: IjentLog): IjentScope {
+  fun createProcessScope(parentScope: ParentOfIjentScopes, ijentLabel: String): IjentScope {
     val context = IjentThreadPool.coroutineContext
     // Prevents from logging the error by the default exception handler.
     // Errors are logged explicitly in this function.
@@ -94,14 +94,14 @@ object IjentSessionMediatorUtils {
         }
 
         // TODO Callers should be able to define their own exception handlers.
-        logIjentError(logger, ijentLabel, err)
+        logIjentError(ijentLabel, err)
       }
     }
     @OptIn(EelDelicateApi::class)
     return IjentScope(parentScope, ijentProcessScope)
   }
 
-  fun logIjentError(logger: IjentLog, ijentLabel: String, exception: Throwable) {
+  fun logIjentError(ijentLabel: String, exception: Throwable) {
     // Wrapped in a non-cancellable section because this can be called from `invokeOnCompletion`
     // of an already-cancelled scope, and `logger.error(...)` may create application services
     // (e.g. error-report submitters) that the service container refuses to instantiate under a
@@ -113,7 +113,7 @@ object IjentSessionMediatorUtils {
 
           is IjentUnavailableException.CommunicationFailure -> {
             if (!exception.exitedExpectedly && loggedErrors.add(exception)) {
-              logger.error("Exception in connection with IJent $ijentLabel: ${exception.message}", exception)
+              IjentLogger.OTHER_LOG.error("Exception in connection with IJent $ijentLabel: ${exception.message}", exception)
             }
           }
         }
@@ -122,7 +122,7 @@ object IjentSessionMediatorUtils {
 
         else -> {
           if (loggedErrors.add(exception)) {
-            logger.error("Unexpected error during communnication with IJent $ijentLabel", exception)
+            IjentLogger.OTHER_LOG.error("Unexpected error during communnication with IJent $ijentLabel", exception)
           }
         }
       }
@@ -133,9 +133,8 @@ object IjentSessionMediatorUtils {
     errorStream: EelReceiveChannel,
     ijentLabel: String,
     lastStderrMessages: MutableSharedFlow<String?>,
-    logger: IjentLog,
   ) {
-    val lineConsumer = createIjentStderrLineConsumer(ijentLabel, lastStderrMessages, logger)
+    val lineConsumer = createIjentStderrLineConsumer(ijentLabel, lastStderrMessages)
     try {
       // `useLines` reads the stderr stream with a blocking call that parks its thread for the whole IJent
       // session. Keep that thread on `IjentThreadPool` instead of the default `Dispatchers.IO`, otherwise a
@@ -148,7 +147,7 @@ object IjentSessionMediatorUtils {
       }
     }
     catch (err: IOException) {
-      logger.debug { "$ijentLabel bootstrap got an error: $err" }
+      IjentLogger.LIFETIME_LOG.debug { "$ijentLabel bootstrap got an error: $err" }
     }
     finally {
       lineConsumer.complete()
@@ -158,9 +157,8 @@ object IjentSessionMediatorUtils {
   fun createIjentStderrLineConsumer(
     ijentLabel: String,
     lastStderrMessages: MutableSharedFlow<String?>,
-    logger: IjentLog,
   ): IjentStderrLineConsumer {
-    val logIjentStderr = LogIjentStderr(logger)
+    val logIjentStderr = LogIjentStderr()
     return IjentStderrLineConsumer(lastStderrMessages) { line ->
       logIjentStderr(ijentLabel, line)
     }
@@ -200,7 +198,7 @@ object IjentSessionMediatorUtils {
     }
   }
 
-  private class LogIjentStderr(private val logger: IjentLog) {
+  private class LogIjentStderr {
     private var lastLoggingHandler: ((String) -> Unit)? = null
 
     operator fun invoke(ijentLabel: String, line: String) {
@@ -210,10 +208,17 @@ object IjentSessionMediatorUtils {
         ijentLogMessageRegex.matchEntire(line)?.destructured
         ?: run {
           val message = "$ijentLabel log: $line"
-          // It's important to always log such messages,
-          // but if logs are supposed to be written to a separate file in debug level,
-          // they're logged in debug level.
-          val logger = lastLoggingHandler ?: logger::info
+          // Not IJent's own log format — typically raw OpenSSH client output. Map a recognizable OpenSSH
+          // level prefix (debug1/2/3, error/fatal, warning) onto the matching IJent level, so that e.g.
+          // `debug1: ...` chatter is no longer logged at INFO. Remember the resolved handler so that a
+          // following continuation line (which carries no prefix of its own) keeps the same level.
+          // It's important to always log such messages; unrecognized lines honor an earlier debug-only
+          // routing when present, otherwise default to INFO so they always stay visible.
+          val opensshHandler = opensshLevelHandler(line)
+          if (opensshHandler != null) {
+            lastLoggingHandler = opensshHandler
+          }
+          val logger = opensshHandler ?: lastLoggingHandler ?: IjentLogger.OTHER_LOG::info
           logger(message)
           return
         }
@@ -222,7 +227,7 @@ object IjentSessionMediatorUtils {
         java.time.Duration.between(hostDateTime, ZonedDateTime.parse(rawRemoteDateTime)).toKotlinDuration()
       }
       catch (_: DateTimeParseException) {
-        val logger = lastLoggingHandler ?: logger::info
+        val logger = lastLoggingHandler ?: IjentLogger.OTHER_LOG::info
         logger(message)
         return
       }
@@ -266,12 +271,24 @@ object IjentSessionMediatorUtils {
         append(message)
       })
     }
+
+    /**
+     * Maps a raw OpenSSH stderr line onto the matching [logger] handler, or `null` when the line carries no
+     * recognizable OpenSSH level tag (so the caller keeps its default handling). The level classification
+     * itself lives in the pure, unit-testable [classifyOpensshStderrLine].
+     */
+    private fun opensshLevelHandler(line: String): ((String) -> Unit)? =
+      when (classifyOpensshStderrLine(line)) {
+        OpensshStderrLevel.DEBUG -> IjentLogger.LIFETIME_LOG::debug
+        OpensshStderrLevel.WARN -> IjentLogger.LIFETIME_LOG::warn
+        OpensshStderrLevel.ERROR -> IjentLogger.LIFETIME_LOG::error
+        null -> null
+      }
   }
 
   suspend fun ijentProcessExitCodeHandler(
     ijentLabel: String,
     lastStderrMessages: MutableSharedFlow<String?>,
-    logger: IjentLog,
     exitCode: Int,
     isExitExpected: Boolean,
   ): Nothing {
@@ -302,10 +319,10 @@ object IjentSessionMediatorUtils {
 
     // TODO IJPL-198706 When IJent unexpectedly terminates, users should be asked for further actions.
     if (isExitExpected) {
-      logger.info(error)
+      IjentLogger.OTHER_LOG.info(error)
     }
     else {
-      logger.warn(error)
+      IjentLogger.OTHER_LOG.warn(error)
     }
     throw error
   }
@@ -429,5 +446,36 @@ private val CANCELLATION_INVOKER: ((Runnable) -> Unit)? = run {
   }
   catch (_: Throwable) {
     null
+  }
+}
+
+/**
+ * OpenSSH stderr log levels that [IjentSessionMediatorUtils]'s stderr handler recognizes and re-maps onto
+ * IJent log levels.
+ */
+internal enum class OpensshStderrLevel { DEBUG, WARN, ERROR }
+
+/**
+ * Best-effort classification of a raw OpenSSH client stderr line into an [OpensshStderrLevel].
+ *
+ * OpenSSH's `do_log` (log.c) prefixes stderr output with a lowercase level tag: `debug1:`, `debug2:` and
+ * `debug3:` are always present, while `error:`/`fatal:` are added when OpenSSH logs through a handler rather
+ * than bare stderr. The client additionally emits human-facing `Warning:` notices. Recognizing these tags
+ * lets the mediator log OpenSSH's own chatter at DEBUG and its problems at WARN/ERROR instead of dumping
+ * everything at INFO.
+ *
+ * The tag must be a single whitespace-free token ending at the first `": "`, so ordinary sentences that
+ * merely contain a colon (e.g. `Connection to host closed: bye`) and progname-prefixed lines without a level
+ * tag (e.g. `ssh: Could not resolve host "fakebox"`) are deliberately left unclassified: this returns `null`
+ * for them and the caller keeps its default handling.
+ */
+internal fun classifyOpensshStderrLine(line: String): OpensshStderrLevel? {
+  val tag = line.substringBefore(": ", missingDelimiterValue = "")
+  if (tag.isEmpty() || tag.any(Char::isWhitespace)) return null
+  return when (tag.lowercase()) {
+    "debug1", "debug2", "debug3" -> OpensshStderrLevel.DEBUG
+    "error", "fatal" -> OpensshStderrLevel.ERROR
+    "warning", "warn" -> OpensshStderrLevel.WARN
+    else -> null
   }
 }

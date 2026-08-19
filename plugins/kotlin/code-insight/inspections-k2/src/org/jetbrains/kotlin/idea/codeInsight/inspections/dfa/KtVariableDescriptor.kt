@@ -13,9 +13,10 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.functionType
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -48,6 +49,7 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KtClassDef.Companio
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.name.JvmStandardClassIds
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
@@ -211,6 +213,7 @@ class KtVariableDescriptor(
                 return@getProjectPsiDependentCache result
             }
 
+        @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
         context(_: KaSession)
         fun createFromSimpleName(factory: DfaValueFactory, expr: KtExpression?): DfaVariableValue? {
             val varFactory = factory.varFactory
@@ -218,7 +221,7 @@ class KtVariableDescriptor(
                 return KtThisDescriptor.descriptorFromThis(expr).first?.let { varFactory.createVariableValue(it) }
             }
             if (expr !is KtSimpleNameExpression) return null
-            val symbol: KaVariableSymbol = expr.mainReference.resolveToSymbol() as? KaVariableSymbol ?: return null
+            val symbol: KaVariableSymbol = expr.resolveSymbol() as? KaVariableSymbol ?: return null
             if (symbol is KaValueParameterSymbol || symbol is KaLocalVariableSymbol || symbol is KaContextParameterSymbol) {
                 return varFactory.createVariableValue(symbol.variableDescriptor())
             }

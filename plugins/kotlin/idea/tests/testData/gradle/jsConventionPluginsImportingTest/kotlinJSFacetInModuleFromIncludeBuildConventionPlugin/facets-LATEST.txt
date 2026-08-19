@@ -1,0 +1,72 @@
+MODULES
+include-plugin
+
+include-plugin.main
+    externalProjectId = 
+    languageLevel = 2.2
+    apiLevel = 2.2
+    targetPlatform = JVM (17)
+
+include-plugin.test
+    externalProjectId = 
+    languageLevel = 2.2
+    apiLevel = 2.2
+    additionalVisibleModuleNames = :include-plugin:main
+    targetPlatform = JVM (17)
+
+project
+
+project.sub-kotlin
+
+project.sub-kotlin.commonMain
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    targetPlatform = JS
+
+project.sub-kotlin.commonTest
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    additionalVisibleModuleNames = :sub-kotlin:commonMain, :sub-kotlin:jsMain, :sub-kotlin:webMain
+    targetPlatform = JS
+
+project.sub-kotlin.jsMain
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :sub-kotlin:commonMain, :sub-kotlin:webMain
+    targetPlatform = JS
+
+project.sub-kotlin.jsTest
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :sub-kotlin:commonTest, :sub-kotlin:webTest
+    additionalVisibleModuleNames = :sub-kotlin:commonMain, :sub-kotlin:jsMain, :sub-kotlin:webMain
+    targetPlatform = JS
+
+project.sub-kotlin.webMain
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :sub-kotlin:commonMain
+    targetPlatform = JS
+
+project.sub-kotlin.webTest
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :sub-kotlin:commonTest
+    additionalVisibleModuleNames = :sub-kotlin:commonMain, :sub-kotlin:jsMain, :sub-kotlin:webMain
+    targetPlatform = JS
+
+
+Test configuration:
+- excluding following facet fields: compilerSettings

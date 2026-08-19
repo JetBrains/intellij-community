@@ -300,7 +300,9 @@ private fun <T : Any> SpeedSearchScope.SpeedSearchableComboBoxImpl(
             modifier.onPreviewKeyEvent { event ->
                 if (!popupVisible) return@onPreviewKeyEvent false
 
-                if (!processKeyEvent(event) && speedSearchState.isVisibleAndNotEmpty) {
+                if (processKeyEvent(event)) return@onPreviewKeyEvent true
+
+                if (speedSearchState.isVisibleAndNotEmpty) {
                     val actionHandled =
                         speedSearchKeyActions
                             .handleOnKeyEvent(

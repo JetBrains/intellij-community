@@ -3,14 +3,13 @@ project
 
 project.kmmApp
 
-project.kmmApp.androidTest
-    androidLib.main (TEST)
+project.kmmApp.androidHostTest
+    androidLib.androidMain (TEST)
+    androidLib.commonMain (TEST)
 
-project.kmmApp.main
-    androidLib.main (COMPILE)
-
-project.kmmApp.unitTest
-    androidLib.main (TEST)
+project.kmmApp.androidMain
+    androidLib.androidMain (COMPILE)
+    androidLib.commonMain (COMPILE)
 
 
 Test configuration:

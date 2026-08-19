@@ -1,7 +1,12 @@
 MODULES
 project
 
-project.androidTest
+project.androidHostTest
+    languageLevel = 2.2
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
+
+project.androidMain
     languageLevel = 2.2
     apiLevel = {{MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
@@ -64,9 +69,8 @@ project.jsTest
     compilerSettings = -main call -nopack -opt-in CompilationOptInAnnotation
 
 project.jvmAndroidMain
-    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
-    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
-    compilerSettings = -opt-in=CompilationOptInAnnotation
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
 
 project.jvmAndroidTest
     languageLevel = {{LATEST_STABLE}}
@@ -82,11 +86,6 @@ project.jvmTest
     apiLevel = {{MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
 
-project.main
-    languageLevel = 2.2
-    apiLevel = {{MINIMAL_SUPPORTED}}
-    compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
-
 project.nativeMain
     languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
     apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
@@ -95,11 +94,6 @@ project.nativeMain
 project.nativeTest
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
-
-project.unitTest
-    languageLevel = 2.2
-    apiLevel = {{MINIMAL_SUPPORTED}}
-    compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
 
 project.webMain
     languageLevel = {{LATEST_STABLE}}

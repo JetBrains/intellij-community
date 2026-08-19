@@ -6,14 +6,16 @@ import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.NonTrivialActionGroup
 import com.intellij.ide.actions.PopupInMainMenuActionGroup
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.SkipOperation
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.WriteActionListener
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled
@@ -27,20 +29,26 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.RunMethodInEdt
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.application
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -231,18 +239,21 @@ class ActionUpdaterTest {
   }
 
   @Test
-  fun testSessionComputeOnEDTWorksAsExpected() = timeoutRunBlocking {
+  fun testSessionComputeOnEDTWorksAsExpected(@TestDisposable disposable: Disposable) = timeoutRunBlocking {
     // scenario: call expandGroup that schedules a block on EDT in RA while WA is requested
     // expected: RA is cancelled, WA is performed, and the expansion is retried
     var getChildrenCount = 0
     var supplierCount = 0
-    val semaphore = Semaphore(1, 1)
+    val getChildrenStarted = CompletableDeferred<Unit>()
+    val waPendingLatch = CountDownLatch(1)
+    val waBlock = { true }
     val action = EmptyAction.createEmptyAction("", null, true)
     val actionGroup = object : ActionGroup() {
       override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         e!!
         if (getChildrenCount++ == 0) {
-          semaphore.release()
+          getChildrenStarted.complete(Unit)
+          awaitWithCheckCanceled(waPendingLatch)
         }
         assertFalse(EDT.isCurrentThreadEdt(), "Must not be in EDT")
         assertTrue(application.isReadAccessAllowed(), "Must be in RA")
@@ -250,20 +261,23 @@ class ActionUpdaterTest {
           supplierCount++
           assertTrue(EDT.isCurrentThreadEdt(), "Must be in EDT")
           assertTrue(application.isReadAccessAllowed(), "Must be in RA")
-          arrayOf<AnAction>(action)
+          arrayOf(action)
         }
       }
     }
+    (application as ApplicationEx).addWriteActionListener(object : WriteActionListener {
+      override fun beforeWriteActionStart(action: Class<*>) {
+        if (action == waBlock.javaClass) waPendingLatch.countDown()
+      }
+    }, disposable)
     withContext(Dispatchers.EDT) {
       val result = async(start = CoroutineStart.UNDISPATCHED) {
         Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
                                        ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
       }
       assertFalse(result.isCompleted, "The update must still be in progress")
-      semaphore.acquire()
-      val waIsExecuted = edtWriteAction {
-        true
-      }
+      getChildrenStarted.await()
+      val waIsExecuted = edtWriteAction(waBlock)
       val actions = result.await()
       assertEquals(1, actions.size)
       assertEquals(2, getChildrenCount, "getChildrenCount must be retried due to WA")
@@ -290,7 +304,7 @@ class ActionUpdaterTest {
         e.updateSession.sharedData(key1) { supplierCount++; awaitWithCheckCanceled(10); 1 }
         e.updateSession.sharedData(key2) { supplierCount++; awaitWithCheckCanceled(10); 2 }
         e.updateSession.sharedData(key2) { supplierCount++; awaitWithCheckCanceled(10); 2 }
-        return arrayOf<AnAction>(action)
+        return arrayOf(action)
       }
     }
     val actions = try {
@@ -313,7 +327,7 @@ class ActionUpdaterTest {
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
       override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         assertTrue(EDT.isCurrentThreadEdt(), "Must be in EDT")
-        return arrayOf<AnAction>(EmptyAction.createEmptyAction("", null, true))
+        return arrayOf(EmptyAction.createEmptyAction("", null, true))
       }
     }
     val actions = withContext(Dispatchers.EDT) {
@@ -346,7 +360,7 @@ class ActionUpdaterTest {
             0
           }
         }
-        return arrayOf<AnAction>(EmptyAction.createEmptyAction("", null, true))
+        return arrayOf(EmptyAction.createEmptyAction("", null, true))
       }
     }
     val actions = withContext(Dispatchers.EDT + MyContextElement(1)) {
@@ -361,7 +375,7 @@ class ActionUpdaterTest {
     val actionGroup = object : ActionGroup() {
       val extra = newAction(ActionUpdateThread.BGT) { awaitWithCheckCanceled(10) }
       override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-        return arrayOf<AnAction>(EmptyAction.createEmptyAction("", null, true))
+        return arrayOf(EmptyAction.createEmptyAction("", null, true))
       }
 
       override fun postProcessVisibleChildren(e: AnActionEvent, visibleChildren: List<AnAction>): List<AnAction> {
@@ -382,7 +396,7 @@ class ActionUpdaterTest {
     val prevRetries = retries.asInteger()
     val quickRetries = 10
     var currentMethodId = 0
-    var checkedCounts = IntArray(3)
+    val checkedCounts = IntArray(3)
     fun updateNewInstance(session: UpdateSession, methodId: Int) {
       if (methodId != currentMethodId) return
       checkedCounts[currentMethodId]++
@@ -395,7 +409,7 @@ class ActionUpdaterTest {
       }
       override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         updateNewInstance(e!!.updateSession, 1)
-        return arrayOf<AnAction>(EmptyAction.createEmptyAction("", null, true))
+        return arrayOf(EmptyAction.createEmptyAction("", null, true))
       }
 
       override fun postProcessVisibleChildren(e: AnActionEvent, visibleChildren: List<AnAction>): List<AnAction> {
@@ -438,7 +452,7 @@ class ActionUpdaterTest {
         val edtAction = newAction(ActionUpdateThread.EDT) {
           throw SkipOperation("update")
         }
-        return arrayOf<AnAction>(
+        return arrayOf(
           EmptyAction.createEmptyAction("", null, true),
           newAction(ActionUpdateThread.BGT) {
             throw SkipOperation("update")

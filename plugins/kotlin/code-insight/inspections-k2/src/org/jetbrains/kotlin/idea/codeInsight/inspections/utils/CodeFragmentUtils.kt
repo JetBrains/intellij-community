@@ -1,26 +1,33 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package org.jetbrains.kotlin.idea.codeInsight.inspections.utils
 
+import org.jetbrains.kotlin.resolution.KtResolvable
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
+import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
 import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.restore
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.idea.k2.refactoring.util.findContextToAnalyze
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -94,6 +101,7 @@ internal fun createFragmentToWithFunction(
  * @param name The name of the counterpart function
  * @return True if the counterpart name resolves to a standard library function
  */
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 internal fun nameResolvesToStdlib(expression: KtCallExpression, calleeName: String, name: String): Boolean {
     val factory = KtPsiFactory(expression.project)
 
@@ -123,8 +131,7 @@ internal fun nameResolvesToStdlib(expression: KtCallExpression, calleeName: Stri
         val callableSymbol: KaCallableSymbol? = when (val fragmentExpression: KtExpression? = fragment.getContentElement()) {
             is KtDotQualifiedExpression -> {
                 // Handle qualified expressions like "receiver.function()"
-                val callExpression = fragmentExpression.selectorExpression as? KtCallExpression
-                callExpression?.calleeExpression?.mainReference?.resolveToSymbol() as? KaCallableSymbol
+                (fragmentExpression.collectCallCandidates().singleOrNull()?.candidate as? KaSingleCall<*, *>)?.signature?.symbol
             }
             else -> {
                 // Handle other expressions

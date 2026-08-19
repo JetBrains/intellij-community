@@ -1,23 +1,34 @@
 MODULES
 project
 
-project.androidTest
+project.androidHostTest
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = project:commonTest
+    additionalVisibleModuleNames = project:androidMain, project:commonMain
+    targetPlatform = JVM (17)
+
+project.androidMain
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = project:commonMain
+    targetPlatform = JVM (17)
+
+project.commonMain
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     targetPlatform = JVM (17)
 
-project.main
+project.commonTest
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
-    targetPlatform = JVM (17)
-
-project.unitTest
-    externalProjectId = project
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
-    mppVersion = M3
+    additionalVisibleModuleNames = project:androidMain, project:commonMain
     targetPlatform = JVM (17)

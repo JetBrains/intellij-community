@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections
 
+import org.jetbrains.kotlin.resolution.KtResolvable
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -14,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.buildSubstitutor
 import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
@@ -325,7 +326,7 @@ private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Bo
 
     when (element) {
         is KtClassLiteralExpression -> {
-            val typeParameterType = (element.receiverExpression?.mainReference?.resolveToSymbol() as? KaTypeParameterSymbol)?.defaultType
+            val typeParameterType = ((element.receiverExpression as? KtResolvable)?.resolveSymbol() as? KaTypeParameterSymbol)?.defaultType
             if (typeParameterType != null && receiverType?.semanticallyEquals(typeParameterType) == true) {
                 return true
             }
@@ -339,7 +340,7 @@ private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Bo
 
     return when (element) {
         is KtThisExpression -> { // Check if this refers to our receiver
-            val referencedSymbol = element.instanceReference.mainReference.resolveToSymbol()
+            val referencedSymbol = element.resolveSymbol()
             referencedSymbol is KaReceiverParameterSymbol && referencedSymbol.owningCallableSymbol == symbol
         }
 

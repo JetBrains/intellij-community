@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.editor
 
 import com.intellij.openapi.components.serviceOrNull
@@ -9,18 +9,19 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtDecompiledFile
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinEditorFileSwapper : EditorFileSwapper {
 
     override fun getFileToSwapTo(project: Project, composite: EditorComposite): Pair<VirtualFile, Int?>? {
         val file = composite.file
         val psiFile = PsiManager.getInstance(project).findFile(file) ?: return null
-        if (psiFile !is KtDecompiledFile) {
+        if (psiFile !is KtFile || !psiFile.isCompiled) {
             return null
         }
+
         val location = getSourcesLocation(psiFile) ?: return null
         val oldEditor = EditorFileSwapper.findSinglePsiAwareEditor(composite.allEditors)
         return if (oldEditor != null) {
@@ -32,7 +33,7 @@ class KotlinEditorFileSwapper : EditorFileSwapper {
         }
     }
 
-    private fun getSourcesLocation(psiFile: KtDecompiledFile): VirtualFile? = psiFile.declarations
+    private fun getSourcesLocation(psiFile: KtFile): VirtualFile? = psiFile.declarations
         .firstOrNull()?.let {
             val element = serviceOrNull<KotlinDeclarationNavigationPolicy>()?.getNavigationElement(it) ?: return@let null
             // declaration from the decompiled file should not be equal to a source declaration
@@ -45,7 +46,7 @@ class KotlinEditorFileSwapper : EditorFileSwapper {
             return null
         }
 
-    private fun getCursorPosition(originalOffset: Int, decompiledFile: KtDecompiledFile): Int {
+    private fun getCursorPosition(originalOffset: Int, decompiledFile: KtFile): Int {
         val cursor = decompiledFile.navigationElement.findElementAt(originalOffset) ?: return 0
         val declaration = PsiTreeUtil.getParentOfType(cursor, KtDeclaration::class.java, false)
         val declarationInSources = declaration?.let {

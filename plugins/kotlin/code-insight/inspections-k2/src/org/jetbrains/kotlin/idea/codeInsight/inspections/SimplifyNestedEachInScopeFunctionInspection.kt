@@ -10,9 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.Applicabilit
 import org.jetbrains.kotlin.idea.k2.refactoring.getThisReceiverOwner
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
@@ -105,6 +107,7 @@ internal class SimplifyNestedEachInScopeFunctionInspection :
         context: Context,
     ): KotlinModCommandQuickFix<KtCallExpression> = SimplifyNestedEachFix(context.innerCallName, context.returnsToRelabel)
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
         val scopeFunctionName = element.getCallingShortNameOrNull(scopeFunctions) ?: return null
@@ -120,7 +123,7 @@ internal class SimplifyNestedEachInScopeFunctionInspection :
             ALSO_FUNCTION_NAME -> {
                 if (innerExpression !is KtDotQualifiedExpression) return null
                 val receiverExpression = innerExpression.receiverExpression as? KtReferenceExpression ?: return null
-                val receiverSymbol = receiverExpression.mainReference.resolveToSymbol() as? KaValueParameterSymbol ?: return null
+                val receiverSymbol = receiverExpression.resolveSymbol() as? KaValueParameterSymbol ?: return null
                 if (receiverSymbol.containingDeclaration?.psi != lambdaExpression.functionLiteral) return null
 
                 if (innerLambdaBody != null) {
@@ -208,6 +211,7 @@ private fun replaceReturnLabels(
     }
 }
 
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 context(_: KaSession)
 private fun collectReturnsTargetingFunctionLiteral(
     callExpression: KtCallExpression,
@@ -217,19 +221,20 @@ private fun collectReturnsTargetingFunctionLiteral(
     return buildList {
         for (returnExpression in functionLiteral.collectDescendantsOfType<KtReturnExpression>()) {
             if (returnExpression.getLabelName() != FOR_EACH_FUNCTION_NAME) continue
-            if (returnExpression.getTargetLabel()?.mainReference?.resolveToSymbol()?.psi != functionLiteral) continue
+            if (returnExpression.getTargetLabel()?.resolveSymbol()?.psi != functionLiteral) continue
             add(returnExpression.createSmartPointer())
         }
     }
 }
 
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 context(_: KaSession)
 private fun KtExpression.referencesParameter(parameterSymbol: KaValueParameterSymbol): Boolean {
     var referenced = false
     accept(object : KtTreeVisitorVoid() {
         override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
             if (referenced) return
-            if (expression.mainReference.resolveToSymbol() == parameterSymbol) {
+            if (expression.resolveSymbol() == parameterSymbol) {
                 referenced = true
                 return
             }

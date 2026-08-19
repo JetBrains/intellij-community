@@ -3,7 +3,9 @@ project
 
 project.consumer
 
-project.consumer.androidTest
+project.consumer.androidHostTest
+
+project.consumer.androidMain
 
 project.consumer.commonMain
 
@@ -11,7 +13,7 @@ project.consumer.commonTest
     fqName: test.useCommonTest
     name: Consumer_commonTest_usagesKt.useCommonTest
     type: Gradle
-    tasks: [:consumer:cleanTestDebugUnitTest, :consumer:testDebugUnitTest, --tests, "test.Consumer_commonTest_usagesKt.useCommonTest"]
+    tasks: [:consumer:cleanTestAndroidHostTest, :consumer:testAndroidHostTest, --tests, "test.Consumer_commonTest_usagesKt.useCommonTest"]
     isDebugAllEnabled: false
     isRunAsTest: true
 
@@ -22,13 +24,11 @@ project.consumer.jvmMain
 
 project.consumer.jvmTest
 
-project.consumer.main
-
-project.consumer.unitTest
-
 project.producer
 
-project.producer.androidTest
+project.producer.androidHostTest
+
+project.producer.androidMain
 
 project.producer.commonMain
 
@@ -39,10 +39,6 @@ project.producer.jvmAndAndroidMain
 project.producer.jvmMain
 
 project.producer.jvmTest
-
-project.producer.main
-
-project.producer.unitTest
 
 
 Test configuration:

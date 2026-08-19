@@ -1,11 +1,21 @@
 MODULES
 project
 
-project.androidTest
+project.androidHostTest
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
+    dependsOnModuleNames = project:commonTest
+    additionalVisibleModuleNames = project:androidMain, project:commonMain
+    targetPlatform = JVM (17)
+
+project.androidMain
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = project:commonMain
     targetPlatform = JVM (17)
 
 project.commonMain
@@ -77,19 +87,3 @@ project.iosX64Test
     additionalVisibleModuleNames = project:commonMain, project:iosMain, project:iosX64Main
     targetPlatform = Native (ios_x64)
     compilerSettings = -Xexport-kdoc -nopack -nostdlib
-
-project.main
-    externalProjectId = project
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
-    mppVersion = M3
-    dependsOnModuleNames = project:commonMain
-    targetPlatform = JVM (17)
-
-project.unitTest
-    externalProjectId = project
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
-    mppVersion = M3
-    dependsOnModuleNames = project:commonTest
-    targetPlatform = JVM (17)

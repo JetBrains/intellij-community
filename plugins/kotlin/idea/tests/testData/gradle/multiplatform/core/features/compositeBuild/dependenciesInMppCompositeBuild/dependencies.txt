@@ -1,11 +1,17 @@
 MODULES
 includedBuild.consumer
 
-includedBuild.consumer.androidTest
+includedBuild.consumer.androidHostTest
+    includedBuild.consumer.androidMain (friend, TEST)
     includedBuild.consumer.commonMain (friend, TEST)
-    includedBuild.consumer.main (friend, TEST)
+    includedBuild.consumer.commonTest (refines, TEST)
     includedBuild.producer.commonMain (TEST)
     includedBuild.producer.jvmMain (TEST)
+
+includedBuild.consumer.androidMain
+    includedBuild.consumer.commonMain (refines, COMPILE)
+    includedBuild.producer.commonMain (COMPILE)
+    includedBuild.producer.jvmMain (COMPILE)
 
 includedBuild.consumer.commonMain
     includedBuild.producer.commonMain (COMPILE)
@@ -59,18 +65,6 @@ includedBuild.consumer.iosX64Test
     includedBuild.producer.commonMain (TEST)
     includedBuild.producer.iosMain (TEST)
     includedBuild.producer.iosX64Main (TEST)
-
-includedBuild.consumer.main
-    includedBuild.consumer.commonMain (refines, COMPILE)
-    includedBuild.producer.commonMain (COMPILE)
-    includedBuild.producer.jvmMain (COMPILE)
-
-includedBuild.consumer.unitTest
-    includedBuild.consumer.commonMain (friend, TEST)
-    includedBuild.consumer.commonTest (refines, TEST)
-    includedBuild.consumer.main (friend, TEST)
-    includedBuild.producer.commonMain (TEST)
-    includedBuild.producer.jvmMain (TEST)
 
 
 Test configuration:

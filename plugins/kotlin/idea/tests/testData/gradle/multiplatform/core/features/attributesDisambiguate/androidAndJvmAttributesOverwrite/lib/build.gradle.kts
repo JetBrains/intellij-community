@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    id("com.android.library")
+    {{android_library_plugin_id}}
 }
 
 {{default_android_block}}
@@ -12,7 +12,7 @@ kotlin {
         attributes.attribute(attr, "jvm")
     }
 
-    {{androidTargetPlaceholder}} {
-        attributes.attribute(attr, "android") // the attribute conflicts with consumer -> androidJvm priority doesn't work
-    }
+    {{androidTargetPlaceholder}}
+
+    targets.getByName("android").attributes.attribute(attr, "android") // the attribute conflicts with consumer -> androidJvm priority doesn't work
 }

@@ -173,6 +173,10 @@ def _extension_impl(module_ctx):
     # Create the repository named "dynamic_deps"
     targets_repo(name = "jps_dynamic_deps_community")
 
+    # A pure function of the checkout: keep the extension out of MODULE.bazel.lock so changes to
+    # the .bzl files it loads never rewrite the lockfile (see jps_dynamic_deps_ultimate.bzl).
+    return module_ctx.extension_metadata(reproducible = True)
+
 # Export the extension
 jps_dynamic_deps_community_extension = module_extension(
     implementation = _extension_impl,

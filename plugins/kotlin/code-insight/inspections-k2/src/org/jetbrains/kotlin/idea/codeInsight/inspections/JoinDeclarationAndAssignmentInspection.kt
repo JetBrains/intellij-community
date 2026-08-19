@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package org.jetbrains.kotlin.idea.codeInsight.inspections
 
+import org.jetbrains.kotlin.resolution.KtResolvable
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.modcommand.ModPsiUpdater
@@ -17,7 +17,7 @@ import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyT
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isComplexInitializer
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -100,7 +101,6 @@ internal class JoinDeclarationAndAssignmentInspection :
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtProperty): Context? {
         val assignment = findFirstAssignment(element) ?: return null
@@ -220,6 +220,7 @@ internal class JoinDeclarationAndAssignmentInspection :
         }
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun canBeMovedToConstructor(element: KtProperty, initializer: KtExpression): Boolean {
         if (element.isLocal) return false
@@ -230,7 +231,7 @@ internal class JoinDeclarationAndAssignmentInspection :
         val containingClass = constructor.getContainingClassOrObject()
         if (containingClass.isData()) return false
 
-        val paramSymbol = initializer.mainReference?.resolveToSymbol() as? KaValueParameterSymbol ?: return false
+        val paramSymbol = (initializer as? KtResolvable)?.resolveSymbol() as? KaValueParameterSymbol ?: return false
         if (element.nameAsName != paramSymbol.name) return false
 
         val parameter = paramSymbol.psi as? KtParameter ?: return false

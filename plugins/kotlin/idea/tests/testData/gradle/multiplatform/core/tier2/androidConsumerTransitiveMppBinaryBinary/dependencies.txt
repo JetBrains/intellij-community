@@ -1,13 +1,16 @@
 MODULES
 project.consumer
 
-project.consumer.androidTest
+project.consumer.androidHostTest
     org.jetbrains.kotlin.mpp.tests:transitive-jvm:1.0 (TEST)
 
-project.consumer.main
+project.consumer.androidMain
     org.jetbrains.kotlin.mpp.tests:transitive-jvm:1.0 (COMPILE)
 
-project.consumer.unitTest
+project.consumer.commonMain
+    org.jetbrains.kotlin.mpp.tests:transitive-jvm:1.0 (COMPILE)
+
+project.consumer.commonTest
     org.jetbrains.kotlin.mpp.tests:transitive-jvm:1.0 (TEST)
 
 

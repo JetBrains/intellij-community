@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests.k2
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.vfs.findFile
 import com.intellij.psi.PsiDocumentManager
@@ -114,6 +115,7 @@ class KotlinMppRunConfigurationsTest : AbstractKotlinMppGradleImportingTest() {
             runAfterTestExecution {
                 val nativeTestFile = myProjectRoot.findFile("src/nativeTest/kotlin/NativeTest.kt") ?: error("Missing 'NativeTest.kt'")
                 runInEdtAndWait {
+                    TestDaemonCodeAnalyzerImpl(myProject).waitForTermination()
                     codeInsightTestFixture.openFileInEditor(nativeTestFile)
                     codeInsightTestFixture.doHighlighting()
                     val psi = PsiManager.getInstance(myProject).findFile(nativeTestFile) ?: error("Missing 'NativeTest.kt' PsiFile")
@@ -158,6 +160,7 @@ class KotlinMppRunConfigurationsTest : AbstractKotlinMppGradleImportingTest() {
             runAfterTestExecution {
                 val nativeTestFile = myProjectRoot.findFile("src/commonTest/kotlin/CommonTest.kt") ?: error("Missing 'CommonTest.kt'")
                 runInEdtAndWait {
+                    TestDaemonCodeAnalyzerImpl(myProject).waitForTermination()
                     codeInsightTestFixture.openFileInEditor(nativeTestFile)
                     codeInsightTestFixture.doHighlighting()
                     val psi = PsiManager.getInstance(myProject).findFile(nativeTestFile) ?: error("Missing 'CommonTest.kt' PsiFile")

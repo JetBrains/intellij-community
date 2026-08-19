@@ -13,7 +13,7 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticCheckerKind
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.Applicabilit
 import org.jetbrains.kotlin.idea.k2.refactoring.util.isUnitLiteral
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtLambdaExpression
@@ -165,6 +166,7 @@ internal class MapToForEachInspection : KotlinApplicableInspectionBase.Simple<Kt
     }
 }
 
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 context(_: KaSession)
 private fun collectReturns(
     element: KtCallExpression,
@@ -178,7 +180,7 @@ private fun collectReturns(
 
     return buildList {
         for (returnExpr in functionLike.collectDescendantsOfType<KtReturnExpression>()) {
-            val targetsMap = returnExpr.getTargetLabel()?.mainReference?.resolveToSymbol()?.psi == functionLike
+            val targetsMap = returnExpr.getTargetLabel()?.resolveSymbol()?.psi == functionLike
             if (!targetsMap) continue
 
             if (returnExpr.returnedExpression?.isUnitLiteral() == false) return null

@@ -9,5 +9,9 @@
                  description="Clear all environments when running a JVM command line application"/>
     <registryKey key="ide.java.show.bundled.runtime" defaultValue="true"
                  description="Enables using bundled JetBrains Runtime for execution"/>
+    <registryKey key="debugger.target.remote.client" defaultValue="true"
+                 description="If set to false, IDEA will connect to the debugger; otherwise, the debugger will connect to IDEA"/>
+    <registryKey key="debugger.target.listen.any.address" defaultValue="true"
+                 description="If set to false, the application will listen only on the address 127.0.0.1"/>
   </extensions>
 </idea-plugin>

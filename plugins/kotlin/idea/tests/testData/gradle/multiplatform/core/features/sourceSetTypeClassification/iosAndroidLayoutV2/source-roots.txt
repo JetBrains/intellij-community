@@ -1,13 +1,11 @@
 MODULES
 rootProject
 
-rootProject.androidTest
-    src/androidInstrumentedTest/kotlin (Java, Test)
-    src/androidInstrumentedTestDebug/kotlin (Java, Test)
-    src/androidTest/java (Java, Test)
-    src/androidTest/kotlin (Java, Test)
-    src/androidTestDebug/java (Java, Test)
-    src/androidTestDebug/kotlin (Java, Test)
+rootProject.androidHostTest
+    src/androidHostTest/kotlin (Java, Test)
+
+rootProject.androidMain
+    src/androidMain/kotlin (Java)
 
 rootProject.appleMain
     src/appleMain/kotlin
@@ -39,27 +37,11 @@ rootProject.iosMain
 rootProject.iosTest
     src/iosTest/kotlin (Test)
 
-rootProject.main
-    src/androidDebug/kotlin (Java)
-    src/androidMain/kotlin (Java)
-    src/debug/java (Java)
-    src/debug/kotlin (Java)
-    src/main/java (Java)
-    src/main/kotlin (Java)
-
 rootProject.nativeMain
     src/nativeMain/kotlin
 
 rootProject.nativeTest
     src/nativeTest/kotlin (Test)
-
-rootProject.unitTest
-    src/androidUnitTest/kotlin (Java, Test)
-    src/androidUnitTestDebug/kotlin (Java, Test)
-    src/test/java (Java, Test)
-    src/test/kotlin (Java, Test)
-    src/testDebug/java (Java, Test)
-    src/testDebug/kotlin (Java, Test)
 
 
 Test configuration:

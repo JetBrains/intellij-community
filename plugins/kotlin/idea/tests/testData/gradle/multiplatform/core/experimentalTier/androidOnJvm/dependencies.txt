@@ -1,15 +1,19 @@
 MODULES
 project.p1
 
-project.p1.androidTest
+project.p1.androidHostTest
     p2.commonMain (TEST)
     p2.jvmMain (TEST)
 
-project.p1.main
+project.p1.androidMain
     p2.commonMain (COMPILE)
     p2.jvmMain (COMPILE)
 
-project.p1.unitTest
+project.p1.commonMain
+    p2.commonMain (COMPILE)
+    p2.jvmMain (COMPILE)
+
+project.p1.commonTest
     p2.commonMain (TEST)
     p2.jvmMain (TEST)
 

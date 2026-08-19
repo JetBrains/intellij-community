@@ -141,6 +141,7 @@ Kotlin/Native: Security
 Kotlin/Native: SecurityUI
 Kotlin/Native: SensitiveContentAnalysis
 Kotlin/Native: SensorKit
+Kotlin/Native: ServicesAccountLinking
 Kotlin/Native: SharedWithYou
 Kotlin/Native: SharedWithYouCore
 Kotlin/Native: ShazamKit

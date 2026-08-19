@@ -5,9 +5,10 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -104,11 +106,12 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         else -> null
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.receiverSymbol(): KaSymbol? {
         when (val receiverExpression = (this as? KtDotQualifiedExpression)?.receiverExpression) {
-            is KtThisExpression -> return receiverExpression.instanceReference.mainReference.resolveToSymbol()
-            is KtNameReferenceExpression -> return receiverExpression.mainReference.resolveToSymbol()
+            is KtThisExpression -> return receiverExpression.resolveSymbol()
+            is KtNameReferenceExpression -> return receiverExpression.resolveSymbol()
         }
 
         return getImplicitReceiverSymbolIfExists()

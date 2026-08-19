@@ -7,16 +7,35 @@ package com.intellij.platform.ijent
  * It's relatively safe to enable all loggers in the debug level.
  * However, all these loggers in trace/all level together can produce 50 MiB text logs per second.
  * Enable trace loggers cautiously.
+ *
+ * When it comes to choosing a logger for infos and warnings, it's fine to choose [OTHER_LOG],
+ * because all loggers write info, warn and error messages to the `idea.log` file anyway.
+ *
+ * Please don't put avoidable logic into this file. Being a small file with the declarative structure,
+ * this file can also work as the logging glossary for people not familiar with internals of the platform.
+ *
+ * Q: Why not use the usual `Logger.getInstance(className)` and analogs instead of a limited pre-defined set of loggers?
+ * A: The pattern of getting a logger for a class allows enabling debug logs for a specific class or a Java package,
+ *    but not for the functionality. We often ask users to provide debug logs regarding IJent initialization,
+ *    or regarding process execution, networking, etc. Every such a group is spread across many classes in many packages
+ *    and many modules. The structure of Java packages does not represent the actual functionality.
  */
 object IjentLogger {
   private val _all_loggers = linkedMapOf<String, IjentLog>()
   val ALL_LOGGERS: Map<String, IjentLog> get() = _all_loggers
 
   private fun logger(name: String): IjentLog {
-    val l = IjentLog.getInstance(name)
+    val l = IjentLog(createBackend(name))
     _all_loggers[name] = l
     return l
   }
+
+  /**
+   * Everything that happens during deploying IJent, launching its process, awaiting it, cleaning up,
+   * so various things that are necessary for IJent but happen outside it.
+   */
+  // ...but such logging events may be added into ijent if anyone needs them there.
+  val LIFETIME_LOG: IjentLog = logger("#com.intellij.platform.ijent.lifetime")
 
   val CONN_MGR_LOG: IjentLog = logger("#com.intellij.platform.ijent.conn_mgr")
 

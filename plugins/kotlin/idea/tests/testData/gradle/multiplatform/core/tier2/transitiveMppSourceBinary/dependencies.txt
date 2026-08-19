@@ -1,8 +1,11 @@
 MODULES
 project.consumer
 
-project.consumer.androidTest
+project.consumer.androidHostTest
     org.jetbrains.kotlin.mpp.tests:transitive-jvm:1.0 (TEST)
+
+project.consumer.androidMain
+    org.jetbrains.kotlin.mpp.tests:transitive-jvm:1.0 (COMPILE)
 
 project.consumer.commonMain
     org.jetbrains.kotlin.mpp.tests:transitive:commonMain:1.0 (COMPILE)
@@ -29,12 +32,6 @@ project.consumer.iosX64Main
 
 project.consumer.iosX64Test
     org.jetbrains.kotlin.mpp.tests:transitive-iosx64:1.0 (TEST)
-
-project.consumer.main
-    org.jetbrains.kotlin.mpp.tests:transitive-jvm:1.0 (COMPILE)
-
-project.consumer.unitTest
-    org.jetbrains.kotlin.mpp.tests:transitive-jvm:1.0 (TEST)
 
 
 Test configuration:

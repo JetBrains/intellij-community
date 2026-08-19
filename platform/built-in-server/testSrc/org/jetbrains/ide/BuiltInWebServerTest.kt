@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.google.common.net.UrlEscapers
@@ -9,7 +9,6 @@ import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.ApplicationRule
@@ -17,8 +16,6 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.useProject
-import com.intellij.util.io.createDirectories
-import com.intellij.util.io.write
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
@@ -33,7 +30,10 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createParentDirectories
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.writeText
 
 internal class BuiltInWebServerTest : BuiltInServerTestCase() {
   override val urlPathPrefix: String
@@ -60,7 +60,7 @@ internal class BuiltInWebServerTest : BuiltInServerTestCase() {
   private fun testIndex(vararg paths: String) {
     val project = projectRule.project
     val newPath = tempDirManager.newPath()
-    newPath.resolve(manager.filePath!!).write("hello".toByteArray())
+    newPath.resolve(manager.filePath!!).createParentDirectories().writeText("hello")
     LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newPath)
 
     createModule(newPath, project)
@@ -97,6 +97,10 @@ internal class HeavyBuiltInWebServerTest {
   @JvmField
   val tempDirManager = TemporaryDirectory()
 
+  @Rule
+  @JvmField
+  val disposableRule = DisposableRule()
+
   @Test
   fun `path outside of project`() {
     val projectDir = tempDirManager.newPath()
@@ -104,16 +108,12 @@ internal class HeavyBuiltInWebServerTest {
       projectDir.createDirectories()
       createModule(projectDir, project)
 
-      val path = tempDirManager.newPath("doNotExposeMe.txt").write("doNotExposeMe").invariantSeparatorsPathString
-      val relativePath = FileUtil.getRelativePath(project.basePath!!, path, '/')
-      val webPath = StringUtil.replace(UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/$relativePath"), "%2F", "/")
+      val path = tempDirManager.newPath("doNotExposeMe.txt").apply { writeText("doNotExposeMe") }
+      val relativePath = Path.of(project.basePath!!).relativize(path).invariantSeparatorsPathString
+      val webPath = StringUtil.replace(UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/${relativePath}"), "%2F", "/")
       testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.NOT_FOUND, asSignedRequest = true)
     }
   }
-
-  @Rule
-  @JvmField
-  val disposableRule = DisposableRule()
 
   @Test
   fun `file in hidden folder`() {
@@ -125,12 +125,11 @@ internal class HeavyBuiltInWebServerTest {
       // DefaultWebServerPathHandler uses module roots as virtual file - must be refreshed
       LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)
 
-      val dir = projectDir.resolve(".coverage")
-      dir.createDirectories()
-      val path = dir.resolve("foo").write("exposeMe").invariantSeparatorsPathString
-      val relativePath = FileUtil.getRelativePath(project.basePath!!, path, '/')
-      val webPath = UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/$relativePath").replace("%2F", "/")
-      testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.OK, asSignedRequest = true)
+      val dir = projectDir.resolve(".coverage").createDirectories()
+      val path = dir.resolve("foo").apply { writeText("exposeMe") }
+      val relativePath = Path.of(project.basePath!!).relativize(path).invariantSeparatorsPathString
+      val webPath = UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/${relativePath}").replace("%2F", "/")
+      testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/${webPath}", HttpResponseStatus.FORBIDDEN, asSignedRequest = true)
     }
   }
 
@@ -138,7 +137,8 @@ internal class HeavyBuiltInWebServerTest {
   fun `service worker in safe mode`() {
     val projectDir = tempDirManager.newPath()
     PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).useProject { project ->
-      projectDir.resolve("sw.js").write("")
+      projectDir.createDirectories()
+      projectDir.resolve("sw.js").writeText("")
       LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)
       createModule(projectDir, project)
 
@@ -159,12 +159,11 @@ internal class HeavyBuiltInWebServerTest {
 }
 
 internal class BuiltInWebServerAbsolutePathTest : BuiltInServerTestCase() {
-
   @Test
   fun `absolute path reference`() {
     val project = projectRule.project
-    val newPath = tempDirManager.newPath()
-    newPath.resolve("script.js").write("hello".toByteArray())
+    val newPath = tempDirManager.newPath().createDirectories()
+    newPath.resolve("script.js").writeText("hello")
     LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newPath)
     createModule(newPath, project)
 
@@ -178,5 +177,4 @@ internal class BuiltInWebServerAbsolutePathTest : BuiltInServerTestCase() {
     assertThat(HttpResponseStatus.valueOf(response.statusCode())).isEqualTo(HttpResponseStatus.OK)
     assertThat(response.body().reader().readText()).isEqualTo("hello")
   }
-
 }

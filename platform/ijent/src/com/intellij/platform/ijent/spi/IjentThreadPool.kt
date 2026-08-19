@@ -1,7 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
-import com.intellij.platform.ijent.IjentLog
+import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -45,7 +45,7 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
   fun checkCurrentThreadIsInPool() {
     val currentThread = Thread.currentThread()
     if (currentThread !in threads) {
-      LOG.error("Not in IJent thread pool: $currentThread")
+      IjentLogger.OTHER_LOG.error("Not in IJent thread pool: $currentThread")
     }
   }
 
@@ -74,7 +74,7 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
     val exceptionHandler = CoroutineExceptionHandler { context, exception ->
       // IjentUnavailableException is silently ignored - it's already logged during its creation.
       if (exception !is IjentUnavailableException) {
-        LOG.error("Uncaught exception in IJent coroutine $context", exception)
+        IjentLogger.OTHER_LOG.error("Uncaught exception in IJent coroutine $context", exception)
       }
     }
 
@@ -111,5 +111,3 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
     }
   }
 }
-
-private val LOG = IjentLog.getInstance<IjentThreadPool>()

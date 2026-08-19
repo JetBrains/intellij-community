@@ -1,18 +1,15 @@
 plugins {
-    id("com.android.application")
+    {{android_library_plugin_id}}
     kotlin("multiplatform")
 }
 
-android {
+{{android_library_configuration_open}}
     compileSdk = {{compile_sdk_version}}
     namespace = "org.jetbrains.kotlin.smoke.multiplatformAndroidApp"
-    defaultConfig {
-        minSdk = 30
-    }
-}
+{{android_library_configuration_close}}
 
 kotlin {
-    androidTarget()
+    {{android_target}}
 
     val commonMain by sourceSets.getting
 

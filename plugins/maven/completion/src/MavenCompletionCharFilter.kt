@@ -10,9 +10,12 @@ import org.jetbrains.annotations.ApiStatus
  * MavenCompletionCharFilter is needed to avoid hiding
  * the completions after typing special characters
  * like '-' or ':', which appear in dependencies.
+ * Accepting other special characters is also needed to make sure that
+ * [com.intellij.codeInsight.completion.XmlCharFilter] and [com.intellij.codeInsight.completion.DefaultCharFilter]
+ * don't perform [com.intellij.codeInsight.lookup.CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP] unnecessarily.
  */
 internal class MavenCompletionCharFilter : CharFilter() {
-  private val acceptableChars = setOf('-', ':', '.', '_')
+  private val acceptableChars = setOf('-', ':', '.', '_', ',', ';', '=', ' ', '(', '>', '\'', '"')
 
   override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup): Result? {
     val isDependencyCompletion = lookup.currentItem?.getUserData(MAVEN_DEPENDENCY_COMPLETION) ?: return null

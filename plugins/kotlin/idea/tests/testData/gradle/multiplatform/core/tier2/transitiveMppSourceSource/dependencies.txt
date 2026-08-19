@@ -1,9 +1,13 @@
 MODULES
 project.consumer
 
-project.consumer.androidTest
+project.consumer.androidHostTest
     transitive.commonMain (TEST)
     transitive.jvmMain (TEST)
+
+project.consumer.androidMain
+    transitive.commonMain (COMPILE)
+    transitive.jvmMain (COMPILE)
 
 project.consumer.commonMain
     transitive.commonMain (COMPILE)
@@ -38,14 +42,6 @@ project.consumer.iosX64Test
     transitive.commonMain (TEST)
     transitive.iosMain (TEST)
     transitive.iosX64Main (TEST)
-
-project.consumer.main
-    transitive.commonMain (COMPILE)
-    transitive.jvmMain (COMPILE)
-
-project.consumer.unitTest
-    transitive.commonMain (TEST)
-    transitive.jvmMain (TEST)
 
 
 Test configuration:

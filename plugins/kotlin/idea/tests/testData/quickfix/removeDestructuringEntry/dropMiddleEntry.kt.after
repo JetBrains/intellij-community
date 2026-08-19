@@ -1,0 +1,13 @@
+// "Remove unused destructuring entry" "true"
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.diagnosticBased.UnusedVariableInspection
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=complete
+
+data class Triple3(val x: Int, val y: Int, val z: Int)
+
+fun bar(t: Triple3) {
+    (val x, val z) = t
+    x.hashCode()
+    z.hashCode()
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.RemoveUnusedVariableFix

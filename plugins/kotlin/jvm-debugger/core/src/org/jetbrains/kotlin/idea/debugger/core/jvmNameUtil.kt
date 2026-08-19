@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.engine.JVMNameUtil
@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.containingFile
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.isLocal
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
@@ -87,9 +86,10 @@ fun getJvmInternalClassName(symbol: KaCallableSymbol): String? {
     }
     val fileSymbol = symbol.containingFile ?: return null
     val file = fileSymbol.psi as? KtFile ?: return null
-    if (file is KtClsFile) {
+    if (file.isCompiled) {
         return file.javaFileFacadeFqName.asString().fqnToInternalName()
     }
+
     return JvmFileClassUtil.getFileClassInfoNoResolve(file).facadeClassFqName.asString().fqnToInternalName()
 }
 

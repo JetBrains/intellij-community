@@ -179,5 +179,6 @@ object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChe
         "Xir-produce-klib-dir",
         "Xir-per-module-output-name",
         "Xcommon-sources",
+        "Xuse-inline-scopes-numbers",
     )
 }

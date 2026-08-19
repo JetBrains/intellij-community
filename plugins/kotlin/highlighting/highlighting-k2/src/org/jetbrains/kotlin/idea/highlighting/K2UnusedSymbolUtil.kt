@@ -866,7 +866,12 @@ object K2UnusedSymbolUtil {
                 ) {
                     RenameElementFix(declaration, "_")
                 } else {
-                    val fix = RemoveUnusedVariableFix(declaration, true, false)
+                    val fix = RemoveUnusedVariableFix(
+                        element = declaration,
+                        isSimpleCase = true,
+                        couldBeAnExplicitlyIgnoredValue = false,
+                        isNameBasedDestructuringEntry = false
+                    )
                     val descriptor = InspectionManager.getInstance(ownerFunction.project)
                         .createProblemDescriptor(declaration, "", fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true)
                     QuickFixWrapper.wrap(descriptor, fix)

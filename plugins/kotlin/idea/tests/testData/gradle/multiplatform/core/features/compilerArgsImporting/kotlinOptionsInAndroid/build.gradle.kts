@@ -1,6 +1,6 @@
 plugins {
     kotlin("android")
-    id("com.android.library")
+    {{android_library_plugin_id}}
 }
 
 repositories {

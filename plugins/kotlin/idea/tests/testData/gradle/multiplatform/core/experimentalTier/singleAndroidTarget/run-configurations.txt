@@ -1,11 +1,13 @@
 MODULES
 project
 
-project.androidTest
+project.androidHostTest
 
-project.main
+project.androidMain
 
-project.unitTest
+project.commonMain
+
+project.commonTest
 
 
 Test configuration:

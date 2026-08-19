@@ -1,17 +1,21 @@
 MODULES
 project.androidOnly
 
-project.androidOnly.androidTest
+project.androidOnly.androidHostTest
+    jvmAndAndroidTransitive.androidMain (TEST)
     jvmAndAndroidTransitive.commonMain (TEST)
-    jvmAndAndroidTransitive.main (TEST)
 
-project.androidOnly.main
+project.androidOnly.androidMain
+    jvmAndAndroidTransitive.androidMain (COMPILE)
     jvmAndAndroidTransitive.commonMain (COMPILE)
-    jvmAndAndroidTransitive.main (COMPILE)
 
-project.androidOnly.unitTest
+project.androidOnly.commonMain
+    jvmAndAndroidTransitive.androidMain (COMPILE)
+    jvmAndAndroidTransitive.commonMain (COMPILE)
+
+project.androidOnly.commonTest
+    jvmAndAndroidTransitive.androidMain (TEST)
     jvmAndAndroidTransitive.commonMain (TEST)
-    jvmAndAndroidTransitive.main (TEST)
 
 
 Test configuration:

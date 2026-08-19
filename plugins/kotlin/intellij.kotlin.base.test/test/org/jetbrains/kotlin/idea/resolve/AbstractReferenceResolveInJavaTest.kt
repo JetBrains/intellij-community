@@ -5,12 +5,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 
 private val DIRECTORY_WITH_KOTLIN_CODE = IDEA_TEST_DATA_DIR.resolve("resolve/referenceInJava/dependency")
@@ -62,7 +62,7 @@ abstract class AbstractReferenceToCompiledKotlinResolveInJavaTest : AbstractRefe
         )
         Assert.assertTrue(
             "Reference should navigate to a kotlin declaration\nWas: ${navigationElement::class.java.simpleName}",
-            navigationElement is KtDeclaration || navigationElement is KtClsFile
+            navigationElement is KtDeclaration || navigationElement is KtFile && navigationElement.isCompiled
         )
     }
 }

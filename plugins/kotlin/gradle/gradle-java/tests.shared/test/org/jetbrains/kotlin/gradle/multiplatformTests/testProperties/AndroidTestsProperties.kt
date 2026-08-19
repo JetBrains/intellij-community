@@ -9,9 +9,8 @@ object AndroidGradlePluginVersionTestsProperty : KotlinTestsResolvableProperty<A
 
     enum class Value(override val versionAlias: String, override val version: String) : ValueFromEnvironment {
         MinSupported("MIN", "7.4.2"),
-        LatestStable("STABLE", "8.5.2"),
-        Beta("BETA", "8.5.2"),
-        Alpha("ALPHA", "8.6.0-alpha03");
+        LatestStable("STABLE", "9.3.0"),
+        Alpha("ALPHA", "9.4.0-alpha05");
     }
 
     override val versionByAlias: Map<Value, String> = Value.entries.associate { it to it.version }

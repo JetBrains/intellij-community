@@ -1,7 +1,12 @@
 MODULES
 project
 
-project.androidTest
+project.androidHostTest
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in OptInAnnotation
+
+project.androidMain
     languageLevel = {{MINIMAL_SUPPORTED}}
     apiLevel = {{MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in OptInAnnotation
@@ -66,7 +71,6 @@ project.jsTest
 project.jvmAndroidMain
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
-    compilerSettings = -language-version=2.0 -api-version=2.0 -opt-in=OptInAnnotation
 
 project.jvmAndroidTest
     languageLevel = {{LATEST_STABLE}}
@@ -82,11 +86,6 @@ project.jvmTest
     apiLevel = {{MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in OptInAnnotation
 
-project.main
-    languageLevel = {{MINIMAL_SUPPORTED}}
-    apiLevel = {{MINIMAL_SUPPORTED}}
-    compilerSettings = -opt-in OptInAnnotation
-
 project.nativeMain
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
@@ -95,11 +94,6 @@ project.nativeMain
 project.nativeTest
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
-
-project.unitTest
-    languageLevel = {{MINIMAL_SUPPORTED}}
-    apiLevel = {{MINIMAL_SUPPORTED}}
-    compilerSettings = -opt-in OptInAnnotation
 
 project.webMain
     languageLevel = {{LATEST_STABLE}}

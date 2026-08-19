@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests.k2
 import junit.framework.AssertionFailedError
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.multiplatformTests.isAgp9OrHigher
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.buildGradleModel
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.buildKotlinMPPGradleModel
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
@@ -137,26 +138,34 @@ class KotlinMppCustomImportingTests : AbstractKotlinMppGradleImportingTest() {
             jvmMain.assertNoAndroidSourceSetInfo()
             jvmTest.assertNoAndroidSourceSetInfo()
 
+            val isAgp9OrHigher = agpVersion.isAgp9OrHigher()
             if (model.getKotlinGradlePluginVersionOrFail().supportsKotlinAndroidMultiplatformSourceSetLayoutVersion2()) {
-                val androidMainInfo = model.getSourceSetOrFail("androidMain").getAndroidSourceSetInfoOrFail()
-                assertEquals("androidMain", androidMainInfo.kotlinSourceSetName)
-                assertEquals("main", androidMainInfo.androidSourceSetName)
-                assertEquals(setOf("debug", "release"), androidMainInfo.androidVariantNames)
+                if (isAgp9OrHigher) {
+                    // AGP 9 + kotlin.androidLibrary currently does not expose androidSourceSetInfo for KMP Android source sets
+                    val androidSourceSets = model.sourceSetsByName.values.filter { it.name.startsWith("android") }
+                    assertTrue("Expected at least one Android source set for AGP 9 path", androidSourceSets.isNotEmpty())
+                    androidSourceSets.forEach { it.assertNoAndroidSourceSetInfo() }
+                } else {
+                    val androidMainInfo = model.getSourceSetOrFail("androidMain").getAndroidSourceSetInfoOrFail()
+                    assertEquals("androidMain", androidMainInfo.kotlinSourceSetName)
+                    assertEquals("main", androidMainInfo.androidSourceSetName)
+                    assertEquals(setOf("debug", "release"), androidMainInfo.androidVariantNames)
 
-                val androidDebugInfo = model.getSourceSetOrFail("androidDebug").getAndroidSourceSetInfoOrFail()
-                assertEquals("androidDebug", androidDebugInfo.kotlinSourceSetName)
-                assertEquals("debug", androidDebugInfo.androidSourceSetName)
-                assertEquals(setOf("debug"), androidDebugInfo.androidVariantNames)
+                    val androidDebugInfo = model.getSourceSetOrFail("androidDebug").getAndroidSourceSetInfoOrFail()
+                    assertEquals("androidDebug", androidDebugInfo.kotlinSourceSetName)
+                    assertEquals("debug", androidDebugInfo.androidSourceSetName)
+                    assertEquals(setOf("debug"), androidDebugInfo.androidVariantNames)
 
-                val androidUnitTestInfo = model.getSourceSetOrFail("androidUnitTest").getAndroidSourceSetInfoOrFail()
-                assertEquals("androidUnitTest", androidUnitTestInfo.kotlinSourceSetName)
-                assertEquals("test", androidUnitTestInfo.androidSourceSetName)
-                assertEquals(setOf("debugUnitTest", "releaseUnitTest"), androidUnitTestInfo.androidVariantNames)
+                    val androidUnitTestInfo = model.getSourceSetOrFail("androidUnitTest").getAndroidSourceSetInfoOrFail()
+                    assertEquals("androidUnitTest", androidUnitTestInfo.kotlinSourceSetName)
+                    assertEquals("test", androidUnitTestInfo.androidSourceSetName)
+                    assertEquals(setOf("debugUnitTest", "releaseUnitTest"), androidUnitTestInfo.androidVariantNames)
 
-                val androidInstrumentedTestInfo = model.getSourceSetOrFail("androidInstrumentedTest").getAndroidSourceSetInfoOrFail()
-                assertEquals("androidInstrumentedTest", androidInstrumentedTestInfo.kotlinSourceSetName)
-                assertEquals("androidTest", androidInstrumentedTestInfo.androidSourceSetName)
-                assertEquals(setOf("debugAndroidTest"), androidInstrumentedTestInfo.androidVariantNames)
+                    val androidInstrumentedTestInfo = model.getSourceSetOrFail("androidInstrumentedTest").getAndroidSourceSetInfoOrFail()
+                    assertEquals("androidInstrumentedTest", androidInstrumentedTestInfo.kotlinSourceSetName)
+                    assertEquals("androidTest", androidInstrumentedTestInfo.androidSourceSetName)
+                    assertEquals(setOf("debugAndroidTest"), androidInstrumentedTestInfo.androidVariantNames)
+                }
             } else {
                 assertFalse(model.getKotlinGradlePluginVersionOrFail().supportsKotlinAndroidSourceSetInfo())
                 model.getSourceSetOrFail("androidMain").assertNoAndroidSourceSetInfo()

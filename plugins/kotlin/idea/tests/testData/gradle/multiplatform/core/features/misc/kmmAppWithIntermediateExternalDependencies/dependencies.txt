@@ -1,7 +1,7 @@
 MODULES
 rootProject
 
-rootProject.androidTest
+rootProject.androidHostTest
     io.ktor:ktor-client-core-jvm:2.1.3 (TEST)
     io.ktor:ktor-events-jvm:2.1.3 (TEST)
     io.ktor:ktor-http-jvm:2.1.3 (TEST)
@@ -10,9 +10,28 @@ rootProject.androidTest
     io.ktor:ktor-utils-jvm:2.1.3 (TEST)
     io.ktor:ktor-websocket-serialization-jvm:2.1.3 (TEST)
     io.ktor:ktor-websockets-jvm:2.1.3 (TEST)
+    io.reactivex.rxjava3:rxjava:3.1.5 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.4 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4 (TEST)
+    org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:1.6.4 (RUNTIME)
+    org.reactivestreams:reactive-streams:1.0.4 (TEST)
     org.slf4j:slf4j-api:1.7.36 (TEST)
+
+rootProject.androidMain
+    io.ktor:ktor-client-core-jvm:2.1.3 (COMPILE)
+    io.ktor:ktor-events-jvm:2.1.3 (COMPILE)
+    io.ktor:ktor-http-jvm:2.1.3 (COMPILE)
+    io.ktor:ktor-io-jvm:2.1.3 (COMPILE)
+    io.ktor:ktor-serialization-jvm:2.1.3 (COMPILE)
+    io.ktor:ktor-utils-jvm:2.1.3 (COMPILE)
+    io.ktor:ktor-websocket-serialization-jvm:2.1.3 (COMPILE)
+    io.ktor:ktor-websockets-jvm:2.1.3 (COMPILE)
+    io.reactivex.rxjava3:rxjava:3.1.5 (COMPILE)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.4 (COMPILE)
+    org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4 (COMPILE)
+    org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:1.6.4 (RUNTIME)
+    org.reactivestreams:reactive-streams:1.0.4 (COMPILE)
+    org.slf4j:slf4j-api:1.7.36 (COMPILE)
 
 rootProject.commonMain
     io.ktor:ktor-client-core:commonMain:2.1.3 (COMPILE)
@@ -141,34 +160,6 @@ rootProject.iosX64Test
     io.ktor:ktor-websockets-iosx64:2.1.3 (TEST)
     org.jetbrains.kotlinx:atomicfu-iosx64:0.17.3 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-iosx64:1.6.4 (TEST)
-
-rootProject.main
-    io.ktor:ktor-client-core-jvm:2.1.3 (COMPILE)
-    io.ktor:ktor-events-jvm:2.1.3 (COMPILE)
-    io.ktor:ktor-http-jvm:2.1.3 (COMPILE)
-    io.ktor:ktor-io-jvm:2.1.3 (COMPILE)
-    io.ktor:ktor-serialization-jvm:2.1.3 (COMPILE)
-    io.ktor:ktor-utils-jvm:2.1.3 (COMPILE)
-    io.ktor:ktor-websocket-serialization-jvm:2.1.3 (COMPILE)
-    io.ktor:ktor-websockets-jvm:2.1.3 (COMPILE)
-    io.reactivex.rxjava3:rxjava:3.1.5 (COMPILE)
-    org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.4 (COMPILE)
-    org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4 (COMPILE)
-    org.reactivestreams:reactive-streams:1.0.4 (COMPILE)
-    org.slf4j:slf4j-api:1.7.36 (COMPILE)
-
-rootProject.unitTest
-    io.ktor:ktor-client-core-jvm:2.1.3 (TEST)
-    io.ktor:ktor-events-jvm:2.1.3 (TEST)
-    io.ktor:ktor-http-jvm:2.1.3 (TEST)
-    io.ktor:ktor-io-jvm:2.1.3 (TEST)
-    io.ktor:ktor-serialization-jvm:2.1.3 (TEST)
-    io.ktor:ktor-utils-jvm:2.1.3 (TEST)
-    io.ktor:ktor-websocket-serialization-jvm:2.1.3 (TEST)
-    io.ktor:ktor-websockets-jvm:2.1.3 (TEST)
-    org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.4 (TEST)
-    org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4 (TEST)
-    org.slf4j:slf4j-api:1.7.36 (TEST)
 
 
 Test configuration:

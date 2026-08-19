@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package org.jetbrains.kotlin.idea.codeInsight.inspections
 
+import org.jetbrains.kotlin.resolution.KtResolvable
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
@@ -18,8 +18,9 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -102,11 +104,12 @@ internal class UnnecessaryVariableInspection : AbstractKotlinInspection() {
         val enclosingElement = KtPsiUtil.getEnclosingElementForLocalDeclaration(property) ?: return null
         val initializer = property.initializer ?: return null
 
+        @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
         context(session: KaSession)
         fun isExactCopy(): Boolean {
             if (property.isVar || initializer !is KtNameReferenceExpression || property.typeReference != null) return false
 
-            val symbol = initializer.mainReference.resolveToSymbol()
+            val symbol = (initializer as? KtResolvable)?.resolveSymbol()
             val initializerSymbol = symbol as? KaLocalVariableSymbol ?: symbol as? KaParameterSymbol ?: return false
 
             val isVal = initializerSymbol.isVal
@@ -129,12 +132,13 @@ internal class UnnecessaryVariableInspection : AbstractKotlinInspection() {
             return nameValidator.validate(copyName)
         }
 
+        @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
         context(session: KaSession)
         fun isReturnOnly(): Boolean {
             val nextStatement = property.getNextSiblingIgnoringWhitespaceAndComments() as? KtReturnExpression ?: return false
             val returned = nextStatement.returnedExpression as? KtNameReferenceExpression ?: return false
 
-            val returnedSymbol = returned.mainReference.resolveToSymbol() as? KaNamedSymbol ?: return false
+            val returnedSymbol = (returned as? KtResolvable)?.resolveSymbol() as? KaNamedSymbol ?: return false
 
             val elementSymbol = property.symbol as? KaNamedSymbol ?: return false
 

@@ -6,8 +6,11 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.dropDestructuringEntry
+import org.jetbrains.kotlin.idea.codeinsight.utils.renameNameBasedDestructuringEntryToUnderscore
 import org.jetbrains.kotlin.idea.codeinsight.utils.renameToUnderscore
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
@@ -17,11 +20,16 @@ import org.jetbrains.kotlin.psi.KtProperty
 class RemoveUnusedVariableFix(
     element: KtNamedDeclaration,
     isSimpleCase: Boolean,
-    val couldBeAnExplicitlyIgnoredValue: Boolean
+    val couldBeAnExplicitlyIgnoredValue: Boolean,
+    val isNameBasedDestructuringEntry: Boolean
 ) : KotlinModCommandQuickFix<KtNamedDeclaration>() {
     private val name: @IntentionName String = when (element) {
         is KtDestructuringDeclarationEntry -> {
-            KotlinBundle.message("rename.to.underscore")
+            if (isNameBasedDestructuringEntry && element.canBeRemovedFromDestructuring()) {
+                KotlinBundle.message("remove.destructuring.entry")
+            } else {
+                KotlinBundle.message("rename.to.underscore")
+            }
         }
 
         is KtProperty if couldBeAnExplicitlyIgnoredValue -> {
@@ -46,7 +54,17 @@ class RemoveUnusedVariableFix(
         updater: ModPsiUpdater
     ) {
         when (element) {
-            is KtDestructuringDeclarationEntry -> renameToUnderscore(element)
+            is KtDestructuringDeclarationEntry -> {
+                if (isNameBasedDestructuringEntry) {
+                    if (element.canBeRemovedFromDestructuring()) {
+                        dropDestructuringEntry(element)
+                    } else {
+                        renameNameBasedDestructuringEntryToUnderscore(element)
+                    }
+                } else {
+                    renameToUnderscore(element)
+                }
+            }
             is KtProperty -> {
                 if (couldBeAnExplicitlyIgnoredValue) {
                     renameToUnderscore(element)
@@ -65,4 +83,8 @@ class RemoveUnusedVariableFix(
             }
         }
     }
+}
+
+private fun KtDestructuringDeclarationEntry.canBeRemovedFromDestructuring(): Boolean {
+    return (parent as? KtDestructuringDeclaration)?.let { it.entries.size > 1 } == true
 }

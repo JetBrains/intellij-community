@@ -6,8 +6,9 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableM
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.isBackingFieldRequired
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtProperty
@@ -86,10 +88,11 @@ context(session: KaSession)
 internal fun isBackingFieldReference(expression: KtExpression?, property: KtProperty): Boolean =
     expression is KtNameReferenceExpression && isBackingFieldReference(expression, property)
 
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 context(session: KaSession)
 private fun isBackingFieldReference(namedReference: KtNameReferenceExpression, property: KtProperty): Boolean {
     if (namedReference.text != KtTokens.FIELD_KEYWORD.value) return false
-    val fieldSymbol = namedReference.mainReference.resolveToSymbol()
+    val fieldSymbol = namedReference.resolveSymbol()
     if (fieldSymbol !is KaBackingFieldSymbol) return false
     return fieldSymbol.owningProperty.psi == property
 }

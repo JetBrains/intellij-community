@@ -981,7 +981,6 @@ private suspend fun layoutPlatform(
   val selector = checkNotNull(request.fragment.platform)
   // One answer for both filters below, taken from the whole layout rather than from whatever each of them can see.
   val ownership = PlatformJarOwnership.of(platformLayout.includedModules)
-  selector.checkNamesAreKnown(ownership, request.fragment.name)
   check(platformLayout.resourcePaths.isEmpty() || request.fragment.isComplete) {
     // Copied by every fragment that lays the platform out, into its own tree, and the paths are not jars the asset
     // filter can partition. No product does this today; the first one that does has to say which fragment owns them.

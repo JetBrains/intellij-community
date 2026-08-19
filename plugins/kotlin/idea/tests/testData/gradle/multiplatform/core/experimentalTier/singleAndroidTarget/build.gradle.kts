@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    id("com.android.library")
+    {{android_library_plugin_id}}
 }
 
 
@@ -12,4 +12,9 @@ repositories {
 
 kotlin {
     {{androidTargetPlaceholder}}
+    sourceSets {
+        val androidMain by getting {
+            {{android_main_kotlin_source_dirs}}
+        }
+    }
 }

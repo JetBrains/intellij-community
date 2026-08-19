@@ -12,7 +12,7 @@ import com.intellij.platform.eel.channels.EelSendChannelException
 import com.intellij.platform.eel.channels.sendWholeBuffer
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import com.intellij.platform.eel.provider.utils.sendWholeText
-import com.intellij.platform.ijent.IjentLog
+import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.IjentUnavailableException.CommunicationFailure
@@ -105,7 +105,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
   private val myContext: Deferred<DeployingContextAndShell> = run {
     var createdShellProcess: ShellProcessWrapper? = null
     val context = scope.s.async(currentDispatcher, start = CoroutineStart.LAZY) {
-      val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(scope, ijentLabel, LOG)
+      val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(scope, ijentLabel)
       val processFacade = createShellProcessFacade(ijentProcessScope)
       val mediator = IjentSessionProcessMediator.create(
         parentScope = scope,
@@ -448,6 +448,7 @@ private suspend fun DeployingContextAndShell.getTargetPlatform(): EelPlatform.Po
   return targetPlatform
 }
 
+@ThrowsChecked(EelSendChannelException::class)
 private suspend fun DeployingContextAndShell.uploadIjentBinary(
   ijentBinaryOnLocalDisk: Path,
   pathMapper: suspend (Path) -> String?,
@@ -461,14 +462,39 @@ private suspend fun DeployingContextAndShell.uploadIjentBinary(
     "BINARY=\"\$($mktemp -d)/ijent\";\n"
   })
 
+  val chmodAndEcho = context.run {
+    "$chmod 500 \"\$BINARY\"; echo \"\$BINARY\";\n"
+  }
+
   if (ijentBinaryPreparedOnTarget != null) {
     process.write(context.run {
-      "$cp ${posixQuote(ijentBinaryPreparedOnTarget)} \$BINARY;\n"
+      "$cp ${posixQuote(ijentBinaryPreparedOnTarget)} \$BINARY; $chmodAndEcho"
     })
   }
   else {
     process.write(context.run {
-      "$head -c ${ijentBinarySize + BUGGY_DASH_BUFFER_FILLER.length} > \$BINARY.tmp;\n"
+      // The file `$BINARY.tmp` will contain the following content:
+      // <\n * (random number in 0..filler_size)> + useful data + <\n + filler_size>
+      // The script below extracts the useful data and puts it into `$BINARY`.
+      // It hasn't been checked if `LC_ALL` really needed for sed/head/tail, this variable
+      // is overridden just in case.
+      //
+      // It is important to send all these commands with a single expression and wait for the output.
+      // `head` on macOS (not on BSD) reads data greedily.
+      // Even though there's a correct limiter in the source code of `head`
+      //    https://github.com/apple-oss-distributions/text_cmds/blob/592aaf8a50aa5810ee8183df20f0ba48bb23aa7e/head/head.c#L210-L214
+      // it uses `fread` that reads data ahead
+      //    https://github.com/apple-oss-distributions/Libc/blob/main/stdio/FreeBSD/makebuf.c#L250
+      // It's not clear how to trigger unbuffered I/O (env var STDBUF0=U does not work). Also, the MAXSIZE from the source above
+      // is also unreliable, macOS can make this buffer for Unix sockets bigger.
+      // Therefore, exploiting the trick with BUGGY_DASH_BUFFER_FILLER again would be unreliable.
+      $$"""
+      $$head -c $${ijentBinarySize + BUGGY_DASH_BUFFER_FILLER.length} > $BINARY.tmp; \
+      BYTES_TO_SKIP=$(LC_ALL=C $$sed -n -e '/./{=;q;}' $BINARY.tmp | LC_ALL=C $$head -n1); \
+      LC_ALL=C $$tail -c+$BYTES_TO_SKIP $BINARY.tmp | LC_ALL=C $$head -c $$ijentBinarySize > $BINARY; \
+      $$rm -f $BINARY.tmp; \
+      $$chmodAndEcho
+      """.trimIndent()
     })
 
     // Old versions of busybox with bundled problematic versions of dash don't handle arguments
@@ -486,24 +512,7 @@ private suspend fun DeployingContextAndShell.uploadIjentBinary(
     LOG.debug { "Sent the IJent binary $ijentBinaryOnLocalDisk" }
     LOG.debug { "Writing workaround command for Dash (2 of 2)" }
     process.write(BUGGY_DASH_BUFFER_FILLER)
-
-    // Now the file `$BINARY.tmp` contains the following content:
-    // <\n * (random number in 0..filler_size)> + useful data + <\n + filler_size>
-    // The script below extracts the useful data and puts it into `$BINARY`.
-    // It wasn't checked if `LC_ALL` really needed for sed/head/tail, this variable
-    // was overridden just in case.
-    process.write(context.run {
-      """
-      | BYTES_TO_SKIP=${'$'}(LC_ALL=C $sed -e '/^${'$'}/d; =; q' ${'$'}BINARY.tmp | LC_ALL=C $head -n1);
-      | LC_ALL=C $tail -c+${'$'}BYTES_TO_SKIP ${'$'}BINARY.tmp | LC_ALL=C $head -c ${ijentBinarySize} > ${'$'}BINARY;
-      | $rm -f ${'$'}BINARY.tmp;
-      """.trimMargin()
-    })
   }
-
-  process.write(context.run {
-    "$chmod 500 \"\$BINARY\"; echo \"\$BINARY\";\n"
-  })
 
   return process.readLine()
 }
@@ -594,7 +603,7 @@ private suspend fun DeployingContextAndShell.execIjentWithTcp(
  * we see the situation of compiling a shell with a problematic version and increased global buffer as improbable.
  */
 private val BUGGY_DASH_BUFFER_FILLER: String get() = "\n".repeat(8192)
-private val LOG = IjentLog.getInstance<IjentDeployingOverShellProcessStrategy>()
+private val LOG = IjentLogger.LIFETIME_LOG
 
 private const val TLS_HEREDOC_DELIMITER: String = "~IJENT_TLS_BOOTSTRAP"
 

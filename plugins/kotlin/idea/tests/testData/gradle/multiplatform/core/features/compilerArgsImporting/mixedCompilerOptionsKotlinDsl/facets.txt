@@ -1,9 +1,14 @@
 MODULES
 project
 
-project.androidTest
-    languageLevel = {{MINIMAL_SUPPORTED}}
-    apiLevel = {{MINIMAL_SUPPORTED}}
+project.androidHostTest
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+
+project.androidMain
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
 
 project.appleMain
@@ -67,9 +72,9 @@ project.jsTest
     compilerSettings = -main call -nopack -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
 
 project.jvmAndroidMain
-    languageLevel = {{MINIMAL_SUPPORTED}}
-    apiLevel = {{MINIMAL_SUPPORTED}}
-    compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive -opt-in=CompilationOptInAnnotation
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive
 
 project.jvmAndroidTest
     languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
@@ -86,11 +91,6 @@ project.jvmTest
     apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
 
-project.main
-    languageLevel = {{MINIMAL_SUPPORTED}}
-    apiLevel = {{MINIMAL_SUPPORTED}}
-    compilerSettings = -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
-
 project.nativeMain
     languageLevel = {{MINIMAL_SUPPORTED}}
     apiLevel = {{MINIMAL_SUPPORTED}}
@@ -100,11 +100,6 @@ project.nativeTest
     languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
     apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive
-
-project.unitTest
-    languageLevel = {{MINIMAL_SUPPORTED}}
-    apiLevel = {{MINIMAL_SUPPORTED}}
-    compilerSettings = -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
 
 project.webMain
     languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
