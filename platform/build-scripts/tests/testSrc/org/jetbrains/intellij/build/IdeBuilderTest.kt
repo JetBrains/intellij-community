@@ -86,12 +86,12 @@ class IdeBuilderTest {
   }
 
   @Test
-  fun platformSelectorsPartitionLibJarsByContentModuleSet() {
+  fun platformSelectorsPartitionLibJarsIntoCoreAndContentModules() {
     val layout = listOf(
       platformModule(),
-      contentModule("intellij.libraries.asm", "libraries.platform"),
-      contentModule("intellij.platform.lang.impl", "core.lang"),
-      contentModule("intellij.charts", null),
+      contentModule("intellij.libraries.asm"),
+      contentModule("intellij.platform.lang.impl"),
+      contentModule("intellij.charts"),
     )
     val ownership = PlatformJarOwnership.of(layout)
     val jars = listOf(
@@ -104,12 +104,11 @@ class IdeBuilderTest {
     )
 
     val core = PlatformFragmentSelector.Core
-    val libraries = PlatformFragmentSelector.ContentModuleSets(setOf("libraries.platform"))
-    val remaining = PlatformFragmentSelector.RemainingContentModules(setOf("libraries.platform"))
+    val contentModules = PlatformFragmentSelector.ContentModules
 
-    // Every jar belongs to exactly one of the three, so the fragments partition `lib` instead of overlapping or losing a jar.
+    // Every jar belongs to exactly one of the two, so the fragments partition `lib` instead of overlapping or losing a jar.
     for (jar in jars) {
-      val owners = listOf(core, libraries, remaining).filter { it.accepts(ownership, jar) }
+      val owners = listOf(core, contentModules).filter { it.accepts(ownership, jar) }
       assertThat(owners).describedAs(jar).hasSize(1)
       assertThat(PlatformFragmentSelector.All.accepts(ownership, jar)).describedAs(jar).isTrue()
     }
@@ -118,35 +117,20 @@ class IdeBuilderTest {
     // A jar the layout does not name is the core fragment's, which is what keeps it out of no fragment at all.
     assertThat(core.accepts(ownership, "swingx.jar")).isTrue()
     assertThat(core.accepts(ownership, "")).isTrue()
-    assertThat(libraries.accepts(ownership, "intellij.libraries.asm.jar")).isTrue()
-    // A content module in no module set is still assembled - by the fragment that takes what nobody claimed.
-    assertThat(remaining.accepts(ownership, "intellij.charts.jar")).isTrue()
-    assertThat(remaining.accepts(ownership, "intellij.platform.lang.impl.jar")).isTrue()
+    assertThat(contentModules.accepts(ownership, "intellij.libraries.asm.jar")).isTrue()
+    assertThat(contentModules.accepts(ownership, "intellij.charts.jar")).isTrue()
+    assertThat(contentModules.accepts(ownership, "intellij.platform.lang.impl.jar")).isTrue()
   }
 
   @Test
-  fun platformOwnershipRejectsAJarSharedByTwoModuleSets() {
-    val modules = listOf(
-      contentModule("intellij.platform.lang.impl", "core.lang").withOutputFile("shared.jar"),
-      contentModule("intellij.libraries.asm", "libraries.platform").withOutputFile("shared.jar"),
-    )
+  fun oneJarHoldingSeveralContentModulesIsStillOneContentModuleJar() {
+    val ownership = PlatformJarOwnership.of(listOf(
+      contentModule("intellij.platform.lang.impl").withOutputFile("shared.jar"),
+      contentModule("intellij.libraries.asm").withOutputFile("shared.jar"),
+    ))
 
-    assertThatThrownBy { PlatformJarOwnership.of(modules) }
-      .isInstanceOf(IllegalStateException::class.java)
-      .hasMessageContaining("holds content modules from two module sets")
-  }
-
-  @Test
-  fun platformSelectorRejectsAModuleSetTheProductDoesNotDeclare() {
-    val ownership = PlatformJarOwnership.of(listOf(contentModule("intellij.libraries.asm", "libraries.platform")))
-
-    assertThatThrownBy {
-      PlatformFragmentSelector.ContentModuleSets(setOf("libraries.platfrom")).checkNamesAreKnown(ownership, "platform_cm_typo")
-    }
-      .isInstanceOf(IllegalStateException::class.java)
-      .hasMessageContaining("libraries.platfrom")
-    // A set the product does declare is fine even when this target platform gives it no jar.
-    PlatformFragmentSelector.ContentModuleSets(setOf("libraries.platform")).checkNamesAreKnown(ownership, "platform_cm_libraries_platform")
+    assertThat(PlatformFragmentSelector.ContentModules.accepts(ownership, "shared.jar")).isTrue()
+    assertThat(PlatformFragmentSelector.Core.accepts(ownership, "shared.jar")).isFalse()
   }
 
   @Test
@@ -175,12 +159,11 @@ class IdeBuilderTest {
     return ModuleItem(moduleName = "intellij.platform.ide.impl", relativeOutputFile = "app-backend.jar", reason = "addModule")
   }
 
-  private fun contentModule(moduleName: String, setName: String?): ModuleItem {
+  private fun contentModule(moduleName: String): ModuleItem {
     return ModuleItem(
       moduleName = moduleName,
       relativeOutputFile = "$moduleName.jar",
       reason = ModuleIncludeReasons.PRODUCT_MODULES,
-      moduleSet = setName?.let { listOf("intellij.moduleSets.$it") },
     )
   }
 
@@ -286,8 +269,8 @@ class IdeBuilderTest {
       options = options,
       request = createBuildRequest(
         fragment = DevBuildFragment(
-          name = "platform_cm_libraries_platform",
-          platform = PlatformFragmentSelector.ContentModuleSets(setOf("libraries.platform")),
+          name = "platform_content_modules",
+          platform = PlatformFragmentSelector.ContentModules,
           platformResources = false,
           plugins = null,
         ),
@@ -326,8 +309,8 @@ class IdeBuilderTest {
       options = options,
       request = createBuildRequest(
         fragment = DevBuildFragment(
-          name = "platform_cm_rest",
-          platform = PlatformFragmentSelector.RemainingContentModules(emptySet()),
+          name = "platform_content_modules",
+          platform = PlatformFragmentSelector.ContentModules,
           platformResources = false,
           plugins = null,
         ),

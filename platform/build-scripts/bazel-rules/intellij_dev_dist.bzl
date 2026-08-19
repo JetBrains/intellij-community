@@ -146,7 +146,7 @@ intellij_project_model_tree = rule(
 )
 
 # The selector values `DevDistMain` accepts, mirrored here so a typo in a BUILD file fails at analysis time.
-_PLATFORM_SELECTORS = ["", "all", "core", "content-modules", "remaining-content-modules"]
+_PLATFORM_SELECTORS = ["", "all", "core", "content-modules"]
 
 _PLUGIN_SELECTORS = ["", "all", "named", "remaining"]
 
@@ -206,8 +206,6 @@ def _fragment_impl(ctx):
 
     if ctx.attr.platform:
         args.add("--platform=" + ctx.attr.platform)
-        args.add_all(ctx.attr.content_module_sets, format_each = "--content-module-set=%s")
-        args.add_all(ctx.attr.claimed_content_module_sets, format_each = "--claimed-content-module-set=%s")
     if ctx.attr.platform_resources:
         args.add("--platform-resources")
 
@@ -285,9 +283,7 @@ intellij_dev_fragment = rule(
         "platform_prefix": attr.string(mandatory = True),
         "target_platform": attr.string(default = ""),
         "fragment_name": attr.string(mandatory = True, doc = "Identifies this fragment in its manifest, its mnemonic and the composer's completeness check."),
-        "platform": attr.string(default = "", values = _PLATFORM_SELECTORS, doc = "Which `lib/` jars this fragment owns; empty means none."),
-        "content_module_sets": attr.string_list(doc = "For platform = 'content-modules': the module sets whose content-module jars this fragment owns."),
-        "claimed_content_module_sets": attr.string_list(doc = "For platform = 'remaining-content-modules': the module sets the sibling fragments own."),
+        "platform": attr.string(default = "", values = _PLATFORM_SELECTORS, doc = "Which `lib/` jars this fragment owns - all, the core that holds no content module, or the content-module jars; empty means none."),
         "platform_resources": attr.bool(default = False, doc = "Whether this fragment owns `bin`, the product metadata, the launchers and the copied product files."),
         "plugins": attr.string(default = "", values = _PLUGIN_SELECTORS, doc = "Which bundled plugins this fragment owns; empty means none."),
         "plugin_main_modules": attr.string_list(doc = "For plugins = 'named': the main modules of the plugins this fragment owns."),

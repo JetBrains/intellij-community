@@ -181,8 +181,7 @@ fun main(args: Array<String>) {
  * Reads which slice of a distribution to assemble.
  *
  * Nothing is inferred: a fragment names itself and its selectors, and passing none of them means the complete
- * distribution. `--platform=content-modules` without `--content-module-set` is an empty fragment rather than an error,
- * which is what lets a product wire a module set that a given target platform happens not to include.
+ * distribution.
  */
 private fun parseFragment(options: CommandLineOptions): DevBuildFragment {
   val name = options.optional("--fragment")
@@ -190,9 +189,8 @@ private fun parseFragment(options: CommandLineOptions): DevBuildFragment {
     when (value) {
       "all" -> PlatformFragmentSelector.All
       "core" -> PlatformFragmentSelector.Core
-      "content-modules" -> PlatformFragmentSelector.ContentModuleSets(options.list("--content-module-set").toSet())
-      "remaining-content-modules" -> PlatformFragmentSelector.RemainingContentModules(options.list("--claimed-content-module-set").toSet())
-      else -> error("Unknown --platform value '$value', expected all, core, content-modules or remaining-content-modules")
+      "content-modules" -> PlatformFragmentSelector.ContentModules
+      else -> error("Unknown --platform value '$value', expected all, core or content-modules")
     }
   }
   val platformResources = options.optionalBoolean("--platform-resources") ?: false
