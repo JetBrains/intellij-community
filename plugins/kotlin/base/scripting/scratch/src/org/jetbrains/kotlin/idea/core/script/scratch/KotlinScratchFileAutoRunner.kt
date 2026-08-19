@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.core.script.scratch.ui.findScratchFileEditorWithPreview
 
+@Suppress("SplitModeApiUsage")
 @OptIn(FlowPreview::class)
 @Service(Service.Level.PROJECT)
 class KotlinScratchFileAutoRunner(private val project: Project, private val scope: CoroutineScope) : DocumentListener {
