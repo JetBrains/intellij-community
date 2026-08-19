@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -32,16 +32,26 @@ public class GroovySealedHighlightingTest extends LightGroovyTestCase implements
 
   public void testPermitsWithNonExtendingReference() {
     highlightingTest("""
-                       sealed class A permits <error>B</error> {}
+                       sealed class A permits <error>B<caret></error> {}
                        class B {}
                        """, GrPermitsClauseInspection.class);
+    myFixture.launchAction(myFixture.findSingleIntention("Add 'A' to extends clause of 'B'"));
+    myFixture.checkResult("""
+                            sealed class A permits B {}
+                            class B extends A {}
+                            """);
   }
 
   public void testExtendingWithoutPermission() {
     highlightingTest("""
                        sealed class A permits B {}
                        class B extends A {}
-                       class C extends <error>A</error> {}""");
+                       class C extends <error>A<caret></error> {}""");
+    myFixture.launchAction(myFixture.findSingleIntention("Add 'C' to permits clause of 'A'"));
+    myFixture.checkResult("""
+                            sealed class A permits B, C {}
+                            class B extends A {}
+                            class C extends A {}""");
   }
 
   public void testImplementingWithoutPermission() {
