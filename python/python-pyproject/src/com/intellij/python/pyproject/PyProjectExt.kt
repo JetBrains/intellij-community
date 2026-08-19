@@ -26,7 +26,8 @@ sealed class TomlTableSafeGetError {
   /**
    * Signifies a missing value at [path].
    */
-  data class RequiredValueMissing(val path: String) : TomlTableSafeGetError()
+  @ConsistentCopyVisibility
+  data class RequiredValueMissing internal constructor(val path: String) : TomlTableSafeGetError()
 }
 
 /**
@@ -89,7 +90,6 @@ inline fun <reified T> TomlTable.safeGet(
  * }
  * ```
  */
-@Internal
 internal inline fun <reified T> TomlTable.safeGetRequired(key: String): Result<T, TomlTableSafeGetError> =
   safeGet<T>(key).mapResult {
     if (it == null) {

@@ -59,7 +59,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
-    <pyDependenciesFileProvider implementation="com.intellij.python.pyproject.PyProjectTomlFileProvider"/>
+    <pyDependenciesFileProvider implementation="com.intellij.python.pyproject.model.internal.PyProjectTomlFileProvider"/>
   </extensions>
 
   <extensionPoints>

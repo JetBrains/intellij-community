@@ -17,8 +17,9 @@ import org.jetbrains.annotations.ApiStatus
  * distinguished from a non-workspace project — both return `null` from
  * [getToolWorkspaceLayout]. This is acceptable for packaging purposes.
  */
+@ConsistentCopyVisibility
 @ApiStatus.Internal
-data class ToolWorkspaceLayout(
+data class ToolWorkspaceLayout internal constructor(
   val rootModule: Module,
   val memberModules: List<Module>,
 )

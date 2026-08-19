@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.python.junit5Tests.unit.packaging.dependencies
+package com.intellij.python.junit5Tests.unit
 
 import com.intellij.python.pyproject.PyProjectTomlFile
-import com.intellij.python.pyproject.PyProjectTomlFileProvider
+import com.intellij.python.pyproject.model.internal.PyProjectTomlFileProvider
 import com.intellij.testFramework.LightVirtualFile
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals

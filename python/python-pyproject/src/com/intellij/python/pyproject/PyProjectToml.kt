@@ -57,12 +57,14 @@ sealed class PyProjectIssue {
   /**
    * Wraps [TomlTableSafeGetError].
    */
-  data class SafeGetError(val error: TomlTableSafeGetError) : PyProjectIssue()
+  @ConsistentCopyVisibility
+  data class SafeGetError internal constructor(val error: TomlTableSafeGetError) : PyProjectIssue()
 
   /**
    * Signifies that a contact misses both `name` and `email` fields.
    */
-  data class InvalidContact(val path: String) : PyProjectIssue()
+  @ConsistentCopyVisibility
+  data class InvalidContact internal constructor(val path: String) : PyProjectIssue()
 }
 
 /**

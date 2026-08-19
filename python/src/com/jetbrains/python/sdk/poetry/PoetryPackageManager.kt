@@ -1,11 +1,18 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
+import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pyproject.PY_PROJECT_TOML_DEPENDENCY_GROUPS
+import com.intellij.python.pyproject.PyDependencyGroup
+import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.api.getPyProjectTomlFile
-import com.jetbrains.python.sdk.findModuleForSdk
+import com.intellij.python.pyproject.model.spi.ProjectName
+import com.intellij.python.pytools.resolveExecutable
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.PyPackageName
@@ -14,32 +21,25 @@ import com.jetbrains.python.packaging.common.PyDependencyGroupName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
-import com.intellij.python.pyproject.model.spi.ProjectName
 import com.jetbrains.python.packaging.management.PythonManagerCliSpec
-import com.jetbrains.python.packaging.management.PythonWorkspaceSupport
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
+import com.jetbrains.python.packaging.management.PythonWorkspaceSupport
 import com.jetbrains.python.packaging.packageRequirements.CachedDependencyTreeProvider
 import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPackageStructureNode
-import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
 import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
+import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
 import com.jetbrains.python.packaging.packageRequirements.TreeParser
 import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
-import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.intellij.python.pyproject.PY_PROJECT_TOML_DEPENDENCY_GROUPS
-import com.intellij.python.pyproject.PyProjectToml
 import com.jetbrains.python.poetry.POETRY_LOCK
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.jetbrains.python.sdk.findModuleForSdk
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
-import com.intellij.python.pytools.resolveExecutable
-import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -49,7 +49,6 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.readText
 
-@ApiStatus.Internal
 internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override val workspaceSupport: PythonWorkspaceSupport = PoetryWorkspaceSupport(project, sdk)
   override val installedPackagesIncludeTransitive: Boolean = true
@@ -85,14 +84,21 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
     return reloadPackages().mapSuccess { }
   }
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> =
+  override suspend fun installPackageCommand(
+    installRequest: PythonPackageInstallRequest,
+    options: List<String>,
+    module: Module?,
+    dependencyGroup: PyDependencyGroup?,
+  ): PyResult<Unit> =
     when (installRequest) {
       is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications ->
         addPackages(installRequest.specifications, options)
       is PythonPackageInstallRequest.ByLocation -> {
         val isEditable = "-e" in options
         val locationStr = installRequest.toPoetryArgument()
-        poetryInstallPackage(sdk, listOfNotNull("--editable".takeIf { isEditable }, locationStr), options.filter { it != "-e" }).mapSuccess { }
+        poetryInstallPackage(sdk,
+                             listOfNotNull("--editable".takeIf { isEditable }, locationStr),
+                             options.filter { it != "-e" }).mapSuccess { }
       }
     }
 
@@ -108,7 +114,11 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
     return addPackages(specifications.toList(), emptyList())
   }
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> {
+  override suspend fun uninstallPackageCommand(
+    vararg pythonPackages: String,
+    workspaceMember: PyWorkspaceMember?,
+    dependencyGroup: PyDependencyGroup?,
+  ): PyResult<Unit> {
     if (pythonPackages.isEmpty()) return PyResult.success(Unit)
 
     val (standalonePackages, declaredPackages) = categorizePackages(pythonPackages).getOr {
@@ -136,7 +146,7 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
     val allPackages = trees.map { PythonPackage(it.name.name, it.version ?: "", false) }
 
     val mainOutput = runPoetryWithSdk(sdk, "show", "--only", "main", "--tree")
-      .getOrNull() ?: return PyResult.success(allPackages)
+                       .getOrNull() ?: return PyResult.success(allPackages)
     val mainNames = TreeParser.parseTrees(mainOutput.lines()).mapTo(mutableSetOf()) { it.name.name }
 
     val annotated = allPackages.map { pkg ->
@@ -205,7 +215,12 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
     val data = sdk.pySdkAdditionalData
     val workingDir = data.workingDirectory.takeIf { data.hasValidWorkingDirectory() } ?: return emptyMap()
     val content = withContext(Dispatchers.IO) {
-      try { workingDir.resolve(POETRY_LOCK.value).readText() } catch (_: IOException) { null }
+      try {
+        workingDir.resolve(POETRY_LOCK.value).readText()
+      }
+      catch (_: IOException) {
+        null
+      }
     } ?: return emptyMap()
     return parsePoetryLockEditablePackages(content).mapValues { (_, url) ->
       url?.let { resolveEditableLocation(it, workingDir) }
@@ -220,8 +235,12 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
     val path = Path.of(url)
     if (path.isAbsolute) path.toUri() else projectRoot.resolve(path).normalize().toUri()
   }
-  catch (_: URISyntaxException) { null }
-  catch (_: InvalidPathException) { null }
+  catch (_: URISyntaxException) {
+    null
+  }
+  catch (_: InvalidPathException) {
+    null
+  }
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> = poetryShowOutdated(sdk).mapSuccess {
     it.values.toList()
@@ -260,7 +279,7 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
     val allTrees = treeProvider.getDependencyTrees()
     if (allTrees.isEmpty()) return PackageCollectionPackageStructureNode(emptyList(), emptyList())
     val declaredPackageNames = declaredPackagesFromTrees(allTrees).getOrNull()
-      ?.mapTo(mutableSetOf()) { it.name } ?: emptySet()
+                                 ?.mapTo(mutableSetOf()) { it.name } ?: emptySet()
     val declared = allTrees.filter { it.name.name in declaredPackageNames }
     val undeclared = allTrees.filter { it.name.name !in declaredPackageNames }
 
@@ -303,7 +322,13 @@ private fun PyProjectToml.getPoetryGroupNames(): List<String> {
   val poetryGroups = poetryTable?.getTable("group")?.keySet().orEmpty()
   val pep735Groups = toml.getTable(PY_PROJECT_TOML_DEPENDENCY_GROUPS)?.keySet().orEmpty()
   val pep621Extras = project.dependencies.optional.keys
-  return (PyProjectToml.DEFAULT_GROUP_NAMES + legacyDev + poetryGroups + pep735Groups + pep621Extras).distinct()
+  return buildList {
+    addAll(PyProjectToml.DEFAULT_GROUP_NAMES)
+    addAll(legacyDev)
+    addAll(poetryGroups)
+    addAll(pep735Groups)
+    addAll(pep621Extras)
+  }.distinct()
 }
 
 private class PoetryWorkspaceSupport(private val project: Project, private val sdk: Sdk) : PythonWorkspaceSupport {

@@ -242,6 +242,8 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
+        "//python/python-requirements/common",
+        "//python/python-requirements/common:common_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.pyproject.tests` end
