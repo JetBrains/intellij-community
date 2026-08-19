@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.google.common.net.UrlEscapers
@@ -34,6 +34,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.writeText
 
 internal class BuiltInWebServerTest : BuiltInServerTestCase() {
   override val urlPathPrefix: String
@@ -125,12 +126,11 @@ internal class HeavyBuiltInWebServerTest {
       // DefaultWebServerPathHandler uses module roots as virtual file - must be refreshed
       LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)
 
-      val dir = projectDir.resolve(".coverage")
-      dir.createDirectories()
-      val path = dir.resolve("foo").write("exposeMe").invariantSeparatorsPathString
-      val relativePath = FileUtil.getRelativePath(project.basePath!!, path, '/')
-      val webPath = UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/$relativePath").replace("%2F", "/")
-      testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.OK, asSignedRequest = true)
+      val dir = projectDir.resolve(".coverage").createDirectories()
+      val path = dir.resolve("foo").apply { writeText("exposeMe") }
+      val relativePath = Path.of(project.basePath!!).relativize(path).invariantSeparatorsPathString
+      val webPath = UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/${relativePath}").replace("%2F", "/")
+      testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/${webPath}", HttpResponseStatus.FORBIDDEN, asSignedRequest = true)
     }
   }
 

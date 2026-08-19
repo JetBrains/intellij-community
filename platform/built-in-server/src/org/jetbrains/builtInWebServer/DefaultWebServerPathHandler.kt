@@ -114,8 +114,8 @@ internal class DefaultWebServerPathHandler : WebServerPathHandler {
   }
 
   private fun checkAccess(file: Path, project: Project): Boolean = (
-    runCatching { file.toRealPath().startsWith(project.basePath!!) }.getOrDefault(false) ||
-    TrustedProjects.isProjectTrusted(project) && checkAccess(file)
+    (TrustedProjects.isProjectTrusted(project) || runCatching { file.toRealPath().startsWith(project.basePath!!) }.getOrDefault(false)) &&
+    checkAccess(file)
   )
 }
 
