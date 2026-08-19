@@ -64,7 +64,9 @@ internal class WslFileChooserContributor : UniversalFileChooserContributor {
       }
     }
 
-    roots
+    // Present the distributions in a stable, alphabetical order by name instead of the arbitrary
+    // order reported by WslDistributionManager.
+    roots.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.presentation.presentableName })
   }
 
   override suspend fun getFilteredRoots(path: Path): List<Root> {
