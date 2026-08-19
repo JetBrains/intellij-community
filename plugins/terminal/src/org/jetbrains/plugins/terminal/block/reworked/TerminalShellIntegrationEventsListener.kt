@@ -6,7 +6,7 @@ import java.util.EventListener
 
 @ApiStatus.Internal
 interface TerminalShellIntegrationEventsListener : EventListener {
-  fun initialized(currentDirectory: String?) {}
+  fun initialized(currentDirectory: String?, historyPath: String?) {}
 
   fun commandStarted(command: String) {}
 

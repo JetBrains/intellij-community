@@ -10,6 +10,7 @@ import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.impl.TerminalAliasesReceivedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalBeepEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCommandFinishedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCommandHistoryPathReceivedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCommandStartedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCompletionFinishedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
@@ -195,6 +196,30 @@ internal class TerminalSessionOutputEventsTest(emulatorType: TerminalEmulatorTyp
     connector.feed(shellIntegrationOsc("completion_finished;result=${"completion-result".encodeShellIntegrationValue()}"))
     val completion = collector.awaitEvent<TerminalCompletionFinishedEvent>()
     assertThat(completion.result).isEqualTo("completion-result")
+  }
+
+  @Test
+  fun `initialized shell integration event reports history path after enabling integration`() = runSessionTest { _, connector, collector ->
+    connector.feed(shellIntegrationOsc(
+      "initialized;current_directory=${"/home/user".encodeShellIntegrationValue()};history_path=${"/home/user/.bash_history".encodeShellIntegrationValue()}"
+    ))
+
+    val state = collector.awaitEvent<TerminalStateChangedEvent> { it.state.isShellIntegrationEnabled }
+    assertThat(state.state.isShellIntegrationEnabled).isTrue()
+
+    val historyPath = collector.awaitEvent<TerminalCommandHistoryPathReceivedEvent>()
+    assertThat(historyPath.path).isEqualTo("/home/user/.bash_history")
+  }
+
+  @Test
+  fun `initialized shell integration event reports missing history path`() = runSessionTest { _, connector, collector ->
+    connector.feed(shellIntegrationOsc(
+      "initialized;current_directory=${"/home/user".encodeShellIntegrationValue()}"
+    ))
+
+    collector.awaitEvent<TerminalStateChangedEvent> { it.state.isShellIntegrationEnabled }
+    val historyPath = collector.awaitEvent<TerminalCommandHistoryPathReceivedEvent>()
+    assertThat(historyPath.path).isNull()
   }
 
   // ---------------------------------------------------------------------------
