@@ -35,7 +35,7 @@ class FrontendDiffDebugExtension : FrontendDiffExtension {
       createInlay(frontendEditor, index, context.request.contents, mapping, context.parentDisposable)
     }
 
-    mapping?.addListener(context.parentDisposable) {
+    val scheduleUpdate = {
       ApplicationManager.getApplication().invokeLater(
         {
           for (debugInlay in inlays) {
@@ -45,6 +45,10 @@ class FrontendDiffDebugExtension : FrontendDiffExtension {
         },
         ModalityState.any(),
       )
+    }
+    mapping?.addListener(context.parentDisposable, scheduleUpdate)
+    for (frontendEditor in viewer.editors) {
+      frontendEditor.lineMapper.addListener(context.parentDisposable, scheduleUpdate)
     }
   }
 
@@ -74,7 +78,10 @@ class FrontendDiffDebugExtension : FrontendDiffExtension {
     contents: List<FrontendDiffContent>,
     mapping: FrontendUnifiedDiffMapping?,
   ): List<String> = buildList {
-    add("Frontend editor $index: side=${frontendEditor.side ?: "UNIFIED"}, document=${describeDocument(frontendEditor.editor.document)}")
+    add(
+      "Frontend editor $index: side=${frontendEditor.side ?: "UNIFIED"}, document=${describeDocument(frontendEditor.editor.document)}, " +
+      "mapperAvailable=${frontendEditor.lineMapper.isAvailable}",
+    )
     contents.forEachIndexed { contentIndex, content ->
       add(
         "FrontendDiffContent[$contentIndex]: file=${content.file?.url ?: "<none>"}, " +
