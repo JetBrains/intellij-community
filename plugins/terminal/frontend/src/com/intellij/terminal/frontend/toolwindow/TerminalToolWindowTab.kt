@@ -32,6 +32,12 @@ interface TerminalToolWindowTab {
   val closeOnProcessTermination: Boolean
 
   /**
+   * Whether this tab is persisted with the project and re-created, re-running its command, on the next
+   * project open. See [TerminalToolWindowTabBuilder.restoreOnProjectReopen].
+   */
+  val restoreOnProjectReopen: Boolean
+
+  /**
    * Terminal process startup options that were specified in the [TerminalToolWindowTabBuilder].
    */
   val processOptions: TerminalRequestedProcessOptions

@@ -24,7 +24,9 @@ import org.jetbrains.plugins.terminal.settings.impl.TerminalSessionPersistedTab
 @ApiStatus.Internal
 class TerminalToolWindowEditorTabPersistenceProvider : ToolWindowEditorTabPersistenceProvider {
 
-  override fun canSerialize(content: Content): Boolean = content.getTerminalTab() != null
+  // A tab that opted out of restoring is not serialized here either: dragging it into the editor area must
+  // not put back the command re-run that TerminalTabsPersistence leaves out of the tool window state.
+  override fun canSerialize(content: Content): Boolean = content.getTerminalTab()?.restoreOnProjectReopen == true
 
   @RequiresEdt
   override fun serialize(content: Content): Element {

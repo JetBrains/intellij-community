@@ -9,5 +9,6 @@ internal data class TerminalToolWindowTabImpl(
   override val view: TerminalView,
   override val content: Content,
   override val closeOnProcessTermination: Boolean,
+  override val restoreOnProjectReopen: Boolean,
   override val processOptions: TerminalRequestedProcessOptions,
 ) : TerminalToolWindowTab

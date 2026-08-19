@@ -152,6 +152,7 @@ class TerminalToolWindowTabsManagerImpl(
       project = project,
       terminal = terminal,
       closeOnProcessTermination = builder.closeOnProcessTermination,
+      restoreOnProjectReopen = builder.restoreOnProjectReopen,
       processOptions = builder.getRequestedProcessOptions(),
       coroutineScope = tabScope,
     )
@@ -171,6 +172,7 @@ class TerminalToolWindowTabsManagerImpl(
     project: Project,
     terminal: TerminalView,
     closeOnProcessTermination: Boolean,
+    restoreOnProjectReopen: Boolean,
     processOptions: TerminalRequestedProcessOptions,
     coroutineScope: CoroutineScope,
   ): TerminalToolWindowTab {
@@ -207,7 +209,7 @@ class TerminalToolWindowTabsManagerImpl(
       manager.removeContent(content, true)
     }
 
-    val tab = TerminalToolWindowTabImpl(terminal, content, closeOnProcessTermination, processOptions)
+    val tab = TerminalToolWindowTabImpl(terminal, content, closeOnProcessTermination, restoreOnProjectReopen, processOptions)
     content.putUserData(TerminalToolWindowTab.KEY, tab)
     return tab
   }
@@ -400,6 +402,8 @@ class TerminalToolWindowTabsManagerImpl(
       private set
     var closeOnProcessTermination: Boolean = TerminalOptionsProvider.instance.closeSessionOnLogout
       private set
+    var restoreOnProjectReopen: Boolean = true
+      private set
     var shouldAddToToolWindow: Boolean = true
       private set
     var sourceNavigationProjectPath: String? = null
@@ -459,6 +463,11 @@ class TerminalToolWindowTabsManagerImpl(
 
     override fun closeOnProcessTermination(shouldClose: Boolean): TerminalToolWindowTabBuilder {
       closeOnProcessTermination = shouldClose
+      return this
+    }
+
+    override fun restoreOnProjectReopen(restore: Boolean): TerminalToolWindowTabBuilder {
+      restoreOnProjectReopen = restore
       return this
     }
 
