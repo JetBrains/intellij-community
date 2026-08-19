@@ -5,6 +5,7 @@ import com.intellij.devkit.uiDsl.DevkitUiDslBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
+import com.intellij.ui.components.Badge
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.text
@@ -47,7 +48,8 @@ fun demoComments(): DialogPanel {
 
     group(DevkitUiDslBundle.message("demo.comments.group.common")) {
       row {
-        comment(DevkitUiDslBundle.message("demo.comments.html.comment", toHtmlIcon(AllIcons.General::Information))) {
+        comment(DevkitUiDslBundle.message("demo.comments.html.comment", toHtmlIcon(AllIcons.General::Information),
+                                          toHtmlIcon(Badge::beta))) {
           Messages.showMessageDialog(
             DevkitUiDslBundle.message("demo.comments.link.clicked", it.description),
             DevkitUiDslBundle.message("demo.comments.message"),

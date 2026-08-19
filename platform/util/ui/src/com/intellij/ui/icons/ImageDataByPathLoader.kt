@@ -167,9 +167,18 @@ internal fun normalizePath(patchedPath: String): String = patchedPath.trimStart(
 
 private val LOOKUP = MethodHandles.lookup()
 
+private val SHORT_NAME_ICON_PACKAGES = mapOf(
+  "AllIcons." to "com.intellij.icons.",
+  "Badge." to "com.intellij.ui.components."
+)
+
+private fun getShortNameIconPackage(path: String): String? {
+  return SHORT_NAME_ICON_PACKAGES.entries.firstOrNull { path.startsWith(it.key) }?.value
+}
+
 @Internal
 fun isReflectivePath(path: String): Boolean {
-  return !path.startsWith('/') && path.contains("Icons.") && !path.endsWith(".svg")
+  return !path.startsWith('/') && (path.contains("Icons.") || getShortNameIconPackage(path) != null) && !path.endsWith(".svg")
 }
 
 @Internal
@@ -207,7 +216,8 @@ internal fun getClassNameByIconPath(path: String): String {
     if (separatorIndex != -1) {
       builder.setCharAt(separatorIndex, '$')
     }
-    builder.insert(0, if (path.startsWith("AllIcons.")) "com.intellij.icons." else "icons.")
+    val packageName = getShortNameIconPackage(path) ?: "icons."
+    builder.insert(0, packageName)
   }
   return builder.toString()
 }
