@@ -159,11 +159,11 @@ private class IdeKotlinDeclarationProvider(
     }
 
     override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> = withRestrictedDataAccess {
-        KotlinTopLevelPropertyFqnNameIndex.get(callableId.asTopLevelStringForIndexes(), project, scope)
+        KotlinTopLevelPropertyFqnNameIndex[callableId.asTopLevelStringForIndexes(), project, scope]
     }
 
     override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> = withRestrictedDataAccess {
-        KotlinTopLevelFunctionFqnNameIndex.get(callableId.asTopLevelStringForIndexes(), project, scope)
+        KotlinTopLevelFunctionFqnNameIndex[callableId.asTopLevelStringForIndexes(), project, scope]
     }
 
     override fun getTopLevelCallableFiles(callableId: CallableId): Collection<KtFile> = withRestrictedDataAccess {

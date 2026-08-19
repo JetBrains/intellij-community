@@ -24,20 +24,13 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library name="kotlinc.kotlin-compiler-common" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-common-for-ide:2.5.0-dev-4232">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.5.0-dev-4232/kotlin-compiler-common-for-ide-2.5.0-dev-4232.jar">
-              <sha256sum>43d4812a2d69c5f14c7fe6638ba6d8b00b4e89dd2a1d84cad3bd54e5ee4f7a14</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
+      <library name="kotlinc.kotlin-compiler-common">
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.5.0-dev-4232/kotlin-compiler-common-for-ide-2.5.0-dev-4232.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.5.255-dev-255/kotlin-compiler-common-for-ide-2.5.255-dev-255.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.5.0-dev-4232/kotlin-compiler-common-for-ide-2.5.0-dev-4232-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.5.255-dev-255/kotlin-compiler-common-for-ide-2.5.255-dev-255-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

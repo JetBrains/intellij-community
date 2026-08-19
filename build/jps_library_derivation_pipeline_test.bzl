@@ -217,9 +217,9 @@ def _project_library_kotlin_dev_snapshot_env_test_impl(ctx):
 
 project_library_kotlin_dev_snapshot_env_test = unittest.make(_project_library_kotlin_dev_snapshot_env_test_impl)
 
-# --- Test 5: module_library_ignores_kotlin_dev_snapshot_env_test ---
+# --- Test 5: module_library_uses_kotlin_dev_snapshot_env_test ---
 
-def _module_library_ignores_kotlin_dev_snapshot_env_test_impl(ctx):
+def _module_library_uses_kotlin_dev_snapshot_env_test_impl(ctx):
     env = unittest.begin(ctx)
 
     iml = _iml_xml(module_library_roots = [
@@ -232,10 +232,13 @@ def _module_library_ignores_kotlin_dev_snapshot_env_test_impl(ctx):
         env = {"JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT": "2.1.20-dev-1234"},
     )
 
-    asserts.equals(env, ["@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.1.20-dev-1234.jar"], result)
+    # Same as the project-level case above: module-level kotlin dev libraries are
+    # redirected to //snapshots:, matching DependencyKt#generateDeps, which applies
+    # the redirect to every JpsLibraryDependency regardless of level.
+    asserts.equals(env, ["@lib//snapshots:kotlin-stdlib-2.1.20-dev-1234.jar"], result)
     return unittest.end(env)
 
-module_library_ignores_kotlin_dev_snapshot_env_test = unittest.make(_module_library_ignores_kotlin_dev_snapshot_env_test_impl)
+module_library_uses_kotlin_dev_snapshot_env_test = unittest.make(_module_library_uses_kotlin_dev_snapshot_env_test_impl)
 
 # --- Test 7: module_library_project_and_module_dir_resolution_test ---
 
@@ -417,7 +420,7 @@ def jps_library_derivation_pipeline_test_suite(name):
         project_library_repo_selection_test,
         project_library_mixed_snapshot_test,
         project_library_kotlin_dev_snapshot_env_test,
-        module_library_ignores_kotlin_dev_snapshot_env_test,
+        module_library_uses_kotlin_dev_snapshot_env_test,
         module_library_project_and_module_dir_resolution_test,
         module_library_mixed_snapshot_test,
         dedup_and_sorting_test,
