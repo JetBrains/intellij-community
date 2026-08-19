@@ -3,18 +3,41 @@ package com.intellij.polySymbols.webTypes.impl
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.vfs.DiskQueryRelay
 import com.intellij.polySymbols.webTypes.json.WebTypes
-import com.intellij.polySymbols.webTypes.readWebTypes
+import com.intellij.polySymbols.webTypes.readWebTypesRaw
 import com.intellij.util.text.SemVer
 import com.intellij.util.xmlb.annotations.Attribute
 import java.io.IOException
 
-open class WebTypesDefinitionsEP : CustomLoadingExtensionPointBean<WebTypes>() {
+class WebTypesDefinitionsEP : CustomLoadingExtensionPointBean<WebTypes>() {
   companion object {
     val EP_NAME: ExtensionPointName<WebTypesDefinitionsEP> = ExtensionPointName("com.intellij.polySymbols.webTypes")
+
+    private val LOG = thisLogger()
+
+    private data class WebTypesSource(val plugin: PluginDescriptor, val fileUrl: String)
+
+    private val loader: DiskQueryRelay<WebTypesSource, WebTypes> = DiskQueryRelay {
+      LOG.debug("Reading <polySymbols.webTypes> from file: $it")
+
+      val inputStream = it.plugin.pluginClassLoader!!.getResourceAsStream(it.fileUrl)
+                        ?: throw PluginException("Cannot find web-types definitions located at '${it.fileUrl}'", it.plugin.pluginId)
+      inputStream.use { s -> readWebTypesRaw(s) }
+    }
+
+    /**
+     * Force loading of extensions to prepare them outside of read action.
+     */
+    fun ensureLoaded() {
+      EP_NAME.extensionList.forEach {
+        it.instance
+      }
+    }
   }
 
   @Attribute("source")
@@ -28,23 +51,20 @@ open class WebTypesDefinitionsEP : CustomLoadingExtensionPointBean<WebTypes>() {
   override fun getImplementationClassName(): String? = null
 
   override fun createInstance(componentManager: ComponentManager, pluginDescriptor: PluginDescriptor): WebTypes {
-    val pluginId = pluginDescriptor.pluginId
     try {
-      val inputStream = pluginDescriptor.classLoader.getResourceAsStream(source)
-                        ?: throw PluginException("Cannot find web-types definitions located at '$source'", pluginId)
-      val webTypes = inputStream.readWebTypes()
+      val webTypes = loader.accessDiskWithCheckCanceled(WebTypesSource(pluginDescriptor, source!!))
       if (webTypes.name == null) {
-        throw PluginException("Missing package-name in web-types definitions from '$source'", pluginId)
+        throw PluginException("Missing package-name in web-types definitions from '$source'", pluginDescriptor.pluginId)
       }
 
       if (SemVer.parseFromText(webTypes.version) == null) {
-        throw PluginException("Cannot parse version '${webTypes.version}' in web-types definitions from '$source'", pluginId)
+        throw PluginException("Cannot parse version '${webTypes.version}' in web-types definitions from '$source'", pluginDescriptor.pluginId)
       }
 
       return webTypes
     }
     catch (e: IOException) {
-      throw PluginException("Cannot load web-types definitions from '$source': ${e.message}", e, pluginId)
+      throw PluginException("Cannot load web-types definitions from '$source': ${e.message}", e, pluginDescriptor.pluginId)
     }
   }
 }

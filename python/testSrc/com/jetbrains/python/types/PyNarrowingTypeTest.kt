@@ -355,6 +355,81 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           expr = y
       #   └ TYPE {bar} | ({bar} & int)
       """.trimIndent())
+
+    @Test
+    fun `type assertions`() = test("""
+      def test():
+          def f_1():
+              '''
+              :rtype: int or str or None
+              '''
+          def f_2():
+              '''
+              :rtype: int or None
+              '''
+          def f_3():
+              '''
+              :rtype: unknown
+              '''
+          def f_4():
+              '''
+              :rtype: object
+              '''
+          def f_5():
+              '''
+              :rtype: int or object
+              '''
+          def f_6():
+              '''
+              :rtype: int or unknown or float
+              '''
+          def f_7():
+              '''
+              :rtype: int or unknown
+              '''
+          def print_int(x):
+              '''
+              :type x: int
+              '''
+              print(x)
+          def print_int_or_str(x):
+              '''
+              :type x: int or str
+              '''
+          x_1 = f_1()
+          print_int(x_1)
+      #             ^^^ WARNING Expected type 'int', got 'int | str | None' instead
+          print_int_or_str(x_1)
+      #                    ^^^ WARNING Expected type 'int | str', got 'int | str | None' instead
+          if isinstance(x_1, int):
+              print_int(x_1)
+          if isinstance(x_1, str):
+              print_int_or_str(x_1)
+          x_7 = f_7()
+          print_int(x_7)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-9118"])
+    fun `negative is instance`() = test("""
+      def method_a():
+          '''
+          :rtype: dict or int
+          '''
+          pass
+
+      def method_b(d):
+          '''
+          :type d: dict
+          '''
+          pass
+
+      def f():
+          var = method_a()
+          if isinstance(var, int):
+              return var
+          method_b(var)  # pass
+      """.trimIndent())
   }
 
   @Nested
@@ -527,7 +602,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           if x is not None:
               pass
       expr = x
-      #└ TYPE Literal["foo"]
+      # └ TYPE Literal["foo"]
       """.trimIndent())
 
     @Test
@@ -537,7 +612,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       if xs is None:
           xs = [1, 2, 3]
       expr = xs
-      #└ TYPE list[int]
+      # └ TYPE list[int]
       """.trimIndent())
 
     @Test
@@ -580,6 +655,44 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           expr = g_b
       #   └ TYPE () -> None & B
       """.trimIndent())
+
+    @Test
+    fun `not none`() = test("""
+      def test():
+          def f(x):
+              '''
+              :type x: int or str or list
+              '''
+          def f1():
+              '''
+              :rtype: int or None
+              '''
+          def f2():
+              '''
+              :rtype: int or str or None
+              '''
+          x1 = f1()
+          x2 = f2()
+          x3 = 1
+          f(x1)
+      #     ^^ WARNING Expected type 'int | str | list', got 'int | None' instead
+          f(x2)
+      #     ^^ WARNING Expected type 'int | str | list', got 'int | str | None' instead
+          f(x3)
+          if x1:
+              f(x1)
+          if x2:
+              f(x2)
+          if x3:
+              f(x3)
+          if x1 is not None:
+              f(x1)
+          elif x2 is not None:
+              f(x2)
+          elif x3 is not None:
+              f(x3)
+      """.trimIndent())
+
   }
 
   @Nested

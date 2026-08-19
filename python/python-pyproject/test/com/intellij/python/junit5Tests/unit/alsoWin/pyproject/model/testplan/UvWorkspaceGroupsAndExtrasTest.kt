@@ -9,7 +9,6 @@ import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTom
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Test
 
 /**
@@ -26,10 +25,10 @@ import org.junit.jupiter.api.Test
 @TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/PY-91376-uv-workspace-groups-and-extras")
 internal class UvWorkspaceGroupsAndExtrasTest {
   companion object {
-    private val tempDirFixture = tempPathFixture()
-    private val projectFixture = projectFixture(pathFixture = tempDirFixture)
+    private val projectFixture = projectFixture()
   }
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -37,8 +36,14 @@ internal class UvWorkspaceGroupsAndExtrasTest {
     f.assertProjectStructure(
       ExpectedModule("workspace-root", contentRoot = ".", deps = listOf("core", "app-a", "app-b"), sourceRoots = listOf(".")),
       ExpectedModule("core", contentRoot = "packages" / "core", sourceRoots = listOf("packages" / "core" / "src")),
-      ExpectedModule("app-a", contentRoot = "projects" / "app-a", deps = listOf("core"), sourceRoots = listOf("projects" / "app-a" / "src")),
-      ExpectedModule("app-b", contentRoot = "projects" / "app-b", deps = listOf("core"), sourceRoots = listOf("projects" / "app-b" / "src")),
+      ExpectedModule("app-a",
+                     contentRoot = "projects" / "app-a",
+                     deps = listOf("core"),
+                     sourceRoots = listOf("projects" / "app-a" / "src")),
+      ExpectedModule("app-b",
+                     contentRoot = "projects" / "app-b",
+                     deps = listOf("core"),
+                     sourceRoots = listOf("projects" / "app-b" / "src")),
     )
   }
 }

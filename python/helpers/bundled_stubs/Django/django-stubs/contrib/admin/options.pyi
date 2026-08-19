@@ -1,6 +1,8 @@
 import enum
+import sys
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
-from typing import Any, ClassVar, Generic, Literal, TypeAlias, cast, type_check_only
+from dataclasses import dataclass
+from typing import Any, ClassVar, Generic, Literal, Self, TypeAlias, cast, type_check_only
 
 from django import forms
 from django.contrib.admin.filters import FieldListFilter, ListFilter
@@ -33,20 +35,41 @@ from django.urls.resolvers import URLPattern
 from django.utils.datastructures import _ListOrTuple
 from django.utils.functional import _StrOrPromise
 from django.utils.safestring import SafeString
-from typing_extensions import Self, TypedDict, TypeVar, override
+from typing_extensions import TypedDict, TypeVar, deprecated, override
 
-IS_POPUP_VAR: str
-TO_FIELD_VAR: str
-IS_FACETS_VAR: str
-HORIZONTAL: Literal[1]
-VERTICAL: Literal[2]
-
-_Direction: TypeAlias = Literal[1, 2]
+IS_POPUP_VAR: Literal["_popup"]
+SOURCE_MODEL_VAR: Literal["_source_model"]
+TO_FIELD_VAR: Literal["_to_field"]
+IS_FACETS_VAR: Literal["_facets"]
+EMPTY_VALUE_STRING: Literal["-"]
 
 class ShowFacets(enum.Enum):
     NEVER = cast(str, ...)
     ALLOW = cast(str, ...)
     ALWAYS = cast(str, ...)
+
+class ActionLocation(enum.Enum):
+    CHANGE_FORM = cast(str, ...)
+    CHANGE_LIST = cast(str, ...)
+
+HORIZONTAL: Literal[1]
+VERTICAL: Literal[2]
+
+_Direction: TypeAlias = Literal[1, 2]
+
+@dataclass
+class Action:
+    func: _ActionCallable[ModelAdmin[Any], Any]
+    name: str
+    description: str
+    plural_description: str
+    locations: list[ActionLocation]
+    # RemovedInDjango70Warning.
+    @deprecated("Unpacking an action tuple is deprecated. Use Action attributes instead.")
+    def __iter__(self) -> Iterator[_ActionCallable[ModelAdmin[Any], Any] | str]: ...
+    # RemovedInDjango70Warning.
+    @deprecated("Using indexes on an action tuple is deprecated. Use Action attributes instead.")
+    def __getitem__(self, index: int) -> _ActionCallable[ModelAdmin[Any], Any] | str: ...
 
 def get_content_type_for_model(obj: type[Model] | Model) -> ContentType: ...
 def get_ul_class(radio_style: int) -> str: ...
@@ -101,6 +124,7 @@ class BaseModelAdmin(Generic[_ModelT], metaclass=MediaDefiningClass):
     sortable_by: ClassVar[_ListOrTuple[str] | None]
     show_full_result_count: ClassVar[bool]
     checks_class: ClassVar[Any]
+    delete_confirmation_max_display: ClassVar[int | None]
     model: type[_ModelT]
     opts: Options[_ModelT]
     admin_site: AdminSite
@@ -217,11 +241,29 @@ class ModelAdmin(BaseModelAdmin[_ModelT]):
     def log_change(self, request: HttpRequest, obj: _ModelT, message: Any) -> LogEntry: ...
     def log_deletions(self, request: HttpRequest, queryset: QuerySet[_ModelT]) -> list[LogEntry]: ...
     def action_checkbox(self, obj: _ModelT) -> SafeString: ...
-    def get_actions(self, request: HttpRequest) -> dict[str, tuple[Callable[..., str], str, str] | None]: ...
-    def get_action_choices(
-        self, request: HttpRequest, default_choices: list[tuple[str, str]] = ...
-    ) -> list[tuple[str, str]]: ...
-    def get_action(self, action: Callable[..., Any] | str) -> tuple[Callable[..., str], str, str] | None: ...
+    # Django 6.0 requires Python 3.12, so the `else` branch can only ever meet
+    # Django 5.x: it keeps the Django 5.x action signatures.
+    if sys.version_info >= (3, 12):
+        def get_actions(
+            self, request: HttpRequest, action_location: ActionLocation = ...
+        ) -> dict[str, Action | None]: ...
+        def get_action_choices(
+            self,
+            request: HttpRequest,
+            default_choices: list[tuple[str, str]] | None = ...,
+            action_location: ActionLocation = ...,
+        ) -> list[tuple[str, str]]: ...
+        def get_action(
+            self,
+            action: _ActionCallable[Self, _ModelT] | str,
+            action_location: ActionLocation = ...,
+        ) -> Action | None: ...
+    else:
+        def get_actions(self, request: HttpRequest) -> dict[str, tuple[Callable[..., str], str, str] | None]: ...
+        def get_action_choices(
+            self, request: HttpRequest, default_choices: list[tuple[str, str]] = ...
+        ) -> list[tuple[str, str]]: ...
+        def get_action(self, action: Callable[..., Any] | str) -> tuple[Callable[..., str], str, str] | None: ...
     def get_list_display(self, request: HttpRequest) -> _ListDisplayT[_ModelT]: ...
     def get_list_display_links(
         self, request: HttpRequest, list_display: _ListDisplayT[_ModelT]
@@ -266,7 +308,9 @@ class ModelAdmin(BaseModelAdmin[_ModelT]):
     def response_post_save_add(self, request: HttpRequest, obj: _ModelT) -> HttpResponseRedirect: ...
     def response_post_save_change(self, request: HttpRequest, obj: _ModelT) -> HttpResponseRedirect: ...
     # Probably FileResponse cannot come from ModelAdmin views
-    def response_action(self, request: HttpRequest, queryset: QuerySet[Any]) -> HttpResponse | None: ...
+    def response_action(
+        self, request: HttpRequest, queryset: QuerySet[Any], action_location: ActionLocation = ...
+    ) -> HttpResponse | None: ...
     def response_delete(self, request: HttpRequest, obj_display: str, obj_id: int) -> HttpResponse: ...
     def render_delete_form(self, request: HttpRequest, context: dict[str, Any]) -> HttpResponse: ...
     def get_inline_formsets(

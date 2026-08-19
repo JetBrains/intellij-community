@@ -173,7 +173,7 @@ P = ParamSpec("P")
 R = TypeVar("R", covariant=True)
 
 
-class Proto9(Protocol[P, R]):
+class Proto9[**P, R](Protocol):
     other_attribute: int
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:

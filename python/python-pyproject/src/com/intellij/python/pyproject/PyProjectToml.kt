@@ -34,13 +34,13 @@ const val PY_PROJECT_TOML: String = "pyproject.toml"
 const val PY_PROJECT_TOML_PROJECT: String = "project"
 
 @Internal
-const val PY_PROJECT_TOML_BUILD_SYSTEM: String = "build-system"
+internal const val PY_PROJECT_TOML_BUILD_SYSTEM: String = "build-system"
 
 @Internal
 const val PY_PROJECT_TOML_DEPENDENCY_GROUPS: String = "dependency-groups"
 
 @Internal
-const val PY_PROJECT_TOML_TOOL_PREFIX: String = "tool"
+internal const val PY_PROJECT_TOML_TOOL_PREFIX: String = "tool"
 
 
 /**
@@ -68,8 +68,9 @@ sealed class PyProjectIssue {
 /**
  * A general handler for `pyproject.toml` files.
  */
+@ConsistentCopyVisibility
 @Internal
-data class PyProjectToml(
+data class PyProjectToml internal constructor(
   /**
    * Represents the parsed `pyproject.toml` file.
    */
@@ -115,8 +116,12 @@ data class PyProjectToml(
   fun getDependencyGroupNames(): List<String> {
     val groupsTable = toml.getTable(PY_PROJECT_TOML_DEPENDENCY_GROUPS)
     val extraGroups = groupsTable?.keySet()?.toList() ?: emptyList()
-    val optionalGroups = project?.dependencies?.optional?.keys?.toList() ?: emptyList()
-    return DEFAULT_GROUP_NAMES + extraGroups + optionalGroups
+    val optionalGroups = project.dependencies.optional.keys.toList()
+    return buildList {
+      addAll(DEFAULT_GROUP_NAMES)
+      addAll(extraGroups)
+      addAll(optionalGroups)
+    }
   }
 
   companion object {

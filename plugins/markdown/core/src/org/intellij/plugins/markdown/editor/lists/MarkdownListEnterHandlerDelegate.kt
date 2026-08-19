@@ -70,7 +70,23 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
     if (!codeInsightSettings.smartEnterAndBackspace) {
       return EnterHandlerDelegate.Result.Continue
     }
-    if (!file.supportsMarkdown(dataContext) || isInCodeFence(caretOffset.get(), file)) {
+    if (!file.supportsMarkdown(dataContext)) {
+      return EnterHandlerDelegate.Result.Continue
+    }
+
+    if (isInlineCodeFence(caretOffset.get(), file)) {
+      val document = editor.document
+      val line = document.getLineNumber(caretOffset.get())
+      val lineStart = document.getLineStartOffset(line)
+      val lineIndent = document.charsSequence.subSequence(lineStart, caretOffset.get())
+        .takeWhile { it == ' ' || it == '\t' }
+      val newCaretOffset = caretOffset.get() + lineIndent.length + 1
+      EditorModificationUtil.insertStringAtCaret(editor, "\n$lineIndent\n$lineIndent")
+      editor.caretModel.moveToOffset(newCaretOffset)
+      return EnterHandlerDelegate.Result.Stop
+    }
+
+    if (isInCodeFence(caretOffset.get(), file)) {
       return EnterHandlerDelegate.Result.Continue
     }
 
@@ -137,8 +153,17 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
       return false
     }
     val element = file.findElementAt(caretOffset - 1) ?: return false
-    val fence = element.parentOfType<MarkdownCodeFence>(withSelf = true)
-    return fence != null
+    return element.parentOfType<MarkdownCodeFence>(withSelf = true) != null
+  }
+
+  private fun isInlineCodeFence(caretOffset: Int, file: PsiFile): Boolean {
+    if (caretOffset == 0) {
+      return false
+    }
+    val document = file.viewProvider.document ?: return false
+    val line = document.getLineNumber(caretOffset)
+    return document.charsSequence.subSequence(document.getLineStartOffset(line), caretOffset).trimStart().startsWith("```") &&
+           document.charsSequence.subSequence(caretOffset, document.getLineEndOffset(line)).trimStart().startsWith("```")
   }
 
   private fun isAtMarkdownHardLineBreak(offset: Int, document: Document): Boolean {

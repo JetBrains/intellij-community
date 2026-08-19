@@ -267,11 +267,14 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  defaultValue="false"
                  description="UI progress retrieves its state directly from Rhizome TaskInfoEntity, avoiding the obsolete use of ProgressIndicator."/>
     <registryKey key="ide.idle.memory.cleaner.enabled"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Actively return memory to OS when the IDE becomes idle"/>
     <registryKey key="ide.idle.memory.cleaner.delay"
                  defaultValue="5000"
                  description="A delay in milliseconds between the IDE becoming idle and the memory cleaning being performed"/>
+    <registryKey key="ide.idle.memory.cleaner.enabled.page.cache.release"
+                 defaultValue="false"
+                 description="Flush and release allocated direct buffers to OS when IDE becomes idle"/>
     <registryKey key="progresses.show.counter.icon.instead.of.show.link"
                  defaultValue="true"
                  description="Progresses would be shown with an icon with their number in status bar instead of Show All link"/>

@@ -1,1 +1,11 @@
-<idea-plugin visibility="public"/>
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.platform.ide.impl"/>
+  </dependencies>
+  <!-- Tips and Tricks -->
+  <extensions defaultExtensionNs="com.intellij">
+    <tipAndTrick file="Kotlin_mix.html"/>
+    <tipAndTrick file="Kotlin_Java_convert.html"/>
+  </extensions>
+
+</idea-plugin>

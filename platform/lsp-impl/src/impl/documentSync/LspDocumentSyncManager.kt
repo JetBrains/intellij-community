@@ -24,7 +24,9 @@ import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.DidCloseTextDocumentParams
 import org.eclipse.lsp4j.TextDocumentSyncKind
 import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Sends document lifecycle notifications (didOpen, didChange, didSave, didClose) and tracks which files are open on the server.
@@ -36,6 +38,21 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
   private val openedFiles: MutableSet<VirtualFile> = Collections.synchronizedSet(HashSet())
   private val shutdown = AtomicBoolean(false)
 
+  /**
+   * The version this client has last declared to the server for each file it has ever been asked about,
+   * owned entirely by this class: [nextDocumentVersion] advances it by exactly one per notification sent,
+   * lazily starting a file at `0` the first time it's queried -- callers are not required to route through
+   * [open] first, since not every document-sync path in this codebase does (some poll timestamps instead of
+   * listening for document events). [close]/[shutdown] drop entries for files this instance's own open/close
+   * lifecycle knows are done with, as a memory optimization only: correctness never depends on it, since a
+   * fresh query for any file, closed or not, just restarts its own count from `0`.
+   *
+   * This is deliberately independent of [com.intellij.openapi.editor.ex.DocumentEx.getModificationSequence],
+   * which only promises to strictly increase on a text change, not by how much -- a delta some callers need
+   * to predict before an edit is even applied (see [com.intellij.platform.lsp.impl.documentSync.LspDidChangeUtil]).
+   */
+  private val documentVersions: MutableMap<VirtualFile, AtomicInteger> = ConcurrentHashMap()
+
   val openedFileCount: Int get() = openedFiles.size
 
   fun isFileOpened(file: VirtualFile): Boolean {
@@ -45,9 +62,24 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
 
   fun forEachOpenedFile(action: (VirtualFile) -> Unit) = openedFiles.forEach(action)
 
+  /**
+   * The version last declared to the server for [file].
+   */
+  fun currentDocumentVersion(file: VirtualFile): Int = versionCounter(file).get()
+
+  /**
+   * Advances and returns the version to declare for [file]'s next `didOpen`/`didChange`. Safe to call
+   * regardless of when the underlying document mutation actually lands, since this owns the number outright.
+   */
+  fun nextDocumentVersion(file: VirtualFile): Int = versionCounter(file).incrementAndGet()
+
+  private fun versionCounter(file: VirtualFile): AtomicInteger =
+    documentVersions.computeIfAbsent(file) { AtomicInteger(0) }
+
   fun shutdown() {
     shutdown.set(true)
     openedFiles.clear()
+    documentVersions.clear()
   }
 
   @RequiresWriteLock
@@ -90,6 +122,7 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
       }
       return
     }
+    documentVersions.remove(file)
 
     val document = FileDocumentManager.getInstance().getDocument(file)
     if (document == null) {

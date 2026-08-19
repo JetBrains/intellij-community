@@ -9,6 +9,11 @@ create_kotlinc_options(
 )
 
 jvm_provided_library(
+    name = "libraries_kodein-di-jvm_provided",
+    lib = "//libraries/kodein-di-jvm",
+)
+
+jvm_provided_library(
     name = "libraries_junit5_provided",
     lib = "//libraries/junit5",
 )
@@ -37,14 +42,14 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
         "@lib//:kotlin-stdlib",
         "//tools/intellij.tools.ide.starter:ide-starter",
-        "@lib//:kodein-di-jvm-provided",
         "//platform/remote-driver/test-sdk:driver-sdk",
-        "@lib//:io-qameta-allure-java-commons",
+        "//libraries/allure/java-commons:libraries-allure-java-commons",
         "//tools/intellij.tools.ide.util.common:ide-util-common",
         "//platform/testFramework/common",
         "//platform/util",
         "//libraries/opentelemetry",
         "//platform/testFramework/teamCity",
+        ":libraries_kodein-di-jvm_provided",
         ":libraries_junit5_provided",
     ],
 )
@@ -66,10 +71,12 @@ jvm_library(
         "//platform/remote-driver/model:model_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
-        "@lib//:kodein-di-jvm-provided",
+        "//libraries/kodein-di-jvm",
+        "//libraries/kodein-di-jvm:kodein-di-jvm_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//platform/remote-driver/test-sdk:driver-sdk_test_lib",
+        "//libraries/allure/java-commons:libraries-allure-java-commons_test_lib",
         "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
         "//platform/testFramework/common:common_test_lib",
         "//platform/util:util_test_lib",
@@ -136,7 +143,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/reflect",
         "//libraries/kotlin/reflect:reflect_test_lib",
-        "@lib//:kodein-di-jvm",
+        "//libraries/kodein-di-jvm",
+        "//libraries/kodein-di-jvm:kodein-di-jvm_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/junit5-launcher",

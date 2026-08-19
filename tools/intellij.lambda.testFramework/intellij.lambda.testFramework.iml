@@ -51,7 +51,7 @@
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
-    <orderEntry type="library" name="kodein-di-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kodein.di.jvm" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.product.idea.ultimate" />
     <orderEntry type="module" module-name="intellij.tools.ide.util.common" />

@@ -8,7 +8,7 @@ import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.RichTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.ZombieCodeVisionEntry
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
@@ -27,7 +27,6 @@ import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-
 
 internal class CodeVisionNecromancerAwaker : NecromancerAwaker<CodeVisionZombie> {
   override fun awake(project: Project, coroutineScope: CoroutineScope): Necromancer<CodeVisionZombie> {
@@ -90,7 +89,7 @@ private class CodeVisionNecromancer(
 
   override suspend fun spawnNoZombie(recipe: SpawnRecipe) {
     val psiManager = recipe.project.serviceAsync<PsiManager>()
-    val psiFile = readActionBlocking { psiManager.findFile(recipe.file) }
+    val psiFile = readAction { psiManager.findFile(recipe.file) }
     val editor = recipe.editorSupplier.invoke()
     val placeholders = recipe.project.serviceAsync<CodeVisionHost>().collectPlaceholders(editor, psiFile)
     if (placeholders.isNotEmpty()) {

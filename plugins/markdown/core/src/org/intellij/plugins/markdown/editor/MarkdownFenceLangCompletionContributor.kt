@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.util.PsiUtilCore
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 
 class MarkdownFenceLangCompletionContributor: CompletionContributor() {
   init {
@@ -15,7 +15,7 @@ class MarkdownFenceLangCompletionContributor: CompletionContributor() {
   }
 
   override fun beforeCompletion(context: CompletionInitializationContext) {
-    if (context.file !is MarkdownFile) return
+    if (!context.file.supportsMarkdown()) return
     val element = PsiUtilCore.getElementAtOffset(context.file, context.startOffset)
     if (context.dummyIdentifier != dummyIdentifier && CodeFenceLanguageListCompletionProvider.isInMiddleOfUnCollapsedFence(element, context.startOffset)) {
       context.dummyIdentifier = dummyIdentifier

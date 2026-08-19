@@ -155,6 +155,7 @@ import com.sun.jdi.connect.VMStartException;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
+import com.sun.jdi.request.InvalidRequestStateException;
 import com.sun.jdi.request.StepRequest;
 import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
@@ -1436,6 +1437,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       myEvaluationDispatcher.getMulticaster().evaluationStarted(suspendContext);
       beforeMethodInvocation(suspendContext, myMethod, internalEvaluate);
 
+      List<StepRequest> disabledStepRequests = disableStepIntoRequests(invokeThread);
       Object resumeData = null;
       try {
         for (SuspendContextImpl suspendingContext : suspendingContexts) {
@@ -1477,6 +1479,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
       finally {
+        enableStepRequests(disabledStepRequests);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Evaluation finished in " + suspendContext);
         }
@@ -1612,6 +1615,35 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         LOG.assertTrue(isSuspended, thread);
       }
       catch (ObjectCollectedException ignored) {
+      }
+    }
+
+    private static @NotNull List<StepRequest> disableStepIntoRequests(@NotNull ThreadReferenceProxyImpl thread) {
+      ThreadReference threadReference = thread.getThreadReference();
+      List<StepRequest> disabledRequests = new ArrayList<>();
+      for (StepRequest request : thread.getVirtualMachineProxy().eventRequestManager().stepRequests()) {
+        try {
+          if (request.isEnabled() && threadReference.equals(request.thread()) && request.depth() == StepRequest.STEP_INTO) {
+            request.disable();
+            disabledRequests.add(request);
+          }
+        }
+        catch (InvalidRequestStateException e) {
+          LOG.error(e);
+        }
+      }
+      LOG.assertTrue(disabledRequests.size() < 2, "More than one enabled STEP_INTO request for the evaluation thread");
+      return disabledRequests;
+    }
+
+    private static void enableStepRequests(@NotNull List<? extends StepRequest> requests) {
+      for (StepRequest request : requests) {
+        try {
+          request.enable();
+        }
+        catch (InvalidRequestStateException ignored) {
+          // request may be deleted already, for example, on pause or session stop
+        }
       }
     }
   }

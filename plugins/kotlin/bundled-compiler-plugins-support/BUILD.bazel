@@ -40,7 +40,7 @@ jvm_library(
         "@lib//:kotlinc-scripting-compiler-plugin",
         "@lib//:kotlinc-js-plain-objects-compiler-plugin",
         "//plugins/kotlin/base/plugin",
-        "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
+        "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin",
         "@lib//:kotlinc-kotlin-dataframe-compiler-plugin",
     ],
 )
@@ -62,6 +62,7 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.support.bundled` end

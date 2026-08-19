@@ -24,7 +24,6 @@ public interface PyCallSiteExpression extends PyAstCallSiteExpression, PyCallSit
    *
    * @param resolvedCallee optional callee corresponding to the call. Without it the receiver is deduced purely syntactically.
    */
-  @Override
   default @Nullable PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
     return (PyExpression)getReceiver((PyAstCallable)resolvedCallee);
   }

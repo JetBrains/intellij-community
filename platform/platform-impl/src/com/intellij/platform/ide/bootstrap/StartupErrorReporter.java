@@ -69,7 +69,6 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.List;
 
 import static com.intellij.ide.BootstrapBundle.message;
 import static java.util.Objects.requireNonNullElse;
@@ -384,13 +383,13 @@ public final class StartupErrorReporter {
     if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       var conflictException = findCause(t, ImplementationConflictException.class);
       if (conflictException != null) {
-        PluginConflictReporter pluginConflictReporter = ApplicationManager.getApplication().getService(PluginConflictReporter.class);
+        var pluginConflictReporter = ApplicationManager.getApplication().getService(PluginConflictReporter.class);
         pluginConflictReporter.reportConflict(conflictException.getConflictingPluginIds(), conflictException.isConflictWithPlatform());
       }
     }
 
     var pluginException = findCause(t, PluginException.class);
-    var pluginId = extractNonEssentialPlugin(pluginException);
+    var pluginId = findNonEssentialPlugin(pluginException);
     if (pluginId != null) {
       PluginManagerCore.disablePlugin(pluginId);
 
@@ -408,24 +407,25 @@ public final class StartupErrorReporter {
     }
   }
 
-  private static @Nullable PluginId extractNonEssentialPlugin(@Nullable PluginException pluginException) {
+  private static @Nullable PluginId findNonEssentialPlugin(@Nullable PluginException pluginException) {
     if (pluginException == null) return null;
 
-    List<PluginId> affectedPlugins = new ArrayList<>();
+    var affectedPlugins = new ArrayList<PluginId>();
     if (pluginException instanceof PluginConflictException conflictException) {
-      affectedPlugins.addAll(conflictException.getConflictingPluginIds());
+      affectedPlugins.add(conflictException.conflictingPluginId);
     }
-    else {
-      PluginId pluginId = pluginException.getPluginId();
-      if (pluginId != null) {
-        affectedPlugins.add(pluginId);
+    var pluginId = pluginException.getPluginId();
+    if (pluginId != null) {
+      affectedPlugins.add(pluginId);
+    }
+
+    if (!affectedPlugins.isEmpty()) {
+      var appInfo = ApplicationInfoImpl.getShadowInstance();
+      for (var id : affectedPlugins) {
+        if (!appInfo.isEssentialPlugin(id)) return id;
       }
     }
 
-    var appInfo = ApplicationInfoImpl.getShadowInstance();
-    for (PluginId pluginId : affectedPlugins) {
-      if (!appInfo.isEssentialPlugin(pluginId)) return pluginId;
-    }
     return null;
   }
 

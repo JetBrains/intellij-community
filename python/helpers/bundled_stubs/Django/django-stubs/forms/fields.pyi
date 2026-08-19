@@ -3,7 +3,7 @@ import json
 from collections.abc import Callable, Collection, Iterable, Iterator, Sequence
 from decimal import Decimal
 from re import Pattern
-from typing import Any, ClassVar, Protocol, TypeAlias, type_check_only
+from typing import Any, ClassVar, Protocol, Self, TypeAlias, type_check_only
 from uuid import UUID
 
 from django.core.files import File
@@ -15,7 +15,7 @@ from django.forms.widgets import Widget
 from django.utils.choices import CallableChoiceIterator, _ChoicesCallable, _ChoicesInput
 from django.utils.datastructures import _PropertyDescriptor
 from django.utils.functional import _StrOrPromise
-from typing_extensions import Self, override
+from typing_extensions import override
 
 # Problem: attribute `widget` is always of type `Widget` after field instantiation.
 # However, on class level it can be set to `Type[Widget]` too.
@@ -536,6 +536,7 @@ class FilePathField(ChoiceField):
         disabled: bool = ...,
         label_suffix: str | None = ...,
     ) -> None: ...
+    def set_choices(self) -> None: ...
 
 class SplitDateTimeField(MultiValueField):
     widget: _ClassLevelWidgetT

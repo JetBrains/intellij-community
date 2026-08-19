@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
@@ -24,6 +25,36 @@ internal class JarPackagerDependencyHelperTest {
   }
 
   @Test
+  fun `descriptor search reads only the test output of a test-only module`() {
+    val project = JpsElementFactory.getInstance().createModel().project
+    val module = project.addModule("intellij.sample.tests", JpsJavaModuleType.INSTANCE)
+    val provider = RecordingOutputProvider(module = module, testCompilationOutputEnabled = true, testOutput = DESCRIPTOR)
+
+    val content = runBlocking {
+      readDescriptor(module = module, path = "intellij.sample.tests.xml", outputProvider = provider, pass = DescriptorSearchPass.MODULE_OUTPUT)
+    }
+
+    assertThat(content).isEqualTo(DESCRIPTOR)
+    // The negative half is the point: a production read is what declares the empty stub jar of a `.tests` module as
+    // an input of a dev-distribution fragment, and the fragment never declared it.
+    assertThat(provider.requestedForTests).containsExactly(true)
+  }
+
+  @Test
+  fun `descriptor search reads the production output of an ordinary module`() {
+    val project = JpsElementFactory.getInstance().createModel().project
+    val module = project.addModule("intellij.sample", JpsJavaModuleType.INSTANCE)
+    val provider = RecordingOutputProvider(module = module, testCompilationOutputEnabled = false, productionOutput = DESCRIPTOR)
+
+    val content = runBlocking {
+      readDescriptor(module = module, path = "intellij.sample.xml", outputProvider = provider, pass = DescriptorSearchPass.MODULE_OUTPUT)
+    }
+
+    assertThat(content).isEqualTo(DESCRIPTOR)
+    assertThat(provider.requestedForTests).containsExactly(false)
+  }
+
+  @Test
   fun `caches library dependencies separately for test runtime`() {
     val project = JpsElementFactory.getInstance().createModel().project
     val module = project.addModule("intellij.test.module", JpsJavaModuleType.INSTANCE)
@@ -42,6 +73,8 @@ internal class JarPackagerDependencyHelperTest {
     assertThat(reverseOrderHelper.getLibraryDependencies(module, withTests = false).libraryNames()).containsExactly("production-lib")
   }
 }
+
+private val DESCRIPTOR = "<idea-plugin/>".toByteArray()
 
 private fun newDependencyHelper(outputProvider: ModuleOutputProvider = EmptyModuleOutputProvider): Any {
   val helperClass = Class.forName("org.jetbrains.intellij.build.JarPackagerDependencyHelper")
@@ -93,4 +126,23 @@ private class SelectiveTestOutputProvider(private val selectedModule: JpsModule)
   override fun findModule(name: String): JpsModule? = selectedModule.takeIf { module -> module.name == name }
 
   override fun isTestCompilationOutputEnabled(module: JpsModule): Boolean = module == selectedModule
+}
+
+/** Records which side of a module's output a read asked for, so a test can assert what was *not* asked for. */
+private class RecordingOutputProvider(
+  private val module: JpsModule,
+  private val testCompilationOutputEnabled: Boolean,
+  private val productionOutput: ByteArray? = null,
+  private val testOutput: ByteArray? = null,
+) : ModuleOutputProvider by EmptyModuleOutputProvider {
+  @JvmField val requestedForTests: MutableList<Boolean> = ArrayList()
+
+  override fun findModule(name: String): JpsModule? = module.takeIf { it.name == name }
+
+  override fun isTestCompilationOutputEnabled(module: JpsModule): Boolean = testCompilationOutputEnabled
+
+  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+    requestedForTests.add(forTests)
+    return if (forTests) testOutput else productionOutput
+  }
 }

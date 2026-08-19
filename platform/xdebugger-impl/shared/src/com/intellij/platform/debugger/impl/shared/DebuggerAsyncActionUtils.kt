@@ -4,50 +4,30 @@ package com.intellij.platform.debugger.impl.shared
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi
 import com.intellij.platform.project.projectId
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 fun performDebuggerActionAsync(e: AnActionEvent, action: suspend () -> Unit) {
-  performDebuggerActionAsync(e.project, e.dataContext, action)
-}
-
-@ApiStatus.Internal
-fun performDebuggerActionAsync(
-  project: Project?,
-  dataContext: DataContext,
-  action: suspend () -> Unit,
-) {
-  getFrontendDebuggerActionCoroutineScope(project).launch {
+  e.coroutineScope.launch {
     action()
-    reshowInlays(project, dataContext)
+    reshowInlays(e.project, e.dataContext)
   }
 }
 
 @ApiStatus.Internal
-fun performDebuggerAction(
-  project: Project?,
-  dataContext: DataContext,
-  action: () -> Unit,
-) {
+fun performDebuggerAction(e: AnActionEvent, action: () -> Unit) {
   EDT.assertIsEdt()
   action()
-  getFrontendDebuggerActionCoroutineScope(project).launch {
-    reshowInlays(project, dataContext)
+  e.coroutineScope.launch {
+    reshowInlays(e.project, e.dataContext)
   }
 }
-
-private fun getFrontendDebuggerActionCoroutineScope(project: Project?): CoroutineScope =
-  project?.service<FrontendDebuggerActionProjectCoroutineScope>()?.cs
-         ?: service<FrontendDebuggerActionCoroutineScope>().cs
 
 private suspend fun reshowInlays(project: Project?, dataContext: DataContext) {
   val editor = dataContext.getData(CommonDataKeys.EDITOR)
@@ -55,9 +35,3 @@ private suspend fun reshowInlays(project: Project?, dataContext: DataContext) {
     XDebuggerManagerApi.getInstance().reshowInlays(project.projectId(), editor.editorId())
   }
 }
-
-@Service(Service.Level.APP)
-private class FrontendDebuggerActionCoroutineScope(val cs: CoroutineScope)
-
-@Service(Service.Level.PROJECT)
-private class FrontendDebuggerActionProjectCoroutineScope(val cs: CoroutineScope)

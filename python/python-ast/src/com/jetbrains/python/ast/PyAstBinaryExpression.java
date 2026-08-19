@@ -50,6 +50,14 @@ public interface PyAstBinaryExpression extends PyAstQualifiedExpression, PyAstCa
   }
 
   default boolean isOperator(String chars) {
+    return getOperatorTokensText().equals(chars);
+  }
+
+  /**
+   * The concatenated text of the {@link PyTokenTypes#BINARY_OPS} tokens making up this expression's operator,
+   * e.g. {@code "notin"} for {@code not in} - a compound operator spread across two sibling keyword tokens.
+   */
+  default String getOperatorTokensText() {
     ASTNode child = getNode().getFirstChildNode();
     StringBuilder buf = new StringBuilder();
     while (child != null) {
@@ -59,7 +67,7 @@ public interface PyAstBinaryExpression extends PyAstQualifiedExpression, PyAstCa
       }
       child = child.getTreeNext();
     }
-    return buf.toString().equals(chars);
+    return buf.toString();
   }
 
   default @Nullable PyAstExpression getOppositeExpression(PyAstExpression expression) throws IllegalArgumentException {
@@ -98,6 +106,9 @@ public interface PyAstBinaryExpression extends PyAstQualifiedExpression, PyAstCa
     final PyElementType t = getOperator();
     if (t == PyTokenTypes.DIV && isTrueDivEnabled(this)) {
       return PyNames.TRUEDIV;
+    }
+    if (t == PyTokenTypes.NOT_KEYWORD && isOperator("notin")) {
+      return PyNames.CONTAINS;
     }
     return t != null ? t.getSpecialMethodName() : null;
   }

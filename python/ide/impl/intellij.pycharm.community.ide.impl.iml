@@ -59,6 +59,7 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.python.sdk.backend" />
+    <orderEntry type="module" module-name="intellij.python.sdk.common" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.featuresTrainer" />
     <orderEntry type="module" module-name="intellij.python.featuresTrainer" scope="RUNTIME" />

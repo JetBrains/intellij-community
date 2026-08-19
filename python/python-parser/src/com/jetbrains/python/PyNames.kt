@@ -420,6 +420,14 @@ object PyNames {
   @JvmField
   val STANDALONE_RIGHT_OPERATORS: Set<String> = setOf(CONTAINS)
 
+  /**
+   * Readable source text for compound operators spread across multiple sibling tokens, keyed by their
+   * concatenated token text, for operators
+   * whose PSI anchor spans only their first token - e.g. `not in` is anchored on its leading `not`.
+   */
+  @JvmField
+  val COMPOUND_OPERATOR_DISPLAY_TEXT: Map<String, String> = mapOf("notin" to "not in")
+
   private val onlySelfDescr = BuiltinDescription("(self)")
   private fun onlySelfDescr(returnType: String, vararg imports: String) = BuiltinDescription("(self) -> $returnType", *imports)
   private val selfOtherDescr = BuiltinDescription("(self, other)")

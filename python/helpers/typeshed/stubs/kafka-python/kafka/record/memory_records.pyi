@@ -3,6 +3,7 @@ from _typeshed import Incomplete
 from kafka.record.abc import ABCRecords
 
 class MemoryRecords(ABCRecords):
+    __slots__ = ("_buffer", "_pos", "_next_slice", "_remaining_bytes")
     LENGTH_OFFSET: Incomplete
     LOG_OVERHEAD: Incomplete
     MAGIC_OFFSET: Incomplete
@@ -17,6 +18,18 @@ class MemoryRecords(ABCRecords):
     next = __next__
 
 class MemoryRecordsBuilder:
+    __slots__ = (
+        "_builder",
+        "_batch_size",
+        "_buffer",
+        "_next_offset",
+        "_closed",
+        "_magic",
+        "_bytes_written",
+        "_producer_id",
+        "_producer_epoch",
+        "_base_sequence",
+    )
     def __init__(
         self,
         magic,
@@ -29,12 +42,14 @@ class MemoryRecordsBuilder:
         base_sequence: int = -1,
     ) -> None: ...
     def skip(self, offsets_to_skip) -> None: ...
-    def append(self, timestamp, key, value, headers=[]): ...
+    def append(self, timestamp, key, value, headers=None): ...
     def set_producer_state(self, producer_id, producer_epoch, base_sequence, is_transactional) -> None: ...
     @property
     def producer_id(self): ...
     @property
     def producer_epoch(self): ...
+    @property
+    def base_sequence(self): ...
     def records(self): ...
     def close(self) -> None: ...
     def size_in_bytes(self): ...

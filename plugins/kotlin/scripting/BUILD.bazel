@@ -19,6 +19,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_scripting",
     module_name = "kotlin.scripting",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -52,6 +56,7 @@ jvm_library(
 exports_files(
     [
         "kotlin.scripting.iml",
+        "resources/kotlin.scripting.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -7,6 +7,7 @@ Tests basic usage of TypeVarTuple.
 from typing import Generic, NewType, TypeVarTuple, assert_type
 
 Ts = TypeVarTuple("Ts")
+Ts1 = TypeVarTuple("Ts1")
 
 
 class Array1(Generic[*Ts]):
@@ -60,11 +61,10 @@ class ClassA(Generic[Shape]):  # E: not unpacked
         ...
 
 
-# > TypeVarTuple does not yet support specification of variance, bounds, constraints.
+# > TypeVarTuple does not support type constraints.
 
-Ts1 = TypeVarTuple("Ts1", covariant=True)  # E
 Ts2 = TypeVarTuple("Ts2", int, float)  # E
-Ts3 = TypeVarTuple("Ts3", bound=int)  # E
+Ts3 = TypeVarTuple("Ts3", bound=int)  # E: bound is unavailable in Python 3.12
 
 
 # > If the same TypeVarTuple instance is used in multiple places in a signature
@@ -104,5 +104,9 @@ def func3(x: Array[Height], y: Array[Width], z: Array[Height, Width]):
 # > Only a single type variable tuple may appear in a type parameter list.
 
 
-class Array3(Generic[*Ts1, *Ts2]):  # E
+class Array3(Generic[*Ts, *Ts1]):  # E
+    ...
+
+
+class Array4[*Ts1, *Ts2]:  # E
     ...

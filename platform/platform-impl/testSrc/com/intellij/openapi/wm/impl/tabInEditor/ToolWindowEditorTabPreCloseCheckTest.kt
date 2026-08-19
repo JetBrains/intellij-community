@@ -5,7 +5,6 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.actions.CloseAction.CloseTarget
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
@@ -22,13 +21,11 @@ import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import javax.swing.JPanel
 
 @TestApplication
 class ToolWindowEditorTabPreCloseCheckTest {
@@ -45,21 +42,17 @@ class ToolWindowEditorTabPreCloseCheckTest {
   private val registryFixture = registryKeyFixture(ToolWindowEditorTabSupportUtil.REGISTRY_KEY) { setValue(true) }
 
   private val project: Project get() = projectFixture.get()
-  private val projectScope: CoroutineScope get() = (project as ComponentManagerEx).getCoroutineScope()
   private val manager: FileEditorManagerImpl get() = fileEditorManagerFixture.get()
   private val controller: ToolWindowEditorTabTransferController
     get() = ToolWindowEditorTabTransferController.getInstance(project)
 
   private val toolWindowId = "TestToolWindow"
 
-  private fun createTabFile(displayName: String = "tab"): ToolWindowEditorTabFile = ToolWindowEditorTabFile(
-    presentationFlow = flowOf(ToolWindowEditorTabPresentation("Title")),
-    toolWindowId = toolWindowId,
-    component = JPanel(),
-    preferredFocusedComponent = JPanel(),
-    content = createTabContent(displayName = displayName),
+  private fun createDetachedTabFile(displayName: String = "tab"): ToolWindowEditorTabFile = createTabFile(
     project = project,
-    parentCoroutineScope = projectScope,
+    toolWindowId = toolWindowId,
+    content = createTabContent(displayName = displayName),
+    presentationFlow = flowOf(ToolWindowEditorTabPresentation("Title")),
   )
 
   @BeforeEach
@@ -81,7 +74,7 @@ class ToolWindowEditorTabPreCloseCheckTest {
   @Test
   fun `tab file without support can be closed`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val check = ToolWindowEditorTabPreCloseCheck()
-    assertThat(check.canCloseFile(createTabFile())).isTrue()
+    assertThat(check.canCloseFile(createDetachedTabFile())).isTrue()
   }
 
   @Test
@@ -92,7 +85,7 @@ class ToolWindowEditorTabPreCloseCheckTest {
       disposable,
     )
     val check = ToolWindowEditorTabPreCloseCheck()
-    assertThat(check.canCloseFile(createTabFile())).isTrue()
+    assertThat(check.canCloseFile(createDetachedTabFile())).isTrue()
   }
 
   @Test
@@ -103,7 +96,7 @@ class ToolWindowEditorTabPreCloseCheckTest {
       disposable,
     )
     val check = ToolWindowEditorTabPreCloseCheck()
-    val tabFile = createTabFile()
+    val tabFile = createDetachedTabFile()
 
     assertThat(check.canCloseFile(tabFile)).isFalse()
     // A blocked group vetoes the whole bulk close, even alongside a plain file.
@@ -118,30 +111,34 @@ class ToolWindowEditorTabPreCloseCheckTest {
       val support = FakeToolWindowEditorTabSupport(flowOf(ToolWindowEditorTabPresentation("Title")), canClose = true)
       registerFakeToolWindowEditorTabSupport(toolWindowId, support, disposable)
       val check = ToolWindowEditorTabPreCloseCheck()
-      val tabFile1 = createTabFile()
-      val tabFile2 = createTabFile()
+      val tabFile1 = createDetachedTabFile()
+      val tabFile2 = createDetachedTabFile()
 
       assertThat(check.canCloseFiles(listOf(tabFile1, tabFile2, LightVirtualFile("plain.txt")))).isTrue()
       // The support must be asked once for the whole group, not once per tab.
       assertThat(support.filterTabsToCloseInvocations).hasSize(1)
       assertThat(support.filterTabsToCloseInvocations.single())
-        .containsExactly(tabFile1.content, tabFile2.content)
+        .containsExactly(tabFile1.attachedContent(project), tabFile2.attachedContent(project))
     }
 
   @Test
   fun `bulk close preserves order while dropping only blocked tab files`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
-      val blockedTab = createTabFile("blocked")
-      val closableTab = createTabFile("closable")
+      val blockedTab = createDetachedTabFile("blocked")
+      val closableTab = createDetachedTabFile("closable")
       val plain = LightVirtualFile("plain.txt")
+
       registerFakeToolWindowEditorTabSupport(
         toolWindowId,
         FakeToolWindowEditorTabSupport(
           flowOf(ToolWindowEditorTabPresentation("Title")),
-          filterTabsToCloseAction = { listOf(closableTab.content) },
+          filterTabsToCloseAction = {
+            listOf(requireNotNull(closableTab.attachedContent(project)))
+          },
         ),
         disposable,
       )
+
       val check = ToolWindowEditorTabPreCloseCheck()
 
       assertThat(check.filterFilesToClose(listOf(blockedTab, plain, closableTab)))

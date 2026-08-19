@@ -22,6 +22,7 @@ import org.jetbrains.intellij.build.impl.patchOsSpecificPluginXml
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.CommunityKotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
@@ -111,7 +112,7 @@ object CommunityRepositoryModules {
         val targetLib = targetDir.resolve("lib")
 
         val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
-        materializeCacheDir(sourceDir = mavenDist, targetDir = targetLib.resolve("maven3"), context = context)
+        copyDir(sourceDir = mavenDist, targetDir = targetLib.resolve("maven3"), overwrite = true)
       }
 
       with("intellij.maven.server3") {
@@ -123,9 +124,9 @@ object CommunityRepositoryModules {
         spec.withGeneratedResources { targetDir, context ->
           val targetLib = targetDir.resolve("lib")
           val maven3Libs = BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot)
-          copyMavenLibraries(maven3Libs, targetLib.resolve(this), context)
+          copyMavenLibraries(maven3Libs, targetLib.resolve(this))
           val mavenTelemetryDependencies = BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-          copyMavenLibraries(mavenTelemetryDependencies, targetLib.resolve(this), context)
+          copyMavenLibraries(mavenTelemetryDependencies, targetLib.resolve(this))
         }
       }
 
@@ -141,9 +142,9 @@ object CommunityRepositoryModules {
         spec.withGeneratedResources { targetDir, context ->
           val targetLib = targetDir.resolve("lib")
           val maven4Libs = BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot)
-          copyMavenLibraries(maven4Libs, targetLib.resolve(this), context)
+          copyMavenLibraries(maven4Libs, targetLib.resolve(this))
           val mavenTelemetryDependencies = BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-          copyMavenLibraries(mavenTelemetryDependencies, targetLib.resolve(this), context)
+          copyMavenLibraries(mavenTelemetryDependencies, targetLib.resolve(this))
         }
       }
 
@@ -188,12 +189,10 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.gradle.toolingExtension.impl", "gradle-tooling-extension-impl.jar")
       spec.withModule("intellij.libraries.groovy", "groovy.jar")
       spec.withModule("intellij.libraries.groovy.ant", "groovy-ant.jar")
-      spec.withProjectLibrary("Gradle", LibraryPackMode.STANDALONE_SEPARATE)
       spec.withProjectLibrary("Ant", "ant", LibraryPackMode.STANDALONE_SEPARATE)
     },
     pluginAuto(listOf("intellij.gradle.java.plugin", "intellij.gradle.java", "intellij.gradle.jps")) {
       it.excludeProjectLibrary("Ant")
-      it.excludeProjectLibrary("Gradle")
     },
     pluginAuto("intellij.junit") { spec ->
       spec.withModule("intellij.junit.rt", "junit-rt.jar")
@@ -382,7 +381,7 @@ object CommunityRepositoryModules {
 
         // Unix ZIP does not have root `jcef` directory
         val jcefOutputDir = extracted.resolve("jcef").takeIf { Files.exists(it) } ?: extracted
-        materializeCacheDir(sourceDir = jcefOutputDir, targetDir = targetDir.resolve("jcef"), context = context)
+        copyDir(sourceDir = jcefOutputDir, targetDir = targetDir.resolve("jcef"), overwrite = true)
       }
 
       spec.enableSymlinksAndExecutableResources()
@@ -482,8 +481,6 @@ object CommunityRepositoryModules {
       else {
         spec.bundlingRestrictions.includeInDistribution = PluginDistribution.CROSS_PLATFORM_DIST_ONLY
       }
-
-      spec.excludeProjectLibrary("Gradle")
 
       // modules:
       // adt-ui.jar
@@ -608,6 +605,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.screenshot-test.gradle", "android.jar")
       spec.withModule("intellij.android.sdkUpdates", "android.jar")
       spec.withModule("intellij.android.threading-checker", "android.jar")
+      spec.withModule("intellij.android.tracer", "android.jar")
       spec.withModule("intellij.android.transport", "android.jar")
       spec.withModule("intellij.android.newProjectWizard", "android.jar")
       spec.withModule("intellij.android.wear-pairing", "android.jar")
@@ -799,9 +797,9 @@ object CommunityRepositoryModules {
   }
 }
 
-private fun copyMavenLibraries(libraries: List<BundledMavenDownloader.MavenLibraryFile>, targetDir: Path, context: BuildContext) {
+private fun copyMavenLibraries(libraries: List<BundledMavenDownloader.MavenLibraryFile>, targetDir: Path) {
   for ((fileName, source) in libraries) {
-    materializeCacheFile(source = source, target = targetDir.resolve(fileName), context = context)
+    copyFile(file = source, target = targetDir.resolve(fileName), overwrite = true)
   }
 }
 

@@ -11,6 +11,7 @@ from django.db.models.expressions import Combinable, Expression
 from django.db.models.fields import NOT_PROVIDED, _ErrorMessagesDict, _ErrorMessagesMapping
 from django.db.models.fields.mixins import CheckFieldDefaultMixin
 from django.db.models.lookups import Transform
+from django.db.models.sql.compiler import _AsSqlType
 from django.utils.choices import _Choices
 from django.utils.functional import _StrOrPromise
 from typing_extensions import TypeVar, override
@@ -66,7 +67,7 @@ class ArrayField(CheckPostgresInstalledMixin, CheckFieldDefaultMixin, Field[_ST,
     def description(self) -> str: ...  # type: ignore[override]
     @override
     def cast_db_type(self, connection: BaseDatabaseWrapper) -> str: ...
-    def get_placeholder(self, value: Unused, compiler: Unused, connection: BaseDatabaseWrapper) -> str: ...
+    def get_placeholder_sql(self, value: Unused, compiler: Unused, connection: BaseDatabaseWrapper) -> _AsSqlType: ...
     @override
     def get_transform(self, name: str) -> type[Transform] | None: ...
 

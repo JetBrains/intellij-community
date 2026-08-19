@@ -34,14 +34,13 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
-    <orderEntry type="library" name="Gradle" level="project" />
-    <orderEntry type="library" name="kodein-di-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kodein.di.jvm" />
     <orderEntry type="library" name="qodana-sarif" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.tools.ide.performanceTesting.commands" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.libraries.monte.screen.recorder" />
-    <orderEntry type="library" exported="" name="io.qameta.allure.java.commons" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.allure.java.commons" exported="" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" />
     <orderEntry type="module" module-name="intellij.tools.ide.util.common" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.bus" exported="" />

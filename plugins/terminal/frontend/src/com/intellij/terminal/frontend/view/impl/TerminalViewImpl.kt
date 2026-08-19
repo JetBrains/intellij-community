@@ -595,6 +595,7 @@ class TerminalViewImpl(
   ) {
     val parentDisposable = coroutineScope.asDisposable() // same lifecycle as `this@ReworkedTerminalView`
 
+    editor.putUserData(TerminalView.KEY, this@TerminalViewImpl)
     editor.putUserData(TerminalOutputModel.KEY, model)
 
     // Resolve and cache the PSI file here, not inside the listener below: getPsiFile may require a read lock,

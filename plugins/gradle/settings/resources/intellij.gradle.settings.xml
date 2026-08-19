@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.commons.cli"/>
     <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gradle"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.externalSystem"/>

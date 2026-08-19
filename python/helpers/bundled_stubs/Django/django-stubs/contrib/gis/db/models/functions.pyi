@@ -193,6 +193,11 @@ class MemSize(GeoFunc):
     output_field: ClassVar[IntegerField[Any, Any]]
     arity: int
 
+class NumDimensions(GeoFuncMixin, StandardTransform):  # type: ignore[misc]
+    lookup_name: str
+    output_field: ClassVar[IntegerField[Any, Any]]
+    arity: int
+
 class NumGeometries(GeoFunc):
     output_field: ClassVar[IntegerField[Any, Any]]
     arity: int

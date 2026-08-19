@@ -90,11 +90,6 @@ fun configurePropertiesForAllEditionsOfIntelliJIdea(properties: JetBrainsProduct
     //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
     layout.withModule("intellij.java.rt", "idea_rt.jar")
     layout.withoutProjectLibrary("Ant")
-    // there is a patched version of the org.gradle.api.JavaVersion class placed into the Gradle plugin classpath as "rt" jar
-    // to avoid class linkage conflicts "Gradle" library is placed into the 'lib' directory of the Gradle plugin layout so we need to exclude it from the platform layout explicitly
-    // TODO should be used as regular project library when the issue will be fixed at the Gradle tooling api side https://github.com/gradle/gradle/issues/8431 and the patched class will be removed
-    layout.withoutProjectLibrary("Gradle")
-
     // this library is placed into a subdirectory of the 'lib' directory in the Android plugin layout, so we need to exclude it from the platform layout explicitly
     layout.withoutProjectLibrary("layoutlib")
 

@@ -54,6 +54,7 @@
     <inspection_tool class="92d42a73-fb88-340b-88e5-4f09e27f9db6" enabled="true" level="WEAK WARNING" enabled_by_default="false" editorAttributes="INFO_ATTRIBUTES">
       <scope name="Go" level="WEAK WARNING" enabled="true" />
     </inspection_tool>
+    <inspection_tool class="959112ef-d77b-3be1-8a8c-9e70e3274220" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
     <inspection_tool class="AbstractMethodCallInConstructor" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AccessStaticViaInstance" enabled="true" level="Strong Warning" enabled_by_default="true" />
     <inspection_tool class="ActionIsNotPreviewFriendly" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
@@ -2781,6 +2782,11 @@
         <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def project = __context__.getProject();&#10;def fqn = c.getValue().substring(1);&#10;if (fqn.indexOf('.') == -1) return false;&#10;def shortName = com.intellij.openapi.util.text.StringUtil.getShortName(fqn);&#10;if (!shortName.equals(com.intellij.openapi.util.text.StringUtil.capitalize(shortName))) return false;&#10;&#10;def cClass = JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));&#10; cClass == null&#10;&quot;" within="" contains="" />
         <constraint name="c" target="true" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="Logger.runCatching" uuid="959112ef-d77b-3be1-8a8c-9e70e3274220" description="&lt;code&gt;runCatching&lt;/code&gt; is often mistakenly used instead of &lt;code&gt;runAndLogException&lt;/code&gt;" suppressId="LoggerRunCatching" problemDescriptor="Did you mean to use 'runAndLogException'? If not, use the method call without the explicit receiver to avoid confusion." text="$Logger$.runCatching { $Code$ }" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Logger" nameOfExprType="com\.intellij\.openapi\.diagnostic\.Logger" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Code" within="" contains="" />
+      </searchConfiguration>
       <replaceConfiguration name="Logger expression can be simplified" uuid="0befec03-d2b3-3838-ada0-363adc05fac7" text="com.intellij.openapi.diagnostic.Logger.getInstance(&quot;#&quot; + $c$.class.getName())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.diagnostic.Logger.getInstance($c$.class)">
         <constraint name="c" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
@@ -3127,7 +3133,7 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="Expr" within="" contains="" />
       </replaceConfiguration>
-      <searchConfiguration name="Rpc functions must be suspend" text="interface $Class$: RemoteApi&lt;Unit&gt; {&#10;  suspend fun $Method$ ($Parameter$ : $ParameterType$)&#10;&#10;  fun $Method2$($Parameter2$ : $ParameterType2$)&#10;}" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
+      <searchConfiguration name="Rpc functions must be suspend" text="interface $Class$: RemoteApi&lt;Unit&gt; {&#10;  suspend fun $Method$ ($Parameter$ : $ParameterType$)&#10;&#10;  fun $Method2$($Parameter2$ : $ParameterType2$): $ReturnType$&#10;}" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Class" within="" contains="" />
         <constraint name="Method" minCount="0" maxCount="2147483647" within="" contains="" />
@@ -3136,6 +3142,7 @@
         <constraint name="Method2" target="true" within="" contains="" />
         <constraint name="Parameter2" minCount="0" maxCount="2147483647" within="" contains="" />
         <constraint name="ParameterType2" within="" contains="" />
+        <constraint name="ReturnType" regexp="(?:[A-Za-z_][A-Za-z0-9_]*\.)*Flow(?:\s*&lt;.*&gt;)?" minCount="0" negateName="true" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="Rpc interfaces should be marked with @Rpc" text="@$Annotation$ &#10;interface $Name$: $Interface$ { &#10;  &#10;}" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
@@ -3184,6 +3191,14 @@
         <constraint name="a" within="" contains="" />
         <constraint name="b" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="Specify return type explicitly on CLion's JUnit5 methods" uuid="b6c22af8-66a9-31b8-8509-2c9180ad1e3d" text="@$Annotation$&#10;fun $Name$($Param$): $Type$ = $Expr$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Name" target="true" within="" contains="" />
+        <constraint name="Param" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Type" minCount="0" maxCount="0" within="" contains="" />
+        <constraint name="Expr" regexp="clionTimeoutRunBlocking.*" within="" contains="" />
+        <constraint name="Annotation" regexp="org.junit.jupiter.api.Test" reference="annotations" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="Storing localized strings in static fields prevents dynamic loading of language bundles" description="When references to localized strings are stored in static fields,&#10;it is impossible to dynamically unload the resources. This means a &#10;user will need to restart their IDE for the affected UI elements to &#10;get the updated text, after enabling or disabling a language pack.&#10;&lt;p&gt;&#10;To fix the problem use a &lt;code&gt;Bundle.message()&lt;/code&gt; call directly &#10;instead of storing its value in a &lt;code&gt;static&lt;/code&gt; field. Or use &#10;&lt;code&gt;Bundle.messagePointer()&lt;/code&gt; if that is not possible." text="$bundle$.$message$(&quot;$s$&quot;, $p$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" script="&quot;import com.intellij.psi.*;&#10;import com.intellij.psi.util.*;&#10;PsiElement member = PsiTreeUtil.getParentOfType(__context__, PsiMember.class, PsiLambdaExpression.class)&#10;if (member instanceof PsiClassInitializer) {&#10;  PsiElement parent = member.getParent()&#10;  if (parent instanceof PsiAnonymousClass) {&#10;    // yuk, double brace initialization&#10;    member = PsiTreeUtil.getParentOfType(parent, PsiMember.class, PsiLambdaExpression.class)&#10;  }&#10;}&#10;return member instanceof PsiField &amp;&amp; member.hasModifierProperty(PsiModifier.STATIC)&quot;" within="" contains="" />
         <constraint name="s" within="" contains="" />

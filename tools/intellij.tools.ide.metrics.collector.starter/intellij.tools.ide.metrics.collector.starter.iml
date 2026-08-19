@@ -26,6 +26,6 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" />
-    <orderEntry type="library" scope="PROVIDED" name="kodein-di-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kodein.di.jvm" scope="PROVIDED" />
   </component>
 </module>

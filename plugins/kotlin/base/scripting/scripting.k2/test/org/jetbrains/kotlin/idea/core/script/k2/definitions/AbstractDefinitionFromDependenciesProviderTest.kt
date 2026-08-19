@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.runner.RunWith
 import java.io.File
+import kotlin.io.path.pathString
 
 @RunWith(JUnit3RunnerWithInners::class)
 abstract class AbstractDefinitionFromDependenciesProviderTest : HeavyPlatformTestCase() {
@@ -48,8 +49,8 @@ abstract class AbstractDefinitionFromDependenciesProviderTest : HeavyPlatformTes
         }
 
         val provider = DefinitionFromDependenciesProvider(project)
-        val discoveredFqns = provider.getDefinitionClasses().toList()
-        val discoveredClasspath = provider.getDefinitionsClassPath().map { it.path }
+        val discoveredFqns = provider.definitionClasses()
+        val discoveredClasspath = provider.getTemplateClasspath().map { it.pathString }
 
         val fileText = File(path, "test.kts").readText()
         val expectedNames = InTextDirectivesUtils.findListWithPrefixes(fileText, "// NAME:").sorted()

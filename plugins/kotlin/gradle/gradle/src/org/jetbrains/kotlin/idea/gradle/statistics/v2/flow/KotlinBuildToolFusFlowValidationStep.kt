@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradle.statistics.v2.flow
 
+import org.jetbrains.kotlin.idea.gradle.statistics.anonymizeProjectPathForFus
+
 /**
  * Validation and transformation step for raw FUS (Feature Usage Statistics) values.
  */
@@ -102,8 +104,14 @@ class KotlinBuildToolListFlowValidationStep(private val delimiter: String = ",")
  * Basic validation and transformation step of FUS value processing for string values.
  * All input values are included in the result as-is.
  */
-object KotlinBuildToolStringFLowValidationStep : KotlinBuildToolFusFlowValidationStep<String> {
+object KotlinBuildToolStringFlowValidationStep : KotlinBuildToolFusFlowValidationStep<String> {
     override fun process(values: List<RawFusValue>): List<String> {
         return values.map { it.value }
+    }
+}
+
+object KotlinBuildToolProjectPathValidationStep : KotlinBuildToolFusFlowValidationStep<String> {
+    override fun process(values: List<RawFusValue>): List<String> {
+        return values.map { anonymizeProjectPathForFus(it.value) }
     }
 }

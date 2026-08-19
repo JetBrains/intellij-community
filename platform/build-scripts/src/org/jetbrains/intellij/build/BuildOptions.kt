@@ -46,22 +46,6 @@ data class BuildOptions(
   @JvmField var useCompiledClassesFromProjectOutput: Boolean = getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode),
 
   /**
-   * If `true`, files taken from an immutable cache - a download-cache entry, an extracted archive, a
-   * Bazel runfile, a [jarCacheDir] payload - may be hardlinked into the layout instead of copied.
-   *
-   * Enabled only for an in-process dev-mode assembly (see `configureDevModeBuildOptions`), whose run
-   * directory is disposable and never patched in place. A distribution must own its bytes: signing,
-   * notarization, and packaging all rewrite files, and a link would write those changes back into the
-   * shared cache. This is deliberately *not* [isInDevelopmentMode], which is merely "not on CI" and is
-   * true for a release-shaped build on a developer machine.
-   *
-   * Both caches honour it: the download cache through `materializeCacheFile`, the jar cache through
-   * [org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager]. The jar cache is the larger half -
-   * it holds every module and library jar of the distribution.
-   */
-  @JvmField var linkImmutableCacheEntries: Boolean = false,
-
-  /**
    * If `true`, every non-scrambled content module's own descriptor is inlined into the product descriptor as CDATA
    * while the platform layout is built.
    *
@@ -534,6 +518,12 @@ data class BuildOptions(
    */
   @Experimental
   var generateRuntimeModuleRepository: Boolean = getBooleanProperty("intellij.build.generate.runtime.module.repository", true)
+
+  /**
+   * If the option is set to `true`, plugins with `plugin.xml` marked with `BUILD_USING_BAZEL_MARKER` in a comment will be built by Bazel
+   */
+  @Internal
+  var buildPluginsByBazel: Boolean = getBooleanProperty("intellij.build.build.plugins.by.bazel", false)
 
   /**
    * Specifies a prefix to use when looking for an artifact of a [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] to be bundled with distributions.

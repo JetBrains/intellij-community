@@ -421,14 +421,13 @@ object InternalPsiVersioning {
 
   fun initWriteActionSection(): AccessToken {
     val storedThreadLocal = threadLocalVersioningTracker.get()
-    return if (storedThreadLocal == null
-               // this branch can happen in tests where the context is reset to dispatch some events synchronously
-               || currentThreadContext()[PsiVersionWriteContextElement.Key] == null) {
+    val context = currentThreadContext()
+    return if (storedThreadLocal == null) {
       val psiVersionRegistry = PsiVersionRegistry.instance
       val existingVersion = psiVersionRegistry.latestPublishedVersion
       val newVersion = existingVersion + 1
       @Suppress("DEPRECATION")
-      val threadContextInstallation = installThreadContext(currentThreadContext() + PsiVersionWriteContextElement(newVersion), true)
+      val threadContextInstallation = installThreadContext(context + PsiVersionWriteContextElement(newVersion), true)
       threadLocalVersioningTracker.set(newVersion)
       object : AccessToken() {
         override fun finish() {
@@ -438,18 +437,35 @@ object InternalPsiVersioning {
           PsiVersionRegistry.instance.incrementVersion(latestVersion)
         }
       }
+    } else if (context[PsiVersionWriteContextElement.Key] == null) {
+      // can be lost due to malicious resetThreadContext
+      // so we just restore it back, this is a write action after all
+      @Suppress("DEPRECATION")
+      installThreadContext(currentThreadContext() + PsiVersionWriteContextElement(storedThreadLocal), true)
     } else {
       AccessToken.EMPTY_ACCESS_TOKEN
     }
   }
 
+  // this function is needed to get protection against malicious resetThreadContext
+  fun unsafeInstallThreadLocalVersion(version: Long): AccessToken {
+    val prevValue = threadLocalVersioningTracker.get()
+    threadLocalVersioningTracker.set(version)
+    return object : AccessToken() {
+      override fun finish() {
+        threadLocalVersioningTracker.set(prevValue)
+      }
+    }
+  }
+
   fun initReadActionSection(): AccessToken {
+    if (ApplicationManager.getApplication().isWriteIntentLockAcquired || ApplicationManager.getApplication().isWriteAccessAllowed) {
+      return AccessToken.EMPTY_ACCESS_TOKEN
+    }
     val latestVersion = PsiVersionRegistry.instance.latestPublishedVersion
     val writeElementVersion = currentThreadContext()[PsiVersionWriteContextElement.Key]?.version
     val correctVersion = when {
       writeElementVersion != null -> writeElementVersion
-      // this condition can happen if we are in service initialization, where contexts are independent from the thread
-      ApplicationManager.getApplication().isWriteAccessAllowed -> latestVersion + 1
       else -> latestVersion
     }
     val value = threadLocalVersioningTracker.get()

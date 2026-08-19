@@ -1,0 +1,51 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.kotlinc.kotlin.compiler.fir` start
+jvm_library(
+    name = "libraries-kotlinc-kotlin-compiler-fir",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinc.kotlin.compiler.fir",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-kotlin-compiler-fir-kotlinc-kotlin-compiler-fir"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-kotlinc-kotlin-compiler-fir-kotlinc-kotlin-compiler-fir",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+    ],
+)
+
+jvm_library(
+    name = "libraries-kotlinc-kotlin-compiler-fir_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.kotlinc.kotlin.compiler.fir",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-kotlin-compiler-fir-kotlinc-kotlin-compiler-fir"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-kotlinc-kotlin-compiler-fir",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.kotlinc.kotlin.compiler.fir` end
+
+### auto-generated section `iml intellij.libraries.kotlinc.kotlin.compiler.fir` start
+exports_files(
+    [
+        "intellij.libraries.kotlinc.kotlin.compiler.fir.iml",
+        "resources/intellij.libraries.kotlinc.kotlin.compiler.fir.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.kotlinc.kotlin.compiler.fir` end

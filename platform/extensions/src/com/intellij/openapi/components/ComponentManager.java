@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -12,12 +12,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +43,8 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    *
    * @param interfaceClass the interface class of the component
    * @return component that matches interface class or null if there is no such component
-   * @deprecated Components are deprecated, please see <a href="https://plugins.jetbrains.com/docs/intellij/plugin-components.html">SDK Docs</a> for guidelines on migrating to other APIs.
+   * @deprecated Components are deprecated, please see <a href="https://plugins.jetbrains.com/docs/intellij/plugin-components.html">SDK Docs</a>
+   * for guidelines on migrating to other APIs.
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
@@ -64,8 +63,8 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   boolean isInjectionForExtensionSupported();
 
   /**
-   * @deprecated not all implementations support this functionality; 
-   * call {@link com.intellij.openapi.application.Application#getMessageBus()} or {@link com.intellij.openapi.project.Project#getMessageBus()} 
+   * @deprecated not all implementations support this functionality;
+   * call {@link com.intellij.openapi.application.Application#getMessageBus()} or {@link com.intellij.openapi.project.Project#getMessageBus()}
    * instead.
    */
   @Deprecated
@@ -73,7 +72,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
 
   /**
    * @return true when this component is disposed (e.g. the "File|Close Project" invoked or the application is exited)
-   * or is about to be disposed (e.g. the {@link com.intellij.openapi.project.impl.ProjectExImpl#dispose()} was called but not completed yet)
+   * or is about to be disposed (e.g., the {@link com.intellij.openapi.project.impl.ProjectImpl#dispose()} was called but not completed yet)
    * <br>
    * The result is only valid inside read action because the application/project/module can be disposed at any moment.
    * (see <a href="https://plugins.jetbrains.com/docs/intellij/threading-model.html">more details on read actions</a>)
@@ -112,8 +111,8 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   /**
-   * Collects all services registered with matching client="..." attribute in xml.
-   * Take a look at {@link com.intellij.openapi.client.ClientSession}
+   * Collects all services registered with matching {@code client="..."} attribute in XML.
+   * Take a look at {@link com.intellij.openapi.client.ClientSession}.
    */
   @ApiStatus.Internal
   @ApiStatus.Experimental
@@ -145,17 +144,14 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   @NotNull RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId);
 
   @ApiStatus.Internal
-  @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId);
+  @NotNull RuntimeException createError(@NotNull String message, @NotNull PluginId pluginId);
 
   @ApiStatus.Internal
-  default @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId, @NotNull Collection<PluginId> conflictingPluginIds) {
+  default @NotNull RuntimeException createError(@NotNull String message, @NotNull PluginId pluginId, @NotNull PluginId conflictingPluginId) {
     return createError(message, pluginId);
   }
 
-  @NotNull RuntimeException createError(@NotNull @NonNls String message,
-                                        @Nullable Throwable error,
-                                        @NotNull PluginId pluginId,
-                                        @Nullable Map<String, String> attachments);
+  @NotNull RuntimeException createError(@NotNull String message, @Nullable Throwable error, @NotNull PluginId pluginId, @Nullable Map<String, String> attachments);
 
   @ApiStatus.Internal
   <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException;

@@ -30,7 +30,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
-    <orderEntry type="library" name="Gradle" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gradle" />
     <orderEntry type="module-library">
       <library name="ant" type="repository">
         <properties maven-id="org.apache.ant:ant:1.10.15">

@@ -52,6 +52,7 @@ internal class BazelCompilationContextTest {
             ),
           ),
           projectLibraries = emptyMap(),
+          pluginDistributionTargets = emptyMap(),
         )
       },
     )
@@ -129,6 +130,7 @@ internal class BazelCompilationContextTest {
             ),
           ),
           projectLibraries = emptyMap(),
+          pluginDistributionTargets = emptyMap(),
         )
       },
     )

@@ -46,11 +46,6 @@ public interface PyClass
    * @see PyCallSiteOwner
    */
   @Override
-  default @Nullable PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
-    return null;
-  }
-
-  @Override
   default @NotNull List<@NotNull PyExpression> getArguments(@Nullable PyCallable resolvedCallee) {
     final PyArgumentList argumentList = getSuperClassExpressionList();
     if (argumentList == null) {

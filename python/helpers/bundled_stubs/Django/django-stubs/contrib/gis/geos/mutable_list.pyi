@@ -1,6 +1,6 @@
-from typing import Any
+from typing import Any, Self
 
-from typing_extensions import Self, override
+from typing_extensions import override
 
 class ListMixin:
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...

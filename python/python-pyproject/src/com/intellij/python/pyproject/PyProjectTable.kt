@@ -10,7 +10,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * @see [pyproject.toml specification](https://packaging.python.org/en/latest/specifications/pyproject-toml/)
  */
 @Internal
-data class PyProjectTable(
+@ExposedCopyVisibility
+data class PyProjectTable internal constructor(
   val name: String,
   val version: String? = null,
   val requiresPython: String? = null,

@@ -1,15 +1,13 @@
 from _typeshed import Incomplete
 
-log: Incomplete
-
 class Heartbeat:
-    DEFAULT_CONFIG: Incomplete
-    config: Incomplete
-    last_send: Incomplete
-    last_receive: Incomplete
-    last_poll: Incomplete
-    last_reset: Incomplete
-    heartbeat_failed: Incomplete
+    DEFAULT_CONFIG: dict[str, Incomplete]
+    config: dict[str, Incomplete]
+    last_send: float
+    last_receive: float
+    last_poll: float
+    last_reset: float
+    heartbeat_failed: bool | None
     def __init__(self, **configs) -> None: ...
     def poll(self) -> None: ...
     def sent_heartbeat(self) -> None: ...

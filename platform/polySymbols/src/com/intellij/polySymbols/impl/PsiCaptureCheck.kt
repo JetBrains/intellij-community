@@ -12,7 +12,7 @@ private val PSI_OR_POLY_SYMBOL_TYPES = arrayOf(
   PolySymbol::class.java,
 )
 
-internal val LOG = logger<DependencyHandle<*>>()
+private val LOG = logger<DependencyHandle<*>>()
 
 /**
  * In dev/test builds, reflect on [lambda] and fail fast if any captured

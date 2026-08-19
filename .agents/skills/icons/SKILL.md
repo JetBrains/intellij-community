@@ -1,6 +1,6 @@
 ---
 name: icons
-description: Create or review IntelliJ New UI SVG icons, theme variants, and palette.
+description: Create or review IntelliJ New UI SVG icons and theme variants.
 ---
 
 # IntelliJ Platform New UI Icons

@@ -60,10 +60,8 @@ fun createExtensionPoints(points: List<ExtensionPointDescriptor>,
     result.putIfAbsent(point.name, point)?.let { old ->
       val oldPluginDescriptor = old.getPluginDescriptor()
       LOG.error(componentManager.createError(
-        "Duplicate registration for EP ${point.name} first in $oldPluginDescriptor, second in $pluginDescriptor" +
-        " (the second declaration is ignored)",
-        pluginDescriptor.pluginId,
-        setOf(oldPluginDescriptor.pluginId, pluginDescriptor.pluginId),
+        "Duplicate registration for EP ${point.name} first in $oldPluginDescriptor, second in $pluginDescriptor (the second declaration is ignored)",
+        oldPluginDescriptor.pluginId, pluginDescriptor.pluginId,
       ))
     }
   }
@@ -280,7 +278,7 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
     if (DEBUG_REGISTRATION) {
       LOG.error(message, epTraces!!.get(pointName))
     }
-    throw componentManager.createError(message, pluginDescriptor.pluginId, setOf(id1, id2))
+    throw componentManager.createError(message, id1, id2)
   }
 
   // _only_ for CoreApplicationEnvironment

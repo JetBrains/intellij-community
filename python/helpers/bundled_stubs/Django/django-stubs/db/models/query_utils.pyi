@@ -19,6 +19,8 @@ from typing_extensions import TypeVar
 
 logger: logging.Logger
 
+PROHIBITED_FILTER_KWARGS: frozenset[str]
+
 class class_or_instance_method:
     class_method: Callable[..., Any]
     instance_method: Callable[..., Any]
@@ -70,6 +72,8 @@ class DeferredAttribute:
     field: Field[Any, Any]
     def __init__(self, field: Field[Any, Any]) -> None: ...
     def __get__(self, instance: Model | None, cls: type[Model] | None = None) -> Any: ...
+    def fetch_one(self, instance: Model) -> None: ...
+    def fetch_many(self, instances: Iterable[Model]) -> None: ...
 
 _R = TypeVar("_R", bound=type)
 

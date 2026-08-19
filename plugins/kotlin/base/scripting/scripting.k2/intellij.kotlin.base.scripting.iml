@@ -71,5 +71,6 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="kotlin.scripting" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

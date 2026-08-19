@@ -100,6 +100,24 @@ import kotlin.time.Duration.Companion.hours
 
 private const val maxWindowsPathLengthForIDERootToBeAbleToRunRiderBackend: Int = 64
 
+sealed interface DevBuildOutput {
+  data object Complete : DevBuildOutput
+
+  data class Component(
+    @JvmField val fragment: DevBuildFragment,
+    @JvmField val manifestFile: Path,
+    @JvmField val pluginClasspathPartFile: Path? = null,
+    @JvmField val pluginClasspathPrefixFile: Path? = null,
+  ) : DevBuildOutput {
+    init {
+      require(!fragment.isComplete) { "A complete dev distribution must use DevBuildOutput.Complete" }
+      require(!fragment.ownsPlugins || pluginClasspathPartFile != null) {
+        "The '$fragment' fragment owns plugins, so it requires a plugin-classpath part file"
+      }
+    }
+  }
+}
+
 data class BuildRequest(
   @JvmField val platformPrefix: String,
   @JvmField val additionalModules: List<String>,
@@ -159,36 +177,15 @@ data class BuildRequest(
   // `Long` is `java.lang.Long` in this file
   @JvmField val buildDateInSeconds: kotlin.Long? = null,
 
-  /**
-   * If `true`, the distribution may hard-link immutable jar cache entries instead of copying them.
-   * A dev run directory is disposable and can share bytes with the caches it is assembled from, but a Bazel output must own its bytes.
-   */
-  @JvmField val linkImmutableCacheEntries: Boolean = true,
-
-  /** Selects the independently cacheable slice produced by a standalone Bazel assembly. */
-  @JvmField val fragment: DevBuildFragment = DevBuildFragment.COMPLETE,
-
-  /** Metadata for a fragment; required unless [fragment] is [DevBuildFragment.COMPLETE]. */
-  @JvmField val componentManifestFile: Path? = null,
-
-  /**
-   * Where this fragment writes its share of the `plugin-classpath.txt` records, one per plugin it built.
-   *
-   * A fragment cannot write that file itself: it holds a count over all plugins of the distribution and a prefix that
-   * only the platform knows, so the composer assembles it out of [pluginClasspathPrefixFile] and every fragment's
-   * records. Required of a fragment that owns plugins, and meaningless for a complete distribution, which writes the
-   * whole file directly.
-   */
-  @JvmField val pluginClasspathPartFile: Path? = null,
-
-  /**
-   * Where this fragment writes the `plugin-classpath.txt` prefix - format version, `jarOnly`, product descriptor.
-   *
-   * Exactly one fragment of a distribution is asked for it; which one is the caller's choice, since any fragment that
-   * has the platform layout can produce it.
-   */
-  @JvmField val pluginClasspathPrefixFile: Path? = null,
+  /** Complete distribution, or one fully specified independently cacheable component. */
+  @JvmField val output: DevBuildOutput = DevBuildOutput.Complete,
 ) {
+  internal val fragment: DevBuildFragment
+    get() = (output as? DevBuildOutput.Component)?.fragment ?: DevBuildFragment.COMPLETE
+
+  internal val componentOutput: DevBuildOutput.Component?
+    get() = output as? DevBuildOutput.Component
+
   override fun toString(): String {
     return buildString {
       append("DevBuildRequest(platformPrefix='$platformPrefix', ")
@@ -231,9 +228,6 @@ internal suspend fun buildProductFromProject(
 }
 
 internal suspend fun buildProduct(request: BuildRequest, createBuildContext: suspend CoroutineScope.(buildDir: Path) -> BuildContext): Path {
-  check(request.fragment.isComplete || request.componentManifestFile != null) {
-    "A component manifest file is required for the '${request.fragment}' dev build fragment"
-  }
   check(request.fragment.isComplete || request.scrambleTool == null) {
     "Split dev distribution assembly does not support scrambling"
   }
@@ -401,8 +395,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
         }
       }
 
-      // write and update core classpath from platform and plugins distribution
-      launch(CoroutineName("compute core classpath")) {
+      val coreClassPathDeferred = async(CoroutineName("compute core classpath")) {
         val platformClasspath = platformLayoutResultDeferred.await().coreClassPath
         val coreClasspathFromPlugins = if (request.fragment.ownsPlugins) {
           generateCoreClasspathFromPlugins(
@@ -412,8 +405,12 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
           )
         }
         else emptyList()
-        val classPath = platformClasspath + coreClasspathFromPlugins
+        platformClasspath + coreClasspathFromPlugins
+      }
 
+      // Write and publish the one classpath computation shared with the component manifest below.
+      launch(CoroutineName("publish core classpath")) {
+        val classPath = coreClassPathDeferred.await()
         if (request.writeCoreClasspath && request.fragment.isComplete) {
           val classPathString = formatCoreClasspath(classPath = classPath, runDir = runDir)
           launch(Dispatchers.IO) {
@@ -464,9 +461,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
               runDir.resolve(PLUGIN_CLASSPATH)
             }
             else {
-              checkNotNull(request.pluginClasspathPartFile) {
-                "The '${request.fragment}' fragment owns plugins, so it needs somewhere to write its plugin-classpath records"
-              }
+              checkNotNull(request.componentOutput).pluginClasspathPartFile!!
             }
             target.parent?.createDirectories()
             Files.write(target, byteOut.toByteArray())
@@ -474,7 +469,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
         }
         else null
 
-        request.pluginClasspathPrefixFile?.let { prefixFile ->
+        request.componentOutput?.pluginClasspathPrefixFile?.let { prefixFile ->
           launch(CoroutineName("write plugin classpath prefix")) {
             val requiredPlatformLayout = checkNotNull(platformLayoutAwaited) {
               "The '${request.fragment}' fragment must lay out the platform to describe the product"
@@ -556,26 +551,17 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
           )
         }
         else {
-          val platformResult = platformLayoutResultDeferred.await()
           val pluginsResult = pluginDistributionEntriesDeferred.await()
-          val coreClassPath = platformResult.coreClassPath + if (request.fragment.ownsPlugins) {
-            generateCoreClasspathFromPlugins(
-              platformLayout = checkNotNull(platformLayout).await(),
-              pluginBuildResults = pluginsResult.pluginEntries,
-              context = context,
-            )
-          }
-          else emptyList()
           withContext(Dispatchers.IO) {
             writeDevBuildComponentManifest(
-              file = checkNotNull(request.componentManifestFile),
+              file = checkNotNull(request.componentOutput).manifestFile,
               kind = request.fragment.name,
               platformPrefix = request.platformPrefix,
               os = request.os,
               arch = request.arch,
               additionalModules = if (request.fragment.ownsPlugins) request.additionalModules else emptyList(),
               mainClass = context.ideMainClassName,
-              coreClassPath = coreClassPath,
+              coreClassPath = coreClassPathDeferred.await(),
               pluginCount = pluginsResult.pluginEntries.size + (pluginsResult.additionalPlugins?.size ?: 0),
               componentRoot = runDir,
             )
@@ -860,11 +846,9 @@ internal fun configureDevModeBuildOptions(options: BuildOptions, request: BuildR
   // A dev assembly can contain uncommitted changes, so HEAD does not identify its contents.
   // Avoid coupling assembly to the mutable checkout solely for production provenance metadata.
   options.storeGitRevision = false
-  // a dev run directory is disposable and never patched in place, so by default it can share bytes with the caches it is assembled from
-  options.linkImmutableCacheEntries = request.linkImmutableCacheEntries
   // Only the fragment that packs the core jars or writes the `plugin-classpath.txt` prefix has anywhere to put the
   // inlined content-module descriptors; for the rest, resolving them only makes every content module's jar an input.
-  options.embedProductContentModuleDescriptors = request.fragment.ownsProductDescriptorJars || request.pluginClasspathPrefixFile != null
+  options.embedProductContentModuleDescriptors = request.fragment.ownsProductDescriptorJars || request.componentOutput?.pluginClasspathPrefixFile != null
 }
 
 /** [scratchDir] holds throwaway build data (`temp`, `artifacts`); it is separate from [buildDir] when the latter must contain only the distribution. */
@@ -912,7 +896,6 @@ internal fun createDevBuildContext(
       LocalDiskJarCacheManager(
         cacheDir = it,
         classesOutputDirectory = compilationContext.classesOutputDirectory,
-        linkCacheEntries = compilationContext.options.linkImmutableCacheEntries,
         maxAccessTimeAge = compilationContext.options.jarCacheMaxAccessAge,
         cleanupInterval = 1.hours,
       )

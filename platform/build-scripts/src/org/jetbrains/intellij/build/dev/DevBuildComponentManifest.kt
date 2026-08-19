@@ -20,7 +20,7 @@ import java.nio.file.attribute.PosixFilePermission
 import java.util.LinkedHashSet
 import kotlin.io.path.invariantSeparatorsPathString
 
-private const val DEV_BUILD_COMPONENT_MANIFEST_VERSION = 5
+private const val DEV_BUILD_COMPONENT_MANIFEST_VERSION = 7
 private const val COMPONENT_FILE_ENTRY_TYPE = "component-file"
 private const val COMPONENT_SYMLINK_ENTRY_TYPE = "symlink"
 private const val GENERATED_CORE_CLASSPATH_ENTRY_TYPE = "generated-core-classpath"

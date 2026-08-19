@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin.jar
+  modules:
+  - name: intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin
+    libraries:
+      kotlinc.kotlinx-serialization-compiler-plugin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2/kotlinx-serialization-compiler-plugin-for-ide-2.jar

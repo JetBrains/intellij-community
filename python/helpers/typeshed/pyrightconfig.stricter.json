@@ -53,8 +53,6 @@
         "stubs/html5lib",
         "stubs/httplib2",
         "stubs/hvac",
-        "stubs/icalendar/icalendar/prop.pyi",
-        "stubs/icalendar/icalendar/timezone/provider.pyi",
         "stubs/jsonschema",
         "stubs/jwcrypto",
         "stubs/kafka-python",

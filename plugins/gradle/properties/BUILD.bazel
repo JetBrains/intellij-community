@@ -121,7 +121,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:gradle",
+        "//libraries/gradle",
+        "//libraries/gradle:gradle_test_lib",
         "//plugins/gradle",
         "//plugins/gradle:gradle_test_lib",
         "//plugins/gradle/settings",

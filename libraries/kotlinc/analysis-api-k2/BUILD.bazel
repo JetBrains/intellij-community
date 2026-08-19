@@ -24,6 +24,7 @@ jvm_library(
         "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//java/java-psi-impl:psi-impl",
         "//java/java-frontback-psi-impl:frontback-psi-impl",
+        "//platform/backend",
     ],
 )
 
@@ -48,6 +49,7 @@ jvm_library(
         "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//java/java-psi-impl:psi-impl_test_lib",
         "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
+        "//platform/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.analysis.api.k2` end

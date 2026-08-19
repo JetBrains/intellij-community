@@ -41,6 +41,7 @@ class BaseDatabaseFeatures:
     has_real_datatype: bool
     supports_subqueries_in_group_by: bool
     ignores_unnecessary_order_by_in_subqueries: bool
+    has_native_boolean_field: bool
     has_native_uuid_field: bool
     has_native_duration_field: bool
     supports_temporal_subtraction: bool
@@ -100,6 +101,8 @@ class BaseDatabaseFeatures:
     supports_aggregate_order_by_clause: bool
     supports_aggregate_distinct_multiple_argument: bool
     supports_any_value: bool
+    supports_bit_aggregations: bool
+    supports_default_in_bit_aggregations: bool
     supports_index_on_text_field: bool
     supports_over_clause: bool
     supports_frame_range_fixed_distance: bool
@@ -139,17 +142,29 @@ class BaseDatabaseFeatures:
     supports_comments_inline: bool
     supports_stored_generated_columns: bool
     supports_virtual_generated_columns: bool
+    supports_alter_generated_column_data_type: bool
     supports_logical_xor: bool
     prohibits_null_characters_in_text_exception: tuple[ValueError | DataError] | None
     supports_unlimited_charfield: bool
     supports_tuple_comparison_against_subquery: bool
     rounds_to_even: bool
+    pattern_lookup_needs_param_pattern: bool
+    supports_no_precision_decimalfield: bool
     supports_tuple_lookups: bool
+    supports_on_delete_db_cascade: bool
+    supports_on_delete_db_default: bool
+    supports_on_delete_db_null: bool
+    supports_inspectdb: bool
     test_collations: dict[str, str | None]
     test_now_utc_template: str | None
     insert_test_table_with_defaults: str | None
     django_test_expected_failures: set[str]
     django_test_skips: dict[str, set[str]]
+    disallowed_simple_test_case_connection_methods: list[tuple[str, str]]
+    supports_uuid4_function: bool
+    supports_uuid4_function_in_default: bool
+    supports_uuid7_function: bool
+    supports_uuid7_function_shift: bool
     connection: BaseDatabaseWrapper
     def __init__(self, connection: BaseDatabaseWrapper) -> None: ...
     def __del__(self) -> None: ...

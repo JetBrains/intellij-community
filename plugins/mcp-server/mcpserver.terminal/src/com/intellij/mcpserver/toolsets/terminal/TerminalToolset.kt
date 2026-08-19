@@ -70,7 +70,7 @@ class TerminalToolset : McpToolset {
                                command = command,
                                executeInShell = executeInShell,
                                sessionId = if (reuseExistingTerminalWindow) id else null,
-                               timeout = Constants.LONG_TIMEOUT_MILLISECONDS_VALUE.milliseconds,
+                               timeout = timeout.milliseconds,
                                maxLinesCount = maxLinesCount,
                                truncateMode = truncateMode
     )

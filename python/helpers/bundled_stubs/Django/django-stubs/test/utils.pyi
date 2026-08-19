@@ -5,7 +5,7 @@ from decimal import Decimal
 from io import StringIO
 from logging import Logger
 from types import TracebackType
-from typing import Any, Protocol, SupportsIndex, TypeAlias, type_check_only
+from typing import Any, Protocol, Self, SupportsIndex, TypeAlias, type_check_only
 
 from django.apps.registry import Apps
 from django.conf import LazySettings, Settings
@@ -15,7 +15,7 @@ from django.db.models.lookups import Lookup, Transform
 from django.db.models.query_utils import RegisterLookupMixin
 from django.test.runner import DiscoverRunner
 from django.test.testcases import SimpleTestCase
-from typing_extensions import Self, TypeVar, override
+from typing_extensions import TypeVar, override
 
 _TestClass: TypeAlias = type[SimpleTestCase]
 _DecoratedTest: TypeAlias = Callable[..., Any] | _TestClass

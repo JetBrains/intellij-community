@@ -2727,28 +2727,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps/gradle-api-9.7.0.jar_copy",
-    src = "@org_jetbrains_intellij_deps-gradle-api-9_7_0_http//file",
-    out = "org.jetbrains.intellij.deps/gradle-api-9.7.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "gradle",
-    jar = "@org_jetbrains_intellij_deps-gradle-api-9_7_0_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-gradle-api-9_7_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "gradle-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":gradle"],
-)
-
-copy_file(
     name = "org.apache.ant/ant-1.10.15.jar_copy",
     src = "@org_apache_ant-ant-1_10_15_http//file",
     out = "org.apache.ant/ant-1.10.15.jar",
@@ -5958,44 +5936,6 @@ java_library(
 )
 
 copy_file(
-    name = "io.qameta.allure/allure-java-commons-2.25.0.jar_copy",
-    src = "@io_qameta_allure-allure-java-commons-2_25_0_http//file",
-    out = "io.qameta.allure/allure-java-commons-2.25.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.qameta.allure/allure-model-2.25.0.jar_copy",
-    src = "@io_qameta_allure-allure-model-2_25_0_http//file",
-    out = "io.qameta.allure/allure-model-2.25.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "io-qameta-allure-java-commons",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":io_qameta_allure-allure-java-commons-2_25_0_http_import",
-        ":io_qameta_allure-allure-model-2_25_0_http_import",
-    ],
-)
-
-jvm_import(
-    name = "io_qameta_allure-allure-java-commons-2_25_0_http_import",
-    jar = "@io_qameta_allure-allure-java-commons-2_25_0_http//file",
-    source_jar = "@io_qameta_allure-allure-java-commons-2_25_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_qameta_allure-allure-model-2_25_0_http_import",
-    jar = "@io_qameta_allure-allure-model-2_25_0_http//file",
-    source_jar = "@io_qameta_allure-allure-model-2_25_0-sources_http//file",
-)
-
-copy_file(
     name = "org.jacoco/org.jacoco.ant-0.8.15.jar_copy",
     src = "@org_jacoco-org_jacoco_ant-0_8_15_http//file",
     out = "org.jacoco/org.jacoco.ant-0.8.15.jar",
@@ -6172,17 +6112,17 @@ java_library(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps/debugger-agent-1.191.jar_copy",
-    src = "@org_jetbrains_intellij_deps-debugger-agent-1_191_http//file",
-    out = "org.jetbrains.intellij.deps/debugger-agent-1.191.jar",
+    name = "org.jetbrains.intellij.deps/debugger-agent-1.193.jar_copy",
+    src = "@org_jetbrains_intellij_deps-debugger-agent-1_193_http//file",
+    out = "org.jetbrains.intellij.deps/debugger-agent-1.193.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "java-debugger-agent-holder-debugger-agent",
-    jar = "@org_jetbrains_intellij_deps-debugger-agent-1_191_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-debugger-agent-1_191-sources_http//file",
+    jar = "@org_jetbrains_intellij_deps-debugger-agent-1_193_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-debugger-agent-1_193-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -7123,51 +7063,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.kodein.di/kodein-di-jvm-7.26.1.jar_copy",
-    src = "@org_kodein_di-kodein-di-jvm-7_26_1_http//file",
-    out = "org.kodein.di/kodein-di-jvm-7.26.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.kodein.type/kaverit-jvm-2.10.0.jar_copy",
-    src = "@org_kodein_type-kaverit-jvm-2_10_0_http//file",
-    out = "org.kodein.type/kaverit-jvm-2.10.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kodein-di-jvm",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_kodein_di-kodein-di-jvm-7_26_1_http_import",
-        ":org_kodein_type-kaverit-jvm-2_10_0_http_import",
-    ],
-)
-
-jvm_import(
-    name = "org_kodein_di-kodein-di-jvm-7_26_1_http_import",
-    jar = "@org_kodein_di-kodein-di-jvm-7_26_1_http//file",
-    source_jar = "@org_kodein_di-kodein-di-jvm-7_26_1-sources_http//file",
-)
-
-jvm_import(
-    name = "org_kodein_type-kaverit-jvm-2_10_0_http_import",
-    jar = "@org_kodein_type-kaverit-jvm-2_10_0_http//file",
-    source_jar = "@org_kodein_type-kaverit-jvm-2_10_0-sources_http//file",
-)
-
-java_library(
-    name = "kodein-di-jvm-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":kodein-di-jvm"],
-)
-
-copy_file(
     name = "org.ehcache/sizeof-0.4.0.jar_copy",
     src = "@org_ehcache-sizeof-0_4_0_http//file",
     out = "org.ehcache/sizeof-0.4.0.jar",
@@ -7305,21 +7200,6 @@ jvm_import(
     name = "kotlin-test",
     jar = "@org_jetbrains_kotlin-kotlin-test-2_4_10-RC2_http//file",
     source_jar = "@org_jetbrains_kotlin-kotlin-test-2_4_10-RC2-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.jetbrains.kotlin/kotlin-test-junit-2.4.10-RC2.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-test-junit-2_4_10-RC2_http//file",
-    out = "org.jetbrains.kotlin/kotlin-test-junit-2.4.10-RC2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlin-test-junit",
-    jar = "@org_jetbrains_kotlin-kotlin-test-junit-2_4_10-RC2_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-test-junit-2_4_10-RC2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -7578,28 +7458,6 @@ java_library(
     neverlink = True,
     visibility = ["//visibility:public"],
     exports = [":kotlinc-kotlin-compiler-fe10"],
-)
-
-copy_file(
-    name = "org.jetbrains.kotlin/kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232_http//file",
-    out = "org.jetbrains.kotlin/kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlinc-kotlin-compiler-fir",
-    jar = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kotlinc-kotlin-compiler-fir-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-compiler-fir"],
 )
 
 copy_file(
@@ -7952,28 +7810,6 @@ java_library(
     neverlink = True,
     visibility = ["//visibility:public"],
     exports = [":kotlinc-kotlin-swift-export"],
-)
-
-copy_file(
-    name = "org.jetbrains.kotlin/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-dev-4232.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlinx-serialization-compiler-plugin-for-ide-2_5_0-dev-4232_http//file",
-    out = "org.jetbrains.kotlin/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-dev-4232.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlinc-kotlinx-serialization-compiler-plugin",
-    jar = "@org_jetbrains_kotlin-kotlinx-serialization-compiler-plugin-for-ide-2_5_0-dev-4232_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlinx-serialization-compiler-plugin-for-ide-2_5_0-dev-4232-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kotlinc-kotlinx-serialization-compiler-plugin-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlinx-serialization-compiler-plugin"],
 )
 
 copy_file(
@@ -8834,6 +8670,44 @@ jvm_import(
     jar = "@ai_grazie_utils-utils-multiplatform-jvm-0_8_256_http//file",
     source_jar = "@ai_grazie_utils-utils-multiplatform-jvm-0_8_256-sources_http//file",
     visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.qameta.allure/allure-java-commons-2.25.0.jar_copy",
+    src = "@io_qameta_allure-allure-java-commons-2_25_0_http//file",
+    out = "io.qameta.allure/allure-java-commons-2.25.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.qameta.allure/allure-model-2.25.0.jar_copy",
+    src = "@io_qameta_allure-allure-model-2_25_0_http//file",
+    out = "io.qameta.allure/allure-model-2.25.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-allure-java-commons-io-qameta-allure-java-commons",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":io_qameta_allure-allure-java-commons-2_25_0_http_import",
+        ":io_qameta_allure-allure-model-2_25_0_http_import",
+    ],
+)
+
+jvm_import(
+    name = "io_qameta_allure-allure-java-commons-2_25_0_http_import",
+    jar = "@io_qameta_allure-allure-java-commons-2_25_0_http//file",
+    source_jar = "@io_qameta_allure-allure-java-commons-2_25_0-sources_http//file",
+)
+
+jvm_import(
+    name = "io_qameta_allure-allure-model-2_25_0_http_import",
+    jar = "@io_qameta_allure-allure-model-2_25_0_http//file",
+    source_jar = "@io_qameta_allure-allure-model-2_25_0-sources_http//file",
 )
 
 copy_file(
@@ -10796,6 +10670,882 @@ jvm_import(
 )
 
 copy_file(
+    name = "com.vladsch.flexmark/flexmark-all-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-all-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-all-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-abbreviation-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-abbreviation-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-abbreviation-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-util-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-util-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-util-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-admonition-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-admonition-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-admonition-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-anchorlink-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-anchorlink-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-anchorlink-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-aside-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-aside-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-aside-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-attributes-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-attributes-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-attributes-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-autolink-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-autolink-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-autolink-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.nibor.autolink/autolink-0.6.0.jar_copy",
+    src = "@org_nibor_autolink-autolink-0_6_0_http//file",
+    out = "org.nibor.autolink/autolink-0.6.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-definition-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-definition-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-definition-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-emoji-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-emoji-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-emoji-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-enumerated-reference-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-enumerated-reference-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-enumerated-reference-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-escaped-character-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-escaped-character-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-escaped-character-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-footnotes-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-footnotes-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-footnotes-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-gfm-issues-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-gfm-issues-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-gfm-issues-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-gfm-strikethrough-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-gfm-strikethrough-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-gfm-strikethrough-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-gfm-tasklist-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-gfm-tasklist-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-gfm-tasklist-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-gfm-users-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-gfm-users-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-gfm-users-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-gitlab-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-gitlab-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-gitlab-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-jekyll-front-matter-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-jekyll-front-matter-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-jekyll-front-matter-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-jekyll-tag-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-jekyll-tag-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-jekyll-tag-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-media-tags-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-media-tags-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-media-tags-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-resizable-image-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-resizable-image-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-resizable-image-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-macros-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-macros-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-macros-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-ins-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-ins-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-ins-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-xwiki-macros-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-xwiki-macros-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-xwiki-macros-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-superscript-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-superscript-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-superscript-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-tables-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-tables-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-tables-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-toc-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-toc-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-toc-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-typographic-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-typographic-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-typographic-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-wikilink-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-wikilink-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-wikilink-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-yaml-front-matter-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-yaml-front-matter-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-yaml-front-matter-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-ext-youtube-embedded-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-ext-youtube-embedded-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-ext-youtube-embedded-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-html2md-converter-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-html2md-converter-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-html2md-converter-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-jira-converter-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-jira-converter-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-jira-converter-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-pdf-converter-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-pdf-converter-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-pdf-converter-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.openhtmltopdf/openhtmltopdf-core-1.0.10.jar_copy",
+    src = "@com_openhtmltopdf-openhtmltopdf-core-1_0_10_http//file",
+    out = "com.openhtmltopdf/openhtmltopdf-core-1.0.10.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.openhtmltopdf/openhtmltopdf-pdfbox-1.0.10.jar_copy",
+    src = "@com_openhtmltopdf-openhtmltopdf-pdfbox-1_0_10_http//file",
+    out = "com.openhtmltopdf/openhtmltopdf-pdfbox-1.0.10.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.apache.pdfbox/pdfbox-2.0.24.jar_copy",
+    src = "@org_apache_pdfbox-pdfbox-2_0_24_http//file",
+    out = "org.apache.pdfbox/pdfbox-2.0.24.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.apache.pdfbox/fontbox-2.0.24.jar_copy",
+    src = "@org_apache_pdfbox-fontbox-2_0_24_http//file",
+    out = "org.apache.pdfbox/fontbox-2.0.24.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.apache.pdfbox/xmpbox-2.0.24.jar_copy",
+    src = "@org_apache_pdfbox-xmpbox-2_0_24_http//file",
+    out = "org.apache.pdfbox/xmpbox-2.0.24.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "de.rototor.pdfbox/graphics2d-0.32.jar_copy",
+    src = "@de_rototor_pdfbox-graphics2d-0_32_http//file",
+    out = "de.rototor.pdfbox/graphics2d-0.32.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.openhtmltopdf/openhtmltopdf-rtl-support-1.0.10.jar_copy",
+    src = "@com_openhtmltopdf-openhtmltopdf-rtl-support-1_0_10_http//file",
+    out = "com.openhtmltopdf/openhtmltopdf-rtl-support-1.0.10.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-profile-pegdown-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-profile-pegdown-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-profile-pegdown-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-util-ast-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-util-ast-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-util-ast-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-util-builder-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-util-builder-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-util-builder-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-util-collection-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-util-collection-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-util-collection-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-util-data-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-util-data-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-util-data-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-util-dependency-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-util-dependency-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-util-dependency-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-util-format-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-util-format-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-util-format-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-util-html-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-util-html-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-util-html-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-util-misc-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-util-misc-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-util-misc-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-util-options-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-util-options-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-util-options-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-util-sequence-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-util-sequence-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-util-sequence-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-util-visitor-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-util-visitor-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-util-visitor-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.vladsch.flexmark/flexmark-youtrack-converter-0.64.8.jar_copy",
+    src = "@com_vladsch_flexmark-flexmark-youtrack-converter-0_64_8_http//file",
+    out = "com.vladsch.flexmark/flexmark-youtrack-converter-0.64.8.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-flexmark-flexmark",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":com_vladsch_flexmark-flexmark-all-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-abbreviation-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-util-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-admonition-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-anchorlink-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-aside-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-attributes-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-autolink-0_64_8_http_import",
+        ":org_nibor_autolink-autolink-0_6_0_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-definition-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-emoji-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-enumerated-reference-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-escaped-character-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-footnotes-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-gfm-issues-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-gfm-strikethrough-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-gfm-tasklist-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-gfm-users-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-gitlab-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-jekyll-front-matter-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-jekyll-tag-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-media-tags-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-resizable-image-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-macros-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-ins-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-xwiki-macros-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-superscript-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-tables-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-toc-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-typographic-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-wikilink-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-yaml-front-matter-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-ext-youtube-embedded-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-html2md-converter-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-jira-converter-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-pdf-converter-0_64_8_http_import",
+        ":com_openhtmltopdf-openhtmltopdf-core-1_0_10_http_import",
+        ":com_openhtmltopdf-openhtmltopdf-pdfbox-1_0_10_http_import",
+        ":org_apache_pdfbox-pdfbox-2_0_24_http_import",
+        ":org_apache_pdfbox-fontbox-2_0_24_http_import",
+        ":org_apache_pdfbox-xmpbox-2_0_24_http_import",
+        ":de_rototor_pdfbox-graphics2d-0_32_http_import",
+        ":com_openhtmltopdf-openhtmltopdf-rtl-support-1_0_10_http_import",
+        ":com_vladsch_flexmark-flexmark-profile-pegdown-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-util-ast-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-util-builder-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-util-collection-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-util-data-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-util-dependency-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-util-format-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-util-html-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-util-misc-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-util-options-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-util-sequence-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-util-visitor-0_64_8_http_import",
+        ":com_vladsch_flexmark-flexmark-youtrack-converter-0_64_8_http_import",
+    ],
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-all-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-all-0_64_8_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-abbreviation-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-abbreviation-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-abbreviation-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-util-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-util-0_64_8_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-admonition-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-admonition-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-admonition-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-anchorlink-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-anchorlink-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-anchorlink-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-aside-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-aside-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-aside-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-attributes-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-attributes-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-attributes-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-autolink-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-autolink-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-autolink-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "org_nibor_autolink-autolink-0_6_0_http_import",
+    jar = "@org_nibor_autolink-autolink-0_6_0_http//file",
+    source_jar = "@org_nibor_autolink-autolink-0_6_0-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-definition-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-definition-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-definition-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-emoji-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-emoji-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-emoji-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-enumerated-reference-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-enumerated-reference-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-enumerated-reference-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-escaped-character-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-escaped-character-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-escaped-character-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-footnotes-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-footnotes-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-footnotes-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-gfm-issues-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-gfm-issues-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-gfm-issues-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-gfm-strikethrough-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-gfm-strikethrough-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-gfm-strikethrough-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-gfm-tasklist-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-gfm-tasklist-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-gfm-tasklist-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-gfm-users-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-gfm-users-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-gfm-users-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-gitlab-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-gitlab-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-gitlab-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-jekyll-front-matter-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-jekyll-front-matter-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-jekyll-front-matter-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-jekyll-tag-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-jekyll-tag-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-jekyll-tag-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-media-tags-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-media-tags-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-media-tags-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-resizable-image-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-resizable-image-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-resizable-image-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-macros-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-macros-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-macros-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-ins-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-ins-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-ins-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-xwiki-macros-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-xwiki-macros-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-xwiki-macros-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-superscript-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-superscript-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-superscript-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-tables-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-tables-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-tables-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-toc-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-toc-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-toc-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-typographic-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-typographic-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-typographic-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-wikilink-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-wikilink-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-wikilink-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-yaml-front-matter-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-yaml-front-matter-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-yaml-front-matter-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-ext-youtube-embedded-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-ext-youtube-embedded-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-ext-youtube-embedded-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-html2md-converter-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-html2md-converter-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-html2md-converter-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-jira-converter-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-jira-converter-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-jira-converter-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-pdf-converter-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-pdf-converter-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-pdf-converter-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_openhtmltopdf-openhtmltopdf-core-1_0_10_http_import",
+    jar = "@com_openhtmltopdf-openhtmltopdf-core-1_0_10_http//file",
+    source_jar = "@com_openhtmltopdf-openhtmltopdf-core-1_0_10-sources_http//file",
+)
+
+jvm_import(
+    name = "com_openhtmltopdf-openhtmltopdf-pdfbox-1_0_10_http_import",
+    jar = "@com_openhtmltopdf-openhtmltopdf-pdfbox-1_0_10_http//file",
+    source_jar = "@com_openhtmltopdf-openhtmltopdf-pdfbox-1_0_10-sources_http//file",
+)
+
+jvm_import(
+    name = "org_apache_pdfbox-pdfbox-2_0_24_http_import",
+    jar = "@org_apache_pdfbox-pdfbox-2_0_24_http//file",
+    source_jar = "@org_apache_pdfbox-pdfbox-2_0_24-sources_http//file",
+)
+
+jvm_import(
+    name = "org_apache_pdfbox-fontbox-2_0_24_http_import",
+    jar = "@org_apache_pdfbox-fontbox-2_0_24_http//file",
+    source_jar = "@org_apache_pdfbox-fontbox-2_0_24-sources_http//file",
+)
+
+jvm_import(
+    name = "org_apache_pdfbox-xmpbox-2_0_24_http_import",
+    jar = "@org_apache_pdfbox-xmpbox-2_0_24_http//file",
+    source_jar = "@org_apache_pdfbox-xmpbox-2_0_24-sources_http//file",
+)
+
+jvm_import(
+    name = "de_rototor_pdfbox-graphics2d-0_32_http_import",
+    jar = "@de_rototor_pdfbox-graphics2d-0_32_http//file",
+    source_jar = "@de_rototor_pdfbox-graphics2d-0_32-sources_http//file",
+)
+
+jvm_import(
+    name = "com_openhtmltopdf-openhtmltopdf-rtl-support-1_0_10_http_import",
+    jar = "@com_openhtmltopdf-openhtmltopdf-rtl-support-1_0_10_http//file",
+    source_jar = "@com_openhtmltopdf-openhtmltopdf-rtl-support-1_0_10-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-profile-pegdown-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-profile-pegdown-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-profile-pegdown-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-util-ast-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-util-ast-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-util-ast-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-util-builder-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-util-builder-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-util-builder-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-util-collection-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-util-collection-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-util-collection-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-util-data-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-util-data-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-util-data-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-util-dependency-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-util-dependency-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-util-dependency-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-util-format-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-util-format-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-util-format-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-util-html-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-util-html-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-util-html-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-util-misc-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-util-misc-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-util-misc-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-util-options-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-util-options-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-util-options-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-util-sequence-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-util-sequence-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-util-sequence-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-util-visitor-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-util-visitor-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-util-visitor-0_64_8-sources_http//file",
+)
+
+jvm_import(
+    name = "com_vladsch_flexmark-flexmark-youtrack-converter-0_64_8_http_import",
+    jar = "@com_vladsch_flexmark-flexmark-youtrack-converter-0_64_8_http//file",
+    source_jar = "@com_vladsch_flexmark-flexmark-youtrack-converter-0_64_8-sources_http//file",
+)
+
+copy_file(
+    name = "org.jetbrains.intellij.deps/gradle-api-9.7.0.jar_copy",
+    src = "@org_jetbrains_intellij_deps-gradle-api-9_7_0_http//file",
+    out = "org.jetbrains.intellij.deps/gradle-api-9.7.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-gradle-_gradle",
+    jar = "@org_jetbrains_intellij_deps-gradle-api-9_7_0_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-gradle-api-9_7_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.codehaus.groovy/groovy-ant-3.0.25.jar_copy",
     src = "@org_codehaus_groovy-groovy-ant-3_0_25_http//file",
     out = "org.codehaus.groovy/groovy-ant-3.0.25.jar",
@@ -12335,6 +13085,44 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.kodein.di/kodein-di-jvm-7.26.1.jar_copy",
+    src = "@org_kodein_di-kodein-di-jvm-7_26_1_http//file",
+    out = "org.kodein.di/kodein-di-jvm-7.26.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.kodein.type/kaverit-jvm-2.10.0.jar_copy",
+    src = "@org_kodein_type-kaverit-jvm-2_10_0_http//file",
+    out = "org.kodein.type/kaverit-jvm-2.10.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-kodein-di-jvm-kodein-di-jvm",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":org_kodein_di-kodein-di-jvm-7_26_1_http_import",
+        ":org_kodein_type-kaverit-jvm-2_10_0_http_import",
+    ],
+)
+
+jvm_import(
+    name = "org_kodein_di-kodein-di-jvm-7_26_1_http_import",
+    jar = "@org_kodein_di-kodein-di-jvm-7_26_1_http//file",
+    source_jar = "@org_kodein_di-kodein-di-jvm-7_26_1-sources_http//file",
+)
+
+jvm_import(
+    name = "org_kodein_type-kaverit-jvm-2_10_0_http_import",
+    jar = "@org_kodein_type-kaverit-jvm-2_10_0_http//file",
+    source_jar = "@org_kodein_type-kaverit-jvm-2_10_0-sources_http//file",
+)
+
+copy_file(
     name = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar_copy",
     src = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162_http//file",
     out = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar",
@@ -12361,6 +13149,21 @@ jvm_import(
     name = "libraries-kotlin-gradle-plugin-idea-proto-kotlin-gradle-plugin-idea-proto",
     jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-proto-1_9_20-dev-8162_http//file",
     source_jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-proto-1_9_20-dev-8162-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlin/kotlin-test-junit-2.4.10-RC2.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-test-junit-2_4_10-RC2_http//file",
+    out = "org.jetbrains.kotlin/kotlin-test-junit-2.4.10-RC2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlin-test-junit-kotlin-test-junit",
+    jar = "@org_jetbrains_kotlin-kotlin-test-junit-2_4_10-RC2_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-test-junit-2_4_10-RC2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -12520,6 +13323,36 @@ jvm_import(
     name = "libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
     jar = "@org_jetbrains_kotlin-kotlin-compiler-common-for-ide-2_5_0-dev-4232_http//file",
     source_jar = "@org_jetbrains_kotlin-kotlin-compiler-common-for-ide-2_5_0-dev-4232-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlin/kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232_http//file",
+    out = "org.jetbrains.kotlin/kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlinc-kotlin-compiler-fir-kotlinc-kotlin-compiler-fir",
+    jar = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlin/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-dev-4232.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlinx-serialization-compiler-plugin-for-ide-2_5_0-dev-4232_http//file",
+    out = "org.jetbrains.kotlin/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-dev-4232.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlinc-kotlinx-serialization-compiler-plugin-kotlinc-kotlinx-serialization-compiler-plugin",
+    jar = "@org_jetbrains_kotlin-kotlinx-serialization-compiler-plugin-for-ide-2_5_0-dev-4232_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlinx-serialization-compiler-plugin-for-ide-2_5_0-dev-4232-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -12983,6 +13816,21 @@ jvm_import(
     name = "com_miglayout-miglayout-core-11_4_2_http_import",
     jar = "@com_miglayout-miglayout-core-11_4_2_http//file",
     source_jar = "@com_miglayout-miglayout-core-11_4_2-sources_http//file",
+)
+
+copy_file(
+    name = "org.mockito.kotlin/mockito-kotlin-6.0.0.jar_copy",
+    src = "@org_mockito_kotlin-mockito-kotlin-6_0_0_http//file",
+    out = "org.mockito.kotlin/mockito-kotlin-6.0.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-mockito-kotlin-mockito-kotlin",
+    jar = "@org_mockito_kotlin-mockito-kotlin-6_0_0_http//file",
+    source_jar = "@org_mockito_kotlin-mockito-kotlin-6_0_0-sources_http//file",
+    visibility = ["//visibility:public"],
 )
 
 copy_file(
@@ -18906,21 +19754,6 @@ jvm_import(
     name = "mockito-junit-jupiter",
     jar = "@org_mockito-mockito-junit-jupiter-5_19_0_http//file",
     source_jar = "@org_mockito-mockito-junit-jupiter-5_19_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.mockito.kotlin/mockito-kotlin-6.0.0.jar_copy",
-    src = "@org_mockito_kotlin-mockito-kotlin-6_0_0_http//file",
-    out = "org.mockito.kotlin/mockito-kotlin-6.0.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "mockito-kotlin",
-    jar = "@org_mockito_kotlin-mockito-kotlin-6_0_0_http//file",
-    source_jar = "@org_mockito_kotlin-mockito-kotlin-6_0_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

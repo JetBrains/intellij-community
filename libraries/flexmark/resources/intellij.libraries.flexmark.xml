@@ -1,0 +1,6 @@
+<!--
+  This module is not included in the core plugin.
+  Plugins using this library must register it as private content without a namespace so bundled copies do not clash.
+-->
+<idea-plugin visibility="private">
+</idea-plugin>

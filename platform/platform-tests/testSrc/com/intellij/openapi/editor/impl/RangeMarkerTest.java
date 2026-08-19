@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -1035,6 +1036,22 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     LeakHunter.checkLeak(marker, Document.class, _ -> true);
   }
 
+  public void testRangeMarkerUserDataIsAvailableWhenProcessingOverlappingMarkers() {
+    RangeMarker marker = createMarker("0123456789", 2, 5);
+    Key<Object> key = Key.create("range.marker.test.data");
+    Object value = new Object();
+    marker.putUserData(key, value);
+
+    Ref<RangeMarker> processedMarker = new Ref<>();
+    assertTrue(((DocumentEx)document).processRangeMarkersOverlappingWith(2, 5, candidate -> {
+      processedMarker.set(candidate);
+      return true;
+    }));
+
+    assertNotNull(processedMarker.get());
+    assertSame(value, processedMarker.get().getUserData(key));
+  }
+
   public void testRangeMarkersAreGarbageCollectableAndWhenTheyHaveTheyLeaveNoTracesInDocumentEvenTheirIds() {
     DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
     Ref<RangeMarkerEx> markerRef = new Ref<>((RangeMarkerEx)document.createRangeMarker(0, document.getTextLength()));
@@ -1583,6 +1600,36 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(vf, marker, persistentMarker);
   }
 
+  public void testSnapshotRangeMarkerAloneUpdatesItselfWhenDocumentIsGCedAndVirtualFileChanges() throws IOException {
+    VirtualFile vf = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "blah");
+    PsiFile psiFile = Objects.requireNonNull(getPsiManager().findFile(vf));
+    RangeMarker marker = createMarker(psiFile, 1, 3);
+    int oldDocumentHash = System.identityHashCode(document);
+
+    gcDocument();
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(vf));
+    assertTrue(marker.isValid());
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(vf));
+
+    String newText = "0123blah";
+    WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Object, IOException>)() -> {
+      vf.setBinaryContent(newText.getBytes(StandardCharsets.UTF_8));
+      return null;
+    });
+
+    document = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
+    assertNotSame(oldDocumentHash, System.identityHashCode(document));
+    assertEquals(newText, document.getText());
+    assertTrue(marker.isValid());
+    assertEquals("la", marker.getTextRange().substring(document.getText()));
+
+    gcDocument();
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(vf));
+    assertTrue(marker.isValid());
+    assertEquals(new TextRange(5, 7), marker.getTextRange());
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(vf));
+  }
+
   public void testLazyPersistentRangeMarkerCreatedFromLineColumnMustRestoreItselfWhenDocumentIsLoaded() {
     // need to be physical file
     VirtualFile vf = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "blah\nblah2\nblah3");
@@ -1704,7 +1751,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
   public void testGetTextRangeMustBeAtomic_Stress() throws ExecutionException, InterruptedException {
     int len = 1000;
-    RangeMarkerEx marker = createMarker(" ".repeat(len), 10, 11);
+    DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(" ".repeat(len));
+    RangeMarker marker = document.createRangeMarker(10, 11);
+
     TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       while (!t.isTimedOut()) {
@@ -1713,11 +1762,12 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       }
     });
     while (!t.isTimedOut()) {
-      insertString(marker.getDocument(), 0, "x");
+      insertString(document, 0, "x");
       Thread.yield();
-      deleteString(marker.getDocument(), 0,1);
+      deleteString(document, 0, 1);
     }
     future.get();
+    Reference.reachabilityFence(document);
   }
 
   public void testRangeMarkerMustPreserveItsOffsetsSomeTimeAfterDeath() {
@@ -1775,5 +1825,19 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     RangeMarkerEx marker = createMarker("12345", 1, 3);
     deleteString(document, 0, 4);
     assertFalse(marker.isValid());
+  }
+
+  public void testReplaceNotGreedy() {
+    RangeMarkerEx marker = createMarker(" ".repeat(10), 1, 3);
+    replaceString(document, 0, 2, "xxx");
+    assertEquals(TextRange.create(3,4), marker.getTextRange());
+  }
+  
+  public void testReplaceBeforeGreedy() {
+    RangeMarkerEx marker = createMarker(" ".repeat(10), 1, 3);
+    marker.setGreedyToLeft(true);
+    replaceString(document, 0, 1, "xxx");
+    assertTrue(marker.isValid());
+    assertEquals(TextRange.create(3,5), marker.getTextRange());
   }
 }

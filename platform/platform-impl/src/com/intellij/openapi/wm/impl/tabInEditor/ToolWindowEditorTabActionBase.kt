@@ -47,8 +47,7 @@ abstract class ToolWindowEditorTabActionBase : DumbAwareAction() {
     val file = e.getData(PlatformDataKeys.FILE_EDITOR)?.file as? ToolWindowEditorTabFile ?: return null
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(file.toolWindowId) ?: return null
 
-    // after adding persistence: val content = ToolWindowEditorTabManager.getInstance(project).getSession(file)?.content ?: return null
-    val content = file.content
+    val content = ToolWindowEditorTabManager.getInstance(project).getSession(file)?.content ?: return null
 
     return Context(
       toolWindow = toolWindow,

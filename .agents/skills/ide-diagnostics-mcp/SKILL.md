@@ -1,6 +1,6 @@
 ---
 name: ide-diagnostics-mcp
-description: Inspect a running IntelliJ IDE for freezes, high CPU, or blocked threads via MCP.
+description: Inspect a running IntelliJ IDE for freezes or blocked threads via MCP.
 ---
 
 # IDE Diagnostics MCP

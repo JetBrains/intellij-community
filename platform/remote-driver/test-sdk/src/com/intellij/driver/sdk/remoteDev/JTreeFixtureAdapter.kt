@@ -95,6 +95,10 @@ class JTreeFixtureAdapter(robot: Robot, component: BeControlComponentBase) :
     fixture.expandAll(timeoutMs)
   }
 
+  override fun expandRowRecursively(row: Int, timeoutMs: Int) {
+    fixture.expandRowRecursively(row, timeoutMs)
+  }
+
   override fun getRowPoint(row: Int): Point {
     return fixture.getRowPoint(row)
   }

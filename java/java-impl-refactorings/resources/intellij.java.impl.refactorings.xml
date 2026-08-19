@@ -83,6 +83,11 @@
       serviceInterface="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableService"
       serviceImplementation="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableServiceImpl"
       overrides="true"/>
+
+    <!-- Entry point for intentions declared in intellij.java.impl, which cannot depend on this module -->
+    <applicationService
+      serviceInterface="com.intellij.refactoring.JavaRefactoringService"
+      serviceImplementation="com.intellij.refactoring.JavaRefactoringServiceImpl"/>
     <applicationService
       serviceInterface="com.intellij.refactoring.introduceField.JavaIntroduceFieldService"
       serviceImplementation="com.intellij.refactoring.introduceField.JavaIntroduceFieldServiceImpl"

@@ -68,6 +68,8 @@
   <content namespace="jetbrains">
     <!-- region lambda.testFrameworkLibraries -->
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.allure.java.commons"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.byte.buddy"/>
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.hamcrest"/>
@@ -85,6 +87,8 @@
     <module name="intellij.libraries.junit5.pioneer"/>
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.junit5.vintage"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.kodein.di.jvm"/>
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.kotlinTest"/>
     <!-- endregion -->

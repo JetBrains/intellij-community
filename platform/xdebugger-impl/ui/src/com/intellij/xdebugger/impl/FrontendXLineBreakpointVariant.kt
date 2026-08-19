@@ -18,6 +18,7 @@ import com.intellij.platform.debugger.impl.rpc.XLineBreakpointMultipleVariantRes
 import com.intellij.platform.debugger.impl.rpc.XLineBreakpointVariantDto
 import com.intellij.platform.debugger.impl.rpc.XNoBreakpointPossibleResponse
 import com.intellij.platform.debugger.impl.rpc.XRemoveBreakpointResponse
+import com.intellij.platform.debugger.impl.rpc.toRpc as expressionToRpc
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
@@ -50,7 +51,7 @@ private suspend fun XLineBreakpointInstallationInfo.toRequest(hasBreakpoints: Bo
   placement,
   isTemporary,
   isLogging,
-  logExpression,
+  logExpression?.expressionToRpc(),
   hasBreakpoints,
 )
 

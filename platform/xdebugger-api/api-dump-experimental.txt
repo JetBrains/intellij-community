@@ -44,6 +44,16 @@ com.intellij.xdebugger.breakpoints.XBreakpointListener
 - java.util.EventListener
 - *:breakpointError(com.intellij.xdebugger.breakpoints.XBreakpoint,com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.BreakpointErrorData):V
 - *:breakpointLogMessage(com.intellij.xdebugger.breakpoints.XBreakpoint,com.intellij.xdebugger.XDebugSession,java.lang.String):V
+*f:com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo
+- f:getLogExpressionIfEnabled():com.intellij.xdebugger.XExpression
+- f:getSuspendPolicy():com.intellij.xdebugger.breakpoints.SuspendPolicy
+- f:isTemporary():Z
+*f:com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo$Builder
+- <init>():V
+- f:build():com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo
+- f:setLogExpressionIfEnabled(com.intellij.xdebugger.XExpression):com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo$Builder
+- f:setSuspendPolicy(com.intellij.xdebugger.breakpoints.SuspendPolicy):com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo$Builder
+- f:setTemporary(Z):com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo$Builder
 a:com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 - *:isEvaluateExpressionFieldEnabled():Z
 *:com.intellij.xdebugger.frame.XDropFrameHandler

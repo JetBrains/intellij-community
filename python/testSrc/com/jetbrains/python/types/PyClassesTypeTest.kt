@@ -24,4 +24,31 @@ class PyClassesTypeTest : PyCodeInsightTestCase() {
     class C(A, a="str"): ...
     #          ^^^^^^^ WARNING Expected type 'int', got 'Literal["str"]' instead
     """.trimIndent())
+
+  @Test
+  fun `old style classes`() = test("""
+    def test_old_style_classes():
+        class C:
+            pass
+        def f(x):
+            '''
+            :type x: object
+            '''
+            pass
+        f(C()) #pass
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-6606"])
+  fun `builtin base class`() = test("""
+    def test():
+        class MyInt(int):
+            pass
+        def f(x):
+            '''
+            :type x: MyInt
+            '''
+        i = MyInt(2)
+        f(i)
+    """.trimIndent())
 }

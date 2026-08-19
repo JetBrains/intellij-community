@@ -5,27 +5,26 @@ import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.VetoableProjectManagerListener
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Key
-import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabFile
+import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabManager
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
-import com.intellij.terminal.frontend.view.TerminalView
-import com.intellij.terminal.ui.TerminalWidget
+import com.intellij.ui.content.Content
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.plugins.terminal.TerminalBundle
-import org.jetbrains.plugins.terminal.TerminalToolWindowManager
+import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import java.time.LocalDateTime
 
 /**
@@ -59,11 +58,6 @@ internal object TerminalProcessesClosingNotifier : VetoableProjectManagerListene
   }
 
   override fun canClose(project: Project): Boolean {
-    if (!IdeProductMode.isFrontend) {
-      // Processes closing notification is enabled only in RemDev for now
-      return true
-    }
-
     // This logic can be called multiple times during the IDE closing process:
     // during `canExitApplication` and `canClose` checks in `ApplicationImpl.canExit`,
     // then during `canClose` check in `ProjectManagerImpl.closeProject`.
@@ -75,16 +69,14 @@ internal object TerminalProcessesClosingNotifier : VetoableProjectManagerListene
     }
 
     // canClose() is invoked on EDT during project close, so reading the tool window tabs here is safe.
-    // Use serviceIfCreated to avoid creating a terminal service just to close a project without terminals.
-    val reworkedViews = (project.serviceIfCreated<TerminalToolWindowTabsManager>()?.tabs ?: emptyList()).map { it.view }
-    val classicWidgets = (project.serviceIfCreated<TerminalToolWindowManager>()?.terminalWidgets?.toList() ?: emptyList())
-    if (reworkedViews.isEmpty() && classicWidgets.isEmpty()) {
+    val terminalTabs = collectTerminalTabs(project)
+    if (terminalTabs.isEmpty()) {
       return true
     }
 
     val tabTitlesToConfirm = try {
       runWithModalProgressBlocking(project, TerminalBundle.message("checking.running.terminal.processes.progress")) {
-        collectTabTitlesToConfirm(reworkedViews, classicWidgets)
+        collectTabTitlesToConfirm(terminalTabs)
       }
     }
     catch (_: CancellationException) {
@@ -107,30 +99,43 @@ internal object TerminalProcessesClosingNotifier : VetoableProjectManagerListene
     return terminationConfirmed
   }
 
-  private suspend fun collectTabTitlesToConfirm(
-    reworkedTabs: List<TerminalView>,
-    classicWidgets: List<TerminalWidget>,
-  ): List<String> = coroutineScope {
-    val tasks = mutableListOf<Deferred<String?>>()
+  private fun collectTerminalTabs(project: Project): List<TerminalTabContent> {
+    val contents = getTerminalToolWindowContents(project) + getTerminalEditorTabContents(project)
+    return contents.mapNotNull { it.toTerminalTabContentOrNull() }
+  }
 
-    for (view in reworkedTabs) {
-      tasks += async {
-        if (TerminalTabCloseListenerImpl.shouldConfirmClosing(view)) {
-          view.getFullTitleText()
-        }
-        else null
-      }
-    }
-    for (widget in classicWidgets) {
-      tasks += async(Dispatchers.IO) {
-        if (widget.isCommandRunning()) {
-          widget.terminalTitle.buildFullTitle()
-        }
-        else null
-      }
+  private fun getTerminalToolWindowContents(project: Project): List<Content> {
+    val terminalToolWindow = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID)
+                             ?: return emptyList()
+    // Use `contentManagerIfCreated` to avoid initializing the tool window if it is not yet created.
+    return terminalToolWindow.contentManagerIfCreated?.contentsRecursively ?: emptyList()
+  }
+
+  private fun getTerminalEditorTabContents(project: Project): List<Content> {
+    // Use `serviceIfCreated` to avoid initializing the services if they are not yet created.
+    val fileEditorManager = project.serviceIfCreated<FileEditorManager>()
+    val editorTabsManager = project.serviceIfCreated<ToolWindowEditorTabManager>()
+    if (fileEditorManager == null || editorTabsManager == null) {
+      // If these services are not yet created, there are definitely no related editor tabs.
+      return emptyList()
     }
 
-    tasks.awaitAll().filterNotNull()
+    return fileEditorManager.openFiles
+      .asSequence()
+      .filterIsInstance<ToolWindowEditorTabFile>()
+      .filter { file -> file.toolWindowId == TerminalToolWindowFactory.TOOL_WINDOW_ID }
+      .mapNotNull { file -> editorTabsManager.getSession(file) }
+      .map { session -> session.content }
+      .toList()
+  }
+
+  private suspend fun collectTabTitlesToConfirm(tabs: List<TerminalTabContent>): List<String> = coroutineScope {
+    val tasks = tabs.map {
+      async {
+        it.getClosingConfirmationDetails()
+      }
+    }
+    tasks.awaitAll().mapNotNull { it?.fullTitle }
   }
 }
 

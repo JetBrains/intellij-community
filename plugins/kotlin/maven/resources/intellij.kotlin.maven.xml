@@ -139,6 +139,12 @@
             bundle="messages.KotlinMavenBundle"
     />
 
+    <notificationGroup
+            id="Kotlin Maven project import"
+            displayType="STICKY_BALLOON"
+            key="configuration.maven.group.name"
+    />
+
     <registryKey
             key="kotlin.configuration.maven.autoConfig.enabled"
             description="Whether auto-configuration is enabled for Maven projects when adding a Kotlin file"

@@ -1,6 +1,6 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
@@ -30,6 +30,11 @@ resourcegroup(
         ["gen-resources/**/*"],
     ),
     strip_prefix = "gen-resources",
+)
+
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlinx-serialization-compiler-plugin_provided",
+    lib = "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin",
 )
 
 jvm_library(
@@ -72,7 +77,6 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
-        "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
         "//libraries/jackson/jackson",
         "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
         "//platform/dvcs-impl:vcs-dvcs-impl",
@@ -101,6 +105,7 @@ jvm_library(
         "//platform/observable",
         "//platform/progress/shared:ide-progress",
         "//platform/lang-api:lang",
+        ":libraries_kotlinc_libraries-kotlinc-kotlinx-serialization-compiler-plugin_provided",
     ],
 )
 
@@ -134,7 +139,8 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
-        "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
+        "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin",
+        "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin_test_lib",
         "//libraries/jackson/jackson:jackson_test_lib",
         "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
         "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
@@ -275,7 +281,8 @@ jvm_library(
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/json:json_test_lib",
-        "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
+        "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin",
+        "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin_test_lib",
         "//libraries/jackson/jackson",
         "//libraries/jackson/jackson:jackson_test_lib",
         "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",

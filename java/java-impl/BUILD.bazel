@@ -371,6 +371,8 @@ jvm_library(
 exports_files(
     [
         "intellij.java.impl.iml",
+        "resources/META-INF/IntentionPowerPack.xml",
+        "resources/META-INF/Intentions.xml",
         "resources/META-INF/RegistryKeysJavaImpl.xml",
         "resources/META-INF/UsageData.xml",
         "resources/com/intellij/internal/statistic/libraryJar/library-jar-statistics.xml",

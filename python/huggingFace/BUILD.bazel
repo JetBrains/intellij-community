@@ -22,7 +22,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:gradle",
+        "//libraries/gradle",
         "//libraries/jackson/jackson",
         "//libraries/jackson/databind",
         "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
@@ -57,6 +57,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":huggingFace",
+        "//libraries/gradle:gradle_test_lib",
         "//libraries/jackson/jackson:jackson_test_lib",
         "//libraries/jackson/databind:databind_test_lib",
         "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",

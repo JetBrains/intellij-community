@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtilsKt;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,7 @@ public final class MarkdownTypedHandler extends TypedHandlerDelegate {
 
   @Override
   public @NotNull Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!(file instanceof MarkdownFile)) return Result.CONTINUE;
+    if (!MarkdownLanguageUtilsKt.supportsMarkdown(file.getLanguage(), null)) return Result.CONTINUE;
     if (charTyped == '@') {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
       return Result.STOP;

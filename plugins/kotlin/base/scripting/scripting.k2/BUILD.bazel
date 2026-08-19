@@ -84,6 +84,7 @@ jvm_library(
         "//platform/util",
         "//platform/eel-provider",
         "//plugins/kotlin/scripting",
+        "//platform/statistics",
     ],
 )
 
@@ -154,6 +155,7 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
         "//plugins/kotlin/scripting:scripting_test_lib",
+        "//platform/statistics:statistics_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.scripting` end
@@ -331,6 +333,10 @@ jvm_library(
         "@lib//:kotlinc-kotlin-compiler-tests",
         "//plugins/kotlin/scripting",
         "//plugins/kotlin/scripting:scripting_test_lib",
+        "//platform/statistics",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/statistics/testFramework",
+        "//platform/statistics/testFramework:testFramework_test_lib",
         "//plugins/kotlin/base/facet/tests",
         "//plugins/kotlin/base/facet/tests:tests_test_lib",
         "//libraries/junit4",

@@ -403,7 +403,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       # └ TYPE set[int]
       """.trimIndent())
 
-    @TestFor(issues = ["PY-87575"])
+    @TestFor(issues = ["PY-76927", "PY-87575"])
     @Test
     fun `dunder iter defined in metaclass has higher priority than inherited class`() = test("""
       from collections.abc import Iterator
@@ -418,6 +418,16 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
       expr = set(MyClass)
       # └ TYPE set[int]
+
+      iter_result = iter(MyClass)
+      # └ TYPE Iterator[int]
+
+      iter_method = MyClass.__iter__
+      # └ TYPE (self: MyClass) -> Iterator[str]
+
+      for e in MyClass:
+          expr = e
+      #   └ TYPE int
       """.trimIndent())
 
     @TestFor(issues = ["PY-87575"])
@@ -669,6 +679,75 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           def __iter__(self) -> Iterator[int]: ...
       expr = [*A()]
       # └ TYPE list[int]
+      """.trimIndent())
+
+    @Test
+    fun `enumerate iterator`() = test("""
+      def test():
+          def f(x):
+              '''
+              :type x: str
+              '''
+              pass
+          xs = [1.1, 2.2, 3.3]
+          for i, x in enumerate(xs):
+              f(i)
+      #         └ WARNING Expected type 'str', got 'int' instead
+              f(x)
+      #         └ WARNING Expected type 'str', got 'float | int' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-6728"])
+    fun `for loop iteration`() = test("""
+      def test(p1):
+          for x in 'foo':
+              pass
+
+          for x in 42:
+      #            ^^ WARNING Expected type 'collections.Iterable', got 'Literal[42]' instead
+                  pass
+
+          for x in f('foo', p1):
+      #            ^^^^^^^^^^^^ WARNING Expected type 'collections.Iterable', got 'Literal[10] | Unknown' instead
+                  pass
+
+      def f(c, x):
+          if c:
+              return 10
+          else:
+              return x
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-10854"])
+    fun `second form iter`() = test("""
+      def test_second_form():
+          def f():
+              return ''
+
+          for chunk in iter(lambda: f(), ''):
+              pass
+
+      def test_second_form_fail():
+          for chunk in iter(10, ''):
+      #                    ^^^^^^^^ WARNING No overload of 'iter' matches the arguments. Argument types: (Literal[10], Literal[""]). Expected one of: (object: () -> _T | None, sentinel: None), (object: () -> _T, sentinel: object)
+                  pass
+
+      def test_first_form():
+          for x in iter([1, 2, 3]):
+              pass
+      """.trimIndent())
+
+    @Test
+    fun `iterate over param with no attributes`() = test("""
+      def f(xs):
+          ys = 'string'
+          for x in xs:
+              g(ys)
+
+      def g(x):
+          return x.lower()
       """.trimIndent())
   }
 
@@ -1148,6 +1227,18 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       def f() -> Generator[list[object], None, None]:
           yield from [[1, 2]]
       """.trimIndent())
+
+    @Test
+    fun `generator type hint`() = test("""
+      from typing import Generator
+
+      def fixture_generator() -> Generator[str, None, None]:
+          yield "Hello World"
+      """.trimIndent())
+
+
+    // Type-checker (`PyTypeCheckerInspection`) tests migrated from the legacy
+    // `com.jetbrains.python.inspections.Py3TypeCheckerInspectionTest` to the modern inline-assertion [PyCodeInsightTestCase] suite.
   }
 
   @Nested

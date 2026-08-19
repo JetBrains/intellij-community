@@ -19,6 +19,12 @@ class SpellcheckerCornerCasesTest : SpellcheckerInspectionTestCase() {
     assertTrue(suggestions.isEmpty())
   }
 
+  fun `test words are not spellchecked if they are too long`() {
+    myFixture.enableInspections(*getInspectionTools())
+    myFixture.configureByText("a.txt", "a".repeat(33))
+    myFixture.checkHighlighting()
+  }
+
   fun `test that korean language is treated as alien`() {
     myFixture.enableInspections(*getInspectionTools())
     myFixture.configureByText("a.txt", """

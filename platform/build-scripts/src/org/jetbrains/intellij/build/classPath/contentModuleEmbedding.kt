@@ -430,6 +430,27 @@ internal class XIncludeElementResolverImpl(
           }
         }
       }
+      if (pass == DescriptorSearchPass.PRODUCTION_SOURCES && searchPath.isNotEmpty()) {
+        // Generated module-set descriptors may be materialized under the module that owns the generated source,
+        // while an xi:include still names the product module whose output used to receive a copy. Search the complete
+        // source model before falling back to any compiled jar. This is the same deterministic last-resort scope the
+        // generated dev-distribution plan validates, and it keeps ordinary module byte changes out of unrelated
+        // fragment keys.
+        val outputProvider = context.outputProvider
+        val alreadySearched = searchPath.flatMapTo(HashSet(), DescriptorSearchScope::modules)
+        for (module in outputProvider.getAllModules().sortedBy { it.name }) {
+          if (!alreadySearched.add(module.name)) continue
+          readDescriptor(
+            module = module,
+            path = loadPath,
+            outputProvider = outputProvider,
+            pass = DescriptorSearchPass.PRODUCTION_SOURCES,
+          )?.let { data ->
+            searchPath.first().descriptorCache.putIfAbsent(loadPath, data)
+            return JDOMUtil.load(data)
+          }
+        }
+      }
     }
 
     if (searchPath.singleOrNull()?.searchInDependencies == DescriptorSearchScope.SearchMode.PLUGIN_COLLECTOR) {

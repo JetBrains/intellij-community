@@ -24,7 +24,7 @@ open class ScriptResidenceExceptionProvider(
         virtualFile.name.endsWith(suffix)
 
     fun isSupportedUnderSourceRoot(virtualFile: VirtualFile): Boolean =
-        if (supportedUnderSourceRoot) isSupportedScriptExtension(virtualFile) else false
+        supportedUnderSourceRoot && isSupportedScriptExtension(virtualFile)
 }
 
 private val scriptResidenceExceptionProviders: List<ScriptResidenceExceptionProvider> = listOf(
@@ -48,9 +48,6 @@ private val scriptResidenceExceptionProviders: List<ScriptResidenceExceptionProv
         }
     }
 )
-
-fun VirtualFile.hasUnknownScriptExt(): Boolean =
-  scriptResidenceExceptionProviders.none { it.isSupportedScriptExtension(this) }
 
 fun VirtualFile.hasNoExceptionsToBeUnderSourceRoot(): Boolean =
     scriptResidenceExceptionProviders.none { it.isSupportedUnderSourceRoot(this) }

@@ -2108,20 +2108,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps-gradle-api-9_7_0_http",
-    downloaded_file_path = "gradle-api-9.7.0.jar",
-    sha256 = "6fbb1aa9e83b3bd083289aa62705505d24007066c4b526f8eb1d2971eb892e16",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/gradle-api/9.7.0/gradle-api-9.7.0.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps-gradle-api-9_7_0-sources_http",
-    downloaded_file_path = "gradle-api-9.7.0-sources.jar",
-    sha256 = "3e149c4f1476e280ca60021bf41c4c36596f9a49acef2cb3b8141243ac827db4",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/gradle-api/9.7.0/gradle-api-9.7.0-sources.jar",
-)
-
-http_file(
     name = "org_apache_ant-ant-1_10_15_http",
     downloaded_file_path = "ant-1.10.15.jar",
     sha256 = "763acda4a69588c9ea8817a952851ff0c2fc4bffa1d081c2565dc407f29d5794",
@@ -4761,34 +4747,6 @@ http_file(
 )
 
 http_file(
-    name = "io_qameta_allure-allure-java-commons-2_25_0_http",
-    downloaded_file_path = "allure-java-commons-2.25.0.jar",
-    sha256 = "5f16061bd881c8e568ace97d8a708dd57aefb2630a7b7d792b64fe55368d4284",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/qameta/allure/allure-java-commons/2.25.0/allure-java-commons-2.25.0.jar",
-)
-
-http_file(
-    name = "io_qameta_allure-allure-model-2_25_0_http",
-    downloaded_file_path = "allure-model-2.25.0.jar",
-    sha256 = "1611fb0f34cb0b5de17cdcaca9ba46634863a2bd4074d98bda3b3f4ffb8cf7aa",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/qameta/allure/allure-model/2.25.0/allure-model-2.25.0.jar",
-)
-
-http_file(
-    name = "io_qameta_allure-allure-java-commons-2_25_0-sources_http",
-    downloaded_file_path = "allure-java-commons-2.25.0-sources.jar",
-    sha256 = "8516e016119e4bb0df05b19c9500f4fb9a4185d9d0187a921b3761f707ba0b83",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/qameta/allure/allure-java-commons/2.25.0/allure-java-commons-2.25.0-sources.jar",
-)
-
-http_file(
-    name = "io_qameta_allure-allure-model-2_25_0-sources_http",
-    downloaded_file_path = "allure-model-2.25.0-sources.jar",
-    sha256 = "ad46c0ba4603a244eecd78a33e3d39e16b10e0f61d863caa7352ea4e5ef54711",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/qameta/allure/allure-model/2.25.0/allure-model-2.25.0-sources.jar",
-)
-
-http_file(
     name = "org_jacoco-org_jacoco_ant-0_8_15_http",
     downloaded_file_path = "org.jacoco.ant-0.8.15.jar",
     sha256 = "54fb6af97c95352d7deeb49113d7ad63f190eaa8cc9ae8e068fdb2f2a6de009e",
@@ -4915,17 +4873,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps-debugger-agent-1_191_http",
-    downloaded_file_path = "debugger-agent-1.191.jar",
-    sha256 = "37f0ebd285fad3e02b9f3000cf7088c96b3141121dadd6a205c78307f48073ca",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.191/debugger-agent-1.191.jar",
+    name = "org_jetbrains_intellij_deps-debugger-agent-1_193_http",
+    downloaded_file_path = "debugger-agent-1.193.jar",
+    sha256 = "cf1e428405735da2e0028cd7e7ba232b1331445bd97122d0de80d5240415d214",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.193/debugger-agent-1.193.jar",
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps-debugger-agent-1_191-sources_http",
-    downloaded_file_path = "debugger-agent-1.191-sources.jar",
-    sha256 = "0f76384b8bf3123d229dc3372e97bb670c5b0d32a182395b38bc32b92f80b719",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.191/debugger-agent-1.191-sources.jar",
+    name = "org_jetbrains_intellij_deps-debugger-agent-1_193-sources_http",
+    downloaded_file_path = "debugger-agent-1.193-sources.jar",
+    sha256 = "d0fef05fdaf9755be52907dfa32851c4793b2e488c251b3079d189c3e9c3fde8",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.193/debugger-agent-1.193-sources.jar",
 )
 
 http_file(
@@ -5664,34 +5622,6 @@ http_file(
 )
 
 http_file(
-    name = "org_kodein_di-kodein-di-jvm-7_26_1_http",
-    downloaded_file_path = "kodein-di-jvm-7.26.1.jar",
-    sha256 = "01c5a3fc5c63d196d5949442bde1b014519c07ca7b9fa2d4ee38827ed6a6c98e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/kodein/di/kodein-di-jvm/7.26.1/kodein-di-jvm-7.26.1.jar",
-)
-
-http_file(
-    name = "org_kodein_type-kaverit-jvm-2_10_0_http",
-    downloaded_file_path = "kaverit-jvm-2.10.0.jar",
-    sha256 = "01f3fdf938081f2702d62bd5d78a42651e37643e2fb47e2d5e52ff5772912a11",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/kodein/type/kaverit-jvm/2.10.0/kaverit-jvm-2.10.0.jar",
-)
-
-http_file(
-    name = "org_kodein_di-kodein-di-jvm-7_26_1-sources_http",
-    downloaded_file_path = "kodein-di-jvm-7.26.1-sources.jar",
-    sha256 = "e3cb25368560307f567f0e8e5f52f362b01425b8d49dccfe539e7576d025fca7",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/kodein/di/kodein-di-jvm/7.26.1/kodein-di-jvm-7.26.1-sources.jar",
-)
-
-http_file(
-    name = "org_kodein_type-kaverit-jvm-2_10_0-sources_http",
-    downloaded_file_path = "kaverit-jvm-2.10.0-sources.jar",
-    sha256 = "89ec05e96974e80c8899d9c6c2194f6a42421d447b800b7f588afa70c33c07c1",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/kodein/type/kaverit-jvm/2.10.0/kaverit-jvm-2.10.0-sources.jar",
-)
-
-http_file(
     name = "org_ehcache-sizeof-0_4_0_http",
     downloaded_file_path = "sizeof-0.4.0.jar",
     sha256 = "0429cb1f5cda94180007874ea926a88149fca2028e92b4556d35f0cfce310c53",
@@ -5801,20 +5731,6 @@ http_file(
     downloaded_file_path = "kotlin-test-2.4.10-RC2-sources.jar",
     sha256 = "5872d95764647025277d207c29e9e8e816763a509f77ca24a3bea3241afb392f",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test/2.4.10-RC2/kotlin-test-2.4.10-RC2-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlin-kotlin-test-junit-2_4_10-RC2_http",
-    downloaded_file_path = "kotlin-test-junit-2.4.10-RC2.jar",
-    sha256 = "788d8b638e6a6154d40d5cccf9adf15f7383c537512c11a28e8fd44b98ad4eef",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-junit/2.4.10-RC2/kotlin-test-junit-2.4.10-RC2.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlin-kotlin-test-junit-2_4_10-RC2-sources_http",
-    downloaded_file_path = "kotlin-test-junit-2.4.10-RC2-sources.jar",
-    sha256 = "3fd39bbf3f8283cf7b7759e02abdd752ddde9964352f645467b779257bccef20",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-junit/2.4.10-RC2/kotlin-test-junit-2.4.10-RC2-sources.jar",
 )
 
 http_file(
@@ -5983,20 +5899,6 @@ http_file(
     downloaded_file_path = "kotlin-compiler-fe10-for-ide-2.5.0-dev-4232-sources.jar",
     sha256 = "17823db2d171bf42307eede2f3eda5c9b42042c8d2f029eab6ec76c4e4bc381a",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.5.0-dev-4232/kotlin-compiler-fe10-for-ide-2.5.0-dev-4232-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232_http",
-    downloaded_file_path = "kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar",
-    sha256 = "430fc9bfbaef3988025eaf8e175c01b36c71394027e08e1baba67b64e123121e",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-dev-4232/kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232-sources_http",
-    downloaded_file_path = "kotlin-compiler-fir-for-ide-2.5.0-dev-4232-sources.jar",
-    sha256 = "0dc7d3ea464700e19b34752711a5a6b33714a7d5abfed2e79b23621984a1dfe6",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-dev-4232/kotlin-compiler-fir-for-ide-2.5.0-dev-4232-sources.jar",
 )
 
 http_file(
@@ -6221,20 +6123,6 @@ http_file(
     downloaded_file_path = "kotlin-swift-export-for-ide-2.5.0-dev-4232-sources.jar",
     sha256 = "654160c8e0caa0171d084de9ae2864fcc6dd06c2341b0f177992ca02a88d186a",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.5.0-dev-4232/kotlin-swift-export-for-ide-2.5.0-dev-4232-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlin-kotlinx-serialization-compiler-plugin-for-ide-2_5_0-dev-4232_http",
-    downloaded_file_path = "kotlinx-serialization-compiler-plugin-for-ide-2.5.0-dev-4232.jar",
-    sha256 = "cb42966da27931a2a7c3cb2dfed015002089c424d3afe1094d3e98a502963d2e",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.0-dev-4232/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-dev-4232.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlin-kotlinx-serialization-compiler-plugin-for-ide-2_5_0-dev-4232-sources_http",
-    downloaded_file_path = "kotlinx-serialization-compiler-plugin-for-ide-2.5.0-dev-4232-sources.jar",
-    sha256 = "e4aae7f1c5dea3e1741cbba71c2c8a18c151f373817bd5ed1a1403ad0a4dd15f",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.0-dev-4232/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-dev-4232-sources.jar",
 )
 
 http_file(
@@ -6767,6 +6655,34 @@ http_file(
     downloaded_file_path = "hunspell-en-0.2.359.jar",
     sha256 = "539594571b6f75697b82712530fd5e8df236644e34d7e8afd87551a58bb85e2f",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/spell/hunspell-en/0.2.359/hunspell-en-0.2.359.jar",
+)
+
+http_file(
+    name = "io_qameta_allure-allure-java-commons-2_25_0_http",
+    downloaded_file_path = "allure-java-commons-2.25.0.jar",
+    sha256 = "5f16061bd881c8e568ace97d8a708dd57aefb2630a7b7d792b64fe55368d4284",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/qameta/allure/allure-java-commons/2.25.0/allure-java-commons-2.25.0.jar",
+)
+
+http_file(
+    name = "io_qameta_allure-allure-model-2_25_0_http",
+    downloaded_file_path = "allure-model-2.25.0.jar",
+    sha256 = "1611fb0f34cb0b5de17cdcaca9ba46634863a2bd4074d98bda3b3f4ffb8cf7aa",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/qameta/allure/allure-model/2.25.0/allure-model-2.25.0.jar",
+)
+
+http_file(
+    name = "io_qameta_allure-allure-java-commons-2_25_0-sources_http",
+    downloaded_file_path = "allure-java-commons-2.25.0-sources.jar",
+    sha256 = "8516e016119e4bb0df05b19c9500f4fb9a4185d9d0187a921b3761f707ba0b83",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/qameta/allure/allure-java-commons/2.25.0/allure-java-commons-2.25.0-sources.jar",
+)
+
+http_file(
+    name = "io_qameta_allure-allure-model-2_25_0-sources_http",
+    downloaded_file_path = "allure-model-2.25.0-sources.jar",
+    sha256 = "ad46c0ba4603a244eecd78a33e3d39e16b10e0f61d863caa7352ea4e5ef54711",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/qameta/allure/allure-model/2.25.0/allure-model-2.25.0-sources.jar",
 )
 
 http_file(
@@ -8401,6 +8317,804 @@ http_file(
 )
 
 http_file(
+    name = "com_vladsch_flexmark-flexmark-all-0_64_8_http",
+    downloaded_file_path = "flexmark-all-0.64.8.jar",
+    sha256 = "4b89d89af1251cb404e5f025714b3d52f60fb090fe546057e4640c7f30c05726",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-all/0.64.8/flexmark-all-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-0_64_8_http",
+    downloaded_file_path = "flexmark-0.64.8.jar",
+    sha256 = "3133878d108f0e1964d7d427f379a7433e1b71a45f9f3c1fab7ed0ac0301d3b0",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark/0.64.8/flexmark-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-abbreviation-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-abbreviation-0.64.8.jar",
+    sha256 = "4f5d2dbac5775dcd32c1a6324618687883f0b287b3e243b836c7e8560be0bbea",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-abbreviation/0.64.8/flexmark-ext-abbreviation-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-0_64_8_http",
+    downloaded_file_path = "flexmark-util-0.64.8.jar",
+    sha256 = "1e24c891dac9532bb722be7122c7026fb47868c3de36c02400eed8e9ad535727",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util/0.64.8/flexmark-util-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-admonition-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-admonition-0.64.8.jar",
+    sha256 = "a6823ea45a5810ac1e97f545bdec83710797e6fcf6ca4eeefbe930e57a9a043d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-admonition/0.64.8/flexmark-ext-admonition-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-anchorlink-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-anchorlink-0.64.8.jar",
+    sha256 = "36d6849df8548a71b0f87eb97d3690864b960a8e4979fedf865418c8903453a6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-anchorlink/0.64.8/flexmark-ext-anchorlink-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-aside-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-aside-0.64.8.jar",
+    sha256 = "feba989fc8207b3d67df517feaedadb2496c35d45827b3f0ab6b49d887743884",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-aside/0.64.8/flexmark-ext-aside-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-attributes-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-attributes-0.64.8.jar",
+    sha256 = "4db42f300ec5490ff79e7d4e44000088e08d83d14096e7b3a9fd63119589ed77",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-attributes/0.64.8/flexmark-ext-attributes-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-autolink-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-autolink-0.64.8.jar",
+    sha256 = "4850d6f895ec3f2932635829d74ff9a2fb00918965bb91c000ab497d603e11b8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-autolink/0.64.8/flexmark-ext-autolink-0.64.8.jar",
+)
+
+http_file(
+    name = "org_nibor_autolink-autolink-0_6_0_http",
+    downloaded_file_path = "autolink-0.6.0.jar",
+    sha256 = "a80be030f6386f18111cad9161c0b6983157352a1b59a59e6002172f0d321c04",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/nibor/autolink/autolink/0.6.0/autolink-0.6.0.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-definition-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-definition-0.64.8.jar",
+    sha256 = "d8dac5e0732c405702c932b3c495a0fc413224335333ce6009d830734e31e0e6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-definition/0.64.8/flexmark-ext-definition-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-emoji-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-emoji-0.64.8.jar",
+    sha256 = "012d2db51463afd84702627e493fedce42eb7deb1bae309ddcefd181ab283cbe",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-emoji/0.64.8/flexmark-ext-emoji-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-enumerated-reference-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-enumerated-reference-0.64.8.jar",
+    sha256 = "e2f858bedf356e24db9d31c15cc57a2b14071074a850f8bbfdd8c632acf05942",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-enumerated-reference/0.64.8/flexmark-ext-enumerated-reference-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-escaped-character-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-escaped-character-0.64.8.jar",
+    sha256 = "01009a3473c007bddecfe3cd3979282117b82d49812dcf347cebfcee47023712",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-escaped-character/0.64.8/flexmark-ext-escaped-character-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-footnotes-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-footnotes-0.64.8.jar",
+    sha256 = "ae5244254e270ae6479803870fa791fe0ae12be242f72e47979412a8ae16df06",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-footnotes/0.64.8/flexmark-ext-footnotes-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-gfm-issues-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-gfm-issues-0.64.8.jar",
+    sha256 = "0c332dcbeb703179dc88df368cdb71b3a5f486ceb62488cf8a816f7bebe71558",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-gfm-issues/0.64.8/flexmark-ext-gfm-issues-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-gfm-strikethrough-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-gfm-strikethrough-0.64.8.jar",
+    sha256 = "fc6cad026fbd036b3ffd0448264360a5f1b572756ef3427ff022715b7fc5f1c3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-gfm-strikethrough/0.64.8/flexmark-ext-gfm-strikethrough-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-gfm-tasklist-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-gfm-tasklist-0.64.8.jar",
+    sha256 = "c86754ba8f0ffe997fa448da2a6ab2cfdbea9b381884cfed6f74bf513b77f5a9",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-gfm-tasklist/0.64.8/flexmark-ext-gfm-tasklist-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-gfm-users-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-gfm-users-0.64.8.jar",
+    sha256 = "996f2e361c5918a5724a66766fe803a14c397aa9f7d0f75220ec1b9cae0b0c06",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-gfm-users/0.64.8/flexmark-ext-gfm-users-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-gitlab-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-gitlab-0.64.8.jar",
+    sha256 = "36dbd3e3253bc16f09c9773bb4c9b4e3476769c0f53430380b12ac1a47d59983",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-gitlab/0.64.8/flexmark-ext-gitlab-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-jekyll-front-matter-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-jekyll-front-matter-0.64.8.jar",
+    sha256 = "b11e4e61dbd4cb3e37ae325b2f9cd16dbf78f86bfd623d952bf0dfd6d685c46a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-jekyll-front-matter/0.64.8/flexmark-ext-jekyll-front-matter-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-jekyll-tag-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-jekyll-tag-0.64.8.jar",
+    sha256 = "234de845decddf253f7bebd5400e0c6c130ea5f89887c0f71958e033bcdc233e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-jekyll-tag/0.64.8/flexmark-ext-jekyll-tag-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-media-tags-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-media-tags-0.64.8.jar",
+    sha256 = "8f2e41be52f9633aeaf36ce8d0ed222e6cc37ad9e0e6c943a0d304b2d071f600",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-media-tags/0.64.8/flexmark-ext-media-tags-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-resizable-image-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-resizable-image-0.64.8.jar",
+    sha256 = "e3af2fd6d82e4cd5adf66a1b5cd68ae0c2cef7c7bccb2f2010c2eabe88eafbee",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-resizable-image/0.64.8/flexmark-ext-resizable-image-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-macros-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-macros-0.64.8.jar",
+    sha256 = "bc846058d8a2bd66e7c4193fde8e194db089761e2534ce017ae99ac271fc8d3e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-macros/0.64.8/flexmark-ext-macros-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-ins-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-ins-0.64.8.jar",
+    sha256 = "5b61b83c31cb0bd3273cbf12aed3887b63b8bdc6dfa17b03ecf479cf1ce176bd",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-ins/0.64.8/flexmark-ext-ins-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-xwiki-macros-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-xwiki-macros-0.64.8.jar",
+    sha256 = "f986ce5aed53fa8db20fdf2a98e36aa5cafefb496516c8c031b84bfb081a5672",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-xwiki-macros/0.64.8/flexmark-ext-xwiki-macros-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-superscript-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-superscript-0.64.8.jar",
+    sha256 = "457933324d1ca9f283bc15a1842777c6df0385f318fcceade4de41621395e402",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-superscript/0.64.8/flexmark-ext-superscript-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-tables-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-tables-0.64.8.jar",
+    sha256 = "cdf82d26e112e96ade7e370138aeb16920b7e2d411d20c6c15cb1acfacd1ef1f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-tables/0.64.8/flexmark-ext-tables-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-toc-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-toc-0.64.8.jar",
+    sha256 = "bf54f1bb7bca720341db0e322691725ab8e022b2ca269ad1e4f3705c16d37911",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-toc/0.64.8/flexmark-ext-toc-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-typographic-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-typographic-0.64.8.jar",
+    sha256 = "61561a811c716843fee3cb7f18f00783c3a01c30a6ce653446738bcc900aeb13",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-typographic/0.64.8/flexmark-ext-typographic-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-wikilink-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-wikilink-0.64.8.jar",
+    sha256 = "f32ef779eefb4c3b80d5bebf3c4b7ad7206fc46e083a5901cf51db7b4535ff79",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-wikilink/0.64.8/flexmark-ext-wikilink-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-yaml-front-matter-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-yaml-front-matter-0.64.8.jar",
+    sha256 = "6c60b85db4cc851301c1a52d712dc0909c5d2da9bd17ebae4d97a3a03afe22ee",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-yaml-front-matter/0.64.8/flexmark-ext-yaml-front-matter-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-youtube-embedded-0_64_8_http",
+    downloaded_file_path = "flexmark-ext-youtube-embedded-0.64.8.jar",
+    sha256 = "6fe195afee752df502ad4295ab0c4ec8ed79f5b0fdc5ff85b98c8bc512f0f11a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-youtube-embedded/0.64.8/flexmark-ext-youtube-embedded-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-html2md-converter-0_64_8_http",
+    downloaded_file_path = "flexmark-html2md-converter-0.64.8.jar",
+    sha256 = "3f24a90a8fedd6708f06be72bbc9f5f5211abc49c35ee95918ce7b0b41651e62",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-html2md-converter/0.64.8/flexmark-html2md-converter-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-jira-converter-0_64_8_http",
+    downloaded_file_path = "flexmark-jira-converter-0.64.8.jar",
+    sha256 = "ccc1c3a9659a104b75a53a2321e9c1d4cedb05acd867d4366d8b8e1647bd37dd",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-jira-converter/0.64.8/flexmark-jira-converter-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-pdf-converter-0_64_8_http",
+    downloaded_file_path = "flexmark-pdf-converter-0.64.8.jar",
+    sha256 = "2efacba4c37d4736f00fc35cd5685f8f00b83db9b3c80ca5602eda2fb9d2511c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-pdf-converter/0.64.8/flexmark-pdf-converter-0.64.8.jar",
+)
+
+http_file(
+    name = "com_openhtmltopdf-openhtmltopdf-core-1_0_10_http",
+    downloaded_file_path = "openhtmltopdf-core-1.0.10.jar",
+    sha256 = "3e6fd2250d833d500b7cd48b7a896700d0c33bd9f77a219e820493b01566eda3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/openhtmltopdf/openhtmltopdf-core/1.0.10/openhtmltopdf-core-1.0.10.jar",
+)
+
+http_file(
+    name = "com_openhtmltopdf-openhtmltopdf-pdfbox-1_0_10_http",
+    downloaded_file_path = "openhtmltopdf-pdfbox-1.0.10.jar",
+    sha256 = "7de90df1b3ecf84e6f0daf808d724c11142007a2f22bff1936479bf17251d31a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/openhtmltopdf/openhtmltopdf-pdfbox/1.0.10/openhtmltopdf-pdfbox-1.0.10.jar",
+)
+
+http_file(
+    name = "org_apache_pdfbox-pdfbox-2_0_24_http",
+    downloaded_file_path = "pdfbox-2.0.24.jar",
+    sha256 = "3c2c0553ec0e7533c490b4c952e1af113621de5275af6e380e11d0d9a0a4f3d6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/pdfbox/pdfbox/2.0.24/pdfbox-2.0.24.jar",
+)
+
+http_file(
+    name = "org_apache_pdfbox-fontbox-2_0_24_http",
+    downloaded_file_path = "fontbox-2.0.24.jar",
+    sha256 = "2e8c0a569a90b04734fbc0c805d77f4ec03f98c11f5705055ccd7718c1953d68",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/pdfbox/fontbox/2.0.24/fontbox-2.0.24.jar",
+)
+
+http_file(
+    name = "org_apache_pdfbox-xmpbox-2_0_24_http",
+    downloaded_file_path = "xmpbox-2.0.24.jar",
+    sha256 = "27383df2285b9e228c39f2c755adeebbef774793d33c4f20f0dc99e9ebaaf673",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/pdfbox/xmpbox/2.0.24/xmpbox-2.0.24.jar",
+)
+
+http_file(
+    name = "de_rototor_pdfbox-graphics2d-0_32_http",
+    downloaded_file_path = "graphics2d-0.32.jar",
+    sha256 = "37f8f387395f96c214ac44f7475c7a2e1f832dfc1de289a3610e0ffbf728f679",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/de/rototor/pdfbox/graphics2d/0.32/graphics2d-0.32.jar",
+)
+
+http_file(
+    name = "com_openhtmltopdf-openhtmltopdf-rtl-support-1_0_10_http",
+    downloaded_file_path = "openhtmltopdf-rtl-support-1.0.10.jar",
+    sha256 = "5675c0b56d613b15446f9d0922d89781af48f05331326a87bdb3d1775c703215",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/openhtmltopdf/openhtmltopdf-rtl-support/1.0.10/openhtmltopdf-rtl-support-1.0.10.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-profile-pegdown-0_64_8_http",
+    downloaded_file_path = "flexmark-profile-pegdown-0.64.8.jar",
+    sha256 = "1ef21e536299c25c040f26ff9b229fdeef24c3661c6c371bc2b9462227652426",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-profile-pegdown/0.64.8/flexmark-profile-pegdown-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-ast-0_64_8_http",
+    downloaded_file_path = "flexmark-util-ast-0.64.8.jar",
+    sha256 = "a5342f644c6a5f37d502f225c3a0cb699c263621c82e720d9c08eba5a9f3b8d3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-ast/0.64.8/flexmark-util-ast-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-builder-0_64_8_http",
+    downloaded_file_path = "flexmark-util-builder-0.64.8.jar",
+    sha256 = "afb9c88d9f652451e75f1ab069ad7ddd791d712eb211c51d8d2a83494240875d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-builder/0.64.8/flexmark-util-builder-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-collection-0_64_8_http",
+    downloaded_file_path = "flexmark-util-collection-0.64.8.jar",
+    sha256 = "031ff01408d0f54c6235db18d451dc6e6b15b859b0ec1e40ff3429a82375082a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-collection/0.64.8/flexmark-util-collection-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-data-0_64_8_http",
+    downloaded_file_path = "flexmark-util-data-0.64.8.jar",
+    sha256 = "83ceb5989ab0205054bf1b42446f55cb6da14c10aa7c2bda05d6a2504670f353",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-data/0.64.8/flexmark-util-data-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-dependency-0_64_8_http",
+    downloaded_file_path = "flexmark-util-dependency-0.64.8.jar",
+    sha256 = "e41adb5e8144699b61b78d50eb004eeb7de84f90c4c63626609e6cee5ea28b42",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-dependency/0.64.8/flexmark-util-dependency-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-format-0_64_8_http",
+    downloaded_file_path = "flexmark-util-format-0.64.8.jar",
+    sha256 = "6c9ac87686474edf0117b3f838d9dcb3b965fa72be4998d2177b598013679f73",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-format/0.64.8/flexmark-util-format-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-html-0_64_8_http",
+    downloaded_file_path = "flexmark-util-html-0.64.8.jar",
+    sha256 = "5b19e6506aff7913c74ad725af7c2b8a9f23958e6324bf0710c5a645a4663017",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-html/0.64.8/flexmark-util-html-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-misc-0_64_8_http",
+    downloaded_file_path = "flexmark-util-misc-0.64.8.jar",
+    sha256 = "74472ca81a9080e51ea1a4f11c270898e3d6c242c92275fab47eb993806c8f2b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-misc/0.64.8/flexmark-util-misc-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-options-0_64_8_http",
+    downloaded_file_path = "flexmark-util-options-0.64.8.jar",
+    sha256 = "2489f41e9caf1d9f8061833b311b25403925cbb631fff2b8c069192804d6fc88",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-options/0.64.8/flexmark-util-options-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-sequence-0_64_8_http",
+    downloaded_file_path = "flexmark-util-sequence-0.64.8.jar",
+    sha256 = "6e22976fe4e9b8de94fd529991ecb2d79cc482aad94985367470a93be1d82631",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-sequence/0.64.8/flexmark-util-sequence-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-visitor-0_64_8_http",
+    downloaded_file_path = "flexmark-util-visitor-0.64.8.jar",
+    sha256 = "d9b3002a833a078c45e139568b306dab0ac117ff9046c6a1f9e180c0154563fc",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-visitor/0.64.8/flexmark-util-visitor-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-youtrack-converter-0_64_8_http",
+    downloaded_file_path = "flexmark-youtrack-converter-0.64.8.jar",
+    sha256 = "06e556491d36876c1d7eb66b1300263a4e774c1541b9cffc6946f541df38a9b6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-youtrack-converter/0.64.8/flexmark-youtrack-converter-0.64.8.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-0.64.8-sources.jar",
+    sha256 = "41740277308867e41377ef4f60331ebbe03ab7b2f49362de80d18c6b8798773a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark/0.64.8/flexmark-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-abbreviation-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-abbreviation-0.64.8-sources.jar",
+    sha256 = "ffd6b055919e75e200a3587b0f5417f329f82e0de64a8b4ffabac6359e0b7add",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-abbreviation/0.64.8/flexmark-ext-abbreviation-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-admonition-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-admonition-0.64.8-sources.jar",
+    sha256 = "260769ba29dd90eeaa93ca37e581994b3934e956433543222635f7ca8bee8be5",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-admonition/0.64.8/flexmark-ext-admonition-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-anchorlink-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-anchorlink-0.64.8-sources.jar",
+    sha256 = "617772031194b87f04fca825f45034597557bd26e82d3d2d4c7842d864ce0c91",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-anchorlink/0.64.8/flexmark-ext-anchorlink-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-aside-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-aside-0.64.8-sources.jar",
+    sha256 = "16522671dcdf293632a35c5e38fd640cc4790281d90ba36c747cdd90146bb39a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-aside/0.64.8/flexmark-ext-aside-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-attributes-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-attributes-0.64.8-sources.jar",
+    sha256 = "ba7f36c23563e69fd95cbd068508b2758cb94c2981edeb511b595dd48f99edc6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-attributes/0.64.8/flexmark-ext-attributes-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-autolink-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-autolink-0.64.8-sources.jar",
+    sha256 = "44fd15f2753b803a82f9b02b9e88eacb7aa7a2ea9e6a6dd48f906aa93e1a30c7",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-autolink/0.64.8/flexmark-ext-autolink-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "org_nibor_autolink-autolink-0_6_0-sources_http",
+    downloaded_file_path = "autolink-0.6.0-sources.jar",
+    sha256 = "26d6fba888c9e332f6357773ef0500a7552c2453779a7d3e5d163e079546d8a8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/nibor/autolink/autolink/0.6.0/autolink-0.6.0-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-definition-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-definition-0.64.8-sources.jar",
+    sha256 = "96dde75978bcc3a5728fb06056a8cdc071f65b9386b19c4fb2b86f5b3bb90801",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-definition/0.64.8/flexmark-ext-definition-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-emoji-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-emoji-0.64.8-sources.jar",
+    sha256 = "e01bdf91dfedc722fa5ee5989ac150871f27695145901721e6950ce80c7d448a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-emoji/0.64.8/flexmark-ext-emoji-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-enumerated-reference-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-enumerated-reference-0.64.8-sources.jar",
+    sha256 = "6349efd94245f6b07d059925e02866fa1fe835801172bd5e4084cadb835cb5bd",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-enumerated-reference/0.64.8/flexmark-ext-enumerated-reference-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-escaped-character-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-escaped-character-0.64.8-sources.jar",
+    sha256 = "2b0f65c9e7d37bf390f7f19bc87da86fd167c93dceadc1ee6f86884668d0690d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-escaped-character/0.64.8/flexmark-ext-escaped-character-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-footnotes-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-footnotes-0.64.8-sources.jar",
+    sha256 = "e8fc55fd57cebb683b0886667f40029d23a4e1d2c6a5fabf70b692bfde8dc502",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-footnotes/0.64.8/flexmark-ext-footnotes-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-gfm-issues-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-gfm-issues-0.64.8-sources.jar",
+    sha256 = "c240060f170b239643317e8fb307d7e9b445e6691b39f5ed45c1419ebc684202",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-gfm-issues/0.64.8/flexmark-ext-gfm-issues-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-gfm-strikethrough-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-gfm-strikethrough-0.64.8-sources.jar",
+    sha256 = "e51a1672d372423aaad44bf0429d14dd062ca6982dd47ec45e0463bf513d54c2",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-gfm-strikethrough/0.64.8/flexmark-ext-gfm-strikethrough-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-gfm-tasklist-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-gfm-tasklist-0.64.8-sources.jar",
+    sha256 = "db06db3c564d14044fa7365f7143cf5ca271671e94740b56831854a1abca25fb",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-gfm-tasklist/0.64.8/flexmark-ext-gfm-tasklist-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-gfm-users-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-gfm-users-0.64.8-sources.jar",
+    sha256 = "d41badad89ddae3d7908164f995109fed7031f2c4398fa6073b49878d7ff9f36",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-gfm-users/0.64.8/flexmark-ext-gfm-users-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-gitlab-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-gitlab-0.64.8-sources.jar",
+    sha256 = "a68b4ab1ef8ff27da3baea3b4440856a3d32ab94e98d57af9748e72d1992ea2b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-gitlab/0.64.8/flexmark-ext-gitlab-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-jekyll-front-matter-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-jekyll-front-matter-0.64.8-sources.jar",
+    sha256 = "6e822e4a31736483d0f1a59108c69d0ca259911c4ce954e30324c89cd7646d05",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-jekyll-front-matter/0.64.8/flexmark-ext-jekyll-front-matter-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-jekyll-tag-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-jekyll-tag-0.64.8-sources.jar",
+    sha256 = "b70605ccc986c715efbb235a344cde700f5db4dcb5a65bb90c7d5f02d09e6942",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-jekyll-tag/0.64.8/flexmark-ext-jekyll-tag-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-media-tags-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-media-tags-0.64.8-sources.jar",
+    sha256 = "b39138f43fb92ca8903b64ebfc2bd48c8dd5de7fd3332f602d67b2985ab25db5",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-media-tags/0.64.8/flexmark-ext-media-tags-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-resizable-image-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-resizable-image-0.64.8-sources.jar",
+    sha256 = "10514067c7c74d733e3c90829717c6460fe9d8e5b774d51287ad46dbebea057a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-resizable-image/0.64.8/flexmark-ext-resizable-image-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-macros-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-macros-0.64.8-sources.jar",
+    sha256 = "052c81d46f06b4d8c5447f623aca406256949fdd84e88e0f2778fa0a53adc42b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-macros/0.64.8/flexmark-ext-macros-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-ins-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-ins-0.64.8-sources.jar",
+    sha256 = "8ee12a6e34044eaafb058798602c4bb2b46ab235a94f5e72482b0540e6cf6b60",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-ins/0.64.8/flexmark-ext-ins-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-xwiki-macros-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-xwiki-macros-0.64.8-sources.jar",
+    sha256 = "2267ad16aaa551e3085a4c1d00a0fce1e0e1021ba758badca06395dc489c04e6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-xwiki-macros/0.64.8/flexmark-ext-xwiki-macros-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-superscript-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-superscript-0.64.8-sources.jar",
+    sha256 = "628711efc1998df2f5b2af310918be89e73f96f326bd884285ff73601f926485",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-superscript/0.64.8/flexmark-ext-superscript-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-tables-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-tables-0.64.8-sources.jar",
+    sha256 = "52c8e007ae8f1fe8179817061cb26e8d0bb4b610fa0c2d3cf3c4fcec2039544c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-tables/0.64.8/flexmark-ext-tables-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-toc-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-toc-0.64.8-sources.jar",
+    sha256 = "ad88d052e4462c8ea2f56ddefc696c1cb2e4f3d757e06c729438b9eb823c9175",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-toc/0.64.8/flexmark-ext-toc-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-typographic-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-typographic-0.64.8-sources.jar",
+    sha256 = "a687c04138b7466b299ae0290ff2b24255ee2060faeda0876a541cd1ddece919",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-typographic/0.64.8/flexmark-ext-typographic-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-wikilink-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-wikilink-0.64.8-sources.jar",
+    sha256 = "1725a70c052e3429231f8ef0a62127192c76a680df2aa5cdf2821728dc99ce6b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-wikilink/0.64.8/flexmark-ext-wikilink-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-yaml-front-matter-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-yaml-front-matter-0.64.8-sources.jar",
+    sha256 = "b94144340803e5ccd4ccda01e0554edaca5e54030b8fd72cbbdb48d2c3ed8367",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-yaml-front-matter/0.64.8/flexmark-ext-yaml-front-matter-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-ext-youtube-embedded-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-ext-youtube-embedded-0.64.8-sources.jar",
+    sha256 = "aaab031841d6ca8ea870e6992ba826b5dc2824a4746ec1bacf9ed2c294e4c646",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-ext-youtube-embedded/0.64.8/flexmark-ext-youtube-embedded-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-html2md-converter-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-html2md-converter-0.64.8-sources.jar",
+    sha256 = "d304ddcd53b73434a5b5b4e8ca88954466e6df757ef37b0ab64512db54ca19a0",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-html2md-converter/0.64.8/flexmark-html2md-converter-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-jira-converter-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-jira-converter-0.64.8-sources.jar",
+    sha256 = "227d96a52bc99cd04ebbcad779b10a7a672828f0103cca7814865ef62081079b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-jira-converter/0.64.8/flexmark-jira-converter-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-pdf-converter-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-pdf-converter-0.64.8-sources.jar",
+    sha256 = "ae152d947195d1cd5095281955333983dcbd1b6692d2764584513a0c826e6bed",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-pdf-converter/0.64.8/flexmark-pdf-converter-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_openhtmltopdf-openhtmltopdf-core-1_0_10-sources_http",
+    downloaded_file_path = "openhtmltopdf-core-1.0.10-sources.jar",
+    sha256 = "5141399fb43b64f249e938ec9e8e1748f9664c0c2c13d18df407dbdbb9e68421",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/openhtmltopdf/openhtmltopdf-core/1.0.10/openhtmltopdf-core-1.0.10-sources.jar",
+)
+
+http_file(
+    name = "com_openhtmltopdf-openhtmltopdf-pdfbox-1_0_10-sources_http",
+    downloaded_file_path = "openhtmltopdf-pdfbox-1.0.10-sources.jar",
+    sha256 = "24663bf4e50ada11ac388912ef19290e5b2b2b1eae7bd474f4c7ad2044322113",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/openhtmltopdf/openhtmltopdf-pdfbox/1.0.10/openhtmltopdf-pdfbox-1.0.10-sources.jar",
+)
+
+http_file(
+    name = "org_apache_pdfbox-pdfbox-2_0_24-sources_http",
+    downloaded_file_path = "pdfbox-2.0.24-sources.jar",
+    sha256 = "6f12c05d9ef4cf724910a56d7dd91f9b3b1ad9948a2dd996229207762ce014ff",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/pdfbox/pdfbox/2.0.24/pdfbox-2.0.24-sources.jar",
+)
+
+http_file(
+    name = "org_apache_pdfbox-fontbox-2_0_24-sources_http",
+    downloaded_file_path = "fontbox-2.0.24-sources.jar",
+    sha256 = "6cac29129a3ab7226cfe7adee6ae9aff0036f30c0d97ef34ec05d6cc499b5d8e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/pdfbox/fontbox/2.0.24/fontbox-2.0.24-sources.jar",
+)
+
+http_file(
+    name = "org_apache_pdfbox-xmpbox-2_0_24-sources_http",
+    downloaded_file_path = "xmpbox-2.0.24-sources.jar",
+    sha256 = "4dc983b620f7fe7fc90910a6825d54bbe2895d8d7d85bb1179fd10692b4d2768",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/pdfbox/xmpbox/2.0.24/xmpbox-2.0.24-sources.jar",
+)
+
+http_file(
+    name = "de_rototor_pdfbox-graphics2d-0_32-sources_http",
+    downloaded_file_path = "graphics2d-0.32-sources.jar",
+    sha256 = "dfbab3557c66510849814cd82355abdc85fed6423e9ee5dc9bd3a8195e9ef957",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/de/rototor/pdfbox/graphics2d/0.32/graphics2d-0.32-sources.jar",
+)
+
+http_file(
+    name = "com_openhtmltopdf-openhtmltopdf-rtl-support-1_0_10-sources_http",
+    downloaded_file_path = "openhtmltopdf-rtl-support-1.0.10-sources.jar",
+    sha256 = "82eae7d75bf8e4f99214c2b480cefdd0956c34ddea257426dfb853ee6deb0bdd",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/openhtmltopdf/openhtmltopdf-rtl-support/1.0.10/openhtmltopdf-rtl-support-1.0.10-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-profile-pegdown-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-profile-pegdown-0.64.8-sources.jar",
+    sha256 = "83617b5929599c40da1c28946897b4a2c77c2227b0a42cdc95873e118c29e6d0",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-profile-pegdown/0.64.8/flexmark-profile-pegdown-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-ast-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-util-ast-0.64.8-sources.jar",
+    sha256 = "4e36e21ec7a4ac9e976ae35a6c09544585c24f5fe7682178014e53f755aa3456",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-ast/0.64.8/flexmark-util-ast-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-builder-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-util-builder-0.64.8-sources.jar",
+    sha256 = "e1250a03bf9f478193094e25c8e8193d64a5290c8dfacd2322a8d277d90d03e9",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-builder/0.64.8/flexmark-util-builder-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-collection-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-util-collection-0.64.8-sources.jar",
+    sha256 = "a1484f5cb100b2a8a9f732748bf6d4ee75f72892e3915900d901c134403dedcf",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-collection/0.64.8/flexmark-util-collection-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-data-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-util-data-0.64.8-sources.jar",
+    sha256 = "12dbc4e9e5fa92c20113ad6381fdc9ed2f4eed4ee3f6c29eb12b911e17a99b45",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-data/0.64.8/flexmark-util-data-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-dependency-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-util-dependency-0.64.8-sources.jar",
+    sha256 = "6606ced6643520748893fa39186705c9f99406178240fa06a08f131e06c139f6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-dependency/0.64.8/flexmark-util-dependency-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-format-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-util-format-0.64.8-sources.jar",
+    sha256 = "e5200a49b80877159ce13e1ea588f315d0f62e27ae05685dc9420ba2d3660649",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-format/0.64.8/flexmark-util-format-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-html-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-util-html-0.64.8-sources.jar",
+    sha256 = "88fabc24d8c94f9ef27204f8c9cf679daeff61ae970c71eafd5a9a94891fdec9",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-html/0.64.8/flexmark-util-html-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-misc-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-util-misc-0.64.8-sources.jar",
+    sha256 = "93d87943c488545fa7e4ec5f6d7a1869febeb9ab781852afa51930c3d67628fb",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-misc/0.64.8/flexmark-util-misc-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-options-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-util-options-0.64.8-sources.jar",
+    sha256 = "384dd1c89b76482f9938a59f53626c944877f5bc5f02662ae965a09d4402e495",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-options/0.64.8/flexmark-util-options-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-sequence-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-util-sequence-0.64.8-sources.jar",
+    sha256 = "d83ac60aff8c7f55b2dff38ea89c2cc8c57b8a36db91943136f355303cb73f14",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-sequence/0.64.8/flexmark-util-sequence-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-util-visitor-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-util-visitor-0.64.8-sources.jar",
+    sha256 = "ac98028eb53715db30ae025e90394e8ad6c276e26dfe47b77d6c18369873673e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-util-visitor/0.64.8/flexmark-util-visitor-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_vladsch_flexmark-flexmark-youtrack-converter-0_64_8-sources_http",
+    downloaded_file_path = "flexmark-youtrack-converter-0.64.8-sources.jar",
+    sha256 = "ceacb63385bfe87d2cfd6a6ce39fa52d2ebf806ba58c3f63786ee4274fbf930e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-youtrack-converter/0.64.8/flexmark-youtrack-converter-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps-gradle-api-9_7_0_http",
+    downloaded_file_path = "gradle-api-9.7.0.jar",
+    sha256 = "6fbb1aa9e83b3bd083289aa62705505d24007066c4b526f8eb1d2971eb892e16",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/gradle-api/9.7.0/gradle-api-9.7.0.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps-gradle-api-9_7_0-sources_http",
+    downloaded_file_path = "gradle-api-9.7.0-sources.jar",
+    sha256 = "3e149c4f1476e280ca60021bf41c4c36596f9a49acef2cb3b8141243ac827db4",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/gradle-api/9.7.0/gradle-api-9.7.0-sources.jar",
+)
+
+http_file(
     name = "org_codehaus_groovy-groovy-ant-3_0_25_http",
     downloaded_file_path = "groovy-ant-3.0.25.jar",
     sha256 = "fd65c1a0cd1c60272b6ed0f45025d7afae8de20b5c11e2a131a7ccb4b0f1f1b2",
@@ -9703,6 +10417,34 @@ http_file(
 )
 
 http_file(
+    name = "org_kodein_di-kodein-di-jvm-7_26_1_http",
+    downloaded_file_path = "kodein-di-jvm-7.26.1.jar",
+    sha256 = "01c5a3fc5c63d196d5949442bde1b014519c07ca7b9fa2d4ee38827ed6a6c98e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/kodein/di/kodein-di-jvm/7.26.1/kodein-di-jvm-7.26.1.jar",
+)
+
+http_file(
+    name = "org_kodein_type-kaverit-jvm-2_10_0_http",
+    downloaded_file_path = "kaverit-jvm-2.10.0.jar",
+    sha256 = "01f3fdf938081f2702d62bd5d78a42651e37643e2fb47e2d5e52ff5772912a11",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/kodein/type/kaverit-jvm/2.10.0/kaverit-jvm-2.10.0.jar",
+)
+
+http_file(
+    name = "org_kodein_di-kodein-di-jvm-7_26_1-sources_http",
+    downloaded_file_path = "kodein-di-jvm-7.26.1-sources.jar",
+    sha256 = "e3cb25368560307f567f0e8e5f52f362b01425b8d49dccfe539e7576d025fca7",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/kodein/di/kodein-di-jvm/7.26.1/kodein-di-jvm-7.26.1-sources.jar",
+)
+
+http_file(
+    name = "org_kodein_type-kaverit-jvm-2_10_0-sources_http",
+    downloaded_file_path = "kaverit-jvm-2.10.0-sources.jar",
+    sha256 = "89ec05e96974e80c8899d9c6c2194f6a42421d447b800b7f588afa70c33c07c1",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/kodein/type/kaverit-jvm/2.10.0/kaverit-jvm-2.10.0-sources.jar",
+)
+
+http_file(
     name = "org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162_http",
     downloaded_file_path = "kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar",
     sha256 = "8d1af87632d95148f122a9fa0ae2903c19ee6fab7d01e017f76e0d2c9a022c20",
@@ -9728,6 +10470,20 @@ http_file(
     downloaded_file_path = "kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162-sources.jar",
     sha256 = "17cfd9ffb163ab974875820368673a42edf8cd6c8f3a0d9750ccb0cb21f6d21d",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.9.20-dev-8162/kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-kotlin-test-junit-2_4_10-RC2_http",
+    downloaded_file_path = "kotlin-test-junit-2.4.10-RC2.jar",
+    sha256 = "788d8b638e6a6154d40d5cccf9adf15f7383c537512c11a28e8fd44b98ad4eef",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-junit/2.4.10-RC2/kotlin-test-junit-2.4.10-RC2.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-kotlin-test-junit-2_4_10-RC2-sources_http",
+    downloaded_file_path = "kotlin-test-junit-2.4.10-RC2-sources.jar",
+    sha256 = "3fd39bbf3f8283cf7b7759e02abdd752ddde9964352f645467b779257bccef20",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-junit/2.4.10-RC2/kotlin-test-junit-2.4.10-RC2-sources.jar",
 )
 
 http_file(
@@ -9868,6 +10624,34 @@ http_file(
     downloaded_file_path = "kotlin-compiler-common-for-ide-2.5.0-dev-4232-sources.jar",
     sha256 = "387c3b3c88aa8a037e741071ef21a94e082d63bb9b2d9894555a48a4d7e8ec70",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.5.0-dev-4232/kotlin-compiler-common-for-ide-2.5.0-dev-4232-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232_http",
+    downloaded_file_path = "kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar",
+    sha256 = "430fc9bfbaef3988025eaf8e175c01b36c71394027e08e1baba67b64e123121e",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-dev-4232/kotlin-compiler-fir-for-ide-2.5.0-dev-4232.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-4232-sources_http",
+    downloaded_file_path = "kotlin-compiler-fir-for-ide-2.5.0-dev-4232-sources.jar",
+    sha256 = "0dc7d3ea464700e19b34752711a5a6b33714a7d5abfed2e79b23621984a1dfe6",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-dev-4232/kotlin-compiler-fir-for-ide-2.5.0-dev-4232-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-kotlinx-serialization-compiler-plugin-for-ide-2_5_0-dev-4232_http",
+    downloaded_file_path = "kotlinx-serialization-compiler-plugin-for-ide-2.5.0-dev-4232.jar",
+    sha256 = "cb42966da27931a2a7c3cb2dfed015002089c424d3afe1094d3e98a502963d2e",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.0-dev-4232/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-dev-4232.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-kotlinx-serialization-compiler-plugin-for-ide-2_5_0-dev-4232-sources_http",
+    downloaded_file_path = "kotlinx-serialization-compiler-plugin-for-ide-2.5.0-dev-4232-sources.jar",
+    sha256 = "e4aae7f1c5dea3e1741cbba71c2c8a18c151f373817bd5ed1a1403ad0a4dd15f",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.0-dev-4232/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-dev-4232-sources.jar",
 )
 
 http_file(
@@ -10218,6 +11002,20 @@ http_file(
     downloaded_file_path = "miglayout-core-11.4.2-sources.jar",
     sha256 = "933dfa0ee061a3c6ac990613b4a82eb075c8c2d9415945fee7932be002631311",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-core/11.4.2/miglayout-core-11.4.2-sources.jar",
+)
+
+http_file(
+    name = "org_mockito_kotlin-mockito-kotlin-6_0_0_http",
+    downloaded_file_path = "mockito-kotlin-6.0.0.jar",
+    sha256 = "34d626ffa4a27ec49e47de7d760f1df30223ecb8944b6472941f5c73ec68dfbd",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/mockito/kotlin/mockito-kotlin/6.0.0/mockito-kotlin-6.0.0.jar",
+)
+
+http_file(
+    name = "org_mockito_kotlin-mockito-kotlin-6_0_0-sources_http",
+    downloaded_file_path = "mockito-kotlin-6.0.0-sources.jar",
+    sha256 = "766d88d3fb0d2abc707f57ca6e15a5e337eff7e428631cd1c639f1b736b2c78f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/mockito/kotlin/mockito-kotlin/6.0.0/mockito-kotlin-6.0.0-sources.jar",
 )
 
 http_file(
@@ -14838,20 +15636,6 @@ http_file(
     downloaded_file_path = "mockito-junit-jupiter-5.19.0-sources.jar",
     sha256 = "3c199479a2319db4395fd9fd209946ecc4530f48fe5cdeed7677c285bf70fbb5",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/mockito/mockito-junit-jupiter/5.19.0/mockito-junit-jupiter-5.19.0-sources.jar",
-)
-
-http_file(
-    name = "org_mockito_kotlin-mockito-kotlin-6_0_0_http",
-    downloaded_file_path = "mockito-kotlin-6.0.0.jar",
-    sha256 = "34d626ffa4a27ec49e47de7d760f1df30223ecb8944b6472941f5c73ec68dfbd",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/mockito/kotlin/mockito-kotlin/6.0.0/mockito-kotlin-6.0.0.jar",
-)
-
-http_file(
-    name = "org_mockito_kotlin-mockito-kotlin-6_0_0-sources_http",
-    downloaded_file_path = "mockito-kotlin-6.0.0-sources.jar",
-    sha256 = "766d88d3fb0d2abc707f57ca6e15a5e337eff7e428631cd1c639f1b736b2c78f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/mockito/kotlin/mockito-kotlin/6.0.0/mockito-kotlin-6.0.0-sources.jar",
 )
 
 http_file(

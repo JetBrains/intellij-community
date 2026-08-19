@@ -109,6 +109,18 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
     computeOnEdt { TreeUtil.promiseExpandAll(component) }.blockingGet(timeoutMs)
   }
 
+  fun expandRowRecursively(row: Int, timeoutMs: Int) {
+    val selectedPath = computeOnEdt {
+      require(row in 0 until component.rowCount) {
+        "The given row $row should be between 0 and ${component.rowCount - 1}"
+      }
+      requireNotNull(component.getPathForRow(row))
+    }
+    computeOnEdt {
+      TreeUtil.promiseExpandRecursively(component, selectedPath)
+    }.blockingGet(timeoutMs)
+  }
+
   fun collectIconsAtRow(row: Int): List<Icon> {
     val rowComponent = getComponentAtRow(row)
     if (rowComponent is Container) {

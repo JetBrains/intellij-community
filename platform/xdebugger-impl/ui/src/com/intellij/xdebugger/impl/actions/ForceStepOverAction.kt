@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.platform.debugger.impl.shared.performDebuggerActionAsync
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
@@ -19,8 +18,8 @@ open class ForceStepOverAction : XDebuggerActionBase(), SplitDebuggerAction {
 }
 
 private val ourHandler = object : XDebuggerProxySuspendedActionHandler() {
-  override fun perform(session: XDebugSessionProxy, dataContext: DataContext) {
-    performDebuggerActionAsync(session.project, dataContext) {
+  override fun perform(session: XDebugSessionProxy, event: AnActionEvent) {
+    performDebuggerActionAsync(event) {
       session.stepOver(ignoreBreakpoints = true)
     }
   }

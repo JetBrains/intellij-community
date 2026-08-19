@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.mockito.kotlin.jar
+  modules:
+  - name: intellij.libraries.mockito.kotlin
+    libraries:
+      mockito-kotlin:
+      - name: $MAVEN_REPOSITORY$/org/mockito/kotlin/mockito-kotlin/6/mockito-kotlin-6.jar

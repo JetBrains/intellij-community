@@ -41,6 +41,7 @@ import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
+import com.intellij.platform.debugger.impl.ui.XDebuggerUiBundle;
 import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -74,7 +75,6 @@ import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchNode;
 import com.intellij.xdebugger.impl.inline.InlineWatchesRootNode;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
-import com.intellij.platform.debugger.impl.ui.XDebuggerUiBundle;
 import com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
@@ -88,6 +88,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.util.DisposableUtilKt;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -331,7 +332,9 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
           };
 
           // The debugger session can end while the watches editor is still alive.
-          Disposer.register(CoroutineScopeKt.asDisposable(scope), () -> { doDisposeInlineCompletion.run(); });
+          DisposableUtilKt.onTermination(CoroutineScopeKt.asDisposable(scope), () -> {
+            doDisposeInlineCompletion.run();
+          });
           // The watches editor can be recreated while the debugger session is still active.
           EditorUtil.disposeWithEditor(editor, () -> { doDisposeInlineCompletion.run(); });
         }

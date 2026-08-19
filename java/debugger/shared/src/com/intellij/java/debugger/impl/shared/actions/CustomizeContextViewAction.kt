@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 internal class CustomizeContextViewAction : AnAction(), DumbAware, SplitDebuggerAction {
   override fun actionPerformed(e: AnActionEvent) {
     val session = DebuggerUIUtil.getSessionProxy(e) ?: return
-    session.coroutineScope.launch {
+    e.coroutineScope.launch {
       JavaDebuggerLuxActionsApi.getInstance().showCustomizeDataViewsDialog(session.project.projectId())
     }
   }

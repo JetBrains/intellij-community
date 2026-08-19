@@ -33,6 +33,7 @@ jvm_library(
 exports_files(
     [
         "intellij.module.iml",
+        "resources/intellij.module.xml",
     ],
     visibility = ["//visibility:public"],
 )

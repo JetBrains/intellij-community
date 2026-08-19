@@ -1,9 +1,8 @@
 from collections.abc import Collection, Mapping, Sequence
 from re import Pattern
-from typing import Any, Literal, Protocol, TypeAlias, TypedDict, type_check_only
+from typing import Any, Literal, NotRequired, Protocol, TypeAlias, TypedDict, type_check_only
 
 from django.utils.functional import _StrOrPromise
-from typing_extensions import NotRequired
 
 from django_stubs_ext.settings import TemplatesSetting
 
@@ -97,6 +96,11 @@ class Router(Protocol):
 
 DATABASE_ROUTERS: list[str | Router]
 
+# Mailer configurations. No mailers are defined by default.
+# RemovedInDjango70Warning: uncomment the next line.
+# MAILERS: Mapping[str, Mapping[str, Any]]
+
+# RemovedInDjango70Warning.
 # The email backend to use. For possible shortcuts see django.core.mail.
 # The default is to use the SMTP backend.
 # Third-party backends can be specified by providing a Python path
@@ -107,15 +111,18 @@ EMAIL_BACKEND: str
 # Because Django doesn't define it, we can't provide its type here. Use `getattr` for type-safe access
 # e.g. `getattr(settings, "EMAIL_FILE_PATH")`
 
+# RemovedInDjango70Warning.
 # Host for sending email.
 EMAIL_HOST: str
 
+# RemovedInDjango70Warning.
 # Port for sending email.
 EMAIL_PORT: int
 
 # Whether to send SMTP 'Date' header in the local time zone or in UTC.
 EMAIL_USE_LOCALTIME: bool
 
+# RemovedInDjango70Warning.
 # Optional SMTP authentication information for EMAIL_HOST.
 EMAIL_HOST_USER: str
 EMAIL_HOST_PASSWORD: str
@@ -132,6 +139,9 @@ TEMPLATES: list[TemplatesSetting]
 
 # Default form rendering class.
 FORM_RENDERER: str
+# RemovedInDjango70Warning: This setting allows to revert back to the old
+# blank choice label in Django 6.1.
+USE_BLANK_CHOICE_DASH: bool
 
 # Default email address to use for various automated correspondence from
 # the site managers.

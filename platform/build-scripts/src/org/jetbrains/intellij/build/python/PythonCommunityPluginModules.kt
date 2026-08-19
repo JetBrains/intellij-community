@@ -38,7 +38,6 @@ object PythonCommunityPluginModules {
 
       // required for "Python Console" in PythonCore plugin
       @Suppress("SpellCheckingInspection")
-      spec.excludeProjectLibrary("Gradle")
       body(spec)
     }
   }

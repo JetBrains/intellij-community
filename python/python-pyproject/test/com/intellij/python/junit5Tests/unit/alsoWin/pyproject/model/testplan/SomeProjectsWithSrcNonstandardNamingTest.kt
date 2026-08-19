@@ -9,7 +9,6 @@ import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTom
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -20,10 +19,10 @@ private const val BASE = $$"$CONTENT_ROOT/../testData/monorepo/some_projects_wit
 @TestDataPath("$BASE/flat_layout_poetry")
 internal class FlatLayoutPoetryTest {
   companion object {
-    private val tempDirFixture = tempPathFixture()
-    private val projectFixture = projectFixture(pathFixture = tempDirFixture)
+    private val projectFixture = projectFixture()
   }
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -41,10 +40,10 @@ internal class FlatLayoutPoetryTest {
 @TestDataPath("$BASE/hatch.build.targets.wheel")
 internal class HatchBuildTargetsWheelTest {
   companion object {
-    private val tempDirFixture = tempPathFixture()
-    private val projectFixture = projectFixture(pathFixture = tempDirFixture)
+    private val projectFixture = projectFixture()
   }
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -65,10 +64,10 @@ internal class HatchBuildTargetsWheelTest {
 @TestDataPath("$BASE/poetry.packages.include")
 internal class PoetryPackagesIncludeTest {
   companion object {
-    private val tempDirFixture = tempPathFixture()
-    private val projectFixture = projectFixture(pathFixture = tempDirFixture)
+    private val projectFixture = projectFixture()
   }
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -86,10 +85,10 @@ internal class PoetryPackagesIncludeTest {
 @TestDataPath("$BASE/setuptools.packages.find")
 internal class SetuptoolsPackagesFindTest {
   companion object {
-    private val tempDirFixture = tempPathFixture()
-    private val projectFixture = projectFixture(pathFixture = tempDirFixture)
+    private val projectFixture = projectFixture()
   }
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -110,10 +109,10 @@ internal class SetuptoolsPackagesFindTest {
 @TestDataPath("$BASE/setuptools.packages.find_multiple_source_roots")
 internal class SetuptoolsPackagesFindMultipleSourceRootsTest {
   companion object {
-    private val tempDirFixture = tempPathFixture()
-    private val projectFixture = projectFixture(pathFixture = tempDirFixture)
+    private val projectFixture = projectFixture()
   }
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -134,10 +133,10 @@ internal class SetuptoolsPackagesFindMultipleSourceRootsTest {
 @TestDataPath("$BASE/uv.build-backend")
 internal class UvBuildBackendTest {
   companion object {
-    private val tempDirFixture = tempPathFixture()
-    private val projectFixture = projectFixture(pathFixture = tempDirFixture)
+    private val projectFixture = projectFixture()
   }
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {

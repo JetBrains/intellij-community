@@ -54,7 +54,7 @@ jvm_library(
         "//libraries/jetbrains/annotations",
         "//platform/external-system-rt:externalSystem-rt",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
-        "@lib//:gradle",
+        "//libraries/gradle",
         "//libraries/gson",
         "//platform/object-serializer:objectSerializer-annotations",
         "//libraries/ion",
@@ -94,6 +94,7 @@ jvm_library(
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/external-system-rt:externalSystem-rt_test_lib",
         "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
+        "//libraries/gradle:gradle_test_lib",
         "//libraries/gson:gson_test_lib",
         "//platform/object-serializer:objectSerializer-annotations_test_lib",
         "//libraries/ion:ion_test_lib",
@@ -224,6 +225,8 @@ jvm_library(
         "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//platform/todo/plugin",
         "//platform/todo/plugin:plugin_test_lib",
+        "//tools/intellij.tools.ide.starter:ide-starter",
+        "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` end

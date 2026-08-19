@@ -55,7 +55,7 @@ internal class FloatingPointLiteralPrecisionInspection : KotlinApplicableInspect
 
     context(session: KaSession)
     override fun prepareContext(element: KtConstantExpression): String? {
-        if (element.elementType == KtNodeTypes.FLOAT_CONSTANT) {
+        if (element.iElementType == KtNodeTypes.FLOAT_CONSTANT) {
             val isFloat = element.expressionType?.classId == KaStandardTypeClassIds.FLOAT
             val uppercaseSuffix = isFloat && element.text?.endsWith('F') == true
             val literal = element.text?.replace(Regex("[_fF]"), "") ?: return null

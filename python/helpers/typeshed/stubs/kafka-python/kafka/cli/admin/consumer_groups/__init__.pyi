@@ -1,3 +1,0 @@
-class ConsumerGroupsSubCommand:
-    @classmethod
-    def add_subparser(cls, subparsers): ...

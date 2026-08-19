@@ -1533,6 +1533,7 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.maven.proofreading.tests",
   "intellij.maven.groovy.tests",
   "intellij.maven.testFramework.tests",
+  "intellij.maven.tests",
   "intellij.mermaid.tests",
   "intellij.notebooks.visualization.tests",
   "intellij.java.manifest.tests",
@@ -1607,6 +1608,7 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.searchEverywhereMl.tests",
   "intellij.searchEverywhereMl.typos.tests",
   "intellij.statsCollector.tests",
+  "intellij.platform.builtInServer.tests",
   "intellij.platform.core.nio.fs",
   "intellij.platform.jewel.ui.tests",
   "intellij.platform.jps.model.tests",
@@ -1692,4 +1694,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.workspace.jps.tests",
   "intellij.platform.workspace.storage.tests",
   "intellij.platform.util.tests",
+  "intellij.platform.credentialStore.impl.tests",
 )

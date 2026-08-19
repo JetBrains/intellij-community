@@ -17,7 +17,7 @@ class CalculateRetainedSizeAction : XDebuggerTreeSplitActionBase() {
   override fun perform(node: XValueNodeImpl, nodeName: String, e: AnActionEvent) {
     val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return
     val xValue = node.valueContainer
-    sessionProxy.coroutineScope.launch {
+    e.coroutineScope.launch {
       XDebugManagerProxy.getInstance().withId(xValue, sessionProxy) { xValueId ->
         JavaDebuggerLuxActionsApi.getInstance().showCalculateRetainedSizeDialog(xValueId, nodeName)
       }

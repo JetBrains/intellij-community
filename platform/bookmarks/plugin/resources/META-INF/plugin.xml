@@ -2,11 +2,14 @@
 <!--suppress PluginXmlPluginLogo -->
 <idea-plugin>
   <id>intellij.bookmarks.plugin</id>
-  <name>Bookmarks Manager</name>
-  <description>Marks lines of code, files, folders, classes, and editor tabs for quick navigation,
-    supports anonymous and mnemonic bookmarks accessible via keyboard shortcuts,
-    and organizes them into named lists in a dedicated tool window.</description>
+  <name>Bookmarks</name>
   <vendor>JetBrains</vendor>
+  <description><![CDATA[
+    Marks lines of code, files, folders, classes, and editor tabs for quick navigation,
+    supports anonymous and mnemonic bookmarks accessible via keyboard shortcuts,
+    and organizes them into named lists in a dedicated tool window.
+  ]]></description>
+
   <content namespace="jetbrains">
     <module name="intellij.platform.bookmarks" loading="required"/>
     <module name="intellij.platform.bookmarks.backend"/>

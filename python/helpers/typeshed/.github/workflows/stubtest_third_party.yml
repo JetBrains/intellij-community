@@ -1,4 +1,4 @@
-name: Third-party stubtest
+name: "Stubtest: third-party"
 
 on:
   pull_request:

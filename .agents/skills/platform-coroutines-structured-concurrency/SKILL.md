@@ -1,6 +1,6 @@
 ---
 name: platform-coroutines-structured-concurrency
-description: Write or review IntelliJ coroutine code for structured concurrency, scope ownership, and cancellation.
+description: Write or review IntelliJ coroutine scope ownership and cancellation.
 ---
 
 # Coroutines: structured concurrency

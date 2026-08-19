@@ -167,8 +167,13 @@ object GitRemoteBranchesUtil {
       }
       if (!fetchOk) return@withBackgroundProgress
 
-      // Reuse the local branch already tracking the remote one, so the worktree doesn't fail to create a duplicate branch.
-      val ref: GitBranch = findLocalBranchTrackingRemote(repository, branch) ?: branch
+      // Reuse a local branch that already tracks the remote one, or shares the name a regular checkout would have
+      // assigned it (tracking may be missing depending on the user's `branch.autoSetupMerge` setting), so the
+      // worktree doesn't fail trying to create a branch that already exists.
+      val existingLocalBranch = findLocalBranchTrackingRemote(repository, branch)
+                                 ?: repository.branches.findLocalBranch(branch.nameForRemoteOperations)
+                                   ?.takeUnless { hasTrackingConflicts(mapOf(repository to it), branch.name) }
+      val ref: GitBranch = existingLocalBranch ?: branch
       GitCreateWorkingTreeService.getInstance()
         .createOrOpenWorktreeForBranch(repository, ref, parentDir, worktreeName, place, onProjectOpened)
     }

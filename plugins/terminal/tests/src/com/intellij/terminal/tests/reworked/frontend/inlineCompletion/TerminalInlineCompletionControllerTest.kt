@@ -156,6 +156,20 @@ internal class TerminalInlineCompletionControllerTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `typing and backspace events are forwarded in order`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    createFixture().use { fixture ->
+      fixture.type('a', TerminalOffset.ZERO)
+      fixture.updateOutput("a<cursor>")
+      assertThat(fixture.provider.events.receive()).isEqualTo(RecordedTyping('a', 0))
+
+      fixture.press(KeyEvent.VK_BACK_SPACE, TerminalOffset.of(1))
+      fixture.updateOutput("<cursor>")
+      assertThat(fixture.provider.events.receive()).isEqualTo(RecordedBackspace)
+      assertThat(fixture.provider.events.tryReceive().getOrNull()).isNull()
+    }
+  }
+
+  @Test
   fun `tab and navigation keys invalidate pending input`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     createFixture().use { fixture ->
       for (keyCode in listOf(

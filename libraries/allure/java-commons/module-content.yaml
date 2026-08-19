@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.allure.java.commons.jar
+  modules:
+  - name: intellij.libraries.allure.java.commons
+    libraries:
+      io.qameta.allure.java.commons:
+      - name: $MAVEN_REPOSITORY$/io/qameta/allure/allure-java-commons/2/allure-java-commons-2.jar
+      - name: $MAVEN_REPOSITORY$/io/qameta/allure/allure-model/2/allure-model-2.jar

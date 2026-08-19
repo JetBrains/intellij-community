@@ -1,373 +1,422 @@
-from _typeshed import Incomplete, OptExcInfo, Unused
-from collections.abc import Callable
+from _typeshed import FileDescriptorOrPath, Incomplete, OptExcInfo, Unused
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from types import TracebackType
+from typing import Final, Literal, overload
 
 import _win32typing
 
 class error(Exception): ...
 
-def ComparePath(path1: str, path2: str, /): ...
+def ComparePath(path1: str, path2: str, /) -> int: ...
 def CreateMDIFrame() -> _win32typing.PyCMDIFrameWnd: ...
 def CreateMDIChild() -> _win32typing.PyCMDIChildWnd: ...
 def CreateBitmap(*args: Unused) -> _win32typing.PyCBitmap: ...
-def CreateBitmapFromHandle(): ...
+def CreateBitmapFromHandle(handle: int | _win32typing.PyHANDLE | None, /) -> _win32typing.PyCBitmap: ...
+
+@overload
 def CreateBrush() -> _win32typing.PyCBrush: ...
+@overload
+def CreateBrush(style: int, color: int, hatch: int, /) -> _win32typing.PyCBrush: ...
+
 def CreateButton() -> _win32typing.PyCButton: ...
 def CreateColorDialog(
-    initColor: int = ..., flags: int = ..., parent: _win32typing.PyCWnd | None = ..., /
+    initColor: int = 0, flags: int = 0, parent: _win32typing.PyCWnd | None = None, /
 ) -> _win32typing.PyCColorDialog: ...
 def CreateControl(
     classId: str,
-    windowName: str,
-    style,
-    rect: tuple[Incomplete, Incomplete, Incomplete, Incomplete],
+    windowName: str | None,
+    style: int,
+    rect: tuple[int, int, int, int],
     parent: _win32typing.PyCWnd,
-    _id,
-    bStorage,
-    obPersist: Incomplete | None = ...,
-    licKey: str | None = ...,
+    id: int,
+    obPersist: Unused = None,
+    bStorage: bool | Literal[0, 1] = False,
+    licKey: str | None = None,
     /,
 ) -> _win32typing.PyCWnd: ...
 def CreateControlBar() -> _win32typing.PyCControlBar: ...
-def CreateCtrlView(doc: _win32typing.PyCDocument, className: str, style: int = ..., /) -> _win32typing.PyCCtrlView: ...
-def CreateDC() -> None: ...
-def CreateDCFromHandle(hwnd: int | _win32typing.PyHANDLE, /) -> _win32typing.PyCDC: ...
-def CreateDialog(idRes, dll: _win32typing.PyDLL | None = ..., /) -> _win32typing.PyCDialog: ...
+def CreateCtrlView(doc: _win32typing.PyCDocument, className: str, style: int = 0, /) -> _win32typing.PyCCtrlView: ...
+def CreateDC() -> _win32typing.PyCDC: ...
+def CreateDCFromHandle(handle: int | _win32typing.PyHANDLE | None, /) -> _win32typing.PyCDC: ...
+def CreateDialog(idRes: int, dll: _win32typing.PyDLL | None = None, /) -> _win32typing.PyCDialog: ...
 def CreateDialogBar() -> _win32typing.PyCDialogBar: ...
-def CreateDialogIndirect(oblist, /) -> _win32typing.PyCDialog: ...
+def CreateDialogIndirect(
+    oblist: Iterable[_win32typing.PyDLGTEMPLATE | _win32typing.PyDLGITEMTEMPLATE], /
+) -> _win32typing.PyCDialog: ...
 def CreatePrintDialog(
-    idRes, bPrintSetupOnly, dwFlags, parent: _win32typing.PyCWnd | None = ..., dll: _win32typing.PyDLL | None = ..., /
+    idRes: int,
+    bPrintSetupOnly: bool | Literal[0, 1] = False,
+    dwFlags: int = ...,
+    parent: _win32typing.PyCWnd | None = None,
+    dll: _win32typing.PyDLL | None = None,
+    /,
 ) -> _win32typing.PyCPrintDialog: ...
-def CreateDocTemplate(idRes, /) -> _win32typing.PyCDocTemplate: ...
+def CreateDocTemplate(idRes: int, /) -> _win32typing.PyCDocTemplate: ...
 def CreateEdit() -> _win32typing.PyCEdit: ...
 def CreateFileDialog(
-    bFileOpen,
-    arg,
-    defExt: str | None = ...,
-    fileName: str | None = ...,
-    _filter: str | None = ...,
-    parent: _win32typing.PyCWnd | None = ...,
+    bFileOpen: int,
+    defExt: str | None = None,
+    fileName: str | None = None,
+    flags: int = ...,
+    filter: str | None = None,
+    parent: _win32typing.PyCWnd | None = None,
     /,
 ) -> _win32typing.PyCFileDialog: ...
 def CreateFontDialog(
-    arg, font: Incomplete | None = ..., dcPrinter: _win32typing.PyCDC | None = ..., parent: _win32typing.PyCWnd | None = ..., /
+    font: tuple[int, int, int, int, int, int, int, str | None] | Mapping[str, int | str | None] | None = None,
+    flags: int = ...,
+    dcPrinter: _win32typing.PyCDC | None = None,
+    parent: _win32typing.PyCWnd | None = None,
+    /,
 ) -> _win32typing.PyCFontDialog: ...
-def CreateFormView(doc: _win32typing.PyCDocument, Template, /) -> _win32typing.PyCFormView: ...
-def CreateFrame(): ...
-def CreateTreeCtrl() -> _win32typing.PyCTreeCtrl: ...
+def CreateFormView(
+    doc: _win32typing.PyCDocument, Template: int | str | _win32typing.PyResourceId, /
+) -> _win32typing.PyCFormView: ...
+def CreateFrame() -> _win32typing.PyCFrameWnd: ...
+def CreateTreeCtrl(*args: Unused) -> _win32typing.PyCTreeCtrl: ...
 def CreateTreeView(doc: _win32typing.PyCDocument, /) -> _win32typing.PyCTreeView: ...
-def CreatePalette(lp, /): ...
+def CreatePalette(lp: Sequence[tuple[int, int, int, int]], /) -> int: ...
 def CreatePopupMenu() -> _win32typing.PyCMenu: ...
 def CreateMenu() -> _win32typing.PyCMenu: ...
-def CreatePen(style, width, color, /): ...
+def CreatePen(style: int, width: int, color: int, /): ...
 def CreateProgressCtrl() -> _win32typing.PyCProgressCtrl: ...
-def CreatePropertyPage(resource: _win32typing.PyResourceId, caption: int = ..., /) -> _win32typing.PyCPropertyPage: ...
-def CreatePropertyPageIndirect(resourcelist: _win32typing.PyDialogTemplate, caption=..., /) -> _win32typing.PyCPropertyPage: ...
+def CreatePropertyPage(resource: int | str | _win32typing.PyResourceId, caption: int = 0, /) -> _win32typing.PyCPropertyPage: ...
+def CreatePropertyPageIndirect(
+    resourceList: Iterable[Incomplete] | _win32typing.PyDialogTemplate, caption: int = 0, /
+) -> _win32typing.PyCPropertyPage: ...
 def CreatePropertySheet(
-    caption: _win32typing.PyResourceId, parent: _win32typing.PyCWnd | None = ..., select=..., /
+    caption: int | str | _win32typing.PyResourceId, parent: _win32typing.PyCWnd | None = None, select: int = 0, /
 ) -> _win32typing.PyCPropertySheet: ...
 def CreateRgn() -> _win32typing.PyCRgn: ...
 def CreateRichEditCtrl() -> _win32typing.PyCRichEditCtrl: ...
-def CreateRichEditDocTemplate(idRes, /) -> _win32typing.PyCRichEditDocTemplate: ...
-def CreateRichEditView(doc: _win32typing.PyCDocument | None = ..., /) -> _win32typing.PyCRichEditView: ...
+def CreateRichEditDocTemplate(idRes: int, /) -> _win32typing.PyCRichEditDocTemplate: ...
+def CreateRichEditView(doc: _win32typing.PyCDocument | None = None, /) -> _win32typing.PyCRichEditView: ...
 def CreateSliderCtrl() -> _win32typing.PyCSliderCtrl: ...
 def CreateSplitter() -> _win32typing.PyCSplitterWnd: ...
 def CreateStatusBar(
-    parent: _win32typing.PyCWnd, style: int = ..., windowId: int = ..., ctrlStype: int = ..., /
+    parent: _win32typing.PyCWnd, style: int = ..., windowId: int = ..., ctrlStype: int = 0, /
 ) -> _win32typing.PyCStatusBar: ...
 def CreateStatusBarCtrl() -> _win32typing.PyCStatusBarCtrl: ...
-def CreateFont(properties, /) -> _win32typing.PyCFont: ...
+def CreateFont(properties: Mapping[str, int | str | None], pydc: _win32typing.PyCDC = ..., /) -> _win32typing.PyCFont: ...
 def CreateToolBar(parent: _win32typing.PyCWnd, style: int, windowId: int = ..., /) -> _win32typing.PyCToolBar: ...
 def CreateToolBarCtrl() -> _win32typing.PyCToolBarCtrl: ...
 def CreateToolTipCtrl() -> _win32typing.PyCToolTipCtrl: ...
+
+@overload
 def CreateThread() -> _win32typing.PyCWinThread: ...
+@overload
+def CreateThread(func: Callable[..., Incomplete], args=None, /) -> _win32typing.PyCWinThread: ...
+
 def CreateView(doc: _win32typing.PyCDocument, /) -> _win32typing.PyCScrollView: ...
 def CreateEditView(doc: _win32typing.PyCDocument, /) -> _win32typing.PyCEditView: ...
 def CreateDebuggerThread() -> None: ...
-def CreateWindowFromHandle(hwnd: int, /) -> _win32typing.PyCWnd: ...
+def CreateWindowFromHandle(hwnd: int | _win32typing.PyHANDLE | None, /) -> _win32typing.PyCWnd: ...
 def CreateWnd() -> _win32typing.PyCWnd: ...
 def DestroyDebuggerThread() -> None: ...
-def DoWaitCursor(code, /) -> None: ...
-def DisplayTraceback(exc_info: OptExcInfo, title: str, /) -> None: ...
-def Enable3dControls(): ...
-def FindWindow(className: str, windowName: str, /) -> _win32typing.PyCWnd: ...
+def DoWaitCursor(code: Literal[-1, 0, 1], /) -> None: ...
+def DisplayTraceback(exc_info: OptExcInfo, title: str | None = None, /) -> None: ...
+def Enable3dControls() -> int: ...
+def FindWindow(className: str | None, windowName: str | None, /) -> _win32typing.PyCWnd: ...
 def FindWindowEx(
-    parentWindow: _win32typing.PyCWnd, childAfter: _win32typing.PyCWnd, className: str, windowName: str, /
+    parentWindow: _win32typing.PyCWnd | None,
+    childAfter: _win32typing.PyCWnd | None,
+    className: str | None,
+    windowName: str | None,
+    /,
 ) -> _win32typing.PyCWnd: ...
 def FullPath(path: str, /) -> str: ...
 def GetActiveWindow() -> _win32typing.PyCWnd: ...
 def GetApp() -> _win32typing.PyCWinApp: ...
-def GetAppName(): ...
+def GetAppName() -> str: ...
 def GetAppRegistryKey() -> _win32typing.PyHKEY: ...
-def GetBytes(address, size, /) -> str: ...
+def GetBytes(address: int, size: int, /) -> bytes: ...
 def GetCommandLine() -> str: ...
-def GetDeviceCaps(hdc, index, /): ...
+def GetDeviceCaps(hdc: int | _win32typing.PyHANDLE | None, index: int, /) -> int: ...
 def GetFileTitle(fileName: str, /) -> str: ...
 def GetFocus() -> _win32typing.PyCWnd: ...
 def GetForegroundWindow() -> _win32typing.PyCWnd: ...
-def GetHalftoneBrush() -> _win32typing.PyCBrush: ...
-def GetInitialStateRequest(): ...
+def GetHalftoneBrush(*args: Unused) -> _win32typing.PyCBrush: ...
+def GetInitialStateRequest() -> int: ...
 def GetMainFrame() -> _win32typing.PyCWnd: ...
 def GetName() -> str: ...
 def GetProfileFileName() -> str: ...
-def GetProfileVal(section: str, entry: str, defValue: str, /) -> str: ...
+
+@overload
+def GetProfileVal(section: str, entry: str, defValue: str | None, /) -> str: ...
+@overload
+def GetProfileVal(section: str, entry: str, defValue: int, /) -> int: ...
+
 def GetResource() -> _win32typing.PyDLL: ...
 def GetThread() -> _win32typing.PyCWinApp: ...
-def GetType(): ...
-def InitRichEdit() -> str: ...
-def InstallCallbackCaller(caller: Callable[..., Incomplete] | None): ...
-def IsDebug() -> int: ...
-def IsWin32s() -> int: ...
+def GetType(name: str, /): ...
+def InitRichEdit() -> None: ...
+def InstallCallbackCaller(caller: Callable[..., Incomplete] | None = None, /): ...
+def IsDebug() -> Literal[0, 1]: ...
+def IsWin32s() -> bool: ...
 def IsObject(o: object, /) -> bool: ...
-def LoadDialogResource(idRes, dll: _win32typing.PyDLL | None = ..., /): ...
-def LoadLibrary(fileName: str, /) -> _win32typing.PyDLL: ...
-def LoadMenu(_id, dll: _win32typing.PyDLL | None = ..., /) -> _win32typing.PyCMenu: ...
+def LoadDialogResource(idRes: int, dll: _win32typing.PyDLL | None = None, /) -> list[Incomplete]: ...
+def LoadLibrary(fileName: str, flags: int = 0, /) -> _win32typing.PyDLL: ...
+def LoadMenu(id: int, dll: _win32typing.PyDLL | None = None, /) -> _win32typing.PyCMenu: ...
 def LoadStdProfileSettings(maxFiles: int = ..., /) -> None: ...
-def LoadString(stringId, /) -> str: ...
-def MessageBox(message: str, title: str | None = ..., style=..., /): ...
-def OutputDebugString(msg: str, /) -> None: ...
-def EnableControlContainer(): ...
-def PrintTraceback(tb, output, /) -> None: ...
-def PumpWaitingMessages(firstMessage: int = ..., lastMessage: int = ..., /) -> int: ...
-def RegisterWndClass(style, hCursor: int = ..., hBrush: int = ..., hIcon=..., /) -> str: ...
-def RemoveRecentFile(index: int = ..., /) -> None: ...
-def SetAppHelpPath(): ...
-def SetAppName(appName: str, /): ...
-def SetCurrentInstanceHandle(newVal, /): ...
-def SetCurrentResourceHandle(newVal, /): ...
+def LoadString(stringId: int, /) -> str: ...
+def MessageBox(message: str, title: str | None = None, style: int = 0, /) -> int: ...
+def EnableControlContainer() -> None: ...
+def PrintTraceback(tb: TracebackType, output: FileDescriptorOrPath, /) -> None: ...
+def PumpWaitingMessages(firstMessage: int = 15, lastMessage: int = 15, /) -> Literal[0, 1]: ...
+def RegisterWndClass(
+    style: int,
+    hCursor: int | _win32typing.PyHANDLE | None = 0,
+    hBrush: int | _win32typing.PyHANDLE | None = 0,
+    hIcon: int | _win32typing.PyHANDLE | None = 0,
+    /,
+) -> str: ...
+def RemoveRecentFile(index: int = 0, /) -> None: ...
+def SetAppHelpPath(name: str, /) -> None: ...
+def SetAppName(appName: str, /) -> None: ...
+def SetCurrentInstanceHandle(newVal: int | _win32typing.PyHANDLE | None, /) -> int: ...
+def SetCurrentResourceHandle(newVal: int, /) -> int: ...
 def SetDialogBkColor(clrCtlBk: int = ..., clrCtlText: int = ..., /) -> None: ...
 def SetProfileFileName(filename: str, /) -> None: ...
 def SetRegistryKey(key: str, /) -> None: ...
-def SetResource(dll, /) -> _win32typing.PyDLL: ...
-def SetStatusText(msg: str, bForce: int = ..., /) -> None: ...
+def SetResource(dll: _win32typing.PyDLL, /) -> _win32typing.PyDLL: ...
+def SetStatusText(msg: str, bForce: bool | Literal[0, 1] = False, /) -> None: ...
 def StartDebuggerPump() -> None: ...
 def StopDebuggerPump() -> None: ...
-def TranslateMessage(): ...
-def TranslateVirtualKey(vk, /) -> str: ...
-def WinHelp(arg, data: str, /) -> None: ...
-def WriteProfileVal(section: str, entry: str, value: str, /) -> None: ...
-def AddToRecentFileList(fname, /): ...
-def CreateImageList(cx, cy, mask, initial, grow, /): ...
-def CreateListCtrl(): ...
-def CreateListView(doc, /): ...
-def CreateRectRgn(rect: tuple[Incomplete, Incomplete, Incomplete, Incomplete], /): ...
-def GetRecentFileList() -> list[Incomplete]: ...
-def OutputDebug(msg: str, /) -> None: ...
+def TranslateMessage(msg: tuple[int, int, int, int, int, tuple[int, int]]) -> int: ...
+def TranslateVirtualKey(vk: int, /) -> bytes | None: ...
+def WinHelp(cmd: int, data: str | int, /) -> None: ...
+def WriteProfileVal(section: str, entry: str, value: str | int, /) -> int: ...
+def AddToRecentFileList(fileName: str, /) -> None: ...
 
-AFX_IDW_PANE_FIRST: int
-AFX_IDW_PANE_LAST: int
-AFX_WS_DEFAULT_VIEW: int
-CDocTemplate_Confidence_maybeAttemptForeign: int
-CDocTemplate_Confidence_maybeAttemptNative: int
-CDocTemplate_Confidence_noAttempt: int
-CDocTemplate_Confidence_yesAlreadyOpen: int
-CDocTemplate_Confidence_yesAttemptForeign: int
-CDocTemplate_Confidence_yesAttemptNative: int
-CDocTemplate_docName: int
-CDocTemplate_fileNewName: int
-CDocTemplate_filterExt: int
-CDocTemplate_filterName: int
-CDocTemplate_regFileTypeId: int
-CDocTemplate_regFileTypeName: int
-CDocTemplate_windowTitle: int
-CRichEditView_WrapNone: int
-CRichEditView_WrapToTargetDevice: int
-CRichEditView_WrapToWindow: int
-debug: int
-FWS_ADDTOTITLE: int
-FWS_PREFIXTITLE: int
-FWS_SNAPTOBARS: int
-ID_APP_ABOUT: int
-ID_APP_EXIT: int
-ID_EDIT_CLEAR: int
-ID_EDIT_CLEAR_ALL: int
-ID_EDIT_COPY: int
-ID_EDIT_CUT: int
-ID_EDIT_FIND: int
-ID_EDIT_GOTO_LINE: int
-ID_EDIT_PASTE: int
-ID_EDIT_REDO: int
-ID_EDIT_REPEAT: int
-ID_EDIT_REPLACE: int
-ID_EDIT_SELECT_ALL: int
-ID_EDIT_SELECT_BLOCK: int
-ID_EDIT_UNDO: int
-ID_FILE_CHECK: int
-ID_FILE_CLOSE: int
-ID_FILE_IMPORT: int
-ID_FILE_LOCATE: int
-ID_FILE_MRU_FILE1: int
-ID_FILE_MRU_FILE2: int
-ID_FILE_MRU_FILE3: int
-ID_FILE_MRU_FILE4: int
-ID_FILE_NEW: int
-ID_FILE_OPEN: int
-ID_FILE_PAGE_SETUP: int
-ID_FILE_PRINT: int
-ID_FILE_PRINT_PREVIEW: int
-ID_FILE_PRINT_SETUP: int
-ID_FILE_RUN: int
-ID_FILE_SAVE: int
-ID_FILE_SAVE_ALL: int
-ID_FILE_SAVE_AS: int
-ID_HELP_GUI_REF: int
-ID_HELP_OTHER: int
-ID_HELP_PYTHON: int
-ID_INDICATOR_COLNUM: int
-ID_INDICATOR_LINENUM: int
-ID_NEXT_PANE: int
-ID_PREV_PANE: int
-ID_SEPARATOR: int
-ID_VIEW_BROWSE: int
-ID_VIEW_EOL: int
-ID_VIEW_FIXED_FONT: int
-ID_VIEW_FOLD_COLLAPSE: int
-ID_VIEW_FOLD_COLLAPSE_ALL: int
-ID_VIEW_FOLD_EXPAND: int
-ID_VIEW_FOLD_EXPAND_ALL: int
-ID_VIEW_INDENTATIONGUIDES: int
-ID_VIEW_INTERACTIVE: int
-ID_VIEW_OPTIONS: int
-ID_VIEW_RIGHT_EDGE: int
-ID_VIEW_STATUS_BAR: int
-ID_VIEW_TOOLBAR: int
-ID_VIEW_TOOLBAR_DBG: int
-ID_VIEW_WHITESPACE: int
-ID_WINDOW_ARRANGE: int
-ID_WINDOW_CASCADE: int
-ID_WINDOW_NEW: int
-ID_WINDOW_SPLIT: int
-ID_WINDOW_TILE_HORZ: int
-ID_WINDOW_TILE_VERT: int
-IDB_BROWSER_HIER: int
-IDB_DEBUGGER_HIER: int
-IDB_HIERFOLDERS: int
-IDC_ABOUT_VERSION: int
-IDC_AUTO_RELOAD: int
-IDC_AUTOCOMPLETE: int
-IDC_BUTTON1: int
-IDC_BUTTON2: int
-IDC_BUTTON3: int
-IDC_BUTTON4: int
-IDC_CALLTIPS: int
-IDC_CHECK1: int
-IDC_CHECK2: int
-IDC_CHECK3: int
-IDC_COMBO1: int
-IDC_COMBO2: int
-IDC_EDIT1: int
-IDC_EDIT2: int
-IDC_EDIT3: int
-IDC_EDIT4: int
-IDC_EDIT_TABS: int
-IDC_INDENT_SIZE: int
-IDC_KEYBOARD_CONFIG: int
-IDC_PROMPT1: int
-IDC_PROMPT2: int
-IDC_PROMPT3: int
-IDC_PROMPT4: int
-IDC_PROMPT_TABS: int
-IDC_RADIO1: int
-IDC_RADIO2: int
-IDC_RIGHTEDGE_COLUMN: int
-IDC_RIGHTEDGE_DEFINE: int
-IDC_RIGHTEDGE_ENABLE: int
-IDC_RIGHTEDGE_SAMPLE: int
-IDC_SPIN1: int
-IDC_SPIN2: int
-IDC_SPIN3: int
-IDC_TAB_SIZE: int
-IDC_USE_SMART_TABS: int
-IDC_USE_TABS: int
-IDC_VIEW_WHITESPACE: int
-IDC_VSS_INTEGRATE: int
-IDD_ABOUTBOX: int
-IDD_DUMMYPROPPAGE: int
-IDD_GENERAL_STATUS: int
-IDD_LARGE_EDIT: int
-IDD_PP_DEBUGGER: int
-IDD_PP_EDITOR: int
-IDD_PP_FORMAT: int
-IDD_PP_IDE: int
-IDD_PP_TABS: int
-IDD_PP_TOOLMENU: int
-IDD_PROPDEMO1: int
-IDD_PROPDEMO2: int
-IDD_RUN_SCRIPT: int
-IDD_SET_TABSTOPS: int
-IDD_SIMPLE_INPUT: int
-IDD_TREE: int
-IDD_TREE_MB: int
-IDR_CNTR_INPLACE: int
-IDR_DEBUGGER: int
-IDR_MAINFRAME: int
-IDR_PYTHONCONTYPE: int
-IDR_PYTHONTYPE: int
-IDR_PYTHONTYPE_CNTR_IP: int
-IDR_TEXTTYPE: int
-LM_COMMIT: int
-LM_HORZ: int
-LM_HORZDOCK: int
-LM_LENGTHY: int
-LM_MRUWIDTH: int
-LM_STRETCH: int
-LM_VERTDOCK: int
-MFS_4THICKFRAME: int
-MFS_BLOCKSYSMENU: int
-MFS_MOVEFRAME: int
-MFS_SYNCACTIVE: int
-MFS_THICKFRAME: int
-PD_ALLPAGES: int
-PD_COLLATE: int
-PD_DISABLEPRINTTOFILE: int
-PD_ENABLEPRINTHOOK: int
-PD_ENABLEPRINTTEMPLATE: int
-PD_ENABLEPRINTTEMPLATEHANDLE: int
-PD_ENABLESETUPHOOK: int
-PD_ENABLESETUPTEMPLATE: int
-PD_ENABLESETUPTEMPLATEHANDLE: int
-PD_HIDEPRINTTOFILE: int
-PD_NONETWORKBUTTON: int
-PD_NOPAGENUMS: int
-PD_NOSELECTION: int
-PD_NOWARNING: int
-PD_PAGENUMS: int
-PD_PRINTSETUP: int
-PD_PRINTTOFILE: int
-PD_RETURNDC: int
-PD_RETURNDEFAULT: int
-PD_RETURNIC: int
-PD_SELECTION: int
-PD_SHOWHELP: int
-PD_USEDEVMODECOPIES: int
-PD_USEDEVMODECOPIESANDCOLLATE: int
-PSWIZB_BACK: int
-PSWIZB_DISABLEDFINISH: int
-PSWIZB_FINISH: int
-PSWIZB_NEXT: int
-IDC_DBG_ADD: int
-IDC_DBG_BREAKPOINTS: int
-IDC_DBG_CLEAR: int
-IDC_DBG_CLOSE: int
-IDC_DBG_GO: int
-IDC_DBG_STACK: int
-IDC_DBG_STEP: int
-IDC_DBG_STEPOUT: int
-IDC_DBG_STEPOVER: int
-IDC_DBG_WATCH: int
-IDC_EDITOR_COLOR: int
-IDC_FOLD_ENABLE: int
-IDC_FOLD_ON_OPEN: int
-IDC_FOLD_SHOW_LINES: int
-IDC_LIST1: int
-IDC_MARGIN_FOLD: int
-IDC_MARGIN_LINENUMBER: int
-IDC_MARGIN_MARKER: int
-IDC_TABTIMMY_BG: int
-IDC_TABTIMMY_IND: int
-IDC_TABTIMMY_NONE: int
-IDC_VIEW_EOL: int
-IDC_VIEW_INDENTATIONGUIDES: int
-ID_VIEW_FOLD_TOPLEVEL: int
-copyright: str
-dllhandle: int
-types: dict[str, type]
+@overload
+def CreateImageList(cx: int, cy: int, mask: bool | Literal[0, 1], initial: int, grow: int, /) -> _win32typing.PyCImagelist: ...
+@overload
+def CreateImageList(
+    bitmapId: int | str | _win32typing.PyResourceId, cx: int, grow: int, crMask: int, /
+) -> _win32typing.PyCImagelist: ...
+
+def CreateListCtrl(*args: Unused) -> _win32typing.PyClistCtrl: ...
+def CreateListView(doc: _win32typing.PyCDocument, /) -> _win32typing.PyClistView: ...
+def CreateRectRgn(rect: tuple[int, int, int, int], /) -> Literal[0, 1]: ...
+def GetRecentFileList() -> list[str]: ...
+def OutputDebug(msg: str, /) -> None: ...
+def OutputDebugString(msg: str, /) -> None: ...
+
+AFX_IDW_PANE_FIRST: Final[int]
+AFX_IDW_PANE_LAST: Final[int]
+AFX_WS_DEFAULT_VIEW: Final[int]
+FWS_ADDTOTITLE: Final[int]
+FWS_PREFIXTITLE: Final[int]
+FWS_SNAPTOBARS: Final[int]
+IDD_ABOUTBOX: Final[int]
+IDD_DUMMYPROPPAGE: Final[int]
+IDD_PROPDEMO1: Final[int]
+IDD_PROPDEMO2: Final[int]
+IDB_DEBUGGER_HIER: Final[int]
+IDB_HIERFOLDERS: Final[int]
+IDB_BROWSER_HIER: Final[int]
+IDD_GENERAL_STATUS: Final[int]
+IDD_LARGE_EDIT: Final[int]
+IDD_TREE: Final[int]
+IDD_TREE_MB: Final[int]
+IDD_RUN_SCRIPT: Final[int]
+IDD_PP_EDITOR: Final[int]
+IDD_PP_DEBUGGER: Final[int]
+IDD_PP_FORMAT: Final[int]
+IDD_PP_IDE: Final[int]
+IDD_PP_TABS: Final[int]
+IDD_PP_TOOLMENU: Final[int]
+IDD_SIMPLE_INPUT: Final[int]
+IDD_SET_TABSTOPS: Final[int]
+IDC_DBG_STEP: Final[int]
+IDC_DBG_STEPOUT: Final[int]
+IDC_DBG_STEPOVER: Final[int]
+IDC_DBG_GO: Final[int]
+IDC_DBG_ADD: Final[int]
+IDC_DBG_CLEAR: Final[int]
+IDC_DBG_CLOSE: Final[int]
+IDC_DBG_STACK: Final[int]
+IDC_DBG_BREAKPOINTS: Final[int]
+IDC_DBG_WATCH: Final[int]
+IDC_ABOUT_VERSION: Final[int]
+IDC_AUTO_RELOAD: Final[int]
+IDC_BUTTON1: Final[int]
+IDC_BUTTON2: Final[int]
+IDC_BUTTON3: Final[int]
+IDC_BUTTON4: Final[int]
+IDC_CHECK1: Final[int]
+IDC_CHECK2: Final[int]
+IDC_CHECK3: Final[int]
+IDC_COMBO1: Final[int]
+IDC_COMBO2: Final[int]
+IDC_EDIT1: Final[int]
+IDC_EDIT2: Final[int]
+IDC_EDIT3: Final[int]
+IDC_EDIT4: Final[int]
+IDC_EDIT_TABS: Final[int]
+IDC_EDITOR_COLOR: Final[int]
+IDC_FOLD_SHOW_LINES: Final[int]
+IDC_FOLD_ENABLE: Final[int]
+IDC_FOLD_ON_OPEN: Final[int]
+IDC_INDENT_SIZE: Final[int]
+IDC_KEYBOARD_CONFIG: Final[int]
+IDC_MARGIN_LINENUMBER: Final[int]
+IDC_MARGIN_FOLD: Final[int]
+IDC_MARGIN_MARKER: Final[int]
+IDC_LIST1: Final[int]
+IDC_PROMPT_TABS: Final[int]
+IDC_PROMPT1: Final[int]
+IDC_PROMPT2: Final[int]
+IDC_PROMPT3: Final[int]
+IDC_PROMPT4: Final[int]
+IDC_RADIO1: Final[int]
+IDC_RADIO2: Final[int]
+IDC_RIGHTEDGE_COLUMN: Final[int]
+IDC_RIGHTEDGE_ENABLE: Final[int]
+IDC_RIGHTEDGE_SAMPLE: Final[int]
+IDC_RIGHTEDGE_DEFINE: Final[int]
+IDC_TABTIMMY_NONE: Final[int]
+IDC_TABTIMMY_IND: Final[int]
+IDC_TABTIMMY_BG: Final[int]
+IDC_VIEW_WHITESPACE: Final[int]
+IDC_VIEW_EOL: Final[int]
+IDC_VIEW_INDENTATIONGUIDES: Final[int]
+IDC_AUTOCOMPLETE: Final[int]
+IDC_CALLTIPS: Final[int]
+IDC_SPIN1: Final[int]
+IDC_SPIN2: Final[int]
+IDC_SPIN3: Final[int]
+IDC_TAB_SIZE: Final[int]
+IDC_USE_TABS: Final[int]
+IDC_USE_SMART_TABS: Final[int]
+IDC_VSS_INTEGRATE: Final[int]
+ID_INDICATOR_LINENUM: Final[int]
+ID_INDICATOR_COLNUM: Final[int]
+ID_FILE_NEW: Final[int]
+ID_FILE_OPEN: Final[int]
+ID_FILE_CLOSE: Final[int]
+ID_FILE_RUN: Final[int]
+ID_FILE_IMPORT: Final[int]
+ID_FILE_LOCATE: Final[int]
+ID_FILE_CHECK: Final[int]
+ID_FILE_SAVE: Final[int]
+ID_FILE_SAVE_AS: Final[int]
+ID_FILE_SAVE_ALL: Final[int]
+ID_FILE_PAGE_SETUP: Final[int]
+ID_FILE_PRINT_SETUP: Final[int]
+ID_FILE_PRINT: Final[int]
+ID_FILE_PRINT_PREVIEW: Final[int]
+ID_HELP_PYTHON: Final[int]
+ID_HELP_GUI_REF: Final[int]
+ID_HELP_OTHER: Final[int]
+ID_APP_ABOUT: Final[int]
+ID_APP_EXIT: Final[int]
+ID_FILE_MRU_FILE1: Final[int]
+ID_FILE_MRU_FILE2: Final[int]
+ID_FILE_MRU_FILE3: Final[int]
+ID_FILE_MRU_FILE4: Final[int]
+ID_VIEW_BROWSE: Final[int]
+ID_VIEW_FIXED_FONT: Final[int]
+ID_VIEW_INTERACTIVE: Final[int]
+ID_VIEW_OPTIONS: Final[int]
+ID_VIEW_TOOLBAR_DBG: Final[int]
+ID_VIEW_WHITESPACE: Final[int]
+ID_VIEW_INDENTATIONGUIDES: Final[int]
+ID_VIEW_EOL: Final[int]
+ID_VIEW_FOLD_EXPAND: Final[int]
+ID_VIEW_FOLD_EXPAND_ALL: Final[int]
+ID_VIEW_FOLD_COLLAPSE: Final[int]
+ID_VIEW_FOLD_COLLAPSE_ALL: Final[int]
+ID_VIEW_FOLD_TOPLEVEL: Final[int]
+ID_VIEW_RIGHT_EDGE: Final[int]
+ID_NEXT_PANE: Final[int]
+ID_PREV_PANE: Final[int]
+ID_WINDOW_NEW: Final[int]
+ID_WINDOW_ARRANGE: Final[int]
+ID_WINDOW_CASCADE: Final[int]
+ID_WINDOW_TILE_HORZ: Final[int]
+ID_WINDOW_TILE_VERT: Final[int]
+ID_WINDOW_SPLIT: Final[int]
+ID_EDIT_CLEAR: Final[int]
+ID_EDIT_CLEAR_ALL: Final[int]
+ID_EDIT_COPY: Final[int]
+ID_EDIT_CUT: Final[int]
+ID_EDIT_FIND: Final[int]
+ID_EDIT_GOTO_LINE: Final[int]
+ID_EDIT_PASTE: Final[int]
+ID_EDIT_REPEAT: Final[int]
+ID_EDIT_REPLACE: Final[int]
+ID_EDIT_SELECT_ALL: Final[int]
+ID_EDIT_SELECT_BLOCK: Final[int]
+ID_EDIT_UNDO: Final[int]
+ID_EDIT_REDO: Final[int]
+ID_VIEW_TOOLBAR: Final[int]
+ID_VIEW_STATUS_BAR: Final[int]
+ID_SEPARATOR: Final[int]
+IDR_DEBUGGER: Final[int]
+IDR_PYTHONTYPE_CNTR_IP: Final[int]
+IDR_MAINFRAME: Final[int]
+IDR_PYTHONTYPE: Final[int]
+IDR_PYTHONCONTYPE: Final[int]
+IDR_TEXTTYPE: Final[int]
+IDR_CNTR_INPLACE: Final[int]
+CDocTemplate_windowTitle: Final[int]
+CDocTemplate_docName: Final[int]
+CDocTemplate_fileNewName: Final[int]
+CDocTemplate_filterName: Final[int]
+CDocTemplate_filterExt: Final[int]
+CDocTemplate_regFileTypeId: Final[int]
+CDocTemplate_regFileTypeName: Final[int]
+CDocTemplate_Confidence_noAttempt: Final[int]
+CDocTemplate_Confidence_maybeAttemptForeign: Final[int]
+CDocTemplate_Confidence_maybeAttemptNative: Final[int]
+CDocTemplate_Confidence_yesAttemptForeign: Final[int]
+CDocTemplate_Confidence_yesAttemptNative: Final[int]
+CDocTemplate_Confidence_yesAlreadyOpen: Final[int]
+CRichEditView_WrapNone: Final[int]
+CRichEditView_WrapToWindow: Final[int]
+CRichEditView_WrapToTargetDevice: Final[int]
+PD_ALLPAGES: Final[int]
+PD_COLLATE: Final[int]
+PD_DISABLEPRINTTOFILE: Final[int]
+PD_ENABLEPRINTHOOK: Final[int]
+PD_ENABLEPRINTTEMPLATE: Final[int]
+PD_ENABLEPRINTTEMPLATEHANDLE: Final[int]
+PD_ENABLESETUPHOOK: Final[int]
+PD_ENABLESETUPTEMPLATE: Final[int]
+PD_ENABLESETUPTEMPLATEHANDLE: Final[int]
+PD_HIDEPRINTTOFILE: Final[int]
+PD_NONETWORKBUTTON: Final[int]
+PD_NOPAGENUMS: Final[int]
+PD_NOSELECTION: Final[int]
+PD_NOWARNING: Final[int]
+PD_PAGENUMS: Final[int]
+PD_PRINTSETUP: Final[int]
+PD_PRINTTOFILE: Final[int]
+PD_RETURNDC: Final[int]
+PD_RETURNDEFAULT: Final[int]
+PD_RETURNIC: Final[int]
+PD_SELECTION: Final[int]
+PD_SHOWHELP: Final[int]
+PD_USEDEVMODECOPIES: Final[int]
+PD_USEDEVMODECOPIESANDCOLLATE: Final[int]
+PSWIZB_BACK: Final[int]
+PSWIZB_NEXT: Final[int]
+PSWIZB_FINISH: Final[int]
+PSWIZB_DISABLEDFINISH: Final[int]
+MFS_SYNCACTIVE: Final[int]
+MFS_4THICKFRAME: Final[int]
+MFS_THICKFRAME: Final[int]
+MFS_MOVEFRAME: Final[int]
+MFS_BLOCKSYSMENU: Final[int]
+LM_STRETCH: Final[int]
+LM_HORZ: Final[int]
+LM_MRUWIDTH: Final[int]
+LM_HORZDOCK: Final[int]
+LM_VERTDOCK: Final[int]
+LM_LENGTHY: Final[int]
+LM_COMMIT: Final[int]
+debug: Final[int]
+copyright: Final[str]
+dllhandle: Final[int]
+types: Final[dict[str, type]]

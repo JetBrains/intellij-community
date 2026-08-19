@@ -1,12 +1,12 @@
 import logging.config
 from collections.abc import Callable
 from logging import Logger, LogRecord
-from typing import Any
+from typing import Any, overload
 
 from django.core.management.color import Style
 from django.http import HttpRequest, HttpResponse
 from django.utils.functional import _StrOrPromise
-from typing_extensions import override
+from typing_extensions import deprecated, override
 
 request_logger: Logger
 DEFAULT_LOGGING: Any
@@ -17,6 +17,15 @@ class AdminEmailHandler(logging.Handler):
     include_html: bool
     email_backend: str | None
     reporter_class: type[Any]
+    @overload
+    def __init__(
+        self,
+        include_html: bool = False,
+        reporter_class: str | None = None,
+        using: str | None = None,
+    ) -> None: ...
+    @overload
+    @deprecated("The 'email_backend' argument is deprecated. Use 'using' instead.")
     def __init__(
         self,
         include_html: bool = False,
@@ -24,7 +33,6 @@ class AdminEmailHandler(logging.Handler):
         reporter_class: str | None = None,
     ) -> None: ...
     def send_mail(self, subject: _StrOrPromise, message: _StrOrPromise, *args: Any, **kwargs: Any) -> None: ...
-    def connection(self) -> Any: ...
     def format_subject(self, subject: str) -> str: ...
 
 class CallbackFilter(logging.Filter):

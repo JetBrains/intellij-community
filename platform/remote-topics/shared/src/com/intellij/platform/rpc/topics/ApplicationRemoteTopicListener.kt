@@ -27,7 +27,6 @@ import org.jetbrains.annotations.ApiStatus
  *
  * @see ApplicationRemoteTopic
  */
-@ApiStatus.Internal
 @ApiStatus.OverrideOnly
 interface ApplicationRemoteTopicListener<E : Any> {
   /**

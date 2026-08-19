@@ -1,3 +1,4 @@
+load("@rules_jvm//:jvm.bzl", _jvm_platform_transition = "jvm_platform_transition")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 
 # This is the very first draft, many things are missing (todo):
@@ -63,4 +64,5 @@ This is an experimental rule, its API will change, please do not migrate the plu
         ),
     },
     implementation = _ij_plugin_impl,
+    cfg = _jvm_platform_transition,
 )

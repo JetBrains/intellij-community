@@ -1,122 +1,80 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling
 
+import com.intellij.ide.starter.sdk.JdkDownloaderFacade
+import com.intellij.ide.starter.sdk.JdkVersion
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.util.text.NaturalComparator
+import com.intellij.tools.ide.performanceTesting.commands.SdkObject
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
-import org.junit.AssumptionViolatedException
+import org.junit.jupiter.api.assertNotNull
 
-class GradleJvmResolver(
-  private val gradleVersion: GradleVersion,
-  private val javaVersionRestriction: JavaVersionRestriction
-) {
+object GradleJvmResolver {
 
-  private val sdkType = JavaSdk.getInstance()
+  @JvmStatic
+  fun resolveGradleJvm(gradleVersion: GradleVersion, javaVersionRestriction: JavaVersionRestriction, parentDisposable: Disposable): Sdk =
+    resolveGradleSdkObject(gradleVersion, javaVersionRestriction)
+      .asSdk(parentDisposable)
 
-  private fun isSdkSupported(versionString: String): Boolean {
-    val javaVersion = JavaVersion.tryParse(versionString) ?: return false
-    return isSdkSupported(javaVersion)
-  }
+  @JvmStatic
+  fun resolveGradleJvmHomePath(gradleVersion: GradleVersion, javaVersionRestriction: JavaVersionRestriction): String =
+    resolveGradleSdkObject(gradleVersion, javaVersionRestriction).getPath()
 
-  private fun isSdkSupported(javaVersion: JavaVersion): Boolean {
-    return GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion)
-           && GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)
-           && !javaVersionRestriction.isRestricted(gradleVersion, javaVersion)
-  }
-
-  private fun resolveGradleJvmImpl(parentDisposable: Disposable): Sdk {
-    val homePath = resolveGradleJvmHomePathImpl()
-    return requireNotNull(createAndAddSdk(homePath, parentDisposable)) {
+  private fun resolveGradleSdkObject(gradleVersion: GradleVersion, javaVersionRestriction: JavaVersionRestriction): SdkObject {
+    val compatibleJdks = suggestCompatibleJdks(gradleVersion, javaVersionRestriction)
+    println("Java versions: $compatibleJdks chosen as compatible ones for running Gradle: $gradleVersion")
+    val targetJavaVersion = compatibleJdks.firstOrNull()
+                            ?: throw IllegalStateException("Unable to find a compatible JDK for running Gradle: $gradleVersion")
+    val sdk = JdkDownloaderFacade.jdkDownloader(targetJavaVersion.number.toString())
+      .toSdk()
+    println(
       """
-        |
-        |Cannot create JDK for the Gradle ${gradleVersion.version}
-        |Gradle JVM version: ${sdkType.getVersionString(homePath)}
-        |Gradle JVM path: $homePath
-        |
-      """.trimMargin()
-    }
-  }
-
-  private fun resolveGradleJvmHomePathImpl(): String {
-    return findSdkHomePathOnDisk()?.also { homePath ->
-      println("""
-        |
-        |Resolved Gradle JVM for the Gradle ${gradleVersion.version}
-        |Gradle JVM version: ${sdkType.getVersionString(homePath)}
-        |Gradle JVM path: $homePath
-        |
-      """.trimMargin())
-    } ?: run {
-      val supportedJavaVersions = GradleJvmSupportMatrix.getSupportedJavaVersions(gradleVersion)
-      val restrictedJavaVersions = supportedJavaVersions.filter { isSdkSupported(it) }
-      val suggestedJavaHomePaths = sdkType.suggestHomePaths().sortedWith(NaturalComparator.INSTANCE)
-      val exceptionText = """
-        |
-        |Cannot find JDK for the Gradle ${gradleVersion.version}.
-        |Please, research JDK restrictions or discuss it with test author, and install JDK manually.
-        |Supported JDKs for current Gradle version:
-        |  $supportedJavaVersions
-        |Supported JDKs for current restrictions:
-        |  $restrictedJavaVersions
-        |Checked paths: [
-           ${suggestedJavaHomePaths.joinToString("\n") { "|  $it" }}
-        |]
+        |Gradle: $gradleVersion
+        |Gradle JVM version: ${sdk.sdkName}
+        |Gradle JVM path: ${sdk.sdkPath}
+        |Gradle JVM type: ${sdk.sdkType}
         |
       """.trimMargin()
-      if (restrictedJavaVersions.isNotEmpty()) {
-        throw IllegalStateException(exceptionText)
-      } else {
-        throw AssumptionViolatedException(exceptionText)
-      }
-    }
-  }
-
-  private fun findSdkHomePathOnDisk(): String? {
-    return sdkType.suggestHomePaths().asSequence()
-      .filter { sdkType.isValidSdkHome(it) }
-      .map { sdkType.getVersionString(it) to it }
-      .filter { it.first != null && isSdkSupported(it.first!!) }
-      .sortedBy { it.first }
-      .map { it.second }
-      .firstOrNull()
-  }
-
-  private fun createAndAddSdk(sdkHome: String, parentDisposable: Disposable): Sdk? {
-    val table = ProjectJdkTable.getInstance()
-    val sdk = WriteAction.computeAndWait(ThrowableComputable {
-      SdkConfigurationUtil.createAndAddSDK(sdkHome, sdkType)
-    })
-    if (sdk != null) {
-      Disposer.register(parentDisposable, Disposable {
-        WriteAction.computeAndWait(ThrowableComputable {
-          table.removeJdk(sdk)
-        })
-      })
-    }
+    )
     return sdk
   }
 
-  companion object {
+  private fun suggestCompatibleJdks(gradleVersion: GradleVersion, javaVersionRestriction: JavaVersionRestriction): List<JdkVersion> =
+    GradleJvmSupportMatrix.getSupportedJavaVersions(gradleVersion)
+      .filter { isSdkSupported(it, gradleVersion, javaVersionRestriction) }
+      .map { "JDK_${it.feature}" }
+      .map { runCatching { JdkVersion.valueOf(it) } }
+      .mapNotNull { it.getOrNull() }
 
-    @JvmStatic
-    fun resolveGradleJvm(gradleVersion: GradleVersion, javaVersionRestriction: JavaVersionRestriction, parentDisposable: Disposable): Sdk {
-      return GradleJvmResolver(gradleVersion, javaVersionRestriction)
-        .resolveGradleJvmImpl(parentDisposable)
-    }
+  private fun isSdkSupported(
+    javaVersion: JavaVersion,
+    gradleVersion: GradleVersion,
+    javaVersionRestriction: JavaVersionRestriction,
+  ): Boolean = GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion)
+               && GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)
+               && !javaVersionRestriction.isRestricted(gradleVersion, javaVersion)
 
-    @JvmStatic
-    fun resolveGradleJvmHomePath(gradleVersion: GradleVersion, javaVersionRestriction: JavaVersionRestriction): String {
-      return GradleJvmResolver(gradleVersion, javaVersionRestriction)
-        .resolveGradleJvmHomePathImpl()
-    }
+  private fun SdkObject.getPath() = sdkPath.toString()
+
+  private fun SdkObject.asSdk(parentDisposable: Disposable): Sdk {
+    val table = ProjectJdkTable.getInstance()
+    val sdk = WriteAction.computeAndWait(ThrowableComputable {
+      SdkConfigurationUtil.createAndAddSDK(sdkPath.toString(), SdkType.findByName(sdkType)!!)
+    })
+    assertNotNull(sdk, "SDK should be added into the project jdk table")
+    Disposer.register(parentDisposable, Disposable {
+      WriteAction.computeAndWait(ThrowableComputable {
+        table.removeJdk(sdk)
+      })
+    })
+    return sdk
   }
 }

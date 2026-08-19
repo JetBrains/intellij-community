@@ -5,7 +5,6 @@
     <module name="intellij.libraries.compose.runtime.desktop"/>
     <module name="intellij.libraries.kotlinTestAssertionsCoreJvm"/>
     <module name="intellij.libraries.kotlinx.coroutines.debug"/>
-    <module name="intellij.libraries.kotlinx.coroutines.test"/>
     <module name="intellij.libraries.skiko"/>
     <module name="intellij.platform.jewel.foundation"/>
     <module name="intellij.platform.jewel.ideLafBridge"/>
@@ -19,7 +18,9 @@
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlin.test.junit"/>
     <module name="intellij.libraries.kotlinTest"/>
+    <module name="intellij.libraries.kotlinx.coroutines.test"/>
     <module name="intellij.libraries.mockk"/>
     <module name="intellij.libraries.mockk.jvm"/>
     <module name="intellij.platform.core"/>

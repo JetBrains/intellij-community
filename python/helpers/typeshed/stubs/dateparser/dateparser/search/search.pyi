@@ -3,7 +3,7 @@ import re
 from _typeshed import Incomplete
 from collections import OrderedDict
 from collections.abc import Iterable, Sequence, Set as AbstractSet
-from typing import Any, Final, TypedDict, type_check_only
+from typing import Any, Final, Literal, TypedDict, type_check_only
 
 from dateparser.conf import Settings
 from dateparser.date import DateData, DateDataParser, _DetectLanguagesFunction
@@ -72,5 +72,6 @@ class DateSearchWithDetection:
         languages: list[str] | tuple[str, ...] | AbstractSet[str] | None = None,
         settings: Settings | dict[str, Any] | None = None,
         detect_languages_function: _DetectLanguagesFunction | None = None,
+        strategy: Literal["split", "ngram"] = "split",
     ) -> _SearchDates: ...
     def preprocess_text(self, text: str, languages: Iterable[str] | None) -> str: ...

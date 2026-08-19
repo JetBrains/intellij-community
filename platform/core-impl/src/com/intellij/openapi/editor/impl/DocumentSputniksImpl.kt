@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentSputnik
 import com.intellij.openapi.editor.ex.DocumentSputniks
-import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.util.Key
 import com.intellij.util.ArrayUtil
 
@@ -24,7 +24,62 @@ internal class DocumentSputniksImpl private constructor(
     return values[index]
   }
 
-  override fun add(key: Key<out DocumentSputnik>, sputnik: DocumentSputnik): DocumentSputniks {
+  override fun applyOp(
+    before: DocumentSnapshot,
+    after: DocumentSnapshot,
+    op: DocumentOp,
+    nextSnapshot: (DocumentSputniks) -> DocumentSnapshot,
+  ): DocumentSnapshot {
+    return when (op) {
+      is DocumentOp.Insert,
+      is DocumentOp.Delete -> applyText(before, after, op, nextSnapshot)
+      is DocumentOp.SetSputnik -> applySetSputnik(after, op, nextSnapshot)
+      is DocumentOp.ModStamp,
+      is DocumentOp.UnmodifiedLines -> after
+    }
+  }
+
+  private fun applySetSputnik(
+    snapshot: DocumentSnapshot,
+    op: DocumentOp.SetSputnik,
+    nextSnapshot: (DocumentSputniks) -> DocumentSnapshot,
+  ): DocumentSnapshot {
+    val key = op.key()
+    val sputnik = op.sputnik()
+    val sputniks = if (sputnik == null) {
+      remove(key)
+    } else {
+      add(key, sputnik)
+    }
+    if (sputniks === this) {
+      return snapshot
+    }
+    return nextSnapshot.invoke(sputniks)
+  }
+
+  private fun applyText(
+    before: DocumentSnapshot,
+    after: DocumentSnapshot,
+    op: DocumentOp,
+    nextSnapshot: (DocumentSputniks) -> DocumentSnapshot,
+  ): DocumentSnapshot {
+    var result = after
+    var currentSputniks = this
+    for (i in values.indices) {
+      val sputnik = values[i]
+      val newSputnik = sputnik.applyOp(before, result, op)
+      if (newSputnik === sputnik) {
+        continue
+      }
+      val newValues = currentSputniks.values.copyOf()
+      newValues[i] = newSputnik
+      currentSputniks = DocumentSputniksImpl(keys, newValues)
+      result = nextSnapshot.invoke(currentSputniks)
+    }
+    return result
+  }
+
+  private fun add(key: Key<out DocumentSputnik>, sputnik: DocumentSputnik): DocumentSputniks {
     val keyCode = key.hashCode()
     val index = indexOf(keyCode)
     if (index >= 0) {
@@ -41,7 +96,7 @@ internal class DocumentSputniksImpl private constructor(
     return DocumentSputniksImpl(newKeys, newValues)
   }
 
-  override fun remove(key: Key<out DocumentSputnik>): DocumentSputniks {
+  private fun remove(key: Key<out DocumentSputnik>): DocumentSputniks {
     val index = indexOf(key.hashCode())
     if (index < 0) {
       return this
@@ -52,28 +107,6 @@ internal class DocumentSputniksImpl private constructor(
     val newKeys = ArrayUtil.remove(keys, index)
     val newValues = ArrayUtil.remove(values, index)
     return DocumentSputniksImpl(newKeys, newValues)
-  }
-
-  override fun withTextChange(
-    before: DocumentSnapshot,
-    after: DocumentSnapshot,
-    diff: DocumentTextPatch,
-    nextSnapshot: (DocumentSputniks) -> DocumentSnapshot,
-  ): DocumentSnapshot {
-    var result = after
-    var currentSputniks = this
-    for (i in values.indices) {
-      val sputnik = values[i]
-      val newSputnik = sputnik.withTextChange(before, result, diff)
-      if (newSputnik === sputnik) {
-        continue
-      }
-      val newValues = currentSputniks.values.copyOf()
-      newValues[i] = newSputnik
-      currentSputniks = DocumentSputniksImpl(keys, newValues)
-      result = nextSnapshot.invoke(currentSputniks)
-    }
-    return result
   }
 
   /**

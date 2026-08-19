@@ -58,6 +58,11 @@ tarfile.LinkFallbackError
 tarfile.TarFile._extract_member
 tarfile.TarFile.makelink_with_filter
 
+# Incompatible changes introduced in Python 3.10.19
+# (Remove once 3.10.19 becomes available for GitHub Actions)
+pyexpat.XMLParserType.SetBillionLaughsAttackProtectionActivationThreshold
+pyexpat.XMLParserType.SetBillionLaughsAttackProtectionMaximumAmplification
+
 # Incompatible changes introduced in Python 3.10.20
 # (Remove once 3.10.20 becomes available for GitHub Actions)
 email._header_value_parser.make_parenthesis_pairs

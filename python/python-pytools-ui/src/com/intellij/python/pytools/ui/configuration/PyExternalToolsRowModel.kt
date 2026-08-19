@@ -15,11 +15,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Version as PlatformVersion
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.python.pytools.PyExecutableCache
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.Version
-import com.intellij.python.pytools.findExecutableInPath
 import com.intellij.python.pytools.findExecutableInSdk
 import com.jetbrains.python.sdk.pyInterpreterPresentation
 import com.intellij.python.pytools.ui.PyToolsUiBundle
@@ -138,14 +137,16 @@ internal sealed interface PathFieldValue {
 
 /**
  * Resolve the row's displayed path. A user-supplied [customPath] wins; a [knownPath] (the exact path an
- * installer just reported) is trusted next; otherwise the tool is auto-detected via [findExecutableInPath],
- * which searches PATH **and** the well-known per-user install dirs — a plain PATH lookup misses the per-user
- * scripts dirs pip/uv install into, which are frequently not on PATH on Windows (PY-91493).
+ * installer just reported) is trusted next; otherwise the tool is auto-detected via its own [PyExecutableCache],
+ * which searches the tool's specific locations (e.g. conda's `~/miniconda3/bin`) — the same detection the interpreter
+ * widget uses — so a tool installed outside `$PATH` is still found.
  */
 internal suspend fun detect(project: Project, tool: PyTool, customPath: Path?, knownPath: Path? = null): PathFieldValue {
   if (customPath != null) return PathFieldValue.Custom(customPath)
   if (knownPath != null) return PathFieldValue.AutoDetected(knownPath)
-  val auto = findExecutableInPath(project.getEelDescriptor().toEelApi(), tool.packageName.name)
+  // Resolve via the tool's own executable cache — it searches the tool's specific locations (e.g. conda's
+  // ~/miniconda3/bin), so a tool installed outside $PATH is still found, matching how the interpreter widget detects it.
+  val auto = PyExecutableCache.getInstance().get(project.getEelDescriptor(), tool)
   return if (auto != null) PathFieldValue.AutoDetected(auto) else PathFieldValue.NotFound
 }
 

@@ -7,10 +7,12 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.ide.language.markdown.semantics.analyzer.SpecificationAnalyzer
 import com.intellij.grazie.ide.language.markdown.semantics.inspection.quickfix.SpecificationReplacementQuickFix
-import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.isAnalysisEnabled
+import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils
+import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.isAnalysisAvailable
 import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.isSpecificationLikeFile
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.TextRange
@@ -51,14 +53,14 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
    */
   open fun getDependencies(root: PsiFile): Set<PsiFile> = setOf(root)
 
-  abstract fun getAnalyzer(file: PsiFile): LlmAnalyzer<T>?
+  abstract fun getAnalyzer(file: PsiFile): LlmAnalyzer<T>
 
   final override fun buildVisitor(
     holder: ProblemsHolder,
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
   ): PsiElementVisitor {
-    if (!isOnTheFly || !isAnalysisEnabled() || InspectionProfileManager.hasTooLowSeverity(session, this)) {
+    if (!isOnTheFly || !isAnalysisAvailable() || InspectionProfileManager.hasTooLowSeverity(session, this)) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
     val client = GrazieCloudConnector.api() ?: return PsiElementVisitor.EMPTY_VISITOR
@@ -73,7 +75,12 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
           thisLogger().info("${file.name} is not specification-like")
           return
         }
-        val analyzer = getAnalyzer(file) ?: return
+
+        if (!GrazieConfig.get().specificationAnalysisEnabled) {
+          SpecificationUtils.promoteAnalyzers(holder, file)
+          return
+        }
+        val analyzer = getAnalyzer(file)
         val dependencies = getDependencies(file)
         val issues = SpecificationAnalyzer.analyze(analyzer, file, dependencies, client)
         reportProblems(holder, file, dependencies, issues)

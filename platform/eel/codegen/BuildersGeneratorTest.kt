@@ -985,8 +985,8 @@ private fun renderPropertyInBuilder(
               val targetAnnotation = resolved.getAnnotation("java.lang.annotation.Target")
                                      ?: resolved.getAnnotation("kotlin.annotation.Target")
 
-              targetAnnotation == null || targetAnnotation.text.let {
-                it.contains("METHOD") || it.contains("FUNCTION")
+              targetAnnotation == null || targetAnnotation.text.let { text ->
+                text.contains("METHOD") || text.contains("FUNCTION")
               }
             }
             is KtClass -> {

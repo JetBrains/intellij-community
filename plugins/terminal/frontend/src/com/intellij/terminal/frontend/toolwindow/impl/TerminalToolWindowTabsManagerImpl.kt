@@ -353,6 +353,30 @@ class TerminalToolWindowTabsManagerImpl(
     }
   }
 
+  @RequiresEdt
+  internal fun createDetachedTab(
+    row: TerminalSessionPersistedTab,
+  ): TerminalToolWindowTab {
+    val builder = createTabBuilder() as TerminalToolWindowTabBuilderImpl
+    with(builder) {
+      shellCommand(row.shellCommand)
+      workingDirectory(row.workingDirectory)
+      envVariables(row.envVariables ?: emptyMap())
+      processType(row.processType ?: TerminalProcessType.SHELL)
+      tabName(row.name)
+      userDefinedName(row.isUserDefinedName)
+      shouldAddToToolWindow(false)
+      requestFocus(false)
+      startupFusInfo(
+        TerminalStartupFusInfo(
+          TerminalTabOpeningWay.TABS_RESTORE,
+          triggerTime = null,
+        )
+      )
+    }
+    return builder.createTab()
+  }
+
   private inner class TerminalToolWindowTabBuilderImpl : TerminalToolWindowTabBuilder {
     var workingDirectory: String? = null
       private set

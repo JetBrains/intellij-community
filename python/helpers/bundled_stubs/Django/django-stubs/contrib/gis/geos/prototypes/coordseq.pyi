@@ -21,6 +21,11 @@ class CsOutput(GEOSFuncFactory):
     @override
     def errcheck(result: Any, func: Any, cargs: Any) -> Any: ...
 
+class CsUnaryPredicate(GEOSFuncFactory):
+    argtypes: Any
+    restype: Any
+    errcheck: Any
+
 cs_clone: Any
 create_cs: Any
 get_cs: Any
@@ -29,9 +34,12 @@ cs_setordinate: Any
 cs_getx: Any
 cs_gety: Any
 cs_getz: Any
+cs_getm: Any
 cs_setx: Any
 cs_sety: Any
 cs_setz: Any
+cs_setm: Any
 cs_getsize: Any
 cs_getdims: Any
+cs_hasm: Any
 cs_is_ccw: Any

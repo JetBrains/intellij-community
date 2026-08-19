@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.mock.MockDocument;
 import com.intellij.openapi.editor.ex.DocumentText;
+import com.intellij.openapi.editor.ex.DocumentOp;
 import com.intellij.openapi.editor.ex.DocumentTextPatch;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PerformanceUnitTest;
@@ -347,7 +348,7 @@ public class ModifiedLineSetTest {
 
           lineSet = lineSet.update(text.chars(), start, end, replacement);
           modifiedLineSet = modifiedLineSet.update(text, start, end, replacement);
-          text = text.withPatch(DocumentTextPatch.simple(start, end, replacement, ++modStamp, false));
+          text = applyPatch(text, DocumentTextPatch.simple(start, end, replacement, ++modStamp, false));
 
           assertLinesAgree(lineSet, modifiedLineSet, trace.toString());
         }
@@ -381,7 +382,7 @@ public class ModifiedLineSetTest {
 
           lineSet = lineSet.update(text.chars(), start, end, replacement);
           modifiedLineSet = modifiedLineSet.update(text, start, end, replacement);
-          text = text.withPatch(DocumentTextPatch.simple(start, end, replacement, ++modStamp, false));
+          text = applyPatch(text, DocumentTextPatch.simple(start, end, replacement, ++modStamp, false));
           env.logMessage(trace.toString());
           assertLinesAgree(lineSet, modifiedLineSet, trace.toString());
 
@@ -484,7 +485,7 @@ public class ModifiedLineSetTest {
       for (int i = 0; i < edits; i++) {
         // simulates the pre-split DocumentTextImpl: its own LineSet served offset mapping AND modification
         // tracking, so this one call is the entire per-edit cost.
-        text = text.withPatch(DocumentTextPatch.simple(offset, offset, "x", i, false));
+        text = applyPatch(text, DocumentTextPatch.simple(offset, offset, "x", i, false));
         offset += 1;
       }
     }).runAsStressTest().start();
@@ -495,7 +496,7 @@ public class ModifiedLineSetTest {
       int offset = text.lineStartOffset(midLine);
       for (int i = 0; i < edits; i++) {
         modStateLineSet = modStateLineSet.update(text.chars(), offset, offset, "x"); // the wasted call, using the OLD text
-        text = text.withPatch(DocumentTextPatch.simple(offset, offset, "x", i, false));
+        text = applyPatch(text, DocumentTextPatch.simple(offset, offset, "x", i, false));
         offset += 1;
       }
     }).runAsStressTest().start();
@@ -506,7 +507,7 @@ public class ModifiedLineSetTest {
       int offset = text.lineStartOffset(midLine);
       for (int i = 0; i < edits; i++) {
         modifiedLineSet = modifiedLineSet.update(text, offset, offset, "x"); // using the OLD text, per the real contract
-        text = text.withPatch(DocumentTextPatch.simple(offset, offset, "x", i, false));
+        text = applyPatch(text, DocumentTextPatch.simple(offset, offset, "x", i, false));
         offset += 1;
       }
     }).runAsStressTest().start();
@@ -597,14 +598,14 @@ public class ModifiedLineSetTest {
       int offset = text.length();
       lineSet = lineSet.update(text.chars(), offset, offset, insertion);
       modifiedLineSet = modifiedLineSet.update(text, offset, offset, insertion);
-      text = text.withPatch(DocumentTextPatch.simple(offset, offset, insertion, ++modStamp, false));
+      text = applyPatch(text, DocumentTextPatch.simple(offset, offset, insertion, ++modStamp, false));
       assertLinesAgree(lineSet, modifiedLineSet, "after inserting \"" + StringUtil.escapeStringCharacters(insertion) + "\"");
     }
 
     int fullLength = text.length();
     lineSet = lineSet.update(text.chars(), 0, fullLength, "");
     modifiedLineSet = modifiedLineSet.update(text, 0, fullLength, "");
-    text = text.withPatch(DocumentTextPatch.simple(0, fullLength, "", ++modStamp, false));
+    text = applyPatch(text, DocumentTextPatch.simple(0, fullLength, "", ++modStamp, false));
     assertLinesAgree(lineSet, modifiedLineSet, "delete back to empty");
     assertEquals(0, lineSet.getLineCount());
 
@@ -636,7 +637,7 @@ public class ModifiedLineSetTest {
 
     lineSet = lineSet.update(text.chars(), 0, 0, "x");
     modifiedLineSet = modifiedLineSet.update(text, 0, 0, "x");
-    text = text.withPatch(DocumentTextPatch.simple(0, 0, "x", ++modStamp, false));
+    text = applyPatch(text, DocumentTextPatch.simple(0, 0, "x", ++modStamp, false));
     assertLinesAgree(lineSet, modifiedLineSet, "after inserting x");
     assertTrue(lineSet.isModified(0));
     assertFalse(lineSet.isModified(1));
@@ -674,12 +675,19 @@ public class ModifiedLineSetTest {
    * does exactly this for any {@link com.intellij.openapi.editor.Document}: it builds a real
    * {@link DocumentTextImpl} itself (legitimately, from the same module) and hands back the public
    * {@link DocumentText} view -- so this is a genuine production instance with the real, incrementally
-   * maintained {@link DocumentText#withPatch}, not a hand-rolled stand-in. {@link MockDocument#replaceText}
+   * maintained {@link DocumentText#applyOp}, not a hand-rolled stand-in. {@link MockDocument#replaceText}
    * does no separator validation, so it is a fitting non-{@link DocumentImpl} source of chaotic content.
    */
   private static DocumentText documentText(String text) {
     MockDocument document = new MockDocument();
     document.replaceText(text, 0);
     return DocumentInternalUtil.getDocumentText(document);
+  }
+
+  private static DocumentText applyPatch(DocumentText text, DocumentTextPatch patch) {
+    for (DocumentOp op : patch.toOps()) {
+      text = text.applyOp(op);
+    }
+    return text;
   }
 }

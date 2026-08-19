@@ -38,7 +38,7 @@ public abstract class LocalTerminalCustomizer {
    *     EelDescriptor eelDescriptor
    *   ) throws InvalidPathException, EelPathException {
    *     Path nioPath = Path.of(localPathString);
-   *     return EelNioBridgeServiceKt.asEelPath(nioPath, eelDescriptor).toString();
+   *     return EelNioBridgeServiceKt.asEelPath(nioPath).toString();
    *   }
    * }</pre>
    * One of the common use cases is modifying the PATH environment variable.

@@ -15,8 +15,6 @@ import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import org.junit.jupiter.api.Test
@@ -29,9 +27,7 @@ import kotlin.time.Duration.Companion.seconds
 @TestApplication
 internal class PyProjectTomlRelocationTest {
 
-  private val tempDirFixture = tempPathFixture()
-  private val projectFixture = projectFixture(pathFixture = tempDirFixture)
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+  private val f by pyProjectTomlSyncFixture()
 
   /**
    * PY-89073: a non-pyproject Python module at the root with source and exclude roots inside
@@ -45,14 +41,14 @@ internal class PyProjectTomlRelocationTest {
       val a = f.root.createDirectory("lib-a")
       a.createDirectory("src")
       a.createDirectory(".venv")
-      a.writePyprojectToml("lib-a")
+      a.writePyprojectTomlWithProject("lib-a")
       a
     }
     val libBDir = edtWriteAction {
       val b = f.root.createDirectory("lib-b")
       b.createDirectory("tests")
       b.createDirectory(".cache")
-      b.writePyprojectToml("lib-b")
+      b.writePyprojectTomlWithProject("lib-b")
       b
     }
 
@@ -97,9 +93,9 @@ internal class PyProjectTomlRelocationTest {
   @Test
   fun `source roots in sub-project are relocated to child module`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("parent")
+      f.root.writePyprojectTomlWithProject("parent")
       val sub = f.root.createDirectory("sub")
-      sub.writePyprojectToml("child")
+      sub.writePyprojectTomlWithProject("child")
       sub.createDirectory("src")
     }
 
@@ -117,9 +113,9 @@ internal class PyProjectTomlRelocationTest {
   @Test
   fun `template and resource roots in sub-project are relocated to child module`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("parent")
+      f.root.writePyprojectTomlWithProject("parent")
       val sub = f.root.createDirectory("sub")
-      sub.writePyprojectToml("child")
+      sub.writePyprojectTomlWithProject("child")
       sub.createDirectory("templates")
       sub.createDirectory("resources")
     }
@@ -162,9 +158,9 @@ internal class PyProjectTomlRelocationTest {
   @Test
   fun `excluded folders in sub-project are relocated to child module`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("parent")
+      f.root.writePyprojectTomlWithProject("parent")
       val sub = f.root.createDirectory("sub")
-      sub.writePyprojectToml("child")
+      sub.writePyprojectTomlWithProject("child")
       sub.createDirectory(".venv")
     }
 

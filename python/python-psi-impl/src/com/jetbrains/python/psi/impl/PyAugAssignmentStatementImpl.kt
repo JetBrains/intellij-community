@@ -34,10 +34,6 @@ class PyAugAssignmentStatementImpl(astNode: ASTNode) : PyElementImpl(astNode), P
     return PyOperatorReference(this, context)
   }
 
-  override fun getReceiver(resolvedCallee: PyCallable?): PyExpression? {
-    return if (isRightOperator(resolvedCallee)) value else target
-  }
-
   override fun getArguments(resolvedCallee: PyCallable?): List<PyExpression> {
     // `value` may be null for an incomplete statement (e.g. `x +=` with no right-hand side),
     // mirror PyBinaryExpression and return an empty list instead of throwing (PY-90019).

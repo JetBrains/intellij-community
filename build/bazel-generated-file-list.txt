@@ -201,6 +201,7 @@ android/sync-memory-tests
 android/sync-perf-tests
 android/testartifacts
 android/threading-checker
+android/tracer
 android/transport-database
 android/utp
 android/visual-lint
@@ -383,6 +384,7 @@ jvm/jvm-analysis-refactoring
 jvm/jvm-analysis-testFramework
 libraries/aalto-xml
 libraries/ai.grazie.spell.gec.engine.local
+libraries/allure/java-commons
 libraries/androidx-collections
 libraries/asm
 libraries/asm-tools
@@ -429,6 +431,8 @@ libraries/download-pgp-verifier
 libraries/ec4j/core
 libraries/fastutil
 libraries/ffmpeg
+libraries/flexmark
+libraries/gradle
 libraries/groovy
 libraries/groovy/ant
 libraries/groovy/json
@@ -510,17 +514,21 @@ libraries/junit6-params
 libraries/jvm-native-trusted-roots
 libraries/jzlib
 libraries/keychain
+libraries/kodein-di-jvm
 libraries/kotlin/gradle-plugin-idea
 libraries/kotlin/gradle-plugin-idea-proto
 libraries/kotlin/reflect
 libraries/kotlin/test
 libraries/kotlin/test-assertions-core-jvm
+libraries/kotlin/test-junit
 libraries/kotlin/tooling-core
 libraries/kotlinc/analysis-api
 libraries/kotlinc/analysis-api-impl-base
 libraries/kotlinc/analysis-api-k2
 libraries/kotlinc/analysis-api-platform-interface
 libraries/kotlinc/kotlin-compiler-common
+libraries/kotlinc/kotlin-compiler-fir
+libraries/kotlinc/kotlinx-serialization-compiler-plugin
 libraries/kotlinc/low-level-api-fir
 libraries/kotlinc/symbol-light-classes
 libraries/kotlinx/collections-immutable
@@ -559,6 +567,7 @@ libraries/microba
 libraries/miglayout-swing
 libraries/misc/plugin
 libraries/mockito
+libraries/mockito-kotlin
 libraries/mockk
 libraries/mockk/jvm
 libraries/monte-screen-recorder

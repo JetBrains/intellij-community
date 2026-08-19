@@ -3,7 +3,9 @@ package com.intellij.terminal.tests.runner
 
 import com.intellij.execution.Platform
 import com.intellij.execution.configuration.EnvironmentVariablesData
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.idea.TestFor
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.impl.wsl.WslConstants
@@ -185,6 +187,42 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
     }
   }
 
+  fun testUserDefinedEnvValueIsMacroExpanded() {
+    setDefaultStartingDirectory(tempDirectory.pathString)
+    setEnvDataForTest(EnvironmentVariablesData.create(mapOf("MY_ENV_WITH_MACRO" to $$"$PROJECT_DIR$/sub"), true))
+
+    val actual = LocalOptionsConfigurer.configureStartupOptions(
+      ShellStartupOptions.Builder()
+        .shellCommand(listOf("some-shell"))
+        .build(),
+      project
+    )
+
+    val expanded = PathMacroManager.getInstance(project).expandPath($$"$PROJECT_DIR$/sub")
+    assertThat(expanded).doesNotContain("PROJECT_DIR")
+    assertThat(actual.envVariables).containsEntry("MY_ENV_WITH_MACRO", expanded)
+  }
+
+  fun testUserDefinedEnvsNotPassedForUntrustedProject() {
+    setDefaultStartingDirectory(tempDirectory.pathString)
+    setEnvDataForTest(EnvironmentVariablesData.create(mapOf("MY_UNTRUSTED_ENV" to "value"), true))
+
+    TrustedProjects.setProjectTrusted(project, false)
+    try {
+      val actual = LocalOptionsConfigurer.configureStartupOptions(
+        ShellStartupOptions.Builder()
+          .shellCommand(listOf("some-shell"))
+          .build(),
+        project
+      )
+      assertThat(actual.envVariables).doesNotContainKey("MY_UNTRUSTED_ENV")
+    }
+    finally {
+      // the light project is shared between tests, and the explicit trusted state is application-level
+      TrustedProjects.setProjectTrusted(project, true)
+    }
+  }
+
   fun testPlatformEnvVariablesCannotBeOverridden() {
     setDefaultStartingDirectory(tempDirectory.pathString)
 
@@ -360,6 +398,15 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
     prop.set(newValue)
     Disposer.register(testRootDisposable) {
       prop.set(prevValue)
+    }
+  }
+
+  private fun setEnvDataForTest(envData: EnvironmentVariablesData) {
+    val provider = TerminalProjectOptionsProvider.getInstance(project)
+    val prevValue = provider.getEnvData()
+    provider.setEnvData(envData)
+    Disposer.register(testRootDisposable) {
+      provider.setEnvData(prevValue)
     }
   }
 

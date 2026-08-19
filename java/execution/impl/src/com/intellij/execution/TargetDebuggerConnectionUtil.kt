@@ -6,6 +6,7 @@ import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.execution.configurations.JavaCommandLineState
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.RemoteConnection
+import com.intellij.execution.eel.Mapping
 import com.intellij.execution.eel.TargetDebuggerConnectionProxy
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.target.TargetEnvironmentRequest
@@ -15,6 +16,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.util.registry.Registry
 
 private val LOG = logger<TargetDebuggerConnectionUtil>()
 
@@ -60,27 +62,58 @@ internal object TargetDebuggerConnectionUtil {
     javaParameters: JavaParameters,
     isJava9Plus: Boolean,
   ): RemoteConnection {
-    val (localPort, remotePort) = TargetDebuggerConnectionProxy.getProxy(project, disposable)
-    val remoteAddressForVmParams: String = if (isJava9Plus) {
-      // IDEA-225182 - hack: pass "host:port" to construct correct VM params, then adjust the connection
-      "0.0.0.0:${remotePort}"
+    if (Registry.`is`("debugger.target.remote.client", true)) {
+      val mapping = TargetDebuggerConnectionProxy.getProxy(project, false, disposable)
+      return RemoteConnectionBuilder(true, DebuggerSettings.SOCKET_TRANSPORT, mapping.remote.toString())
+        .suspend(true)
+        .create(javaParameters)
+        .setRemoteClientMapping(mapping)
+        .setApplicationHostname(isJava9Plus)
     }
     else {
-      remotePort.toString()
+      val mapping = TargetDebuggerConnectionProxy.getProxy(project, true, disposable)
+      return RemoteConnectionBuilder(false, DebuggerSettings.SOCKET_TRANSPORT, getRemoteServerListenAddress(mapping, isJava9Plus))
+        .suspend(true)
+        .create(javaParameters)
+        .setRemoteServerMapping(mapping)
+        .setApplicationHostname(isJava9Plus)
     }
+  }
 
-    val remoteConnection = RemoteConnectionBuilder(false, DebuggerSettings.SOCKET_TRANSPORT, remoteAddressForVmParams)
-      .suspend(true)
-      .create(javaParameters)
-
-    return remoteConnection.apply {
-      applicationAddress = remotePort.toString()
-      debuggerAddress = localPort.toString()
-      debuggerHostName = "localhost"
-      if (isJava9Plus) {
-        applicationHostName = "*"
+  private fun getRemoteServerListenAddress(mapping: Mapping, isJava9Plus: Boolean): String {
+    return if (isJava9Plus) {
+      // IDEA-225182 - hack: pass "host:port" to construct correct VM params, then adjust the connection
+      if (Registry.`is`("debugger.target.listen.any.address", true)) {
+        "0.0.0.0:${mapping.remote}"
+      }
+      else {
+        "127.0.0.1:${mapping.remote}"
       }
     }
+    else {
+      mapping.remote.toString()
+    }
+  }
+
+  private fun RemoteConnection.setApplicationHostname(isJava9Plus: Boolean): RemoteConnection {
+    if (isJava9Plus) {
+      applicationHostName = "*"
+    }
+    return this
+  }
+
+  private fun RemoteConnection.setRemoteServerMapping(mapping: Mapping): RemoteConnection {
+    applicationAddress = mapping.remote.toString()
+    debuggerAddress = mapping.local.toString()
+    debuggerHostName = "localhost"
+    return this
+  }
+
+  private fun RemoteConnection.setRemoteClientMapping(mapping: Mapping): RemoteConnection {
+    applicationAddress = mapping.local.toString()
+    debuggerAddress = mapping.local.toString()
+    debuggerHostName = "127.0.0.1"
+    return this
   }
 
   private fun TargetEnvironmentRequest.isJava9Plus(): Boolean {

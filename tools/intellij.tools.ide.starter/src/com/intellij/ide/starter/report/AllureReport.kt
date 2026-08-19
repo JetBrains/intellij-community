@@ -25,6 +25,10 @@ object AllureReport {
   private val ignoreLabels = setOf("layer", "AS_ID")
   private val errorLink = Link()
 
+  // Allure can't handle very long status messages/traces, so we cap them and attach the full message and stack trace as a file instead.
+  private const val MAX_STATUS_DETAILS_LENGTH: Int = 4000
+  private const val FULL_ERROR_ATTACHMENT_NAME: String = "Full error message and stacktrace"
+
   init {
     errorLink.name = "How to process exception"
     errorLink.url = "https://jb.gg/ide-test-errors"
@@ -82,10 +86,25 @@ object AllureReport {
         errorLabels.add(Label().setName("layer").setValue("Exception"))
         errorLabels.add(Label().setName("AS_ID").setValue("-1"))
         val hash = convertToHashCodeWithOnlyLetters(generifyErrorMessage(formattedStackTrace.processedForTC()).hashCode())
+
+        // Attach the full message and stack trace as a file when either overflows the limit we send in the status details, so no information is lost.
+        if (message.length > MAX_STATUS_DETAILS_LENGTH || formattedStackTrace.length > MAX_STATUS_DETAILS_LENGTH) {
+          AllureHelper.attachText(FULL_ERROR_ATTACHMENT_NAME, buildString {
+            appendLine("Message:")
+            appendLine(message)
+            appendLine()
+            appendLine("Stacktrace:")
+            append(formattedStackTrace)
+          })
+        }
+        val truncationNote = "\n... (truncated, see the '$FULL_ERROR_ATTACHMENT_NAME' attachment)"
+        val truncatedMessage = message.limitForAllure(truncationNote)
+        val truncatedTrace = formattedStackTrace.limitForAllure(truncationNote)
+
         Allure.getLifecycle().updateTestCase {
           it.status = Status.FAILED
           it.name = "$suffix in ${parentContext.testName.ifBlank { contextName }}"
-          it.statusDetails = StatusDetails().setMessage(message).setTrace(formattedStackTrace)
+          it.statusDetails = StatusDetails().setMessage(truncatedMessage).setTrace(truncatedTrace)
           it.fullName = parentContext.fullName.ifBlank { contextName } + ".${hash}" + ".${suffix.lowercase()}"
           it.testCaseName = parentContext.testCaseName
           it.historyId = hash
@@ -99,6 +118,12 @@ object AllureReport {
         Allure.getLifecycle().writeTestCase(uuid)
       }
     }.join()
+  }
+
+  // Caps the string at MAX_STATUS_DETAILS_LENGTH, appending truncationNote so the truncation is visible and the total stays within the limit.
+  private fun String.limitForAllure(truncationNote: String): String {
+    if (length <= MAX_STATUS_DETAILS_LENGTH) return this
+    return take(MAX_STATUS_DETAILS_LENGTH - truncationNote.length) + truncationNote
   }
 
   private fun captureCurrentAllureContext(): AllureContextSnapshot {

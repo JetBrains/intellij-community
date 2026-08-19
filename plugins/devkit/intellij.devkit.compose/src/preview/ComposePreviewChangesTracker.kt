@@ -21,6 +21,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiModificationTracker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.awaitClose
@@ -99,6 +100,9 @@ internal class ComposePreviewChangesTracker(val project: Project, val coroutineS
 
           try {
             processor(virtualFile)
+          }
+          catch (e: CancellationException) {
+            throw e
           }
           catch (e: Throwable) {
             thisLogger().error("Error during Compose UI Preview refresh chain", e)

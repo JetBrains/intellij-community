@@ -14,6 +14,7 @@ import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
 import com.intellij.codeInsight.javadoc.AnnotationDocGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.codeInsight.javadoc.NonCodeAnnotationGenerator;
+import com.intellij.codeInspection.dataFlow.EditContractIntention;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.java.JavaBundle;
@@ -238,7 +239,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
       ModCommandAction mc = action.asModCommandAction();
       return mc instanceof AnnotateIntentionAction ||
              mc instanceof DeannotateIntentionAction ||
-             mc != null && mc.getClass().getName().equals("com.intellij.codeInspection.dataFlow.EditContractIntention") ||
+             mc instanceof EditContractIntention ||
              action instanceof MakeInferredAnnotationExplicit ||
              mc instanceof MakeExternalAnnotationExplicit;
     }

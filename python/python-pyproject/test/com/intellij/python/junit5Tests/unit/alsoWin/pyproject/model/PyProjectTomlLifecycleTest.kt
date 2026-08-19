@@ -33,8 +33,6 @@ import com.intellij.python.pyproject.model.internal.autoImportBridge.createWsmTr
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
-import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.testFramework.utils.vfs.createFile
 import com.intellij.util.io.createDirectories
@@ -71,9 +69,7 @@ internal class PyProjectTomlLifecycleTest {
     }
   }
 
-  private val tempDirFixture = tempPathFixture()
-  private val projectFixture = projectFixture(pathFixture = tempDirFixture)
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+  private val f by pyProjectTomlSyncFixture()
 
 
   @Test
@@ -81,7 +77,7 @@ internal class PyProjectTomlLifecycleTest {
 
     val projectRebuiltTimesCounter = AtomicInteger()
     val projectRebuiltTwoTimes = CompletableDeferred<Unit>()
-    projectFixture.get().messageBus.connect(projectFixture.get())
+    f.project.messageBus.connect(f.project)
       .subscribe(MODEL_REBUILD,
                  ModelRebuiltListener {
                    if (projectRebuiltTimesCounter.incrementAndGet() == 2) { // <-- Wait for 2 rebuilds: initial and after new proj attached
@@ -99,11 +95,11 @@ internal class PyProjectTomlLifecycleTest {
       val workspace2Members = workspace2.convertDirToUvWorkspace()
       Pair(workspace2, workspace2Members)
     }
-    val scope = projectFixture.get().service<MyService>().scope
+    val scope = f.project.service<MyService>().scope
 
     // To be unlocked when WSM updated with new module
     val wsmTrackedDef = CompletableDeferred<Unit>()
-    val tracker = scope.createWsmTracker(projectFixture.get()) {
+    val tracker = scope.createWsmTracker(f.project) {
       scope.launch {
         // Project rebuild doesn't work in tests, so we listen for WSM and update it explicitly
         f.reloadProject() // <-- Reload 2
@@ -149,8 +145,8 @@ internal class PyProjectTomlLifecycleTest {
   @Test
   fun `excluded folder pyproject is ignored and restored on un-exclude`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("sub").writePyprojectToml("child")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("sub").writePyprojectTomlWithProject("child")
     }
 
     f.reloadProject()
@@ -215,8 +211,8 @@ internal class PyProjectTomlLifecycleTest {
     }
 
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      libDir.writePyprojectToml("lib")
+      f.root.writePyprojectTomlWithProject("root")
+      libDir.writePyprojectTomlWithProject("lib")
     }
 
     f.reloadProject()
@@ -239,9 +235,9 @@ internal class PyProjectTomlLifecycleTest {
 
     // Create pyproject.toml at same location (adopts "lib") + another module "app"
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      libDir.writePyprojectToml("lib")
-      f.root.createDirectory("app").writePyprojectToml("old-app")
+      f.root.writePyprojectTomlWithProject("root")
+      libDir.writePyprojectTomlWithProject("lib")
+      f.root.createDirectory("app").writePyprojectTomlWithProject("old-app")
     }
 
     f.reloadProject()
@@ -303,9 +299,9 @@ internal class PyProjectTomlLifecycleTest {
 
     // Initial sync: A depends on B
     edtWriteAction {
-      f.root.writePyprojectToml("root")
+      f.root.writePyprojectTomlWithProject("root")
       aDir.createFile(PY_PROJECT_TOML).writeText("[project]\nname = \"A\"\ndependencies = [\"B @ $bUri\"]")
-      bDir.writePyprojectToml("B")
+      bDir.writePyprojectTomlWithProject("B")
     }
 
     f.reloadProject()
@@ -350,8 +346,8 @@ internal class PyProjectTomlLifecycleTest {
   @Test
   fun `source roots and excluded folders relocated to parent on module deletion`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("sub").writePyprojectToml("child")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("sub").writePyprojectTomlWithProject("child")
     }
 
     f.reloadProject()
@@ -396,8 +392,8 @@ internal class PyProjectTomlLifecycleTest {
   @Test
   fun `non-existing source roots and excludes are not relocated on module deletion`(): Unit = timeoutRunBlocking(30.seconds) {
     edtWriteAction {
-      f.root.writePyprojectToml("root")
-      f.root.createDirectory("sub").writePyprojectToml("child")
+      f.root.writePyprojectTomlWithProject("root")
+      f.root.createDirectory("sub").writePyprojectTomlWithProject("child")
     }
 
     f.reloadProject()

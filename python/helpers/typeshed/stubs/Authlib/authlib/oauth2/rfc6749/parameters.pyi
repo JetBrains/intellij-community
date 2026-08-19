@@ -1,6 +1,22 @@
-from _typeshed import Incomplete
+from collections.abc import Collection, Sequence
 
-def prepare_grant_uri(uri, client_id, response_type, redirect_uri=None, scope=None, state=None, **kwargs): ...
-def prepare_token_request(grant_type, body: str = "", redirect_uri=None, **kwargs) -> str: ...
-def parse_authorization_code_response(uri, state=None) -> dict[Incomplete, Incomplete]: ...
-def parse_implicit_response(uri, state=None) -> dict[Incomplete, Incomplete]: ...
+def prepare_grant_uri(
+    uri: str,
+    client_id: str,
+    response_type: str,
+    redirect_uri: str | None = None,
+    scope: Collection[str] | str | None = None,
+    state: str | None = None,
+    **kwargs: str | Sequence[str | None] | None,
+): ...
+def prepare_token_request(
+    grant_type: str,
+    body: str = "",
+    redirect_uri: str | None = None,
+    *,
+    scope: Collection[str] | str | None = None,
+    code: str | None = None,
+    **kwargs: str | None,
+) -> str: ...
+def parse_authorization_code_response(uri: str, state: str | None = None) -> dict[str, str]: ...
+def parse_implicit_response(uri: str, state: str | None = None) -> dict[str, str]: ...

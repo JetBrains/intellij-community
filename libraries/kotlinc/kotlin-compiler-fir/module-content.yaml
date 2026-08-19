@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.kotlin.compiler.fir.jar
+  modules:
+  - name: intellij.libraries.kotlinc.kotlin.compiler.fir
+    libraries:
+      kotlinc.kotlin-compiler-fir:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2/kotlin-compiler-fir-for-ide-2.jar

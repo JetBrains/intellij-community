@@ -3,6 +3,7 @@
   <name>Extended Tool Windows UI</name>
   <id>com.intellij.extendedToolWindowsUi</id>
   <vendor>JetBrains</vendor>
+  <category>UI</category>
 
   <content namespace="jetbrains">
     <module name="intellij.extendedToolWindowsUi.frontend"/>

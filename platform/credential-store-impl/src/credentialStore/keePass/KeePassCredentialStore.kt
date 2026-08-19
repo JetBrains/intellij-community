@@ -11,6 +11,7 @@ import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
 import com.intellij.credentialStore.kdbx.KdbxPassword
 import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.credentialStore.kdbx.loadKdbx
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -20,10 +21,8 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.util.application
 import com.intellij.util.io.delete
 import com.intellij.util.io.safeOutputStream
-import com.intellij.util.messages.SimpleMessageBusConnection
 import org.jetbrains.annotations.TestOnly
 import java.io.Closeable
 import java.nio.file.Files
@@ -51,13 +50,17 @@ internal class KeePassCredentialStore(
   private val isNeedToSave: AtomicBoolean
   @Volatile
   private var lastSavedTimestamp: Long = 0
-  private val messageBusConnection: SimpleMessageBusConnection = application.messageBus.simpleConnect()
+  private val app = ApplicationManager.getApplication()
+  private val messageBusConnection = app?.messageBus?.simpleConnect()
 
   override var db: KeePassDatabase = if (preloadedDb == null) {
     isNeedToSave = AtomicBoolean(false)
     if (dbFile.exists()) {
       val mainPassword = mainKeyStorage.load() ?: throw IncorrectMainPasswordException(isFileMissed = true)
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(dbFile.toString())
+      if (app != null) {
+        VirtualFileManager.getInstance().getFileSystem(LocalFileSystem.PROTOCOL)
+          .refreshAndFindFileByPath(dbFile.toString())
+      }
       loadKdbx(dbFile, KdbxPassword.createAndClear(mainPassword))
     }
     else {
@@ -70,7 +73,7 @@ internal class KeePassCredentialStore(
   }
 
   init {
-    messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    messageBusConnection?.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
         if (events.any { (it is VFileContentChangeEvent || it is VFileCreateEvent) && it.path.toNioPathOrNull() == dbFile }) {
           val currentTimestamp = Files.getLastModifiedTime(dbFile).toMillis()
@@ -157,7 +160,7 @@ internal class KeePassCredentialStore(
   }
 
   override fun close() {
-    messageBusConnection.disconnect()
+    messageBusConnection?.disconnect()
   }
 }
 

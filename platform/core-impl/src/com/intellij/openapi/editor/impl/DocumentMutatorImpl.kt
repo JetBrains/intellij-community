@@ -11,11 +11,14 @@ import com.intellij.openapi.editor.ReadOnlyFragmentModificationException
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentMutator
+import com.intellij.openapi.editor.ex.DocumentNewOps
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentSputnik
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.util.text.ImmutableCharSequence
 import java.util.function.UnaryOperator
@@ -31,20 +34,23 @@ internal abstract class DocumentMutatorImpl(
   protected abstract fun updateAndGet(update: UnaryOperator<DocumentSnapshot>): DocumentSnapshot
 
   override fun setModStamp(newModStamp: Long, incrementModSequence: Boolean) {
-    updateAndGet { it.withModStamp(newModStamp, incrementModSequence) }
+    val newOps = DocumentNewOps.getInstance()
+    val op = newOps.createModStampOp(newModStamp, incrementModSequence)
+    updateAndGet { it.applyOp(op) }
   }
 
   override fun clearLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray) {
-    updateAndGet { it.withClearedLineFlags(startLine, endLine, exceptLines) }
+    val newOps = DocumentNewOps.getInstance()
+    val op = newOps.createUnmodifiedLinesOp(startLine, endLine, exceptLines)
+    updateAndGet { it.applyOp(op) }
   }
 
-  override fun updateSnapshotAndGet(updateFunc: UnaryOperator<DocumentSnapshot>): DocumentSnapshot {
+  override fun <S : DocumentSputnik> setSputnik(key: Key<S>, sputnik: (DocumentSnapshot) -> S?): DocumentSnapshot {
+    val newOps = DocumentNewOps.getInstance()
     return updateAndGet { snapshot ->
-      val updated = updateFunc.apply(snapshot)
-      if (snapshot.text().chars() !== updated.text().chars()) {
-        throw IllegalArgumentException("text change is not allowed because it bypasses DocumentListener")
-      }
-      updated
+      val s = sputnik.invoke(snapshot)
+      val op = newOps.createSetSputnikOp(key, s)
+      snapshot.applyOp(op)
     }
   }
 
@@ -316,11 +322,11 @@ internal abstract class DocumentMutatorImpl(
   }
 
   /**
-   * Returns the snapshot of [snapshotBefore] updated by [patch], carrying the modification stamp/sequence
-   * of [latest].
+   * Returns [patch] applied on top of [latest] if [latest] still has [snapshotBefore]'s text -- e.g. the
+   * stamp changed during before-change listeners -- or on top of [snapshotBefore] otherwise, i.e. once some
+   * other text mutation has already won the race and [latest] no longer applies.
    *
-   * The stamp could be changed during before-change listeners, so [latest]'s stamp/sequence is merged in
-   * before the patch is applied; line-modification tracking stays [snapshotBefore]'s own.
+   * @see DocumentSnapshot.withMetadata
    */
   protected fun mergeAndPatch(
     snapshotBefore: DocumentSnapshot,
@@ -328,7 +334,7 @@ internal abstract class DocumentMutatorImpl(
     patch: DocumentTextPatch,
   ): DocumentSnapshot {
     val merged = snapshotBefore.withMetadata(latest)
-    return merged.withPatch(patch)
+    return merged.applyOps(patch.toOps())
   }
 
   private fun trimToSize(hostDocument: Document, snapshot: DocumentSnapshot): DocumentSnapshot {

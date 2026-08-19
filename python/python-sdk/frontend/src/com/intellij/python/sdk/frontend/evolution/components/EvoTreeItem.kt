@@ -21,6 +21,14 @@ class EvoTreeItem(val element: EvoTreeElement, val separatorAbove: ListSeparator
   val secondaryText: @Nls String?
     get() = element.presentation.getClientProperty(ActionUtil.SECONDARY_TEXT)
 
+  /**
+   * True for rows that carry (or will lazily resolve) a secondary "version" text. The renderer reserves a fixed
+   * width for that column up front so the popup is sized correctly on first show and never resizes when the version
+   * arrives. See `EvoPopupListElementRenderer.reserveVersionColumn`.
+   */
+  val reservesVersionColumn: Boolean
+    get() = secondaryText != null || (element as? EvoTreeLeafElement)?.action is EvoLazyDetail
+
   val icon: Icon?
     get() = element.presentation.icon
 

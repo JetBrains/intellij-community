@@ -22,12 +22,15 @@ import org.jetbrains.kotlin.idea.configuration.KOTLIN_SCRIPTING_SETTINGS_ID
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.DefinitionFromDependenciesProvider
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
+import org.jetbrains.kotlin.idea.core.script.shared.definition.canBeSwitchedOff
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import java.awt.Font
 import java.util.Objects.hash
 import javax.swing.JComponent
 import javax.swing.ListSelectionModel
 import javax.swing.table.TableCellRenderer
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ide
 
 internal class KotlinScriptingSettingsConfigurable(val project: Project) : SearchableConfigurable {
     private val definitionsFromClassPathTitle = AtomicProperty("")
@@ -68,19 +71,18 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
             KotlinBaseScriptingBundle.message("looking.for.script.definitions.in.classpath"),
             TaskCancellation.cancellable()
         ) {
-            ScriptDefinitionProviderImpl.getInstance(project).definitionsFromSources.sortedBy {
+            ScriptDefinitionProviderImpl.getInstance(project).cachedProvidedDefinitions.sortedBy {
                 state.getScriptDefinitionOrder(it)
             }.map {
                 ScriptDefinitionTableModel(
                     id = it.definitionId,
                     name = it.name,
-                    pattern = (it as? ScriptDefinition.FromConfigurationsBase)?.fileNamePattern
-                        ?: (it as? ScriptDefinition.FromConfigurationsBase)?.filePathPattern ?: ("." + it.fileExtension),
-                    canBeSwitchedOff = it.canDefinitionBeSwitchedOff,
+                    pattern = (it as? ScriptDefinition.FromConfigurationsBase)?.fileNamePattern ?: ("." + it.fileExtension),
+                    canBeSwitchedOff = it.compilationConfiguration[ScriptCompilationConfiguration.ide.canBeSwitchedOff] ?: true,
                     isEnabled = state.isScriptDefinitionEnabled(it)
                 )
             }
-        }
+        }.toList()
 
         tableView.stopEditing()
         tableView.listTableModel.setItems(models)
@@ -156,8 +158,8 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
 
             reloadTable()
             val currentDefinitionIds = currentModels.map { it.id }
-            val foundFqns = DefinitionFromDependenciesProvider(project).getDefinitionClasses()
-                .filter { it in currentDefinitionIds }.toList()
+            val foundFqns = DefinitionFromDependenciesProvider(project).definitionClasses()
+                .filter { it in currentDefinitionIds }
 
             definitionsFromClassPathTitle.set(
                 foundFqns.joinToString(

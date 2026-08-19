@@ -122,7 +122,7 @@ internal fun setRendererForNodes(e: AnActionEvent, rendererId: NodeRendererId?) 
   val session = DebuggerUIUtil.getSessionProxy(e) ?: return
   val selectedNodesWithJavaValues = getSelectedJavaValuesWithDescriptors(e).map { it.first to it.second }
 
-  session.coroutineScope.launch {
+  e.coroutineScope.launch {
     val xValues = selectedNodesWithJavaValues.map { it.second }
     xValues.withId(session) { ids ->
       JavaDebuggerSessionApi.getInstance().setRenderer(rendererId, ids)
@@ -156,4 +156,3 @@ internal suspend fun <T> List<XValue>.withId(session: XDebugSessionProxy, block:
 
   return rec(0)
 }
-

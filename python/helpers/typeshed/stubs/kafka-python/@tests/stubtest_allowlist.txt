@@ -7,18 +7,25 @@ kafka.producer.__main__
 # Benchmark modules are not included in type stubs.
 kafka.benchmarks.*
 
-# Concrete subclasses define these abstract properties as class attributes.
-kafka.protocol.api.Request.API_KEY
-kafka.protocol.api.Request.API_VERSION
-kafka.protocol.api.Request.RESPONSE_TYPE
-kafka.protocol.api.Request.SCHEMA
-kafka.protocol.api.Response.API_KEY
-kafka.protocol.api.Response.API_VERSION
-kafka.protocol.api.Response.SCHEMA
-
 # Vendored compatibility modules are implementation details.
 kafka.vendor
-kafka.vendor.enum34
-kafka.vendor.selectors34
-kafka.vendor.six
-kafka.vendor.socketpair
+
+# Undocumented and clearly not meant to be exposed.
+kafka.coordinator.base.heartbeat_log
+kafka.net.selector.log_trace
+kafka.*\.log
+kafka.*\.logger
+kafka.*\.__license__
+
+# The max_version param expects an int, even though it has as default value of float('inf').
+kafka.protocol.broker_version_data.BrokerVersionData.api_version
+
+# TODO: This has more attributes.
+kafka.protocol.api_header.RequestHeader.client_id
+kafka.protocol.api_header.RequestHeader.correlation_id
+kafka.protocol.api_header.RequestHeader.request_api_key
+kafka.protocol.api_header.RequestHeader.request_api_version
+kafka.protocol.api_header.ResponseHeader.correlation_id
+kafka.coordinator.assignors.sticky.user_data.StickyAssignorUserData.TopicPartition
+kafka.coordinator.assignors.sticky.user_data.StickyAssignorUserData.generation
+kafka.coordinator.assignors.sticky.user_data.StickyAssignorUserData.previous_assignment

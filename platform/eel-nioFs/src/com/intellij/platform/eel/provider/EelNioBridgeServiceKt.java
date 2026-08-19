@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.provider;
 
 import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.channels.EelDelicateApi;
 import com.intellij.platform.eel.path.EelPath;
 import com.intellij.platform.eel.path.EelPathException;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,6 +32,14 @@ public final class EelNioBridgeServiceKt {
     return EelPathConversionsKt.asEelPath(nioPath);
   }
 
+  /**
+   * **Do not use this function!** Use [asEelPath] instead.
+   * This function will be dropped soon.
+   * <p>
+   * [descriptor] should be exactly `this.getEelDescriptor()`. This method exists only to avoid calling `getEelDescriptor()` twice.
+   */
+  @EelDelicateApi
+  @ApiStatus.Internal
   public static @NotNull EelPath asEelPath(@NotNull Path nioPath, @NotNull EelDescriptor descriptor) throws EelPathException {
     return EelPathConversionsKt.asEelPath(nioPath, descriptor);
   }

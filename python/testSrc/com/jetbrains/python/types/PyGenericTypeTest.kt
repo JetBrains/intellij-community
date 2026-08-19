@@ -6,7 +6,6 @@ import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
-import com.jetbrains.python.fixtures.PyCodeInsightTestCase.TestCaseOptions
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -297,6 +296,73 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       expr = foo(5)
       #└ TYPE Tuple[int, ...]
       """.trimIndent())
+
+    @Test
+    fun `generic user classes`() = test("""
+      class User1(object):
+          def __init__(self, x):
+              '''
+              :type x: T
+              :rtype: User1 of T
+              '''
+              self.x = x
+
+          def get(self):
+              '''
+              :rtype: T
+              '''
+              return self.x
+
+          def put(self, value):
+              '''
+              :type value: T
+              '''
+              self.x = value
+
+      c = User1(10)
+      print(c.get() + 'foo')
+      #               ^^^^^ WARNING Expected type 'int', got 'Literal["foo"]' instead
+      c.put(14)
+      c.put('foo')
+      #     ^^^^^ WARNING Expected type 'int', got 'Literal["foo"]' instead
+      """.trimIndent())
+
+    @Test
+    fun `dict generics`() = test("""
+      def test_dict_generics(d):
+          '''
+          :type d: dict from int to unicode
+          '''
+          xs = d.items()
+          d2 = dict(xs)
+          for k, v in d2.items():
+              print k + v
+      #            │    └ WARNING Expected type 'int', got 'str' instead
+      #            └ ERROR End of statement expected
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-7244"])
+    fun `generic arguments`() = test("""
+      class B(object):
+          def __init__(self, x):
+              '''
+              :type x: T
+              :rtype: B of T
+              '''
+              self._x = x
+
+          def foo(self):
+              '''
+              :rtype: T
+              '''
+              return self._x
+
+      class C(B):
+          def bar(self):
+              expr = self.foo()
+              return 'foo' + expr #pass
+      """.trimIndent())
   }
 
   @Nested
@@ -332,6 +398,60 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       #       └ TYPE int
       
           T = -1
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-23161"])
+    fun `generic with type var bounds`() = test("""
+      from typing import TypeVar, Generic
+
+      class B:
+          pass
+
+      T = TypeVar('T', bound=B)
+
+      class C(Generic[T]):
+          def __init__(self, foo: T):
+              self.foo = foo
+
+          def bar(self) -> T:
+              return self.foo # PY-23161 "Expected type 'T', got 'B' instead" warning here
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-32375"])
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON35)
+    fun `matching return against bounded type var`() = test("""
+      from typing import TypeVar
+      F = TypeVar('F', bound=int)
+      def deco(func: F) -> F:
+              return ""
+      #              ^^ WARNING Expected type 'F ≤: int', got 'Literal[""]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-35235"])
+    fun `literal against type var bounded with typing literal`() = test("""
+      from typing_extensions import Literal
+      from typing import TypeVar
+      T = TypeVar('T', Literal["a"], Literal["b"], Literal["c"])
+
+      def repeat(x: T, n: int):
+          return [x] * n
+
+      repeat("c", 2)
+      """.trimIndent())
+
+    @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `literal against type var without bound`() = test("""
+      from typing import Dict, Literal
+
+      def foo(data: Dict[Literal['a', 5], bool]):
+          a = data['a']
+          five = data[5]
+          b = data['b']
+      #            ^^^ WARNING Expected type 'Literal['a', 5]', got 'Literal['b']' instead
       """.trimIndent())
   }
 
@@ -1169,6 +1289,58 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       expr = f
       #└ TYPE [T: int = str, *Ts = *tuple[int], **P = [str]](t: T) -> T
       """.trimIndent())
+
+    @Test
+    fun `bounded generic`() = test("""
+      def test():
+          def f(x):
+              '''
+              :type x: T <= int | str
+              :rtype: T
+              '''
+              pass
+
+          x = f(10)
+          y = f('foo')
+          z = f([])
+      #         ^^ WARNING Expected type 'T ≤: int | str', got 'list[Unknown]' instead
+          return x + y
+      #              └ WARNING Expected type 'int', got 'str' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-33548"])
+    fun `type vars chain before non type var substitution`() = test("""
+      from typing import TypeVar, Mapping
+
+      MyKT = TypeVar("MyKT")
+      MyVT = TypeVar("MyVT")
+
+      class MyMapping(Mapping[MyKT, MyVT]): # WEAK-WARNING Class MyMapping must implement all abstract methods
+          pass
+
+      d: MyMapping[str, str] = undefined1 # ERROR Unresolved reference 'undefined1'
+      d.get(undefined2) # ERROR Unresolved reference 'undefined2'
+      d.get("str")
+      d.get(1)
+      #     └ WARNING Expected type 'str', got 'Literal[1]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-33500"])
+    fun `implicit generic dunder call call on typed element`() = test("""
+      from typing import TypeVar, Generic
+
+      _T = TypeVar('_T')
+
+      class Callback(Generic[_T]):
+          def __call__(self, arg: _T):
+              pass
+
+      def foo(cb: Callback[int]):
+          cb("42")
+      #      ^^^^ WARNING Expected type 'int', got 'Literal["42"]' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -1528,6 +1700,26 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
 
       expr = f()
       #└ TYPE T
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-61883"])
+    fun `type parameter bound with pep 695 syntax`() = test("""
+      def foo[T: str](p: T):
+          return p
+
+      expr = foo(42)
+      #          ^^ WARNING Expected type 'T ≤: str', got 'Literal[42]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-61883"])
+    fun `type parameter constraints with pep 695 syntax`() = test("""
+      def foo[T: (str, bool)](p: T):
+          return p
+
+      expr = foo(42)
+      #          ^^ WARNING Expected type 'T ≤: str | bool', got 'Literal[42]' instead
       """.trimIndent())
   }
 

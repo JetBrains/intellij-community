@@ -1,5 +1,5 @@
-from collections.abc import Callable
-from typing import Any
+from collections.abc import Callable, Sequence
+from typing import Any, Self, overload
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.checks.messages import CheckMessage
@@ -35,6 +35,18 @@ class GenericForeignKey(FieldCacheMixin, Field[Any, Any]):
     def __init__(
         self, ct_field: str = "content_type", fk_field: str = "object_id", for_concrete_model: bool = True
     ) -> None: ...
+    # class access
+    @overload
+    @override
+    def __get__(self, instance: None, owner: Any) -> GenericForeignKeyDescriptor: ...
+    # Model instance access
+    @overload
+    @override
+    def __get__(self, instance: Model, owner: Any) -> Any | None: ...
+    # non-Model instances
+    @overload
+    @override
+    def __get__(self, instance: Any, owner: Any) -> Self: ...
     name: Any
     model: Any
     @override
@@ -55,12 +67,17 @@ class GenericForeignKey(FieldCacheMixin, Field[Any, Any]):
         using: str | None = None,
         model: type[Model] | None = None,
     ) -> ContentType: ...
+
+class GenericForeignKeyDescriptor:
+    field: GenericForeignKey
+    def __init__(self, field: GenericForeignKey) -> None: ...
+    def is_cached(self, instance: Model) -> bool: ...
     def get_prefetch_querysets(
-        self, instances: list[Model] | QuerySet[Any], querysets: list[QuerySet[Any]] | None = None
+        self, instances: Sequence[Model] | QuerySet[Any], querysets: Sequence[QuerySet[Any]] | None = None
     ) -> tuple[list[Model], Callable[..., Any], Callable[..., Any], bool, str, bool]: ...
-    @override
-    def __get__(self, instance: Model | None, cls: type[Model] | None = ...) -> Any | None: ...  # type: ignore[override]
-    @override
+    def __get__(self, instance: Model | None, cls: type[Model] | None = ...) -> Any | None: ...
+    def fetch_one(self, instance: Model) -> None: ...
+    def fetch_many(self, instances: Sequence[Model] | QuerySet[Any]) -> None: ...
     def __set__(self, instance: Model, value: Any | None) -> None: ...
 
 class GenericRel(ForeignObjectRel):

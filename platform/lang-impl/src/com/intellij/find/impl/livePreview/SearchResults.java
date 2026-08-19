@@ -40,7 +40,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.SwingUtilities;
 import java.awt.Point;
@@ -86,9 +85,6 @@ public class SearchResults implements DocumentListener, CaretListener {
   public enum Direction {UP, DOWN}
 
   private static final long CHUNK_TIME_BUDGET_MS = 50;
-  @VisibleForTesting
-  @ApiStatus.Internal
-  public static final int CHUNK_MATCH_LIMIT = 2000;
 
   /**
    * Where a chunked scan of a {@link SearchArea} resumes: the index of the range being scanned, and the offset inside
@@ -361,7 +357,7 @@ public class SearchResults implements DocumentListener, CaretListener {
    */
   private int chunkMatchLimit() {
     if (myChunkMatchLimit != Integer.MAX_VALUE) return myChunkMatchLimit; // a test drives the chunk boundaries itself
-    return isChunked() ? CHUNK_MATCH_LIMIT : Integer.MAX_VALUE;
+    return isChunked() ? LivePreviewController.MATCHES_LIMIT : Integer.MAX_VALUE;
   }
 
   private @NotNull SearchChunk computeChunk(@NotNull Editor editor,
@@ -422,7 +418,7 @@ public class SearchResults implements DocumentListener, CaretListener {
       if (first) {
         myOldCursorRange = searchStarted(myModel);
       }
-      searchAdvanced(chunk, first);
+      searchAdvanced(chunk, first, last);
 
       if (last) {
         if (myTargetEditor.getDocument().getModificationStamp() == documentTimeStamp) {
@@ -430,6 +426,9 @@ public class SearchResults implements DocumentListener, CaretListener {
           myCallback.setDone();
         }
         else {
+          // The last chunk stays unpublished, and the occurrences of this search have already replaced the ones the
+          // listeners are showing, so tell them what they are holding before the retry that follows gets to run.
+          notifyChanged();
           myCallback.setRejected();
         }
       }
@@ -642,9 +641,10 @@ public class SearchResults implements DocumentListener, CaretListener {
     int offset = range.getStartOffset();
     int maxOffset = Math.min(range.getEndOffset(), charSequence.length());
     FindManager findManager = FindManager.getInstance(getProject());
+    boolean timed = deadline != Long.MAX_VALUE; // an unchunked search has no deadline, and reads no clock per match
 
     while (offset < maxOffset) {
-      if (results.size() >= maxMatches || System.currentTimeMillis() >= deadline) return offset;
+      if (results.size() >= maxMatches || (timed && System.currentTimeMillis() >= deadline)) return offset;
 
       FindResult result;
       try {
@@ -669,7 +669,7 @@ public class SearchResults implements DocumentListener, CaretListener {
 
   /**
    * Forces a search to publish a chunk every {@code maxMatches} occurrences, so that tests can drive the chunked path
-   * without depending on how long a search happens to take. Overrides {@link #CHUNK_MATCH_LIMIT}, and applies even
+   * without depending on how long a search happens to take. Overrides {@link LivePreviewController#MATCHES_LIMIT}, and applies even
    * where a search would otherwise run {@linkplain #isChunked() unchunked}, as it does on the EDT.
    */
   @TestOnly
@@ -720,10 +720,21 @@ public class SearchResults implements DocumentListener, CaretListener {
    * The first chunk is reported as a full update, which is what makes the listeners drop whatever the previous search
    * left behind; the ones after it are reported as appends, which a listener can apply without revisiting the
    * occurrences it has already seen.
+   * <p>
+   * The last chunk is not reported here at all, because {@link #searchFinished} publishes the settled result set in
+   * full immediately afterwards: a listener about to be handed every occurrence gains nothing from having been handed
+   * the tail of them a moment earlier. It costs, though - a full update walks every occurrence on screen, turning each
+   * one into a range highlighter - and a search that fits in a single chunk, which is the common case, would otherwise
+   * pay for that walk one extra time. It is what
+   * {@code FindInEditorPerformanceTest#testEditingWithSearchResultsShown} pays per keystroke, and skipping it there is
+   * worth ~20% of that benchmark.
    */
   @RequiresEdt
-  private void searchAdvanced(@NotNull List<FindResult> chunk, boolean first) {
+  private void searchAdvanced(@NotNull List<FindResult> chunk, boolean first, boolean last) {
     myOccurrences.addAll(chunk);
+    if (last) {
+      return;
+    }
     if (first) {
       notifyChanged();
     }

@@ -314,6 +314,8 @@ class ErrorCodes:
         CannotVaultOneTimeUsePayPalAccount: Final = "82902"
         ConsentCodeOrAccessTokenIsRequired: Final = "82901"
         CustomerIdIsRequiredForVaulting: Final = "82905"
+        EmailFormatIsInvalid: Final = "92963"
+        EmailIsTooLong: Final = "92964"
         InvalidParamsForPayPalAccountUpdate: Final = "92915"
         PayPalAccountsAreNotAccepted: Final = "82904"
         PayPalCommunicationError: Final = "92910"

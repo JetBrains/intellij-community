@@ -26,6 +26,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
-    <orderEntry type="library" scope="PROVIDED" name="Gradle" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gradle" scope="PROVIDED" />
   </component>
 </module>

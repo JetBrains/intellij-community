@@ -1,16 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.PCDId1
 import com.intellij.platform.workspace.storage.testEntities.entities.PCDIdChild
 import com.intellij.platform.workspace.storage.testEntities.entities.PcdChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.PcdChildReferencer
 import com.intellij.platform.workspace.storage.testEntities.entities.PcdParent1Entity
 import com.intellij.platform.workspace.storage.testEntities.entities.PcdParent2Entity
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyPcdParent1Entity
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyPcdParent2Entity
+import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -116,5 +119,34 @@ class EntityWithDependentSymbolicIdsTest {
     assertEquals(newParent1, newParent1Id.resolve(builder))
     assertNotNull(newChild)
     assertEquals(newChild, newChildId.resolve(builder))
+  }
+
+  @Test
+  fun `add child, add its referencer, change parent id`() {
+    val (parent1, parent2) = addTwoParents()
+    attachChild(false, parent1, parent2)
+
+    val firstParent1Id = parent1.symbolicId
+    val parent2Id = parent2.symbolicId
+    val firstChildId = PCDIdChild(false, firstParent1Id, parent2Id)
+    val referencer = builder addEntity PcdChildReferencer("referencer", firstChildId, MySource)
+    val snapshot1 = builder.toSnapshot()
+    snapshot1.assertConsistency()
+    Assertions.assertNotNull(referencer.relatedChildEntity.resolve(snapshot1))
+    val builder2 = snapshot1.toBuilder()
+    val newName = "changedName"
+    builder2.modifyPcdParent1Entity(parent1) par1@{
+      name = newName
+    }
+    val snapshot2 = builder2.toSnapshot()
+    snapshot2.assertConsistency()
+    val newReferencer = run {
+      val all = snapshot2.entities<PcdChildReferencer>().toList()
+      assertEquals(1, all.size)
+      all.single()
+    }
+    val newChildId = PCDIdChild(false, PCDId1(newName), parent2Id)
+    assertEquals(newChildId, newReferencer.relatedChildEntity)
+    Assertions.assertNotNull(newReferencer.relatedChildEntity.resolve(snapshot2))
   }
 }

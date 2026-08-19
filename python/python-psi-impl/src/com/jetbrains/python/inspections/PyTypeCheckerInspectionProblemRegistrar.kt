@@ -4,7 +4,6 @@ package com.jetbrains.python.inspections
 import com.google.common.collect.Sets
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
@@ -15,7 +14,6 @@ import com.jetbrains.python.codeInsight.typing.matchingProtocolDefinitions
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.inspections.PyTypeCheckerInspection.AnalyzeArgumentResult
 import com.jetbrains.python.inspections.PyTypeCheckerInspection.AnalyzeCalleeResults
-import com.jetbrains.python.inspections.PyTypeCheckerInspectionProblemRegistrar.breakdownTooltip
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionProblemRegistrar.breakdownTooltipFromFragment
 import com.jetbrains.python.psi.PyAugAssignmentStatement
 import com.jetbrains.python.psi.PyBinaryExpression
@@ -358,17 +356,17 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
 
   /**
    * Renders [headlineFragment] (already an HTML fragment, with any `<code>` spans) followed by the
-   * [explanation] tree as an HTML tooltip (on-the-fly only). Each level is indented; a node's message marks
+   * [explanations] trees as an HTML tooltip (on-the-fly only). Each level is indented; a node's message marks
    * code-like spans with backticks, which become `<code>` blocks while the surrounding text is escaped. The
    * result is used as the problem's tooltip, not its description, so batch results stay one line.
    */
   @NlsContexts.Tooltip
   private fun breakdownTooltipFromFragment(
     @NlsContexts.Tooltip headlineFragment: String,
-    explanation: PyTypeMismatchExplanation,
+    explanations: List<PyTypeMismatchExplanation>,
   ): @NlsContexts.Tooltip String {
     val builder = HtmlBuilder().appendRaw(headlineFragment)
-    appendBreakdownNodes(builder, listOf(explanation), 1)
+    appendBreakdownNodes(builder, explanations, 1)
     return builder.wrapWith("html").toString()
   }
 
@@ -379,7 +377,17 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     headline: PyInspectionMessages.ProblemMessage,
     explanation: PyTypeMismatchExplanation,
   ): @NlsContexts.Tooltip String =
-    breakdownTooltipFromFragment(PyInspectionMessages.tooltipFragment(headline), explanation)
+    breakdownTooltipFromFragment(PyInspectionMessages.tooltipFragment(headline), listOf(explanation))
+
+  /** [breakdownTooltip] for a headline explained by several independent reasons, each rendered as its own top-level node. */
+  @NlsContexts.Tooltip
+  @JvmStatic
+  fun breakdownTooltip(
+    headline: PyInspectionMessages.ProblemMessage,
+    explanations: List<PyTypeMismatchExplanation>,
+  ): @NlsContexts.Tooltip String? =
+    if (explanations.isEmpty()) null
+    else breakdownTooltipFromFragment(PyInspectionMessages.tooltipFragment(headline), explanations)
 
   /**
    * The breakdown tooltip explaining why [actual] doesn't match [expected], or null when the failure category

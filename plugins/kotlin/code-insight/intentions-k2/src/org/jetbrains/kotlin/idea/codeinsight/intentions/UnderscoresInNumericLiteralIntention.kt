@@ -64,7 +64,7 @@ internal class RemoveUnderscoresFromNumericLiteralIntention : KotlinApplicableMo
     }
 }
 
-private fun KtConstantExpression.isNumeric(): Boolean = elementType in numericConstantKinds
+private fun KtConstantExpression.isNumeric(): Boolean = iElementType in numericConstantKinds
 
 private val numericConstantKinds = listOf(
     KtNodeTypes.INTEGER_CONSTANT,

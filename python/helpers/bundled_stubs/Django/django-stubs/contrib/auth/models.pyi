@@ -1,6 +1,6 @@
 import datetime as dt
 from collections.abc import Iterable
-from typing import Any, ClassVar, Literal, TypeAlias
+from typing import Any, ClassVar, Literal, Never, Self, TypeAlias
 
 from django.contrib.auth.base_user import AbstractBaseUser as AbstractBaseUser
 from django.contrib.auth.base_user import BaseUserManager as BaseUserManager
@@ -12,7 +12,7 @@ from django.db.models.base import Model
 from django.db.models.expressions import Combinable
 from django.db.models.manager import EmptyManager
 from django.utils.functional import _StrOrPromise
-from typing_extensions import Never, Self, TypeVar
+from typing_extensions import TypeVar
 
 # This is our "placeholder" type the mypy plugin refines to configured 'AUTH_USER_MODEL'
 # wherever it is used as a type. The most recognised example of this is (probably)
@@ -41,6 +41,8 @@ class Permission(models.Model):
     name: models.CharField[str | int | Combinable, str]
     content_type: models.ForeignKey[ContentType | Combinable, ContentType]
     codename: models.CharField[str | int | Combinable, str]
+    @property
+    def user_perm_str(self) -> str: ...
     def natural_key(self) -> tuple[str, str, str]: ...
 
 class GroupManager(models.Manager[Group]):

@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.DevBuildFragment
+import org.jetbrains.intellij.build.dev.DevBuildOutput
 import org.jetbrains.intellij.build.dev.PlatformFragmentSelector
 import org.jetbrains.intellij.build.dev.PluginFragmentSelector
 import org.jetbrains.intellij.build.dev.buildProductInProcess
@@ -44,7 +45,7 @@ import kotlin.system.exitProcess
  */
 @OptIn(ExperimentalPathApi::class)
 fun main(args: Array<String>) {
-  val options = parseArgs(args)
+  val options = parseCommandLineOptions(args)
 
   val outputDir = options.requiredPath("--output-dir")
   val scratchDir = options.optionalPath("--scratch-dir") ?: Path.of("${outputDir.invariantSeparatorsPathString}.scratch")
@@ -78,8 +79,6 @@ fun main(args: Array<String>) {
   val buildDateInSeconds = options.optional("--build-date-seconds")?.let {
     it.toLongOrNull() ?: error("--build-date-seconds must be an integer number of seconds since the epoch, but got '$it'")
   }
-  // a dev run directory is disposable and may share bytes with the jar cache, but a Bazel output must own its bytes
-  val linkCacheEntries = options.optionalBoolean("--link-cache-entries") ?: false
   // Unlike a dev run directory, which is rebuilt in place over and over and reuses a jar cache shared with every other
   // product, an assembly here is produced once per change by a caller that caches the whole result. A local disk cache would
   // only add a second copy of every jar, and a directory that concurrent assemblies mutate while its cleanup prunes it.
@@ -93,6 +92,20 @@ fun main(args: Array<String>) {
   val componentManifest = options.optionalPath("--component-manifest")
   val pluginClasspathPart = options.optionalPath("--plugin-classpath-part")
   val pluginClasspathPrefix = options.optionalPath("--plugin-classpath-prefix")
+  val output = if (fragment.isComplete) {
+    require(componentManifest == null && pluginClasspathPart == null && pluginClasspathPrefix == null) {
+      "Component output options require --fragment"
+    }
+    DevBuildOutput.Complete
+  }
+  else {
+    DevBuildOutput.Component(
+      fragment = fragment,
+      manifestFile = checkNotNull(componentManifest) { "--component-manifest is required for fragment '$fragment'" },
+      pluginClasspathPartFile = pluginClasspathPart,
+      pluginClasspathPrefixFile = pluginClasspathPrefix,
+    )
+  }
   options.optionalPath("--bazel-targets-json")?.let { path ->
     System.setProperty("intellij.build.bazel.targets.json.file", path.invariantSeparatorsPathString)
   }
@@ -137,12 +150,8 @@ fun main(args: Array<String>) {
         runDirOverride = outputDir,
         scratchDir = scratchDir,
         buildDateInSeconds = buildDateInSeconds,
-        linkImmutableCacheEntries = linkCacheEntries,
         jarCacheDir = jarCacheDir,
-        fragment = fragment,
-        componentManifestFile = componentManifest,
-        pluginClasspathPartFile = pluginClasspathPart,
-        pluginClasspathPrefixFile = pluginClasspathPrefix,
+        output = output,
       )
     )
 
@@ -175,7 +184,7 @@ fun main(args: Array<String>) {
  * distribution. `--platform=content-modules` without `--content-module-set` is an empty fragment rather than an error,
  * which is what lets a product wire a module set that a given target platform happens not to include.
  */
-private fun parseFragment(options: Options): DevBuildFragment {
+private fun parseFragment(options: CommandLineOptions): DevBuildFragment {
   val name = options.optional("--fragment")
   val platform = options.optional("--platform")?.let { value ->
     when (value) {
@@ -216,7 +225,7 @@ private fun parseFragment(options: Options): DevBuildFragment {
  * verbatim; only a relative name is resolved against the runfiles tree. That is what lets the archives be plain inputs of
  * a Bazel action rather than runfiles of the assembler binary.
  */
-private fun configurePreloadedDownloads(options: Options) {
+private fun configurePreloadedDownloads(options: CommandLineOptions) {
   val manifests = options.pathList("--preloaded-manifest")
   if (manifests.isNotEmpty()) {
     System.setProperty(
@@ -253,60 +262,4 @@ private fun parseArch(value: String): JvmArchitecture {
     it.name.equals(value, ignoreCase = true) || it.archName.equals(value, ignoreCase = true) ||
     it.dirName.equals(value, ignoreCase = true) || it.marketplaceName.equals(value, ignoreCase = true)
   } ?: error("Unknown --arch value '$value', expected one of ${JvmArchitecture.entries.joinToString { it.name }}")
-}
-
-private class Options(private val values: Map<String, List<String>>) {
-  private val used = HashSet<String>()
-
-  fun optional(name: String): String? {
-    used.add(name)
-    val value = values.get(name) ?: return null
-    require(value.size == 1) { "$name must be specified at most once, but got ${value.size} values: $value" }
-    return value.single().takeIf { it.isNotEmpty() }
-  }
-
-  fun list(name: String): List<String> {
-    used.add(name)
-    return values.get(name)?.filter { it.isNotEmpty() } ?: emptyList()
-  }
-
-  fun optionalBoolean(name: String): Boolean? {
-    val value = optional(name) ?: return null
-    return when (value.lowercase()) {
-      "true" -> true
-      "false" -> false
-      else -> error("$name must be 'true' or 'false', but got '$value'")
-    }
-  }
-
-  fun optionalPath(name: String): Path? = optional(name)?.let { toAbsolutePath(it) }
-
-  fun pathList(name: String): List<Path> = list(name).map { toAbsolutePath(it) }
-
-  fun requiredPath(name: String, fallback: () -> String? = { null }): Path {
-    val value = optional(name) ?: fallback() ?: error("$name is required (no value and no fallback available)")
-    return toAbsolutePath(value)
-  }
-
-  fun checkNoUnknownOptions() {
-    val unknown = values.keys - used
-    check(unknown.isEmpty()) { "Unknown options: ${unknown.sorted().joinToString()}" }
-  }
-
-  // all paths are made absolute right away: the build changes neither the working directory nor its own view of it,
-  // but the resulting paths are written into files and compared to each other, so they must not depend on it
-  private fun toAbsolutePath(value: String): Path = Path.of(value).toAbsolutePath().normalize()
-}
-
-private fun parseArgs(args: Array<String>): Options {
-  val values = LinkedHashMap<String, MutableList<String>>()
-  for (arg in args) {
-    require(arg.startsWith("--")) { "Expected an option in the '--key=value' form, but got '$arg'" }
-    val separatorIndex = arg.indexOf('=')
-    // a flag without a value is a `true` flag
-    val name = if (separatorIndex == -1) arg else arg.substring(0, separatorIndex)
-    val value = if (separatorIndex == -1) "true" else arg.substring(separatorIndex + 1)
-    values.computeIfAbsent(name) { ArrayList() }.add(value)
-  }
-  return Options(values)
 }

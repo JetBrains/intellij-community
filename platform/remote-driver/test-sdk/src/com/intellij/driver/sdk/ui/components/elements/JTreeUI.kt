@@ -153,6 +153,21 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     return this
   }
 
+  /**
+   * Recursively expands the subtree rooted at [path] and waits for asynchronous expansion to complete.
+   * Unlike `expandRow`, which expands only one row, this expands all eligible descendants while leaving unrelated subtrees unchanged.
+   */
+  fun expandPathRecursively(
+    vararg path: String,
+    fullMatch: Boolean = true,
+    timeout: Duration = 5.seconds,
+  ): JTreeUiComponent {
+    waitForNodesLoaded()
+    val row = findExpandedPath(*path, fullMatch = fullMatch)?.row ?: throw PathNotFoundException(path.toList())
+    fixture.expandRowRecursively(row, timeout.inWholeMilliseconds.toInt())
+    return this
+  }
+
   fun expandPath(vararg path: String, fullMatch: Boolean = true) {
     for (i in path.indices) {
       waitForNodesLoaded(1.minutes)
@@ -331,6 +346,7 @@ interface JTreeFixtureRef : Component {
   fun collectSelectedPaths(): List<TreePath>
   fun selectRow(row: Int): JTreeFixtureRef?
   fun expandAll(timeoutMs: Int)
+  fun expandRowRecursively(row: Int, timeoutMs: Int)
   fun getRowPoint(row: Int): Point
   fun replaceCellRendererReader(reader: CellRendererReader)
   fun getComponentAtRow(row: Int): Component

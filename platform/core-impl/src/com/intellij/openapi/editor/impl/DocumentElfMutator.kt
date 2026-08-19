@@ -7,8 +7,10 @@ import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentSputnik
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
+import com.intellij.openapi.util.Key
 import com.intellij.util.DocumentEventUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.text.ImmutableCharSequence
@@ -101,9 +103,9 @@ internal abstract class DocumentElfMutator(
     throw UnsupportedOperationException("ElfDocument does not support clearLineFlags yet")
   }
 
-  final override fun updateSnapshotAndGet(updateFunc: UnaryOperator<DocumentSnapshot>): DocumentSnapshot {
+  final override fun <S : DocumentSputnik> setSputnik(key: Key<S>, sputnik: (DocumentSnapshot) -> S?): DocumentSnapshot {
     assertIsInElfScope()
-    throw UnsupportedOperationException("ElfDocument does not support updateSnapshotAndGet yet")
+    throw UnsupportedOperationException("ElfDocument does not support setSputnik yet")
   }
 
   final override fun insertString(

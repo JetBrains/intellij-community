@@ -1,6 +1,6 @@
 ---
 name: fix-project-leak-from-tc-report
-description: Fix TeamCity project-leak test failures from diagnosis to verification.
+description: Fix TeamCity project-leak test failures end to end.
 ---
 
 # Fix a `_LastInSuiteTest.testProjectLeak` from a TeamCity report

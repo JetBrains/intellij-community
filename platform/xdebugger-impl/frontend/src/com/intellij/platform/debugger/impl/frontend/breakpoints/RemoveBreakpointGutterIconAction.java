@@ -30,7 +30,7 @@ class RemoveBreakpointGutterIconAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
-    performDebuggerAction(e.getProject(), e.getDataContext(), () -> {
+    performDebuggerAction(e, () -> {
       InputEvent event = e.getInputEvent();
       // for mouse events check that no modifiers applied
       if (!(event instanceof MouseEvent) || keyModifiersAreApplicable(event, myBreakpoint) || SwingUtilities.isMiddleMouseButton((MouseEvent)event)) {

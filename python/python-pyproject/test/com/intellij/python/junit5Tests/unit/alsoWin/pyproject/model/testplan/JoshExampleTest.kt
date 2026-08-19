@@ -9,7 +9,6 @@ import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTom
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Test
 
 @PyDefaultTestApplication
@@ -17,18 +16,22 @@ import org.junit.jupiter.api.Test
 @TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/josh_example")
 internal class JoshExampleTest {
   companion object {
-    private val tempDirFixture = tempPathFixture()
-    private val projectFixture = projectFixture(pathFixture = tempDirFixture)
+    private val projectFixture = projectFixture()
   }
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule("josh_example", contentRoot = ".", sourceRoots = listOf(".")),
-      ExpectedModule("josh_example_bar", contentRoot = "packages" / "josh_example_bar", sourceRoots = listOf("packages" / "josh_example_bar" / "src")),
-      ExpectedModule("josh_example_foo", contentRoot = "packages" / "josh_example_foo", sourceRoots = listOf("packages" / "josh_example_foo" / "src")),
+      ExpectedModule("josh_example_bar",
+                     contentRoot = "packages" / "josh_example_bar",
+                     sourceRoots = listOf("packages" / "josh_example_bar" / "src")),
+      ExpectedModule("josh_example_foo",
+                     contentRoot = "packages" / "josh_example_foo",
+                     sourceRoots = listOf("packages" / "josh_example_foo" / "src")),
     )
   }
 }

@@ -1,6 +1,6 @@
 ---
 name: ui-accessibility
-description: Review IntelliJ UI accessibility for keyboard, focus, labels, and screen readers.
+description: Review IntelliJ UI accessibility for keyboard, focus, and labels.
 ---
 
 # IntelliJ UI Accessibility

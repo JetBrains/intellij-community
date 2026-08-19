@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="RUNTIME" />
+    <orderEntry type="module-library" exported="">
+      <library name="kotlin-test-junit" type="repository">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-test-junit:2.4.10-RC2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/2.4.10-RC2/kotlin-test-junit-2.4.10-RC2.jar">
+              <sha256sum>788d8b638e6a6154d40d5cccf9adf15f7383c537512c11a28e8fd44b98ad4eef</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-test" />
+            <dependency maven-id="junit:junit" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/2.4.10-RC2/kotlin-test-junit-2.4.10-RC2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/2.4.10-RC2/kotlin-test-junit-2.4.10-RC2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

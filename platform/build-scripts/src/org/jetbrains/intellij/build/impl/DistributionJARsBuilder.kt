@@ -65,9 +65,7 @@ import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import kotlin.io.path.listDirectoryEntries
 
 /**
@@ -630,13 +628,19 @@ internal suspend fun layoutPlatformDistribution(
   assetFilter: DistributionAssetFilter? = null,
   context: BuildContext,
 ): List<DistributionFileEntry> {
+  val selectedModules = includedModules ?: platform.includedModules
+  val selectedModuleNames = selectedModules.mapTo(HashSet(), ModuleItem::moduleName)
   if (copyFiles) {
     coroutineScope {
-      createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPatcher, context)
-      launch(CoroutineName("patch keymap with Alt click reassigned to multiple carets")) {
-        patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher, context)
+      if (selectedModuleNames.contains("intellij.platform.ide.impl")) {
+        createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPatcher, context)
       }
-      launch(CoroutineName("write patched app info")) {
+      if (selectedModuleNames.contains("intellij.platform.resources")) {
+        launch(CoroutineName("patch keymap with Alt click reassigned to multiple carets")) {
+          patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher, context)
+        }
+      }
+      if (selectedModuleNames.contains("intellij.platform.core")) launch(CoroutineName("write patched app info")) {
         spanBuilder("write patched app info").use {
           val moduleName = "intellij.platform.core"
           val module = context.outputProvider.findRequiredModule(moduleName)
@@ -671,7 +675,7 @@ internal suspend fun layoutPlatformDistribution(
         targetDir = targetDir,
         copyFiles = copyFiles,
         moduleOutputPatcher = moduleOutputPatcher,
-        includedModules = includedModules ?: platform.includedModules,
+        includedModules = selectedModules,
         searchableOptionSet = searchableOptionSet,
         cachedDescriptorWriterProvider = null,
         assetFilter = assetFilter,
@@ -810,9 +814,11 @@ internal suspend fun layoutDistribution(
     withContext(Dispatchers.IO) {
       Files.createDirectories(targetDir)
 
-      if (!layout.moduleExcludes.isEmpty()) {
+      val includedModuleNames = includedModules.mapTo(HashSet(), ModuleItem::moduleName)
+      val relevantModuleExcludes = layout.moduleExcludes.filterKeys(includedModuleNames::contains)
+      if (relevantModuleExcludes.isNotEmpty()) {
         launch(CoroutineName("check module excludes")) {
-          checkModuleExcludes(layout.moduleExcludes, context.outputProvider)
+          checkModuleExcludes(relevantModuleExcludes, context.outputProvider)
         }
       }
 
@@ -866,7 +872,7 @@ internal suspend fun layoutDistribution(
   return entries to targetDir
 }
 
-private fun layoutResourcePaths(layout: BaseLayout, targetDirectory: Path, overwrite: Boolean, outputProvider: ModuleOutputProvider) {
+private fun layoutResourcePaths(layout: BaseLayout, targetDirectory: Path, outputProvider: ModuleOutputProvider) {
   val missing = ArrayList<String>()
   for (resourceData in layout.resourcePaths) {
     val source = basePath(resourceData.moduleName, outputProvider).resolve(resourceData.resourcePath).normalize()
@@ -880,7 +886,7 @@ private fun layoutResourcePaths(layout: BaseLayout, targetDirectory: Path, overw
     if (resourceData.packToZip) {
       if (Files.isDirectory(source)) {
         // do not compress - doesn't make sense as it is a part of distribution
-        zip(targetFile = target, dirs = mapOf(source to ""), overwrite = overwrite)
+        zip(targetFile = target, dirs = mapOf(source to ""))
       }
       else {
         target = target.resolve(source.fileName)
@@ -889,24 +895,10 @@ private fun layoutResourcePaths(layout: BaseLayout, targetDirectory: Path, overw
     }
     else {
       if (Files.isRegularFile(source)) {
-        if (overwrite) {
-          val targetFile = target.resolve(source.fileName)
-          Files.createDirectories(target)
-          Files.copy(source, targetFile, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
-        }
-        else {
-          copyFileToDir(source, target)
-        }
+        copyFileToDir(source, target)
       }
       else {
-        if (overwrite) {
-          copyDir(source, target, fileFilter = {
-            copyIfChanged(target, source, it)
-          })
-        }
-        else {
-          copyDir(source, target)
-        }
+        copyDir(source, target)
       }
     }
   }
@@ -916,26 +908,8 @@ private fun layoutResourcePaths(layout: BaseLayout, targetDirectory: Path, overw
   }
 }
 
-private fun copyIfChanged(targetDir: Path, sourceDir: Path, sourceFile: Path): Boolean {
-  val targetFile = targetDir.resolve(sourceDir.relativize(sourceFile))
-  val t = try {
-    Files.getLastModifiedTime(targetFile).toMillis()
-  }
-  catch (_: NoSuchFileException) {
-    return true
-  }
-  val s = Files.getLastModifiedTime(sourceFile).toMillis()
-  if (t == s) {
-    return false
-  }
-  Files.delete(targetFile)
-  return true
-}
-
 private suspend fun layoutAdditionalResources(layout: BaseLayout, targetDirectory: Path, context: BuildContext) {
-  // quick fix for a very annoying FileAlreadyExistsException in CLion dev build
-  val overwrite = ("intellij.clion.radler" == (layout as? PluginLayout)?.mainModule)
-  layoutResourcePaths(layout = layout, targetDirectory = targetDirectory, overwrite = overwrite, outputProvider = context.outputProvider)
+  layoutResourcePaths(layout = layout, targetDirectory = targetDirectory, outputProvider = context.outputProvider)
   if (layout !is PluginLayout) {
     return
   }

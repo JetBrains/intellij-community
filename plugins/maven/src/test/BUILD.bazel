@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "maven-tests_test",
+    timeout = "short",
+    tags = ["community-aggregator"],
+    runtime_deps = [":maven-tests_test_lib"],
+)
+### skip generation section `test intellij.maven.tests`
+
 ### auto-generated section `build intellij.maven.tests` start
 jvm_library(
     name = "maven-tests",
@@ -204,13 +212,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.maven.tests` end
-
-### auto-generated section `test intellij.maven.tests` start
-jps_test(
-    name = "maven-tests_test",
-    runtime_deps = [":maven-tests_test_lib"],
-)
-### auto-generated section `test intellij.maven.tests` end
 
 ### auto-generated section `build intellij.maven.tests.main` start
 jvm_library(

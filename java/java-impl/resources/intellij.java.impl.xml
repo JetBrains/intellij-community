@@ -81,6 +81,9 @@
 
   <xi:include href="/META-INF/RegistryKeysJavaImpl.xml"/>
 
+  <xi:include href="/META-INF/Intentions.xml"/>
+  <xi:include href="/META-INF/IntentionPowerPack.xml"/>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.lang.jvm.annotationPackageSupport" interface="com.intellij.codeInsight.annoPackages.AnnotationPackageSupport" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.jvm.annotations.marker.suppressor"

@@ -209,6 +209,107 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       expr = [f][0]
       #└ TYPE [T: int = str, *Ts = *tuple[int], **P = [str]](t: T) -> T
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-4025"])
+    fun `function assignments`() = test("""
+      def test():
+          def g(x):
+              '''
+              :type x: int
+              '''
+              return x
+          g("str") #fail
+      #     ^^^^^ WARNING Expected type 'int', got 'Literal["str"]' instead
+          h = g
+          h("str") #fail
+      #     ^^^^^ WARNING Expected type 'int', got 'Literal["str"]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-7179"])
+    fun `decorated function`() = test("""
+      def decorator(f):
+          return f
+
+      @decorator
+      def foo():
+          return 'foo'
+
+      print(foo + 3) # we know type at least
+      #     ^^^ WARNING Expected type 'int', got '() -> Literal["foo"]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-16055"])
+    fun `function return type`() = test("""
+      from typing import Optional, List, Union
+
+      def a(x):
+      # type: (List[int]) -> List[str]
+          return [x]
+      #          ^^^ WARNING Expected type 'list[str]', got 'list[list[int]]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-28364"])
+    fun `definition against callable instance`() = test("""
+      class B:
+          def __call__(self, *args, **kwargs):
+              pass
+
+      def some_fn(arg: B):
+          pass
+
+      some_fn(B)
+      #       └ WARNING Expected type 'B', got 'type[B]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-29993"])
+    fun `callable instance against other callable instance`() = test("""
+      class MyCls:
+          def __call__(self):
+              return True
+
+      class DifferentCls:
+          def __call__(self):
+              return True
+
+      def foo(arg: MyCls):
+          pass
+
+      foo(MyCls())
+      foo(DifferentCls())
+      #   ^^^^^^^^^^^^^^ WARNING Expected type 'MyCls', got 'DifferentCls' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-42205"])
+    fun `non reference callee`() = test("""
+      class CallableTest:
+          def __call__(self, arg=None):
+              pass
+      CallableTest()("bad 1")
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-43841"])
+    fun `py function against builtin function`() = test("""
+      class C:
+          def method(self, f):
+              '''
+              Parameters
+              ----------
+              f : function
+              '''
+          pass
+
+      def foo():
+          pass
+
+      C().method(foo)
+      """.trimIndent())
   }
 
   @Nested
@@ -290,6 +391,41 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = f(g)
       #└ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-10413"])
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `function parameter return type`() = test("""
+      def func(f, seq):
+          '''
+          :param f: my param
+          :type f: (unknown) -> str
+          :rtype: list[str]
+          '''
+          return [f(v) for v in seq]
+
+      def f(x):
+          return int(x)
+
+      def test():
+          for item in func(f, []):
+      #                    └ WARNING Expected type '(Unknown) -> str', got '(x: Unknown) -> int' instead
+              pass
+
+          for item in func(int, []):
+      #                    ^^^ WARNING Expected type '(Unknown) -> str', got 'type[int]' instead
+              pass
+
+          for item in func(lambda x: int(x), []):
+      #                    ^^^^^^^^^^^^^^^^ WARNING Expected type '(Unknown) -> str', got '(x: Unknown) -> int' instead
+              pass
+
+          for item in func(lambda x: str(x), []):
+              pass
+
+          for item in func(str, []):
+              pass
       """.trimIndent())
   }
 
@@ -442,6 +578,52 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def foo(**x: Unpack[Movie]):
           expr = x
       #   └ TYPE dict[str, Unknown]
+      """.trimIndent())
+
+    @Test
+    fun `positional arguments`() = test("""
+      def foo(*args):
+          '''
+          :type args: str
+          '''
+          pass
+
+      foo(1, '1')
+      #   └ WARNING Expected type 'str', got 'Literal[1]' instead
+      """.trimIndent())
+
+    @Test
+    fun `null argument mapped to positional parameter`() = test("""
+      class Kvas:
+          def __getitem__(self, *item):
+              pass
+
+      Kvas()[]
+      #      └ ERROR Expression expected
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-48798"])
+    fun `dict literal in keyword arguments`() = test("""
+      from typing import TypedDict
+      class Point(TypedDict):
+          x: int
+          y: int
+      class Movie(TypedDict):
+          name: str
+          year: int
+      def record_movie(movie: Movie) -> None: ...
+      record_movie(movie={'name': 'Blade Runner', 'year': 1984})
+      record_movie(movie={'year': 1984})
+      #                  ^^^^^^^^^^^^^^ WARNING TypedDict 'Movie' has missing key: 'name'
+      record_movie(movie={'name': 1984, 'year': 1984})
+      #                           ^^^^ WARNING Expected type 'str', got 'int' instead
+      record_movie(movie={})
+      #                  ^^ WARNING TypedDict 'Movie' has missing keys: 'name', 'year'
+      record_movie(movie={'name': '1984', 'year': 1984, 'director': 'Michael Radford'})
+      #                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Extra key 'director' for TypedDict 'Movie'
+      record_movie(movie=Point(x=123, y=321))
+      #            ^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'Movie', got 'Point' instead
       """.trimIndent())
   }
 
@@ -764,6 +946,20 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE int
           _ = items[0](1)
       #   └ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-24930"])
+    fun `call operator`() = test("""
+      class Foo:
+          def __call__(self, arg: int):
+              return arg
+
+      bar = Foo()
+      bar.__call__("s")
+      #            ^^^ WARNING Expected type 'int', got 'Literal["s"]' instead
+      bar("s")
+      #   ^^^ WARNING Expected type 'int', got 'Literal["s"]' instead
       """.trimIndent())
   }
 
@@ -2498,13 +2694,10 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       call = single_int
       call = int_bool
-      #^^^ WARNING Redeclared 'call' defined above without usage
       call = single_str
-      #│     ^^^^^^^^^^ WARNING Expected type '(Concatenate(int, ...)) -> str', got '(x: str) -> str' instead
-      #^^^ WARNING Redeclared 'call' defined above without usage
+      #      ^^^^^^^^^^ WARNING Expected type '(Concatenate(int, ...)) -> str', got '(x: str) -> str' instead
       call = empty
-      #│     ^^^^^ WARNING Expected type '(Concatenate(int, ...)) -> str', got '() -> str' instead
-      #^^^ WARNING Redeclared 'call' defined above without usage
+      #      ^^^^^ WARNING Expected type '(Concatenate(int, ...)) -> str', got '() -> str' instead
       """.trimIndent())
 
     @TestFor(issues = ["PY-89912"])
@@ -2527,6 +2720,147 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       shape = Shape()
       shape.apply(accept_circle)
       #           ^^^^^^^^^^^^^ WARNING Expected type '(Shape) -> None', got '(c: Circle) -> None' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-35544"])
+    fun `less specific callable against more specific`() = test("""
+      from typing import Callable
+
+      class MainClass:
+          pass
+
+      class SubClass(MainClass):
+          pass
+
+      def f(p: Callable[[SubClass], int]):
+          pass
+
+      def g(p: MainClass) -> int:
+          pass
+
+      f(g)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-37876"])
+    fun `generic callables in generic classes`() = test("""
+      from typing import Iterable, TypeVar, Generic
+      T = TypeVar("T")
+      class MyClass(Generic[T]):
+          def __init__(self, data: Iterable[T]):
+              sorted(data, key=self.my_func)
+          def my_func(self, elem: T) -> int:
+              pass
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-37876"])
+    fun `bounded generic parameter of expected callable parameter 1`() = test("""
+      from typing import Callable, TypeVar
+
+      T = TypeVar('T', bound=int)
+
+      def func(c: Callable[[T], None]):
+          pass
+
+      def accepts_anything(x: object) -> None:
+          pass
+
+      func(accepts_anything)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-37876"])
+    fun `bounded generic parameter of expected callable parameter 2`() = test("""
+      from typing import Callable, TypeVar
+
+      T = TypeVar('T', bound=int)
+
+      def func(c: Callable[[T], None]):
+          pass
+
+      def accepts_str(x: str) -> None:
+          pass
+
+      func(accepts_str)
+      #    ^^^^^^^^^^^ WARNING Expected type '(T ≤: int) -> None', got '(x: str) -> None' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-37876"])
+    fun `generic parameter of two expected callable parameters`() = test("""
+      from typing import Callable, TypeVar, assert_type
+
+      class BadType(int, str):
+          pass
+
+      T = TypeVar('T')
+
+      def func(c1: Callable[[T], None], c2: Callable[[T], None]) -> T:
+          pass
+
+      def accepts_str(x: str) -> None:
+          pass
+
+      def accepts_int(x: int) -> None:
+          pass
+
+      res = func(accepts_str, accepts_int)
+      assert_type(res, "str & int")
+      #           │         └ WARNING Class 'type' does not define '__and__', so the '&' operator cannot be used on its instances
+      #           ^^^ WARNING Expected type 'str & int', got 'int | str' instead
+      """.trimIndent())
+
+    @Test
+    fun `bounded generic parameter of expected callable return`() = test("""
+      from typing import Callable, TypeVar
+
+      T = TypeVar('T', bound=int)
+
+      def func(c: Callable[[], T]):
+          pass
+
+      def returns_str() -> str:
+          pass
+
+      func(returns_str)
+      #    ^^^^^^^^^^^ WARNING Expected type '() -> T ≤: int', got '() -> str' instead
+      """.trimIndent())
+
+    @Test
+    fun `constraint generic parameter of expected callable parameter`() = test("""
+      from typing import Callable, TypeVar
+
+      T = TypeVar('T', int, bool) # using constraint here
+
+      def func(c: Callable[[T], None]):
+          pass
+
+      def accepts_anything(x: str) -> None:
+          pass
+
+      func(accepts_anything)
+      #    ^^^^^^^^^^^^^^^^ WARNING Expected type '(T ≤: int | bool) -> None', got '(x: str) -> None' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-37876"])
+    fun `generic parameter of expected callable mapped by other argument`() = test("""
+      from typing import Callable, TypeVar
+
+      T = TypeVar('T')
+
+      def func(x: T, c: Callable[[T], None]) -> None:
+          pass
+
+      def accepts_anything(x: str) -> None:
+          pass
+
+      # Bug: Expected error.
+      # `Callable[[str], None]` is assignable to `Callable[[int | str], None]`.
+      # Thus, substitution `T` -> `int | str` is considered valid.
+      func(42, accepts_anything)
       """.trimIndent())
   }
 
@@ -2970,12 +3304,10 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       class Derived2(Base[str]): ...
       b = Derived2()
-      #│  ^^^^^^^^^^ WARNING Expected type 'Base[[int]]', got 'Derived2' instead
-      #\ WARNING Redeclared 'b' defined above without usage
+      #   ^^^^^^^^^^ WARNING Expected type 'Base[[int]]', got 'Derived2' instead
 
       class Derived3[**P](Base[P]): ...
       b = Derived3()
-      #\ WARNING Redeclared 'b' defined above without usage
       """.trimIndent())
 
     @Test
@@ -2994,8 +3326,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       class Mismatch:
           f: Callable[[str], None]
       p = Mismatch()
-      #│  ^^^^^^^^^^ WARNING Expected type 'Proto[[int]]', got 'Mismatch' instead
-      #\ WARNING Redeclared 'p' defined above without usage
+      #   ^^^^^^^^^^ WARNING Expected type 'Proto[[int]]', got 'Mismatch' instead
       """.trimIndent())
 
     @Test
@@ -3075,6 +3406,41 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #                  │    └ WARNING Expected type 'str', got 'Literal[1]' instead
       #                  ^^^ WARNING Expected type 'int', got 'Literal["A"]' instead
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-45438"])
+    fun `function against callback protocol`() = test("""
+      from typing import Protocol
+
+      class NamedParam(Protocol):
+          def __call__(self, arg: float) -> float:
+              pass
+
+      class StarParam(Protocol):
+          def __call__(self, *args: float) -> float:
+              pass
+
+      def named_parameter(arg: float) -> float:
+          pass
+
+      def named_parameter_wrong_type(arg: int) -> float:
+          pass
+
+      def star_parameter(*args: float) -> float:
+          pass
+
+      def star_parameter_wrong_type(*args: int) -> float:
+          pass
+
+      foo0: NamedParam = named_parameter
+      foo1: NamedParam = named_parameter_wrong_type
+      #                  ^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'NamedParam', got '(arg: int) -> float | int' instead
+      foo2: StarParam = star_parameter
+      foo3: StarParam = star_parameter_wrong_type
+      #                 ^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'StarParam', got '(*args: int) -> float | int' instead
+      foo4: StarParam = named_parameter
+      #                 ^^^^^^^^^^^^^^^ WARNING Expected type 'StarParam', got '(arg: float | int) -> float | int' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -3133,35 +3499,6 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
                 pass
         """.trimIndent())
   }
-
-  @Test
-  fun `call on non-reference callee with default parameter`() = test("""
-    class CallableTest:
-        def __call__(self, arg=None):
-            pass
-
-    CallableTest()("bad 1")
-    """.trimIndent())
-
-  @Test
-  @TestFor(issues = ["PY-35544"])
-  fun `less specific callable accepted for more specific callable parameter`() = test("""
-    from typing import Callable
-
-    class MainClass:
-        pass
-
-    class SubClass(MainClass):
-        pass
-
-    def f(p: Callable[[SubClass], int]):
-        pass
-
-    def g(p: MainClass) -> int:
-        pass
-
-    f(g)
-    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-90658"])

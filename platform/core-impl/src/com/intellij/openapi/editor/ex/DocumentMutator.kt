@@ -2,8 +2,8 @@
 package com.intellij.openapi.editor.ex
 
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
-import java.util.function.UnaryOperator
 
 /**
  * This interface is responsible for the document write path.
@@ -38,11 +38,12 @@ import java.util.function.UnaryOperator
  * cases (5) and (6) are T_O_D_O to be fixed
  *
  * A change is computed against the snapshot captured at the start of the operation, but published against the
- * snapshot found at CAS time. The two are reconciled by [DocumentSnapshot.withMetadata]: the modification
- * stamp/sequence of the latest snapshot is taken, but its text -- and the line-modification tracking paired
- * with it -- is discarded, and the change is applied to the text the operation started from. That is how a
- * losing text mutation is overridden in cases (1) and (2), while a metadata-only update that raced the change
- * -- a modification stamp set from another thread, say -- still survives.
+ * snapshot found at CAS time. The two are reconciled by [DocumentSnapshot.withMetadata]: if the snapshot found
+ * at CAS time still has the same text the operation started from, it is taken as a whole and the change is
+ * applied on top of it -- that is how a metadata-only update that raced the change, a modification stamp set
+ * from another thread say, survives. Otherwise that snapshot's text has already moved on to some other change,
+ * so it is discarded wholesale, metadata included, and the change is applied to the text the operation started
+ * from instead. That is how a losing text mutation is overridden in cases (1) and (2).
  */
 @ApiStatus.Internal
 interface DocumentMutator {
@@ -52,7 +53,7 @@ interface DocumentMutator {
    *
    * Safe to perform concurrently.
    * @param incrementModSequence whether the modSequence should be incremented
-   * @see DocumentSnapshot.withModStamp
+   * @see DocumentSnapshot.applyOp
    */
   fun setModStamp(newModStamp: Long, incrementModSequence: Boolean)
 
@@ -61,7 +62,7 @@ interface DocumentMutator {
    *
    * It is unsafe to perform concurrently with text mutations because line numbers may become outdated causing an exception
    *
-   * @see DocumentSnapshot.withClearedLineFlags
+   * @see DocumentSnapshot.applyOp
    */
   fun clearLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray)
 
@@ -127,19 +128,13 @@ interface DocumentMutator {
   )
 
   /**
-   * Atomically replaces the current snapshot with the result of [updateFunc] and returns it.
+   * Atomically attaches the sputnik returned by [sputnik] under [key], or detaches it if [sputnik] returns
+   * `null`.
    *
-   * The general escape hatch for snapshot state that has no dedicated method here, a sputnik above all:
-   * `updateSnapshotAndGet { it.withSputnik(key, sputnik) }`.
+   * [sputnik] may be invoked more than once per call -- a lost publish race re-invokes it against the newly
+   * found snapshot -- so it must be pure and side-effect free.
    *
-   * [updateFunc] must keep the characters of the snapshot it is given: a text change published this way
-   * would fire no [com.intellij.openapi.editor.event.DocumentListener], leaving every listener-backed model
-   * stale, so it is rejected with an [IllegalArgumentException]. Use the text methods of this interface instead.
-   *
-   * [updateFunc] must also be side-effect free: publishing goes through a compare-and-set, so a lost race
-   * re-applies it against the newly found snapshot.
-   *
-   * @see DocumentSnapshot.withSputnik
+   * @see DocumentSnapshot.applyOp
    */
-  fun updateSnapshotAndGet(updateFunc: UnaryOperator<DocumentSnapshot>): DocumentSnapshot
+  fun <S : DocumentSputnik> setSputnik(key: Key<S>, sputnik: (DocumentSnapshot) -> S?): DocumentSnapshot
 }

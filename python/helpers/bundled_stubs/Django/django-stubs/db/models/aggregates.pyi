@@ -40,6 +40,14 @@ class AnyValue(Aggregate):
 
 class Avg(FixDurationInputMixin, NumericOutputFieldMixin, Aggregate): ...
 
+class BitAggregate(Aggregate):
+    def __init__(self, expression: Combinable | str, **extra: Any) -> None: ...
+    def as_oracle(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
+
+class BitAnd(BitAggregate): ...
+class BitOr(BitAggregate): ...
+class BitXor(BitAggregate): ...
+
 class Count(Aggregate):
     output_field: ClassVar[IntegerField[Any, Any]]
     def __init__(
@@ -95,4 +103,18 @@ class Variance(NumericOutputFieldMixin, Aggregate):
         **extra: Any,
     ) -> None: ...
 
-__all__ = ["Aggregate", "AnyValue", "Avg", "Count", "Max", "Min", "StdDev", "StringAgg", "Sum", "Variance"]
+__all__ = [
+    "Aggregate",
+    "AnyValue",
+    "Avg",
+    "BitAnd",
+    "BitOr",
+    "BitXor",
+    "Count",
+    "Max",
+    "Min",
+    "StdDev",
+    "StringAgg",
+    "Sum",
+    "Variance",
+]

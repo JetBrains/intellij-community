@@ -301,6 +301,9 @@
     <extensionPoint qualifiedName="com.intellij.toolWindowEditorTabSupport" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabSupport"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.toolWindowEditorTabPersistenceProvider" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabPersistenceProvider"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.inspectionPopupLevelChangePolicy" interface="com.intellij.openapi.editor.impl.InspectionPopupLevelChangePolicy" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.editorMouseActionsOverrider"
                     interface="com.intellij.openapi.editor.impl.EditorMouseActionsOverrider" dynamic="true"/>
@@ -649,7 +652,6 @@
     <editorCompositeProvider implementation="com.intellij.openapi.fileEditor.impl.StartupEditorCompositeProvider"/>
     <applicationService serviceInterface="com.intellij.ide.ui.search.SearchableOptionsRegistrar"
                         serviceImplementation="com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl"/>
-    <search.optionContributor implementation="com.intellij.ide.ui.search.PluginSearchableOptionContributor"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.EditorCopyPasteHelper"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl"/>
     <actionConfigurationCustomizer implementation="com.intellij.openapi.actionSystem.ex.QuickListsManager$QuickListActionCustomizer"/>
@@ -1149,6 +1151,7 @@
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.WindowsDefenderCheckerActivity" os="windows"/>
     <iconLayerProvider implementation="com.intellij.ide.LockedIconLayerProvider"/>
     <fileEditorProvider implementation="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabFileEditorProvider" id="ToolWindowEditorTabFileEditor"/>
+    <virtualFileSystem implementationClass="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabFileSystem" key="tool-window-editor-tab" physical="false"/>
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider" id="LargeFileEditor"/>
     <fileEditorProvider id="jcomponent-editor" implementation="com.intellij.openapi.fileEditor.impl.JComponentEditorProvider"/>
     <fileEditorProvider id="settingsWindow" implementation="com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider"/>
@@ -1881,6 +1884,8 @@
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.ide.RecentProjectsManagerBase$MyProjectListener"
               topic="com.intellij.openapi.project.ProjectCloseListener" activeInHeadlessMode="false"/>
+    <listener class="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabFileRegistryCleaner"
+              topic="com.intellij.openapi.project.ProjectCloseListener"/>
     <listener class="com.intellij.ide.RecentProjectsManagerBase$MyFrameStateListener" topic="com.intellij.ide.FrameStateListener"/>
     <listener class="com.intellij.openapi.editor.impl.EditorLastActionTracker$MyAnActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>

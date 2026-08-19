@@ -139,7 +139,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
         a += 1
 
         a = A()
-        a += "a" # WARNING FIXME Expected type 'int', got 'Literal["a"]' instead # PY-91385
+        a += "a" # WARNING Expected type 'int', got 'Literal["a"]' instead
         """.trimIndent())
     }
 
@@ -152,7 +152,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       a += 1
 
       a = A()
-      a += "a" # WARNING FIXME Expected type 'int', got 'Literal["a"]' instead # PY-91385
+      a += "a" # WARNING Expected type 'int', got 'Literal["a"]' instead
       """.trimIndent())
 
     @Test
@@ -184,7 +184,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       a: A = A()
       a.i += 1
-      a.i += "s" # WARNING FIXME Expected type 'int', got 'Literal["s"]' instead # PY-91385
+      a.i += "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
       """.trimIndent())
 
     @Test
@@ -195,7 +195,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       a: A = A()
       a.a += 1
-      a.a += "s" # FIXME WARNING Expected type 'int', got 'Literal["s"]' instead # PY-91385
+      a.a += "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
       """.trimIndent())
   }
 
@@ -454,8 +454,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       d_obj : D[object] = D[object]()
 
       d_int = d_obj # E
-      #│      ^^^^^ WARNING Expected type 'D[int]', got 'D[object]' instead
-      #^^^^ WARNING Redeclared 'd_int' defined above without usage
+      #       ^^^^^ WARNING Expected type 'D[int]', got 'D[object]' instead
       d_obj = d_int # ok
       """.trimIndent())
 
@@ -470,8 +469,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       d_obj : D[object] = D[object]()
 
       d_int = d_obj # E
-      #│      ^^^^^ WARNING Expected type 'E', got 'D[object]' instead
-      #^^^^ WARNING Redeclared 'd_int' defined above without usage
+      #       ^^^^^ WARNING Expected type 'E', got 'D[object]' instead
       d_obj = d_int # ok
       """.trimIndent())
 
@@ -485,8 +483,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       d_obj : D[object] = D[object]()
 
       d_int = d_obj # ok
-      #│      ^^^^^ WARNING Expected type 'D[int]', got 'D[object]' instead FIXME # PY-89564
-      #^^^^ WARNING Redeclared 'd_int' defined above without usage
+      #       ^^^^^ WARNING Expected type 'D[int]', got 'D[object]' instead FIXME # PY-89564
       d_obj = d_int # E
       #       ^^^^^ WARNING FIXME Expected type 'D[object]', got 'D[int]' instead # PY-89564
       """.trimIndent())
@@ -502,8 +499,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       d_obj : E = E()
 
       d_int = d_obj # ok
-      #│      ^^^^^ WARNING Expected type 'D[int]', got 'E' instead FIXME # PY-89564
-      #^^^^ WARNING Redeclared 'd_int' defined above without usage
+      #       ^^^^^ WARNING Expected type 'D[int]', got 'E' instead FIXME # PY-89564
       d_obj = d_int # E
       #       ^^^^^ WARNING Expected type 'E', got 'D[int]' instead
       """.trimIndent())
@@ -522,7 +518,6 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       b : B[int] = B[int]()
 
       a = b # Ok
-      #\ WARNING Redeclared 'a' defined above without usage
       b = a # E
       #   └ WARNING Expected type 'B[int]', got 'A[object]' instead
       """.trimIndent())
@@ -541,8 +536,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       b : B[object] = B[object]()
 
       a = b # E
-      #│  └ WARNING Expected type 'A[int]', got 'B[object]' instead
-      #\ WARNING Redeclared 'a' defined above without usage
+      #   └ WARNING Expected type 'A[int]', got 'B[object]' instead
       b = a # E
       #   └ WARNING Expected type 'B[object]', got 'A[int]' instead
       """.trimIndent())
@@ -562,8 +556,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       b : B[object] = B[object]()
 
       a = b # Ok
-      #│  └ WARNING Expected type 'A[int]', got 'B[object]' instead FIXME # PY-89564
-      #\ WARNING Redeclared 'a' defined above without usage
+      #   └ WARNING Expected type 'A[int]', got 'B[object]' instead FIXME # PY-89564
       b = a # E
       #   └ WARNING Expected type 'B[object]', got 'A[int]' instead
       """.trimIndent())
@@ -583,8 +576,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       b : B[int] = B[int]()
 
       a = b # E
-      #│  └ WARNING FIXME Expected type 'A[object]', got 'B[int]' instead # PY-89564
-      #\ WARNING Redeclared 'a' defined above without usage
+      #   └ WARNING FIXME Expected type 'A[object]', got 'B[int]' instead # PY-89564
       b = a # E
       #   └ WARNING Expected type 'B[int]', got 'A[object]' instead
       """.trimIndent())
@@ -887,8 +879,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       int_and_str = n # WARNING Expected type 'int & str', got 'int' instead
       int_and_str = s
-      #│            └ WARNING Expected type 'int & str', got 'str' instead
-      #^^^^^^^^^^ WARNING Redeclared 'int_and_str' defined above without usage
+      #             └ WARNING Expected type 'int & str', got 'str' instead
 
       int_or_str = int_and_str
       int_and_str = int_or_str # WARNING Expected type 'int & str', got 'int | str' instead
@@ -904,10 +895,8 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       #          └ WARNING Class 'type' does not define '__and__', so the '&' operator cannot be used on its instances
       a_and_b = A() # WARNING Expected type 'A & B', got 'A' instead
       a_and_b = B()
-      #│        ^^^ WARNING Expected type 'A & B', got 'B' instead
-      #^^^^^^ WARNING Redeclared 'a_and_b' defined above without usage
+      #         ^^^ WARNING Expected type 'A & B', got 'B' instead
       a_and_b = C()
-      #^^^^^^ WARNING Redeclared 'a_and_b' defined above without usage
 
       a: A = a_and_b
       b: B = a_and_b

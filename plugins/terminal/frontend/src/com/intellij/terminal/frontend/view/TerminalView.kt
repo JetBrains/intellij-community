@@ -2,6 +2,7 @@ package com.intellij.terminal.frontend.view
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.util.Key
 import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.terminal.TerminalTitle
 import kotlinx.coroutines.CoroutineScope
@@ -168,6 +169,8 @@ interface TerminalView {
   fun setTopComponent(component: JComponent, disposable: Disposable)
 
   companion object {
+    val KEY: Key<TerminalView> = Key.create("TerminalView")
+
     /**
      * The data context key for accessing the Terminal View from actions.
      *

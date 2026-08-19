@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -59,7 +60,8 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerSplitActionHa
   }
 
   @Override
-  protected void perform(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
+  protected void perform(@NotNull XDebugSessionProxy session, @NotNull AnActionEvent event) {
+    DataContext dataContext = event.getDataContext();
     getTextToEvaluate(dataContext, session)
       .onSuccess(text -> {
         if (text == null) return;

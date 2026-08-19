@@ -29,7 +29,7 @@
     <orderEntry type="module" module-name="intellij.platform.buildData" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" />
     <orderEntry type="module" module-name="intellij.platform.devIdeConfig" />
-    <orderEntry type="library" name="kodein-di-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kodein.di.jvm" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.tools.ide.util.common" />

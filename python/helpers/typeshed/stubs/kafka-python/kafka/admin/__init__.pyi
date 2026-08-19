@@ -1,4 +1,4 @@
-from kafka.admin.acl_resource import (
+from kafka.admin._acls import (
     ACL as ACL,
     ACLFilter as ACLFilter,
     ACLOperation as ACLOperation,
@@ -8,23 +8,61 @@ from kafka.admin.acl_resource import (
     ResourcePatternFilter as ResourcePatternFilter,
     ResourceType as ResourceType,
 )
+from kafka.admin._cluster import UpdateFeatureType as UpdateFeatureType
+from kafka.admin._configs import (
+    AlterConfigOp as AlterConfigOp,
+    ConfigFilterType as ConfigFilterType,
+    ConfigResource as ConfigResource,
+    ConfigResourceType as ConfigResourceType,
+    ConfigSourceType as ConfigSourceType,
+    ConfigType as ConfigType,
+)
+from kafka.admin._groups import GroupState as GroupState, GroupType as GroupType, MemberToRemove as MemberToRemove
+from kafka.admin._partitions import NewPartitions as NewPartitions, OffsetSpec as OffsetSpec, OffsetTimestamp as OffsetTimestamp
+from kafka.admin._topics import NewTopic as NewTopic
+from kafka.admin._transactions import (
+    AbortTransactionSpec as AbortTransactionSpec,
+    PartitionProducerState as PartitionProducerState,
+    ProducerState as ProducerState,
+    TransactionDescription as TransactionDescription,
+    TransactionListing as TransactionListing,
+    TransactionState as TransactionState,
+)
+from kafka.admin._users import (
+    ScramMechanism as ScramMechanism,
+    UserScramCredentialDeletion as UserScramCredentialDeletion,
+    UserScramCredentialUpsertion as UserScramCredentialUpsertion,
+)
 from kafka.admin.client import KafkaAdminClient as KafkaAdminClient
-from kafka.admin.config_resource import ConfigResource as ConfigResource, ConfigResourceType as ConfigResourceType
-from kafka.admin.new_partitions import NewPartitions as NewPartitions
-from kafka.admin.new_topic import NewTopic as NewTopic
 
 __all__ = [
-    "ConfigResource",
-    "ConfigResourceType",
     "KafkaAdminClient",
-    "NewTopic",
-    "NewPartitions",
     "ACL",
     "ACLFilter",
-    "ResourcePattern",
-    "ResourcePatternFilter",
     "ACLOperation",
-    "ResourceType",
     "ACLPermissionType",
     "ACLResourcePatternType",
+    "ResourceType",
+    "ResourcePattern",
+    "ResourcePatternFilter",
+    "AlterConfigOp",
+    "ConfigResource",
+    "ConfigResourceType",
+    "ConfigType",
+    "ConfigSourceType",
+    "UpdateFeatureType",
+    "GroupState",
+    "GroupType",
+    "MemberToRemove",
+    "OffsetSpec",
+    "OffsetTimestamp",
+    "AbortTransactionSpec",
+    "PartitionProducerState",
+    "ProducerState",
+    "TransactionDescription",
+    "TransactionListing",
+    "TransactionState",
+    "ScramMechanism",
+    "UserScramCredentialDeletion",
+    "UserScramCredentialUpsertion",
 ]

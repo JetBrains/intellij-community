@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.tools.ide.starter.bus">
+<idea-plugin package="com.intellij.tools.ide.starter.bus" visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.jackson"/>

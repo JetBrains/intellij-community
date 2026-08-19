@@ -195,10 +195,8 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.bundledPluginModules],
      * [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.pluginModulesToPublish] list.
      *
-     * Note that project-level libraries on which the plugin modules depend are automatically put in the 'IDE_HOME/lib' directory
-     * for all IDEs that are compatible with the plugin.
-     * If this isn't desired (e.g., a library is used in a single plugin only or isn't bundled with IDEs to reduce the distribution size),
-     * you may invoke [PluginLayoutSpec.withProjectLibrary] to include such a library to the plugin distribution.
+     * Note that a project-level library on which a plugin module depends is not packed implicitly - it must be provided
+     * by the platform or by a library module (`intellij.libraries.*`) declared in the plugin content, otherwise the build fails.
      *
      * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
      */
@@ -254,8 +252,8 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
 
     /**
-     * Project-level library is included in the plugin by default, if not yet included in the platform.
      * Direct main module dependencies in the same module group are included automatically.
+     * Project-level libraries are not - see the note in [plugin].
      */
     fun pluginAuto(moduleNames: List<String>): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first(), auto = true)

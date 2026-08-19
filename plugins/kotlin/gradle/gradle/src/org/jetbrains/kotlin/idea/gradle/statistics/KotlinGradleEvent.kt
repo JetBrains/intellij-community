@@ -131,19 +131,7 @@ class KotlinGradleEvent(group: EventLogGroup, val eventName: GradleStatisticsEve
 
         private val IDE_STRING_ANONYMIZERS = lazy {
             mapOf(
-                StringMetrics.PROJECT_PATH to { path: String ->
-                    // This code duplicated logics of StatisticsUtil.getProjectId, which could not be directly reused:
-                    // 1. the path of gradle project may not have corresponding project
-                    // 2. the projectId should be stable and independent on IDE version
-                    val presentableUrl = FileUtil.toSystemIndependentName(path)
-                    val name =
-                        PathUtilRt.getFileName(presentableUrl).lowercase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
-                    val locationHash = Integer.toHexString((presentableUrl).hashCode())
-                    val projectHash =
-                        "${name.trimMiddle(name.length.coerceAtMost(254 - locationHash.length), useEllipsisSymbol = false)}.$locationHash"
-                    @Suppress("DEPRECATION")
-                    EventLogConfiguration.getInstance().anonymize(projectHash)
-                })
+                StringMetrics.PROJECT_PATH to { path: String -> anonymizeProjectPathForFus(path) })
         }
 
         private fun String.anonymizeIdeString(metric: StringMetrics) = if (metric.anonymization.anonymizeOnIdeSize())

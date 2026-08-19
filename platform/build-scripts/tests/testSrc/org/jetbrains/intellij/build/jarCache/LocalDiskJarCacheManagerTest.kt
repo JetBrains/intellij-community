@@ -15,7 +15,6 @@ import org.jetbrains.intellij.build.InMemoryContentSource
 import org.jetbrains.intellij.build.Source
 import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.getProductionClassesOutputDirectory
-import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.ByteBuffer
@@ -247,7 +246,6 @@ internal class LocalDiskJarCacheManagerTest {
       val manager = LocalDiskJarCacheManager(
         cacheDir = cacheDir,
         classesOutputDirectory = tempDir.resolve("classes"),
-        linkCacheEntries = true,
         maxAccessTimeAge = 30.days,
       )
       val produceCalls = AtomicInteger()
@@ -987,10 +985,10 @@ internal class LocalDiskJarCacheManagerTest {
   }
 
   @Test
-  fun `cache miss copies payload into target when linking is disabled`() {
+  fun `cache miss copies payload into target`() {
     runBlocking {
       val cacheDir = tempDir.resolve("cache")
-      val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days, linkCacheEntries = false)
+      val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
       val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = false)
 
@@ -1010,10 +1008,10 @@ internal class LocalDiskJarCacheManagerTest {
   }
 
   @Test
-  fun `cache hit copies payload into target when linking is disabled`() {
+  fun `cache hit copies payload into target`() {
     runBlocking {
       val cacheDir = tempDir.resolve("cache")
-      val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days, linkCacheEntries = false)
+      val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
       val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = false)
       val sources = createSources()
@@ -1037,38 +1035,6 @@ internal class LocalDiskJarCacheManagerTest {
       assertThat(hitResult).isEqualTo(hitTarget)
       assertThat(produceCalls.get()).isEqualTo(1)
       assertTargetOwnsItsBytes(target = hitTarget, payloadFile = findSingleEntryPaths(cacheDir).payloadFile)
-    }
-  }
-
-  @Test
-  fun `cache hit hardlinks payload into target when linking is enabled`() {
-    runBlocking {
-      val cacheDir = tempDir.resolve("cache")
-      val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days, linkCacheEntries = true)
-      val builder = TestSourceBuilder(produceCalls = AtomicInteger(), useCacheAsTargetFile = false)
-      val sources = createSources()
-
-      manager.computeIfAbsent(
-        sources = sources,
-        targetFile = tempDir.resolve("out/first.jar"),
-        nativeFiles = null,
-        span = Span.getInvalid(),
-        producer = builder,
-      )
-      val hitTarget = tempDir.resolve("out2/first.jar")
-      manager.computeIfAbsent(
-        sources = sources,
-        targetFile = hitTarget,
-        nativeFiles = null,
-        span = Span.getInvalid(),
-        producer = builder,
-      )
-
-      val payloadKey = fileKey(findSingleEntryPaths(cacheDir).payloadFile)
-      val targetKey = fileKey(hitTarget)
-      // a filesystem that reports no file key (Windows) cannot answer the question this test asks
-      assumeTrue(payloadKey != null && targetKey != null, "filesystem does not report file keys")
-      assertThat(targetKey).isEqualTo(payloadKey)
     }
   }
 
@@ -1124,21 +1090,20 @@ internal class LocalDiskJarCacheManagerTest {
     cacheDir: Path,
     maxAccessTimeAge: Duration,
     metadataTouchInterval: Duration = 15.minutes,
-    linkCacheEntries: Boolean = true,
   ): LocalDiskJarCacheManager {
     return LocalDiskJarCacheManager(
       cacheDir = cacheDir,
       classesOutputDirectory = tempDir.resolve("classes"),
-      linkCacheEntries = linkCacheEntries,
       maxAccessTimeAge = maxAccessTimeAge,
       metadataTouchInterval = metadataTouchInterval,
     )
   }
 
   /**
-   * A hardlinked target and its payload are one file on disk, so the target has bytes of its own only when the two have
-   * different file keys - on Unix a file key is `(device, inode)`, exactly what `stat -f '%i'` compares.
-   * The write is the portable half of the check: it runs everywhere, including filesystems that report no file key at all.
+   * The invariant the jar cache owes a layout: the materialized target is a file of its own, never the cache payload
+   * under another name. On Unix a file key is `(device, inode)`, exactly what `stat -f '%i'` compares - a copy-on-write
+   * clone has its own, a hardlink would not. Reading the content is the portable half of the check: it runs everywhere,
+   * including filesystems that report no file key at all.
    */
   private fun assertTargetOwnsItsBytes(target: Path, payloadFile: Path) {
     assertThat(Files.readString(target)).isEqualTo("payload")

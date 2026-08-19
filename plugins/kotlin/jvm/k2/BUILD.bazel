@@ -75,6 +75,7 @@ jvm_library(
         "//plugins/kotlin/base/statistics",
         "//platform/util/progress",
         "//platform/util",
+        "//plugins/kotlin/scripting",
     ],
 )
 
@@ -134,6 +135,7 @@ jvm_library(
         "//plugins/kotlin/base/statistics:statistics_test_lib",
         "//platform/util/progress:progress_test_lib",
         "//platform/util:util_test_lib",
+        "//plugins/kotlin/scripting:scripting_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jvm` end

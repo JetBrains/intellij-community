@@ -18,11 +18,11 @@ import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.bridge.compose
-import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import javax.swing.JComponent
 
 internal const val TOOLWINDOW_ID = "ComposeUIPreview"
@@ -35,7 +35,6 @@ internal class ComposePreviewToolWindowFactory : ToolWindowFactory, DumbAware {
     return isComposeToolingEnabled()
   }
 
-  @OptIn(ExperimentalJewelApi::class)
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val wrapperPanel = ComposePreviewBusyPanel(project)
 
@@ -58,8 +57,13 @@ internal class ComposePreviewToolWindowFactory : ToolWindowFactory, DumbAware {
         current as? JComponent
       }
 
+      var displayDefaultContent = false
       val provider = try {
         compileCode(virtualFile, project)
+      }
+      catch (e: CancellationException) {
+        displayDefaultContent = true
+        throw e
       }
       catch (e: Throwable) {
         LOG.warn("Unable to compile code for preview of $virtualFile", e)
@@ -68,8 +72,9 @@ internal class ComposePreviewToolWindowFactory : ToolWindowFactory, DumbAware {
       finally {
         withContext(Dispatchers.UI) {
           wrapperPanel.setPaintBusy(false)
-          if (oldContent != null) {
-            wrapperPanel.setContent(oldContent)
+          when {
+            displayDefaultContent -> wrapperPanel.displayDefaultContent()
+            oldContent != null -> wrapperPanel.setContent(oldContent)
           }
         }
       }
@@ -102,8 +107,13 @@ internal class ComposePreviewToolWindowFactory : ToolWindowFactory, DumbAware {
         catch (e: ComposeLocalContextException) {
           wrapperPanel.displayMissingLocals(e)
         }
-        catch (e: Exception) {
+        catch (e: CancellationException) {
+          wrapperPanel.displayDefaultContent()
+          throw e
+        }
+        catch (e: Throwable) {
           LOG.error("Unable to apply content for UI preview of $virtualFile", e)
+          wrapperPanel.displayError(e, virtualFile)
         }
       }
     }

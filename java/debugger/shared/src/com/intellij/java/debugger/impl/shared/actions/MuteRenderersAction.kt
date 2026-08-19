@@ -22,7 +22,7 @@ internal class MuteRenderersAction : ToggleAction(), DumbAware, SplitDebuggerAct
     val javaSession = SharedJavaDebuggerSession.findSession(e) ?: return
     val session = DebuggerUIUtil.getSessionProxy(e) ?: return
     javaSession.areRenderersMuted = state
-    session.coroutineScope.launch {
+    e.coroutineScope.launch {
       JavaDebuggerSessionApi.getInstance().muteRenderers(session.id, state)
     }
   }

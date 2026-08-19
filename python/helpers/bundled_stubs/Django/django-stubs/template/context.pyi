@@ -1,12 +1,12 @@
 from collections.abc import Callable, Iterable, Iterator
 from contextlib import AbstractContextManager
 from types import TracebackType
-from typing import Any, TypeAlias
+from typing import Any, Self, TypeAlias
 
 from django.http.request import HttpRequest
 from django.template.base import Node, Origin, Template
 from django.template.loader_tags import IncludeNode
-from typing_extensions import Self, override
+from typing_extensions import override
 
 _ContextKeys: TypeAlias = int | str | Node
 

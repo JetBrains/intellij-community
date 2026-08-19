@@ -93,6 +93,7 @@ jvm_library(
         "//platform/lang-api:lang",
         "//plugins/gradle/java/properties",
         "//plugins/properties/properties-psi-api:psi",
+        "//plugins/kotlin/scripting",
     ],
 )
 
@@ -155,6 +156,7 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//plugins/gradle/java/properties:properties_test_lib",
         "//plugins/properties/properties-psi-api:psi_test_lib",
+        "//plugins/kotlin/scripting:scripting_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting` end

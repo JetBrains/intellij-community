@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
@@ -36,6 +37,8 @@ internal class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
   override fun getDisplayName(): String = PyBundle.message("configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name")
 
   override fun isAvailable(project: Project): Boolean {
+    // Superseded by the Evo interpreter widget when its registry flag is on.
+    if (PyEvoRegistry.isWidgetEnabled) return false
     return PythonIdeLanguageCustomization.isMainlyPythonIde()
   }
 

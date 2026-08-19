@@ -13,6 +13,7 @@ private val QUALIFIED_ANNOTATION = Regex("""^@(\w+)\.(\w+)""")
 private val TAG_ANNOTATION = Regex("""^@(?:org\.junit\.jupiter\.api\.)?Tag\(\s*"([^"]+)"\s*\)""")
 private val CLASS_DECLARATION = Regex("""\bclass\s+(\w+)\b""")
 private val TEST_NAME_SUFFIX = Regex(""".*(Test|Tests|TestCase|TestSuite)$""")
+private val NON_RUNNABLE_MODIFIER = Regex("""\b(?:abstract|sealed|annotation|enum)\b""")
 
 private val ANNOTATION_QUALIFIERS = setOf(
   "Components", "Subsystems", "Layers",
@@ -21,14 +22,14 @@ private val ANNOTATION_QUALIFIERS = setOf(
 
 private const val TAG_BUFFER_KEY = "Tags"
 
-private data class Variant(
+data class Variant(
   val name: String? = null,
   val status: String? = null,
   val durationMs: Long? = null,
   val errorMessage: String? = null,
 )
 
-private data class LastRun(
+data class LastRun(
   val status: String? = null,
   val durationMs: Long? = null,
   val errorMessage: String? = null,
@@ -37,7 +38,7 @@ private data class LastRun(
   val variants: List<Variant> = emptyList(),
 )
 
-private data class TestRecord(
+data class TestRecord(
   val file: String,
   val fqn: String,
   val subsystems: List<String>,
@@ -50,9 +51,14 @@ private data class TestRecord(
   val lastRun: LastRun = LastRun(),
 )
 
-private data class UnannotatedRecord(
+data class UnannotatedRecord(
   val file: String,
   val fqn: String,
+)
+
+data class ScanReport(
+  val tests: List<TestRecord>,
+  val unannotated: List<UnannotatedRecord>,
 )
 
 private data class Report(
@@ -112,7 +118,7 @@ private fun parseArgs(args: Array<String>): Args {
 /**
  * Reads a source-root list: one repository-relative path per line, blank lines and `#` comments ignored.
  */
-private fun readSourceRoots(file: Path): List<String> {
+fun readSourceRoots(file: Path): List<String> {
   if (!Files.exists(file)) error("Source roots file does not exist: $file")
   val roots = Files.readAllLines(file).map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("#") }
   if (roots.isEmpty()) error("Source roots file lists no paths: $file")
@@ -137,18 +143,19 @@ private fun printUsage() {
   """.trimMargin())
 }
 
-fun main(args: Array<String>) {
-  val parsed = parseArgs(args)
-
+/**
+ * Runs the scan over [sourceRoots] and returns the records sorted by FQN.
+ */
+fun scanSourceRoots(sourceRoots: List<Path>, repoRoot: Path): ScanReport {
   // A root that no longer exists means the list is stale, and skipping it would silently shrink the report.
-  val missingRoots = parsed.sourceRoots.filter { !Files.exists(it) }
+  val missingRoots = sourceRoots.filter { !Files.exists(it) }
   if (missingRoots.isNotEmpty()) {
     error(missingRoots.joinToString("\n", prefix = "Source root(s) do not exist:\n") { "  $it" })
   }
 
   val records = mutableListOf<TestRecord>()
   val unannotated = mutableListOf<UnannotatedRecord>()
-  for (root in parsed.sourceRoots) {
+  for (root in sourceRoots) {
     val files = Files.walk(root).use { stream ->
       stream
         .filter {
@@ -159,19 +166,25 @@ fun main(args: Array<String>) {
         .collect(Collectors.toList())
     }
     for (file in files) {
-      when (val r = scanFile(file, parsed.repoRoot)) {
+      when (val r = scanFile(file, repoRoot)) {
         is ScanResult.Annotated -> records.add(r.record)
         is ScanResult.Unannotated -> unannotated.add(UnannotatedRecord(r.file, r.fqn))
         ScanResult.Skip -> {}
       }
     }
   }
+  return ScanReport(tests = records.sortedBy { it.fqn }, unannotated = unannotated.sortedBy { it.fqn })
+}
+
+fun main(args: Array<String>) {
+  val parsed = parseArgs(args)
+  val scan = scanSourceRoots(parsed.sourceRoots, parsed.repoRoot)
 
   val report = Report(
     generatedAt = Instant.now().toString(),
     repoCommit = currentGitHead(parsed.repoRoot),
-    tests = records.sortedBy { it.fqn },
-    unannotated = unannotated.sortedBy { it.fqn },
+    tests = scan.tests,
+    unannotated = scan.unannotated,
   )
 
   Files.createDirectories(parsed.output.parent)
@@ -182,7 +195,7 @@ fun main(args: Array<String>) {
 
   println(
     "Scanned ${parsed.sourceRoots.size} source root(s); " +
-    "wrote ${records.size} annotated and ${unannotated.size} unannotated record(s) " +
+    "wrote ${scan.tests.size} annotated and ${scan.unannotated.size} unannotated record(s) " +
     "to ${parsed.output}"
   )
 }
@@ -227,6 +240,10 @@ private fun scanFile(file: Path, repoRoot: Path): ScanResult {
       // Annotation may be on the same line as the class declaration.
       val classMatch = CLASS_DECLARATION.find(line)
       if (classMatch != null) {
+        if (!isRunnableClassDeclaration(line, classMatch)) {
+          buffer.clear()  // the annotations belonged to this non-runnable class; don't leak them onto the next one
+          continue
+        }
         if (firstClassSeen == null) firstClassSeen = classMatch.groupValues[1]
         if (buffer.isNotEmpty()) {
           className = classMatch.groupValues[1]
@@ -238,6 +255,10 @@ private fun scanFile(file: Path, repoRoot: Path): ScanResult {
 
     val classMatch = CLASS_DECLARATION.find(line)
     if (classMatch != null) {
+      if (!isRunnableClassDeclaration(line, classMatch)) {
+        buffer.clear()  // the annotations belonged to this non-runnable class; don't leak them onto the next one
+        continue
+      }
       if (firstClassSeen == null) firstClassSeen = classMatch.groupValues[1]
       if (buffer.isNotEmpty()) {
         className = classMatch.groupValues[1]
@@ -283,6 +304,9 @@ private fun scanFile(file: Path, repoRoot: Path): ScanResult {
   }
   return ScanResult.Skip
 }
+
+private fun isRunnableClassDeclaration(line: String, classMatch: MatchResult): Boolean =
+  !NON_RUNNABLE_MODIFIER.containsMatchIn(line.substring(0, classMatch.range.first))
 
 private fun parenBalance(line: String): Int {
   var depth = 0

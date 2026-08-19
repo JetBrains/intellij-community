@@ -144,6 +144,116 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       #│                    ^^^^^^^^^ ERROR Unresolved reference 'undefined'
       #└ TYPE Literal[A.V1]
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-35235"])
+    fun `typing literal initialization`() = test("""
+      from typing_extensions import Literal
+
+      a: Literal[20] = 20
+      b: Literal[30] = 25
+      #                ^^ WARNING Expected type 'Literal[30]', got 'Literal[25]' instead
+      c: Literal[2, 3, 4] = 3
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-35235"])
+    fun `typing literal initialization with different expressions`() = test("""
+      from typing_extensions import Literal
+
+      a1: Literal[0x14] = 20
+      a2: Literal[20] = 0x14
+      b1: Literal[0] = False
+      #                ^^^^^ WARNING Expected type 'Literal[0]', got 'Literal[False]' instead
+      b2: Literal[False] = 0
+      #                    └ WARNING Expected type 'Literal[False]', got 'Literal[0]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-35235"])
+    fun `explicit typing literal argument`() = test("""
+      from typing_extensions import Literal
+
+      a: Literal[20] = undefined # ERROR Unresolved reference 'undefined'
+      b: Literal[30] = undefined # ERROR Unresolved reference 'undefined'
+      c: int = 20
+
+      def foo1(p1: Literal[20]):
+          pass
+
+      foo1(a)
+      foo1(b)
+      #    └ WARNING Expected type 'Literal[20]', got 'Literal[30]' instead
+      foo1(c)
+      #    └ WARNING Expected type 'Literal[20]', got 'int' instead
+
+      def foo2(p1: int):
+          pass
+
+      foo2(a)
+      foo2(b)
+      foo2(c)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-35235"])
+    fun `negative typing literals`() = test("""
+      from typing_extensions import Literal
+      a = undefined  # type: Literal[-10]
+      #   ^^^^^^^^^ ERROR Unresolved reference 'undefined'
+      b = undefined  # type: Literal[-20]
+      #   ^^^^^^^^^ ERROR Unresolved reference 'undefined'
+      a = b
+      #   └ WARNING Expected type 'Literal[-10]', got 'Literal[-20]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-35235"])
+    fun `distinguish typing literals from type hint or value`() = test("""
+      from typing_extensions import Literal
+      a = Literal[10]  # type: Literal[0]
+      #   ^^^^^^^^^^^ WARNING Expected type 'Literal[0]', got 'type[Literal[10]]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-35235"])
+    fun `keyword argument against typing literal`() = test("""
+      from typing_extensions import Literal
+      def f(a: Literal["b"]):
+          pass
+      f(a='b')
+      f(a='c')
+      # ^^^^^ WARNING Expected type 'Literal["b"]', got 'Literal['c']' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-35235"])
+    fun `numeric matching and typing literal`() = test("""
+      from typing import Literal
+      def expects_str(x: float) -> None: ...
+      var: Literal[1] = 1
+      expects_str(var)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-35235"])
+    fun `non plain string as typing literal value`() = test("""
+      from typing import Literal
+      a: Literal["22"] = f"22"
+      b: Literal["22"] = f"32"
+      #                  ^^^^^ WARNING Expected type 'Literal["22"]', got 'Literal[f"32"]' instead
+      two = "2"
+      c: Literal["22"] = f"2{two}"
+      #                  ^^^^^^^^^ WARNING Expected type 'Literal["22"]', got 'str' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-35235", "PY-42281"])
+    fun `expected typing literal return type`() = test("""
+      from typing import Literal
+      def foo() -> Literal["ok"]:
+          return "ok"
+      """.trimIndent())
   }
 
   @Nested
@@ -304,6 +414,30 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       
       expr = foo("a")
       #└ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-42473"])
+    fun `overload literal enum imported`() = test("""
+      from m import E, f
+
+      a: int = f(E.b)
+      b: str = f(E.a)
+      """.trimIndent(), "m.py" to """
+      from enum import Enum, auto
+      from typing import Literal, overload
+
+      class E(Enum):
+          a = auto()
+          b = auto()
+
+      @overload
+      def f(x: Literal[E.a]) -> str: ...
+
+      @overload
+      def f(x: Literal[E.b]) -> int: ...
+
+      def f(x: E) -> object: ...
       """.trimIndent())
   }
 
@@ -938,6 +1072,150 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       def f[T: Literal[1]](t: T) -> list[T]: ...
       expr = f(1)
       #└ TYPE list[Literal[1]]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-38065"])
+    fun `tuple literal against typing literal`() = test("""
+      from typing import Literal, Tuple, List, Set
+
+      L1 = Literal['test']
+      L2 = Literal['a', 'b', 5]
+
+      tuple_one_literal: Tuple[L1] = ('test',)
+      tuple_one_literal_incorrect: Tuple[L1] = ('t',)
+      #                                        ^^^^^^ WARNING Expected type 'tuple[Literal['test']]', got 'tuple[Literal['t']]' instead
+
+      tuple_union_literal: Tuple[L2] = ('b',)
+      tuple_union_literal_incorrect: Tuple[L2] = ('t',)
+      #                                          ^^^^^^ WARNING Expected type 'tuple[Literal['a', 'b', 5]]', got 'tuple[Literal['t']]' instead
+
+      tuple_several_literal: Tuple[L2, L1] = ('b', 'test')
+      tuple_several_literal_incorrect: Tuple[L2, L1] = ('a', 'r')
+      #                                                ^^^^^^^^^^ WARNING Expected type 'tuple[Literal['a', 'b', 5], Literal['test']]', got 'tuple[Literal['a'], Literal['r']]' instead
+
+      tuple_of_list_and_tuple_set: Tuple[List[Tuple[L2, L1]], Set[L2]] = ([('b', 'test'), (5, 'test')], {'b', 5})
+      tuple_of_list_and_tuple_set_incorrect: Tuple[List[Tuple[L2, L1]], Set[L2]] = ([('r', 'test'), (5, 'test')], {'b', 5})
+      #                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'tuple[list[tuple[Literal['a', 'b', 5], Literal['test']]], set[Literal['a', 'b', 5]]]', got 'tuple[list[tuple[Literal['r'], Literal['test']] | tuple[Literal[5], Literal['test']]], set[Literal['b', 5]]]' instead
+
+      FooTuple = Tuple[Literal["a", "b"], int]
+
+      def foo(param: int) -> FooTuple:
+          return "a", param
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-41268"])
+    fun `list literal against typing literal`() = test("""
+      from typing import Literal, Tuple, List, Union
+
+      L1 = Literal['test']
+      L2 = Literal['a', 'b', 5]
+
+      list_one_literal: List[L1] = ['test', 'test']
+      list_one_literal_incorrect: List[L1] = ['r', 'a']
+      #                                      ^^^^^^^^^^ WARNING Expected type 'list[Literal['test']]', got 'list[Literal['r', 'a']]' instead
+
+      list_several_literal: List[L2] = ['a', 5]
+      list_several_literal_incorrect: List[L2] = ['r', 'a']
+      #                                          ^^^^^^^^^^ WARNING Expected type 'list[Literal['a', 'b', 5]]', got 'list[Literal['r', 'a']]' instead
+      list_several_literal_incorrect: List[L2] = ['a', 'r']
+      #                                          ^^^^^^^^^^ WARNING Expected type 'list[Literal['a', 'b', 5]]', got 'list[Literal['a', 'r']]' instead
+
+      list_union_literal: List[Union[L2, L1]] = ['b', 'test', 5]
+      list_union_literal_incorrect: List[Union[L2, L1]] = ['r', 'a']
+      #                                                   ^^^^^^^^^^ WARNING Expected type 'list[Literal['a', 'b', 5, 'test']]', got 'list[Literal['r', 'a']]' instead
+      list_union_literal_incorrect: List[Union[L2, L1]] = ['a', 'r']
+      #                                                   ^^^^^^^^^^ WARNING Expected type 'list[Literal['a', 'b', 5, 'test']]', got 'list[Literal['a', 'r']]' instead
+
+      list_tuple: List[Tuple[L2, L1]] = [('b', 'test'), (5, 'test')]
+      list_tuple_incorrect: List[Tuple[L2, L1]] = [('a',), (5, 'test')]
+      #                                           ^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'list[tuple[Literal['a', 'b', 5], Literal['test']]]', got 'list[tuple[Literal['a']] | tuple[Literal[5], Literal['test']]]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-41268"])
+    fun `set literal against typing literal`() = test("""
+      from typing import Literal, Set, List, Union, Tuple
+
+      L1 = Literal['test']
+      L2 = Literal['a', 'b', 5]
+
+      set_one_literal: Set[L1] = {'test', 'test'}
+      set_one_literal_incorrect: Set[L1] = {'r', 'a'}
+      #                                    ^^^^^^^^^^ WARNING Expected type 'set[Literal['test']]', got 'set[Literal['r', 'a']]' instead
+
+      set_several_literal: Set[L2] = {'b', 5}
+      set_several_literal_incorrect: Set[L2] = {'r', 'a'}
+      #                                        ^^^^^^^^^^ WARNING Expected type 'set[Literal['a', 'b', 5]]', got 'set[Literal['r', 'a']]' instead
+      set_several_literal_incorrect2: Set[L2] = {'a', 'r'}
+      #                                         ^^^^^^^^^^ WARNING Expected type 'set[Literal['a', 'b', 5]]', got 'set[Literal['a', 'r']]' instead
+
+      set_union_literal: Set[Union[L2, L1]] = {'b', 'test', 5}
+      set_union_literal_incorrect: Set[Union[L2, L1]] = {'r', 'a'}
+      #                                                 ^^^^^^^^^^ WARNING Expected type 'set[Literal['a', 'b', 5, 'test']]', got 'set[Literal['r', 'a']]' instead
+      set_union_literal_incorrect2: Set[Union[L2, L1]] = {'a', 'r'}
+      #                                                  ^^^^^^^^^^ WARNING Expected type 'set[Literal['a', 'b', 5, 'test']]', got 'set[Literal['a', 'r']]' instead
+
+      set_of_tuple_and_list: Set[Union[Tuple[L2, L1], List[L1]]] = {('b', 'test'), ['test', 'test'], (5, 'test')}
+      set_of_tuple_and_list_incorrect: Set[Union[Tuple[L2, L1], List[L1]]] = {('b', 'r'), ['test', 'test'], (5, 'test')}
+      #                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'set[tuple[Literal['a', 'b', 5], Literal['test']] | list[Literal['test']]]', got 'set[tuple[Literal['b'], Literal['r']] | list[Literal['test']] | tuple[Literal[5], Literal['test']]]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-41578"])
+    fun `dict literal against typing literal`() = test("""
+      from typing import Tuple, Literal, Dict, List
+
+      L1 = Literal['k1', 'k2']
+      L2 = Literal['a', 'b', 5]
+
+      d1: Dict[L1, L2] = {'k1': 'b', 'k2': 5}
+      d2: Dict[L1, L2] = {'k1': 'r'}
+      #                  ^^^^^^^^^^^ WARNING Expected type 'dict[Literal['k1', 'k2'], Literal['a', 'b', 5]]', got 'dict[Literal['k1'], Literal['r']]' instead
+      d3: Dict[L1, L2] = {'r': 'b'}
+      #                  ^^^^^^^^^^ WARNING Expected type 'dict[Literal['k1', 'k2'], Literal['a', 'b', 5]]', got 'dict[Literal['r'], Literal['b']]' instead
+      d4: Dict[L1, List[L2]] = {'k2': ['b', 5]}
+      d5: Dict[L1, List[L2]] = {'k2': ['r', 5]}
+      #                        ^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[Literal['k1', 'k2'], list[Literal['a', 'b', 5]]]', got 'dict[Literal['k2'], list[Literal['r', 5]]]' instead
+      d6: Dict[L1, Tuple[L2, L2]] = {'k2': ('a', 5)}
+      d7: Dict[L1, Tuple[L2, L2]] = {'k2': ('r', 5)}
+      #                             ^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[Literal['k1', 'k2'], tuple[Literal['a', 'b', 5], Literal['a', 'b', 5]]]', got 'dict[Literal['k2'], tuple[Literal['r'], Literal[5]]]' instead
+      d8: Dict[L1, Dict[L1, L2]] = {'k1': {'k2': 'a', 'k1': 5}}
+      d9: Dict[L1, Dict[L1, L2]] = {'k1': {'k2': 'r', 'k1': 9}}
+      #                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[Literal['k1', 'k2'], dict[Literal['k1', 'k2'], Literal['a', 'b', 5]]]', got 'dict[Literal['k1'], dict[Literal['k2', 'k1'], Literal['r', 9]]]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-48799"])
+    fun `dict literal in variable`() = test("""
+      from typing import TypedDict
+      class C(TypedDict):
+          foo: str
+      def f(x: C) -> None:
+          pass
+      y = {}
+      z = {'foo': 'bar'}
+      n = {"foo": "", "quux": 3}
+      f(y)
+      # └ WARNING Expected type 'C', got 'dict[Unknown, Unknown]' instead
+      f(n)
+      # └ WARNING Expected type 'C', got 'dict[str, str | int]' instead
+      f(z)
+      # └ WARNING Expected type 'C', got 'dict[str, str]' instead
+      f(x=y)
+      # ^^^ WARNING Expected type 'C', got 'dict[Unknown, Unknown]' instead
+      f(x=n)
+      # ^^^ WARNING Expected type 'C', got 'dict[str, str | int]' instead
+      f(x=z)
+      # ^^^ WARNING Expected type 'C', got 'dict[str, str]' instead
+      z2: C = y
+      #       └ WARNING Expected type 'C', got 'dict[Unknown, Unknown]' instead
+      z2: C = n
+      #       └ WARNING Expected type 'C', got 'dict[str, str | int]' instead
+      z2: C = z
+      #       └ WARNING Expected type 'C', got 'dict[str, str]' instead
+
       """.trimIndent())
   }
 }

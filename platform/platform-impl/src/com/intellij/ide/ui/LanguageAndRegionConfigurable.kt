@@ -139,7 +139,8 @@ object LanguageAndRegionUi {
     panel.row(IdeBundle.message("combobox.region")) {
       val helpUrl = HelpManagerImpl.getHelpUrl("region-settings")
 
-      val model = CollectionComboBoxModel(Region.entries.sortedBy { it.displayOrdinal }.toMutableList(), RegionSettings.getRegion())
+      var appliedRegion = RegionSettings.getRegion()
+      val model = CollectionComboBoxModel(Region.entries.sortedBy { it.displayOrdinal }.toMutableList(), appliedRegion)
       val regionBox = comboBox(model).accessibleName(IdeBundle.message("combobox.region")).widthGroup(comboGroup)
 
       if (propertyGraph != null && connection != null) {
@@ -165,7 +166,10 @@ object LanguageAndRegionUi {
                                                     IdeBundle.message("combobox.region.hint.link"), URL(helpUrl)))
       }
       else {
-        regionBox.bindItem({ RegionSettings.getRegion() }, { RegionSettings.setRegion(it ?: Region.NOT_SET) })
+        regionBox.bindItem({ appliedRegion }, {
+          appliedRegion = it ?: Region.NOT_SET
+          RegionSettings.setRegion(appliedRegion)
+        })
 
         regionBox.comment(IdeBundle.message("combobox.region.comment", helpUrl))
 

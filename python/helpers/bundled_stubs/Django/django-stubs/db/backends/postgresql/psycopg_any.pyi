@@ -32,10 +32,11 @@ RANGE_TYPES: tuple[Any, ...]
 Jsonb: Any
 ClientCursor: Any
 TextLoader: Any
-TimestamptzLoader: Any
 BaseTzLoader: Any
 RangeDumper: Any
 DjangoRangeDumper: Any
+
+orig_tz_loader_cls: Any
 
 def Inet(address: str) -> Any: ...
 def mogrify(sql: str, params: Any, connection: BaseDatabaseWrapper) -> str: ...

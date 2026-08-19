@@ -1,4 +1,4 @@
-version = "83.0.*"
+version = "84.0.*"
 upstream-repository = "https://github.com/pypa/setuptools"
 extra-description = """\
 Given that `pkg_resources` is typed since `setuptools >= 71.1`, \
@@ -11,6 +11,9 @@ ci-platforms = ["linux", "win32"]
 stubtest-dependencies = ["more_itertools", "tomli"]
 
 # Stubtest fails on trying to run mypy on the source files rather than our stubs
-[mypy-tests.distutils]
+[mypy-tests.distutils1]
 module-name = "setuptools._distutils.compilers.C.*"
+values = { ignore_errors = true }
+[mypy-tests.distutils2]
+module-name = "setuptools._distutils.compilers.platform.detect"
 values = { ignore_errors = true }

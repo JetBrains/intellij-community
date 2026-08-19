@@ -88,9 +88,12 @@ public final class JBCefHealthMonitor {
     });
   }
 
-  void performStartupTestAsync() {
+  void performStartupTestAsync(boolean isRemoteEnabled) {
     myStatus.set(Status.OK);
     myGPUCrashCounter = 0;
+
+    if (!isRemoteEnabled)
+      return;
 
     myInternalJcefTest = new InternalJcefTest();
     myInternalJcefTest.setOnFailed(errText -> {

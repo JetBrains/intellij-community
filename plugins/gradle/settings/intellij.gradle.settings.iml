@@ -7,7 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="org.jetbrains.plugins.gradle" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="library" name="Gradle" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gradle" />
     <orderEntry type="module" module-name="intellij.libraries.commons.cli" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" />

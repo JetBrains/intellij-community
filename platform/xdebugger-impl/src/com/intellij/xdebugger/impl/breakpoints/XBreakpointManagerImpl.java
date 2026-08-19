@@ -436,8 +436,8 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       breakpoint.setSuspendPolicy(additionalInfo.getSuspendPolicy());
     }
     if (additionalInfo.getLogExpressionIfEnabled() != null) {
-      breakpoint.setLogMessage(true);
-      breakpoint.setLogExpression(additionalInfo.getLogExpressionIfEnabled());
+      breakpoint.setLogExpressionEnabled(true);
+      breakpoint.setLogExpressionObject(additionalInfo.getLogExpressionIfEnabled());
     }
   }
 

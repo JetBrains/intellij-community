@@ -777,18 +777,6 @@ def has_non_stubsabot_commits(branch: str) -> bool:
     try:
         # commits on origin/branch that are not on branch or are
         # patch equivalent to a commit on branch
-        print(
-            "[debugprint]",
-            subprocess.check_output(
-                ["git", "log", "--right-only", "--pretty=%an %s", "--cherry-pick", f"{branch}...origin/{branch}"]
-            ),
-        )
-        print(
-            "[debugprint]",
-            subprocess.check_output(
-                ["git", "log", "--right-only", "--pretty=%an", "--cherry-pick", f"{branch}...origin/{branch}"]
-            ),
-        )
         output = subprocess.check_output(
             ["git", "log", "--right-only", "--pretty=%an", "--cherry-pick", f"{branch}...origin/{branch}"],
             stderr=subprocess.DEVNULL,

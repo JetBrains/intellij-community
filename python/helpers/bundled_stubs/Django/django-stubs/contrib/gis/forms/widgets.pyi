@@ -11,6 +11,7 @@ class BaseGeometryWidget(Widget):
     geom_type: str
     map_srid: int
     display_raw: bool
+    max_geom_collections: int
     supports_3d: bool
     template_name: str
     attrs: Any

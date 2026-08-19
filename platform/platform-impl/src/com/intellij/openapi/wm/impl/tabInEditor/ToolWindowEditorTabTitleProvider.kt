@@ -13,11 +13,11 @@ internal class ToolWindowEditorTabTitleProvider : EditorTabTitleProvider {
     file: VirtualFile,
   ): @NlsContexts.TabTitle String? {
     if (file !is ToolWindowEditorTabFile) return null
-    return file.tabPresentation?.title
+    return ToolWindowEditorTabManager.getInstance(project).getTabTitle(file)
   }
 
   override fun getEditorTabTooltipHtml(project: Project, virtualFile: VirtualFile): HtmlChunk? {
     if (virtualFile !is ToolWindowEditorTabFile) return null
-    return virtualFile.tabPresentation?.tooltip
+    return ToolWindowEditorTabManager.getInstance(project).getTabPresentation(virtualFile)?.tooltip
   }
 }

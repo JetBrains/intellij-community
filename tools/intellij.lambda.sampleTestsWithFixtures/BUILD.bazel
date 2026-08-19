@@ -45,7 +45,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "@lib//:kodein-di-jvm",
+        "//libraries/kodein-di-jvm",
+        "//libraries/kodein-di-jvm:kodein-di-jvm_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/test:libraries-kotlinTest",
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",

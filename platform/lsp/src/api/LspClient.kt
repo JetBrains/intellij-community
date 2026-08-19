@@ -111,6 +111,14 @@ interface LspClient {
    */
   fun getDocumentVersion(document: Document): Int
 
+  /**
+   * Advances and returns the version to declare for [document]'s next `didOpen`/`didChange`. This client
+   * owns the number outright, so callers that must declare a version before an edit lands -- an incremental
+   * change's line numbers have to be computed from the pre-edit document, for instance -- can call this
+   * safely instead of trying to predict [document]'s own modification-tracking state.
+   */
+  fun nextDocumentVersion(document: Document): Int
+
   companion object {
     const val DEFAULT_REQUEST_TIMEOUT_MS: Int = 10_000
   }

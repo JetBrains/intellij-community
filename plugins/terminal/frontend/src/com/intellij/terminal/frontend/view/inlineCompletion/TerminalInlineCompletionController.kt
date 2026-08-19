@@ -1,9 +1,12 @@
 package com.intellij.terminal.frontend.view.inlineCompletion
 
 import com.intellij.codeInsight.inline.completion.InlineCompletion
-import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
-import com.intellij.codeInsight.inline.completion.TypingEvent
+import com.intellij.codeInsight.inline.completion.InlineCompletionEvent.Backspace
+import com.intellij.codeInsight.inline.completion.InlineCompletionEvent.DocumentChange
+import com.intellij.codeInsight.inline.completion.TypingEvent.OneSymbol
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -11,6 +14,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.impl.syncEditorCaretWithModel
+import com.intellij.terminal.frontend.view.impl.toRelative
 import com.intellij.terminal.frontend.view.typeahead.TerminalBackspacePrediction
 import com.intellij.terminal.frontend.view.typeahead.TerminalLogicalPosition
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAheadSession
@@ -161,7 +165,13 @@ class TerminalInlineCompletionController(
     pendingEvents.forEach { it.timeoutJob?.cancel() }
     inputSession = null
     pendingEvents.clear()
-    InlineCompletion.getHandlerOrNull(editor)?.cancel(FinishType.KEY_PRESSED)
+
+    // Avoid scheduling an EDT action that acquires WIL when there is no session to cancel.
+    if (InlineCompletionSession.getOrNull(editor) == null) return
+
+    launchInlineCompletionAction {
+      InlineCompletion.getHandlerOrNull(editor)?.cancel(FinishType.KEY_PRESSED)
+    }
   }
 
   private fun getCurrentTypedCommandText(): String? {
@@ -221,16 +231,28 @@ class TerminalInlineCompletionController(
 
   private fun invokeTyping(char: Char, position: TerminalLogicalPosition) {
     LOG.trace { "Inline completion dispatched typing: char='$char', position=$position" }
-    syncEditorCaretWithModel(editor, model)
-    InlineCompletion.getHandlerOrNull(editor)?.invokeEvent(
-      InlineCompletionEvent.DocumentChange(TypingEvent.OneSymbol(char, (model.logicalPositionToOffset(position) - model.startOffset).toInt()), editor)
-    )
+    val offset = (model.logicalPositionToOffset(position) - model.startOffset).toInt()
+    launchInlineCompletionAction {
+      syncEditorCaretWithModel(editor, model)
+      InlineCompletion.getHandlerOrNull(editor)?.invokeEvent(
+        DocumentChange(OneSymbol(char, offset), editor)
+      )
+    }
   }
 
   private fun invokeBackspace() {
     LOG.trace("Inline completion dispatched backspace")
-    syncEditorCaretWithModel(editor, model)
-    InlineCompletion.getHandlerOrNull(editor)?.invokeEvent(InlineCompletionEvent.Backspace(editor))
+    launchInlineCompletionAction {
+      syncEditorCaretWithModel(editor, model)
+      InlineCompletion.getHandlerOrNull(editor)?.invokeEvent(Backspace(editor))
+    }
+  }
+
+  private fun launchInlineCompletionAction(action: () -> Unit) {
+    // Inline Completion may require the platform read lock, so execute actions later on EDT.
+    coroutineScope.launch(Dispatchers.EDT) {
+      action()
+    }
   }
 
   private fun addPendingEvent(event: PendingInputEvent) {

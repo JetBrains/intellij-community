@@ -6,6 +6,7 @@ import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.wsl.WslPath
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
@@ -78,6 +79,21 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
   fun setEnvData(envData: EnvironmentVariablesData) {
     state.envDataOptions.set(envData)
+  }
+
+  /**
+   * Returns [getEnvData] prepared for launching a process: values are expanded with [PathMacroManager],
+   * and for untrusted projects user-defined variables are dropped (IJPL-111912)
+   * while [EnvironmentVariablesData.isPassParentEnvs] is preserved.
+   */
+  @ApiStatus.Internal
+  fun getEffectiveEnvData(): EnvironmentVariablesData {
+    val envData = getEnvData()
+    if (envData.envs.isEmpty()) return envData
+    // user-defined envs are passed for trusted projects only (IJPL-111912)
+    if (!TrustedProjects.isProjectTrusted(project)) return envData.with(emptyMap())
+    val macroManager = PathMacroManager.getInstance(project)
+    return envData.with(envData.envs.mapValues { (_, value) -> macroManager.expandPath(value) })
   }
 
   class State {

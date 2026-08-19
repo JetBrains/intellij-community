@@ -18,7 +18,7 @@ internal class FreezeThreadAction : XDebuggerTreeSplitActionBase() {
       return
     }
     val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return
-    sessionProxy.coroutineScope.launch {
+    e.coroutineScope.launch {
       val executionStack = node.executionStackOrNull ?: return@launch
       XDebugManagerProxy.getInstance().withId(executionStack, sessionProxy) { xExecutionStackId ->
         JavaDebuggerSessionApi.getInstance().freezeThread(xExecutionStackId)

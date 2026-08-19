@@ -4,7 +4,6 @@ from re import Pattern
 from typing import Any, Literal, overload, type_check_only
 from uuid import UUID
 
-from _typeshed import Unused
 from django.contrib.admin.options import BaseModelAdmin, _DisplayT, _FieldGroups, _FieldsetSpec, _ListDisplayT, _ModelT
 from django.contrib.admin.sites import AdminSite
 from django.db.models.base import Model
@@ -51,6 +50,8 @@ class NestedObjects(Collector):
     edges: dict[Model, list[Model]]
     protected: set[Model]
     model_objs: defaultdict[str, set[Model]]
+    @override
+    def __init__(self, *args: object, force_collection: bool = ..., **kwargs: object) -> None: ...
     def add_edge(self, source: Model | None, target: Model) -> None: ...
     @override
     def collect(  # type: ignore[override]
@@ -73,8 +74,6 @@ class NestedObjects(Collector):
     def nested(self, format_callback: None = None) -> list[Any]: ...
     @overload
     def nested(self, format_callback: Callable[[Model], _T]) -> list[Any]: ...
-    @override
-    def can_fast_delete(self, *args: Unused, **kwargs: Unused) -> Literal[False]: ...
 
 @type_check_only
 class _ModelFormatDict(TypedDict):

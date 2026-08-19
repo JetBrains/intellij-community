@@ -9,6 +9,8 @@ import javax.swing.Icon
 internal class ToolWindowEditorTabFileIconProvider : FileIconProvider {
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
     val editorTabFile = file as? ToolWindowEditorTabFile ?: return null
-    return editorTabFile.icon
+    if (project == null) return null
+
+    return ToolWindowEditorTabManager.getInstance(project).getTabPresentation(editorTabFile)?.icon
   }
 }

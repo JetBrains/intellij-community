@@ -95,7 +95,7 @@ private fun ijentDashboardPanel(): JComponent {
 private fun detailPanel(ijentData: IjentData?): JComponent {
   return if (ijentData != null) {
     JBTabbedPane().also { tabbedPane ->
-      IjentDashboardTab.EP_NAME.extensionList.forEach { tab ->
+      IjentDashboardTab.EP_NAME.forEachExtensionSafe { tab ->
         val projects = ProjectManager.getInstance().openProjects.filter { it.getEelDescriptor() == ijentData.ijentApi.descriptor }
         val tabComponent = tab.createComponent(projects, ijentData.ijentApi, ijentData.ijentSession, tabbedPane)
         if (tabComponent != null) {
