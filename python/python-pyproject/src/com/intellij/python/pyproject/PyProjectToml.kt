@@ -87,7 +87,18 @@ data class PyProjectToml internal constructor(
    * An instance of [TomlTable] provided by the TOML parser.
    */
   val toml: TomlParseResult,
+
+  /**
+   * PEP 735 groups (`dependency-groups`) mapped to their dependencies.
+   * Groups without any dependency string are omitted, so this may hold fewer groups than [getDependencyGroupNames].
+   */
+  val depGroupsToDeps: Map<String, List<String>>,
 ) {
+  /**
+   * Values of [depGroupsToDeps]
+   */
+  val allDepsFromGroups: Set<String> = depGroupsToDeps.values.flatten().toSet()
+
   /**
    * Gets a specific tool from an object implementing [PyProjectToolFactory].
    *
@@ -113,6 +124,9 @@ data class PyProjectToml internal constructor(
    * Returns dependency group names: PEP 735 `[dependency-groups]` keys plus PEP 621
    * `[project.optional-dependencies]` keys. Always includes "main" as the first entry
    * (representing `[project.dependencies]`).
+   *
+   * Unlike [depGroupsToDeps], groups without dependencies are kept here: a user-visible group exists
+   * as soon as its key does.
    */
   @Internal
   fun getDependencyGroupNames(): List<String> {
@@ -216,11 +230,11 @@ data class PyProjectToml internal constructor(
 
       val projectDependencies = projectTable.safeGetArr<String>("dependencies").getOrIssue(issues) ?: listOf()
       val depGroups = toml
-        .safeGet<TomlTable>("dependency-groups")
+        .safeGet<TomlTable>(PY_PROJECT_TOML_DEPENDENCY_GROUPS)
         .getOrIssue(issues)
 
       val depsFromGroups = depGroups?.keySet()?.associate { depGroupName ->
-        // Can't filter by string because there might be (still unsuppored) { include-group = "" } tables
+        // Can't filter by string because there might be (still unsupported) { include-group = "" } tables
         depGroupName to (depGroups.safeGetArr<Any>(depGroupName).getOrIssue(issues)?.filterIsInstance<String>() ?: emptyList())
       }?.filter { it.value.isNotEmpty() } // No need to have empty groups
       val optionalDependencies =
@@ -259,7 +273,6 @@ data class PyProjectToml internal constructor(
           PyProjectDependencies(
             projectDependencies,
             optionalDependencies,
-            depGroupsToDeps = depsFromGroups ?: emptyMap()
           ),
           scripts,
           guiScripts,
@@ -267,6 +280,7 @@ data class PyProjectToml internal constructor(
         ),
         issues,
         toml,
+        depGroupsToDeps = depsFromGroups ?: emptyMap(),
       )
     }
 

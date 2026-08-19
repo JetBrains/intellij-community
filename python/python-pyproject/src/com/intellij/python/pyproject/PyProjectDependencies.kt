@@ -17,13 +17,4 @@ data class PyProjectDependencies internal constructor(
    * Dependencies provided in `project.optional-dependencies`.
    */
   val optional: Map<String, List<String>> = mapOf(),
-  /**
-   * Groups (`dependency-groups.`)
-   */
-  val depGroupsToDeps: Map<String, List<String>> = mapOf(),
-) {
-  /**
-   * Values of [depGroupsToDeps]
-   */
-  val allDepsFromGroups: Set<String> = depGroupsToDeps.values.flatten().toSet()
-}
+)

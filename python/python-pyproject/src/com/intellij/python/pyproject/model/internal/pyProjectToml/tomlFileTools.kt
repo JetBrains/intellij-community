@@ -203,7 +203,7 @@ private fun getToolSpecificDependenciesFromTomlTable(root: Path, tomlTable: Toml
 
 @RequiresBackgroundThread
 private fun getDependenciesFromPep735Groups(root: Path, tomlTable: PyProjectToml): Sequence<Directory> =
-  tomlTable.project.dependencies.allDepsFromGroups.asSequence().mapNotNull { parsePep621Dependency(root, it) }
+  tomlTable.allDepsFromGroups.asSequence().mapNotNull { parsePep621Dependency(root, it) }
 
 @RequiresBackgroundThread
 private fun getDependenciesFromProject(root: Path, projectToml: PyProjectToml): Sequence<Directory> {

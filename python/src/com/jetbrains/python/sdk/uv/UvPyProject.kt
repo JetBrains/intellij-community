@@ -28,7 +28,7 @@ internal data class UvPyProject(val project: UvPyProjectTable?, val issues: List
   ): List<PyRequirement> =
     setOf(
       *pyProject.project.dependencies.project.toTypedArray(),
-      *pyProject.project.dependencies.allDepsFromGroups.toTypedArray(),
+      *pyProject.allDepsFromGroups.toTypedArray(),
       *(project?.uvDevDependencies?.toTypedArray() ?: arrayOf()),
     ).mapNotNull { depString ->
       fromLine(depString, module.project)

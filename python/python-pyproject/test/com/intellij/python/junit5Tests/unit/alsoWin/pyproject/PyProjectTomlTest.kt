@@ -16,10 +16,10 @@ import org.apache.tuweni.toml.TomlArray
 import org.apache.tuweni.toml.TomlTable
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import kotlin.reflect.KClass
 
 internal class PyProjectTomlTest {
   @Test
@@ -113,18 +113,25 @@ internal class PyProjectTomlTest {
     val testTool = pyproject.getTool(TestPyProject)
 
     // THEN
-    assertEquals(testTool.tables["tool.test"], null)
-    assertEquals(testTool.tables["shared_category"], null)
+    assertNull(testTool.tables["tool.test"])
+    assertNull(testTool.tables["shared_category"])
   }
 
   @ParameterizedTest(name = "{0}")
   @MethodSource("parseTestCases")
-  fun parseTests(name: String, pyprojectToml: String, expectedProjectTable: PyProjectTable?, expectedIssues: List<PyProjectIssue>?) {
+  fun parseTests(
+    name: String,
+    pyprojectToml: String,
+    expectedProjectTable: PyProjectTable?,
+    expectedIssues: List<PyProjectIssue>?,
+    expectedDepGroups: Map<String, List<String>>,
+  ) {
     val result = PyProjectToml.parse(pyprojectToml)
 
     assertEquals(expectedProjectTable, result?.project)
     if (result != null) {
       assertEquals(expectedIssues, result.issues)
+      assertEquals(expectedDepGroups, result.depGroupsToDeps)
     }
   }
 
@@ -182,7 +189,7 @@ internal class PyProjectTomlTest {
         listOf()
       ),
 
-      *listOf<Pair<String, KClass<*>>>(
+      *listOf(
         "requires-python" to String::class,
         "authors" to TomlArray::class,
         "maintainers" to TomlArray::class,
@@ -383,11 +390,9 @@ internal class PyProjectTomlTest {
         PyProjectTable(
           name = "name",
           version = "123",
-          dependencies = PyProjectDependencies(
-            depGroupsToDeps = mapOf("dev" to listOf("a", "b"))
-          )
         ),
-        listOf()
+        listOf(),
+        expectedDepGroups = mapOf("dev" to listOf("a", "b")),
       ),
 
       ParseTestCase(
@@ -633,7 +638,6 @@ internal class PyProjectTomlTest {
               "django>2.1; os_name != 'nt'",
               "django>2.0; os_name == 'nt'",
             ),
-            depGroupsToDeps = mapOf("dev" to listOf("foo", "bar")),
             optional = mapOf(
               "gui" to listOf("PyQt5"),
               "cli" to listOf("rich", "click"),
@@ -654,6 +658,7 @@ internal class PyProjectTomlTest {
           ),
         ),
         listOf(),
+        expectedDepGroups = mapOf("dev" to listOf("foo", "bar")),
       ),
       ParseTestCase(
         "dependency_groups",
@@ -673,14 +678,31 @@ internal class PyProjectTomlTest {
         PyProjectTable(
           name = "name",
           version = "123",
-          dependencies = PyProjectDependencies(
-            depGroupsToDeps = mapOf("dev" to listOf("sub-project-a", "sub-project-b"), "abc" to listOf("spam")),
-          )
         ),
-        expectedIssues = emptyList()
+        expectedIssues = emptyList(),
+        expectedDepGroups = mapOf("dev" to listOf("sub-project-a", "sub-project-b"), "abc" to listOf("spam")),
+      ),
+      ParseTestCase(
+        "groups without string dependencies are skipped",
+        """
+          [project]
+          name = "name"
+          version = "123"
+          [dependency-groups]
+          dev = ["a"]
+          empty = []
+          # `include-group` is not supported yet, so the group holds no dependencies and is dropped
+          includes = [{include-group = "dev"}]
+        """.trimIndent(),
+        PyProjectTable(
+          name = "name",
+          version = "123",
+        ),
+        expectedIssues = emptyList(),
+        expectedDepGroups = mapOf("dev" to listOf("a")),
       ),
     ).map {
-      Arguments.of(it.name, it.pyprojectToml, it.expectedProjectTable, it.expectedIssues)
+      Arguments.of(it.name, it.pyprojectToml, it.expectedProjectTable, it.expectedIssues, it.expectedDepGroups)
     }
 
     data class ParseTestCase(
@@ -688,6 +710,7 @@ internal class PyProjectTomlTest {
       val pyprojectToml: String,
       val expectedProjectTable: PyProjectTable?,
       val expectedIssues: List<PyProjectIssue>,
+      val expectedDepGroups: Map<String, List<String>> = emptyMap(),
     )
 
     data class TestPyProject(val tables: Map<String, TomlTable?>) {
