@@ -7,7 +7,11 @@ import com.intellij.driver.model.ui.UiRole
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import org.junit.jupiter.api.Test
+import java.awt.Point
+import javax.swing.JButton
+import javax.swing.JPanel
 import javax.swing.JPasswordField
+import javax.swing.JRootPane
 import javax.swing.JTextArea
 import javax.swing.JTextField
 import javax.swing.SwingUtilities
@@ -33,6 +37,20 @@ class UiLocatorMatcherTest {
     )
 
     assertThat(UiLocatorMatcher.find(UiLocator.Role(UiRole.BUTTON, "OK"), root)).containsExactly(2)
+  }
+
+  @Test
+  fun `combined locator returns intersection in first selector order`() {
+    val root = root(
+      node(1, role = UiRole.BUTTON, name = "Project"),
+      node(2, role = UiRole.LABEL, name = "Project"),
+      node(3, role = UiRole.BUTTON, name = "Project"),
+    )
+    val locator = UiLocator.All(listOf(UiLocator.Xpath("ordered"), UiLocator.Role(UiRole.BUTTON)))
+
+    val matches = UiLocatorMatcher.find(locator, root) { linkedSetOf(3, 2, 1) }
+
+    assertThat(matches).containsExactly(3, 1)
   }
 
   @Test
@@ -104,6 +122,46 @@ class UiLocatorMatcherTest {
     val text = readAccessibleTextOrNull(field, UiRole.PASSWORD_TEXT)
 
     assertThat(text).isNull()
+  }
+
+  @Test
+  fun `bare glass pane does not cover underlying component`() {
+    SwingUtilities.invokeAndWait {
+      val rootPane = rootPaneWithButton()
+      rootPane.glassPane.isVisible = true
+      rootPane.doLayout()
+
+      val hit = deepestComponentAtIgnoringBareGlassPane(rootPane, Point(20, 20))
+
+      assertThat(hit).isInstanceOf(JButton::class.java)
+    }
+  }
+
+  @Test
+  fun `glass pane child remains the hit component`() {
+    SwingUtilities.invokeAndWait {
+      val rootPane = rootPaneWithButton()
+      val blocker = JPanel().apply { setBounds(10, 10, 80, 30) }
+      val overlay = JPanel(null).apply {
+        add(blocker)
+      }
+      rootPane.glassPane = overlay
+      overlay.isVisible = true
+      rootPane.doLayout()
+
+      val hit = deepestComponentAtIgnoringBareGlassPane(rootPane, Point(20, 20))
+
+      assertThat(hit).isSameAs(blocker)
+    }
+  }
+
+  private fun rootPaneWithButton(): JRootPane {
+    return JRootPane().apply {
+      setSize(200, 100)
+      contentPane.layout = null
+      contentPane.add(JButton("Run").apply { setBounds(10, 10, 80, 30) })
+      doLayout()
+    }
   }
 
   private fun root(vararg children: UiNode): UiNode = node(0, children = children.toList())

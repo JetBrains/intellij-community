@@ -12,16 +12,23 @@ import com.intellij.driver.model.ui.UiRole
 import com.intellij.driver.model.ui.UiSnapshot
 import com.intellij.driver.model.ui.UiState
 import com.intellij.driver.model.ui.UiValue
+import com.intellij.driver.model.ui.UiWindow
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelCreator
 import org.assertj.swing.edt.GuiActionRunner
 import org.assertj.swing.edt.GuiQuery
+import org.jetbrains.annotations.ApiStatus
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.NodeList
 import java.awt.Component
 import java.awt.Container
+import java.awt.Desktop
+import java.awt.Dialog
+import java.awt.Frame
+import java.awt.KeyboardFocusManager
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.Window
@@ -29,6 +36,8 @@ import java.util.IdentityHashMap
 import java.util.WeakHashMap
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JComponent
+import javax.swing.JRootPane
+import javax.swing.RootPaneContainer
 import javax.swing.SwingUtilities
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
@@ -178,7 +187,13 @@ class UiAutomationService {
           children = children,
         )
         nodesById[root.id] = root
-        return Capture(UiSnapshot(revision, root), document, componentsById, nodesById, elementIds)
+        return Capture(
+          UiSnapshot(revision, root, captureWindows()),
+          document,
+          componentsById,
+          nodesById,
+          elementIds,
+        )
       }
     })
   }
@@ -190,9 +205,10 @@ class UiAutomationService {
     elementIds: IdentityHashMap<Element, Long>,
   ): UiNode? {
     val component = element.getUserData("component") as? Component ?: return null
-    val id = synchronized(nodeIds) { nodeIds.getOrPut(component) { nextNodeId.getAndIncrement() } }
+    val id = nodeId(component)
     componentsById[id] = component
     elementIds[element] = id
+    val focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
     val attributes = element.selectedAttributes()
     val states = buildSet {
       attributes["accessiblestates"]?.split(',')?.mapNotNullTo(this, ::parseState)
@@ -203,11 +219,18 @@ class UiAutomationService {
       if (component.isFocusOwner) add(UiState.FOCUSED)
       if (attributes["selected"].toBoolean()) add(UiState.SELECTED)
       if (attributes["disabled"].toBoolean()) remove(UiState.ENABLED)
+      if (component is Window) {
+        if (component.isActive || component === focusManager.activeWindow) add(UiState.ACTIVE)
+        if (component.isFocused || component === focusManager.focusedWindow) add(UiState.FOCUSED)
+        if (component is Dialog && component.isModal) add(UiState.MODAL)
+      }
     }
     val children = element.childElements().mapNotNull { createNode(it, componentsById, nodesById, elementIds) }.toList()
     val value = createValue(attributes)
     val bounds = component.boundsOnScreen()
     val role = parseRole(attributes["accessiblerole"] ?: attributes["role"])
+      .takeUnless { it == UiRole.UNKNOWN }
+      ?: component.windowRole()
     val node = UiNode(
       id = id,
       className = element.getAttribute("class").ifBlank { element.tagName },
@@ -226,9 +249,52 @@ class UiAutomationService {
       attributes = attributes,
       children = children,
       text = readAccessibleTextOrNull(component, role),
+      windowId = component.containingWindow()?.let(::nodeId),
     )
     nodesById[id] = node
     return node
+  }
+
+  private fun captureWindows(): List<UiWindow> {
+    val focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+    return Window.getWindows()
+      .filter { it.isShowing }
+      .map { window ->
+        UiWindow(
+          id = nodeId(window),
+          className = window.componentClassName(),
+          javaClassName = window.javaClass.name,
+          role = window.windowRole(),
+          title = window.windowTitle(),
+          ownerId = window.owner?.let(::nodeId),
+          bounds = window.boundsOnScreen(),
+          active = window === focusManager.activeWindow || window.isActive,
+          focused = window === focusManager.focusedWindow || window.isFocused,
+          modal = window is Dialog && window.isModal,
+        )
+      }
+  }
+
+  @ApiStatus.Internal
+  fun getWindowsForHitTest(): List<Window> {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+    return Window.getWindows()
+      .filter { it.isShowing }
+      .withIndex()
+      .sortedWith(hitTestWindowOrder(focusManager))
+      .map { it.value }
+  }
+
+  private fun hitTestWindowOrder(focusManager: KeyboardFocusManager): Comparator<IndexedValue<Window>> {
+    return compareByDescending<IndexedValue<Window>> { it.value === focusManager.focusedWindow }
+      .thenByDescending { it.value === focusManager.activeWindow || it.value.isActive }
+      .thenByDescending { it.value.ownerDepth() }
+      .thenByDescending { it.index }
+  }
+
+  private fun nodeId(component: Component): Long {
+    return synchronized(nodeIds) { nodeIds.getOrPut(component) { nextNodeId.getAndIncrement() } }
   }
 
   private fun prepareForMouseAction(component: Component) {
@@ -249,7 +315,7 @@ class UiAutomationService {
         val window = SwingUtilities.getWindowAncestor(component) ?: error("component has no window")
         val point = Point(secondBounds.x + secondBounds.width / 2, secondBounds.y + secondBounds.height / 2)
         SwingUtilities.convertPointFromScreen(point, window)
-        val hit = SwingUtilities.getDeepestComponentAt(window, point.x, point.y)
+        val hit = deepestComponentAtIgnoringBareGlassPane(window, point)
         check(hit === component || hit != null && SwingUtilities.isDescendingFrom(hit, component)) {
           "component center is covered by ${hit?.javaClass?.name ?: "nothing"}"
         }
@@ -267,8 +333,7 @@ class UiAutomationService {
         if (component is JComponent) component.scrollRectToVisible(Rectangle(0, 0, component.width, component.height))
       }
       robot.waitForIdle()
-      robot.focusAndWaitForFocusGain(component)
-      checkInputFocus(component)
+      activateAndFocus(component)
     }
   }
 
@@ -281,15 +346,24 @@ class UiAutomationService {
            ?: window.firstFocusableDescendant()
            ?: error("window has no focusable component")
     }
-    robot.focusAndWaitForFocusGain(focusTarget)
-    checkInputFocus(focusTarget)
+    activateAndFocus(focusTarget)
+  }
+
+  private fun activateAndFocus(component: Component) {
+    onEdt {
+      val window = SwingUtilities.getWindowAncestor(component) ?: error("component has no window")
+      requestForeground(window)
+    }
+    robot.waitForIdle()
+    robot.focusAndWaitForFocusGain(component)
+    checkInputFocus(component)
   }
 
   private fun checkInputFocus(expected: Component) {
     retryable {
       check(onEdt { expected.isFocusOwner }) { "focus was not acquired by ${expected.javaClass.name}" }
       check(robot.hasInputFocus()) { "IDE did not receive the focus probe" }
-      check(onEdt { SwingUtilities.getWindowAncestor(expected)?.isActive == true }) { "IDE window is not active" }
+      check(onEdt { isWindowOrOwnerActive(SwingUtilities.getWindowAncestor(expected)) }) { "IDE window is not active" }
     }
   }
 
@@ -418,6 +492,12 @@ internal object UiLocatorMatcher {
         .filter { it.className == locator.value || it.javaClassName == locator.value }
         .map { it.id }
         .toList()
+      is UiLocator.All -> {
+        require(locator.locators.isNotEmpty()) { "Combined locator must contain at least one selector" }
+        val matches = locator.locators.map { find(it, root, xpathIds) }
+        val remaining = matches.drop(1).map(List<Long>::toSet)
+        matches.first().filter { id -> remaining.all { id in it } }
+      }
       is UiLocator.Within -> {
         val ancestors = find(locator.ancestor, root, xpathIds).toSet()
         val descendantIds = root.descendants()
@@ -484,9 +564,60 @@ private fun describe(locator: UiLocator): String = when (locator) {
   is UiLocator.Role -> "role ${locator.role}${locator.name?.let { " named '$it'" }.orEmpty()}"
   is UiLocator.Text -> "text '${locator.value}'"
   is UiLocator.ClassName -> "class '${locator.value}'"
+  is UiLocator.All -> locator.locators.joinToString(prefix = "all of (", postfix = ")", transform = ::describe)
   is UiLocator.Within -> "${describe(locator.descendant)} within ${describe(locator.ancestor)}"
   is UiLocator.Nth -> "${describe(locator.locator)} at index ${locator.index}"
   is UiLocator.Xpath -> "XPath '${locator.value}'"
+}
+
+private fun Component.containingWindow(): Window? = this as? Window ?: SwingUtilities.getWindowAncestor(this)
+
+private fun Component.componentClassName(): String {
+  return generateSequence<Class<*>>(javaClass) { it.superclass }
+           .map { it.simpleName }
+           .firstOrNull(String::isNotBlank)
+         ?: javaClass.name
+}
+
+private fun Component.windowRole(): UiRole = when (this) {
+  is Dialog -> UiRole.DIALOG
+  is Frame -> UiRole.FRAME
+  is Window -> UiRole.WINDOW
+  else -> UiRole.UNKNOWN
+}
+
+private fun Window.windowTitle(): String? {
+  return when (this) {
+    is Dialog -> title
+    is Frame -> title
+    else -> accessibleContext?.accessibleName
+  }?.takeIf(String::isNotBlank)
+}
+
+private fun Window.ownerDepth(): Int = generateSequence(owner, Window::getOwner).count()
+
+private fun deepestComponentAtIgnoringBareGlassPane(window: Window, pointInWindow: Point): Component? {
+  val rootPane = (window as? RootPaneContainer)?.rootPane
+                 ?: return SwingUtilities.getDeepestComponentAt(window, pointInWindow.x, pointInWindow.y)
+  val pointInRootPane = SwingUtilities.convertPoint(window, pointInWindow, rootPane)
+  return deepestComponentAtIgnoringBareGlassPane(rootPane, pointInRootPane)
+}
+
+internal fun deepestComponentAtIgnoringBareGlassPane(rootPane: JRootPane, pointInRootPane: Point): Component? {
+  val hit = SwingUtilities.getDeepestComponentAt(rootPane, pointInRootPane.x, pointInRootPane.y)
+  if (hit !== rootPane.glassPane) return hit
+  val pointInLayeredPane = SwingUtilities.convertPoint(rootPane, pointInRootPane, rootPane.layeredPane)
+  return SwingUtilities.getDeepestComponentAt(rootPane.layeredPane, pointInLayeredPane.x, pointInLayeredPane.y)
+}
+
+private fun isWindowOrOwnerActive(window: Window?): Boolean {
+  val activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
+  return generateSequence(window, Window::getOwner).any { it === activeWindow || it.isActive }
+}
+
+private fun requestForeground(window: Window) {
+  runCatching { Desktop.getDesktop().requestForeground(true) }
+  window.toFront()
 }
 
 private fun describe(node: UiNode): String {

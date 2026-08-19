@@ -65,6 +65,11 @@ class Locator internal constructor(
 
   fun locator(xpath: String): Locator = descendant(UiLocator.Xpath(xpath))
 
+  fun and(other: Locator): Locator {
+    require(driver === other.driver) { "Both locators must belong to the same Driver" }
+    return Locator(driver, UiLocator.All(listOf(selector, other.selector)))
+  }
+
   fun first(): Locator = nth(0)
 
   fun nth(index: Int): Locator = Locator(driver, UiLocator.Nth(selector, index))

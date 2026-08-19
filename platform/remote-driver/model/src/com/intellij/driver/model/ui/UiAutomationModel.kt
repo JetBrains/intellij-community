@@ -84,6 +84,19 @@ data class UiValue(
   val maximum: Double?,
 ) : PassByValue
 
+data class UiWindow(
+  val id: Long,
+  val className: String,
+  val javaClassName: String,
+  val role: UiRole,
+  val title: String?,
+  val ownerId: Long?,
+  val bounds: UiBounds?,
+  val active: Boolean,
+  val focused: Boolean,
+  val modal: Boolean,
+) : PassByValue
+
 data class UiNode(
   val id: Long,
   val className: String,
@@ -99,11 +112,13 @@ data class UiNode(
   val attributes: Map<String, String>,
   val children: List<UiNode>,
   val text: String? = null,
+  val windowId: Long? = null,
 ) : PassByValue
 
 data class UiSnapshot(
   val revision: Long,
   val root: UiNode,
+  val windows: List<UiWindow> = emptyList(),
 ) : PassByValue
 
 sealed interface UiLocator : PassByValue {
@@ -111,6 +126,7 @@ sealed interface UiLocator : PassByValue {
   data class Role(val role: UiRole, val name: String? = null, val exactName: Boolean = true) : UiLocator
   data class Text(val value: String, val exact: Boolean = false) : UiLocator
   data class ClassName(val value: String) : UiLocator
+  data class All(val locators: List<UiLocator>) : UiLocator
   data class Within(val ancestor: UiLocator, val descendant: UiLocator) : UiLocator
   data class Nth(val locator: UiLocator, val index: Int) : UiLocator
   data class Xpath(val value: String) : UiLocator
