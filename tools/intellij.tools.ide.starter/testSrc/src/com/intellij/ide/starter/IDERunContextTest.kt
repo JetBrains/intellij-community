@@ -92,6 +92,48 @@ class IDERunContextTest {
     (firstTestReportingData.logsDir == secondTestReportingData.logsDir) shouldBe false
   }
 
+  @Test
+  fun `a launch no test method claims reports no link of its own`() {
+    val testContext = testContext("shared-ide-test")
+
+    val whileTheIdeStarts = testMetadataReportedWhile("shared-ide-test") { IDERunContext(testContext) }
+
+    whileTheIdeStarts shouldBe emptyList()
+  }
+
+  @Test
+  fun `every test method that claims a launch reports its links, the startup launch among them`() {
+    val testContext = testContext("shared-ide-test")
+    val runContext = IDERunContext(testContext)
+
+    val forTheFirstTest = testMetadataReportedWhile("shared-ide-test") {
+      CurrentTestMethod.set(testMethod("first test"))
+      runContext.registerNewIdeReportingData {}
+    }
+    val forTheSecondTest = testMetadataReportedWhile("shared-ide-test") {
+      CurrentTestMethod.set(testMethod("second test"))
+      runContext.registerNewIdeReportingData {}
+    }
+
+    forTheFirstTest shouldBe listOf(
+      ReportedMetadata("Link to Logs and artifacts", linkToArtifacts("shared-ide-test/ide-run-context-test/1-first-test")),
+      ReportedMetadata("Link to Logs and artifacts (IDE Startup)", linkToArtifacts("shared-ide-test")),
+    )
+    forTheSecondTest shouldBe listOf(
+      ReportedMetadata("Link to Logs and artifacts", linkToArtifacts("shared-ide-test/ide-run-context-test/2-second-test")),
+      ReportedMetadata("Link to Logs and artifacts (IDE Startup)", linkToArtifacts("shared-ide-test")),
+    )
+  }
+
+  @Test
+  fun `a launch the test that started it claims reports one link, being the startup launch itself`() {
+    CurrentTestMethod.set(testMethod("the only test"))
+
+    val whileTheIdeStarts = testMetadataReportedWhile("in-test-launch-test") { IDERunContext(testContext("in-test-launch-test")) }
+
+    whileTheIdeStarts shouldBe listOf(ReportedMetadata("Link to Logs and artifacts", linkToArtifacts("in-test-launch-test")))
+  }
+
   private fun testMethod(displayName: String, id: String = displayName): TestMethod = TestMethod(
     name = displayName,
     displayName = displayName,
@@ -99,13 +141,17 @@ class IDERunContextTest {
     id = id,
   )
 
-  private fun testContext(): IDETestContext {
+  private fun testContext(testName: String? = null): IDETestContext {
     val context = mock(IDETestContext::class.java)
     val testCase = mock(TestCase::class.java)
     val ideInfo = mock(IdeInfo::class.java)
     doReturn(testCase).`when`(context).testCase
     doReturn(ideInfo).`when`(testCase).ideInfo
     doReturn(false).`when`(ideInfo).isFrontend
+    testName?.let {
+      doReturn(it).`when`(context).testName
+      doReturn(IDEDataPaths(tempDir, null)).`when`(context).paths
+    }
     return context
   }
 }

@@ -53,7 +53,7 @@ internal class IDEReportingDataRegistry(
         error("Test method '$testMethodId' was activated again after another test method")
       }
 
-      val testMethod = currentTestMethod?.run {
+      val reportingIdentity = currentTestMethod?.run {
         TestMethodReportingIdentity(
           className = clazzSimpleName,
           displayName = displayName,
@@ -63,15 +63,19 @@ internal class IDEReportingDataRegistry(
       val reportingData = IDEReportingData(
         reportingRoot = testContext.paths.reportingRoot,
         testName = testContext.testName,
-        testMethod = testMethod,
+        testMethod = reportingIdentity,
         launchName = launchName,
         isFrontend = testContext.testCase.ideInfo.isFrontend,
         artifactLayout = if (registered.isNotEmpty()) IDEReportingData.ArtifactLayout.REUSED_IDE else IDEReportingData.ArtifactLayout.LEGACY
       )
-      reportArtifactsLink("Link to Logs and artifacts", reportingData)
-      registered.firstOrNull()?.reportingData
-        ?.takeUnless { it.artifactPath == reportingData.artifactPath }
-        ?.let { reportArtifactsLink("Link to Logs and artifacts (IDE Startup)", it) }
+      // only for a launch some test method claims, see CurrentTestMethod.get: an IDE started outside a test - from
+      // `@BeforeAll` - would report its links onto the test that ran before it
+      if (currentTestMethod != null) {
+        reportArtifactsLink("Link to Logs and artifacts", reportingData)
+        registered.firstOrNull()?.reportingData
+          ?.takeUnless { it.artifactPath == reportingData.artifactPath }
+          ?.let { reportArtifactsLink("Link to Logs and artifacts (IDE Startup)", it) }
+      }
       actionToResetLogDir.invoke(reportingData.logsDir)
       registered.add(Registration(testMethodId, planGeneration, reportingData))
       return reportingData
