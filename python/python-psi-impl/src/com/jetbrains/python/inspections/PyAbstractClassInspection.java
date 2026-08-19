@@ -73,12 +73,12 @@ public final class PyAbstractClassInspection extends PyInspection {
             if (hasAbstractMethod || !getAllSuperAbstractMethods(pyClass).isEmpty()) {
               registerProblem(node, PyPsiBundle.problemMessage("INSP.abstract.class.cannot.instantiate.abstract.class",
                                                                CodifiedParam.ofReference(pyClass)),
-                              effectiveHighlightType(ProblemHighlightType.WARNING));
+                              ProblemHighlightType.WARNING);
             }
             else if (isAbstract(pyClass)) {
               registerProblem(node, PyPsiBundle.problemMessage("INSP.abstract.class.cannot.instantiate.abstract.class",
                                                                CodifiedParam.ofReference(pyClass)),
-                              effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
             }
           }
         }

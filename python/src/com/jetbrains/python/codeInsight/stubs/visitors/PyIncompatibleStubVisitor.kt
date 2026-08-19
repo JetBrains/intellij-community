@@ -15,9 +15,6 @@ internal class PyIncompatibleStubVisitor(
   holder: ProblemsHolder,
   val session: LocalInspectionToolSession,
 ) : PyStubVisitor(holder, session) {
-  init {
-    downgradeHighlightForTypeEngine = getContext(session).usesExternalTypeEngine
-  }
 
   override fun checkImports(file: PyFile, importedPackages: Set<String>, packageManager: PythonPackageManager) {
     val checker = PyStubsIncompatibilityChecker.getInstance(project = packageManager.project)
