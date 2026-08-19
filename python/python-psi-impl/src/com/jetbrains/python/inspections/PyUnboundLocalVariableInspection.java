@@ -54,6 +54,9 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
                                                  boolean isOnTheFly,
                                                  final @NotNull LocalInspectionToolSession session) {
     TypeEvalContext context = PyInspectionVisitor.getContext(session);
+    if (context.getUsesExternalTypeEngine()) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new Visitor(holder, context);
   }
 

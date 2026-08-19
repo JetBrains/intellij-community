@@ -145,6 +145,9 @@ open class PyTypeCheckerInspection : PyInspection() {
       session.putUserData(TIME_KEY, System.nanoTime())
     }
     val context = PyInspectionVisitor.getContext(session)
+    if (context.usesExternalTypeEngine) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
     val visitor = Visitor(holder, context)
     return PyReachableElementVisitor(visitor, context)
   }

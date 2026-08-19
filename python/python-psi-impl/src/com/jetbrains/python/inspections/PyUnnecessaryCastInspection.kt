@@ -23,10 +23,10 @@ import com.jetbrains.python.psi.types.PyTypeUtil.isSameType
 class PyUnnecessaryCastInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val context = PyInspectionVisitor.getContext(session)
+    if (context.usesExternalTypeEngine) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
     return object : PyInspectionVisitor(holder, context) {
-      init {
-        downgradeHighlightForTypeEngine = context.usesExternalTypeEngine
-      }
       override fun visitPyCallExpression(callExpression: PyCallExpression) {
         val callee = callExpression.callee ?: return
         val callables = PyTypeUtil.getCallableItems(context.getType(callee))

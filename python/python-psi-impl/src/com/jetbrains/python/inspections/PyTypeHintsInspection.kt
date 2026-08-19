@@ -124,7 +124,11 @@ class PyTypeHintsInspection : PyInspection() {
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
   ): PsiElementVisitor {
-    return Visitor(holder, PyInspectionVisitor.getContext(session))
+    val context = PyInspectionVisitor.getContext(session)
+    if (context.usesExternalTypeEngine) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+    return Visitor(holder, context)
   }
 
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {

@@ -32,7 +32,11 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyPatternInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-    return PyPatternInspectionVisitor(holder, PyInspectionVisitor.getContext(session))
+    val context = PyInspectionVisitor.getContext(session)
+    if (context.usesExternalTypeEngine) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+    return PyPatternInspectionVisitor(holder, context)
   }
 }
 
