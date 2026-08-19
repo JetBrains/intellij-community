@@ -184,9 +184,16 @@ object UniversalFileChooser {
     fun getSelectedFiles(): List<Path> = mainPanel.getSelectedFiles()
 
     override fun doOKAction() {
-      getSelectedFiles().firstOrNull()?.let { lastSelected ->
-        FileChooserUtil.setLastOpenedFile(project, lastSelected)
+      // Before confirming, resolve the path typed in the text field when it diverges from the tree selection
+      mainPanel.confirmOk {
+        getSelectedFiles().firstOrNull()?.let { lastSelected ->
+          FileChooserUtil.setLastOpenedFile(project, lastSelected)
+        }
+        performOkAction()
       }
+    }
+
+    private fun performOkAction() {
       super.doOKAction()
     }
   }
@@ -536,6 +543,20 @@ object UniversalFileChooser {
     override fun getSelectedFiles(): List<Path> {
       val fileView = getActiveFileView()
       return fileView?.getSelectedFiles() ?: emptyList()
+    }
+
+    /**
+     * Confirms the current selection on OK. Delegates to the active [FileView], which resolves the
+     * path typed in the text field when it diverges from the tree selection and only then runs
+     * [proceed] (see [FileView.confirmSelection]).
+     */
+    fun confirmOk(proceed: () -> Unit) {
+      val activeView = getActiveFileView()
+      if (activeView == null) {
+        proceed()
+        return
+      }
+      activeView.confirmSelection(proceed)
     }
 
     fun navigateToFile(file: Path, preselectPathText: Boolean = false) {
@@ -960,6 +981,9 @@ object UniversalFileChooser {
       }
 
       fun isOkEnabled(): Boolean {
+        // The path typed in the text field failed validation on the last OK attempt: keep OK
+        // disabled until the user edits the field (see IJPL-253095 and setPathTextFieldError).
+        if (pathTextFieldInvalid) return false
         val selected = getSelectedFiles()
         return selected.isNotEmpty() && selected.all { file ->
           if (file.parent == null) return@all false
@@ -1078,6 +1102,39 @@ object UniversalFileChooser {
         pathTextField.selectAll()
       }
 
+      /**
+       * Confirms the current selection when the user clicks OK.
+       */
+      fun confirmSelection(proceed: () -> Unit) {
+        val text = pathTextField.text.trim()
+        val selectedPresentable = fileTree.getSelectedFile()?.let { contributor.getPresentablePath(it) }
+        if (text.isEmpty() || text == selectedPresentable) {
+          proceed()
+          return
+        }
+        scope.launch {
+          withContext(Dispatchers.IO) {
+            val path = contributor.parsePresentablePath(text)
+            val exists = path != null && runCatching { Files.exists(path) }.getOrDefault(false)
+            runOnEdt {
+              if (path == null || !exists) {
+                setPathTextFieldError(true)
+                if (pathTextField.isShowing) {
+                  pathTextField.requestFocusInWindow()
+                }
+              }
+              else {
+                setPathTextFieldError(false)
+                fileTree.select(path) {
+                  fileTree.expand(path, null)
+                  proceed()
+                }
+              }
+            }
+          }
+        }
+      }
+
       private fun navigateToTextFieldPath() {
         val text = pathTextField.text.trim()
         if (text.isEmpty()) {
@@ -1118,6 +1175,9 @@ object UniversalFileChooser {
         if (pathTextFieldInvalid == isError) return
         pathTextFieldInvalid = isError
         ComponentValidator.getInstance(pathTextField).ifPresent { it.revalidate() }
+        // Reflect the new validity in the OK button: disable it while the path is invalid, and
+        // re-enable it (subject to the tree selection) once the user edits the field.
+        okEnabledUpdater()
       }
 
       private fun hasHiddenSegment(path: Path): Boolean {
