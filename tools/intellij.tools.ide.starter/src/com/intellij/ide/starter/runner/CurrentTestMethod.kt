@@ -42,9 +42,24 @@ object CurrentTestMethod {
    * Called once the test runner has opened the test on the CI side, so that listeners may report metadata that attaches
    * to the current test. Setting the method is deliberately not enough: the provider learns about a test before the
    * runner has reported it to TeamCity.
+   *
+   * Every listener is announced to even when an earlier one throws, and the failures are reported together afterwards.
+   * A listener detaches itself when it is announced to and finds its own subject gone — [removeOnChangeListener] from
+   * inside the callback is the only removal there is — so a listener that throws in front of the others would keep
+   * them from ever running *and* keep itself registered, turning one dead listener into a permanently failing
+   * announcement that outlives whatever it was watching.
    */
   fun publishToListeners() {
-    onChangeListeners.forEach { it(testMethod) }
+    var failure: Throwable? = null
+    for (listener in onChangeListeners) {
+      try {
+        listener(testMethod)
+      }
+      catch (e: Throwable) {
+        if (failure == null) failure = e else failure.addSuppressed(e)
+      }
+    }
+    if (failure != null) throw failure
   }
 
   fun get(): TestMethod? {

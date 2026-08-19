@@ -5,6 +5,7 @@ import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.runner.CurrentTestMethod
+import com.intellij.ide.starter.runner.CurrentTestPlan
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.TestMethod
 import io.kotest.matchers.shouldBe
@@ -52,6 +53,27 @@ class IDERunContextTest {
     runContext.ideReportingDataFromCurrentToOldest() shouldBe listOf(secondTestReportingData, firstTestReportingData)
     (runContext.lastIdeReportingData === secondTestReportingData) shouldBe true
     switchedLogDirs shouldBe listOf(secondTestReportingData.logsDir)
+  }
+
+  @Test
+  fun `a new test plan runs the same method again instead of failing`() {
+    CurrentTestMethod.set(testMethod("first test"))
+    val testContext = testContext()
+    doReturn("reused-ide-test").`when`(testContext).testName
+    doReturn(IDEDataPaths(tempDir, null)).`when`(testContext).paths
+    val runContext = IDERunContext(testContext)
+    val firstPlanReportingData = runContext.registerNewIdeReportingData {}
+    CurrentTestMethod.set(testMethod("second test"))
+    runContext.registerNewIdeReportingData {}
+
+    // What the warm-IDE harnesses do: the plan ends, the IDE stays, and the next plan replays the same ids.
+    CurrentTestPlan.beginNew()
+    CurrentTestMethod.set(testMethod("first test"))
+    val secondPlanReportingData = runContext.registerNewIdeReportingData {}
+
+    (secondPlanReportingData === firstPlanReportingData) shouldBe false
+    (secondPlanReportingData.logsDir == firstPlanReportingData.logsDir) shouldBe false
+    secondPlanReportingData.artifactPath shouldBe "reused-ide-test/ide-run-context-test/3-first-test"
   }
 
   @Test

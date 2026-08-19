@@ -1,6 +1,7 @@
 package com.intellij.ide.starter.junit5
 
 import com.intellij.ide.starter.runner.CurrentTestMethod
+import com.intellij.ide.starter.runner.CurrentTestPlan
 import com.intellij.ide.starter.runner.TestMethod
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.AfterEach
@@ -48,6 +49,15 @@ class CurrentTestMethodProviderTest {
     finally {
       CurrentTestMethod.removeOnChangeListener(listener)
     }
+  }
+
+  @Test
+  fun `starting a test plan opens a new generation`() {
+    val before = CurrentTestPlan.generation
+
+    CurrentTestMethodProvider().testPlanExecutionStarted(null)
+
+    CurrentTestPlan.generation shouldBe before + 1
   }
 
   private fun testIdentifier(): TestIdentifier {
