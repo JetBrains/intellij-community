@@ -57,7 +57,7 @@ data class WithTailInsertHandler(
         if (overwriteText) {
             var offset = tailOffset
             if (tailText != " ") {
-                offset = skipWhitespacesAndComments(context, offset)
+                offset = getOffsetAndSkipWhitespacesAndTrailingCommas(context, offset)
             }
             if (shouldOverwriteChar(document, offset)) {
                 insert = false
@@ -97,6 +97,14 @@ data class WithTailInsertHandler(
         return maxOf(offset, codeLeaf.textRange.startOffset)
     }
 
+    private fun getOffsetAndSkipWhitespacesAndTrailingCommas(context: InsertionContext, tailOffset: Int): Int {
+        val offset = skipWhitespacesAndComments(context, tailOffset)
+        if (tailText !in setOf(RPARENTH.tailText, RBRACKET.tailText)) return offset
+        if (context.file.findElementAt(offset) == null) return offset
+        val afterComma = skipWhitespacesAndComments(context, offset + 1)
+        return if (context.file.findElementAt(afterComma)?.text == tailText) afterComma else offset
+    }
+
     private fun shouldOverwriteChar(document: Document, offset: Int): Boolean {
         if (!document.isTextAt(offset, tailText)) return false
         if (tailText == " " && document.charsSequence.isCharAt(offset + 1, '}')) return false // do not overwrite last space before '}'
@@ -104,12 +112,12 @@ data class WithTailInsertHandler(
     }
 
     companion object {
-        val COMMA = WithTailInsertHandler(",", spaceBefore = false, spaceAfter = true /*TODO: use code style option*/)
-        val RPARENTH = WithTailInsertHandler(")", spaceBefore = false, spaceAfter = false)
-        val RBRACKET = WithTailInsertHandler("]", spaceBefore = false, spaceAfter = false)
-        val RBRACE = WithTailInsertHandler("}", spaceBefore = true, spaceAfter = false)
-        val ELSE = WithTailInsertHandler("else", spaceBefore = true, spaceAfter = true)
-        val EQ = WithTailInsertHandler("=", spaceBefore = true, spaceAfter = true) /*TODO: use code style options*/
-        val SPACE = WithTailInsertHandler(" ", spaceBefore = false, spaceAfter = false, overwriteText = true)
+        internal val COMMA = WithTailInsertHandler(",", spaceBefore = false, spaceAfter = true /*TODO: use code style option*/)
+        internal val RPARENTH = WithTailInsertHandler(")", spaceBefore = false, spaceAfter = false)
+        internal val RBRACKET = WithTailInsertHandler("]", spaceBefore = false, spaceAfter = false)
+        internal val RBRACE = WithTailInsertHandler("}", spaceBefore = true, spaceAfter = false)
+        internal val ELSE = WithTailInsertHandler("else", spaceBefore = true, spaceAfter = true)
+        internal val EQ = WithTailInsertHandler("=", spaceBefore = true, spaceAfter = true) /*TODO: use code style options*/
+        internal val SPACE = WithTailInsertHandler(" ", spaceBefore = false, spaceAfter = false, overwriteText = true)
     }
 }
