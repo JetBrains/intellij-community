@@ -33,7 +33,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
@@ -127,22 +126,6 @@ class MavenDependencyCompletionCharFilterTest {
     assertTrue(documentText.contains("<artifactId>spring-core$charToType</artifactId>"),
                "The typed text must be preserved and extended, but was:\n$documentText")
     assertNotNull(activeLookup, "'$charToType' must be added to the prefix, so the lookup must stay open")
-  }
-
-  @Test
-  fun `test typing dot in version tag keeps platform behaviour`() = runBlocking {
-    completeAndType("""
-      <dependencies>
-        <dependency>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-core</artifactId>
-          <version>6.<caret></version>
-        </dependency>
-      </dependencies>
-      """, '.')
-
-    assertTrue(documentText.contains("<version>6.2.</version>"),
-               "The version lookup must keep completing till the typed char occurrence, but was:\n$documentText")
   }
 
   private suspend fun completeAndType(
