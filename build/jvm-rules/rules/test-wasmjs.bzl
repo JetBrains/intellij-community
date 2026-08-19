@@ -128,7 +128,7 @@ def _wasmjs_browser_test_impl(ctx):
     flagfile = ctx.actions.declare_file("%s.flagfile" % ctx.label.name)
     flag_args = ctx.actions.args()
     flag_args.set_param_file_format("multiline")
-    flag_args.add("--browser-binary=%s" % _rlocation_path(ctx, _browser_executable_path(ctx, browser_files)))
+    flag_args.add("--browser-binary=%s" % _rlocation_path(ctx, ctx.file._browser_executable.short_path))
     flag_args.add("--browser-flagfile=%s" % _rlocation_path(ctx, browser_flagfile.short_path))
     flag_args.add("--browser-profile-dir=%s" % _BROWSER_PROFILE_DIR)
     flag_args.add("--static-content-dir=%s" % _rlocation_path(ctx, dist_link.short_path.removesuffix("/%s-js" % module_name)))
@@ -274,16 +274,6 @@ def _rlocation_path(ctx, short_path):
         return short_path[len("../"):]
     return "%s/%s" % (ctx.workspace_name, short_path)
 
-# Playwright chromium-headless-shell helpers: the browser tree artifact is opaque at analysis
-# time (the archive is unzipped by a build action), but the playwright archive layout is fixed
-# per OS, so the executable path inside the tree is known here — the runner receives ready
-# values through the flagfile and carries no browser knowledge.
-_PLAYWRIGHT_CHROMIUM_EXECUTABLES = {
-    "mac": "chrome-mac/headless_shell",
-    "linux": "chrome-linux/headless_shell",
-    "windows": "chrome-win/headless_shell.exe",
-}
-
 # The browser command line, one argument per line of `<name>.browser.flagfile`;
 # ${BROWSER_PROFILE_DIR} is substituted by the runner with the resolved --browser-profile-dir.
 _PLAYWRIGHT_CHROMIUM_FLAGS = [
@@ -313,17 +303,6 @@ _PLAYWRIGHT_CHROMIUM_FLAGS = [
 
 # Relative: the runner resolves it under TEST_TMPDIR at test runtime.
 _BROWSER_PROFILE_DIR = "browser-profile"
-
-def _browser_executable_path(ctx, browser_files):
-    if len(browser_files) != 1:
-        fail("expected the browser target to provide a single tree artifact, got %d files" % len(browser_files))
-    return "%s/%s" % (browser_files[0].short_path, _PLAYWRIGHT_CHROMIUM_EXECUTABLES[_target_os(ctx)])
-
-def _target_os(ctx):
-    for os, attr in {"mac": ctx.attr._macos_constraint, "linux": ctx.attr._linux_constraint, "windows": ctx.attr._windows_constraint}.items():
-        if ctx.target_platform_has_constraint(attr[platform_common.ConstraintValueInfo]):
-            return os
-    fail("wasmjs_test supports macOS, Linux and Windows target platforms only")
 
 def _runner_executable(ctx):
     windows_constraint = ctx.attr._windows_constraint[platform_common.ConstraintValueInfo]
@@ -391,18 +370,18 @@ _wasmjs_browser_test = rule(
             # configuration), not in the execution configuration of build actions.
             cfg = "target",
         ),
+        # The headless shell and everything it loads from its own directory at startup; served to
+        # the test through the runfiles. Platform resolution happens in the alias, not here.
         "_browser": attr.label(
             default = Label("//wasmjs-test-harness:chromium-headless-shell"),
             allow_files = True,
         ),
+        "_browser_executable": attr.label(
+            default = Label("//wasmjs-test-harness:chromium-headless-shell-executable"),
+            allow_single_file = True,
+        ),
         "_windows_constraint": attr.label(
             default = Label("@platforms//os:windows"),
-        ),
-        "_macos_constraint": attr.label(
-            default = Label("@platforms//os:osx"),
-        ),
-        "_linux_constraint": attr.label(
-            default = Label("@platforms//os:linux"),
         ),
     },
     implementation = _wasmjs_browser_test_impl,

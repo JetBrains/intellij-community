@@ -3,11 +3,39 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("//:jvm.bzl", "jvm_import")
 load("//:rules/assert_maven_coordinates_match.bzl", "assert_maven_coordinates_match_jar")
 
-# The browser the _wasmjs_browser_test rule runs tests in; provisioned hermetically by
-# rules_playwright from the vendored //:playwright-browsers.json manifest.
+# The browser the _wasmjs_browser_test rule runs tests in: playwright's prebuilt chromium
+# headless-shell for the target platform, provisioned hermetically by the http_archive repositories
+# declared in //:MODULE.bazel. Selecting the platform here rather than inside the rule is what keeps
+# a build from fetching an archive it cannot use.
+#
+# Playwright ships no arm64 Windows headless shell, so Windows-on-ARM gets the x64 one and runs it
+# under emulation (Windows 11 on ARM; slower than native, but supported). The two aliases are
+# derived from one mapping so the executable can never come from a different repository than the
+# files around it.
+_CHROMIUM_HEADLESS_SHELL_REPOSITORIES = {
+    "//:macos_arm64": "@chromium_headless_shell_arm64-macos",
+    "//:macos_x86_64": "@chromium_headless_shell_x86_64-macos",
+    "//:linux_x86_64": "@chromium_headless_shell_x86_64-linux",
+    "//:linux_arm64": "@chromium_headless_shell_aarch64-linux",
+    "//:windows_x86_64": "@chromium_headless_shell_x86_64-windows",
+    "//:windows_arm64": "@chromium_headless_shell_x86_64-windows",
+}
+
 alias(
     name = "chromium-headless-shell",
-    actual = "@playwright//:chromium-headless-shell",
+    actual = select({
+        platform: "%s//:files" % repository
+        for platform, repository in _CHROMIUM_HEADLESS_SHELL_REPOSITORIES.items()
+    }),
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "chromium-headless-shell-executable",
+    actual = select({
+        platform: "%s//:headless-shell" % repository
+        for platform, repository in _CHROMIUM_HEADLESS_SHELL_REPOSITORIES.items()
+    }),
     visibility = ["//visibility:public"],
 )
 

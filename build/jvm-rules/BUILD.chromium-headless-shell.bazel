@@ -1,0 +1,23 @@
+# The extracted playwright chromium headless-shell (the archive's top-level directory is stripped
+# by http_archive, so the executable sits at the repository root): the shell itself plus the ICU
+# data, .pak resources and shared libraries it loads from its own directory at startup — all of it
+# has to reach the test runfiles for the browser to come up.
+filegroup(
+    name = "files",
+    srcs = glob(
+        ["**"],
+        exclude = ["BUILD.bazel"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+# The executable alone: the wasmjs_test rule passes its runfiles path to the harness as
+# --browser-binary. The glob spells the name once for `headless_shell` and `headless_shell.exe`
+# alike — nothing else in the archive shares that prefix (the neighbouring .pak files are
+# `headless_command_resources`/`headless_lib_*`), and the rule consumes this through an
+# allow_single_file attribute, so a second match would fail the build rather than pass silently.
+filegroup(
+    name = "headless-shell",
+    srcs = glob(["headless_shell*"]),
+    visibility = ["//visibility:public"],
+)

@@ -636,17 +636,35 @@ http_file(
 # wasmjs-test-harness (the wasmjs_test browser test runner) dependencies
 # -----------------------------------------------------------------------------------------------
 
-bazel_dep(name = "rules_playwright", version = "0.5.3")
-bazel_dep(name = "aspect_bazel_lib", version = "2.22.0")
+# Playwright's prebuilt chromium headless-shell, the browser the wasmjs_test rule drives (see
+# rules/test-wasmjs.bzl). The revision comes from playwright 1.56.1's browsers.json and pins
+# chromium 141.0.7390.37; bump the revision and all hashes together.
+# Playwright publishes no arm64 Windows build, so Windows-on-ARM runs the win64 shell under x64
+# emulation — see the select in wasmjs-test-harness/BUILD.bazel.
+CHROMIUM_HEADLESS_SHELL_REVISION = "1194"
 
-# Hermetic chromium headless-shell for wasmjs_test, resolved from the vendored
-# playwright-browsers.json manifest (see the note there about supported revisions).
-playwright = use_extension("@rules_playwright//playwright:extensions.bzl", "playwright")
-playwright.repo(
-    name = "playwright",
-    browsers_json = "//:playwright-browsers.json",
-)
-use_repo(playwright, "playwright")
+# platform -> (archive infix, archive top-level directory, sha256)
+CHROMIUM_HEADLESS_SHELL_PLATFORMS = {
+    "arm64-macos": ("mac-arm64", "chrome-mac", "c4c97caab34c16f9a2bb411da0e68505deacb35c86d70db63dc117381a5e6d60"),
+    "x86_64-macos": ("mac", "chrome-mac", "a84cf791a7c7d195c3fdfced9e28c591383522d396a15242602304587b825755"),
+    "x86_64-linux": ("linux", "chrome-linux", "d745c7210cc88b73c7991a22c9624819960d84bc3de77ac7336d2de841a8c91f"),
+    "aarch64-linux": ("linux-arm64", "chrome-linux", "6b963b7651119c81fa51312c1176429d3235bbefb56d5c687730cf44a5b1fdd7"),
+    "x86_64-windows": ("win64", "chrome-win", "c745ef87016c69b11f461ca5eced32c69abcf1ae450e37b450585de9f446e103"),
+}
+
+[
+    http_archive(
+        name = "chromium_headless_shell_%s" % platform,
+        build_file = "//:BUILD.chromium-headless-shell.bazel",
+        sha256 = sha256,
+        strip_prefix = archive_root,
+        url = "https://playwright.azureedge.net/builds/chromium/%s/chromium-headless-shell-%s.zip" % (
+            CHROMIUM_HEADLESS_SHELL_REVISION,
+            archive,
+        ),
+    )
+    for platform, (archive, archive_root, sha256) in CHROMIUM_HEADLESS_SHELL_PLATFORMS.items()
+]
 
 # TeamCity service message parsing (kotlin-test browser output); published on
 # intellij-dependencies, not Maven Central.
