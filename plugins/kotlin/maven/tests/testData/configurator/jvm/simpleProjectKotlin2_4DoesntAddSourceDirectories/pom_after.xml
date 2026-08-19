@@ -10,6 +10,7 @@
 
     <properties>
         <kotlin.version>2.4.0</kotlin.version>
+        <maven.compiler.release>8</maven.compiler.release>
     </properties>
 
     <dependencies>

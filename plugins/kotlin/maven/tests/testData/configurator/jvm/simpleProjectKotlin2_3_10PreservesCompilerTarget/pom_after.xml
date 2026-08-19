@@ -9,8 +9,8 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <kotlin.version>2.3.0</kotlin.version>
-        <maven.compiler.release>8</maven.compiler.release>
+        <maven.compiler.target>11</maven.compiler.target>
+        <kotlin.version>2.3.10</kotlin.version>
     </properties>
 
     <dependencies>
@@ -51,7 +51,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <jvmTarget>1.8</jvmTarget>
+                    <jvmTarget>${maven.compiler.target}</jvmTarget>
                 </configuration>
             </plugin>
         </plugins>
@@ -60,4 +60,4 @@
 
 </project>
 
-<!-- VERSION: 2.3.0 -->
+<!-- VERSION: 2.3.10 -->

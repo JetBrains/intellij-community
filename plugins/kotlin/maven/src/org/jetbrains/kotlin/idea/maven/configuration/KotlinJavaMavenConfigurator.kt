@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
@@ -64,7 +65,39 @@ class KotlinJavaMavenConfigurator : KotlinMavenConfigurator(TEST_LIB_ID, false, 
             getDefaultJvmTarget(sdk, version)?.description
         }
 
-        if(jvmTargetVersion != null) pom.addPluginConfiguration(plugin, "jvmTarget", jvmTargetVersion)
+        if (jvmTargetVersion != null) {
+            pom.addPluginConfiguration(plugin, "jvmTarget", jvmTargetVersion)
+            if (plugin.extensions.value == true && !pom.hasConfiguredJavaCompilerLevel(module)) {
+                pom.addProperty("maven.compiler.release", jvmTargetVersion.toMavenRelease())
+            }
+        }
+    }
+
+    private fun String.toMavenRelease(): String = removePrefix("1.")
+
+    private fun PomFile.hasConfiguredJavaCompilerLevel(module: Module): Boolean {
+        val propertyNames = listOf("maven.compiler.release", "maven.compiler.source", "maven.compiler.target")
+        if (propertyNames.any { findProperty(it) != null }) {
+            return true
+        }
+
+        val configurationNames = listOf("release", "source", "target")
+        val localPlugin = findPlugin(javacMavenId)
+        val localConfigurations = listOfNotNull(localPlugin?.configuration?.xmlTag) +
+                localPlugin?.executions?.executions.orEmpty().mapNotNull { it.configuration.xmlTag }
+        if (localConfigurations.any { configuration -> configurationNames.any { configuration.findFirstSubTag(it) != null } }) {
+            return true
+        }
+
+        val mavenProject = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return false
+        if (propertyNames.any { mavenProject.properties.getProperty(it) != null }) {
+            return true
+        }
+
+        val effectivePlugin = mavenProject.findPlugin(javacMavenId.groupId, javacMavenId.artifactId) ?: return false
+        val effectiveConfigurations = listOfNotNull(effectivePlugin.configurationElement) +
+                effectivePlugin.executions.mapNotNull { it.configurationElement }
+        return effectiveConfigurations.any { configuration -> configurationNames.any { configuration.getChild(it) != null } }
     }
 
     override fun configureModule(module: Module, file: PsiFile, version: IdeKotlinVersion, collector: NotificationMessageCollector): Boolean {
