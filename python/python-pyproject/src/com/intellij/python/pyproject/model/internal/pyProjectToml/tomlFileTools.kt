@@ -192,8 +192,7 @@ private fun getToolSpecificDependenciesFromTomlTable(root: Path, tomlTable: Toml
   return tomlTable.keySet().asSequence().mapNotNull {
     // PY-91089: safeGet instead of getString, which throws when `<dep>.path` holds a non-string value.
     tomlTable.safeGet<String>("${it}.path", unquotedDottedKey = true).successOrNull?.let { depPathString ->
-      parseDepFromPathString(root,
-                             depPathString)
+      parseDepFromPathString(root, depPathString)
     }
   }.toSet()
 }

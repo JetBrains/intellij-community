@@ -62,4 +62,10 @@ interface PyProjectManager : PyProjectCreator, PyDependencyGroupLocator, PyProje
    * Tool-specific toml sections where dependencies may be specified
    */
   fun getTomlDependencySpecifications(): List<TomlDependencySpecification>
+
+  /**
+   * Virtual project doesn't have `[project]` table but still can be a project.
+   * If this method returns `true`, we assume project is valid and has directory name as a project name
+   */
+  fun canBeVirtualProject(pyProjectToml: TomlTable): Boolean = false
 }

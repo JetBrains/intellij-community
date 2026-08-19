@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pkg-app"
+version = "0.1.0"
+description = "App package that depends on pkg-core"
+requires-python = ">=3.11"
+dependencies = [
+    "pkg-core",
+]
+
+[tool.uv.sources]
+pkg-core = { workspace = true }

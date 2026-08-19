@@ -12,6 +12,7 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.PyProjectToolFactory
 import com.intellij.python.pyproject.TomlTableSafeGetError.RequiredValueMissing
 import com.intellij.python.pyproject.TomlTableSafeGetError.UnexpectedType
+import com.intellij.testFramework.junit5.TestApplication
 import org.apache.tuweni.toml.TomlArray
 import org.apache.tuweni.toml.TomlTable
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -21,6 +22,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 
+@TestApplication
 internal class PyProjectTomlTest {
   @Test
   fun parseProvidesErrorsOnFailure() {
