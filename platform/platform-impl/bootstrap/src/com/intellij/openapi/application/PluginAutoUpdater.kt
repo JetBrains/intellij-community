@@ -154,15 +154,15 @@ object PluginAutoUpdater {
       for ((id, updateDesc) in updates) {
         // no third-party plugin check, settings are not available at this point; that check must be done when downloading the updates
         if (initContext.validatePluginIsCompatible(updateDesc) != null) {
-          rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} is not compatible with current IDE build"
+          rejectedUpdates[id] = "${updateDesc.shortLogDescription} is not compatible with current IDE build"
           continue
         }
         if (initContext.isPluginBroken(updateDesc.pluginId, updateDesc.version)) {
-          rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} is known to be broken"
+          rejectedUpdates[id] = "${updateDesc.shortLogDescription} is known to be broken"
           continue
         }
         if (id in initContext.essentialPlugins) {
-          rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} is part of the IDE distribution and cannot be updated without IDE update"
+          rejectedUpdates[id] = "${updateDesc.shortLogDescription} is part of the IDE distribution and cannot be updated without IDE update"
           continue
         }
         // I guess a more robust way to check which updates should be applied and which not is the following.
@@ -176,13 +176,13 @@ object PluginAutoUpdater {
         val plugin = pluginSet.candidateSubset.resolvePluginId(id)
         if (plugin == null || plugin !== updateDesc) {
           val nonLoadReason = excludedDescriptors[updateDesc]
-          rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} would not load after the update" +
+          rejectedUpdates[id] = "${updateDesc.shortLogDescription} would not load after the update" +
                                 (nonLoadReason?.let { ": ${PluginInitializationDiagnosticUtils.getLogMessage(it)}" } ?:
                                  plugin?.let { ": version ${it.version} is selected for loading instead" }.orEmpty())
           continue
         }
         if (pluginSet.resolvedPluginSet.isExcluded(plugin)) {
-          rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} would not load after the update:\n" +
+          rejectedUpdates[id] = "${updateDesc.shortLogDescription} would not load after the update:\n" +
                                 PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(pluginSet.resolvedPluginSet, plugin)
           continue
         }
