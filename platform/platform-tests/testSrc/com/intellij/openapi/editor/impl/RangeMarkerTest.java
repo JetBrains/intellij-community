@@ -20,6 +20,8 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.impl.marker.PMarker;
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -1050,6 +1052,127 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     assertNotNull(processedMarker.get());
     assertSame(value, processedMarker.get().getUserData(key));
+  }
+
+  // Exercises specification replacement after the marker has acquired a lazy offset shift and checks handle identity.
+  public void testGreedinessChangeAfterLazyShiftPreservesMarker() {
+    RangeMarkerEx marker = createMarker("0123456789", 4, 6);
+    Key<Object> key = Key.create("range.marker.shifted.data");
+    Object value = new Object();
+    marker.putUserData(key, value);
+
+    insertString(document, 0, "xx");
+    assertValidMarker(marker, 6, 8);
+    marker.setGreedyToLeft(true);
+    insertString(document, 6, "y");
+    assertValidMarker(marker, 6, 9);
+
+    Ref<RangeMarker> processedMarker = new Ref<>();
+    assertTrue(((DocumentEx)document).processRangeMarkersOverlappingWith(6, 9, candidate -> {
+      if (candidate == marker) {
+        processedMarker.set(candidate);
+      }
+      return true;
+    }));
+    assertSame(marker, processedMarker.get());
+    assertSame(value, processedMarker.get().getUserData(key));
+  }
+
+  // Covers disposal of an already-invalid marker, including preservation of its last known range and enumeration cleanup.
+  public void testDisposeInvalidatedMarkerPreservesRangeAndRemovesItFromEnumeration() {
+    RangeMarkerEx marker = createMarker("0123456789", 2, 5);
+    deleteString(document, 1, 6);
+    assertFalse(marker.isValid());
+    TextRange invalidRange = marker.getTextRange();
+
+    marker.dispose();
+
+    assertFalse(marker.isValid());
+    assertEquals(invalidRange, marker.getTextRange());
+    assertTrue(((DocumentEx)document).processRangeMarkersOverlappingWith(0, document.getTextLength(), candidate -> {
+      assertNotSame(marker, candidate);
+      return true;
+    }));
+  }
+
+  // Verifies that an invalid marker remains weakly owned and that queue processing purges its persistent state after GC.
+  public void testInvalidMarkerIsPurgedAfterGc() {
+    Ref<RangeMarkerEx> markerRef = new Ref<>(createMarker("0123456789", 2, 5));
+    long markerId = markerRef.get().getId();
+    boolean snapshotMarker = markerRef.get() instanceof PMarker;
+    deleteString(document, 1, 6);
+    assertFalse(markerRef.get().isValid());
+
+    Reference<RangeMarkerEx> reference = new WeakReference<>(markerRef.get());
+    markerRef.set(null);
+    GCUtil.tryGcSoftlyReachableObjects(() -> reference.get() == null);
+    assertNull(reference.get());
+
+    ((DocumentEx)document).processRangeMarkers(candidate -> {
+      assertTrue("Garbage-collected marker was enumerated", markerId != ((RangeMarkerEx)candidate).getId());
+      return true;
+    });
+    if (snapshotMarker) {
+      assertFalse(SnapshotMarkerEngineImpl.INSTANCE.containsMarkerId(((DocumentImpl)document).getCore().snapshot(), markerId));
+    }
+  }
+
+  // Ensures explicit disposal immediately excludes only the disposed handle from overlapping-marker enumeration.
+  public void testDisposedMarkerIsNotEnumerated() {
+    RangeMarkerEx disposedMarker = createMarker("0123456789", 2, 6);
+    RangeMarkerEx liveMarker = (RangeMarkerEx)document.createRangeMarker(3, 7);
+    disposedMarker.dispose();
+
+    List<RangeMarker> processedMarkers = new ArrayList<>();
+    assertTrue(((DocumentEx)document).processRangeMarkersOverlappingWith(3, 6, candidate -> {
+      processedMarkers.add(candidate);
+      return true;
+    }));
+
+    assertEquals(1, processedMarkers.size());
+    assertSame(liveMarker, processedMarkers.get(0));
+  }
+
+  // Checks that early termination releases enumeration state so the selected marker can be disposed immediately afterward.
+  public void testDisposeAfterEnumerationStopsEarly() {
+    DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument("0123456789");
+    List<RangeMarker> markers = List.of(
+      document.createRangeMarker(1, 5),
+      document.createRangeMarker(2, 6),
+      document.createRangeMarker(3, 7)
+    );
+    Ref<RangeMarker> selectedMarker = new Ref<>();
+
+    assertFalse(document.processRangeMarkersOverlappingWith(3, 4, candidate -> {
+      selectedMarker.set(candidate);
+      return false;
+    }));
+    assertNotNull(selectedMarker.get());
+    selectedMarker.get().dispose();
+
+    List<RangeMarker> processedMarkers = new ArrayList<>();
+    assertTrue(document.processRangeMarkersOverlappingWith(3, 4, candidate -> {
+      processedMarkers.add(candidate);
+      return true;
+    }));
+
+    List<RangeMarker> expectedMarkers = new ArrayList<>(markers);
+    expectedMarkers.remove(selectedMarker.get());
+    assertSameElements(processedMarkers, expectedMarkers);
+  }
+
+  // Guards disposal idempotence for invalid markers and ensures repeated calls do not lose their retained offsets.
+  public void testRepeatedDisposeAfterInvalidationIsIdempotent() {
+    RangeMarkerEx marker = createMarker("0123456789", 2, 5);
+    deleteString(document, 1, 6);
+    assertFalse(marker.isValid());
+    TextRange invalidRange = marker.getTextRange();
+
+    marker.dispose();
+    marker.dispose();
+
+    assertFalse(marker.isValid());
+    assertEquals(invalidRange, marker.getTextRange());
   }
 
   public void testRangeMarkersAreGarbageCollectableAndWhenTheyHaveTheyLeaveNoTracesInDocumentEvenTheirIds() {
