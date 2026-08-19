@@ -13,7 +13,7 @@ import static org.junit.Assert.assertEquals;
 // disabled; enable again when needed
 
 public class DevkitInspectionsRegistrationCheckTest /*extends BasePlatformTestCase*/ {
-  private static final int EXPECTED_INSPECTIONS_NUMBER = 94;
+  private static final int EXPECTED_INSPECTIONS_NUMBER = 95;
 
   /**
    * Inspections that are finished and intentionally disabled.
