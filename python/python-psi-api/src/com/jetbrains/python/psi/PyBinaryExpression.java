@@ -26,16 +26,6 @@ public interface PyBinaryExpression extends PyAstBinaryExpression, PyQualifiedEx
     return (PyExpression)PyAstBinaryExpression.super.getRightExpression();
   }
 
-  /**
-   * @deprecated Use {@link PyAstBinaryExpression#getOppositeExpression(PyAstExpression)}
-   */
-  @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
-  @Deprecated
-  default PyExpression getOppositeExpression(PyExpression expression)
-    throws IllegalArgumentException {
-    return (PyExpression)PyAstBinaryExpression.super.getOppositeExpression(expression);
-  }
-
   @Override
   default @Nullable PyExpression getQualifier() {
     return (PyExpression)PyAstBinaryExpression.super.getQualifier();
