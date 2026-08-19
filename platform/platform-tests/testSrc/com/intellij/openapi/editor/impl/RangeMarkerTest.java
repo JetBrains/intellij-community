@@ -1826,4 +1826,18 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     deleteString(document, 0, 4);
     assertFalse(marker.isValid());
   }
+
+  public void testReplaceNotGreedy() {
+    RangeMarkerEx marker = createMarker(" ".repeat(10), 1, 3);
+    replaceString(document, 0, 2, "xxx");
+    assertEquals(TextRange.create(3,4), marker.getTextRange());
+  }
+  
+  public void testReplaceBeforeGreedy() {
+    RangeMarkerEx marker = createMarker(" ".repeat(10), 1, 3);
+    marker.setGreedyToLeft(true);
+    replaceString(document, 0, 1, "xxx");
+    assertTrue(marker.isValid());
+    assertEquals(TextRange.create(3,5), marker.getTextRange());
+  }
 }
