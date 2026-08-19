@@ -241,11 +241,11 @@ class JavaSupportTest : GrazieTestBase() {
     }
     SpellCheckerSettings.getInstance(project).isUseSingleDictionaryToSave = true
 
-    myFixture.configureByText("a.java", "// <TYPO descr=\"Typo: In word 'Qdrant'\">Qdra<caret>nt</TYPO>")
+    myFixture.configureByText("a.java", "// <TYPO descr=\"Typo: In word 'Blahblahwordish'\">Blahblahword<caret>ish</TYPO>")
     myFixture.checkHighlighting()
-    val intention = myFixture.findSingleIntention("Save 'Qdrant' to dictionary")
+    val intention = myFixture.findSingleIntention("Save 'Blahblahwordish' to dictionary")
     myFixture.launchAction(intention)
-    myFixture.configureByText("a.java", "// Qdrant")
+    myFixture.configureByText("a.java", "// Blahblahwordish")
     myFixture.checkHighlighting()
   }
 

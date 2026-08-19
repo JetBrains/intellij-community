@@ -29,10 +29,10 @@ http_file(
 )
 
 http_file(
-    name = "ai_grazie-grazie-rule-engine-0_3_278_http",
-    downloaded_file_path = "grazie-rule-engine-0.3.278.jar",
-    sha256 = "f2f30f75b0959ec2a589e53be996fde84ce6cf842be98abbfbe3853fff4cca18",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.278/grazie-rule-engine-0.3.278.jar",
+    name = "ai_grazie-grazie-rule-engine-0_4_8_http",
+    downloaded_file_path = "grazie-rule-engine-0.4.8.jar",
+    sha256 = "4424b866ca4f4e4185fa49f8d01c86bfeec0e4f67424cd43ae89dbe42209d5a1",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.4.8/grazie-rule-engine-0.4.8.jar",
 )
 
 http_file(
@@ -43,10 +43,10 @@ http_file(
 )
 
 http_file(
-    name = "ai_grazie-grazie-rule-engine-0_3_278-sources_http",
-    downloaded_file_path = "grazie-rule-engine-0.3.278-sources.jar",
-    sha256 = "0595f65a92a62822e4e590d729392bc2bd2c4223836274ebdc509ed4f1696800",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.278/grazie-rule-engine-0.3.278-sources.jar",
+    name = "ai_grazie-grazie-rule-engine-0_4_8-sources_http",
+    downloaded_file_path = "grazie-rule-engine-0.4.8-sources.jar",
+    sha256 = "ca74e4092844e911811028d6f814708388e13d50f81515e63005aeeb4aa8f744",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.4.8/grazie-rule-engine-0.4.8-sources.jar",
 )
 
 http_file(
@@ -57,17 +57,17 @@ http_file(
 )
 
 http_file(
-    name = "ai_grazie-grazie-rules-llm-0_3_278_http",
-    downloaded_file_path = "grazie-rules-llm-0.3.278.jar",
-    sha256 = "822ffa1a82a8561dccd3297604c44dd8b1c43bd684ed80cbee7ded86d6a021c3",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.278/grazie-rules-llm-0.3.278.jar",
+    name = "ai_grazie-grazie-rules-llm-0_4_8_http",
+    downloaded_file_path = "grazie-rules-llm-0.4.8.jar",
+    sha256 = "d015676f20eed34ed02d455bccd8059c78102c4e5e13ec500e9f4b067f3d3f17",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.4.8/grazie-rules-llm-0.4.8.jar",
 )
 
 http_file(
-    name = "ai_grazie-grazie-rules-llm-0_3_278-sources_http",
-    downloaded_file_path = "grazie-rules-llm-0.3.278-sources.jar",
-    sha256 = "78f8caea0872727a3de623e8f6a069c7918c9bac80e4a00713dca6e4a53e06cf",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.278/grazie-rules-llm-0.3.278-sources.jar",
+    name = "ai_grazie-grazie-rules-llm-0_4_8-sources_http",
+    downloaded_file_path = "grazie-rules-llm-0.4.8-sources.jar",
+    sha256 = "1b15a2c1647263b14d8c081d6ad18af0e36b8ad94c3f89e5099a24af76c887d8",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.4.8/grazie-rules-llm-0.4.8-sources.jar",
 )
 
 http_file(
@@ -2763,6 +2763,34 @@ http_file(
     downloaded_file_path = "tasks-library-model-jvm-0.8.256-sources.jar",
     sha256 = "86e2b53fdf5907a83392a4aceb422c9fe4bf74ec35682775dd7f333b93e86e40",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks-library/tasks-library-model-jvm/0.8.256/tasks-library-model-jvm-0.8.256-sources.jar",
+)
+
+http_file(
+    name = "cloud_jetbrains_sdk_ml-jbai-ner-api-0_2_0_http",
+    downloaded_file_path = "jbai-ner-api-0.2.0.jar",
+    sha256 = "417a88f8556aaea06feda768cf18ca420f49ec6499065c40874f893e7ab88216",
+    url = "https://cache-redirector.jetbrains.com/jcp-github-mirror-public/cloud/jetbrains/sdk/ml/jbai-ner-api/0.2.0/jbai-ner-api-0.2.0.jar",
+)
+
+http_file(
+    name = "cloud_jetbrains_sdk_ml-jbai-ner-api-0_2_0-sources_http",
+    downloaded_file_path = "jbai-ner-api-0.2.0-sources.jar",
+    sha256 = "a3df39d0abb9b1e4ef1ee19c4482b9db0ced37b04fc8fb7bc2b173eb08a39af8",
+    url = "https://cache-redirector.jetbrains.com/jcp-github-mirror-public/cloud/jetbrains/sdk/ml/jbai-ner-api/0.2.0/jbai-ner-api-0.2.0-sources.jar",
+)
+
+http_file(
+    name = "cloud_jetbrains_sdk_ml-jbai-tree-api-2_1_0_http",
+    downloaded_file_path = "jbai-tree-api-2.1.0.jar",
+    sha256 = "adba2a2580f4af64bc97e625b9e60fd0dc533482c97ea39ba8feffc4f77de265",
+    url = "https://cache-redirector.jetbrains.com/jcp-github-mirror-public/cloud/jetbrains/sdk/ml/jbai-tree-api/2.1.0/jbai-tree-api-2.1.0.jar",
+)
+
+http_file(
+    name = "cloud_jetbrains_sdk_ml-jbai-tree-api-2_1_0-sources_http",
+    downloaded_file_path = "jbai-tree-api-2.1.0-sources.jar",
+    sha256 = "7364a21cf2f921056cd39c65322a4d110d9f69f107f4ff9a2fef631a1f6c0285",
+    url = "https://cache-redirector.jetbrains.com/jcp-github-mirror-public/cloud/jetbrains/sdk/ml/jbai-tree-api/2.1.0/jbai-tree-api-2.1.0-sources.jar",
 )
 
 http_file(

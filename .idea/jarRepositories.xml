@@ -42,6 +42,11 @@
       <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper" />
     </remote-repository>
     <remote-repository>
+      <option name="id" value="jcp-github-mirror-public" />
+      <option name="name" value="JCP GitHub mirror public" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/jcp-github-mirror-public" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="kotlin-bootstrap" />
       <option name="name" value="Kotlin Bootstrap (non-expiring bi-weekly dev-builds)" />
       <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kt/bootstrap" />

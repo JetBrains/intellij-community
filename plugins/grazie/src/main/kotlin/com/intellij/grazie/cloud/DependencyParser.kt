@@ -9,6 +9,10 @@ import ai.grazie.rules.tree.Tree
 import ai.grazie.rules.tree.TreeSupport
 import ai.grazie.rules.uk.UkrainianTreeSupport
 import ai.grazie.text.exclusions.SentenceWithExclusions
+import ai.grazie.tree.model.SentenceWithTreeDependencies
+import cloud.jetbrains.sdk.ml.tree.client.model.ConfidenceMetrics
+import cloud.jetbrains.sdk.ml.tree.client.model.Node
+import cloud.jetbrains.sdk.ml.tree.client.model.SentenceWithTree
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
@@ -41,6 +45,12 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.languagetool.language.English
+import cloud.jetbrains.sdk.ml.ner.client.model.Annotation as CloudAnnotation
+import cloud.jetbrains.sdk.ml.ner.client.model.Label as CloudLabel
+import cloud.jetbrains.sdk.ml.ner.client.model.Range as CloudNerRange
+import cloud.jetbrains.sdk.ml.ner.client.model.SentenceWithNERAnnotations as CloudSentenceWithNERAnnotations
+import cloud.jetbrains.sdk.ml.tree.client.model.TextRange as CloudTextRange
+
 
 object DependencyParser {
   private val LOG = Logger.getInstance(DependencyParser::class.java)
@@ -185,7 +195,10 @@ object DependencyParser {
 
         if (trees == null) emptyMap()
         else sentences.zip(trees).associate {
-          it.first to support.buildTree(it.second, labels[it.first.sentence]) { ProgressManager.checkCanceled() }
+          it.first to support.buildTree(
+            fromLegacyTree(it.second),
+            fromLegacyNer(labels[it.first.sentence])
+          ) { ProgressManager.checkCanceled() }
         }
       }
     }
@@ -194,6 +207,48 @@ object DependencyParser {
     override fun reportStatus(reporter: RawProgressReporter) {
       super.reportStatus(reporter)
       reporter.text(GrazieBundle.message("progress.text.parsing.natural.language.text"))
+    }
+
+    //TODO: Remove `fromLegacy*` methods when IntelliJ migrates to JCP auth
+    /** Converts from the deprecated Grazie-internal tree model to the JCP-generated one.  */
+    fun fromLegacyTree(conllu: SentenceWithTreeDependencies): SentenceWithTree {
+      val nodes = conllu.tree.map { node ->
+        Node {
+          range = CloudTextRange {
+            start = node.range.start
+            endExclusive = node.range.endExclusive
+          }
+          id = node.id
+          headId = node.headId
+          dependency = node.dependency
+        }
+      }.toList()
+
+      return SentenceWithTree {
+        text = conllu.text
+        tree = nodes
+        confidenceMetrics = ConfidenceMetrics {
+          minRelsDiff = 1.0
+          minArcsDiff = 1.0
+        }
+      }
+    }
+
+    /** Converts from the deprecated Grazie-internal NER model to the JCP-generated one.  */
+    fun fromLegacyNer(ner: SentenceWithNERAnnotations?): CloudSentenceWithNERAnnotations? {
+      val ner = ner ?: return null
+      return CloudSentenceWithNERAnnotations {
+        text = ner.text
+        annotations = ner.annotations.map { annotation ->
+          CloudAnnotation {
+            range = CloudNerRange {
+              start = annotation.range.start
+              endExclusive = annotation.range.endExclusive
+            }
+            label = CloudLabel.valueOf(annotation.label.name)
+          }
+        }
+      }
     }
   }
 }

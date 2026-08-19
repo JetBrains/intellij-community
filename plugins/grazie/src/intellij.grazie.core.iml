@@ -340,7 +340,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library name="ai.grazie.gec.util" type="repository">
         <properties include-transitive-deps="false" maven-id="ai.grazie.gec:gec-util:0.9.2">
           <verification>
@@ -693,6 +693,9 @@
               <sha256sum>1ebcfdb5c2bb052c1590d3952a50e89146fdd9ae39aa343c1b94a59009edb6b6</sha256sum>
             </artifact>
           </verification>
+          <exclude>
+            <dependency maven-id="cloud.jetbrains.sdk.ml:jbai-ner-api" />
+          </exclude>
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0.8.256/model-ner-jvm-0.8.256.jar!/" />
@@ -700,6 +703,42 @@
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0.8.256/model-ner-jvm-0.8.256-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="cloud.jetbrains.sdk.ml.jbai.tree.api" type="repository">
+        <properties include-transitive-deps="false" maven-id="cloud.jetbrains.sdk.ml:jbai-tree-api:2.1.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/cloud/jetbrains/sdk/ml/jbai-tree-api/2.1.0/jbai-tree-api-2.1.0.jar">
+              <sha256sum>adba2a2580f4af64bc97e625b9e60fd0dc533482c97ea39ba8feffc4f77de265</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/cloud/jetbrains/sdk/ml/jbai-tree-api/2.1.0/jbai-tree-api-2.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/cloud/jetbrains/sdk/ml/jbai-tree-api/2.1.0/jbai-tree-api-2.1.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="cloud.jetbrains.sdk.ml.jbai.ner.api" type="repository">
+        <properties include-transitive-deps="false" maven-id="cloud.jetbrains.sdk.ml:jbai-ner-api:0.2.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/cloud/jetbrains/sdk/ml/jbai-ner-api/0.2.0/jbai-ner-api-0.2.0.jar">
+              <sha256sum>417a88f8556aaea06feda768cf18ca420f49ec6499065c40874f893e7ab88216</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/cloud/jetbrains/sdk/ml/jbai-ner-api/0.2.0/jbai-ner-api-0.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/cloud/jetbrains/sdk/ml/jbai-ner-api/0.2.0/jbai-ner-api-0.2.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
