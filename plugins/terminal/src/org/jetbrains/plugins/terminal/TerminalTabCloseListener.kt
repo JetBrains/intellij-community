@@ -85,7 +85,7 @@ abstract class TerminalTabCloseListener(
       val proxy = NopProcessHandler().apply { startNotify() }
       // don't show 'disconnect' button
       proxy.putUserData(RunContentManagerImpl.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY, true)
-      val result = TerminateRemoteProcessDialog.show(project, "Terminal ${content.displayName}", proxy)
+      val result = TerminateRemoteProcessDialog.show(project, content.displayName, proxy)
       return result != ProcessCloseConfirmationResult.LEAVE_RUNNING
     }
 
