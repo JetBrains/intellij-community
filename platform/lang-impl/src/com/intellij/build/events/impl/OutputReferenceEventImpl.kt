@@ -1,11 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events.impl
 
+import com.intellij.build.events.OutputId
 import com.intellij.build.events.OutputReferenceEvent
+import com.intellij.build.events.StartId
 
 internal data class OutputReferenceEventImpl(
-  override val startId: Any,
-  override val outputIds: List<Any>,
+  override val startId: StartId,
+  override val outputIds: List<OutputId>,
 ) : OutputReferenceEvent {
 
   override fun getId(): Nothing {

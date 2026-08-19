@@ -2,6 +2,7 @@
 package com.intellij.build.output
 
 import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.StartId
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.platform.util.coroutines.childScope
@@ -15,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 @Internal
 class BuildOutputParserDispatcherImpl(
-  private val parentEventId: Any,
+  private val parentEventId: StartId,
   parsers: List<BuildOutputParser>,
   multicaster: BuildOutputMulticaster,
   linesBufferSize: Int = 64,
@@ -74,12 +75,12 @@ class BuildOutputParserDispatcherImpl(
   @Suppress("RAW_RUN_BLOCKING")
   private class BuildOutputInstantReaderWrapper(
     private val bufferedReader: BuildOutputReplayableLineReader,
-    private val parentEventId: Any,
+    private val parentEventId: StartId,
   ) : BuildOutputInstantReader {
 
     private var linesRead = 0
 
-    override fun getParentEventId(): Any = parentEventId
+    override fun getParentEventId() = parentEventId
 
     override fun readLine(): String? {
       val line = runBlocking { bufferedReader.readLine() }

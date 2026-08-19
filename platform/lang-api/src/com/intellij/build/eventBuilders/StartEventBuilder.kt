@@ -4,6 +4,7 @@ package com.intellij.build.eventBuilders
 import com.intellij.build.events.BuildEventsNls.Description
 import com.intellij.build.events.BuildEventsNls.Hint
 import com.intellij.build.events.StartEvent
+import com.intellij.build.events.StartId
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.CheckReturnValue
 
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.CheckReturnValue
 interface StartEventBuilder {
 
   @CheckReturnValue
-  fun withParentId(parentId: Any?): StartEventBuilder
+  fun withParentId(parentId: StartId?): StartEventBuilder
 
   @CheckReturnValue
   fun withTime(time: Long?): StartEventBuilder

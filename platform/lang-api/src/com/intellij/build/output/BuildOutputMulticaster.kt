@@ -3,6 +3,7 @@ package com.intellij.build.output
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.BuildId
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 
@@ -17,7 +18,7 @@ interface BuildOutputMulticaster {
   companion object {
 
     @Internal
-    fun BuildProgressListener.asMulticaster(buildId: Any): BuildOutputMulticaster {
+    fun BuildProgressListener.asMulticaster(buildId: BuildId): BuildOutputMulticaster {
       return object : BuildOutputMulticaster {
         override fun notifyBuildEvent(event: BuildEvent) =
           this@asMulticaster.onEvent(buildId, event)

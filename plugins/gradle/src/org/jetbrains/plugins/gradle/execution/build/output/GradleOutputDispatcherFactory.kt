@@ -3,7 +3,9 @@ package org.jetbrains.plugins.gradle.execution.build.output
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.BuildId
 import com.intellij.build.events.StartEvent
+import com.intellij.build.events.StartId
 import com.intellij.build.events.impl.OutputBuildEventImpl
 import com.intellij.build.output.BuildOutputInstantReaderImpl
 import com.intellij.build.output.BuildOutputParser
@@ -31,10 +33,10 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
   override val externalSystemId: ProjectSystemId = GradleConstants.SYSTEM_ID
 
   override fun create(
-    buildId: Any,
+    buildId: BuildId,
     buildProgressListener: BuildProgressListener,
     appendOutputToMainConsole: Boolean,
-    parsers: List<BuildOutputParser>
+    parsers: List<BuildOutputParser>,
   ): ExternalSystemOutputMessageDispatcher {
     return GradleOutputMessageDispatcher(buildId, buildProgressListener, appendOutputToMainConsole, parsers)
   }
@@ -44,13 +46,13 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
   @VisibleForTesting
   class GradleOutputMessageDispatcher(
-    private val buildId: Any,
+    private val buildId: BuildId,
     listener: BuildProgressListener,
     private val appendOutputToMainConsole: Boolean,
     private val parsers: List<BuildOutputParser>,
   ) : ExternalSystemOutputMessageDispatcherImpl(buildId, listener, parsers) {
 
-    private val tasksEventIds: MutableMap<TaskNameId, Any> = ConcurrentHashMap()
+    private val tasksEventIds: MutableMap<TaskNameId, StartId> = ConcurrentHashMap()
     private val deferredTaskEvents: MutableMap<TaskNameId, MutableList<BuildEvent>> = ConcurrentHashMap()
     private val tasksOutputReaders: MutableMap<TaskNameId, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
     private val tasksOutputRedefinedReaders = mutableListOf<BuildOutputInstantReaderImpl>()
@@ -89,7 +91,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
       }
     }
 
-    override fun onEvent(buildId: Any, event: BuildEvent) {
+    override fun onEvent(buildId: BuildId, event: BuildEvent) {
       val buildEvent = when (val parentId = event.parentId) {
         buildId -> event
         is TaskNameId -> {

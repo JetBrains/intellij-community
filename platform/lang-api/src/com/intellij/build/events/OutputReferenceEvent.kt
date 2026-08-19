@@ -22,12 +22,12 @@ interface OutputReferenceEvent : BuildEvent {
   /**
    * [StartEvent.id] of the node to attach the referenced output to.
    */
-  val startId: Any
+  val startId: StartId
 
   /**
    * [OutputBuildEvent.id]'s that are referenced by this event.
    */
-  val outputIds: List<Any>
+  val outputIds: List<OutputId>
 
   companion object {
 

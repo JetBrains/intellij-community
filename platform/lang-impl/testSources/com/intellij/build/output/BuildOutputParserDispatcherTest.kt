@@ -2,6 +2,7 @@
 package com.intellij.build.output
 
 import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.StartId
 import com.intellij.testFramework.common.timeoutRunBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -13,7 +14,7 @@ class BuildOutputParserDispatcherTest {
   fun `test lines are parsed`() = timeoutRunBlocking {
     val parser = RecordingBuildOutputParser()
 
-    val dispatcher = BuildOutputParserDispatcherImpl(Any(), listOf(parser), NoopBuildOutputMulticaster)
+    val dispatcher = BuildOutputParserDispatcherImpl(StartId(), listOf(parser), NoopBuildOutputMulticaster)
     dispatcher.notifyTextAvailable("a\n")
     dispatcher.notifyTextAvailable("b\n")
     dispatcher.close()
@@ -25,7 +26,7 @@ class BuildOutputParserDispatcherTest {
   fun `test blank lines are skipped`() = timeoutRunBlocking {
     val parser = RecordingBuildOutputParser()
 
-    val dispatcher = BuildOutputParserDispatcherImpl(Any(), listOf(parser), NoopBuildOutputMulticaster)
+    val dispatcher = BuildOutputParserDispatcherImpl(StartId(), listOf(parser), NoopBuildOutputMulticaster)
     dispatcher.notifyTextAvailable("a\n")
     dispatcher.notifyTextAvailable("\n")
     dispatcher.notifyTextAvailable("b\n")
@@ -39,7 +40,7 @@ class BuildOutputParserDispatcherTest {
     val firstParser = RecordingBuildOutputParser(result = false)
     val secondParser = RecordingBuildOutputParser(result = false)
 
-    val dispatcher = BuildOutputParserDispatcherImpl(Any(), listOf(firstParser, secondParser), NoopBuildOutputMulticaster)
+    val dispatcher = BuildOutputParserDispatcherImpl(StartId(), listOf(firstParser, secondParser), NoopBuildOutputMulticaster)
     dispatcher.notifyTextAvailable("a\n")
     dispatcher.close()
 
@@ -52,7 +53,7 @@ class BuildOutputParserDispatcherTest {
     val firstParser = RecordingBuildOutputParser(result = true)
     val secondParser = RecordingBuildOutputParser(result = true)
 
-    val dispatcher = BuildOutputParserDispatcherImpl(Any(), listOf(firstParser, secondParser), NoopBuildOutputMulticaster)
+    val dispatcher = BuildOutputParserDispatcherImpl(StartId(), listOf(firstParser, secondParser), NoopBuildOutputMulticaster)
     dispatcher.notifyTextAvailable("a\n")
     dispatcher.close()
 
@@ -77,7 +78,7 @@ class BuildOutputParserDispatcherTest {
       false
     }
 
-    val dispatcher = BuildOutputParserDispatcherImpl(Any(), listOf(parser), NoopBuildOutputMulticaster)
+    val dispatcher = BuildOutputParserDispatcherImpl(StartId(), listOf(parser), NoopBuildOutputMulticaster)
     dispatcher.notifyTextAvailable("a\n")
     dispatcher.notifyTextAvailable("b\n")
     dispatcher.notifyTextAvailable("c\n")
@@ -90,7 +91,7 @@ class BuildOutputParserDispatcherTest {
   fun `test dispatcher close waits for reader to finish`() = timeoutRunBlocking {
     val parser = RecordingBuildOutputParser { Thread.sleep(50); true }
 
-    val dispatcher = BuildOutputParserDispatcherImpl(Any(), listOf(parser), NoopBuildOutputMulticaster)
+    val dispatcher = BuildOutputParserDispatcherImpl(StartId(), listOf(parser), NoopBuildOutputMulticaster)
     dispatcher.notifyTextAvailable("a\n")
     dispatcher.notifyTextAvailable("b\n")
     dispatcher.close()
@@ -120,7 +121,7 @@ class BuildOutputParserDispatcherTest {
       true
     }
 
-    val dispatcher = BuildOutputParserDispatcherImpl(Any(), listOf(parser), multicaster)
+    val dispatcher = BuildOutputParserDispatcherImpl(StartId(), listOf(parser), multicaster)
     dispatcher.notifyTextAvailable("trigger\n")
     dispatcher.close()
 

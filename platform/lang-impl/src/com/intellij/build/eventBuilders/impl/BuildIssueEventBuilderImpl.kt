@@ -5,6 +5,7 @@ import com.intellij.build.FilePosition
 import com.intellij.build.eventBuilders.BuildIssueEventBuilder
 import com.intellij.build.events.BuildEventsNls.Hint
 import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.OutputId
 import com.intellij.build.events.impl.BuildIssueEventImpl
 import com.intellij.build.events.impl.FileBuildIssueEventImpl
 import com.intellij.build.issue.BuildIssue
@@ -19,7 +20,7 @@ internal class BuildIssueEventBuilderImpl(
   private var time: Long? = null
   private var hint: @Hint String? = null
 
-  private var outputIds: List<Any> = emptyList()
+  private var outputIds: List<OutputId> = emptyList()
 
   private var filePosition: FilePosition? = null
 
@@ -35,7 +36,7 @@ internal class BuildIssueEventBuilderImpl(
   override fun withHint(hint: @Hint String?): BuildIssueEventBuilderImpl =
     apply { this.hint = hint }
 
-  override fun withOutputIds(outputIds: List<Any>): BuildIssueEventBuilderImpl =
+  override fun withOutputIds(outputIds: List<OutputId>): BuildIssueEventBuilderImpl =
     apply { this.outputIds = outputIds }
 
   override fun withFilePosition(filePosition: FilePosition?): BuildIssueEventBuilderImpl =

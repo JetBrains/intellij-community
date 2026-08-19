@@ -2,6 +2,8 @@
 package com.intellij.build.output
 
 import com.intellij.build.BuildProgressListener
+import com.intellij.build.events.BuildId
+import com.intellij.build.events.StartId
 import com.intellij.build.output.BuildOutputMulticaster.Companion.asMulticaster
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.coroutines.runBlocking
@@ -16,8 +18,8 @@ import java.util.concurrent.CompletableFuture
  */
 @Suppress("RAW_RUN_BLOCKING")
 open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
-  buildId: Any,
-  private val parentEventId: Any,
+  buildId: BuildId,
+  private val parentEventId: StartId,
   buildProgressListener: BuildProgressListener,
   parsers: List<BuildOutputParser>,
   pushBackBufferSize: Int = 50,
@@ -27,7 +29,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
   private val multicaster = buildProgressListener.asMulticaster(buildId)
   private val dispatcher = BuildOutputParserDispatcherImpl(parentEventId, parsers, multicaster, channelBufferCapacity, pushBackBufferSize)
 
-  override fun getParentEventId(): Any =
+  override fun getParentEventId(): StartId =
     parentEventId
 
   override fun append(csq: CharSequence): BuildOutputInstantReaderImpl = apply {
@@ -70,7 +72,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
 @Experimental
 class BuildOutputCollector(private val reader: BuildOutputInstantReader) : BuildOutputInstantReader {
   private val readLines = LinkedList<String>()
-  override fun getParentEventId(): Any = reader.parentEventId
+  override fun getParentEventId(): StartId = reader.parentEventId
 
   override fun readLine(): String? {
     val line = reader.readLine()

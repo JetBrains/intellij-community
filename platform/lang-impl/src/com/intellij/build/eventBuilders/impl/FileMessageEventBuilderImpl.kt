@@ -8,6 +8,7 @@ import com.intellij.build.events.BuildEventsNls.Hint
 import com.intellij.build.events.BuildEventsNls.Message
 import com.intellij.build.events.BuildEventsNls.Title
 import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.OutputId
 import com.intellij.build.events.impl.FileMessageEventImpl
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -26,7 +27,7 @@ class FileMessageEventBuilderImpl(
   private var description: @Description String? = null
 
   private var group: @Title String? = null
-  private var outputIds: List<Any> = emptyList()
+  private var outputIds: List<OutputId> = emptyList()
 
   override fun withId(id: Any?): FileMessageEventBuilderImpl =
     apply { this.id = id }
@@ -46,7 +47,7 @@ class FileMessageEventBuilderImpl(
   override fun withGroup(group: @Title String?): FileMessageEventBuilderImpl =
     apply { this.group = group }
 
-  override fun withOutputIds(outputIds: List<Any>): FileMessageEventBuilderImpl =
+  override fun withOutputIds(outputIds: List<OutputId>): FileMessageEventBuilderImpl =
     apply { this.outputIds = outputIds }
 
   override fun build(): FileMessageEventImpl =

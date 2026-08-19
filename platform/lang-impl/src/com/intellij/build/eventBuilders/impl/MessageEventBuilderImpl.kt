@@ -8,6 +8,7 @@ import com.intellij.build.events.BuildEventsNls.Hint
 import com.intellij.build.events.BuildEventsNls.Message
 import com.intellij.build.events.BuildEventsNls.Title
 import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.OutputId
 import com.intellij.build.events.impl.FileMessageEventImpl
 import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.pom.Navigatable
@@ -27,7 +28,7 @@ class MessageEventBuilderImpl(
 
   private var group: @Title String? = null
   private var navigatable: Navigatable? = null
-  private var outputIds: List<Any> = emptyList()
+  private var outputIds: List<OutputId> = emptyList()
 
   private var filePosition: FilePosition? = null
 
@@ -52,7 +53,7 @@ class MessageEventBuilderImpl(
   override fun withNavigatable(navigatable: Navigatable?): MessageEventBuilderImpl =
     apply { this.navigatable = navigatable }
 
-  override fun withOutputIds(outputIds: List<Any>): MessageEventBuilderImpl =
+  override fun withOutputIds(outputIds: List<OutputId>): MessageEventBuilderImpl =
     apply { this.outputIds = outputIds }
 
   override fun withFilePosition(filePosition: FilePosition?): MessageEventBuilderImpl =

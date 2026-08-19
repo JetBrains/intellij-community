@@ -4,12 +4,14 @@ package org.jetbrains.plugins.gradle.execution.build.output
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.BuildId
 import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.FinishEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.StartBuildEvent
 import com.intellij.build.events.StartEvent
+import com.intellij.build.events.StartId
 import com.intellij.build.events.impl.SuccessResultImpl
 import com.intellij.build.output.BuildOutputInstantReader
 import com.intellij.build.output.BuildOutputParser
@@ -29,11 +31,11 @@ class GradleOutputMessageDispatcherTest {
 
   @Test
   fun `test task output is routed to task reader with correct parentEventId`() {
-    val buildId = Any()
+    val buildId = BuildId()
     val startBuildEvent = StartBuildEvent.builder("Build", DefaultBuildDescriptor(buildId, "Build", "/", 0L)).build()
-    val startEvent = StartEvent.builder(Any(), ":task").withParentId(buildId).build()
-    val finishEvent = FinishEvent.builder(Any(), ":task", SuccessResultImpl()).withParentId(buildId).build()
-    val finishBuildEvent = FinishBuildEvent.builder(buildId, "Build", SuccessResultImpl()).build()
+    val startEvent = StartEvent.builder(StartId(), ":task").withParentId(startBuildEvent.id).build()
+    val finishEvent = FinishEvent.builder(startEvent.id, ":task", SuccessResultImpl()).withParentId(startBuildEvent.id).build()
+    val finishBuildEvent = FinishBuildEvent.builder(startBuildEvent.id, "Build", SuccessResultImpl()).build()
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
@@ -59,13 +61,13 @@ class GradleOutputMessageDispatcherTest {
 
   @Test
   fun `test two tasks output is routed to their own readers`() {
-    val buildId = Any()
+    val buildId = BuildId()
     val startBuildEvent = StartBuildEvent.builder("Build", DefaultBuildDescriptor(buildId, "Build", "/", 0L)).build()
-    val startEvent1 = StartEvent.builder(Any(), ":task1").withParentId(buildId).build()
-    val startEvent2 = StartEvent.builder(Any(), ":task2").withParentId(buildId).build()
-    val finishEvent1 = FinishEvent.builder(Any(), ":task1", SuccessResultImpl()).withParentId(buildId).build()
-    val finishEvent2 = FinishEvent.builder(Any(), ":task2", SuccessResultImpl()).withParentId(buildId).build()
-    val finishBuildEvent = FinishBuildEvent.builder(buildId, "Build", SuccessResultImpl()).build()
+    val startEvent1 = StartEvent.builder(StartId(), ":task1").withParentId(startBuildEvent.id).build()
+    val startEvent2 = StartEvent.builder(StartId(), ":task2").withParentId(startBuildEvent.id).build()
+    val finishEvent1 = FinishEvent.builder(startEvent1.id, ":task1", SuccessResultImpl()).withParentId(startBuildEvent.id).build()
+    val finishEvent2 = FinishEvent.builder(startEvent2.id, ":task2", SuccessResultImpl()).withParentId(startBuildEvent.id).build()
+    val finishBuildEvent = FinishBuildEvent.builder(startBuildEvent.id, "Build", SuccessResultImpl()).build()
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
@@ -97,10 +99,10 @@ class GradleOutputMessageDispatcherTest {
 
   @Test
   fun `test output after task finish event is not lost`() {
-    val buildId = Any()
+    val buildId = BuildId()
     val startBuildEvent = StartBuildEvent.builder("Build", DefaultBuildDescriptor(buildId, "Build", "/", 0L)).build()
-    val startEvent = StartEvent.builder(Any(), ":task").withParentId(buildId).build()
-    val finishEvent = FinishEvent.builder(Any(), ":task", SuccessResultImpl()).withParentId(buildId).build()
+    val startEvent = StartEvent.builder(StartId(), ":task").withParentId(startBuildEvent.id).build()
+    val finishEvent = FinishEvent.builder(startEvent.id, ":task", SuccessResultImpl()).withParentId(startBuildEvent.id).build()
     val finishBuildEvent = FinishBuildEvent.builder(buildId, "Build", SuccessResultImpl()).build()
 
     val parser = RecordingBuildOutputParser()

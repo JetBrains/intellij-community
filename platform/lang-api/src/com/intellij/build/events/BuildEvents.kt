@@ -31,18 +31,18 @@ interface BuildEvents {
   ): StartBuildEventBuilder
 
   fun finishBuild(
-    startBuildId: Any,
+    startBuildId: StartBuildId,
     message: @Message String,
     result: EventResult,
   ): FinishBuildEventBuilder
 
   fun start(
-    id: Any,
+    id: StartId,
     message: @Message String,
   ): StartEventBuilder
 
   fun finish(
-    startId: Any,
+    startId: StartId,
     message: @Message String,
     result: EventResult,
   ): FinishEventBuilder
@@ -52,12 +52,12 @@ interface BuildEvents {
   ): OutputBuildEventBuilder
 
   fun outputReference(
-    startId: Any,
-    outputIds: List<Any>
+    startId: StartId,
+    outputIds: List<OutputId>
   ): OutputReferenceEventBuilder
 
   fun progress(
-    startId: Any,
+    startId: StartId,
     message: @Message String,
   ): ProgressBuildEventBuilder
 
@@ -79,14 +79,14 @@ interface BuildEvents {
   ): BuildIssueEventBuilder
 
   fun fileDownload(
-    startId: Any,
+    startId: StartId,
     message: @Message String,
     isFirstInGroup: Boolean,
     downloadPath: String,
   ): FileDownloadEventBuilder
 
   fun fileDownloaded(
-    startId: Any,
+    startId: StartId,
     message: @Message String,
     duration: Long,
     downloadPath: String,

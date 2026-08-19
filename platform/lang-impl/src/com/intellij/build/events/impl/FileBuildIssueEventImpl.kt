@@ -6,6 +6,7 @@ import com.intellij.build.events.BuildEventsNls.Hint
 import com.intellij.build.events.FileMessageEvent
 import com.intellij.build.events.FileMessageEventResult
 import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.OutputId
 import com.intellij.build.issue.BuildIssue
 
 internal class FileBuildIssueEventImpl(
@@ -13,7 +14,7 @@ internal class FileBuildIssueEventImpl(
   parentId: Any?,
   time: Long?,
   hint: @Hint String?,
-  outputIds: List<Any>,
+  outputIds: List<OutputId>,
   issue: BuildIssue,
   kind: MessageEvent.Kind,
   private val filePosition: FilePosition,

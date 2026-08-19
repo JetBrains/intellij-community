@@ -6,6 +6,8 @@ import com.intellij.build.events.BuildEventsNls.Description
 import com.intellij.build.events.BuildEventsNls.Hint
 import com.intellij.build.events.BuildEventsNls.Message
 import com.intellij.build.events.impl.OutputBuildEventImpl
+import com.intellij.build.events.OutputId
+import com.intellij.build.events.StartId
 import com.intellij.execution.process.ProcessOutputType
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -14,18 +16,18 @@ class OutputBuildEventBuilderImpl(
   private val message: @Message String
 ) : OutputBuildEventBuilder {
 
-  private var id: Any? = null
-  private var parentId: Any? = null
+  private var id: OutputId? = null
+  private var parentId: StartId? = null
   private var time: Long? = null
   private var hint: @Hint String? = null
   private var description: @Description String? = null
 
   private var outputType: ProcessOutputType? = null
 
-  override fun withId(id: Any?): OutputBuildEventBuilderImpl =
+  override fun withId(id: OutputId?): OutputBuildEventBuilderImpl =
     apply { this.id = id }
 
-  override fun withParentId(parentId: Any?): OutputBuildEventBuilderImpl =
+  override fun withParentId(parentId: StartId?): OutputBuildEventBuilderImpl =
     apply { this.parentId = parentId }
 
   override fun withTime(time: Long?): OutputBuildEventBuilderImpl =

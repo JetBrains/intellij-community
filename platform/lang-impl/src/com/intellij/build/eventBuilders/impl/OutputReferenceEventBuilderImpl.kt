@@ -3,10 +3,12 @@ package com.intellij.build.eventBuilders.impl
 
 import com.intellij.build.eventBuilders.OutputReferenceEventBuilder
 import com.intellij.build.events.impl.OutputReferenceEventImpl
+import com.intellij.build.events.OutputId
+import com.intellij.build.events.StartId
 
 internal class OutputReferenceEventBuilderImpl(
-  private val startId: Any,
-  private val outputIds: List<Any>,
+  private val startId: StartId,
+  private val outputIds: List<OutputId>,
 ) : OutputReferenceEventBuilder {
 
   override fun build(): OutputReferenceEventImpl =

@@ -4,6 +4,7 @@ package com.intellij.build.eventBuilders
 import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEventsNls.Hint
 import com.intellij.build.events.BuildIssueEvent
+import com.intellij.build.events.OutputId
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.CheckReturnValue
@@ -25,7 +26,7 @@ interface BuildIssueEventBuilder {
   fun withHint(hint: @Hint String?): BuildIssueEventBuilder
 
   @CheckReturnValue
-  fun withOutputIds(outputIds: List<Any>): BuildIssueEventBuilder
+  fun withOutputIds(outputIds: List<OutputId>): BuildIssueEventBuilder
 
   @CheckReturnValue
   fun withFilePosition(filePosition: FilePosition?): BuildIssueEventBuilder

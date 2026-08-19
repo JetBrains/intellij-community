@@ -6,6 +6,7 @@ import com.intellij.build.events.BuildEventsNls.Description
 import com.intellij.build.events.BuildEventsNls.Hint
 import com.intellij.build.events.BuildEventsNls.Title
 import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.OutputId
 import com.intellij.pom.Navigatable
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.CheckReturnValue
@@ -35,7 +36,7 @@ interface MessageEventBuilder {
   fun withNavigatable(navigatable: Navigatable?): MessageEventBuilder
 
   @CheckReturnValue
-  fun withOutputIds(outputIds: List<Any>): MessageEventBuilder
+  fun withOutputIds(outputIds: List<OutputId>): MessageEventBuilder
 
   @CheckReturnValue
   fun withFilePosition(filePosition: FilePosition?): MessageEventBuilder

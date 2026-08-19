@@ -5,6 +5,7 @@ import com.intellij.build.events.BuildEventsNls.Description
 import com.intellij.build.events.BuildEventsNls.Hint
 import com.intellij.build.events.BuildEventsNls.Title
 import com.intellij.build.events.FileMessageEvent
+import com.intellij.build.events.OutputId
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.CheckReturnValue
 
@@ -31,7 +32,7 @@ interface FileMessageEventBuilder {
   fun withGroup(group: @Title String?): FileMessageEventBuilder
 
   @CheckReturnValue
-  fun withOutputIds(outputIds: List<Any>): FileMessageEventBuilder
+  fun withOutputIds(outputIds: List<OutputId>): FileMessageEventBuilder
 
   fun build(): FileMessageEvent
 }
