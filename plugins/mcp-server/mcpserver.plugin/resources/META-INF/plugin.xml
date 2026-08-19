@@ -29,5 +29,6 @@
 
   <content>
     <module name="intellij.libraries.night.config.toml" loading="required"/>
+    <module name="intellij.libraries.schema.kenerator" loading="embedded"/>
   </content>
 </idea-plugin>

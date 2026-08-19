@@ -5846,51 +5846,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "io.github.smiley4/schema-kenerator-core-2.2.0.jar_copy",
-    src = "@io_github_smiley4-schema-kenerator-core-2_2_0_http//file",
-    out = "io.github.smiley4/schema-kenerator-core-2.2.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "io-github-smiley4-schema-kenerator-core",
-    jar = "@io_github_smiley4-schema-kenerator-core-2_2_0_http//file",
-    source_jar = "@io_github_smiley4-schema-kenerator-core-2_2_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.github.smiley4/schema-kenerator-jsonschema-2.2.0.jar_copy",
-    src = "@io_github_smiley4-schema-kenerator-jsonschema-2_2_0_http//file",
-    out = "io.github.smiley4/schema-kenerator-jsonschema-2.2.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "io-github-smiley4-schema-kenerator-jsonschema",
-    jar = "@io_github_smiley4-schema-kenerator-jsonschema-2_2_0_http//file",
-    source_jar = "@io_github_smiley4-schema-kenerator-jsonschema-2_2_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.github.smiley4/schema-kenerator-serialization-2.2.0.jar_copy",
-    src = "@io_github_smiley4-schema-kenerator-serialization-2_2_0_http//file",
-    out = "io.github.smiley4/schema-kenerator-serialization-2.2.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "io-github-smiley4-schema-kenerator-serialization",
-    jar = "@io_github_smiley4-schema-kenerator-serialization-2_2_0_http//file",
-    source_jar = "@io_github_smiley4-schema-kenerator-serialization-2_2_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "io.modelcontextprotocol/kotlin-sdk-jvm-0.12.0.jar_copy",
     src = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http//file",
     out = "io.modelcontextprotocol/kotlin-sdk-jvm-0.12.0.jar",
@@ -14907,6 +14862,51 @@ jvm_import(
     name = "libraries-rhino-rhino",
     jar = "@org_mozilla-rhino-runtime-1_7_15_1_http//file",
     source_jar = "@org_mozilla-rhino-runtime-1_7_15_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.smiley4/schema-kenerator-core-2.2.0.jar_copy",
+    src = "@io_github_smiley4-schema-kenerator-core-2_2_0_http//file",
+    out = "io.github.smiley4/schema-kenerator-core-2.2.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-schema-kenerator-io-github-smiley4-schema-kenerator-core",
+    jar = "@io_github_smiley4-schema-kenerator-core-2_2_0_http//file",
+    source_jar = "@io_github_smiley4-schema-kenerator-core-2_2_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.smiley4/schema-kenerator-jsonschema-2.2.0.jar_copy",
+    src = "@io_github_smiley4-schema-kenerator-jsonschema-2_2_0_http//file",
+    out = "io.github.smiley4/schema-kenerator-jsonschema-2.2.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-schema-kenerator-io-github-smiley4-schema-kenerator-jsonschema",
+    jar = "@io_github_smiley4-schema-kenerator-jsonschema-2_2_0_http//file",
+    source_jar = "@io_github_smiley4-schema-kenerator-jsonschema-2_2_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.github.smiley4/schema-kenerator-serialization-2.2.0.jar_copy",
+    src = "@io_github_smiley4-schema-kenerator-serialization-2_2_0_http//file",
+    out = "io.github.smiley4/schema-kenerator-serialization-2.2.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-schema-kenerator-io-github-smiley4-schema-kenerator-serialization",
+    jar = "@io_github_smiley4-schema-kenerator-serialization-2_2_0_http//file",
+    source_jar = "@io_github_smiley4-schema-kenerator-serialization-2_2_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

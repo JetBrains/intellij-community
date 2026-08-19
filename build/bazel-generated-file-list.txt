@@ -602,6 +602,7 @@ libraries/rd/framework
 libraries/rd/swing
 libraries/rd/text
 libraries/rhino
+libraries/schema-kenerator
 libraries/search-everywhere-find-all-model
 libraries/search-everywhere-find-ec-model
 libraries/semver

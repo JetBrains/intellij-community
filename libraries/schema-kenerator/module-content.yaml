@@ -1,0 +1,10 @@
+- name: dist.all/lib/intellij.libraries.schema.kenerator.jar
+  modules:
+  - name: intellij.libraries.schema.kenerator
+    libraries:
+      io.github.smiley4.schema.kenerator.core:
+      - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-core/2/schema-kenerator-core-2.jar
+      io.github.smiley4.schema.kenerator.jsonschema:
+      - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-jsonschema/2/schema-kenerator-jsonschema-2.jar
+      io.github.smiley4.schema.kenerator.serialization:
+      - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2/schema-kenerator-serialization-2.jar

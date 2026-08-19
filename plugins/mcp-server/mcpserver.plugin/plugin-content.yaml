@@ -1,21 +1,18 @@
+- name: lib/intellij.libraries.schema.kenerator.jar
+  contentModules:
+  - name: intellij.libraries.schema.kenerator
+    libraries:
+      io.github.smiley4.schema.kenerator.core:
+      - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-core/2/schema-kenerator-core-2.jar
+      io.github.smiley4.schema.kenerator.jsonschema:
+      - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-jsonschema/2/schema-kenerator-jsonschema-2.jar
+      io.github.smiley4.schema.kenerator.serialization:
+      - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2/schema-kenerator-serialization-2.jar
 - name: lib/intellij.mcpserver.jar
-  projectLibraries:
-  - name: io.github.smiley4.schema.kenerator.core
-    files:
-    - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-core/2/schema-kenerator-core-2.jar
-    reason: <- intellij.mcpserver
-  - name: io.github.smiley4.schema.kenerator.jsonschema
-    files:
-    - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-jsonschema/2/schema-kenerator-jsonschema-2.jar
-    reason: <- intellij.mcpserver
-  - name: io.github.smiley4.schema.kenerator.serialization
-    files:
-    - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2/schema-kenerator-serialization-2.jar
-    reason: <- intellij.mcpserver
-  - name: ktor-server-content-negotiation
-    files:
-    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-content-negotiation-jvm/3/ktor-server-content-negotiation-jvm-3.jar
-    reason: <- intellij.mcpserver
+  library: ktor-server-content-negotiation
+  files:
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-content-negotiation-jvm/3/ktor-server-content-negotiation-jvm-3.jar
+  reason: <- intellij.mcpserver
   contentModules:
   - name: intellij.mcpserver
 - name: lib/intellij.mcpserver.stdio.jar
