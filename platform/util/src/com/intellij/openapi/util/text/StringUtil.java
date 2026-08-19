@@ -3054,7 +3054,7 @@ public class StringUtil {
     return false;
   }
 
-  @Contract(pure = true)
+  @Contract(value = "!null -> !null; null -> null", pure = true)
   @SuppressWarnings("AssignmentToForLoopParameter")
   public static String replaceUnicodeEscapeSequences(String text) {
     if (text == null) return null;
