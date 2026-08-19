@@ -52,6 +52,9 @@ open class EvoActionPopupStep(
   /** True when this step renders the "add new environment" node's submenu — the popup positions it to the left. */
   val isAddNewSubmenu: Boolean get() = node is EvoTreeAddNewNode
 
+  /** The editable env-name holder for an add-new submenu, or null when the name is fixed — see [EvoTreeAddNewNode]. */
+  val editableName: EvoEditableName? get() = (node as? EvoTreeAddNewNode)?.editableName
+
   override fun onChosen(
     selectedValue: EvoTreeItem,
     finalChoice: Boolean
@@ -65,6 +68,9 @@ open class EvoActionPopupStep(
       is EvoTreeNodeElement ->
         if (element.isEnabled && element.hasContent()) EvoActionPopupStep(null, element, dataContext, scope) else null
       is EvoTreeLeafElement -> {
+        // In an add-new submenu with an invalid name (blank/taken) the version rows are inert: don't select or close —
+        // keep the popup open so the user can fix the name (the field is red with an explaining tooltip).
+        if (editableName?.isValid == false) return null
         // Run the action only after the whole popup closes (via getFinalRunnable), so a tool window or dialog
         // it opens never appears behind a still-visible popup. FINAL_CHOICE is null; see EvoTreePopup.handleNextStep.
         finalRunnable = Runnable { performActionItem(element, null) }
@@ -96,7 +102,9 @@ open class EvoActionPopupStep(
     }
 
   // set to true if we need actions '...' on disabled items too
-  override fun isSelectable(value: EvoTreeItem?): Boolean = value != null && value.element.state == State.DONE && value.isEnabled
+  override fun isSelectable(value: EvoTreeItem?): Boolean =
+    // An invalid add-new name makes its version rows non-selectable (not just no-op) so nav/hover/click can't pick them.
+    editableName?.isValid != false && value != null && value.element.state == State.DONE && value.isEnabled
 
   override fun getIconFor(value: EvoTreeItem?): Icon? = value?.icon
 
@@ -136,7 +144,8 @@ open class EvoActionPopupStep(
 
   override fun getMnemonicNavigationFilter(): MnemonicNavigationFilter<EvoTreeItem?>? = null
 
-  override fun isSpeedSearchEnabled(): Boolean = true
+  // Off for an editable add-new submenu, so typed characters reach its name field instead of the list's speed search.
+  override fun isSpeedSearchEnabled(): Boolean = editableName == null
 
   // Filter the list as you type — match the row title and (once resolved) its secondary text.
   override fun getSpeedSearchFilter(): SpeedSearchFilter<EvoTreeItem?> = SpeedSearchFilter { value ->

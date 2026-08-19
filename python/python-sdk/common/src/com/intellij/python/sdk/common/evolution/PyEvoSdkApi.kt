@@ -201,9 +201,13 @@ sealed interface PyInterpreterRef {
    * chosen Python version (empty = uv's default); pip: the chosen system Python's binary path. [folder] (uv/pip
    * only) is the env folder location (absolute path of the auto-generated first-free `.venv{X}` in the section's
    * folder); when null the backend uses the first free `.venv`, `.venv1`, … under the module base dir.
+   *
+   * [name] is the user-editable env name from the in-widget "add new" name field: for uv/pip it is the env **folder
+   * name** created inside [folder] (the containing dir); for conda it is the **env name**. `null` keeps the tool's
+   * default (the pre-filled name).
    */
   @Serializable
-  data class CreateEnv(val token: @NonNls String, val folder: @NonNls String? = null) : PyInterpreterRef
+  data class CreateEnv(val token: @NonNls String, val folder: @NonNls String? = null, val name: @NonNls String? = null) : PyInterpreterRef
 
   /**
    * Configure the module's interpreter using one of the IDE's setup options (the "Shortcuts" rows — the same options
@@ -278,16 +282,31 @@ data class EvoSectionDto(
   val addNewFolderPath: @NonNls String? = null,
 )
 
-/** The in-widget "add new environment" flow for a section: the auto-generated target and the Python versions. */
+/** The in-widget "add new environment" flow for a section: the pre-filled target name and the Python versions. */
 @ApiStatus.Internal
 @Serializable
 data class EvoAddNewDto(
-  /** Auto-generated (non-editable) env folder name shown on the row, e.g. `.venv` — the first free one in the folder. */
+  /** Pre-filled env name shown on the row and in the name field: the env folder name for uv/pip (e.g. `.venv`), the env name for conda. */
   val name: @NlsSafe String,
-  /** Absolute path of that folder, where the env is created (see [PyInterpreterRef.CreateEnv.folder]). */
+  /**
+   * The base location passed back as [PyInterpreterRef.CreateEnv.folder]: for uv/pip the **containing dir** the env
+   * folder is created in; for conda unused (the name is the env name). See [PyInterpreterRef.CreateEnv].
+   */
   val path: @NonNls String,
   /** Version choices, best/default first (uv leads with its default; pip with the newest system Python). */
   val options: List<EvoAddNewOptionDto>,
+  /**
+   * When true, the add-new submenu shows an editable name field (pre-filled with [name]) on top and turns off speed
+   * search so typing edits the name; the chosen version then creates the env with the edited name. When false the row
+   * uses [name] as-is (e.g. poetry, whose in-project env is always `.venv`).
+   */
+  val nameEditable: Boolean = false,
+  /**
+   * Names already taken in the target location, so the name field can flag a collision (red + hint) and block creation.
+   * For uv/pip this is **every existing entry** in the containing dir (not only virtualenvs), since any file/folder with
+   * that name blocks creating the env there; for conda the existing env names are conveyed by the visible env rows.
+   */
+  val takenNames: List<@NlsSafe String> = emptyList(),
 )
 
 /** One selectable Python version for the in-widget "add new environment" flow. */

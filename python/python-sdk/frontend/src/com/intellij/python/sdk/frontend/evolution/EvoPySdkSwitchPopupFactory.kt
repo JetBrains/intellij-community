@@ -26,6 +26,7 @@ import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.requestEvoNode
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
+import com.intellij.python.sdk.frontend.evolution.components.EvoEditableName
 import com.intellij.python.sdk.frontend.evolution.components.EvoErrorException
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeAddNewNode
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeElement
@@ -102,9 +103,13 @@ internal class EvoPySdkSwitchPopupFactory(
   }
 
   private fun EvoLoadResultDto.toSections(nodeId: String, traceId: String): List<EvoTreeSection> = when (this) {
-    is EvoLoadResultDto.Ok -> sections.map { section ->
-      val leaves = section.leaves.map { it.toElement(nodeId, traceId) }
-      EvoTreeSection(label = section.label?.let { ListSeparator(it) }, elements = leaves + listOfNotNull(addNewElement(section, nodeId)))
+    is EvoLoadResultDto.Ok -> {
+      // Names already in use across this tool's node (existing envs) — the add-new field rejects these (red, no create).
+      val takenNames = sections.flatMap { it.leaves }.mapTo(mutableSetOf()) { it.title }
+      sections.map { section ->
+        val leaves = section.leaves.map { it.toElement(nodeId, traceId) }
+        EvoTreeSection(label = section.label?.let { ListSeparator(it) }, elements = leaves + listOfNotNull(addNewElement(section, nodeId, takenNames)))
+      }
     }
     is EvoLoadResultDto.Warning -> throw EvoWarningException(message)
     is EvoLoadResultDto.Error -> throw EvoErrorException(message)
@@ -115,23 +120,44 @@ internal class EvoPySdkSwitchPopupFactory(
    * showing the auto-generated (non-editable) env folder name; its submenu lists the Python versions and is
    * repositioned to the left (see EvoTreePopup). Otherwise the classic modal "Add new environment" row; or null.
    */
-  private fun addNewElement(section: EvoSectionDto, nodeId: String): EvoTreeElement? {
+  private fun addNewElement(section: EvoSectionDto, nodeId: String, takenNames: Set<String>): EvoTreeElement? {
     val addNewEnv = section.addNewEnv
     return when {
-      addNewEnv == null || addNewEnv.options.isEmpty() ->
-        if (section.addNew) EvoTreeLeafElement(AddNewEnvAction(project, moduleName, nodeId, scope)) else null
-      else -> EvoTreeAddNewNode(
-        text = addNewEnv.name,
-        icon = AllIcons.General.InlineAdd,
-        versions = addNewEnv.options.map { EvoTreeLeafElement(addVersionAction(nodeId, it, addNewEnv.path)) },
-      )
+      // No in-widget picker (no version options) → no add-new row. We no longer fall back to the modal Add dialog.
+      addNewEnv == null || addNewEnv.options.isEmpty() -> null
+      else -> {
+        // When the tool allows renaming (uv/pip/conda), share one editable-name holder between the submenu's name
+        // field and its version rows; poetry's `.venv` is fixed, so no holder — the rows use the pre-filled name.
+        // Taken names combine the visible env rows (conda's named envs) with the backend's full directory listing (uv/pip).
+        val editable = if (addNewEnv.nameEditable) EvoEditableName(addNewEnv.name, takenNames + addNewEnv.takenNames) else null
+        EvoTreeAddNewNode(
+          // The submenu opens to the left, so the row leads with a "<" (in place of the usual "+") and shows no right arrow.
+          text = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.title"),
+          icon = AllIcons.General.ChevronLeft,
+          versions = addNewEnv.options.map { EvoTreeLeafElement(addVersionAction(nodeId, it, addNewEnv.path, editable, addNewEnv.name)) },
+          editableName = editable,
+        )
+      }
     }
   }
 
-  /** A single Python-version row in the "add new environment" submenu: creates that version's env in [path] on click. */
-  private fun addVersionAction(nodeId: String, option: EvoAddNewOptionDto, path: String): AnAction =
+  /**
+   * A single Python-version row in the "add new environment" submenu: on click creates that version's env with the
+   * (possibly user-edited) name — from [editableName] when present, else [defaultName] — in the base location [path].
+   */
+  private fun addVersionAction(
+    nodeId: String,
+    option: EvoAddNewOptionDto,
+    path: String,
+    editableName: EvoEditableName? = null,
+    defaultName: String? = null,
+  ): AnAction =
     object : AnAction({ addVersionText(option) }, { "" }, AllIcons.Language.Python), DumbAware {
-      override fun actionPerformed(e: AnActionEvent) = createEvoEnv(project, moduleName, nodeId, option.token, path, scope)
+      override fun actionPerformed(e: AnActionEvent) {
+        // A taken/blank name can't back a new env (the field shows it in red) — don't create.
+        if (editableName != null && !editableName.isValid) return
+        createEvoEnv(project, moduleName, nodeId, option.token, path, editableName?.value ?: defaultName, scope)
+      }
     }
 
   /** Version row text: "Default" for uv's default (blank token), otherwise "Python <version>". */

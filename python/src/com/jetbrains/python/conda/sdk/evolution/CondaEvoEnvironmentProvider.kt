@@ -37,12 +37,25 @@ internal class CondaEvoEnvironmentProvider : PyEvoEnvironmentProvider {
                           ?: return evoWarning(PyCondaBundle.message("evolution.conda.executable.is.not.found"))
     val stdout = conda.runTool(fileSystem, null, null, "env", "list").getOrNull()
                  ?: return EvoLoadResultDto.Ok(emptyList())
-    val leaves = parseEnvList(stdout).map { (name, binary) -> evoEnvLeaf(name, binary, icon) }
+    val envs = parseEnvList(stdout)
+    val leaves = envs.map { (name, binary) -> evoEnvLeaf(name, binary, icon) }
+    // Conda envs are named (not folder-based): propose a free env name derived from the project so the widget's
+    // in-place "add new" can offer name + Python version (PyEvoSdkApiProvider fills the version options), instead of
+    // the modal dialog. addNewFolderPath carries the proposed name here.
+    val proposedName = firstFreeCondaEnvName(pyProject.baseDir.fileName?.toString() ?: "conda", envs.mapTo(mutableSetOf()) { it.first })
     val sections = listOf(
       EvoSectionDto(label = condaExecutable.path.toDisplayPath(), leaves = leaves),
-      EvoSectionDto(label = null, leaves = emptyList(), addNew = true),
+      EvoSectionDto(label = null, leaves = emptyList(), addNew = true, addNewFolderPath = proposedName),
     )
     return EvoLoadResultDto.Ok(sections)
+  }
+
+  /** First conda env name not already taken: `base`, then `base-1`, `base-2`, … */
+  private fun firstFreeCondaEnvName(base: String, existing: Set<String>): String {
+    if (base !in existing) return base
+    var i = 1
+    while ("$base-$i" in existing) i++
+    return "$base-$i"
   }
 
   private fun parseEnvList(stdout: String): List<Pair<String, Path?>> =

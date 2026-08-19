@@ -14,16 +14,21 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.SeparatorWithText
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.fields.ExtendableTextComponent
+import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
 import java.awt.BorderLayout
 import java.awt.Component
@@ -35,7 +40,10 @@ import java.awt.GridBagConstraints
 import java.awt.Insets
 import java.awt.Point
 import java.awt.Rectangle
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
@@ -49,6 +57,7 @@ import javax.swing.JViewport
 import javax.swing.ListCellRenderer
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
+import javax.swing.event.DocumentEvent
 
 private val SETTINGS_GEAR: Icon = AllIcons.General.GearPlain
 
@@ -98,7 +107,7 @@ private class GearGroupHeaderSeparator(labelInsets: Insets, private val gearCapt
   }
 }
 
-class EvoPopupListElementRenderer(listPopupImpl: ListPopupImpl) : PopupListElementRenderer<EvoTreeItem>(listPopupImpl) {
+class EvoPopupListElementRenderer(private val popup: EvoTreePopup) : PopupListElementRenderer<EvoTreeItem>(popup) {
   private val reloadLabel = JLabel()
 
   // Replace the plain group header with one that paints a settings gear on the "Select Environment" section.
@@ -113,7 +122,9 @@ class EvoPopupListElementRenderer(listPopupImpl: ListPopupImpl) : PopupListEleme
   override fun customizeComponent(list: JList<out EvoTreeItem>?, value: EvoTreeItem?, isSelected: Boolean) {
     super.customizeComponent(list, value, isSelected)
     if (value != null) {
-      myTextLabel.isEnabled = value.isEnabled
+      // Grey out the whole row (text + icon) when it can't be chosen — including all version rows while the add-new
+      // name is invalid. A disabled JLabel dims its icon automatically.
+      myTextLabel.isEnabled = value.isEnabled && !popup.isEditingNameInvalid()
       reserveVersionColumn(value)
     }
 
@@ -135,7 +146,9 @@ class EvoPopupListElementRenderer(listPopupImpl: ListPopupImpl) : PopupListEleme
       // The platform gives the arrow a wide emptyLeft(20) inset; tighten it so the icon sits right by the arrow.
       arrow.border = JBUI.Borders.emptyLeft(4)
     }
-    buttonPane.add(arrow, gb.next().weightx(0.0))
+    // The "Add New" row shows a "<" as its leading icon (see addNewElement) and opens its submenu to the left, so hide
+    // the platform's right-side next-step arrow for it.
+    if (element !is EvoTreeAddNewNode) buttonPane.add(arrow, gb.next().weightx(0.0))
   }
 
   /**
@@ -195,6 +208,115 @@ open class EvoTreePopup private constructor(
     (nextStep != null || evoStep?.hasPendingFinalAction() == true) && super.handleNextStep(nextStep, parentValue, e)
 
   private val evoStep: EvoActionPopupStep? get() = listStep as? EvoActionPopupStep
+
+  /** True while this is an add-new submenu whose typed name is invalid (blank/taken) — the renderer greys its version rows. */
+  fun isEditingNameInvalid(): Boolean = evoStep?.editableName?.isValid == false
+
+  /**
+   * For an editable add-new submenu, stack a name field on top of the version list. The name starts as plain (read-only)
+   * text; a pencil icon — or a click on the text — turns it editable. Speed search is off for this step (see
+   * [EvoActionPopupStep.isSpeedSearchEnabled]), so once editing, keystrokes reach the field; it writes straight into the
+   * shared [EvoEditableName] the version rows read at create time. Called from the [WizardPopup] constructor, so it
+   * relies only on the step (already set), not on this class's own fields (not yet initialized).
+   */
+  override fun createContent(): JComponent {
+    val content = super.createContent()
+    val editable = evoStep?.editableName ?: return content
+    // Full-width, right-aligned name field with the pencil as its trailing extension (so the name sits close to it).
+    val field = ExtendableTextField(editable.value)
+    field.isOpaque = false
+    field.border = JBUI.Borders.empty(1, 8)   // a touch more compact than the platform default
+    field.horizontalAlignment = SwingConstants.RIGHT
+    // Give the header a comfortable, consistent width (fits a ~22-char name; longer names scroll) so the popup size
+    // doesn't depend on how short the Python-version rows below happen to be.
+    field.columns = 22
+    val defaultForeground = field.foreground
+    fun refreshValidity() {
+      // Blank or already-taken name → red name + a tooltip explaining why, and the version rows won't create it
+      // (addVersionAction). A tooltip (rather than an extra line) keeps the popup height stable.
+      field.foreground = if (editable.isValid) defaultForeground else NamedColorUtil.getErrorForeground()
+      val hint = when {
+        editable.value.isBlank() -> PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.hint.empty")
+        editable.value in editable.takenNames -> PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.hint.exists", editable.value)
+        else -> null
+      }
+      field.setToolTipText(hint?.let { HtmlChunk.text(it) })
+      list.repaint()   // re-render the version rows so they grey out / un-grey with the name's validity
+    }
+    field.document.addDocumentListener(object : DocumentAdapter() {
+      override fun textChanged(e: DocumentEvent) {
+        editable.value = field.text.trim()
+        refreshValidity()
+      }
+    })
+    refreshValidity()
+    fun setEditing(on: Boolean) {
+      if (field.isEditable == on) return
+      field.isEditable = on              // read-only reads as plain text; editable shows a normal field
+      field.isOpaque = on
+      editable.editing = on
+      if (on) {
+        field.requestFocusInWindow()
+        field.selectAll()
+      }
+    }
+    // Finish editing = back to plain text AND move focus off the field to the list, so no caret lingers in the label.
+    // Defer the focus move so it also wins when triggered from a click on the pencil (which would otherwise re-focus
+    // the field as the click completes).
+    fun finishEditing() {
+      setEditing(false)
+      SwingUtilities.invokeLater { list.requestFocusInWindow() }
+    }
+    setEditing(false)                    // plain text by default
+    editable.finishEditing = ::finishEditing
+    // The pencil toggles text ↔ edit; clicking the text starts editing; losing focus commits back to text.
+    field.addExtension(ExtendableTextComponent.Extension.create(
+      AllIcons.Actions.Edit, PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.rename")) {
+      if (field.isEditable) finishEditing() else setEditing(true)
+    })
+    field.addMouseListener(object : MouseAdapter() {
+      override fun mouseClicked(e: MouseEvent) {
+        if (!field.isEditable) setEditing(true)
+      }
+    })
+    field.addFocusListener(object : FocusAdapter() {
+      override fun focusLost(e: FocusEvent) = setEditing(false)
+    })
+    // A muted caption on the left balances the right-aligned name and says what the field is.
+    val caption = JBLabel(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.name.caption")).apply {
+      foreground = NamedColorUtil.getInactiveTextColor()
+      border = JBUI.Borders.emptyLeft(8)
+    }
+    val header = JPanel(BorderLayout()).apply {
+      isOpaque = false
+      add(caption, BorderLayout.WEST)
+      add(field, BorderLayout.CENTER)
+    }
+    return JPanel(BorderLayout()).apply {
+      add(header, BorderLayout.NORTH)
+      add(content, BorderLayout.CENTER)
+    }
+  }
+
+  // While the name field is being edited, Enter finishes editing (back to plain text) instead of creating the env; a
+  // mouse click on a version still creates it. Enter is bound to selection in ListPopupImpl's input map and dispatched
+  // before the field sees it, so we intercept it here (the platform passes the triggering KeyEvent).
+  override fun handleSelect(handleFinalChoices: Boolean, e: InputEvent?) {
+    val editable = evoStep?.editableName
+    if (editable?.editing == true && e is KeyEvent && e.keyCode == KeyEvent.VK_ENTER) {
+      editable.finishEditing?.invoke()
+      return
+    }
+    super.handleSelect(handleFinalChoices, e)
+  }
+
+  // While the name field is being edited, don't route keys to the list (its Left/Right close the submenu / navigate,
+  // Home/End jump rows, etc.). Skipping this lets the un-consumed event fall through to the focused field, which then
+  // handles caret movement, selection and editing natively. Non-editing keys are processed by the list as usual.
+  override fun process(aEvent: KeyEvent) {
+    if (evoStep?.editableName?.editing == true) return
+    super.process(aEvent)
+  }
 
   /** Caption of the section header that carries the settings gear. */
   private val selectEnvCaption: String = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.select.environment")

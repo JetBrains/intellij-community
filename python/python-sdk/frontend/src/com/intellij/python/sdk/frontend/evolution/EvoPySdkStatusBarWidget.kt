@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
+import com.intellij.openapi.components.service
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.platform.project.projectId
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
@@ -26,14 +27,11 @@ import com.intellij.python.sdk.common.evolution.requestEvoAssociatedInterpreters
 import com.intellij.python.sdk.common.evolution.requestEvoSdkConfigurationInProgress
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeStaticNodeElement
+import com.intellij.ui.AnimatedIcon
 import com.intellij.util.IconUtil
 import com.intellij.util.messages.MessageBusConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.awt.Component
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.RenderingHints
 import javax.swing.Icon
 
 private const val ID: String = "EvoPySdkStatusBarWidget"
@@ -41,34 +39,8 @@ private const val ID: String = "EvoPySdkStatusBarWidget"
 /** How long (ms) after the popup is closed a re-open still reuses the built tree instead of rebuilding (rescanning). */
 private fun popupTreeTtlMs(): Long = PyEvoRegistry.popupTreeCacheSeconds.toLong() * 1000
 
-/**
- * A self-animating spinner made from the Python logo (used for the "loading" and "configuring" states): it rotates the
- * logo by a wall-clock-derived angle and schedules its own repaint via the [Component] passed to [paintIcon], so it
- * animates in the status bar (which has no repaint timer) without any external ticker. Painting stops on its own once
- * the widget swaps in another icon.
- */
-private object PythonSpinnerIcon : Icon {
-  private val base: Icon = AllIcons.Language.Python
-  private const val PERIOD_MS: Long = 1000 // one full rotation per second
-  private const val FRAME_MS: Long = 60    // ~16 fps
-
-  override fun getIconWidth(): Int = base.iconWidth
-  override fun getIconHeight(): Int = base.iconHeight
-
-  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-    val g2 = g.create() as Graphics2D
-    try {
-      g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
-      val angle = 2.0 * Math.PI * (System.currentTimeMillis() % PERIOD_MS) / PERIOD_MS
-      g2.rotate(angle, x + base.iconWidth / 2.0, y + base.iconHeight / 2.0)
-      base.paintIcon(c, g2, x, y)
-    }
-    finally {
-      g2.dispose()
-    }
-    c?.repaint(FRAME_MS)
-  }
-}
+/** Fading Python logo for the neutral "loading" state (no specific tool yet); configuring uses the tool's own logo. */
+private val PYTHON_FADING_ICON: Icon = AnimatedIcon.Fading(AllIcons.Language.Python)
 
 internal class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
   override fun getId(): String = ID
@@ -125,9 +97,21 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     scope.launch {
       requestEvoSdkConfigurationInProgress(project.projectId()).collect { inProgress ->
         configuring = inProgress
+        if (!inProgress) project.service<EvoConfiguringTracker>().nodeId = null   // stop attributing the fade to a tool
         update()
       }
     }
+  }
+
+  /**
+   * The per-tool fading icon for the "configuring" state: the logo of the tool whose environment is being set up
+   * (recorded by the select/create action in [EvoConfiguringTracker]), or the Python logo when the tool is unknown
+   * (e.g. autoconfigure / associated interpreters).
+   */
+  private fun configuringIcon(): Icon {
+    val nodeId = project.service<EvoConfiguringTracker>().nodeId
+    val toolIcon = nodeId?.let { id -> cached?.nodes?.firstOrNull { it.id == id }?.icon?.icon() }
+    return AnimatedIcon.Fading(toolIcon ?: AllIcons.Language.Python)
   }
 
   override fun getWidgetState(file: VirtualFile?): WidgetState {
@@ -138,7 +122,7 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
         PySdkFrontendBundle.message("evo.sdk.status.bar.configuring.description"),
         PySdkFrontendBundle.message("evo.sdk.status.bar.configuring.title"),
         true,
-      ).apply { icon = PythonSpinnerIcon }
+      ).apply { icon = configuringIcon() }
     }
     val module = file?.let { findModule(it) } ?: project.modules.firstOrNull() ?: return WidgetState.HIDDEN
     val moduleName = module.name
@@ -151,7 +135,7 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
         PySdkFrontendBundle.message("evo.sdk.loading.description"),
         PySdkFrontendBundle.message("evo.sdk.status.bar.loading.title"),
         true,
-      ).apply { icon = PythonSpinnerIcon }
+      ).apply { icon = PYTHON_FADING_ICON }
     }
 
     val interpreter = current.current

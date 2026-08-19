@@ -50,8 +50,11 @@ import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 import com.intellij.python.sdk.common.evolution.PyEvoSdkApi
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
+import com.jetbrains.python.Result
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.MessageError
+import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.packaging.PyVersionSpecifiers
@@ -86,6 +89,9 @@ import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterPresenter
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
 import com.jetbrains.python.sdk.createSdkGuessingTypeByPath
+import com.jetbrains.python.sdk.conda.condaSupportedLanguages
+import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
+import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
@@ -117,6 +123,7 @@ import java.nio.file.Path
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.exists
+import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
 import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.seconds
@@ -361,7 +368,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
             ?: return@withSdkConfigurationLock EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.select.failed"))
           }
           is PyInterpreterRef.CreateEnv ->
-            createSdkForCreateEnv(pyProject, fileSystem, ref.token, ref.folder, nodeId)
+            createSdkForCreateEnv(pyProject, fileSystem, ref.token, ref.folder, ref.name, nodeId)
             ?: return@withSdkConfigurationLock EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.select.failed"))
         }
         // Apply via the module setter (like the add-interpreter dialog's setupSdk and the classic widget): it runs
@@ -471,18 +478,34 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
   }
 
   /**
+   * Unwraps a creator result: on failure surfaces it to the user via the default [ErrorSink] (a process error opens the
+   * process-execution-error dialog with the command's output) instead of silently swallowing it, and returns `null`.
+   */
+  private suspend fun <T> Result<T, com.jetbrains.python.errorProcessing.PyError>.getOrShowError(project: Project): T? =
+    when (this) {
+      is Result.Success -> result
+      is Result.Failure -> { ErrorSink().emit(error, project); null }
+    }
+
+  /**
    * Creates the SDK for a declared-but-not-yet-materialized env (poetry per-version, hatch declared env) using the
    * tool's "create" logic, dispatched by [nodeId]. [token] is tool-specific (poetry: base Python path; hatch: env
-   * name). Returns `null` on failure.
+   * name). Returns `null` on failure (surfaced to the user via [getOrShowError]).
    */
-  private suspend fun createSdkForCreateEnv(pyProject: PyProject, fileSystem: EelFileSystem, token: String, folder: String?, nodeId: String): Sdk? {
+  private suspend fun createSdkForCreateEnv(pyProject: PyProject, fileSystem: EelFileSystem, token: String, folder: String?, name: String?, nodeId: String): Sdk? {
     val module = pyProject.residesOnModule
-    // The env location: the auto-generated path from the widget (absolute, or relative to the base dir), else the
-    // first free .venv{X} under the base dir.
-    val venvDir = folder?.takeIf { it.isNotBlank() }?.let { pyProject.baseDir.resolve(it) } ?: firstFreeVenvDir(pyProject.baseDir)
+    val project = pyProject.project
+    // uv/pip env location: the (possibly user-edited) [name] folder inside the [folder] containing dir. Fallbacks keep
+    // older callers working (folder as a full path, or the first free `.venv{X}` under the base dir).
+    val venvDir = when {
+      !folder.isNullOrBlank() && !name.isNullOrBlank() -> Path.of(folder).resolve(name)
+      !folder.isNullOrBlank() -> pyProject.baseDir.resolve(folder)
+      else -> firstFreeVenvDir(pyProject.baseDir)
+    }
     return when (nodeId) {
       "uv" -> {
         val uvExe = UvPyTool.getInstance().resolveExecutable(fileSystem) ?: return null
+        if (venvDir.exists()) return existsError(project, venvDir.fileName.toString())
         // token is the chosen Python version ("" = uv's default).
         val version = token.takeIf { it.isNotBlank() }?.let { runCatching { Version.parse(it, strict = false) }.getOrNull() }
         setupNewUvSdkAndEnv(
@@ -492,14 +515,15 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
           fileSystem = fileSystem,
           version = version,
           errorSink = ErrorSink(),
-        ).getOrNull()
+        ).getOrShowError(project)
       }
       "pip" -> {
+        if (venvDir.exists()) return existsError(project, venvDir.fileName.toString())
         // token is the chosen system Python's binary path.
         val eelApi = fileSystem.eelDescriptor.toEelApi()
         val systemPython = SystemPythonService().findSystemPythons(eelApi).firstOrNull { it.pythonBinary.pathString == token } ?: return null
-        val venvPython = createVenvFromSystemPython(systemPython, venvDir).getOrNull() ?: return null
-        createSdkGuessingTypeByPath(PathHolder.Eel(venvPython), fileSystem, ModuleOrProject.ModuleAndProject(module), null).getOrNull()
+        val venvPython = createVenvFromSystemPython(systemPython, venvDir).getOrShowError(project) ?: return null
+        createSdkGuessingTypeByPath(PathHolder.Eel(venvPython), fileSystem, ModuleOrProject.ModuleAndProject(module), null).getOrShowError(project)
       }
       "Poetry" -> {
         val poetryExe = PoetryPyTool.getInstance().resolveExecutable(fileSystem) ?: return null
@@ -513,7 +537,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
           // The in-project "add new" carries a target folder; the per-version cache rows don't (poetry uses its cache).
           inProjectEnv = folder != null,
           targetPanelExtension = null,
-        ).getOrNull()
+        ).getOrShowError(project)
       }
       "Hatch" -> {
         // Version picker: folder = declared env name, token = chosen base python. Fallback (no picker): token = env name.
@@ -524,11 +548,28 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
         val eelApi = fileSystem.eelDescriptor.toEelApi()
         val basePython = if (folder != null) Path.of(token)
                          else SystemPythonService().findSystemPythons(eelApi).firstOrNull()?.pythonBinary ?: return null
-        val venv = hatchService.createVirtualEnvironment(PathHolder.Eel(basePython), envName).getOrNull() ?: return null
-        HatchVirtualEnvironment(hatchEnv, venv).createSdk(hatchService.getWorkingDirectoryPath(), fileSystem, null).getOrNull()
+        val venv = hatchService.createVirtualEnvironment(PathHolder.Eel(basePython), envName).getOrShowError(project) ?: return null
+        HatchVirtualEnvironment(hatchEnv, venv).createSdk(hatchService.getWorkingDirectoryPath(), fileSystem, null).getOrShowError(project)
+      }
+      "Conda" -> {
+        // Named conda env: name = the (possibly user-edited) env name, token = the chosen Python version. Conda
+        // provides the interpreter for that version, so no base system Python is needed.
+        val condaExe = CondaPyTool.getInstance().resolveExecutable(fileSystem) ?: return null
+        val envName = name?.takeIf { it.isNotBlank() } ?: folder?.takeIf { it.isNotBlank() } ?: return null
+        val langLevel = LanguageLevel.fromPythonVersion(token) ?: return null
+        // conda itself refuses to recreate an existing named env; its error is surfaced by getOrShowError below.
+        PyCondaCommand(condaExe.path.toString(), null)
+          .createCondaSdkAlongWithNewEnv(NewCondaEnvRequest.EmptyNamedEnv(langLevel, envName), PythonSdkUtil.getAllSdks(), pyProject.baseDir)
+          .getOrShowError(project)
       }
       else -> null
     }
+  }
+
+  /** Surfaces a "that environment already exists" error (so we never silently overwrite/recreate) and returns null. */
+  private suspend fun existsError(project: Project, name: String): Sdk? {
+    ErrorSink().emit(MessageError(PySdkBundle.message("evolution.error.env.exists", name)), project)
+    return null
   }
 
   /**
@@ -541,11 +582,28 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val options = addNewVersionOptions(nodeId, pyProject).takeIf { it.isNotEmpty() } ?: return result
     return result.copy(sections = result.sections.map { section ->
       if (!section.addNew) return@map section
-      // Auto-generate the env folder per section's folder (so a nested/other folder proposes its own first-free .venv{X}).
-      // Poetry's in-project env is always the fixed `.venv` (poetry ignores any other name), so don't propose `.venv{X}`.
-      val folder = section.addNewFolderPath?.let { Path.of(it) } ?: pyProject.baseDir
-      val dir = if (nodeId == "Poetry") defaultVenvDir(folder) else firstFreeVenvDir(folder)
-      section.copy(addNewEnv = EvoAddNewDto(name = dir.fileName.toString(), path = dir.pathString, options = options))
+      val addNewEnv = when (nodeId) {
+        // Conda envs are named, not folder-based: propose a free env name (from the provider) and let the user edit it.
+        // `path` is unused for conda — the name is the env name.
+        "Conda" -> {
+          val envName = section.addNewFolderPath ?: (pyProject.baseDir.fileName?.toString() ?: "conda")
+          EvoAddNewDto(name = envName, path = "", options = options, nameEditable = true)
+        }
+        // Poetry's in-project env is always the fixed `.venv` (poetry ignores any other name) → non-editable.
+        "Poetry" -> {
+          val dir = defaultVenvDir(section.addNewFolderPath?.let { Path.of(it) } ?: pyProject.baseDir)
+          EvoAddNewDto(name = dir.fileName.toString(), path = dir.pathString, options = options, nameEditable = false)
+        }
+        // uv/pip: the env folder is created inside the section's containing dir; propose the first-free `.venv{X}` name,
+        // which the user can edit. `path` is that containing dir. Taken names = EVERY existing entry in that dir (not just
+        // virtualenvs) — any file/folder with the same name would block creating the env there.
+        else -> {
+          val container = section.addNewFolderPath?.let { Path.of(it) } ?: pyProject.baseDir
+          val taken = runCatching { withContext(Dispatchers.IO) { container.listDirectoryEntries().map { it.fileName.toString() } } }.getOrDefault(emptyList())
+          EvoAddNewDto(name = firstFreeVenvDir(container).fileName.toString(), path = container.pathString, options = options, nameEditable = true, takenNames = taken)
+        }
+      }
+      section.copy(addNewEnv = addNewEnv)
     })
   }
 
@@ -570,11 +628,10 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
       "uv" -> {
         val uvExe = UvPyTool.getInstance().resolveExecutable(fileSystem) ?: return emptyList()
         val cli = createUvCli(uvExe, fileSystem).getOrNull() ?: return emptyList()
-        // Same list as the v2 dialog: filtered by the project's requires-python, newest-first, led by uv's "default"
-        // (empty token → uv picks the version). The version token is the full version so the create step can pin it.
+        // Same list as the v2 dialog: filtered by the project's requires-python, newest-first. The version token is the
+        // full version so the create step can pin it.
         val versions = createUvLowLevel(pyProject.baseDir, cli, fileSystem, null)
           .listSupportedPythonVersions(requiresPython(pyProject.baseDir)).getOrNull().orEmpty()
-        listOf(EvoAddNewOptionDto(title = "", token = "")) +
         versions.map { EvoAddNewOptionDto(title = "${it.major}.${it.minor}", token = it.toString()) }
       }
       // pip creates a venv from a base interpreter; Poetry/Hatch create their env from one — all pick a system Python.
@@ -589,6 +646,10 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
           .sortedByDescending { it.pythonInfo.languageLevel }
           .map { EvoAddNewOptionDto(title = it.pythonInfo.languageLevel.toPythonVersion(), token = it.pythonBinary.pathString) }
       }
+      // Conda provides the interpreter itself, so the choice is a Python version from conda's supported levels (the same
+      // list the v2 dialog offers — up to 3.13, NOT filtered by the project's requires-python). The token is the
+      // version string; the create step parses it back to a LanguageLevel.
+      "Conda" -> condaSupportedLanguages.map { EvoAddNewOptionDto(title = it.toPythonVersion(), token = it.toPythonVersion()) }
       else -> emptyList()
     }
   }
