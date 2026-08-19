@@ -4,6 +4,7 @@ package com.intellij.refactoring.introduceVariable;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -12,7 +13,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.refactoring.IntroduceChoiceAction;
 import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.IntroduceSite;
 import com.intellij.refactoring.RefactoringBundle;
@@ -72,9 +72,9 @@ public final class JavaIntroduceVariableModCommandServiceImpl extends JavaIntrod
     //noinspection DialogTitleCapitalization
     return ModCommand.chooseAction(
       title != null ? title : RefactoringBundle.message("replace.multiple.occurrences.found"),
-      ContainerUtil.map(choices, choice -> new IntroduceChoiceAction(
-        choice.description(), familyName, choice.occurrences(),
-        pickedContext -> introduceVariableCommand(pickedContext, site, choice.index()))));
+      ContainerUtil.map(choices, choice -> ModCommandAction
+        .of(choice.description(), familyName, pickedContext -> introduceVariableCommand(pickedContext, site, choice.index()))
+        .withPresentation(presentation -> presentation.withHighlighting(choice.occurrences().toArray(TextRange.EMPTY_ARRAY)))));
   }
 
   /**

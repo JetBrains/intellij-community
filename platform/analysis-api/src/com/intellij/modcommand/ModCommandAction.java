@@ -1,10 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
@@ -13,6 +15,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 /**
@@ -30,6 +33,55 @@ public interface ModCommandAction extends CommonIntentionAction, PossiblyDumbAwa
    * Empty array constant for convenience
    */
   ModCommandAction[] EMPTY_ARRAY = new ModCommandAction[0];
+
+  /**
+   * Creates an action that computes an arbitrary command when it's performed.
+   *
+   * @param title   the text naming the action to the user; also its {@link #getFamilyName() family name}
+   * @param command a function computing the command to perform
+   * @return an action that performs the command {@code command} computes
+   * @see #of(String, String, Function)
+   */
+  @Contract(pure = true)
+  static @NotNull ModCommandAction of(@NotNull @IntentionName String title,
+                                      @NotNull Function<@NotNull ActionContext, @NotNull ModCommand> command) {
+    return of(title, null, command);
+  }
+
+  /**
+   * Creates an action that computes an arbitrary command when it's performed.
+   *
+   * @param title      the text naming the action to the user
+   * @param familyName the {@link #getFamilyName() family name} of the action, {@code title} if {@code null}
+   * @param command    a function computing the command to perform
+   * @return an action that performs the command {@code command} computes
+   */
+  @Contract(pure = true)
+  static @NotNull ModCommandAction of(@NotNull @IntentionName String title,
+                                      @Nullable @IntentionFamilyName String familyName,
+                                      @NotNull Function<@NotNull ActionContext, @NotNull ModCommand> command) {
+    return new ModCommandAction() {
+      @Override
+      public @NotNull Presentation getPresentation(@NotNull ActionContext context) {
+        return Presentation.of(title);
+      }
+
+      @Override
+      public @NotNull String getFamilyName() {
+        return familyName != null ? familyName : title;
+      }
+
+      @Override
+      public @NotNull ModCommand perform(@NotNull ActionContext context) {
+        return command.apply(context);
+      }
+
+      @Override
+      public String toString() {
+        return "Action: [" + title + "]";
+      }
+    };
+  }
 
   /**
    * @param context context in which the action is executed

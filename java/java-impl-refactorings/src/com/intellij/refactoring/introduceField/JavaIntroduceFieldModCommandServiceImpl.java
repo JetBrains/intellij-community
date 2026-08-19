@@ -5,6 +5,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -17,7 +18,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.refactoring.IntroduceChoiceAction;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.Nls;
@@ -102,9 +102,10 @@ public final class JavaIntroduceFieldModCommandServiceImpl extends JavaIntroduce
     return ModCommand.chooseAction(
       JavaRefactoringBundle.message(isConstant ? "popup.title.choose.class.to.introduce.constant"
                                                : "popup.title.choose.class.to.introduce.field"),
-      ContainerUtil.map(targetClasses, targetClass -> new IntroduceChoiceAction(
-        targetClass.presentableName(), familyName, available.highlightRanges(),
-        pickedContext -> chooseInitializationPlace(pickedContext, site, isConstant, available, targetClass, familyName))));
+      ContainerUtil.map(targetClasses, targetClass -> ModCommandAction
+        .of(targetClass.presentableName(), familyName,
+            pickedContext -> chooseInitializationPlace(pickedContext, site, isConstant, available, targetClass, familyName))
+        .withPresentation(presentation -> presentation.withHighlighting(highlightRanges(available)))));
   }
 
   /** A command creating the field in {@code targetClass}, asking where to initialize it if there is a choice. */
@@ -124,9 +125,15 @@ public final class JavaIntroduceFieldModCommandServiceImpl extends JavaIntroduce
     }
     return ModCommand.chooseAction(
       JavaBundle.message("introduce.field.initialize.in.scope"),
-      ContainerUtil.map(places, place -> new IntroduceChoiceAction(
-        Objects.requireNonNull(InitializationPlace.getPresentableText(place)), familyName, analysis.highlightRanges(),
-        pickedContext -> createFieldCommand(pickedContext, site, isConstant, place, targetClass.index()))));
+      ContainerUtil.map(places, place -> ModCommandAction
+        .of(Objects.requireNonNull(InitializationPlace.getPresentableText(place)), familyName,
+            pickedContext -> createFieldCommand(pickedContext, site, isConstant, place, targetClass.index()))
+        .withPresentation(presentation -> presentation.withHighlighting(highlightRanges(analysis)))));
+  }
+
+  /** The ranges of {@code analysis} to highlight while a chooser entry of the refactoring is selected. */
+  private static @NotNull TextRange @NotNull [] highlightRanges(@NotNull ToFieldContext.Available analysis) {
+    return analysis.highlightRanges().toArray(TextRange.EMPTY_ARRAY);
   }
 
   /**
