@@ -894,7 +894,9 @@ object UniversalFileChooser {
               cardLayout.show(contentPanel, TREE_CARD)
               fileToSelect?.let {
                 val selection = if (it.root == it) {
-                  fileTree.matchRoot(it)
+                  allRoots.firstOrNull { root ->
+                    root.path?.invariantSeparatorsPathString == it.invariantSeparatorsPathString
+                  }?.path
                 } else it
                 if (selection != null) {
                   fileTree.select(selection) { fileTree.expand(selection, null) }
