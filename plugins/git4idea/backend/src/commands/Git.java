@@ -136,6 +136,7 @@ public interface Git {
                             boolean force,
                             boolean detach,
                             boolean withReset,
+                            boolean ignoreOtherWorktrees,
                             GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
@@ -353,7 +354,8 @@ public interface Git {
   GitCommandResult createWorkingTree(@NotNull GitRepository repository,
                                      @NotNull FilePath workingTreePath,
                                      @NotNull GitReference sourceRef,
-                                     @Nullable String newBranchName);
+                                     @Nullable String newBranchName,
+                                     boolean force);
 
   @NotNull
   GitCommandResult pruneWorktrees(@NotNull GitRepository repository);

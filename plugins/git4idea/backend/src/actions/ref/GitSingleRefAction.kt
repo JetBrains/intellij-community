@@ -99,6 +99,15 @@ abstract class GitSingleRefAction<T : GitReference>(
       repositories.firstNotNullOfOrNull {
         GitWorkingTreesUtil.findCheckedOutWorkingTree(reference, it.workingTreeHolder.getWorkingTrees(), skipCurrentWorkingTree)
       }
+
+    /**
+     * @return all working trees (across [repositories]) that have [reference] checked out. Normally at most one, but the "ignore other
+     * worktrees" override lets a branch be checked out into more than one worktree at a time.
+     */
+    internal fun findCheckedOutWorkingTrees(reference: GitReference, repositories: List<GitRepository>, skipCurrentWorkingTree: Boolean): List<GitWorkingTree> =
+      repositories.flatMap {
+        GitWorkingTreesUtil.findCheckedOutWorkingTrees(reference, it.workingTreeHolder.getWorkingTrees(), skipCurrentWorkingTree)
+      }
   }
 }
 

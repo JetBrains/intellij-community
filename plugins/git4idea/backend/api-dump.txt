@@ -98,6 +98,8 @@ f:git4idea.checkin.GitCommitOptions
 c:git4idea.checkout.GitCloneDialog
 - <init>(com.intellij.openapi.project.Project):V
 git4idea.commands.Git
+- a:checkout(git4idea.repo.GitRepository,java.lang.String,java.lang.String,Z,Z,Z,Z,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
+- a:createWorkingTree(git4idea.repo.GitRepository,com.intellij.openapi.vcs.FilePath,git4idea.GitReference,java.lang.String,Z):git4idea.commands.GitCommandResult
 - a:getUnmergedFiles(git4idea.repo.GitRepository):git4idea.commands.GitCommandResult
 - a:runCommand(com.intellij.openapi.util.Computable):git4idea.commands.GitCommandResult
 - a:runCommand(git4idea.commands.GitLineHandler):git4idea.commands.GitCommandResult
@@ -118,6 +120,8 @@ a:git4idea.commands.GitHandler
 git4idea.commands.GitHttpAuthenticator
 - a:getPresentableErrorMessage(java.util.List):java.lang.String
 c:git4idea.commands.GitImpl
+- checkout(git4idea.repo.GitRepository,java.lang.String,java.lang.String,Z,Z,Z,Z,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
+- createWorkingTree(git4idea.repo.GitRepository,com.intellij.openapi.vcs.FilePath,git4idea.GitReference,java.lang.String,Z):git4idea.commands.GitCommandResult
 - runHook(git4idea.repo.GitRepository,java.lang.String,java.util.List,java.util.List):git4idea.commands.GitCommandResult
 c:git4idea.commands.GitLineHandler
 - addLineListener(git4idea.commands.GitLineHandlerListener):V

@@ -28,11 +28,22 @@ object GitWorkingTreesUtil {
     workingTrees: Collection<GitWorkingTree>,
     skipCurrentWorkingTree: Boolean,
   ): GitWorkingTree? {
-    if (!isWorkingTreesFeatureEnabled() || reference !is GitStandardLocalBranch) {
-      return null
-    }
+    return findCheckedOutWorkingTrees(reference, workingTrees, skipCurrentWorkingTree).firstOrNull()
+  }
 
-    return workingTrees.find { (!skipCurrentWorkingTree || !it.isCurrent) && it.currentBranch == reference }
+  /**
+   * @return all working trees (among [workingTrees]) that have [reference] checked out. Normally at most one, but the "ignore other
+   * worktrees" override lets a branch be checked out into more than one worktree at a time.
+   */
+  fun findCheckedOutWorkingTrees(
+    reference: GitReference,
+    workingTrees: Collection<GitWorkingTree>,
+    skipCurrentWorkingTree: Boolean,
+  ): List<GitWorkingTree> {
+    if (!isWorkingTreesFeatureEnabled() || reference !is GitStandardLocalBranch) {
+      return emptyList()
+    }
+    return workingTrees.filter { (!skipCurrentWorkingTree || !it.isCurrent) && it.currentBranch == reference }
   }
 
   /**
