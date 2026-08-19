@@ -8,6 +8,7 @@ import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.uast.UastHintedVisitorAdapter
+import com.intellij.util.PerformanceAssertions
 import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
@@ -62,7 +63,10 @@ internal class UnsafeOpenServiceCastInspection : DevKitUastInspectionBase() {
 
   private fun isOpenService(serviceClass: PsiClass, project: Project): Boolean {
     val domManager = DomManager.getDomManager(project)
-    for (candidate in locateExtensionsByPsiClass(serviceClass)) {
+    val candidates = PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911").use {
+      locateExtensionsByPsiClass(serviceClass)
+    }
+    for (candidate in candidates) {
       val extension = getServiceExtensionDeclaration(candidate, domManager) ?: continue
       if (isOpenServiceDeclaration(extension)) {
         return true

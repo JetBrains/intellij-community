@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion.keywords
+package org.jetbrains.kotlin.idea.completion.implCommon.keywords
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import org.jetbrains.kotlin.idea.completion.handlers.createKeywordConstructLookupElement
@@ -9,12 +9,17 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.psiUtil.prevLeaf
 
 object DefaultCompletionKeywordHandlerProvider : CompletionKeywordHandlerProvider<CompletionKeywordHandler.NO_CONTEXT>() {
-    private val CONTRACT_HANDLER = completionKeywordHandler<CompletionKeywordHandler.NO_CONTEXT>(KtTokens.CONTRACT_KEYWORD) { _, _, _, _ ->
-        emptyList()
-    }
+    private val CONTRACT_HANDLER =
+        completionKeywordHandler<CompletionKeywordHandler.NO_CONTEXT>(
+            KtTokens.CONTRACT_KEYWORD
+        ) { _, _, _, _ ->
+            emptyList()
+        }
 
     private val GETTER_HANDLER =
-        completionKeywordHandler<CompletionKeywordHandler.NO_CONTEXT>(KtTokens.GET_KEYWORD) { parameters, _, lookupElement, project ->
+        completionKeywordHandler<CompletionKeywordHandler.NO_CONTEXT>(
+            KtTokens.GET_KEYWORD
+        ) { parameters, _, lookupElement, project ->
             buildList {
                 add(lookupElement.withLineIndentAdjuster())
                 if (!parameters.isUseSiteAnnotationTarget) {
@@ -40,7 +45,9 @@ object DefaultCompletionKeywordHandlerProvider : CompletionKeywordHandlerProvide
         }
 
     private val SETTER_HANDLER =
-        completionKeywordHandler<CompletionKeywordHandler.NO_CONTEXT>(KtTokens.SET_KEYWORD) { parameters, _, lookupElement, project ->
+        completionKeywordHandler<CompletionKeywordHandler.NO_CONTEXT>(
+            KtTokens.SET_KEYWORD
+        ) { parameters, _, lookupElement, project ->
             buildList {
                 add(lookupElement.withLineIndentAdjuster())
                 if (!parameters.isUseSiteAnnotationTarget) {

@@ -1,20 +1,20 @@
-An _<selection>h1<caret></selection>_ header
+An *<selection>h1<caret></selection>* header
 ============
 
-Paragraphs are _<selection>separated<caret></selection>_ by a blank line.
+Paragraphs are *<selection>separated<caret></selection>* by a blank line.
 
 2nd paragraph. *Italic*, **bold**, and `monospace`. Itemized lists
 look like:
 
-  * this _<selection>one<caret></selection>_
-  * that _<selection>one<caret></selection>_
+  * this *<selection>one<caret></selection>*
+  * that *<selection>one<caret></selection>*
   * the other one
 
 Note that --- not considering the asterisk --- the actual text
 content starts at 4-columns in.
 
-> Block _<selection>quotes<caret></selection>_ are
-> _<selection>written<caret></selection>_ like so.
+> Block *<selection>quotes<caret></selection>* are
+> *<selection>written<caret></selection>* like so.
 >
 > They can span multiple paragraphs,
-> if you _<selection>like<caret></selection>_.
+> if you *<selection>like<caret></selection>*.

@@ -32,6 +32,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -71,7 +73,8 @@ public final class APIWrappers {
     private final Map<ProcessingEnvironment, ProcessingEnvironment> myWrappers = new HashMap<>(); // procEnv -> wrappedProcEnv
     private String myLastProcName;
     private final Map<String, String> myProcNamesMap = new HashMap<>(); // real proc className -> wrapped proc className
-    
+    private final Map<String, Collection<String>> myProcessorOriginsMap = new HashMap<>(); // real proc className -> all originating class names the processor has registered in this session
+
     public ProcessingContext(@NotNull JpsJavacFileManager fileManager) {
       myFileManager = fileManager;
     }
@@ -85,7 +88,7 @@ public final class APIWrappers {
     public ProcessingEnvironment getWrappedProcessingEnvironment(ProcessingEnvironment processingEnv) {
       ProcessingEnvironment wrapped = myWrappers.get(processingEnv);
       if (wrapped == null) {
-        myWrappers.put(processingEnv, wrapped = wrap(ProcessingEnvironment.class, new ProcessingEnvironmentWrapper(processingEnv, myFileManager)));
+        myWrappers.put(processingEnv, wrapped = wrap(ProcessingEnvironment.class, new ProcessingEnvironmentWrapper(processingEnv, this)));
       }
       return wrapped;
     }
@@ -96,6 +99,19 @@ public final class APIWrappers {
 
     void setLastExecutedProcessorName(Processor proc) {
       myLastProcName = getProcessorName(proc);
+    }
+
+    void registerCurrentProcessorOrigins(Collection<String> originatingClassNames) {
+      final String procName = myLastProcName;
+      if (procName != null && !originatingClassNames.isEmpty()) {
+        myProcessorOriginsMap.computeIfAbsent(procName, k -> new LinkedHashSet<>()).addAll(originatingClassNames);
+      }
+    }
+
+    @NotNull
+    Collection<String> getCurrentProcessorOrigins() {
+      final Collection<String> origins = myLastProcName != null? myProcessorOriginsMap.get(myLastProcName) : null;
+      return origins != null? origins : Collections.emptyList();
     }
 
     Iterable<Processor> wrapProcessors(Iterable<? extends Processor> processors) {
@@ -293,19 +309,19 @@ public final class APIWrappers {
 
   @ApiStatus.Internal
   public final static class ProcessingEnvironmentWrapper extends DynamicWrapper<ProcessingEnvironment> {
-    private final JpsJavacFileManager myFileManager;
+    private final ProcessingContext myProcessingContext;
     private Filer myFilerImpl;
 
-    ProcessingEnvironmentWrapper(ProcessingEnvironment delegate, JpsJavacFileManager fileManager) {
+    ProcessingEnvironmentWrapper(ProcessingEnvironment delegate, ProcessingContext procContext) {
       super(delegate);
-      myFileManager = fileManager;
+      myProcessingContext = procContext;
     }
 
     public Filer getFiler() {
       Filer impl = myFilerImpl;
       if (impl == null) {
         final Filer delegateFiler = getWrapperDelegate().getFiler();
-        myFilerImpl = impl = wrap(Filer.class, new FilerWrapper(delegateFiler, myFileManager, getWrapperDelegate().getElementUtils()));
+        myFilerImpl = impl = wrap(Filer.class, new FilerWrapper(delegateFiler, myProcessingContext, getWrapperDelegate().getElementUtils()));
       }
       return impl;
     }
@@ -313,12 +329,12 @@ public final class APIWrappers {
 
   @ApiStatus.Internal
   public final static class FilerWrapper extends DynamicWrapper<Filer> implements Filer {
-    private final JpsJavacFileManager myFileManager;
+    private final ProcessingContext myProcessingContext;
     private final Function<Element, String> convertToClassName;
 
-    FilerWrapper(Filer delegate, JpsJavacFileManager fileManager, final Elements elementUtils) {
+    FilerWrapper(Filer delegate, ProcessingContext procContext, final Elements elementUtils) {
       super(delegate);
-      myFileManager = fileManager;
+      myProcessingContext = procContext;
       convertToClassName = new ClassNameFinder(elementUtils);
     }
 
@@ -336,33 +352,38 @@ public final class APIWrappers {
 
     @Override
     public FileObject createResource(JavaFileManager.Location location, CharSequence moduleAndPkg, CharSequence relativeName, Element... originatingElements) throws IOException {
-      if (originatingElements != null && originatingElements.length > 0) {
-        final String resourceName;
-        if (moduleAndPkg == null) {
-          resourceName = relativeName.toString();
-        }
-        else {
-          StringBuilder buf = new StringBuilder();
-          for (int i = 0, len = moduleAndPkg.length(); i < len; i++) {
-            char ch = moduleAndPkg.charAt(i);
-            if (ch == '/') {
-              buf.setLength(0); // skip module name
-            }
-            else if (ch == '.') {
-              buf.append('/');
-            }
-            else {
-              buf.append(ch);
-            }
+      // Format: [package-path/]relative-name
+      // package-path is a package-name where '.' replaced with '/'
+      final String resourceName;
+      if (moduleAndPkg == null) {
+        resourceName = relativeName.toString();
+      }
+      else {
+        StringBuilder buf = new StringBuilder();
+        for (int i = 0, len = moduleAndPkg.length(); i < len; i++) {
+          char ch = moduleAndPkg.charAt(i);
+          if (ch == '/') {
+            buf.setLength(0); // skip module name
           }
-          if (buf.length() > 0 && buf.charAt(buf.length() - 1) != '/') {
+          else if (ch == '.') {
             buf.append('/');
           }
-          resourceName = buf.append(relativeName).toString();
+          else {
+            buf.append(ch);
+          }
         }
-        // Format: [package-path/]relative-name
-        // package-path is a package-name where '.' replaced with '/'
+        if (buf.length() > 0 && buf.charAt(buf.length() - 1) != '/') {
+          buf.append('/');
+        }
+        resourceName = buf.append(relativeName).toString();
+      }
+      if (originatingElements != null && originatingElements.length > 0) {
         addMapping(resourceName, Arrays.asList(originatingElements));
+      }
+      else {
+        // the processor did not specify originating elements for the resource:
+        // attribute it to all origins this processor has registered for its generated outputs so far in this session
+        myProcessingContext.getFileManager().addAnnotationProcessingClassMapping(resourceName, myProcessingContext.getCurrentProcessorOrigins());
       }
       return getWrapperDelegate().createResource(location, moduleAndPkg, relativeName, originatingElements != null ? originatingElements : new Element[0]);
     }
@@ -374,7 +395,9 @@ public final class APIWrappers {
 
     private void addMapping(CharSequence resourceName, final Collection<? extends Element> elements) {
       if (resourceName != null && resourceName.length() > 0 && !elements.isEmpty()) {
-        myFileManager.addAnnotationProcessingClassMapping(resourceName.toString(), Iterators.filter(Iterators.map(elements, convertToClassName), (Predicate<? super String>) Objects::nonNull));
+        List<String> originNames = Iterators.collect(Iterators.filter(Iterators.map(elements, convertToClassName), (Predicate<? super String>) Objects::nonNull), new ArrayList<>());
+        myProcessingContext.registerCurrentProcessorOrigins(originNames);
+        myProcessingContext.getFileManager().addAnnotationProcessingClassMapping(resourceName.toString(), originNames);
       }
     }
   }

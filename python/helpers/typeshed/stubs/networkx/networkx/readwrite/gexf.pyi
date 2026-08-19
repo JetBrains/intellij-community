@@ -1,4 +1,4 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, StrPath, SupportsRead, SupportsWrite
 from collections.abc import Generator
 from typing import Final, Literal
 
@@ -7,12 +7,23 @@ from networkx.utils.backends import _dispatchable
 
 __all__ = ["write_gexf", "read_gexf", "relabel_gexf_graph", "generate_gexf"]
 
-def write_gexf(G: Graph[_Node], path, encoding: str = "utf-8", prettyprint: bool = True, version: str = "1.2draft") -> None: ...
+def write_gexf(
+    G: Graph[_Node],
+    path: StrPath | SupportsWrite[bytes],
+    encoding: str = "utf-8",
+    prettyprint: bool = True,
+    version: str = "1.2draft",
+) -> None: ...
 def generate_gexf(
     G: Graph[_Node], encoding: str = "utf-8", prettyprint: bool = True, version: str = "1.2draft"
 ) -> Generator[Incomplete, Incomplete]: ...
 @_dispatchable
-def read_gexf(path, node_type=None, relabel: bool = False, version: str = "1.2draft"): ...
+def read_gexf(
+    path: StrPath | SupportsRead[bytes],
+    node_type: type[Incomplete] | None = None,
+    relabel: bool = False,
+    version: str = "1.2draft",
+) -> Graph[Incomplete]: ...
 
 class GEXF:
     versions: Incomplete
@@ -69,4 +80,4 @@ class GEXFReader(GEXF):
     def decode_attr_elements(self, gexf_keys, obj_xml): ...
     def find_gexf_attributes(self, attributes_element): ...
 
-def relabel_gexf_graph(G: Graph[_Node]): ...
+def relabel_gexf_graph(G: Graph[_Node]) -> Graph[Incomplete]: ...

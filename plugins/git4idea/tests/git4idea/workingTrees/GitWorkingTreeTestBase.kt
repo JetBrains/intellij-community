@@ -2,24 +2,24 @@
 package git4idea.workingTrees
 
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
-import git4idea.GitLocalBranch
+import com.intellij.vcs.test.refresh
 import git4idea.GitWorkingTree
 import git4idea.actions.workingTree.GitWorkingTreeDialogData
 import git4idea.repo.GitRepository
-import git4idea.repo.GitWorkingTreeHolderImpl
 import git4idea.repo.expectEvent
 import git4idea.repo.getAndInit
-import git4idea.test.GitSingleRepoTest
-import git4idea.test.branch
+import git4idea.test.GitSingleRepoContext
 import git4idea.test.registerRepo
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
 import java.nio.file.Path
 import java.nio.file.Paths
 
-internal abstract class GitWorkingTreeTestBase : GitSingleRepoTest() {
+internal abstract class GitWorkingTreeTestBase(private val contextFixture: TestFixture<GitSingleRepoContext>) {
+
+  protected val context: GitSingleRepoContext get() = contextFixture.get()
+  protected val repo: GitRepository get() = context.repo
 
   abstract fun getExpectedDefaultWorkingTrees(): List<GitWorkingTree>
   abstract val mainRepoPath: Path
@@ -29,19 +29,19 @@ internal abstract class GitWorkingTreeTestBase : GitSingleRepoTest() {
     expectedWorkingTree: GitWorkingTree,
     expectedWorkingTreeBranchName: String?,
     expectedWorkingTreeLastCommit: String,
-  ) {
+  ): Unit = with(context) {
     val holder = GitRepositoriesHolder.getAndInit(project)
     holder.expectEvent(
       { repo.ensureWorkingTreesUpToDateForTests() },
       { event, _ -> event == GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED }
     )
 
-    assertSameElements(repo.workingTreeHolder.getWorkingTrees(), getExpectedDefaultWorkingTrees())
+    assertThat(repo.workingTreeHolder.getWorkingTrees()).containsExactlyInAnyOrderElementsOf(getExpectedDefaultWorkingTrees())
 
     holder.expectEvent(
       {
         val result = GitWorkingTreesService.getInstance(project).createWorkingTree(repo, data)
-        assertTrue(result.errorOutputAsHtmlString, result.success)
+        assertThat(result.success).describedAs(result.errorOutputAsHtmlString).isTrue()
         val worktreesDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(mainRepoPath.resolve(".git/worktrees"))
         refresh(worktreesDir!!)
       },
@@ -49,33 +49,16 @@ internal abstract class GitWorkingTreeTestBase : GitSingleRepoTest() {
     )
 
     val workingTrees = repo.workingTreeHolder.getWorkingTrees()
-    val expected = getExpectedDefaultWorkingTrees().toMutableList()
-    expected.add(expectedWorkingTree)
+    val expected = getExpectedDefaultWorkingTrees() + expectedWorkingTree
 
-    assertSameElements(workingTrees, expected)
+    assertThat(workingTrees).containsExactlyInAnyOrderElementsOf(expected)
 
     val workingTreeRepo = registerRepo(project, Paths.get(data.workingTreePath.path))
-    assertEquals("Current branch of the created working tree is incorrect",
-                 expectedWorkingTreeBranchName,
-                 workingTreeRepo.currentBranchName)
-    assertEquals("Last commit of the created working tree is incorrect", expectedWorkingTreeLastCommit, workingTreeRepo.currentRevision)
-  }
-
-  companion object {
-    fun createBranch(repo: GitRepository, branchName: String): GitLocalBranch {
-      repo.branch(branchName)
-      repo.update()
-      val newBranch = repo.branches.findLocalBranch(branchName)
-      assertNotNull(newBranch)
-      return newBranch!!
-    }
-
-    fun GitRepository.ensureWorkingTreesUpToDateForTests() {
-      runBlocking {
-        withContext(Dispatchers.IO) {
-          (workingTreeHolder as GitWorkingTreeHolderImpl).updateState()
-        }
-      }
-    }
+    assertThat(workingTreeRepo.currentBranchName)
+      .describedAs("Current branch of the created working tree is incorrect")
+      .isEqualTo(expectedWorkingTreeBranchName)
+    assertThat(workingTreeRepo.currentRevision)
+      .describedAs("Last commit of the created working tree is incorrect")
+      .isEqualTo(expectedWorkingTreeLastCommit)
   }
 }

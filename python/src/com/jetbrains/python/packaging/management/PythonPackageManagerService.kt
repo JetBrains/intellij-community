@@ -9,7 +9,8 @@ import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridg
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-internal interface PythonPackageManagerProvider {
+@ApiStatus.Internal
+interface PythonPackageManagerProvider {
 
   /**
    * Creates PythonPackageManager for Python SDK depending on interpreter type,

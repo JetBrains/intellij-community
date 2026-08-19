@@ -16,6 +16,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.instrumentation.UnloadedUtil;
@@ -24,6 +25,7 @@ import jetbrains.coverage.report.ReportBuilderFactory;
 import jetbrains.coverage.report.SourceCodeProvider;
 import jetbrains.coverage.report.html.HTMLReportBuilder;
 import jetbrains.coverage.report.idea.IDEACoverageData;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,13 +37,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * @author Roman.Chernyatchik
  */
 public abstract class JavaCoverageRunner extends CoverageRunner {
+  public static final Class<JaCoCoCoverageRunner> DEFAULT_RUNNER_CLASS = JaCoCoCoverageRunner.class;
+
   private static final String JAVA_COVERAGE_AGENT_AGENT_PATH = "java.test.agent.lib.path";
 
   @Override
@@ -68,6 +75,23 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
 
   public boolean isBranchInfoAvailable(boolean branchCoverage) {
     return branchCoverage;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull List<Integer> collectSrcLinesForUntouchedFile(@NotNull Path classFile, @NotNull CoverageSuitesBundle suite) {
+    return Collections.emptyList();
+  }
+
+  @ApiStatus.Internal
+  public @Nullable ClassData getOrLoadCoverage(
+    Project project,
+    ProjectData projectData,
+    @NotNull Supplier<? extends @NotNull ProjectData> unloadedClassesProjectData,
+    @NotNull String className,
+    boolean isBranchCoverage,
+    @NotNull Supplier<byte[]> classBytes
+  ) {
+    return projectData.getClassData(className);
   }
 
   public void generateReport(CoverageSuitesBundle suite, Project project) throws IOException {

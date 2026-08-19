@@ -6,8 +6,16 @@ from typing_extensions import override
 class GeometryField(forms.Field):
     widget: Any
     geom_type: str
+    max_geom_collections: int
     srid: Any
-    def __init__(self, *, srid: Any | None = ..., geom_type: Any | None = ..., **kwargs: Any) -> None: ...
+    def __init__(
+        self,
+        *,
+        srid: Any | None = ...,
+        geom_type: Any | None = ...,
+        max_geom_collections: int | None = None,
+        **kwargs: Any,
+    ) -> None: ...
     @override
     def to_python(self, value: Any) -> Any: ...
     @override

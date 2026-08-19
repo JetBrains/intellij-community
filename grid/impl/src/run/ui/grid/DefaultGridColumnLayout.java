@@ -103,7 +103,7 @@ public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridCo
     for (ModelIndex<?> columnDataIdx : visibleColumnDataIndices) {
       ResultViewColumn column = myResultView.getLayoutColumn(columnDataIdx);
       if (column == null) continue; // will never happen
-      if (columnsToResize.contains(columnDataIdx) && !column.isWidthSetByUser()) {
+      if (columnsToResize.contains(columnDataIdx) && !column.isWidthLockedForLayout() && !column.isFrozenHidden()) {
         LayoutInfo layoutInfo = new LayoutInfo();
         layoutInfo.min = Math.max(MIN_COLUMN_WIDTH, computeHeaderWidth(column));
         layoutInfo.full = Math.max(layoutInfo.min, computeColumnWidth(column));
@@ -127,7 +127,7 @@ public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridCo
     // as the column has no content and a header with a row number in it.
     // It makes sense to make it at least as wide as the 'average' column in the table.
     if (columnDataIndices.size() == 1 && visibleColumnDataIndices.size() > 1) {
-      ModelIndex<?> insertedIdx = columnDataIndices.get(0);
+      ModelIndex<?> insertedIdx = columnDataIndices.getFirst();
       boolean insertedIdxIsValid = myResultView.isTransposed() && GridUtil.isInsertedRow(myGrid, cast(insertedIdx));
       ResultViewColumn insertedColumn = insertedIdxIsValid ? myResultView.getLayoutColumn(insertedIdx) : null;
       if (insertedColumn != null) {

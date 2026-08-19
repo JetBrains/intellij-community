@@ -12,10 +12,8 @@ import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
-import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.model.module.JpsModule
-import kotlin.io.path.name
 
 internal suspend fun createLibraryLicensesListGenerator(
   context: BuildContext,
@@ -41,26 +39,13 @@ fun createLibraryLicensesListGenerator(
   return LibraryLicensesListGenerator(licences)
 }
 
-fun getLibraryFilename(lib: JpsLibrary): String {
-  val name = lib.name
-  if (name.startsWith('#')) {
-    // unnamed module libraries in the IntelliJ project may have only one root
-    val paths = lib.getPaths(JpsOrderRootType.COMPILED)
-    require(paths.size == 1) {
-      "Unnamed module library has more than one element: ${paths}"
-    }
-    return paths[0].name
-  }
-  return name
-}
-
 private fun generateLicenses(project: JpsProject, licensesList: List<LibraryLicense>, usedModulesNames: Set<String>): List<LibraryLicense> {
   Span.current().setAttribute(AttributeKey.stringArrayKey("modules"), usedModulesNames.toList())
   val usedModules = project.modules.filterTo(HashSet()) { usedModulesNames.contains(it.name) }
   val usedLibraries = HashMap<String, Pair<JpsLibrary, JpsModule>>()
   for (module in usedModules) {
     for (item in JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
-      usedLibraries.put(getLibraryFilename(item), item to module)
+      usedLibraries.put(getLibraryFileName(item), item to module)
     }
   }
 

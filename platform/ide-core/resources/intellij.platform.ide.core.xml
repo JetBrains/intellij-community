@@ -17,6 +17,43 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+    <applicationSettings service="com.intellij.ide.GeneralSettings"/>
+    <applicationService serviceImplementation="com.intellij.ide.GeneralSettings"/>
+    <applicationService serviceImplementation="com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization" open="true"/>
+    <applicationService serviceImplementation="com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization" open="true"/>
     <applicationSettings service="com.intellij.ide.GeneralLocalSettings"/>
+    <applicationService serviceInterface="com.intellij.execution.sudo.SudoCommandProvider" open="true"
+                        serviceImplementation="com.intellij.execution.sudo.LocalSudoCommandProvider"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.appStarter" beanClass="com.intellij.openapi.application.ApplicationStarterEP" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.openapi.application.ApplicationStarter"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.projectConfigurable"
+                    beanClass="com.intellij.openapi.options.ConfigurableEP"
+                    area="IDEA_PROJECT"
+                    dynamic="true">
+      <with attribute="instance" implements="com.intellij.openapi.options.Configurable"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.applicationConfigurable"
+                    dynamic="true"
+                    beanClass="com.intellij.openapi.options.ConfigurableEP">
+      <with attribute="instance" implements="com.intellij.openapi.options.Configurable"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.fileTypeFactory"
+                    interface="com.intellij.openapi.fileTypes.FileTypeFactory" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.fileTypeRegistrar" interface="com.intellij.ide.highlighter.FileTypeRegistrar" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.eventLogCategory" interface="com.intellij.notification.EventLogCategory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.projectAttachProcessor" interface="com.intellij.projectImport.ProjectAttachProcessor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cachesInvalidator" interface="com.intellij.ide.caches.CachesInvalidator" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.notificationRemindLaterHandler" interface="com.intellij.notification.NotificationRemindLaterHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.notificationRouter" interface="com.intellij.notification.NotificationRouter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.universalFileChooserContributor"
+                    interface="com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor"
+                    dynamic="true"/>
+  </extensionPoints>
+  <applicationListeners>
+    <listener class="com.intellij.openapi.fileTypes.StdFileTypes$StdFileTypesUpdater" activeInHeadlessMode="true" activeInTestMode="false"
+              topic="com.intellij.openapi.fileTypes.FileTypeListener"/>
+  </applicationListeners>
 </idea-plugin>

@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -15,8 +14,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement;
-import com.intellij.xdebugger.impl.proxy.MonolithBreakpointManagerKt;
-import com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxyKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +24,6 @@ import java.io.File;
 public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState>
   implements XLineBreakpoint<P> {
 
-  private final BreakpointDraggableObjectFactory myBreakpointDraggableObjectFactory;
-
   private final XLineBreakpointType<P> myType;
   private volatile XSourcePosition mySourcePosition;
 
@@ -37,10 +32,6 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
                              final @Nullable P properties, LineBreakpointState state) {
     super(type, breakpointManager, properties, state);
     myType = type;
-    myBreakpointDraggableObjectFactory = new BreakpointDraggableObjectFactory(
-      MonolithBreakpointManagerKt.asProxy(breakpointManager),
-      MonolithBreakpointProxyKt.asProxy(this)
-    );
   }
 
   /**
@@ -166,15 +157,10 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   @ApiStatus.Internal
   public void setLine(final int line) {
-    setLine(-1, line, true);
+    setLine(-1, line);
   }
 
   public void setLine(long requestId, int line) {
-    setLine(requestId, line, true);
-  }
-
-  private void setLine(long requestId, final int line, boolean visualLineMightBeChanged) {
-
     updateStateIfNeededAndNotify(requestId, line, this::getLine, (l) -> {
       myState.setLine(line);
       resetSourcePosition();
@@ -186,10 +172,6 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
    */
   @Deprecated
   public void doUpdateUI(Runnable callOnUpdate) {
-  }
-
-  public @NotNull GutterDraggableObject createBreakpointDraggableObject() {
-    return myBreakpointDraggableObjectFactory.create();
   }
 
   @Override

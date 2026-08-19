@@ -36,7 +36,8 @@ internal class UnusedLambdaExpressionInspection : KotlinPsiDiagnosticBasedInspec
         context: Unit,
     ): @InspectionMessage String = KotlinBundle.message("inspection.unused.lambda.expression.inspection.problem.description")
 
-    override fun KaSession.prepareContextByDiagnostic(
+    context(session: KaSession)
+    override fun prepareContextByDiagnostic(
         element: KtLambdaExpression,
         diagnostic: KaFirDiagnostic.UnusedLambdaExpression,
     ): Unit = Unit

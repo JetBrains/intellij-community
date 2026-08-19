@@ -34,6 +34,10 @@ public final class StructureViewUtil {
             return ((AbstractTreeNode<?>) filteringNode.getDelegate()).toTestString(printInfo);
         }
 
+        if (node instanceof Queryable) {
+            return Queryable.Util.print((Queryable)node, printInfo);
+        }
+
         if (node == null) {
             return "NULL";
         }
@@ -65,20 +69,19 @@ public final class StructureViewUtil {
             @Nullable Condition<String> nodePrintCondition) {
         Collection<String> strings = new ArrayList<String>();
         Object root = tree.getModel().getRoot();
-        printImpl(tree, root, strings, 0, withSelection, printInfo, nodePrintCondition);
+        printImpl(tree, new TreePath(root), strings, 0, withSelection, printInfo, nodePrintCondition);
         return strings;
     }
 
     private static void printImpl(JTree tree,
-            Object root,
+            TreePath path,
             Collection<String> strings,
             int level,
             boolean withSelection,
             @Nullable Queryable.PrintInfo printInfo,
             @Nullable Condition<String> nodePrintCondition) {
-        DefaultMutableTreeNode defaultMutableTreeNode = (DefaultMutableTreeNode)root;
-
-        Object userObject = defaultMutableTreeNode.getUserObject();
+        Object pathComponent = path.getLastPathComponent();
+        Object userObject = getUserObject(pathComponent);
         String nodeText;
         if (userObject != null) {
             nodeText = toString(userObject, printInfo);
@@ -92,12 +95,13 @@ public final class StructureViewUtil {
         StringBuilder buff = new StringBuilder();
         StringUtil.repeatSymbol(buff, ' ', level);
 
-        boolean expanded = tree.isExpanded(new TreePath(defaultMutableTreeNode.getPath()));
-        if (!defaultMutableTreeNode.isLeaf()) {
+        boolean expanded = tree.isExpanded(path);
+        int childCount = tree.getModel().getChildCount(pathComponent);
+        if (childCount > 0) {
             buff.append(expanded ? "-" : "+");
         }
 
-        boolean selected = tree.getSelectionModel().isPathSelected(new TreePath(defaultMutableTreeNode.getPath()));
+        boolean selected = tree.getSelectionModel().isPathSelected(path);
         if (withSelection && selected) {
             buff.append("[");
         }
@@ -110,11 +114,15 @@ public final class StructureViewUtil {
 
         strings.add(buff.toString());
 
-        int childCount = tree.getModel().getChildCount(root);
         if (expanded) {
             for (int i = 0; i < childCount; i++) {
-                printImpl(tree, tree.getModel().getChild(root, i), strings, level + 1, withSelection, printInfo, nodePrintCondition);
+                Object child = tree.getModel().getChild(pathComponent, i);
+                printImpl(tree, path.pathByAddingChild(child), strings, level + 1, withSelection, printInfo, nodePrintCondition);
             }
         }
+    }
+
+    private static Object getUserObject(Object node) {
+        return node instanceof DefaultMutableTreeNode ? ((DefaultMutableTreeNode)node).getUserObject() : node;
     }
 }

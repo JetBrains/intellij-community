@@ -18,9 +18,9 @@ public final class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
   public static final HighlightSeverity TYPO = new HighlightSeverity(
     "TYPO",
     HighlightSeverity.INFORMATION.myVal + 5,
-    SpellCheckerBundle.INSTANCE.getLazyMessage("typo.severity"),
-    SpellCheckerBundle.INSTANCE.getLazyMessage("typo.severity.capitalized"),
-    SpellCheckerBundle.INSTANCE.getLazyMessage("typo.severity.count.message")
+    SpellCheckerBundle.messagePointer("typo.severity"),
+    SpellCheckerBundle.messagePointer("typo.severity.capitalized"),
+    SpellCheckerBundle.messagePointer("typo.severity.count.message")
   );
 
   @Override

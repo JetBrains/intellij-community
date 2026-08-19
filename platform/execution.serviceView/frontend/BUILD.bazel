@@ -63,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.execution.serviceView.frontend.iml",
+        "resources/intellij.platform.execution.serviceView.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -88,6 +88,7 @@ object MavenDomUtil {
     return isPomFileName(file.getName())
   }
 
+  @RequiresReadLock
   @JvmStatic
   fun isProjectFileWithModel410(file: PsiFile?): Boolean {
     if (file !is XmlFile) return false
@@ -112,6 +113,7 @@ object MavenDomUtil {
     )
   }
 
+  @RequiresReadLock
   @JvmStatic
   fun getXmlProjectModelVersion(file: PsiFile?): @NlsSafe String? {
     if (file !is XmlFile) return null

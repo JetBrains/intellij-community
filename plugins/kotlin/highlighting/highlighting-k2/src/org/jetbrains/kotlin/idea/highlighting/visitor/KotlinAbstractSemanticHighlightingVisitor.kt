@@ -7,7 +7,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.idea.highlighting.analyzers.KotlinSemanticAnalyzer
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -30,7 +31,7 @@ internal abstract class KotlinAbstractSemanticHighlightingVisitor : HighlightVis
 
         analyze(ktFile) {
             try {
-                analyzer = createSemanticAnalyzer(holder, this)
+                analyzer = createSemanticAnalyzer(holder, useSiteSession)
                 action.run()
             } finally {
                 // The analyzer must be cleared to avoid leakages

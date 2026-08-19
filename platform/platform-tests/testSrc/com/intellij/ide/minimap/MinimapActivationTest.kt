@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 /**
@@ -61,19 +60,11 @@ class MinimapActivationTest : BasePlatformTestCase() {
   }
 
   fun testInstalledWhenAvailableEnabledAndSupported() {
-    TestModeFlags.set(MinimapAvailability.FORCE_AVAILABLE, true, testRootDisposable)
     val editor = openAndUpdate("a.txt", "alpha\nbeta\ngamma\n")
     assertTrue(MinimapService.getInstance().isMinimapInstalled(editor))
   }
 
-  fun testNotInstalledWhenUnavailable() {
-    // FORCE_AVAILABLE is left unset, and tests do not run as PyCharm -> the availability gate must reject installation.
-    val editor = openAndUpdate("a.txt", "alpha\nbeta\n")
-    assertFalse(MinimapService.getInstance().isMinimapInstalled(editor))
-  }
-
   fun testNotInstalledWhenDisabled() {
-    TestModeFlags.set(MinimapAvailability.FORCE_AVAILABLE, true, testRootDisposable)
     setSettings(enabled = false)
     val editor = openAndUpdate("a.txt", "alpha\nbeta\n")
     assertFalse(MinimapService.getInstance().isMinimapInstalled(editor))

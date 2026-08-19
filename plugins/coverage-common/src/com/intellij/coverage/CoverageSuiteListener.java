@@ -30,4 +30,9 @@ public interface CoverageSuiteListener {
    * Called <b>each time</b> after a coverage suite is completely processed: data is loaded and accumulated
    */
   default void coverageDataCalculated(@NotNull CoverageSuitesBundle bundle) {}
+
+  /**
+   * Called when coverage data loading or accumulation fails.
+   */
+  default void coverageDataCalculationFailed(@NotNull CoverageSuitesBundle bundle) {}
 }

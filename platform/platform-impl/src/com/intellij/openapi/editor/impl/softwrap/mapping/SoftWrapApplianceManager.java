@@ -98,6 +98,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
   private int                            myDocumentChangeEndOffset = -1;
   private int                            myAvailableWidth = QUICK_DUMMY_WRAPPING;
   private @Nullable LineWrapPositionStrategy myLineWrapPositionStrategy;
+  private boolean                        myAllowGridModeOptimizations;
 
 
   @ApiStatus.Internal
@@ -123,6 +124,12 @@ public final class SoftWrapApplianceManager implements Dumpable {
   @ApiStatus.Internal
   public void setSoftWrapsUnderScrollBar(boolean softWrapsUnderScrollBar) {
     mySoftWrapsUnderScrollBar = softWrapsUnderScrollBar;
+  }
+
+  @ApiStatus.Internal
+  public void setAllowGridModeOptimizations(boolean allowGridModeOptimizations) {
+    myAllowGridModeOptimizations = allowGridModeOptimizations;
+    reset();
   }
 
   @ApiStatus.Internal
@@ -215,7 +222,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
       }
       else {
         new SoftWrapEngine(myEditor, myPainter, myStorage, myDataMapper, event, myLineWrapPositionStrategy, myVisibleAreaWidth,
-                           myCustomIndentUsedLastTime ? myCustomIndentValueUsedLastTime : -1).generate();
+                           myCustomIndentUsedLastTime ? myCustomIndentValueUsedLastTime : -1, myAllowGridModeOptimizations).generate();
       }
       if (LOG.isDebugEnabled()) {
         LOG.debug("Soft wrap recalculation done: " + event + ". " + (event.getActualEndOffset() - event.getStartOffset()) + " characters processed");

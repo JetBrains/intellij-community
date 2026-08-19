@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings
@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.psi.stubs.elements.KtFunctionElementType
 
 class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
 
@@ -48,8 +47,8 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         )
 
     override fun buildLanguageFoldRegions(
-      descriptors: MutableList<FoldingDescriptor>,
-      root: PsiElement, document: Document, quick: Boolean
+        descriptors: MutableList<FoldingDescriptor>,
+        root: PsiElement, document: Document, quick: Boolean
     ) {
         if (root !is PsiFile || root.fileType != KotlinFileType.INSTANCE) return
 
@@ -91,7 +90,7 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         val type = node.elementType
         val parentType = node.treeParent?.elementType
 
-        if (type is KtFunctionElementType) {
+        if (type == KtNodeTypes.FUN) {
             val bodyExpression = (node.psi as? KtNamedFunction)?.bodyExpression
             if (bodyExpression != null && bodyExpression !is KtBlockExpression) return true
         }
@@ -112,7 +111,7 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
 
     private fun getRangeToFold(node: ASTNode, document: Document): TextRange {
         when (node.elementType) {
-            is KtFunctionElementType -> {
+            KtNodeTypes.FUN -> {
                 val function = node.psi as? KtNamedFunction
                 val funKeyword = function?.funKeyword
                 val bodyExpression = function?.bodyExpression
@@ -166,13 +165,19 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         return node.textRange
     }
 
-    override fun getLanguagePlaceholderText(node: ASTNode, range: TextRange): String = when {
-        node.elementType == KtTokens.BLOCK_COMMENT -> "/${getFirstLineOfComment(node)}.../"
-        node.elementType == KDocTokens.KDOC -> "/**${getFirstLineOfComment(node)}...*/"
-        node.elementType == KtNodeTypes.STRING_TEMPLATE -> "\"\"\"${getTrimmedFirstLineOfString(node).addSpaceIfNeeded()}...\"\"\""
-      node.elementType == KtNodeTypes.PRIMARY_CONSTRUCTOR || node.elementType == KtNodeTypes.CALL_EXPRESSION -> "(...)"
-        node.psi is KtImportList -> "..."
+    override fun getLanguagePlaceholderText(node: ASTNode, range: TextRange): String = when (node.elementType) {
+        KtTokens.BLOCK_COMMENT -> "/${getFirstLineOfComment(node)}.../"
+        KDocTokens.KDOC -> "/**${getFirstLineOfComment(node)}...*/"
+        KtNodeTypes.STRING_TEMPLATE -> "\"\"\"${getTrimmedFirstLineOfString(node).addSpaceIfNeeded()}...\"\"\""
+        KtNodeTypes.PRIMARY_CONSTRUCTOR, KtNodeTypes.CALL_EXPRESSION -> "(...)"
+        KtNodeTypes.FUN -> if (needsLeadingSpaceBeforePlaceholder(node, range)) " {...}" else "{...}"
+        else if node.psi is KtImportList -> "..."
         else -> "{...}"
+    }
+
+    private fun needsLeadingSpaceBeforePlaceholder(node: ASTNode, range: TextRange): Boolean {
+        val charBefore = node.text.getOrNull(range.startOffset - node.startOffset - 1)
+        return charBefore?.isWhitespace() == false
     }
 
     private fun getTrimmedFirstLineOfString(node: ASTNode): String {
@@ -219,7 +224,8 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         return false
     }
 
-    override fun isCustomFoldingRoot(node: ASTNode): Boolean = node.elementType == KtNodeTypes.BLOCK || node.elementType == KtNodeTypes.CLASS_BODY
+    override fun isCustomFoldingRoot(node: ASTNode): Boolean =
+        node.elementType == KtNodeTypes.BLOCK || node.elementType == KtNodeTypes.CLASS_BODY
 
     private fun isFirstElementInFile(element: PsiElement): Boolean {
         val parent = element.parent

@@ -86,8 +86,11 @@
     <orderEntry type="module" module-name="intellij.libraries.javax.annotation" />
     <orderEntry type="library" scope="PROVIDED" name="Ant" level="project" />
     <orderEntry type="module" module-name="intellij.python.psi.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.python.sdk" />
-    <orderEntry type="module" module-name="intellij.python.sdk.ui" />
+    <orderEntry type="module" module-name="intellij.python.sdk.backend" />
+    <orderEntry type="module" module-name="intellij.python.sdk.common" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.backend" />
+    <orderEntry type="module" module-name="intellij.platform.project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module-library">
@@ -120,11 +123,11 @@
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.jcef" />
-    <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jna" />
     <orderEntry type="module" module-name="intellij.toml" />
     <orderEntry type="module" module-name="intellij.toml.core" />
-    <orderEntry type="library" name="jsr305" level="project" />
-    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jsr305" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
@@ -202,7 +205,7 @@
     <orderEntry type="module" module-name="intellij.python.externalIndex" />
     <orderEntry type="module" module-name="intellij.python.community.impl.conda" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
-    <orderEntry type="module" module-name="intellij.python.requirements" exported="" />
+    <orderEntry type="module" module-name="intellij.python.requirements.backend" exported="" />
     <orderEntry type="module" module-name="intellij.python.pytools" />
     <orderEntry type="module" module-name="intellij.python.uv.backend" />
     <orderEntry type="module" module-name="intellij.platform.testIntegration" />

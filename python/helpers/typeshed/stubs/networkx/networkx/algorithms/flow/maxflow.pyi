@@ -17,7 +17,7 @@ def maximum_flow(
     capacity: str = "capacity",
     flow_func: Callable[..., Incomplete] | None = None,
     **kwargs,
-): ...
+) -> tuple[int | float, dict[Incomplete, Incomplete]]: ...
 @_dispatchable
 def maximum_flow_value(
     flowG: Graph[_Node],
@@ -26,7 +26,7 @@ def maximum_flow_value(
     capacity: str = "capacity",
     flow_func: Callable[..., Incomplete] | None = None,
     **kwargs,
-): ...
+) -> int | float: ...
 @_dispatchable
 def minimum_cut(
     flowG: Graph[_Node],
@@ -35,7 +35,7 @@ def minimum_cut(
     capacity: str = "capacity",
     flow_func: Callable[..., Incomplete] | None = None,
     **kwargs,
-): ...
+) -> tuple[int | float, tuple[set[Incomplete], set[Incomplete]]]: ...
 @_dispatchable
 def minimum_cut_value(
     flowG: Graph[_Node],
@@ -44,4 +44,4 @@ def minimum_cut_value(
     capacity: str = "capacity",
     flow_func: Callable[..., Incomplete] | None = None,
     **kwargs,
-): ...
+) -> int | float: ...

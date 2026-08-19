@@ -2,18 +2,21 @@
 package com.intellij.testFramework.utils.treeAssertion
 
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.assertion.treeAssertion.allNodes
 import com.intellij.platform.testFramework.assertion.treeAssertion.buildTree
-import com.intellij.platform.testFramework.assertion.treeAssertion.deepCopyTree
+import com.intellij.platform.testFramework.assertion.treeAssertion.toMutableTree
 import com.intellij.platform.testFramework.assertion.treeAssertion.getTreeString
 import com.intellij.platform.testFramework.assertion.treeAssertion.mapTreeValues
+import com.intellij.platform.testFramework.assertion.treeAssertion.node
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 class SimpleTreeUtilTest {
 
   @Test
-  fun `test SimpleTreeUtil#deepCopyTree`() {
-    val tree = buildTree<Int> {
+  fun `test SimpleTreeUtil#toMutableTree`() {
+    val tree = buildTree {
       root("1", 1) {
         node("1.1", 2) {
           node("1.1.1", 3)
@@ -34,8 +37,8 @@ class SimpleTreeUtilTest {
       }
     }
 
-    val treeCopy1 = tree.deepCopyTree()
-    val treeCopy2 = tree.deepCopyTree()
+    val treeCopy1 = tree.toMutableTree()
+    val treeCopy2 = tree.toMutableTree()
 
     SimpleTreeAssertion.assertTreeEquals(tree, treeCopy1)
     SimpleTreeAssertion.assertTreeEquals(tree, treeCopy2)
@@ -186,5 +189,154 @@ class SimpleTreeUtilTest {
     }
 
     SimpleTreeAssertion.assertTreeEquals(expectedTree, actualTree)
+  }
+
+  @Nested
+  inner class AssertNodeTest {
+
+    @Test
+    fun `finds node by name and calls assert`() {
+      val tree = buildTree {
+        root("root", 0) {
+          node("child", 42)
+        }
+      }
+      Assertions.assertEquals(42, tree.node("child").value)
+    }
+
+    @Test
+    fun `fails when node with name is not found`() {
+      val tree = buildTree {
+        root("root", 0)
+      }
+      Assertions.assertThrows(AssertionError::class.java) {
+        tree.node("nonexistent")
+      }
+    }
+
+    @Test
+    fun `fails when several nodes with name are found`() {
+      val tree = buildTree {
+        root("root", 0) {
+          node("child", 21)
+          node("child", 42)
+        }
+      }
+      Assertions.assertThrows(AssertionError::class.java) {
+        tree.node("child")
+      }
+    }
+
+    @Test
+    fun `finds node by regex and calls assert`() {
+      val tree = buildTree {
+        root("root", 0) {
+          node("child-123", 42)
+        }
+      }
+      Assertions.assertEquals(42, tree.node("child-\\d+".toRegex()).value)
+    }
+
+    @Test
+    fun `fails when node with regex is not found`() {
+      val tree = buildTree {
+        root("root", 0)
+      }
+      Assertions.assertThrows(AssertionError::class.java) {
+        tree.node("nonexistent".toRegex())
+      }
+    }
+    @Test
+    fun `fails when several nodes with regex are found`() {
+      val tree = buildTree {
+        root("root", 0) {
+          node("child", 21)
+          node("child", 42)
+        }
+      }
+      Assertions.assertThrows(AssertionError::class.java) {
+        tree.node("child".toRegex())
+      }
+    }
+
+    @Test
+    fun `propagates assertion failure from lambda`() {
+      val tree = buildTree {
+        root("root", 0) {
+          node("child", 42)
+        }
+      }
+      Assertions.assertThrows(AssertionError::class.java) {
+        Assertions.assertEquals(99, tree.node("child").value)
+      }
+    }
+
+    @Test
+    fun `finds deeply nested node`() {
+      val tree = buildTree {
+        root("root", 0) {
+          node("level1", 1) {
+            node("level2", 2) {
+              node("deep", 100)
+            }
+          }
+        }
+      }
+      Assertions.assertEquals(100, tree.node("deep").value)
+    }
+  }
+
+  @Nested
+  inner class AllNodesTest {
+
+    @Test
+    fun `empty tree returns empty sequence`() {
+      val tree = buildTree<Int> {}
+      Assertions.assertEquals(emptyList<Any>(), tree.allNodes().toList())
+    }
+
+    @Test
+    fun `single root returns that node`() {
+      val tree = buildTree {
+        root("root", 42)
+      }
+      val nodes = tree.allNodes().toList()
+      Assertions.assertEquals(1, nodes.size)
+      Assertions.assertEquals("root", nodes[0].name)
+      Assertions.assertEquals(42, nodes[0].value)
+    }
+
+    @Test
+    fun `returns all nodes`() {
+      val tree = buildTree {
+        root("1", 1) {
+          node("1.1", 2) {
+            node("1.1.1", 3)
+            node("1.1.2", 4)
+          }
+          node("1.2", 5)
+        }
+      }
+      val nodes = tree.allNodes().toList()
+      Assertions.assertEquals(5, nodes.size)
+      Assertions.assertEquals(setOf("1", "1.1", "1.1.1", "1.1.2", "1.2"), nodes.map { it.name }.toSet())
+    }
+
+    @Test
+    fun `traversal order is right-to-left DFS`() {
+      val tree = buildTree {
+        root("1", Unit) {
+          node("1.1", Unit) {
+            node("1.1.1", Unit)
+            node("1.1.2", Unit)
+          }
+          node("1.2", Unit)
+        }
+      }
+      Assertions.assertEquals(
+        listOf("1", "1.2", "1.1", "1.1.2", "1.1.1"),
+        tree.allNodes().map { it.name }.toList(),
+      )
+    }
   }
 }

@@ -116,6 +116,9 @@ jvm_library(
 exports_files(
     [
         "intellij.restructuredtext.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/colorSchemes/RestDarcula.xml",
+        "resources/colorSchemes/RestDefault.xml",
     ],
     visibility = ["//visibility:public"],
 )

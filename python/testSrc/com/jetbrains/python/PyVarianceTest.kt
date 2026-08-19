@@ -1,20 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
-import com.jetbrains.python.allure.Layers
-import com.jetbrains.python.allure.Subsystems
-
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ReadAction
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.PyExpression
-import com.jetbrains.python.psi.types.PyTypeParameterType
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.BIVARIANT
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.CONTRAVARIANT
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.COVARIANT
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.INFER_VARIANCE
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.INVARIANT
 import com.jetbrains.python.psi.types.PyTypeVarType
+import com.jetbrains.python.psi.types.PyVariance
+import com.jetbrains.python.psi.types.PyVariance.BIVARIANT
+import com.jetbrains.python.psi.types.PyVariance.CONTRAVARIANT
+import com.jetbrains.python.psi.types.PyVariance.COVARIANT
+import com.jetbrains.python.psi.types.PyVariance.INFER_VARIANCE
+import com.jetbrains.python.psi.types.PyVariance.INVARIANT
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions
@@ -24,7 +23,7 @@ import org.junit.jupiter.api.Test
 @Layers.Functional
 class PyVarianceTest : PyCodeInsightTestCase() {
 
-  private fun doTestTypeVarVariance(variance: PyTypeParameterType.Variance?, @Language("Python") text: String) {
+  private fun doTestTypeVarVariance(variance: PyVariance?, @Language("Python") text: String) {
     myFixture.configureByText(PythonFileType.INSTANCE, text.trimIndent())
     ReadAction.runBlocking<Throwable> {
       val expr = myFixture.findElementByText("expr", PyExpression::class.java)

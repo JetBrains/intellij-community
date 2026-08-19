@@ -86,7 +86,6 @@ a:com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
 - perform(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 - sf:INSTANCE:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
-- sf:findSelectedBreakpoint(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):com.intellij.openapi.util.Pair
 - sf:getDisplayText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
 - sf:getGeneralDescription(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
 - sf:getPropertyXMLDescriptions(com.intellij.xdebugger.breakpoints.XBreakpoint):java.util.List

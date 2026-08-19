@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.ProxyUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.groovy.GroovycOutputParser;
@@ -119,7 +119,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
       params.getProgramParametersList().add(confPath);
     }
 
-    HttpConfigurable.getInstance().getJvmProperties(false, null).forEach(p -> params.getVMParametersList().addProperty(p.first, p.second));
+    ProxyUtils.getCurrentSettingsAsJvmProperties().forEach(params.getVMParametersList()::addProperty);
 
     params.setMainClass("org.codehaus.groovy.tools.GroovyStarter");
 

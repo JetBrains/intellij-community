@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.packageScope
+import org.jetbrains.kotlin.analysis.api.scopes.packageScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext

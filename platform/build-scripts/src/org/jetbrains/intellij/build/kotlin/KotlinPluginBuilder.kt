@@ -23,14 +23,12 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
     /**
      * Module which contains META-INF/plugin.xml
      */
-    const val MAIN_KOTLIN_PLUGIN_MODULE: String = "kotlin.plugin"
+    const val MAIN_KOTLIN_PLUGIN_MODULE: String = "intellij.kotlin.plugin"
     const val MAIN_FRONTEND_MODULE_NAME: String = "kotlin.frontend.split"
+    private const val SERIALIZATION_COMPILER_PLUGIN_MODULE = "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin"
 
     val MODULES: List<String> = java.util.List.of(
-      "kotlin.plugin.common",
-      "kotlin.plugin.k2",
       "kotlin.scripting",
-      "kotlin.jsr223",
     )
 
     private val KOTLIN_SCRIPTING_LIBRARIES = java.util.List.of(
@@ -43,18 +41,21 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.highlighting.minimal"
     )
 
+    private val KOTLINC_LIBRARY_MODULES = java.util.List.of(
+      "intellij.libraries.kotlinc.analysis.api",
+      "intellij.libraries.kotlinc.analysis.api.impl.base",
+      "intellij.libraries.kotlinc.analysis.api.k2",
+      "intellij.libraries.kotlinc.analysis.api.platform.interface",
+      "intellij.libraries.kotlinc.low.level.api.fir",
+      "intellij.libraries.kotlinc.symbol.light.classes",
+    )
+
     private val LIBRARIES_UNPACKED = java.util.List.of(
-      "kotlinc.analysis-api-platform-interface",
-      "kotlinc.analysis-api",
-      "kotlinc.analysis-api-impl-base",
       "kotlinc.kotlin-scripting-compiler-impl",
       "kotlinc.kotlin-scripting-common",
       "kotlinc.kotlin-scripting-dependencies",
       "kotlinc.kotlin-gradle-statistics",
-      "kotlinc.analysis-api-k2",
       "kotlinc.kotlin-compiler-fir",
-      "kotlinc.low-level-api-fir",
-      "kotlinc.symbol-light-classes",
       "kotlin-metadata",
       "kotlinc.kotlin-build-tools-api",
       "kotlinc.kotlin-build-tools-impl",
@@ -75,7 +76,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlinc.sam-with-receiver-compiler-plugin",
       "kotlinc.assignment-compiler-plugin",
       "kotlinc.scripting-compiler-plugin",
-      "kotlinc.kotlinx-serialization-compiler-plugin",
       "kotlinc.parcelize-compiler-plugin",
       "kotlinc.lombok-compiler-plugin",
       "kotlinc.compose-compiler-plugin",
@@ -137,6 +137,11 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
 
   /** paired with [excludeKotlinLibraries] */
   fun basePluginsAndLibraries(spec: PluginLayout.PluginLayoutSpec) {
+    spec.withModules(KOTLINC_LIBRARY_MODULES)
+    spec.withModule(
+      SERIALIZATION_COMPILER_PLUGIN_MODULE,
+      "kotlinc.kotlinx-serialization-compiler-plugin.jar",
+    )
     for (libraryName in LIBRARIES_UNPACKED) {
       spec.withProjectLibraryUnpackedIntoJar(libraryName, spec.mainJarName)
     }
@@ -157,7 +162,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
     for (library in COMPILER_PLUGINS) {
       spec.excludeProjectLibrary(library)
     }
-    spec.excludeProjectLibrary("kotlinc.kotlin-compiler-common")
     for (library in LIBRARIES) {
       spec.excludeProjectLibrary(library)
     }
@@ -179,17 +183,17 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
   fun kotlinFrontendPlugin(): PluginLayout {
     return PluginLayout.plugin(MAIN_FRONTEND_MODULE_NAME) { spec ->
       spec.withModules(MODULES_SHARED_WITH_CLIENT)
-      spec.withProjectLibrary("kotlinc.kotlin-compiler-common")
+      spec.withModule(KOTLINC_KOTLIN_COMPILER_COMMON_MODULE, KOTLINC_KOTLIN_COMPILER_COMMON_JAR)
     }
   }
 
   fun kotlinScriptingPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-    val mainModuleName = "kotlin.scripting-plugin"
+    val mainModuleName = "intellij.kotlin.jsr223.plugin"
     return PluginLayout.pluginAutoWithCustomDirName(mainModuleName) { spec ->
       spec.directoryName = "KotlinScripting"
       spec.mainJarName = "kotlin-scripting-plugin.jar"
 
-      spec.withModule("kotlin.jsr223")
+      spec.withModule("intellij.kotlin.jsr223")
 
       withKotlincKotlinCompilerCommonLibrary(spec, mainModuleName)
       spec.withProjectLibrary("kotlinc.kotlin-compiler-fe10")
@@ -202,10 +206,10 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
 
 private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayoutSpec, mainPluginModule: String) {
   val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
-  spec.withProjectLibrary(kotlincKotlinCompilerCommon)
+  spec.withModule(KOTLINC_KOTLIN_COMPILER_COMMON_MODULE, KOTLINC_KOTLIN_COMPILER_COMMON_JAR)
 
   spec.withPatch { patcher, context ->
-    val jars = context.outputProvider.findLibraryRoots(kotlincKotlinCompilerCommon, moduleLibraryModuleName = null)
+    val jars = context.outputProvider.findLibraryRoots(kotlincKotlinCompilerCommon, moduleLibraryModuleName = KOTLINC_KOTLIN_COMPILER_COMMON_MODULE)
     if (jars.size != 1) {
       throw IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
     }
@@ -216,9 +220,12 @@ private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayo
   }
 }
 
+private const val KOTLINC_KOTLIN_COMPILER_COMMON_MODULE = "intellij.libraries.kotlinc.kotlin.compiler.common"
+private const val KOTLINC_KOTLIN_COMPILER_COMMON_JAR = "intellij.libraries.kotlinc.kotlin.compiler.common.jar"
+
 private fun withKotlincInPluginDirectory(libName: String = "kotlin-dist", target: String = "kotlinc", spec: PluginLayout.PluginLayoutSpec) {
-  spec.withGeneratedResources { targetDir, context ->
-    val distLibName = "kotlinc.$libName"
+  val distLibName = "kotlinc.$libName"
+  spec.withGeneratedResources(inputProjectLibraries = listOf(distLibName)) { targetDir, context ->
     val jars = context.outputProvider.findLibraryRoots(distLibName, moduleLibraryModuleName = null)
     if (jars.size != 1) {
       throw IllegalStateException("$distLibName is expected to have only one jar")

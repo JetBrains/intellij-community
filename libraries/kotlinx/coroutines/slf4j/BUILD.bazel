@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.kotlinx.coroutines.slf4j.iml",
+        "resources/intellij.libraries.kotlinx.coroutines.slf4j.xml",
     ],
     visibility = ["//visibility:public"],
 )

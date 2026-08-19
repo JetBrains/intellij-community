@@ -148,6 +148,7 @@ internal class GHPRDataProviderRepositoryImpl(
     messageBus.connect(providerCs.nestedDisposable()).subscribe(GHPRDataOperationsListener.TOPIC, object : GHPRDataOperationsListener {
       override fun onReviewsChanged() {
         providerCs.launch {
+          detailsData.signalDetailsNeedReload()
           detailsData.signalMergeabilityNeedsReload()
         }
       }

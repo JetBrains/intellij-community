@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -61,6 +62,7 @@ import java.awt.image.ImageObserver;
 import java.awt.image.VolatileImage;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * @author gregsh
@@ -203,8 +205,14 @@ public final class IdeBackgroundUtil {
                                                         Insets insets,
                                                         Disposable disposable) {
     PainterHelper paintersHelper = new PainterHelper(root);
-    paintersHelper.addPainter(PainterHelper.newImagePainter(image, fill, anchor, alpha, insets), root);
+    paintersHelper.addPainter(PainterHelper.newImagePainter(() -> image, fill, anchor, alpha, insets), root);
     createTemporaryBackgroundTransform(root, paintersHelper, disposable);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull AbstractPainter createImagePainter(@NotNull Supplier<? extends Image> imageProvider,
+                                                            Fill fill, Anchor anchor, float alpha, Insets insets) {
+    return PainterHelper.newImagePainter(imageProvider, fill, anchor, alpha, insets);
   }
 
   /**

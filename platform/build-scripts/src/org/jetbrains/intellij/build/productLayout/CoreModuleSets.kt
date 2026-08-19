@@ -36,6 +36,7 @@ object CoreModuleSets {
    */
   fun librariesPlatform(): ModuleSet = moduleSet("libraries.platform") {
     embeddedModule("intellij.libraries.java.compatibility")
+    embeddedModule("intellij.libraries.jetbrains.annotations")
 
     embeddedModule("intellij.libraries.kotlin.reflect")
     // intellij.platform.wsl.impl and intellij.platform.util.http uses it
@@ -100,6 +101,7 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.jaxen")
     embeddedModule("intellij.libraries.jbr")
     embeddedModule("intellij.libraries.jcip")
+    embeddedModule("intellij.libraries.jna")
     embeddedModule("intellij.libraries.jsoup")
     embeddedModule("intellij.libraries.jsonpath")
     embeddedModule("intellij.libraries.jsvg")
@@ -118,6 +120,7 @@ object CoreModuleSets {
 
     embeddedModule("intellij.libraries.oro.matcher")
     embeddedModule("intellij.libraries.protobuf")
+    embeddedModule("intellij.libraries.protobuf.kotlin")
     embeddedModule("intellij.libraries.proxy.vole")
     embeddedModule("intellij.libraries.rhino")
     embeddedModule("intellij.libraries.semver")
@@ -257,6 +260,7 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.runtime.product")
 
     embeddedModule("intellij.platform.diagnostic.telemetry")
+    embeddedModule("intellij.platform.diagnostic.telemetry.impl")
 
     embeddedModule("intellij.platform.util.ex")
     embeddedModule("intellij.platform.util.ui")
@@ -288,6 +292,7 @@ object CoreModuleSets {
     moduleSet(rpcMinimal())
 
     embeddedModule("intellij.platform.ide.core")
+    embeddedModule("intellij.platform.ide.core.impl")
     embeddedModule("intellij.platform.ide.core.plugins")
   }
 
@@ -381,6 +386,11 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.project")
     embeddedModule("intellij.platform.ide.progress")
     embeddedModule("intellij.platform.ide.impl")
+    // keeps marketplace-zip-signer out of the core classloader - loaded only when a plugin signature is verified
+    module("intellij.platform.ide.pluginSignatureVerifier")
+    // private wrapper used only by intellij.platform.ide.pluginSignatureVerifier, so it is not embedded
+    // and is not in librariesPlatform() - products without ide.impl do not need it
+    module("intellij.libraries.zip.signer")
 
     embeddedModule("intellij.platform.rd.community")
 
@@ -391,6 +401,7 @@ object CoreModuleSets {
     // todo not used by platform - move to plugin
     embeddedModule("intellij.platform.ide.designer")
 
+    embeddedModule("intellij.platform.ide.bootstrap")
     embeddedModule("intellij.platform.bootstrap")
 
     // depends on intellij.platform.ide.impl
@@ -454,7 +465,9 @@ object CoreModuleSets {
     moduleSet(fleet())
 
     // Base RPC and kernel modules (backend modules are in rpc(), not here)
-    embeddedModule("intellij.platform.rpc")
+    embeddedModule("intellij.platform.klogger")
+    module("intellij.platform.rpc")
+    embeddedModule("intellij.platform.rpc.lite")
     embeddedModule("intellij.platform.kernel")
   }
 

@@ -3,7 +3,10 @@ package com.intellij.python.pytools.ui.configuration
 
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -11,25 +14,34 @@ import com.intellij.python.pytools.statistics.PyToolUsagesCollector
 import com.intellij.python.pytools.statistics.PyToolActionSource
 import com.intellij.python.pytools.Version
 import com.intellij.python.pytools.ui.PyToolsUiBundle
+import com.intellij.python.uv.backend.UVX_EXECUTABLE
 import com.intellij.python.uv.backend.UvPyTool
-import com.intellij.python.uv.backend.setUvExecutableLocal
-import com.intellij.python.pytools.PyToolManager
-import com.intellij.python.pytools.PyToolManagerProvider
+import com.intellij.python.pytools.PyExecutableCache
+import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.GenericPyToolManager
+import com.intellij.python.pytools.GenericPyToolManagerProvider
 import com.intellij.python.pytools.performToolInstallation
 import com.intellij.python.pytools.performToolUpgrade
+import com.intellij.python.pyproject.PyDependencyGroup
+import com.intellij.python.pyproject.model.spi.ProjectName
+import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.packaging.PyPackageVersionComparator
-import com.jetbrains.python.sdk.uv.impl.hasUvExecutableLocal
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.installPackages
+import com.intellij.python.requirements.PyPackageVersionComparator
+import javax.swing.JComponent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.nio.file.Path
 
 /**
  * Backs the External Tools page's tool actions: the install / upgrade actions invoked from the Path
- * column's hover icon (delegated to [PyToolManager] — uv when present, pip otherwise), the aggregated
+ * column's hover icon (delegated to [GenericPyToolManager] — uv when present, pip otherwise), the aggregated
  * set of outdated tools that drives the upgrade affordance, uv-availability detection, and the
  * install-uv-itself action invoked from the footer hint.
  *
@@ -68,7 +80,7 @@ internal class PyToolManagementController(
 
   /**
    * Package name → latest available version for tools that have a newer release, aggregated across all
-   * registered [PyToolManager]s (so it is populated even without uv). Drives the upgrade icon and its
+   * registered [GenericPyToolManager]s (so it is populated even without uv). Drives the upgrade icon and its
    * tooltip. Refreshed asynchronously; a tool present here is, by definition, manageable and outdated.
    */
   @Volatile
@@ -84,7 +96,7 @@ internal class PyToolManagementController(
   /** Whether the upgrade icon should be offered for [toolRow] — i.e. a newer version is known. */
   fun isUpgradeAvailable(toolRow: ToolRow): Boolean = toolRow.uvPackageName() in outdatedVersions
 
-  /** Latest version [toolRow]'s tool can be upgraded to, when known. */
+  /** The version [toolRow] would be upgraded to, when known (shown next to the Upgrade action). */
   fun latestVersionFor(toolRow: ToolRow): String? = outdatedVersions[toolRow.uvPackageName()]
 
   /**
@@ -94,7 +106,11 @@ internal class PyToolManagementController(
   fun onShown(scope: CoroutineScope) {
     this.scope = scope
     scope.launch {
-      uvAvailable.set(hasUvExecutableLocal())
+      // Detect uvx in the project's environment (e.g. inside WSL), not on the local host, so the uvx
+      // chain marker and the install-uv footer reflect the actual interpreter target (PY-91503). Resolved
+      // via PyExecutableCache so a pip-installed uvx in a per-user dir off PATH is still found.
+      val uvx = PyTool.findExecutable(UVX_EXECUTABLE)
+      uvAvailable.set(uvx != null && PyExecutableCache.getInstance().get(project.getEelDescriptor(), uvx) != null)
       withContext(Dispatchers.Main) { onStateChanged() }
       refreshOutdated()
     }
@@ -126,6 +142,79 @@ internal class PyToolManagementController(
       }
     },
   )
+
+  /**
+   * Install [toolRow]'s tool package **into a specific project [sdk]** (as opposed to the PATH / uv
+   * install offered by [installTool]). Installs into the SDK's own backend (pip / uv / conda /
+   * poetry / …) under a **modal progress** dialog — matching the Path column's install/upgrade UX —
+   * with no separate "confirm package installation" prompt (this page's `Install` click is itself
+   * the explicit action). On success the row's per-SDK availability is re-probed so the freshly
+   * installed environment's line flips from "Not installed" to the resolved binary path; a failure
+   * is surfaced via an error dialog.
+   */
+  fun installIntoSdk(toolRow: ToolRow, sdk: Sdk, source: PyToolActionSource, dependencyGroup: PyDependencyGroup? = null) {
+    val packageName = toolRow.uvPackageName()
+    val title = PyToolsUiBundle.message("settings.external.tools.install.progress", packageName)
+    val errorTitle = PyToolsUiBundle.message("settings.external.tools.install.error.title", packageName)
+    val result = runWithModalProgressBlocking(project, title) {
+      PythonPackageManager.forSdk(project, sdk).installPackages(packageName, dependencyGroup = dependencyGroup)
+    }
+    when (result) {
+      is Result.Failure -> {
+        Messages.showErrorDialog(project, result.error.toString(), errorTitle)
+        return
+      }
+      is Result.Success -> PyToolUsagesCollector.Helper.logToolInstalled(project, toolRow.tool, source)
+    }
+    // Re-probe every project SDK for this tool so the freshly installed one shows its path.
+    val activeScope = scope ?: return
+    activeScope.launch {
+      val snapshot = withContext(Dispatchers.IO) { snapshotProjectSdks(project) }
+      val avail = withContext(Dispatchers.IO) { toolRow.tool.detectInSdks(snapshot) }
+      withContext(Dispatchers.Main) {
+        toolRow.sdkAvailability = avail
+        refreshRow(toolRow)
+      }
+    }
+  }
+
+  /**
+   * Entry point for a row's per-SDK **Install** link. When the target env exposes dependency groups
+   * (a uv/poetry workspace), first pop a single-select chooser under [anchor] so the tool is added to
+   * the chosen group (mirroring the Python Packages install dialog's group dropdown); otherwise
+   * (plain venv / pip / conda — no groups) install straight into the env with no group, unchanged.
+   */
+  fun installIntoSdkChoosingGroup(toolRow: ToolRow, sdk: Sdk, anchor: JComponent, source: PyToolActionSource) {
+    val activeScope = scope ?: return installIntoSdk(toolRow, sdk, source)
+    activeScope.launch {
+      val groups = withContext(Dispatchers.IO) { loadDependencyGroups(sdk) }
+      withContext(Dispatchers.Main) {
+        if (groups.isEmpty()) {
+          installIntoSdk(toolRow, sdk, source)
+          return@withContext
+        }
+        JBPopupFactory.getInstance()
+          .createPopupChooserBuilder(groups)
+          .setTitle(PyToolsUiBundle.message("settings.external.tools.install.group.chooser.title"))
+          .setRenderer(listCellRenderer {
+            @NlsSafe val groupName = value.name
+            text(groupName) {
+              align = LcrInitParams.Align.RIGHT
+            }
+          })
+          .setItemChosenCallback { group -> installIntoSdk(toolRow, sdk, source, group) }
+          .createPopup()
+          .showUnderneathOf(anchor)
+      }
+    }
+  }
+
+  /** Dependency groups declared by [sdk]'s env, flattened across workspace members; empty when the env has none. */
+  private suspend fun loadDependencyGroups(sdk: Sdk): List<PyDependencyGroup> =
+    PythonPackageManager.forSdk(project, sdk).workspaceSupport
+      ?.getDependencyGroups(ProjectName(project.name))
+      ?.values?.flatten()?.distinct()
+      .orEmpty()
 
   /**
    * Bring [toolRow]'s tool up to the latest version via `uv tool install --reinstall`. We
@@ -179,7 +268,7 @@ internal class PyToolManagementController(
   /**
    * Install `uv` itself through [UvPyTool]'s `performToolInstallation` (uv can't install itself, so
    * this falls through to the pip-based installer into a system Python). On success, persists the path
-   * with `setUvExecutableLocal` (matching the SDK setup flow), flips [uvAvailable] on, and fires
+   * for the project's Eel machine (matching the SDK setup flow), flips [uvAvailable] on, and fires
    * [onStateChanged] so the configurable can rebuild the footer hint and the table.
    */
   fun installUv() {
@@ -188,14 +277,18 @@ internal class PyToolManagementController(
     val result = runWithModalProgressBlocking(project, title) {
       UvPyTool.getInstance().performToolInstallation(project.getEelDescriptor().toEelApi())
     }
-    val installedPath = when (result) {
-      is Result.Success -> result.result
+    when (result) {
+      is Result.Success -> Unit
       is Result.Failure -> {
         Messages.showErrorDialog(project, result.error.toString(), errorTitle)
         return
       }
     }
-    setUvExecutableLocal(installedPath)
+    // Don't persist the installed path; drop the detection cache so the next lookup finds uv (and the
+    // uvx it ships) immediately.
+    val eelDescriptor = project.getEelDescriptor()
+    PyExecutableCache.getInstance().invalidate(eelDescriptor, UvPyTool.getInstance())
+    PyTool.findExecutable(UVX_EXECUTABLE)?.let { PyExecutableCache.getInstance().invalidate(eelDescriptor, it) }
     uvAvailable.set(true)
     onStateChanged()
     // Now that uv exists, reload the outdated set so upgrade affordances light up.
@@ -211,7 +304,7 @@ internal class PyToolManagementController(
     toolRow: ToolRow,
     progressTitleKey: String,
     errorTitleKey: String,
-    action: suspend () -> PyResult<*>,
+    action: suspend () -> PyResult<Path>,
     onSuccess: () -> Unit = {},
     /**
      * Fires once after the post-action `--version` re-probe publishes a version (or skips if
@@ -244,12 +337,14 @@ internal class PyToolManagementController(
       refreshRow(toolRow)
       throw e
     }
-    val failure = result as? Result.Failure<*>
-    if (failure != null) {
-      toolRow.actionInProgress = false
-      refreshRow(toolRow)
-      Messages.showErrorDialog(project, failure.error.toString(), errorTitle)
-      return
+    val installedPath = when (result) {
+      is Result.Success -> result.result
+      is Result.Failure -> {
+        toolRow.actionInProgress = false
+        refreshRow(toolRow)
+        Messages.showErrorDialog(project, result.error.toString(), errorTitle)
+        return
+      }
     }
     onSuccess()
     // Invalidate the cached probe so the freshly installed/upgraded binary's version is re-fetched.
@@ -264,7 +359,9 @@ internal class PyToolManagementController(
     }
     var probeCallbacks = 0
     var versionResolvedFired = false
-    toolRow.probeVersion(activeScope) { updatedRow ->
+    // Seed the probe with the path the installer just reported, so the row reflects the freshly
+    // installed tool immediately even when its dir is not on PATH (PY-91493).
+    toolRow.probeVersion(activeScope, project, knownPath = installedPath) { updatedRow ->
       probeCallbacks++
       if (!versionResolvedFired && updatedRow.version != null) {
         versionResolvedFired = true
@@ -284,12 +381,12 @@ internal class PyToolManagementController(
   }
 
   /**
-   * Reload the set of outdated tools, aggregated across every registered [PyToolManager] (so it works
+   * Reload the set of outdated tools, aggregated across every registered [GenericPyToolManager] (so it works
    * without uv). Runs fully on background coroutines; the EDT is only touched via [onStateChanged].
    */
   private suspend fun refreshOutdated() {
     val eel = project.getEelDescriptor().toEelApi()
-    val outdated = PyToolManagerProvider.managerFor(eel)?.list().orEmpty()
+    val outdated = GenericPyToolManagerProvider.managerFor(eel)?.list().orEmpty()
       .filterValues { PyPackageVersionComparator.STR_COMPARATOR.compare(it.latestVersion, it.installedVersion) > 0 }
       .map { (tool, info) -> tool.packageName.name to info.latestVersion }
       .toMap()

@@ -8,6 +8,8 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.WrapWithCollectionLiteralCallFix
@@ -17,7 +19,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
 internal object WrapWithCollectionLiteralCallFixFactory {
-    private fun KaSession.createIfAvailable(element: PsiElement, expectedType: KaType, actualType: KaType): List<ModCommandAction> {
+    context(session: KaSession)
+    private fun createIfAvailable(element: PsiElement, expectedType: KaType, actualType: KaType): List<ModCommandAction> {
         val expression = element as? KtExpression ?: return emptyList()
         if (expression.getStrictParentOfType<KtAnnotationEntry>() != null) return emptyList()
 

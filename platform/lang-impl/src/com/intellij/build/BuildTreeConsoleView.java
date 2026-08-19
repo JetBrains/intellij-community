@@ -571,6 +571,24 @@ public final class BuildTreeConsoleView
 
   @TestOnly
   @ApiStatus.Internal
+  public @Nullable ExecutionNode findNode(@Nullable Object userObject) {
+    if (userObject instanceof ExecutionNode node) {
+      return node;
+    }
+    if (userObject instanceof BuildTreeNode node) {
+      return ObjectUtils.doIfNotNull(myTreeVm, it -> it.getNodeById(node.getId()));
+    }
+    return null;
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public @NotNull ExecutionConsole resolveNodeConsole(@NotNull ExecutionNode node) {
+    return myConsoleViewHandler.resolveExecutionConsole(node);
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
   public @NotNull ExecutionConsole getSelectedNodeConsole() {
     return myConsoleViewHandler.getCurrentConsoleOrEmpty();
   }

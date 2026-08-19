@@ -4,6 +4,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -31,7 +32,7 @@ internal class BackendTerminalHyperlinksSessionsManager(private val project: Pro
   /**
    * @param eelDescriptor environment where the terminal process is running.
    */
-  fun createNewSession(eelDescriptor: EelDescriptor): BackendTerminalHyperlinksSession {
+  suspend fun createNewSession(eelDescriptor: EelDescriptor): BackendTerminalHyperlinksSession {
     val newId = TerminalHyperlinksSessionId(sessionIdCounter.getAndIncrement())
 
     val sessionScope = coroutineScope.childScope("BackendTerminalHyperlinksSession#$newId")
@@ -44,7 +45,7 @@ internal class BackendTerminalHyperlinksSessionsManager(private val project: Pro
     return session
   }
 
-  private fun startHyperlinksSession(
+  private suspend fun startHyperlinksSession(
     project: Project,
     eelDescriptor: EelDescriptor,
     id: TerminalHyperlinksSessionId,
@@ -54,6 +55,7 @@ internal class BackendTerminalHyperlinksSessionsManager(private val project: Pro
       debugName = "Backend#${id.id}",
       project = project,
       eelDescriptor = eelDescriptor,
+      homeDirectory = eelDescriptor.toEelApi().userInfo.home,
       coroutineScope = scope.childScope("BackendTerminalHyperlinkFacade"),
     )
 

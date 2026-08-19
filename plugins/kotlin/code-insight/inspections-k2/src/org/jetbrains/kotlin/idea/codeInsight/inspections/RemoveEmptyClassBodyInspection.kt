@@ -32,7 +32,8 @@ internal class RemoveEmptyClassBodyInspection :
     KotlinApplicableInspectionBase.Simple<KtClassBody, Unit>(),
     CleanupLocalInspectionTool {
 
-    override fun KaSession.prepareContext(element: KtClassBody): Unit = Unit
+    context(session: KaSession)
+    override fun prepareContext(element: KtClassBody): Unit = Unit
 
     override fun buildVisitor(
         holder: ProblemsHolder,

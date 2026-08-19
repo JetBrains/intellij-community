@@ -2,11 +2,13 @@
 package com.intellij.devkit.uiDsl.showcase
 
 import com.intellij.devkit.uiDsl.DevkitUiDslBundle
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.text
+import com.intellij.ui.dsl.builder.toHtmlIcon
 
 @Demo(title = "demo.comments.title",
       description = "demo.comments.description",
@@ -45,7 +47,7 @@ fun demoComments(): DialogPanel {
 
     group(DevkitUiDslBundle.message("demo.comments.group.common")) {
       row {
-        comment(DevkitUiDslBundle.message("demo.comments.html.comment")) {
+        comment(DevkitUiDslBundle.message("demo.comments.html.comment", toHtmlIcon(AllIcons.General::Information))) {
           Messages.showMessageDialog(
             DevkitUiDslBundle.message("demo.comments.link.clicked", it.description),
             DevkitUiDslBundle.message("demo.comments.message"),

@@ -8,10 +8,12 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.INativeFileType
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.pom.Navigatable
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -59,10 +61,10 @@ class FileNavigatorImpl : FileNavigator {
   }
 
   override fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
-    return navigateInRequestedEditor(descriptor) || navigateInAnyFileEditor(descriptor, requestFocus)
+    return navigateInRequestedEditor(descriptor, requestFocus) || navigateInAnyFileEditor(descriptor, requestFocus)
   }
 
-  fun navigateInRequestedEditor(descriptor: OpenFileDescriptor): Boolean {
+  fun navigateInRequestedEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean = false): Boolean {
     if (ignoreContextEditor.get() == true) {
       return false
     }
@@ -77,11 +79,15 @@ class FileNavigatorImpl : FileNavigator {
     if (FileDocumentManager.getInstance().getFile(e.document) != descriptor.file) {
       return false
     }
-    OpenFileDescriptor.navigateInEditor(descriptor, e)
+    navigateInEditorAndMaybeFocus(descriptor, e, requestFocus)
     return true
   }
 
-  suspend fun navigateInRequestedEditorAsync(descriptor: OpenFileDescriptor, dataContext: DataContext): Boolean {
+  suspend fun navigateInRequestedEditorAsync(
+    descriptor: OpenFileDescriptor,
+    dataContext: DataContext,
+    requestFocus: Boolean = false,
+  ): Boolean {
     val e = OpenFileDescriptor.NAVIGATE_IN_EDITOR.getData(dataContext) ?: return false
     if (e.isDisposed) {
       logger<FileNavigatorImpl>().error("Disposed editor returned for NAVIGATE_IN_EDITOR from $dataContext")
@@ -93,7 +99,7 @@ class FileNavigatorImpl : FileNavigator {
     }
 
     withContext(Dispatchers.EDT) {
-      OpenFileDescriptor.navigateInEditor(descriptor, e)
+      navigateInEditorAndMaybeFocus(descriptor, e, requestFocus)
     }
     return true
   }
@@ -112,6 +118,14 @@ class FileNavigatorImpl : FileNavigator {
       ignoreContextEditor.set(null)
     }
     return true
+  }
+}
+
+@RequiresEdt
+private fun navigateInEditorAndMaybeFocus(descriptor: OpenFileDescriptor, editor: Editor, requestFocus: Boolean, ) {
+  OpenFileDescriptor.navigateInEditor(descriptor, editor)
+  if (requestFocus) {
+    IdeFocusManager.getGlobalInstance().requestFocusInProject(editor.contentComponent, descriptor.project)
   }
 }
 

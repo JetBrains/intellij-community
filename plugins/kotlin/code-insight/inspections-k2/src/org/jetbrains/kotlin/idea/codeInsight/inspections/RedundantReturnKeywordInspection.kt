@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -90,7 +91,8 @@ internal class RedundantReturnKeywordInspection : KotlinApplicableInspectionBase
      * @see org.jetbrains.kotlin.idea.inspections.tests.K2LocalInspectionTestGenerated.RedundantReturnKeyword.testUnreachableThrow
      */
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtReturnExpression): Unit? =
+    context(session: KaSession)
+    override fun prepareContext(element: KtReturnExpression): Unit? =
         element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
             .none { it is KaFirDiagnostic.UnreachableCode }
             .asUnit

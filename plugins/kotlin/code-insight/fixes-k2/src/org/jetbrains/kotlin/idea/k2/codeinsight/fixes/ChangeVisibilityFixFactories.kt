@@ -10,14 +10,18 @@ import com.intellij.psi.util.parentOfTypes
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.allSupertypes
+import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -308,7 +312,8 @@ internal object ChangeVisibilityFixFactories {
         return targetVisibilities.mapNotNull { createFixToTargetVisibility(reference, declaration, it) }
     }
 
-    private fun KaSession.createChangeVisibilityFixOnExposure(
+    context(session: KaSession)
+    private fun createChangeVisibilityFixOnExposure(
         element: PsiElement,
         elementVisibility: EffectiveVisibility,
         restrictingSymbol: KaSymbol,

@@ -8,25 +8,26 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
-import org.jetbrains.kotlin.analysis.api.components.hasFlexibleNullability
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
+import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.end
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.start
@@ -42,7 +43,8 @@ import org.jetbrains.kotlin.psi.KtTypeProjection
 
 private val INLINE_REIFIED_FUNCTIONS_WITH_INSIGNIFICANT_TYPE_ARGUMENTS: Set<String> = setOf("kotlin.arrayOf")
 
-fun KaSession.areTypeArgumentsRedundant(
+context(session: KaSession)
+fun areTypeArgumentsRedundant(
     typeArgumentList: KtTypeArgumentList,
     approximateFlexible: Boolean = false,
 ): Boolean {
@@ -109,7 +111,8 @@ private fun hasPropertyAccessorBetween(element: KtElement, context: KtElement): 
     return false
 }
 
-private fun KaSession.isInlineReifiedFunction(symbol: KaFunctionSymbol): Boolean =
+context(session: KaSession)
+private fun isInlineReifiedFunction(symbol: KaFunctionSymbol): Boolean =
     symbol is KaNamedFunctionSymbol &&
             symbol.importableFqName?.asString() !in INLINE_REIFIED_FUNCTIONS_WITH_INSIGNIFICANT_TYPE_ARGUMENTS &&
             symbol.isInline &&

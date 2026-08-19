@@ -35,6 +35,7 @@ import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInspection.streamMigration.SimplifyForEachInspection;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
+import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.lang.java.request.CreateFieldFromUsage;
 import com.intellij.pom.java.JavaFeature;
@@ -60,6 +61,8 @@ import com.intellij.psi.PsiSwitchLabelStatementBase;
 import com.intellij.psi.PsiSwitchLabeledRuleStatement;
 import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -142,13 +145,19 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
       return null;
     }
     PsiFile containingFile = ref.getContainingFile();
-    if (containingFile instanceof PsiJavaCodeReferenceCodeFragment fragment && !fragment.isClassesAccepted()) {
-      return null;
-    }
+    if (containingFile instanceof PsiJavaCodeReferenceCodeFragment fragment && !fragment.isClassesAccepted()) return null;
+    if (PsiUtil.isModuleFile(containingFile)) return null;
+    if (ref.getParent() instanceof PsiMethodCallExpression) return null;
+    SmartPsiElementPointer<PsiJavaCodeReferenceElement> pointer = SmartPointerManager.createPointer(ref);
+    JavaErrorKind<?, ?> kind = error.kind();
     return sink -> {
-      sink.accept(new StaticImportConstantFix(containingFile, ref));
-      sink.accept(new QualifyStaticConstantFix(containingFile, ref));
-      sink.accept(new ImportClassFix(ref));
+      PsiJavaCodeReferenceElement newRef = pointer.getElement();
+      if (newRef == null) return;
+      sink.accept(new StaticImportConstantFix(containingFile, newRef));
+      sink.accept(new QualifyStaticConstantFix(containingFile, newRef));
+      if (kind != JavaErrorKinds.EXPRESSION_EXPECTED && kind != JavaErrorKinds.REFERENCE_AMBIGUOUS) {
+        sink.accept(new ImportClassFix(newRef));
+      }
     };
   }
 

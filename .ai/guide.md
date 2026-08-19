@@ -1,10 +1,8 @@
 {{PARTIAL:frontmatter}}
 
 <!-- TEMPLATE:COMMENT -->
-To regenerate, run `node community/.ai/render-guides.mjs`.
+To regenerate, run `bazel run @community//.ai:render-guides`.
 <!-- /TEMPLATE:COMMENT -->
-
-**Always display the output of SessionStart hooks verbatim to the user at the start of conversation**
 
 **Critical:** These guidelines MUST be followed at all times.
 
@@ -17,7 +15,7 @@ To regenerate, run `node community/.ai/render-guides.mjs`.
 
 ## Workspace Isolation
 
-Never create ad hoc Git worktrees or clones for this repository, and never install a workspace manager automatically. Before any workspace-isolation action, read and follow [Workspace Isolation](./workspace-isolation.md).
+Do not create ad hoc Git worktrees or clones, or install a workspace manager, on your own initiative. Before any workspace-isolation action, read and follow [Workspace Isolation](./workspace-isolation.md), which also covers the explicit-request exception.
 
 {{PARTIAL:module-specific}}
 
@@ -31,6 +29,7 @@ Never create ad hoc Git worktrees or clones for this repository, and never insta
   `tests.cmd` performs Bazel compilation internally, so a separate `bazel build` step is not needed when tests will be run.
   Module-specific rules may override the runner. Skip if plugin has no tests. See [TESTING](../.agents/skills/testing/SKILL.md).
 - **Bazel compilation without tests:** when only verifying compilation (no tests to run), use `bazel build <target>` for affected modules. Skip if only `.js`, `.mjs`, `.md`, `.txt`, or `.json` files are modified.
+- After modifying Bazel/Starlark sources (`BUILD`, `BUILD.bazel`, `MODULE.bazel`, `WORKSPACE`, `WORKSPACE.bazel`, or `*.bzl`), run `bazel run //:format.check`. If it reports diffs, run `bazel run //:format`, inspect the changes, and rerun the check.
 - After modifying `*.iml`, `BUILD.bazel`, or `.idea/` files: run `./build/jpsModelToBazel.cmd`.
 
 ### After Writing Code
@@ -53,15 +52,7 @@ Use `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof` for module r
 
 ## Tools
 
-Never use the `search-tools-instructions` skill; the search tools below replace it.
-
-### File operations (read / edit / write / list)
-
-Use the file-operation mechanism supported by the active harness. ijproxy is reserved for search and semantic operations; it does not provide direct file read, edit, write, or directory-listing tools.
-<!-- IF_TOOL:CODEX -->
-- Read/List: use dedicated harness tools when available. If none are exposed, use `cat` or read-only `sed` for file content and `ls` for directory listings.
-- Edit/Write: use the mechanism provided by the active harness.
-<!-- /IF_TOOL:CODEX -->
+Never use the `code-search` skill; the search tools below replace it.
 
 ### Search & navigation (ijproxy preferred)
 
@@ -93,10 +84,20 @@ Available via ijproxy or JetBrains MCP. Prefer a real refactoring over manual se
 ### Tooling rules
 
 - For content/symbol **search** and semantic operations, prefer ijproxy; fall back to JetBrains MCP, then to the client fallback, only when ijproxy is unavailable.
-- For file **read / edit / write / directory listing**, use the active harness tools; ijproxy has none.
-- Don't shell for file **search** on repo paths, and expect this to be enforced: the `Glob` and `Grep` tools are disabled, and a `PreToolUse` hook denies `grep` and `find` as the primary shell command (piping them is allowed). Use ijproxy search, or `{{TOOLS_DIR}}/fd.cmd` and `{{TOOLS_DIR}}/rg.cmd` when no MCP is available.
+- Don't shell for file **search** on repo paths, and expect this to be enforced: the `Glob` and `Grep` tools are denied outright, and so are the `grep` and `find` commands, in every pipeline position. Pipe into `{{TOOLS_DIR}}/rg.cmd` instead of `| grep` -- it reads stdin. Use ijproxy search, or `{{TOOLS_DIR}}/fd.cmd` and `{{TOOLS_DIR}}/rg.cmd` when no MCP is available.
+- The repo's documented wrapper commands are allowlisted, so prefer them over a hand-rolled equivalent: a spelling the list knows runs without a prompt, a novel one does not. The list is `community/.ai/tool-permissions.json`, rendered into each harness's own config; add an entry there and rerun `bazel run @community//.ai:render-guides` rather than editing a harness allowlist by hand.
 - Shell is allowed where explicitly documented above and for git (prefer `git_status` if the tool is available), build/test.
-- Outside repo: native shell permitted, except for text/file search — use `{{TOOLS_DIR}}/rg.cmd` and `{{TOOLS_DIR}}/fd.cmd` (absolute paths OK) instead of native `grep`/`find`.
+- Outside the working copy, shell access is task-scoped, not general clearance. Read what this repo's tooling produced or what the user or a skill named: build output, an IDE sandbox (`system/`, `config/`, `idea.log`), a tool cache, a VM workspace a skill documents. Do not survey the machine — no listing or reading home, `~/Downloads`, other checkouts, mail, browser or messaging data — and when a step fails, report it rather than going to look for an artifact nobody named. If the task genuinely needs a path outside that set, ask first.
+- Search outside the repo still goes through `{{TOOLS_DIR}}/rg.cmd` and `{{TOOLS_DIR}}/fd.cmd` (absolute paths OK), never native `grep`/`find`.
+- Windows/PowerShell exception: do not pass literal shell metacharacters such as `<`, `>`, `|`, or `&` through `.cmd` search wrappers, even inside quotes. For `rg.cmd` alternation, use repeated `-e` patterns (`{{TOOLS_DIR}}/rg.cmd -n -e "foo" -e "bar" path/to/file.kt`) instead of `"foo|bar"`. For single-file conflict-marker checks, use `Select-String -SimpleMatch -Pattern '<<<<<<<','=======','>>>>>>>' -Path <file>` instead of retrying `rg.cmd` with different quoting.
+- `fd.cmd` and `rg.cmd` skip dot-directories by default. Agent assets live in `.agents/`, `.claude/`, `.junie/`, `.opencode/` — pass `-H` (`--hidden`) when looking for skills, guidelines, or hooks, or you will conclude they do not exist.
+
+### Skills
+
+The harness may list skill *names* only, without descriptions. When a task looks like something a skill covers, read the index for what each name does before improvising:
+
+<!-- IF_EDITION:ULTIMATE -->- Skill index: [`.agents/skills/INDEX.md`](../../.agents/skills/INDEX.md)<!-- /IF_EDITION:ULTIMATE -->
+<!-- IF_EDITION:COMMUNITY -->- Skill index: [`.agents/skills/INDEX.md`](../.agents/skills/INDEX.md)<!-- /IF_EDITION:COMMUNITY -->
 
 {{PARTIAL:knowledge-mcps}}
 

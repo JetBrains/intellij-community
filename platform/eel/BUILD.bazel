@@ -36,8 +36,9 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/kotlinx/coroutines/core",
+        "//platform/util/annotations",
     ],
 )
 
@@ -54,7 +55,9 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":eel",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/util/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.eel` end
@@ -80,6 +83,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//libraries/kotlinx/coroutines/core",
         "//plugins/copyright",
         "//java/openapi:java",
@@ -115,8 +119,12 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//plugins/copyright",
@@ -156,6 +164,8 @@ jvm_library(
         "//platform/execution",
         "//platform/execution:execution_test_lib",
         "//platform/ide-core",
+        "//jps/model-impl",
+        "//jps/model-impl:model-impl_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit5",
@@ -223,7 +233,8 @@ jvm_library(
         "//libraries/junit5-params:junit5-params_test_lib",
         "@lib//:kotlinx-coroutines-core",
         "@lib//:kotlin-test",
-        "@lib//:kotlin-test-assertions-core-jvm",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//libraries/kotlinx/coroutines/test",
         "//libraries/kotlinx/coroutines/test:test_test_lib",
         "//platform/util-class-loader:util-classLoader",

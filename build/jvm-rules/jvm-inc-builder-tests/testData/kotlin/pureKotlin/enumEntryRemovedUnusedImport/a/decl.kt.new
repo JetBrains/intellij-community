@@ -1,0 +1,5 @@
+package lib
+
+enum class E {
+  FIRST
+}

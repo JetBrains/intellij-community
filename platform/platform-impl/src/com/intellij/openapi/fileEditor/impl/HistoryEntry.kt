@@ -141,11 +141,10 @@ private fun parseEntry(
     throw IllegalArgumentException("unexpected tag: $element")
   }
 
-  val url = element.getAttributeValue(HistoryEntry.FILE_ATTRIBUTE)
+  val urlString = element.getAttributeValue(HistoryEntry.FILE_ATTRIBUTE)
   var providerStates = persistentListOf<Pair<FileEditorProvider, FileEditorState>>()
   var selectedProvider: FileEditorProvider? = null
 
-  val file = VirtualFileManager.getInstance().findFileByUrl(url)
   for (providerElement in element.getChildren(PROVIDER_ELEMENT)) {
     val typeId = providerElement.getAttributeValue(EDITOR_TYPE_ID_ATTRIBUTE)
     val provider = fileEditorProviderManager.getProvider(typeId) ?: continue
@@ -153,15 +152,17 @@ private fun parseEntry(
       selectedProvider = provider
     }
 
-    if (file != null) {
-      val stateElement = providerElement.getChild(STATE_ELEMENT)
-      val state = provider.readState(stateElement ?: EMPTY_ELEMENT, project, file)
-      providerStates = providerStates.adding(provider to state)
-    }
+    val stateElement = providerElement.getChild(STATE_ELEMENT)
+    val state = provider.readState(stateElement ?: EMPTY_ELEMENT, project,
+                                   lazy { VirtualFileManager.getInstance().findFileByUrl(urlString) })
+    // The provider reported that there is nothing to restore (e.g. it has no deserialization or the file is gone).
+    // Don't keep it: such a state must never be handed back to writeState/setState (it isn't of the provider's own type).
+    if (state === FileEditorState.NO_STATE) continue
+    providerStates = providerStates.adding(provider to state)
   }
 
   return EntryData(
-    url = url,
+    url = urlString,
     providerStates = providerStates,
     selectedProvider = selectedProvider,
     preview = element.getAttributeBooleanValue(PREVIEW_ATTRIBUTE),

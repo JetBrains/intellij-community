@@ -7,8 +7,9 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -43,7 +44,8 @@ internal class MoveLambdaInsideParenthesesIntention :
             null
         }
 
-    override fun KaSession.prepareContext(element: KtLambdaArgument): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtLambdaArgument): Context? {
         if (element.getArgumentName() != null) {
             // Already used as a named argument
             return null

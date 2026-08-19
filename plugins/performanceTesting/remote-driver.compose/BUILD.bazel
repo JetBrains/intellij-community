@@ -58,6 +58,7 @@ jvm_library(
 exports_files(
     [
         "intellij.performanceTesting.remoteDriver.compose.iml",
+        "resources/intellij.performanceTesting.remoteDriver.compose.xml",
     ],
     visibility = ["//visibility:public"],
 )

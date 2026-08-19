@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.util.asSafely
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangeListViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestCumulativeChangeListViewModel
 
 internal abstract class GitLabViewedStateAction(
   dynamicText: @NlsActions.ActionText String,
@@ -22,9 +22,7 @@ internal abstract class GitLabViewedStateAction(
     e.presentation.isEnabledAndVisible = false
 
     val changeListVm = e.getData(CodeReviewChangeListViewModel.DATA_KEY)
-                         .asSafely<GitLabMergeRequestChangeListViewModel>() ?: return
-
-    if (!changeListVm.isOnLatest) return
+                         .asSafely<GitLabMergeRequestCumulativeChangeListViewModel>() ?: return
 
     val selectedChanges = e.getData(SELECTED_CHANGES) ?: return
     val allFilesViewed = changeListVm.isViewedStateForAllChanges(selectedChanges, isViewed)
@@ -34,7 +32,7 @@ internal abstract class GitLabViewedStateAction(
 
   override fun actionPerformed(e: AnActionEvent) {
     val changeListVm = e.getData(CodeReviewChangeListViewModel.DATA_KEY) as?
-                         GitLabMergeRequestChangeListViewModel ?: return
+                         GitLabMergeRequestCumulativeChangeListViewModel ?: return
 
     val selectedChanges = e.getData(SELECTED_CHANGES) ?: return
 

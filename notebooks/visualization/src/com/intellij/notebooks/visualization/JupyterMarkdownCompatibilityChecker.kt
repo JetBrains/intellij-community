@@ -5,6 +5,9 @@ import com.intellij.lang.Language
 import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.lang.MarkdownCompatibilityChecker
 
 class JupyterMarkdownCompatibilityChecker : MarkdownCompatibilityChecker {
@@ -17,5 +20,16 @@ class JupyterMarkdownCompatibilityChecker : MarkdownCompatibilityChecker {
     val lineNumber = editor.document.getLineNumber(editor.caretModel.offset)
     val cell = NotebookCellLines.get(editor).getCellByLineNumber(lineNumber) ?: return true
     return cell.type == CellType.MARKDOWN
+  }
+
+  override fun isSupportedRange(file: PsiFile, range: TextRange): Boolean {
+    if (!isSupportedLanguage(file.language) || range.isEmpty) return false
+    val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return false
+    val startLine = document.getLineNumber(range.startOffset)
+    val endLine = document.getLineNumber(range.endOffset - 1)
+    val cellLines = NotebookCellLines.get(document)
+    val startCell = cellLines.getCellByLineNumber(startLine) ?: return false
+    val endCell = cellLines.getCellByLineNumber(endLine) ?: return false
+    return startCell == endCell && startCell.type == CellType.MARKDOWN
   }
 }

@@ -51,4 +51,10 @@ class MarkdownParserTest: MarkdownParsingTestCase("parser") {
 
   @TestFor(issues = ["IDEA-308695"])
   fun testTableWithEmptyCellsAndTrailingWhitespace() = doTest(true)
+
+  /**
+   * A link label is part of a full reference link only when it immediately follows the link text,
+   * so bracketed text separated by whitespace stays a pair of shortcut reference links.
+   */
+  fun testReferenceLinkLabelSeparatedFromLinkText() = doTest(true)
 }

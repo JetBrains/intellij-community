@@ -108,9 +108,10 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument(), context);
     if (psiFile == null) return null;
 
-    if (Elf.getElf().isPsiInteractionAllowed()) {
-      // PsiUtilCore.ensureValid: throws because PsiFileImpl.isValid returns false
-      // from InternalPsiVersioning.isInsideVersioningButNotLocks() section
+    // PsiUtilCore.ensureValid: throws because PsiFileImpl.isValid returns false
+    // from InternalPsiVersioning.isInsideVersioningButNotLocks() section
+    boolean isEnsureValidSupported = !Elf.getElf().isUnsupportedOperationGuardActive();
+    if (isEnsureValidSupported) {
       ensureValid(psiFile);
     }
 
@@ -162,7 +163,7 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
       return file;
     }
 
-    if (!Elf.getElf().isPsiInteractionAllowed()) {
+    if (Elf.getElf().isUnsupportedOperationGuardActive()) {
       // 1) PsiUtilCore.ensureValid: throws because PsiFileImpl.isValid returns false
       //    from InternalPsiVersioning.isInsideVersioningButNotLocks() section
       // 2) element.getContainingFile: throws from LeafPsiElement.invalid

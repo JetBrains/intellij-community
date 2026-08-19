@@ -1,7 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder.impl
 
-import com.intellij.idea.AppMode
+import com.intellij.internal.inspector.UiInspectorUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.observable.properties.ObservableProperty
@@ -140,8 +141,8 @@ fun checkConstraints(constraints: Any?): Constraints {
  * Throws an exception when running in debug mode; otherwise, logs the error
  */
 @ApiStatus.Internal
-fun failInDebugOrLog(message: String) {
-  if (strictValidation) {
+fun failInInternalOrLogError(message: String) {
+  if (testOrInternalMode) {
     error(message)
   }
   else {
@@ -150,20 +151,27 @@ fun failInDebugOrLog(message: String) {
 }
 
 @ApiStatus.Internal
-fun logWarningWithDebugStacktrace(message: String) {
-  if (strictValidation) {
-    LOG.warn(message, Throwable())
+fun errorInInternalOrLogWarn(message: String, stacktrace: Throwable? = null) {
+  if (testOrInternalMode) {
+    LOG.error(message, stacktrace ?: Throwable(message))
   }
   else {
     LOG.warn(message)
   }
 }
 
-private val strictValidation: Boolean by lazy {
+@ApiStatus.Internal
+fun isSaveStacktraces(): Boolean {
+  return ApplicationManager.getApplication()?.isInternal == true && UiInspectorUtil.isSaveStacktraces()
+}
+
+private val testOrInternalMode: Boolean by lazy {
+  val testMode = java.lang.Boolean.getBoolean("idea.is.unit.test") || java.lang.Boolean.getBoolean("idea.is.integration.test")
+  testMode || ApplicationManager.getApplication().isInternal
+}
+
+private val runningFromSource: Boolean by lazy {
   // See [com.intellij.ide.plugins.PluginManagerCore.isRunningFromSources]
   // MPS is always loading platform classes from jars even though there is a project directory present
-  val runningFromSource = !PlatformUtils.isMPS() && Files.isDirectory(PathManager.getHomeDir().resolve(Project.DIRECTORY_STORE_FOLDER))
-  val testMode = java.lang.Boolean.getBoolean("idea.is.unit.test") || java.lang.Boolean.getBoolean("idea.is.integration.test")
-
-  runningFromSource || AppMode.isRunningFromDevBuild() || testMode
+  !PlatformUtils.isMPS() && Files.isDirectory(PathManager.getHomeDir().resolve(Project.DIRECTORY_STORE_FOLDER))
 }

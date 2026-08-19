@@ -57,6 +57,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.progress.backend.iml",
+        "resources/intellij.platform.progress.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

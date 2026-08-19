@@ -3,7 +3,7 @@ package com.intellij.platform.searchEverywhere.impl
 
 import com.intellij.ide.rpc.DataContextId
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
@@ -155,8 +155,14 @@ interface SeRemoteApi : RemoteApi<Unit> {
 
   companion object {
     @JvmStatic
+    fun tryGetInstance(): SeRemoteApi? {
+      return LiteRemoteApiProviderService.tryResolve(remoteApiDescriptor<SeRemoteApi>())
+    }
+
+    @JvmStatic
     suspend fun getInstance(): SeRemoteApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<SeRemoteApi>())
+      // TODO: IJPL-252054
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<SeRemoteApi>())
     }
   }
 }

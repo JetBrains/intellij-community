@@ -331,6 +331,7 @@
     <keyboard-shortcut first-keystroke="control S"/>
     <keyboard-shortcut first-keystroke="shift control S"/>
   </action>
+  <action id="SaveAs"/>
   <action id="SelectIn">
     <keyboard-shortcut first-keystroke="shift control 1"/>
     <keyboard-shortcut first-keystroke="shift control 2"/>

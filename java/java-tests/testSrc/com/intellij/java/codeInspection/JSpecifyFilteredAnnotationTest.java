@@ -36,6 +36,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -93,62 +94,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     new SkipErrorFilter("jspecify_nullness_not_enough_information"), //it is useless for our goals
     new SkipIndividuallyFilter( //each case has its own reason (line number starts from 0)
       Set.of(
-        new Pair<>("ExtendsTypeVariableImplementedForNullableTypeArgument.java",
-                   28), // overriding method with @NotNull, original has @Nullable, but IDEA doesn't highlight the opposite example, see IDEA-377687
-        new Pair<>("ExtendsTypeVariableImplementedForNullableTypeArgument.java",
-                   33), // overriding method with @NotNull, original has @Nullable, but IDEA doesn't highlight the opposite example, see IDEA-377687
-        new Pair<>("OverrideParameters.java", 66),  // see: IDEA-377687
-
-        new Pair<>("WildcardCapturesToBoundOfTypeParameterNotToTypeVariableItself.java", 24) ,// see: IDEA-377699
-
-        new Pair<>("SelfType.java", 34),  // see: IDEA-377707 (also see the commented case in warning matchers)
-        new Pair<>("SelfType.java", 43),  // see: IDEA-377707 (also see the commented case in warning matchers)
-        new Pair<>("OutOfBoundsTypeVariable.java", 21),  // see: IDEA-377707 (also see the commented case in warning matchers)
-        new Pair<>("TypeParameterBounds.java", 40), // see: IDEA-377707
-
-        new Pair<>("NullnessUnspecifiedTypeParameter.java", 33), // see: IDEA-377683
-        new Pair<>("TypeVariableMinusNullVsTypeVariable.java", 28), // see: IDEA-377683
-        new Pair<>("TypeVariableMinusNullVsTypeVariable.java", 30) // see: IDEA-377683
-      )
-    ),
-    new SkipIndividuallyFilter( //cases to investigate later (with unspecified annotation and complicated to understand). (line number starts from 0)
-      Set.of(
-        new Pair<>("TypeVariableToObject.java", 109), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 58), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 78), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 98), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 103), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 108), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 113), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 118), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToParent.java", 53), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToParent.java", 68), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToParent.java", 83), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToParent.java", 98), //IDEA-380143
-
-        new Pair<>("DereferenceTypeVariable.java", 123),
-        new Pair<>("MultiBoundTypeVariableUnspecToObject.java", 63),
-        new Pair<>("MultiBoundTypeVariableUnspecToOther.java", 63),
-        new Pair<>("UnionTypeArgumentWithUseSite.java", 95)
-      )
-    ),
-
-    new SkipIndividuallyFilter(
-      Set.of(
-        new Pair<>("NotNullMarkedUseOfWildcardAsTypeArgument.java", 30) //IDEA-380248
-      )
-    ),
-    new SkipIndividuallyFilter(
-      //unspecified
-      Set.of(
-        new Pair<>("CaptureConvertedUnspecToObject.java", 77),
-        new Pair<>("CaptureConvertedUnspecToOther.java", 77),
-        new Pair<>("NotNullMarkedUseOfTypeVariableAsTypeArgument.java", 74),
-        new Pair<>("UseOfTypeVariableAsTypeArgument.java", 67),
-        new Pair<>("UseOfTypeVariableUnspecAsTypeArgument.java", 45),
-        new Pair<>("UseOfTypeVariableUnspecAsTypeArgument.java", 60),
-        new Pair<>("UseOfTypeVariableUnspecAsTypeArgument.java", 70)
-
+        new Pair<>("WildcardCapturesToBoundOfTypeParameterNotToTypeVariableItself.java", 24)// see: IDEA-377699
       )
     )
   );
@@ -216,7 +162,8 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
       dfaInspection.REPORT_UNSPECIFIED_PARAMETRIC_NULLNESS = true;
       var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
       nullableStuffInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
-      nullableStuffInspection.REPORT_UNSPECIFIED_BOUND_CONFLICTS = true;
+      // JSpecify deviates from the JLS here on purpose, see jspecify/jspecify#49
+      nullableStuffInspection.REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL = true;
       var notNullFieldNotInitializedInspection = new JSpecifyNotNullFieldNotInitializedInspection(actual);
       List<LocalInspectionTool> inspections = List.of(dfaInspection, nullableStuffInspection, notNullFieldNotInitializedInspection);
       ReadAction.run(() -> {
@@ -454,6 +401,8 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
              "inspection.nullable.problems.at.local.variable" -> warnings.put(anchor, "jspecify_unrecognized_location");
         case "inspection.nullable.problems.Nullable.method.overrides.NotNull",
              "inspection.nullable.problems.NotNull.parameter.overrides.Nullable",
+             "inspection.nullable.problems.Nullable.parameter.overrides.NotNull",
+             "inspection.nullable.problems.NotNull.type.parameter.bound.overrides.Nullable",
              "complex.problem.with.nullability",
              "assigning.a.class.with.nullable.elements",
              "assigning.a.class.with.notnull.elements",
@@ -461,9 +410,16 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
              "returning.a.class.with.notnull.arguments",
              "overriding.a.class.with.nullable.elements",
              "overriding.a.class.with.notnull.elements"
-          //,  "non.null.type.argument.is.expected"  //todo see IDEA-377707
           -> warnings.put(anchor, "jspecify_nullness_mismatch");
-        case "inspection.nullable.problems.method.overrides.NotNull", "inspection.nullable.problems.parameter.overrides.NotNull" ->
+        case "non.null.type.argument.is.expected" -> {
+          if (anchor instanceof PsiTypeElement typeElement) {
+            warnings.put(anchor, typeElement.getType().getNullability().nullability() == Nullability.NULLABLE
+                                 ? "jspecify_nullness_mismatch"
+                                 : "jspecify_nullness_not_enough_information");
+          }
+        }
+        case "inspection.nullable.problems.method.overrides.NotNull", "inspection.nullable.problems.parameter.overrides.NotNull",
+             "inspection.nullable.problems.unspecified.type.parameter.bound.overrides.Nullable" ->
           warnings.put(anchor, "jspecify_nullness_not_enough_information");
         case "inspection.nullable.problems.Nullable.NotNull.conflict" -> warnings.put(anchor, "jspecify_conflicting_annotations");
       }

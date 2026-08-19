@@ -21,6 +21,13 @@ import java.awt.Font as AwtFont
 
 
 /**
+ * [ElicitationFormRenderer] emitting ANSI escapes, for clients that show the message as terminal text.
+ */
+object AnsiElicitationFormRenderer : ElicitationFormRenderer {
+  override fun render(parts: List<ElicitationMessagePart>, project: Project?): String = renderToAnsi(parts, project)
+}
+
+/**
  * Renders message [parts] into one ANSI string for a terminal.
  * Parts are joined with no separator, so put line breaks inside [ElicitationMessagePart.Text].
  * [ElicitationMessagePart.Code] is syntax-highlighted; [ElicitationMessagePart.Styled] gets emphasis.
@@ -60,7 +67,7 @@ private fun highlightToAnsi(language: Language, code: CharSequence, project: Pro
     val tokenText = text.substring(lexer.tokenStart, lexer.tokenEnd)
     // getTokenHighlights returns keys from least to most specific; merge them so the most specific wins
     // (mirrors the editor's LayeredTextAttributes). Taking only the first key would drop overrides.
-    val attributes = highlighter.getTokenHighlights(lexer.tokenType)
+    val attributes = highlighter.getTokenHighlights(lexer.tokenType!!)
       .fold(null as TextAttributes?) { acc, key ->
         val a = scheme.getAttributes(key) ?: return@fold acc
         if (acc == null) a else TextAttributes.merge(acc, a)

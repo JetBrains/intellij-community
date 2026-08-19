@@ -43,6 +43,9 @@
 - name: lib/modules/intellij.markdown.model.jar
   contentModules:
   - name: intellij.markdown.model
+- name: lib/modules/intellij.markdown.projectView.jar
+  contentModules:
+  - name: intellij.markdown.projectView
 - name: lib/modules/intellij.markdown.spellchecker.jar
   contentModules:
   - name: intellij.markdown.spellchecker

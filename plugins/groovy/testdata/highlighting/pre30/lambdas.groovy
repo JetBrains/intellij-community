@@ -1,3 +1,3 @@
-foo(() <error descr="Lambdas are not supported in current version">-></error> bar)
-foo(() <error descr="Lambdas are not supported in current version">-></error> {})
-foo(it <error descr="Lambdas are not supported in current version">-></error> it)
+foo(() <error descr="Lambdas are available in Groovy 3.0 and later">-></error> bar)
+foo(() <error descr="Lambdas are available in Groovy 3.0 and later">-></error> {})
+foo(it <error descr="Lambdas are available in Groovy 3.0 and later">-></error> it)

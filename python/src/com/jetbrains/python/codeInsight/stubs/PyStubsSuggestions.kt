@@ -2,7 +2,7 @@
 package com.jetbrains.python.codeInsight.stubs
 
 import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.packaging.pyRequirement
+import com.intellij.python.requirements.pyRequirement
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 
 internal object PyStubsSuggestions {

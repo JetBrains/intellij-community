@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.newProjectWizard.impl.emptyProject
 
 import com.intellij.openapi.application.EDT
@@ -16,7 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class PyV3EmptyProjectSettings(
-  var generateWelcomeScript: Boolean = PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject
+  var generateWelcomeScript: Boolean = PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject,
 ) : PyV3ProjectTypeSpecificSettings {
 
   override suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk): PyResult<Unit> {
@@ -30,7 +30,9 @@ class PyV3EmptyProjectSettings(
     }
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
-        file.navigate(true)
+        if (file.isValid) {
+          file.navigate(true)
+        }
       }
     }
 

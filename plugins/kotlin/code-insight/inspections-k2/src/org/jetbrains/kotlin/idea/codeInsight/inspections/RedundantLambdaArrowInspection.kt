@@ -12,10 +12,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -73,7 +76,8 @@ class RedundantLambdaArrowInspection : KotlinApplicableInspectionBase.Simple<KtL
         return true
     }
 
-    override fun KaSession.prepareContext(element: KtLambdaExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtLambdaExpression): Unit? {
         val functionLiteral = element.functionLiteral
         val parameters = functionLiteral.valueParameters
         if (parameters.isNotEmpty() && element.expectedType == null) return null

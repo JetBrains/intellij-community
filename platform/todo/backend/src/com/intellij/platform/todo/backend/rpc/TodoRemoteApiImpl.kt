@@ -6,19 +6,18 @@ import com.intellij.ide.todo.TodoFilter
 import com.intellij.ide.todo.model.TodoScope
 import com.intellij.ide.todo.rpc.TodoEvent
 import com.intellij.ide.todo.rpc.TodoFilesWatchRequest
-import com.intellij.ide.todo.rpc.TodoFilterConfig
-import com.intellij.ide.todo.rpc.TodoPatternConfig
 import com.intellij.ide.todo.rpc.TodoRemoteApi
-import com.intellij.ide.todo.shouldUseSplitTodo
-import com.intellij.ide.util.scopeChooser.ScopesStateService
-import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.ide.todo.model.toSearchScope
+import com.intellij.ide.todo.rpc.toTodoFilter
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
@@ -27,9 +26,8 @@ import com.intellij.platform.todo.backend.model.TodoFileResultBuilder.buildTodoF
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.PsiTodoSearchHelper
 import com.intellij.psi.search.SearchScope
-import com.intellij.psi.search.TodoAttributesUtil
-import com.intellij.psi.search.TodoPattern
 import com.intellij.util.asDisposable
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ProducerScope
@@ -37,6 +35,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
+import java.beans.PropertyChangeListener
 
 private val LOG: Logger = logger<TodoRemoteApiImpl>()
 
@@ -47,27 +46,53 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     request: TodoFilesWatchRequest,
   ): Flow<TodoEvent> = channelFlow {
     val project = projectId.findProjectOrNull() ?: return@channelFlow
-    val filter = resolveFilter(project, request.filter)
-    val searchScope = resolveSearchScope(project, request.scope)
+    val filter = request.filter?.toTodoFilter()
+    val searchScope = request.scope.toSearchScope(project)
+
+    val flowDisposable = this@channelFlow.asDisposable()
+    var scanDisposable: Disposable? = null
 
     val fileChangesQueue = Channel<VirtualFile>(Channel.UNLIMITED)
-    launch {
-      for (file in fileChangesQueue) {
-        scheduleFileChanges(project, file,filter)
+    var initialScanJob: Job? = null
+
+    fun scheduleInitialScan() {
+      initialScanJob?.cancel()
+      scanDisposable?.let(Disposer::dispose)
+
+      val currentScanDisposable = Disposer.newDisposable(flowDisposable);
+      scanDisposable = currentScanDisposable
+
+      initialScanJob = launch {
+        readAction {
+          blockingContextToIndicator {
+            buildInitialScanEvents(project, request.scope, searchScope, filter)
+          }
+          PsiManager.getInstance(project).addPsiTreeChangeListener(
+            TodoBackendPsiListener { file -> if (searchScope?.contains(file) != false) fileChangesQueue.trySend(file) },
+            currentScanDisposable
+          )
+        }
       }
     }
 
-    readAction {
-      blockingContextToIndicator {
-        buildInitialScanEvents(project, request.scope, searchScope, filter)
-      }
-      if (shouldUseSplitTodo()) {
-        PsiManager.getInstance(project).addPsiTreeChangeListener(
-          TodoBackendPsiListener { file -> if (searchScope?.contains(file) != false) fileChangesQueue.trySend(file) },
-          this@channelFlow.asDisposable()
-        )
+    launch {
+      for (file in fileChangesQueue) {
+        scheduleFileChanges(project, file, filter)
       }
     }
+
+    project.messageBus.connect(flowDisposable).subscribe(
+      TodoConfiguration.PROPERTY_CHANGE,
+      PropertyChangeListener { event ->
+        if (event.propertyName == TodoConfiguration.PROP_TODO_PATTERNS ||
+            event.propertyName == TodoConfiguration.PROP_TODO_FILTERS ||
+            event.propertyName == TodoConfiguration.PROP_MULTILINE) {
+          scheduleInitialScan()
+        }
+      }
+    )
+
+    scheduleInitialScan()
 
     awaitCancellation()
   }.buffer(Channel.UNLIMITED)
@@ -111,7 +136,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     trySend(TodoEvent.ScanFinished)
   }
 
-  private suspend fun ProducerScope<TodoEvent>.scheduleFileChanges(project: Project, file: VirtualFile, filter: TodoFilter? ) {
+  private suspend fun ProducerScope<TodoEvent>.scheduleFileChanges(project: Project, file: VirtualFile, filter: TodoFilter?) {
     readAction {
       val psiManager = PsiManager.getInstance(project)
       val helper = PsiTodoSearchHelper.getInstance(project)
@@ -130,50 +155,5 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
       if (result != null) trySend(TodoEvent.ItemUpserted(result))
       else trySend(TodoEvent.ItemRemoved(file.rpcId()))
     }
-  }
-
-  override suspend fun fileMatchesFilter(
-    projectId: ProjectId,
-    fileId: VirtualFileId,
-    filter: TodoFilterConfig?
-  ): Boolean {
-    val project = projectId.findProjectOrNull() ?: return false
-    val virtualFile = fileId.virtualFile() ?: return false
-    val resolvedFilter = resolveFilter(project, filter)
-
-    return readAction {
-      val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return@readAction false
-      val helper = PsiTodoSearchHelper.getInstance(project)
-
-      if (resolvedFilter != null) {
-        resolvedFilter.accept(helper, psiFile)
-      } else {
-        helper.getTodoItemsCount(psiFile) > 0
-      }
-    }
-  }
-
-  private fun resolveFilter(project: Project, config: TodoFilterConfig?): TodoFilter? {
-    if (config == null) return null
-
-    config.name?.let { name ->
-      val byName = TodoConfiguration.getInstance().getTodoFilter(name)
-      if (byName != null) return byName
-    }
-
-    if (config.patterns.isEmpty()) return null
-
-    return TodoFilter().apply {
-      config.patterns.forEach { config: TodoPatternConfig ->
-        val patternString = config.pattern
-        val pattern = TodoPattern(patternString, TodoAttributesUtil.createDefault(), config.isCaseSensitive)
-        addTodoPattern(pattern)
-      }
-    }
-  }
-
-  private fun resolveSearchScope(project: Project, scope: TodoScope?): SearchScope? {
-    if (scope !is TodoScope.NamedScope) return null
-    return ScopesStateService.getInstance(project).getScopesState().getScopeDescriptorById(scope.scopeId)?.scope
   }
 }

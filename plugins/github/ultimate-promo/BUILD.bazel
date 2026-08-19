@@ -53,6 +53,7 @@ jvm_library(
 exports_files(
     [
         "intellij.vcs.github.ultimatePromo.iml",
+        "resources/intellij.vcs.github.ultimatePromo.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KaTypeP
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaCallableReceiverRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaConstructorSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -38,7 +39,8 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import javax.swing.Icon
 
 @OptIn(KaExperimentalApi::class)
-fun KaSession.calcLabel(symbol: KaDeclarationSymbol): String {
+context(session: KaSession)
+fun calcLabel(symbol: KaDeclarationSymbol): String {
     return symbol.render(RENDERER)
 }
 
@@ -63,7 +65,7 @@ class KotlinMethodSmartStepTarget(
         return runDumbAnalyze(declaration, fallback = null) { getClassName(declaration) }
     }
 
-    override fun needForceSmartStepInto() = methodInfo.isInvoke && methodInfo.isSuspend
+    override fun needForceSmartStepInto(): Boolean = methodInfo.isInvoke && methodInfo.isSuspend
 
     fun getDeclaration(): KtDeclaration? =
         declarationPtr.getElementInReadAction()

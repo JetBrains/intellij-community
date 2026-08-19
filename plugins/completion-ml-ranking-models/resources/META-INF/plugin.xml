@@ -11,12 +11,29 @@
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.internal"/>
   </dependencies>
   <!-- endregion -->
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.completion.ml.ranking</depends>
+
+  <content>
+    <module name="intellij.completionMlRankingModels.libraries" loading="embedded"/>
+    <module name="intellij.libraries.completion.ranking.cpp" loading="embedded"/>
+    <module name="intellij.libraries.completion.ranking.go" loading="embedded"/>
+    <module name="intellij.libraries.completion.ranking.java" loading="embedded"/>
+    <module name="intellij.libraries.completion.ranking.js" loading="embedded"/>
+    <module name="intellij.libraries.completion.ranking.kotlin" loading="embedded"/>
+    <module name="intellij.libraries.completion.ranking.php" loading="embedded"/>
+    <module name="intellij.libraries.completion.ranking.ruby" loading="embedded"/>
+    <module name="intellij.libraries.completion.ranking.rust" loading="embedded"/>
+    <module name="intellij.libraries.completion.ranking.sh" loading="embedded"/>
+    <module name="intellij.libraries.completion.ranking.swift" loading="embedded"/>
+    <module name="intellij.libraries.completion.ranking.typescript" loading="embedded"/>
+  </content>
 
   <extensions defaultExtensionNs="com.intellij">
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentKotlinMLRankingProvider"/>

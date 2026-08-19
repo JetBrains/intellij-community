@@ -2,6 +2,7 @@ package org.jetbrains.jewel.foundation.theme
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
 private val nonIslandsColorKeyRegex: Regex
@@ -28,7 +29,7 @@ private val islandsColorKeyRegex: Regex
  * @property purple A list of purple colors.
  * @property teal A list of teal colors.
  * @property rawMap A map of all colors in the palette, with their original keys.
- * @param isIslands Whether the palette uses the Islands theme color key format (e.g., `gray-10` instead of `gray1`).
+ * @property isIslands Whether the palette uses the Islands theme color key format (e.g., `gray-10` instead of `gray1`).
  */
 @Suppress("MemberVisibilityCanBePrivate", "KDocUnresolvedReference")
 @Immutable
@@ -43,7 +44,7 @@ public class ThemeColorPalette(
     public val purple: List<Color>,
     public val teal: List<Color>,
     public val rawMap: Map<String, Color>,
-    private val isIslands: Boolean,
+    public val isIslands: Boolean,
 ) {
     @Suppress("DEPRECATION")
     @Deprecated("Use the constructor with isIslands parameter", level = DeprecationLevel.HIDDEN)
@@ -326,12 +327,16 @@ public class ThemeColorPalette(
      */
     public fun tealOrNull(index: Int): Color? = getByIndexOrNull(teal, index)
 
-    private fun getByIndexOrNull(list: List<Color>, index: Int): Color? =
-        if (isIslands) {
-            if (index % 10 != 0) null else list.getOrNull(index / 10 - 1)
-        } else {
-            list.getOrNull(index - 1)
-        }
+    // Treat Color.Unspecified as null in index gaps in a sparse palette
+    private fun getByIndexOrNull(list: List<Color>, index: Int): Color? {
+        val resolved =
+            if (isIslands) {
+                if (index % 10 != 0) return null else list.getOrNull(index / 10 - 1)
+            } else {
+                list.getOrNull(index - 1)
+            }
+        return resolved?.takeIf { it.isSpecified }
+    }
 
     /**
      * Looks up a color in the palette by its key. The key can be in the format "colorNameN" (e.g., "gray1", "blue12"),

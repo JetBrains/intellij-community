@@ -144,42 +144,8 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library name="find-all-model-experimental" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-all-model:252.0.1">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/252.0.1/find-all-model-252.0.1.jar">
-              <sha256sum>9670b6befe4aa52df008d6612095d1db587880b42d36550794a3db43ff55c377</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/252.0.1/find-all-model-252.0.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/252.0.1/find-all-model-252.0.1-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="find-ec-model-experimental" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-ec-model:252.0.1">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/252.0.1/find-ec-model-252.0.1.jar">
-              <sha256sum>7c49ae42530a312fd8bcb0e63be01b8bae3f2daded8524ba599cd023b376edb2</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/252.0.1/find-ec-model-252.0.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/252.0.1/find-ec-model-252.0.1-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.search.everywhere.find.all.model" />
+    <orderEntry type="module" module-name="intellij.libraries.search.everywhere.find.ec.model" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.ext" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" />
     <orderEntry type="module" module-name="intellij.platform.bookmarks" scope="TEST" />

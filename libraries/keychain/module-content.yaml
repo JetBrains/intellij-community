@@ -1,0 +1,8 @@
+- name: dist.all/lib/intellij.libraries.keychain.jar
+  modules:
+  - name: intellij.libraries.keychain
+    libraries:
+      keychain:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/keychain/4/keychain-4.jar
+      - name: $MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-core/4/dbus-java-core-4.jar
+      - name: $MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-transport-native-unixsocket/4/dbus-java-transport-native-unixsocket-4.jar

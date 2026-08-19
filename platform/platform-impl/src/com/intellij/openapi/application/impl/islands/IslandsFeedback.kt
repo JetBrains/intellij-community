@@ -4,7 +4,6 @@ package com.intellij.openapi.application.impl.islands
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.AppearanceConfigurable
-import com.intellij.ide.ui.LafManager
 import com.intellij.idea.AppMode
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -18,9 +17,6 @@ import java.lang.ref.WeakReference
 
 internal class IslandsFeedback : ProjectActivity {
   internal companion object {
-    internal fun isIslandTheme(): Boolean {
-      return isIslandTheme(LafManager.getInstance().currentUIThemeLookAndFeel?.id ?: return false)
-    }
 
     internal fun isIslandTheme(themeId: String) = themeId == "Islands Dark" || themeId == "Islands Light" || themeId == "Islands Darcula"
 

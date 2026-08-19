@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.codeInsight.inspections.AbstractRangeInspection.ContextWrapper
@@ -20,7 +21,7 @@ import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 abstract class AbstractRangeInspection<C : Any> : KotlinApplicableInspectionBase.Simple<KtExpression, ContextWrapper<C>>() {
-    sealed class RangeExpression() {
+    sealed class RangeExpression {
         abstract val expression: KtExpression
         abstract val type: RangeKtExpressionType
 
@@ -46,12 +47,14 @@ abstract class AbstractRangeInspection<C : Any> : KotlinApplicableInspectionBase
             }
     }
 
-    fun KaSession.rangeExpressionByAnalyze(expression: KtExpression): RangeExpression? =
+    context(session: KaSession)
+    fun rangeExpressionByAnalyze(expression: KtExpression): RangeExpression? =
         rangeExpressionByPsi(expression)?.takeIf {
             val call = expression.resolveToCall()?.singleFunctionCallOrNull()
             val packageName = call?.symbol?.callableId?.packageName
             packageName != null && packageName.startsWith(Name.identifier("kotlin"))
         }
+
     data class ContextWrapper<C : Any>(
         val range: RangeExpression,
         val wrappedContext: C,
@@ -90,9 +93,11 @@ abstract class AbstractRangeInspection<C : Any> : KotlinApplicableInspectionBase
         return range != null && isApplicableByPsi(range)
     }
 
-    abstract fun KaSession.prepareContext(range: RangeExpression): C?
+    context(session: KaSession)
+    abstract fun prepareContext(range: RangeExpression): C?
 
-    final override fun KaSession.prepareContext(element: KtExpression): ContextWrapper<C>? {
+    context(session: KaSession)
+    final override fun prepareContext(element: KtExpression): ContextWrapper<C>? {
         val range = rangeExpressionByAnalyze(element) ?: return null
         val context = prepareContext(range) ?: return null
         return ContextWrapper(range, context)

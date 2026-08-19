@@ -1,11 +1,14 @@
+from _typeshed import Incomplete
 from collections.abc import Callable
-from typing import Any, NoReturn, Protocol, TypeVar, type_check_only
+from typing import Any, Final, Protocol, TypeAlias, TypeVar, type_check_only
+from typing_extensions import Never
 
 from yaml.error import YAMLError
 
 from .events import Event
 
 _T_contra = TypeVar("_T_contra", str, bytes, contravariant=True)
+_YAMLObject: TypeAlias = Any
 
 @type_check_only
 class _WriteStream(Protocol[_T_contra]):
@@ -17,21 +20,21 @@ class _WriteStream(Protocol[_T_contra]):
 class EmitterError(YAMLError): ...
 
 class ScalarAnalysis:
-    scalar: Any
-    empty: Any
-    multiline: Any
-    allow_flow_plain: Any
-    allow_block_plain: Any
-    allow_single_quoted: Any
-    allow_double_quoted: Any
-    allow_block: Any
+    scalar: Incomplete
+    empty: Incomplete
+    multiline: Incomplete
+    allow_flow_plain: Incomplete
+    allow_block_plain: Incomplete
+    allow_single_quoted: Incomplete
+    allow_double_quoted: Incomplete
+    allow_block: Incomplete
     def __init__(
         self, scalar, empty, multiline, allow_flow_plain, allow_block_plain, allow_single_quoted, allow_double_quoted, allow_block
     ) -> None: ...
 
 class Emitter:
-    DEFAULT_TAG_PREFIXES: dict[str, str]
-    stream: _WriteStream[Any]
+    DEFAULT_TAG_PREFIXES: Final[dict[str, str]]
+    stream: _WriteStream[_YAMLObject]
     encoding: str | None
     states: list[Callable[[], None]]
     state: Callable[[], None] | None
@@ -61,7 +64,7 @@ class Emitter:
     style: str | None
     def __init__(
         self,
-        stream: _WriteStream[Any],
+        stream: _WriteStream[_YAMLObject],
         canonical: bool | None = None,
         indent: int | None = None,
         width: int | None = None,
@@ -74,7 +77,7 @@ class Emitter:
     def need_events(self, count: int) -> bool: ...
     def increase_indent(self, flow: bool = False, indentless: bool = False) -> None: ...
     def expect_stream_start(self) -> None: ...
-    def expect_nothing(self) -> NoReturn: ...
+    def expect_nothing(self) -> Never: ...
     def expect_first_document_start(self) -> None: ...
     def expect_document_start(self, first: bool = False) -> None: ...
     def expect_document_end(self) -> None: ...
@@ -125,7 +128,7 @@ class Emitter:
     def write_version_directive(self, version_text: str) -> None: ...
     def write_tag_directive(self, handle_text: str, prefix_text: str) -> None: ...
     def write_single_quoted(self, text: str, split: bool = True) -> None: ...
-    ESCAPE_REPLACEMENTS: dict[str, str]
+    ESCAPE_REPLACEMENTS: Final[dict[str, str]]
     def write_double_quoted(self, text: str, split: bool = True) -> None: ...
     def determine_block_hints(self, text: str) -> str: ...
     def write_folded(self, text: str) -> None: ...

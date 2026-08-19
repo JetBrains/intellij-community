@@ -65,6 +65,7 @@ a:com.intellij.coverage.CoverageDataManager
 - a:chooseSuitesBundle(com.intellij.coverage.CoverageSuitesBundle):V
 - a:closeSuitesBundle(com.intellij.coverage.CoverageSuitesBundle):V
 - coverageDataCalculated(com.intellij.coverage.CoverageSuitesBundle):V
+- coverageDataCalculationFailed(com.intellij.coverage.CoverageSuitesBundle):V
 - a:coverageGathered(com.intellij.coverage.CoverageSuite):V
 - a:doInReadActionIfProjectOpen(com.intellij.openapi.util.Computable):java.lang.Object
 - a:getCurrentSuitesBundle():com.intellij.coverage.CoverageSuitesBundle
@@ -170,6 +171,7 @@ com.intellij.coverage.CoverageSuiteListener
 - afterSuiteChosen():V
 - beforeSuiteChosen():V
 - coverageDataCalculated(com.intellij.coverage.CoverageSuitesBundle):V
+- coverageDataCalculationFailed(com.intellij.coverage.CoverageSuitesBundle):V
 - coverageGathered(com.intellij.coverage.CoverageSuite):V
 c:com.intellij.coverage.CoverageSuitesBundle
 - <init>(com.intellij.coverage.CoverageSuite):V

@@ -34,6 +34,6 @@
     <orderEntry type="module" module-name="intellij.platform.icons.api.rendering" exported="" />
     <orderEntry type="module" module-name="intellij.platform.icons" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
-    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
   </component>
 </module>

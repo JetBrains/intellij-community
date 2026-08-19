@@ -74,6 +74,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.vcs.log.impl.bookmarks.iml",
+        "resources/intellij.platform.vcs.log.impl.bookmarks.xml",
     ],
     visibility = ["//visibility:public"],
 )

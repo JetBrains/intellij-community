@@ -6,6 +6,7 @@
 
   <xi:include href="/META-INF/PlatformLangPlugin.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.jsp.base.xml"/>
   <!-- region additional -->
   <content namespace="jetbrains">
     <module name="intellij.platform.whatsNew"/>

@@ -30,7 +30,8 @@ class RedundantCompanionReferenceInspection : KotlinApplicableInspectionBase.Sim
         context: Unit
     ): KotlinModCommandQuickFix<KtSimpleNameExpression> = RemoveRedundantCompanionReferenceFix()
 
-    override fun KaSession.prepareContext(element: KtSimpleNameExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtSimpleNameExpression): Unit? {
         return element.isRedundantCompanionReference().asUnit
     }
 

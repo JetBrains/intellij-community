@@ -8,6 +8,18 @@
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.references"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.k2"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
   </dependencies>
   <!-- endregion -->
 <extensions defaultExtensionNs="com.intellij">
@@ -17,6 +29,10 @@
             key="kotlin.analysis.allowRestrictedAnalysis"
             restartRequired="true"
     />
+    <registryKey defaultValue="false"
+                 description="Enables the local lookup optimizations"
+                 key="kotlin.analysis.enableLocalLookupOptimization"
+                 restartRequired="true"/>
 
     <applicationService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinAnalysisPermissionOptions"
@@ -43,7 +59,8 @@
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinPackageProviderFactory"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.base.analysisApiPlatform.KotlinModulePackageNamesProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModulePackageNamesProvider"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModulePackageNamesProvider"
+            open="true"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderMerger"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinPackageProviderMerger"/>
@@ -52,7 +69,8 @@
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinPackagePartProviderFactory"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAccessibilityChecker"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.java.IdeKotlinJavaModuleAccessibilityChecker"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.java.IdeKotlinJavaModuleAccessibilityChecker"
+            open="true"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAnnotationsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.java.IdeKotlinJavaModuleAnnotationsProvider"/>

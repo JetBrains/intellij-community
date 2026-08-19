@@ -14,16 +14,20 @@ import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 
 
-
 open class JsonParserDefinition : ParserDefinition {
 
   override fun createLexer(project: Project?): Lexer {
     return JsonLexer()
   }
 
-  override fun createParser(project: Project?): PsiParser {throw UnsupportedOperationException("Should not be called directly. " +
-                                                                                               "If you didn't call directly, check your IFileElementType implementation — it should implement " +
-                                                                                               "com.intellij.platform.syntax.psi.SyntaxFileElementType.SyntaxFileElementType")}
+  override fun createParser(project: Project?): PsiParser {
+    throw UnsupportedOperationException(
+      "Should not be called directly. " +
+      "If you didn't call directly, check your IFileElementType implementation — it should use " +
+      "com.intellij.platform.syntax.psi.SyntaxFileElementType or " +
+      "com.intellij.platform.syntax.psi.SyntaxGrammarKitFileElementType."
+    )
+  }
 
   override fun getFileNodeType(): IFileElementType {
     return JSON_FILE

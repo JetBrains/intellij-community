@@ -114,6 +114,22 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleRunConfigurati
     return configurationFactory.createTemplateConfiguration(myProject) as GradleRunConfiguration
   }
 
+  /**
+   * Runs [action] with [scriptParameters] defined in the Gradle run configuration template.
+   */
+  protected fun <R> withTemplateScriptParameters(scriptParameters: String, action: () -> R): R {
+    val factory = GradleExternalTaskConfigurationType.getInstance().factory
+    val template = RunManager.getInstance(myProject).getConfigurationTemplate(factory).configuration as GradleRunConfiguration
+    val originalScriptParameters = template.settings.scriptParameters
+    template.settings.scriptParameters = scriptParameters
+    try {
+      return action()
+    }
+    finally {
+      template.settings.scriptParameters = originalScriptParameters
+    }
+  }
+
   protected fun createAndAddRunConfiguration(commandLine: String, vmOptions: String? = null): GradleRunConfiguration {
     val runManager = RunManager.getInstance(myProject)
 

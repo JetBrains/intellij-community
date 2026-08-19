@@ -23,7 +23,6 @@ import git4idea.GitWorkingTree
 import git4idea.i18n.GitBundle
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -45,11 +44,15 @@ class GitRepositoriesHolder(
   private val cs: CoroutineScope = providedScope.plus(Dispatchers.IO)
 
   private val repositories: MutableMap<RepositoryId, GitRepositoryModelImpl> = ConcurrentHashMap()
-  private val initJob = cs.launch(start = CoroutineStart.LAZY) { subscribeToRepoEvents() }
+  private val initializedDeferred = CompletableDeferred<Unit>()
   private val _updates = MutableSharedFlow<UpdateType>(replay = 0, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  val initialized: Boolean get() = initJob.isCompleted
+  val initialized: Boolean get() = initializedDeferred.isCompleted
   val updates: SharedFlow<UpdateType> = _updates.asSharedFlow()
+
+  init {
+    subscribeToRepoEvents()
+  }
 
   fun getAll(): List<GitRepositoryModel> {
     logErrorIfNotInitialized()
@@ -74,27 +77,35 @@ class GitRepositoriesHolder(
    * Returns immediately if [GitRepositoriesHolder] is initialized or waits until the initialization is completed.
    */
   suspend fun awaitInitialization() {
-    initJob.start()
-    initJob.join()
+    initializedDeferred.await()
   }
 
   /**
-   * @return once the connection is established and the first [GitRepositoryEvent.ReloadState] is received
+   * Never-empty entry point: awaits initialization, then returns all repositories. Consumers that can suspend
+   * should call this instead of [getAll] to avoid ever observing a premature/empty state.
    */
-  private suspend fun subscribeToRepoEvents() {
-    val initSignal = CompletableDeferred<Unit>()
+  suspend fun getRepositories(): List<GitRepositoryModel> {
+    awaitInitialization()
+    return getAll()
+  }
+
+  /**
+   * Starts listening for repository events over RPC; the first [GitRepositoryEvent.ReloadState] completes
+   * [initializedDeferred].
+   */
+  private fun subscribeToRepoEvents() {
     cs.childScope("Git repository state synchronization").launch {
       durable {
         GitRepositoryApi.getInstance().getRepositoriesEvents(project.projectId()).collect { event ->
           LOG.debug("Received repository event: $event")
           when (event) {
             is GitRepositoryEvent.ReloadState -> {
-              val newState = event.repositories.associate { it.repositoryId to convertToRepositoryInfo(it) }
+              val newState = event.repositories.associate { it.repositoryId to it.toRepositoryModelImpl() }
               repositories.keys.retainAll(newState.keys)
               repositories.putAll(newState)
 
-              if (!initSignal.isCompleted) {
-                initSignal.complete(Unit)
+              if (!initializedDeferred.isCompleted) {
+                initializedDeferred.complete(Unit)
               }
             }
             is GitRepositoryEvent.RepositoriesSync -> {
@@ -109,7 +120,7 @@ class GitRepositoriesHolder(
               }
             }
             is GitRepositoryEvent.RepositoryCreated -> {
-              repositories[event.repository.repositoryId] = convertToRepositoryInfo(event.repository)
+              repositories[event.repository.repositoryId] = event.repository.toRepositoryModelImpl()
             }
             is GitRepositoryEvent.RepositoryDeleted -> repositories.remove(event.repositoryId)
             is GitRepositoryEvent.SingleRepositoryUpdate -> handleSingleRepoUpdate(event)
@@ -124,7 +135,6 @@ class GitRepositoriesHolder(
         }
       }
     }
-    initSignal.await()
   }
 
   private suspend fun handleSingleRepoUpdate(event: GitRepositoryEvent.SingleRepositoryUpdate) {
@@ -136,7 +146,7 @@ class GitRepositoriesHolder(
           info.favoriteRefs = event.favoriteRefs
         }
         is GitRepositoryEvent.RepositoryStateUpdated -> {
-          info.state = convertToRepositoryState(event.newState)
+          info.state = event.newState.toRepositoryStateImpl()
         }
         is GitRepositoryEvent.TagsLoaded -> {
           info.state.tags = event.tags
@@ -167,26 +177,26 @@ class GitRepositoriesHolder(
 
     private val LOG = Logger.getInstance(GitRepositoriesHolder::class.java)
 
-    private fun convertToRepositoryInfo(repositoryDto: GitRepositoryDto) =
+    private fun GitRepositoryDto.toRepositoryModelImpl(): GitRepositoryModelImpl =
       GitRepositoryModelImpl(
-        repositoryId = repositoryDto.repositoryId,
-        shortName = repositoryDto.shortName,
-        state = convertToRepositoryState(repositoryDto.state),
-        favoriteRefs = repositoryDto.favoriteRefs,
-        root = repositoryDto.root.filePath,
+        repositoryId = repositoryId,
+        shortName = shortName,
+        state = state.toRepositoryStateImpl(),
+        favoriteRefs = favoriteRefs,
+        root = root.filePath,
       )
 
-    private fun convertToRepositoryState(repositoryStateDto: GitRepositoryStateDto) =
+    private fun GitRepositoryStateDto.toRepositoryStateImpl(): GitRepositoryStateImpl =
       GitRepositoryStateImpl(
-        currentRef = repositoryStateDto.currentRef,
-        revision = repositoryStateDto.revision,
-        localBranches = repositoryStateDto.localBranches,
-        remoteBranches = repositoryStateDto.remoteBranches,
-        tags = repositoryStateDto.tags,
-        workingTrees = repositoryStateDto.workingTrees,
-        recentBranches = repositoryStateDto.recentBranches,
-        operationState = repositoryStateDto.operationState,
-        trackingInfo = repositoryStateDto.trackingInfo,
+        currentRef = currentRef,
+        revision = revision,
+        localBranches = localBranches,
+        remoteBranches = remoteBranches,
+        tags = tags,
+        workingTrees = workingTrees,
+        recentBranches = recentBranches,
+        operationState = operationState,
+        trackingInfo = trackingInfo,
       )
 
     private fun getUpdateType(rpcEvent: GitRepositoryEvent): UpdateType? = when (rpcEvent) {

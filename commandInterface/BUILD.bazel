@@ -62,6 +62,7 @@ jvm_library(
 exports_files(
     [
         "intellij.commandInterface.iml",
+        "resources/intellij.commandInterface.xml",
     ],
     visibility = ["//visibility:public"],
 )

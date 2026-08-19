@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.getPathMatcher
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.pyproject.safeGet
 import com.intellij.python.pyproject.model.spi.ProjectDependencies
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
@@ -14,8 +15,11 @@ import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.PySdkDependencyGroupSupport
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
+import com.intellij.python.pyproject.psi.spi.PyProjectTomlPathValue
+import com.intellij.python.pyproject.psi.spi.isPathDependencyKey
+import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.pytools.runtime.PyToolRuntime
-import com.intellij.python.uv.backend.UV_TOOL
+import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.uv.backend.runtime.createUvToolRuntime
 import com.intellij.python.uv.backend.runtime.uvCli
 import com.intellij.python.uv.common.UV_TOOL_ID
@@ -27,6 +31,7 @@ import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.ToolBasedProjectCreator
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +47,8 @@ import kotlin.io.path.relativeTo
 internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBasedProjectCreator(
   object : ToolBasedProjectCreator.PyToolFuns {
     override suspend fun createRuntime(fs: EelFileSystem, where: Directory): Result<PyToolRuntime, PyError> {
-      val tool = UV_TOOL.getToolExecutableOrError(fs, null).getOr { return it }
+      val tool = UvPyTool.getInstance().resolveExecutable(fs)
+                 ?: return PyResult.localizedError(PySdkBundle.message("path.validation.file.not.found", "uv"))
       return Result.success(createUvToolRuntime(tool.path))
     }
 
@@ -91,9 +97,12 @@ internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBa
     }
 
     // Each member might have tool.uv.sources table.
+    // PY-91089: use safeGet, not TomlTable.getTable, which throws TomlInvalidTypeException when the key
+    // holds a non-table value (e.g. the `[[tool.uv.sources]]` array-of-tables typo). Such a member is
+    // simply treated as having no sources instead of aborting the whole workspace model sync.
     val memberToUvSourceTable = entries
       .mapNotNull { (projectName, toml) ->
-        toml.pyProjectToml.toml.getTable("tool.uv.sources")?.let { projectName to it }
+        toml.pyProjectToml.toml.safeGet<TomlTable>(UV_SOURCES, unquotedDottedKey = true).successOrNull?.let { projectName to it }
       }
       .toMap()
 
@@ -149,10 +158,36 @@ internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBa
   }
 
   override fun getTomlDependencySpecifications(): List<TomlDependencySpecification> = listOf(
-    TomlDependencySpecification.PathDependency("tool.uv.sources"),
+    TomlDependencySpecification.PathDependency(UV_SOURCES),
     TomlDependencySpecification.Pep621Dependency("tool.uv.dev-dependencies"),
   )
+
+  /**
+   * uv path values, made navigable by `PyProjectTomlPathReferenceContributor` (PY-90384):
+   *
+   * ```toml
+   * [tool.uv.workspace]
+   * members = ["sub-projects/sub-project-a"]  # -> the member directory
+   *
+   * [tool.uv.sources]
+   * vendored = { path = "vendor/vendored-lib" }
+   * ```
+   *
+   * All three spellings of the workspace table (`[tool.uv.workspace]`, `[tool.uv] workspace = { … }` and the
+   * dotted `workspace.members`) arrive here as the same key path, so one comparison covers them.
+   */
+  override fun resolveTomlPath(keyPath: List<String>): PyProjectTomlPathValue? = when {
+    keyPath == WORKSPACE_MEMBERS_KEY || keyPath == WORKSPACE_EXCLUDE_KEY -> PyProjectTomlPathValue()
+    // A path source may point at an sdist / wheel rather than at a project directory.
+    getTomlDependencySpecifications().isPathDependencyKey(keyPath) -> PyProjectTomlPathValue(acceptFiles = true)
+    else -> null
+  }
 }
+
+private const val UV_SOURCES = "tool.uv.sources"
+private const val UV_WORKSPACE = "tool.uv.workspace"
+private val WORKSPACE_MEMBERS_KEY = "$UV_WORKSPACE.members".split('.')
+private val WORKSPACE_EXCLUDE_KEY = "$UV_WORKSPACE.exclude".split('.')
 
 // Slightly more permissive than PEP 508 IDENTIFIER (allows leading underscores & consecutive separators),
 // but sufficient here since dependency names are already validated by uv.
@@ -187,9 +222,11 @@ private data class SourceTableWithOwner(val table: TomlTable, val ownerRoot: Pat
 
 @RequiresBackgroundThread
 private fun getWorkspaceMembers(toml: TomlTable): WorkspaceInfo? {
-  val workspace = toml.getTable("tool.uv.workspace") ?: return null
-  val members = workspace.getArrayOrEmpty("members").asMatchers
-  val exclude = workspace.getArrayOrEmpty("exclude").asMatchers
+  // PY-91089: safeGet instead of getTable/getArrayOrEmpty, which throw TomlInvalidTypeException when
+  // the key holds an unexpected type (e.g. the `[[tool.uv.workspace]]` array typo, or `members = "x"`).
+  val workspace = toml.safeGet<TomlTable>(UV_WORKSPACE, unquotedDottedKey = true).successOrNull ?: return null
+  val members = workspace.safeGet<TomlArray>("members").successOrNull?.asMatchers ?: emptyList()
+  val exclude = workspace.safeGet<TomlArray>("exclude").successOrNull?.asMatchers ?: emptyList()
   if (members.isEmpty()) return null
   return WorkspaceInfo(members = members, exclude = exclude)
 }
@@ -216,24 +253,39 @@ private fun getUvDependencies(
   val workspaceDeps = mutableListOf<ProjectName>()
   val pathDeps = hashSetOf<Path>()
   for ((sourcesTable, ownerRoot) in sourcesTablesWithRoots) {
-    for ((sourceKey, depTable) in sourcesTable.toMap().entries) {
+    for ((sourceKey, sourceValue) in sourcesTable.toMap().entries) {
       val normalizedKey = PyPackageName.normalizeProjectName(sourceKey)
       val depName = depByNormalizedName[normalizedKey] ?: continue
-      val table = depTable as? TomlTable ?: continue
 
-      if (table.getBoolean("workspace") == true) {
-        workspaceDeps.add(ProjectName(depName))
-        depByNormalizedName.remove(normalizedKey)
+      // A source entry is either a single table or an array of tables (multiple sources selected by
+      // platform marker — a valid uv feature); resolve every table it contains (PY-91195).
+      val depTables = when (sourceValue) {
+        is TomlTable -> listOf(sourceValue)
+        is TomlArray -> sourceValue.toList().filterIsInstance<TomlTable>()
+        else -> continue
       }
-      else {
-        val path = table.getString("path") ?: continue
-        try {
-          pathDeps.add(ownerRoot.resolve(path).normalize())
-          depByNormalizedName.remove(normalizedKey)
+
+      var resolved = false
+      for (table in depTables) {
+        // PY-91089: safeGet instead of getBoolean/getString, which throw when the value has an unexpected type.
+        if (table.safeGet<Boolean>("workspace").successOrNull == true) {
+          workspaceDeps.add(ProjectName(depName))
+          resolved = true
         }
-        catch (e: InvalidPathException) {
-          logger.info("Can't resolve $path against $ownerRoot", e)
+        else {
+          val path = table.safeGet<String>("path").successOrNull ?: continue
+          try {
+            pathDeps.add(ownerRoot.resolve(path).normalize())
+            resolved = true
+          }
+          catch (e: InvalidPathException) {
+            logger.info("Can't resolve $path against $ownerRoot", e)
+          }
         }
+      }
+      // Once resolved by a higher-priority table, don't let parent workspace tables override it.
+      if (resolved) {
+        depByNormalizedName.remove(normalizedKey)
       }
     }
   }

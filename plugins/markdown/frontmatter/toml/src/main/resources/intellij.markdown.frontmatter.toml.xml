@@ -1,8 +1,13 @@
 <idea-plugin>
   <dependencies>
-    <module name="intellij.platform.langInjection"/>
-    <module name="intellij.platform.backend"/>
     <plugin id="org.toml.lang"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.langInjection"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

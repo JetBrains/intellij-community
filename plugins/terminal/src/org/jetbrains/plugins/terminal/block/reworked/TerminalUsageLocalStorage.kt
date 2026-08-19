@@ -11,7 +11,6 @@ import com.intellij.openapi.components.service
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalFirstIdeSessionMoment
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -25,43 +24,29 @@ import java.util.concurrent.atomic.AtomicReference
   ]
 )
 class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalStorage.State> {
-  private val feedbackNotificationShown = AtomicBoolean()
   private val enterKeyPressedTimes = AtomicInteger()
 
-  private val completionFeedbackNotificationShown = AtomicBoolean()
   private val completionPopupShownTimes = AtomicInteger()
   private val completionItemChosenTimes = AtomicInteger()
 
   private val firstIdeSessionMoment = AtomicReference<TerminalFirstIdeSessionMoment?>(null)
 
   override fun getState(): State = State(
-    feedbackNotificationShown.get(),
     enterKeyPressedTimes.get(),
-    completionFeedbackNotificationShown.get(),
     completionPopupShownTimes.get(),
     completionItemChosenTimes.get(),
     firstIdeSessionMoment.get(),
   )
 
   override fun loadState(state: State) {
-    feedbackNotificationShown.set(state.feedbackNotificationShown)
     enterKeyPressedTimes.set(state.enterKeyPressedTimes)
-    completionFeedbackNotificationShown.set(state.completionFeedbackNotificationShown)
     completionPopupShownTimes.set(state.completionPopupShownTimes)
     completionItemChosenTimes.set(state.completionItemChosenTimes)
     firstIdeSessionMoment.set(state.firstIdeSessionMoment)
   }
 
-  fun recordFeedbackNotificationShown() {
-    feedbackNotificationShown.set(true)
-  }
-
   fun recordEnterKeyPressed() {
     enterKeyPressedTimes.incrementAndGet()
-  }
-
-  fun recordCompletionFeedbackNotificationShown() {
-    completionFeedbackNotificationShown.set(true)
   }
 
   fun recordCompletionPopupShown() {
@@ -78,9 +63,7 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
 
   @Serializable
   data class State(
-    val feedbackNotificationShown: Boolean = false,
     val enterKeyPressedTimes: Int = 0,
-    val completionFeedbackNotificationShown: Boolean = false,
     val completionPopupShownTimes: Int = 0,
     val completionItemChosenTimes: Int = 0,
     val firstIdeSessionMoment: TerminalFirstIdeSessionMoment? = null,

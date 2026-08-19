@@ -14,7 +14,7 @@ class EditorCellInput(val cell: EditorCell) : EditorCellViewComponent() {
 
   val component: EditorCellViewComponent = EditorCellInputFactory.create(cell).also { add(it) }
 
-  private val dragAssistant = when (Registry.`is`("jupyter.editor.dnd.cells")) {
+  internal val dragAssistant = when (Registry.`is`("jupyter.editor.dnd.cells")) {
     true -> EditorCellDragAssistant(editor, this, ::fold, ::unfold).also { Disposer.register(this, it) }
     false -> null
   }

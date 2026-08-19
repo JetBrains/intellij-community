@@ -53,18 +53,22 @@ suspend fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesF
   }
 }
 
-private fun isPluginCompatible(
+internal fun isPluginCompatible(
   plugin: PluginDescriptor,
   availableModulesAndPlugins: MutableSet<String>,
   nonCheckedModules: MutableMap<String, PluginDescriptor>,
   bundledPluginIds: Set<String>,
 ): Boolean {
+  val includedModules = plugin.pluginLayouts.asSequence()
+    .flatMap { it.includedModules.asSequence() }
+    .mapTo(HashSet()) { it.moduleName }
   nonCheckedModules.remove(plugin.id)
   for (declaredModule in plugin.declaredModules) {
     nonCheckedModules.remove(declaredModule)
   }
   for (requiredDependency in plugin.requiredDependencies) {
     if (availableModulesAndPlugins.contains(requiredDependency)
+        || includedModules.contains(requiredDependency)
         || requiredDependency.startsWith("com.intellij.modules.os.")
         || requiredDependency.startsWith("com.intellij.modules.arch.")) {
       continue

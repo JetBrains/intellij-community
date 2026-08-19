@@ -52,6 +52,8 @@ public abstract class TextMateService {
    */
   public abstract void ensureInitialized();
 
+  public abstract void startInitialization();
+
   public abstract @Nullable TextMateLanguageDescriptor getLanguageDescriptorByExtension(@Nullable CharSequence extension);
 
   public abstract @NotNull ShellVariablesRegistry getShellVariableRegistry();

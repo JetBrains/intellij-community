@@ -25,9 +25,9 @@ import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -514,9 +514,7 @@ private fun launchBackgroundPostStartupActivity(activity: Any, pluginId: PluginI
       throw e
     }
     catch (e: Throwable) {
-      if (e is ControlFlowException) {
-        throw e
-      }
+      rethrowControlFlowException(e)
       LOG.error(e)
     }
   }

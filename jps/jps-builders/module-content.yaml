@@ -2,7 +2,7 @@
   projectLibraries:
   - name: jps-javac-extension
     files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/jps/jps-javac-extension/10/jps-javac-extension-10.jar
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/jps/jps-javac-extension/11/jps-javac-extension-11.jar
   - name: kotlin-metadata
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2/kotlin-metadata-jvm-2.jar

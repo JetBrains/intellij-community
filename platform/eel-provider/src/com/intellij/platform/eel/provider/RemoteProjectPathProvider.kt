@@ -2,6 +2,7 @@
 @file:JvmName("RemoteProjectPathProviderKt")
 package com.intellij.platform.eel.provider
 
+import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -16,6 +17,7 @@ import java.nio.file.Path
 private val LOG = fileLogger()
 
 private val REMOTE_PROJECT_BASE_PATH_KEY: Key<String> = Key.create("com.intellij.platform.remoteProjectBasePath")
+private val REMOTE_PROJECT_IDENTITY_PATH_KEY: Key<String> = Key.create("com.intellij.platform.remoteProjectIdentityPath")
 
 /**
  * Empty string is the "checked-absent" sentinel; the absence of any call is "not yet set"
@@ -71,4 +73,52 @@ fun Project.getRemoteProjectBaseNioPath(): Path? {
   }
 
   return guessProjectDir()?.toNioPathOrNull()
+}
+
+/**
+ * Empty string is the "checked-absent" sentinel; the absence of any call is "not yet set"
+ * and treated as an init-order error on a thin client.
+ *
+ * The identity is the host-side project key used to open/reopen the project, and may be a project
+ * file rather than [getRemoteProjectBaseNioPath]'s directory. For example, Rider uses the `.sln`
+ * path as project identity while the base path is the containing workspace root.
+ */
+@ApiStatus.Internal
+fun Project.setRemoteProjectIdentityNioPath(rawHostPath: String) {
+  putUserData(REMOTE_PROJECT_IDENTITY_PATH_KEY, rawHostPath)
+}
+
+/**
+ * Returns the project's identity path as a [Path].
+ *
+ * On a thin client the backend-provided host path is routed through `MultiRoutingFileSystem`.
+ * On a monolith it falls back to [RecentProjectsManager.getProjectPath], then to [Project.guessProjectDir]
+ * for products that do not expose a separate project identity.
+ */
+@ApiStatus.Internal
+fun Project.getRemoteProjectIdentityNioPath(): Path? {
+  val identityPathFromBackend = getUserData(REMOTE_PROJECT_IDENTITY_PATH_KEY)
+
+  if (identityPathFromBackend == null) {
+    if (PlatformUtils.isJetBrainsClient() && getEelDescriptor() !is LocalEelDescriptor) {
+      LOG.error("REMOTE_PROJECT_IDENTITY_PATH_KEY not set on thin client; init order is broken")
+      return null
+    }
+    return RecentProjectsManager.getInstance().getProjectPath(this)
+           ?: guessProjectDir()?.toNioPathOrNull()
+  }
+
+  if (identityPathFromBackend.isEmpty()) {
+    return null
+  }
+
+  val descriptor = getEelDescriptor()
+
+  return try {
+    EelPath.parse(identityPathFromBackend, descriptor).asNioPath()
+  }
+  catch (e: EelPathException) {
+    LOG.error("Path '$identityPathFromBackend' inconsistent with descriptor $descriptor", e)
+    null
+  }
 }

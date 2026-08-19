@@ -19,7 +19,7 @@ interface ChildWithNullsMultipleBuilder : WorkspaceEntityBuilder<ChildWithNullsM
 }
 
 internal object ChildWithNullsMultipleType : EntityType<ChildWithNullsMultiple, ChildWithNullsMultipleBuilder>() {
-  override val entityClass: Class<ChildWithNullsMultiple> get() = ChildWithNullsMultiple::class.java
+  override val entityImplClass: Class<*> get() = ChildWithNullsMultipleImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ChildWithNullsMultipleImpl.Builder::class.java
   operator fun invoke(
     childData: String,
@@ -42,7 +42,6 @@ fun MutableEntityStorage.modifyChildWithNullsMultiple(
 @Parent
 var ChildWithNullsMultipleBuilder.parent: ParentWithNullsMultipleBuilder?
   by WorkspaceEntity.extensionBuilder(ParentWithNullsMultiple::class.java)
-
 
 @JvmOverloads
 @JvmName("createChildWithNullsMultiple")

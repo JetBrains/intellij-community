@@ -9,7 +9,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiMethod
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.ui.awt.RelativePoint
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor

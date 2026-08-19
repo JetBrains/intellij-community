@@ -17,6 +17,7 @@
     <module name="intellij.libraries.jackson3"/>
     <module name="intellij.libraries.jackson3.databind"/>
     <module name="intellij.libraries.jackson3.module.kotlin"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
@@ -42,7 +43,9 @@
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.bootstrap"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.indexing"/>
@@ -65,6 +68,8 @@
   <content namespace="jetbrains">
     <!-- region lambda.testFrameworkLibraries -->
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.allure.java.commons"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.byte.buddy"/>
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.hamcrest"/>
@@ -83,6 +88,8 @@
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.junit5.vintage"/>
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.kodein.di.jvm"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.kotlinTest"/>
     <!-- endregion -->
 
@@ -93,6 +100,8 @@
     <module name="intellij.codeowners.monorepo.resolver"/>
     <!-- chain: moduleSet platform.testFrameworks.core -->
     <module name="intellij.codeowners.runtime.resolver"/>
+    <!-- chain: moduleSet platform.testFrameworks.core -->
+    <module name="intellij.libraries.jetcheck"/>
     <!-- chain: moduleSet platform.testFrameworks.core -->
     <module name="intellij.platform.testFramework"/>
     <!-- chain: moduleSet platform.testFrameworks.core -->
@@ -137,6 +146,8 @@
   <content>
     <!-- chain: direct -->
     <module name="intellij.libraries.assertj.core"/>
+    <!-- chain: intellij.platform.testFramework.core -> intellij.libraries.opentest4j -->
+    <module name="intellij.libraries.opentest4j"/>
   </content>
   <!-- endregion -->
 </idea-plugin>

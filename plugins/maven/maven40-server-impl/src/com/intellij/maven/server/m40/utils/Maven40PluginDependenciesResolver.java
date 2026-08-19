@@ -26,7 +26,6 @@ import java.util.List;
 @Singleton
 @Priority(10)
 public class Maven40PluginDependenciesResolver implements PluginDependenciesResolver {
-  private static final MethodHandle RESOLVE_PLUGIN_AND_FLATTEN = findResolvePluginAndFlatten();
 
   private final PluginDependenciesResolver delegate;
 
@@ -35,32 +34,13 @@ public class Maven40PluginDependenciesResolver implements PluginDependenciesReso
     this.delegate = delegate;
   }
 
-  private static MethodHandle findResolvePluginAndFlatten() {
-    try {
-      MethodType type = MethodType.methodType(
-        DependencyResult.class, Plugin.class, Artifact.class, DependencyFilter.class,
-        List.class, RepositorySystemSession.class);
-      //noinspection JavaLangInvokeHandleSignature - the method is absent in the Maven version we compile against, resolved at runtime
-      return MethodHandles.lookup().findVirtual(PluginDependenciesResolver.class, "resolvePluginAndFlatten", type);
-    }
-    catch (NoSuchMethodException | IllegalAccessException e) {
-      return null;
-    }
-  }
-
-  private static PluginDependenciesResolver findDefaultResolver(List<PluginDependenciesResolver> allResolvers) {
-    for (PluginDependenciesResolver resolver : allResolvers) {
-      if (resolver instanceof DefaultPluginDependenciesResolver) return resolver;
-    }
-    throw new RuntimeException("DefaultPluginDependenciesResolver not found");
-  }
-
   @Override
   public Artifact resolve(Plugin plugin, List<RemoteRepository> repositories, RepositorySystemSession session)
     throws PluginResolutionException {
     return delegate.resolve(plugin, repositories, session);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public DependencyNode resolve(Plugin plugin, Artifact pluginArtifact, DependencyFilter dependencyFilter,
                                 List<RemoteRepository> repositories, RepositorySystemSession session)
@@ -75,12 +55,14 @@ public class Maven40PluginDependenciesResolver implements PluginDependenciesReso
                                         List<RemoteRepository> remotePluginRepositories,
                                         RepositorySystemSession repositorySession)
     throws PluginResolutionException {
+    //noinspection deprecation
     return retryResolution(
       () -> delegate.resolvePlugin(plugin, artifact, dependencyFilter, remotePluginRepositories, repositorySession)
     );
   }
 
-  /*@Override - see IDEA-390821*/
+
+  @Override
   public DependencyResult resolvePluginAndFlatten(
     Plugin plugin,
     Artifact pluginArtifact,
@@ -88,40 +70,21 @@ public class Maven40PluginDependenciesResolver implements PluginDependenciesReso
     List<RemoteRepository> repositories,
     RepositorySystemSession session)
     throws PluginResolutionException {
-    MethodHandle handle = RESOLVE_PLUGIN_AND_FLATTEN;
-    if (handle == null) {
-      throw new AbstractMethodError(
-        "Receiver class com.intellij.maven.server.m40.utils.Maven40PluginDependenciesResolver " +
-        "does not define or inherit an implementation of the resolved method " +
-        "'abstract org.eclipse.aether.resolution.DependencyResult resolvePluginAndFlatten(" +
-        "org.apache.maven.model.Plugin, org.eclipse.aether.artifact.Artifact, " +
-        "org.eclipse.aether.graph.DependencyFilter, java.util.List, " +
-        "org.eclipse.aether.RepositorySystemSession)' " +
-        "of interface org.apache.maven.plugin.internal.PluginDependenciesResolver.");
-    }
     return retryResolution(
-      () -> invokeResolvePluginAndFlatten(handle, plugin, pluginArtifact, dependencyFilter, repositories, session)
+      () -> delegate.resolvePluginAndFlatten(plugin, pluginArtifact, dependencyFilter, repositories, session)
     );
   }
 
-  private DependencyResult invokeResolvePluginAndFlatten(
-    MethodHandle handle,
+  @Override
+  public DependencyResult resolveCoreExtensionAndFlatten(
     Plugin plugin,
-    Artifact pluginArtifact,
     DependencyFilter dependencyFilter,
     List<RemoteRepository> repositories,
     RepositorySystemSession session)
     throws PluginResolutionException {
-    try {
-      return (DependencyResult)handle.invoke(
-        delegate, plugin, pluginArtifact, dependencyFilter, repositories, session);
-    }
-    catch (PluginResolutionException | RuntimeException | Error e) {
-      throw e;
-    }
-    catch (Throwable e) {
-      throw new RuntimeException(e);
-    }
+    return retryResolution(
+      () -> delegate.resolveCoreExtensionAndFlatten(plugin, dependencyFilter, repositories, session)
+    );
   }
 
   private static <T> T retryResolution(ResolverAction<T> action) throws PluginResolutionException {

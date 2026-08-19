@@ -24,6 +24,7 @@ import org.jetbrains.intellij.build.productLayout.deps.collectResolvableModules
 import org.jetbrains.intellij.build.productLayout.deps.readExistingTestPluginDependencies
 import org.jetbrains.intellij.build.productLayout.deps.resolveAllowedMissingPluginIds
 import org.jetbrains.intellij.build.productLayout.discovery.TEST_PRODUCT_CLASS_NAME
+import org.jetbrains.intellij.build.productLayout.isModuleSetPluginModuleName
 import org.jetbrains.intellij.build.productLayout.model.error.DslTestPluginOwner
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
 import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
@@ -63,7 +64,6 @@ internal object TestPluginDependencyPlanner : PipelineNode {
     val pluginTargetNamesByPluginId = buildPluginTargetNamesByPluginId(model.pluginGraph)
     val pluginIdByTargetName = buildPluginIdByTargetName(model.pluginGraph)
     val resolutionContext = DependencyResolutionContext(model.pluginGraph)
-    val allRealProductNames = embeddedCheckProductNames(model.discovery.products.map { it.name })
 
     val plans = testPluginsWithSource.map { (spec, productClass, productName) ->
       buildTestPluginDependencyPlan(
@@ -75,7 +75,6 @@ internal object TestPluginDependencyPlanner : PipelineNode {
         depsByModule = depsByModule,
         pluginTargetNamesByPluginId = pluginTargetNamesByPluginId,
         pluginIdByTargetName = pluginIdByTargetName,
-        allRealProductNames = allRealProductNames,
         existingPluginDependencies = readExistingTestPluginDependencies(model.projectRoot.resolve(spec.pluginXmlPath)).pluginDependencies,
         dependencyChains = model.dslTestPluginDependencyChains[spec.pluginId].orEmpty(),
       )
@@ -106,11 +105,9 @@ private fun buildTestPluginDependencyPlan(
   depsByModule: Map<ContentModuleName, ContentModuleDependencyPlan>,
   pluginTargetNamesByPluginId: Map<PluginId, Set<TargetName>>,
   pluginIdByTargetName: Map<TargetName, PluginId>,
-  allRealProductNames: Set<String>,
   existingPluginDependencies: Set<PluginId>,
   dependencyChains: Map<ContentModuleName, List<ContentModuleName>>,
 ): TestPluginDependencyPlan {
-  val embeddedCheckProductNames = if (productName in allRealProductNames) setOf(productName) else allRealProductNames
   val contentData = buildContentBlocksAndChainMapping(spec.spec, collectModuleSetAliases = false)
   val contentModules = contentData.contentBlocks
     .asSequence()
@@ -187,6 +184,16 @@ private fun buildTestPluginDependencyPlan(
         continue
       }
 
+      // A library module owned by a module-set wrapper plugin must be depended on by name, not through its owner:
+      // a wrapper is only a packaging container, and products are free to take its content modules directly instead
+      // of bundling it (JetBrains Client and Android Studio do that for intellij.libraries.oshi.core, while Rider
+      // bundles intellij.libraries.misc.plugin). Gating on the wrapper breaks the products that inline the module.
+      if (dependency.value.startsWith(LIB_MODULE_PREFIX) &&
+          resolvableProdOwners.all { isModuleSetPluginModuleName(it.name.value) }) {
+        moduleDepsFromContent.add(dependency)
+        continue
+      }
+
       for ((_, pluginId) in resolvableProdOwners) {
         if (pluginId == spec.pluginId) {
           continue
@@ -206,12 +213,11 @@ private fun buildTestPluginDependencyPlan(
     productName = productName,
     bundledPluginNames = bundledPluginNames,
     pluginTargetNamesByPluginId = pluginTargetNamesByPluginId,
-    embeddedCheckProductNames = embeddedCheckProductNames,
   )
 
   val filteredRequiredByPlugin = requiredByPlugin
     .filter { (pluginId, modules) ->
-      pluginId in existingPluginDependencies || modules.any { !isPreservedTestsDescriptorModule(it) }
+      pluginId in existingPluginDependencies || modules.any { !isTestOnlyContentModule(it) }
     }
     .mapValues { it.value.toSet() }
   val computedPluginDependencies = LinkedHashSet<PluginId>().apply {
@@ -267,6 +273,13 @@ private fun buildTestPluginDependencyPlan(
   )
 }
 
+/**
+ * Test-only content modules (`*.tests`) must not, on their own, introduce a *new* `<plugin>` dependency into a generated
+ * DSL test plugin descriptor: their JPS deps are test-runtime-only, and pulling in whole plugins duplicates test roots
+ * (IJPL-241684). Plugin dependencies already declared in the descriptor are kept regardless.
+ */
+private fun isTestOnlyContentModule(moduleName: ContentModuleName): Boolean = moduleName.value.endsWith(".tests")
+
 private fun collectTargetDependencies(
   graph: PluginGraph,
   resolutionContext: DependencyResolutionContext,
@@ -274,7 +287,6 @@ private fun collectTargetDependencies(
   productName: String,
   bundledPluginNames: Set<TargetName>,
   pluginTargetNamesByPluginId: Map<PluginId, Set<TargetName>>,
-  embeddedCheckProductNames: Set<String>,
 ): TargetDependencyPlan {
   val inferredModuleDeps = LinkedHashSet<ContentModuleName>()
   val explicitModuleDeps = LinkedHashSet<ContentModuleName>()
@@ -367,10 +379,6 @@ private fun collectTargetDependencies(
               }
               if (declarationPolicy == ModuleDependencyDeclarationPolicy.EXPLICIT_MODULE) {
                 explicitModuleDeps.add(classification.moduleName)
-                return@dependsOn
-              }
-              val depModuleId = contentModule(classification.moduleName)
-              if (depModuleId != null && shouldSkipEmbeddedPluginDependency(depModuleId, embeddedCheckProductNames)) {
                 return@dependsOn
               }
               inferredModuleDeps.add(classification.moduleName)

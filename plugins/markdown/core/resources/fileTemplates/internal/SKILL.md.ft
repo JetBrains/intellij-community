@@ -1,11 +1,13 @@
 #set($directoryNameStart = $DIR_PATH.lastIndexOf("/") + 1)
-#set($directoryName = $DIR_PATH.substring($directoryNameStart))
+#set($directoryName = $DIR_PATH.substring($directoryNameStart).toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", ""))
+#if($directoryName.length() > 64)
+#set($directoryName = $directoryName.substring(0, 64).replaceAll("-$", ""))
+#end
 ---
 #if($directoryName)
 name: $directoryName
 #else
-name: TODO
+name: skill
 #end
-description: TODO
+description: #[[$END$]]#
 ---
-#[[$END$]]#

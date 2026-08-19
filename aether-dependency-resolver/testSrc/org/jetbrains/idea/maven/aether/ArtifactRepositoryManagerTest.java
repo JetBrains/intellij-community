@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.aether;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.eclipse.aether.artifact.Artifact;
@@ -13,6 +14,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -88,6 +90,30 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
     assertCoordinates(first.getDependencies().get(2).getArtifact(), "commons-codec", "commons-codec", "1.10");
   }
 
+  public void testResolveAvailableOptionalArtifacts() throws Exception {
+    Path remoteRepository = Files.createTempDirectory("aether-optional-artifacts");
+    Path isolatedLocalRepository = Files.createTempDirectory("aether-optional-artifacts-local");
+    try {
+      writeTestArtifact(remoteRepository, "root", "pom", "", pom("root", "first", "second"));
+      writeTestArtifact(remoteRepository, "first", "pom", "", pom("first"));
+      writeTestArtifact(remoteRepository, "second", "pom", "", pom("second"));
+      writeTestArtifact(remoteRepository, "root", "jar", "sources", "root sources");
+      writeTestArtifact(remoteRepository, "first", "jar", "sources", "first sources");
+
+      RemoteRepository remote = new RemoteRepository.Builder("test", "default", remoteRepository.toUri().toString()).build();
+      ArtifactRepositoryManager manager = new ArtifactRepositoryManager(isolatedLocalRepository.toFile(), List.of(remote), ProgressConsumer.DEAF);
+      Collection<Artifact> artifacts = manager.resolveDependencyAsArtifact("test", "root", "1", EnumSet.of(ArtifactKind.SOURCES),
+                                                                          true, Collections.emptyList());
+
+      assertSameElements(ContainerUtil.map(artifacts, artifact -> artifact.getFile().getName()),
+                         "root-1-sources.jar", "first-1-sources.jar");
+    }
+    finally {
+      NioFiles.deleteRecursively(remoteRepository);
+      NioFiles.deleteRecursively(isolatedLocalRepository);
+    }
+  }
+
   public void testTransitiveSnapshotDependenciesExcluded() throws Exception {
     // version of this excluded dependency is [0.8.1,)
     String excludedArtifact = "sshj";
@@ -110,5 +136,20 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
 
   private static void assertFileNames(Collection<File> files, String... expectedNames) {
     assertSameElements(ContainerUtil.map(files, File::getName), expectedNames);
+  }
+
+  private static String pom(String artifactId, String... dependencies) {
+    String dependencyXml = Stream.of(dependencies)
+      .map(dependency -> "<dependency><groupId>test</groupId><artifactId>" + dependency + "</artifactId><version>1</version></dependency>")
+      .collect(Collectors.joining());
+    return "<project><modelVersion>4.0.0</modelVersion><groupId>test</groupId><artifactId>" + artifactId +
+           "</artifactId><version>1</version><dependencies>" + dependencyXml + "</dependencies></project>";
+  }
+
+  private static void writeTestArtifact(Path repository, String artifactId, String extension, String classifier, String content) throws Exception {
+    Path directory = repository.resolve("test").resolve(artifactId).resolve("1");
+    Files.createDirectories(directory);
+    String classifierSuffix = classifier.isEmpty() ? "" : "-" + classifier;
+    Files.writeString(directory.resolve(artifactId + "-1" + classifierSuffix + "." + extension), content);
   }
 }

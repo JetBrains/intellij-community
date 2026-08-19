@@ -163,7 +163,7 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> protected c
         val project = withModalProgress(ModalTaskOwner.guess(), IdeBundle.message("title.open.project"), TaskCancellation.cancellable()) {
           withRawProgressReporter {
             if (importToProject) {
-              options = options.copy(beforeOpen = { project -> importToProject(project, projectToClose, wizardContext) })
+              options = options.copy(beforeOpenTasks = options.beforeOpenTasks + { project -> importToProject(project, projectToClose, wizardContext) })
             }
             ProjectManagerEx.getInstanceEx().openProjectAsync(pathToOpen, options)
           }

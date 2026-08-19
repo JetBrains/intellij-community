@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,6 +71,10 @@ public abstract sealed class NavBarActions extends AnAction implements ActionRem
   }
 
   public static final class Up extends NavBarActions {
+    Up() {
+      getTemplatePresentation().setRWLockRequired(Registry.is("actions.update.and.perform.arrow.actions.with.rw.lock"));
+    }
+
     @Override
     protected boolean isEnabledWithActivePopupSpeedSearch() {
       return false;
@@ -82,6 +87,10 @@ public abstract sealed class NavBarActions extends AnAction implements ActionRem
   }
 
   public static final class Down extends NavBarActions {
+    Down() {
+      getTemplatePresentation().setRWLockRequired(Registry.is("actions.update.and.perform.arrow.actions.with.rw.lock"));
+    }
+
     @Override
     protected boolean isEnabledWithActivePopupSpeedSearch() {
       return false;
@@ -94,6 +103,10 @@ public abstract sealed class NavBarActions extends AnAction implements ActionRem
   }
 
   public static final class Left extends NavBarActions {
+    Left() {
+      getTemplatePresentation().setRWLockRequired(Registry.is("actions.update.and.perform.arrow.actions.with.rw.lock"));
+    }
+
     @Override
     void actionPerformed(@NotNull NavBarActionHandler handler) {
       handler.moveLeft();
@@ -101,6 +114,10 @@ public abstract sealed class NavBarActions extends AnAction implements ActionRem
   }
 
   public static final class Right extends NavBarActions {
+    Right() {
+      getTemplatePresentation().setRWLockRequired(Registry.is("actions.update.and.perform.arrow.actions.with.rw.lock"));
+    }
+
     @Override
     void actionPerformed(@NotNull NavBarActionHandler handler) {
       handler.moveRight();

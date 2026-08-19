@@ -29,7 +29,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//java/java-indexing-api:indexing",
         "//platform/analysis-api:analysis",
         "//platform/lang-api:lang",
@@ -139,6 +139,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":core",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//java/java-indexing-api:indexing_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/lang-api:lang_test_lib",
@@ -240,6 +241,9 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.core.iml",
+        "resources/assets/devkit-Run_IDE_with_Plugin_run.xml",
+        "resources/inlayProviders/devkit.plugin.descriptor.split.mode.kind/preview.xml",
+        "resources/intellij.devkit.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

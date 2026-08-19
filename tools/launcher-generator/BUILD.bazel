@@ -46,6 +46,7 @@ jvm_library(
 exports_files(
     [
         "intellij.tools.launcherGenerator.iml",
+        "resources/intellij.tools.launcherGenerator.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.Point;
 
-public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
+public final class MarkdownEditorWithPreview extends TextEditorWithPreview implements MarkdownHeaderNavigationHandler {
   private boolean autoScrollPreview;
 
   /**
@@ -89,6 +89,11 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
 
   public void setAutoScrollPreview(boolean autoScrollPreview) {
     this.autoScrollPreview = autoScrollPreview;
+  }
+
+  @Override
+  public void navigateToHeader(int textOffset, int lineNumber) {
+    ((MarkdownPreviewFileEditor)myPreview).scrollToLine(myEditor.getEditor(), lineNumber);
   }
 
   private final class MyVisibleAreaListener implements VisibleAreaListener {

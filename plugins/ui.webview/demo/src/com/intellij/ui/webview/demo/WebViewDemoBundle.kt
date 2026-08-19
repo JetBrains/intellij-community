@@ -9,12 +9,13 @@ import java.util.function.Supplier
 @NonNls
 private const val PATH_TO_BUNDLE = "messages.WebViewDemoBundle"
 
-internal object WebViewDemoBundle : DynamicBundle(PATH_TO_BUNDLE) {
+internal object WebViewDemoBundle {
+  private val instance = DynamicBundle(WebViewDemoBundle::class.java, PATH_TO_BUNDLE)
   @Nls
   @JvmStatic
-  fun message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
+  fun message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) key: String, vararg params: Any): String = instance.getMessage(key, *params)
 
   @JvmStatic
   fun messagePointer(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) key: String, vararg params: Any): Supplier<@Nls String> =
-    getLazyMessage(key, *params)
+    instance.getLazyMessage(key, *params)
 }

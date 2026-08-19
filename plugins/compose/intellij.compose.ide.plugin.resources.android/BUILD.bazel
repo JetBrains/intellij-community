@@ -55,6 +55,7 @@ jvm_library(
 exports_files(
     [
         "intellij.compose.ide.plugin.resources.android.iml",
+        "resources/intellij.compose.ide.plugin.resources.android.xml",
     ],
     visibility = ["//visibility:public"],
 )

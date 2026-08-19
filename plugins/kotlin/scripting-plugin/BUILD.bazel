@@ -1,8 +1,13 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
-### auto-generated section `build kotlin.scripting-plugin` start
+### auto-generated section `build intellij.kotlin.jsr223.plugin` start
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
+    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+)
+
 jvm_library(
-    name = "scripting-plugin",
+    name = "jsr223-plugin",
     srcs = glob(
         [
             "src/**/*.kt",
@@ -11,7 +16,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "kotlin.scripting-plugin",
+    module_name = "intellij.kotlin.jsr223.plugin",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -22,35 +27,36 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/jsr223",
         "//platform/util",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "//platform/core-impl",
+        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     ],
 )
 
 jvm_library(
-    name = "scripting-plugin_test_lib",
+    name = "jsr223-plugin_test_lib",
     testonly = True,
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "kotlin.scripting-plugin",
+    module_name = "intellij.kotlin.jsr223.plugin",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":scripting-plugin",
+        ":jsr223-plugin",
         "//plugins/kotlin/jsr223:jsr223_test_lib",
         "//platform/util:util_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
     ],
 )
-### auto-generated section `build kotlin.scripting-plugin` end
+### auto-generated section `build intellij.kotlin.jsr223.plugin` end
 
-### auto-generated section `iml kotlin.scripting-plugin` start
+### auto-generated section `iml intellij.kotlin.jsr223.plugin` start
 exports_files(
     [
-        "kotlin.scripting-plugin.iml",
+        "intellij.kotlin.jsr223.plugin.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml kotlin.scripting-plugin` end
+### auto-generated section `iml intellij.kotlin.jsr223.plugin` end

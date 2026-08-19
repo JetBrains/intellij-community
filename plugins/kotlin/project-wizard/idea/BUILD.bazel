@@ -26,7 +26,7 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
         "//platform/observable",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common",
         "//libraries/java-compatibility",
         "//platform/platform-impl:ide-impl",
@@ -90,6 +90,7 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/observable:observable_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/java-compatibility:java-compatibility_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/indexing-api:indexing_test_lib",
@@ -139,6 +140,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.projectWizard.idea.iml",
+        "resources/intellij.kotlin.projectWizard.idea.xml",
     ],
     visibility = ["//visibility:public"],
 )

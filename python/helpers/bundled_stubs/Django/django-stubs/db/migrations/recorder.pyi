@@ -1,10 +1,9 @@
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Self
 
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models.base import Model
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
-from typing_extensions import Self
 
 class MigrationRecorder:
     class Migration(Model):
@@ -16,7 +15,7 @@ class MigrationRecorder:
     connection: BaseDatabaseWrapper
     def __init__(self, connection: BaseDatabaseWrapper) -> None: ...
     @property
-    def migration_qs(self) -> QuerySet: ...
+    def migration_qs(self) -> QuerySet[Migration]: ...
     def has_table(self) -> bool: ...
     def ensure_schema(self) -> None: ...
     def applied_migrations(self) -> dict[tuple[str, str], Migration]: ...

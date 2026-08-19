@@ -8,6 +8,8 @@ import com.intellij.util.indexing.dependencies.IndexingDependenciesFingerprint;
 import org.jetbrains.annotations.NotNull;
 
 final class FileBasedIndexPluginListener implements DynamicPluginListener {
+  private static final String SKIP_INDEX_RELOAD_PROPERTY = "intellij.indexes.skip.reload.on.plugin.load.unload";
+
   private final @NotNull FileBasedIndexTumbler mySwitcher;
 
   FileBasedIndexPluginListener() {
@@ -35,13 +37,21 @@ final class FileBasedIndexPluginListener implements DynamicPluginListener {
   }
 
   private void beforePluginSetChanged() {
-    mySwitcher.turnOff();
+    if (!isIndexReloadSkippedInTests()) {
+      mySwitcher.turnOff();
+    }
     ApplicationManager.getApplication().getService(IndexingDependenciesFingerprint.class).resetCache();
   }
 
   private void afterPluginSetChanged() {
     // we don't use dedicated listener for IndexingDependenciesFingerprint, because order is important: first invalidate, then scan.
     ApplicationManager.getApplication().getService(IndexingDependenciesFingerprint.class).resetCache();
-    mySwitcher.turnOn(null);
+    if (!isIndexReloadSkippedInTests()) {
+      mySwitcher.turnOn(null);
+    }
+  }
+
+  private static boolean isIndexReloadSkippedInTests() {
+    return ApplicationManager.getApplication().isUnitTestMode() && Boolean.getBoolean(SKIP_INDEX_RELOAD_PROPERTY);
   }
 }

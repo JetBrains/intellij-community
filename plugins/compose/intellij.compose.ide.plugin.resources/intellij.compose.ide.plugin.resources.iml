@@ -9,7 +9,9 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.symbol.light.classes" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.java.psi" />
@@ -31,7 +33,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.test.junit" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.tests" scope="TEST" />
@@ -64,5 +66,9 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.psi" />
     <orderEntry type="module" module-name="intellij.kotlin.references" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" />
   </component>
 </module>

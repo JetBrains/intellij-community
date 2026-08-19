@@ -26,9 +26,9 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAt
 import org.intellij.plugins.markdown.editor.lists.ListUtils.list
 import org.intellij.plugins.markdown.editor.lists.ListUtils.normalizedMarker
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListNumber
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
@@ -55,7 +55,7 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
       return false
     }
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
-    return file is MarkdownFile
+    return file?.supportsMarkdown(dataContext) == true
   }
 
   override fun preprocessEnter(
@@ -70,7 +70,23 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
     if (!codeInsightSettings.smartEnterAndBackspace) {
       return EnterHandlerDelegate.Result.Continue
     }
-    if (file !is MarkdownFile || isInCodeFence(caretOffset.get(), file)) {
+    if (!file.supportsMarkdown(dataContext)) {
+      return EnterHandlerDelegate.Result.Continue
+    }
+
+    if (isInlineCodeFence(caretOffset.get(), file)) {
+      val document = editor.document
+      val line = document.getLineNumber(caretOffset.get())
+      val lineStart = document.getLineStartOffset(line)
+      val lineIndent = document.charsSequence.subSequence(lineStart, caretOffset.get())
+        .takeWhile { it == ' ' || it == '\t' }
+      val newCaretOffset = caretOffset.get() + lineIndent.length + 1
+      EditorModificationUtil.insertStringAtCaret(editor, "\n$lineIndent\n$lineIndent")
+      editor.caretModel.moveToOffset(newCaretOffset)
+      return EnterHandlerDelegate.Result.Stop
+    }
+
+    if (isInCodeFence(caretOffset.get(), file)) {
       return EnterHandlerDelegate.Result.Continue
     }
 
@@ -118,14 +134,17 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
     if (caretOffset.get() <= markerElement.startOffset) {
       return EnterHandlerDelegate.Result.Continue
     }
-    val indentWithMakerRange = document.getLineIndentRange(itemLine).union(markerElement.textRange)
+    val checkBox = item.checkBox
+    val indentWithMarkerRange = document.getLineIndentRange(itemLine).union(markerElement.textRange)
+    val itemPrefixRange = checkBox?.textRange?.let(indentWithMarkerRange::union) ?: indentWithMarkerRange
 
-    if (indentWithMakerRange.contains(caretOffset.get())) {
-      caretOffset.set(markerElement.endOffset)
+    if (itemPrefixRange.contains(caretOffset.get())) {
+      caretOffset.set(itemPrefixRange.endOffset)
     }
 
     val indentSpaces = document.getLineIndentSpaces(itemLine, file) ?: ""
-    emptyItem = indentSpaces + item.normalizedMarker
+    val checkBoxMarker = if (checkBox != null) CHECK_BOX_MARKER else ""
+    emptyItem = indentSpaces + item.normalizedMarker + checkBoxMarker
     return EnterHandlerDelegate.Result.Default
   }
 
@@ -134,8 +153,17 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
       return false
     }
     val element = file.findElementAt(caretOffset - 1) ?: return false
-    val fence = element.parentOfType<MarkdownCodeFence>(withSelf = true)
-    return fence != null
+    return element.parentOfType<MarkdownCodeFence>(withSelf = true) != null
+  }
+
+  private fun isInlineCodeFence(caretOffset: Int, file: PsiFile): Boolean {
+    if (caretOffset == 0) {
+      return false
+    }
+    val document = file.viewProvider.document ?: return false
+    val line = document.getLineNumber(caretOffset)
+    return document.charsSequence.subSequence(document.getLineStartOffset(line), caretOffset).trimStart().startsWith("```") &&
+           document.charsSequence.subSequence(caretOffset, document.getLineEndOffset(line)).trimStart().startsWith("```")
   }
 
   private fun isAtMarkdownHardLineBreak(offset: Int, document: Document): Boolean {
@@ -155,6 +183,11 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
     if (item.parentOfType<MarkdownListItem>(false) == null) {
       val backspaceHandler = MarkdownListMarkerBackspaceHandlerDelegate()
       val markerEnd = markerElement.endOffset
+      item.checkBox?.textRange?.let { checkBoxRange ->
+        runWriteAction {
+          document.deleteString(checkBoxRange.startOffset, checkBoxRange.endOffset)
+        }
+      }
       editor.caretModel.moveToOffset(markerEnd)
       val char = editor.document.charsSequence[markerEnd - 1]
 
@@ -180,7 +213,7 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
     val document = editor.document
     EditorModificationUtil.insertStringAtCaret(editor, emptyItem)
     PsiDocumentManager.getInstance(file.project).commitDocument(document)
-    val item = (file as MarkdownFile).getListItemAt(editor.caretModel.offset, document) ?: run {
+    val item = file.getListItemAt(editor.caretModel.offset, document) ?: run {
       this.emptyItem = null
       return EnterHandlerDelegate.Result.Continue
     }
@@ -209,6 +242,8 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
   }
 
   companion object {
+    private const val CHECK_BOX_MARKER = "[ ] "
+
     private fun MarkdownListNumber.replaceWithOtherNumber(number: Int): MarkdownListNumber {
       return replaceWithText("$number$delimiter ") as MarkdownListNumber
     }

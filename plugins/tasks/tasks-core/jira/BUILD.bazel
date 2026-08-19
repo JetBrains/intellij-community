@@ -78,6 +78,7 @@ jvm_library(
 exports_files(
     [
         "intellij.tasks.jira.iml",
+        "resources/intellij.tasks.jira.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.internal.statistic.eventLog.connection.metadata.StatsConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.metadata.StatsProxyInfo;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -13,11 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.SSLContext;
-import java.net.MalformedURLException;
 import java.net.Proxy;
-import java.net.URL;
-import java.util.Collections;
-import java.util.List;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 
 @ApiStatus.Internal
@@ -26,10 +23,10 @@ public final class StatsAppConnectionSettings implements StatsConnectionSettings
 
   @Override
   public @NotNull String provideUserAgent() {
-    Application app = ApplicationManager.getApplication();
+    var app = ApplicationManager.getApplication();
     if (app != null && !app.isDisposed()) {
-      String productName = ApplicationNamesInfo.getInstance().getFullProductName();
-      String version = ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode();
+      var productName = ApplicationNamesInfo.getInstance().getFullProductName();
+      var version = ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode();
       return productName + '/' + version;
     }
     return "IntelliJ";
@@ -37,10 +34,10 @@ public final class StatsAppConnectionSettings implements StatsConnectionSettings
 
   @Override
   public @NotNull StatsProxyInfo provideProxy(@NotNull String url) {
-    Application app = ApplicationManager.getApplication();
+    var app = ApplicationManager.getApplication();
     if (app != null && !app.isDisposed()) {
-      Proxy proxy = findProxy(url);
-      if (proxy != Proxy.NO_PROXY) {
+      var proxy = findProxy(url);
+      if (proxy != null) {
         return new StatsProxyInfo(proxy, getAuthProvider());
       }
     }
@@ -54,43 +51,26 @@ public final class StatsAppConnectionSettings implements StatsConnectionSettings
 
   @Override
   public @NotNull Map<String, String> provideExtraHeaders() {
-    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
-    if (externalEventLogSettings != null) {
-      return externalEventLogSettings.getExtraLogUploadHeaders();
-    } else {
-      return Collections.emptyMap();
-    }
+    var externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
+    return externalEventLogSettings != null ? externalEventLogSettings.getExtraLogUploadHeaders() : Map.of();
   }
 
-  private static @Nullable StatsProxyInfo.StatsProxyAuthProvider getAuthProvider() {
-    if (IdeUiService.getInstance().isProxyAuth()) {
-      return StatsAppProxyAuth.INSTANCE;
+  private static @Nullable Proxy findProxy(String url) {
+    try {
+      var proxies = IdeUiService.getInstance().getProxyList(new URI(url));
+      if (!proxies.isEmpty()) {
+        return proxies.getFirst();
+      }
     }
+    catch (URISyntaxException _) { }
     return null;
   }
 
-  private static @NotNull Proxy findProxy(@NotNull String url) {
-    try {
-      List<Proxy> proxies = IdeUiService.getInstance().getProxyList(new URL(url));
-      return !proxies.isEmpty() ? proxies.get(0) : Proxy.NO_PROXY;
-    }
-    catch (MalformedURLException e) {
-      // ignore
-    }
-    return Proxy.NO_PROXY;
-  }
-
-  private static final class StatsAppProxyAuth implements StatsProxyInfo.StatsProxyAuthProvider {
-    private static final StatsAppProxyAuth INSTANCE = new StatsAppProxyAuth();
-
-    @Override
-    public @Nullable String getProxyLogin() {
-      return IdeUiService.getInstance().getProxyLogin();
-    }
-
-    @Override
-    public @Nullable String getProxyPassword() {
-      return IdeUiService.getInstance().getPlainProxyPassword();
-    }
+  private static @Nullable StatsProxyInfo.StatsProxyAuthProvider getAuthProvider() {
+    var credentials = IdeUiService.getInstance().getProxyCredentials();
+    return credentials == null ? null : new StatsProxyInfo.StatsProxyAuthProvider() {
+      @Override public @Nullable String getProxyLogin() { return credentials.first; }
+      @Override public @Nullable String getProxyPassword() { return credentials.second; }
+    };
   }
 }

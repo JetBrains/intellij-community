@@ -106,12 +106,15 @@ public abstract class JBIterable<E> implements Iterable<E> {
   /**
    * Returns a {@code JBIterable} that wraps {@code iterable}, or {@code iterable} itself if it
    * is already a {@code JBIterable}.
+   * BEWARE: returned iterable wrapper is not guaranteed to be 'live' -- i.e. changes in source iterable content may not be
+   * seen via returned iterable. Use {@link #create(Supplier)} if you want a live wrapper
    *
    * @noinspection unchecked
    */
   public static @NotNull <E> JBIterable<E> from(@Nullable Iterable<? extends E> iterable) {
     if (iterable == null || iterable == EMPTY) return empty();
     if (iterable instanceof JBIterable) return (JBIterable<E>)iterable;
+    //TODO RC: optimization below makes returned wrapper a 'snapshot', not a 'live' wrapper -- which may be unexpected for the clients
     if (iterable instanceof Collection && ((Collection<?>)iterable).isEmpty()) return empty();
     return new Multi<>(iterable);
   }

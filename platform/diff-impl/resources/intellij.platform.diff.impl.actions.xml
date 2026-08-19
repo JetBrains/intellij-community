@@ -1,0 +1,48 @@
+<idea-plugin>
+  <actions>
+    <action id="Diff.ShowDiff" class="com.intellij.diff.actions.ShowDiffAction"
+            icon="AllIcons.Actions.Diff"/>
+    <action id="Diff.ShowStandaloneDiff" class="com.intellij.diff.actions.ShowStandaloneDiffAction" icon="AllIcons.Actions.Diff"/>
+    <action id="CompareTwoFiles" class="com.intellij.diff.actions.CompareFilesAction" icon="AllIcons.Actions.Diff">
+      <synonym key="action.CompareTwoFiles.synonym1"/>
+      <synonym key="action.CompareTwoFiles.synonym2"/>
+      <synonym key="action.CompareTwoFiles.synonym3"/>
+    </action>
+    <action id="CompareFileWithEditor" class="com.intellij.diff.actions.CompareFileWithEditorAction"/>
+    <action id="CompareClipboardWithSelection" class="com.intellij.diff.actions.CompareClipboardWithSelectionAction"
+            icon="AllIcons.Actions.DiffWithClipboard"/>
+    <action id="ShowBlankDiffWindow" class="com.intellij.diff.actions.ShowBlankDiffWindowAction" icon="AllIcons.Actions.Diff">
+      <synonym key="action.ShowBlankDiffWindow.synonym1"/>
+      <synonym key="action.ShowBlankDiffWindow.synonym2"/>
+    </action>
+    <action id="CloseDiffEditor" class="com.intellij.diff.editor.CloseDiffEditorAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="ESCAPE"/>
+    </action>
+    <action id="Diff.OpenDiffInEditor" class="com.intellij.diff.actions.impl.OpenDiffInEditorAction" internal="true"/>
+    <action id="DirDiffMenu.SetCopyToRight" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetCopyToRight"
+            icon="AllIcons.Vcs.Arrow_right"/>
+    <action id="DirDiffMenu.SetCopyToLeft" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetCopyToLeft"
+            icon="AllIcons.Vcs.Arrow_left"/>
+    <action id="DirDiffMenu.SetDelete" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetDelete"
+            icon="AllIcons.Vcs.Remove"/>
+    <action id="DirDiffMenu.SetNoOperation" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetNoOperation"/>
+    <action id="DirDiffMenu.MirrorToRight" class="com.intellij.openapi.diff.impl.dir.actions.popup.MirrorToRightAction"
+            icon="AllIcons.Diff.ArrowRight"/>
+    <action id="DirDiffMenu.MirrorToLeft" class="com.intellij.openapi.diff.impl.dir.actions.popup.MirrorToLeftAction"
+            icon="AllIcons.Diff.Arrow"/>
+    <action id="DirDiffMenu.Exclude" class="com.intellij.openapi.diff.impl.dir.actions.popup.ExcludeAction"/>
+    <action id="DirDiffMenu.SetDefault" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetDefault"/>
+    <action id="DirDiffMenu.WarnOnDeletion" class="com.intellij.openapi.diff.impl.dir.actions.popup.WarnOnDeletion"/>
+    <action id="DirDiffMenu.CompareNewFilesWithEachOtherAction"
+            class="com.intellij.openapi.diff.impl.dir.actions.popup.CompareNewFilesWithEachOtherAction" icon="AllIcons.Vcs.Merge"/>
+    <action id="DirDiffMenu.CancelComparingNewFilesWithEachOther"
+            class="com.intellij.openapi.diff.impl.dir.actions.popup.CancelComparingNewFilesWithEachOtherAction"
+            icon="AllIcons.Vcs.Remove"/>
+    <action id="OpenBlankEditorInBlankDiffWindow" class="com.intellij.diff.actions.SwitchToBlankEditorAction"/>
+    <action id="OpenFileEditorInBlankDiffWindow" class="com.intellij.diff.actions.SwitchToFileEditorAction"/>
+    <group id="OpenRecentEditorInBlankDiffWindow" class="com.intellij.diff.actions.SwitchToRecentEditorActionGroup" popup="true"/>
+    <action id="SwapSidesInDiffWindow" class="com.intellij.diff.actions.impl.SwapDiffSidesAction" icon="AllIcons.Actions.SwapPanels"/>
+    <action id="ToggleThreeSideInBlankDiffWindow" class="com.intellij.diff.actions.BlankToggleThreeSideModeAction"/>
+    <action id="SwapThreeWayColorModeInDiffWindow" class="com.intellij.diff.actions.impl.SwapThreeWayColorModeAction"/>
+  </actions>
+</idea-plugin>

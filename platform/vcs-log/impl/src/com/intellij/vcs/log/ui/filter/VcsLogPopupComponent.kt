@@ -5,13 +5,18 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionGroupUtil
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.PopupShowingTimeTracker
+import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.FilterComponent
+import com.intellij.vcs.log.VcsLogBundle
 import java.awt.Component
 import java.util.function.Supplier
+import javax.swing.SwingConstants
 
 internal abstract class VcsLogPopupComponent(displayName: Supplier<@NlsContexts.Label String>) : FilterComponent(displayName) {
   init {
@@ -22,6 +27,20 @@ internal abstract class VcsLogPopupComponent(displayName: Supplier<@NlsContexts.
     val start = IdeEventQueue.getInstance().popupTriggerTime
     val popup = createPopupMenu()
     PopupShowingTimeTracker.showElapsedMillisIfConfigured(start, popup)
+
+    with(popup) {
+      val resetShortcuts = getResetFilterActionShortcuts()
+      val shortcutText = getFirstKeyboardShortcutText(resetShortcuts)
+      setAdText(VcsLogBundle.message("vcs.log.filter.clear.popup.ad", shortcutText), SwingConstants.LEFT)
+
+      object : DumbAwareAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+          resetFilter()
+          cancel()
+        }
+      }.registerCustomShortcutSet(resetShortcuts, content)
+    }
+
     popup.showUnderneathOf(getTargetComponent())
   }
 

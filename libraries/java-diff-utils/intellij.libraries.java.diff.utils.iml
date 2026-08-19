@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="java-diff-utils" type="repository">
+        <properties maven-id="io.github.java-diff-utils:java-diff-utils:4.16">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4.16/java-diff-utils-4.16.jar">
+              <sha256sum>620403030d676a4a27f780a3acec7438dee1b1651a1c804fa6bb11bb07399a6f</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4.16/java-diff-utils-4.16.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4.16/java-diff-utils-4.16-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

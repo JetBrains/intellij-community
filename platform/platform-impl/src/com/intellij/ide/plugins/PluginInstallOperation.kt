@@ -55,6 +55,7 @@ class PluginInstallOperation(
   private val myPendingDynamicPluginInstalls: MutableList<PendingDynamicPluginInstall> = ArrayList()
   private var myRestartRequired = false
   private var myShownErrors = false
+  private var myPendingUpdateToReplace: PluginId? = null
   private val myLocalInstallCallbacks: MutableMap<PluginId, ActionCallback> = IdentityHashMap()
   private val myLocalWaitInstallCallbacks: MutableMap<PluginId, ActionCallback> = IdentityHashMap()
 
@@ -93,6 +94,11 @@ class PluginInstallOperation(
 
   fun setAllowInstallWithoutRestart(allowInstallWithoutRestart: Boolean) {
     myAllowInstallWithoutRestart = allowInstallWithoutRestart
+  }
+
+  @ApiStatus.Internal
+  fun setPendingUpdateToReplace(pluginId: PluginId?) {
+    myPendingUpdateToReplace = pluginId
   }
 
   val pendingDynamicPluginInstalls: List<PendingDynamicPluginInstall>
@@ -230,7 +236,7 @@ class PluginInstallOperation(
       previousVersion,
     )
 
-    val prepared = downloader.prepareToInstall(myIndicator)
+    val prepared = downloader.prepareToInstall(myIndicator, pluginNode.pluginId == myPendingUpdateToReplace)
     if (prepared) {
       val descriptor = downloader.descriptor as PluginMainDescriptor
       if (!checkMissingDependencies(descriptor, installModel)) {

@@ -24,7 +24,7 @@ public final class PlatformDebuggerImplIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval
-    public static final @NotNull Icon DebuggerSync = load("icons/actions/debuggerSync.svg", 0, 0);
+    /** 16x16 */ public static final @NotNull Icon DebuggerSync = load("icons/actions/debuggerSync.svg", -370007676, 2);
   }
 
   public static final class MemoryView {
@@ -37,12 +37,12 @@ public final class PlatformDebuggerImplIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval
-    public static final @NotNull Icon PinnedItem = load("icons/pinToTop/pinnedItem.svg", 0, 0);
+    /** 16x16 */ public static final @NotNull Icon PinnedItem = load("icons/pinToTop/pinnedItem.svg", -843809041, 0);
 
     /** @deprecated to be removed (Use AllIcons.Debugger.PinToTop.UnpinnedItem instead) */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval
-    public static final @NotNull Icon UnpinnedItem = load("icons/pinToTop/unpinnedItem.svg", 0, 0);
+    /** 16x16 */ public static final @NotNull Icon UnpinnedItem = load("icons/pinToTop/unpinnedItem.svg", 990433687, 0);
   }
 }

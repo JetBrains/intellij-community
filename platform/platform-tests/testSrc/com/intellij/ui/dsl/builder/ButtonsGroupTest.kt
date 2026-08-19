@@ -5,10 +5,10 @@ import com.intellij.testFramework.TestApplicationManager
 import com.intellij.ui.components.JBRadioButton
 import org.junit.Before
 import org.junit.Test
-import org.junit.jupiter.api.assertThrows
 import javax.swing.JRadioButton
 import kotlin.reflect.KMutableProperty0
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -48,13 +48,13 @@ class ButtonsGroupTest {
 
   @Test
   fun testInvalidGroups() {
-    assertThrows<IllegalStateException> {
+    assertFailsWith<IllegalStateException> {
       testButtonsGroup(1, 2)
     }
-    assertThrows<IllegalStateException> {
+    assertFailsWith<IllegalStateException> {
       testButtonsGroup("1", "2", ::int)
     }
-    assertThrows<IllegalStateException> {
+    assertFailsWith<IllegalStateException> {
       testButtonsGroup(null, null, ::int)
     }
   }

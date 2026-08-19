@@ -19,6 +19,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
 import com.intellij.lang.html.structureView.Html5SectionsNodeProvider;
 import com.intellij.testFramework.FileStructureTestBase;
+import com.intellij.testFramework.PlatformTestUtil;
 
 public class HtmlFileStructureTest extends FileStructureTestBase {
   private boolean myHtml5OutlineModeDefault;
@@ -68,7 +69,7 @@ public class HtmlFileStructureTest extends FileStructureTestBase {
   }
 
   public void setHtml5OutlineMode(boolean enabled) {
-    myPopupFixture.getPopup().setTreeActionState(Html5SectionsNodeProvider.ACTION_ID, enabled);
+    PlatformTestUtil.waitForPromise(myPopupFixture.getPopup().setTreeActionState(Html5SectionsNodeProvider.ACTION_ID, enabled));
     myPopupFixture.updateAndSelectCurrent();
   }
 

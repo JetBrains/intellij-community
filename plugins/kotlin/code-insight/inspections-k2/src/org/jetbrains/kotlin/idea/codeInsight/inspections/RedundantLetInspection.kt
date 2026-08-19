@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.descendants
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import com.intellij.psi.util.descendants
 
 internal sealed class RedundantLetInspection :
     KotlinApplicableInspectionBase.Simple<KtCallExpression, Unit>() {
@@ -41,7 +41,8 @@ internal sealed class RedundantLetInspection :
     final override fun getApplicableRanges(element: KtCallExpression): List<TextRange> =
         ApplicabilityRanges.calleeExpression(element)
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Unit? {
         if (!element.isCallingAnyOf(StandardKotlinNames.let)) return null
         val lambdaExpression = element.lambdaArguments.firstOrNull()?.getLambdaExpression() ?: return null
         val parameterName = lambdaExpression.getParameterName() ?: return null

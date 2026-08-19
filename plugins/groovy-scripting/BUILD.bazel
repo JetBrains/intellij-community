@@ -44,6 +44,7 @@ jvm_library(
 exports_files(
     [
         "intellij.groovy.scripting.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

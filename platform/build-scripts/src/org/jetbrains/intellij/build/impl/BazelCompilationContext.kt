@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.application.PathManager
+import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import com.intellij.util.io.URLUtil
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineScope
@@ -39,11 +40,15 @@ class BazelCompilationContext(
   @JvmField val outputProviderState: BazelModuleOutputProviderState = BazelModuleOutputProviderState(
     modules = delegate.project.modules,
     projectHome = computeProjectHomeForModuleOutputs(delegate.paths.projectHome),
-    bazelOutputRoot = requireNotNull(bazelOutputRoot) { "Bazel output root is not available" },
   ),
 ) : CompilationContext {
   override val outputProvider: ModuleOutputProvider by lazy {
-    BazelModuleOutputProvider(state = outputProviderState, scope = scope, useTestCompilationOutput = options.useTestCompilationOutput)
+    BazelModuleOutputProvider(
+      state = outputProviderState,
+      scope = scope,
+      useTestCompilationOutput = options.useTestCompilationOutput,
+      testCompilationOutputModules = options.testCompilationOutputModules,
+    )
   }
 
   override val options: BuildOptions
@@ -162,15 +167,33 @@ class BazelTargetsInfo {
   )
 
   @Serializable
+  data class PluginDistributionTargetDescription(
+    @JvmField val target: String,
+    @JvmField val distributionDirectory: String,
+  )  @Serializable
+
   data class TargetsFile(
     @JvmField val modules: Map<String, TargetsFileModuleDescription>,
     @JvmField val imlTargets: List<String> = emptyList(),
     @JvmField val projectLibraries: Map<String, LibraryDescription>,
+    @JvmField val pluginDistributionTargets: Map<String, PluginDistributionTargetDescription>,
   )
 }
 
 @Internal
 fun isRunningFromBazelOut(): Boolean = bazelOutputRoot != null
+
+/**
+ * Whether a dev build must be assembled from Bazel outputs.
+ *
+ * [isRunningFromBazelOut] alone cannot answer this: it reads the path of the jar this class was loaded from, and
+ * that path stops pointing into `bazel-out` as soon as anything copies the jar - the AIR UI test daemon localizes
+ * its stable classpath tier onto guest-local storage. The runfiles environment or an explicit Bazel input manifest
+ * survives such a copy, so either counts too; the predicates used to disagree and the dev build silently took the
+ * JPS branch.
+ */
+@Internal
+fun isDevBuildBazelBacked(): Boolean = isRunningFromBazelOut() || BazelRunfiles.isRunningFromBazel || BazelBuildInputs.isConfigured
 
 internal val bazelOutputRoot: Path? by lazy {
   val url = BazelCompilationContext::class.java.getResource("${BazelCompilationContext::class.java.simpleName}.class")
@@ -188,23 +211,26 @@ internal val bazelOutputRoot: Path? by lazy {
   }
 
   // resolving all symlinks should lead to the bazel output directory
-  val realPath = path.toRealPath()
-  val execRootIndex = realPath.indexOfFirst { it.pathString == "execroot" }
-  if (execRootIndex <= 0) {
-    error("Unable to find 'execroot' directory in the path: $realPath. class output: url=$url, path=$path")
+  val outputRoot = cutBazelOutputRoot(path.toRealPath()) {
+    "Unable to find 'execroot' directory in the path: $it. class output: url=$url, path=$path"
   }
-
-  val outputRoot = realPath.root.resolve(realPath.subpath(0, execRootIndex))
   Span.current().addEvent("Bazel output root: $outputRoot")
   return@lazy outputRoot
+}
+
+/** Everything above `execroot` in a resolved Bazel path is the output base. */
+private inline fun cutBazelOutputRoot(realPath: Path, message: (Path) -> String): Path {
+  val execRootIndex = realPath.indexOfFirst { it.pathString == "execroot" }
+  check(execRootIndex > 0) { message(realPath) }
+  return realPath.root.resolve(realPath.subpath(0, execRootIndex))
 }
 
 val CompilationContextImpl.asBazelIfNeeded: CompilationContext
   get() = toBazelIfNeeded(scope = null)
 
-fun CompilationContextImpl.toBazelIfNeeded(scope: CoroutineScope?): CompilationContext {
+fun CompilationContextImpl.toBazelIfNeeded(scope: CoroutineScope?, isBazelBacked: Boolean = isRunningFromBazelOut()): CompilationContext {
   return when {
-    isRunningFromBazelOut() -> BazelCompilationContext(delegate = this, scope = scope)
+    isBazelBacked -> BazelCompilationContext(delegate = this, scope = scope)
     else -> this
   }
 }

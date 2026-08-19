@@ -56,6 +56,7 @@ jvm_library(
 exports_files(
     [
         "intellij.mermaid.json.iml",
+        "resources/intellij.mermaid.json.xml",
     ],
     visibility = ["//visibility:public"],
 )

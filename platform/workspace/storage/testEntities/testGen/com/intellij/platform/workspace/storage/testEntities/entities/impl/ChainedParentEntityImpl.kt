@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -15,9 +14,7 @@ import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChainedEntity
@@ -30,18 +27,16 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ChainedPare
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChainedParentEntityImpl(private val dataSource: ChainedParentEntityData) : ChainedParentEntity,
                                                                                           WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val CHILD_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ChainedParentEntity::class.java, ChainedEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
     private val connections = listOf<ConnectionId>(CHILD_CONNECTION_ID)
-
   }
 
   override val child: List<ChainedEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(CHILD_CONNECTION_ID, this) as? Sequence<ChainedEntity>)?.toList()
-            ?: error("Children child not found for ChainedParentEntity")
-
+            ?: error("Children list child not found for ChainedParentEntity")
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -52,33 +47,11 @@ internal class ChainedParentEntityImpl(private val dataSource: ChainedParentEnti
     return connections
   }
 
-
   internal class Builder(result: ChainedParentEntityData?) :
     ModifiableWorkspaceEntityBase<ChainedParentEntity, ChainedParentEntityData>(result), ChainedParentEntityBuilder {
     internal constructor() : this(ChainedParentEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity ChainedParentEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -107,87 +80,29 @@ internal class ChainedParentEntityImpl(private val dataSource: ChainedParentEnti
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
-
-    // List of non-abstract referenced types
-    var _child: List<ChainedEntity>? = emptyList()
     override var child: List<ChainedEntityBuilder>
-      get() {
-// Getter of the list of non-abstract referenced types
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILD_CONNECTION_ID, this)!!
-            .toList() as List<ChainedEntityBuilder>) + (this.entityLinks[EntityLink(true,
-                                                                                    CHILD_CONNECTION_ID)] as? List<ChainedEntityBuilder>
-                                                        ?: emptyList())
-        }
-        else {
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? List<ChainedEntityBuilder> ?: emptyList()
-        }
-      }
+      @Suppress("UNCHECKED_CAST")
+      get() = getChildren(CHILD_CONNECTION_ID) as List<ChainedEntityBuilder>
       set(value) {
-// Setter of the list of non-abstract referenced types
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null) {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
-// Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
-              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-            }
-          }
-          _diff.instrumentation.replaceChildren(CHILD_CONNECTION_ID, this, value)
-        }
-        else {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-              item_value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
-            }
-// else you're attaching a new entity to an existing entity that is not modifiable
-          }
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] = value
-        }
+        changeChildren(value, CHILD_CONNECTION_ID)
         changedProperty.add("child")
       }
 
     override fun getEntityClass(): Class<ChainedParentEntity> = ChainedParentEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChainedParentEntityData : WorkspaceEntityData<ChainedParentEntity>() {
-
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChainedParentEntity> {
-    val modifiable = ChainedParentEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): ChainedParentEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = ChainedParentEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): ChainedParentEntity = ChainedParentEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<ChainedParentEntity, *> = ChainedParentEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.ChainedParentEntity") as EntityMetadata
   }

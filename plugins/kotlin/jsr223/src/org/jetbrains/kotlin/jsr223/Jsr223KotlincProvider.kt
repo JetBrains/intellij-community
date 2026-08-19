@@ -2,15 +2,11 @@
 
 package org.jetbrains.kotlin.jsr223
 
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.getPluginDistDirByClass
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.io.Decompressor
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import org.jetbrains.kotlin.idea.compiler.configuration.kotlinArtifactRepositoryCoordinates
 import java.io.IOException
 import java.net.URL
-import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -31,12 +27,16 @@ object Jsr223KotlincProvider {
     }
 
     private fun bundledKotlinc(): Path? {
-        val pluginRoot = getPluginDistDirByClass(Jsr223KotlincProvider::class.java) ?: return null
+        val kotlinPluginJar = PathManager.getJarForClass(Jsr223KotlincProvider::class.java) ?: return null
+        val pluginRoot = kotlinPluginJar
+            .parent
+            .let { if (it.name == "modules") it.parent else it }
+            .takeIf { it.name == "lib" }?.parent ?: return null
         return pluginRoot.resolve(KOTLINC_DIR_NAME).takeIf(::isExpectedKotlincHome)
     }
 
     private fun unpackKotlinDistForIde(): Path? {
-        val distJar = findKotlinDistForIdeJar() ?: return null
+        val distJar = downloadKotlinDistForIdeJar() ?: return null
         val target = PathManager.getSystemDir()
             .resolve(KOTLIN_DIST_LOCATION_PREFIX)
             .resolve(KotlinCompilerVersion.VERSION)
@@ -56,26 +56,6 @@ object Jsr223KotlincProvider {
         if (!isKotlincHome(path)) return false
         val build = runCatching { Files.readString(path.resolve(BUILD_TXT)).trim() }.getOrNull() ?: return false
         return build.startsWith(KotlinCompilerVersion.VERSION)
-    }
-
-    private fun findKotlinDistForIdeJar(): Path? {
-        return findKotlinDistForIdeJarInClassLoaders()
-            ?: downloadKotlinDistForIdeJar()
-    }
-
-    private fun findKotlinDistForIdeJarInClassLoaders(): Path? {
-        val classLoaders = sequenceOf(Jsr223KotlincProvider::class.java.classLoader, Thread.currentThread().contextClassLoader)
-            .filterNotNull() + PluginManagerCore.loadedPlugins.asSequence().mapNotNull { it.pluginClassLoader }
-
-        return classLoaders
-            .flatMap(::classLoaderUrls)
-            .mapNotNull(::toLocalPath)
-            .distinct()
-            .firstOrNull(::isKotlinDistForIdeJar)
-    }
-
-    private fun isKotlinDistForIdeJar(path: Path): Boolean {
-        return path.name == kotlinDistForIdeJarName() && path.exists()
     }
 
     private fun downloadKotlinDistForIdeJar(): Path? {
@@ -107,31 +87,15 @@ object Jsr223KotlincProvider {
         val version = KotlinCompilerVersion.VERSION
         val artifactPath = "$KOTLIN_MAVEN_GROUP_PATH/$KOTLIN_DIST_FOR_IDE_ARTIFACT_ID/$version/$fileName"
 
-        return kotlinArtifactRepositoryCoordinates
-            .map { "$it/$artifactPath" }
+        return buildList {
+            add("https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+            add("https://cache-redirector.jetbrains.com/intellij-dependencies")
+            add("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
+        }.map { "$it/$artifactPath" }
     }
 
     private fun kotlinDistForIdeJarName(): String {
         return "$KOTLIN_DIST_FOR_IDE_ARTIFACT_ID-${KotlinCompilerVersion.VERSION}.jar"
-    }
-
-    private fun classLoaderUrls(classLoader: ClassLoader): Sequence<URL> = sequence {
-        if (classLoader is URLClassLoader) {
-            yieldAll(classLoader.urLs.asSequence())
-        }
-        val urls = runCatching {
-            val method = classLoader.javaClass.getMethod("getUrls")
-            @Suppress("UNCHECKED_CAST")
-            method.invoke(classLoader) as? Iterable<URL>
-        }.getOrNull()
-        if (urls != null) {
-            yieldAll(urls)
-        }
-    }
-
-    private fun toLocalPath(url: URL): Path? {
-        if (url.protocol != "file") return null
-        return runCatching { Path.of(url.toURI()) }.getOrNull()
     }
 }
 

@@ -50,6 +50,9 @@ jvm_library(
 exports_files(
     [
         "intellij.idea.android.customization.iml",
+        "resources/META-INF/AndroidStudioPlugin.xml",
+        "resources/idea/AndroidStudioApplicationInfo.xml",
+        "resources/intellij.idea.android.customization.xml",
     ],
     visibility = ["//visibility:public"],
 )

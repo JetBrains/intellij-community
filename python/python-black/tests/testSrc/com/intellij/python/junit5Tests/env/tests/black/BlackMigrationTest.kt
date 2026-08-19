@@ -5,12 +5,10 @@ import com.intellij.python.black.BlackPyTool
 import com.intellij.python.black.configuration.BlackFormatterConfiguration
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.pytools.PyToolsState
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
-import kotlin.io.path.Path
 
 /**
  * Verifies the one-way migration of Black's pre-[PyToolsState] settings. The old
@@ -33,11 +31,7 @@ internal class BlackMigrationTest {
     }
 
     assertEquals(
-      PyToolsState.ToolEntry(
-        enabled = true,
-        discoveryMode = ExecutableDiscoveryMode.PATH,
-        customToolBinaryPath = Path("/usr/local/bin/black"),
-      ),
+      PyToolsState.ToolEntry(enabled = true),
       BlackPyTool.getInstance().migrateLegacyState(project),
     )
 

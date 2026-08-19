@@ -1,10 +1,14 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.python.terminal.shared"/>
     <module name="intellij.terminal.frontend"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <terminalSettingsProvider implementation="com.intellij.python.terminal.frontend.PyVirtualEnvTerminalSettingsProvider"/>

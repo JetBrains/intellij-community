@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.fir.index
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.indexing.StubIndexPerFileElementTypeModificationTrackerTestHelper
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.psi.stubs.elements.KtFileElementType
 
 class KotlinPerFileElementTypeModificationTrackerTest : KotlinLightCodeInsightFixtureTestCase() {
 
     companion object {
-        val KOTLIN get() = KtFileElementType
+        val KOTLIN get() = KtNodeTypes.FILE
     }
 
     private val helper = StubIndexPerFileElementTypeModificationTrackerTestHelper()

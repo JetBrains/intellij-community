@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
-  static final byte ERROR_STRIPE_FLAG = nextAvailableTasteFlag();
-  static final byte RENDER_IN_GUTTER_FLAG = nextAvailableTasteFlag();
+  static final byte ERROR_STRIPE_FLAVOR_FLAG = nextAvailableFlavorFlag();
+  static final byte RENDER_IN_GUTTER_FLAVOR_FLAG = nextAvailableFlavorFlag();
   private final MarkupModelImpl myMarkupModel;
 
   RangeHighlighterTree(@NotNull MarkupModelImpl markupModel) {
@@ -23,12 +23,6 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
   @Override
   protected boolean keepIntervalOnWeakReference(@NotNull RangeHighlighterEx interval) {
     return false;
-  }
-
-  @Override
-  protected byte getTasteFlags(@NotNull RangeHighlighterEx highlighter) {
-    return (byte)((highlighter.getErrorStripeMarkColor(null) != null ? ERROR_STRIPE_FLAG : 0) |
-                 (highlighter.isRenderedInGutter() ? RENDER_IN_GUTTER_FLAG : 0));
   }
 
   @Override

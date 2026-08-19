@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -18,7 +17,6 @@ import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceL
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimplePropsEntity
@@ -28,12 +26,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityData) : SimplePropsEntity, WorkspaceEntityBase(dataSource) {
-
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
 
   override val text: String
     get() {
@@ -50,19 +42,16 @@ internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityDa
       readField("set")
       return dataSource.set
     }
-
   override val map: Map<Set<String>, List<String>>
     get() {
       readField("map")
       return dataSource.map
     }
-
   override val bool: Boolean
     get() {
       readField("bool")
       return dataSource.bool
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -70,36 +59,14 @@ internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityDa
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: SimplePropsEntityData?) : ModifiableWorkspaceEntityBase<SimplePropsEntity, SimplePropsEntityData>(result),
                                                            SimplePropsEntityBuilder {
     internal constructor() : this(SimplePropsEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity SimplePropsEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -119,7 +86,7 @@ internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityDa
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -145,14 +112,12 @@ internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityDa
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var text: String
       get() = getEntityData().text
@@ -220,7 +185,6 @@ internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityDa
 
     override fun getEntityClass(): Class<SimplePropsEntity> = SimplePropsEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -230,30 +194,12 @@ internal class SimplePropsEntityData : WorkspaceEntityData<SimplePropsEntity>() 
   lateinit var set: MutableSet<List<String>>
   lateinit var map: Map<Set<String>, List<String>>
   var bool: Boolean = false
-
   internal fun isTextInitialized(): Boolean = ::text.isInitialized
   internal fun isListInitialized(): Boolean = ::list.isInitialized
   internal fun isSetInitialized(): Boolean = ::set.isInitialized
   internal fun isMapInitialized(): Boolean = ::map.isInitialized
-
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SimplePropsEntity> {
-    val modifiable = SimplePropsEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): SimplePropsEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = SimplePropsEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): SimplePropsEntity = SimplePropsEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<SimplePropsEntity, *> = SimplePropsEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimplePropsEntity") as EntityMetadata
   }

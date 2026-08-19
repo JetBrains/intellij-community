@@ -54,11 +54,15 @@ fun createExtensionPoints(points: List<ExtensionPointDescriptor>,
                               hasAttributes = descriptor.hasAttributes,
                               dynamic = descriptor.isDynamic)
     }
+    // the first registration wins - descriptors are registered in a core-first order, so a duplicate declared by a plugin
+    // never shadows the platform one. Such a conflict must not prevent the IDE from starting (IJPL-251786),
+    // so it is reported as an error attributed to the offending plugin instead of aborting the whole container registration.
     result.putIfAbsent(point.name, point)?.let { old ->
       val oldPluginDescriptor = old.getPluginDescriptor()
-      throw componentManager.createError(
-        "Duplicate registration for EP ${point.name} first in $oldPluginDescriptor, second in $pluginDescriptor", pluginDescriptor.pluginId
-      )
+      LOG.error(componentManager.createError(
+        "Duplicate registration for EP ${point.name} first in $oldPluginDescriptor, second in $pluginDescriptor (the second declaration is ignored)",
+        oldPluginDescriptor.pluginId, pluginDescriptor.pluginId,
+      ))
     }
   }
 }
@@ -274,7 +278,7 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
     if (DEBUG_REGISTRATION) {
       LOG.error(message, epTraces!!.get(pointName))
     }
-    throw componentManager.createError(message, pluginDescriptor.pluginId)
+    throw componentManager.createError(message, id1, id2)
   }
 
   // _only_ for CoreApplicationEnvironment

@@ -30,15 +30,15 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/core-api:core",
         "//plugins/kotlin/base/indices",
         "//platform/core-impl",
         "//java/java-psi-api:psi",
         "//platform/util",
         "//platform/indexing-api:indexing",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
         "//platform/analysis-api:analysis",
         "//plugins/kotlin/base/project-structure",
     ],
@@ -57,12 +57,15 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":navigation",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/core-api:core_test_lib",
         "//plugins/kotlin/base/indices:indices_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//java/java-psi-api:psi_test_lib",
         "//platform/util:util_test_lib",
         "//platform/indexing-api:indexing_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     ],
@@ -73,6 +76,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.navigation.iml",
+        "resouces/intellij.kotlin.navigation.xml",
     ],
     visibility = ["//visibility:public"],
 )

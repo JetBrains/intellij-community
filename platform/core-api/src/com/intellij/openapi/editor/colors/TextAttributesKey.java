@@ -9,6 +9,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
 import org.jdom.Element;
@@ -47,10 +48,11 @@ import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
  * @see com.intellij.openapi.editor.DefaultLanguageHighlighterColors
  */
 public final class TextAttributesKey implements Comparable<TextAttributesKey> {
-  public static final TextAttributesKey[] EMPTY_ARRAY = new TextAttributesKey[0];
+  public static final @NotNull TextAttributesKey @NotNull [] EMPTY_ARRAY = new TextAttributesKey[0];
   private static final Logger LOG = Logger.getInstance(TextAttributesKey.class);
   private static final String TEMP_PREFIX = "TEMP::";
   private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
+  public static final ArrayFactory<TextAttributesKey> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new TextAttributesKey[count];
 
   private static final ConcurrentMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<>();
 

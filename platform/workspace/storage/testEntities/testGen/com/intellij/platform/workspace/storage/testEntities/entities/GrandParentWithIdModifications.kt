@@ -18,7 +18,7 @@ interface GrandParentWithIdBuilder : WorkspaceEntityBuilder<GrandParentWithId> {
 }
 
 internal object GrandParentWithIdType : EntityType<GrandParentWithId, GrandParentWithIdBuilder>() {
-  override val entityClass: Class<GrandParentWithId> get() = GrandParentWithId::class.java
+  override val entityImplClass: Class<*> get() = GrandParentWithIdImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = GrandParentWithIdImpl.Builder::class.java
   operator fun invoke(
     myId: String,
@@ -40,7 +40,6 @@ fun MutableEntityStorage.modifyGrandParentWithId(
 
 var GrandParentWithIdBuilder.children: List<ParentWithIdBuilder>
   by WorkspaceEntity.extensionBuilder(ParentWithId::class.java)
-
 
 @JvmOverloads
 @JvmName("createGrandParentWithId")

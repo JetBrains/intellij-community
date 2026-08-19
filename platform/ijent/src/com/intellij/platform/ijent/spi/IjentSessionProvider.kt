@@ -13,16 +13,3 @@ interface IjentSessionProvider {
    */
   suspend fun connect(deploymentResult: IjentConnectionContext): IjentSession
 }
-
-sealed class IjentStartupError : RuntimeException {
-  constructor(message: String) : super(message)
-  constructor(message: String, cause: Throwable) : super(message, cause)
-
-  sealed class BootstrapOverShell : IjentStartupError {
-    constructor(message: String) : super(message)
-    constructor(message: String, cause: Throwable) : super(message, cause)
-  }
-
-  class IncompatibleTarget(message: String) : BootstrapOverShell(message)
-  class CommunicationError(cause: Throwable) : BootstrapOverShell(cause.message.orEmpty(), cause)
-}

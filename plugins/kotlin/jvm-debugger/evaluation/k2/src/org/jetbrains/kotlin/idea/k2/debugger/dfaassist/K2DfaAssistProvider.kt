@@ -30,14 +30,22 @@ import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.PrimitiveType
 import com.sun.jdi.Value
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KotlinConstantConditionsInspection
@@ -200,7 +208,7 @@ internal class K2DfaAssistProvider : DfaAssistProvider {
                         if (symbol is KaVariableSymbol) {
                             val name = symbol.name.asString() + inlineSuffix
                             val expectedType = symbol.returnType
-                            val isNonNullPrimitiveType = expectedType.isPrimitive && !expectedType.isNullable
+                            val isNonNullPrimitiveType = expectedType.classId in KaStandardTypeClassIds.PRIMITIVES && !expectedType.isNullable
                             return@readAction VariableResult.Variable(name, symbol.psi, isNonNullPrimitiveType)
                         }
                     }
@@ -284,7 +292,7 @@ internal class K2DfaAssistProvider : DfaAssistProvider {
                 if (call != null) {
                     val inline = analyze(call) {
                         val functionCall = call.resolveToCall()?.singleFunctionCallOrNull()
-                        (functionCall?.partiallyAppliedSymbol?.symbol as? KaNamedFunctionSymbol)?.isInline == true
+                        (functionCall?.symbol as? KaNamedFunctionSymbol)?.isInline == true
                     }
                     if (inline) {
                         current = call

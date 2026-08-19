@@ -2,6 +2,11 @@
 package com.intellij.openapi.vcs.merge.flow
 
 import com.intellij.CommonBundle
+import com.intellij.diff.statistics.FileOpenedFrom
+import com.intellij.diff.statistics.MagicWandResult
+import com.intellij.diff.statistics.MergeStatisticsCollector
+import com.intellij.diff.statistics.RevertUsedOn
+import com.intellij.diff.statistics.SideAppliedFrom
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionManager
@@ -56,6 +61,7 @@ import com.intellij.util.ui.initOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
@@ -96,8 +102,8 @@ internal class IterativeMergeFlowDelegate(
   private val files: List<VirtualFile>,
   private val onClose: () -> Unit,
   private val onAcceptAndFinish: () -> Unit,
-  acceptForResolution: (MergeSession.Resolution) -> Unit,
-  private val showMergeDialog: () -> Unit,
+  acceptForResolution: (MergeSession.Resolution, SideAppliedFrom) -> Unit,
+  private val showMergeDialog: (FileOpenedFrom) -> Unit,
   private val toggleGroupByDirectory: (Boolean) -> Unit,
   private val resolveAutomatically: () -> Unit,
   private val getGroupByDirectory: () -> Boolean,
@@ -117,8 +123,8 @@ internal class IterativeMergeFlowDelegate(
   @Nls
   private var currentDescription: String = VcsBundle.message("merge.loading.merge.details")
 
-  private val acceptForResolution: (MergeSession.Resolution) -> Unit = { resolution ->
-    acceptForResolution(resolution)
+  private val acceptForResolution: (MergeSession.Resolution, SideAppliedFrom) -> Unit = { resolution, from ->
+    acceptForResolution(resolution, from)
     clearAutoResolveStatus()
   }
 
@@ -134,7 +140,7 @@ internal class IterativeMergeFlowDelegate(
         2 -> MergeSession.Resolution.AcceptedTheirs
         else -> error("Invalid column index: $column")
       }
-      acceptForResolution(resolution)
+      acceptForResolution(resolution, SideAppliedFrom.BUTTON)
     }
     table.toolTipTextProvider = { file ->
       iterativeDataHolder.getMergeConflictModel(file)?.let {
@@ -230,6 +236,8 @@ internal class IterativeMergeFlowDelegate(
 
       val acceptAndFinishAction = object : AbstractAction(VcsBundle.message("multiple.file.iterative.merge.accept.finish")) {
         override fun actionPerformed(e: ActionEvent) {
+          val allReviewed = ::state.isInitialized && state.allFilesResolvedAndReviewed
+          MergeStatisticsCollector.logDialogAccept(project, allReviewed)
           onAcceptAndFinish()
         }
       }
@@ -240,7 +248,7 @@ internal class IterativeMergeFlowDelegate(
       val reviewOrResolveAction = object : AbstractAction(VcsBundle.message("multiple.file.iterative.merge.resolve.manually")) {
         override fun actionPerformed(e: ActionEvent) {
           clearAutoResolveStatus()
-          showMergeDialog()
+          showMergeDialog(FileOpenedFrom.RESOLVE_BUTTON)
         }
       }
       reviewOrResolveButton = DialogWrapper.createJButtonForAction(reviewOrResolveAction, rootPane)
@@ -382,7 +390,7 @@ internal class IterativeMergeFlowDelegate(
       val (yoursLabel, theirsLabel) = MergeUIUtil.getYoursAndTheirsLabes(columnNames)
       add(object : DumbAwareAction(VcsBundle.message("multiple.file.iterative.merge.accept", yoursLabel)) {
         override fun actionPerformed(e: AnActionEvent) {
-          acceptForResolution(MergeSession.Resolution.AcceptedYours)
+          acceptForResolution(MergeSession.Resolution.AcceptedYours, SideAppliedFrom.CONTEXT_MENU)
         }
 
         override fun update(e: AnActionEvent) {
@@ -394,7 +402,7 @@ internal class IterativeMergeFlowDelegate(
       })
       add(object : DumbAwareAction(VcsBundle.message("multiple.file.iterative.merge.accept", theirsLabel)) {
         override fun actionPerformed(e: AnActionEvent) {
-          acceptForResolution(MergeSession.Resolution.AcceptedTheirs)
+          acceptForResolution(MergeSession.Resolution.AcceptedTheirs, SideAppliedFrom.CONTEXT_MENU)
         }
 
         override fun update(e: AnActionEvent) {
@@ -417,8 +425,17 @@ internal class IterativeMergeFlowDelegate(
             .icon(Messages.getQuestionIcon())
             .ask(project)
           if (confirmed) {
+            val selected = state.selectedFiles
+            val anyResolved = selected.any { iterativeDataHolder.isFileResolved(it) }
+            val anyUnresolved = selected.any { !iterativeDataHolder.isFileResolved(it) }
+            val usedOn = when {
+              anyResolved && anyUnresolved -> RevertUsedOn.BOTH
+              anyResolved -> RevertUsedOn.RESOLVED
+              else -> RevertUsedOn.UNRESOLVED
+            }
+            MergeStatisticsCollector.logRevertUsedOnTable(project, selected.size, usedOn)
             clearAutoResolveStatus()
-            iterativeDataHolder.removeFiles(state.selectedFiles)
+            iterativeDataHolder.removeFiles(selected)
             isResolveAutomaticallyPressed = false
             updateTable()
           }
@@ -447,7 +464,9 @@ internal class IterativeMergeFlowDelegate(
     clearAutoResolveStatus()
     updateButtonsState()
 
-    val resolvedBefore = files.sumOf { iterativeDataHolder.getMergeConflictModel(it)?.getResolvedChanges()?.size ?: 0 }
+    val resolvedBeforePerFile = files.associateWith { resolvedChangeCount(it) }
+    val resolvedConflictsBeforePerFile = files.associateWith { resolvedConflictCount(it) }
+    val resolvedBefore = resolvedBeforePerFile.values.sum()
     try {
       resolveAutomatically()
     }
@@ -457,10 +476,25 @@ internal class IterativeMergeFlowDelegate(
     }
     finally {
       isResolvingConflicts = false
-      val resolvedAfter = files.sumOf { iterativeDataHolder.getMergeConflictModel(it)?.getResolvedChanges()?.size ?: 0 }
-      val resolvedByAutoResolve = resolvedAfter - resolvedBefore
-      val totalUnresolved = files.sumOf { iterativeDataHolder.getMergeConflictModel(it)?.getUnresolvedChanges()?.size ?: 0 }
-      val filesWithUnresolved = files.count { iterativeDataHolder.getMergeConflictModel(it)?.getUnresolvedChanges()?.isNotEmpty() == true }
+
+      // Report the Magic Wand's effect per file so the distribution of outcomes can be counted,
+      // plus one session event carrying the best result of this button press.
+      var bestOfPress: MagicWandResult? = null
+      for (file in files) {
+        val fileResult = computeMagicWandResult(
+          resolvedByAutoResolve = resolvedChangeCount(file) - (resolvedBeforePerFile[file] ?: 0),
+          unresolvedAfter = unresolvedChangeCount(file),
+          newlyResolvedConflicts = resolvedConflictCount(file) - (resolvedConflictsBeforePerFile[file] ?: 0),
+        )
+        MergeStatisticsCollector.logMagicWandPressed(project, fileResult)
+        bestOfPress = bestMagicWandResultOf(bestOfPress, fileResult)
+      }
+      bestOfPress?.let { MergeStatisticsCollector.logMagicWandSession(project, it) }
+
+      val resolvedByAutoResolve = countResolvedChanges() - resolvedBefore
+      val totalUnresolved = countUnresolvedChanges()
+      val filesWithUnresolved = files.count { unresolvedChangeCount(it) > 0 }
+
       resolveStatusLabel.text = when {
         resolvedByAutoResolve == 0 -> VcsBundle.message("multiple.file.iterative.merge.status.none.resolved")
         totalUnresolved == 0 -> VcsBundle.message("multiple.file.iterative.merge.status.all.resolved")
@@ -473,7 +507,42 @@ internal class IterativeMergeFlowDelegate(
       updateButtonsState()
     }
   }
+
+  private fun countResolvedChanges(): Int = files.sumOf { resolvedChangeCount(it) }
+
+  private fun countUnresolvedChanges(): Int = files.sumOf { unresolvedChangeCount(it) }
+
+  private fun resolvedChangeCount(file: VirtualFile): Int =
+    iterativeDataHolder.getMergeConflictModel(file)?.getResolvedChanges()?.size ?: 0
+
+  private fun unresolvedChangeCount(file: VirtualFile): Int =
+    iterativeDataHolder.getMergeConflictModel(file)?.getUnresolvedChanges()?.size ?: 0
+
+  private fun resolvedConflictCount(file: VirtualFile): Int =
+    iterativeDataHolder.getMergeConflictModel(file)?.getResolvedChanges()?.count { it.isConflict } ?: 0
 }
+
+/**
+ * Classifies the Magic Wand's effect on a single file, from best to worst outcome:
+ * the file is now fully resolved > a real (two-side) conflict was partially resolved >
+ * only non-conflicting one-side changes were applied > nothing changed.
+ */
+@VisibleForTesting
+internal fun computeMagicWandResult(
+  resolvedByAutoResolve: Int,
+  unresolvedAfter: Int,
+  newlyResolvedConflicts: Int,
+): MagicWandResult = when {
+  resolvedByAutoResolve <= 0 -> MagicWandResult.NO_EFFECT
+  unresolvedAfter == 0 -> MagicWandResult.FULLY_RESOLVED
+  newlyResolvedConflicts > 0 -> MagicWandResult.PARTIALLY_RESOLVED
+  else -> MagicWandResult.ONLY_SIDES_APPLIED
+}
+
+/** Picks the better (lower-ordinal) of two results; enum is declared best-to-worst. */
+@VisibleForTesting
+internal fun bestMagicWandResultOf(current: MagicWandResult?, candidate: MagicWandResult): MagicWandResult =
+  if (current == null || candidate.ordinal < current.ordinal) candidate else current
 
 private enum class ConflictsNodeType {
   UNRESOLVED,

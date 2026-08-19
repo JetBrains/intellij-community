@@ -37,6 +37,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.structureView.impl.iml",
+        "resources/intellij.platform.structureView.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

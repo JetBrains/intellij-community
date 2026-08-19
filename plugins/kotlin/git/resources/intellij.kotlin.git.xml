@@ -4,6 +4,9 @@
     <plugin id="Git4Idea"/>
     <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.vcs.core"/>
     <module name="intellij.vcs.git.backend"/>
   </dependencies>
   <!-- endregion -->

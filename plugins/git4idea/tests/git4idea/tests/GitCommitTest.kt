@@ -22,6 +22,7 @@ import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.vcs.commit.CommitExceptionWithActions
 import com.intellij.vcs.test.updateChangeListManager
 import com.intellij.vcs.test.vcsPlatformFixture
+import com.intellij.vcs.test.vcsTestProjectPathFixture
 import git4idea.checkin.GitCheckinExplicitMovementProvider
 import git4idea.checkin.isCommitRenamesSeparately
 import git4idea.config.GitConfigUtil
@@ -1153,7 +1154,7 @@ internal interface GitCommitContext : GitSingleRepoContext {
 }
 
 private fun gitCommitFixture(useIndexInfoStagedChangesSaver: Boolean) =
-  projectFixture(openAfterCreation = true).let { projectFixture ->
+  projectFixture(vcsTestProjectPathFixture(), openAfterCreation = true).let { projectFixture ->
     projectFixture
       .vcsPlatformFixture()
       .gitPlatformFixture(projectFixture,

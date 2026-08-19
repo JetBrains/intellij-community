@@ -101,6 +101,8 @@ jvm_library(
 exports_files(
     [
         "intellij.java.typeMigration.iml",
+        "resources/META-INF/TypeMigration.xml",
+        "resources/intellij.java.typeMigration.xml",
     ],
     visibility = ["//visibility:public"],
 )

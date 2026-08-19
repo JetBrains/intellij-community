@@ -36,7 +36,7 @@ abstract class AbstractMavenUpdateConfigurationQuickFixTest(
         }
     }
 
-    protected suspend fun doTest(intentionName: String) {
+    protected suspend fun doTest(intentionName: String, shouldBeAvailable: Boolean = true) {
         val pomVFile = maven.createProjectSubFile("pom.xml", File(getTestDataPath(), "pom.xml").readText())
         val sourceVFile = maven.createProjectSubFile("src/main/kotlin/src.kt", File(getTestDataPath(), "src.kt").readText())
         LocalFileSystem.getInstance().refreshFiles(listOf(pomVFile, sourceVFile))
@@ -48,10 +48,15 @@ abstract class AbstractMavenUpdateConfigurationQuickFixTest(
                 with(codeInsightTestFixture) {
                     configureFromExistingVirtualFile(sourceVFile)
                     canChangeDocumentDuringHighlighting(true)
-                    launchAction(codeInsightTestFixture.findSingleIntention(intentionName))
+                    if (shouldBeAvailable) {
+                        launchAction(codeInsightTestFixture.findSingleIntention(intentionName))
+                        FileDocumentManager.getInstance().saveAllDocuments()
+                        checkResult(pomVFile)
+                    } else {
+                        val intentions = filterAvailableIntentions(intentionName)
+                        assertTrue(intentions.isEmpty(), "Intention '$intentionName' should not be available")
+                    }
                 }
-                FileDocumentManager.getInstance().saveAllDocuments()
-                checkResult(pomVFile)
             }
         }
     }

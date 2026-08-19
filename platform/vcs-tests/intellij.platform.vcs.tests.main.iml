@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tasks.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tasks.tests.vcs" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.coverage.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.terminal.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.backend.tests" scope="TEST" />

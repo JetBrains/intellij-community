@@ -3,6 +3,7 @@ from collections.abc import Callable, Collection, Hashable, Iterable
 from typing import Literal, TypeAlias, TypeVar, overload
 
 import numpy
+import numpy as np
 from networkx.classes.graph import Graph, _Node
 from networkx.utils.backends import _dispatchable
 
@@ -83,9 +84,20 @@ def from_pandas_edgelist(
 ) -> Graph[Incomplete]: ...
 
 @_dispatchable
-def to_scipy_sparse_array(G: Graph[_Node], nodelist=None, dtype=None, weight="weight", format="csr"): ...
+def to_scipy_sparse_array(
+    G: Graph[_Node],
+    nodelist: Collection[_Node] | None = None,
+    dtype: np.dtype[Incomplete] | None = None,
+    weight: str | None = "weight",
+    format: str = "csr",
+): ...
 @_dispatchable
-def from_scipy_sparse_array(A, parallel_edges=False, create_using=None, edge_attribute="weight"): ...
+def from_scipy_sparse_array(
+    A,
+    parallel_edges: bool = False,
+    create_using: Graph[Incomplete] | type[Graph[Incomplete]] | None = None,
+    edge_attribute: str = "weight",
+): ...
 @_dispatchable
 def to_numpy_array(
     G: Graph[_Node],

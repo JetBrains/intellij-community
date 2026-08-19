@@ -287,7 +287,7 @@ object CodeWithMeClientDownloader {
     val tempFile = Files.createTempFile(latestBuildTxtFileName, "")
     return try {
       if (application.isDispatchThread) {
-        runWithModalProgressBlocking(ModalTaskOwner.guess(), RemoteDevUtilBundle.getMessage("launcher.get.client.info")) {
+        runWithModalProgressBlocking(ModalTaskOwner.guess(), RemoteDevUtilBundle.message("launcher.get.client.info")) {
           coroutineToIndicator {
             downloadWithRetries(latestBuildTxtUri, tempFile, ProgressManager.getInstance().progressIndicator)
           }

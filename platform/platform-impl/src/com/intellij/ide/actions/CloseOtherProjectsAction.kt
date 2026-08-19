@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
  * @author Konstantin Bulenkov
  */
 @ApiStatus.Internal
-class CloseOtherProjectsAction : CloseProjectsActionBase() {
+open class CloseOtherProjectsAction : CloseProjectsActionBase() {
   init {
     val uiCustomization = IdeUICustomization.getInstance()
     templatePresentation.setText(uiCustomization.projectMessagePointer("action.close.other.projects.text"))

@@ -17,9 +17,13 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.symbols.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
+import org.jetbrains.kotlin.analysis.api.types.defaultType
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider
@@ -88,10 +92,8 @@ abstract class KotlinK2RuntimeTypeEvaluator(
 
     context(session: KaSession)
     private fun getKaType(psiClass: PsiElement): KaType? {
-        with(session) {
-            val classSymbol = psiClass.asKtClassOrObject()?.namedClassSymbol ?: (psiClass as? PsiClass)?.namedClassSymbol
-            return classSymbol?.defaultType
-        }
+        val classSymbol = psiClass.asKtClassOrObject()?.namedClassSymbol ?: (psiClass as? PsiClass)?.namedClassSymbol
+        return classSymbol?.defaultType
     }
 
     private fun getKaModule(psiElement: PsiElement, project: Project): KaModule =

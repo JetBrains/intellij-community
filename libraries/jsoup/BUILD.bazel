@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.jsoup.iml",
+        "resources/intellij.libraries.jsoup.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -7,7 +7,7 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.Either
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
-import com.intellij.collaboration.ui.codereview.avatar.Avatar
+import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
@@ -236,14 +236,13 @@ object CodeReviewDetailsStatusComponentFactory {
     }
   }
 
-  fun <Reviewer, IconKey> createReviewersReviewStateComponent(
+  fun <Reviewer, ReviewStateType> createReviewersReviewStateComponent(
     scope: CoroutineScope,
-    reviewersReview: Flow<Map<Reviewer, ReviewState>>,
-    reviewerActionProvider: (Reviewer) -> ActionGroup?,
-    reviewerNameProvider: (Reviewer) -> String,
-    avatarKeyProvider: (Reviewer) -> IconKey,
-    iconProvider: (reviewState: ReviewState, iconKey: IconKey, iconSize: Int) -> Icon,
-    statusIconsEnabled: Boolean = true,
+    reviewersReview: Flow<Map<Reviewer, ReviewStateType>>,
+    statusText: (reviewer: Reviewer, reviewState: ReviewStateType) -> @Nls String,
+    avatarIcon: (reviewer: Reviewer, reviewState: ReviewStateType) -> Icon,
+    statusIcon: (reviewer: Reviewer, reviewState: ReviewStateType) -> Icon? = { _, _ -> null },
+    actionGroup: (reviewer: Reviewer, reviewState: ReviewStateType) -> ActionGroup? = { _, _ -> null },
   ): JComponent {
     val panel = VerticalListPanel().apply {
       name = "Code review status: reviewers"
@@ -254,8 +253,12 @@ object CodeReviewDetailsStatusComponentFactory {
       reviewersReview.collect { reviewersReview ->
         panel.removeAll()
         reviewersReview.forEach { (reviewer, reviewState) ->
-          panel.add(createReviewerReviewStatus(reviewer, reviewState, reviewerActionProvider, reviewerNameProvider, avatarKeyProvider,
-                                               iconProvider, statusIconsEnabled))
+          panel.add(createReviewerReviewStatus(
+            statusText = statusText(reviewer, reviewState),
+            avatarIcon = avatarIcon(reviewer, reviewState),
+            statusIcon = statusIcon(reviewer, reviewState),
+            actionGroup = actionGroup(reviewer, reviewState),
+          ))
         }
         panel.revalidate()
         panel.repaint()
@@ -265,37 +268,41 @@ object CodeReviewDetailsStatusComponentFactory {
     return panel
   }
 
-  private fun <Reviewer, IconKey> createReviewerReviewStatus(
-    reviewer: Reviewer,
-    reviewState: ReviewState,
-    reviewerActionProvider: (Reviewer) -> ActionGroup?,
-    reviewerNameProvider: (Reviewer) -> String,
-    avatarKeyProvider: (Reviewer) -> IconKey,
-    iconProvider: (reviewState: ReviewState, iconKey: IconKey, iconSize: Int) -> Icon,
-    statusIconsEnabled: Boolean,
+  fun <Reviewer> createReviewersReviewStateComponent(
+    scope: CoroutineScope,
+    reviewersReview: Flow<Map<Reviewer, ReviewState>>,
+    reviewerName: (reviewer: Reviewer) -> String,
+    reviewerAvatar: (reviewer: Reviewer) -> Icon,
+    actionGroup: (reviewer: Reviewer, reviewState: ReviewState) -> ActionGroup? = { _, _ -> null },
+  ): JComponent = createReviewersReviewStateComponent(
+    scope, reviewersReview,
+    statusText = { reviewer, reviewState -> ReviewDetailsUIUtil.getReviewStateText(reviewState, reviewerName(reviewer)) },
+    avatarIcon = { reviewer, reviewState ->
+      CodeReviewAvatarUtils.createIconWithOutline(reviewerAvatar(reviewer), ReviewDetailsUIUtil.getReviewStateIconBorder(reviewState))
+    },
+    statusIcon = { _, reviewState -> ReviewDetailsUIUtil.getReviewStateIcon(reviewState) },
+    actionGroup = actionGroup,
+  )
+
+  private fun createReviewerReviewStatus(
+    statusText: @Nls String,
+    avatarIcon: Icon,
+    statusIcon: Icon?,
+    actionGroup: ActionGroup?,
   ): JComponent {
     return HorizontalListPanel(STATUS_REVIEWER_COMPONENT_GAP).apply {
       border = JBUI.Borders.empty(STATUS_REVIEWER_BORDER, 0)
       val reviewerLabel = ReviewDetailsStatusLabel("Code review status: reviewer").apply {
         iconTextGap = STATUS_REVIEWER_COMPONENT_GAP
-        icon = iconProvider(reviewState, avatarKeyProvider(reviewer), Avatar.Sizes.OUTLINED)
-        text = ReviewDetailsUIUtil.getReviewStateText(reviewState, reviewerNameProvider(reviewer))
+        icon = avatarIcon
+        text = statusText
       }
 
-      if (statusIconsEnabled) {
-        val reviewStatusIconLabel = JLabel().apply {
-          icon = ReviewDetailsUIUtil.getReviewStateIcon(reviewState)
-        }
-        add(reviewStatusIconLabel)
-      }
+      statusIcon?.let { add(JLabel().apply { icon = it }) }
 
       add(reviewerLabel)
 
-      if (reviewState != ReviewState.ACCEPTED) {
-        reviewerActionProvider(reviewer)?.let { action ->
-          PopupHandler.installPopupMenu(this, action, "CodeReviewReviewerStatus")
-        }
-      }
+      actionGroup?.let { PopupHandler.installPopupMenu(this, it, "CodeReviewReviewerStatus") }
     }
   }
 

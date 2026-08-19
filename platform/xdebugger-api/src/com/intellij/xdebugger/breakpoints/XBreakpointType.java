@@ -100,6 +100,10 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return AllIcons.Debugger.Db_no_suspend_breakpoint;
   }
 
+  public @NotNull Icon getSuspendNoneDisabledIcon() {
+    return AllIcons.Breakpoints.BreakpointUnsuspendentDisabled;
+  }
+
   public @NotNull Icon getMutedEnabledIcon() {
     return AllIcons.Debugger.Db_muted_breakpoint;
   }

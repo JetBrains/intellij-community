@@ -10,9 +10,9 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.checkCanceled
@@ -134,7 +134,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   constructor(project: Project, cs: CoroutineScope) {
     this.project = project
     this.coroutineScope = cs
-    this.virtualFileManager = IdeVirtualFileUrlManagerImpl(isProjectCaseSensitive(project))
+    this.virtualFileManager = createIdeVirtualFileUrlManager(isProjectCaseSensitive(project))
     log.debug { "Loading workspace model" }
     val start = Milliseconds.now()
 
@@ -364,7 +364,11 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
    * Things that must be considered if you'd love to change this logic: IDEA-342103
    */
   private fun checkRecursiveUpdate() = checkRecursiveUpdateTimeMs.addMeasuredTime {
-    val stackStraceIterator = RuntimeException().stackTrace.iterator()
+    val stackTrace = RuntimeException().stackTrace
+    if (stackTrace.size < 6) {
+      return@addMeasuredTime
+    }
+    val stackStraceIterator = stackTrace.iterator()
     // Skip six methods of the current update
     repeat(6) { stackStraceIterator.next() }
     while (stackStraceIterator.hasNext()) {
@@ -623,7 +627,8 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
     }
     catch (e: Throwable) {
       if (e is AlreadyDisposedException) throw e
-      if (e is ControlFlowException) throw e // Control flow exceptions should never be logger, only rethrown. Related: IJPL-155938
+      rethrowControlFlowException(e) // Control flow exceptions should never be logger, only rethrown. Related: IJPL-155938
+
       val message = "Exception at Workspace Model event handling"
       if (userWarningLoggingLevel) {
         log.warn(message, e)

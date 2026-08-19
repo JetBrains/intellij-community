@@ -42,15 +42,35 @@ sealed interface RpcLookupElementEvent {
 
   /**
    * the lookup is closed with completion
+   *
+   * [requestId] is the request the chosen item belongs to, and it is what the backend must resolve
+   * [selectedItemId] against: items live in a per-request storage
+   * (`BackendCompletionRequestSession.findCompletionResult`), and the mirror lookup's arranger can still belong to an
+   * older request when this event is handled (IJPL-252099 — the frontend swaps a stale-seeded request for a fresh one
+   * right before the accept). Resolving against the arranger's own session instead would fail to find the item and
+   * insert one carrying a shorter prefix matcher, leaving the leading typed characters in the document.
+   *
+   * [itemPattern] is the prefix the *frontend* lookup matched the chosen element against
+   * (`Lookup.itemPattern`), and it is the authoritative measure of the range the insertion must replace: the frontend
+   * owns the lookup, so it owns the lookup start offset. It can be **longer** than the matcher the backend stored for
+   * the item — a stale-seeded placeholder shows an older request's items re-matched against the prefix typed since
+   * (`FrontendCompletionRequestSessionImpl.seedStaleAndSwap`), and accepting one before the swap-restart lands would
+   * otherwise measure the replaced range against the older, shorter matcher and duplicate the leading typed characters
+   * (IJPL-252099). `null` means "no pattern reported" (nothing chosen, or an older frontend), in which case the backend
+   * keeps using the item's own matcher.
    */
   @Serializable
   data class ItemSelected(
     val projectId: ProjectId,
+    val requestId: RpcCompletionRequestId,
     val selectedItemId: RpcCompletionItemId? = null,
+    val itemPattern: String? = null,
   ) : RpcLookupElementEvent {
     override fun toString(): String = buildToString("ItemSelected") {
       field("projectId", projectId)
+      field("requestId", requestId)
       fieldWithNullDefault("selectedItemId", selectedItemId)
+      fieldWithNullDefault("itemPattern", itemPattern)
     }
   }
 

@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.jackson.annotations.iml",
+        "resources/intellij.libraries.jackson.annotations.xml",
     ],
     visibility = ["//visibility:public"],
 )

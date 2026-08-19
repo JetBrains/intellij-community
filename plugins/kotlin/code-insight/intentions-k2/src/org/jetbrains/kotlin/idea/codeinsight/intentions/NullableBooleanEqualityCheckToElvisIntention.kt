@@ -5,11 +5,11 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isBooleanType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -44,7 +44,8 @@ class NullableBooleanEqualityCheckToElvisIntention : KotlinApplicableModCommandA
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.boolean.const.to.elvis")
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Unit? {
         if (element.operationToken != KtTokens.EQEQ && element.operationToken != KtTokens.EXCLEQ) return null
         val lhs = element.left ?: return null
         val rhs = element.right ?: return null
@@ -58,6 +59,6 @@ class NullableBooleanEqualityCheckToElvisIntention : KotlinApplicableModCommandA
 
         val expressionType = lhs.expressionType ?: return false
 
-        return expressionType.isNullable && expressionType.isBooleanType
+        return expressionType.isNullable && expressionType.classId == KaStandardTypeClassIds.BOOLEAN
     }
 }

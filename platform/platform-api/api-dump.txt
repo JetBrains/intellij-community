@@ -568,6 +568,7 @@ e:com.intellij.ide.HelpTooltip$Alignment
 - sf:HELP_BUTTON:com.intellij.ide.HelpTooltip$Alignment
 - sf:LEFT:com.intellij.ide.HelpTooltip$Alignment
 - sf:RIGHT:com.intellij.ide.HelpTooltip$Alignment
+- sf:TOP:com.intellij.ide.HelpTooltip$Alignment
 - a:getPointFor(java.awt.Component,java.awt.Dimension,java.awt.Point):java.awt.Point
 - s:valueOf(java.lang.String):com.intellij.ide.HelpTooltip$Alignment
 - s:values():com.intellij.ide.HelpTooltip$Alignment[]
@@ -633,6 +634,25 @@ f:com.intellij.ide.Prefs
 - s:putLong(java.lang.String,J):V
 - s:remove(java.lang.String):V
 - s:sync(java.lang.String):V
+e:com.intellij.ide.Region
+- java.lang.Enum
+- sf:AFRICA:com.intellij.ide.Region
+- sf:AMERICAS:com.intellij.ide.Region
+- sf:APAC:com.intellij.ide.Region
+- sf:CHINA:com.intellij.ide.Region
+- sf:EUROPE:com.intellij.ide.Region
+- sf:MIDDLE_EAST:com.intellij.ide.Region
+- sf:NOT_SET:com.intellij.ide.Region
+- sf:OCEANIA:com.intellij.ide.Region
+- externalName():java.lang.String
+- s:fromExternalName(java.lang.String):com.intellij.ide.Region
+- getDisplayKey():java.lang.String
+- getDisplayName():java.lang.String
+- getDisplayOrdinal():I
+- s:valueOf(java.lang.String):com.intellij.ide.Region
+- s:values():com.intellij.ide.Region[]
+f:com.intellij.ide.RegionSettings
+- s:getRegion():com.intellij.ide.Region
 a:com.intellij.ide.RemoteDesktopService
 - <init>():V
 - s:getInstance():com.intellij.ide.RemoteDesktopService
@@ -843,7 +863,6 @@ e:com.intellij.ide.browsers.BrowserFamily
 a:com.intellij.ide.browsers.BrowserLauncher
 - sf:Companion:com.intellij.ide.browsers.BrowserLauncher$Companion
 - <init>():V
-- browse(java.io.File):V
 - f:browse(java.lang.String,com.intellij.ide.browsers.WebBrowser):V
 - a:browse(java.lang.String,com.intellij.ide.browsers.WebBrowser,com.intellij.openapi.project.Project):V
 - f:browse(java.net.URI):V
@@ -4446,7 +4465,7 @@ c:com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - sf:computeCommentInsets(javax.swing.JComponent,Z):java.awt.Insets
 - constrainsValid():Z
 - sf:createCommentComponent(java.lang.String,Z):javax.swing.JLabel
-- bsf:createCommentComponent(java.lang.String,Z,I):javax.swing.JLabel
+- sf:createCommentComponent(java.lang.String,Z,I):javax.swing.JLabel
 - sf:createCommentComponent(java.lang.String,Z,I,Z):javax.swing.JLabel
 - sf:createNonWrappingCommentComponent(java.lang.String):javax.swing.JLabel
 - createPanel():javax.swing.JPanel
@@ -4466,7 +4485,7 @@ c:com.intellij.openapi.ui.panel.ComponentPanelBuilder
 f:com.intellij.openapi.ui.panel.ComponentPanelBuilder$Companion
 - f:computeCommentInsets(javax.swing.JComponent,Z):java.awt.Insets
 - f:createCommentComponent(java.lang.String,Z):javax.swing.JLabel
-- bf:createCommentComponent(java.lang.String,Z,I):javax.swing.JLabel
+- f:createCommentComponent(java.lang.String,Z,I):javax.swing.JLabel
 - f:createCommentComponent(java.lang.String,Z,I,Z):javax.swing.JLabel
 - f:createNonWrappingCommentComponent(java.lang.String):javax.swing.JLabel
 - f:getCommentFont(java.awt.Font):java.awt.Font
@@ -5971,9 +5990,8 @@ a:com.intellij.ui.DoubleClickListener
 - f:onClick(java.awt.event.MouseEvent,I):Z
 - pa:onDoubleClick(java.awt.event.MouseEvent):Z
 f:com.intellij.ui.DrawUtil
-- s:drawPlainRect(java.awt.Graphics,I,I,I,I):V
-- s:drawRoundRect(java.awt.Graphics,D,D,D,D,java.awt.Color):V
-- s:isSimplifiedUI():Z
+- sf:INSTANCE:com.intellij.ui.DrawUtil
+- sf:isSimplifiedUI():Z
 com.intellij.ui.DropAreaAware
 - a:getDropArea():java.awt.Rectangle
 a:com.intellij.ui.DumbAwareActionButton
@@ -6703,7 +6721,6 @@ c:com.intellij.ui.OptionGroup
 a:com.intellij.ui.OptionalChooserComponent
 - com.intellij.ui.CheckBoxListListener
 - com.intellij.util.ui.ComponentWithEmptyText
-- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(java.util.List):V
 - apply():V
 - checkBoxSelectionChanged(I,Z):V
@@ -7486,6 +7503,42 @@ c:com.intellij.ui.components.AnActionLink
 - f:getDataProvider():com.intellij.openapi.actionSystem.DataProvider
 - f:setDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+f:com.intellij.ui.components.Badge
+- javax.swing.Icon
+- sf:Companion:com.intellij.ui.components.Badge$Companion
+- sf:alpha:javax.swing.Icon
+- sf:alphaDisabled:javax.swing.Icon
+- sf:beta:javax.swing.Icon
+- sf:betaDisabled:javax.swing.Icon
+- sf:free:javax.swing.Icon
+- sf:freeDisabled:javax.swing.Icon
+- sf:new:javax.swing.Icon
+- sf:newDisabled:javax.swing.Icon
+- sf:trial:javax.swing.Icon
+- sf:trialDisabled:javax.swing.Icon
+- <init>(java.lang.String,com.intellij.ui.components.Badge$ColorType):V
+- b:<init>(java.lang.String,com.intellij.ui.components.Badge$ColorType,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getColorType():com.intellij.ui.components.Badge$ColorType
+- f:getEnabled():Z
+- getIconHeight():I
+- getIconWidth():I
+- f:getText():java.lang.String
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- f:setColorType(com.intellij.ui.components.Badge$ColorType):V
+- f:setEnabled(Z):V
+- f:setText(java.lang.String):V
+e:com.intellij.ui.components.Badge$ColorType
+- java.lang.Enum
+- sf:BLUE:com.intellij.ui.components.Badge$ColorType
+- sf:BLUE_SECONDARY:com.intellij.ui.components.Badge$ColorType
+- sf:GRAY_SECONDARY:com.intellij.ui.components.Badge$ColorType
+- sf:GREEN:com.intellij.ui.components.Badge$ColorType
+- sf:GREEN_SECONDARY:com.intellij.ui.components.Badge$ColorType
+- sf:PURPLE_SECONDARY:com.intellij.ui.components.Badge$ColorType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.components.Badge$ColorType
+- s:values():com.intellij.ui.components.Badge$ColorType[]
+f:com.intellij.ui.components.Badge$Companion
 f:com.intellij.ui.components.BrowserLink
 - com.intellij.ui.components.ActionLink
 - <init>(java.lang.String):V
@@ -7995,8 +8048,6 @@ c:com.intellij.ui.components.OnOffButton
 - javax.swing.JToggleButton
 - <init>():V
 - getIpad():java.awt.Insets
-- getOffText():java.lang.String
-- getOnText():java.lang.String
 - getUIClassID():java.lang.String
 - setIpad(java.awt.Insets):V
 - setOffText(java.lang.String):V
@@ -9285,22 +9336,6 @@ f:com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 - setShowImage(Z):com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 - s:setShowText(com.intellij.openapi.actionSystem.AnAction,Z):com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 - setShowText(Z):com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
-f:com.intellij.ui.messager.Callout
-- sf:NORTH_EAST:I
-- sf:NORTH_WEST:I
-- sf:SOUTH_EAST:I
-- sf:SOUTH_WEST:I
-- <init>():V
-- s:main(java.lang.String[]):V
-- s:showText(com.intellij.ui.awt.RelativePoint,I,java.lang.String):V
-- s:showText(javax.swing.JComponent,I,java.lang.String):V
-- s:showText(javax.swing.JTree,javax.swing.tree.TreePath,I,java.lang.String):V
-- s:showTextBelow(javax.swing.JComponent,java.lang.String):V
-c:com.intellij.ui.messager.CalloutComponent
-- p:myTargetComponent:javax.swing.JComponent
-- p:myTargetWindow:java.awt.Window
-- <init>(javax.swing.JComponent):V
-- show(I,com.intellij.ui.awt.RelativePoint):V
 f:com.intellij.ui.navigation.BackAction
 - com.intellij.ui.navigation.NavigationAction
 - <init>(javax.swing.JComponent,com.intellij.openapi.Disposable):V
@@ -11098,6 +11133,7 @@ com.intellij.util.net.ProxyCredentialStore
 - a:areCredentialsRemembered(java.lang.String,I):Z
 - a:clearAllCredentials():V
 - a:clearTransientCredentials():V
+- getCredentials(com.intellij.util.net.ProxyConfiguration):com.intellij.credentialStore.Credentials
 - a:getCredentials(java.lang.String,I):com.intellij.credentialStore.Credentials
 - s:getInstance():com.intellij.util.net.ProxyCredentialStore
 - a:setCredentials(java.lang.String,I,com.intellij.credentialStore.Credentials,Z):V
@@ -11122,14 +11158,12 @@ f:com.intellij.util.net.ProxyUtils
 - sf:NO_PROXY_LIST:java.util.List
 - sf:asJavaProxy(com.intellij.util.net.ProxyConfiguration$StaticProxyConfiguration):java.net.Proxy
 - sf:asJvmProperties(com.intellij.util.net.ProxyConfiguration$StaticProxyConfiguration,com.intellij.util.net.ProxyCredentialProvider):java.util.Map
-- sf:asJvmProperties(java.net.Proxy):java.util.Map
 - sf:editConfigurable(com.intellij.util.net.ProxySettings,javax.swing.JComponent):Z
-- sf:getApplicableProxiesAsJvmProperties(java.net.URI,com.intellij.util.net.ProxyCredentialProvider,java.net.ProxySelector):java.util.List
-- bs:getApplicableProxiesAsJvmProperties$default(java.net.URI,com.intellij.util.net.ProxyCredentialProvider,java.net.ProxySelector,I,java.lang.Object):java.util.List
+- sf:getCurrentSettingsAsJvmProperties():java.util.Map
+- sf:getDetectedSettingsAsJvmProperties(java.net.URI):java.util.List
 - sf:getHostNameReliably(java.lang.String,java.net.InetAddress,java.net.URL):java.lang.String
 - sf:getStaticProxyCredentials(com.intellij.util.net.ProxySettings,com.intellij.util.net.ProxyCredentialProvider):com.intellij.credentialStore.Credentials
 - sf:isRealProxy(java.net.Proxy):Z
-- sf:setStaticProxyCredentials(com.intellij.util.net.ProxySettings,com.intellij.util.net.ProxyCredentialStore,com.intellij.credentialStore.Credentials,Z):V
 c:com.intellij.util.net.ssl.CertificateInfoPanel
 - javax.swing.JPanel
 - <init>(java.security.cert.X509Certificate):V
@@ -11179,14 +11213,6 @@ f:com.intellij.util.net.ssl.CertificateUtil
 - sf:X509:java.lang.String
 - s:getCommonName(java.security.cert.X509Certificate):java.lang.String
 - s:loadX509Certificate(java.lang.String):java.security.cert.X509Certificate
-c:com.intellij.util.net.ssl.CertificateWarningDialog
-- com.intellij.openapi.ui.DialogWrapper
-- $$$getRootComponent$$$():javax.swing.JComponent
-- <init>(java.security.cert.X509Certificate,java.lang.String,java.lang.String,java.lang.String):V
-- p:createCenterPanel():javax.swing.JComponent
-- s:createExpiredCertificateWarning(java.security.cert.X509Certificate):com.intellij.util.net.ssl.CertificateWarningDialog
-- s:createUntrustedCertificateWarning(java.security.cert.X509Certificate):com.intellij.util.net.ssl.CertificateWarningDialog
-- s:createUntrustedCertificateWarning(java.security.cert.X509Certificate,java.lang.String,java.lang.String):com.intellij.util.net.ssl.CertificateWarningDialog
 f:com.intellij.util.net.ssl.CertificateWrapper
 - sf:NOT_AVAILABLE:java.lang.String
 - <init>(java.security.cert.X509Certificate):V

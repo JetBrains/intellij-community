@@ -17,6 +17,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SearchTextField
@@ -89,7 +90,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
           .resizableColumn()
           .align(Align.FILL)
       }.resizableRow()
-      row(CollaborationToolsBundle.message("clone.dialog.directory.to.clone.label.text")) {
+      row(VcsBundle.message("clone.dialog.directory.to.clone.label.text")) {
         cell(directoryField)
           .align(AlignX.FILL)
           .validationOnApply {

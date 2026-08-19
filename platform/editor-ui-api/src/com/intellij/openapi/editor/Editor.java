@@ -462,6 +462,15 @@ public interface Editor extends UserDataHolder {
     return new ProperTextRange(visibleStart, Math.max(visibleEnd, visibleStart));
   }
 
+  /**
+   * Returns the elf (editor lock-free typing) view of {@link #getDocument()}, or the
+   * document itself when lock-free typing is not active for this editor.
+   * <p>
+   * Editor painting and layout should use this view, so the user sees typed text
+   * before it is synchronized to the real document.
+   *
+   * @see com.intellij.openapi.editor.elf.Elf#getElfDocument(Document)
+   */
   @ApiStatus.Internal
   default @NotNull Document getElfDocument() {
     return getDocument();

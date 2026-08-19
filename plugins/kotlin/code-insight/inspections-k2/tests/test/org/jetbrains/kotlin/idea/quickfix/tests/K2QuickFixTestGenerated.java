@@ -1383,6 +1383,19 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
                 runTest("../../../idea/tests/testData/quickfix/suppress/redundant/Suppressed.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/suppress/unused")
+        public static class Unused extends AbstractK2QuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("unusedParameter.kt")
+            public void testUnusedParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/suppress/unused/unusedParameter.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

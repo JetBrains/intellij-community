@@ -3,29 +3,26 @@ package com.intellij.workspaceModel.codegen.impl.metadata
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.impl.engine.generatorSettings
+import com.intellij.workspaceModel.codegen.impl.dsl.GeneratorContext
 
 internal fun String.withDoubleQuotes(): String = "\"$this\""
 
 internal fun String.escapeDollar(): String = replace("$", "\\$")
 
-internal fun List<String>.allWithDoubleQuotesAndEscapedDollar(): List<String> =
-  map { it.processPackageName().escapeDollar().withDoubleQuotes() }.toList()
+internal fun GeneratorContext.allWithDoubleQuotesAndEscapedDollar(strings: List<String>): List<String> =
+  strings.map { processPackageName(it).escapeDollar().withDoubleQuotes() }.toList()
 
-internal fun getJavaFullName(className: String, moduleName: String): String =
-  "${moduleName.processPackageName()}.$className".escapeDollar().withDoubleQuotes()
+internal fun GeneratorContext.getJavaFullName(className: String, moduleName: String): String =
+  "${processPackageName(moduleName)}.$className".escapeDollar().withDoubleQuotes()
 
-internal val ObjClass<*>.fullName: String
-  get() = getJavaFullName(name, module.name)
+internal fun GeneratorContext.getFullName(objClass: ObjClass<*>): String = getJavaFullName(objClass.name, objClass.module.name)
 
 internal val ValueType<*>.javaPrimitiveType: String
   get() = this.javaClass.typeName.substringAfter('$')
 
-internal val ValueType.JvmClass<*>.name: String
-  get() = javaClassName.processPackageName().escapeDollar().withDoubleQuotes()
+internal fun GeneratorContext.getName(valueTypeJvmClass: ValueType.JvmClass<*>): String = processPackageName(valueTypeJvmClass.javaClassName).escapeDollar().withDoubleQuotes()
 
-internal val ValueType.JvmClass<*>.superClasses: List<String>
-  get() = javaSuperClasses.allWithDoubleQuotesAndEscapedDollar()
+internal fun GeneratorContext.getSuperClasses(valueTypeJvmClass: ValueType.JvmClass<*>): List<String> = allWithDoubleQuotesAndEscapedDollar(valueTypeJvmClass.javaSuperClasses)
 
 
 /**
@@ -37,15 +34,16 @@ internal val ValueType.JvmClass<*>.superClasses: List<String>
  *
  * So, [processPackageName] replaces [OLD_ENTITIES_VERSION_PACKAGE_NAME] with [NEW_ENTITIES_VERSION_PACKAGE_NAME] in the classes package name.
  */
-private val replaceCacheVersionToCurrentVersion: Boolean
-  get() = generatorSettings.testModeEnabled && hashIsComputing
+private fun GeneratorContext.getReplaceCacheVersionToCurrentVersion(): Boolean = testModeEnabled && hashIsComputing
 
 private const val OLD_ENTITIES_VERSION_PACKAGE_NAME = "cacheVersion"
 
 private const val NEW_ENTITIES_VERSION_PACKAGE_NAME = "currentVersion"
 
-private fun String.processPackageName(): String =
-  if (replaceCacheVersionToCurrentVersion) replace(OLD_ENTITIES_VERSION_PACKAGE_NAME, NEW_ENTITIES_VERSION_PACKAGE_NAME) else this
+private fun GeneratorContext.processPackageName(packageName: String): String =
+  if (getReplaceCacheVersionToCurrentVersion()) packageName.replace(OLD_ENTITIES_VERSION_PACKAGE_NAME,
+                                                                    NEW_ENTITIES_VERSION_PACKAGE_NAME)
+  else packageName
 
 
 private var hashIsComputing = false

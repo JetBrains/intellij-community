@@ -156,7 +156,6 @@ def parse_bits(
     defaults: Sized | None,
     kwonly: Collection[str],
     kwonly_defaults: Mapping[str, int] | None,
-    takes_context: bool | None,
     name: str,
 ) -> tuple[list[FilterExpression], dict[str, FilterExpression]]: ...
 def import_library(name: str) -> Library: ...

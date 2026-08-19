@@ -1,29 +1,31 @@
 package com.intellij.debugger.streams.core.action
 
+import com.intellij.debugger.streams.core.ChainStatus
+import com.intellij.debugger.streams.core.StreamChainWithLibrary
 import com.intellij.debugger.streams.core.StreamDebuggerBundle
-import com.intellij.debugger.streams.core.action.ChainResolver.StreamChainWithLibrary
+import com.intellij.debugger.streams.core.ChainDetectionStateManager
 import com.intellij.debugger.streams.core.diagnostic.ex.TraceCompilationException
 import com.intellij.debugger.streams.core.diagnostic.ex.TraceEvaluationException
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
-import com.intellij.debugger.streams.core.psi.DebuggerPositionResolver
-import com.intellij.debugger.streams.core.psi.impl.DebuggerPositionResolverImpl
-import com.intellij.debugger.streams.core.statistics.StreamDebuggerStatisticsCollector
 import com.intellij.debugger.streams.core.trace.StreamTracer
+import com.intellij.debugger.streams.core.trace.formatResolvedTrace
+import com.intellij.debugger.streams.core.trace.formatTrace
 import com.intellij.debugger.streams.core.ui.ChooserOption
 import com.intellij.debugger.streams.core.ui.ElementChooser
 import com.intellij.debugger.streams.core.ui.impl.ElementChooserImpl
 import com.intellij.debugger.streams.core.ui.impl.EvaluationAwareTraceWindow
 import com.intellij.debugger.streams.core.wrapper.StreamChain
-import com.intellij.debugger.streams.shared.ChainStatus
+import com.intellij.debugger.streams.shared.TraceEntryPoint
+import com.intellij.debugger.streams.shared.statistics.StreamDebuggerStatisticsCollector
+import com.intellij.debugger.streams.shared.statistics.StreamDebuggerStatisticsCollector.StreamTraceResult
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.TextRange
@@ -35,8 +37,8 @@ import com.intellij.xdebugger.XDebugSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -47,26 +49,23 @@ import kotlin.coroutines.CoroutineContext
 
 @Service(Service.Level.PROJECT)
 class TraceStreamRunner(val cs: CoroutineScope) {
-  private val myPositionResolver: DebuggerPositionResolver = DebuggerPositionResolverImpl()
-
-  fun getChainStatus(session: XDebugSession?): ChainStatus {
-    val element = if (session == null) null else myPositionResolver.getNearestElementToBreakpoint(session)
-    if (element == null) {
-      return ChainStatus.NOT_FOUND
-    }
-    else {
-      return CHAIN_RESOLVER.tryFindChain(element)
-    }
-  }
-
-  fun actionPerformed(session: XDebugSession?): Job = cs.launch(Dispatchers.Default) {
+  fun actionPerformed(session: XDebugSession?, entryPoint: TraceEntryPoint): Job = cs.launch(Dispatchers.Default) {
     if (session == null) {
       LOG.info("Session is null")
       return@launch
     }
+    StreamDebuggerStatisticsCollector.logTraceStarted(session.project, entryPoint)
 
-    val chains = getChains(session)
-    displayChains(session, chains)
+    val chainsState = withBackgroundProgress(session.project, StreamDebuggerBundle.message("action.calculating.chains.background.progress.title"), true) {
+      ChainDetectionStateManager
+        .getInstance(session.project)
+        .chainStateFlow(session)
+        .first { it.status !is ChainStatus.Computing }
+    }
+    LOG.info("Action was triggered with stream chains state: $chainsState")
+    if (chainsState.status is ChainStatus.Found) {
+      displayChains(session, chainsState.status.chains)
+    }
   }
 
   private suspend fun displayChains(
@@ -101,24 +100,6 @@ class TraceStreamRunner(val cs: CoroutineScope) {
     }
   }
 
-  private suspend fun getChains(session: XDebugSession): List<StreamChainWithLibrary> {
-    val chains = readAction {
-      runBlockingCancellable {
-        val element = myPositionResolver.getNearestElementToBreakpoint(session)
-        if (element == null) {
-          LOG.info("Element at cursor is not found")
-          emptyList()
-        }
-        else {
-          withBackgroundProgress(session.project, StreamDebuggerBundle.message("action.calculating.chains.background.progress.title")) {
-            CHAIN_RESOLVER.getChains(element)
-          }
-        }
-      }
-    }
-    return chains
-  }
-
   private class MyStreamChainChooser(editor: Editor) : ElementChooserImpl<StreamChainOption?>(editor)
 
   private class StreamChainOption(chain: StreamChainWithLibrary) : ChooserOption {
@@ -141,7 +122,16 @@ class TraceStreamRunner(val cs: CoroutineScope) {
 
     private val LOG = Logger.getInstance(TraceStreamRunner::class.java)
 
-    private val CHAIN_RESOLVER = ChainResolver()
+    private fun getFusTraceResult(result: StreamTracer.Result): StreamTraceResult {
+      return when (result) {
+        is StreamTracer.Result.Evaluated -> {
+          if (result.result.exceptionThrown()) StreamTraceResult.CLIENT_EXCEPTION else StreamTraceResult.SUCCESS
+        }
+        is StreamTracer.Result.EvaluationFailed -> StreamTraceResult.INTERNAL_ERROR
+        is StreamTracer.Result.CompilationFailed -> StreamTraceResult.COMPILATION_FAILED
+        StreamTracer.Result.Unknown -> StreamTraceResult.INTERNAL_ERROR
+      }
+    }
 
     @OptIn(AwaitCancellationAndInvoke::class)
     private suspend fun runTrace(chain: StreamChain, provider: LibrarySupportProvider, session: XDebugSession) = coroutineScope {
@@ -173,11 +163,21 @@ class TraceStreamRunner(val cs: CoroutineScope) {
         val tracer: StreamTracer = provider.getTracerFor(chain, session)
         val result = tracer.trace(chain)
 
-        StreamDebuggerStatisticsCollector.logTraceFinished(project, provider, tracer, result)
+        StreamDebuggerStatisticsCollector.logTraceFinished(project, provider.javaClass, tracer.javaClass, getFusTraceResult(result))
 
         when (result) {
           is StreamTracer.Result.Evaluated -> {
             val resolvedTrace = result.result.resolve(provider.getLibrarySupport().resolverFactory)
+            LOG.debug {
+              """
+                |Stream chain:
+                |${chain.text}
+                |Stream trace:
+                |${formatTrace(result.result.trace)}
+                |Resolved stream trace:
+                |${formatResolvedTrace(resolvedTrace)}
+              """.trimMargin()
+            }
             withContext(Dispatchers.EDT) {
               window.setTrace(resolvedTrace, debuggerLauncher, result.evaluationContext, provider.getCollectionTreeBuilder(project))
             }

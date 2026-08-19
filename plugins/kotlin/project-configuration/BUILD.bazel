@@ -20,7 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common",
         "//libraries/asm",
         "//platform/analysis-api:analysis",
@@ -69,8 +69,8 @@ jvm_library(
         "//platform/backend/workspace",
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/execution",
-        "@lib//:kotlinc-analysis-api-platform-interface",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//platform/backend/observation",
         "//platform/util/concurrency",
         "//platform/statistics",
@@ -90,6 +90,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":project-configuration",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/asm:asm_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/lang-api:lang_test_lib",
@@ -137,6 +138,8 @@ jvm_library(
         "//platform/backend/workspace:workspace_test_lib",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//platform/execution:execution_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//platform/backend/observation:observation_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/statistics:statistics_test_lib",
@@ -149,6 +152,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.projectConfiguration.iml",
+        "resources/intellij.kotlin.projectConfiguration.xml",
     ],
     visibility = ["//visibility:public"],
 )

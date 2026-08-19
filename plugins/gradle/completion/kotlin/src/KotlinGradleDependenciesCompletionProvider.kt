@@ -216,6 +216,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
 
     // Autocomplete the dependency coordinate only after 3 or more characters are typed
     if (parameters.isAutoPopup && text.length < 3) return
+    result.restartCompletionOnAnyPrefixChange()
 
     val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
     loadingAdvertiser.showSearchingStatus()

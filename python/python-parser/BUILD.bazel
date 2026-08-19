@@ -59,6 +59,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.parser.iml",
+        "resources/intellij.python.parser.xml",
     ],
     visibility = ["//visibility:public"],
 )

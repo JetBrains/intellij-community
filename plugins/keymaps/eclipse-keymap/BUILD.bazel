@@ -32,6 +32,9 @@ jvm_library(
 exports_files(
     [
         "intellij.keymap.eclipse.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/keymaps/Eclipse (Mac OS X).xml",
+        "resources/keymaps/Eclipse.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Self
 
 from django.contrib.postgres.fields import ArrayField
 from django.db.backends.base.base import BaseDatabaseWrapper
@@ -8,14 +8,14 @@ from django.db.models.expressions import BaseExpression, Combinable
 from django.db.models.query import _OrderByFieldName
 from django.db.models.query_utils import Q
 from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
-from typing_extensions import Self, override
+from typing_extensions import deprecated, override
 
 from .mixins import OrderableAggMixin
 
 class ArrayAgg(OrderableAggMixin, Aggregate):
     @property
     @override
-    def output_field(self) -> ArrayField: ...
+    def output_field(self) -> ArrayField[Any, Any]: ...
     @override
     def resolve_expression(
         self,
@@ -28,18 +28,33 @@ class ArrayAgg(OrderableAggMixin, Aggregate):
     @override
     def as_sql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...  # type: ignore[override]
 
-class BitAnd(Aggregate): ...
-class BitOr(Aggregate): ...
-class BitXor(Aggregate): ...
+class BitAnd(Aggregate):
+    @override
+    @deprecated(
+        "The PostgreSQL-specific BitAnd function is deprecated. Use django.db.models.aggregates.BitAnd instead."
+    )
+    def __init__(self, expression: Any, **extra: Any) -> None: ...
+
+class BitOr(Aggregate):
+    @override
+    @deprecated("The PostgreSQL-specific BitOr function is deprecated. Use django.db.models.aggregates.BitOr instead.")
+    def __init__(self, expression: Any, **extra: Any) -> None: ...
+
+class BitXor(Aggregate):
+    @override
+    @deprecated(
+        "The PostgreSQL-specific BitXor function is deprecated. Use django.db.models.aggregates.BitXor instead."
+    )
+    def __init__(self, expression: Any, **extra: Any) -> None: ...
 
 class BoolAnd(Aggregate):
-    output_field: ClassVar[BooleanField]
+    output_field: ClassVar[BooleanField[Any, Any]]
 
 class BoolOr(Aggregate):
-    output_field: ClassVar[BooleanField]
+    output_field: ClassVar[BooleanField[Any, Any]]
 
 class JSONBAgg(OrderableAggMixin, Aggregate):
-    output_field: ClassVar[JSONField]
+    output_field: ClassVar[JSONField[Any, Any]]
     @override
     def resolve_expression(
         self,
@@ -53,7 +68,10 @@ class JSONBAgg(OrderableAggMixin, Aggregate):
     def as_sql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...  # type: ignore[override]
 
 class StringAgg(OrderableAggMixin, Aggregate):
-    output_field: ClassVar[TextField]
+    output_field: ClassVar[TextField[Any, Any]]
+    @deprecated(
+        "The PostgreSQL specific StringAgg function is deprecated. Use django.db.models.aggregates.StringAgg instead."
+    )
     def __init__(
         self,
         expression: BaseExpression | Combinable | str,

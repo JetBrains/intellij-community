@@ -5,13 +5,14 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.DocumentSnapshot;
+import com.intellij.openapi.editor.ex.DocumentTextPatch;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Processor;
-import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,20 +26,18 @@ public class FrozenDocument implements DocumentEx {
   }
 
   public @NotNull FrozenDocument applyEvent(@NotNull DocumentEvent event, int newStamp) {
-    int offset = event.getOffset();
-    int oldEnd = offset + event.getOldLength();
-    ImmutableCharSequence oldWholeText = mySnapshot.text();
-    ImmutableCharSequence nextWholeText = oldWholeText.replace(offset, oldEnd, event.getNewFragment());
-    DocumentSnapshot newSnapshot = mySnapshot.withText(
-      nextWholeText,
-      offset,
-      oldEnd,
+    int originStartOffset = event instanceof DocumentEventImpl ? ((DocumentEventImpl)event).getInitialStartOffset() : event.getOffset();
+    int originOldLength = event instanceof DocumentEventImpl ? ((DocumentEventImpl)event).getInitialOldLength() : event.getOldLength();
+    DocumentSnapshot newSnapshot = mySnapshot.applyOps(DocumentTextPatch.complex(
+      event.getOffset(),
+      event.getOffset() + event.getOldLength(),
       event.getNewFragment(),
       newStamp,
       event.isWholeTextReplaced(),
-      false,
-      true
-    );
+      originStartOffset,
+      originStartOffset + originOldLength,
+      event.getMoveOffset()
+    ).toOps());
     return new FrozenDocument(newSnapshot);
   }
 
@@ -48,7 +47,7 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public @NotNull LineIterator createLineIterator() {
-    return mySnapshot.lineIterator();
+    return mySnapshot.text().lineIterator();
   }
 
   @Override
@@ -93,12 +92,12 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public @NotNull String getText() {
-    return mySnapshot.string();
+    return mySnapshot.text().string();
   }
 
   @Override
   public @NotNull String getText(@NotNull TextRange range) {
-    return mySnapshot.string(range);
+    return mySnapshot.text().string(range);
   }
 
   @Override
@@ -108,27 +107,27 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public @NotNull CharSequence getImmutableCharSequence() {
-    return mySnapshot.text();
+    return mySnapshot.text().chars();
   }
 
   @Override
   public int getLineCount() {
-    return mySnapshot.lineCount();
+    return mySnapshot.text().lineCount();
   }
 
   @Override
   public int getLineNumber(int offset) {
-    return mySnapshot.lineNumber(offset);
+    return mySnapshot.text().lineNumber(offset);
   }
 
   @Override
   public int getLineStartOffset(int line) {
-    return mySnapshot.lineStartOffset(line);
+    return mySnapshot.text().lineStartOffset(line);
   }
 
   @Override
   public int getLineEndOffset(int line) {
-    return mySnapshot.lineEndOffset(line);
+    return mySnapshot.text().lineEndOffset(line);
   }
 
   @Override
@@ -153,7 +152,7 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public long getModificationStamp() {
-    return mySnapshot.modStamp();
+    return mySnapshot.modState().stamp();
   }
 
   @Override
@@ -203,7 +202,7 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public int getLineSeparatorLength(int line) {
-    return mySnapshot.lineSeparatorLength(line);
+    return mySnapshot.text().lineSeparatorLength(line);
   }
 
   @Override

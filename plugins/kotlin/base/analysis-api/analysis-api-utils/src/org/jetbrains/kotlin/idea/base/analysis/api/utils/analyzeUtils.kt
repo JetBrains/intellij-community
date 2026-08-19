@@ -6,13 +6,12 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.util.concurrency.ThreadingAssertions
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
@@ -25,7 +24,7 @@ import org.jetbrains.kotlin.psi.KtElement
 inline fun <R> analyzeInModalWindow(
     contextElement: KtElement,
     @DialogTitle windowTitle: String,
-    crossinline action: KaSession.() -> R
+    crossinline action: context(KaSession) () -> R
 ): R {
     ThreadingAssertions.assertEventDispatchThread()
     val task = object : Task.WithResult<R, Exception>(runReadAction { contextElement.project }, windowTitle, /*canBeCancelled*/ true) {
@@ -42,7 +41,7 @@ inline fun <R> analyzeInModalWindow(
 )
 inline fun <T : KtElement, R> allowAnalysisFromWriteActionInEdt(
     useSiteElement: T,
-    action: KaSession.(T) -> R,
+    action: context(KaSession) (T) -> R,
 ): R = allowAnalysisOnEdt {
     allowAnalysisFromWriteAction {
         analyze(useSiteElement) {

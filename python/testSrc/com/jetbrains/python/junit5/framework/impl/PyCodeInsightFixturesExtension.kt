@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.junit5.framework.impl
 
 import com.intellij.openapi.module.Module
@@ -7,11 +7,10 @@ import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.junit5.fixture.LookupFixture
 import com.intellij.testFramework.junit5.fixture.LookupFixtureExtension.Companion.getLookupFixtureManager
 import com.intellij.testFramework.junit5.fixture.LookupFixtureExtension.Companion.registerImplicitFixtures
-import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.junit5.framework.pyCodeInsightFixture
 import com.jetbrains.python.junit5.framework.pyMockSdkFixture
@@ -51,7 +50,7 @@ internal class PyCodeInsightFixturesExtension : BeforeAllCallback, BeforeEachCal
     }
 
     val module = manager.getOrDefault {
-      project.moduleFixture(name = context.uniqueId, moduleType = PyNames.PYTHON_MODULE_ID).also {
+      project.pyModuleFixture(name = context.uniqueId).also {
         implicitFixtures += LookupFixture(DEFAULT_PY_MODULE, it, true)
       }
     }

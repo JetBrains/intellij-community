@@ -11,8 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction.ParamCandidate
@@ -90,9 +88,7 @@ private fun buildConstructorAsString(
     append(
         renderParameterList(
             allowAnalysisFromWriteActionInEdt(element) {
-                analyze(element) {
-                    renderCandidatesOfParameterTypes(request.expectedParameters, element)
-                }
+                renderCandidatesOfParameterTypes(request.expectedParameters, element)
             }
         )
     )

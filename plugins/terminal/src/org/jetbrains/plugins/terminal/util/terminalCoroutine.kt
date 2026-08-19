@@ -24,7 +24,8 @@ fun terminalProjectScope(project: Project): CoroutineScope {
   return project.service<TerminalProjectScopeProvider>().coroutineScope
 }
 
-internal fun terminalProjectScopeBoundToDisposable(project: Project, disposable: Disposable, name: String): CoroutineScope {
+@ApiStatus.Internal
+fun terminalProjectScopeBoundToDisposable(project: Project, disposable: Disposable, name: String): CoroutineScope {
   val scope = terminalProjectScope(project).childScope(name)
   scope.coroutineContext.job.cancelOnDispose(disposable)
   return scope

@@ -42,11 +42,13 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io",
         "//platform/platform-impl:ide-impl",
         "//platform/editor-ui-api:editor-ui",
+        "//platform/execution",
         "//python/openapi:community",
         "//python/python-exec-service:community-execService",
         "//platform/eel",
         "//platform/eel-provider",
-        "//python/python-sdk:sdk",
+        "//python/python-sdk/backend",
+        "//libraries/caffeine",
     ],
 )
 
@@ -73,11 +75,13 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/execution:execution_test_lib",
         "//python/openapi:community_test_lib",
         "//python/python-exec-service:community-execService_test_lib",
         "//platform/eel:eel_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
+        "//libraries/caffeine:caffeine_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.pytools` end
@@ -86,6 +90,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.pytools.iml",
+        "resources/intellij.python.pytools.xml",
     ],
     visibility = ["//visibility:public"],
 )

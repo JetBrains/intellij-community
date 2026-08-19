@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTex
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiffLineRange
+import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.getOrNull
@@ -34,12 +35,15 @@ import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosi
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel.SubmitAction
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
+import java.util.Date
+import java.util.UUID
 
-interface GHPRReviewNewCommentEditorViewModel : CodeReviewSubmittableTextViewModel, GHViewModelWithTextCompletion {
+interface GHPRReviewNewCommentEditorViewModel : CodeReviewSubmittableTextViewModel, CodeReviewTrackableItemViewModel, GHViewModelWithTextCompletion {
   val position: StateFlow<GHPRReviewCommentPosition>
   val currentUser: GHActor
   val avatarIconsProvider: GHAvatarIconsProvider
   val submitActions: StateFlow<List<SubmitAction>>
+  val createdAt: Date
 
   fun cancel()
   fun updateLineRange(newStartLocation: DiffLineLocation?, newEndLocation: DiffLineLocation?)
@@ -137,6 +141,8 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
       }
     }.stateInNow(cs, emptyList())
 
+  override val createdAt: Date = Date()
+
   override fun cancel() = onCancel(position.value)
 
   private fun createReviewCommentAction(reviewId: String, isCumulative: Boolean) = SubmitAction.CreateReviewComment {
@@ -172,4 +178,6 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
   }
 
   fun destroy() = cs.cancel()
+
+  override val trackingId: String = UUID.randomUUID().toString()
 }

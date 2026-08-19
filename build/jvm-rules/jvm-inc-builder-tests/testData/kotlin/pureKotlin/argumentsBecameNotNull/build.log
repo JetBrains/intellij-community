@@ -1,0 +1,20 @@
+================ Step #1 =================
+Cleaning output files:
+  C.class
+  DeclKt.class
+  META-INF/kotlin_pureKotlin_argumentsBecameNotNull-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/argumentsBecameNotNull/a/decl.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_argumentsBecameNotNull-a.kotlin_module
+  UseCtorKt.class
+  UseFunKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/argumentsBecameNotNull/a/useCtor.kt
+  kotlin/pureKotlin/argumentsBecameNotNull/a/useFun.kt
+End of files
+------------------------------------------
+Exit code: ERROR

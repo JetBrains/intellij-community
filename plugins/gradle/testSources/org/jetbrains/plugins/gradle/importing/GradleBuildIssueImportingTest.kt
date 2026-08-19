@@ -7,9 +7,12 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.issue.BuildIssue
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.Disposable
-import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
-import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
+import com.intellij.platform.testFramework.assertion.BuildViewNodeAssertion
+import com.intellij.platform.testFramework.assertion.assertConsoleText
+import com.intellij.platform.testFramework.assertion.assertIsNodeSelected
 import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.runBlocking
@@ -32,7 +35,6 @@ import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildFile
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.initProject
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleSettingsFile
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.ParameterizedTest
@@ -57,7 +59,8 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
   private val projectFixture = gradleFixture.projectFixture(testRootFixture, numProjectSyncs = 0)
   private val project by projectFixture
 
-  private val buildView by buildViewFixture(projectFixture)
+  private val buildViewFixture by buildViewFixture(projectFixture)
+  private val syncView get() = buildViewFixture.syncView
 
   enum class BrokenFile {
     SETTINGS_SCRIPT,
@@ -81,17 +84,16 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
 
     gradle.linkProject(project, projectRoot)
 
-    buildView.assertSyncViewTree {
+    assertBuildViewTree(syncView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
         assertFilePositionNode(gradleVersion, gradleDsl, brokenFile) {
-          assertNode(TEST_BUILD_ISSUE_TITLE)
+          assertNode(TEST_BUILD_ISSUE_TITLE) {
+            assertIsNodeSelected(true)
+            assertConsoleText(TEST_BUILD_ISSUE_DESCRIPTION + "\n\n")
+          }
         }
       }
-    }
-
-    buildView.assertSyncViewSelectedNode(TEST_BUILD_ISSUE_TITLE) { text ->
-      assertEquals(TEST_BUILD_ISSUE_DESCRIPTION + "\n\n", text)
     }
   }
 
@@ -108,21 +110,20 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
 
     gradle.linkProject(project, projectRoot)
 
-    buildView.assertSyncViewTree {
+    assertBuildViewTree(syncView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
         assertFilePositionNode(gradleVersion, gradleDsl, BrokenFile.BUILD_SCRIPT) {
-          assertNode(TEST_BUILD_ISSUE_TITLE)
-          assertNode(TEST_BUILD_ISSUE_TITLE_2)
+          assertNode(TEST_BUILD_ISSUE_TITLE) {
+            assertIsNodeSelected(true)
+            assertConsoleText(TEST_BUILD_ISSUE_DESCRIPTION + "\n\n")
+          }
+          assertNode(TEST_BUILD_ISSUE_TITLE_2) {
+            assertIsNodeSelected(false)
+            assertConsoleText(TEST_BUILD_ISSUE_DESCRIPTION_2 + "\n\n")
+          }
         }
       }
-    }
-
-    buildView.assertSyncViewSelectedNode(TEST_BUILD_ISSUE_TITLE) { text ->
-      assertEquals(TEST_BUILD_ISSUE_DESCRIPTION + "\n\n", text)
-    }
-    buildView.assertSyncViewNode(TEST_BUILD_ISSUE_TITLE_2) { text ->
-      assertEquals(TEST_BUILD_ISSUE_DESCRIPTION_2 + "\n\n", text)
     }
   }
 
@@ -196,11 +197,11 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
         GradleDsl.KOTLIN -> code("throw $className(\"$message\")")
       }
 
-    private fun SimpleTreeAssertion<*>.assertFilePositionNode(
+    private fun BuildViewNodeAssertion.assertFilePositionNode(
       gradleVersion: GradleVersion,
       gradleDsl: GradleDsl,
       brokenFile: BrokenFile,
-      assert: SimpleTreeAssertion<*>.() -> Unit,
+      assert: BuildViewNodeAssertion.() -> Unit,
     ) {
       if (gradleDsl == GradleDsl.KOTLIN && GradleVersionUtil.isGradleOlderThan(gradleVersion, "6.8")) {
         // For old Gradle versions there are no information about exception location with Kotlin scripts:

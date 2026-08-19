@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.model
 
 import com.intellij.model.psi.impl.targetSymbols
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.junit.Test
@@ -69,7 +68,6 @@ class LinkLabelRenameTest: BasePlatformTestCase() {
 
   @Test
   fun `test renaming collapsed reference updates original element`() {
-    Registry.get("markdown.validate.short.links").setValue(true, testRootDisposable)
     doRename(
       before = """
         Here is a link to [Goo<caret>gle][].

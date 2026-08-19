@@ -1,15 +1,37 @@
-<idea-plugin visibility="public">
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.backend"/>
-    <module name="intellij.platform.kernel.backend"/>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.jediterm.core"/>
+    <module name="intellij.libraries.jediterm.ui"/>
+    <module name="intellij.libraries.pty4j"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.impl.wsl"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.terminal.backend.rpc.TerminalRemoteApiProvider"/>
     <applicationService
       serviceInterface="org.jetbrains.plugins.terminal.hyperlinks.menu.BackendHyperlinkInfoService"
       serviceImplementation="com.intellij.terminal.backend.hyperlinks.BackendHyperlinkInfoServiceImpl"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.terminal.backend.CliUtilInstallCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">

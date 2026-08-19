@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.checkForNoDiskSpace
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProduct
 import org.jetbrains.intellij.build.dev.configureDevModeBuildOptions
+import org.jetbrains.intellij.build.dev.copyWithDevBuildOverrides
 import org.jetbrains.intellij.build.dev.createDevBuildContext
 import org.jetbrains.intellij.build.dev.createDevBuildPaths
 import org.jetbrains.intellij.build.dev.readVmOptions
@@ -58,22 +59,20 @@ private fun createBuildContextFromExistingContext(
   buildDir: Path,
   scope: CoroutineScope,
 ): BuildContext {
-  val options = baseContext.options.copy(
-    jarCacheDir = request.jarCacheDir,
-    printFreeSpace = false,
-    validateImplicitPlatformModule = false,
-    skipDependencySetup = true,
-    skipCheckOutputOfPluginModules = true,
-    validateModuleStructure = false,
-    cleanOutDir = false,
-    outRootDir = buildDir,
-    compilationLogEnabled = false,
-    logDir = buildDir.resolve("log"),
-    isUnpackedDist = request.isUnpackedDist,
+  val options = baseContext.options.copyWithDevBuildOverrides(
+    request = request,
+    buildDir = buildDir,
+    // this assembly is nested in a real build, so without an explicit override it keeps that build's date rather than the dev-mode one
+    defaultBuildDateInSeconds = baseContext.options.buildDateInSeconds,
   )
   configureDevModeBuildOptions(options = options, request = request, buildOptionsTemplate = baseContext.options)
 
-  val buildPaths = createDevBuildPaths(projectDir = request.projectDir, buildDir = buildDir, logDir = options.logDir!!)
+  val buildPaths = createDevBuildPaths(
+    projectDir = request.projectDir,
+    buildDir = buildDir,
+    logDir = options.logDir!!,
+    scratchDir = request.scratchDir ?: buildDir,
+  )
   val messages = BuildMessagesImpl.create()
   messages.setDebugLogPath(buildPaths.logDir.resolve("debug.log"))
   BuildMessagesHandler.initLoggingIfNeeded(messages)

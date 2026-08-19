@@ -13,9 +13,9 @@ goal of the entire conversion pipeline is to convert Java structures in JK Tree 
 - May have some children.
 - Has a single parent node (except for the `JKTreeRoot`, which has no parent node)
 - May have information about a Java `PsiElement` it was initially created from.
-  It's stored in `org.jetbrains.kotlin.nj2k.tree.PsiOwner.psi`. When converting a `JKElement`, the `PsiElement` information is usually
+  It's stored in `org.jetbrains.kotlin.j2k.tree.PsiOwner`. When converting a `JKElement`, the `PsiElement` information is usually
   preserved.
-- Has information about formatting stored in `org.jetbrains.kotlin.nj2k.tree.JKFormattingOwner`. This information consists of comments and
+- Has information about formatting stored in `org.jetbrains.kotlin.j2k.tree.JKFormattingOwner`. This information consists of comments and
   line breaks before and after an element. The formatting is usually preserved between conversions.
 
 ### JKElement Parenting

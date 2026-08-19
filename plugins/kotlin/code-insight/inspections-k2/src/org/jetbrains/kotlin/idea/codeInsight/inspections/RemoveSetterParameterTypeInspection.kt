@@ -33,7 +33,8 @@ internal class RemoveSetterParameterTypeInspection :
         }
     }
 
-    override fun KaSession.prepareContext(element: KtParameter) = Unit
+    context(session: KaSession)
+    override fun prepareContext(element: KtParameter) = Unit
 
     override fun isApplicableByPsi(element: KtParameter): Boolean {
         if (!element.isSetterParameter) return false

@@ -60,6 +60,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.coil.iml",
+        "resources/intellij.libraries.coil.xml",
     ],
     visibility = ["//visibility:public"],
 )

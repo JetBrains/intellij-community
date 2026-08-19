@@ -14,7 +14,7 @@ def set_language(request: HttpRequest) -> HttpResponse: ...
 def get_formats() -> dict[str, list[str] | int | str]: ...
 
 class JavaScriptCatalog(View):
-    head: Callable
+    head: Callable[..., Any]
     domain: str
     packages: list[str] | None
     translation: DjangoTranslation

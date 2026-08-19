@@ -9,7 +9,8 @@ package kotlin.collections
 <symbolName descr="null">public</symbolName> val <<symbolName descr="null">T</symbolName>> kotlin.collections.List<T>.<symbolName descr="null">lastIndex</symbolName>: kotlin.Int /* compiled code */
     <symbolName descr="null">public</symbolName> <symbolName descr="null">final</symbolName> <symbolName descr="null">get</symbolName>() { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName> <symbolName descr="null">internal</symbolName> <symbolName descr="null">expect</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> kotlin.Array<<symbolName descr="null">out</symbolName> T>.<symbolName descr="null">asArrayList</symbolName>(): kotlin.collections.ArrayList<T> { /* compiled code */ }
+<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName>
+<symbolName descr="null">internal</symbolName> <symbolName descr="null">expect</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> kotlin.Array<<symbolName descr="null">out</symbolName> T>.<symbolName descr="null">asArrayList</symbolName>(): kotlin.collections.ArrayList<T> { /* compiled code */ }
 
 <symbolName descr="null">internal</symbolName> fun <<symbolName descr="null">T</symbolName>> kotlin.Array<<symbolName descr="null">out</symbolName> T>.<symbolName descr="null">asCollection</symbolName>(<symbolName descr="null">isVarargs</symbolName>: kotlin.Boolean = COMPILED_CODE): kotlin.collections.Collection<T> { /* compiled code */ }
 
@@ -17,13 +18,19 @@ package kotlin.collections
 
 <symbolName descr="null">public</symbolName> fun <<symbolName descr="null">T</symbolName>> <symbolName descr="null">listOf</symbolName>(<symbolName descr="null">vararg</symbolName> <symbolName descr="null">elements</symbolName>: T): kotlin.collections.List<T> { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">expect</symbolName> fun <<symbolName descr="null">T</symbolName>> <symbolName descr="null">listOf</symbolName>(<symbolName descr="null">element</symbolName>: T): kotlin.collections.List<T> { /* compiled code */ }
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.9")
+<symbolName descr="null">public</symbolName> <symbolName descr="null">expect</symbolName> fun <<symbolName descr="null">T</symbolName>> <symbolName descr="null">listOf</symbolName>(<symbolName descr="null">element</symbolName>: T): kotlin.collections.List<T> { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> <symbolName descr="null">listOf</symbolName>(): kotlin.collections.List<T> { /* compiled code */ }
+<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName>
+<symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> <symbolName descr="null">listOf</symbolName>(): kotlin.collections.List<T> { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">@kotlin.internal.InlineOnly</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> <symbolName descr="null">mutableListOf</symbolName>(): kotlin.collections.MutableList<T> { /* compiled code */ }
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.1")
+<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName>
+<symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> <symbolName descr="null">mutableListOf</symbolName>(): kotlin.collections.MutableList<T> { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">@kotlin.internal.InlineOnly</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> <symbolName descr="null">arrayListOf</symbolName>(): kotlin.collections.ArrayList<T> { /* compiled code */ }
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.1")
+<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName>
+<symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> <symbolName descr="null">arrayListOf</symbolName>(): kotlin.collections.ArrayList<T> { /* compiled code */ }
 
 <symbolName descr="null">public</symbolName> fun <<symbolName descr="null">T</symbolName>> <symbolName descr="null">mutableListOf</symbolName>(<symbolName descr="null">vararg</symbolName> <symbolName descr="null">elements</symbolName>: T): kotlin.collections.MutableList<T> { /* compiled code */ }
 
@@ -33,31 +40,54 @@ package kotlin.collections
 
 <symbolName descr="null">public</symbolName> fun <<symbolName descr="null">T</symbolName> : kotlin.Any> <symbolName descr="null">listOfNotNull</symbolName>(<symbolName descr="null">vararg</symbolName> <symbolName descr="null">elements</symbolName>: T?): kotlin.collections.List<T> { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">@kotlin.internal.InlineOnly</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> <symbolName descr="null">List</symbolName>(<symbolName descr="null">size</symbolName>: kotlin.Int, <symbolName descr="null">init</symbolName>: (kotlin.Int) -> T): kotlin.collections.List<T> { /* compiled code */ }
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.1")
+<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName>
+<symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> <symbolName descr="null">List</symbolName>(<symbolName descr="null">size</symbolName>: kotlin.Int, <symbolName descr="null">init</symbolName>: (kotlin.Int) -> T): kotlin.collections.List<T> { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">@kotlin.internal.InlineOnly</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> <symbolName descr="null">MutableList</symbolName>(<symbolName descr="null">size</symbolName>: kotlin.Int, <symbolName descr="null">init</symbolName>: (kotlin.Int) -> T): kotlin.collections.MutableList<T> { /* compiled code */ }
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.1")
+<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName>
+<symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> <symbolName descr="null">MutableList</symbolName>(<symbolName descr="null">size</symbolName>: kotlin.Int, <symbolName descr="null">init</symbolName>: (kotlin.Int) -> T): kotlin.collections.MutableList<T> { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">@kotlin.internal.InlineOnly</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">E</symbolName>> <symbolName descr="null">buildList</symbolName>(<symbolName descr="null">@kotlin.BuilderInference</symbolName> <symbolName descr="null">builderAction</symbolName>: kotlin.collections.MutableList<E>.() -> kotlin.Unit): kotlin.collections.List<E> { contract { /* compiled contract */ }; /* compiled code */ }
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.6")
+<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName>
+<symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">E</symbolName>> <symbolName descr="null">buildList</symbolName>(<symbolName descr="null">builderAction</symbolName>: kotlin.collections.MutableList<E>.() -> kotlin.Unit): kotlin.collections.List<E> { contract { /* compiled contract */ }; /* compiled code */ }
 
-<symbolName descr="null">@kotlin.PublishedApi</symbolName> <symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">@kotlin.internal.InlineOnly</symbolName> <symbolName descr="null">internal</symbolName> <symbolName descr="null">expect</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">E</symbolName>> <symbolName descr="null">buildListInternal</symbolName>(<symbolName descr="null">builderAction</symbolName>: kotlin.collections.MutableList<E>.() -> kotlin.Unit): kotlin.collections.List<E> { /* compiled code */ }
+<symbolName descr="null">@kotlin.PublishedApi</symbolName>
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.3")
+<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName>
+<symbolName descr="null">internal</symbolName> <symbolName descr="null">expect</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">E</symbolName>> <symbolName descr="null">buildListInternal</symbolName>(<symbolName descr="null">builderAction</symbolName>: kotlin.collections.MutableList<E>.() -> kotlin.Unit): kotlin.collections.List<E> { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">@kotlin.internal.InlineOnly</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">E</symbolName>> <symbolName descr="null">buildList</symbolName>(<symbolName descr="null">capacity</symbolName>: kotlin.Int, <symbolName descr="null">@kotlin.BuilderInference</symbolName> <symbolName descr="null">builderAction</symbolName>: kotlin.collections.MutableList<E>.() -> kotlin.Unit): kotlin.collections.List<E> { contract { /* compiled contract */ }; /* compiled code */ }
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.6")
+<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName>
+<symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">E</symbolName>> <symbolName descr="null">buildList</symbolName>(<symbolName descr="null">capacity</symbolName>: kotlin.Int, <symbolName descr="null">builderAction</symbolName>: kotlin.collections.MutableList<E>.() -> kotlin.Unit): kotlin.collections.List<E> { contract { /* compiled contract */ }; /* compiled code */ }
 
-<symbolName descr="null">@kotlin.PublishedApi</symbolName> <symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">@kotlin.internal.InlineOnly</symbolName> <symbolName descr="null">internal</symbolName> <symbolName descr="null">expect</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">E</symbolName>> <symbolName descr="null">buildListInternal</symbolName>(<symbolName descr="null">capacity</symbolName>: kotlin.Int, <symbolName descr="null">builderAction</symbolName>: kotlin.collections.MutableList<E>.() -> kotlin.Unit): kotlin.collections.List<E> { /* compiled code */ }
+<symbolName descr="null">@kotlin.PublishedApi</symbolName>
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.3")
+<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName>
+<symbolName descr="null">internal</symbolName> <symbolName descr="null">expect</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">E</symbolName>> <symbolName descr="null">buildListInternal</symbolName>(<symbolName descr="null">capacity</symbolName>: kotlin.Int, <symbolName descr="null">builderAction</symbolName>: kotlin.collections.MutableList<E>.() -> kotlin.Unit): kotlin.collections.List<E> { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> kotlin.collections.Collection<T>.<symbolName descr="null">isNotEmpty</symbolName>(): kotlin.Boolean { /* compiled code */ }
+<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName>
+<symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> kotlin.collections.Collection<T>.<symbolName descr="null">isNotEmpty</symbolName>(): kotlin.Boolean { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">@kotlin.internal.InlineOnly</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> kotlin.collections.Collection<T>?.<symbolName descr="null">isNullOrEmpty</symbolName>(): kotlin.Boolean { contract { /* compiled contract */ }; /* compiled code */ }
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.3")
+<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName>
+<symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> kotlin.collections.Collection<T>?.<symbolName descr="null">isNullOrEmpty</symbolName>(): kotlin.Boolean { contract { /* compiled contract */ }; /* compiled code */ }
 
-<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> kotlin.collections.Collection<T>?.<symbolName descr="null">orEmpty</symbolName>(): kotlin.collections.Collection<T> { /* compiled code */ }
+<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName>
+<symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> kotlin.collections.Collection<T>?.<symbolName descr="null">orEmpty</symbolName>(): kotlin.collections.Collection<T> { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> kotlin.collections.List<T>?.<symbolName descr="null">orEmpty</symbolName>(): kotlin.collections.List<T> { /* compiled code */ }
+<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName>
+<symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">T</symbolName>> kotlin.collections.List<T>?.<symbolName descr="null">orEmpty</symbolName>(): kotlin.collections.List<T> { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">@kotlin.internal.InlineOnly</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">C</symbolName> : kotlin.collections.Collection<*>, <symbolName descr="null">R</symbolName>> C.<symbolName descr="null">ifEmpty</symbolName>(<symbolName descr="null">defaultValue</symbolName>: () -> R): R <symbolName descr="null">where</symbolName> C : R { contract { /* compiled contract */ }; /* compiled code */ }
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.3")
+<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName>
+<symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">C</symbolName> : kotlin.collections.Collection<*>, <symbolName descr="null">R</symbolName>> C.<symbolName descr="null">ifEmpty</symbolName>(<symbolName descr="null">defaultValue</symbolName>: () -> R): R <symbolName descr="null">where</symbolName> C : R { contract { /* compiled contract */ }; /* compiled code */ }
 
-<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">@kotlin.internal.OnlyInputTypes</symbolName> <symbolName descr="null">T</symbolName>> kotlin.collections.Collection<T>.<symbolName descr="null">containsAll</symbolName>(<symbolName descr="null">elements</symbolName>: kotlin.collections.Collection<T>): kotlin.Boolean { /* compiled code */ }
+<symbolName descr="null">@kotlin.internal.InlineOnly</symbolName>
+<symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">@kotlin.internal.OnlyInputTypes</symbolName> <symbolName descr="null">T</symbolName>> kotlin.collections.Collection<T>.<symbolName descr="null">containsAll</symbolName>(<symbolName descr="null">elements</symbolName>: kotlin.collections.Collection<T>): kotlin.Boolean { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">public</symbolName> fun <<symbolName descr="null">T</symbolName>> kotlin.collections.Iterable<T>.<symbolName descr="null">shuffled</symbolName>(<symbolName descr="null">random</symbolName>: kotlin.random.Random): kotlin.collections.List<T> { /* compiled code */ }
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.3")
+<symbolName descr="null">public</symbolName> fun <<symbolName descr="null">T</symbolName>> kotlin.collections.Iterable<T>.<symbolName descr="null">shuffled</symbolName>(<symbolName descr="null">random</symbolName>: kotlin.random.Random): kotlin.collections.List<T> { /* compiled code */ }
 
 <symbolName descr="null">internal</symbolName> fun <<symbolName descr="null">T</symbolName>> kotlin.collections.List<T>.<symbolName descr="null">optimizeReadOnlyList</symbolName>(): kotlin.collections.List<T> { /* compiled code */ }
 
@@ -71,13 +101,23 @@ package kotlin.collections
 
 <symbolName descr="null">private</symbolName> fun <symbolName descr="null">rangeCheck</symbolName>(<symbolName descr="null">size</symbolName>: kotlin.Int, <symbolName descr="null">fromIndex</symbolName>: kotlin.Int, <symbolName descr="null">toIndex</symbolName>: kotlin.Int): kotlin.Unit { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.PublishedApi</symbolName> <symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">@kotlin.IgnorableReturnValue</symbolName> <symbolName descr="null">internal</symbolName> <symbolName descr="null">expect</symbolName> fun <symbolName descr="null">checkIndexOverflow</symbolName>(<symbolName descr="null">index</symbolName>: kotlin.Int): kotlin.Int { /* compiled code */ }
+<symbolName descr="null">@kotlin.PublishedApi</symbolName>
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.3")
+<symbolName descr="null">@kotlin.IgnorableReturnValue</symbolName>
+<symbolName descr="null">internal</symbolName> <symbolName descr="null">expect</symbolName> fun <symbolName descr="null">checkIndexOverflow</symbolName>(<symbolName descr="null">index</symbolName>: kotlin.Int): kotlin.Int { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.PublishedApi</symbolName> <symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">@kotlin.IgnorableReturnValue</symbolName> <symbolName descr="null">internal</symbolName> <symbolName descr="null">expect</symbolName> fun <symbolName descr="null">checkCountOverflow</symbolName>(<symbolName descr="null">count</symbolName>: kotlin.Int): kotlin.Int { /* compiled code */ }
+<symbolName descr="null">@kotlin.PublishedApi</symbolName>
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.3")
+<symbolName descr="null">@kotlin.IgnorableReturnValue</symbolName>
+<symbolName descr="null">internal</symbolName> <symbolName descr="null">expect</symbolName> fun <symbolName descr="null">checkCountOverflow</symbolName>(<symbolName descr="null">count</symbolName>: kotlin.Int): kotlin.Int { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.PublishedApi</symbolName> <symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">internal</symbolName> fun <symbolName descr="null">throwIndexOverflow</symbolName>(): kotlin.Unit { /* compiled code */ }
+<symbolName descr="null">@kotlin.PublishedApi</symbolName>
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.3")
+<symbolName descr="null">internal</symbolName> fun <symbolName descr="null">throwIndexOverflow</symbolName>(): kotlin.Unit { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.PublishedApi</symbolName> <symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">internal</symbolName> fun <symbolName descr="null">throwCountOverflow</symbolName>(): kotlin.Unit { /* compiled code */ }
+<symbolName descr="null">@kotlin.PublishedApi</symbolName>
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.3")
+<symbolName descr="null">internal</symbolName> fun <symbolName descr="null">throwCountOverflow</symbolName>(): kotlin.Unit { /* compiled code */ }
 
 <symbolName descr="null">internal</symbolName> fun <symbolName descr="null">collectionToArrayCommonImpl</symbolName>(<symbolName descr="null">collection</symbolName>: kotlin.collections.Collection<*>): kotlin.Array<kotlin.Any?> { /* compiled code */ }
 
@@ -100,7 +140,7 @@ package kotlin.collections
 }
 
 <symbolName descr="null">internal</symbolName> object <symbolName descr="null">EmptyList</symbolName> : kotlin.collections.List<kotlin.Nothing>, kotlin.io.Serializable, kotlin.collections.RandomAccess {
-    <symbolName descr="null">private</symbolName> <symbolName descr="null">const</symbolName> val <symbolName descr="null">serialVersionUID</symbolName>: kotlin.Long = COMPILED_CODE /* compiled code */
+    <symbolName descr="null">private</symbolName> <symbolName descr="null">const</symbolName> val <symbolName descr="null">serialVersionUID</symbolName>: kotlin.Long = -7390468764508069838L
 
     <symbolName descr="null">public</symbolName> <symbolName descr="null">open</symbolName> val <symbolName descr="null">size</symbolName>: kotlin.Int /* compiled code */
         <symbolName descr="null">public</symbolName> <symbolName descr="null">open</symbolName> <symbolName descr="null">get</symbolName>() { /* compiled code */ }

@@ -143,6 +143,9 @@ jvm_library(
 exports_files(
     [
         "intellij.eclipse.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/org/jetbrains/idea/eclipse/conversion/template.empty.project.xml",
+        "resources/org/jetbrains/idea/eclipse/conversion/template.project.xml",
     ],
     visibility = ["//visibility:public"],
 )

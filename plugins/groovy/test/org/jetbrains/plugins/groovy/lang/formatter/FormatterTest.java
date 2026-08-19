@@ -196,6 +196,8 @@ public class FormatterTest extends GroovyFormatterTestCase {
 
   public void testPreserveGroovydoc() { doTest(); }
 
+  public void testGroovydocNoExtraSpace() { doTest(); }
+
   public void testCaseInSwitch() {
     getGroovySettings().INDENT_CASE_FROM_SWITCH = false;
     doTest();

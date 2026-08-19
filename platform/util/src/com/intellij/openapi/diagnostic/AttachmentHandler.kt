@@ -1,10 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic
 
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.sanitizeFileName
 import kotlinx.coroutines.FlowPreview
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.PrintWriter
 import java.nio.file.Files
@@ -19,7 +20,8 @@ import kotlin.io.path.name
 /**
  * Handler for logging attachments of [ExceptionWithAttachments] to log folder.
  */
-internal class AttachmentHandler(logPath: Path) : Handler() {
+@ApiStatus.Internal
+class AttachmentHandler(logPath: Path) : Handler() {
   private val baseDir = logPath.parent.resolve("attachments")
 
   private val pruner = OldAttachmentPruner()

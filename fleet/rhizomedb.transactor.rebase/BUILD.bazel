@@ -157,6 +157,7 @@ jvm_library(
 exports_files(
     [
         "fleet.rhizomedb.transactor.rebase.iml",
+        "resources/fleet.rhizomedb.transactor.rebase.xml",
     ],
     visibility = ["//visibility:public"],
 )

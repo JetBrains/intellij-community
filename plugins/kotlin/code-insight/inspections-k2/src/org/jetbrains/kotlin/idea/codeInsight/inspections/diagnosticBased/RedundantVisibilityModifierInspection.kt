@@ -32,7 +32,8 @@ internal class RedundantVisibilityModifierInspection :
     override fun getApplicableRanges(element: KtModifierListOwner): List<TextRange> =
         ApplicabilityRanges.visibilityModifier(element)
 
-    override fun KaSession.prepareContextByDiagnostic(
+    context(session: KaSession)
+    override fun prepareContextByDiagnostic(
         element: KtModifierListOwner,
         diagnostic: KaFirDiagnostic.RedundantVisibilityModifier,
     ): ModifierContext? {

@@ -26,7 +26,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//platform/analysis-api:analysis",
@@ -60,6 +60,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":bookmarks",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/bookmarks:bookmarks_test_lib",
@@ -84,6 +85,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.debugger.impl.bookmarks.iml",
+        "resources/intellij.platform.debugger.impl.bookmarks.xml",
     ],
     visibility = ["//visibility:public"],
 )

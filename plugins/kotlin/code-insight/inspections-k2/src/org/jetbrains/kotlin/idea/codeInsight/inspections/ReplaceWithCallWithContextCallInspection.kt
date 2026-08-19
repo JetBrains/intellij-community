@@ -10,6 +10,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
@@ -17,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -66,7 +69,8 @@ internal class ReplaceWithCallWithContextCallInspection :
         return true
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): ReplaceContext? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): ReplaceContext? {
         val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         if (resolvedCall.symbol.callableId != WITH_CALLABLE_ID) return null
         val lambda = getLambda(element) ?: return null
@@ -81,7 +85,8 @@ internal class ReplaceWithCallWithContextCallInspection :
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.isReceiverOnlyUsedAsContextArgument(
+    context(session: KaSession)
+    private fun isReceiverOnlyUsedAsContextArgument(
         lambda: KtLambdaExpression,
         receiverParameter: KaReceiverParameterSymbol,
     ): Boolean {

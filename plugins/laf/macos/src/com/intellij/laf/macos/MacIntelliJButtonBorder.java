@@ -2,9 +2,9 @@
 package com.intellij.laf.macos;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ui.DrawUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.JComponent;
@@ -14,7 +14,6 @@ import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
-import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
@@ -36,9 +35,7 @@ public final class MacIntelliJButtonBorder implements Border, UIResource {
       float arc = MacIntelliJTextBorder.ARC.getFloat();
 
       if (isSmallVariant(c) && c.isFocusable() && c.hasFocus()) {
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                            MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+        DrawUtil.setupRenderingHints(g2);
 
         float f = UIUtil.isRetina(g2) ? 0.5f : 1.0f;
         float lw = JBUIScale.scale(f);

@@ -1,6 +1,6 @@
 ---
 name: ssr
-description: Create or modify IntelliJ Structural Search and Replace patterns and inspections.
+description: Create or modify IntelliJ Structural Search and Replace patterns.
 ---
 
 # Structural Search and Replace

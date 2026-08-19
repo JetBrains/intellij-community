@@ -12,6 +12,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -72,7 +73,21 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     private val LOG = logger<EditorHistoryManager>()
 
     @JvmStatic
-    fun getInstance(project: Project): EditorHistoryManager = project.service()
+    fun getInstance(project: Project): EditorHistoryManager {
+      return project.service()
+    }
+
+    suspend fun getInstanceAsync(project: Project): EditorHistoryManager = project.serviceAsync()
+
+    /**
+     * Initializes the [EditorHistoryManager] service so that its persisted history is loaded
+     * within this suspending call. Invoke it before synchronous [getInstance] access on a
+     * latency-sensitive path so that history loading does not block the caller.
+     */
+    @ApiStatus.Internal
+    suspend fun preloadHistory(project: Project) {
+      getInstanceAsync(project)
+    }
   }
 
   @Synchronized

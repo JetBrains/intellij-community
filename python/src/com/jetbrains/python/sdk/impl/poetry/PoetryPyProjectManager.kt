@@ -12,6 +12,8 @@ import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.PySdkDependencyGroupSupport
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
+import com.intellij.python.pyproject.psi.spi.PyProjectTomlPathValue
+import com.intellij.python.pyproject.psi.spi.isPathDependencyKey
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.poetry.PoetryDependencyGroupSupport
@@ -50,6 +52,28 @@ internal class PoetryPyProjectManager : PyProjectManager {
     TomlDependencySpecification.GroupPathDependency("tool.poetry.group", "dependencies"),
   )
 
+  /**
+   * Poetry path values, made navigable by `PyProjectTomlPathReferenceContributor` (PY-90384):
+   *
+   * ```toml
+   * [tool.poetry]
+   * packages = [{ include = "mypkg", from = "src" }]  # -> src/mypkg
+   *
+   * [tool.poetry.dependencies]
+   * subproject-a = { path = "../sub-project-a", develop = true }
+   * ```
+   *
+   * `[tool.poetry] include` / `exclude` are sdist file patterns rather than package paths, so they stay
+   * unreferenced — answering `null` for them is as much this manager's job as claiming the keys above.
+   */
+  override fun resolveTomlPath(keyPath: List<String>): PyProjectTomlPathValue? = when {
+    // `include` names a package directory or a single module file, relative to its sibling `from`.
+    keyPath == PACKAGES_INCLUDE_KEY -> PyProjectTomlPathValue(baseSiblingKey = FROM, acceptFiles = true)
+    keyPath == PACKAGES_FROM_KEY -> PyProjectTomlPathValue()
+    getTomlDependencySpecifications().isPathDependencyKey(keyPath) -> PyProjectTomlPathValue(acceptFiles = true)
+    else -> null
+  }
+
   // Poetry-specific dependency-group shapes. PEP 621 / PEP 735 shapes are covered by the shared
   // spec dispatcher and don't need to be handled here.
   override fun resolveHeaderPath(path: List<String>): String? {
@@ -72,3 +96,8 @@ internal class PoetryPyProjectManager : PyProjectManager {
     private const val DEPENDENCIES = "dependencies"
   }
 }
+
+private const val FROM = "from"
+private val POETRY_PACKAGES = listOf("tool", "poetry", "packages")
+private val PACKAGES_INCLUDE_KEY = POETRY_PACKAGES + "include"
+private val PACKAGES_FROM_KEY = POETRY_PACKAGES + FROM

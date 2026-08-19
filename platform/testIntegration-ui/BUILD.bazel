@@ -23,7 +23,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/testIntegration",
         "//platform/util",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -43,6 +43,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/testIntegration:testIntegration_test_lib",
         "//platform/util:util_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testIntegration.ui` end
@@ -51,6 +52,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.testIntegration.ui.iml",
+        "resources/intellij.platform.testIntegration.ui.xml",
     ],
     visibility = ["//visibility:public"],
 )

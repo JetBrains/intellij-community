@@ -31,6 +31,7 @@ jvm_library(
         "//java/java-impl:impl",
         "//libraries/stream",
         "//java/debugger/impl",
+        "//libraries/asm",
         "//platform/xdebugger-impl:debugger-impl",
         "//platform/xdebugger-impl/shared",
         "//platform/xdebugger-impl/ui",
@@ -45,6 +46,7 @@ jvm_library(
         "//platform/code-style-api:codeStyle",
         "//java/debugger/shared",
         "//plugins/stream-debugger/rt",
+        "//plugins/stream-debugger/rt/gatherers",
     ],
 )
 
@@ -78,6 +80,7 @@ jvm_library(
         "//java/java-impl:impl_test_lib",
         "//libraries/stream:stream_test_lib",
         "//java/debugger/impl:impl_test_lib",
+        "//libraries/asm:asm_test_lib",
         "//platform/xdebugger-impl:debugger-impl_test_lib",
         "//platform/xdebugger-impl/shared:shared_test_lib",
         "//platform/xdebugger-impl/ui:ui_test_lib",
@@ -101,6 +104,7 @@ jvm_library(
         "//platform/code-style-api:codeStyle_test_lib",
         "//java/debugger/shared:shared_test_lib",
         "//plugins/stream-debugger/rt:rt_test_lib",
+        "//plugins/stream-debugger/rt/gatherers:gatherers_test_lib",
     ],
 )
 ### auto-generated section `build intellij.debugger.streams.java` end
@@ -109,6 +113,7 @@ jvm_library(
 exports_files(
     [
         "intellij.debugger.streams.java.iml",
+        "resources/intellij.debugger.streams.java.xml",
     ],
     visibility = ["//visibility:public"],
 )

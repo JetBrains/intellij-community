@@ -37,6 +37,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/util:util-ui",
         "//platform/lang-api:lang",
+        "//platform/platform-impl:ide-impl",
     ],
 )
 
@@ -69,6 +70,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/lang-api:lang_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.completion` end
@@ -77,6 +79,7 @@ jvm_library(
 exports_files(
     [
         "intellij.maven.completion.iml",
+        "resources/intellij.maven.completion.xml",
     ],
     visibility = ["//visibility:public"],
 )

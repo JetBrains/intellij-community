@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.gradle.dependencyAnalyzer
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
+import com.intellij.platform.testFramework.assertion.consoleText
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
@@ -64,15 +67,15 @@ class GradleDependencyNodeIndexTest : GradleDependencyNodeIndexTestCase() {
           GradleDependencyNodeIndex.getOrCollectDependencies(project, moduleData).await()
         }
 
-        assertSyncViewTree {
+        assertBuildViewTree(syncView) {
           assertNode("successful") {
             assertNodeWithDeprecatedGradleWarning(gradleVersion)
             assertNode(":ijCollectDependencies")
           }
         }
-        assertSyncViewNode("successful") { consoleText ->
-          if ("0 problems were found storing the configuration cache" !in consoleText) {
-            Assertions.assertThat(consoleText)
+        assertBuildViewNode(syncView, "successful") {
+          if ("0 problems were found storing the configuration cache" !in it.consoleText) {
+            Assertions.assertThat(it.consoleText)
               .doesNotContain("problem was found storing the configuration cache")
               .doesNotContain("problems were found storing the configuration cache")
           }

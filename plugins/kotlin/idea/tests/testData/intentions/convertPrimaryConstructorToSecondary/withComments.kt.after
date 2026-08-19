@@ -5,7 +5,8 @@ class WithComments
 /**
  * Some nasty constructor
  */
-{/* First parameter */
+{
+    /* First parameter */
     /* Second Parameter */
     val first: Int
     val second: Double

@@ -1,7 +1,6 @@
 // "Create field for parameter 'i'" "true"
 
 class C {
-
     private final int myI;
 
     C(int i) {

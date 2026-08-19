@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.jline.iml",
+        "resources/intellij.libraries.jline.xml",
     ],
     visibility = ["//visibility:public"],
 )

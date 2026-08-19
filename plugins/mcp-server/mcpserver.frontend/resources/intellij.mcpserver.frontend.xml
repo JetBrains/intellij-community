@@ -1,18 +1,39 @@
-<idea-plugin>
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.frontend"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.mcpserver"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.compose"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <serviceViewContributor implementation="com.intellij.mcpserver.services.McpServiceViewContributor"/>
+    <serviceViewContributor implementation="com.intellij.mcpserver.frontend.services.McpServiceViewContributor"/>
 
     <statusBarWidgetFactory id="McpServerStatusBarWidget"
-                            implementation="com.intellij.mcpserver.widget.McpServerStatusBarWidgetFactory"
+                            implementation="com.intellij.mcpserver.frontend.widget.McpServerStatusBarWidgetFactory"
                             order="after PowerSaveMode"/>
 
     <applicationConfigurable
-      instance="com.intellij.mcpserver.settings.McpServerSettingsConfigurable"
+      instance="com.intellij.mcpserver.frontend.settings.McpServerSettingsConfigurable"
       id="com.intellij.mcpserver.settings"
       key="mcp.server.configurable.name"
       bundle="messages.McpServerBundle"
@@ -20,11 +41,17 @@
       parentId="tools"/>
 
     <applicationConfigurable
-      instance="com.intellij.mcpserver.settings.McpToolFilterConfigurable"
+      instance="com.intellij.mcpserver.frontend.settings.McpToolFilterConfigurable"
       id="com.intellij.mcpserver.settings.filter"
       key="configurable.mcp.tool.filter"
       bundle="messages.McpServerBundle"
       dynamic="true"
       parentId="com.intellij.mcpserver.settings"/>
   </extensions>
+
+  <actions resource-bundle="messages.McpServerBundle">
+    <action id="com.intellij.mcpserver.actions.ShowMcpToolsAction" class="com.intellij.mcpserver.frontend.actions.ShowMcpToolsAction">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>

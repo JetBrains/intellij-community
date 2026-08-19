@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
@@ -19,7 +18,6 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.util.indexing.testEntities.DependencyItem
@@ -33,13 +31,6 @@ import com.intellij.util.indexing.testEntities.WithReferenceTestEntityId
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class WithReferenceTestEntityImpl(private val dataSource: WithReferenceTestEntityData) : WithReferenceTestEntity,
                                                                                                   WorkspaceEntityBase(dataSource) {
-
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val symbolicId: WithReferenceTestEntityId = super.symbolicId
 
   override val name: String
@@ -52,7 +43,6 @@ internal class WithReferenceTestEntityImpl(private val dataSource: WithReference
       readField("references")
       return dataSource.references
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -60,36 +50,14 @@ internal class WithReferenceTestEntityImpl(private val dataSource: WithReference
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: WithReferenceTestEntityData?) :
     ModifiableWorkspaceEntityBase<WithReferenceTestEntity, WithReferenceTestEntityData>(result), WithReferenceTestEntityBuilder {
     internal constructor() : this(WithReferenceTestEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity WithReferenceTestEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -103,7 +71,7 @@ internal class WithReferenceTestEntityImpl(private val dataSource: WithReference
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -122,14 +90,12 @@ internal class WithReferenceTestEntityImpl(private val dataSource: WithReference
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var name: String
       get() = getEntityData().name
@@ -162,17 +128,14 @@ internal class WithReferenceTestEntityImpl(private val dataSource: WithReference
 
     override fun getEntityClass(): Class<WithReferenceTestEntity> = WithReferenceTestEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class WithReferenceTestEntityData : WorkspaceEntityData<WithReferenceTestEntity>(), SoftLinkable {
   lateinit var name: String
   lateinit var references: MutableList<DependencyItem>
-
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isReferencesInitialized(): Boolean = ::references.isInitialized
-
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
     for (item in references) {
@@ -188,7 +151,6 @@ internal class WithReferenceTestEntityData : WorkspaceEntityData<WithReferenceTe
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     for (item in references) {
       val removedItem_item_reference = mutablePreviousSet.remove(item.reference)
@@ -222,29 +184,15 @@ internal class WithReferenceTestEntityData : WorkspaceEntityData<WithReferenceTe
         it
       }
     }
+
     if (references_data != null) {
       references = references_data as MutableList<DependencyItem>
     }
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<WithReferenceTestEntity> {
-    val modifiable = WithReferenceTestEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): WithReferenceTestEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = WithReferenceTestEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): WithReferenceTestEntity = WithReferenceTestEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<WithReferenceTestEntity, *> = WithReferenceTestEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.util.indexing.testEntities.WithReferenceTestEntity") as EntityMetadata
   }

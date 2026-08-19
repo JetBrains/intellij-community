@@ -145,7 +145,7 @@ suspend fun testDefaultLayout(isNewUi: Boolean, project: Project) {
   }
 }
 
-fun testButtonLayout(isNewUi: Boolean, anchor: ToolWindowAnchor) {
+fun testButtonLayout(isNewUi: Boolean, anchor: ToolWindowAnchor, isHorizontal: Boolean = false) {
   fun info(order: Int): WindowInfoImpl {
     val result = WindowInfoImpl()
     result.order = order
@@ -159,11 +159,11 @@ fun testButtonLayout(isNewUi: Boolean, anchor: ToolWindowAnchor) {
       TestStripeButtonManager("Version Control", info(0)),
       TestStripeButtonManager("Problems View", info(1)),
     )
-      .sortedWith(AbstractDroppableStripe.createButtonLayoutComparator(isNewUi = isNewUi, anchor = anchor))
+      .sortedWith(AbstractDroppableStripe.createButtonLayoutComparator(isNewUi = isNewUi, anchor = anchor, isHorizontal = isHorizontal))
       .map { it.id }
       .toList()
   ).isEqualTo(listOf("Version Control", "Problems View", "Terminal")
-                .let { if (isNewUi && anchor == ToolWindowAnchor.BOTTOM) it.asReversed() else it })
+                .let { if (isNewUi && anchor == ToolWindowAnchor.BOTTOM && !isHorizontal) it.asReversed() else it })
 }
 
 private class TestStripeButtonManager(override val id: String, override val windowDescriptor: WindowInfo) : StripeButtonManager {

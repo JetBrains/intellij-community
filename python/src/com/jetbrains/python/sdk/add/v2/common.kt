@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.icons.AllIcons
@@ -24,6 +24,8 @@ import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
 import com.intellij.python.hatch.icons.PythonHatchIcons
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
+import com.intellij.python.pytools.PyExecutable
+import com.intellij.python.pytools.setCustomExecutablePath
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.intellij.python.uv.common.icons.PythonUvCommonIcons
 import com.intellij.python.venv.icons.PythonVenvIcons
@@ -52,7 +54,6 @@ import com.jetbrains.python.statistics.PythonInterpreterInstallationIdsHolder.Co
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 import javax.swing.Icon
 
 abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInterpreterModel<P>) {
@@ -66,6 +67,14 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
   protected abstract val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?>?
   protected abstract val toolExecutablePersister: suspend (P) -> Unit
 
+  /**
+   * Whether the resolved [toolExecutable] should be persisted to the custom-path store when the SDK is
+   * created. Default `false`: an auto-detected tool path must NOT be persisted (detection is cached with
+   * a TTL instead, so it self-heals when the tool moves). Overridden to `true` only when the value is an
+   * explicit user choice (the tool field was browsed/typed) — see [ValidatedPathField.isUserEdited].
+   */
+  protected open val persistToolExecutableOnSetup: Boolean get() = false
+
   abstract fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor)
   abstract fun onShown(scope: CoroutineScope)
 
@@ -78,7 +87,7 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
 
   @ApiStatus.Internal
   suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
-    savePathToExecutableToProperties(null)
+    savePathToExecutableToProperties()
     val sdk = getOrCreateSdk(moduleOrProject).getOr { return it }
 
     moduleOrProject.project.excludeInnerVirtualEnv(sdk)
@@ -91,19 +100,19 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
   }
 
   /**
-   * Saves the provided path to an executable in the properties of the environment
-   *
-   * @param [pathHolder] The path holder of the path to the executable that needs to be saved. This may be null when we try to find the tool automatically.
+   * Persists the user-chosen tool executable to the custom-path store, but only when
+   * [persistToolExecutableOnSetup] is `true` (i.e. the user explicitly picked the path). Auto-detected
+   * paths are intentionally not persisted.
    */
-  protected suspend fun savePathToExecutableToProperties(pathHolder: P?) {
-    val savingPath = pathHolder ?: toolExecutable?.get()?.pathHolder ?: return
-    if (!model.fileSystem.isLocal) return
+  protected suspend fun savePathToExecutableToProperties() {
+    if (!persistToolExecutableOnSetup) return
+    val savingPath = toolExecutable?.get()?.pathHolder ?: return
     toolExecutablePersister(savingPath)
   }
 
   open suspend fun createPythonModuleStructure(module: Module): PyResult<Unit> = Result.success(Unit)
 
-  abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
+  internal abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }
 
 abstract class PythonNewEnvironmentCreator<P : PathHolder>(override val model: PythonMutableTargetAddInterpreterModel<P>) :
@@ -207,7 +216,6 @@ internal suspend fun <P : PathHolder> PythonSelectableInterpreter<P>.setupSdk(
   moduleOrProject: ModuleOrProject,
   fileSystem: FileSystem<P>,
   targetPanelExtension: TargetPanelExtension?,
-  isAssociateWithModule: Boolean,
 ): PyResult<Sdk> {
   when (this) {
     is ExistingSelectableInterpreter -> return PyResult.success(sdkWrapper.sdk)
@@ -217,13 +225,17 @@ internal suspend fun <P : PathHolder> PythonSelectableInterpreter<P>.setupSdk(
   val homePath = this@setupSdk.homePath!!
 
   // Do our best to guess the flavor
-  return createSdkGuessingTypeByPath(homePath, fileSystem, moduleOrProject, targetPanelExtension, isAssociateWithModule)
+  return createSdkGuessingTypeByPath(homePath, fileSystem, moduleOrProject, targetPanelExtension)
 }
 
 
-internal fun savePathForEelOnly(pathHolder: PathHolder, pathPersister: (Path) -> Unit) {
-  when (pathHolder) {
-    is PathHolder.Eel -> pathPersister(pathHolder.path)
-    is PathHolder.Target -> Unit
-  }
+/**
+ * Persist the user-chosen executable [pathHolder] as the custom path for [executable] on the machine
+ * this file system targets (per-Eel-machine store). No-op for the legacy target-based backend, which
+ * has no Eel machine to key on.
+ */
+internal fun FileSystem<*>.persistCustomToolPath(pathHolder: PathHolder, executable: PyExecutable) {
+  val eelPath = (pathHolder as? PathHolder.Eel)?.path ?: return
+  val eelDescriptor = eelDescriptor ?: return
+  executable.setCustomExecutablePath(eelDescriptor, eelPath)
 }

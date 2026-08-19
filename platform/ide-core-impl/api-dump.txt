@@ -85,27 +85,32 @@ c:com.intellij.ide.impl.DataManagerImpl
 f:com.intellij.ide.impl.OpenProjectTask
 - f:asNewProject():com.intellij.ide.impl.OpenProjectTask
 - sf:build():com.intellij.ide.impl.OpenProjectTask
+- f:component13():java.lang.Boolean
 - f:component16():java.lang.String
 - f:component18():Z
-- f:component19():kotlin.jvm.functions.Function1
-- f:component21():kotlin.jvm.functions.Function2
+- f:component19():java.util.List
+- f:component20():java.util.List
+- f:component21():java.util.List
 - f:component22():Z
 - f:component23():kotlin.jvm.functions.Function1
 - f:component24():java.lang.Object
 - f:component25():java.nio.file.Path
 - f:component26():Z
-- f:copy(Z,Z,com.intellij.openapi.project.Project,Z,Z,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.projectImport.ProjectOpenedCallback,I,I,Z,Z,Z,java.lang.String,java.lang.String,Z,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,Z,kotlin.jvm.functions.Function1,java.lang.Object,java.nio.file.Path,Z):com.intellij.ide.impl.OpenProjectTask
-- bs:copy$default(com.intellij.ide.impl.OpenProjectTask,Z,Z,com.intellij.openapi.project.Project,Z,Z,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.projectImport.ProjectOpenedCallback,I,I,Z,Z,Z,java.lang.String,java.lang.String,Z,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,Z,kotlin.jvm.functions.Function1,java.lang.Object,java.nio.file.Path,Z,I,java.lang.Object):com.intellij.ide.impl.OpenProjectTask
+- f:copy(Z,Z,com.intellij.openapi.project.Project,Z,Z,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.projectImport.ProjectOpenedCallback,I,I,Z,java.lang.Boolean,Z,java.lang.String,java.lang.String,Z,Z,java.util.List,java.util.List,java.util.List,Z,kotlin.jvm.functions.Function1,java.lang.Object,java.nio.file.Path,Z):com.intellij.ide.impl.OpenProjectTask
+- bs:copy$default(com.intellij.ide.impl.OpenProjectTask,Z,Z,com.intellij.openapi.project.Project,Z,Z,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.projectImport.ProjectOpenedCallback,I,I,Z,java.lang.Boolean,Z,java.lang.String,java.lang.String,Z,Z,java.util.List,java.util.List,java.util.List,Z,kotlin.jvm.functions.Function1,java.lang.Object,java.nio.file.Path,Z,I,java.lang.Object):com.intellij.ide.impl.OpenProjectTask
 - f:getBeforeInit():kotlin.jvm.functions.Function1
+- f:getBeforeInitTasks():java.util.List
 - f:getBeforeOpen():kotlin.jvm.functions.Function2
+- f:getBeforeOpenTasks():java.util.List
 - f:getCallback():com.intellij.projectImport.ProjectOpenedCallback
 - f:getForceOpenInNewFrame():Z
 - f:getPreloadServices():Z
 - f:getPreparedToOpen():kotlin.jvm.functions.Function2
+- f:getPreparedToOpenTasks():java.util.List
 - f:getProject():com.intellij.openapi.project.Project
 - f:getProjectName():java.lang.String
 - f:getProjectToClose():com.intellij.openapi.project.Project
-- f:getRunConfigurators():Z
+- f:getRunConfigurators():java.lang.Boolean
 - f:getRunConversionBeforeOpen():Z
 - f:getShowWelcomeScreen():Z
 - f:getUseDefaultProjectAsTemplate():Z
@@ -114,6 +119,7 @@ f:com.intellij.ide.impl.OpenProjectTask
 - f:withForceOpenInNewFrame(Z):com.intellij.ide.impl.OpenProjectTask
 - f:withProject(com.intellij.openapi.project.Project):com.intellij.ide.impl.OpenProjectTask
 - f:withProjectName(java.lang.String):com.intellij.ide.impl.OpenProjectTask
+- f:withProjectRootDir(java.nio.file.Path):com.intellij.ide.impl.OpenProjectTask
 - f:withProjectToClose(com.intellij.openapi.project.Project):com.intellij.ide.impl.OpenProjectTask
 f:com.intellij.ide.impl.OpenProjectTask$Companion
 - f:build():com.intellij.ide.impl.OpenProjectTask
@@ -135,7 +141,7 @@ f:com.intellij.ide.impl.OpenProjectTaskBuilder
 - f:getProjectRootDir():java.nio.file.Path
 - f:getProjectToClose():com.intellij.openapi.project.Project
 - f:getProjectWorkspaceId():java.lang.String
-- f:getRunConfigurators():Z
+- f:getRunConfigurators():java.lang.Boolean
 - f:getRunConversionBeforeOpen():Z
 - f:getShowWelcomeScreen():Z
 - f:getUseDefaultProjectAsTemplate():java.lang.Boolean
@@ -150,7 +156,7 @@ f:com.intellij.ide.impl.OpenProjectTaskBuilder
 - f:setProjectName(java.lang.String):V
 - f:setProjectRootDir(java.nio.file.Path):V
 - f:setProjectToClose(com.intellij.openapi.project.Project):V
-- f:setRunConfigurators(Z):V
+- f:setRunConfigurators(java.lang.Boolean):V
 - f:setUseDefaultProjectAsTemplate(java.lang.Boolean):V
 - f:withBeforeOpenCallback(java.util.function.Predicate):V
 f:com.intellij.ide.impl.ProjectUtilCore

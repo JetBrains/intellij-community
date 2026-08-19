@@ -9,6 +9,8 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.ide.impl.ProjectUtilService
+import com.intellij.ide.impl.effectiveImplOptions
+import com.intellij.ide.impl.withImplOptions
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.AnAction
@@ -40,6 +42,7 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.openapi.wm.impl.IDE_FRAME_EVENT_LOG
@@ -449,7 +452,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   }
 
   @Internal
-  open fun getProjectPath(project: Project): Path? {
+  override fun getProjectPath(project: Project): Path? {
     return ((project as? ProjectStoreOwner)?.componentStore ?: return null).storeDescriptor.presentableUrl
   }
 
@@ -461,13 +464,12 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
   open suspend fun openProject(projectFile: Path, options: OpenProjectTask): Project? {
     var effectiveOptions = options
-    if (options.implOptions == null) {
+    if (options.effectiveImplOptions == null) {
       getProjectMetaInfo(projectFile)?.let { info ->
         effectiveOptions = effectiveOptions.copy(
           projectWorkspaceId = info.projectWorkspaceId,
           projectFrameTypeId = info.projectFrameTypeId,
-          implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frameInfo = info.frame)
-        )
+        ).withImplOptions(OpenProjectImplOptions(recentProjectMetaInfo = info, frameInfo = info.frame))
       }
     }
 
@@ -656,10 +658,12 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       return false
     }
 
+    // resolve once, outside the lock - a hidden project only reopens if its frame type opts in
+    val frameTypes = serviceAsync<ProjectFrameTypeService>()
     synchronized(stateLock) {
       // FIXME do we really want to make this method non-idempotent?
       state.forceReopenProjects = false
-      return state.additionalInfo.values.any { canReopenProject(it) }
+      return state.additionalInfo.values.any { canReopenProject(it, frameTypes) }
     }
   }
 
@@ -672,8 +676,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       return false
     }
 
+    // resolve once, outside the lock - a hidden project only reopens if its frame type opts in
+    val frameTypes = serviceAsync<ProjectFrameTypeService>()
     val openPaths = synchronized(stateLock) {
-      state.additionalInfo.entries.filter { canReopenProject(it.value) }
+      state.additionalInfo.entries.filter { canReopenProject(it.value, frameTypes) }
     }
     if (openPaths.isEmpty()) {
       return false
@@ -825,12 +831,13 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return true
   }
 
-  private fun canReopenProject(info: RecentProjectMetaInfo): Boolean {
-    return info.opened && !info.hidden
+  private fun canReopenProject(info: RecentProjectMetaInfo, frameTypes: ProjectFrameTypeService): Boolean {
+    return info.opened && (!info.hidden || frameTypes.canReopenWhenHidden(info.projectFrameTypeId))
   }
 
   /**
-   * Do not reopen a project on restart and do not show it in the recent projects list
+   * Do not show a project in the recent projects list. Such a project is also not reopened on restart, unless its
+   * project-frame type opts in with `reopenWhenHidden` (see `com.intellij.projectFrameType`).
    */
   fun setProjectHidden(project: Project, hidden: Boolean) {
     val path = getProjectPath(project)?.invariantSeparatorsPathString ?: return
@@ -1195,13 +1202,13 @@ data class OpenProjectImplOptions(
 )
 
 val OpenProjectTask.frame: IdeFrameImpl?
-  @Internal get() = (implOptions as OpenProjectImplOptions?)?.frame
+  @Internal get() = (effectiveImplOptions as OpenProjectImplOptions?)?.frame
 
 val OpenProjectTask.frameInfo: FrameInfo?
-  @Internal get() = (implOptions as OpenProjectImplOptions?)?.frameInfo
+  @Internal get() = (effectiveImplOptions as OpenProjectImplOptions?)?.frameInfo
 
 val OpenProjectTask.recentProjectMetaInfo: RecentProjectMetaInfo?
-  @Internal get() = (implOptions as OpenProjectImplOptions?)?.recentProjectMetaInfo
+  @Internal get() = (effectiveImplOptions as OpenProjectImplOptions?)?.recentProjectMetaInfo
 
 @Internal
 interface SystemDock {

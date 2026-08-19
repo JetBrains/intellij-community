@@ -1,16 +1,23 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
-    <module name="intellij.java.syntax"/>
     <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.codeserver.core"/>
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.indexing.serializers"/>
-    <!-- endregion -->
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
   </dependencies>
+  <!-- endregion -->
 
   <xi:include href="/META-INF/JavaIndexingPlugin.xml"/>
 </idea-plugin>

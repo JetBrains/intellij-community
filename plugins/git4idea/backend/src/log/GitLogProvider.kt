@@ -54,7 +54,6 @@ import com.intellij.vcs.log.impl.VcsActivityKey
 import com.intellij.vcs.log.impl.VcsIndexableLogProvider
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.util.UserNameRegex
-import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcs.log.visible.filters.hasLowerBound
 import com.intellij.vcs.log.visible.filters.hasUpperBound
@@ -357,7 +356,7 @@ class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexabl
   @CalledInAny
   override fun isFullHash(root: VirtualFile, hash: String): Boolean {
     val repository = repositoryManager.getRepositoryForRootQuick(root) ?: return false
-    return hash.length == repository.fullHashLength && VcsLogUtil.HASH_REGEX.matcher(hash).matches()
+    return hash.length == repository.fullHashLength && GitUtil.isPossibleHash(hash)
   }
 
   @Suppress("UNCHECKED_CAST")

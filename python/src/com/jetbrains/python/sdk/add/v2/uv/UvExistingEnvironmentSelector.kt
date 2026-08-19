@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.add.v2.uv
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.uv.backend.setUvExecutableLocal
 import com.intellij.python.uv.common.UV_UI_INFO
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
@@ -16,7 +15,8 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
-import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
+import com.intellij.python.uv.backend.UvPyTool
+import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.uv.sdk.configuration.isUvEnv
@@ -29,7 +29,7 @@ internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutabl
   override val toolState: ToolValidator<P> = model.uvViewModel.toolValidator
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.uvViewModel.uvExecutable
   override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
-    savePathForEelOnly(pathHolder) { path -> setUvExecutableLocal(path) }
+    model.fileSystem.persistCustomToolPath(pathHolder, UvPyTool.getInstance())
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {

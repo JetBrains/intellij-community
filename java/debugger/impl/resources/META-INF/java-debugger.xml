@@ -67,6 +67,12 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.debugger.engine.dfaassist.DfaAssistProvider"/>
     </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.debugger.trickyLineBreakpointLocationProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.debugger.ui.breakpoints.JvmTrickyLineBreakpointLocationProvider"/>
+    </extensionPoint>
+
     <extensionPoint qualifiedName="com.intellij.debugger.extraDebugNodesProvider"
                     interface="com.intellij.debugger.ui.tree.ExtraDebugNodesProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.steppingListener"
@@ -369,6 +375,10 @@
                  description="Watch if a thread we do stepping in is blocked by another suspended thread"/>
     <registryKey key="debugger.check.source" defaultValue="true"
                  description="Check that the source code matches the bytecode"/>
+    <registryKey key="debugger.target.remote.client" defaultValue="true"
+                 description="If set to false, IDEA will connect to the debugger; otherwise, the debugger will connect to IDEA"/>
+    <registryKey key="debugger.target.listen.any.address" defaultValue="true"
+                 description="If set to false, the application will listen only on the address 127.0.0.1"/>
     <applicationSettings service="com.intellij.debugger.settings.TraceSettings"/>
     <applicationSettings service="com.intellij.debugger.settings.ViewsGeneralSettings"/>
     <applicationSettings service="com.intellij.debugger.settings.ThreadsViewSettings"/>

@@ -201,7 +201,7 @@ def func6(
 # > to a Callable parameterized by P.
 
 
-class ProtocolWithP(Protocol[P]):
+class ProtocolWithP[**P](Protocol):
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> None: ...
 
 

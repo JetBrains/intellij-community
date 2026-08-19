@@ -9,6 +9,7 @@ import com.intellij.psi.PsiCapturedWildcardType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiLambdaExpressionType;
 import com.intellij.psi.PsiManager;
@@ -121,20 +122,26 @@ public final class JavaVarTypeUtil {
               }
 
               if (((PsiWildcardType)ai).isSuper()) {
-                targetSubstitutor = targetSubstitutor.put(parameter, createDownwardProjection(manager, ((PsiWildcardType)ai).getSuperBound()));
+                targetSubstitutor =
+                  targetSubstitutor.put(parameter, createDownwardProjection(manager, ((PsiWildcardType)ai).getSuperBound(), null));
               }
 
             }
             else {
+              // the projection replaces a capture of a wildcard that was written in the source, and an unbounded wildcard
+              // put in its place has to keep that place: the nullness of its implicit bound depends on the scope it was
+              // written in, see PsiWildcardType#getPsiContext
+              PsiElement context = ai instanceof PsiCapturedWildcardType
+                                   ? ((PsiCapturedWildcardType)ai).getWildcard().getPsiContext() : null;
               PsiType U = RecursionManager.doPreventingRecursion(ai, true, () -> ai.accept(this));
               if (U == null) {
-                targetSubstitutor = targetSubstitutor.put(parameter, PsiWildcardType.createUnbounded(manager));
+                targetSubstitutor = targetSubstitutor.put(parameter, PsiWildcardType.createUnbounded(manager, context));
               }
               else if (!U.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && tryUpperBound(aClass, parameter, U)) {
                 targetSubstitutor = targetSubstitutor.put(parameter, PsiWildcardType.createExtends(manager, U));
               }
               else {
-                targetSubstitutor = targetSubstitutor.put(parameter, createDownwardProjection(manager, ai));
+                targetSubstitutor = targetSubstitutor.put(parameter, createDownwardProjection(manager, ai, context));
               }
             }
           }
@@ -144,10 +151,10 @@ public final class JavaVarTypeUtil {
       return classType;
     }
 
-    private static PsiWildcardType createDownwardProjection(PsiManager manager, PsiType bound) {
+    private static PsiWildcardType createDownwardProjection(PsiManager manager, PsiType bound, @Nullable PsiElement context) {
       PsiType downwardProjection = getDownwardProjection(bound);
       return downwardProjection != PsiTypes.nullType() ? PsiWildcardType.createSuper(manager, downwardProjection)
-                                                       : PsiWildcardType.createUnbounded(manager);
+                                                       : PsiWildcardType.createUnbounded(manager, context);
     }
 
     private static boolean tryUpperBound(PsiClass aClass, PsiTypeParameter parameter, PsiType U) {

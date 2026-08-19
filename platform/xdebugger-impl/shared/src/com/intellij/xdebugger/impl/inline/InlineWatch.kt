@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline
 
 import com.intellij.openapi.editor.RangeMarker
@@ -8,6 +8,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * A watch that is shown in editor at the specified [position]
@@ -42,21 +43,29 @@ class InlineWatch(val expression: XExpression, position: XSourcePosition) {
     return true
   }
 
+  @ApiStatus.Internal
+  fun disposeMarker() {
+    myRangeMarker?.dispose()
+    myRangeMarker = null
+  }
+
   /**
    * Install [RangeMarker] for this watch.
    * @return true if a marker was added successfully
    */
   fun setMarker(): Boolean {
     ThreadingAssertions.assertReadAccess()
-    if (myRangeMarker != null) return true
+    if (markerMatchesPosition(myRangeMarker)) return true
     // try not to decompile files
     var document = FileDocumentManager.getInstance().getCachedDocument(myFile)
     if (document == null) {
       if (myFile.fileType.isBinary()) return true
       document = FileDocumentManager.getInstance().getDocument(myFile)
     }
-    if (myRangeMarker != null) return true // an extra check for myRangeMarker because we call setMarker from fileContentLoaded
+    // An extra check because setMarker is also called from fileContentLoaded.
+    if (markerMatchesPosition(myRangeMarker)) return true
     if (document != null) {
+      disposeMarker()
       val line = position.line
       if (DocumentUtil.isValidLine(line, document)) {
         val offset = document.getLineEndOffset(line)
@@ -65,5 +74,9 @@ class InlineWatch(val expression: XExpression, position: XSourcePosition) {
       }
     }
     return false
+  }
+
+  private fun markerMatchesPosition(marker: RangeMarker?): Boolean {
+    return marker != null && marker.isValid && marker.document.getLineNumber(marker.startOffset) == position.line
   }
 }

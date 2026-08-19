@@ -1,10 +1,15 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.tools.ide.starter.product.gateway` start
 create_kotlinc_options(
     name = "custom_ide-starter-product-gateway",
     opt_in = ["kotlin.time.ExperimentalTime"],
+)
+
+jvm_provided_library(
+    name = "libraries_kodein-di-jvm_provided",
+    lib = "//libraries/kodein-di-jvm",
 )
 
 jvm_library(
@@ -29,7 +34,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//tools/intellij.tools.ide.starter:ide-starter",
         "//libraries/junit5-launcher",
-        "@lib//:kodein-di-jvm-provided",
+        ":libraries_kodein-di-jvm_provided",
     ],
 )
 
@@ -48,7 +53,8 @@ jvm_library(
         ":ide-starter-product-gateway",
         "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
         "//libraries/junit5-launcher:junit5-launcher_test_lib",
-        "@lib//:kodein-di-jvm-provided",
+        "//libraries/kodein-di-jvm",
+        "//libraries/kodein-di-jvm:kodein-di-jvm_test_lib",
     ],
 )
 ### auto-generated section `build intellij.tools.ide.starter.product.gateway` end

@@ -172,7 +172,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
           type = PsiWildcardType.createSuper(getManager(), ((PsiTypeElement)boundType).getType());
         }
         else {
-          type = PsiWildcardType.createUnbounded(getManager());
+          type = PsiWildcardType.createUnbounded(getManager(), this);
         }
         type = type.annotate(createProvider(annotations));
         break;

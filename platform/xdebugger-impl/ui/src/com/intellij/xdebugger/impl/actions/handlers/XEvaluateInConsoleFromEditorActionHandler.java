@@ -5,6 +5,7 @@ import com.intellij.execution.console.ConsoleExecuteAction;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -47,7 +48,8 @@ public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFrom
   }
 
   @Override
-  protected void perform(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
+  protected void perform(@NotNull XDebugSessionProxy session, @NotNull AnActionEvent event) {
+    DataContext dataContext = event.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (!(editor instanceof EditorEx)) {
       return;

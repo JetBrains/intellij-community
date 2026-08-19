@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "relaxng-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":relaxng-tests_test_lib"],
+)
+### skip generation section `test intellij.relaxng.tests`
+
 ### auto-generated section `build intellij.relaxng` start
 jvm_library(
     name = "relaxng",
@@ -36,9 +44,9 @@ jvm_library(
         "//platform/ide-core",
         "//platform/lang-impl",
         "//xml/relaxng/lib:relaxng-rngom-20051226-patched",
-        "@lib//:relaxng-isorelax",
         "//xml/relaxng/lib:relaxng-trang-core",
-        "@lib//:relaxng-jing",
+        "//libraries/isorelax",
+        "//libraries/jing",
         "//platform/util/nanoxml",
         "//libraries/fastutil",
         "//platform/indexing-impl",
@@ -84,6 +92,8 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//libraries/isorelax:isorelax_test_lib",
+        "//libraries/jing:jing_test_lib",
         "//platform/util/nanoxml:nanoxml_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//platform/indexing-impl:indexing-impl_test_lib",
@@ -107,6 +117,7 @@ jvm_library(
 exports_files(
     [
         "intellij.relaxng.iml",
+        "resources/intellij.relaxng.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -145,6 +156,7 @@ jvm_library(
         ":relaxng-tests",
         "//platform/backend:backend_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-impl/internal:internal_test_lib",
     ],
     deps = [
         # do not sort,
@@ -170,14 +182,20 @@ jvm_library(
         "//xml/impl:impl_test_lib",
         "//xml/dom-openapi:dom",
         "//xml/dom-openapi:dom_test_lib",
+        "//xml/dom-impl",
+        "//xml/dom-impl:dom-impl_test_lib",
         "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl/internal",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//xml/relaxng/lib:relaxng-tests-rngom-20051226-patched",
         "//xml/relaxng/lib:relaxng-tests-trang-core",
-        "@lib//:relaxng-tests-jing",
+        "//libraries/isorelax",
+        "//libraries/isorelax:isorelax_test_lib",
+        "//libraries/jing",
+        "//libraries/jing:jing_test_lib",
         "//platform/util/nanoxml",
         "//platform/util/nanoxml:nanoxml_test_lib",
         "//libraries/fastutil",
@@ -218,10 +236,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.relaxng.tests` end
-
-### auto-generated section `test intellij.relaxng.tests` start
-jps_test(
-    name = "relaxng-tests_test",
-    runtime_deps = [":relaxng-tests_test_lib"],
-)
-### auto-generated section `test intellij.relaxng.tests` end

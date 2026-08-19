@@ -51,6 +51,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.gradle.java.iml",
+        "resources/intellij.kotlin.gradle.java.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -65,7 +66,13 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.gradle.java.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/problemsView/collector"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
+        "//platform/problemsView/collector",
+    ],
 )
 
 jvm_library(
@@ -87,6 +94,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-gradle-java-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/problemsView/collector:collector_test_lib",
     ],
@@ -102,8 +110,6 @@ jvm_library(
         "//platform/indexing-api:indexing_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/gradle/gradle-java/tests.shared",
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
@@ -133,7 +139,12 @@ jvm_library(
         "//java/testFramework:testFramework_test_lib",
         "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
         "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//libraries/fastutil",
         "//libraries/fastutil:fastutil_test_lib",
         "//plugins/groovy",

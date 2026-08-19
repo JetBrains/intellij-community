@@ -51,6 +51,7 @@ jvm_library(
 exports_files(
     [
         "intellij.searchEverywhereLucene.performanceTesting.iml",
+        "resources/intellij.searchEverywhereLucene.performanceTesting.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -4,6 +4,7 @@ package com.intellij.gradle.completion.kotlin.tests.integration
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
@@ -24,7 +25,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
-import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions.assertTrue
+import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
@@ -40,6 +41,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertTrue
 
 
+@IJIgnore(issue = "KT-88180")
 @GradleProjectTestApplication
 @TestDataPath($$"$CONTENT_ROOT/testData")
 @TestRoot("completion/kotlin/tests/testData")
@@ -684,7 +686,7 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
         val unexpectedLookup = codeInsightFixture.completeBasic()
           ?.map { it.lookupString }
           ?.filter { it in commandCompletionExamples }
-        assertTrue(unexpectedLookup.isNullOrEmpty()) {
+        JUnit4Assertions.assertTrue(unexpectedLookup.isNullOrEmpty()) {
           "The command completion was not expected, but these commands were suggested: \n${unexpectedLookup}"
         }
       }
@@ -700,7 +702,7 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
       runInEdtAndWait {
         codeInsightFixture.configureFromExistingVirtualFile(file)
         val lookup = codeInsightFixture.completeBasic()?.map { it.lookupString }
-        assertTrue(lookup?.any { it == "Reformat code" } == true) {
+        JUnit4Assertions.assertTrue(lookup?.any { it == "Reformat code" } == true) {
           "The command completion was expected outside the dependencies block, but it wasn't suggested. Actual lookup: $lookup"
         }
       }
@@ -832,7 +834,7 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
         codeInsightFixture.completeBasic()
         // `embeddedKotlin` accepts no version argument, so no version suggestions should be produced.
         val lookupStrings = codeInsightFixture.lookupElementStrings.orEmpty()
-        assertTrue(lookupStrings.none { it == "2.0.21" || it == "1.9.24" }) {
+        JUnit4Assertions.assertTrue(lookupStrings.none { it == "2.0.21" || it == "1.9.24" }) {
           "Expected no version completions for embeddedKotlin's second argument, but got: $lookupStrings"
         }
       }

@@ -358,27 +358,57 @@ internal fun Socket.consumeAsEelChannelImpl(): EelReceiveChannel =
 internal fun Socket.asEelChannelImpl(): EelSendChannel =
   channel?.asEelChannel() ?: outputStream.asEelChannel()
 
-internal fun EelReceiveChannel.linesImpl(charset: Charset): Flow<String> = flow {
-  val tmpBuffer = ByteBuffer.allocate(1)
-  var result = ByteArrayOutputStream()
-  while (true) {
-    tmpBuffer.rewind()
-    suspend fun emitBuffer() {
-      emit(charset.decode(ByteBuffer.wrap(result.toByteArray())).toString())
-    }
+private const val LINE_FEED = '\n'.code.toByte()
+private const val CARRIAGE_RETURN = '\r'.code.toByte()
 
-    val r = receive(tmpBuffer)
+internal fun EelReceiveChannel.linesImpl(charset: Charset, bufferSize: Int): Flow<String> = flow {
+  val chunk = ByteBuffer.allocate(bufferSize)
+  var result = ByteArrayOutputStream()
+
+  // The terminator is dropped by decoding fewer bytes rather than by trimming the decoded line, which
+  // would allocate a second string for every line that has one.
+  suspend fun emitBuffer() {
+    val bytes = result.toByteArray()
+    var size = bytes.size
+    if (size > 0 && bytes[size - 1] == LINE_FEED) {
+      size--
+      if (size > 0 && bytes[size - 1] == CARRIAGE_RETURN) {
+        size--
+      }
+    }
+    emit(charset.decode(ByteBuffer.wrap(bytes, 0, size)).toString())
+  }
+
+  while (true) {
+    chunk.clear()
+    val r = receive(chunk)
 
     if (r == ReadResult.EOF) {
-      emitBuffer()
+      // A stream ending right after a line feed has no unterminated last line to report.
+      if (result.size() > 0) {
+        emitBuffer()
+      }
       return@flow
     }
-    tmpBuffer.flip()
-    val b = tmpBuffer.get().toInt()
-    result.write(b)
-    if (b == 10) {
-      emitBuffer()
-      result = ByteArrayOutputStream()
+    chunk.flip()
+    while (chunk.hasRemaining()) {
+      val start = chunk.position()
+      val limit = chunk.limit()
+      var end = limit
+      var lineComplete = false
+      for (i in start until limit) {
+        if (chunk.get(i) == LINE_FEED) {
+          end = i + 1
+          lineComplete = true
+          break
+        }
+      }
+      result.write(chunk.array(), chunk.arrayOffset() + start, end - start)
+      chunk.position(end)
+      if (lineComplete) {
+        emitBuffer()
+        result = ByteArrayOutputStream()
+      }
     }
   }
 }

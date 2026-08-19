@@ -64,6 +64,8 @@ jvm_library(
 exports_files(
     [
         "intellij.java.structureView.iml",
+        "resources/META-INF/RegistryKeysStructureView.xml",
+        "resources/intellij.java.structureView.xml",
     ],
     visibility = ["//visibility:public"],
 )

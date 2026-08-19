@@ -15,10 +15,18 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public class MergingLexerAdapter extends MergingLexerAdapterBase {
+  /**
+   * Characters of text a merge run may cover between two cancellation checks. Counting characters rather than merged
+   * sub-tokens keeps the bound meaningful whatever the sub-tokens happen to be: a run of a few thousand single-character
+   * tokens costs about as much as one of a few large ones, and only the text covered says how much work that was.
+   */
+  private static final int CANCELLATION_CHECK_INTERVAL = 8 * 1024;
+
   private final TokenSet myTokenSet;
   private final MergeFunction myMergeFunction = new MyMergeFunction();
 
@@ -39,7 +47,15 @@ public class MergingLexerAdapter extends MergingLexerAdapterBase {
           return type;
         }
 
+        // A merged run has no upper bound -- a megabyte of comment or character data collapses into a single token --
+        // and it is produced by one getTokenType() call, so a caller counting tokens cannot bound this loop from
+        // the outside.
+        int nextCancellationCheckAt = originalLexer.getTokenStart() + CANCELLATION_CHECK_INTERVAL;
         while (true) {
+          if (originalLexer.getTokenStart() >= nextCancellationCheckAt) {
+            ProgressManager.checkCanceled();
+            nextCancellationCheckAt = originalLexer.getTokenStart() + CANCELLATION_CHECK_INTERVAL;
+          }
           IElementType tokenType = originalLexer.getTokenType();
           if (tokenType != type) break;
           originalLexer.advance();

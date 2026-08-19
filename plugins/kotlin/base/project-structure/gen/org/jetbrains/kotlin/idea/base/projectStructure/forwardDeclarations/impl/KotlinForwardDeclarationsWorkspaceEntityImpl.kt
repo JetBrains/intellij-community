@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -20,9 +19,7 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -34,7 +31,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.Kotli
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSource: KotlinForwardDeclarationsWorkspaceEntityData) :
     KotlinForwardDeclarationsWorkspaceEntity, WorkspaceEntityBase(dataSource) {
-
     private companion object {
         internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(
             LibraryEntity::class.java,
@@ -43,7 +39,6 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
             false
         )
         private val connections = listOf<ConnectionId>(LIBRARY_CONNECTION_ID)
-
     }
 
     override val forwardDeclarationRoots: Set<VirtualFileUrl>
@@ -54,7 +49,6 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
     override val library: LibraryEntity
         get() = snapshot.instrumentation.getParent(LIBRARY_CONNECTION_ID, this) as? LibraryEntity
             ?: error("Parent library not found for KotlinForwardDeclarationsWorkspaceEntity")
-
     override val entitySource: EntitySource
         get() {
             readField("entitySource")
@@ -65,34 +59,12 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
         return connections
     }
 
-
     internal class Builder(result: KotlinForwardDeclarationsWorkspaceEntityData?) :
         ModifiableWorkspaceEntityBase<KotlinForwardDeclarationsWorkspaceEntity, KotlinForwardDeclarationsWorkspaceEntityData>(result),
         KotlinForwardDeclarationsWorkspaceEntityBuilder {
         internal constructor() : this(KotlinForwardDeclarationsWorkspaceEntityData())
 
-        override fun applyToBuilder(builder: MutableEntityStorage) {
-            if (this.diff != null) {
-                if (existsInBuilder(builder)) {
-                    this.diff = builder
-                    return
-                } else {
-                    error("Entity KotlinForwardDeclarationsWorkspaceEntity is already created in a different builder")
-                }
-            }
-            this.diff = builder
-            addToBuilder()
-            this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-            this.currentEntityData = null
-            index(this, "forwardDeclarationRoots", this.forwardDeclarationRoots)
-// Process linked entities that are connected without a builder
-            processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
-        }
-
-        private fun checkInitialization() {
+        override fun checkInitialization() {
             val _diff = diff
             if (!getEntityData().isEntitySourceInitialized()) {
                 error("Field WorkspaceEntity#entitySource should be initialized")
@@ -131,6 +103,9 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
             updateChildToParentReferences(parents)
         }
 
+        override fun index() {
+            index(this, "forwardDeclarationRoots", this.forwardDeclarationRoots)
+        }
 
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
@@ -138,7 +113,6 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
                 checkModificationAllowed()
                 getEntityData(true).entitySource = value
                 changedProperty.add("entitySource")
-
             }
         private val forwardDeclarationRootsUpdater: (value: Set<VirtualFileUrl>) -> Unit = { value ->
             val _diff = diff
@@ -162,67 +136,25 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
                 forwardDeclarationRootsUpdater.invoke(value)
             }
         override var library: LibraryEntityBuilder
-            get() {
-                val _diff = diff
-                return if (_diff != null) {
-                    ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(LIBRARY_CONNECTION_ID, this) as? LibraryEntityBuilder)
-                        ?: (this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] as? LibraryEntityBuilder)
-                        ?: error("library is null for KotlinForwardDeclarationsWorkspaceEntity")
-                } else {
-                    (this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] as? LibraryEntityBuilder)
-                        ?: error("library is null for KotlinForwardDeclarationsWorkspaceEntity")
-                }
-            }
+            get() = getParent(LIBRARY_CONNECTION_ID) as? LibraryEntityBuilder
+                ?: error("library is null for KotlinForwardDeclarationsWorkspaceEntity")
             set(value) {
-                checkModificationAllowed()
-                val _diff = diff
-                if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-                    if (value is ModifiableWorkspaceEntityBase<*, *>) {
-                        value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
-                    }
-// else you're attaching a new entity to an existing entity that is not modifiable
-                    _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-                }
-                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-                    _diff.instrumentation.addChild(LIBRARY_CONNECTION_ID, value, this)
-                } else {
-                    if (value is ModifiableWorkspaceEntityBase<*, *>) {
-                        value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
-                    }
-// else you're attaching a new entity to an existing entity that is not modifiable
-                    this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] = value
-                }
+                changeParent(value, LIBRARY_CONNECTION_ID)
                 changedProperty.add("library")
             }
 
         override fun getEntityClass(): Class<KotlinForwardDeclarationsWorkspaceEntity> =
             KotlinForwardDeclarationsWorkspaceEntity::class.java
     }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class KotlinForwardDeclarationsWorkspaceEntityData : WorkspaceEntityData<KotlinForwardDeclarationsWorkspaceEntity>() {
     lateinit var forwardDeclarationRoots: MutableSet<VirtualFileUrl>
-
     internal fun isForwardDeclarationRootsInitialized(): Boolean = ::forwardDeclarationRoots.isInitialized
-
-    override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<KotlinForwardDeclarationsWorkspaceEntity> {
-        val modifiable = KotlinForwardDeclarationsWorkspaceEntityImpl.Builder(null)
-        modifiable.diff = diff
-        modifiable.id = createEntityId()
-        return modifiable
-    }
-
-    override fun createEntity(snapshot: EntityStorageInstrumentation): KotlinForwardDeclarationsWorkspaceEntity {
-        val entityId = createEntityId()
-        return snapshot.initializeEntity(entityId) {
-            val entity = KotlinForwardDeclarationsWorkspaceEntityImpl(this)
-            entity.snapshot = snapshot
-            entity.id = entityId
-            entity
-        }
-    }
+    override fun newInstance(): KotlinForwardDeclarationsWorkspaceEntity = KotlinForwardDeclarationsWorkspaceEntityImpl(this)
+    override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<KotlinForwardDeclarationsWorkspaceEntity, *> =
+        KotlinForwardDeclarationsWorkspaceEntityImpl.Builder(null)
 
     override fun getMetadata(): EntityMetadata {
         return MetadataStorageImpl.getMetadataByTypeFqn("org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity") as EntityMetadata

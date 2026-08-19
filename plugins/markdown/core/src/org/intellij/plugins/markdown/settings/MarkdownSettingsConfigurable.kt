@@ -123,6 +123,10 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
           .bindSelected(settings::showProblemsInCodeBlocks)
       }
       row {
+        checkBox(MarkdownBundle.message("markdown.settings.strip.trailing.spaces"))
+          .bindSelected(settings::isStripTrailingSpacesOnSave)
+      }
+      row {
         checkBox(MarkdownBundle.message("markdown.settings.group.documents.in.project.tree"))
           .bindSelected(settings::isFileGroupingEnabled)
           .onApply { ProjectView.getInstance(project).refresh(ProjectViewUpdateCause.SETTINGS) }
@@ -135,6 +139,19 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
           )
           onApply { notifyExtensionsChanged() }
         }
+      }
+      row(MarkdownBundle.message("markdown.settings.commandrunner.directory")) {
+        comboBox(
+          model = DefaultComboBoxModel(arrayOf(false, true)),
+          renderer = textListCellRenderer("") { value: Boolean? ->
+            value?.let {
+              MarkdownBundle.message(if (it) "markdown.settings.commandrunner.directory.file" else "markdown.settings.commandrunner.directory.project")
+            }
+          }
+        ).bindItem(
+          getter = { settings.useFileDirectoryForCommands },
+          setter = { settings.useFileDirectoryForCommands = it }
+        ).widthGroup(comboBoxWidthGroup)
       }.bottomGap(BottomGap.SMALL)
       extensionsListRow().apply {
         onApply { notifyExtensionsChanged() }

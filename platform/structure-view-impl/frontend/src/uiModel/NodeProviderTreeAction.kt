@@ -4,6 +4,7 @@ package com.intellij.platform.structureView.frontend.uiModel
 import com.intellij.ide.rpc.ShortcutId
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation
 import com.intellij.platform.structureView.impl.uiModel.StructureUiTreeElement
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.Nls
 
 class NodeProviderTreeAction(
@@ -17,21 +18,20 @@ class NodeProviderTreeAction(
   override val checkboxText: @Nls String,
 ) : CheckboxTreeAction {
 
-  @Volatile
-  private var myNodesByParentId: Map<Int, List<StructureUiTreeElement>> = emptyMap()
+  private var myNodesByParentId: Map<Int, List<StructureViewNode>> = emptyMap()
 
-  @Volatile
+  @all:RequiresEdt
   var nodesLoaded: Boolean = false
     private set
 
-  fun setNodes(newNodes: List<StructureUiTreeElement>) {
-    myNodesByParentId = newNodes.groupBy { node ->
-      (node as? StructureUiTreeElementImpl)?.dto?.parentId ?: -1
-    }
+  @RequiresEdt
+  internal fun setNodesByParentId(nodesByParentId: Map<Int, List<StructureViewNode>>) {
+    myNodesByParentId = nodesByParentId
     nodesLoaded = true
   }
 
-  fun getNodes(parent: StructureUiTreeElement): List<StructureUiTreeElement> {
+  @RequiresEdt
+  internal fun getNodes(parent: StructureUiTreeElement): List<StructureViewNode> {
     return myNodesByParentId[parent.id] ?: emptyList()
   }
 }

@@ -3,10 +3,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.restore
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.codeinsight.utils.qualifiedCalleeExpressionTextRangeInThis
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.CallableImportCandidatesProvider
@@ -22,7 +24,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
+    context(session: KaSession)
+    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
         val psiElement = diagnostic.psi as? KtExpression ?: return null
 
         val invokeCallReceiver = when {
@@ -86,7 +89,8 @@ internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
     override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importContext: ImportContext): Set<Name> =
         setOf(OperatorNameConventions.INVOKE)
 
-    override fun KaSession.provideImportCandidates(
+    context(session: KaSession)
+    override fun provideImportCandidates(
         unresolvedName: Name,
         importContext: ImportContext,
         indexProvider: KtSymbolFromIndexProvider

@@ -25,7 +25,7 @@ jvm_library(
     exports = ["@lib//:io-modelcontextprotocol-kotlin-sdk-provided"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "@lib//:io-modelcontextprotocol-kotlin-sdk-provided",
         "//libraries/junit5",
@@ -61,6 +61,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":mcpserver.testFramework",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:io-modelcontextprotocol-kotlin-sdk-provided",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/kotlin/reflect:reflect_test_lib",
@@ -88,6 +89,7 @@ jvm_library(
 exports_files(
     [
         "intellij.mcpserver.testFramework.iml",
+        "resources/intellij.mcpserver.testFramework.xml",
     ],
     visibility = ["//visibility:public"],
 )

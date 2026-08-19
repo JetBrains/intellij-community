@@ -1,5 +1,6 @@
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject
 
+import com.intellij.idea.TestFor
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.internal.pyProjectToml.getDependenciesFromToml
 import com.intellij.python.pyproject.model.spi.ProjectName
@@ -40,6 +41,38 @@ internal class GetDependenciesFromTomlTest {
 
     val result = getDependenciesFromToml(entries, rootIndex, emptyList())
     assertThat(result.map[mainName]).containsExactly(libName)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-90798"])
+  fun `hatch context formatted project dependencies`(@TempDir tempDir: Path): Unit = timeoutRunBlocking {
+    val workspaceDir = tempDir.resolve("workspace")
+    val packagesDir = workspaceDir.resolve("packages")
+    val mainDir = packagesDir.resolve("main").createDirectories()
+    val childDir = mainDir.resolve("child").createDirectories()
+    val siblingDir = packagesDir.resolve("sibling").createDirectories()
+    val sharedDir = workspaceDir.resolve("shared").createDirectories()
+
+    val toml = PyProjectToml.parse("""
+      [project]
+      name = "main"
+      version = "1.0"
+      dependencies = [
+        "child @ {root:uri}/child",
+        "sibling @ {root:parent:uri}/sibling",
+        "shared @ {root:parent:parent:uri}/shared",
+      ]
+    """.trimIndent())!!
+
+    val mainName = ProjectName("main")
+    val childName = ProjectName("child")
+    val siblingName = ProjectName("sibling")
+    val sharedName = ProjectName("shared")
+    val entries = mapOf(mainName to TestProject(toml, mainDir))
+    val rootIndex = mapOf(childDir to childName, siblingDir to siblingName, sharedDir to sharedName)
+
+    val result = getDependenciesFromToml(entries, rootIndex, emptyList())
+    assertThat(result.map[mainName]).containsExactlyInAnyOrder(childName, siblingName, sharedName)
   }
 
   @Test
@@ -142,6 +175,35 @@ internal class GetDependenciesFromTomlTest {
     val entries = mapOf(mainName to TestProject(toml, mainDir))
     val rootIndex = mapOf(libDir to libName)
     val specs = listOf(TomlDependencySpecification.GroupPathDependency("tool.poetry.group", "dependencies"))
+
+    val result = getDependenciesFromToml(entries, rootIndex, specs)
+    assertThat(result.map[mainName]).containsExactly(libName)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-90798"])
+  fun `tool GroupPep621Dependency`(@TempDir tempDir: Path): Unit = timeoutRunBlocking {
+    val workspaceDir = tempDir.resolve("workspace")
+    val mainDir = workspaceDir.resolve("main").createDirectories()
+    val libDir = workspaceDir.resolve("lib").createDirectories()
+
+    val toml = PyProjectToml.parse("""
+      [project]
+      name = "main"
+      version = "1.0"
+
+      [tool.hatch.envs.default]
+      dependencies = [
+        "pytest>=8",
+        "lib @ {root:parent:uri}/lib",
+      ]
+    """.trimIndent())!!
+
+    val mainName = ProjectName("main")
+    val libName = ProjectName("lib")
+    val entries = mapOf(mainName to TestProject(toml, mainDir))
+    val rootIndex = mapOf(libDir to libName)
+    val specs = listOf(TomlDependencySpecification.GroupPep621Dependency("tool.hatch.envs", "dependencies"))
 
     val result = getDependenciesFromToml(entries, rootIndex, specs)
     assertThat(result.map[mainName]).containsExactly(libName)

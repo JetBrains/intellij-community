@@ -64,6 +64,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.sqlite.iml",
+        "resources/intellij.platform.sqlite.xml",
     ],
     visibility = ["//visibility:public"],
 )

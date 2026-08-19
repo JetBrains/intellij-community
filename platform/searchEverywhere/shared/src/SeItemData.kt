@@ -8,6 +8,7 @@ import com.intellij.platform.searchEverywhere.impl.SeItemEntity
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.computeCatchingOrNull
+import com.intellij.platform.searchEverywhere.providers.target.SeTargetItem
 import com.jetbrains.rhizomedb.DbContext
 import fleet.kernel.DurableRef
 import kotlinx.serialization.Serializable
@@ -65,6 +66,10 @@ class SeItemDataFactory {
         val isSemanticElement = (contributor as? SemanticSearchEverywhereContributor)?.isElementSemantic(element) ?: false
         additionalInfo[SeItemDataKeys.IS_SEMANTIC] = isSemanticElement.toString()
       }
+
+      if (item is SeTargetItem && item.isExactMatch) {
+        additionalInfo[SeItemDataKeys.IS_EXACT_MATCH] = true.toString()
+      }
     }
 
     return SeItemDataImpl(uuid, providerId, item.weight(), item.presentation(), emptyList(), additionalInfo, entityRef)
@@ -83,8 +88,8 @@ class SeItemDataImpl internal constructor(
   private val itemRef: DurableRef<SeItemEntity>,
 ): SeItemData {
   val isCommand: Boolean get() = additionalInfo[SeItemDataKeys.IS_COMMAND]?.toBoolean() == true
-
   val isSemantic: Boolean get() = additionalInfo[SeItemDataKeys.IS_SEMANTIC]?.toBoolean() == true
+  val isExactMatch: Boolean get() = additionalInfo[SeItemDataKeys.IS_EXACT_MATCH]?.toBoolean() == true
 
   override fun fetchItemIfExists(): SeItem? =
     try {
@@ -124,6 +129,9 @@ val SeItemData.isCommand: Boolean get() = (this as SeItemDataImpl).isCommand
 
 @get:ApiStatus.Internal
 val SeItemData.isSemantic: Boolean get() = (this as SeItemDataImpl).isSemantic
+
+@get:ApiStatus.Internal
+val SeItemData.isExactMatch: Boolean get() = (this as SeItemDataImpl).isExactMatch
 
 @ApiStatus.Internal
 fun SeItemData.contentEquals(other: Any?): Boolean = (this as SeItemDataImpl).contentEquals(other)

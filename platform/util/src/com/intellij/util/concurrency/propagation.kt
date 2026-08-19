@@ -492,6 +492,36 @@ internal fun capturePropagationContext(r: Runnable, forceUseContextJob : Boolean
   return command
 }
 
+/**
+ * Same as [capturePropagationContext] with `forceUseContextJob = true`, but additionally returns a cleanup action
+ * for the case when the returned runnable is discarded without ever being executed.
+ *
+ * [ContextRunnable] completes the child job only when it is actually executed, so a discarded runnable would leave
+ * behind a hanging child job which prevents completion of the parent one.
+ * The caller **must** run the returned cleanup if, and only if, it gives up on executing the returned runnable.
+ *
+ * @see AppScheduledExecutorService.captureContextCancellationForRunnableThatDoesNotOutliveContextScope
+ */
+internal fun capturePropagationContextWithCleanup(r: Runnable): JBPair<Runnable, Runnable> {
+  if (isContextAwareComputation(r)) {
+    return JBPair.create(r, EMPTY_CLEANUP)
+  }
+  val command = captureClientIdInRunnable(r)
+  val childContext = createChildContextWithContextJob(r.toString())
+  val childJob = childContext.continuation?.context?.job
+  if (childJob == null) {
+    return JBPair.create(ContextRunnable(childContext, command), EMPTY_CLEANUP)
+  }
+  val cleanup = Runnable {
+    // Cancel to avoid a hanging child job which will prevent completion of the parent one.
+    childJob.cancel(null)
+    childContext.cancelAllIntelliJElements()
+  }
+  return JBPair.create(ContextRunnable(childContext, command), cleanup)
+}
+
+private val EMPTY_CLEANUP = Runnable {}
+
 @ApiStatus.Internal
 fun capturePropagationContext(r: Runnable, expired: Condition<*>, signalRunnable: Runnable): JBPair<Runnable, Condition<*>> {
   if (isContextAwareComputation(signalRunnable)) {
@@ -545,7 +575,7 @@ internal fun <V> capturePropagationContext(c: Callable<V>): FutureTask<V> {
     return CancellationFutureTask(childJob, wrappedCallable, executionTracker, childContext)
   }
   else {
-    return FutureTask(wrappedCallable)
+    return ShallowCancellationFutureTask(childContext, executionTracker, wrappedCallable)
   }
 }
 

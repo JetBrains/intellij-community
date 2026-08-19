@@ -24,6 +24,10 @@ public final class ProjectScope {
     "LIBRARIES_SCOPE_KEY",
     project -> ProjectScopeBuilder.getInstance(project).buildLibrariesScope());
 
+  private static final NotNullLazyKey<GlobalSearchScope, Project> LIBRARY_CLASSES_SCOPE_KEY = NotNullLazyKey.createLazyKey(
+    "LIBRARY_CLASSES_SCOPE_KEY",
+    project -> ProjectScopeBuilder.getInstance(project).buildLibraryClassesScope());
+
   private static final NotNullLazyKey<GlobalSearchScope, Project> CONTENT_SCOPE_KEY = NotNullLazyKey.createLazyKey(
     "CONTENT_SCOPE_KEY",
     project -> ProjectScopeBuilder.getInstance(project).buildContentScope());
@@ -54,9 +58,22 @@ public final class ProjectScope {
   /**
    * Returns a scope containing files from 'binary' and 'source' roots of all libraries and SDK added to the dependencies of the project
    * (for which {@link com.intellij.openapi.roots.ProjectFileIndex#isInLibrary(VirtualFile) isInLibrary} returns {@code true}).
+   *
+   * @see getLibraryClassesScope
    */
   public static @NotNull GlobalSearchScope getLibrariesScope(@NotNull Project project) {
     return LIBRARIES_SCOPE_KEY.getValue(project);
+  }
+
+  /**
+   * Returns a scope containing files from 'binary' ('classes') roots of all libraries and SDK added to the dependencies of the project
+   * (for which {@link com.intellij.openapi.roots.ProjectFileIndex#isInLibraryClasses(VirtualFile) isInLibraryClasses} returns
+   * {@code true}).
+   *
+   * @see getLibrariesScope
+   */
+  public static @NotNull GlobalSearchScope getLibraryClassesScope(@NotNull Project project) {
+    return LIBRARY_CLASSES_SCOPE_KEY.getValue(project);
   }
 
   /**

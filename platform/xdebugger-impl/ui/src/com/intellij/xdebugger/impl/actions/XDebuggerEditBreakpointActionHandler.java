@@ -27,7 +27,7 @@ public class XDebuggerEditBreakpointActionHandler extends EditBreakpointActionHa
     DataContext dataContext = event.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return false;
-    var pair = XBreakpointUIUtil.findSelectedBreakpointProxy(project, editor, getSelectedBreakpointPlacement());
-    return pair.first != null;
+    var breakpoint = XBreakpointUIUtil.findSelectedBreakpoint(project, editor, getSelectedBreakpointPlacement());
+    return breakpoint != null;
   }
 }

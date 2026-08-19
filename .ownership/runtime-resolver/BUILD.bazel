@@ -55,6 +55,7 @@ jvm_library(
 exports_files(
     [
         "intellij.codeowners.runtime.resolver.iml",
+        "resources/intellij.codeowners.runtime.resolver.xml",
     ],
     visibility = ["//visibility:public"],
 )

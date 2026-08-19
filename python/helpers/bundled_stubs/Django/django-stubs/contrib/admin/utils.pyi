@@ -1,9 +1,9 @@
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Sequence
+from re import Pattern
 from typing import Any, Literal, overload, type_check_only
 from uuid import UUID
 
-from _typeshed import Unused
 from django.contrib.admin.options import BaseModelAdmin, _DisplayT, _FieldGroups, _FieldsetSpec, _ListDisplayT, _ModelT
 from django.contrib.admin.sites import AdminSite
 from django.db.models.base import Model
@@ -22,10 +22,11 @@ _T = TypeVar("_T")
 
 QUOTE_MAP: dict[int, str]
 UNQUOTE_MAP: dict[str, str]
+UNQUOTE_RE: Pattern[str]
 
 class FieldIsAForeignKeyColumnName(Exception): ...
 
-def lookup_spawns_duplicates(opts: Options, lookup_path: str) -> bool: ...
+def lookup_spawns_duplicates(opts: Options[Any], lookup_path: str) -> bool: ...
 def get_last_value_from_parameters(parameters: dict[str, list[str] | str], key: str) -> str | None: ...
 @overload
 def prepare_lookup_value(key: str, value: list[str], separator: str = ...) -> list[str] | list[bool]: ...
@@ -49,6 +50,8 @@ class NestedObjects(Collector):
     edges: dict[Model, list[Model]]
     protected: set[Model]
     model_objs: defaultdict[str, set[Model]]
+    @override
+    def __init__(self, *args: object, force_collection: bool = ..., **kwargs: object) -> None: ...
     def add_edge(self, source: Model | None, target: Model) -> None: ...
     @override
     def collect(  # type: ignore[override]
@@ -71,32 +74,30 @@ class NestedObjects(Collector):
     def nested(self, format_callback: None = None) -> list[Any]: ...
     @overload
     def nested(self, format_callback: Callable[[Model], _T]) -> list[Any]: ...
-    @override
-    def can_fast_delete(self, *args: Unused, **kwargs: Unused) -> Literal[False]: ...
 
 @type_check_only
 class _ModelFormatDict(TypedDict):
     verbose_name: str
     verbose_name_plural: str
 
-def model_format_dict(obj: Model | type[Model] | QuerySet | Options[Model]) -> _ModelFormatDict: ...
-def model_ngettext(obj: Options | QuerySet, n: int | None = ...) -> str: ...
+def model_format_dict(obj: Model | type[Model] | QuerySet[Any] | Options[Model]) -> _ModelFormatDict: ...
+def model_ngettext(obj: Options[Any] | QuerySet[Any], n: int | None = ...) -> str: ...
 def lookup_field(
-    name: Callable | str, obj: Model, model_admin: BaseModelAdmin | None = ...
+    name: Callable[..., Any] | str, obj: Model, model_admin: BaseModelAdmin[Any] | None = ...
 ) -> tuple[Field[Any, Any] | None, str | None, Any]: ...
 @overload
 def label_for_field(
-    name: Callable | str,
+    name: Callable[..., Any] | str,
     model: type[Model],
-    model_admin: BaseModelAdmin | None = ...,
+    model_admin: BaseModelAdmin[Any] | None = ...,
     return_attr: Literal[True] = True,
     form: BaseForm | None = ...,
-) -> tuple[str, Callable | str | None]: ...
+) -> tuple[str, Callable[..., Any] | str | None]: ...
 @overload
 def label_for_field(
-    name: Callable | str,
+    name: Callable[..., Any] | str,
     model: type[Model],
-    model_admin: BaseModelAdmin | None = ...,
+    model_admin: BaseModelAdmin[Any] | None = ...,
     return_attr: Literal[False] = False,
     form: BaseForm | None = ...,
 ) -> str: ...
@@ -112,5 +113,5 @@ def get_model_from_relation(field: Field[Any, Any] | reverse_related.ForeignObje
 def reverse_field_path(model: type[Model], path: str) -> tuple[type[Model], str]: ...
 def get_fields_from_path(model: type[Model], path: str) -> list[Field[Any, Any]]: ...
 def construct_change_message(
-    form: Form, formsets: Iterable[BaseFormSet], add: bool
+    form: Form, formsets: Iterable[BaseFormSet[Any]], add: bool
 ) -> list[dict[str, dict[str, list[str]]]]: ...

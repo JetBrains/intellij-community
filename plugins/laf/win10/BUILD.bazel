@@ -57,6 +57,7 @@ jvm_library(
 exports_files(
     [
         "intellij.laf.win10.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

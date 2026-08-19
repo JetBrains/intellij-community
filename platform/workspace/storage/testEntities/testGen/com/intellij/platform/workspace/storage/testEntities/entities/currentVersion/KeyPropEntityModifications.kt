@@ -20,7 +20,7 @@ interface KeyPropEntityBuilder : WorkspaceEntityBuilder<KeyPropEntity> {
 }
 
 internal object KeyPropEntityType : EntityType<KeyPropEntity, KeyPropEntityBuilder>() {
-  override val entityClass: Class<KeyPropEntity> get() = KeyPropEntity::class.java
+  override val entityImplClass: Class<*> get() = KeyPropEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = KeyPropEntityImpl.Builder::class.java
   operator fun invoke(
     someInt: Int,

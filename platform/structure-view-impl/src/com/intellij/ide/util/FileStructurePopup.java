@@ -1117,7 +1117,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner, S
   @Override
   @TestOnly
   @ApiStatus.Internal
-  public void setTreeActionState(@NotNull String actionName, boolean state) {
+  public @NotNull Promise<?> setTreeActionState(@NotNull String actionName, boolean state) {
     JBCheckBox checkBox = myCheckBoxes.get(actionName);
     if (checkBox != null) {
       checkBox.setSelected(state);
@@ -1125,6 +1125,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner, S
         listener.actionPerformed(new ActionEvent(this, 1, ""));
       }
     }
+    return Promises.resolvedPromise();
   }
 
   @Override

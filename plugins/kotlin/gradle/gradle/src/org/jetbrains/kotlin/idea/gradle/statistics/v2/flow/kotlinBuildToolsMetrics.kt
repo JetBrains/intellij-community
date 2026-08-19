@@ -41,6 +41,8 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
     KOTLIN_CROSS_COMPILATION_NOT_SUPPORTED(KotlinBuildToolBooleanFusMetric("KOTLIN_CROSS_COMPILATION_NOT_SUPPORTED")),
     KOTLIN_NATIVE_CACHE_DISABLED(KotlinBuildToolBooleanFusMetric("KOTLIN_NATIVE_CACHE_DISABLED")),
     KMP_TOP_LEVEL_DEPENDENCIES_BLOCK(KotlinBuildToolBooleanFusMetric("KMP_TOP_LEVEL_DEPENDENCIES_BLOCK")),
+    KMP_JVM_CLASSPATH_METADATA_ENABLED(KotlinBuildToolBooleanFusMetric("KMP_JVM_CLASSPATH_METADATA_ENABLED")),
+    KMP_JVM_UNSAFE_OPTIMIZATIONS_ENABLED(KotlinBuildToolBooleanFusMetric("KMP_JVM_UNSAFE_OPTIMIZATIONS_ENABLED")),
     KMP_SWIFT_PM_IMPORT_HAS_DIRECT_DEPENDENCIES(KotlinBuildToolBooleanFusMetric("KMP_SWIFT_PM_IMPORT_HAS_DIRECT_DEPENDENCIES")),
     KMP_SWIFT_PM_IMPORT_HAS_TRANSITIVE_DEPENDENCIES_FROM_MODULAR_DEPENDENCIES(KotlinBuildToolBooleanFusMetric("KMP_SWIFT_PM_IMPORT_HAS_TRANSITIVE_DEPENDENCIES_FROM_MODULAR_DEPENDENCIES")),
     KMP_SWIFT_PM_IMPORT_NUMBER_OF_DIRECT_DEPENDENCIES(KotlinBuildToolLongSumFusMetric("KMP_SWIFT_PM_IMPORT_NUMBER_OF_DIRECT_DEPENDENCIES", anonymizeByRounding = true)),
@@ -63,6 +65,19 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
     JS_ES_TARGET(ConcatenatedAllowedListValuesStringFusMetric("JS_ES_TARGET", listOf("es5", "es2015", "default"))),
     JS_MODULE_SYSTEM(ConcatenatedAllowedListValuesStringFusMetric("JS_MODULE_SYSTEM", listOf("plain", "amd", "commonjs", "umd", "es", "default"))),
 
+    JS_TEST_BROWSER_TYPE(ConcatenatedAllowedListValuesStringFusMetric("JS_TEST_BROWSER_TYPE", listOf("chromium", "firefox", "webkit"))),
+    JS_TEST_BROWSER_CHANGED_OPTION(
+        ConcatenatedAllowedListValuesStringFusMetric(
+            "JS_TEST_BROWSER_CHANGED_OPTION",
+            listOf(
+                "testsLocation",
+                "headless",
+                "launchArgs",
+                "launchEnvironmentVariables",
+                "customBrowserExecutable"
+            )
+        )
+    ),
     NPM_PUBLISH_PLUGIN_ENABLED(KotlinBuildToolBooleanFusMetric("NPM_PUBLISH_PLUGIN_ENABLED")),
     ENABLED_COMPILER_PLUGIN_JS_PLAIN_OBJECTS(KotlinBuildToolBooleanFusMetric("ENABLED_COMPILER_PLUGIN_JS_PLAIN_OBJECTS")),
 

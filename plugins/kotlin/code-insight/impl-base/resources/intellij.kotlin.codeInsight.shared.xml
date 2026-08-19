@@ -24,6 +24,32 @@
     <module name="intellij.kotlin.projectConfiguration"/>
     <module name="intellij.kotlin.refactorings.base"/>
     <module name="intellij.kotlin.references"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.impl.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.k2"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.testIntegration.ui"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs"/>
   </dependencies>
   <!-- endregion -->
 <extensions defaultExtensionNs="com.intellij">
@@ -33,6 +59,7 @@
     <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinInitializerAndIfToElvisHandler" order="first"/>
     <postFormatProcessor implementation="org.jetbrains.kotlin.idea.formatter.TrailingCommaPostFormatProcessor"/>
     <breadcrumbsInfoProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinBreadcrumbsInfoProvider"/>
+    <generatedSourcesFilter implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinGeneratedSourcesFilter"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
     <applicationSettings service="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
     <!--suppress SplitModeXmlApiUsage -->

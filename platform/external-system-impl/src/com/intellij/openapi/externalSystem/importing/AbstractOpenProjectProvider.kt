@@ -72,20 +72,23 @@ abstract class AbstractOpenProjectProvider {
       isNewProject = !isValidIdeaProject,
       runConfigurators = false,
       projectRootDir = nioPath,
-      beforeOpen = { project ->
-        if (isValidIdeaProject) {
-          UnlinkedProjectNotificationAware.enableNotifications(project, systemId)
-        }
-        else {
-          project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
-          project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
-          project.trackActivity(ExternalSystemActivityKey) {
-            linkToExistingProjectAsync(projectFile, project)
+      beforeOpenTasks = buildList {
+        add { project ->
+          if (isValidIdeaProject) {
+            UnlinkedProjectNotificationAware.enableNotifications(project, systemId)
           }
-          ProjectUtil.updateLastProjectLocation(nioPath)
+          else {
+            project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
+            project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
+            project.trackActivity(ExternalSystemActivityKey) {
+              linkToExistingProjectAsync(projectFile, project)
+            }
+            ProjectUtil.updateLastProjectLocation(nioPath)
+          }
+          true
         }
-        openProjectTask.beforeOpen?.invoke(project) ?: true
-      },
+        addAll(openProjectTask.beforeOpenTasks)
+      }
     )
     return ProjectManagerEx.getInstanceEx().openProjectAsync(nioPath, options)
   }

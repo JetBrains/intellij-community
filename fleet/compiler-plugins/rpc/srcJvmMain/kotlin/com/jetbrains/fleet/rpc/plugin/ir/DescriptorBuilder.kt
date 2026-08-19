@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrBranch
 import org.jetbrains.kotlin.ir.expressions.IrConst
-import org.jetbrains.kotlin.ir.expressions.IrConstKind
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
@@ -268,11 +267,10 @@ private fun IrBlockBodyBuilder.whenBranch(
     block(remoteApiFunction)
   )
 
-private fun IrBuiltIns.irString(value: String): IrConst = IrConstImpl(
+private fun IrBuiltIns.irString(value: String): IrConst = IrConstImpl.string(
   UNDEFINED_OFFSET,
   UNDEFINED_OFFSET,
   stringType,
-  IrConstKind.String,
   value
 )
 

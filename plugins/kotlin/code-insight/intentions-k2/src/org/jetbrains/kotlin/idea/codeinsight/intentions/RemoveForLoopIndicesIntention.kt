@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
@@ -43,7 +44,8 @@ class RemoveForLoopIndicesIntention :
         return multiParameter.entries.size == 2
     }
 
-    override fun KaSession.prepareContext(element: KtForExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtForExpression): Context? {
         val loopRange = element.loopRange as? KtDotQualifiedExpression ?: return null
         val multiParameter = element.destructuringDeclaration ?: return null
 

@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.ProductPluginInitContext.Companion.configureProductModeModules
+import com.intellij.ide.plugins.ProductPluginInitContext.Companion.defaultProductCompatibilityDependenciesForRemainingCandidatesProvider
 import com.intellij.ide.plugins.ProductPluginInitContext.Companion.defaultProductCompatibilityDependenciesProvider
 import com.intellij.ide.plugins.ProductPluginInitContext.Companion.defaultProductRulesImposedExclusions
 import com.intellij.ide.plugins.ProductPluginInitContext.Companion.defaultShouldIncludeContentModulesForDependsEdgeTarget
@@ -34,6 +35,12 @@ abstract class PseudoProductTestPluginInitContext : EmptyTestPluginInitContext()
     pluginSet: UnambiguousPluginSet,
   ): Sequence<DependencyRef> =
     defaultProductCompatibilityDependenciesProvider(descriptor, pluginSet)
+
+  override fun provideCompatibilityDependenciesForRemainingCandidates(
+    descriptor: IdeaPluginDescriptorImpl,
+    remainingCandidates: PluginInitializationContext.RemainingCandidatesView
+  ): Sequence<DependencyRef> =
+    defaultProductCompatibilityDependenciesForRemainingCandidatesProvider(descriptor, remainingCandidates)
 
   override fun shouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget: PluginMainDescriptor): Boolean =
     defaultShouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget)

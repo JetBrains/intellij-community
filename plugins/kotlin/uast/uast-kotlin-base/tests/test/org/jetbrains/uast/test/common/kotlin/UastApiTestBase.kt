@@ -37,18 +37,25 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.UAnchorOwner
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UBreakExpression
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UContinueExpression
 import org.jetbrains.uast.UDeclarationsExpression
+import org.jetbrains.uast.UDoWhileExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UForEachExpression
+import org.jetbrains.uast.UForExpression
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UIfExpression
+import org.jetbrains.uast.UJumpExpression
 import org.jetbrains.uast.ULabeledExpression
 import org.jetbrains.uast.ULambdaExpression
 import org.jetbrains.uast.ULiteralExpression
 import org.jetbrains.uast.ULocalVariable
+import org.jetbrains.uast.ULoopExpression
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UNamedExpression
 import org.jetbrains.uast.UParameter
@@ -57,6 +64,7 @@ import org.jetbrains.uast.UReturnExpression
 import org.jetbrains.uast.USwitchClauseExpressionWithBody
 import org.jetbrains.uast.USwitchExpression
 import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UWhileExpression
 import org.jetbrains.uast.UYieldExpression
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.getAsJavaPsiElement
@@ -824,12 +832,103 @@ interface UastApiTestBase {
                     is ULambdaExpression -> { // return@forEach
                         TestCase.assertTrue(returnTarget in lambdas)
                     }
-                    is ULabeledExpression -> { // return@l
-                        TestCase.assertTrue(returnTarget in labels)
-                    }
                     else -> TestCase.fail("Unexpected return target: $returnTarget")
                 }
                 return super.visitReturnExpression(node)
+            }
+        })
+    }
+
+    fun checkBreakAndContinueJumpTargets(uFilePath: String, uFile: UFile) {
+        uFile.accept(object : AbstractUastVisitor() {
+            private val loops: MutableList<ULoopExpression> = mutableListOf()
+            private val labels: MutableList<ULabeledExpression> = mutableListOf()
+
+            override fun visitWhileExpression(node: UWhileExpression): Boolean {
+                loops.add(node)
+                return super.visitWhileExpression(node)
+            }
+
+            override fun afterVisitWhileExpression(node: UWhileExpression) {
+                loops.remove(node)
+                super.afterVisitWhileExpression(node)
+            }
+
+            override fun visitDoWhileExpression(node: UDoWhileExpression): Boolean {
+                loops.add(node)
+                return super.visitDoWhileExpression(node)
+            }
+
+            override fun afterVisitDoWhileExpression(node: UDoWhileExpression) {
+                loops.remove(node)
+                super.afterVisitDoWhileExpression(node)
+            }
+
+            override fun visitForExpression(node: UForExpression): Boolean {
+                loops.add(node)
+                return super.visitForExpression(node)
+            }
+
+            override fun afterVisitForExpression(node: UForExpression) {
+                loops.remove(node)
+                super.afterVisitForExpression(node)
+            }
+
+            override fun visitForEachExpression(node: UForEachExpression): Boolean {
+                loops.add(node)
+                return super.visitForEachExpression(node)
+            }
+
+            override fun afterVisitForEachExpression(node: UForEachExpression) {
+                loops.remove(node)
+                super.afterVisitForEachExpression(node)
+            }
+
+            override fun visitLabeledExpression(node: ULabeledExpression): Boolean {
+                labels.add(node)
+                return super.visitLabeledExpression(node)
+            }
+
+            override fun afterVisitLabeledExpression(node: ULabeledExpression) {
+                labels.remove(node)
+                super.afterVisitLabeledExpression(node)
+            }
+
+            override fun visitBreakExpression(node: UBreakExpression): Boolean {
+                checkLoopJumpTarget(node)
+                return super.visitBreakExpression(node)
+            }
+
+            override fun visitContinueExpression(node: UContinueExpression): Boolean {
+                checkLoopJumpTarget(node)
+                return super.visitContinueExpression(node)
+            }
+
+            private inline fun <reified T : UJumpExpression> checkLoopJumpTarget(node: T) {
+                val name = T::class.java.simpleName
+                TestCase.assertNotNull("$name.jumpTarget should not be null", node.jumpTarget)
+                val jumpTarget = node.jumpTarget
+                TestCase.assertTrue(
+                    "$name.jumpTarget should be ULoopExpression but was: ${jumpTarget?.javaClass?.name}",
+                    jumpTarget is ULoopExpression
+                )
+                if (node.label != null) {
+                    val matchingLabel = labels.lastOrNull { it.label == node.label }
+                    TestCase.assertNotNull("Matching label for $name@${node.label} not found", matchingLabel)
+                    TestCase.assertEquals(
+                        "$name jump target for $name@${node.label} should be the target loop",
+                        matchingLabel?.expression,
+                        jumpTarget
+                    )
+                } else {
+                    val innermostLoop = loops.lastOrNull()
+                    TestCase.assertNotNull("Enclosing loop for $name not found", innermostLoop)
+                    TestCase.assertEquals(
+                        "Unlabeled $name jump target should be the innermost loop",
+                        innermostLoop,
+                        jumpTarget
+                    )
+                }
             }
         })
     }

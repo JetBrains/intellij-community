@@ -9,6 +9,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.generateNewConditionWithSubject
@@ -23,7 +26,8 @@ class EliminateWhenSubjectIntention : KotlinApplicableModCommandAction<KtWhenExp
     override fun getActionPresentation(context: ActionContext, element: KtWhenExpression): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
-    override fun KaSession.prepareContext(element: KtWhenExpression): Boolean? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtWhenExpression): Boolean? {
         val subjectExpression = element.subjectExpression
         if (subjectExpression !is KtNameReferenceExpression) return null
         if (element.entries.lastOrNull()?.isElse == true || !element.isUsedAsExpression) {

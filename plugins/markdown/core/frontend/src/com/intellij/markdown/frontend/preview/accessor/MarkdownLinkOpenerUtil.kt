@@ -9,8 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.PsiNavigateUtil
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
-import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
-import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
+import org.intellij.plugins.markdown.ui.preview.MarkdownHeaderNavigationHandler
 import java.net.URI
 import java.net.URISyntaxException
 
@@ -22,14 +21,15 @@ object MarkdownLinkOpenerUtil {
     val file = headerInfo.virtualFileId.virtualFile() ?: return
     val element = PsiUtilCore.getPsiFile(project, file).findElementAt(headerInfo.textOffset) ?: return
     val manager = FileEditorManager.getInstance(project)
-    val openedEditor = manager.getEditorList(file).filterIsInstance<MarkdownEditorWithPreview>().firstOrNull()
+    val openedEditor = manager.getSelectedEditor(file) as? MarkdownHeaderNavigationHandler
+                       ?: manager.getEditorList(file).filterIsInstance<MarkdownHeaderNavigationHandler>().firstOrNull()
     if (openedEditor == null) {
       val descriptor = OpenFileDescriptor(project, file, element.getTextOffset())
       manager.openEditor(descriptor, true)
       return
     }
+    openedEditor.navigateToHeader(headerInfo.textOffset, headerInfo.lineNumber)
     PsiNavigateUtil.navigate(element, true)
-    (openedEditor.previewEditor as? MarkdownPreviewFileEditor)?.scrollToLine(openedEditor.editor, headerInfo.lineNumber)
   }
 
   private fun createFileUri(link: String?): URI? {

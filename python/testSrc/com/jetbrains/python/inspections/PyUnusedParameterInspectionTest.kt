@@ -4,6 +4,8 @@ package com.jetbrains.python.inspections
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.idea.TestFor
 import com.jetbrains.python.PythonFileType
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedParameterInspection
 import org.intellij.lang.annotations.Language
@@ -11,6 +13,8 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 @TestFor(issues = ["PY-9687"])
+@Subsystems.Inspections
+@Layers.Functional
 class PyUnusedParameterInspectionTest : PyCodeInsightTestCase() {
 
   /** Asserts the exact set of unused-parameter warnings (descriptions) reported for [code]. */

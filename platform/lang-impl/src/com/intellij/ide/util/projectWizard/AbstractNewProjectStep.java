@@ -3,7 +3,6 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.ide.impl.OpenProjectTaskKt;
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.idea.ActionsBundle;
@@ -55,6 +54,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import static com.intellij.ide.impl.OpenProjectTaskKt.OpenProjectTask;
 import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
 
 /**
@@ -204,19 +204,21 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     @Nullable DirectoryProjectGenerator<T> generator,
     @NotNull T settings
   ) {
-    var options = createOpenProjectOptions(projectToClose, null);
+    var options = createOpenProjectOptions(projectToClose, locationString, null);
     return doGenerateProject(locationString, generator, settings, options);
   }
 
   protected static @NotNull OpenProjectTask createOpenProjectOptions(
     @Nullable Project projectToClose,
+    @NotNull String locationString,
     @Nullable Consumer<? super UserDataHolder> extraUserData
   ) {
-    return OpenProjectTaskKt.OpenProjectTask(builder -> {
+    return OpenProjectTask(builder -> {
       builder.setProjectToClose(projectToClose);
       builder.setNewProject(true);
       builder.setRunConfigurators(true);
       builder.setProjectCreatedWithWizard(true);
+      builder.setProjectRootDir(Path.of(locationString));
       builder.withBeforeOpenCallback(project -> {
         if (extraUserData != null) {
           extraUserData.accept(project);
@@ -269,7 +271,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       var noText = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.open.existing");
       var result = Messages.showYesNoDialog(options.getProjectToClose(), message, title, yesText, noText, Messages.getQuestionIcon());
       if (result == Messages.NO) {
-        return PlatformProjectOpenProcessor.Companion.doOpenProject(location, OpenProjectTask.build());
+        return PlatformProjectOpenProcessor.Companion.doOpenProject(location, OpenProjectTask.build().withProjectRootDir(location));
       }
     }
 

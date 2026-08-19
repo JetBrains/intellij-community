@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  Base.class
+  META-INF/kotlin_classModifiers_classBecameAbstract-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classModifiers/classBecameAbstract/a/base.kt
+End of files
+Cleaning output files:
+  InstKt.class
+  META-INF/kotlin_classModifiers_classBecameAbstract-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classModifiers/classBecameAbstract/a/inst.kt
+End of files
+------------------------------------------
+Exit code: ERROR

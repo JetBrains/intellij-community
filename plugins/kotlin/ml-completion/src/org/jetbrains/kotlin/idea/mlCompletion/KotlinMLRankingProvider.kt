@@ -8,8 +8,8 @@ import com.intellij.lang.Language
 
 class KotlinMLRankingProvider : CatBoostJarCompletionModelProvider(
     KotlinMlCompletionBundle.message("kotlin.ml.completion.model"),
-    "kotlin_features",
-    "kotlin_model"
+    "kotlin_features_exp",
+    "kotlin_model_exp"
 ) {
     override fun isLanguageSupported(language: Language): Boolean = language.id.equals("kotlin", ignoreCase = true)
 

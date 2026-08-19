@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -47,7 +48,8 @@ internal object UnresolvedInvocationQuickFixFactories {
         listOfNotNull(createInterpolationPrefixFixIfApplicable(stringTemplateExpression))
     }
 
-    private fun KaSession.createInterpolationPrefixFixIfApplicable(stringTemplateExpression: KtStringTemplateExpression): AddInterpolationPrefixFix? {
+    context(session: KaSession)
+    private fun createInterpolationPrefixFixIfApplicable(stringTemplateExpression: KtStringTemplateExpression): AddInterpolationPrefixFix? {
         if (!stringTemplateExpression.languageVersionSettings.supportsFeature(LanguageFeature.MultiDollarInterpolation)) return null
         if (stringTemplateExpression.interpolationPrefix != null) return null
         if (stringTemplateExpression.isSingleQuoted()) return null
@@ -57,7 +59,8 @@ internal object UnresolvedInvocationQuickFixFactories {
         return AddInterpolationPrefixFix(stringTemplateExpression, prefixLength)
     }
 
-    private fun KaSession.containsResolvedReferences(stringTemplateExpression: KtStringTemplateExpression): Boolean {
+    context(session: KaSession)
+    private fun containsResolvedReferences(stringTemplateExpression: KtStringTemplateExpression): Boolean {
         return stringTemplateExpression.entries.filterIsInstance<KtSimpleNameStringTemplateEntry>().any { nameEntry ->
             val resolvedCalls = nameEntry.expression?.resolveToCall()?.calls.orEmpty()
             resolvedCalls.isNotEmpty()

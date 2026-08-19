@@ -1,0 +1,43 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.zip.signer` start
+jvm_library(
+    name = "zip-signer",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.zip.signer",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-zip-signer-zip-signer"],
+    runtime_deps = ["@lib//:libraries-zip-signer-zip-signer"],
+)
+
+jvm_library(
+    name = "zip-signer_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.zip.signer",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-zip-signer-zip-signer"],
+    runtime_deps = [":zip-signer"],
+)
+### auto-generated section `build intellij.libraries.zip.signer` end
+
+### auto-generated section `iml intellij.libraries.zip.signer` start
+exports_files(
+    [
+        "intellij.libraries.zip.signer.iml",
+        "resources/intellij.libraries.zip.signer.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.zip.signer` end

@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="foo in integration" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
+    <module name="integration" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="foo.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <option name="PACKAGE_NAME" value="foo" />
+    <option name="MAIN_CLASS_NAME" value="" />
+    <option name="METHOD_NAME" value="" />
+    <option name="TEST_OBJECT" value="package" />
+    <method v="2" />
+  </configuration>
+</component>

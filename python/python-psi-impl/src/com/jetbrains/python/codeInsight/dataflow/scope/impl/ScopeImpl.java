@@ -36,14 +36,15 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyTypeCheckedElementVisitor;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -170,14 +171,6 @@ public class ScopeImpl implements Scope {
   }
 
   @Override
-  public boolean declaresName(@NotNull String name) {
-    if (myNamedElements == null) {
-      collectDeclarations();
-    }
-    return myNamedElements.containsKey(name);
-  }
-
-  @Override
   public @NotNull List<PyImportedNameDefiner> getImportedNameDefiners() {
     if (myImportedNameDefiners == null) {
       collectDeclarations();
@@ -186,18 +179,19 @@ public class ScopeImpl implements Scope {
   }
 
   @Override
-  public @NotNull Collection<PsiNamedElement> getNamedElements(String name, boolean includeNestedGlobals) {
+  public @NotNull @Unmodifiable Collection<PsiNamedElement> getNamedElements(String name, boolean includeNestedGlobals) {
     if (myNamedElements == null || myNestedScopes == null) {
       collectDeclarations();
     }
-    final Collection<PsiNamedElement> elements = new ArrayList<>(myNamedElements.getOrDefault(name, List.of()));
-    if (includeNestedGlobals) {
-      for (Scope scope : myNestedScopes) {
-        ((ScopeImpl)scope).collectGlobals(name, elements);
-      }
+    final Collection<PsiNamedElement> elements = myNamedElements.getOrDefault(name, List.of());
+    if (!includeNestedGlobals) {
+      return Collections.unmodifiableCollection(elements);
     }
-    elements.forEach(PyPsiUtils::assertValid);
-    return elements;
+    final Collection<PsiNamedElement> allElements = new ArrayList<>(elements);
+    for (Scope scope : myNestedScopes) {
+      ((ScopeImpl)scope).collectGlobals(name, allElements);
+    }
+    return Collections.unmodifiableCollection(allElements);
   }
 
   private void collectGlobals(String name, @NotNull Collection<PsiNamedElement> results) {

@@ -18,10 +18,6 @@
     reason: <- intellij.mcpserver
   contentModules:
   - name: intellij.mcpserver
-    libraries:
-      night-config-toml:
-      - name: $MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3/toml-3.jar
-      - name: $MAVEN_REPOSITORY$/com/electronwill/night-config/core/3/core-3.jar
 - name: lib/intellij.mcpserver.stdio.jar
   projectLibraries:
   - name: io.github.oshai.kotlin.logging.jvm
@@ -44,6 +40,13 @@
 - name: lib/mcpserver-plugin.jar
   modules:
   - name: intellij.mcpserver.plugin
+- name: lib/modules/intellij.libraries.night.config.toml.jar
+  contentModules:
+  - name: intellij.libraries.night.config.toml
+    libraries:
+      night-config-toml:
+      - name: $MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3/toml-3.jar
+      - name: $MAVEN_REPOSITORY$/com/electronwill/night-config/core/3/core-3.jar
 - name: lib/modules/intellij.mcpserver.frontend.jar
   contentModules:
   - name: intellij.mcpserver.frontend
@@ -53,6 +56,9 @@
 - name: lib/modules/intellij.mcpserver.terminal.jar
   contentModules:
   - name: intellij.mcpserver.terminal
+- name: lib/modules/intellij.mcpserver.toolsets.jar
+  contentModules:
+  - name: intellij.mcpserver.toolsets
 - name: lib/modules/intellij.mcpserver.vcs.jar
   contentModules:
   - name: intellij.mcpserver.vcs

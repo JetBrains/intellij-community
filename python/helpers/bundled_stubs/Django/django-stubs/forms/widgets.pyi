@@ -1,15 +1,16 @@
 import datetime
 from collections.abc import Iterable, Iterator, Mapping, Sequence
-from typing import Any, Literal, Protocol, TypeAlias, type_check_only
+from re import Pattern
+from typing import Any, Literal, Protocol, Self, TypeAlias, type_check_only
 
-import _typeshed
+from _typeshed import Self as MetaclassSelf  # noqa: TID251
 from django.core.files.base import File
 from django.forms.renderers import BaseRenderer
 from django.forms.utils import _DataT, _FilesT
 from django.utils.choices import _Choices
 from django.utils.datastructures import _ListOrTuple
 from django.utils.safestring import SafeString
-from typing_extensions import Self, override
+from typing_extensions import override
 
 _OptAttrs: TypeAlias = dict[str, Any]
 
@@ -24,6 +25,7 @@ class MediaAsset:
     @override
     def __hash__(self) -> int: ...
     def __html__(self) -> SafeString: ...
+    def render(self, *, attrs: Any | None = None) -> SafeString: ...
     @property
     def path(self) -> str: ...
 
@@ -32,6 +34,11 @@ class Script(MediaAsset):
 
     def __init__(self, src: str, **attributes: Any) -> None: ...
 
+class Stylesheet(MediaAsset):
+    element_template: str
+
+    def __init__(self, href: str, **attributes: Any) -> None: ...
+
 class Media:
     def __init__(
         self,
@@ -39,9 +46,9 @@ class Media:
         css: dict[str, Sequence[str]] | None = None,
         js: Sequence[str] | None = None,
     ) -> None: ...
-    def render(self) -> SafeString: ...
-    def render_js(self) -> list[SafeString]: ...
-    def render_css(self) -> Iterable[SafeString]: ...
+    def render(self, *, attrs: Any | None = None) -> SafeString: ...
+    def render_js(self, *, attrs: Any | None = None) -> list[SafeString]: ...
+    def render_css(self, *, attrs: Any | None = None) -> Iterable[SafeString]: ...
     def absolute_path(self, path: str) -> str: ...
     def __getitem__(self, name: str) -> Media: ...
     @staticmethod
@@ -51,11 +58,11 @@ class Media:
 
 class MediaDefiningClass(type):
     def __new__(
-        mcs: type[_typeshed.Self],  # noqa: TID251
+        mcs: type[MetaclassSelf],
         name: str,
         bases: tuple[type, ...],
         attrs: dict[str, Any],
-    ) -> _typeshed.Self: ...  # noqa: TID251
+    ) -> MetaclassSelf: ...
 
 class Widget(metaclass=MediaDefiningClass):
     needs_multipart_form: bool
@@ -162,7 +169,7 @@ class ClearableFileInput(FileInput):
     checked: bool
     def clear_checkbox_name(self, name: str) -> str: ...
     def clear_checkbox_id(self, name: str) -> str: ...
-    def is_initial(self, value: File | str | None) -> bool: ...
+    def is_initial(self, value: File[Any] | str | None) -> bool: ...
     @override
     def format_value(self, value: Any) -> Any: ...
     @override
@@ -351,7 +358,7 @@ class SelectDateWidget(Widget):
     template_name: str
     input_type: str
     select_widget: type[ChoiceWidget]
-    date_re: Any
+    date_re: Pattern[str]
     years: Iterable[int | str]
     months: Mapping[int, str]
     year_none_value: tuple[Literal[""], str]
@@ -371,7 +378,7 @@ class SelectDateWidget(Widget):
     @override
     def id_for_label(self, id_: str) -> str: ...
     @override
-    def value_from_datadict(self, data: _DataT, files: _FilesT, name: str) -> str | None | Any: ...
+    def value_from_datadict(self, data: _DataT, files: _FilesT, name: str) -> str | Any | None: ...
     @override
     def value_omitted_from_data(self, data: _DataT, files: _FilesT, name: str) -> bool: ...
 
@@ -400,6 +407,7 @@ __all__ = (
     "SelectMultiple",
     "SplitDateTimeWidget",
     "SplitHiddenDateTimeWidget",
+    "Stylesheet",
     "TelInput",
     "TextInput",
     "Textarea",

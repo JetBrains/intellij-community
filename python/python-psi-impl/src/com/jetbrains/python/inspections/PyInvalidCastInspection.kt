@@ -15,11 +15,11 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyElementGenerator
-import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.isSubtypeRelated
 import com.jetbrains.python.psi.types.PyTypedDictType
@@ -46,10 +46,10 @@ class PyInvalidCastInspection : PyInspection() {
     val ignoreTypedDictStructure = ignoreTypedDictStructure
     return object : PyInspectionVisitor(holder, context) {
       override fun visitPyCallExpression(callExpression: PyCallExpression) {
-        val callees = callExpression.multiResolveCalleeFunction(resolveContext)
-        val isCastCall = callees.any {
-          (it as? PyFunction)?.qualifiedName == PyTypingTypeProvider.CAST ||
-          (it as? PyFunction)?.qualifiedName == PyTypingTypeProvider.CAST_EXT
+        val callee = callExpression.callee ?: return
+        val callables = PyTypeUtil.getCallableItems(context.getType(callee))
+        val isCastCall = callables.map { it.callable?.qualifiedName }.any {
+          it == PyTypingTypeProvider.CAST || it == PyTypingTypeProvider.CAST_EXT
         }
         if (!isCastCall) return
 

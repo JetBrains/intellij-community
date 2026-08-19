@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
@@ -9,4 +10,15 @@
     <module name="intellij.platform.projectModel"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.indexPatternProvider" interface="com.intellij.psi.search.IndexPatternProvider"/>
+    <extensionPoint qualifiedName="com.intellij.lang.findUsagesProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.findUsages.FindUsagesProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.searcher" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
+      <with attribute="forClass" implements="com.intellij.model.search.SearchParameters"/>
+      <with attribute="implementationClass" implements="com.intellij.model.search.Searcher"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.globalIndexFilter" interface="com.intellij.util.indexing.GlobalIndexFilter" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

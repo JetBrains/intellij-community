@@ -1,6 +1,7 @@
 from _typeshed import Incomplete, SupportsWrite
 from collections.abc import Iterable, Mapping
-from typing import NoReturn, TypeVar, overload
+from typing import TypeVar, overload
+from typing_extensions import Never
 
 from .std import tqdm as std_tqdm
 
@@ -45,7 +46,7 @@ class tqdm_tk(std_tqdm[_T]):
     ) -> None: ...
     @overload
     def __init__(
-        self: tqdm_tk[NoReturn],
+        self: tqdm_tk[Never],
         iterable: None = None,
         desc: str | None = ...,
         total: float | None = ...,

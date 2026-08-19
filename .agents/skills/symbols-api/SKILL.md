@@ -1,6 +1,6 @@
 ---
 name: symbols-api
-description: Use IntelliJ Symbol API for declarations, references, search, rename, and navigation outside PolySymbols.
+description: Use IntelliJ Symbol API for declarations, references, and rename.
 ---
 
 # Symbol API

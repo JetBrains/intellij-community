@@ -19,30 +19,30 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKindImpl
-import org.jetbrains.kotlin.analysis.api.components.asCompositeScope
-import org.jetbrains.kotlin.analysis.api.components.asSignature
-import org.jetbrains.kotlin.analysis.api.components.callableSymbol
-import org.jetbrains.kotlin.analysis.api.components.canBeAnalysed
-import org.jetbrains.kotlin.analysis.api.components.containingSymbol
-import org.jetbrains.kotlin.analysis.api.components.declarationScope
-import org.jetbrains.kotlin.analysis.api.components.defaultType
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
-import org.jetbrains.kotlin.analysis.api.components.isDenotable
-import org.jetbrains.kotlin.analysis.api.components.isStringType
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
-import org.jetbrains.kotlin.analysis.api.components.memberScope
-import org.jetbrains.kotlin.analysis.api.components.packageScope
-import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.scopes.asCompositeScope
+import org.jetbrains.kotlin.analysis.api.signatures.asSignature
+import org.jetbrains.kotlin.analysis.api.javaInterop.callableSymbol
+import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
+import org.jetbrains.kotlin.analysis.api.scopes.declarationScope
+import org.jetbrains.kotlin.analysis.api.types.defaultType
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
+import org.jetbrains.kotlin.analysis.api.types.isDenotable
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
+import org.jetbrains.kotlin.analysis.api.scopes.packageScope
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.components.scope
-import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
-import org.jetbrains.kotlin.analysis.api.components.smartCastInfo
-import org.jetbrains.kotlin.analysis.api.components.staticMemberScope
-import org.jetbrains.kotlin.analysis.api.components.substitute
-import org.jetbrains.kotlin.analysis.api.components.withNullability
+import org.jetbrains.kotlin.analysis.api.scopes.scope
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
+import org.jetbrains.kotlin.analysis.api.scopes.staticMemberScope
+import org.jetbrains.kotlin.analysis.api.signatures.substitute
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -72,6 +72,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForExplicitReceiverExpression
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isIgnoredExpectDeclaration
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
@@ -867,7 +868,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
 
     context(_: KaSession)
     private fun KaJavaFieldSymbol.hasPrimitiveOrStringReturnType(): Boolean =
-        (psi as? PsiField)?.type is PsiPrimitiveType || returnType.isStringType
+        (psi as? PsiField)?.type is PsiPrimitiveType || returnType.classId == KaStandardTypeClassIds.STRING
 
     context(_: KaSession)
     private fun KaCallableSymbol.hasConstEvaluationAnnotation(): Boolean =

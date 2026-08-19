@@ -7,6 +7,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -35,7 +36,8 @@ internal object PositionedValueArgumentForJavaAnnotationFixFactories {
             listOfNotNull(createFixIfAvailable(diagnostic.psi))
         }
 
-    private fun KaSession.createFixIfAvailable(
+    context(session: KaSession)
+    private fun createFixIfAvailable(
         element: KtElement,
     ): ReplaceWithNamedArgumentsFix? {
         val annotationEntry = element.parentOfType<KtAnnotationEntry>() ?: return null

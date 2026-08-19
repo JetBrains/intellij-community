@@ -19,10 +19,16 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
+import org.jetbrains.kotlin.analysis.api.symbols.findPackage
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsi
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.allSupertypes
+import org.jetbrains.kotlin.analysis.api.types.defaultType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.name.ClassId
@@ -38,7 +44,8 @@ private val moduleAbstractTypesClassIds: List<ClassId> = listOf(
   WorkspaceModelDefaults.SYMBOLIC_ENTITY_ID.classId,
 )
 
-internal fun KaSession.inheritors(
+context(session: KaSession)
+internal fun inheritors(
   classSymbol: KaClassSymbol, javaPsiFacade: JavaPsiFacade, scope: GlobalSearchScope,
 ): List<KtClassOrObject> {
   // can be rewritten using org.jetbrains.kotlin.idea.searching.inheritors.KotlinSearchUtilKt.findAllInheritors
@@ -53,7 +60,8 @@ internal fun KaSession.inheritors(
 
 private val standardTypes = setOf(Any::class.qualifiedName, CommonClassNames.JAVA_LANG_OBJECT, CommonClassNames.JAVA_LANG_ENUM)
 
-internal fun KaSession.superTypesJavaFqns(
+context(session: KaSession)
+internal fun superTypesJavaFqns(
   classSymbol: KaClassSymbol, javaPsiFacade: JavaPsiFacade, scope: GlobalSearchScope,
 ): List<String> {
   // FIXME: There's definitely smth wrong with AA
@@ -94,7 +102,8 @@ internal val KaClassLikeSymbol.packageName: String
 internal val KaClassLikeSymbol.packageOrDie: FqName
   get() = classId?.packageFqName ?: throw MetaModelBuilderException("$name has no package", sourcePsiSafe())
 
-internal fun KaSession.getPackageSymbol(classSymbol: KaClassSymbol): KaPackageSymbol? =
+context(session: KaSession)
+internal fun getPackageSymbol(classSymbol: KaClassSymbol): KaPackageSymbol? =
   classSymbol.classId?.packageFqName?.let { findPackage(it) }
 
 private val blobClasses: List<ClassId> = arrayListOf(
@@ -102,7 +111,8 @@ private val blobClasses: List<ClassId> = arrayListOf(
   WorkspaceModelDefaults.ENTITY_POINTER.classId,
 )
 
-internal fun KaSession.isBlob(classSymbol: KaClassSymbol): Boolean {
+context(session: KaSession)
+internal fun isBlob(classSymbol: KaClassSymbol): Boolean {
   val classId = classSymbol.classId ?: return false
   return blobClasses.any { blobClass -> classSymbol.defaultType.isSubtypeOf(blobClass) } ||
          classId in moduleAbstractTypesClassIds ||
@@ -114,20 +124,25 @@ private fun Iterable<String>.withoutStandardTypes(): List<String> {
   return filterNot { standardTypes.contains(it) }
 }
 
-internal fun KaSession.moduleAbstractTypes(): List<KaClassSymbol> {
+context(session: KaSession)
+internal fun moduleAbstractTypes(): List<KaClassSymbol> {
   return moduleAbstractTypesClassIds.mapNotNull { classId -> findClass(classId) }
 }
 
-internal fun KaSession.isEntityInterface(classSymbol: KaClassSymbol): Boolean =
+context(session: KaSession)
+internal fun isEntityInterface(classSymbol: KaClassSymbol): Boolean =
   classSymbol.classKind == KaClassKind.INTERFACE && classSymbol.defaultType.isSubtypeOf(WorkspaceModelDefaults.WORKSPACE_ENTITY.classId)
 
-internal fun KaSession.isEntityBuilderInterface(classSymbol: KaClassSymbol): Boolean =
+context(session: KaSession)
+internal fun isEntityBuilderInterface(classSymbol: KaClassSymbol): Boolean =
   isEntityInterface(classSymbol) && classSymbol.name?.identifier == "Builder" // TODO: improve
 
-internal fun KaSession.isEntitySource(classSymbol: KaClassSymbol): Boolean =
+context(session: KaSession)
+internal fun isEntitySource(classSymbol: KaClassSymbol): Boolean =
   classSymbol.defaultType.isSubtypeOf(WorkspaceModelDefaults.ENTITY_SOURCE.classId)
 
-internal fun KaSession.computeKind(property: KaPropertySymbol): ObjProperty.ValueKind {
+context(session: KaSession)
+internal fun computeKind(property: KaPropertySymbol): ObjProperty.ValueKind {
   val getter = property.getter ?: return ObjProperty.ValueKind.Plain
   if (!getter.hasBody) return ObjProperty.ValueKind.Plain
   val declaration = getter.psi as? KtDeclarationWithBody ?: return ObjProperty.ValueKind.Plain
@@ -139,7 +154,8 @@ internal fun KaSession.computeKind(property: KaPropertySymbol): ObjProperty.Valu
   }
 }
 
-internal fun KaSession.createObjTypeStub(symbol: KaClassSymbol, module: CompiledObjModuleImpl): ObjClassImpl<Obj> {
+context(session: KaSession)
+internal fun createObjTypeStub(symbol: KaClassSymbol, module: CompiledObjModuleImpl): ObjClassImpl<Obj> {
   val openness = when {
     symbol.isAnnotatedBy(WorkspaceModelDefaults.ABSTRACT_ANNOTATION.classId) -> ObjClass.Openness.abstract
     symbol.isAnnotatedBy(WorkspaceModelDefaults.OPEN_ANNOTATION.classId) -> ObjClass.Openness.open
@@ -155,10 +171,12 @@ internal fun KaSession.createObjTypeStub(symbol: KaClassSymbol, module: Compiled
   return ObjClassImpl(module, identifier, openness, symbol.sourcePsi(), propertyAnnotations)
 }
 
-internal fun KaSession.isParent(kaType: KaAnnotated) =
+context(session: KaSession)
+internal fun isParent(kaType: KaAnnotated) =
   kaType.isAnnotatedBy(WorkspaceModelDefaults.PARENT_ANNOTATION.classId)
 
-internal fun KaSession.isEntityReference(kaType: KaType?): Boolean {
+context(session: KaSession)
+internal fun isEntityReference(kaType: KaType?): Boolean {
   if (kaType !is KaClassType) return false
   if (kaType.isSubtypeOf(StandardClassIds.List) || kaType.isSubtypeOf(StandardClassIds.Set)) {
     val typeArgument = kaType.typeArguments.firstNotNullOf { it.type }

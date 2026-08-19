@@ -64,6 +64,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.execution.impl.shared.iml",
+        "resources/intellij.java.execution.impl.shared.xml",
     ],
     visibility = ["//visibility:public"],
 )

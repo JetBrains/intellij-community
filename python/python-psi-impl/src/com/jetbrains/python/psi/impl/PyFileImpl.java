@@ -26,7 +26,6 @@ import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -97,7 +96,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
+public class PyFileImpl extends PsiFileBase implements PyFile {
   protected volatile @Nullable PyType myType;
 
   //private volatile Boolean myAbsoluteImportEnabled;

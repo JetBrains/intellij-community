@@ -3,12 +3,9 @@ package com.intellij.build.console
 
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.Failure
-import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ExecutionConsole
 
 internal interface BuildConsoleView : ExecutionConsole {
-
-  val consoleView: ConsoleView
 
   fun onEvent(event: BuildEvent)
 

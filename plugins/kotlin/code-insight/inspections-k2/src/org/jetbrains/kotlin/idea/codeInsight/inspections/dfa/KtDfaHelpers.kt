@@ -15,8 +15,8 @@ import com.intellij.psi.PsiTypes
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.KaStandardTypeClassIds
-import org.jetbrains.kotlin.analysis.api.components.arrayElementType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.arrayElementType
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
 import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
 import org.jetbrains.kotlin.analysis.api.components.isClassType
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
@@ -185,7 +185,7 @@ context(_: KaSession)
 internal fun KaType.getJvmAwareArrayElementType(): KaType? {
     if (!isArrayOrPrimitiveArray) return null
     val type = arrayElementType ?: return null
-    if (this.isClassType(StandardClassIds.Array) && type.isPrimitive) {
+    if (this.isClassType(StandardClassIds.Array) && type.classId in KaStandardTypeClassIds.PRIMITIVES) {
         return type.withNullability(true)
     }
     return type

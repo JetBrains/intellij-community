@@ -1,8 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jsonDump
 
+import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.ModuleDependency
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
+import com.intellij.platform.workspace.jps.entities.SdkDependency
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.getChildrenConnections
@@ -53,7 +60,7 @@ class WorkspaceModelJsonDumpSerializer {
             putJsonArray(propertyName) {
               for (value in valueList) {
                 val asJson = finalClassAsJson(value, customTypeMetadata)
-                add(asJson)
+                asJson?.let { add(it) }
               }
             }
           }
@@ -65,7 +72,7 @@ class WorkspaceModelJsonDumpSerializer {
                 }
                 if (thisMetadata != null) {
                   val asJson = finalClassAsJson(value, thisMetadata)
-                  add(asJson)
+                  asJson?.let { add(it) }
                 }
                 else {
                   add("Could not serialize abstract class ${customTypeMetadata.fqName}")
@@ -83,7 +90,7 @@ class WorkspaceModelJsonDumpSerializer {
     }
   }
 
-  private fun finalClassAsJson(value: Any, typeMetadata: FinalClassMetadata): JsonObject {
+  private fun finalClassAsJson(value: Any, typeMetadata: FinalClassMetadata): JsonObject? {
     if (typeMetadata.fqName == VirtualFileUrl::class.qualifiedName) {
       return buildJsonObject {
         put("url", (value as VirtualFileUrl).url)
@@ -92,7 +99,8 @@ class WorkspaceModelJsonDumpSerializer {
     if (typeMetadata.fqName == EntitySource::class.qualifiedName) {
       return buildJsonObject {
         put("entitySourceFqn", value::class.qualifiedName)
-        put("virtualFileUrl", (value as? EntitySource)?.virtualFileUrl?.url)
+        val vfu = (value as? EntitySource)?.virtualFileUrl?.url
+        vfu?.let { put("virtualFileUrl", it) }
       }
     }
     when (typeMetadata) {
@@ -101,10 +109,17 @@ class WorkspaceModelJsonDumpSerializer {
         //if (typeMetadata.fqName in encounteredClasses) {
         //} else {
         return buildJsonObject {
-          put("Unknown \"FinalClassMetadata.KnownClass\"", typeMetadata.fqName)
+          put("unsupported", typeMetadata.fqName)
         }
       }
       is FinalClassMetadata.ClassMetadata, is FinalClassMetadata.ObjectMetadata -> {
+        if (typeMetadata.isSymbolicId()) {
+          value as SymbolicEntityId<*>
+          return buildJsonObject {
+            put("fqn", typeMetadata.fqName)
+            put("presentableName", value.presentableName)
+          }
+        }
         return buildJsonObject {
           put("fqn", typeMetadata.fqName)
           for (property in typeMetadata.properties) {
@@ -140,7 +155,7 @@ class WorkspaceModelJsonDumpSerializer {
         when (val customTypeMetadata = propertyType.typeMetadata) {
           is FinalClassMetadata -> {
             val asJson = finalClassAsJson(propertyValue, customTypeMetadata)
-            put(propertyName, asJson)
+            asJson?.let { put(propertyName, it) }
           }
           is ExtendableClassMetadata.AbstractClassMetadata -> {
             val thisMetadata = propertyValue::class.qualifiedName?.let { classFqn ->
@@ -148,7 +163,7 @@ class WorkspaceModelJsonDumpSerializer {
             }
             if (thisMetadata != null) {
               val asJson = finalClassAsJson(propertyValue, thisMetadata)
-              put(propertyName, asJson)
+              asJson?.let { put(propertyName, it) }
             }
             else {
               put(propertyName, "Could not serialize abstract class ${customTypeMetadata.fqName}")
@@ -171,16 +186,48 @@ class WorkspaceModelJsonDumpSerializer {
     }
   }
 
+  @OptIn(WorkspaceEntityInternalApi::class)
   fun entityAsJson(entity: WorkspaceEntity): JsonObject {
+    if (entity is ModuleEntity) {
+      return moduleEntityAsJson(entity)
+    }
     val entityBase = entity as WorkspaceEntityBase
     return entityBaseAsJson(entityBase)
   }
 
-  @OptIn(WorkspaceEntityInternalApi::class, EntityStorageInstrumentationApi::class)
+  @OptIn(WorkspaceEntityInternalApi::class)
+  private fun moduleEntityAsJson(entity: ModuleEntity): JsonObject {
+    entity as WorkspaceEntityBase
+    val entityMetadata = entity.getData().getMetadata()
+
+    return buildJsonObject {
+      put("fqn", entityMetadata.fqName)
+      
+      for (property in entityMetadata.properties) {
+        if (property.name != "dependencies")
+          putProperty(entity, property)
+      }
+
+      put("dependencies_Count", entity.dependencies.size)
+      putJsonArray("dependencies") {
+        for (dependency in entity.dependencies) {
+          when (dependency) {
+            InheritedSdkDependency -> add("InheritedSdkDependency")
+            ModuleSourceDependency -> add("ModuleSourceDependency")
+            is LibraryDependency -> add("Library(${dependency.library.presentableName}, ${dependency.exported}, ${dependency.scope})")
+            is ModuleDependency -> add("Module(${dependency.module.presentableName}, ${dependency.exported}, ${dependency.scope}, ${dependency.productionOnTest})")
+            is SdkDependency -> add("Sdk(${dependency.sdk.presentableName})")
+          }
+        }
+      }
+
+      putEntityChildren(entity)
+    }
+  }
+
+  @OptIn(WorkspaceEntityInternalApi::class)
   private fun entityBaseAsJson(entity: WorkspaceEntityBase): JsonObject {
     val entityMetadata = entity.getData().getMetadata()
-    val snapshot = entity.snapshot as AbstractEntityStorage
-    val childrenConnections = getChildrenConnections(entity, snapshot).sortedBy { it.childClass }
 
     return buildJsonObject {
       put("fqn", entityMetadata.fqName)
@@ -189,31 +236,38 @@ class WorkspaceModelJsonDumpSerializer {
         putProperty(entity, property)
       }
 
-      for (connectionId in childrenConnections) {
-        val childClassName = connectionId.childClass.findWorkspaceEntity().simpleName
-        when (connectionId.connectionType) {
-          ConnectionId.ConnectionType.ONE_TO_ONE, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> {
-            val jsonName = entityChildReferenceJsonName(childClassName)
-            val child = snapshot.instrumentation.getOneChild(connectionId, entity) as? WorkspaceEntityBase
-            if (child != null) {
-              val childAsJson = entityBaseAsJson(child)
-              put(jsonName, childAsJson)
-            }
-            else {
-              put(jsonName, "null")
-            }
-          }
-          ConnectionId.ConnectionType.ONE_TO_MANY, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
-            val jsonName = entityChildReferenceJsonName(childClassName, true)
+      putEntityChildren(entity)
+    }
+  }
 
-            @Suppress("UNCHECKED_CAST")
-            val children = snapshot.instrumentation.getManyChildren(connectionId, entity).toList() as List<WorkspaceEntityBase>
-            put("${jsonName}_Count", children.size)
-            putJsonArray(jsonName) {
-              for (child in children) {
-                val childAsJson = entityBaseAsJson(child)
-                add(childAsJson)
-              }
+  @OptIn(WorkspaceEntityInternalApi::class, EntityStorageInstrumentationApi::class)
+  private fun JsonObjectBuilder.putEntityChildren(entity: WorkspaceEntityBase) {
+    val snapshot = entity.snapshot as AbstractEntityStorage
+    val childrenConnections = getChildrenConnections(entity, snapshot).sortedBy { it.childClass }
+    for (connectionId in childrenConnections) {
+      val childClassName = connectionId.childClass.findWorkspaceEntity().simpleName
+      when (connectionId.connectionType) {
+        ConnectionId.ConnectionType.ONE_TO_ONE, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> {
+          val jsonName = entityChildReferenceJsonName(childClassName)
+          val child = snapshot.instrumentation.getOneChild(connectionId, entity) as? WorkspaceEntityBase
+          if (child != null) {
+            val childAsJson = entityBaseAsJson(child)
+            put(jsonName, childAsJson)
+          }
+          else {
+            put(jsonName, "null")
+          }
+        }
+        ConnectionId.ConnectionType.ONE_TO_MANY, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
+          val jsonName = entityChildReferenceJsonName(childClassName, true)
+
+          @Suppress("UNCHECKED_CAST")
+          val children = snapshot.instrumentation.getManyChildren(connectionId, entity).toList() as List<WorkspaceEntityBase>
+          put("${jsonName}_Count", children.size)
+          putJsonArray(jsonName) {
+            for (child in children) {
+              val childAsJson = entityBaseAsJson(child)
+              add(childAsJson)
             }
           }
         }

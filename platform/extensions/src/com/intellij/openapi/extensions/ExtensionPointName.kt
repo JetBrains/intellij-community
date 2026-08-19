@@ -169,7 +169,6 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
                                                  parentDisposable = parentDisposable)
   }
 
-  @Internal
   fun addExtensionPointListener(coroutineScope: CoroutineScope, listener: ExtensionPointListener<T>) {
     getRootPoint().addExtensionPointListener(listener = listener,
                                                  invokeForLoadedExtensions = false,

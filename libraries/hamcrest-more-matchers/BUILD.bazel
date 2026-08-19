@@ -43,6 +43,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.hamcrest.more.matchers.iml",
+        "resources/intellij.libraries.hamcrest.more.matchers.xml",
     ],
     visibility = ["//visibility:public"],
 )

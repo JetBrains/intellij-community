@@ -11,11 +11,13 @@ from typing import (
     ClassVar,
     Final,
     Generic,
+    NamedTuple,
     ParamSpec,
     Protocol,
     TypeAlias,
     TypeVar,
     TypeVarTuple,
+    TypedDict,
     assert_type,
     cast,
 )
@@ -76,6 +78,20 @@ class ClassA(Generic[T, P]):
 
 bad11: ClassVar[int] = 3  # E: ClassVar not allowed here
 bad12: TypeAlias = ClassVar[str]  # E: ClassVar not allowed here
+
+
+# > ``ClassVar`` cannot be used as a qualifier for a TypedDict item or a
+# > NamedTuple field. Such usage also generates an error at runtime.
+
+
+class TDWithClassVar(TypedDict):
+    a: int
+    b: ClassVar[int]  # E: ClassVar not allowed in a TypedDict
+
+
+class NTWithClassVar(NamedTuple):
+    a: int
+    b: ClassVar[int]  # E: ClassVar not allowed in a NamedTuple
 
 
 assert_type(ClassA.good1, int)

@@ -19,8 +19,8 @@ open class ForceStepIntoAction : XDebuggerActionBase(), SplitDebuggerAction {
 }
 
 private val ourHandler = object : XDebuggerProxySuspendedActionHandler() {
-  override fun perform(session: XDebugSessionProxy, dataContext: DataContext) {
-    performDebuggerActionAsync(session.project, dataContext) {
+  override fun perform(session: XDebugSessionProxy, event: AnActionEvent) {
+    performDebuggerActionAsync(event) {
       session.stepInto(ignoreBreakpoints = true)
     }
   }

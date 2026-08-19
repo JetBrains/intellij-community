@@ -76,6 +76,7 @@ jvm_library(
 exports_files(
     [
         "fleet.util.serialization.iml",
+        "resources/fleet.util.serialization.xml",
     ],
     visibility = ["//visibility:public"],
 )

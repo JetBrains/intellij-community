@@ -229,7 +229,7 @@ enum class Debugger {
   },
 
   WSL_DEBUGGER {
-    override fun getDebuggerPath(): String = "WSL GDB"
+    override fun getDebuggerPath(): String = "/usr/bin/gdb"
     override fun getDebuggerFieldName(): String = "Custom GDB executable"
     override fun toString(): String = "WSL GDB"
     override fun type(): String = "GDB"

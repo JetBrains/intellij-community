@@ -12,7 +12,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,11 +28,7 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
 
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-    boolean serialized = Registry.is("editor.injected.highlighting.serialization.allowed") &&
-      ((TextEditorHighlightingPassRegistrarImpl)registrar).isSerializeCodeInsightPasses();
-    int[] runAfterCompletionOf = serialized ? new int[]{Pass.UPDATE_ALL} : null;
-    int[] runAfterStartingOf = serialized ? null : new int[]{Pass.UPDATE_ALL};
-    registrar.registerTextEditorHighlightingPass(this, runAfterCompletionOf, runAfterStartingOf, false, Pass.INJECTED_GENERAL);
+    registrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, false, Pass.INJECTED_GENERAL);
   }
 
   @Override

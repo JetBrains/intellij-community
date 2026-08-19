@@ -15,12 +15,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyAugAssignmentStatementImpl(astNode: ASTNode) : PyElementImpl(astNode), PyAugAssignmentStatement {
 
-  override val assignmentTarget: PyTargetExpression = object : PyTargetExpressionImpl(firstChild.node) {
-    override fun findAssignedValue(): PyExpression {
-      return this@PyAugAssignmentStatementImpl
-    }
-  }
-
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
     pyVisitor.visitPyAugAssignmentStatement(this)
   }
@@ -38,10 +32,6 @@ class PyAugAssignmentStatementImpl(astNode: ASTNode) : PyElementImpl(astNode), P
 
   override fun getReference(context: PyResolveContext): PsiPolyVariantReference {
     return PyOperatorReference(this, context)
-  }
-
-  override fun getReceiver(resolvedCallee: PyCallable?): PyExpression? {
-    return if (isRightOperator(resolvedCallee)) value else target
   }
 
   override fun getArguments(resolvedCallee: PyCallable?): List<PyExpression> {

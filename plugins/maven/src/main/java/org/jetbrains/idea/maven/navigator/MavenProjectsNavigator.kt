@@ -19,7 +19,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -28,9 +27,10 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx.ProjectJdkListener
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WriteExternalException
-import com.intellij.openapi.wm.*
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
@@ -42,7 +42,6 @@ import com.intellij.util.containers.ContainerUtil
 import icons.MavenIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -54,7 +53,11 @@ import org.jetbrains.idea.maven.indices.IndexChangeProgressListener
 import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager
 import org.jetbrains.idea.maven.navigator.structure.MavenProjectsNavigatorPanel
 import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.project.MavenSyncListener
 import org.jetbrains.idea.maven.server.MavenIndexUpdateState
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager
 import org.jetbrains.idea.maven.tasks.MavenTasksManager
@@ -180,7 +183,6 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
       override fun activated() {
         invokeLaterIfProjectAlive(myProject, Runnable { initToolWindow() })
         listenForProjectsChanges()
-        scheduleStructureUpdate()
       }
     })
   }
@@ -292,25 +294,6 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
     contentManager.addContent(content)
     contentManager.setSelectedContent(content, false)
 
-    myProject.getMessageBus().connect(content).subscribe<ToolWindowManagerListener>(ToolWindowManagerListener.TOPIC,
-                                                                                    object : ToolWindowManagerListener {
-                                                                                      var wasVisible: Boolean = false
-
-                                                                                      override fun stateChanged(toolWindowManager: ToolWindowManager) {
-                                                                                        if (toolWindow.isDisposed()) {
-                                                                                          return
-                                                                                        }
-
-                                                                                        val visible = (toolWindowManager as ToolWindowManagerEx).shouldUpdateToolWindowContent(
-                                                                                          toolWindow)
-                                                                                        if (!visible || wasVisible) {
-                                                                                          return
-                                                                                        }
-                                                                                        scheduleStructureUpdate()
-                                                                                        wasVisible = true
-                                                                                      }
-                                                                                    })
-
     val actionManager = ActionManager.getInstance()
 
     val group = DefaultActionGroup()
@@ -322,6 +305,7 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
 
     toolWindow.setAdditionalGearActions(group)
     forceDirectTransfer(panel)
+    scheduleStructureUpdate()
   }
 
   private fun initTree() {
@@ -401,7 +385,7 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
     project.trackActivityBlocking(MavenActivityKey) {
       project.service<CoroutineScopeService>().cs.launchTracked {
         val files = MavenProjectsManager.getInstance(myProject).getState().originalFiles
-        val hasMavenProjects = files != null && !files.isEmpty()
+        val hasMavenProjects = !files.isEmpty()
 
         if (toolWindow.isAvailable() != hasMavenProjects) {
           withContext(Dispatchers.EDT) {

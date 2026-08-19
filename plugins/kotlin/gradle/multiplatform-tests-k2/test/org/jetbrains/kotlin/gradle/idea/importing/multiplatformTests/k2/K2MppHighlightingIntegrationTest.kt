@@ -85,4 +85,12 @@ class K2MppHighlightingIntegrationTest : AbstractKotlinMppGradleImportingTest() 
             publish("lib")
         }
     }
+
+    // KT-65417: an 'expect'/'actual' enum class against a standard library that predates
+    // 'expect'/'actual' builtins (KT-65526), i.e. one where non-JVM 'kotlin.Enum' has no 'clone()'
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.0.0+")
+    fun testExpectActualEnumWithOldStdlib() {
+        doTest()
+    }
 }

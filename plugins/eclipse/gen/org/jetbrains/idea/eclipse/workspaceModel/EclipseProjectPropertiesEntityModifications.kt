@@ -28,7 +28,7 @@ interface EclipseProjectPropertiesEntityBuilder : WorkspaceEntityBuilder<Eclipse
 }
 
 internal object EclipseProjectPropertiesEntityType : EntityType<EclipseProjectPropertiesEntity, EclipseProjectPropertiesEntityBuilder>() {
-  override val entityClass: Class<EclipseProjectPropertiesEntity> get() = EclipseProjectPropertiesEntity::class.java
+  override val entityImplClass: Class<*> get() = EclipseProjectPropertiesEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = EclipseProjectPropertiesEntityImpl.Builder::class.java
   operator fun invoke(
     variablePaths: Map<String, String>,
@@ -62,7 +62,6 @@ fun MutableEntityStorage.modifyEclipseProjectPropertiesEntity(
 
 var ModuleEntityBuilder.eclipseProperties: EclipseProjectPropertiesEntityBuilder?
   by WorkspaceEntity.extensionBuilder(EclipseProjectPropertiesEntity::class.java)
-
 
 @JvmOverloads
 @JvmName("createEclipseProjectPropertiesEntity")

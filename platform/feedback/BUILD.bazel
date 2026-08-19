@@ -38,7 +38,7 @@ jvm_library(
         "//platform/core-ui",
         "//platform/util:util-ui",
         "//platform/progress/shared:ide-progress",
-        "@lib//:jna",
+        "//libraries/jna",
     ],
 )
 
@@ -73,6 +73,7 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
+        "//libraries/jna:jna_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.feedback` end
@@ -81,6 +82,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.feedback.iml",
+        "resources/intellij.platform.feedback.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -73,6 +73,7 @@ jvm_library(
 exports_files(
     [
         "intellij.editorconfig.common.iml",
+        "resources/intellij.editorconfig.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

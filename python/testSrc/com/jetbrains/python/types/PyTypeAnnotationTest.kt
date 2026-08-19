@@ -8,8 +8,6 @@ import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.inspections.PyTypeHintsInspection
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Timeout
-import java.util.concurrent.TimeUnit
 
 @Subsystems.Inspections
 @Layers.Functional
@@ -24,7 +22,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     T0 = TypeVar('T0')
     T1 = TypeVar('T2')
     #            ^^^^ WARNING The argument to 'TypeVar()' must be a string equal to the variable name to which it is assigned
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28243"])
@@ -36,7 +34,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #       ^^ WARNING Unbound type variable
     b: List[TypeVar('T1')]
     #       ^^^^^^^^^^^^^ WARNING A 'TypeVar()' expression must always directly be assigned to a variable
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28243"])
@@ -47,7 +45,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     print(T0)
     T0 = TypeVar('T0')
     #\ WARNING Type variables must not be redefined
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28124"])
@@ -59,7 +57,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     true = True
     T2 = TypeVar('T2', contravariant=true, covariant=true)
     #    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ERROR Bivariant type variables are not supported
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28124"])
@@ -68,7 +66,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     T2 = TypeVar('T2', int, str, bound=str)
     #    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ERROR Constraints cannot be combined with bound=…
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28124"])
@@ -78,7 +76,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     T1 = TypeVar('T1', int)
     #    ^^^^^^^^^^^^^^^^^^ ERROR A single constraint is not allowed
     T2 = TypeVar('T2', int, str)
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28124"])
@@ -89,7 +87,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     T0 = TypeVar(name)
     #            ^^^^ WARNING 'TypeVar()' expects a string literal as first argument
     T1 = TypeVar('T1')
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28243"])
@@ -119,7 +117,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     my_list_int = List[int]
     T44 = TypeVar('T44', int, my_list_int)
     T55 = TypeVar('T55', bound=my_list_int)
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28227"])
@@ -134,7 +132,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class C(B):
     #       └ ERROR Cannot inherit from plain 'Generic'
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28227"])
@@ -206,7 +204,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class E2(Generic[my_d]):
     #                ^^^^ ERROR Parameters to 'Generic[...]' must all be type variables
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28227"])
@@ -228,7 +226,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class D(Generic[T1, T]):
     #               ^^ ERROR Parameters to 'Generic[...]' must all be type variables
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28227"])
@@ -251,7 +249,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A(E, Generic[S]):
     #          ^^^^^^^^^^ ERROR Cannot inherit from 'Generic[...]' multiple times
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28227"])
@@ -285,7 +283,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     class G(Iterable[T]):  # ISSUES *
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-31147"])
@@ -296,12 +294,12 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     class C(Generic[T], Dict[int, T]):
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-78767"])
+  @TestCaseOptions(assertRecursionPrevention = false)
   fun `Generic metaclasses are not supported`() = test(
-    TestOptions(assertRecursionPrevention = false),
     """
     from typing import Any, Generic, TypeVar
 
@@ -312,7 +310,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class MyClass1(Generic[T], metaclass=MyMetaClass[T]): ...
     #                                    ^^^^^^^^^^^^^^ WARNING Metaclass cannot be generic
     class MyClass2(metaclass=MyMetaClass[Any]): ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76866"])
@@ -365,7 +363,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
         def do_something(self, x: S) -> S: ...
         def do_something_else(self, other: 'Bar[T]'): ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-78878"])
@@ -402,7 +400,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class OuterNewSyntax[U]:
         class Bad(Generic[U]): ...
     #         ^^^ WARNING Some type variables (U) are already in use by an outer scope
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-82835"])
@@ -425,14 +423,14 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
         class Inner[T]: ...
     #               └ WARNING Type parameter 'T' is already in use by an outer scope
-    """)
+    """.trimIndent())
 
   @Test
   fun `self annotation uses class-scoped type parameters`() = test("""
     class MyClass[T1, T2]:
         def __init__(self: MyClass[T2, T1]) -> None: ...
     #                      ^^^^^^^^^^^^^^^ WARNING Class-scoped type variables should not be used in the annotation for 'self' parameter of '__init__' method
-    """)
+    """.trimIndent())
 
   @Test
   fun `inconsistent TypeVar order`() = test("""
@@ -445,7 +443,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class Parent(Grandparent[T1, T2]): ...
     class BadChild(Parent[T1, T2], Grandparent[T2, T1]): ...
     #                              ^^^^^^^^^^^^^^^^^^^ WARNING Generic base class 'Grandparent' is inherited with inconsistent type arguments: 'Grandparent[T1, T2]' and 'Grandparent[T2, T1]'
-    """)
+    """.trimIndent())
 
   @Test
   fun `inconsistent TypeVar order diamond`() = test("""
@@ -459,7 +457,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class Right(Base[T2, T1]): ...
     class BadDiamond(Left[T1, T2], Right[T1, T2]): ...
     #                              ^^^^^^^^^^^^^ WARNING Generic base class 'Base' is inherited with inconsistent type arguments: 'Base[T1, T2]' and 'Base[T2, T1]'
-    """)
+    """.trimIndent())
 
   @Test
   fun `consistent TypeVar order with reordered intermediate`() = test("""
@@ -471,7 +469,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class Base(Generic[T1, T2]): ...
     class Reordered(Generic[T1, T2], Base[T2, T1]): ...
     class GoodChild(Reordered[T1, T2], Base[T2, T1]): ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28249"])
@@ -486,7 +484,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     B = Any
     assert issubclass(A, B)
     #                    └ ERROR 'Any' cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28249"])
@@ -501,7 +499,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     B = NoReturn
     assert issubclass(A, B)
     #                    └ ERROR 'NoReturn' cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28249"])
@@ -522,12 +520,12 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                    └ ERROR Type variables cannot be used with instance and class checks
     assert issubclass(A, T)
     #                    └ ERROR Type variables cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28249"])
+  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON39)
   fun `instance and class checks on Union before 310`() = test(
-    TestOptions(languageLevel = LanguageLevel.PYTHON39),
     """
     from typing import Union
 
@@ -561,12 +559,12 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                    ^^^^^^^^^ ERROR Python version 3.9 does not allow writing union types as X | Y
     assert issubclass(A, int | list[str])
     #                    ^^^^^^^^^^^^^^^ ERROR Python version 3.9 does not allow writing union types as X | Y
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-44974"])
+  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON39)
   fun `instance and class checks on Union from future annotations`() = test(
-    TestOptions(languageLevel = LanguageLevel.PYTHON39),
     """
     from typing import Union
     from __future__ import annotations
@@ -601,7 +599,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                    ^^^^^^^^^ ERROR Python version 3.9 does not allow writing union types as X | Y
     assert issubclass(A, int | list[str])
     #                    ^^^^^^^^^^^^^^^ ERROR Python version 3.9 does not allow writing union types as X | Y
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-44974"])
@@ -632,12 +630,12 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     assert issubclass(A, int | str)
     assert issubclass(A, int | list[str])
     #                          ^^^^^^^^^ ERROR Parameterized generics cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28249"])
+  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON39)
   fun `instance and class checks on Optional before 310`() = test(
-    TestOptions(languageLevel = LanguageLevel.PYTHON39),
     """
     from typing import Optional
 
@@ -659,12 +657,12 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     C = B[int]
     assert issubclass(A, C)
     #                    └ ERROR 'Optional' cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28249"])
+  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON39)
   fun `instance and class checks on Optional from future annotations`() = test(
-    TestOptions(languageLevel = LanguageLevel.PYTHON39),
     """
     from typing import Optional
     from __future__ import annotations
@@ -687,7 +685,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     C = B[int]
     assert issubclass(A, C)
     #                    └ ERROR 'Optional' cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28249"])
@@ -709,7 +707,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     assert issubclass(A, B[int])
     C = B[int]
     assert issubclass(A, C)
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28249"])
@@ -734,7 +732,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     C = B[int]
     assert issubclass(A, C)
     #                    └ ERROR 'ClassVar' cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28249"])
@@ -757,7 +755,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     C = B[T]
     assert issubclass(A, C)
     #                    └ ERROR 'Generic' cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-34945"])
@@ -785,7 +783,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     C = B[T]
     assert issubclass(A, C)
     #                    └ ERROR 'Final' cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-35235"])
@@ -810,7 +808,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     C = B[1]
     assert issubclass(A, C)
     #                    └ ERROR 'Literal' cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-42334"])
@@ -831,7 +829,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                    └ ERROR 'TypeAlias' cannot be used with instance and class checks
     assert issubclass(A, B)
     #                    └ ERROR 'TypeAlias' cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28249"])
@@ -854,7 +852,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     C = B[T]
     assert issubclass(A, C)
     #                    └ ERROR Parameterized generics cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28249"])
@@ -864,7 +862,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
-    assert isinstance(A(), Tuple)  # ISSUES *
+    assert isinstance(A(), Tuple)
     B = Tuple
     assert issubclass(A, B)
 
@@ -875,7 +873,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     C = B[int, str]
     assert issubclass(A, C)
     #                    └ ERROR Parameterized generics cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28249"])
@@ -898,7 +896,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     C = B[int]
     assert issubclass(A, C)
     #                    └ ERROR Parameterized generics cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28249"])
@@ -919,7 +917,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     C = B[..., str]
     assert issubclass(A, C)
     #                    └ ERROR Parameterized generics cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28249"])
@@ -946,7 +944,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     C = B[T]
     assert issubclass(A, C)
     #                    └ ERROR Parameterized generics cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28249"])
@@ -972,7 +970,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     C = B[int]
     assert issubclass(A, C)
     #                    └ ERROR Parameterized generics cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28249"])
@@ -990,7 +988,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     assert issubclass(A, B[int])
     C = B[int]
     assert issubclass(A, C)
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-31788"])
@@ -1015,7 +1013,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                          ^^ ERROR Type variables cannot be used with instance and class checks
         assert issubclass(A, p3)
     #                        ^^ ERROR Type variables cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   fun `TypedDict with instance and class checks`() = test("""
@@ -1048,7 +1046,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     if issubclass(A, M2):
     #                ^^ ERROR TypedDict type cannot be used with instance and class checks
         pass
-    """)
+    """.trimIndent())
 
   @Test
   fun `TypedDict as TypeVar bound`() = test("""
@@ -1061,7 +1059,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     T = TypeVar("T", bound=TypedDict)
     #                      ^^^^^^^^^ WARNING TypedDict is not allowed as a bound for a TypeVar
     U = TypeVar("U", bound=Movie)
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-16853"])
@@ -1117,7 +1115,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     A4 = 'Union(int, str)'  # type: TypeAlias
     #    │^^^^^^^^^^^^^^^ ERROR Generics should be specified through square brackets
     #    ^^^^^^^^^^^^^^^^^ WARNING Assigned value of type alias must be a correct type
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-57155"])
@@ -1144,7 +1142,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     def f(x: Annotated[dict(key=1), ""]):
     #                  ^^^^^^^^^^^ WARNING Generics should be specified through square brackets
        pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-32634"])
@@ -1158,7 +1156,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     type ExampleType = DefaultDict(int)
     #                  ^^^^^^^^^^^^^^^^ ERROR Generics should be specified through square brackets
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-16853"])
@@ -1216,39 +1214,43 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     A4 = 'A(int)'  # type: TypeAlias
     #    │^^^^^^ WARNING Generics should be specified through square brackets
     #    ^^^^^^^^ WARNING Assigned value of type alias must be a correct type
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-20530"])
   fun `Callable parameters`() = test("""
     from typing import Callable, TypeAlias
 
+    _: Callable
     a: Callable[..., str]
     b: Callable[[int], str]
     c: Callable[[int, str], str]
 
     d: Callable[...]
-    #           ^^^ ERROR 'Callable' must be used as 'Callable[[arg, ...], result]'
+    #           ^^^ ERROR 'Callable' must have exactly two arguments
     e: Callable[int, str]
-    #           ^^^ ERROR 'Callable' first parameter must be a parameter expression
+    #           ^^^ ERROR 'Callable' first parameter must be a list literal of parameter types ('[T1, T2, ...]') or a parameter specification
     f: Callable[int, str, str]
-    #           ^^^^^^^^ ERROR 'Callable' must be used as 'Callable[[arg, ...], result]'
+    #           │         ^^^ ERROR 'Callable' must have exactly two arguments
+    #           ^^^ ERROR 'Callable' first parameter must be a list literal of parameter types ('[T1, T2, ...]') or a parameter specification
     g: Callable[(int, str), str]
-    #           ^^^^^^^^^^ ERROR 'Callable' first parameter must be a parameter expression
+    #           ^^^^^^^^^^ ERROR 'Callable' first parameter must be a list literal of parameter types ('[T1, T2, ...]') or a parameter specification
     h: Callable[int]
-    #           ^^^ ERROR 'Callable' must be used as 'Callable[[arg, ...], result]'
-    h: Callable[(int), str]
-    #           ^^^^^ ERROR 'Callable' first parameter must be a parameter expression
+    #           ^^^ ERROR 'Callable' must have exactly two arguments
+    i: Callable[int,]
+    #           ^^^^ ERROR 'Callable' must have exactly two arguments
+    j: Callable[(int), str]
+    #           ^^^^^ ERROR 'Callable' first parameter must be a list literal of parameter types ('[T1, T2, ...]') or a parameter specification
 
     A1: TypeAlias = Callable[int]
-    #                        ^^^ ERROR 'Callable' must be used as 'Callable[[arg, ...], result]'
+    #                        ^^^ ERROR 'Callable' must have exactly two arguments
     A2: TypeAlias = 'Callable[int]'
-    #                         ^^^ ERROR 'Callable' must be used as 'Callable[[arg, ...], result]'
+    #                         ^^^ ERROR 'Callable' must have exactly two arguments
     A3 = Callable[int]  # type: TypeAlias
-    #             ^^^ ERROR 'Callable' must be used as 'Callable[[arg, ...], result]'
+    #             ^^^ ERROR 'Callable' must have exactly two arguments
     A4 = 'Callable[int]'  # type: TypeAlias
-    #              ^^^ ERROR 'Callable' must be used as 'Callable[[arg, ...], result]'
-    """)
+    #              ^^^ ERROR 'Callable' must have exactly two arguments
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-20530"])
@@ -1268,7 +1270,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         pass
 
     v: self
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-20530"])
@@ -1286,7 +1288,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                                   ^^^^^^^^^^ WARNING Type comment cannot be matched with unpacked variables
     e2, (f2, g2), h2 = undefined()  # type: int, (str), str
     #                                       ^^^^^^^^^^^^^^^ WARNING Type comment cannot be matched with unpacked variables
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-20530"])
@@ -1318,7 +1320,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         # type: (int) -> int
     #   ^^^^^^^^^^^^^^^^^^^^ WARNING Types specified both in a type comment and annotation
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-20530"])
@@ -1402,7 +1404,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         def baz(self, a, b, c, d):
             # type: (...) -> None
             pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-20530"])
@@ -1486,7 +1488,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
             # type: (int) -> None
     #       ^^^^^^^^^^^^^^^^^^^^^ WARNING Type signature has too few arguments
             pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-20530"])
@@ -1513,7 +1515,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #          ^^ ERROR Parameters to generic types must be types
     foo8: List[l2]
     #          ^^ ERROR Parameters to generic types must be types
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-32530"])
@@ -1522,7 +1524,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         pass
     def bar(a: Unknown):  # type: ignore[no-untyped-def, name-defined]
         pass
-    """)
+    """.trimIndent())
 
   @Test
   fun `annotating non-self attribute`() = test("""
@@ -1540,7 +1542,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     def func(a):
         a.xxx: str = "2"
     #   ^^^^^ WARNING Non-self attribute could not be type hinted
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-35235"])
@@ -1583,7 +1585,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     expr: LiteralString = "aba"
     n: Literal[f"hello {expr}"]
     #          ^^^^^^^^^^^^^^^ WARNING 'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-79227"])
@@ -1644,7 +1646,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     v11: Literal[E.QUX]
     v12: Literal[E.meth2]
     #            ^^^^^^^ WARNING 'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-79227"])
@@ -1674,7 +1676,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     v11: Literal[E.QUX]
     v12: Literal[E.meth2]
     #            ^^^^^^^ WARNING 'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types
-    """,
+    """.trimIndent(),
     "m.py" to """
       from enum import Enum, member, nonmember
       from typing import Any
@@ -1708,7 +1710,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
           def meth(self): ...
 
           meth2 = meth
-      """,
+      """.trimIndent(),
   )
 
   @Test
@@ -1720,7 +1722,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #  ^^^^^^^ WARNING 'Literal' must have at least one parameter
     b = 2  # type: Literal
     #              ^^^^^^^ WARNING 'Literal' must have at least one parameter
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-35235"])
@@ -1729,11 +1731,11 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: Literal[f"1"] = "1"
     #          ^^^^ WARNING 'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types
-    """)
+    """.trimIndent())
 
   @Test
+  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON38)
   fun `parameterized builtin collections before 39`() = test(
-    TestOptions(languageLevel = LanguageLevel.PYTHON38),
     """
     xs: type[str]
     #   ^^^^^^^^^ WARNING Builtin 'type' cannot be parameterized directly
@@ -1741,7 +1743,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #   ^^^^^^^^^^^^^^^ WARNING Builtin 'tuple' cannot be parameterized directly
     zs: dict[int, str]
     #   ^^^^^^^^^^^^^^ WARNING Builtin 'dict' cannot be parameterized directly
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-42418"])
@@ -1749,7 +1751,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     xs: type[str]
     ys: tuple[int, str]
     zs: dict[int, str]
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-41847"])
@@ -1772,7 +1774,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                      └ WARNING 'Annotated' must be called with at least two arguments
     g: Annotated[[], 1]
     #            ^^ ERROR *
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-89188"])
@@ -1780,7 +1782,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     from typing import Annotated
 
     a: Annotated[int, [], print("asdf")]
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-41847"])
@@ -1805,7 +1807,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     C = B[int, 2]
     assert issubclass(A, C)
     #                    └ ERROR 'Annotated' cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-41847"])
@@ -1816,7 +1818,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #  ^^^^^^^^^ WARNING 'Annotated' must be called with at least two arguments
     b = 2  # type: Annotated[int]
     #                        ^^^ WARNING 'Annotated' must be called with at least two arguments
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-42334"])
@@ -1825,7 +1827,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     Alias = TypeAlias[int]
     #                 ^^^ ERROR 'TypeAlias' cannot be parameterized
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-42334"])
@@ -1834,7 +1836,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     Alias: TypeAlias[int]
     #      ^^^^^^^^^ WARNING 'TypeAlias' must be used as standalone type hint
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-42334"])
@@ -1843,7 +1845,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     Alias: Final[TypeAlias] = str
     #            ^^^^^^^^^ WARNING 'TypeAlias' must be used as standalone type hint
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-42334"])
@@ -1852,7 +1854,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     Alias: TypeAlias
     #^^^^ WARNING Type alias must be immediately initialized
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-42334"])
@@ -1862,18 +1864,18 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     def func():
         Alias: TypeAlias = str
     #   ^^^^^ WARNING Type alias must be top-level declaration
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-46602"])
+  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON38)
   fun `no inspection TypedDict in Python 38`() = test(
-    TestOptions(languageLevel = LanguageLevel.PYTHON38),
     """
     from __future__ import annotations
 
     def hello(i: dict[str, str]):
         return i
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-50401"])
@@ -1884,7 +1886,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     T0 = ParamSpec(name)
     #              ^^^^ WARNING 'ParamSpec()' expects a string literal as first argument
     T1 = ParamSpec('T1')
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-50401"])
@@ -1894,7 +1896,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     T0 = ParamSpec('T1')
     #              ^^^^ WARNING The argument to 'ParamSpec()' must be a string equal to the variable name to which it is assigned
     T1 = ParamSpec('T1')
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-50930"])
@@ -1905,7 +1907,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     P = ParamSpec("P")
     R = TypeVar("R")
     def foo(it: Callable[P, R]) -> Callable[P, R]: ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-53104"])
@@ -1921,7 +1923,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                              ^^^^ ERROR 'Self' cannot be used with instance and class checks
             assert issubclass(A, Self)
     #                            ^^^^ ERROR 'Self' cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-53104"])
@@ -1934,7 +1936,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         def foo(self):
             x: Self[int]
     #               ^^^ ERROR 'Self' cannot be parameterized
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-53104"])
@@ -1944,7 +1946,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     def foo() -> Self:
     #            ^^^^ WARNING Cannot use 'Self' outside class
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-53104"])
@@ -1953,7 +1955,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     something: Self | None = None
     #          ^^^^ WARNING Cannot use 'Self' outside class
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-53104"])
@@ -1967,7 +1969,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                │        ^^^^ WARNING Cannot use 'Self' in staticmethod
     #                ^^^^ WARNING Cannot use 'Self' in staticmethod
             return bar
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-53104"])
@@ -1980,7 +1982,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                                 │        ^^^^ WARNING Cannot use 'Self' if 'self' parameter is not 'Self' annotated
     #                                 ^^^^ WARNING Cannot use 'Self' if 'self' parameter is not 'Self' annotated
             return bar
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-53104"])
@@ -1994,7 +1996,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                                │        ^^^^ WARNING Cannot use 'Self' if 'cls' parameter is not 'Self' annotated
     #                                ^^^^ WARNING Cannot use 'Self' if 'cls' parameter is not 'Self' annotated
             return bar
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-53104"])
@@ -2006,7 +2008,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         def m():
             obj: Self
     #            ^^^^ WARNING Cannot use 'Self' in staticmethod
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-53104"])
@@ -2017,7 +2019,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         def m(self: C):
             obj: Self
     #            ^^^^ WARNING Cannot use 'Self' if 'self' parameter is not 'Self' annotated
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-62301"])
@@ -2026,12 +2028,12 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     class ReturnsSelf:
         def __new__(cls, value: int) -> Self: ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-36317"])
+  @TestCaseOptions(assertRecursionPrevention = false)
   fun `dict subscription not reported as parametrized generic`() = test(
-    TestOptions(assertRecursionPrevention = false),
     """
     keys_and_types = {
         'comment': (str, type(None)),
@@ -2042,7 +2044,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     def type_is_valid(test_key, test_value):
         return isinstance(test_value, keys_and_types[test_key])
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-36317"])
@@ -2051,7 +2053,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     def my_is_instance(value, index: int) -> bool:
         return isinstance(value, tuple_of_types[index])
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-36317"])
@@ -2060,7 +2062,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         for key in s.keys():
             if not isinstance(d[key], s[key]):
                 raise TypeError
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-53105"])
@@ -2070,7 +2072,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     Shape = TypeVarTuple('Shape')
 
     class Array(Generic[*Shape]): ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-53105"])
@@ -2081,7 +2083,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     Ts = TypeVarTuple(name)
     #                 ^^^^ WARNING 'TypeVarTuple()' expects a string literal as first argument
     Ts1 = TypeVarTuple('Ts1')
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-53105"])
@@ -2091,7 +2093,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     Ts = TypeVarTuple('T')
     #                 ^^^ WARNING The argument to 'TypeVarTuple()' must be a string equal to the variable name to which it is assigned
     Ts1 = TypeVarTuple('Ts1')
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-70528"])
@@ -2101,7 +2103,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     Ts = TypeVarTuple('T')
     #                 ^^^ WARNING The argument to 'TypeVarTuple()' must be a string equal to the variable name to which it is assigned
     Ts1 = TypeVarTuple('Ts1')
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-53105"])
@@ -2114,7 +2116,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     class Array(Generic[*Ts1, *Ts2]): ...
     #                         ^^^^ ERROR Parameters to generic cannot contain more than one unpacking
-    """)
+    """.trimIndent())
 
   @Test
   fun `TypeIs does not match`() = test("""
@@ -2144,7 +2146,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
         @staticmethod
         def f6(x: float) -> TypeIs[float]: ...
-    """)
+    """.trimIndent())
 
   @Test
   fun `TypeIs does not match 2`() = test("""
@@ -2158,7 +2160,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     def isInt123(x: Derived) -> TypeIs[Base]: ...
     #   ^^^^^^^^ WARNING Return type of TypeIs 'Base' is not consistent with the type of the first parameter 'Derived'
-    """)
+    """.trimIndent())
 
   @Test
   fun `TypeIs match`() = test("""
@@ -2171,7 +2173,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         pass
 
     def isInt123(x: Base) -> TypeIs[Derived]: ...
-    """)
+    """.trimIndent())
 
   @Test
   fun `TypeIs missed parameter`() = test("""
@@ -2191,7 +2193,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
       @staticmethod
       def buz() -> TypeIs[float]: ...
     #     ^^^ WARNING User-defined TypeGuard or TypeIs functions must have at least one parameter
-    """)
+    """.trimIndent())
 
   @Test
   fun `TypeGuard missed parameter`() = test("""
@@ -2221,7 +2223,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
         @staticmethod
         def f6(x: bool) -> TypeGuard[str]: ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-71002"])
@@ -2240,7 +2242,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class ClazzB(Generic[DefaultT, NoDefaultT2, DefaultT1]): ...
     #                              ^^^^^^^^^^^ ERROR Non-default TypeVars cannot follow ones with defaults
     class ClazzC(Generic[NoDefaultT2, NoDefaultT3]): ...
-    """)
+    """.trimIndent())
 
   @Test
   fun `cast call`() = test("""
@@ -2252,7 +2254,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         v2 = cast('list[float]', val) # ok
         v3 = cast(1, val)
     #             └ WARNING Expected a type
-    """)
+    """.trimIndent())
 
   @Test
   fun `isinstance and issubclass on NewType`() = test("""
@@ -2265,7 +2267,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                   ^^^^^^ ERROR NewType type cannot be used with instance and class checks
         issubclass(int, UserId)
     #                   ^^^^^^ ERROR NewType type cannot be used with instance and class checks
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2285,7 +2287,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class Foo3(Generic[S1]):
         class Bar2(Generic[S2]): ...
     #                      ^^ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2297,7 +2299,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     class Clazz(Generic[P2, P1]): ...
     #                   ^^ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-71002"])
@@ -2309,7 +2311,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     class Clazz(Generic[P2, P1]): ...
     #                       ^^ ERROR Non-default TypeVars cannot follow ones with defaults
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2321,7 +2323,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     class Clazz(Generic[*Ts2]): ...
     #                   ^^^^ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2340,7 +2342,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     T6 = TypeVar("T6", default=Clazz)
     T7 = TypeVar("T7", default=[int])
     #                          ^^^^^ WARNING Default type must be a type expression
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2366,7 +2368,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                ^^ WARNING Type variable 'P1' is out of scope
     class Clazz8[T = [int]]: ...
     #                ^^^^^ WARNING Default type must be a type expression
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-90365"])
@@ -2374,7 +2376,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A[T = [int]]: ...
     #           ^^^^^ WARNING Default type must be a type expression
     class B[T = A]: ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2401,7 +2403,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     P10 = ParamSpec("P10", default=[1, 2])
     #                               │  └ WARNING Default type must be a type expression
     #                               └ WARNING Default type must be a type expression
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2427,7 +2429,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class Clazz8[**P = Ts1]: ...
     #                  ^^^ WARNING Default type of ParamSpec must be a ParamSpec type or a list of types
     #                  ^^^ WARNING Type variable 'Ts1' is out of scope
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2446,7 +2448,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                                 ^^^ WARNING Default type of TypeVarTuple must be unpacked
     Ts6 = TypeVarTuple("Ts6", default=Unpack[tuple[int, ...]])
     Ts7 = TypeVarTuple("Ts7", default=Unpack[tuple[T, T]])
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2469,7 +2471,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class Clazz9[**P1, *Ts = P1]: ...
     #                        ^^ WARNING Default type of TypeVarTuple must be unpacked
     class Clazz10[*Ts = Unpack[tuple[int, ...]]]: ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2487,7 +2489,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                           └ ERROR TypeVar with a default value cannot follow TypeVarTuple
     class Clazz2(Generic[TsDef, P]): ...
     class Clazz3(Generic[Ts, P]): ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2513,7 +2515,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Passed type arguments do not match type parameters [NoDefaultT2, NoDefaultT3, NoDefaultT4, DefaultT, DefaultT1] of class 'Clazz'
     c7 = Clazz[int, str, bool, int, str, int, int]()
     #          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Passed type arguments do not match type parameters [NoDefaultT2, NoDefaultT3, NoDefaultT4, DefaultT, DefaultT1] of class 'Clazz'
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2531,7 +2533,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     c2 = Clazz[int, str, bool]()
     c3 = Clazz[int, str, bool, float]()
     #          ^^^^^^^^^^^^^^^^^^^^^ WARNING Passed type arguments do not match type parameters [T, T1, T2] of class 'Clazz'
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2548,7 +2550,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     c5 = Clazz[int, str, bool, int, str]()
     c6 = Clazz[int, str, bool, int, str, int]()
     c7 = Clazz[int, str, bool, int, str, int, int]()
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2575,7 +2577,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     c14 = Clazz1[int, str, [bool, int]]()
     c15 = Clazz1[int, str, [bool, int, str]]()
     c16 = Clazz1[int, [str, bool, int, str, int]]()
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2600,7 +2602,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     c7 = Clazz[int, str, bool, int, str, int, int]()
     c8 = Clazz[int, str, bool, int, str, int, int, float]()
     c9 = Clazz[int, str, bool, int, str, int, int, float, list]()
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2618,7 +2620,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Passed type arguments do not match type parameters [NoDefaultT2, NoDefaultT3, NoDefaultT4, DefaultT, DefaultT1] of class 'Clazz'
     c7 = Clazz[int, str, bool, int, str, int, int]()
     #          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Passed type arguments do not match type parameters [NoDefaultT2, NoDefaultT3, NoDefaultT4, DefaultT, DefaultT1] of class 'Clazz'
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2635,7 +2637,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class Clazz2(Generic[T3, T4]): ...
     #                    │   ^^ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
     #                    ^^ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2656,7 +2658,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                               ^^^^^^^ WARNING Passed type arguments do not match type parameters [_KT, _VT] of class 'dict'
     T4 = TypeVar("T4", default=dict[list[P], str])
     #                                    └ WARNING Passed type arguments do not match type parameters [_T] of class 'list'
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2669,7 +2671,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #          ^^^^^^^^ WARNING Passed type arguments do not match type parameters [T1, T2, *Ts, T3] of class 'Clazz'
     c3 = Clazz[int, str, bool]()
     c4 = Clazz[int, str, bool, float]()
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2709,7 +2711,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     c16 = Clazz[(lambda: int)()]
     #           ^^^^^^^^^^^^^^^ ERROR Invalid type argument
     c17 = Clazz[(int, str)]
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-77601", "PY-76840"])
@@ -2725,7 +2727,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     x: ClassA[int, int]
     #         ^^^^^^^^ WARNING Passed type arguments do not match type parameters [T, **P1] of class 'ClassA'
     x1: ClassA[int, [int]]
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-75759"])
@@ -2739,7 +2741,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     def func23(x: ClassA[int, ...]) -> str:  # OK
         return ""
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-79693"])
@@ -2751,7 +2753,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
        b: list[NoReturn]
        c: Never
        d: list[Never]
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76820"])
@@ -2778,7 +2780,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #           ^^^^^^^^^^^^^^ WARNING Passed type arguments do not match type parameters of type alias 'alias2'
     a24: alias2[int, str, bool, int]
     #           ^^^^^^^^^^^^^^^^^^^ WARNING Passed type arguments do not match type parameters of type alias 'alias2'
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76820"])
@@ -2796,7 +2798,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #         ^^^^^^^^^^^^^^ WARNING Passed type arguments do not match type parameters of type alias 'alias'
     a4: alias[int, str, bool, int]
     #         ^^^^^^^^^^^^^^^^^^^ WARNING Passed type arguments do not match type parameters of type alias 'alias'
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76820"])
@@ -2823,7 +2825,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #         ^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Passed type arguments do not match type parameters of type alias 'alias'
     a5: alias[int, str, bool, int, float, str]
     #         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Passed type arguments do not match type parameters of type alias 'alias'
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76820"])
@@ -2840,7 +2842,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #         ^^^^^^^^^^^^^^ WARNING Passed type arguments do not match type parameters of type alias 'alias'
     a4: alias[int, str, bool, int]
     #         ^^^^^^^^^^^^^^^^^^^ WARNING Passed type arguments do not match type parameters of type alias 'alias'
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76820"])
@@ -2871,7 +2873,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #             ^^^ WARNING Type alias is not generic or already specialized
     x4: ListOrSetAlias[int]
     #                  ^^^ WARNING Type alias is not generic or already specialized
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76839"])
@@ -2881,7 +2883,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     a1: alias[int]  # OK
     a2: alias2[int]
     #          ^^^ WARNING Type alias is not generic or already specialized
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76820"])
@@ -2895,7 +2897,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #         ^^^ WARNING Type alias is not generic or already specialized
     a2: alias2[int]
     #          ^^^ WARNING Type alias is not generic or already specialized
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76839"])
@@ -2903,7 +2905,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     ListOrTupleAlias = list | tuple
     x: ListOrTupleAlias[int]
     #                   ^^^ WARNING Type alias is not generic or already specialized
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76839"])
@@ -2933,12 +2935,12 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     x2 = ListAlias[int]()
     x4: ListOrSetAlias[int]  # ISSUES *
     #                  ^^^ WARNING Type alias is not generic or already specialized
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76820"])
+  @TestCaseOptions(assertRecursionPrevention = false)
   fun `explicit TypeAlias invalid values conformance tests`() = test(
-    TestOptions(assertRecursionPrevention = false),
     """
     from typing import TypeAlias as TA
 
@@ -2983,7 +2985,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                    ^^^^^^ WARNING Assigned value of type alias must be a correct type
     BadTypeAlias17: TA = "foo()"
     #                    ^^^^^^^ WARNING Assigned value of type alias must be a correct type
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76820"])
@@ -3012,7 +3014,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     GoodTypeAlias14: TA = list["int | str"]
     GoodTypeAlias15: TA = Literal[3, 4, 5, None]
     GoodTypeAlias16: TA = "Callable[Concatenate[int, P], R]"
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76820"])
@@ -3065,7 +3067,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         p14: GoodTypeAlias14,
         p15: GoodTypeAlias15,
     ): pass
-    """,
+    """.trimIndent(),
     "util.py" to """
       from typing import Any, Callable, Concatenate, Literal, ParamSpec, TypeVar, Union, \
           assert_type, Never
@@ -3105,7 +3107,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
       BadTypeAlias10: TA = True  # E
       BadTypeAlias11: TA = 1  # E
       BadTypeAlias12: TA = list or set  # E
-      """,
+      """.trimIndent(),
   )
 
   @Test
@@ -3161,7 +3163,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         p12: GoodTypeAlias12[bool],
         p13: GoodTypeAlias13
     ): pass
-    """,
+    """.trimIndent(),
     "util.py" to """
       from typing import Any, Callable, Concatenate, ParamSpec, TypeVar, Union
 
@@ -3201,7 +3203,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
       BadTypeAlias12 = list or set
       BadTypeAlias13 = f"int"
       BadTypeAlias14 = "int | str"
-      """,
+      """.trimIndent(),
   )
 
   @Test
@@ -3212,7 +3214,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     a3 = a2
     def foo(p: a3): ...
     #          ^^ WARNING Invalid type annotation
-    """)
+    """.trimIndent())
 
   @Test
   fun `multi-line type hint`() = test("""
@@ -3221,7 +3223,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         str |
         list[int]
     $TRIPLE_QUOTE
-    """)
+    """.trimIndent())
 
   @Test
   fun `ParamSpec args kwargs is valid`() = test("""
@@ -3230,7 +3232,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     P = ParamSpec("P")
     class Proto4(Protocol[P]):
         def __call__(self, a: int, *args: P.args, **kwargs: P.kwargs) -> None: ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76834"])
@@ -3270,12 +3272,12 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         p25: Callable[[int, str], None],
         p26: Any,
     ): ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76834"])
+  @TestCaseOptions(assertRecursionPrevention = false)
   fun `TypeExpr invalid annotations conformance tests suite`() = test(
-    TestOptions(assertRecursionPrevention = false),
     """
     import types
 
@@ -3316,7 +3318,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         p15: types,
     #        ^^^^^ WARNING Invalid type annotation
     ): ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-61787"])
@@ -3328,7 +3330,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     def changing_signature(f: Callable[P, T]) -> Callable[Concatenate[Any, P], T]:  # no warnings expected
         ...
-    """)
+    """.trimIndent())
 
   @Test
   fun `class is already parameterized`() = test("""
@@ -3353,7 +3355,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
              return "str"
 
     n = NoErr[int]()
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76894"])
@@ -3381,7 +3383,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     # Concatenate in Callable is allowed
     def changing_signature(f: Callable[P, T]) -> Callable[Concatenate[Any, P], T]: ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-80248"])
@@ -3389,7 +3391,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     type my_type = str
 
     def func1(x: my_type) -> str: ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-80278"])
@@ -3400,7 +3402,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     def foo() -> Instruction:  # No warning expected
         return Instruction(1, 2, 3, 4, 5, 6)
-    """)
+    """.trimIndent())
 
   @Test
   fun `unresolved reference not reported as invalid type argument`() = test("""
@@ -3414,7 +3416,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     c = Clazz[RefToNoWhere, WrongRef]() # will be reported by PyUnresolvedReferencesInspection, but not here
     #         │             ^^^^^^^^ ERROR Unresolved reference 'WrongRef'
     #         ^^^^^^^^^^^^ ERROR Unresolved reference 'RefToNoWhere'
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76862"])
@@ -3429,7 +3431,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #           ^^^^^^^^ ERROR Union type annotations with forward references must be wrapped in quotes entirely
     good1: int | list["ClassA"]
     class ClassA: ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76870"])
@@ -3437,7 +3439,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     from typing import TypeVar, List
 
     T1 = TypeVar('T1', bound=int, default=bool)
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76870"])
@@ -3446,7 +3448,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     T1 = TypeVar('T1', int, str, default=bool)
     #                                    ^^^^ WARNING Default type of TypeVar must be one of the constraint types
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76870"])
@@ -3462,7 +3464,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                                    ^^^^ WARNING Default type of TypeVar must be one of the constraint types
     T4 = TypeVar('T4', str, int, default=List[int])
     #                                    ^^^^^^^^^ WARNING Default type of TypeVar must be one of the constraint types
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76870"])
@@ -3472,7 +3474,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     Y1 = TypeVar("Y1", bound=int)
     Invalid = TypeVar("Invalid", float, str, default=Y1)
     #                                                ^^ WARNING Default type of TypeVar must be one of the constraint types
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76870"])
@@ -3483,7 +3485,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     AlsoOk2 = TypeVar("AlsoOk2", int, str, bool, default=Y1)  # OK
     AlsoInvalid2 = TypeVar("AlsoInvalid2", bool, complex, default=Y1)
     #                                                             ^^ WARNING Default type of TypeVar must be one of the constraint types
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76870"])
@@ -3493,7 +3495,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     T = TypeVar("T")
     Invalid = TypeVar("Invalid", str, int, default=T)
     #                                              └ WARNING Default type of TypeVar must be one of the constraint types
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76870"])
@@ -3502,7 +3504,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     X1 = TypeVar("X1", bound=int)
     Ok1 = TypeVar("Ok1", default=X1, bound=float)
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76870"])
@@ -3512,7 +3514,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     Y3 = TypeVar("Y3", bound=int)
     Invalid3 = TypeVar("Invalid3", str, complex, default=Y3)
     #                                                    ^^ WARNING Default type of TypeVar must be one of the constraint types
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76870"])
@@ -3522,7 +3524,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     X1 = TypeVar("X1", bound=int)
     Invalid1 = TypeVar("Invalid1", default=X1, bound=str)
     #                                      ^^ WARNING Default type of TypeVar is not a subtype of the bound
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76870"])
@@ -3532,7 +3534,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     Y4 = TypeVar("Y4", int, str)
     Invalid4 = TypeVar("Invalid4", bound=str, default=Y4)
     #                                                 ^^ WARNING Default type of TypeVar is not a subtype of the bound
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76870"])
@@ -3559,7 +3561,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     def bar3[T1: bool, T2: int = T1](): ...
     def bar4[T1: (int, str), T2: (str, int) = T1](): ...
     def bar5[T1: (int, str), T2: (str, int, float) = T1](): ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76870"])
@@ -3569,7 +3571,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     T = TypeVar('T')
     T1 = TypeVar('T1', bound=object, default=T)
     T2 = TypeVar('T2', int, object, default=T)
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76870"])
@@ -3602,7 +3604,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     Y5 = TypeVar("Y5", bound=Any)
     NotOk5 = TypeVar("NotOk5", int, str, Any, default=Y5)
     #                                                 ^^ WARNING Default type of TypeVar must be one of the constraint types
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76852"])
@@ -3626,12 +3628,12 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         t5: tuple[*tuple[str], *Ts]
         t6: tuple[*tuple[str, ...], *Ts]
     #       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Type argument list can have at most one unpacked TypeVarTuple or unbounded tuple
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76862"])
+  @TestCaseOptions(assertRecursionPrevention = false)
   fun `check circular references`() = test(
-    TestOptions(assertRecursionPrevention = false),
     """
     from typing import TypeAlias
 
@@ -3668,19 +3670,19 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
            x: "int" = 0 # OK
            var: "var" = None  # E: circular reference
     #           ^^^^^ ERROR Circular reference
-    """)
+    """.trimIndent())
 
   @Test
   fun `Concatenate not reported as illegal first param`() = test("""
     from typing import Callable, Concatenate
 
     x: Callable[Concatenate[int, ...], str]
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76851"])
+  @TestCaseOptions(assertRecursionPrevention = false)
   fun `invalid type alias statement`() = test(
-    TestOptions(assertRecursionPrevention = false),
     """
     var1 = 1
     type BadTypeAlias1 = eval("".join(map(chr, [105, 110, 116])))
@@ -3712,7 +3714,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                     ^^^^^^^^^^^ WARNING Invalid type annotation
     type BadTypeAlias13 = f"{'int'}"
     #                     ^^^^^^^^^^ WARNING Invalid type annotation
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76851"])
@@ -3723,14 +3725,14 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     def func():
         type A = int
     #   ^^^^^^^^^^^^ WARNING A 'type' statement can be used only within a module or class scope
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76851"])
   fun `type alias bound match`() = test("""
     type TypeAlias[S: str] = list[S]
     r: TypeAlias[str] = [""]
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76851"])
@@ -3738,7 +3740,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     type TypeAlias[S: int] = list[S]
     r: TypeAlias[str] = [""]
     #            ^^^ WARNING Expected type 'S ≤: int', got 'str' instead
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76851"])
@@ -3749,7 +3751,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     Alias: TypeAlias = list[T]
     x: Alias[int]
     #        ^^^ WARNING Expected type 'T ≤: str', got 'int' instead
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76851"])
@@ -3760,7 +3762,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         t: Callable[S2, S1]
 
     a: A[int, ...]
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76851"])
@@ -3768,7 +3770,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class C[T: str]: ...
     c = C[int]()
     #     ^^^ WARNING Expected type 'T ≤: str', got 'int' instead
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-88277"])
@@ -3790,7 +3792,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #      ^^^^^^^^ WARNING Expected type '*Ts ≤: *tuple[str]', got '*tuple[str, str]' instead
     d3 = D[int, str]()
     #      ^^^^^^^^ WARNING Expected type '*Ts ≤: *tuple[str]', got '*tuple[int, str]' instead
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-88277"])
@@ -3799,7 +3801,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #            ^^^^^ ERROR Parameter specifications cannot have constraints or upper bounds
     c = C[int]()
     #     ^^^ WARNING Expected type '**P ≤: [str]', got '[int]' instead
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76851"])
@@ -3808,14 +3810,14 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     type TypeAlias[S1, **S2] = Callable[S2, S1]
     type TypeAlias2 = TypeAlias[int, ...]
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76851"])
   fun `simple recursive type alias statement`() = test("""
     type TypeAlias = TypeAlias
     #                ^^^^^^^^^ WARNING Invalid type annotation
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76851"])
@@ -3823,14 +3825,14 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     type TypeAlias = int | str | TypeAlias
     #                            ^^^^^^^^^ WARNING Circular reference
     type TypeAlias2 = int | str
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76851"])
   fun `union recursive type alias statement`() = test("""
     type TypeAlias = TypeAlias | int
     #                ^^^^^^^^^ WARNING Circular reference
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76851"])
@@ -3841,13 +3843,13 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                 ^^^^^^^^^^ WARNING Invalid type annotation
     type TypeAlias3 = TypeAlias1
     #                 ^^^^^^^^^^ WARNING Invalid type annotation
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76851"])
   fun `correct recursive type alias statement`() = test("""
     type TypeAlias1 = list[TypeAlias1]
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-82979"])
@@ -3857,7 +3859,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     def foo() -> HttpOk[None] | Http400 | Http404:
         pass
-    """,
+    """.trimIndent(),
     "sample.py" to """
       from typing import Literal, TypeVar
 
@@ -3873,7 +3875,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
       Http404 = Http[Literal[404], Error]
       Http422 = Http[Literal[422], ErrorResponse[list[ErrorDetails]]]
       Http500 = Http[Literal[500], Literal["Internal Server Error"]]
-      """,
+      """.trimIndent(),
   )
 
   @Test
@@ -3883,12 +3885,12 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     from m import StrictStr
 
     s: StrictStr
-    """,
+    """.trimIndent(),
     "m.py" to """
       from typing import Annotated
 
       StrictStr = Annotated[str, object()]
-      """,
+      """.trimIndent(),
   )
 
   @Test
@@ -3909,7 +3911,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     ]
 
     a_or_b: AOrB
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-83699"])
@@ -3919,7 +3921,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     AsyncFunc = Callable[[int], Awaitable[Any | None]]
 
     f: AsyncFunc
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-83700"])
@@ -3928,7 +3930,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     from lib import Baz
 
     def bar(baz: Baz.SOME_TYPE) -> None: ...
-    """,
+    """.trimIndent(),
     "lib.py" to """
       from typing import Generic, TypeVar
 
@@ -3938,7 +3940,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
       class Baz:
           SOME_TYPE = Foo[int]
-      """,
+      """.trimIndent(),
   )
 
   @Test
@@ -3952,7 +3954,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     def foo(arg: Cls | None) -> None:
         print(arg)
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-81439"])
@@ -3968,7 +3970,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     def f(a: A, a1: A1, a2: A2, a3: A3, b: B, c: C) -> None:
         print(a, a1, a2, a3, b, c)
-    """)
+    """.trimIndent())
 
   @Test
   fun `Self imported from non-excluded typing extensions multi-file`() = test(
@@ -3978,7 +3980,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class C:
         def identity(self) -> Self:
             return self
-    """,
+    """.trimIndent(),
     "typing_extensions.py" to """
       import typing
 
@@ -4000,7 +4002,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
               $TRIPLE_QUOTE
 
               raise TypeError(f"{self} is not subscriptable")
-      """,
+      """.trimIndent(),
   )
 
   @Test
@@ -4016,7 +4018,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class B:
        def __init__(self):
            self.l: list[Self]  # OK
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76832"])
@@ -4026,7 +4028,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class Bar[T]: ...
     class Baz(Bar[Self]): ...
     #             ^^^^ WARNING Cannot use 'Self' in this context
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76832"])
@@ -4039,7 +4041,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
         def __mul__(cls, count: int) -> list[Self]: ...
     #                                        ^^^^ WARNING Type 'Self' cannot be used in a metaclass
-    """)
+    """.trimIndent())
 
   @Test
   fun `subscription parentheses flattening`() = test("""
@@ -4114,7 +4116,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: Optional[((int, int))]
     #│            ^^^^^^^^ ERROR 'Optional' must have exactly one argument
-    #\ TYPE Unknown FIXME Unknown | None
+    #\ TYPE Unknown | None
 
     a: tuple[((int)), ((...))]
     #\ TYPE tuple[int, ...]
@@ -4123,10 +4125,10 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: tuple[((...)), ((int))]
     #│         ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...]
+    #\ TYPE tuple[Unknown, int]
     a: Tuple[((...)), ((int))]
     #│         ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...]
+    #\ TYPE tuple[Unknown, int]
 
     a: tuple[(int,), ...]
     #│       ^^^^^^ ERROR Invalid type argument
@@ -4140,7 +4142,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: C2[(((int), (str)))]
     #\ TYPE C2[int, str]
-    """)
+    """.trimIndent())
 
   @Test
   fun `subscription empty parentheses`() = test("""
@@ -4155,17 +4157,17 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: tuple[int, ()]
     #│            ^^ ERROR Empty tuple is allowed only as a sole argument
-    #\ TYPE tuple[()] FIXME tuple[Unknown]
+    #\ TYPE tuple[int, Unknown]
     a: Tuple[int, ()]
     #│            ^^ ERROR Empty tuple is allowed only as a sole argument
-    #\ TYPE tuple[()] FIXME tuple[Unknown]
+    #\ TYPE tuple[int, Unknown]
 
     a: tuple[(), int]
     #│       ^^ ERROR Empty tuple is allowed only as a sole argument
-    #\ TYPE tuple[()] FIXME tuple[Unknown]
+    #\ TYPE tuple[Unknown, int]
     a: Tuple[(), int]
     #│       ^^ ERROR Empty tuple is allowed only as a sole argument
-    #\ TYPE tuple[()] FIXME tuple[Unknown]
+    #\ TYPE tuple[Unknown, int]
 
     a: tuple[(), ...]
     #│       ^^ ERROR Empty tuple is allowed only as a sole argument
@@ -4177,11 +4179,11 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     a: tuple[(), ()]
     #│       │   ^^ ERROR Empty tuple is allowed only as a sole argument
     #│       ^^ ERROR Empty tuple is allowed only as a sole argument
-    #\ TYPE tuple[Unknown, ...] FIXME tuple[Unknown]
+    #\ TYPE tuple[Unknown, Unknown]
     a: Tuple[(), ()]
     #│       │   ^^ ERROR Empty tuple is allowed only as a sole argument
     #│       ^^ ERROR Empty tuple is allowed only as a sole argument
-    #\ TYPE tuple[Unknown, ...] FIXME tuple[Unknown]
+    #\ TYPE tuple[Unknown, Unknown]
 
     a: list[()]
     #│      ^^ WARNING Passed type arguments do not match type parameters [_T] of class 'list'
@@ -4211,12 +4213,12 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: Optional[()]
     #│          ^^ ERROR 'Optional' must have exactly one argument
-    #\ TYPE Unknown FIXME Unknown | None
+    #\ TYPE Unknown | None
 
     a: C1[()]
     #│    ^^ WARNING Passed type arguments do not match type parameters [T] of class 'C1'
     #\ TYPE C1 FIXME C1[Unknown]
-    """)
+    """.trimIndent())
 
   @Test
   fun `subscription type form`() = test("""
@@ -4302,14 +4304,27 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: Optional[int, int]
     #│          ^^^^^^^^ ERROR 'Optional' must have exactly one argument
-    #\ TYPE Unknown FIXME Unknown | None
+    #\ TYPE Unknown | None
 
     a: Optional[(int,)]
     #\ TYPE int | None
 
     a: Callable[int, int]
-    #│          ^^^ ERROR 'Callable' first parameter must be a parameter expression
-    #\ TYPE int | None FIXME (Unknown) -> int
+    #│          ^^^ ERROR 'Callable' first parameter must be a list literal of parameter types ('[T1, T2, ...]') or a parameter specification
+    #\ TYPE (...) -> int
+
+    a: Callable[(int, str), float]
+    #│          ^^^^^^^^^^ ERROR 'Callable' first parameter must be a list literal of parameter types ('[T1, T2, ...]') or a parameter specification
+    #\ TYPE (...) -> float | int
+
+    a: Callable[int, str, float, complex]
+    #│          │         ^^^^^^^^^^^^^^ ERROR 'Callable' must have exactly two arguments
+    #│          ^^^ ERROR 'Callable' first parameter must be a list literal of parameter types ('[T1, T2, ...]') or a parameter specification
+    #\ TYPE (...) -> str
+
+    a: Callable[[int], str, float]
+    #│                      ^^^^^ ERROR 'Callable' must have exactly two arguments
+    #\ TYPE (int) -> str
 
     a: Callable[[int], (([int]))]
     #│                   ^^^^^ ERROR Parameters to generic types must be types
@@ -4353,7 +4368,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #\ TYPE dict[int, TV] FIXME dict[int, Unknown]
 
     a: Annotated[((str, dict[str, str]))]
-    """)
+    """.trimIndent())
 
   @Test
   fun `subscription ellipsis type form`() = test("""
@@ -4368,38 +4383,49 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: tuple[..., int]
     #│       ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...]
+    #\ TYPE tuple[Unknown, int]
     a: Tuple[..., int]
     #│       ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...]
+    #\ TYPE tuple[Unknown, int]
 
     a: tuple[int, int, ...]
     #│                 ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...]
+    #\ TYPE tuple[int, int, Unknown]
     a: Tuple[int, int, ...]
     #│                 ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...]
+    #\ TYPE tuple[int, int, Unknown]
 
     a: tuple[int, ..., int]
     #│            ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...]
+    #\ TYPE tuple[int, Unknown, int]
     a: Tuple[int, ..., int]
     #│            ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...]
+    #\ TYPE tuple[int, Unknown, int]
 
     a: tuple[...]
     #│       ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...] FIXME tuple[Unknown]
+    #\ TYPE tuple[Unknown]
     a: Tuple[...]
     #│       ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...] FIXME tuple[Unknown]
+    #\ TYPE tuple[Unknown]
 
     a: tuple[..., ...]
     #│       ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...] FIXME tuple[Unknown]
+    #\ TYPE tuple[Unknown, ...]
     a: Tuple[..., ...]
     #│       ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...] FIXME tuple[Unknown]
+    #\ TYPE tuple[Unknown, ...]
+
+    a: tuple[..., ..., ...]
+    #│       │    │    ^^^ ERROR '...' is allowed only as the second of two arguments
+    #│       │    ^^^ ERROR '...' is allowed only as the second of two arguments
+    #│       ^^^ ERROR '...' is allowed only as the second of two arguments
+    #\ TYPE tuple[Unknown, Unknown, Unknown]
+    a: Tuple[..., ..., ...]
+    #│       │    │    ^^^ ERROR '...' is allowed only as the second of two arguments
+    #│       │    ^^^ ERROR '...' is allowed only as the second of two arguments
+    #│       ^^^ ERROR '...' is allowed only as the second of two arguments
+    #\ TYPE tuple[Unknown, Unknown, Unknown]
 
     a: list[...]
     #│      ^^^ ERROR Invalid type argument
@@ -4428,26 +4454,25 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: Optional[...]
     #│          ^^^ ERROR Invalid type argument
-    #\ TYPE Unknown FIXME Unknown | None
+    #\ TYPE Unknown | None
 
     a: tuple[*tuple[str], ...]
     #│                    ^^^ ERROR '...' cannot be used with an unpacked 'TypeVarTuple' or tuple
-    #\ TYPE Unknown FIXME tuple[Unknown, ...]
+    #\ TYPE tuple[Unknown, ...]
 
     a: tuple[*tuple[str, ...], ...]
     #│                         ^^^ ERROR '...' cannot be used with an unpacked 'TypeVarTuple' or tuple
-    #\ TYPE Unknown FIXME tuple[Unknown, ...]
+    #\ TYPE tuple[Unknown, ...]
 
     a: C1[...]
     #│    ^^^ ERROR Invalid type argument
     #\ TYPE C1[Unknown]
-    """)
+    """.trimIndent())
 
   @Test
-  @Timeout(value = 5, unit = TimeUnit.SECONDS)
   @TestFor(issues = ["PY-84289"])
+  @TestCaseOptions(assertRecursionPrevention = false)
   fun `exponential analysis time when map lookup key equals variable name`() = test(
-    TestOptions(assertRecursionPrevention = false),
     """
     from a import config_response
 
@@ -4485,7 +4510,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     config_response = {}
     config_map = config_response["spec"]["config_map"]
     kafka_consumer_key9 = config_map["component.job.static.job2"]["spec.plugin.kafka.connectivity.in"]
-    """,
+    """.trimIndent(),
     "a.py" to "config_response = {}",
   )
 
@@ -4508,7 +4533,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #            ^^^^^^^^^^ WARNING Invalid type annotation
     myAlias: TypeAlias = [int, str]
     #                    ^^^^^^^^^^ WARNING Assigned value of type alias must be a correct type
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-85120"])
@@ -4517,7 +4542,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     if a:
         _ = a[1]  # No error expected
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-86310"])
@@ -4525,7 +4550,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     b = []
     a = b
     _ = a[0] # No error expected
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-86223"])
@@ -4535,7 +4560,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     def foo[T](x: list["T"]):
         assert_type(x, list[T])
         assert_type(x, list["T"])
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76895"])
@@ -4564,7 +4589,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                     ^^^^^^^^^^^^^^^ WARNING Invalid type annotation
     class ClassK[T: [int]]: ...
     #               ^^^^^ WARNING Invalid type annotation
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-89092"])
@@ -4574,7 +4599,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A[**P]: ...
     class B[T: Callable[[], None] = Callable[[], None]]: ...
     class C[T: A[[]] = A[[]]]: ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76895"])
@@ -4592,7 +4617,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                     ^^^^^^^^^^^^^^^ WARNING Invalid type annotation
     class ClassF[T: 3]: ...
     #               └ WARNING Invalid type annotation
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-87564"])
@@ -4601,7 +4626,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     import mod
 
     class A[T: mod.MyClass]: ...
-    """,
+    """.trimIndent(),
     "mod.py" to "class MyClass: pass",
   )
 
@@ -4612,7 +4637,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                        │                   ^^^^^^ WARNING 'P.args' can only be used to annotate '*args' parameters
     #                        ^^^^^^^^ WARNING 'P.kwargs' can only be used to annotate '**kwargs' parameters
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76850"])
@@ -4620,7 +4645,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     def misplaced[**P](x: P.args) -> None:
     #                     ^^^^^^ WARNING ParamSpec component can only be used to annotate '*args' or '**kwargs' parameters
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76850"])
@@ -4628,7 +4653,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     def bad[**P](*args: P.args, **kwargs: P.args) -> None:
     #                                     ^^^^^^ WARNING 'P.args' can only be used to annotate '*args' parameters
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76850"])
@@ -4638,7 +4663,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     def bad[**P](*args: P.args, **kwargs: Any) -> None:
     #                   ^^^^^^ WARNING 'P.args' and 'P.kwargs' must both be present in the same function signature
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76850"])
@@ -4650,7 +4675,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                       │                 └ WARNING ParamSpec 'P' must be a type parameter of the enclosing callable or class
     #                       └ WARNING ParamSpec 'P' must be a type parameter of the enclosing callable or class
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76850"])
@@ -4660,7 +4685,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                ^^^^^^ WARNING ParamSpec component can only be used to annotate '*args' or '**kwargs' parameters
         stored_kwargs: P.kwargs
     #                  ^^^^^^^^ WARNING ParamSpec component can only be used to annotate '*args' or '**kwargs' parameters
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76850"])
@@ -4668,7 +4693,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     def just_args[**P](*args: P.args) -> None:
     #                         ^^^^^^ WARNING 'P.args' and 'P.kwargs' must both be present in the same function signature
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76850"])
@@ -4676,7 +4701,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     def just_kwargs[**P](**kwargs: P.kwargs) -> None:
     #                              ^^^^^^^^ WARNING 'P.args' and 'P.kwargs' must both be present in the same function signature
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76850"])
@@ -4684,7 +4709,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     def bar[**P](*args: P.args, s: str, **kwargs: P.kwargs) -> None:
     #                           ^^^^^^ WARNING No parameters allowed between 'P.args' and 'P.kwargs'
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76850"])
@@ -4695,7 +4720,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class Wrapper(Generic[P]):
         def call(self, *args: P.args, **kwargs: P.kwargs) -> None:
             pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76850"])
@@ -4705,7 +4730,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     P = ParamSpec("P")
     class Proto(Protocol[P]):
         def __call__(self, *args: P.args, **kwargs: P.kwargs) -> None: ...
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76850"])
@@ -4713,7 +4738,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class Wrapper[**P]:
         def call(self, *args: P.args, **kwargs: P.kwargs) -> None:
             pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76850"])
@@ -4726,7 +4751,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                         │                 └ WARNING ParamSpec 'P' must be a type parameter of the enclosing callable or class
     #                         └ WARNING ParamSpec 'P' must be a type parameter of the enclosing callable or class
             pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76850"])
@@ -4743,7 +4768,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     def twice(f: Callable[P, int], *args: P.args, **kwargs: P.kwargs) -> int:
         return f(*args, **kwargs)
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76850"])
@@ -4756,7 +4781,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     def invoke(fn: Callable[P, T], *args: P.args, **kwargs) -> T:
     #                                     ^^^^^^ WARNING 'P.args' and 'P.kwargs' must both be present in the same function signature
         pass
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-76850"])
@@ -4768,7 +4793,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                    ^^^^^^^^ WARNING 'P.args' and 'P.kwargs' must both be present in the same function signature
     #                    └ WARNING ParamSpec 'P' must be a type parameter of the enclosing callable or class
         pass
-    """)
+    """.trimIndent())
 
   @Test
   fun `explicit tuple in Literal`() = test("""
@@ -4776,7 +4801,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     _: Literal[(1, "a")]
     #          ^^^^^^^^ WARNING 'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types
-    """)
+    """.trimIndent())
 
   companion object {
     private const val TRIPLE_QUOTE = "\"\"\""

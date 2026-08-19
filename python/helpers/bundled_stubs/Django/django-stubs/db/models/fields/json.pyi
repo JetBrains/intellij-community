@@ -1,6 +1,6 @@
 import json
 from collections.abc import Callable
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Self
 
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models import Model, lookups
@@ -9,7 +9,7 @@ from django.db.models.fields import TextField
 from django.db.models.lookups import FieldGetDbPrepValueMixin, PostgresOperatorLookup, Transform
 from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
 from django.utils.functional import _StrOrPromise
-from typing_extensions import Self, TypeVar, override
+from typing_extensions import TypeVar, override
 
 from . import Field
 from .mixins import CheckFieldDefaultMixin
@@ -88,7 +88,7 @@ class KeyTransform(Transform):
 class KeyTextTransform(KeyTransform):
     postgres_operator: str
     postgres_nested_operator: str
-    output_field: ClassVar[TextField]
+    output_field: ClassVar[TextField[Any, Any]]
     @override
     def as_mysql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...
     @classmethod

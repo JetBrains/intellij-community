@@ -42,18 +42,65 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.jediterm.core"/>
+    <module name="intellij.libraries.jediterm.ui"/>
+    <module name="intellij.libraries.jna"/>
+    <module name="intellij.libraries.kotlinx.datetime"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.pty4j"/>
+    <module name="intellij.libraries.winp"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.feedback"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.internal"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.remote.core"/>
+    <module name="intellij.platform.rpc.lite"/>
+    <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.diff"/>
+    <module name="intellij.platform.util.ui"/>
     <!-- endregion -->
   </dependencies>
 
   <content namespace="jetbrains">
     <module name="intellij.terminal.backend.split"/>
     <module name="intellij.terminal.backend"/>
+    <module name="intellij.terminal.emulator"/>
     <module name="intellij.terminal.frontend"/>
     <module name="intellij.terminal.frontend.split"/>
     <module name="intellij.terminal.cloud"/>
     <module name="intellij.terminal.sh"/>
     <module name="intellij.terminal.agentsProvider"/>
+  </content>
+  <content>
+    <module name="intellij.libraries.completion.ranking.sh" loading="embedded"/>
+    <module name="intellij.terminal.libraries.completionDbWithExtensions" loading="embedded"/>
   </content>
 
   <resource-bundle>messages.TerminalBundle</resource-bundle>
@@ -146,23 +193,6 @@
       <keyboard-shortcut first-keystroke="control R" keymap="Mac OS X 10.5+" replace-all="true"/>
     </action>
 
-    <action id="Terminal.LineUp" class="org.jetbrains.plugins.terminal.action.TerminalLineUpAction">
-      <override-text place="GoToAction"/>
-      <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
-    </action>
-    <action id="Terminal.LineDown" class="org.jetbrains.plugins.terminal.action.TerminalLineDownAction">
-      <override-text place="GoToAction"/>
-      <keyboard-shortcut first-keystroke="control DOWN" keymap="$default"/>
-    </action>
-    <action id="Terminal.PageUp" class="org.jetbrains.plugins.terminal.action.TerminalPageUpAction">
-      <override-text place="GoToAction"/>
-      <keyboard-shortcut first-keystroke="shift PAGE_UP" keymap="$default"/>
-    </action>
-    <action id="Terminal.PageDown" class="org.jetbrains.plugins.terminal.action.TerminalPageDownAction">
-      <override-text place="GoToAction"/>
-      <keyboard-shortcut first-keystroke="shift PAGE_DOWN" keymap="$default"/>
-    </action>
-
     <group id="Terminal.PromptStyle" popup="true">
       <action id="Terminal.UseSingleLinePrompt" class="org.jetbrains.plugins.terminal.block.prompt.TerminalUseSingleLinePromptAction"/>
       <action id="Terminal.UseDoubleLinePrompt" class="org.jetbrains.plugins.terminal.block.prompt.TerminalUseDoubleLinePromptAction"/>
@@ -171,10 +201,6 @@
 
     <group id="Terminal.PromptToolbar"/>
 
-    <action id="Terminal.ShowFeedbackNotification" internal="true"
-            class="org.jetbrains.plugins.terminal.block.feedback.ShowReworkedTerminalFeedbackNotificationAction"/>
-    <action id="Terminal.Completion.ShowFeedbackNotification" internal="true"
-            class="org.jetbrains.plugins.terminal.block.completion.feedback.ShowTerminalCompletionFeedbackNotificationAction"/>
   </actions>
 
 </idea-plugin>

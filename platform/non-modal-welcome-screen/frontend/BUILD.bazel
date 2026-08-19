@@ -65,6 +65,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.nonModalWelcomeScreen.frontend.iml",
+        "resources/intellij.platform.ide.nonModalWelcomeScreen.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )

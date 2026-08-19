@@ -9,23 +9,43 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.get
 import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.set
 import org.jetbrains.annotations.TestOnly
+import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import kotlin.jvm.optionals.getOrNull
 
 @TestOnly
-internal class TestApplicationLeakTrackerExtension : BeforeEachCallback, AfterEachCallback {
+internal class TestApplicationLeakTrackerExtension : BeforeEachCallback, AfterEachCallback, BeforeAllCallback, AfterAllCallback {
 
   companion object {
     private val leakTrackersKey = TypedStoreKey.createKey<LeakTrackers>()
   }
 
   override fun beforeEach(context: ExtensionContext) {
-    context[leakTrackersKey] = LeakTrackers()
+    if (context.testInstanceLifecycle.getOrNull() != TestInstance.Lifecycle.PER_CLASS) {
+      context[leakTrackersKey] = LeakTrackers()
+    }
   }
 
   override fun afterEach(context: ExtensionContext) {
-    context[leakTrackersKey]?.checkNothingLeaked()
+    if (context.testInstanceLifecycle.getOrNull() != TestInstance.Lifecycle.PER_CLASS) {
+      context[leakTrackersKey]?.checkNothingLeaked()
+    }
+  }
+
+  override fun beforeAll(context: ExtensionContext) {
+    if (context.testInstanceLifecycle.getOrNull() == TestInstance.Lifecycle.PER_CLASS) {
+      context[leakTrackersKey] = LeakTrackers()
+    }
+  }
+
+  override fun afterAll(context: ExtensionContext) {
+    if (context.testInstanceLifecycle.getOrNull() == TestInstance.Lifecycle.PER_CLASS) {
+      context[leakTrackersKey]?.checkNothingLeaked()
+    }
   }
 
   @TestOnly

@@ -47,7 +47,7 @@ internal class ThreadDumpAction : DumbAwareAction(), SplitDebuggerAction {
       return
     }
     val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return
-    sessionProxy.coroutineScope.launch {
+    e.coroutineScope.launch {
       val dtosWillBeSerialized = FrontendApplicationInfo.getFrontendType() !is FrontendType.Monolith
       val maxItems = if (dtosWillBeSerialized) Registry.intValue("debugger.thread.dump.max.items.frontend") else Int.MAX_VALUE
       val (threadDumpsDtoChannel, filters) = JavaDebuggerSessionApi.getInstance().dumpThreads(sessionProxy.id, maxItems, onlyPlatformThreads) ?: return@launch

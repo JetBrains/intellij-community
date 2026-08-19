@@ -32,13 +32,10 @@ object LspDidChangeUtil {
     documentEvent: DocumentEvent,
     virtualFile: VirtualFile,
   ): DidChangeTextDocumentParams {
-    val versionedIdentifier = getVersionedIdentifier(lspClient, documentEvent.document, virtualFile)
-    // This function is called at the moment when the `documentEvent` is not yet applied to the document,
-    // but the state of the document that this `DidChangeTextDocumentParams` reports to the LSP server
-    // assumes that the documentEvent has been applied.
-    // If we don't increase the document version number, the LSP server will have the right to ignore the `didChange` notification
-    // because the document version number may appear to be equal to the one sent previously within the `didOpen` request.
-    versionedIdentifier.version = versionedIdentifier.version!! + 1
+    // This function is called at the moment when the `documentEvent` is not yet applied to the document, so
+    // the version to declare can't be read off the document -- [LspClient.nextDocumentVersion] advances a
+    // version counter this client owns outright instead, so there's nothing to predict.
+    val versionedIdentifier = getVersionedIdentifier(lspClient, virtualFile, lspClient.nextDocumentVersion(documentEvent.document))
 
     val range = getLsp4jRange(documentEvent.document, documentEvent.offset, documentEvent.oldLength)
     val text = documentEvent.newFragment.toString()
@@ -54,17 +51,14 @@ object LspDidChangeUtil {
     virtualFile: VirtualFile,
   ): DidChangeTextDocumentParams =
     DidChangeTextDocumentParams(
-      getVersionedIdentifier(lspClient, document, virtualFile),
+      getVersionedIdentifier(lspClient, virtualFile, lspClient.nextDocumentVersion(document)),
       listOf(TextDocumentContentChangeEvent(document.text))
     )
 
   private fun getVersionedIdentifier(
     lspClient: LspClient,
-    document: Document,
     virtualFile: VirtualFile,
+    version: Int,
   ): VersionedTextDocumentIdentifier =
-    VersionedTextDocumentIdentifier(
-      lspClient.descriptor.getFileUri(virtualFile),
-      lspClient.getDocumentVersion(document)
-    )
+    VersionedTextDocumentIdentifier(lspClient.descriptor.getFileUri(virtualFile), version)
 }

@@ -32,6 +32,9 @@ jvm_library(
 exports_files(
     [
         "intellij.keymap.visualStudio.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/keymaps/Visual Studio OSX.xml",
+        "resources/keymaps/Visual Studio.xml",
     ],
     visibility = ["//visibility:public"],
 )

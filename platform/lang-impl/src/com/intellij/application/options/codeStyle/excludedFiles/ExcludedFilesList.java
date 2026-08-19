@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
@@ -26,9 +26,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public final class ExcludedFilesList extends JBList<FileSetDescriptor> {
 
@@ -116,60 +114,6 @@ public final class ExcludedFilesList extends JBList<FileSetDescriptor> {
 
   public ToolbarDecorator getDecorator() {
     return myFileListDecorator;
-  }
-
-  @SuppressWarnings("unused")
-  private void addDescriptor() {
-    assert mySchemesModel != null;
-    List<NamedScope> availableScopes = getAvailableScopes();
-    if (!availableScopes.isEmpty()) {
-      ExcludedFilesScopeDialog dialog = new ExcludedFilesScopeDialog(mySchemesModel.getProject(), availableScopes);
-      dialog.show();
-      if (dialog.isOK()) {
-        FileSetDescriptor descriptor = dialog.getDescriptor();
-        if (descriptor != null) {
-          int insertAt = getSelectedIndex() < 0 ? getItemsCount() : getSelectedIndex() + 1;
-          int exiting = myModel.indexOf(descriptor);
-          if (exiting < 0) {
-            myModel.add(insertAt, descriptor);
-            setSelectedValue(descriptor, true);
-          }
-          else {
-            setSelectedValue(myModel.get(exiting), true);
-          }
-        }
-      }
-      else if (dialog.getExitCode() == ExcludedFilesScopeDialog.EDIT_SCOPES) {
-        editScope(null);
-      }
-    }
-    else {
-      editScope(null);
-    }
-  }
-
-  private List<NamedScope> getAvailableScopes() {
-    Set<String> usedNames = getUsedScopeNames();
-    List<NamedScope> namedScopes = new ArrayList<>();
-    for (NamedScopesHolder holder : getScopeHolders()) {
-      for (NamedScope scope : holder.getEditableScopes()) {
-        if (!usedNames.contains(scope.getScopeId())) {
-          namedScopes.add(scope);
-        }
-      }
-    }
-    return namedScopes;
-  }
-
-  private Set<String> getUsedScopeNames() {
-    Set<String> usedScopeNames = new HashSet<>();
-    for (int i =0 ; i < myModel.size(); i ++) {
-      FileSetDescriptor descriptor = myModel.get(i);
-      if (descriptor instanceof NamedScopeDescriptor) {
-        usedScopeNames.add(descriptor.getName());
-      }
-    }
-    return usedScopeNames;
   }
 
   private void removeDescriptor() {

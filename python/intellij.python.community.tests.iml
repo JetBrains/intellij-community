@@ -99,7 +99,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.core.impl" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.sdk.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.gson" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.commandInterface" scope="TEST" />
@@ -124,7 +124,7 @@
     <orderEntry type="module" module-name="intellij.python.syntax" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetcheck" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.python.test.env.common" />
     <orderEntry type="module" module-name="intellij.python.test.env.junit4" scope="TEST" />
@@ -163,6 +163,7 @@
     <orderEntry type="module" module-name="intellij.python.pyright" scope="TEST" />
     <orderEntry type="module" module-name="intellij.toml.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.requirements.backend" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.python.community.impl" />
 </module>

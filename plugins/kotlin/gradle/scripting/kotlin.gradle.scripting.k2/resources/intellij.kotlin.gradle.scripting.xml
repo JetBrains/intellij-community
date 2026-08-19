@@ -22,6 +22,22 @@
     <module name="intellij.kotlin.gradle.tooling.impl"/>
     <module name="intellij.kotlin.references"/>
     <module name="intellij.kotlin.uast.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.k2"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.properties.psi"/>
     <module name="kotlin.gradle.gradle-java"/>
     <module name="kotlin.gradle.scripting.shared"/>
@@ -46,10 +62,11 @@
     <codeInsight.declarativeInlayProvider language="kotlin"
                                           implementationClass="org.jetbrains.kotlin.gradle.scripting.k2.GradleVersionCatalogVersionInlayHintsProvider"
                                           isEnabledByDefault="true"
-                                          group="VALUES_GROUP"
+                                          group="OTHER_GROUP"
                                           providerId="gradle.version.catalog.version"
                                           bundle="messages.KotlinGradleScriptingBundle"
-                                          nameKey="inlay.hints.version.catalog.dependencies.name"/>
+                                          nameKey="inlay.hints.version.catalog.dependencies.name"
+                                          descriptionKey="inlay.hints.version.catalog.dependencies.description"/>
 
     <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslSyncListener"/>
 
@@ -73,7 +90,7 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <kotlinScriptFilter implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptProcessingFilter"/>
-    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.gradle.scripting.k2.definition.GradleScriptDefinitionsSource"/>
+    <scriptDefinitionsProvider implementation="org.jetbrains.kotlin.gradle.scripting.k2.definition.GradleScriptDefinitionsProvider"/>
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.gradle.scripting.k2.fixes.KotlinGradlePropertyMethodCallQuickFixRegistrar"/>
   </extensions>
 

@@ -61,6 +61,9 @@ public object ShowcaseIcons {
         /** Icon for the ComboBox component section. */
         public val comboBox: PathIconKey = PathIconKey("icons/components/comboBox.svg", ShowcaseIcons::class.java)
 
+        /** Icon for the GotIt component section. */
+        public val gotIt: PathIconKey = PathIconKey("icons/components/balloon.svg", ShowcaseIcons::class.java)
+
         /** Icon for the Links component section. */
         public val links: PathIconKey = PathIconKey("icons/components/links.svg", ShowcaseIcons::class.java)
 

@@ -6,6 +6,8 @@ import com.intellij.driver.client.service
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.remoteDev.FrontendGuestNavigationService
+import com.intellij.driver.sdk.remoteDev.isLightSession
+import com.intellij.driver.sdk.remoteDev.openFileInLightSession
 import com.intellij.driver.sdk.ui.remote.ColorRef
 import java.awt.Point
 import java.awt.Rectangle
@@ -221,6 +223,7 @@ fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEd
 
 fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true, isTextEditor: Boolean = true) {
   step("Open file $relativePath") {
+    val openInLightSession = isRemDevMode && isLightSession()
     val openedFile = if (!isRemDevMode) {
       val fileToOpen = waitFor(message = "File is opened: $relativePath",
                                errorMessage = { "Fail to find file $relativePath" },
@@ -234,6 +237,9 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
       openEditor(fileToOpen!!, project)
       fileToOpen
     }
+    else if (openInLightSession) {
+      openFileInLightSession(relativePath, project, isTextEditor)
+    }
     else {
       val service = service(FrontendGuestNavigationService::class, project)
       withContext(OnDispatcher.EDT) {
@@ -241,7 +247,7 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
         findCurrentEditorFile(relativePath = relativePath, project = project, isTextEditor = isTextEditor)!!
       }
     }
-    if (waitForCodeAnalysis) {
+    if (waitForCodeAnalysis && !openInLightSession) {
       waitForCodeAnalysis(project, openedFile)
     }
   }
@@ -263,3 +269,7 @@ fun Driver.findOpenFile(relativePath: String, project: Project = singleProject()
   else {
     findCurrentEditorFile(relativePath = relativePath, project = project, isTextEditor = isTextEditor)
   }
+
+/** Returns the selected text editor, or `null` when another editor type is selected. */
+fun Driver.selectedTextEditor(project: Project = singleProject()): Editor? =
+  service<FileEditorManager>(project).getSelectedTextEditor()

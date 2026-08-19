@@ -65,14 +65,17 @@ internal suspend fun getUniqueNameEditorTabTitleAsync(project: Project, file: Vi
   // Even though this is a 'tab title provider' it is used also when tabs are not shown, namely for building IDE frame title.
   val uniqueFilePathBuilder = (ApplicationManager.getApplication() as ComponentManagerEx)
                                 .getServiceAsyncIfDefined(UniqueVFilePathBuilder::class.java) ?: return null
+  val builder = uniqueFilePathBuilder.withProject(project) // preload necessary services out of read action
+
   var uniqueName = readAction {
     if (uiSettings.editorTabPlacement == UISettings.TABS_NONE) {
-      uniqueFilePathBuilder.getUniqueVirtualFilePath(project, file)
+      builder.getUniqueVirtualFilePath(file)
     }
     else {
-      uniqueFilePathBuilder.getUniqueVirtualFilePathWithinOpenedFileEditors(project, file)
+      builder.getUniqueVirtualFilePathWithinOpenedFileEditors(file)
     }
   }
+
   uniqueName = getEditorTabText(
     result = uniqueName,
     separator = File.separator,

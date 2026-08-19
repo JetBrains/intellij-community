@@ -65,10 +65,17 @@ public final class JpsReferenceDependenciesRegistrar implements JavacFileReferen
         JavacRef ref = iterator.next().getKey();
         final JavacRef.ImportProperties importProps = ref.getImportProperties();
         if (importProps != null) { // the reference comes from import list
-          if (ref instanceof JavacRef.JavacClass) {
+          if (ref instanceof JavacRef.JavacPackageImport) {
+            classImports.add(ref.getName() + ".*");
+          }
+          else if (ref instanceof JavacRef.JavacClass) {
             classImports.add(ref.getName());
-            if (importProps.isStatic() && importProps.isOnDemand()) {
-              staticImports.add(ref.getName() + ".*");
+            if (importProps.isOnDemand()) {
+              String onDemandImport = ref.getName() + ".*";
+              classImports.add(onDemandImport);
+              if (importProps.isStatic()) {
+                staticImports.add(onDemandImport);
+              }
             }
           }
           else {

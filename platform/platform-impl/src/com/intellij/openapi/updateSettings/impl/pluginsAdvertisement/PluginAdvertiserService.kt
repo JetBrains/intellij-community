@@ -244,10 +244,8 @@ open class PluginAdvertiserServiceImpl(
   /**
    * Checks if the plugin is compatible with the current build of the IDE.
    */
-  private fun isPluginCompatible(descriptor: IdeaPluginDescriptor): Boolean {
-    val incompatibilityReason = PluginManagerCore.checkBuildNumberCompatibility(descriptor, PluginManagerCore.buildNumber)
-    return incompatibilityReason == null
-  }
+  private fun isPluginCompatible(descriptor: IdeaPluginDescriptor): Boolean =
+    PluginManagerCore.isCompatible(descriptor, PluginManagerCore.buildNumber)
 
   private suspend fun fetchFeatures(
     features: Collection<UnknownFeature>,

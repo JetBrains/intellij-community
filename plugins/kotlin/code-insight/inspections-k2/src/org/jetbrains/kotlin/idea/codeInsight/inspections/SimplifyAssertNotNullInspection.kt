@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -54,7 +55,8 @@ internal class SimplifyAssertNotNullInspection :
         }
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Context? {
 
         val calleeExpression = element.calleeExpression as? KtNameReferenceExpression ?: return null
         val functionSymbol = calleeExpression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol

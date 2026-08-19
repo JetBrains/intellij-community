@@ -81,7 +81,7 @@ public final class JavaDebuggerConsoleFilterProvider implements ConsoleFilterPro
     }
   }
 
-  private static boolean isDebuggerAttached(String transport, String address, Project project) {
+  public static boolean isDebuggerAttached(@NotNull String transport, @NotNull String address, @NotNull Project project) {
     return isDebuggerAttached(transport, address, project, null);
   }
 

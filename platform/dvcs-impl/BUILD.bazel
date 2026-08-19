@@ -63,6 +63,7 @@ jvm_library(
         "//platform/workspace/storage",
         "//platform/dvcs-impl/shared",
         "//platform/kernel/backend",
+        "//platform/kernel/rpc.backend",
         "//jps/model-api:model",
         "//platform/lang-core",
         "//fleet/rhizomedb",
@@ -121,6 +122,7 @@ jvm_library(
         "//platform/workspace/storage:storage_test_lib",
         "//platform/dvcs-impl/shared:shared_test_lib",
         "//platform/kernel/backend:backend_test_lib",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
         "//jps/model-api:model_test_lib",
         "//platform/lang-core:lang-core_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
@@ -132,6 +134,8 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.vcs.dvcs.impl.iml",
+        "resources/VcsProductivityFeatures.xml",
+        "resources/intellij.platform.vcs.dvcs.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

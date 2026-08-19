@@ -46,6 +46,10 @@ object Subsystems {
   @Inherited
   annotation class Interpreters
 
+  @Subsystem("Packaging")
+  @Inherited
+  annotation class Packaging
+
   @Subsystem("Packaging. Requirements")
   @Inherited
   annotation class PackagingRequirements
@@ -241,4 +245,8 @@ object Layers {
   @Layer("UI Tests")
   @Inherited
   annotation class UI
+
+  @Layer("Performance Tests")
+  @Inherited
+  annotation class Performance
 }

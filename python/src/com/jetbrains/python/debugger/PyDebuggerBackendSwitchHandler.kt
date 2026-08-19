@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -27,13 +26,15 @@ interface PyDebuggerBackendSwitchHandler {
 
   /**
    * Returns true if this handler is responsible for the debug session in the current Debug tool window tab.
-   * When true, [shouldShowSwitcher] is called to determine whether to show the switcher for that tab.
+   * Claiming a tab is what makes the switcher appear on it, so a tab no handler claims stays free of the
+   * switcher unless it is a pydevd-backed Python session, which is recognized without any handler.
    */
   fun ownsRunProfile(e: AnActionEvent): Boolean = false
 
   /**
    * Returns true if the switcher should be visible for the current Debug tool window tab.
-   * Called only when [ownsRunProfile] returned true for the same event.
+   * Called only when [ownsRunProfile] returned true for the same event, and the answer is final for that
+   * tab: no other handler and no fallback is consulted afterwards.
    */
   fun shouldShowSwitcher(project: Project, e: AnActionEvent): Boolean = true
 

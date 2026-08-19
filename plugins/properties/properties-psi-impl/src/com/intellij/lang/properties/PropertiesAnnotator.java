@@ -66,8 +66,8 @@ public class PropertiesAnnotator implements Annotator, DumbAware {
     final String s = node.getText();
     lexer.start(s);
 
-    while (lexer.getTokenType() != null) {
-      IElementType elementType = lexer.getTokenType();
+    IElementType elementType;
+    while ((elementType = lexer.getTokenType()) != null) {
       TextAttributesKey[] keys = highlighter.getTokenHighlights(elementType);
       for (TextAttributesKey key : keys) {
         final String displayName = PropertiesComponent.getDisplayName(key);

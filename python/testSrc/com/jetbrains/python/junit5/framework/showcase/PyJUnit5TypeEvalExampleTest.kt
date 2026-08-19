@@ -6,6 +6,8 @@ import com.intellij.python.junit5Tests.framework.metaInfo.Repository
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.jetbrains.python.PythonFileType
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.junit5.framework.annotations.InjectCodeInsightTestFixture
 import com.jetbrains.python.junit5.framework.annotations.PyCodeInsightTestApplication
@@ -15,6 +17,8 @@ import org.junit.jupiter.api.Test
 
 @TestClassInfo(Repository.PY_COMMUNITY)
 @PyCodeInsightTestApplication
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyJUnit5TypeEvalExampleTest {
 
   @InjectCodeInsightTestFixture

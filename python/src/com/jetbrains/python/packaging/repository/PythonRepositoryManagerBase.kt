@@ -7,8 +7,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.onFailure
-import com.jetbrains.python.packaging.PyPackageVersion
-import com.jetbrains.python.packaging.PyPackageVersionNormalizer
+import com.intellij.python.requirements.PyPackageVersion
+import com.intellij.python.requirements.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification

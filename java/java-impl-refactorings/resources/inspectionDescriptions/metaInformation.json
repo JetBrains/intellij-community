@@ -1,0 +1,8 @@
+{
+  "inspections": [
+    {
+      "id": "ExtractMethodRecommender",
+      "codeQualityCategory": "Code Style"
+    }
+  ]
+}

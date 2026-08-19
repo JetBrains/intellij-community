@@ -1,8 +1,9 @@
 <idea-plugin>
   <id>com.intellij.platform.ui.webview.demo</id>
-  <name>WebView Demo (Experimental)</name>
+  <name>WebView Demo (Deprecated)</name>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
+    Plugin moved to https://github.com/nerzhulart/intellij-webview
     Provides a WebView Demo tool window with sample IDE panels built as local web UI.
     <ul>
       <li>Shows how HTML, CSS, TypeScript, and frontend frameworks can be embedded into IntelliJ-based IDEs.</li>
@@ -16,9 +17,28 @@
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.platform.ui.webview"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.markdown"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
     <!-- endregion -->
   </dependencies>
+  <content namespace="jetbrains"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress SplitModeXmlApiUsage -->

@@ -24,7 +24,7 @@ internal class MavenDependenciesAutoPopupHandler : TypedHandlerDelegate() {
       val xmlText = element.parent as? XmlText ?: return@scheduleAutoPopup false
       val parentTag = xmlText.parent as? XmlTag ?: return@scheduleAutoPopup false
       val tagName = parentTag.name
-      if (tagName != "dependencies" && tagName != "dependency") return@scheduleAutoPopup false
+      if (tagName !in setOf("dependencies", "dependency", "groupId", "artifactId", "version")) return@scheduleAutoPopup false
       MavenCoordinateCompletionContributor.trimDummy(xmlText.value).length >= 3
     }
 

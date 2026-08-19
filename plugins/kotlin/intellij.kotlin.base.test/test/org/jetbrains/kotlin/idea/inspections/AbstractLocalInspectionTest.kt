@@ -296,8 +296,9 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
                     "Available actions: $availableDescription",
             localFixAction != null
         )
+        DirectiveBasedActionUtils.checkPriority(file.text, localFixAction!!)
 
-        val modCommandAction = localFixAction!!.asModCommandAction()
+        val modCommandAction = localFixAction.asModCommandAction()
         if (modCommandAction != null) {
             val actionContext = ActionContext.from(editor, file)
             val command: ModCommand = ActionUtil.underModalProgress(project, "compute") {

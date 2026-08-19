@@ -65,12 +65,11 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.eel.impl" />
     <orderEntry type="module" module-name="intellij.libraries.jbr" />
-    <orderEntry type="library" name="github.oshi.core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.oshi.core" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" />
-    <orderEntry type="module" module-name="intellij.platform.structureView" />
     <orderEntry type="module" module-name="intellij.platform.welcomeScreen" />
   </component>
 </module>

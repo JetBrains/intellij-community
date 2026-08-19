@@ -87,6 +87,8 @@ jvm_library(
 exports_files(
     [
         "intellij.json.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/intellij.json.xml",
     ],
     visibility = ["//visibility:public"],
 )

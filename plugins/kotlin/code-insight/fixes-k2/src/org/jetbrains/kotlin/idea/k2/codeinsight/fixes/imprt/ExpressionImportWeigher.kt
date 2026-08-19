@@ -4,13 +4,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 import com.intellij.psi.PsiElement
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -20,6 +19,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsi
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.arrayElementType
+import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinAutoImportCallableWeigher
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
@@ -48,8 +51,8 @@ interface ExpressionImportWeigher {
                 is KtNameReferenceExpression -> CallExpressionImportWeigher(
                     session.token,
                     element,
-                    session.calculateReceiverTypes(element),
-                    session.calculateValueArgumentTypes(element),
+                    calculateReceiverTypes(element),
+                    calculateValueArgumentTypes(element),
                 )
 
                 is KtOperationReferenceExpression -> {
@@ -71,7 +74,8 @@ interface ExpressionImportWeigher {
                 else -> Empty
             }
 
-        private fun KaSession.calculateReceiverTypes(element: KtNameReferenceExpression): List<KaType> {
+        context(session: KaSession)
+        private fun calculateReceiverTypes(element: KtNameReferenceExpression): List<KaType> {
             val receiverExpression = element.getParentOfType<KtQualifiedExpression>(false)?.receiverExpression
 
             return if (receiverExpression != null) {
@@ -86,7 +90,8 @@ interface ExpressionImportWeigher {
             }
         }
 
-        private fun KaSession.calculateValueArgumentTypes(element: KtNameReferenceExpression): List<KaType?> {
+        context(session: KaSession)
+        private fun calculateValueArgumentTypes(element: KtNameReferenceExpression): List<KaType?> {
             val callExpression = element.getParentOfType<KtCallElement>(strict = false)
             val valueArgumentList = callExpression?.valueArgumentList ?: return emptyList()
 
@@ -110,7 +115,7 @@ internal abstract class AbstractExpressionImportWeigher : ExpressionImportWeighe
         return baseWeight + ownWeigh(symbol)
     }
 
-    context(_: KaSession)
+    context(session: KaSession)
     protected abstract fun ownWeigh(symbol: KaDeclarationSymbol): Int
 
     context(_: KaSession)
@@ -144,18 +149,19 @@ internal class CallExpressionImportWeigher(
     context(session: KaSession)
     override fun ownWeigh(symbol: KaDeclarationSymbol): Int = this.withValidityAssertion {
         when {
-            symbol is KaCallableSymbol -> session.calculateWeight(symbol, presentReceiverTypes, valueArgumentTypes)
+            symbol is KaCallableSymbol -> calculateWeight(symbol, presentReceiverTypes, valueArgumentTypes)
             // TODO: some constructors could be not visible
             symbol is KaClassSymbol && presentReceiverTypes.isEmpty() -> {
                 val constructors = symbol.declaredMemberScope.constructors
-                constructors.maxOfOrNull { session.calculateWeight(it, presentReceiverTypes = emptyList(), valueArgumentTypes) } ?: 0
+                constructors.maxOfOrNull { calculateWeight(it, presentReceiverTypes = emptyList(), valueArgumentTypes) } ?: 0
             }
 
             else -> 0
         }
     }
 
-    private fun KaSession.calculateWeight(
+    context(session: KaSession)
+    private fun calculateWeight(
         symbolToBeImported: KaCallableSymbol,
         presentReceiverTypes: List<KaType>,
         presentValueArgumentTypes: List<KaType?>,
@@ -215,7 +221,8 @@ internal class CallExpressionImportWeigher(
         return weight
     }
 
-    private fun KaSession.calculateCallExtensionsWeight(symbolToBeImported: KaCallableSymbol): Int =
+    context(session: KaSession)
+    private fun calculateCallExtensionsWeight(symbolToBeImported: KaCallableSymbol): Int =
         with(KotlinAutoImportCallableWeigher) { weigh(symbolToBeImported, element) }
 }
 
@@ -233,7 +240,7 @@ internal class OperatorExpressionImportWeigher(
         return super.weigh(functionSymbol)
     }
 
-    context(_: KaSession)
+    context(session: KaSession)
     override fun ownWeigh(symbol: KaDeclarationSymbol): Int = this.withValidityAssertion {
         symbol as KaNamedFunctionSymbol
 

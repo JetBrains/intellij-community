@@ -16,7 +16,7 @@
     <orderEntry type="module" module-name="intellij.python.community" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.psi.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.sdk.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.toml.core" scope="TEST" />

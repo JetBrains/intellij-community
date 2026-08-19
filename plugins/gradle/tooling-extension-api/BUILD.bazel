@@ -38,10 +38,10 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/external-system-rt:externalSystem-rt",
         "//platform/util-rt",
-        "@lib//:gradle",
+        "//libraries/gradle",
         ":libraries_groovy_provided",
         ":libraries_groovy_ant_provided",
     ],
@@ -60,8 +60,10 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":toolingExtension",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/external-system-rt:externalSystem-rt_test_lib",
         "//platform/util-rt:util-rt_test_lib",
+        "//libraries/gradle:gradle_test_lib",
         "//libraries/groovy",
         "//libraries/groovy:groovy_test_lib",
         "//libraries/groovy/ant",
@@ -74,6 +76,7 @@ jvm_library(
 exports_files(
     [
         "intellij.gradle.toolingExtension.iml",
+        "resources/intellij.gradle.toolingExtension.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -36,7 +36,7 @@ jvm_library(
         "//platform/util/base",
         "//platform/boot",
         "//platform/testFramework/bootstrap:tools-testsBootstrap",
-        "@lib//:opentest4j",
+        "//libraries/opentest4j",
         "//java/java-runtime:rt",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
@@ -74,6 +74,7 @@ jvm_library(
         "//platform/testFramework/bootstrap:tools-testsBootstrap_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//libraries/opentest4j:opentest4j_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//java/java-runtime:rt_test_lib",
@@ -94,6 +95,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.testFramework.core.iml",
+        "resources/intellij.platform.testFramework.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

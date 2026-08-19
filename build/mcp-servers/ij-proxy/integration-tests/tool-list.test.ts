@@ -204,6 +204,16 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
     })
   })
 
+  it('rejects direct build_project calls', async () => {
+    await withProxy({}, async ({proxyClient}) => {
+      const response = await proxyClient.send('tools/call', {name: 'build_project', arguments: {}})
+
+      ok(response.result?.isError)
+      const message = response.result?.content?.[0]?.text ?? ''
+      ok(message.includes("Tool 'build_project' is not exposed by ij-proxy"))
+    })
+  })
+
   it('rejects direct get_file_problems calls', async () => {
     await withProxy({}, async ({proxyClient}) => {
       const response = await proxyClient.send('tools/call', {

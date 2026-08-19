@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -45,8 +45,8 @@ public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
   public static void setUp() {
     assumeWindows();
     assumeTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
-    assumeTrue("'fsutil.exe' not found in %Path%", PathEnvironmentVariableUtil.findInPath("fsutil.exe") != null);
-    assumeTrue("'wsl.exe' not found in %Path% (needed for 'setCaseSensitiveInfo')", PathEnvironmentVariableUtil.findInPath("wsl.exe") != null);
+    assumeTrue("'fsutil.exe' not found in %Path%", PathEnvironmentVariableUtil.findFirst("fsutil.exe") != null);
+    assumeTrue("'wsl.exe' not found in %Path% (needed for 'setCaseSensitiveInfo')", PathEnvironmentVariableUtil.findFirst("wsl.exe") != null);
   }
 
   @Test

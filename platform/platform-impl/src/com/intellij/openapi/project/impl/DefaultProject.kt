@@ -37,14 +37,15 @@ import com.intellij.serviceContainer.emptyConstructorMethodType
 import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.serviceContainer.getComponentManagerEx
 import com.intellij.serviceContainer.getComponentManagerImpl
+import com.intellij.serviceContainer.newInstanceOrThrow
 import com.intellij.util.messages.MessageBus
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
-import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import java.lang.reflect.Constructor
 
 private val LOG = logger<DefaultProject>()
 
@@ -290,13 +291,13 @@ private class DefaultProjectImpl(
     getService(IComponentStore::class.java)!!
   }
 
-  override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+  override fun <T : Any> findConstructorAndInstantiateClass(constructors: Array<Constructor<*>>, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
     // see ConfigurableEP - prefer constructor that accepts our instance
-    return (lookup.findConstructorOrNull(aClass, projectMethodType)?.invoke(actualContainerInstance)
-            ?: lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
-            ?: lookup.findConstructorOrNull(aClass, projectAndScopeMethodType)?.invoke(this, instanceCoroutineScope(aClass))
-            ?: lookup.findConstructorOrNull(aClass, coroutineScopeMethodType)?.invoke(instanceCoroutineScope(aClass))
+    return (constructors.findConstructorOrNull(projectMethodType)?.newInstanceOrThrow(actualContainerInstance)
+            ?: constructors.findConstructorOrNull(emptyConstructorMethodType)?.newInstanceOrThrow()
+            ?: constructors.findConstructorOrNull(projectAndScopeMethodType)?.newInstanceOrThrow(this, instanceCoroutineScope(aClass))
+            ?: constructors.findConstructorOrNull(coroutineScopeMethodType)?.newInstanceOrThrow(instanceCoroutineScope(aClass))
             ?: throw RuntimeException("Cannot find suitable constructor, expected (Project) or ()")) as T
   }
 

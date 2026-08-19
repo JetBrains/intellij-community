@@ -22,7 +22,7 @@ import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.findPackageSpecification
-import com.jetbrains.python.packaging.pyRequirement
+import com.intellij.python.requirements.pyRequirement
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import com.jetbrains.python.errorProcessing.ErrorSink
 import org.jetbrains.annotations.ApiStatus

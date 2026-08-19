@@ -106,10 +106,6 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
         checkBox(message("sdk.create.custom.inherit.packages"))
           .bindSelected(model.venvViewModel.inheritSitePackages)
       }
-      row("") {
-        checkBox(message("available.to.all.projects"))
-          .bindSelected(model.venvViewModel.makeAvailableForAllProjects)
-      }
     }
   }
 
@@ -138,7 +134,7 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
       type = InterpreterType.VIRTUALENV,
       target = target.toStatisticsField(),
       globalSitePackage = model.venvViewModel.inheritSitePackages.get(),
-      makeAvailableToAllProjects = model.venvViewModel.makeAvailableForAllProjects.get(),
+      makeAvailableToAllProjects = false,
       previouslyConfigured = false,
       isWSLContext = false, // todo fix for wsl
       creationMode = InterpreterCreationMode.CUSTOM

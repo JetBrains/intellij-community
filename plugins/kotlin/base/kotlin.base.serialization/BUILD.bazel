@@ -33,8 +33,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:jetbrains-annotations",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -53,6 +53,8 @@ jvm_library(
         ":kotlin.base.serialization",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.serialization` end
@@ -61,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.base.serialization.iml",
+        "resources/intellij.kotlin.base.serialization.xml",
     ],
     visibility = ["//visibility:public"],
 )

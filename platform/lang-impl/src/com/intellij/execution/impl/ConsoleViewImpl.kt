@@ -149,6 +149,10 @@ open class ConsoleViewImpl protected constructor(
   initialState: ConsoleState,
   usePredefinedMessageFilter: Boolean,
 ) : JPanel(BorderLayout()), ConsoleView, ObservableConsoleView, UiCompatibleDataProvider, OccurenceNavigator {
+  init {
+    ThreadingAssertions.softAssertAwtOperationsThread()
+  }
+
   @Suppress("LeakingThis")
   private val flushUserInputAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
   private val commandLineFolding = CommandLineFolding()
@@ -536,7 +540,9 @@ open class ConsoleViewImpl protected constructor(
     try {
       while (true) {
         try {
-          future[10, TimeUnit.MILLISECONDS]
+          TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+            future[10, TimeUnit.MILLISECONDS]
+          }
           break
         }
         catch (_: TimeoutException) {

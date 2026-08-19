@@ -11,9 +11,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.computeMissingCases
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.isNothingType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -95,10 +95,11 @@ internal class UseExpressionBodyInspection :
         element: KtDeclarationWithBody, context: Context
     ): ProblemHighlightType = context.highlightType
 
-    override fun KaSession.prepareContext(element: KtDeclarationWithBody): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDeclarationWithBody): Context? {
         val valueStatementResult = element.findValueStatement() ?: return null
         val valueStatement = valueStatementResult.statement
-        val requireType = valueStatement?.expressionType?.isNothingType == true
+        val requireType = valueStatement?.expressionType?.classId == KaStandardTypeClassIds.NOTHING
         return when {
             valueStatement !is KtReturnExpression -> Context(KotlinBundle.message("block.body"), INFORMATION)
             valueStatement.returnedExpression is KtWhenExpression -> Context(KotlinBundle.message("return.when"), INFORMATION)
@@ -130,8 +131,8 @@ internal class UseExpressionBodyInspection :
                 if (statement is KtBinaryExpression && statement.operationToken in KtTokens.ALL_ASSIGNMENTS) return null
 
                 val expressionType = statement.expressionType ?: return null
-                val isUnit = expressionType.isUnitType
-                if (!isUnit && !expressionType.isNothingType) return null
+                val isUnit = expressionType.classId == KaStandardTypeClassIds.UNIT
+                if (!isUnit && expressionType.classId != KaStandardTypeClassIds.NOTHING) return null
                 if (isUnit) {
                     if (statement.hasResultingIfWithoutElse()) {
                         return null

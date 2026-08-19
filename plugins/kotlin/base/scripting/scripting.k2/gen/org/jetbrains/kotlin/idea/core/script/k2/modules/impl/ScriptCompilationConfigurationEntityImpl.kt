@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
@@ -17,7 +16,6 @@ import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity
@@ -29,13 +27,6 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigu
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: ScriptCompilationConfigurationEntityData) :
     ScriptCompilationConfigurationEntity, WorkspaceEntityBase(dataSource) {
-
-    private companion object {
-
-        private val connections = listOf<ConnectionId>()
-
-    }
-
     override val symbolicId: ScriptCompilationConfigurationId = super.symbolicId
 
     override val data: ByteArray
@@ -48,7 +39,6 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
             readField("identity")
             return dataSource.identity
         }
-
     override val entitySource: EntitySource
         get() {
             readField("entitySource")
@@ -56,36 +46,15 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
         }
 
     override fun connectionIdList(): List<ConnectionId> {
-        return connections
+        return emptyList()
     }
-
 
     internal class Builder(result: ScriptCompilationConfigurationEntityData?) :
         ModifiableWorkspaceEntityBase<ScriptCompilationConfigurationEntity, ScriptCompilationConfigurationEntityData>(result),
         ScriptCompilationConfigurationEntityBuilder {
         internal constructor() : this(ScriptCompilationConfigurationEntityData())
 
-        override fun applyToBuilder(builder: MutableEntityStorage) {
-            if (this.diff != null) {
-                if (existsInBuilder(builder)) {
-                    this.diff = builder
-                    return
-                } else {
-                    error("Entity ScriptCompilationConfigurationEntity is already created in a different builder")
-                }
-            }
-            this.diff = builder
-            addToBuilder()
-            this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-            this.currentEntityData = null
-// Process linked entities that are connected without a builder
-            processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
-        }
-
-        private fun checkInitialization() {
+        override fun checkInitialization() {
             val _diff = diff
             if (!getEntityData().isEntitySourceInitialized()) {
                 error("Field WorkspaceEntity#entitySource should be initialized")
@@ -99,7 +68,7 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
         }
 
         override fun connectionIdList(): List<ConnectionId> {
-            return connections
+            return emptyList()
         }
 
         // Relabeling code, move information from dataSource to this builder
@@ -111,14 +80,12 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
             updateChildToParentReferences(parents)
         }
 
-
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
                 checkModificationAllowed()
                 getEntityData(true).entitySource = value
                 changedProperty.add("entitySource")
-
             }
         override var data: ByteArray
             get() = getEntityData().data
@@ -126,7 +93,6 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
                 checkModificationAllowed()
                 getEntityData(true).data = value
                 changedProperty.add("data")
-
             }
         override var identity: ScriptCompilationConfigurationId
             get() = getEntityData().identity
@@ -134,22 +100,18 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
                 checkModificationAllowed()
                 getEntityData(true).identity = value
                 changedProperty.add("identity")
-
             }
 
         override fun getEntityClass(): Class<ScriptCompilationConfigurationEntity> = ScriptCompilationConfigurationEntity::class.java
     }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ScriptCompilationConfigurationEntityData : WorkspaceEntityData<ScriptCompilationConfigurationEntity>(), SoftLinkable {
     lateinit var data: ByteArray
     lateinit var identity: ScriptCompilationConfigurationId
-
     internal fun isDataInitialized(): Boolean = ::data.isInitialized
     internal fun isIdentityInitialized(): Boolean = ::identity.isInitialized
-
     override fun getLinks(): Set<SymbolicEntityId<*>> {
         val result = HashSet<SymbolicEntityId<*>>()
         result.add(identity)
@@ -161,7 +123,6 @@ internal class ScriptCompilationConfigurationEntityData : WorkspaceEntityData<Sc
     }
 
     override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-// TODO verify logic
         val mutablePreviousSet = HashSet(prev)
         val removedItem_identity = mutablePreviousSet.remove(identity)
         if (!removedItem_identity) {
@@ -186,22 +147,9 @@ internal class ScriptCompilationConfigurationEntityData : WorkspaceEntityData<Sc
         return changed
     }
 
-    override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ScriptCompilationConfigurationEntity> {
-        val modifiable = ScriptCompilationConfigurationEntityImpl.Builder(null)
-        modifiable.diff = diff
-        modifiable.id = createEntityId()
-        return modifiable
-    }
-
-    override fun createEntity(snapshot: EntityStorageInstrumentation): ScriptCompilationConfigurationEntity {
-        val entityId = createEntityId()
-        return snapshot.initializeEntity(entityId) {
-            val entity = ScriptCompilationConfigurationEntityImpl(this)
-            entity.snapshot = snapshot
-            entity.id = entityId
-            entity
-        }
-    }
+    override fun newInstance(): ScriptCompilationConfigurationEntity = ScriptCompilationConfigurationEntityImpl(this)
+    override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<ScriptCompilationConfigurationEntity, *> =
+        ScriptCompilationConfigurationEntityImpl.Builder(null)
 
     override fun getMetadata(): EntityMetadata {
         return MetadataStorageImpl.getMetadataByTypeFqn("org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity") as EntityMetadata

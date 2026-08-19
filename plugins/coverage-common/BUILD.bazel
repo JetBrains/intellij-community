@@ -48,7 +48,9 @@ jvm_library(
         "//platform/lvcs-api:lvcs",
         "//platform/platform-impl/concurrency",
         "//platform/ide-core",
+        "//platform/progress/shared:ide-progress",
         "//platform/util/diff",
+        "//libraries/kotlinx/coroutines/core",
         "//platform/vcs-api:vcs",
         "//libraries/fastutil",
         "//platform/core-ui",
@@ -95,7 +97,9 @@ jvm_library(
         "//platform/lvcs-api:lvcs_test_lib",
         "//platform/platform-impl/concurrency:concurrency_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/progress/shared:ide-progress_test_lib",
         "//platform/util/diff:diff_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/vcs-api:vcs_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//platform/core-ui:core-ui_test_lib",
@@ -114,6 +118,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.coverage.iml",
+        "resources/intellij.platform.coverage.xml",
     ],
     visibility = ["//visibility:public"],
 )

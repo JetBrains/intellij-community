@@ -43,6 +43,7 @@ jvm_library(
 exports_files(
     [
         "intellij.tools.jps.antTasks.iml",
+        "resources/jetbrains/antlayout/antlib.xml",
     ],
     visibility = ["//visibility:public"],
 )

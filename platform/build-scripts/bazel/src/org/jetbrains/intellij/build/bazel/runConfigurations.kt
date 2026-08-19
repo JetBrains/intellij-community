@@ -188,7 +188,7 @@ internal class RunConfigurationsFile : BuildFile() {
       val prefix = runConfiguration.vmOptions.properties["idea.platform.prefix"]
                    ?: error("idea.platform.prefix not found in VM options")
       option("platform_prefix", prefix)
-      if (prefix.startsWith("IntelliJServer") || prefix == "KotlinServer" || prefix == "DataGripServer") {
+      if (prefix.startsWith("IntelliJServer") || prefix == "KotlinServer" || prefix == "DataGripServer" || prefix == "GoLandServer") {
         option("data", listOf("//language-server/build:filewatcher_jni_all_platforms"))
       }
 

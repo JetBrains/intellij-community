@@ -43,7 +43,6 @@ import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.flavors.conda.fixCondaPathEnvIfNeeded
 import com.jetbrains.python.sdk.targetAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAddedByUser
 import org.jetbrains.annotations.ApiStatus
@@ -82,7 +81,6 @@ fun PythonExecution.buildTargetedCommandLine(
 
   if (runTool != null) {
     applyRunToolAsync(commandLineBuilder, runTool)
-    // TODO PY-87712 maybe need proper handling of envs (duplicates?)
     runTool.envs.forEach { (k, v) ->
       commandLineBuilder.addEnvironmentVariable(k, v)
     }
@@ -121,12 +119,6 @@ fun PythonExecution.buildTargetedCommandLine(
     commandLineBuilder.ptyOptions = LocalTargetPtyOptions(LocalPtyOptions.defaults())
   }
 
-  // This fix shouldn't be here, since flavor patches envs (see configureBuilderToRunPythonOnTarget), but envs
-  // then overwritten by patchEnvironmentVariablesForVirtualenv and envs
-  // Fix must be removed after path merging implementation
-  if (sdk != null) {
-    commandLineBuilder.fixCondaPathEnvIfNeeded(sdk)
-  }
   return commandLineBuilder.build()
 }
 
@@ -333,9 +325,14 @@ fun PythonExecution.extendEnvs(additionalEnvs: Map<String, TargetEnvironmentFunc
 
 @ApiStatus.Internal
 fun TargetedCommandLine.execute(env: TargetEnvironment, indicator: ProgressIndicator): ProcessOutput {
+  // Don't even start the process if we're already cancelled (e.g. the SDK was disposed and cancelled the indicator).
+  indicator.checkCanceled()
   val process = env.createProcess(this, indicator)
   val capturingHandler = CapturingProcessHandler(process, charset, getCommandPresentation(env))
-  val output = capturingHandler.runProcess()
+  // Poll the indicator so the process is destroyed if it gets cancelled mid-run (createProcess/runProcess don't do this on their own).
+  val output = capturingHandler.runProcessWithProgressIndicator(indicator)
+  // Surface a cancellation as ProcessCanceledException rather than a spurious non-zero-exit ExecutionException below.
+  indicator.checkCanceled()
   if (output.isTimeout || output.exitCode != 0) {
     val fullCommand = collectCommandsSynchronously()
     throw PyExecutionException("", fullCommand[0], fullCommand.drop(1), output)

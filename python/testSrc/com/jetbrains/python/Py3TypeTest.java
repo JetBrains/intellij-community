@@ -13,12 +13,15 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyCallableTypeImpl;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyNarrowedType;
+import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions;
 import com.jetbrains.python.psi.types.PyTypeVarType;
 import com.jetbrains.python.psi.types.PyTypeVarTypeImpl;
+import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NotNull;
@@ -173,6 +176,32 @@ public class Py3TypeTest extends PyTestCase {
     assertExpressionType("dict[str, Unknown]", dict);
   }
 
+
+  @TestFor(issues = "PY-90122")
+  public void testLoopFixedPointAnalysisThreshold() {
+    myFixture.configureByText(PythonFileType.INSTANCE, """
+      def input_data_valid(levels: int):
+          data = ["foo"]
+          for _ in range(levels):
+              data = [data for _ in range(levels)]
+          expr = data
+      """);
+    PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+    TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    PyType type = context.getType(expr);
+
+    int[] classTypeCount = new int[]{0};
+    PyRecursiveTypeVisitor.traverse(type, context, new PyRecursiveTypeVisitor.PyTypeTraverser() {
+      @Override
+      public PyRecursiveTypeVisitor.@NotNull Traversal visitPyClassType(@NotNull PyClassType classType) {
+        classTypeCount[0]++;
+        return PyRecursiveTypeVisitor.Traversal.CONTINUE;
+      }
+    });
+    assertInstanceOf(type, PyUnionType.class);
+    assertTrue("%d class types in the resulting union type".formatted(classTypeCount[0]), classTypeCount[0] < 100);
+  }
+
   @TestFor(issues = "PY-54336")
   public void testCyclePreventionDuringGenericsSubstitution() {
     PyTypeVarType typeVarT = new PyTypeVarTypeImpl("T", PyAnyType.getUnknown());
@@ -190,6 +219,17 @@ public class Py3TypeTest extends PyTestCase {
     substituted = PyTypeChecker.substitute(callable, new GenericSubstitutions(Map.of(typeVarT, typeVarV, typeVarV, callable)), context);
     PyCallableType substitutedCallable = assertInstanceOf(substituted, PyCallableType.class);
     assertEquals(PyAnyType.getUnknown(), substitutedCallable.getReturnType(context));
+
+    // A cyclic substitution where each hop rebuilds the type variable in its `type[T]` (definition) form, so every
+    // step produces a fresh-but-equal PyTypeVarType instance. PyCloningTypeVisitor's identity-based cycle guard
+    // cannot see such a cycle, so substitution must stop via equality-based detection instead of overflowing the
+    // stack with clone(substitution) calls.
+    PyTypeVarType typeVarTClass = typeVarT.toClass();
+    PyTypeVarType typeVarVClass = typeVarV.toClass();
+    substituted = PyTypeChecker.substitute(typeVarTClass,
+                                           new GenericSubstitutions(Map.of(typeVarTClass, typeVarV, typeVarVClass, typeVarT)),
+                                           context);
+    assertEquals(typeVarTClass, substituted);
   }
 
 

@@ -1,5 +1,5 @@
 import re
-from typing import Any, ClassVar, TypeAlias
+from typing import Any, ClassVar, Self, TypeAlias
 
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models import Expression, Field, FloatField, TextField
@@ -7,11 +7,16 @@ from django.db.models.expressions import Combinable, CombinedExpression, Func, V
 from django.db.models.lookups import Lookup
 from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
 from psycopg.adapt import Dumper
-from typing_extensions import Self, override
+from typing_extensions import TypeVar, override
 
 from .utils import CheckPostgresInstalledMixin
 
 _Expression: TypeAlias = str | Combinable | SearchQueryCombinable
+
+# __set__ value type
+_ST = TypeVar("_ST", contravariant=True)
+# __get__ return type
+_GT = TypeVar("_GT", covariant=True)
 
 class UTF8Dumper(Dumper):
     @override
@@ -31,8 +36,8 @@ class SearchVectorExact(Lookup):
     @override
     def as_sql(self, qn: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...
 
-class SearchVectorField(CheckPostgresInstalledMixin, Field[Any, Any]): ...
-class SearchQueryField(CheckPostgresInstalledMixin, Field[Any, Any]): ...
+class SearchVectorField(CheckPostgresInstalledMixin, Field[_ST, _GT]): ...
+class SearchQueryField(CheckPostgresInstalledMixin, Field[_ST, _GT]): ...
 
 class SearchConfig(Expression):
     config: _Expression | None
@@ -47,7 +52,7 @@ class SearchVector(SearchVectorCombinable, Func):
     config: _Expression | None
     function: str
     arg_joiner: str
-    output_field: ClassVar[SearchVectorField]
+    output_field: ClassVar[SearchVectorField[Any, Any]]
     def __init__(
         self, *expressions: _Expression, config: _Expression | None = None, weight: Any | None = None
     ) -> None: ...
@@ -79,7 +84,7 @@ class SearchQueryCombinable:
     def __rand__(self, other: SearchQueryCombinable) -> Self: ...
 
 class SearchQuery(SearchQueryCombinable, Func):  # type: ignore[misc]
-    output_field: ClassVar[SearchQueryField]
+    output_field: ClassVar[SearchQueryField[Any, Any]]
     SEARCH_TYPES: dict[str, str]
     def __init__(
         self,
@@ -112,7 +117,7 @@ class CombinedSearchQuery(SearchQueryCombinable, CombinedExpression):  # type: i
     ) -> None: ...
 
 class SearchRank(Func):
-    output_field: ClassVar[FloatField]
+    output_field: ClassVar[FloatField[Any, Any]]
     def __init__(
         self,
         vector: SearchVector | _Expression,
@@ -125,7 +130,7 @@ class SearchRank(Func):
 class SearchHeadline(Func):
     function: str
     template: str
-    output_field: ClassVar[TextField]
+    output_field: ClassVar[TextField[Any, Any]]
     def __init__(
         self,
         expression: _Expression,
@@ -151,11 +156,11 @@ class SearchHeadline(Func):
     ) -> _AsSqlType: ...
 
 class TrigramBase(Func):
-    output_field: ClassVar[FloatField]
+    output_field: ClassVar[FloatField[Any, Any]]
     def __init__(self, expression: _Expression, string: str, **extra: Any) -> None: ...
 
 class TrigramWordBase(Func):
-    output_field: ClassVar[FloatField]
+    output_field: ClassVar[FloatField[Any, Any]]
     def __init__(self, string: str, expression: _Expression, **extra: Any) -> None: ...
 
 class TrigramSimilarity(TrigramBase): ...

@@ -32,8 +32,8 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/references",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/guava",
         "//platform/duplicates-analysis",
         "//platform/analysis-api:analysis",
@@ -70,6 +70,8 @@ jvm_library(
         # do not sort,
         ":kotlin-codeInsight-structuralSearch",
         "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//libraries/guava:guava_test_lib",
         "//platform/duplicates-analysis:duplicates-analysis_test_lib",
         "//platform/analysis-api:analysis_test_lib",
@@ -97,6 +99,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.codeInsight.structuralSearch.iml",
+        "resources/intellij.kotlin.codeInsight.structuralSearch.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,13 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.types
 
-import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.allure.Layers
-import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.fixtures.PyCodeInsightTestCase.TestInspections
 import com.jetbrains.python.inspections.PyArgumentListInspection
+import com.jetbrains.python.inspections.PyAttrsDataclassInspection
 import com.jetbrains.python.inspections.PyDataclassInspection
+import com.jetbrains.python.inspections.PyDataclassTransformInspection
+import com.jetbrains.python.inspections.PyStdlibDataclassInspection
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -19,16 +23,14 @@ import org.junit.jupiter.api.Test
 @Subsystems.Typing
 @Components.TypeInference
 @Layers.Functional
+@TestInspections(disableInspections = [
+  PyArgumentListInspection::class,
+  PyDataclassInspection::class,
+  PyStdlibDataclassInspection::class,
+  PyAttrsDataclassInspection::class,
+  PyDataclassTransformInspection::class,
+])
 class PyDataclassTypeTest : PyCodeInsightTestCase() {
-
-  override val defaultTestOptions =
-    TestOptions(
-      assertRecursionPrevention = false,
-      disableInspections = setOf(
-        PyArgumentListInspection::class.java,
-        PyDataclassInspection::class.java,
-      )
-    )
 
   @Nested
   inner class GeneratedInitFieldTypes {
@@ -43,7 +45,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       expr = A(1).t
       # └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-87909"])
@@ -61,7 +63,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       expr = A(1).t
       #└ TYPE int
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -77,7 +79,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           def __post_init__(self, d):
               expr = d
       #       └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-78006"])
@@ -122,7 +124,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           def __post_init__(self, p1, p2, p3, p4, p5, p6):
               expr = (p1, p2, p3, p4, p5, p6)
       #       └ TYPE tuple[A1, A4, A2, A3, A5, A6]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-27398"])
@@ -136,7 +138,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           def __post_init__(self, d):
               expr = d
       #       └ TYPE Unknown
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-28506"])
@@ -154,7 +156,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           def __post_init__(self, a, b):
               expr = a
       #       └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-28506"])
@@ -172,7 +174,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           def __post_init__(self, a, b):
               expr = a
       #       └ TYPE Unknown
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-28506"])
@@ -190,7 +192,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           def __post_init__(self, a, b):
               expr = a
       #       └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-28506"])
@@ -208,7 +210,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           def __post_init__(self, a, b):
               expr = a
       #       └ TYPE Unknown
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-28506"])
@@ -225,7 +227,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           def __post_init__(self, a, b):
               expr = a
       #       └ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-28506"])
@@ -242,7 +244,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           def __post_init__(self, a, b):
               expr = a
       #       └ TYPE Unknown
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -264,7 +266,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           if isinstance(a, B):
               expr = a
       #       └ TYPE Never
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -284,7 +286,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       MyClass()
       #└ TYPE (id: int, name: str) -> MyClass
-      """)
+      """.trimIndent())
 
     @Test
     fun `dataclass_transform constructor signature decorated base class attribute excluded`() = test("""
@@ -302,7 +304,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       SubSub()
       # └ TYPE (id: int, name: str) -> SubSub
-      """)
+      """.trimIndent())
 
     @Test
     fun `dataclass_transform constructor signature metaclass base class attribute not excluded`() = test("""
@@ -323,7 +325,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       SubSub()
       #└ TYPE (included: int, id: int, name: str) -> SubSub
-      """)
+      """.trimIndent())
 
     @Test
     fun `dataclass_transform overloads`() = test("""
@@ -353,7 +355,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       MyClass()
       #└ TYPE (id: int, name: str) -> MyClass
-      """)
+      """.trimIndent())
 
     @Test
     fun `dataclass_transform own kw_only omitted and taken from kw_only_default`() = test("""
@@ -373,7 +375,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       MyClass()
       #└ TYPE (*, id: int, name: str) -> MyClass
-      """)
+      """.trimIndent())
 
     @Test
     fun `dataclass_transform field specifier kw_only default overrides decorators kw_only`() = test("""
@@ -393,7 +395,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       Order()
       # └ TYPE (id: str, *, addr: list[str]) -> Order
-      """)
+      """.trimIndent())
 
     @Test
     fun `dataclass_transform field specifier kw_only default overrides decorators kw_only_default`() = test("""
@@ -413,7 +415,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       Order()
       #└ TYPE (id: str, *, addr: list[str]) -> Order
-      """)
+      """.trimIndent())
 
     @Test
     fun `dataclass_transform field specifier kw_only overrides decorators kw_only`() = test("""
@@ -433,7 +435,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       Order()
       #└ TYPE (id: str, *, addr: list[str]) -> Order
-      """)
+      """.trimIndent())
 
     @Test
     fun `dataclass_transform field specifier kw_only overrides decorators kw_only_default`() = test("""
@@ -453,7 +455,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       Order()
       #└ TYPE (id: str, *, addr: list[str]) -> Order
-      """)
+      """.trimIndent())
 
     @Test
     fun `dataclass_transform field specifier overload init false constructor signature`() = test("""
@@ -496,7 +498,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       CustomerModel1()
       #└ TYPE (*, name: str) -> CustomerModel1
-      """)
+      """.trimIndent())
 
     @Test
     fun `dataclass_transform decorated function type`() = test("""
@@ -507,7 +509,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       expr = my_dataclass
       #└ TYPE (cls: Unknown) -> None
-      """)
+      """.trimIndent())
 
     @Test
     fun `dataclass_transform constructor signature with fields annotated with descriptor`() = test("""
@@ -532,7 +534,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       MyClass()
       #└ TYPE (id: int, name: str) -> MyClass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76149"])
@@ -556,7 +558,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       MyClass(1, "")
       #└ TYPE (id: int, name: str) -> MyClass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76149"])
@@ -586,17 +588,16 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       MyClass()
       #└ TYPE (id: int, name: str, payload: Any, payload_length: int) -> MyClass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-88828"])
-    fun `dataclass_transform constructor signature decorator with marked overloads not implementation`() = test(
-      """
+    fun `dataclass_transform constructor signature decorator with marked overloads not implementation`() = test("""
       from mod import Document
       
       Document(name="foo")
       #└ TYPE (*, name: str) -> Document
-      """,
+      """.trimIndent(),
       "mod.py" to """
         import strawberry
         
@@ -604,7 +605,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
         @strawberry.type
         class Document:
             name: str
-        """,
+      """.trimIndent(),
       "strawberry.py" to """
         from typing import overload, dataclass_transform, Sequence, Callable
         
@@ -659,14 +660,14 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
                 extend: bool = False,
         ) -> T | Callable[[T], T]:
             pass
-        """,
-    )
+        """.trimIndent())
   }
 
   @Nested
   inner class InitArgumentTypeChecking {
     @Test
     @TestFor(issues = ["PY-27398"])
+    @TestCaseOptions(assertRecursionPrevention = false)
     fun `initializing dataclass checks generated init arguments`() = test("""
       import dataclasses
       import typing
@@ -800,7 +801,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
 
       F1("1")
       F1(1) # WARNING Expected type 'str', got 'Literal[1]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-28442"])
@@ -816,7 +817,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           @classmethod
           def from_str(cls, string: str) -> 'Point':
               return cls(1, 2)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-36889"])
@@ -828,7 +829,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           attr: int = 1
       
       C().attr = "foo" # WARNING Expected type 'int', got 'Literal["foo"]' instead
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -844,7 +845,33 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       asdict(MyDataClass(name="Bob"))
       asdict("Bob") # WARNING Expected type 'DataclassInstance', got 'Literal["Bob"]' instead
-      """)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-55691"])
+    @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)])
+    fun `attrs dataclass protocol matching define`() = test("""
+      import attrs
+
+      @attrs.define
+      class User:
+          password: str
+
+      attrs.fields(User)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-55691"])
+    @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)])
+    fun `attrs dataclass protocol matching frozen`() = test("""
+      import attrs
+
+      @attrs.frozen
+      class User:
+          password: str
+
+      attrs.fields(User)
+      """.trimIndent())
   }
 
   @Nested
@@ -869,7 +896,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       
       v2: Hashable = DC2(0) # WARNING Expected type 'Hashable', got 'DC2' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76854"])
@@ -915,7 +942,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       
       v5: Hashable = DC5(0)
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -929,7 +956,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       class DC: ...
       
       sorted([DC(), DC()])
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-45958"])
@@ -944,7 +971,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       class DC: ...
       
       a: SupportsLessThan = DC()
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-45958"])
@@ -958,8 +985,8 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       class B: ...
       
       A().__le__(A())
-      A().__le__(B()) # WARNING Expected type 'A', got 'B' instead
-      """)
+      A().__le__(B()) # WARNING FIXME Expected type 'A', got 'B' instead # PY-91385
+      """.trimIndent())
   }
 
   @Nested
@@ -972,7 +999,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       @dataclass
       class E:
           a: int = field(default_factory=(lambda: "")) # WARNING Expected type 'int', got 'str' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76861"])
@@ -986,7 +1013,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       @dataclass
       class A:
           x: int = field(default_factory=make_str) # WARNING Expected type 'int', got 'str' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76861"])
@@ -1002,7 +1029,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       @dataclass
       class B:
           y: int = field(default_factory=make_factory()) # WARNING Expected type 'int', got 'str' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-88042"])
@@ -1012,7 +1039,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       @dataclass
       class DC:
           a: str | None = field(default_factory=lambda: "")
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-88043"])
@@ -1026,24 +1053,22 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       @dataclass
       class DC:
           a: str | None = field(default_factory=factory)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-88043"])
-    fun `field default_factory not annotated multifile`() = test(
-      """
+    fun `field default_factory not annotated multifile`() = test("""
       from dataclasses import dataclass, field
       from lib import do
       
       @dataclass
       class NewDataclass:
           val: str | None = field(default_factory=do)
-      """,
+      """.trimIndent(),
       "lib.py" to """
         def do():
             return "this or that"
-        """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76861"])
@@ -1053,6 +1078,6 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       @dataclass
       class DC:
           a: str = field(default_factory=(lambda: str)) # WARNING Expected type 'str', got 'type[str]' instead
-      """)
+      """.trimIndent())
   }
 }

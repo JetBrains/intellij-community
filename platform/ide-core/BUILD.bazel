@@ -95,6 +95,9 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.core.iml",
+        "resources/META-INF/intellij.moduleSets.core.platform.xml",
+        "resources/META-INF/intellij.moduleSets.rpc.minimal.xml",
+        "resources/intellij.platform.ide.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

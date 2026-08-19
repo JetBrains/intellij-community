@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -57,7 +58,8 @@ internal class ConvertNaNEqualityInspection :
                 (element.left?.text?.endsWith(NAN_NAME) == true || element.right?.text?.endsWith(NAN_NAME) == true)
     }
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Context? {
         val left = element.left ?: return null
         val right = element.right ?: return null
 
@@ -95,7 +97,8 @@ internal class ConvertNaNEqualityInspection :
 }
 
 @OptIn(KtExperimentalApi::class, KaExperimentalApi::class)
-private fun KaSession.isNaNExpression(expression: KtExpression): Boolean {
+context(session: KaSession)
+private fun isNaNExpression(expression: KtExpression): Boolean {
     if (expression.text?.endsWith(NAN_NAME) != true) return false
 
     val symbol = ((expression as? KtResolvableCall)?.resolveCall() as? KaVariableAccessCall)?.symbol ?: return false

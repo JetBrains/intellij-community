@@ -71,7 +71,7 @@ private fun persistTerminalTabs(project: Project, contentManager: ContentManager
 }
 
 @RequiresEdt
-private fun computePersistedTab(tab: TerminalToolWindowTab): TerminalSessionPersistedTab {
+internal fun computePersistedTab(tab: TerminalToolWindowTab): TerminalSessionPersistedTab {
   val title = tab.view.title
   val requestedProcessOptions = tab.processOptions
   val processCurDirectory = tab.view.workingDirectoryFlow.value

@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "configurationStore-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":configurationStore-tests_test_lib"],
+)
+### skip generation section `test intellij.platform.configurationStore.tests`
+
 ### auto-generated section `build intellij.platform.configurationStore.impl` start
 jvm_library(
     name = "configurationStore-impl",
@@ -126,6 +134,8 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.configurationStore.impl.iml",
+        "resources/intellij.platform.configurationStore.impl.actions.xml",
+        "resources/intellij.platform.configurationStore.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -222,8 +232,22 @@ jvm_library(
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//java/java-impl:impl",
         "//java/java-impl:impl_test_lib",
+        "//plugins/groovy",
+        "//plugins/groovy:groovy_test_lib",
+        "//plugins/groovy-scripting",
+        "//plugins/groovy-scripting:groovy-scripting_test_lib",
+        "//plugins/properties/properties-common:properties",
+        "//plugins/properties/properties-common:properties_test_lib",
+        "//plugins/properties:properties-backend",
+        "//plugins/properties:properties-backend_test_lib",
+        "//platform/structuralsearch:structuralSearch",
+        "//platform/structuralsearch:structuralSearch_test_lib",
+        "//platform/structuralsearch/plugin",
+        "//platform/structuralsearch/plugin:plugin_test_lib",
         "//platform/lang-api:lang",
         "//platform/lang-api:lang_test_lib",
+        "//platform/vcs/plugin",
+        "//platform/vcs/plugin:plugin_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit5",
@@ -240,10 +264,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.configurationStore.tests` end
-
-### auto-generated section `test intellij.platform.configurationStore.tests` start
-jps_test(
-    name = "configurationStore-tests_test",
-    runtime_deps = [":configurationStore-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.configurationStore.tests` end

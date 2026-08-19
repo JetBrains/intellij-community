@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.pipenv.sdk.configuration
 
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
@@ -10,10 +9,11 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.execService.ZeroCodeStdoutParserTransformer
-import com.intellij.python.community.impl.pipenv.pipenvPath
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
+import com.jetbrains.python.project.resolveFile
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
@@ -26,12 +26,14 @@ import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.PipEnv
 import com.jetbrains.python.sdk.configuration.findEnvOrNull
 import com.jetbrains.python.sdk.configuration.prepareSdkCreator
 import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.pipenv.PIP_FILE
 import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData
-import com.jetbrains.python.sdk.pipenv.getPipEnvExecutable
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.community.impl.pipenv.PipEnvPyTool
+import com.intellij.python.pytools.resolveExecutable
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.pipenv.runPipEnv
 import com.jetbrains.python.sdk.pipenv.setupPipEnv
 import com.jetbrains.python.sdk.pipenv.suggestedSdkName
@@ -48,6 +50,8 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override val toolId: ToolId = PIPENV_TOOL_ID
 
+  override val potentialDependencyFiles: Set<String> = setOf(PIP_FILE)
+
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
       { checkManageableEnv(module) }
@@ -58,14 +62,15 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
   private suspend fun checkManageableEnv(
     module: Module,
   ): EnvCheckerResult = withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
-    val pipfile = findAmongRoots(module, PIP_FILE)?.name ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
-    val pipEnvExecutable = getPipEnvExecutable() ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
+    val pipfile =
+      module.asPyProject()?.resolveFile(PIP_FILE)?.fileName ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
+    val pipEnvExecutable = PipEnvPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path
+                           ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
     val canManage = pipEnvExecutable.isExecutable()
     val intentionName = PyBundle.message("sdk.create.pipenv.suggestion", pipfile)
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
     if (canManage) {
-      PropertiesComponent.getInstance().pipenvPath = pipEnvExecutable.pathString
       val envPath = runPipEnv(
         module.baseDir?.path?.toNioPathOrNull(),
         "--venv",

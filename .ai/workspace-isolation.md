@@ -2,13 +2,17 @@
 
 This repository is too large for agents to create ad hoc Git worktrees or additional clones for workspace isolation.
 
-- Never run `git worktree add`, clone this repository for workspace isolation, or implement another custom workspace-isolation mechanism.
+- Do not run `git worktree add`, clone this repository for workspace isolation, or implement another custom workspace-isolation mechanism on your own initiative. See the explicit-request exception below.
 - Never install, initialize, configure, or update Treehouse or another workspace manager automatically.
-- When an isolated workspace is required, first check whether `treehouse` is already installed and usable for this repository.
-- If Treehouse is available, acquire a durable workspace using `treehouse get --lease --json --lease-holder <unique-session-id>`. Use the current development or agent session ID as the holder; if none is available, use another unique, stable label for the session.
-- Record the returned workspace path, lease ID, and lease holder for the entire session, and work from the returned workspace path.
-- If Treehouse is unavailable or acquisition fails, do not fall back to raw Git worktrees, repository clones, or another workspace manager. Continue in the current checkout when safe, or ask the user to provide an isolated workspace.
+- When an isolated workspace is required, use the `treehouse` skill. Its Bun CLI checks whether Treehouse is installed and usable for this repository; never bypass it with raw lifecycle commands.
+- If Treehouse is available, acquire a durable workspace with the skill's `write acquire` command. Use the current development or agent session ID as the holder when one is available. Acquisition prepares a clean detached workspace at the caller checkout's exact `HEAD`; it does not transfer index, working-tree, or untracked changes.
+- An available workspace shown by Treehouse status may have a stale detached `HEAD`; this is expected. Never use, enter, or synchronize a status path directly. Work only from the path returned by `write acquire`.
+- The skill records the returned workspace path, lease ID, lease holder, and captured source `HEAD` in an ignored receipt inside the acquired workspace. Work from the returned workspace path and preserve that receipt for the entire session.
+- If Treehouse is unavailable and the user has not asked for a Git worktree, do not fall back to one, a repository clone, or another workspace manager on your own initiative. Continue in the current checkout when safe, or ask the user to provide an isolated workspace.
+- If the user explicitly asks you to use a Git worktree for the current task, create exactly one scoped to that task instead of asking them to do it manually.
+- If `write acquire` fails for a reason other than Treehouse being unavailable, do not fall back to a raw Git worktree, a repository clone, or another workspace manager. Continue in the current checkout when safe, or ask the user to provide an isolated workspace.
 - Before returning a workspace, verify that all intended changes are committed or otherwise preserved outside it, that no intended uncommitted or untracked work remains, and that no relevant process is still using it.
-- Return the workspace only with the recorded lease identity: `treehouse return <path> --if-lease-id <lease-id> --if-lease-holder <lease-holder>`. Never use `--force`.
+- Return the workspace only from outside it with the skill's `write return --workspace <leased-path>` command. The wrapper requires Treehouse to report no live workspace processes, verifies the recorded lease identity, and passes both identity guards to Treehouse. Never use `--force`.
+- A workspace with uncommitted changes makes Treehouse ask `Clean and return? [Y/n]`. After the preceding preservation checks pass, run `write return --workspace <leased-path> --confirm-preserved` in an interactive TTY and answer `Y`; a non-interactive invocation is refused. Do not replace the confirmation with `--force`.
 - If the workspace cannot be returned safely, retain the lease and report its path, lease ID, and lease holder to the user.
 - Never run `treehouse enter`, `treehouse init`, `treehouse update`, `treehouse prune`, `treehouse destroy`, or another command that may enter, alter, or delete another session's workspace.

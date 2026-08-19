@@ -58,7 +58,6 @@ internal object ProductModuleDependencyGenerator : PipelineNode {
       val strategy = model.generatedArtifactWritePolicy
       val suppressionConfig = model.suppressionConfig
       val updateSuppressions = model.updateSuppressions
-      val allRealProductNames = embeddedCheckProductNames(model.discovery.products.map { it.name })
 
       // Write XML files in parallel
       val results = modulesToProcess.map { moduleName ->
@@ -76,9 +75,6 @@ internal object ProductModuleDependencyGenerator : PipelineNode {
             graph = graph,
             moduleName = contentModuleName,
             includeTestScope = false,
-            allRealProductNames = allRealProductNames,
-            descriptorCache = cache,
-            sourceOverridingServiceKeys = info.overridingServiceKeys,
             outputProvider = model.outputProvider,
             projectLibraryToModuleMap = model.config.projectLibraryToModuleMap,
           ).moduleDeps
@@ -86,9 +82,6 @@ internal object ProductModuleDependencyGenerator : PipelineNode {
             graph = graph,
             moduleName = contentModuleName,
             includeTestScope = true,
-            allRealProductNames = allRealProductNames,
-            descriptorCache = cache,
-            sourceOverridingServiceKeys = info.overridingServiceKeys,
             outputProvider = model.outputProvider,
             projectLibraryToModuleMap = model.config.projectLibraryToModuleMap,
           ).moduleDeps

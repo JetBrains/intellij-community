@@ -72,17 +72,29 @@ public final class PostfixTemplatesConfigurable implements SearchableConfigurabl
 
   @Override
   public @NotNull JComponent createComponent() {
-    myAsyncLoaderDisposable = Disposer.newDisposable();
+    // createComponent() may be called again, e.g. after the configurable card was auto-disposed
+    disposeUIResources();
+    Disposable asyncLoaderDisposable = Disposer.newDisposable("PostfixTemplatesConfigurable async loader");
+    myAsyncLoaderDisposable = asyncLoaderDisposable;
 
     return createAsyncSettingsInitPlaceholder(
       settings -> {
         myTemplatesSettings = settings;
-        myUi = new PostfixTemplatesConfigurableUi();
+        // the initialization block may be restarted when the page is hidden and shown again,
+        // so this callback can be invoked more than once: reuse the already created UI instead of
+        // creating a second one, which would be left without an owner and would never be disposed
+        PostfixTemplatesConfigurableUi ui = myUi;
+        if (ui == null) {
+          ui = new PostfixTemplatesConfigurableUi();
+          // the UI must have a real owner, not only the myUi field
+          Disposer.register(asyncLoaderDisposable, ui);
+          myUi = ui;
+        }
         reset();
 
-        return myUi.panel;
+        return ui.panel;
       },
-      myAsyncLoaderDisposable
+      asyncLoaderDisposable
     );
   }
 
@@ -157,14 +169,12 @@ public final class PostfixTemplatesConfigurable implements SearchableConfigurabl
   @Override
   public void disposeUIResources() {
     if (myAsyncLoaderDisposable != null) {
+      // also disposes myUi, which is registered as its child
       Disposer.dispose(myAsyncLoaderDisposable);
       myAsyncLoaderDisposable = null;
     }
 
-    if (myUi != null) {
-      Disposer.dispose(myUi);
-      myUi = null;
-      myTemplatesSettings = null;
-    }
+    myUi = null;
+    myTemplatesSettings = null;
   }
 }

@@ -20,7 +20,7 @@ interface CompositeChildAbstractEntityBuilder : WorkspaceEntityBuilder<Composite
 }
 
 internal object CompositeChildAbstractEntityType : EntityType<CompositeChildAbstractEntity, CompositeChildAbstractEntityBuilder>() {
-  override val entityClass: Class<CompositeChildAbstractEntity> get() = CompositeChildAbstractEntity::class.java
+  override val entityImplClass: Class<*> get() = CompositeChildAbstractEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = CompositeChildAbstractEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

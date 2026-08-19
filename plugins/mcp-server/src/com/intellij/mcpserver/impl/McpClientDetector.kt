@@ -62,7 +62,7 @@ object McpClientDetector {
     return globalClients
   }
 
-  internal fun detectProjectMcpClients(project: Project): List<McpClient> {
+  fun detectProjectMcpClients(project: Project): List<McpClient> {
     val projectClients = mutableListOf<McpClient>()
 
     runCatching {

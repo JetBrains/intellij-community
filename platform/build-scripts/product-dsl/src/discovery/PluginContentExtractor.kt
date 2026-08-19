@@ -14,6 +14,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import org.jetbrains.intellij.build.DescriptorSearchPass
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.findFileInModuleDependenciesRecursive
@@ -24,6 +25,7 @@ import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
 import org.jetbrains.intellij.build.productLayout.model.error.XIncludeResolutionError
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
+import org.jetbrains.intellij.build.readDescriptor
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
@@ -144,7 +146,6 @@ internal data class PluginXmlOverride(
 
 private val PLUGIN_ID_PATTERN = Regex("""<id>([^<]+)</id>""")
 private val XML_COMMENT_PATTERN = Regex("<!--.*?-->", setOf(RegexOption.DOT_MATCHES_ALL))
-
 /** Extracts plugin ID from plugin.xml content */
 private fun extractPluginId(content: String): PluginId? {
   return PLUGIN_ID_PATTERN.find(content)?.groupValues?.get(1)?.trim()?.let { PluginId(it) }
@@ -352,29 +353,39 @@ private suspend fun resolveXInclude(
   outputProvider: ModuleOutputProvider,
   prefix: String?,
 ): XIncludeResult {
-  outputProvider.readFileContentFromModuleOutput(module = jpsModule, relativePath = path)?.let {
-    return XIncludeResult.Success(it)
-  }
+  // Sources across every candidate first, module output only if the checkout had nothing anywhere: the last resort
+  // below walks *every* module in the project, and in `MODULE_OUTPUT` even a miss resolves each one's Bazel output,
+  // which is what declares it as an input. See `DescriptorSearchPass`.
+  for (pass in DescriptorSearchPass.entries) {
+    readDescriptor(module = jpsModule, path = path, outputProvider = outputProvider, pass = pass)?.let {
+      return XIncludeResult.Success(it)
+    }
 
-  val processedModules = ConcurrentHashMap.newKeySet<String>()
-  processedModules.add(jpsModule.name)
+    // Fresh per pass: a shared set would make the output pass skip every module the sources pass visited.
+    val processedModules = ConcurrentHashMap.newKeySet<String>()
+    processedModules.add(jpsModule.name)
 
-  findFileInModuleDependenciesRecursive(
-    module = jpsModule,
-    relativePath = path,
-    provider = outputProvider,
-    processedModules = processedModules,
-    moduleNamePrefix = prefix,
-  )?.let {
-    return XIncludeResult.Success(it)
-  }
+    findFileInModuleDependenciesRecursive(
+      module = jpsModule,
+      relativePath = path,
+      provider = outputProvider,
+      processedModules = processedModules,
+      pass = pass,
+      moduleNamePrefix = prefix,
+    )?.let {
+      return XIncludeResult.Success(it)
+    }
 
-  findFileInModuleLibraryDependencies(jpsModule, path, outputProvider)?.let {
-    return XIncludeResult.Success(it)
-  }
+    if (pass == DescriptorSearchPass.MODULE_OUTPUT) {
+      // A library has no source root, so it can only answer this pass - and asking it resolves its jars.
+      findFileInModuleLibraryDependencies(jpsModule, path, outputProvider)?.let {
+        return XIncludeResult.Success(it)
+      }
 
-  outputProvider.findFileInAnyModuleOutput(path, prefix, processedModules)?.let {
-    return XIncludeResult.Success(it)
+      outputProvider.findFileInAnyModuleOutput(path, prefix, processedModules)?.let {
+        return XIncludeResult.Success(it)
+      }
+    }
   }
 
   return XIncludeResult.Failure(

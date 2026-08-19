@@ -41,8 +41,12 @@ class BadTypedDict1(TypedDict):
         pass
 
 
-# > Specifying a metaclass is not allowed.
-class BadTypedDict2(TypedDict, metaclass=type):  # E
+class CustomMeta(type):
+    pass
+
+
+# > Specifying a custom metaclass is not allowed.
+class BadTypedDict2(TypedDict, metaclass=CustomMeta):  # E
     name: str
 
 

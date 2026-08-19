@@ -8,7 +8,8 @@ import org.jetbrains.annotations.PropertyKey
 @NonNls
 private const val BUNDLE = "messages.GradleFeedbackBundle"
 
-internal object GradleFeedbackBundle : DynamicBundle(BUNDLE) {
+internal object GradleFeedbackBundle {
+    private val instance = DynamicBundle(GradleFeedbackBundle::class.java, BUNDLE)
     @Suppress("SpreadOperator")
-    fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any) = getMessage(key, *params)
+    fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any) = instance.getMessage(key, *params)
 }

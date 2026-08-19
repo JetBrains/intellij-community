@@ -1,7 +1,8 @@
 from _typeshed import Incomplete, SupportsWrite
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
-from typing import NoReturn, TypeVar, overload, type_check_only
+from typing import TypeVar, overload, type_check_only
+from typing_extensions import Never
 
 from .std import tqdm as std_tqdm
 
@@ -73,7 +74,7 @@ class tqdm_rich(std_tqdm[_T]):
     ) -> None: ...
     @overload
     def __init__(
-        self: tqdm_rich[NoReturn],
+        self: tqdm_rich[Never],
         iterable: None = None,
         desc: str | None = ...,
         total: float | None = ...,

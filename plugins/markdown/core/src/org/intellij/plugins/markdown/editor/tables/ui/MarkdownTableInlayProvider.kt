@@ -10,6 +10,7 @@ import com.intellij.codeInsight.hints.InlayHintsSink
 import com.intellij.codeInsight.hints.NoSettings
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -20,16 +21,17 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.calculateActualTex
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.VerticalBarPresentation
-import org.intellij.plugins.markdown.lang.isMarkdownType
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import javax.swing.JPanel
 
-internal class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
+class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
     return when {
-      file.fileType.isMarkdownType() -> Collector(editor)
+      editor is ImaginaryEditor -> null
+      file.supportsMarkdown() -> Collector(editor)
       else -> null
     }
   }

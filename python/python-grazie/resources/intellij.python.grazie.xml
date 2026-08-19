@@ -1,11 +1,13 @@
 <idea-plugin>
+<!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
 <dependencies>
-  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <plugin id="tanvd.grazi"/>
   <module name="intellij.platform.backend"/>
+  <module name="intellij.platform.core"/>
+  <module name="intellij.platform.core.impl"/>
   <module name="intellij.python.community.impl"/>
-  <!-- endregion -->
 </dependencies>
+<!-- endregion -->
   <extensions defaultExtensionNs="com.intellij.grazie">
     <textExtractor language="Python" implementationClass="com.intellij.python.grazie.PythonTextExtractor"/>
     <problemFilter language="Python" implementationClass="com.intellij.grazie.text.LiteralProblemFilter"/>

@@ -1,11 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.uploader
 
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
+import com.intellij.internal.statistic.eventLog.FileDeletionCause
 import com.intellij.internal.statistic.uploader.events.ExternalEventsLogger
 import com.intellij.internal.statistic.uploader.events.ExternalSystemErrorEvent
 import com.intellij.internal.statistic.uploader.events.ExternalSystemEvent
 import com.intellij.internal.statistic.uploader.events.ExternalSystemEventSerializer.deserialize
 import com.intellij.internal.statistic.uploader.events.ExternalSystemEventSerializer.serialize
+import com.intellij.internal.statistic.uploader.events.ExternalUploadFileDeletedEvent
 import com.intellij.internal.statistic.uploader.events.ExternalUploadFinishedEvent
 import com.intellij.internal.statistic.uploader.events.ExternalUploadSendEvent
 import com.intellij.internal.statistic.uploader.events.ExternalUploadStartedEvent
@@ -440,6 +443,36 @@ class EventLogResultParserTest : UsefulTestCase() {
       "1583419435214 ERROR ABC com.intellij.internal.statistics.uploader.MockEventLogCustomException",
       serialize(ExternalSystemErrorEvent(1583419435214, ex, RECORDER))
     )
+  }
+
+  fun test_serialize_file_deleted_event() {
+    assertEquals(
+      "1583419435214 FILE_DELETED ABC SEND_REJECTED 2048 5000 7 RELEASE",
+      serialize(ExternalUploadFileDeletedEvent(1583419435214, FileDeletionCause.SEND_REJECTED, 2048, 5000, 7, EventLogBuildType.RELEASE, RECORDER))
+    )
+    assertEquals(
+      "1583419435214 FILE_DELETED ABC AGE 4096 -1 -1 EAP",
+      serialize(ExternalUploadFileDeletedEvent(1583419435214, FileDeletionCause.AGE, 4096, -1, -1, EventLogBuildType.EAP, RECORDER))
+    )
+  }
+
+  fun test_parse_file_deleted_event() {
+    assertEquals(
+      ExternalUploadFileDeletedEvent(1583419435214, FileDeletionCause.SEND_REJECTED, 2048, 5000, 7, EventLogBuildType.RELEASE, RECORDER),
+      deserialize("1583419435214 FILE_DELETED ABC SEND_REJECTED 2048 5000 7 RELEASE", VERSION)
+    )
+    assertEquals(
+      ExternalUploadFileDeletedEvent(1583419435214, FileDeletionCause.AGE, 100, -1, 3, EventLogBuildType.EAP, RECORDER),
+      deserialize("1583419435214 FILE_DELETED ABC AGE 100 -1 3 EAP", VERSION)
+    )
+  }
+
+  fun test_parse_file_deleted_event_failed() {
+    assertNull(deserialize("1583419435214 FILE_DELETED ABC SEND_REJECTED", VERSION))
+    assertNull(deserialize("1583419435214 FILE_DELETED ABC SEND_REJECTED 2048 5000 7", VERSION))
+    assertNull(deserialize("1583419435214 FILE_DELETED ABC UNKNOWN_CAUSE 1 2 3 RELEASE", VERSION))
+    assertNull(deserialize("1583419435214 FILE_DELETED ABC SEND_REJECTED 2048 5000 7 NOT_A_BUILDTYPE", VERSION))
+    assertNull(deserialize("1583419435214 FILE_DELETED ABC SEND_REJECTED 2048 5000 7 RELEASE extra", VERSION))
   }
 
   private fun doTestParseOldFile(fileText: String, vararg expectedEvents: ExternalSystemEvent) {

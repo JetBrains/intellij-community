@@ -298,6 +298,7 @@ class JavaSupportTest : GrazieTestBase() {
       // It is a SCORN with no grade. It is a SCORM with no grade.
       // It is an ECO summit. It is an ECS summit.
       // It is an ISS mission. It is an ISSA mission.
+      // Sending an Sms. Sending an sms. Sending an SMS.
       """.trimIndent()
     )
     myFixture.checkHighlighting()

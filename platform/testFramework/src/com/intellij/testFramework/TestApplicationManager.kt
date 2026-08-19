@@ -53,6 +53,7 @@ import com.intellij.testFramework.common.isApplicationInitialized
 import com.intellij.testFramework.common.reduceAndThrow
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.common.runAllCatching
+import com.intellij.testFramework.common.testWorkspaceModelLeakOnApplicationTeardown
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.ref.GCUtil
@@ -226,6 +227,7 @@ class TestApplicationManager private constructor() {
             app?.messageBus?.syncPublisher(AppLifecycleListener.TOPIC)?.appWillBeClosed(false)
           },
           { UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS) },
+          { testWorkspaceModelLeakOnApplicationTeardown() },
           {
             if (ApplicationManager.getApplication() != null) {
               assertNonDefaultProjectsAreNotLeaked(ignoredTraverseEntries)

@@ -40,6 +40,8 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
     public boolean SPACE_BEFORE_WHEN_PARENTHESES = true;
     public boolean SPACE_AFTER_CONTEXT_PARAMETER_LIST_IN_FUNCTION_TYPE = true;
     public boolean LBRACE_ON_NEXT_LINE = false;
+    public boolean ENABLE_KDOC_FORMATTING = true;
+    public boolean KDOC_PRESERVE_LINE_FEEDS = true;
     public int NAME_COUNT_TO_USE_STAR_IMPORT = ApplicationManager.getApplication().isUnitTestMode() ? Integer.MAX_VALUE : DEFAULT_NAME_COUNT_TO_USE_STAR_IMPORT;
     public int NAME_COUNT_TO_USE_STAR_IMPORT_FOR_MEMBERS = ApplicationManager.getApplication().isUnitTestMode() ? Integer.MAX_VALUE : DEFAULT_NAME_COUNT_TO_USE_STAR_IMPORT_FOR_MEMBERS;
     public boolean IMPORT_NESTED_CLASSES = false;

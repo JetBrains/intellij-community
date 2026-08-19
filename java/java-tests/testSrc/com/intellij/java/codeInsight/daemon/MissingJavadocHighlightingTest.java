@@ -2,11 +2,13 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInspection.javaDoc.MissingJavadocInspection;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+@TestDataPath("$CONTENT_ROOT/testData/codeInsight/daemonCodeAnalyzer/missingJavadoc/")
 public class MissingJavadocHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 {
 
   private MissingJavadocInspection myInspection;

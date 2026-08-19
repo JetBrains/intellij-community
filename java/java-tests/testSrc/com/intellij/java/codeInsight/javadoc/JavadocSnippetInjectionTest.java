@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -24,21 +25,30 @@ public class JavadocSnippetInjectionTest extends LightQuickFixParameterizedTestC
     final Language language = getInjectedLanguage();
     final Language expectedLang = Language.findLanguageByID(actionHint.getExpectedText());
 
+    if (language == null) {
+      assertThat(expectedLang)
+      .withFailMessage("no language found but one language expected: ", expectedLang.getID())
+      .isEqualTo(Language.ANY);
+    } else {
     assertThat(language)
       .withFailMessage(String.format("Language '%s' should be injected, but found '%s'", actionHint.getExpectedText(), language.getID()))
       .isEqualTo(expectedLang);
-
+    }
   }
 
-  @NotNull
-  private Language getInjectedLanguage() {
+  private @Nullable Language getInjectedLanguage() {
     final int offset = getEditor().getCaretModel().getPrimaryCaret().getOffset();
     final PsiElement element = PsiUtilCore.getElementAtOffset(getFile(), offset);
     final PsiSnippetDocTag snippet = PsiTreeUtil.getParentOfType(element, PsiSnippetDocTag.class);
     final AtomicReference<PsiElement> injected = new AtomicReference<>();
     final InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(getProject());
     injectionManager.enumerate(snippet, (injectedPsi, places) -> { injected.set(injectedPsi); });
-
+    
+    // For tests with no language injected
+    if (injected.get() == null) {
+      return null;
+    }
+    
     return injected.get().getLanguage();
   }
 

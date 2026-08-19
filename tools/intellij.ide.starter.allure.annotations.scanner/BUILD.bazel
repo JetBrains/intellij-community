@@ -15,7 +15,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/gson",
     ],
@@ -33,6 +33,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":ide-starter-allure-annotations-scanner",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/gson:gson_test_lib",
     ],
 )

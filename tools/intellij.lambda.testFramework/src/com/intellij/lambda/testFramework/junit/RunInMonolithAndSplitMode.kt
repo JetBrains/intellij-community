@@ -1,5 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
+import com.intellij.ide.starter.ide.IdeRunMode
 import com.intellij.lambda.testFramework.starter.IdeConfigReset
 import com.intellij.util.SystemProperties
 import org.junit.jupiter.api.TestInstance

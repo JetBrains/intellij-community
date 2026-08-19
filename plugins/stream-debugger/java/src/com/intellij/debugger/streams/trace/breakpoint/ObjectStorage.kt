@@ -83,22 +83,23 @@ private class ValueContextImpl(
   override fun Method.invoke(classType: ClassType, args: List<Value?>): Value? =
     evaluationContext.debugProcess.invokeMethod(evaluationContext, classType, this, args, 0, true)
 
-  override fun clazz(className: String): ClassType = loadType(className) as ClassType
+  override fun findClass(className: String): ClassType = loadType(className) as ClassType
 
-  override fun clazz(cls: Class<*>): ClassType = ClassLoadingUtils.getHelperClass(cls, evaluationContext)
-                                                 ?: error("Failed to load helper class ${cls.name}")
+  override fun helperClass(cls: Class<*>, vararg additionalClassesToLoad: String): ClassType =
+    ClassLoadingUtils.getHelperClass(cls, evaluationContext, *additionalClassesToLoad)
+    ?: error("Failed to load helper class ${cls.name}")
 
   override fun ReferenceType.method(name: String, signature: String): Method =
     DebuggerUtilsImpl.findMethod(this, name, signature)
     ?: error("Cannot find method $name$signature on ${name()}")
 
   override fun instance(cls: Class<*>, constructorSignature: String, args: List<Value?>): ObjectReference {
-    val classType = clazz(cls)
+    val classType = helperClass(cls)
     return doInstantiate(classType, constructorSignature, args)
   }
 
   override fun instance(cls: String, constructorSignature: String, args: List<Value?>): ObjectReference {
-    val classType = clazz(cls)
+    val classType = findClass(cls)
     return doInstantiate(classType, constructorSignature, args)
   }
 

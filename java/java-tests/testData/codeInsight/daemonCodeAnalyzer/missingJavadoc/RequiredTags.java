@@ -18,4 +18,11 @@ public class RequiredTags<T> {
       return 42;
   }
 
+  /**
+   * {@return the answer to life or something}
+   */
+  public int whereIsMyInlineReturnTag() {
+    return 42;
+  }
+
 }

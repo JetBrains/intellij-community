@@ -13,6 +13,7 @@ class KotlinCodeStylePanel(currentSettings: CodeStyleSettings, settings: CodeSty
         super.initTabs(settings)
 
         addTab(ImportSettingsPanelWrapper(settings))
+        addTab(KDocFormattingPanel(settings))
         addTab(KotlinOtherSettingsPanel(settings))
         for (provider in CodeStyleSettingsProvider.EXTENSION_POINT_NAME.extensions) {
             if (provider.language == KotlinLanguage.INSTANCE && !provider.hasSettingsPage()) {

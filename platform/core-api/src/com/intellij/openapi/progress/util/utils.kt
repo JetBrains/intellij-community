@@ -1,5 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProgressIndicatorUtilsCore")
+
 package com.intellij.openapi.progress.util
 
 import com.intellij.openapi.diagnostic.Logger
@@ -25,7 +26,8 @@ private val LOG: Logger = Logger.getInstance("#com.intellij.openapi.progress.uti
 
 fun <T> Future<T>.awaitWithCheckCanceled(): T {
   @Suppress("UsagesOfObsoleteApi")
-  val indicator = ProgressManager.getInstance().getProgressIndicator()
+  // Can be called before Application has started, services may be unavailable
+  val indicator = ProgressManager.getInstanceOrNull()?.getProgressIndicator()
   return awaitWithCheckCanceled(indicator)
 }
 
@@ -64,6 +66,7 @@ fun <T> Future<T>.awaitWithCheckCanceled(indicator: ProgressIndicator?): T {
       if (cause is ProcessCanceledException) {
         throw cause
       }
+      @Suppress("RethrowControlFlowExceptionWithUtil")
       if (cause is CancellationException) {
         throw ProcessCanceledException(cause)
       }

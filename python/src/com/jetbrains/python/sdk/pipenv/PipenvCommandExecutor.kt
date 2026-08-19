@@ -3,24 +3,20 @@ package com.jetbrains.python.sdk.pipenv
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.ProcessOutputTransformer
-import com.intellij.python.community.impl.pipenv.pipenvPath
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.ToolCommandExecutor
-import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.intellij.python.community.impl.pipenv.PipEnvPyTool
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.TargetFileSystemCache
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.pySdkAdditionalData
-import com.jetbrains.python.sdk.runTool
+import com.intellij.python.pytools.runTool
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import com.jetbrains.python.target.ui.TargetPanelExtension
@@ -29,10 +25,6 @@ import org.jetbrains.annotations.SystemDependent
 import java.nio.file.Path
 import kotlin.io.path.createFile
 import kotlin.io.path.exists
-
-internal val PIPENV_TOOL: ToolCommandExecutor = ToolCommandExecutor("pipenv") {
-  pipenvPath
-}
 
 private val PIPENV_PROJECT_DOWNLOAD_CONFIG = DownloadConfig(relativePaths = listOf(PIP_FILE, PIP_FILE_LOCK))
 private val PIPENV_PROJECT_MUTATING_COMMANDS = setOf("--python", "install", "lock", "sync", "uninstall", "update")
@@ -45,7 +37,7 @@ internal suspend fun <P : PathHolder> runPipEnv(
   baseEnv: Map<String, String> = emptyMap(),
   downloadConfig: DownloadConfig? = null,
 ): PyResult<String> =
-  PIPENV_TOOL.runTool(
+  PipEnvPyTool.getInstance().runTool(
     fileSystem = fileSystem,
     pathFromSdk = pipenvExecutable?.toString(),
     dirPath = dirPath,
@@ -64,7 +56,7 @@ suspend fun runPipEnv(dirPath: Path?, vararg args: String): PyResult<String> =
   )
 
 internal suspend fun <T> runPipEnv(dirPath: Path?, vararg args: String, transformer: ProcessOutputTransformer<T>): PyResult<T> =
-  PIPENV_TOOL.runTool(
+  PipEnvPyTool.getInstance().runTool(
     fileSystem = dirPath.toEelFileSystem(),
     pathFromSdk = null,
     dirPath = dirPath,
@@ -72,17 +64,6 @@ internal suspend fun <T> runPipEnv(dirPath: Path?, vararg args: String, transfor
     transformer = transformer,
   )
 
-/**
- * Returns the configured pipenv executable or detects it automatically on the given [fileSystem].
- */
-internal suspend fun <P : PathHolder> getPipEnvExecutable(fileSystem: FileSystem<P>): P? =
-  PIPENV_TOOL.getToolExecutable(fileSystem, pathFromSdk = null)
-
-/**
- * Returns the configured pipenv executable or detects it automatically.
- */
-internal suspend fun getPipEnvExecutable(eel: EelApi = localEel): Path? =
-  getPipEnvExecutable(EelFileSystem(eel))?.path
 
 internal suspend fun runPipEnvWithSdk(sdk: Sdk, vararg args: String): PyResult<String> {
   val data = sdk.pySdkAdditionalData

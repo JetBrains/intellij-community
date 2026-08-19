@@ -48,7 +48,7 @@ import java.util.function.Supplier
 import javax.swing.JComponent
 import com.intellij.ui.EditorNotificationPanel.Status as NotificationStatus
 
-private val AGENT_WORKBENCH_PLUGIN_ID = PluginId.getId("com.intellij.agent.workbench")
+private val AGENT_WORKBENCH_PLUGIN_ID = PluginId.getId("com.intellij.air")
 private const val AGENT_WORKBENCH_TOOL_WINDOW_ID = "agent.workbench.sessions"
 private const val AGENT_WORKBENCH_PROMOTION_ENABLED_REGISTRY_KEY = "terminal.agent.workbench.promotion.enabled"
 private const val AGENT_WORKBENCH_PROMOTION_DISMISSED_KEY = "terminal.agent.workbench.promotion.dismissed"

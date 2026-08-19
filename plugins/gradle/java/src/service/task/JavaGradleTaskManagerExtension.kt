@@ -15,7 +15,6 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.text.nullize
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.debugger.GradleJvmDebuggerBackend
-import org.jetbrains.plugins.gradle.service.execution.loadFileComparisonTestLoggerInitScript
 import org.jetbrains.plugins.gradle.service.execution.loadIjTestLoggerInitScript
 import org.jetbrains.plugins.gradle.service.execution.loadJvmDebugInitScript
 import org.jetbrains.plugins.gradle.service.execution.loadJvmOptionsInitScript
@@ -36,10 +35,8 @@ class JavaGradleTaskManagerExtension : GradleTaskManagerExtension {
 
   private fun configureTestLogger(settings: GradleExecutionSettings) {
     if (settings.isRunAsTest) {
-      if (settings.isBuiltInTestEventsUsed) {
-        settings.addInitScript(TEST_LOGGER_SCRIPT_NAME, loadFileComparisonTestLoggerInitScript())
-      }
-      else {
+      // Gradle prior to 7.6
+      if (!settings.isBuiltInTestEventsUsed) {
         settings.addInitScript(TEST_LOGGER_SCRIPT_NAME, loadIjTestLoggerInitScript())
       }
     }

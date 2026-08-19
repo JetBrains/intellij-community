@@ -1,0 +1,19 @@
+// "Convert to 'java.time.Instant'" "true"
+// WITH_STDLIB
+// RUNTIME_WITH_FULL_JDK
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+
+import java.time.Instant as JavaInstant
+import kotlin.time.Clock
+import kotlin.time.Instant
+
+val today: Instant = null!!
+val tomorrow: Instant = null!!
+
+fun takesJavaInstant(instant: JavaInstant?) {}
+
+fun test(isToday: Boolean) {
+    takesJavaInstant(<caret>if (isToday) today else tomorrow)
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ToJavaInstantFix

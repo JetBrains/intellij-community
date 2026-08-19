@@ -19,7 +19,7 @@ interface AttachedEntityToParentBuilder : WorkspaceEntityBuilder<AttachedEntityT
 }
 
 internal object AttachedEntityToParentType : EntityType<AttachedEntityToParent, AttachedEntityToParentBuilder>() {
-  override val entityClass: Class<AttachedEntityToParent> get() = AttachedEntityToParent::class.java
+  override val entityImplClass: Class<*> get() = AttachedEntityToParentImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = AttachedEntityToParentImpl.Builder::class.java
   operator fun invoke(
     data: String,
@@ -42,7 +42,6 @@ fun MutableEntityStorage.modifyAttachedEntityToParent(
 @Parent
 var AttachedEntityToParentBuilder.ref: MainEntityToParentBuilder
   by WorkspaceEntity.extensionBuilder(MainEntityToParent::class.java)
-
 
 @JvmOverloads
 @JvmName("createAttachedEntityToParent")

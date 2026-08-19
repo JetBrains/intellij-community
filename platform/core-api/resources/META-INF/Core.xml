@@ -50,5 +50,6 @@
     <applicationService serviceInterface="com.intellij.util.messages.MessageBusFactory"
                         serviceImplementation="com.intellij.util.messages.impl.MessageBusFactoryImpl"/>
     <applicationService serviceImplementation="com.intellij.ide.debug.ApplicationStateDebugSupport" preload="true"/>
+    <applicationService serviceImplementation="com.intellij.openapi.application.IdeUrlTrackingParametersProvider" open="true"/>
   </extensions>
 </idea-plugin>

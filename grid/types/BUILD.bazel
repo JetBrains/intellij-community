@@ -21,7 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/util-rt",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -39,6 +39,7 @@ jvm_library(
         # do not sort,
         ":types",
         "//platform/util-rt:util-rt_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.grid.types` end
@@ -47,6 +48,7 @@ jvm_library(
 exports_files(
     [
         "intellij.grid.types.iml",
+        "resources/intellij.grid.types.xml",
     ],
     visibility = ["//visibility:public"],
 )

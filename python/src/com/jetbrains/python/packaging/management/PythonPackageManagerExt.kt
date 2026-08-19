@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle
@@ -16,8 +17,8 @@ import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.pyRequirement
-import com.jetbrains.python.packaging.pyRequirementVersionSpec
+import com.intellij.python.requirements.pyRequirement
+import com.intellij.python.requirements.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
@@ -43,7 +44,10 @@ internal fun PythonPackageManager.reloadPackagesBlocking() {
 
 
 @ApiStatus.Internal
-suspend fun PythonPackageManager.installPackages(vararg packages: String): PyResult<List<PythonPackage>> {
+suspend fun PythonPackageManager.installPackages(
+  vararg packages: String,
+  dependencyGroup: PyDependencyGroup? = null,
+): PyResult<List<PythonPackage>> {
   waitForInit()
   val specifications = packages.map {
     val packageName = PyPackageName.normalizePackageName(it)
@@ -53,7 +57,10 @@ suspend fun PythonPackageManager.installPackages(vararg packages: String): PyRes
       PythonRepositoryPackageSpecification(repository, pyRequirement(packageName))
     } ?: return PyResult.localizedError(PyBundle.message("python.packaging.installing.error.failed.to.find.specification", it))
   }
-  return installPackage(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications))
+  return installPackage(
+    PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications),
+    dependencyGroup = dependencyGroup,
+  )
 }
 
 

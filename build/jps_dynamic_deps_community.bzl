@@ -8,7 +8,7 @@ Parity with the JPS-to-Bazel converter is asserted in JpsModuleToBazelTargetsOnl
 
 load(":jps_library_derivation.bzl", "derive_library_targets")
 load(":jps_model.bzl", "read_project_model")
-load(":jps_target_derivation.bzl", "SKIPPED_MODULES", "compute_build_dir", "compute_iml_target", "compute_module_targets", "module_name_to_target", "parse_iml")
+load(":jps_target_derivation.bzl", "SKIPPED_MODULES", "compute_build_dir", "compute_iml_target", "compute_module_targets", "compute_plugin_distribution_target", "compute_project_file_target", "module_name_to_target", "parse_iml")
 
 def _format_target_list(name, targets):
     """Format a list of targets as a Starlark list assignment."""
@@ -21,13 +21,16 @@ def _format_target_list(name, targets):
     lines.append("]\n")
     return "\n".join(lines)
 
-def _generate_targets_bzl(production_targets, test_targets, library_targets, iml_targets):
+def _generate_targets_bzl(production_targets, test_targets, library_targets, iml_targets, plugin_xml_targets, plugin_distribution_targets, descriptor_targets):
     """Generate the content for targets.bzl file."""
     content = []
     content.append(_format_target_list("ALL_PRODUCTION_COMMUNITY_TARGETS", production_targets))
     content.append(_format_target_list("ALL_TEST_COMMUNITY_TARGETS", test_targets))
     content.append(_format_target_list("ALL_LIBRARY_COMMUNITY_TARGETS", library_targets))
     content.append(_format_target_list("ALL_COMMUNITY_IML_TARGETS", iml_targets))
+    content.append(_format_target_list("ALL_COMMUNITY_PLUGIN_XML_TARGETS", plugin_xml_targets))
+    content.append(_format_target_list("ALL_COMMUNITY_PLUGIN_DISTRIBUTION_TARGETS", plugin_distribution_targets))
+    content.append(_format_target_list("ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS", descriptor_targets))
     content.append("BAZEL_TARGETS_JSON_COMMUNITY = \"@community//build:community_bazel_targets_json\"")
     content.append("ALL_COMMUNITY_TARGETS = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_TEST_COMMUNITY_TARGETS + ALL_LIBRARY_COMMUNITY_TARGETS")
     return "\n".join(content)
@@ -46,6 +49,9 @@ def _derive_targets_from_model(ctx, model):
     all_test = []
     iml_data_list = []
     all_iml = []
+    all_plugin_xml = []
+    all_descriptors = []
+    all_plugin_distribution = []
 
     # community-only: community_root_parts is [] (project root IS community root)
     community_root_parts = []
@@ -66,6 +72,26 @@ def _derive_targets_from_model(ctx, model):
         )
         if iml_target not in all_iml:
             all_iml.append(iml_target)
+        for descriptor_rel_path in mod.descriptor_rel_paths:
+            descriptor_target = compute_project_file_target(
+                module_name = mod.module_name,
+                build_dir_parts = build_dir_parts,
+                file_rel_path = descriptor_rel_path,
+                is_community = True,
+                community_root_parts = community_root_parts,
+            )
+            if descriptor_target not in all_descriptors:
+                all_descriptors.append(descriptor_target)
+        if mod.plugin_xml_rel_path != None:
+            plugin_xml_target = compute_project_file_target(
+                module_name = mod.module_name,
+                build_dir_parts = build_dir_parts,
+                file_rel_path = mod.plugin_xml_rel_path,
+                is_community = True,
+                community_root_parts = community_root_parts,
+            )
+            if plugin_xml_target not in all_plugin_xml:
+                all_plugin_xml.append(plugin_xml_target)
 
         # Skip modules that the converter also skips (standalone Bazel projects)
         if mod.module_name in SKIPPED_MODULES:
@@ -93,6 +119,16 @@ def _derive_targets_from_model(ctx, model):
             is_community = True,
             community_root_parts = community_root_parts,
         )
+        if mod.plugin_xml_rel_path != None:
+            plugin_distribution_target = compute_plugin_distribution_target(
+                module_name = mod.module_name,
+                build_dir_parts = build_dir_parts,
+                target_name = target_name,
+                is_community = True,
+                community_root_parts = community_root_parts,
+            )
+            if plugin_distribution_target not in all_plugin_distribution:
+                all_plugin_distribution.append(plugin_distribution_target)
 
         for t in targets.production:
             if t not in all_production:
@@ -114,6 +150,9 @@ def _derive_targets_from_model(ctx, model):
         test = all_test,
         library = library_targets,
         iml = all_iml,
+        plugin_xml = all_plugin_xml,
+        plugin_distribution = all_plugin_distribution,
+        descriptors = all_descriptors,
     )
 
 def _targets_repo_impl(ctx):
@@ -126,6 +165,9 @@ def _targets_repo_impl(ctx):
         sorted(starlark.test),
         starlark.library,
         sorted(starlark.iml),
+        sorted(starlark.plugin_xml),
+        sorted(starlark.plugin_distribution),
+        sorted(starlark.descriptors),
     )
 
     # jps_to_bazel_targets_json rule has no way to get JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT environment variable, forward it via targets.bzl

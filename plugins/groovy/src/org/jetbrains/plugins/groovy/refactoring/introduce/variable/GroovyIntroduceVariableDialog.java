@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -106,6 +107,16 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
       GroovyBundle.message("introduce.variable.declare.final.label")
     ));
     panel.add(myCbIsFinal);
+    String type = myTypeComboBox.getSelectedType().getCanonicalText();
+    if (PsiModifier.FINAL.equals(type) || GrModifier.VAL.equals(type)) {
+      myCbIsFinal.setEnabled(false);
+    }
+
+    myTypeComboBox.addItemListener(e -> {
+      String item = myTypeComboBox.getSelectedType().getCanonicalText();
+      boolean enabled = !PsiModifier.FINAL.equals(item) && !GrModifier.VAL.equals(item);
+      myCbIsFinal.setEnabled(enabled);
+    });
     myCbReplaceAllOccurrences = new JCheckBox(UIUtil.replaceMnemonicAmpersand(
       GroovyBundle.message("introduce.variable.replace.all.occurrences")
     ));
@@ -121,7 +132,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     c.nextLine().next().weightx(0).fillCellNone();
     namePanel.add(typeLabel, c);
 
-    myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(myExpression, GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_SELECT_DEF);
+    myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(myExpression, GroovyApplicationSettings.getInstance().INTRODUCE_TYPE);
     c.next().weightx(1).fillCellHorizontally();
     namePanel.add(myTypeComboBox, c);
     typeLabel.setLabelFor(myTypeComboBox);
@@ -151,7 +162,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     return myCbIsFinal.isSelected();
   }
 
-  private @Nullable PsiType getSelectedType() {
+  private @NotNull PsiType getSelectedType() {
     return myTypeComboBox.getSelectedType();
   }
 
@@ -173,7 +184,14 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     if (myCbIsFinal.isEnabled()) {
       GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = myCbIsFinal.isSelected();
     }
-    GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_SELECT_DEF = (myTypeComboBox.getSelectedType() == null);
+    PsiType type = myTypeComboBox.getSelectedType();
+    GroovyApplicationSettings.getInstance().INTRODUCE_TYPE = switch (type.getCanonicalText()) {
+      case GrModifier.DEF -> GroovyApplicationSettings.Type.DEF;
+      case PsiModifier.FINAL -> GroovyApplicationSettings.Type.FINAL;
+      case GrModifier.VAR -> GroovyApplicationSettings.Type.VAR;
+      case GrModifier.VAL -> GroovyApplicationSettings.Type.VAL;
+      default -> GroovyApplicationSettings.Type.TYPED;
+    };
     super.doOKAction();
   }
 

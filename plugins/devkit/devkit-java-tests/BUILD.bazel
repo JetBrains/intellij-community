@@ -29,7 +29,7 @@ jvm_library(
     exports = ["//java/java-backend:backend"],
     runtime_deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/ide-core-impl",
         "//plugins/devkit",
         "//xml/dom-impl",
@@ -78,7 +78,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core",
@@ -172,6 +173,8 @@ jvm_library(
         "//plugins/kotlin/base/testFramework:testFramework_test_lib",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//plugins/devkit/intellij.devkit.mcp.inspections:mcp-inspections",
+        "//plugins/devkit/intellij.devkit.mcp.inspections:mcp-inspections_test_lib",
         "//java/codeserver/highlighting",
         "//java/codeserver/highlighting:highlighting_test_lib",
         "//java/java-frontback-psi-api:frontback-psi",

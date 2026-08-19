@@ -9,7 +9,8 @@ import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
@@ -26,7 +27,7 @@ class KotlinNotSurrounder : KotlinExpressionSurrounder() {
         if (!super.isApplicable(expression)) return false
         allowAnalysisOnEdt {
             return analyze(expression) {
-                expression.expressionType?.isBooleanType == true
+                expression.expressionType?.classId == KaStandardTypeClassIds.BOOLEAN
             }
         }
     }

@@ -55,6 +55,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.grazie.iml",
+        "resources/intellij.python.grazie.xml",
     ],
     visibility = ["//visibility:public"],
 )

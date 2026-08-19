@@ -35,40 +35,7 @@ internal class JarPackagerDependencyHelper(private val outputProvider: ModuleOut
   }
 
   fun isTestPluginModule(moduleName: String, module: JpsModule?): Boolean {
-    if (!outputProvider.useTestCompilationOutput) {
-      return false
-    }
-
-    // todo use some marker
-    if (moduleName == "intellij.rdct.testFramework" ||
-        moduleName == "intellij.platform.split.testFramework" ||
-        moduleName == "intellij.python.junit5Tests" ||
-        moduleName == "intellij.rdct.tests.distributed") {
-      return true
-    }
-
-    // modules containing tests only as per https://youtrack.jetbrains.com/articles/IJPL-A-62
-    if (moduleName.endsWith(".tests")) {
-      return true
-    }
-
-    if (moduleName.contains(".test.")) {
-      @Suppress("RedundantIf", "RedundantSuppression")
-      if (module?.sourceRoots?.none { it.rootType.isForTests } == true) {
-        return false
-      }
-
-      return moduleName != "intellij.rider.test.framework" &&
-             moduleName != "intellij.rider.test.build.shared" &&
-             moduleName != "intellij.rider.test.framework.core" &&
-             moduleName != "intellij.rider.test.framework.perforator" &&
-             moduleName != "intellij.rider.test.framework.testng" &&
-             moduleName != "intellij.rider.test.framework.junit" &&
-             moduleName != "intellij.rider.test.framework.unit" &&
-             moduleName != "intellij.rider.test.framework.integration.testng" &&
-             moduleName != "intellij.rider.test.framework.integration.junit"
-    }
-    return moduleName.endsWith("._test")
+    return isTestOnlyPluginModule(moduleName = moduleName, module = module, outputProvider = outputProvider)
   }
 
   suspend fun getPluginIdByModule(pluginModule: JpsModule): String {

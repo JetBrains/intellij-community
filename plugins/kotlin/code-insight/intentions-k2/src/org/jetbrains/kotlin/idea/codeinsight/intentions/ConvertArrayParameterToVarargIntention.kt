@@ -8,9 +8,15 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.arrayElementType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -42,7 +48,7 @@ internal class ConvertArrayParameterToVarargIntention :
                 val typeProjection = typeArgument?.parent as? KtTypeProjection
                 if (typeProjection?.hasModifier(KtTokens.IN_KEYWORD) != false) return null
                 if (!typeProjection.hasModifier(KtTokens.OUT_KEYWORD) &&
-                    type.arrayElementType?.let { !it.isMarkedNullable && it.isPrimitive } == false
+                    !(type.arrayElementType?.let { !it.isMarkedNullable && it.classId in KaStandardTypeClassIds.PRIMITIVES } ?: true)
                 ) {
                     KotlinBundle.message("0.may.break.code", familyName)
                 } else {
@@ -56,7 +62,8 @@ internal class ConvertArrayParameterToVarargIntention :
     }
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtParameter): KtTypeReference? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtParameter): KtTypeReference? {
         val symbol = element.symbol as? KaValueParameterSymbol ?: return null
         val elementType = symbol.returnType.arrayElementType ?: return null
         val newType = elementType.render(position = Variance.IN_VARIANCE)

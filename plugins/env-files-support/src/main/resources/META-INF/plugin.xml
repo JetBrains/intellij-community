@@ -24,6 +24,24 @@
     </ul>
     ]]></description>
 
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <dependencies>
+      <module name="intellij.libraries.kotlinx.collections.immutable"/>
+      <module name="intellij.platform.analysis"/>
+      <module name="intellij.platform.analysis.impl"/>
+      <module name="intellij.platform.core"/>
+      <module name="intellij.platform.core.impl"/>
+      <module name="intellij.platform.editor.ui"/>
+      <module name="intellij.platform.ide.core"/>
+      <module name="intellij.platform.ide.impl"/>
+      <module name="intellij.platform.indexing"/>
+      <module name="intellij.platform.lang"/>
+      <module name="intellij.platform.lang.core"/>
+      <module name="intellij.platform.lang.impl"/>
+      <module name="intellij.platform.projectModel"/>
+      <module name="intellij.platform.util.ui"/>
+    </dependencies>
+    <!-- endregion -->
     <extensionPoints>
         <extensionPoint interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider"
                         name="environmentVariablesProvider"
@@ -33,10 +51,12 @@
                         dynamic="true"/>
     </extensionPoints>
 
-    <content>
+    <content namespace="jetbrains">
       <module name="intellij.dotenv.kotlin"/>
-      <module name="intellij.dotenv.python"/>
+    </content>
+    <content>
       <module name="intellij.dotenv.java"/>
+      <module name="intellij.dotenv.python"/>
     </content>
 
     <xi:include href="/META-INF/dotenv-ultimate.xml">
@@ -49,7 +69,7 @@
         <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex"/>
 
         <fileType name=".env file" extensions="env" fileNames=".env" patterns=".env.*" fieldName="INSTANCE" language="DotEnv"
-                  implementationClass="ru.adelf.idea.dotenv.DotEnvFileType"/>
+                  implementationClass="ru.adelf.idea.dotenv.DotEnvFileType" order="before textmate"/>
         <lang.parserDefinition language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvParserDefinition"/>
         <lang.commenter language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCommenter"/>
 

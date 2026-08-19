@@ -322,7 +322,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
                               stopDumbLaterIfPossible();
                             }
                           },
-                          () -> tryRollback(), 0).showInBestPositionFor(myEditor);
+                          () -> ApplicationManager.getApplication().invokeLater(() -> tryRollback()), 0).showInBestPositionFor(myEditor);
   }
 
   /**

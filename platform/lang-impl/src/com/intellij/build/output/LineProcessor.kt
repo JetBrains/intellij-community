@@ -38,14 +38,16 @@ abstract class LineProcessor : Appendable, Closeable {
 
   override fun close() {
     if (lineBuilder != null) {
-      flushBuffer()
+      flushBuffer(skipEmptyLine = true)
       lineBuilder = null
     }
   }
 
-  private fun flushBuffer() {
+  private fun flushBuffer(skipEmptyLine: Boolean = false) {
     val line = lineBuilder!!.toString()
     lineBuilder!!.setLength(0)
-    process(line)
+    if (!skipEmptyLine || line.isNotEmpty()) {
+      process(line)
+    }
   }
 }

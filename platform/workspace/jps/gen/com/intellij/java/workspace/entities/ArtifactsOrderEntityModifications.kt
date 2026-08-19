@@ -18,7 +18,7 @@ interface ArtifactsOrderEntityBuilder : WorkspaceEntityBuilder<ArtifactsOrderEnt
 }
 
 internal object ArtifactsOrderEntityType : EntityType<ArtifactsOrderEntity, ArtifactsOrderEntityBuilder>() {
-  override val entityClass: Class<ArtifactsOrderEntity> get() = ArtifactsOrderEntity::class.java
+  override val entityImplClass: Class<*> get() = ArtifactsOrderEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ArtifactsOrderEntityImpl.Builder::class.java
   operator fun invoke(
     orderOfArtifacts: List<String>,

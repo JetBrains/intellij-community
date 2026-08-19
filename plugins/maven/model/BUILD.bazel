@@ -18,7 +18,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = ["@lib//:jetbrains-annotations"],
+    deps = ["//libraries/jetbrains/annotations"],
 )
 
 jvm_library(
@@ -31,7 +31,11 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.maven.model",
     visibility = ["//visibility:public"],
-    runtime_deps = [":model"],
+    runtime_deps = [
+        # do not sort,
+        ":model",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.maven.model` end
 
@@ -39,6 +43,7 @@ jvm_library(
 exports_files(
     [
         "intellij.maven.model.iml",
+        "resources/intellij.maven.model.xml",
     ],
     visibility = ["//visibility:public"],
 )

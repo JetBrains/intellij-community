@@ -112,6 +112,8 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   val cells: MutableList<CellBaseImpl<*>?> = mutableListOf()
 
+  var creationStackTrace: Throwable? = null
+
   private var visible = true
   private var enabled = true
 
@@ -497,5 +499,15 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     }
 
     return result
+  }
+
+  /**
+   * Should be called after row initialization. The stack trace may be created by mistake
+   * because of usages such as: `row { }.label("Label")`
+   */
+  fun initCreationStackTrace() {
+    if (cells.isEmpty() && isSaveStacktraces()) {
+      creationStackTrace = Throwable()
+    }
   }
 }

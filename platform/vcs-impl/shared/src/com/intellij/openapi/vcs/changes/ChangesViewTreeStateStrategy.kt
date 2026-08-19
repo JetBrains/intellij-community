@@ -53,20 +53,26 @@ class ChangesViewTreeStateStrategy : TreeStateStrategy<ChangesViewTreeStateStrat
 
     // IJPL-75200: Expand Default changelist only if it was empty and no other changelists are expanded
     if (shouldExpandDefaultChangeList(newRoot, oldFileCount, isNodeExpanded = { view.isExpanded(TreePath(it.path)) })) {
-      view.expandSafe(defaultListNode)
-      defaultListNode.expandDefaultsUnder(view)
+      defaultListNode.safeExpandDefaultsRecursively(view)
     }
   }
 
-  private fun ChangesBrowserNode<*>.expandDefaultsUnder(view: ChangesListView) {
+  private fun ChangesBrowserNode<*>.safeExpandDefaultsRecursively(view: ChangesListView) {
+    if (!ChangesListView.canExpandSafe(this)) return // if the root is too big, skip everything
+    val nodesToExpand = mutableListOf(TreeUtil.getPathFromRoot(this))
+    collectDefaultsUnder(nodesToExpand)
+    view.expandPaths(nodesToExpand)
+  }
+
+  private fun ChangesBrowserNode<*>.collectDefaultsUnder(nodesToExpand: MutableList<TreePath>) {
     iterateNodeChildren()
       .asSequence()
       .filterIsInstance<ChangesBrowserNode<*>>()
       .filter { node ->
-        node.shouldExpandByDefault() && !node.isLeaf
+        node.shouldExpandByDefault() && !node.isLeaf && ChangesListView.canExpandSafe(node)
       }.forEach { node ->
-        view.expandSafe(node)
-        node.expandDefaultsUnder(view)
+        nodesToExpand += TreeUtil.getPathFromRoot(node)
+        node.collectDefaultsUnder(nodesToExpand)
       }
   }
 

@@ -45,7 +45,10 @@ object GotoClassPresentationUpdater {
     return ChooseByNameRegistry.getInstance().classModelContributorList
       .asSequence()
       .filterIsInstance<GotoClassContributor>()
-      .firstOrNull { it.elementLanguage in IdeLanguageCustomization.getInstance().primaryIdeLanguages }
+      .firstOrNull {
+        val language = it.elementLanguage
+        language != null && language in IdeLanguageCustomization.getInstance().primaryIdeLanguages
+      }
   }
 
   private fun getElementKinds(transform: (GotoClassContributor) -> Iterable<String>): LinkedHashSet<String> {
@@ -54,7 +57,8 @@ object GotoClassPresentationUpdater {
       .asSequence()
       .filterIsInstance<GotoClassContributor>()
       .sortedBy {
-        val index = primaryIdeLanguages.indexOf(it.elementLanguage)
+        val language = it.elementLanguage
+        val index = if (language == null) -1 else primaryIdeLanguages.indexOf(language)
         if (index == -1) primaryIdeLanguages.size else index
       }
       .flatMapTo(LinkedHashSet(), transform)

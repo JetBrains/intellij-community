@@ -75,6 +75,7 @@ jvm_library(
 exports_files(
     [
         "intellij.maven.jps.ide.iml",
+        "resources/intellij.maven.jps.ide.xml",
     ],
     visibility = ["//visibility:public"],
 )

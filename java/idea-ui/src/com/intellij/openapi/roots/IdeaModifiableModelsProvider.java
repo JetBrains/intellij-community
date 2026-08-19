@@ -128,7 +128,11 @@ public final class IdeaModifiableModelsProvider implements ModifiableModelsProvi
   }
 
   private static @Nullable StructureConfigurableContext getProjectStructureContext(@NotNull Project project) {
-    final ProjectStructureConfigurable structureConfigurable = ProjectStructureConfigurable.getInstance(project);
-    return structureConfigurable.isUiInitialized() ? structureConfigurable.getContext() : null;
+    // Do not force-create the Project Structure UI service here: this method can be called on a background thread
+    // (e.g. from a write action), and instantiating the configurable off-EDT builds its Swing UI in field
+    // initializers, which contends the global AWT tree lock and freezes the IDE (IJPL-248581). We only need the
+    // context of an already opened dialog, so reuse the existing instance if any.
+    final ProjectStructureConfigurable structureConfigurable = ProjectStructureConfigurable.getInstanceIfCreated(project);
+    return structureConfigurable != null && structureConfigurable.isUiInitialized() ? structureConfigurable.getContext() : null;
   }
 }

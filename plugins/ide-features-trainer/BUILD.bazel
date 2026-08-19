@@ -129,7 +129,8 @@ jvm_library(
         "//platform/diagnostic:diagnostic_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
-        "@lib//:mockito-kotlin",
+        "//libraries/mockito-kotlin",
+        "//libraries/mockito-kotlin:mockito-kotlin_test_lib",
         "//libraries/mockito",
         "//libraries/mockito:mockito_test_lib",
         "//platform/execution:execution_test_lib",
@@ -142,6 +143,7 @@ jvm_library(
 exports_files(
     [
         "intellij.featuresTrainer.iml",
+        "res/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -276,7 +278,8 @@ jvm_library(
         "//platform/diagnostic:diagnostic_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
-        "@lib//:mockito-kotlin",
+        "//libraries/mockito-kotlin",
+        "//libraries/mockito-kotlin:mockito-kotlin_test_lib",
         "//libraries/mockito",
         "//libraries/mockito:mockito_test_lib",
         "//platform/execution",

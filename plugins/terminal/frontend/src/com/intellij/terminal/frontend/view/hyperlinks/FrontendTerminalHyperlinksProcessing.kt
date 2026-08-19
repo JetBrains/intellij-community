@@ -5,15 +5,12 @@ import com.intellij.execution.impl.EditorTextDecorationApplier
 import com.intellij.execution.impl.buildHighlighting
 import com.intellij.execution.impl.buildHyperlink
 import com.intellij.execution.impl.buildInlay
-import com.intellij.execution.impl.createEditorTextDecorationApplier
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.event.EditorMouseEvent
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.project.projectId
@@ -72,7 +69,7 @@ import kotlin.time.Duration.Companion.seconds
 fun installHyperlinksProcessing(
   project: Project,
   outputModel: TerminalOutputModel,
-  editor: EditorEx,
+  decorationApplier: EditorTextDecorationApplier,
   sessionModel: TerminalSessionModel,
   eelDescriptor: EelDescriptor,
   coroutineScope: CoroutineScope,
@@ -80,17 +77,16 @@ fun installHyperlinksProcessing(
   // The modification stamp of the most recent highlighting task whose
   // `TerminalHyperlinksOutputEvent.TaskFinished` event has been observed.
   val lastFinishedTaskStamp = MutableStateFlow(0L)
-  val applier = createEditorTextDecorationApplier(editor, coroutineScope.asDisposable())
 
   val sessionDeferred = coroutineScope.async(CoroutineName("createHyperlinksSession")) {
     createHyperlinksSession(project, eelDescriptor, coroutineScope.childScope("FrontendTerminalHyperlinksSession"))
   }
 
   coroutineScope.launch(CoroutineName("processHyperlinks")) {
-    processHyperlinks(outputModel, sessionModel, sessionDeferred, applier, lastFinishedTaskStamp)
+    processHyperlinks(outputModel, sessionModel, sessionDeferred, decorationApplier, lastFinishedTaskStamp)
   }
 
-  return FrontendTerminalHyperlinkFacade(sessionDeferred, applier, lastFinishedTaskStamp)
+  return FrontendTerminalHyperlinkFacade(sessionDeferred, decorationApplier, lastFinishedTaskStamp)
 }
 
 private suspend fun processHyperlinks(
@@ -108,8 +104,8 @@ private suspend fun processHyperlinks(
   launch(CoroutineName("Output model tracking")) {
     trackOutputModelChanges(outputModel, sessionModel, outputModelChangesTracker, session.inputEventsSink)
   }
-  // Can't use Dispatchers.UI because editor can require locks
-  launch(Dispatchers.EDT + ModalityState.any().asContextElement() + CoroutineName("Results processing")) {
+
+  launch(Dispatchers.UI + ModalityState.any().asContextElement() + CoroutineName("Results processing")) {
     processHyperlinkResults(
       debugName = "Frontend#${session.id.id}",
       outputModel = outputModel,

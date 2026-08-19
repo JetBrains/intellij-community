@@ -399,7 +399,6 @@ com.intellij.openapi.editor.ex.DocumentEx
 - moveText(I,I,I):V
 - a:processRangeMarkers(com.intellij.util.Processor):Z
 - a:processRangeMarkersOverlappingWith(I,I,com.intellij.util.Processor):Z
-- a:registerRangeMarker(com.intellij.openapi.editor.ex.RangeMarkerEx,I,I,Z,Z,I):V
 - removeEditReadOnlyListener(com.intellij.openapi.editor.ex.EditReadOnlyListener):V
 - a:removeRangeMarker(com.intellij.openapi.editor.ex.RangeMarkerEx):Z
 - a:replaceText(java.lang.CharSequence,J):V
@@ -470,6 +469,12 @@ c:com.intellij.openapi.editor.impl.EditorTextFieldRendererDocument
 - com.intellij.openapi.editor.ex.DocumentEx
 - <init>():V
 - setText(java.lang.CharSequence):V
+com.intellij.openapi.editor.impl.GuardedBlocks
+- a:createGuardedBlock(com.intellij.openapi.editor.ex.DocumentEx,I,I):com.intellij.openapi.editor.ex.RangeMarkerEx
+- a:getGuardedBlocks():java.util.List
+- a:getOffsetGuard(I):com.intellij.openapi.editor.RangeMarker
+- a:getRangeGuard(I,I):com.intellij.openapi.editor.RangeMarker
+- a:removeGuardedBlock(com.intellij.openapi.editor.RangeMarker):V
 a:com.intellij.openapi.editor.impl.PsiBasedStripTrailingSpacesFilter
 - com.intellij.openapi.editor.StripTrailingSpacesFilter
 - p:<init>(com.intellij.openapi.editor.Document):V
@@ -1409,6 +1414,9 @@ f:com.intellij.util.indexing.FileContentImpl
 - s:createByContent(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.NotNullComputable,com.intellij.openapi.util.NotNullComputable,com.intellij.openapi.project.Project):com.intellij.util.indexing.FileContent
 - s:createByFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.indexing.FileContent
 - getPsiFile():com.intellij.psi.PsiFile
+f:com.intellij.util.ref.DebugReflectionUtil
+- s:walkObjects(I,I,java.util.Map,java.lang.Class,java.util.function.Predicate,java.util.function.Predicate,com.intellij.util.PairProcessor):Z
+- s:walkObjects(I,java.util.Map,java.lang.Class,java.util.function.Predicate,java.util.function.Predicate,com.intellij.util.PairProcessor):Z
 c:com.intellij.util.ref.DebugReflectionUtil$BackLink
 - getValue():java.lang.Object
 - prev():com.intellij.util.ref.DebugReflectionUtil$BackLink

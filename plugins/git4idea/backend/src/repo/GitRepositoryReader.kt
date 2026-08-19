@@ -298,7 +298,7 @@ internal class GitRepositoryReader(private val project: Project, private val git
       handler.addParameters("HEAD^{commit}")
 
       val output = Git.getInstance().runCommand(handler).getOutputOrThrow().trim()
-      if (GitUtil.isHashString(output)) {
+      if (GitUtil.isPossibleFullHash(output)) {
         return HashImpl.build(output)
       }
       return null

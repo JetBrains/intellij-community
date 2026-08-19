@@ -33,15 +33,15 @@ open class KotlinFunctionBreakpointType protected constructor(@NotNull id: Strin
     @Suppress("unused") // Used by plugin XML
     constructor() : this("kotlin-function", message("function.breakpoint.tab.title"))
 
-    override fun getGeneralDescription(variant: XLineBreakpointVariant) =
+    override fun getGeneralDescription(variant: XLineBreakpointVariant): String =
         message("function.breakpoint.description")
 
-    override fun getGeneralDescription(breakpoint: XLineBreakpoint<JavaMethodBreakpointProperties>) =
+    override fun getGeneralDescription(breakpoint: XLineBreakpoint<JavaMethodBreakpointProperties>): String =
         message("function.breakpoint.description")
 
-    override fun getPriority() = 120
+    override fun getPriority(): Int = 120
 
-    override fun createJavaBreakpoint(project: Project, breakpoint: XBreakpoint<JavaMethodBreakpointProperties>) =
+    override fun createJavaBreakpoint(project: Project, breakpoint: XBreakpoint<JavaMethodBreakpointProperties>): KotlinFunctionBreakpoint =
         KotlinFunctionBreakpoint(project, breakpoint)
 
     override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean =

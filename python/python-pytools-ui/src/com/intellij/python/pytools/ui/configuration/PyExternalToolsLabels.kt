@@ -1,28 +1,106 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pytools.ui.configuration
 
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBLabel
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
 import java.awt.Color
+import java.awt.Dimension
+import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.UIManager
 
-internal const val COL_ENABLED: Int = 0
-internal const val COL_TOOL: Int = 1
-internal const val COL_MODE: Int = 2
-internal const val COL_PATH: Int = 3
-
 /**
- * Foreground for the bracketed list of activated features in the Tool column. Uses the
- * "added / enabled" green (matching `FileStatus.ADDED`) so the readable contrast is consistent
- * across light and dark themes.
+ * Shared column geometry so the "Lookup" caption in the header bar lines up with the lookup-chain
+ * text in every row: both lay their right side out as `[chain][gap][toggle column]`, right-anchored,
+ * so the chain and caption share a right edge a fixed [columnGap] from the toggle regardless of the
+ * chain's length.
  */
-internal val ENABLED_OPTIONS_FOREGROUND: Color =
-  JBColor(Color(0x59A869), Color(0x6A8759))
+internal fun toggleColumnWidth(): Int = JBUI.scale(64)
+
+internal fun columnGap(): Int = JBUI.scale(12)
 
 /**
- * Foreground for the warning "No features selected" hint shown in the Tool column when a tool
+ * Tooltip for the executable path label: the full path, the probed version, a below-minimum-version
+ * warning, and any validation error — each on its own line. `null` when there is nothing to show
+ * (path not resolved / not yet probed). Shared by the External Tools and Package Managers rows so
+ * the path text can stay short while its details live in the tooltip.
+ */
+@Suppress("HardCodedStringLiteral")
+internal fun pathDetailsTooltip(row: ToolRow): HtmlChunk? {
+  val builder = HtmlBuilder()
+  var has = false
+  fun line(text: String) {
+    if (has) builder.br()
+    builder.append(text)
+    has = true
+  }
+  when (val d = row.pathFieldValue) {
+    is PathFieldValue.Custom -> line(d.path.toString())
+    is PathFieldValue.AutoDetected -> line(d.path.toString())
+    PathFieldValue.NotFound, null -> Unit
+  }
+  row.version?.let { line(PyToolsUiBundle.message("settings.external.tools.path.version.tooltip", it.toString())) }
+  row.belowMinVersionMessage?.let { line(it) }
+  row.pathError?.let { line(it) }
+  return if (has) builder.wrapWith(HtmlChunk.html()) else null
+}
+
+/** Text for the Upgrade action link: "Upgrade to X.Y.Z" when the target version is known, else "Upgrade". */
+@Nls
+internal fun upgradeLinkText(latestVersion: String?): String =
+  if (latestVersion != null) PyToolsUiBundle.message("settings.external.tools.upgrade.to.version.link", latestVersion)
+  else PyToolsUiBundle.message("settings.external.tools.upgrade.link")
+
+/**
+ * The short muted "vX.Y.Z" label shown right after a resolved executable path, or `null` when the
+ * path isn't resolved or its version hasn't been probed. The full path plus any error/warning stays
+ * in [pathDetailsTooltip]; only the concise version is shown inline. Shared by both pages.
+ */
+internal fun installedVersionLabel(row: ToolRow): JComponent? {
+  val resolved = row.pathFieldValue is PathFieldValue.Custom || row.pathFieldValue is PathFieldValue.AutoDetected
+  val version = row.version
+  if (!resolved || version == null) return null
+  @NlsSafe val text = "v${version.value}"
+  return JBLabel(text).apply { foreground = UIUtil.getInactiveTextColor() }
+}
+
+/**
+ * Rejects an Apply when any row has an unresolved custom-path validation error, throwing a
+ * [ConfigurationException] so the Settings dialog shows the message at the bottom and does not
+ * persist. Shared by the External Tools and Package Managers pages.
+ */
+@Throws(ConfigurationException::class)
+internal fun checkNoPathErrors(rows: List<ToolRow>) {
+  val invalid = rows.firstOrNull { it.pathError != null } ?: return
+  throw ConfigurationException(
+    PyToolsUiBundle.message("settings.external.tools.path.apply.error", invalid.tool.presentableName, invalid.pathError!!)
+  )
+}
+
+/** Wrap [comp] in a panel pinned to [width], anchored (WEST by default) within that width. */
+internal fun fixedWidthPanel(width: Int, comp: JComponent, anchor: String = BorderLayout.WEST): JComponent =
+  object : JPanel(BorderLayout()) {
+    init {
+      isOpaque = false
+      add(comp, anchor)
+    }
+
+    override fun getMinimumSize(): Dimension = Dimension(width, super.getMinimumSize().height)
+    override fun getPreferredSize(): Dimension = Dimension(width, super.getPreferredSize().height)
+    override fun getMaximumSize(): Dimension = Dimension(width, super.getMaximumSize().height)
+  }
+
+/**
+ * Foreground for the warning "No features selected" hint shown in a tool's header when the tool
  * is enabled but its features summary is empty. Uses an orange that matches the IDE's
  * inspection-warning palette across light and dark themes.
  */
@@ -42,17 +120,10 @@ internal fun searchSpotlightBorderColor(): Color =
     JBColor.namedColor("ColorPalette.Orange4", 0xA36B4E),
   )
 
-@Nls
-internal fun modeLabel(mode: ExecutableDiscoveryMode): String = when (mode) {
-  ExecutableDiscoveryMode.INTERPRETER -> PyToolsUiBundle.message("settings.external.tools.mode.interpreter")
-  ExecutableDiscoveryMode.PATH -> PyToolsUiBundle.message("settings.external.tools.mode.path")
-  ExecutableDiscoveryMode.UVX -> PyToolsUiBundle.message("settings.external.tools.mode.uvx")
-}
-
 /**
- * Per-step availability marker for one chain mode. UNKNOWN suppresses the glyph entirely
- * (initial render before probes complete). PARTIAL is only meaningful for the SDK step (some
- * project SDKs have the tool, others don't); Path and uvx are binary FOUND / NOT_FOUND.
+ * Per-step availability of one lookup-chain step. UNKNOWN suppresses emphasis entirely (initial
+ * render before probes complete). PARTIAL is only meaningful for the SDK step (some project SDKs
+ * have the tool, others don't); Path and uvx are binary FOUND / NOT_FOUND.
  */
 internal enum class ChainStepStatus { UNKNOWN, FOUND, PARTIAL, NOT_FOUND }
 
@@ -78,52 +149,77 @@ internal fun uvxChainStatus(uvAvailable: Boolean?): ChainStepStatus = when (uvAv
 }
 
 /**
- * Render the picked [mode] followed by its implicit fallback chain — e.g. picking `Sdk` becomes
- * `Sdk · Path · uvx`, `Path` becomes `Path · uvx`, and `uvx` is just `uvx`. Each chain step is
- * decorated with a coloured ✓ / ✗ / ◐ glyph from [statusFor]: ✓ when the step would resolve,
- * ✗ when it can't, ◐ when only some project SDKs have the tool. Steps returning
- * [ChainStepStatus.UNKNOWN] render plain (initial state before background probes complete).
+ * True when [this] tool would resolve through none of the `SDK → Path → uvx` chain steps — every step
+ * is NOT_FOUND and none is still UNKNOWN (mid-probe). Independent of the row's enabled flag: callers
+ * gate on [ToolRow.staged].enabled, since only an *enabled* tool that resolves nowhere is an error.
+ * While any step is still probing this returns `false`, so incomplete detection never flags a tool.
  */
-@Nls
-@Suppress("HardCodedStringLiteral")
-internal fun modeChainLabel(
-  mode: ExecutableDiscoveryMode,
-  statusFor: ((ExecutableDiscoveryMode) -> ChainStepStatus)? = null,
-): String {
-  val all = ExecutableDiscoveryMode.entries
-  val tail = all.subList(all.indexOf(mode) + 1, all.size)
-  val chain = listOf(mode) + tail
-  if (statusFor == null) {
-    // No row context (e.g. popup items) — render the plain, undecorated chain.
-    return chain.joinToString(" · ") { modeLabel(it) }
-  }
-  return buildString {
-    append("<html>")
-    chain.joinTo(this, " · ") { m -> modeLabel(m) + glyphSuffix(statusFor(m)) }
-    append("</html>")
-  }
+internal fun ToolRow.resolvesNowhere(uvAvailable: Boolean?): Boolean {
+  val steps = listOf(sdkAvailability.toChainStatus(), pathFieldValue.toChainStatus(), uvxChainStatus(uvAvailable))
+  // Still probing (any UNKNOWN) → not an error yet; otherwise unresolved iff no step would resolve it.
+  return steps.none { it == ChainStepStatus.UNKNOWN } &&
+         steps.none { it == ChainStepStatus.FOUND || it == ChainStepStatus.PARTIAL }
 }
 
 /**
- * Render the trailing glyph for one chain step. Covers every [ChainStepStatus] — including
- * UNKNOWN, which renders as a muted `?` so the user sees "probing in progress" rather than
- * a silently-missing marker.
+ * Render the fixed `SDK → Path → uvx` lookup chain as informational HTML for a tool's header.
+ *
+ * The chain is no longer selectable; it always runs SDK first, then $PATH, then uvx. To convey the
+ * sequence (ticket concern #2) the steps are joined by arrows. To keep it quiet (ticket concern #1:
+ * no per-method status icons / divider) each step is plain text — the **first step that would
+ * actually resolve** the tool (FOUND, or PARTIAL for SDK) is emphasized in the normal foreground;
+ * every other step is muted. The SDK step also shows a `(matched/total)` count when the project has
+ * interpreters. Before probes finish (UNKNOWN) nothing is emphasized.
  */
-private fun glyphSuffix(status: ChainStepStatus): String {
-  val (glyph, color) = when (status) {
-    ChainStepStatus.UNKNOWN -> "?" to STEP_UNKNOWN_COLOR
-    ChainStepStatus.FOUND -> "✓" to STEP_FOUND_COLOR
-    ChainStepStatus.PARTIAL -> "◐" to STEP_PARTIAL_COLOR
-    ChainStepStatus.NOT_FOUND -> "✗" to STEP_NOT_FOUND_COLOR
+@Nls
+@Suppress("HardCodedStringLiteral")
+internal fun lookupChainHtml(
+  sdkStatus: ChainStepStatus,
+  sdkMatched: Int,
+  sdkTotal: Int,
+  pathStatus: ChainStepStatus,
+  uvxStatus: ChainStepStatus,
+  /**
+   * When true (an *enabled* tool that [resolvesNowhere]), the whole chain is painted in the error
+   * red instead of the usual available/muted split — a purely visual cue; Apply is not blocked, so
+   * the user can still save and install the tool later (e.g. from a terminal).
+   */
+  unresolved: Boolean = false,
+): String {
+  // Show the "(matched/total)" count only when there is more than one environment — with a single
+  // env it is just noise ("(0/1)" / "(1/1)").
+  val sdkLabel = if (sdkTotal > 1) {
+    PyToolsUiBundle.message("settings.external.tools.chain.env") + " ($sdkMatched/$sdkTotal)"
   }
-  val hex = "%06x".format(color.rgb and 0xFFFFFF)
-  return "<font color='#$hex'>&nbsp;$glyph</font>"
+  else {
+    PyToolsUiBundle.message("settings.external.tools.chain.env")
+  }
+  val steps = listOf(
+    sdkLabel to sdkStatus,
+    PyToolsUiBundle.message("settings.external.tools.mode.path") to pathStatus,
+    PyToolsUiBundle.message("settings.external.tools.mode.uvx") to uvxStatus,
+  )
+  // Colour by availability: a step that would resolve (FOUND / PARTIAL) reads in the normal
+  // foreground; one that can't (NOT_FOUND / not-yet-probed) is muted. Independently, the first
+  // resolving step — where the tool actually runs — is bold, to show where the chain stops.
+  val activeIndex = steps.indexOfFirst { it.second == ChainStepStatus.FOUND || it.second == ChainStepStatus.PARTIAL }
+  val availableHex = "%06x".format(UIUtil.getLabelForeground().rgb and 0xFFFFFF)
+  val mutedHex = "%06x".format(UIUtil.getInactiveTextColor().rgb and 0xFFFFFF)
+  // Matches the red used for a path-validation error in the expanded row, so the two error cues agree.
+  val errorHex = "%06x".format(JBColor.RED.rgb and 0xFFFFFF)
+  return buildString {
+    append("<html>")
+    steps.forEachIndexed { i, (label, status) ->
+      if (i > 0) append("&nbsp;&rarr; ")
+      val available = status == ChainStepStatus.FOUND || status == ChainStepStatus.PARTIAL
+      val hex = if (unresolved) errorHex else if (available) availableHex else mutedHex
+      if (i == activeIndex) {
+        append("<b><font color='#$hex'>").append(label).append("</font></b>")
+      }
+      else {
+        append("<font color='#$hex'>").append(label).append("</font>")
+      }
+    }
+    append("</html>")
+  }
 }
-
-private val STEP_FOUND_COLOR: Color = JBColor(Color(0x59A869), Color(0x6A8759))
-private val STEP_NOT_FOUND_COLOR: Color = JBColor(Color(0xC75450), Color(0xCF5B56))
-private val STEP_PARTIAL_COLOR: Color = JBColor(
-  JBColor.namedColor("ColorPalette.Orange6", Color(0xE08855)),
-  JBColor.namedColor("ColorPalette.Orange4", Color(0xCB7B57)),
-)
-private val STEP_UNKNOWN_COLOR: Color = JBColor.GRAY

@@ -29,7 +29,7 @@
     <orderEntry type="module" module-name="intellij.platform.syntax" />
     <orderEntry type="module" module-name="intellij.platform.syntax.util" />
     <orderEntry type="module" module-name="intellij.platform.syntax.extensions" />
-    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.platform.multiplatformSupport" scope="PROVIDED" />
   </component>
 </module>

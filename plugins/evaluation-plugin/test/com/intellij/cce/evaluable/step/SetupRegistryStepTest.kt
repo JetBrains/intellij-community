@@ -41,5 +41,5 @@ class SetupRegistryStepTest {
   }
 }
 
-private const val BOOLEAN_KEY_1 = "ide.tree.experimental.layout.cache"
+private const val BOOLEAN_KEY_1 = "ide.tree.showBusyIndicator"
 private const val BOOLEAN_KEY_2 = "ide.tree.experimental.layout.cache.debug"

@@ -7,6 +7,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils
@@ -66,7 +69,8 @@ internal class InvertIfConditionIntention :
     override fun isApplicableByPsi(element: KtIfExpression): Boolean =
         element.condition != null && element.then != null
 
-    override fun KaSession.prepareContext(element: KtIfExpression): Context {
+    context(session: KaSession)
+    override fun prepareContext(element: KtIfExpression): Context {
         val rBrace = parentBlockRBrace(element)
         val commentSavingRange = if (rBrace != null)
             PsiChildRange(element, rBrace)
@@ -78,7 +82,7 @@ internal class InvertIfConditionIntention :
         val condition = element.condition!!
         val newCondition = (condition as? KtQualifiedExpression)?.invertSelectorFunction() ?: condition.negate()
 
-        val isParentFunUnit = element.getParentOfType<KtNamedFunction>(true)?.returnType?.isUnitType == true
+        val isParentFunUnit = element.getParentOfType<KtNamedFunction>(true)?.returnType?.classId == KaStandardTypeClassIds.UNIT
 
         val demorgansLawContext = if (condition is KtBinaryExpression && areAllOperandsBoolean(condition)) {
             getBinaryExpression(newCondition)?.let(::splitBooleanSequence)?.let { operands ->

@@ -18,7 +18,7 @@ interface HeadAbstractionEntityBuilder : WorkspaceEntityBuilder<HeadAbstractionE
 }
 
 internal object HeadAbstractionEntityType : EntityType<HeadAbstractionEntity, HeadAbstractionEntityBuilder>() {
-  override val entityClass: Class<HeadAbstractionEntity> get() = HeadAbstractionEntity::class.java
+  override val entityImplClass: Class<*> get() = HeadAbstractionEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = HeadAbstractionEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,

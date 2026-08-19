@@ -109,6 +109,10 @@ jvm_library(
 exports_files(
     [
         "intellij.sh.backend.iml",
+        "resources/intellij.sh.backend.xml",
+        "resources/liveTemplates/ShellScript.xml",
+        "resources/liveTemplates/ShellScriptArray.xml",
+        "resources/liveTemplates/ShellScriptHidden.xml",
     ],
     visibility = ["//visibility:public"],
 )

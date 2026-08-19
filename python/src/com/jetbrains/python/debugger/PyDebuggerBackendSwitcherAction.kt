@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.ReportFeedbackService
 import com.intellij.ide.actions.SendFeedbackAction
+import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -12,6 +13,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.components.service
@@ -46,9 +48,11 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.sdk.findPythonSdk
 import kotlinx.coroutines.launch
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.jetbrains.python.icons.PythonIcons
 import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
@@ -102,14 +106,12 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
       return
     }
 
-    if (!PyDebuggerBackendSwitcherVisibilityPin.isPinned(project)) {
-      val switchHandler = PyDebuggerBackendSwitchHandler.EP_NAME.extensionList.firstOrNull {
-        it.ownsRunProfile(e)
-      }
-      if (switchHandler != null && !switchHandler.shouldShowSwitcher(project, e)) {
-        e.presentation.isEnabledAndVisible = false
-        return
-      }
+    if (!isPyDebuggerBackendSwitcherVisible(project, e)) {
+      // Only the toolbar presence is in question here, so the action stays enabled: invoking it by id
+      // keeps working, which is how the backend is chosen before the first session exists.
+      e.presentation.isEnabled = true
+      e.presentation.isVisible = false
+      return
     }
 
     e.presentation.isEnabledAndVisible = true
@@ -167,16 +169,17 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
       if (backend == PyDebuggerBackend.DEBUGPY && !isDebugpyAvailableInProject(project)) {
         e.presentation.isEnabled = false
         @Suppress("DialogTitleCapitalization")
-        val disabledMsg = if (!isPythonDapPluginInstalledAndEnabled()) {
-          PyBundle.message("debugger.backend.debugpy.disabled.not.installed.tooltip")
-        }
-        else {
-          val sdk = getEffectiveSdk(project)
-          if (sdk != null && PythonSdkUtil.isRemote(sdk)) {
-            PyBundle.message("debugger.backend.debugpy.disabled.remote.tooltip")
-          }
-          else {
-            PyBundle.message("debugger.backend.debugpy.disabled.tooltip")
+        val disabledMsg = when {
+          isPythonDapPluginInstalledButDisabled() -> PyBundle.message("debugger.backend.debugpy.disabled.not.enabled.tooltip")
+          !isPythonDapPluginInstalledAndEnabled() -> PyBundle.message("debugger.backend.debugpy.disabled.not.installed.tooltip")
+          else -> {
+            val sdk = getEffectiveSdk(project)
+            if (sdk != null && PythonSdkUtil.isRemote(sdk)) {
+              PyBundle.message("debugger.backend.debugpy.disabled.remote.tooltip")
+            }
+            else {
+              PyBundle.message("debugger.backend.debugpy.disabled.tooltip")
+            }
           }
         }
         e.presentation.description = disabledMsg
@@ -200,6 +203,15 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = !isPythonDapPluginInstalledAndEnabled()
+      val enableOnly = isPythonDapPluginInstalledButDisabled()
+      e.presentation.text = if (enableOnly) {
+        PyBundle.message("debugger.backend.enable.debugpy.plugin")
+      }
+      else {
+        PyBundle.message("debugger.backend.install.debugpy.plugin")
+      }
+      // The plugin is already on disk in the enable case, so nothing is downloaded and the badge would mislead.
+      e.presentation.icon = if (enableOnly) null else AllIcons.Actions.Download
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -246,6 +258,36 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
 }
 
 /**
+ * Whether the backend switcher belongs on the Debug tool window tab the [e] context points at.
+ *
+ * The switcher lives in the tool window header, which is shared by every tab of every product that
+ * bundles the Python plugin, so it has to opt in per tab rather than default to visible: a C++ or a
+ * JavaScript session must not be told which Python debugger backend it runs on (CPP-51572).
+ */
+internal fun isPyDebuggerBackendSwitcherVisible(project: Project, e: AnActionEvent): Boolean {
+  if (PyDebuggerBackendSwitcherVisibilityPin.isPinned(project)) return true
+
+  // A handler that recognizes the tab decides for it.
+  val switchHandler = PyDebuggerBackendSwitchHandler.EP_NAME.extensionList.firstOrNull { it.ownsRunProfile(e) }
+  if (switchHandler != null) return switchHandler.shouldShowSwitcher(project, e)
+
+  // No handler recognizes the tab, which is also the state of every tab while the PythonDAP plugin is
+  // not installed. The switcher is the promotion surface for debugpy then, so it stays on pydevd-backed
+  // sessions and only those.
+  return isPythonDebugTab(e)
+}
+
+private fun isPythonDebugTab(e: AnActionEvent): Boolean {
+  // The header toolbar takes its data context from the selected tab, but a tab only publishes a run
+  // profile when it was started from an execution environment, which a Jupyter or console session
+  // was not. Those are recognized through the session instead: they run a pydevd-backed process.
+  if (e.getData(LangDataKeys.RUN_PROFILE) is AbstractPythonRunConfiguration<*>) return true
+  val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return false
+  val session = XDebuggerEntityConverter.getSession(sessionProxy) ?: return false
+  return session.runProfile is AbstractPythonRunConfiguration<*> || session.debugProcess is PyDebugProcess
+}
+
+/**
  * Returns the SDK of the currently selected run configuration, falling back to the project SDK.
  */
 private fun getEffectiveSdk(project: Project): Sdk? =
@@ -255,7 +297,15 @@ private fun getEffectiveSdk(project: Project): Sdk? =
 @ApiStatus.Internal
 fun installPythonDapPlugin(project: Project, onLoaded: Runnable? = null) {
   project.service<PyDapPluginLoadListener>().listen(onLoaded)
-  installAndEnable(project, setOf(PluginId.getId(PYTHON_DAP_PLUGIN_ID)), showDialog = true) {}
+
+  val pluginId = PluginId.getId(PYTHON_DAP_PLUGIN_ID)
+  val descriptor = PluginManagerCore.getPlugin(pluginId)
+  if (descriptor != null && PluginManagerCore.isDisabled(pluginId)) {
+    PluginEnabler.getInstance().enable(listOf(descriptor))
+    return
+  }
+
+  installAndEnable(project, setOf(pluginId), showDialog = true) {}
 }
 
 // This method exists to provide backward compatibility with older versions of the DAP plugin
@@ -323,6 +373,11 @@ private fun restartDebugSessions(sessions: List<XDebugSession>) {
 internal fun isPythonDapPluginInstalledAndEnabled(): Boolean {
   val pluginId = PluginId.getId(PYTHON_DAP_PLUGIN_ID)
   return PluginManager.isPluginInstalled(pluginId) && !PluginManagerCore.isDisabled(pluginId)
+}
+
+internal fun isPythonDapPluginInstalledButDisabled(): Boolean {
+  val pluginId = PluginId.getId(PYTHON_DAP_PLUGIN_ID)
+  return PluginManager.isPluginInstalled(pluginId) && PluginManagerCore.isDisabled(pluginId)
 }
 
 private fun switchBackend(project: Project, backend: PyDebuggerBackend) {

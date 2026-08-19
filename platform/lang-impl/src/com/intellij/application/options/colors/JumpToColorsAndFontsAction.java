@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 import javax.swing.JList;
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -202,11 +204,8 @@ public final class JumpToColorsAndFontsAction extends DumbAwareAction {
       if (syntaxHighlighter != null && !hasEraseMarkerRef.get()) {
         HighlighterIterator iterator = highlighter.createIterator(selection.getStartOffset());
         while (!iterator.atEnd()) {
-          for (TextAttributesKey key : syntaxHighlighter.getTokenHighlights(iterator.getTokenType())) {
-            if (key != null) {
-              keys.add(key);
-            }
-          }
+          IElementType type = iterator.getTokenType();
+          keys.addAll(Arrays.asList(type == null ? TextAttributesKey.EMPTY_ARRAY : syntaxHighlighter.getTokenHighlights(type)));
           if (iterator.getEnd() >= selection.getEndOffset()) break;
           iterator.advance();
         }

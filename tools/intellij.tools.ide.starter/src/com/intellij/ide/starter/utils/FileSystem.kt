@@ -3,13 +3,13 @@ package com.intellij.ide.starter.utils
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.ThreeState
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.Compressor.Tar.Compression
 import com.intellij.util.io.Decompressor
+import com.intellij.util.io.createDirectories
 import com.intellij.util.io.zip.JBZipEntry
 import com.intellij.util.io.zip.JBZipFile
 import com.intellij.util.system.OS
@@ -27,9 +27,9 @@ import java.time.Duration
 import java.time.Instant
 import java.util.zip.GZIPOutputStream
 import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.div
+import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.fileSize
 import kotlin.io.path.inputStream
@@ -48,22 +48,11 @@ object FileSystem {
     .replace("\"", replaceWith)
     .replace("/", replaceWith)
 
-  fun validatePath(path: Path, additionalString: String = "") {
-    if (SystemInfo.isWindows) {
-      val pathToValidate = when (additionalString.isNotEmpty()) {
-        true -> path.resolve(additionalString).toString()
-        false -> path.toString()
-      }
-      check(pathToValidate.length < 260) {
-        "$pathToValidate >= 260 symbols on Windows may lead to unexpected problems"
-      }
-    }
-  }
-
-  fun countFiles(path: Path): Long = Files.walk(path).use { it.count() }
-
-  fun hasAtLeastFiles(path: Path, minCount: Long): Boolean =
-    Files.walk(path).use { stream ->
+  fun hasAtLeastFiles(path: Path, minCount: Long): Boolean {
+    // Files.walk() does not follow a symbolic link at the root without FileVisitOption.FOLLOW_LINKS, so a path that
+    // is itself a symlink (e.g. a shared reused-IDE system directory) would otherwise count as a single entry.
+    val realPath = if (Files.isSymbolicLink(path)) path.toRealPath() else path
+    Files.walk(realPath).use { stream ->
       val iterator = stream.iterator()
       var seen = 0L
       while (iterator.hasNext()) {
@@ -72,6 +61,7 @@ object FileSystem {
       }
       return false
     }
+  }
 
   fun compressToZip(sourceToCompress: Path, outputArchive: Path) {
     if (sourceToCompress.extension == "zip") {
@@ -94,7 +84,8 @@ object FileSystem {
 
       val symlinks = mutableListOf<SymlinkInfo>()
 
-      JBZipFile(zipFile, StandardCharsets.UTF_8, false, ThreeState.UNSURE).use { zip ->
+      // read-only: unpacking never writes to the archive, and the archive can be a Bazel runfile on a read-only filesystem
+      JBZipFile(zipFile, StandardCharsets.UTF_8, true, ThreeState.UNSURE).use { zip ->
         for (entry in zip.entries) {
           if (entry.isDirectory) {
             val dir = targetDir.resolve(entry.name)
@@ -129,9 +120,10 @@ object FileSystem {
       }
     }
     catch (e: Throwable) {
-      zipFile.deleteRecursivelyQuietly()
+      // only the half-written target is ours to remove - the archive belongs to whoever supplied it, and a
+      // checksum-pinned Bazel runfile must survive a failure here
       targetDir.deleteRecursivelyQuietly()
-      throw Exception("Failed to unpack $zipFile. File and unpack targets are removed. ${e.message}", e)
+      throw Exception("Failed to unpack $zipFile. The unpack target is removed. ${e.message}", e)
     }
   }
 
@@ -245,9 +237,9 @@ object FileSystem {
       }
     }
     catch (e: Exception) {
-      tarFile.deleteRecursivelyQuietly()
+      // as in `unpackZip`: the archive belongs to its supplier, only the half-written target is ours
       targetDir.deleteRecursivelyQuietly()
-      throw Exception("Failed to unpack $tarFile. File and unpack targets are removed. ${e.message}", e)
+      throw Exception("Failed to unpack $tarFile. The unpack target is removed. ${e.message}", e)
     }
   }
 

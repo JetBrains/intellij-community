@@ -1,16 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion
 
-import com.intellij.platform.workspace.storage.SymbolicEntityId
-import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 
-interface ChangedComputablePropEntity: WorkspaceEntityWithSymbolicId {
+interface ChangedComputablePropEntity : WorkspaceEntity {
   val text: String
-  override val symbolicId: com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropEntityId
-    get() = com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropEntityId(text)
+  val computableProperty: com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedDataClass
+    get() = com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedDataClass(text)
 }
 
-data class ChangedComputablePropEntityId(val text: String): SymbolicEntityId<ChangedComputablePropEntity> {
-  override val presentableName: String
-    get() = text
-}
+data class ChangedDataClass(val text: String)

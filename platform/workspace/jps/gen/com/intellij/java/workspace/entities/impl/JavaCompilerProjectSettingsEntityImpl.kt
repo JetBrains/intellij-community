@@ -11,7 +11,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -21,9 +20,7 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
@@ -32,14 +29,12 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class JavaCompilerProjectSettingsEntityImpl(private val dataSource: JavaCompilerProjectSettingsEntityData) :
   JavaCompilerProjectSettingsEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PROJECTSETTINGS_CONNECTION_ID: ConnectionId = ConnectionId.create(ProjectSettingsEntity::class.java,
                                                                                    JavaCompilerProjectSettingsEntity::class.java,
                                                                                    ConnectionId.ConnectionType.ONE_TO_ONE,
                                                                                    false)
     private val connections = listOf<ConnectionId>(PROJECTSETTINGS_CONNECTION_ID)
-
   }
 
   override val projectSettings: ProjectSettingsEntity
@@ -51,15 +46,10 @@ internal class JavaCompilerProjectSettingsEntityImpl(private val dataSource: Jav
       return dataSource.additionalOptions
     }
   override var preferTargetJdkCompiler: Boolean = dataSource.preferTargetJdkCompiler
-
   override var debuggingInfo: Boolean = dataSource.debuggingInfo
-
   override var generateNoWarnings: Boolean = dataSource.generateNoWarnings
-
   override var deprecation: Boolean = dataSource.deprecation
-
   override var maximumHeapSize: Int = dataSource.maximumHeapSize
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -70,34 +60,12 @@ internal class JavaCompilerProjectSettingsEntityImpl(private val dataSource: Jav
     return connections
   }
 
-
   internal class Builder(result: JavaCompilerProjectSettingsEntityData?) :
     ModifiableWorkspaceEntityBase<JavaCompilerProjectSettingsEntity, JavaCompilerProjectSettingsEntityData>(result),
     JavaCompilerProjectSettingsEntityBuilder {
     internal constructor() : this(JavaCompilerProjectSettingsEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity JavaCompilerProjectSettingsEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -142,52 +110,20 @@ internal class JavaCompilerProjectSettingsEntityImpl(private val dataSource: Jav
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var projectSettings: ProjectSettingsEntityBuilder
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PROJECTSETTINGS_CONNECTION_ID,
-                                                                           this) as? ProjectSettingsEntityBuilder)
-          ?: (this.entityLinks[EntityLink(false, PROJECTSETTINGS_CONNECTION_ID)] as? ProjectSettingsEntityBuilder)
-          ?: error("projectSettings is null for JavaCompilerProjectSettingsEntity")
-        }
-        else {
-          (this.entityLinks[EntityLink(false, PROJECTSETTINGS_CONNECTION_ID)] as? ProjectSettingsEntityBuilder)
-          ?: error("projectSettings is null for JavaCompilerProjectSettingsEntity")
-        }
-      }
+      get() = getParent(PROJECTSETTINGS_CONNECTION_ID) as? ProjectSettingsEntityBuilder
+              ?: error("projectSettings is null for JavaCompilerProjectSettingsEntity")
       set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, PROJECTSETTINGS_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.instrumentation.addChild(PROJECTSETTINGS_CONNECTION_ID, value, this)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, PROJECTSETTINGS_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
-          this.entityLinks[EntityLink(false, PROJECTSETTINGS_CONNECTION_ID)] = value
-        }
+        changeParent(value, PROJECTSETTINGS_CONNECTION_ID)
         changedProperty.add("projectSettings")
       }
-
     private val additionalOptionsUpdater: (value: List<String>) -> Unit = { value ->
 
       changedProperty.add("additionalOptions")
@@ -247,7 +183,6 @@ internal class JavaCompilerProjectSettingsEntityImpl(private val dataSource: Jav
 
     override fun getEntityClass(): Class<JavaCompilerProjectSettingsEntity> = JavaCompilerProjectSettingsEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -258,25 +193,10 @@ internal class JavaCompilerProjectSettingsEntityData : WorkspaceEntityData<JavaC
   var generateNoWarnings: Boolean = false
   var deprecation: Boolean = true
   var maximumHeapSize: Int = 128
-
   internal fun isAdditionalOptionsInitialized(): Boolean = ::additionalOptions.isInitialized
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<JavaCompilerProjectSettingsEntity> {
-    val modifiable = JavaCompilerProjectSettingsEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): JavaCompilerProjectSettingsEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = JavaCompilerProjectSettingsEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
+  override fun newInstance(): JavaCompilerProjectSettingsEntity = JavaCompilerProjectSettingsEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<JavaCompilerProjectSettingsEntity, *> =
+    JavaCompilerProjectSettingsEntityImpl.Builder(null)
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.java.workspace.entities.JavaCompilerProjectSettingsEntity") as EntityMetadata

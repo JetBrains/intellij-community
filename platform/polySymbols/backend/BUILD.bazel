@@ -67,6 +67,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.polySymbols.backend.iml",
+        "resources/intellij.platform.polySymbols.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

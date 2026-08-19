@@ -11,6 +11,8 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.PropertyKeyValueFormat;
+import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -131,7 +133,7 @@ public final class PluginXmlCapitalizationInspection extends DevKitPluginXmlInsp
       }
     }
     else {
-      highlightCapitalization(holder, domElement, property.getValue(), capitalization, property);
+      highlightCapitalization(holder, domElement, property.getUnescapedValue(), capitalization, property);
     }
   }
 
@@ -198,8 +200,7 @@ public final class PluginXmlCapitalizationInspection extends DevKitPluginXmlInsp
         if (resolveResults.length == 1 && resolveResults[0].isValidResult()) {
           PsiElement element = resolveResults[0].getElement();
           if (element instanceof Property property) {
-            String value = property.getValue();
-            highlightCapitalization(holder, genericDomValue, value, capitalization, property);
+            highlightCapitalization(holder, genericDomValue, property.getUnescapedValue(), capitalization, property);
             return;
           }
         }
@@ -222,22 +223,23 @@ public final class PluginXmlCapitalizationInspection extends DevKitPluginXmlInsp
 
   private static void highlightCapitalization(DomElementAnnotationHolder holder,
                                               DomElement domElement,
-                                              String value,
+                                              @Nullable String value,
                                               Nls.Capitalization capitalization,
                                               @Nullable Property property) {
     if (StringUtil.isEmptyOrSpaces(value)) return;
 
-    final @NlsSafe String escapedValue = XmlUtil.unescape(value).replace("_", "");
-    if (NlsCapitalizationUtil.isCapitalizationSatisfied(escapedValue, capitalization)) {
+    final @NlsSafe String unescapedValue = XmlUtil.unescape(value);
+    final @NlsSafe String presentableValue = unescapedValue.replace("_", "");
+    if (NlsCapitalizationUtil.isCapitalizationSatisfied(presentableValue, capitalization)) {
       return;
     }
 
     LocalQuickFix quickFix = property != null
-                             ? new FixPropertyCapitalizationFix(property, escapedValue, capitalization)
-                             : new FixDomValueCapitalizationFix(escapedValue, capitalization);
+                             ? new FixPropertyCapitalizationFix(property, presentableValue, capitalization)
+                             : new FixDomValueCapitalizationFix(unescapedValue, presentableValue, capitalization);
     holder.createProblem(domElement,
                          DevKitI18nBundle.message("inspections.plugin.xml.capitalization.error",
-                                                  escapedValue,
+                                                  presentableValue,
                                                   capitalization == Nls.Capitalization.Title ? 0 : 1),
                          quickFix);
   }
@@ -245,17 +247,17 @@ public final class PluginXmlCapitalizationInspection extends DevKitPluginXmlInsp
 
   private abstract static class FixCapitalizationFixBase implements LocalQuickFix {
 
-    protected final String myValue;
+    private final String myPresentableValue;
     protected final Nls.Capitalization myCapitalization;
 
-    private FixCapitalizationFixBase(String value, Nls.Capitalization capitalization) {
-      this.myValue = value;
+    private FixCapitalizationFixBase(String presentableValue, Nls.Capitalization capitalization) {
+      myPresentableValue = presentableValue;
       myCapitalization = capitalization;
     }
 
     @Override
     public @IntentionName @NotNull String getName() {
-      return DevKitI18nBundle.message("inspections.plugin.xml.capitalization.fix.properly.capitalize", myValue);
+      return DevKitI18nBundle.message("inspections.plugin.xml.capitalization.fix.properly.capitalize", myPresentableValue);
     }
 
     @Override
@@ -269,8 +271,8 @@ public final class PluginXmlCapitalizationInspection extends DevKitPluginXmlInsp
     @SafeFieldForPreview
     private final @NotNull SmartPsiElementPointer<Property> myPropertyPointer;
 
-    private FixPropertyCapitalizationFix(Property property, String value, Nls.Capitalization capitalization) {
-      super(value, capitalization);
+    private FixPropertyCapitalizationFix(Property property, String presentableValue, Nls.Capitalization capitalization) {
+      super(presentableValue, capitalization);
       myPropertyPointer = SmartPointerManager.createPointer(property);
     }
 
@@ -281,13 +283,13 @@ public final class PluginXmlCapitalizationInspection extends DevKitPluginXmlInsp
 
       PsiFile containingFile = myPropertyPointer.getContainingFile();
       assert containingFile != null;
-      String propertyKey = property.getKey();
-      String newValue = NlsCapitalizationUtil.fixValue(myValue, myCapitalization);
+      String propertyText = property.getText();
+      String keyWithDelimiter = propertyText.substring(0, propertyText.length() - StringUtil.notNullize(property.getValue()).length());
 
       return new IntentionPreviewInfo.CustomDiff(PropertiesFileType.INSTANCE,
                                                  containingFile.getName(),
-                                                 property.getText(),
-                                                 propertyKey + "=" + newValue);
+                                                 propertyText,
+                                                 keyWithDelimiter + fixedFileFormatValue(property));
     }
 
     @Override
@@ -300,13 +302,73 @@ public final class PluginXmlCapitalizationInspection extends DevKitPluginXmlInsp
       Property propertyToFix = myPropertyPointer.getElement();
       if (propertyToFix == null) return;
 
-      propertyToFix.setValue(NlsCapitalizationUtil.fixValue(myValue, myCapitalization));
+      propertyToFix.setValue(fixedFileFormatValue(propertyToFix), PropertyKeyValueFormat.FILE);
+    }
+
+    /**
+`     * Re-cases the stored value text in place, so escapes, Unicode spellings, XML entities and line continuations
+     * keep their original form. A malformed Unicode escape breaks the offset mapping, so such a value is returned unchanged.
+     */
+    private @NotNull String fixedFileFormatValue(@NotNull Property property) {
+      String storedValue = StringUtil.notNullize(property.getValue());
+      StringBuilder unescapedValue = new StringBuilder();
+      int[] storedOffsets = new int[storedValue.length() + 1];
+      if (!PropertyImpl.parseCharacters(storedValue, unescapedValue, storedOffsets)) return storedValue;
+
+      String maskedValue = maskXmlEntities(unescapedValue.toString());
+      String fixedValue = NlsCapitalizationUtil.fixValue(maskedValue, myCapitalization);
+      StringBuilder result = new StringBuilder(storedValue);
+      for (int i = 0; i < maskedValue.length(); i++) {
+        char fixedChar = fixedValue.charAt(i);
+        if (fixedChar == maskedValue.charAt(i)) continue;
+
+        int offset = storedOffsets[i];
+        if (storedValue.charAt(offset) != '\\') {
+          result.setCharAt(offset, fixedChar);
+        }
+        else if (storedValue.charAt(offset + 1) == 'u') {
+          result.replace(offset, offset + 6, String.format("\\u%04x", (int)fixedChar));
+        }
+        else {
+          result.setCharAt(offset + 1, fixedChar);
+        }
+      }
+      return result.toString();
+    }
+
+    /** The XML entities {@link XmlUtil#unescape} decodes, paired with their single-character replacements. */
+    private static final String[] XML_ENTITIES = {"&lt;", "&gt;", "&amp;", "&#39;", "&quot;"};
+    private static final char[] XML_ENTITY_CHARS = {'<', '>', '&', '\'', '"'};
+
+    /**
+     * The capitalization check runs on the XML-unescaped value, so entity letters must not look like words to the capitalizer.
+     * Each entity is masked with a run of its decoded character, which also keeps that character's word-boundary role.
+     */
+    private static @NotNull String maskXmlEntities(@NotNull String value) {
+      StringBuilder masked = new StringBuilder(value);
+      for (int entityIndex = 0; entityIndex < XML_ENTITIES.length; entityIndex++) {
+        String entity = XML_ENTITIES[entityIndex];
+        int start = value.indexOf(entity);
+        while (start >= 0) {
+          for (int i = start; i < start + entity.length(); i++) {
+            masked.setCharAt(i, XML_ENTITY_CHARS[entityIndex]);
+          }
+          start = value.indexOf(entity, start + entity.length());
+        }
+      }
+      return masked.toString();
     }
   }
 
   private static class FixDomValueCapitalizationFix extends FixCapitalizationFixBase {
 
-    private FixDomValueCapitalizationFix(String escapedValue, Nls.Capitalization capitalization) { super(escapedValue, capitalization); }
+    /** The unescaped value with mnemonic markers kept, so that applying the fix does not drop them. */
+    private final String myValue;
+
+    private FixDomValueCapitalizationFix(String value, String presentableValue, Nls.Capitalization capitalization) {
+      super(presentableValue, capitalization);
+      myValue = value;
+    }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

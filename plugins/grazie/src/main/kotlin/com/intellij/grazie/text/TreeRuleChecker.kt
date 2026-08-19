@@ -423,11 +423,7 @@ class TreeRuleChecker private constructor() {
     }
 
     @JvmStatic
-    suspend fun checkText(texts: List<TextContent>): List<TreeProblem> {
-      return checkText(ParsedSentence.getAllCheckedSentences(texts))
-    }
-
-    private fun checkText(textToSentences: SequencedMap<TextContent, List<ParsedSentence>>): List<TreeProblem> {
+    fun checkText(textToSentences: SequencedMap<TextContent, List<ParsedSentence>>): List<TreeProblem> {
       if (textToSentences.isEmpty()) return emptyList()
 
       val suppressedRanges = suppressedRanges()

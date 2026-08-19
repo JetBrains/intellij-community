@@ -4,10 +4,16 @@
     <plugin id="com.intellij.modules.java-capable"/>
     <module name="intellij.java.frontback.psi.impl"/>
     <module name="intellij.java.frontback.psi"/>
-    <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
     <module name="intellij.libraries.stream"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.uast"/>
   </dependencies>
   <!-- endregion -->
@@ -20,6 +26,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
+                    serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>
     <registryKey defaultValue="30" description="UAST usages graph building depth limit" key="uast.usage.graph.default.recursion.depth.limit"/>
     <registryKey key="uast.references.by.usage" defaultValue="true"
                  description="Enables UAST reference contributors that search for usages of variables in the opened file"/>

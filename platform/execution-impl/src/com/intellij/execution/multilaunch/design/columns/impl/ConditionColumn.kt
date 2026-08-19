@@ -26,6 +26,7 @@ import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.ui.AbstractTableCellEditor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -35,6 +36,10 @@ import java.awt.event.ActionEvent
 import javax.swing.JLabel
 import javax.swing.JTable
 import javax.swing.table.DefaultTableCellRenderer
+
+// A couple of pixels on top of the default row spacing, so the title and the options below it
+// read as one list instead of touching each other.
+private const val LAUNCH_WHEN_OPTION_GAP = 2
 
 internal class ConditionColumn(
   private val viewModel: MultiLaunchConfigurationViewModel
@@ -129,7 +134,10 @@ internal class ConditionColumn(
       }
 
       private fun createContentPanel() = panel {
-        buttonsGroup(ExecutionBundle.message("run.configurations.multilaunch.condition.launch.when"), indent = true) {
+        buttonsGroup(indent = true) {
+          row {
+            label(ExecutionBundle.message("run.configurations.multilaunch.condition.launch.when")).bold()
+          }.customize(UnscaledGapsY(bottom = LAUNCH_WHEN_OPTION_GAP))
           ConditionTemplate.EP_NAME.extensionList.forEach { template ->
             val rowCondition = executableRow.condition
             val condition = when {
@@ -137,9 +145,9 @@ internal class ConditionColumn(
               else -> ConditionFactory.getInstance(viewModel.project).create(template)
             }
             row {
-              val button = radioButton(condition.text, ConditionOption(condition))
+              val button = radioButton(condition.optionLabel, ConditionOption(condition))
               condition.provideEditor(this)?.enabledIf(button.selected)
-            }
+            }.customize(UnscaledGapsY(top = LAUNCH_WHEN_OPTION_GAP))
           }
         }.bind(editorProperty)
       }

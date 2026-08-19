@@ -38,6 +38,8 @@ class KotlinInspectionSuppressor : InspectionSuppressor, RedundantSuppressionDet
                 override fun isAvailable(project: Project, context: PsiElement) = it.isAvailable(project, null, context)
 
                 override fun isSuppressAll() = it.isSuppressAll
+
+                override fun getPriority() = it.priority
             }
         }.toTypedArray()
     }

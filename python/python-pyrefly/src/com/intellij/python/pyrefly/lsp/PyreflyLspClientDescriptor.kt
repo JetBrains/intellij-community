@@ -1,8 +1,11 @@
 package com.intellij.python.pyrefly.lsp
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.execution.process.BaseProcessHandler
+import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.lsp.api.Lsp4jServer
 import com.intellij.platform.lsp.api.customization.LspFoldingRangeCustomizer
@@ -14,12 +17,11 @@ import com.intellij.python.lsp.core.utils.PyLspServerModificationTracker
 import com.intellij.python.pyrefly.PyreflyConfiguration
 import com.intellij.python.pyrefly.PyreflyPyTool
 import com.intellij.python.pyrefly.PyreflyUsageCollector
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
-import com.intellij.python.pytools.getState
 import com.intellij.python.pytools.lsp.PyLspToolSettings
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.sdk.pythonSdk
 import org.eclipse.lsp4j.ConfigurationItem
+import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.InitializeResult
 
 @Suppress("UsagesOfObsoleteApi")
@@ -32,6 +34,18 @@ class PyreflyLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, P
 
   override val lspCustomization: PyLspToolCustomization = object : PyLspToolCustomization(toolConfig, pyTool, project) {
     override val foldingRangeCustomizer: LspFoldingRangeCustomizer = LspFoldingRangeDisabled
+
+    override val diagnosticsSupport: PyLspToolDiagnosticsSupport = object : PyLspToolDiagnosticsSupport() {
+      override fun createAnnotation(
+        holder: AnnotationHolder,
+        diagnostic: Diagnostic,
+        textRange: TextRange,
+        quickFixes: List<IntentionAction>,
+      ) {
+        val customizedQuickFixes = customizePyreflyQuickFixes(holder, diagnostic, textRange, quickFixes)
+        super.createAnnotation(holder, diagnostic, textRange, customizedQuickFixes)
+      }
+    }
   }
 
   override val lspServerListener: PyLspToolDescriptorLspServerListener = object : PyLspToolDescriptorLspServerListener() {
@@ -99,17 +113,12 @@ class PyreflyLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, P
     mapOf("pyrefly" to buildPyreflyClientSettings())
 
   override fun startServerProcess(): BaseProcessHandler<*> {
-    when (PyreflyPyTool.getInstance().getState(project).discoveryMode) {
-      ExecutableDiscoveryMode.INTERPRETER -> {
-        val pythonSdk = module.pythonSdk ?: error("Cannot find PythonSdk for module " + module.name)
-        // Per-module check (not the single-module engine check): the Pyrefly tool runs against any
-        // local, non-read-only interpreter, including in multi-module projects (PY-89705).
-        if (!PyTypeEngineUtils.isLocalNonReadOnlySdk(module)) {
-          error("Pyrefly is available only for local, non read-only interpreters. Current:$pythonSdk")
-        }
-      }
-      ExecutableDiscoveryMode.PATH -> error("Path for pyrefly executable is not setup")
-      ExecutableDiscoveryMode.UVX -> error("UVX mode is not yet supported for Pyrefly")
+    // Pyrefly always runs against the module interpreter (discovery mode is no longer selectable).
+    val pythonSdk = module.pythonSdk ?: error("Cannot find PythonSdk for module " + module.name)
+    // Per-module check (not the single-module engine check): the Pyrefly tool runs against any
+    // local, non-read-only interpreter, including in multi-module projects (PY-89705).
+    if (!PyTypeEngineUtils.isLocalNonReadOnlySdk(module)) {
+      error("Pyrefly is available only for local, non read-only interpreters. Current:$pythonSdk")
     }
 
     return super.startServerProcess()

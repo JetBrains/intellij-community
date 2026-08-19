@@ -80,7 +80,7 @@ internal class NewUsersOnboardingExecutor(
 
     val showInCenter = gotItData.position == null
     val builder = gotItData.builder
-    builder.withStepNumber("${ind + 1}/${steps.size}")
+    builder.withStepText("${ind + 1}/${steps.size}")
       .onEscapePressed {
         finishOnboarding(OnboardingStopReason.ESCAPE_PRESSED)
       }

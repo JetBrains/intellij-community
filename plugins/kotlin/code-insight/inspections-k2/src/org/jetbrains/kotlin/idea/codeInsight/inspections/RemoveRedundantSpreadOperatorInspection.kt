@@ -59,7 +59,8 @@ internal class RemoveRedundantSpreadOperatorInspection : KotlinApplicableInspect
         return listOf(TextRange(startOffset, endOffset))
     }
 
-    override fun KaSession.prepareContext(element: KtValueArgument): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtValueArgument): Unit? {
         return when (val argumentExpression = element.getArgumentExpression()) {
             is KtCallExpression -> {
                 if (!argumentExpression.isArrayOfFunction()) return null

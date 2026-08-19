@@ -5,22 +5,15 @@ import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.ResolveResult;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -30,7 +23,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.Property;
-import com.jetbrains.python.psi.PsiReferenceEx;
 import com.jetbrains.python.psi.PyAssignmentExpression;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyCallable;
@@ -47,6 +39,7 @@ import com.jetbrains.python.psi.PyImportedNameDefiner;
 import com.jetbrains.python.psi.PyListCompExpression;
 import com.jetbrains.python.psi.PyNonlocalStatement;
 import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyQualifiedElement;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
@@ -84,79 +77,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
+public class PyReferenceImpl extends PyReferenceBase {
 
-public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference {
-  protected final PyQualifiedExpression myElement;
-  protected final PyResolveContext myContext;
-
-  public PyReferenceImpl(PyQualifiedExpression element, @NotNull PyResolveContext context) {
-    myElement = element;
-    myContext = context;
-  }
-
-  @Override
-  public @NotNull TextRange getRangeInElement() {
-    final ASTNode nameElement = myElement.getNameElement();
-    return nameElement != null ? nameElement.getPsi().getTextRangeInParent() : TextRange.from(0, myElement.getTextLength());
-  }
-
-  @Override
-  public @NotNull PsiElement getElement() {
-    return myElement;
-  }
-
-  /**
-   * Resolves reference to the most obvious point.
-   * Imported module names: to module file (or directory for a qualifier).
-   * Other identifiers: to most recent definition before this reference.
-   * This implementation is cached.
-   *
-   * @see #resolveInner().
-   */
-  @Override
-  public @Nullable PsiElement resolve() {
-    final ResolveResult[] results = multiResolve(false);
-    return results.length >= 1 && !(results[0] instanceof ImplicitResolveResult) ? results[0].getElement() : null;
-  }
-
-  // it is *not* final so that it can be changed in debug time. if set to false, caching is off
-  private static final boolean USE_CACHE = true;
-
-  /**
-   * Resolves reference to possible referred elements.
-   * First element is always what resolve() would return.
-   * Imported module names: to module file, or {directory, '__init__.py}' for a qualifier.
-   * todo Local identifiers: a list of definitions in the most recent compound statement
-   * (e.g. {@code if X: a = 1; else: a = 2} has two definitions of {@code a}.).
-   * todo Identifiers not found locally: similar definitions in imported files and builtins.
-   *
-   * @see PsiPolyVariantReference#multiResolve(boolean)
-   */
-  @Override
-  public ResolveResult @NotNull [] multiResolve(final boolean incompleteCode) {
-    if (USE_CACHE) {
-      final ResolveCache cache = ResolveCache.getInstance(getElement().getProject());
-      final boolean actuallyIncomplete = incompleteCode || myContext.getTypeEvalContext().hasAssumptions();
-      return cache.resolveWithCaching(this, CachingResolver.INSTANCE, true, actuallyIncomplete);
-    }
-    else {
-      return multiResolveInner();
-    }
+  public PyReferenceImpl(@NotNull PyQualifiedExpression element, @NotNull PyResolveContext context) {
+    super(element, context);
   }
 
   // sorts and modifies results of resolveInner
-
-  private ResolveResult @NotNull [] multiResolveInner() {
-    final String referencedName = myElement.getReferencedName();
-    if (referencedName == null) return ResolveResult.EMPTY_ARRAY;
-
-    final List<RatedResolveResult> targets = resolveInner();
-    if (targets.isEmpty()) return ResolveResult.EMPTY_ARRAY;
-
-    return RatedResolveResult.sorted(targets).toArray(ResolveResult.EMPTY_ARRAY);
-  }
 
   private static @NotNull ResolveResultList resolveToLatestDefs(@NotNull List<Instruction> instructions,
                                                                 @NotNull PsiElement element,
@@ -256,6 +184,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    * @return resolution result.
    * @see #resolve()
    */
+  @Override
   protected @NotNull List<RatedResolveResult> resolveInner() {
     final ResolveResultList overriddenResult = resolveByOverridingReferenceResolveProviders();
     if (!overriddenResult.isEmpty()) {
@@ -282,7 +211,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final ScopeOwner owner = ScopeUtil.getScopeOwner(realContext);
     if (typeEvalContext.maySwitchToAST(realContext) && owner != null && !(owner instanceof PyClass)) {
       final Scope scope = ControlFlowCache.getScope(owner);
-      if (scope.declaresName(referencedName) && !scope.isGlobal(referencedName) && !scope.isNonlocal(referencedName)) {
+      if (!scope.getNamedElements(referencedName, false).isEmpty() &&
+          !scope.isGlobal(referencedName) &&
+          !scope.isNonlocal(referencedName)) {
         final List<Instruction> defs =
           PyDefUseUtil.getLatestDefs(owner, referencedName, realContext, false, true, typeEvalContext).defs();
         if (!defs.isEmpty() && ContainerUtil.and(defs, i -> i.getElement() instanceof PyTargetExpression)) {
@@ -351,7 +282,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         }
       }
       else if (referenceOwner != null) {
-        if (!allowsForwardOutgoingReferencesInClass(myElement)) {
+        if (!allowsForwardOutgoingReferencesInClass(getElement())) {
           final PyClass outermostNestedClass = outermostNestedClass(referenceOwner, resolvedOwner);
 
           if (outermostNestedClass != null) {
@@ -438,7 +369,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     PyReferenceResolveProvider.EP_NAME.getExtensionList().stream()
       .filter(PyOverridingReferenceResolveProvider.class::isInstance)
-      .map(provider -> provider.resolveName(myElement, context))
+      .map(provider -> provider.resolveName(getElement(), context))
       .forEach(results::addAll);
 
     return results;
@@ -451,7 +382,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       if (provider instanceof PyOverridingReferenceResolveProvider) {
         continue;
       }
-      results.addAll(provider.resolveName(myElement, context));
+      results.addAll(provider.resolveName(getElement(), context));
     }
     return results;
   }
@@ -518,29 +449,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   @Override
   public @NotNull String getCanonicalText() {
     return getRangeInElement().substring(getElement().getText());
-  }
-
-  @Override
-  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
-    final ASTNode nameElement = myElement.getNameElement();
-    // there is a case where the file has already been renamed when this function is invoked
-    //  so we can't resolve `myElement` to determine if it's actually a PyFile
-    if (newElementName.endsWith(PyNames.DOT_PY)) {
-      newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PY);
-    }
-    else if (newElementName.endsWith(PyNames.DOT_PYI)) {
-      newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PYI);
-    }
-    if (nameElement != null && PyNames.isIdentifier(newElementName)) {
-      final ASTNode newNameElement = PyUtil.createNewName(myElement, newElementName);
-      myElement.getNode().replaceChild(nameElement, newNameElement);
-    }
-    return myElement;
-  }
-
-  @Override
-  public @Nullable PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    return null;
   }
 
   @Override
@@ -726,7 +634,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final List<LookupElement> ret = new ArrayList<>();
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
-    final PyQualifiedExpression element = CompletionUtilCoreImpl.getOriginalOrSelf(myElement);
+    final PyQualifiedElement element = CompletionUtilCoreImpl.getOriginalOrSelf(myElement);
 
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(element);
     final LanguageLevel languageLevel = LanguageLevel.forElement(myElement);
@@ -805,21 +713,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   @Override
-  public boolean isSoft() {
-    return false;
-  }
-
-  @Override
   public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
     if (isBuiltInConstant()) return null;
-    final PyExpression qualifier = myElement.getQualifier();
-    if (qualifier == null) {
-      return HighlightSeverity.ERROR;
-    }
-    if (!isUnknown(context.getType(qualifier))) {
-      return HighlightSeverity.WARNING;
-    }
-    return null;
+    return super.getUnresolvedHighlightSeverity(context);
   }
 
   private boolean isBuiltInConstant() {
@@ -829,37 +725,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   @Override
-  public @Nullable String getUnresolvedDescription() {
-    return null;
-  }
-
-
-  // our very own caching resolver
-
-  private static class CachingResolver implements ResolveCache.PolyVariantResolver<PyReferenceImpl> {
-    public static final CachingResolver INSTANCE = new CachingResolver();
-
-    @Override
-    public ResolveResult @NotNull [] resolve(final @NotNull PyReferenceImpl ref, final boolean incompleteCode) {
-      return ref.multiResolveInner();
-    }
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    PyReferenceImpl that = (PyReferenceImpl)o;
-
-    if (!myElement.equals(that.myElement)) return false;
-    if (!myContext.equals(that.myContext)) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return myElement.hashCode();
+  public @NotNull PyQualifiedExpression getElement() {
+    return (PyQualifiedExpression)super.getElement();
   }
 }

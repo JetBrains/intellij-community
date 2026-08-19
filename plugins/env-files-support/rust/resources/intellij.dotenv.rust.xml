@@ -1,11 +1,17 @@
 <idea-plugin package="ru.adelf.idea.dotenv.rust">
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <dependencies>
-      <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
       <plugin id="ru.adelf.idea.dotenv"/>
+      <module name="intellij.platform.analysis"/>
+      <module name="intellij.platform.core"/>
+      <module name="intellij.platform.core.impl"/>
+      <module name="intellij.platform.core.ui"/>
+      <module name="intellij.platform.editor.ui"/>
+      <module name="intellij.platform.projectModel"/>
       <module name="intellij.rustrover.common"/>
       <module name="intellij.rustrover.core"/>
-      <!-- endregion -->
     </dependencies>
+    <!-- endregion -->
 
     <extensions defaultExtensionNs="com.intellij">
         <completion.contributor language="Rust" implementationClass="ru.adelf.idea.dotenv.rust.RustEnvCompletionProvider"/>

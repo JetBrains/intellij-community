@@ -72,6 +72,41 @@ public class AbstractMethodOverridesAbstractMethodInspectionTest extends LightJa
         }
         """);
   }
+  
+  public void testFixQualifiedCall() {
+    myFixture.configureByText("Test.java", """
+      class Test {
+        interface Super {
+          void charInput();
+        }
+      
+        interface Sub extends Super {
+          @Override
+          void cha<caret>rInput();
+        }
+      
+        void use(Sub sub) {
+          sub.charInput();
+        }
+      }
+      """);
+    IntentionAction intention = myFixture.findSingleIntention("Remove redundant abstract method declaration");
+    myFixture.launchAction(intention);
+    myFixture.checkResult("""
+      class Test {
+        interface Super {
+          void charInput();
+        }
+      
+        interface Sub extends Super {
+        }
+      
+        void use(Sub sub) {
+          sub.charInput();
+        }
+      }
+      """);
+  }
 
   @Nullable
   @Override

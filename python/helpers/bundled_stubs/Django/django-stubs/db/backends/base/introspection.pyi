@@ -1,11 +1,12 @@
 from collections.abc import Iterable
-from typing import Any, Literal, NamedTuple, type_check_only
+from typing import Any, Literal, NamedTuple, NotRequired, type_check_only
 
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.utils import CursorWrapper
 from django.db.models.base import Model
+from django.db.models.deletion import DatabaseOnDelete, _Collector
 from django.db.models.fields import Field
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 
 class TableInfo(NamedTuple):
     name: str
@@ -43,6 +44,7 @@ class _SequenceDict(TypedDict):
 
 class BaseDatabaseIntrospection:
     data_types_reverse: Any
+    on_delete_types: dict[str, _Collector | DatabaseOnDelete]
     connection: BaseDatabaseWrapper
     def __init__(self, connection: BaseDatabaseWrapper) -> None: ...
     def __del__(self) -> None: ...
@@ -56,7 +58,7 @@ class BaseDatabaseIntrospection:
     def installed_models(self, tables: list[str]) -> set[type[Model]]: ...
     def sequence_list(self) -> list[dict[str, str]]: ...
     def get_sequences(
-        self, cursor: CursorWrapper, table_name: str, table_fields: Iterable[Field] = ()
+        self, cursor: CursorWrapper, table_name: str, table_fields: Iterable[Field[Any, Any]] = ()
     ) -> list[_SequenceDict]: ...
     def get_relations(self, cursor: CursorWrapper, table_name: str) -> dict[str, tuple[str, str]]: ...
     def get_primary_key_column(self, cursor: CursorWrapper, table_name: str) -> str | None: ...

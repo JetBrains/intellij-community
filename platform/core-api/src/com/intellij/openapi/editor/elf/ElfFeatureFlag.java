@@ -20,28 +20,24 @@ public final class ElfFeatureFlag {
   }
 
   /**
- * This flag only tells whether elf is enabled. It is not a contextual
+   * This flag only tells whether elf is enabled. It is not a contextual
    * check for the current execution. Use {@link Elf#isInElfScope()} when code needs
    * to know whether it is running inside lock-free typing, and
-   * {@link Elf#isPsiInteractionAllowed()} before touching PSI from typing code.
+   * {@link Elf#isUnsupportedOperationGuardActive()} before calling operations that are
+   * not supported yet during lock-free typing.
    */
   public static boolean isEnabled() {
     return IS_LOCK_FREE_TYPING_ENABLED;
   }
 
   @TestOnly
-  public static void setEnabled(boolean enabled) {
-    IS_LOCK_FREE_TYPING_ENABLED = enabled;
-  }
-
-  @TestOnly
   public static void withEnabled(@NotNull Runnable action) {
     boolean oldValue = isEnabled();
-    setEnabled(true);
+    IS_LOCK_FREE_TYPING_ENABLED = true;
     try {
       action.run();
     } finally {
-      setEnabled(oldValue);
+      IS_LOCK_FREE_TYPING_ENABLED = oldValue;
     }
   }
 }

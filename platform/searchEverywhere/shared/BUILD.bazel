@@ -20,8 +20,8 @@ jvm_library(
     exports = ["//platform/lang-impl"],
     deps = [
         # do not sort,
-        "//platform/kernel/rpc",
-        "@lib//:jetbrains-annotations",
+        "//platform/kernel/rpc.lite",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//platform/core-api:core",
@@ -65,7 +65,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":searchEverywhere",
-        "//platform/kernel/rpc:rpc_test_lib",
+        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/project/shared:project_test_lib",
@@ -96,6 +97,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.searchEverywhere.iml",
+        "resources/intellij.platform.searchEverywhere.xml",
     ],
     visibility = ["//visibility:public"],
 )

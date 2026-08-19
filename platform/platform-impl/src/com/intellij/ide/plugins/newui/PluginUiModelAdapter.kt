@@ -5,11 +5,11 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.ModuleDependencies
 import com.intellij.ide.plugins.PageContainer
+import com.intellij.ide.plugins.PluginCompatibilityUtils.getUnfulfilledCpuArchRequirement
+import com.intellij.ide.plugins.PluginCompatibilityUtils.getUnfulfilledOsRequirement
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledCpuArchRequirement
-import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.api.ReviewsPageContainer

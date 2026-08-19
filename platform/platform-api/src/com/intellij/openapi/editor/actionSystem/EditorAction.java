@@ -94,12 +94,11 @@ public abstract class EditorAction extends AnAction implements DumbAware, LightE
         LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, inputEvent.getWhen());
       }
     }
-    // Some editor actions have `actionUpdateThread == EDT`, but they still work with document in their `perform`.
-    // As part of IJPL-223881, such actions do not run in write-intent lock;
-    // but as of now, we are not ready to liberate the editor actions from write-intent.
-    WriteIntentReadAction.run(() -> {
+    if (this.getTemplatePresentation().isRWLockRequired()) {
+      WriteIntentReadAction.run(() -> actionPerformed(editor, dataContext));
+    } else {
       actionPerformed(editor, dataContext);
-    });
+    }
   }
 
   public final void actionPerformed(Editor editor, @NotNull DataContext dataContext) {

@@ -6,8 +6,7 @@ package com.intellij.ui.dsl.builder.impl
 import com.intellij.BundleBase
 import com.intellij.ide.TooltipTitle
 import com.intellij.ide.ui.laf.darcula.ui.DarculaScrollPaneBorder
-import com.intellij.internal.inspector.UiInspectorUtil
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.TextWithMnemonic
@@ -46,6 +45,7 @@ import javax.swing.text.JTextComponent
  * Components that can have assigned labels
  */
 private val ALLOWED_LABEL_COMPONENTS = listOf(
+  ComboBoxAction.ComboBoxButton::class,
   JCheckBox::class,
   JComboBox::class,
   JRadioButton::class,
@@ -130,7 +130,7 @@ internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
   val mnemonicExists = label.displayedMnemonic != 0 || label.displayedMnemonicIndex >= 0 || mnemonic?.hasMnemonic() == true
   if (cell !is CellImpl<*>) {
     if (mnemonicExists) {
-      logWarningWithDebugStacktrace("Cannot assign mnemonic to Panel and other non-component cells, label '${label.text}'")
+      errorInInternalOrLogWarn("Cannot assign mnemonic to Panel and other non-component cells, label '${label.text}'")
     }
     return
   }
@@ -142,7 +142,7 @@ internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
   val component = getLabelComponentFor(cell.component.interactiveComponent)
   if (component == null) {
     if (mnemonicExists) {
-      logWarningWithDebugStacktrace("Unsupported labeled component ${cell.component.javaClass.name}, label '${label.text}'")
+      errorInInternalOrLogWarn("Unsupported labeled component ${cell.component.javaClass.name}, label '${label.text}'")
     }
     return
   }
@@ -163,7 +163,7 @@ private fun getLabelComponentFor(component: JComponent): JComponent? {
 }
 
 internal fun registerCreationStacktrace(component: JComponent) {
-  if (ApplicationManager.getApplication()?.isInternal == true && UiInspectorUtil.isSaveStacktraces()) {
+  if (isSaveStacktraces()) {
     component.putClientProperty(DslComponentPropertyInternal.CREATION_STACKTRACE, Throwable())
   }
 }
@@ -181,7 +181,7 @@ private val DENIED_TAGS = mapOf(
 fun checkDeniedHtmlTags(text: String) {
   for ((regex, reason) in DENIED_TAGS) {
     if (regex.find(text, 0) != null) {
-      failInDebugOrLog("Invalid html: $reason, text: $text")
+      failInInternalOrLogError("Invalid html: $reason, text: $text")
     }
   }
 }

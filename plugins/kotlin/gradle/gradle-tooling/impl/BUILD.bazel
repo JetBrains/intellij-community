@@ -40,7 +40,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/reflect",
         "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
@@ -51,7 +51,7 @@ jvm_library(
         "//plugins/gradle/tooling-extension-api:toolingExtension",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
         "//libraries/opentelemetry",
-        "@lib//:gradle",
+        "//libraries/gradle",
         ":platform_extensions_provided",
         ":libraries_jspecify_provided",
     ],
@@ -70,6 +70,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":impl",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlin/reflect:reflect_test_lib",
         "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
         "//libraries/kotlin/gradle-plugin-idea-proto:libraries-kotlin-gradle-plugin-idea-proto_test_lib",
@@ -80,7 +81,8 @@ jvm_library(
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
-        "@lib//:kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
         "//libraries/kotlin/test:libraries-kotlinTest",
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//platform/extensions",
@@ -88,6 +90,7 @@ jvm_library(
         "//libraries/opentelemetry:opentelemetry_test_lib",
         "//libraries/jspecify",
         "//libraries/jspecify:jspecify_test_lib",
+        "//libraries/gradle:gradle_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.tooling.impl` end
@@ -96,6 +99,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.gradle.tooling.impl.iml",
+        "resources/intellij.kotlin.gradle.tooling.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -131,7 +135,8 @@ jvm_library(
     runtime_deps = [":kotlin-gradle-tooling-impl-tests"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/reflect",
         "//libraries/kotlin/reflect:reflect_test_lib",
@@ -151,14 +156,16 @@ jvm_library(
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
-        "@lib//:kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
         "@lib//:kotlin-test",
         "//platform/extensions",
         "//platform/extensions:extensions_test_lib",
         "//libraries/opentelemetry",
         "//libraries/opentelemetry:opentelemetry_test_lib",
         "@lib//:jspecify-provided",
-        "@lib//:gradle",
+        "//libraries/gradle",
+        "//libraries/gradle:gradle_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.tooling.impl.tests` end

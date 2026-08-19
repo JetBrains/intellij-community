@@ -9,9 +9,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatement
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
@@ -90,7 +92,8 @@ internal class ReplaceIfExpressionWithFirstOrNullInspection : KotlinApplicableIn
         return candidate.receiver.isSimpleStableReceiver()
     }
 
-    override fun KaSession.prepareContext(element: KtIfExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtIfExpression): Unit? {
         val candidate = element.extractReplacementCandidate() ?: return null
         val receiver = candidate.firstElementRead.receiver
 
@@ -116,7 +119,8 @@ internal class ReplaceIfExpressionWithFirstOrNullInspection : KotlinApplicableIn
     }
 }
 
-private fun KaSession.isSupportedReceiverType(receiver: KtExpression): Boolean {
+context(session: KaSession)
+private fun isSupportedReceiverType(receiver: KtExpression): Boolean {
     val type = receiver.expressionType ?: return false
     return type.isSubtypeOf(StandardClassIds.List) ||
             type.isSubtypeOf(StandardClassIds.CharSequence) ||

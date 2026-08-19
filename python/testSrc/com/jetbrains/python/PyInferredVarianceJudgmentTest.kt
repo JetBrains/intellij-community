@@ -148,7 +148,6 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     T = TypeVar("T", infer_variance=True)
     class A(Protocol[T]):
     #                └ INFERRED_VARIANCE BIVARIANT
-    #                └ WARNING This type variable is effectively covariant in this protocol, so it cannot be bivariant here FIXME
         def method(self): pass
     """.trimIndent())
 
@@ -265,6 +264,7 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     class B[BT](A[BT]):
     #       └ INFERRED_VARIANCE INVARIANT
         def method(self) -> BT: pass
+    #             ^^^^^^ WARNING Signature of method 'B.method()' does not match signature of the base method in class 'A'
     """.trimIndent())
 
   @Test
@@ -510,6 +510,7 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     class A[T](Box[T]):
     #       └ INFERRED_VARIANCE CONTRAVARIANT
         def method(self, t: T): pass
+    #             ^^^^^^^^^^^^ WARNING Signature of method 'A.method()' does not match signature of the base method in class 'Box'
     """.trimIndent())
 
   @Test
@@ -690,8 +691,7 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     #       └ INFERRED_VARIANCE COVARIANT
         def __init__(self):
             ...
-    """.trimIndent(),
-                      "lib.py" to """
+    """.trimIndent(), "lib.py" to """
             from typing import Final
             class A[T]:
                 def __init__(self, t: T):
@@ -759,7 +759,7 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestFor(issues=["PY-90269"])
+  @TestFor(issues = ["PY-90269"])
   fun `Frozen attribute via dataclass_transform frozen_default`() = test("""
     from typing import dataclass_transform
     
@@ -773,7 +773,7 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestFor(issues=["PY-90269"])
+  @TestFor(issues = ["PY-90269"])
   fun `Mutable attribute via dataclass_transform frozen_default overridden`() = test("""
     from typing import dataclass_transform, Callable
     
@@ -829,7 +829,7 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     
     # We cannot infer variance for type variables whose origin was disguised
     def fn(t: X): pass
-    #         └ INFERRED_VARIANCE NULL
+    #         └ INFERRED_VARIANCE Unknown
     #         └ WARNING Invalid type annotation
     """.trimIndent())
 
@@ -912,6 +912,19 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
         def f(self, t: tuple[*Ts]): ...
     """.trimIndent())
 
+  @TestFor(issues = ["PY-90344"])
+  @Test
+  /**
+   * In case you consider to have BIVARIANCE as a solution here, also keep in mind that
+   * (a) there can be more complex cases such as `class B[U, V]` where `U` and `V` are swapped at self-usage locations,
+   * (b) that even BIVANRIANCE needs to be treated as INVARIANCE during subtype checks.
+   */
+  fun `Infer invariance as stable solution for self usage in covariant position`() = test("""
+      class A[T]:
+      #       └ INFERRED_VARIANCE INVARIANT
+          def f(self, other: A[T]): ...
+      """.trimIndent())
+
   @Test
   fun `Type variable tuple invariant`() = test("""
     from typing import Callable
@@ -923,12 +936,76 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
 
   @TestFor(issues = ["PY-88800"])
   @Test
-  fun `Contravariant arguments in nested functions`() = test("""
+  fun `Captured type variable in parameter of function in nested function`() = test("""
     class B[T]:
     #       └ INFERRED_VARIANCE BIVARIANT
         def f1(self):
-            def f2(a: T): # nested uses of T are ignored by variance inference
+            def f2(a: T): # nested uses of T are ignored by variance inference and checks
                 ...
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-88800"])
+  @Test
+  fun `Captured type variable in parameter of function in nested function of protocol`() = test("""
+    from typing import TypeVar, Protocol
+    
+    T = TypeVar("T", infer_variance=True)
+    class B(Protocol[T]):
+    #                └ INFERRED_VARIANCE BIVARIANT
+        def f1(self):
+            def f2(a: T): # nested uses of T are ignored by variance inference and checks
+                ...
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-91260"])
+  @Test
+  fun `Captured type variable in parameter of function in nested class`() = test("""
+    class Outer[T]:
+    #           └ INFERRED_VARIANCE BIVARIANT
+        class Inner:
+            def function(self, arg: T): # nested uses of T are ignored by variance inference and checks
+                ...
+        pass
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-91260"])
+  @Test
+  fun `Captured type variable in parameter of function in nested class of protocol`() = test("""
+    from typing import TypeVar, Protocol
+    
+    T = TypeVar("T", infer_variance=True)
+    class Outer(Protocol[T]):
+    #                    └ INFERRED_VARIANCE BIVARIANT
+        class Inner:
+            def function(self, arg: T): # nested uses of T are ignored by variance inference and checks
+                ...
+        pass
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-91260"])
+  @Test
+  fun `Captured type variable in attribute in nested class`() = test("""
+    class Outer[T]:
+    #           └ INFERRED_VARIANCE BIVARIANT
+        class Inner:
+            a: T # nested uses of T are ignored by variance inference and checks
+
+        pass
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-91260"])
+  @Test
+  fun `Captured type variable in attribute in nested class of protocol`() = test("""
+    from typing import TypeVar, Protocol
+    
+    T = TypeVar("T", infer_variance=True)
+    class Outer(Protocol[T]):
+    #                    └ INFERRED_VARIANCE BIVARIANT
+        class Inner:
+            a: T # nested uses of T are ignored by variance inference and checks
+    #          └ WARNING Unbound type variable
+
+        pass
     """.trimIndent())
 
 }

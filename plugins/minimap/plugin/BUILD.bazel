@@ -1,0 +1,39 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.minimap.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.minimap.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.minimap.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+### auto-generated section `build intellij.minimap.plugin` end
+
+### auto-generated section `iml intellij.minimap.plugin` start
+exports_files(
+    [
+        "intellij.minimap.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.minimap.plugin` end

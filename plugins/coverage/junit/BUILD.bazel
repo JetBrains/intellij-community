@@ -1,0 +1,69 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+### auto-generated section `build intellij.java.coverage.rt.junit` start
+jvm_provided_library(
+    name = "plugins_coverage-common_coverage-agent_provided",
+    lib = "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
+)
+
+jvm_provided_library(
+    name = "java_rt_provided",
+    lib = "//java/java-runtime:rt",
+)
+
+jvm_library(
+    name = "junit",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.java.coverage.rt.junit",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//plugins/coverage/coverage_rt:java-coverage-rt",
+        ":plugins_coverage-common_coverage-agent_provided",
+        ":java_rt_provided",
+    ],
+)
+
+jvm_library(
+    name = "junit_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.java.coverage.rt.junit",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":junit",
+        "//plugins/coverage/coverage_rt:java-coverage-rt_test_lib",
+        "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
+        "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent_test_lib",
+        "//java/java-runtime:rt",
+        "//java/java-runtime:rt_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.coverage.rt.junit` end
+
+### auto-generated section `iml intellij.java.coverage.rt.junit` start
+exports_files(
+    [
+        "intellij.java.coverage.rt.junit.iml",
+        "resources/intellij.java.coverage.rt.junit.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.coverage.rt.junit` end

@@ -13,6 +13,7 @@ class Tags:
     compatibility: str
     database: str
     files: str
+    mail: str
     models: str
     security: str
     signals: str
@@ -40,8 +41,8 @@ class _ProcessedCheckCallable(Protocol[_C]):
     __call__: _C
 
 class CheckRegistry:
-    registered_checks: set[_ProcessedCheckCallable]
-    deployment_checks: set[_ProcessedCheckCallable]
+    registered_checks: set[_ProcessedCheckCallable[_CheckCallable]]
+    deployment_checks: set[_ProcessedCheckCallable[_CheckCallable]]
     def __init__(self) -> None: ...
     @overload
     def register(self, check: _C, *tags: str, **kwargs: Any) -> _ProcessedCheckCallable[_C]: ...
@@ -58,7 +59,7 @@ class CheckRegistry:
     ) -> list[CheckMessage]: ...
     def tag_exists(self, tag: str, include_deployment_checks: bool = False) -> bool: ...
     def tags_available(self, deployment_checks: bool = False) -> set[str]: ...
-    def get_checks(self, include_deployment_checks: bool = False) -> list[_ProcessedCheckCallable]: ...
+    def get_checks(self, include_deployment_checks: bool = False) -> list[_ProcessedCheckCallable[_CheckCallable]]: ...
 
 registry: CheckRegistry = ...
 register = registry.register

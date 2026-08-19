@@ -1,0 +1,64 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.python.minimap` start
+jvm_library(
+    name = "minimap",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.minimap",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/minimap/core",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-api:ide",
+        "//platform/structure-view-impl:structureView",
+        "//python:python-community-impl",
+        "//python/python-parser:parser",
+    ],
+)
+
+jvm_library(
+    name = "minimap_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.minimap",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":minimap",
+        "//plugins/minimap/core:core_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/structure-view-impl:structureView_test_lib",
+        "//python:python-community-impl_test_lib",
+        "//python/python-parser:parser_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.minimap` end
+
+### auto-generated section `iml intellij.python.minimap` start
+exports_files(
+    [
+        "intellij.python.minimap.iml",
+        "resources/intellij.python.minimap.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.minimap` end

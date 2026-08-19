@@ -27,7 +27,7 @@ import java.util.List;
 public class EditValueAction extends AnAction implements DumbAware, GridEditAction {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return ActionUpdateThread.EDT;
   }
 
   public EditValueAction() {

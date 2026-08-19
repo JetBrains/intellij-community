@@ -6,12 +6,12 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.impl.interactiveComponent
 import org.junit.Test
-import org.junit.jupiter.api.assertThrows
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTextField
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class LabelTest {
 
@@ -78,7 +78,7 @@ class LabelTest {
     val label = JLabel("Label:")
     val panel = JPanel()
     panel.putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, "Invalid")
-    assertThrows<ClassCastException> {
+    assertFailsWith<ClassCastException> {
       panel {
         row(label) {
           cell(panel)

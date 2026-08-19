@@ -11,7 +11,6 @@ public class StaticMethodImportLombokInspectionTest extends AbstractLombokLightC
 
       import somepackage.Place;
       import somepackage.SomeClass;
-
       import static somepackage.Place.builder<caret>;
       import static <error descr="Static imports of Lombok-generated methods doesn't work with javac">somepackage.SomeClass.create</error>;
       import static <error descr="Static imports of Lombok-generated methods doesn't work with javac">somepackage.SomeClass.getSomeInt</error>;
@@ -86,7 +85,6 @@ public class StaticMethodImportLombokInspectionTest extends AbstractLombokLightC
 
       import somepackage.Place;
       import somepackage.SomeClass;
-
       import static <error descr="Static imports of Lombok-generated methods doesn't work with javac">somepackage.SomeClass.create</error>;
       import static <error descr="Static imports of Lombok-generated methods doesn't work with javac">somepackage.SomeClass.getSomeInt</error>;
       import static java.lang.Math.max;

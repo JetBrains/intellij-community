@@ -22,7 +22,7 @@ class MarkdownTextExtractor : TextExtractor() {
     if (allowedDomains.contains(TextContent.TextDomain.PLAIN_TEXT) &&
         (MarkdownPsiUtils.isHeaderContent(root) || MarkdownPsiUtils.isParagraph(root))) {
       val content = TextContentBuilder.FromPsi
-        .withUnknown { it.node.isMarkdownCodeType() || it.node.isTestLink() }
+        .withUnknown { it.node.isMarkdownCodeType() || it.node.isTestLink() || it.node.elementType == MarkdownElementTypes.AT_PATH }
         .withMarkup { e ->
           e.elementType in markup ||
           e.firstChild == null && e.parent.node.isMarkdownLinkType() && !isLinkText(e) && !isShortRefLinkLabel(e)

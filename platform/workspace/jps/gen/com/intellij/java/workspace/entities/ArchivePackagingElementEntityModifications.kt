@@ -21,7 +21,7 @@ interface ArchivePackagingElementEntityBuilder : WorkspaceEntityBuilder<ArchiveP
 }
 
 internal object ArchivePackagingElementEntityType : EntityType<ArchivePackagingElementEntity, ArchivePackagingElementEntityBuilder>() {
-  override val entityClass: Class<ArchivePackagingElementEntity> get() = ArchivePackagingElementEntity::class.java
+  override val entityImplClass: Class<*> get() = ArchivePackagingElementEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ArchivePackagingElementEntityImpl.Builder::class.java
   operator fun invoke(
     fileName: String,

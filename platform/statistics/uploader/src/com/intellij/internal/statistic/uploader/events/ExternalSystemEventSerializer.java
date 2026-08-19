@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader.events;
 
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType;
+import com.intellij.internal.statistic.eventLog.FileDeletionCause;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +35,10 @@ public final class ExternalSystemEventSerializer {
     }
     else if (event instanceof ExternalSystemErrorEvent error) {
       return prefix + " " + escape(error.getErrorClass());
+    }
+    else if (event instanceof ExternalUploadFileDeletedEvent fileDeleted) {
+      return prefix + " " + fileDeleted.getCause().name() + " " + fileDeleted.getSizeBytes() + " " +
+             fileDeleted.getAgeMs() + " " + fileDeleted.getQueuedMs() + " " + fileDeleted.getBuildType().name();
     }
     return prefix;
   }
@@ -71,7 +77,39 @@ public final class ExternalSystemEventSerializer {
       String errorClass = parts[payloadStartIndex].trim();
       return new ExternalSystemErrorEvent(timestamp, errorClass, recorderId);
     }
+    else if (type == ExternalSystemEventType.FILE_DELETED && length == payloadStartIndex + 5) {
+      FileDeletionCause cause = parseCause(parts[payloadStartIndex].trim());
+      if (cause == null) {
+        return null;
+      }
+      long sizeBytes = parseLong(parts[payloadStartIndex + 1]);
+      long ageMs = parseLong(parts[payloadStartIndex + 2]);
+      long queuedMs = parseLong(parts[payloadStartIndex + 3]);
+      EventLogBuildType buildType = parseBuildType(parts[payloadStartIndex + 4].trim());
+      if (buildType == null) {
+        return null;
+      }
+      return new ExternalUploadFileDeletedEvent(timestamp, cause, sizeBytes, ageMs, queuedMs, buildType, recorderId);
+    }
     return null;
+  }
+
+  private static @Nullable FileDeletionCause parseCause(@NotNull String value) {
+    try {
+      return FileDeletionCause.valueOf(value);
+    }
+    catch (IllegalArgumentException e) {
+      return null;
+    }
+  }
+
+  private static @Nullable EventLogBuildType parseBuildType(@NotNull String value) {
+    try {
+      return EventLogBuildType.valueOf(value);
+    }
+    catch (IllegalArgumentException e) {
+      return null;
+    }
   }
 
   private static @NotNull List<String> parseSentFiles(@NotNull String part) {

@@ -43,7 +43,8 @@ internal class ToOrdinaryStringLiteralIntention :
         return element.text.startsWith(TRIPLE_QUOTE)
     }
 
-    override fun KaSession.prepareContext(element: KtStringTemplateExpression): Unit = Unit
+    context(session: KaSession)
+    override fun prepareContext(element: KtStringTemplateExpression): Unit = Unit
 
     override fun getActionPresentation(context: ActionContext, element: KtStringTemplateExpression): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)

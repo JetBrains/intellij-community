@@ -31,7 +31,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/core-api:core",
         "//platform/credential-store",
         "//platform/platform-api:ide",
@@ -66,6 +66,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":external-process-auth-helper",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/credential-store:credential-store_test_lib",
         "//platform/platform-api:ide_test_lib",
@@ -90,6 +91,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.externalProcessAuthHelper.iml",
+        "resources/intellij.platform.externalProcessAuthHelper.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -137,7 +139,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/credential-store",

@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -93,6 +94,29 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
       }
     };
     result.setDisplayName(LangBundle.message("psi.search.scope.libraries"));
+    return result;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull GlobalSearchScope buildLibraryClassesScope() {
+    ProjectAndLibrariesScope result = new ProjectAndLibrariesScope(myProject) {
+      @Override
+      public boolean contains(@NotNull VirtualFile file) {
+        return myProjectFileIndex.isInLibraryClasses(file);
+      }
+
+      @Override
+      public boolean isSearchInModuleContent(@NotNull Module aModule) {
+        return false;
+      }
+
+      @Override
+      public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+        return Collections.emptySet();
+      }
+    };
+    result.setDisplayName(LangBundle.message("psi.search.scope.library.classes"));
     return result;
   }
 

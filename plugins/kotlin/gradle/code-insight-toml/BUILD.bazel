@@ -20,7 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//plugins/toml/core",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/core-api:core",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/plugin",
@@ -34,6 +34,7 @@ jvm_library(
         "//plugins/gradle/java",
         "//plugins/toml",
         "//plugins/gradle/java/toml",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
     ],
 )
 
@@ -50,6 +51,7 @@ jvm_library(
         # do not sort,
         ":kotlin-gradle-codeInsight-toml",
         "//plugins/toml/core:core_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/core-api:core_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
@@ -63,6 +65,7 @@ jvm_library(
         "//plugins/gradle/java:java_test_lib",
         "//plugins/toml:toml_test_lib",
         "//plugins/gradle/java/toml:toml_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.toml` end
@@ -71,6 +74,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.gradle.codeInsight.toml.iml",
+        "resources/intellij.kotlin.gradle.codeInsight.toml.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.platform.eel.provider.utils.EelProjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
@@ -807,7 +806,7 @@ public class GitImpl extends GitImplBase {
     GitCommandResult result = runCommand(handler);
     String output = result.getOutputAsJoinedString();
     if (result.success()) {
-      if (GitUtil.isHashString(output, false)) {
+      if (GitUtil.isPossibleHash(output)) {
         return HashImpl.build(output);
       }
       else {

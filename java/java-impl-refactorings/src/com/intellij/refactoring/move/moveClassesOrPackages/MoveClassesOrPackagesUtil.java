@@ -293,7 +293,7 @@ public final class MoveClassesOrPackagesUtil {
         documentManager.commitDocument(document);
       }
 
-      file = moveDestination.findFile(file.getName());
+      file = MovedFileProvider.getInstance().getUpdatedFile(moveDestination, file);
 
     }
 

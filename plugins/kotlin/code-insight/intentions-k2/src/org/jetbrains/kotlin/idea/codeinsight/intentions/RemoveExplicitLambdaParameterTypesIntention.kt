@@ -27,7 +27,8 @@ class RemoveExplicitLambdaParameterTypesIntention : KotlinApplicableModCommandAc
         return listOf(TextRange(0, arrow.endOffset - element.startOffset))
     }
 
-    override fun KaSession.prepareContext(element: KtLambdaExpression): Unit = Unit
+    context(session: KaSession)
+    override fun prepareContext(element: KtLambdaExpression): Unit = Unit
 
     override fun invoke(
         actionContext: ActionContext,

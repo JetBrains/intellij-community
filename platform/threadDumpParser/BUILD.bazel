@@ -75,6 +75,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.threadDumpParser.iml",
+        "resources/intellij.platform.threadDumpParser.xml",
     ],
     visibility = ["//visibility:public"],
 )

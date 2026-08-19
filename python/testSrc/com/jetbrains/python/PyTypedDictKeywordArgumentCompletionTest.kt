@@ -2,8 +2,12 @@
 package com.jetbrains.python
 
 import com.intellij.idea.TestFor
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyTestCase
 
+@Subsystems.CodeCompletion
+@Layers.Functional
 class PyTypedDictKeywordArgumentCompletionTest : PyTestCase() {
 
   @TestFor(issues = ["PY-90617"])

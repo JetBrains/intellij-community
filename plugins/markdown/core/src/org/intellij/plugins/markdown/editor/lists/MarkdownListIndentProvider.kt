@@ -4,6 +4,7 @@ import com.intellij.codeInsight.editorActions.AutoHardWrapHandler
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.codeStyle.lineIndent.FormatterBasedLineIndentProvider
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiUtilCore
@@ -11,9 +12,8 @@ import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLineSafely
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
-import org.intellij.plugins.markdown.lang.MarkdownLanguage
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 
@@ -29,11 +29,14 @@ internal class MarkdownListIndentProvider : FormatterBasedLineIndentProvider() {
     if (!MarkdownCodeInsightSettings.getInstance().state.adjustListIndentation) {
       return null
     }
-    val file = PsiEditorUtil.getPsiFile(editor) as? MarkdownFile ?: return null
+    val file = PsiEditorUtil.getPsiFile(editor)
+    if (!file.supportsMarkdown()) {
+      return null
+    }
     return doGetLineIndent(editor, file, offset) ?: super.getLineIndent(project, editor, language, offset)
   }
 
-  private fun doGetLineIndent(editor: Editor, file: MarkdownFile, offset: Int): String? {
+  private fun doGetLineIndent(editor: Editor, file: PsiFile, offset: Int): String? {
     if (editor.getUserData(AutoHardWrapHandler.AUTO_WRAP_LINE_IN_PROGRESS_KEY) == true) return null
     val element = PsiUtilCore.getElementAtOffset(file, offset)
     if (MarkdownCodeFenceUtils.inCodeFence(element.node)) return ""
@@ -52,5 +55,5 @@ internal class MarkdownListIndentProvider : FormatterBasedLineIndentProvider() {
     return ""
   }
 
-  override fun isSuitableFor(language: Language?) = language is MarkdownLanguage
+  override fun isSuitableFor(language: Language?) = language?.supportsMarkdown() == true
 }

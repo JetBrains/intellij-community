@@ -6,10 +6,8 @@ docker.transport.sshconn
 # model is always set by child classes
 docker.models.resource.Collection.model
 
-# keyword arguments are now unsupported
-docker.api.container.ContainerApiMixin.start
-
 # implementation has *args and **kwargs params that can't be used
+docker.api.container.ContainerApiMixin.start
 docker.client.DockerClient.info
 docker.client.DockerClient.ping
 

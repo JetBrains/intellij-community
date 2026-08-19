@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
@@ -11,6 +11,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
@@ -28,7 +29,10 @@ internal class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
   override fun customizeCommandAndEnvironment(project: Project?, envs: MutableMap<String, String>, context: VcsExecutableContext) {
     if (project == null || !PyVirtualEnvVcsSettings.getInstance(project).virtualEnvActivate) return
 
-    val sdk: Sdk = runReadAction { findSdk(project, context.root) } ?: return
+    // Use a cancellable, retryable read action instead of a plain blocking one:
+    // this runs in a git command (background thread) and must yield to pending write actions
+    // to avoid non-cancellable read-action freezes (PY-89735).
+    val sdk: Sdk = ReadAction.nonBlocking<Sdk?> { findSdk(project, context.root) }.executeSynchronously() ?: return
     when {
       PythonSdkUtil.isRemote(sdk) -> return
       sdk.isWsl -> if (context.type != ExecutableType.WSL) return
@@ -38,7 +42,7 @@ internal class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
     val pyRichSdk = sdk.pythonInterpreter()
     if (pyRichSdk.isActivatable) {
       // in case of virtualenv sdk on unix we activate virtualenv
-      envs.putAll(PySdkUtil.activateVirtualEnv(sdk))
+      envs.putAll(runBlockingMaybeCancellable { sdk.activationEnvironment() }.successOrNull ?: emptyMap())
     }
   }
 

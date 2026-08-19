@@ -56,6 +56,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -571,6 +572,20 @@ final class MethodChecker {
     MostlySingularMultiMap<MethodSignature, PsiMethod> duplicateMethods = getDuplicateMethods(aClass);
     MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
     List<PsiMethod> methods = (List<PsiMethod>)duplicateMethods.get(methodSignature);
+    if (!myVisitor.languageLevel().isAtLeast(LanguageLevel.JDK_1_8)) {
+      // javac 7 and older looked for a duplicate only among the methods with the same erasure, so two generic methods which
+      // differ solely in the order of the bounds of their type parameters were accepted, even though they have the same
+      // signature (JLS 8.4.4). Fixed by https://bugs.openjdk.org/browse/JDK-8013846 in Java 8.
+      PsiType[] erasure = MethodSignatureUtil.calcErasedParameterTypes(methodSignature);
+      List<PsiMethod> sameErasure = new ArrayList<>(methods.size());
+      for (PsiMethod duplicate : methods) {
+        PsiType[] duplicateErasure = MethodSignatureUtil.calcErasedParameterTypes(duplicate.getSignature(PsiSubstitutor.EMPTY));
+        if (Arrays.equals(erasure, duplicateErasure)) {
+          sameErasure.add(duplicate);
+        }
+      }
+      methods = sameErasure;
+    }
     if (methods.size() > 1) {
       myVisitor.report(JavaErrorKinds.METHOD_DUPLICATE.create(method, new JavaErrorKinds.DuplicateMethodsContext(methods)));
     }

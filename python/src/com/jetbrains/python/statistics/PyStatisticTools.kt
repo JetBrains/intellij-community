@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -13,6 +13,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.asSafely
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.hatch.sdk.isHatch
@@ -58,19 +59,24 @@ import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.jetbrains.annotations.ApiStatus
 
+@get:ApiStatus.Internal
+@Deprecated(message = "Use com.jetbrains.python.project.PyProject.Companion.getPyProjects")
 val Project.modules: Array<Module> get() = ModuleManager.getInstance(this).modules
+
+@Deprecated(message = "Use com.jetbrains.python.sdk.PythonInterpreterKt.getInterpreter (internal only), or get SDK directly using a platfrom API (third party)")
 val Project.sdks: List<Sdk> get() = modules.mapNotNull(Module::getSdk)
 
 /**
  * Adds python language and interpreter version if the module has sdk
  */
+@ApiStatus.Internal
 fun getPythonSpecificInfo(module: Module): List<EventPair<*>> =
   module.getSdk()?.let { sdk -> getPythonSpecificInfo(sdk) } ?: emptyList()
 
 /**
  * Adds python language and interpreter version
  */
-fun getPythonSpecificInfo(sdk: Sdk): List<EventPair<*>> {
+internal fun getPythonSpecificInfo(sdk: Sdk): List<EventPair<*>> {
   val data = ArrayList<EventPair<*>>()
   if (!PythonSdkUtil.isPythonSdk(sdk)) return data
   data.add(EventFields.Language.with(PythonLanguage.INSTANCE))
@@ -86,6 +92,7 @@ fun getPythonSpecificInfo(sdk: Sdk): List<EventPair<*>> {
   If you need to get an event with a specific execution type, interpreter type, or whatsoever, please use the corresponding segment in the analytics platform.
   Thank you very much!
   """)
+@ApiStatus.Internal
 fun registerPythonSpecificEvent(group: EventLogGroup, eventId: String, vararg extraFields: EventField<*>): VarargEventId {
   return group.registerVarargEvent(eventId,
                                    EventFields.Language,
@@ -96,10 +103,17 @@ fun registerPythonSpecificEvent(group: EventLogGroup, eventId: String, vararg ex
                                    *extraFields)
 }
 
+
+@ApiStatus.Internal
 val PYTHON_VERSION: StringEventField = EventFields.StringValidatedByRegexpReference("python_version", "version")
-val PYTHON_IMPLEMENTATION: StringEventField = EventFields.String("python_implementation", listOf("Python"))
+internal val PYTHON_IMPLEMENTATION: StringEventField = EventFields.String("python_implementation", listOf("Python"))
 
 
+/**
+ * This class is for statistics only. It was never intented to provide an API for anything else. Do not use it!
+ */
+@ApiStatus.Internal
+@PyInternalExecApi
 enum class InterpreterTarget(val value: String) {
   LOCAL("local"),
   REMOTE_DOCKER("Remote_Docker"),
@@ -133,6 +147,7 @@ enum class InterpreterTarget(val value: String) {
   }
 }
 
+@get:ApiStatus.Internal
 val EXECUTION_TYPE: StringEventField = EventFields.String("executionType", listOf(
   LOCAL.value,
   REMOTE_DOCKER.value,
@@ -145,6 +160,11 @@ val EXECUTION_TYPE: StringEventField = EventFields.String("executionType", listO
   REMOTE_WEB_DEPLOYMENT.value,
   REMOTE_UNKNOWN.value))
 
+/**
+ * This class is for statistics only. It was never intented to provide an API for anything else. Do not use it!
+ */
+@ApiStatus.Internal
+@PyInternalExecApi
 enum class InterpreterType(val value: String) {
   PIPENV("pipenv"),
   CONDAVENV("condavenv"),
@@ -157,15 +177,17 @@ enum class InterpreterType(val value: String) {
   HATCH("hatch"),
 }
 
-enum class InterpreterCreationMode(val value: String) {
+internal enum class InterpreterCreationMode(val value: String) {
   SIMPLE("simple"),
   CUSTOM("custom"),
   NA("not_applicable"),
 }
 
+
+@get:ApiStatus.Internal
 val INTERPRETER_TYPE: StringEventField = EventFields.String("interpreterType", InterpreterType.entries.map { it.value })
 
-val INTERPRETER_CREATION_MODE: StringEventField = EventFields.String(
+internal val INTERPRETER_CREATION_MODE: StringEventField = EventFields.String(
   "interpreter_creation_mode",
   listOf(SIMPLE.value, CUSTOM.value, NA.value)
 )
@@ -174,7 +196,15 @@ internal val PREVIOUSLY_CONFIGURED: BooleanEventField = EventFields.Boolean("pre
 
 
 private val Sdk.pythonImplementation: String get() = PythonSdkFlavor.getFlavor(this)?.name ?: "Python"
+
+@Deprecated("See  PySdkUtil.getLanguageLevelForSdk deprecation message")
+@get:ApiStatus.Internal
 val Sdk?.version: LanguageLevel get() = PySdkUtil.getLanguageLevelForSdk(this)
+
+/**
+ * **DO NOT USE FOR ANYTHING BUT FUS**
+ */
+@get:ApiStatus.Internal
 val Sdk.executionType: InterpreterTarget
   get() =
     when (val additionalData = sdkAdditionalData) {
@@ -183,10 +213,13 @@ val Sdk.executionType: InterpreterTarget
     }
 
 /**
+ * **DO NOT USE FOR ANYTHING BUT FUS**
+ *
  * This method is for statistics only and might be somewhat inaccurate.
  * Moreover, interpreters will become a pluggable system soon, so there will be no predefined enum.
  * Please, do not use it.
  */
+@get:ApiStatus.Internal
 val Sdk.interpreterType: InterpreterType
   get() = when {
     // The order of checks is important here since e.g. a pipenv is a virtualenv

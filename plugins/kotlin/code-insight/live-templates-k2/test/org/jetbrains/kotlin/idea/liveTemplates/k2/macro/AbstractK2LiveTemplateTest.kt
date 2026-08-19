@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.liveTemplates.k2.macro
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.kotlin.idea.artifacts.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -26,6 +27,7 @@ abstract class AbstractK2LiveTemplateTest : NewLightKotlinCodeInsightFixtureTest
         val disableDirective = IgnoreTests.DIRECTIVES.IGNORE_K2
         IgnoreTests.runTestIfNotDisabledByFileDirective(testRootPath.resolve(testMethodPath), disableDirective, "after") {
             myFixture.configureByDefaultFile()
+            PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
             templateName?.let(myFixture::type)
 
             val fileText = file.text

@@ -2,6 +2,7 @@
 package com.intellij.terminal.frontend.action
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -123,7 +124,7 @@ internal fun launchTerminalAgent(
 
 @OptIn(FlowPreview::class)
 private fun fusReportWhenJunieInstalled(project: Project, agent: TerminalAgent, terminalView: TerminalView) {
-  terminalView.coroutineScope.launch(Dispatchers.EDT + CoroutineName("Junie installation tracking")) {
+  terminalView.coroutineScope.launch(Dispatchers.UI + CoroutineName("Junie installation tracking")) {
     val outputModel = terminalView.outputModels.regular
 
     try {

@@ -146,6 +146,13 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
     setModel(buildModel(c, accessibleModel));
   }
 
+  /**
+   * Serializes the whole component hierarchy and the properties shown in the inspector table as JSON.
+   */
+  public @NotNull String exportTreeAsJson() {
+    return ComponentTreeJsonExporter.export(getModel().getRoot());
+  }
+
   public void selectPath(@NotNull Component component) {
     selectPath(component, false);
   }

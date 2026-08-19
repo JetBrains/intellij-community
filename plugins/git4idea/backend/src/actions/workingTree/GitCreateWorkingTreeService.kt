@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
@@ -179,15 +180,19 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
 
     TrustedProjects.setProjectTrusted(Path(workingTreeData.workingTreePath.path), true)
 
-    val worktreeProject = withProgressText(GitBundle.message("progress.text.worktree.opening.project")) {
-      gitWTService.openProjectInNewWindow(Path(workingTreeData.workingTreePath.path))
-    }
+    // Opening the worktree project in the same window closes (and disposes) the current project, so this must not run
+    // on a scope tied to it - otherwise the operation is cancelled before the new project finishes opening.
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.Default) {
+      val worktreeProject = withProgressText(GitBundle.message("progress.text.worktree.opening.project")) {
+        gitWTService.openProjectInNewWindow(Path(workingTreeData.workingTreePath.path))
+      }
 
-    if (worktreeProject != null) {
-      GitOperationsCollector.logWorktreeProjectOpenedAfterCreation(ideActivity)
-      onProjectOpened?.invoke(worktreeProject)
-    } else {
-      repository.workingTreeHolder.scheduleReload()
+      if (worktreeProject != null) {
+        GitOperationsCollector.logWorktreeProjectOpenedAfterCreation(ideActivity)
+        onProjectOpened?.invoke(worktreeProject)
+      } else {
+        repository.workingTreeHolder.scheduleReload()
+      }
     }
   }
 }

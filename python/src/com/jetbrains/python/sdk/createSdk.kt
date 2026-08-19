@@ -118,7 +118,6 @@ suspend fun createLocalSdkGuessingTypeByPath(
                               EelFileSystem(homePath.getEelDescriptor().toEelApi()),
                               moduleOrProject,
                               null,
-                              true,
                               suggestedSdkName)
 
 
@@ -130,7 +129,6 @@ internal suspend fun <P : PathHolder> createSdkGuessingTypeByPath(
   fileSystem: FileSystem<P>,
   moduleOrProject: ModuleOrProject,
   targetPanelExtension: TargetPanelExtension?,
-  isAssociateWithModule: Boolean,
   suggestedSdkName: String? = null,
 ): PyResult<Sdk> {
   val flavorAndData = when (homePath) {
@@ -165,7 +163,7 @@ internal suspend fun <P : PathHolder> createSdkGuessingTypeByPath(
   ).getOr { return it }
 
   val module = PyProjectCreateHelpers.getModule(moduleOrProject, newSdk.homeDirectory)
-  if (isAssociateWithModule && module != null) {
+  if (module != null) {
     newSdk.setAssociationToModule(module)
   }
 

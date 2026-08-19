@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search
 
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.imports.getDefaultImports
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult.MATCH
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult.NO_MATCH
@@ -178,7 +178,7 @@ class PsiBasedClassResolver @TestOnly constructor(private val targetClassFqName:
         }
 
         val project = file.project
-        val kaModule = KaModuleProvider.getModule(project, file, useSiteModule = null)
+        val kaModule = file.kaModule(useSiteModule = null)
         for (defaultImports in kaModule.targetPlatform.getDefaultImports(project).defaultImports) {
             val importPath = defaultImports.importPath
             result = analyzeSingleImport(result, importPath.fqName, importPath.isAllUnder, importPath.alias?.asString())

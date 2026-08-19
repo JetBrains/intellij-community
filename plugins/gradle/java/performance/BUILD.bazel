@@ -20,7 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//plugins/performanceTesting/core:performanceTesting",
         "//platform/util",
         "//platform/workspace/jps",
@@ -60,6 +60,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":performance",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/performanceTesting/core:performanceTesting_test_lib",
         "//platform/util:util_test_lib",
         "//platform/workspace/jps:jps_test_lib",
@@ -92,6 +93,7 @@ jvm_library(
 exports_files(
     [
         "intellij.gradle.java.performance.iml",
+        "resources/intellij.gradle.java.performance.xml",
     ],
     visibility = ["//visibility:public"],
 )

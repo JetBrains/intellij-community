@@ -60,7 +60,7 @@ jvm_library(
         "//libraries/gson",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlin/reflect",
-        "@lib//:jna",
+        "//libraries/jna",
         "//platform/workspace/storage",
         "//platform/platform-impl/concurrency",
         "//platform/platform-impl/update-checker",
@@ -68,7 +68,6 @@ jvm_library(
         "//libraries/jbr",
         "//platform/projectModel-impl",
         "//platform/execution",
-        "//platform/kernel/rpc",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/locking-impl",
         "//platform/lang-impl",
@@ -128,6 +127,7 @@ jvm_library(
         "//libraries/gson:gson_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlin/reflect:reflect_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//platform/workspace/storage:storage_test_lib",
         "//platform/platform-impl/concurrency:concurrency_test_lib",
         "//platform/platform-impl/update-checker:update-checker_test_lib",
@@ -135,7 +135,6 @@ jvm_library(
         "//libraries/jbr:jbr_test_lib",
         "//platform/projectModel-impl:projectModel-impl_test_lib",
         "//platform/execution:execution_test_lib",
-        "//platform/kernel/rpc:rpc_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/locking-impl:locking-impl_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
@@ -147,6 +146,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.internal.iml",
+        "resources/intellij.platform.ide.internal.xml",
     ],
     visibility = ["//visibility:public"],
 )

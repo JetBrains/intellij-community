@@ -6,7 +6,7 @@ import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
 import com.intellij.lang.Language
 
 class ExperimentJSMLRankingProvider : CatBoostJarCompletionModelProvider(
-  CompletionRankingModelsBundle.message("ml.completion.experiment.model.js"), "ecmascript6_features_exp", "ecmascript6_model_exp"), ExperimentModelProvider {
+  CompletionRankingModelsBundle.message("ml.completion.experiment.model.js"), "ecmascript6_features", "ecmascript6_model"), ExperimentModelProvider {
 
   override fun isLanguageSupported(language: Language): Boolean = language.displayName.compareTo("ecmascript 6", ignoreCase = true) == 0
 

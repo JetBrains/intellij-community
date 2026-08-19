@@ -19,10 +19,15 @@
   <content namespace="jetbrains">
     <!--todo: embedded to simulate old behaviour-->
     <module name="intellij.mcpserver" loading="embedded"/>
+    <module name="intellij.mcpserver.toolsets"/>
     <module name="intellij.mcpserver.stdio" loading="embedded"/>
     <module name="intellij.mcpserver.vcs"/>
     <module name="intellij.mcpserver.terminal"/>
     <module name="intellij.mcpserver.terminal.frontend"/>
     <module name="intellij.mcpserver.frontend" required-if-available="intellij.platform.frontend"/>
+  </content>
+
+  <content>
+    <module name="intellij.libraries.night.config.toml" loading="required"/>
   </content>
 </idea-plugin>

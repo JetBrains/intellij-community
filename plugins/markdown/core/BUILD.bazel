@@ -21,7 +21,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "//platform/kernel/rpc",
+        "//platform/kernel/rpc.lite",
         "//platform/analysis-api:analysis",
         "//platform/code-style-api:codeStyle",
         "//platform/util/concurrency",
@@ -49,6 +49,7 @@ jvm_library(
         "//platform/core-ui",
         "//platform/code-style-impl:codeStyle-impl",
         "//libraries/markdown",
+        "//libraries/fastutil",
         "//platform/platform-util-io:ide-util-io",
         "//platform/util-ex",
         "//platform/projectModel-impl",
@@ -60,7 +61,6 @@ jvm_library(
         "//libraries/miglayout-swing",
         "//platform/platform-api:ide",
         "//platform/statistics",
-        "//platform/structure-view-impl:structureView",
         "//platform/util/jdom",
         "//libraries/kotlinx/coroutines/core",
         "//platform/diagnostic",
@@ -94,7 +94,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":markdown",
-        "//platform/kernel/rpc:rpc_test_lib",
+        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
@@ -122,6 +122,7 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//platform/code-style-impl:codeStyle-impl_test_lib",
         "//libraries/markdown:markdown_test_lib",
+        "//libraries/fastutil:fastutil_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/util-ex:util-ex_test_lib",
         "//platform/projectModel-impl:projectModel-impl_test_lib",
@@ -133,7 +134,6 @@ jvm_library(
         "//libraries/miglayout-swing:miglayout-swing_test_lib",
         "//platform/platform-api:ide_test_lib",
         "//platform/statistics:statistics_test_lib",
-        "//platform/structure-view-impl:structureView_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/diagnostic:diagnostic_test_lib",
@@ -159,6 +159,10 @@ jvm_library(
 exports_files(
     [
         "intellij.markdown.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/colorSchemes/MarkdownDarcula.xml",
+        "resources/colorSchemes/MarkdownDefault.xml",
+        "resources/intellij.markdown.xml",
     ],
     visibility = ["//visibility:public"],
 )

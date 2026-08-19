@@ -64,6 +64,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.duplicates.analysis.iml",
+        "resources/intellij.platform.duplicates.analysis.xml",
     ],
     visibility = ["//visibility:public"],
 )

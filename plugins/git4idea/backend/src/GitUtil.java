@@ -45,7 +45,6 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -59,6 +58,7 @@ import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitObjectFormat;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryFiles;
@@ -120,7 +120,7 @@ public final class GitUtil {
   private static final Logger LOG = Logger.getInstance(GitUtil.class);
   private static final @NonNls String HEAD_FILE = "HEAD";
 
-  private static final Pattern HASH_STRING_PATTERN = Pattern.compile("[a-fA-F0-9]{40}");
+  public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,64}");
 
   /**
    * A private constructor to suppress instance creation
@@ -1164,16 +1164,17 @@ public final class GitUtil {
     return HashImpl.build(head);
   }
 
-  public static boolean isHashString(@NotNull @NonNls String revision) {
-    return isHashString(revision, true);
+  public static boolean isPossibleHash(@NotNull String revision) {
+    return HASH_REGEX.matcher(revision).matches();
   }
 
-  public static boolean isHashString(@NotNull @NonNls String revision, boolean fullHashOnly) {
-    if (fullHashOnly) {
-      return HASH_STRING_PATTERN.matcher(revision).matches();
+  public static boolean isPossibleFullHash(@NotNull String revision) {
+    int length = revision.length();
+    for (GitObjectFormat format : GitObjectFormat.getEntries()) {
+      if (length == format.getHexSize()) {
+        return isPossibleHash(revision);
+      }
     }
-    else {
-      return VcsLogUtil.HASH_REGEX.matcher(revision).matches();
-    }
+    return false;
   }
 }

@@ -6,7 +6,7 @@ import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
 import com.intellij.lang.Language
 
 class ExperimentRustMLRankingProvider : CatBoostJarCompletionModelProvider(
-  CompletionRankingModelsBundle.message("ml.completion.experiment.model.rust"), "rust_features_exp", "rust_model_exp"), ExperimentModelProvider {
+  CompletionRankingModelsBundle.message("ml.completion.experiment.model.rust"), "rust_features", "rust_model"), ExperimentModelProvider {
 
   override fun isLanguageSupported(language: Language): Boolean = language.id.compareTo("Rust", ignoreCase = true) == 0
 

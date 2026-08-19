@@ -12,12 +12,17 @@ import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 import org.opentest4j.AssertionFailedError;
+import org.opentest4j.FileInfo;
 import org.opentest4j.MultipleFailuresError;
+import org.opentest4j.ValueWrapper;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -192,16 +197,7 @@ public final class IjSmTestExecutionListener implements TestExecutionListener {
             Map<String, String> fail = baseAttrs(testIdentifier);
             String message = sub.getMessage();
             fail.put("message", message != null ? message : "");
-            if (sub instanceof AssertionFailedError) {
-              AssertionFailedError afe = (AssertionFailedError) sub;
-              if (afe.isExpectedDefined() || afe.isActualDefined()) {
-                fail.put("type", "comparisonFailure");
-                String expected = afe.isExpectedDefined() && afe.getExpected() != null ? String.valueOf(afe.getExpected().getValue()) : "";
-                String actual = afe.isActualDefined() && afe.getActual() != null ? String.valueOf(afe.getActual().getValue()) : "";
-                fail.put("expected", expected);
-                fail.put("actual", actual);
-              }
-            }
+            putComparisonFailureAttrs(sub, fail);
             fail.put("details", stackTraceToString(sub));
             serviceMessage("testFailed", fail);
           }
@@ -209,16 +205,7 @@ public final class IjSmTestExecutionListener implements TestExecutionListener {
           Map<String, String> fail = baseAttrs(testIdentifier);
           String message = t.getMessage();
           fail.put("message", message != null ? message : "");  // required parameter
-          if (t instanceof AssertionFailedError) {
-            AssertionFailedError afe = (AssertionFailedError) t;
-            if (afe.isExpectedDefined() || afe.isActualDefined()) {
-              fail.put("type", "comparisonFailure");
-              String expected = afe.isExpectedDefined() && afe.getExpected() != null ? String.valueOf(afe.getExpected().getValue()) : "";
-              String actual = afe.isActualDefined() && afe.getActual() != null ? String.valueOf(afe.getActual().getValue()) : "";
-              fail.put("expected", expected);
-              fail.put("actual", actual);
-            }
-          }
+          putComparisonFailureAttrs(t, fail);
           fail.put("details", stackTraceToString(t));
           serviceMessage("testFailed", fail);
         }
@@ -319,6 +306,32 @@ public final class IjSmTestExecutionListener implements TestExecutionListener {
     // Keep simple: include type information
     String type = id.isContainer() ? (id.isTest() ? "test+container" : "container") : (id.isTest() ? "test" : "unknown");
     return type;
+  }
+
+  private static void putComparisonFailureAttrs(Throwable t, Map<String, String> fail) {
+    if (!(t instanceof AssertionFailedError afe)) return;
+    if (!afe.isExpectedDefined() && !afe.isActualDefined()) return;
+    fail.put("type", "comparisonFailure");
+    String expected = afe.isExpectedDefined() && afe.getExpected() != null ? String.valueOf(afe.getExpected().getValue()) : "";
+    String actual = afe.isActualDefined() && afe.getActual() != null ? String.valueOf(afe.getActual().getValue()) : "";
+    fail.put("expected", expected);
+    fail.put("actual", actual);
+    String expectedFile = fileInfoPath(afe.isExpectedDefined() ? afe.getExpected() : null);
+    if (expectedFile != null) fail.put("expectedFile", expectedFile);
+    String actualFile = fileInfoPath(afe.isActualDefined() ? afe.getActual() : null);
+    if (actualFile != null) fail.put("actualFile", actualFile);
+  }
+
+  private static String fileInfoPath(ValueWrapper wrapper) {
+    Object value = wrapper != null ? wrapper.getValue() : null;
+    if (!(value instanceof FileInfo)) return null;
+    String path = ((FileInfo) value).getPath();
+    try {
+      // bazel runfiles/sandbox symlinks die with the sandbox; resolve to the real workspace file while it is still alive
+      return Paths.get(path).toRealPath().toString();
+    } catch (IOException | InvalidPathException e) {
+      return path;
+    }
   }
 
   private static String stackTraceToString(Throwable t) {

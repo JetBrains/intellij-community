@@ -16,7 +16,6 @@
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-                <arg>$KOTLIN_COMPOSE_COMPILER_PLUGIN$</arg>
               </args>
             </arrayArg>
           </arrayArguments>
@@ -31,31 +30,9 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="module-library">
-      <library name="night-config-toml" type="repository">
-        <properties maven-id="com.electronwill.night-config:toml:3.8.4">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3.8.4/toml-3.8.4.jar">
-              <sha256sum>127bf8b025c341139145c55bc897f3188057eec19940f99d3eae624399e88f2a</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/electronwill/night-config/core/3.8.4/core-3.8.4.jar">
-              <sha256sum>2d9532aa851742a6e2f3cb472a6a5b3c0e7e8b9da287c7d20a2963466f4aebb4</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3.8.4/toml-3.8.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/core/3.8.4/core-3.8.4.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3.8.4/toml-3.8.4-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/core/3.8.4/core-3.8.4-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.night.config.toml" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
@@ -75,24 +52,15 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="library" name="io.github.smiley4.schema.kenerator.core" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
-    <orderEntry type="module" module-name="intellij.platform.lang" />
-    <orderEntry type="module" module-name="intellij.platform.debugger" />
-    <orderEntry type="module" module-name="intellij.platform.refactoring" />
-    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
-    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
-    <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
-    <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
@@ -109,7 +77,6 @@
     <orderEntry type="module" module-name="intellij.libraries.ktor.server.cio" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.io" />
-    <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
@@ -117,6 +84,5 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
-    <orderEntry type="module" module-name="intellij.platform.compose" />
   </component>
 </module>

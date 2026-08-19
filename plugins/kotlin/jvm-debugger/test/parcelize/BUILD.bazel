@@ -26,7 +26,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.jvm.debugger.test.parcelize",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/kotlin/plugin/k2"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -42,15 +42,17 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.jvm.debugger.test.parcelize",
     visibility = ["//visibility:public"],
-    runtime_deps = [":parcelize"],
+    runtime_deps = [
+        # do not sort,
+        ":parcelize",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/base/testFramework",
         "//plugins/kotlin/base/testFramework:testFramework_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
@@ -70,7 +72,8 @@ jvm_library(
         "//java/openapi:java_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//plugins/kotlin/jvm-debugger/test/parcelize/testFramework",
         "//plugins/kotlin/jvm-debugger/test/parcelize/testFramework:testFramework_test_lib",
         "//libraries/junit4",

@@ -11,16 +11,17 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.awt.event.MouseEvent
 
 @RunWith(JUnit4::class)
 class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
@@ -35,6 +36,18 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     myFixture.openFileInEditor(testMdFile.virtualFile)
   }
 
+  override fun tearDown() {
+    try {
+      MarkdownSettings.getInstance(project).useFileDirectoryForCommands = null
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
+  }
+
   @Test
   fun `block run marker is shown for shell code fence`() {
     myFixture.doHighlighting()
@@ -44,20 +57,22 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
 
   @Test
   fun `block run marker invokes runner with base directory as working directory`() {
+    MarkdownSettings.getInstance(project).useFileDirectoryForCommands = false
     fireBlockMarkerAction()
     val expected = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(myFixture.file.virtualFile)?.canonicalPath
     assertEquals(expected, capturingRunner.capturedDir)
   }
 
   @Test
-  fun `block run marker invokes runner with file directory as working directory when registry key is enabled`() {
-    Registry.get("markdown.command.runner.use.file.directory").setValue(true, testRootDisposable)
+  fun `block run marker invokes runner with file directory as working directory when setting is enabled`() {
+    MarkdownSettings.getInstance(project).useFileDirectoryForCommands = true
     fireBlockMarkerAction()
     assertEquals(myFixture.file.virtualFile.parent.canonicalPath, capturingRunner.capturedDir)
   }
 
   @Test
   fun `block run marker strips trailing hash comment from command`() {
+    MarkdownSettings.getInstance(project).useFileDirectoryForCommands = true
     val testMdFile = myFixture.addFileToProject(
       "foo/withComment.md",
       "```bash\nnpm run dev       # start Vite dev server (HMR, localhost:5173)\n```"
@@ -75,7 +90,8 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     val blockMarker = markers.first { it.icon == AllIcons.RunConfigurations.TestState.Run_run }
     val action = (blockMarker.createGutterRenderer() as GutterIconRenderer).clickAction!!
     val dataContext = SimpleDataContext.builder().add(CommonDataKeys.PROJECT, project).build()
-    val event = AnActionEvent.createEvent(dataContext, action.templatePresentation.clone(), ActionPlaces.EDITOR_GUTTER, ActionUiKind.NONE, null)
+    val inputEvent = MouseEvent(myFixture.editor.component, MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0, 1, false)
+    val event = AnActionEvent.createEvent(dataContext, action.templatePresentation.clone(), ActionPlaces.EDITOR_GUTTER, ActionUiKind.NONE, inputEvent)
     action.actionPerformed(event)
   }
 

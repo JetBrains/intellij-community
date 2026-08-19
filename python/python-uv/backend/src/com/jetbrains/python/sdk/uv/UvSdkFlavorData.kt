@@ -2,16 +2,17 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.remote.RemoteSdkPropertiesPaths
-import com.jetbrains.python.sdk.PySdkUtil
+import com.jetbrains.python.sdk.activationEnvironment
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
- * TODO PY-87712 Should drop as a whole
+ * TODO PY-91452 Should drop as a whole
  * uvWorkingDirectory - workingDirectory in PythonSdkAdditionalData
  * usePip - can be deduced based on requirementsFile in PythonSdkAdditionalData
  * venvPath - sdkHome
@@ -34,7 +35,7 @@ data class UvSdkFlavorData(
     val separator = targetCommandLineBuilder.request.targetPlatform.platform.fileSeparator
     targetCommandLineBuilder.addEnvironmentVariable("UV_PROJECT_ENVIRONMENT", interpreterPath.parentPath(separator).parentPath(separator))
     if (!PythonSdkUtil.isRemote(sdk)) {
-      PySdkUtil.activateVirtualEnv(sdk)
+      runBlockingMaybeCancellable { sdk.activationEnvironment() }
     }
   }
 

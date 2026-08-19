@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.visibility.isVisibleInClass
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
-import org.jetbrains.kotlin.analysis.api.components.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.expressions.contextSensitiveResolutionStatus
 import org.jetbrains.kotlin.analysis.api.resolution.KaContextSensitiveResolutionStatus
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue

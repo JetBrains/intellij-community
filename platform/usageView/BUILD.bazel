@@ -80,6 +80,8 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.usageView.iml",
+        "resources/intellij.platform.usageView.actions.xml",
+        "resources/intellij.platform.usageView.xml",
     ],
     visibility = ["//visibility:public"],
 )

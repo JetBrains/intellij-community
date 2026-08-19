@@ -22,8 +22,9 @@ import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isNothingType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.codeInsight.slicer.HackedSliceNullnessAnalyzerBase
 import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
@@ -70,7 +71,7 @@ class KotlinSliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer 
                     }
                     return when {
                         types.isEmpty() -> Nullability.UNKNOWN
-                        types.all { it.isNothingType && it.isMarkedNullable } -> Nullability.NULLABLE
+                        types.all { it.classId == KaStandardTypeClassIds.NOTHING && it.isMarkedNullable } -> Nullability.NULLABLE
                         types.any {
                           it is KaErrorType || it.isNullable ||
                                 (it as? KaFlexibleType)?.let { flexibleType -> flexibleType.upperBound.isMarkedNullable != flexibleType.lowerBound.isMarkedNullable } == true } -> Nullability.UNKNOWN

@@ -12,11 +12,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.toArray
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.isCharType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -43,7 +45,8 @@ internal class ReplaceJavaStaticMethodWithKotlinAnalogInspection :
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
         !findReplacementCandidatesByPsi(element).isEmpty()
 
-    override fun KaSession.prepareContext(element: KtCallExpression): List<Replacement>? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): List<Replacement>? {
         val replacements = findReplacementCandidatesByPsi(element).filter {
             it.isApplicable(element)
         }
@@ -135,7 +138,7 @@ private object Holder {
                         val singleArgument = valueArguments.single().getArgumentExpression()
                         if (singleArgument != null) {
                             analyze(call) {
-                              singleArgument.expressionType?.isCharType
+                              singleArgument.expressionType?.classId == KaStandardTypeClassIds.CHAR
                             } == true
                         } else {
                             false

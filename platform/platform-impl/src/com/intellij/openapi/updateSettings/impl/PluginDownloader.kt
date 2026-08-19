@@ -7,6 +7,8 @@ import com.intellij.ide.plugins.DynamicPlugins
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.InstalledPluginsState
+import com.intellij.ide.plugins.PluginCompatibilityUtils
+import com.intellij.ide.plugins.PluginCompatibilityUtils.convertToUIError
 import com.intellij.ide.plugins.PluginDependencyImpl
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginMainDescriptor
@@ -17,7 +19,7 @@ import com.intellij.ide.plugins.getMainDescriptor
 import com.intellij.ide.plugins.isBrokenPlugin
 import com.intellij.ide.plugins.loadDescriptorFromArtifact
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService
-import com.intellij.ide.plugins.marketplace.PluginSignatureChecker
+import com.intellij.ide.plugins.marketplace.PluginSignatureVerifier
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.plugins.newui.PluginDependencyModel
 import com.intellij.ide.plugins.newui.PluginUiModel
@@ -80,6 +82,7 @@ class PluginDownloader private constructor(
   private var myFile: Path? = null
   private var myOldFile: Path? = null
   private var myShownErrors: Boolean = false
+  private var myReplacingPendingUpdate: Boolean = false
 
   fun withErrorsConsumer(errorsConsumer: Consumer<@NotificationContent String>): PluginDownloader {
     return PluginDownloader(myModel, myPluginUrl, myBuildNumber, errorsConsumer, myDownloadService)
@@ -148,8 +151,17 @@ class PluginDownloader private constructor(
 
   @Throws(IOException::class)
   fun prepareToInstall(indicator: ProgressIndicator?): Boolean {
+    return prepareToInstall(indicator, false)
+  }
+
+  @ApiStatus.Internal
+  @Throws(IOException::class)
+  fun prepareToInstall(indicator: ProgressIndicator?, replacePendingUpdate: Boolean): Boolean {
     ThreadingAssertions.assertBackgroundThread()
     myShownErrors = false
+
+    val replacingPendingUpdate = replacePendingUpdate && InstalledPluginsState.getInstance().wasUpdatedWithRestart(myPluginId)
+    myReplacingPendingUpdate = replacingPendingUpdate
 
     if (myFile != null) {
       val actualDescriptor = loadDescriptorFromArtifact()
@@ -174,7 +186,7 @@ class PluginDownloader private constructor(
         if (result < 0 && isDowngradeAllowed(installedDescriptor)) {
           LOG.info("Preparing to downgrade plugin '" + myPluginId + "' : " + pluginVersion + " -> " + installedDescriptor.version)
         }
-        else if (result <= 0) {
+        else if (result < 0 || (result == 0 && !replacingPendingUpdate)) {
           LOG.info("Preparing: plugin $myPluginId: current version (max) $pluginVersion")
           return false
         }
@@ -196,7 +208,7 @@ class PluginDownloader private constructor(
     }
 
     val loaded = LoadingState.COMPONENTS_LOADED.isOccurred  // plugins can be requested during initial IDE setup
-    if (loaded && !PluginSignatureChecker.verifyIfRequired(myDescriptor, file, isFromMarketplace(), true)) {
+    if (loaded && !PluginSignatureVerifier.verifyIfRequired(myDescriptor, file, isFromMarketplace(), true)) {
       myShownErrors = true
       return false
     }
@@ -207,7 +219,7 @@ class PluginDownloader private constructor(
       return false
     }
 
-    if (loaded && InstalledPluginsState.getInstance().wasUpdated(actualDescriptor.pluginId)) {
+    if (loaded && InstalledPluginsState.getInstance().wasUpdated(actualDescriptor.pluginId) && !replacingPendingUpdate) {
       reportError(IdeBundle.message("error.pending.update", pluginName))
       return false
     }
@@ -220,7 +232,7 @@ class PluginDownloader private constructor(
       if (result < 0 && isDowngradeAllowed(descriptor)) {
         LOG.info("Downgrading plugin '" + myPluginId + "' : " + pluginVersion + " -> " + descriptor.version)
       }
-      else if (result <= 0) {
+      else if (result < 0 || (result == 0 && !replacingPendingUpdate)) {
         LOG.info("Plugin $myPluginId: current version (max) $pluginVersion")
         reportError(IdeBundle.message("error.older.update", pluginVersion, descriptor.version))
         return false
@@ -230,7 +242,8 @@ class PluginDownloader private constructor(
     myDescriptor = actualDescriptor
 
     val buildNumber = myBuildNumber ?: PluginManagerCore.buildNumber
-    val incompatibleError = PluginManagerCore.checkBuildNumberCompatibility(actualDescriptor, buildNumber)
+    val incompatibleError = PluginCompatibilityUtils.checkBuildNumberCompatibility(actualDescriptor, buildNumber)
+      ?.convertToUIError(actualDescriptor)
     if (incompatibleError != null) {
       LOG.info(
         "Plugin " + myPluginId + " is incompatible with current installation " +
@@ -266,11 +279,13 @@ class PluginDownloader private constructor(
 
   @Throws(IOException::class)
   fun install() {
-    PluginInstaller.installAfterRestartAndKeepIfNecessary(myDescriptor, getFilePath(), myOldFile)
+    val state = if (LoadingState.COMPONENTS_LOADED.isOccurred) InstalledPluginsState.getInstance() else null
+    val pendingArchive = if (myReplacingPendingUpdate) state?.getUpdatedPluginArchive(myDescriptor.pluginId) else null
+    PluginInstaller.installAfterRestartAndKeepIfNecessary(myDescriptor, getFilePath(), myOldFile, pendingArchive)
 
-    if (LoadingState.COMPONENTS_LOADED.isOccurred) {
+    if (state != null) {
       val isInstalled = PluginManagerCore.isPluginInstalled(myDescriptor.pluginId)
-      InstalledPluginsState.getInstance().onPluginInstall(myDescriptor, isInstalled, true)
+      state.onPluginInstall(myDescriptor, isInstalled, true, getFilePath())
     }
     else {
       InstalledPluginsState.addPreInstalledPlugin(myDescriptor)
@@ -383,10 +398,15 @@ class PluginDownloader private constructor(
       newBuildNumber: BuildNumber?,
     ): Int {
       var state = VersionComparatorUtil.compare(newPluginVersion, existingPlugin.version)
-      if (state < 0 && (isBrokenPlugin(existingPlugin) || PluginManagerCore.isIncompatible(existingPlugin, newBuildNumber))) {
+      if (state < 0 && isIncompatibleOrBrokenPlugin(existingPlugin, newBuildNumber)) {
         state = 1
       }
       return state
+    }
+
+    @ApiStatus.Internal
+    fun isIncompatibleOrBrokenPlugin(installedPlugin: IdeaPluginDescriptor, ideBuildNumber: BuildNumber?): Boolean {
+      return isBrokenPlugin(installedPlugin) || PluginManagerCore.isIncompatible(installedPlugin, ideBuildNumber)
     }
 
     @JvmStatic

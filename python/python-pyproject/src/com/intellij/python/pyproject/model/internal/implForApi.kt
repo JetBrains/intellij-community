@@ -4,10 +4,9 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.internal.workspaceBridge.pyProjectTomlEntity
 import com.intellij.workspaceModel.ide.legacyBridge.findModule
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity

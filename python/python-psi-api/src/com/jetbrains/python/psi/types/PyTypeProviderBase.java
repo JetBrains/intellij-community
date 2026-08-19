@@ -84,9 +84,18 @@ public class PyTypeProviderBase implements PyTypeProvider {
     return Collections.emptyMap();
   }
 
+  @Deprecated
   @Override
   public @Nullable Ref<@Nullable PyCallableType> prepareCalleeTypeForCall(@Nullable PyType type,
                                                                           @NotNull PyCallExpression call,
+                                                                          @NotNull TypeEvalContext context) {
+    PyExpression callee = call.getCallee();
+    return callee == null ? null : prepareCalleeTypeForCall(type, callee, context);
+  }
+
+  @Override
+  public @Nullable Ref<@Nullable PyCallableType> prepareCalleeTypeForCall(@Nullable PyType type,
+                                                                          @NotNull PyExpression callee,
                                                                           @NotNull TypeEvalContext context) {
     return null;
   }

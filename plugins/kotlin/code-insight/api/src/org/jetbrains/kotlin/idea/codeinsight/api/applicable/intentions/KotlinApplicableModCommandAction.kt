@@ -65,7 +65,8 @@ abstract class KotlinApplicableModCommandAction<E : KtElement, C : Any>(
     abstract class Simple<E : KtElement>(
         elementClass: KClass<E>,
     ) : KotlinApplicableModCommandAction<E, Unit>(elementClass) {
-        final override fun KaSession.prepareContext(element: E) {
+        context(session: KaSession)
+        final override fun prepareContext(element: E) {
         }
     }
 }

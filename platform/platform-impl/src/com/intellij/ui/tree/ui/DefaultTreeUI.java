@@ -42,15 +42,12 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
-import javax.swing.event.TreeModelEvent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.AbstractLayoutCache;
-import javax.swing.tree.FixedHeightLayoutCache;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import javax.swing.tree.VariableHeightLayoutCache;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -88,7 +85,11 @@ import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollapseSupport, CustomBoundsTreeUI {
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
-  public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
+  /**
+   * Allows clients to override the default auto-expand behavior for a tree.
+   * If unset, auto-expand is allowed for showing trees backed by {@link BgtAwareTreeModel}.
+   */
+  public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to override the default auto-expand behavior");
   public static final Key<Function<Object, Boolean>> AUTO_EXPAND_FILTER =
     Key.create("allows to filter single child nodes which should not be auto-expanded");
 
@@ -189,8 +190,9 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
   }
 
   private static boolean isAutoExpandAllowed(@NotNull JTree tree) {
+    if (!tree.isShowing()) return false;
     Boolean allowed = ClientProperty.get(tree, AUTO_EXPAND_ALLOWED);
-    return allowed != null ? allowed : tree.isShowing();
+    return allowed != null ? allowed : tree.getModel() instanceof BgtAwareTreeModel;
   }
 
   private static boolean isAutoExpandAllowed(@NotNull JTree tree, @NotNull Object node) {
@@ -766,50 +768,10 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
 
   @Override
   protected AbstractLayoutCache createLayoutCache() {
-    if (is("ide.tree.experimental.layout.cache", true)) {
-      return new DefaultTreeLayoutCache(path -> {
-        handleAutoExpand(path);
-        return Unit.INSTANCE;
-      });
-    }
-
-    if (isLargeModel() && getRowHeight() > 0) {
-      return new FixedHeightLayoutCache();
-    }
-
-    return new VariableHeightLayoutCache() {
-      @Override
-      public void setExpandedState(TreePath path, boolean isExpanded) {
-        int oldRowCount = getRowCount();
-        super.setExpandedState(path, isExpanded);
-        if (isExpanded) onSingleChildInserted(path, oldRowCount);
-      }
-
-      @Override
-      public void treeNodesInserted(TreeModelEvent event) {
-        int oldRowCount = getRowCount();
-        super.treeNodesInserted(event);
-        onSingleChildInserted(event.getTreePath(), oldRowCount);
-      }
-
-      private void onSingleChildInserted(TreePath path, int oldRowCount) {
-        if (path == null || oldRowCount + 1 != getRowCount()) return;
-        JTree tree = getTree();
-        if (!shouldAutoExpand(tree, path)) return;
-        TreeModel model = tree.getModel();
-        if (model instanceof BgtAwareTreeModel && 1 == model.getChildCount(path.getLastPathComponent())) {
-          int pathCount = 1 + path.getPathCount();
-          for (int i = 0; i <= oldRowCount; i++) {
-            TreePath row = getPathForRow(i);
-            if (row != null && pathCount == row.getPathCount() && path.equals(row.getParentPath())) {
-              handleAutoExpand(row);
-              // this code is intended to auto-expand a single child node
-              return;
-            }
-          }
-        }
-      }
-    };
+    return new DefaultTreeLayoutCache(path -> {
+      handleAutoExpand(path);
+      return Unit.INSTANCE;
+    });
   }
 
   private final @NotNull AtomicInteger bulkOperationsInProgress = new AtomicInteger();
@@ -878,11 +840,9 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
     if (!shouldAutoExpand(tree, row.getParentPath())) {
       return;
     }
-    if (tree.getModel() instanceof BgtAwareTreeModel) {
-      Object node = row.getLastPathComponent();
-      if (isAutoExpandAllowed(tree, node)) {
-        EdtInvocationManager.invokeLaterIfNeeded(() -> tree.expandPath(row));
-      }
+    Object node = row.getLastPathComponent();
+    if (isAutoExpandAllowed(tree, node)) {
+      EdtInvocationManager.invokeLaterIfNeeded(() -> tree.expandPath(row));
     }
   }
   

@@ -1,6 +1,6 @@
-import sys
 from io import BytesIO, IOBase
 from typing import Any
+from wsgiref.types import StartResponse, WSGIEnvironment
 
 from django.core.files import uploadedfile
 from django.core.handlers import base
@@ -10,11 +10,6 @@ from django.http.response import HttpResponseBase
 from django.utils.datastructures import MultiValueDict
 from django.utils.functional import cached_property
 from typing_extensions import override
-
-if sys.version_info >= (3, 11):
-    from wsgiref.types import StartResponse, WSGIEnvironment
-else:
-    from _typeshed.wsgi import StartResponse, WSGIEnvironment
 
 class LimitedStream(IOBase):
     limit: int
@@ -35,7 +30,7 @@ class WSGIRequest(HttpRequest):
     def COOKIES(self) -> dict[str, str]: ...  # type: ignore[override]
     @property
     @override
-    def FILES(self) -> MultiValueDict[str, uploadedfile.UploadedFile]: ...  # type: ignore[override]
+    def FILES(self) -> MultiValueDict[str, uploadedfile.UploadedFile[Any]]: ...  # type: ignore[override]
 
 class WSGIHandler(base.BaseHandler):
     request_class: type[WSGIRequest]

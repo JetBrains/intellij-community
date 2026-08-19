@@ -243,7 +243,12 @@ java_import(
 )
 ```
 
-### Phase 7: Output & Cleanup
+### Phase 7: Plugin Distribution Generation
+
+For each module containing a `plugin.xml` marked with a special comment generate a call of `ij_plugin` rule with `content_modules` argument
+populated from the content modules registered in `plugin.xml`.
+
+### Phase 8: Output & Cleanup
 
 1. Save all BUILD.bazel files atomically (temp file + move)
 2. Verify HTTP file checksums match MODULE.bazel
@@ -364,6 +369,13 @@ The generator searches for marker files to find project roots:
       "target": "@lib//:annotations",
       "jars": ["external/..."],
       "sourceJars": ["external/..."]
+    }
+  },
+  "pluginDistributionTargets": {
+    //mapping from name of module with `plugin.xml` to the target and its project-relative output directory
+    "intellij.plugin": {
+      "target": "@community//plugin:plugin_plugin",
+      "distributionDirectory": "out/bazel-out/jvm-fastbuild/bin/plugin/plugin_plugin"
     }
   }
 }

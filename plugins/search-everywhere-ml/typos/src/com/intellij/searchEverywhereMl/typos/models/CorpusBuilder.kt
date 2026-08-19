@@ -47,7 +47,7 @@ internal class CorpusBuilder(private val coroutineScope: CoroutineScope) {
     else {
       withBackgroundProgress(
         project,
-        TyposBundle.getMessage("progress.title.computing.actions.language.model"),
+        TyposBundle.message("progress.title.computing.actions.language.model"),
         TaskCancellation.nonCancellable(),
         suspender = null,
         visibleInStatusBar = false

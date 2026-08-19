@@ -28,7 +28,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.additionalArgumentsAsList
-import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 
 private val LOG = logger<WorkspaceModelGenerator>()
@@ -73,7 +72,7 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
         processAbstractTypes = module.withAbstractTypes,
         explicitApiEnabled = module.explicitApiEnabled,
         isTestSourceFolder = sourceRoot.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID,
-        isTestModule = module.isTestModule, // TODO(It doesn't work for all modules)
+        isTestModule = module.name == WORKSPACE_TESTS_MODULE,
         targetFolderGenerator = {
           WriteAction.compute<VirtualFile?, Throwable> {
             var genSourceRot: SourceRootEntity? = null
@@ -120,7 +119,8 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
   }
 
   private fun getSourceRoots(moduleEntity: ModuleEntity): List<SourceRootEntity> {
-    return moduleEntity.contentRoots.flatMap { it.sourceRoots.flatMap { it.javaSourceRoots } }.filter { !it.generated }.map { it.sourceRoot }.distinct()
+    return moduleEntity.contentRoots.flatMap { it.sourceRoots.flatMap { it.javaSourceRoots } }.filter { !it.generated }
+      .map { it.sourceRoot }.distinct()
   }
 
   private val Module.withAbstractTypes: Boolean
@@ -144,6 +144,8 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
       "intellij.platform.workspace.storage.testEntities",
       "intellij.android.projectSystem.gradle"
     )
+
+    const val WORKSPACE_TESTS_MODULE: String = "intellij.platform.workspace.storage.testEntities"
 
     fun getInstance(project: Project): WorkspaceModelGenerator = project.service()
   }

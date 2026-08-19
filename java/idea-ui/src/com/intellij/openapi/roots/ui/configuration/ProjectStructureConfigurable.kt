@@ -637,6 +637,20 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
       return project.service<ProjectStructureConfigurable>()
     }
 
+    /**
+     * Returns the already created instance or `null` if the service has not been instantiated yet.
+     *
+     * Unlike [getInstance], this does not force the service (and its Swing UI) to be created.
+     * It is intended for background threads that only need the context of an already opened
+     * Project Structure dialog: creating this configurable off-EDT builds Swing components in field
+     * initializers (e.g. the MasterDetailsComponent tree), which contends the global AWT tree lock
+     * and freezes the IDE (IJPL-248581).
+     */
+    @JvmStatic
+    fun getInstanceIfCreated(project: Project): ProjectStructureConfigurable? {
+      return project.getServiceIfCreated(ProjectStructureConfigurable::class.java)
+    }
+
     private fun createPlaceFor(configurable: Configurable?): Place {
       return Place().putPath(CATEGORY, configurable)
     }

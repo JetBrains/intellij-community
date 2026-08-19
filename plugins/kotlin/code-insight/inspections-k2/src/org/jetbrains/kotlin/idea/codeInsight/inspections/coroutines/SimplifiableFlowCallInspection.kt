@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutinesIds
 import org.jetbrains.kotlin.idea.codeInsight.inspections.AbstractSimplifiableCallInspection

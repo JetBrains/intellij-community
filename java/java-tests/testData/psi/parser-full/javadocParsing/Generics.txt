@@ -1,0 +1,201 @@
+PsiJavaFile:Generics.java
+  PsiImportList
+    <empty list>
+  PsiClass:C
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace(' ')
+      PsiReferenceLink:
+        PsiDocToken:DOC_LBRACKET('[')
+        PsiElement(DOC_REFERENCE_HOLDER)
+          PsiJavaCodeReferenceElement:List<String>
+            PsiIdentifier:List('List')
+            PsiReferenceParameterList
+              PsiJavaToken:LT('<')
+              PsiTypeElement:String
+                PsiJavaCodeReferenceElement:String
+                  PsiIdentifier:String('String')
+                  PsiReferenceParameterList
+                    <empty list>
+              PsiJavaToken:GT('>')
+        PsiDocToken:DOC_RBRACKET(']')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiReferenceLink:
+        PsiDocToken:DOC_LBRACKET('[')
+        PsiElement(DOC_REFERENCE_HOLDER)
+          PsiJavaCodeReferenceElement:HashMap<List<String>, Integer>
+            PsiIdentifier:HashMap('HashMap')
+            PsiReferenceParameterList
+              PsiJavaToken:LT('<')
+              PsiTypeElement:List<String>
+                PsiJavaCodeReferenceElement:List<String>
+                  PsiIdentifier:List('List')
+                  PsiReferenceParameterList
+                    PsiJavaToken:LT('<')
+                    PsiTypeElement:String
+                      PsiJavaCodeReferenceElement:String
+                        PsiIdentifier:String('String')
+                        PsiReferenceParameterList
+                          <empty list>
+                    PsiJavaToken:GT('>')
+              PsiJavaToken:COMMA(',')
+              PsiWhiteSpace(' ')
+              PsiTypeElement:Integer
+                PsiJavaCodeReferenceElement:Integer
+                  PsiIdentifier:Integer('Integer')
+                  PsiReferenceParameterList
+                    <empty list>
+              PsiJavaToken:GT('>')
+        PsiDocToken:DOC_RBRACKET(']')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiReferenceLink:
+        PsiDocToken:DOC_LBRACKET('[')
+        PsiElement(DOC_REFERENCE_HOLDER)
+          PsiJavaCodeReferenceElement:HashMap<Unfinished
+            PsiIdentifier:HashMap('HashMap')
+            PsiReferenceParameterList
+              PsiJavaToken:LT('<')
+              PsiTypeElement:Unfinished
+                PsiJavaCodeReferenceElement:Unfinished
+                  PsiIdentifier:Unfinished('Unfinished')
+                  PsiReferenceParameterList
+                    <empty list>
+              PsiErrorElement:'>' or ',' expected
+                <empty list>
+        PsiDocToken:DOC_RBRACKET(']')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiReferenceLink:
+        PsiDocToken:DOC_LBRACKET('[')
+        PsiElement(DOC_REFERENCE_HOLDER)
+          PsiJavaCodeReferenceElement:HashMap
+            PsiIdentifier:HashMap('HashMap')
+            PsiReferenceParameterList
+              <empty list>
+        PsiDocToken:DOC_LT('<')
+        PsiElement(DOC_TYPE_HOLDER)
+          PsiTypeElement:Boolean
+            PsiJavaCodeReferenceElement:Boolean
+              PsiIdentifier:Boolean('Boolean')
+              PsiReferenceParameterList
+                <empty list>
+        PsiDocToken:DOC_COMMA(',')
+        PsiDocToken:DOC_GT('>')
+        PsiDocToken:DOC_RBRACKET(']')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace(' \n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiInlineDocTag:@link
+        PsiDocToken:DOC_INLINE_TAG_START('{')
+        PsiDocToken:DOC_TAG_NAME('@link')
+        PsiWhiteSpace(' ')
+        PsiElement(DOC_REFERENCE_HOLDER)
+          PsiJavaCodeReferenceElement:List<String>
+            PsiIdentifier:List('List')
+            PsiReferenceParameterList
+              PsiJavaToken:LT('<')
+              PsiTypeElement:String
+                PsiJavaCodeReferenceElement:String
+                  PsiIdentifier:String('String')
+                  PsiReferenceParameterList
+                    <empty list>
+              PsiJavaToken:GT('>')
+        PsiDocToken:DOC_INLINE_TAG_END('}')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiInlineDocTag:@link
+        PsiDocToken:DOC_INLINE_TAG_START('{')
+        PsiDocToken:DOC_TAG_NAME('@link')
+        PsiWhiteSpace(' ')
+        PsiElement(DOC_REFERENCE_HOLDER)
+          PsiJavaCodeReferenceElement:HashMap<List<String>, Integer>
+            PsiIdentifier:HashMap('HashMap')
+            PsiReferenceParameterList
+              PsiJavaToken:LT('<')
+              PsiTypeElement:List<String>
+                PsiJavaCodeReferenceElement:List<String>
+                  PsiIdentifier:List('List')
+                  PsiReferenceParameterList
+                    PsiJavaToken:LT('<')
+                    PsiTypeElement:String
+                      PsiJavaCodeReferenceElement:String
+                        PsiIdentifier:String('String')
+                        PsiReferenceParameterList
+                          <empty list>
+                    PsiJavaToken:GT('>')
+              PsiJavaToken:COMMA(',')
+              PsiWhiteSpace(' ')
+              PsiTypeElement:Integer
+                PsiJavaCodeReferenceElement:Integer
+                  PsiIdentifier:Integer('Integer')
+                  PsiReferenceParameterList
+                    <empty list>
+              PsiJavaToken:GT('>')
+        PsiDocToken:DOC_INLINE_TAG_END('}')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiInlineDocTag:@link
+        PsiDocToken:DOC_INLINE_TAG_START('{')
+        PsiDocToken:DOC_TAG_NAME('@link')
+        PsiWhiteSpace(' ')
+        PsiElement(DOC_REFERENCE_HOLDER)
+          PsiJavaCodeReferenceElement:HashMap<Unfinished
+            PsiIdentifier:HashMap('HashMap')
+            PsiReferenceParameterList
+              PsiJavaToken:LT('<')
+              PsiTypeElement:Unfinished
+                PsiJavaCodeReferenceElement:Unfinished
+                  PsiIdentifier:Unfinished('Unfinished')
+                  PsiReferenceParameterList
+                    <empty list>
+              PsiErrorElement:'>' or ',' expected
+                <empty list>
+        PsiDocToken:DOC_INLINE_TAG_END('}')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiInlineDocTag:@link
+        PsiDocToken:DOC_INLINE_TAG_START('{')
+        PsiDocToken:DOC_TAG_NAME('@link')
+        PsiWhiteSpace(' ')
+        PsiElement(DOC_REFERENCE_HOLDER)
+          PsiJavaCodeReferenceElement:HashMap
+            PsiIdentifier:HashMap('HashMap')
+            PsiReferenceParameterList
+              <empty list>
+        PsiElement(DOC_TAG_VALUE_ELEMENT)
+          PsiDocToken:DOC_TAG_VALUE_LT('<')
+        PsiElement(DOC_TYPE_HOLDER)
+          PsiTypeElement:Boolean
+            PsiJavaCodeReferenceElement:Boolean
+              PsiIdentifier:Boolean('Boolean')
+              PsiReferenceParameterList
+                <empty list>
+        PsiElement(DOC_TAG_VALUE_ELEMENT)
+          PsiDocToken:DOC_TAG_VALUE_COMMA(',')
+        PsiElement(DOC_TAG_VALUE_ELEMENT)
+          PsiDocToken:DOC_TAG_VALUE_GT('>')
+        PsiDocToken:DOC_INLINE_TAG_END('}')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:C('C')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

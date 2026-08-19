@@ -16,6 +16,25 @@ internal class BazelFileUpdater(private val file: Path) {
     this.fileContent = fileContent.replace(pattern, "").trim().takeIf { it.isNotBlank() }
   }
 
+  /**
+   * The files this BUILD file exports by hand, outside the generated sections.
+   *
+   * Bazel rejects a file exported twice in one package, so a generator that also wants to export something has to
+   * defer to what a human already wrote - including the narrower visibility they chose.
+   *
+   * Call after [removeSections], which is what leaves only the hand-written content behind.
+   */
+  fun handWrittenExportedFiles(): Set<String> {
+    val fileContent = fileContent ?: return emptySet()
+    val result = HashSet<String>()
+    for (block in EXPORTS_FILES_PATTERN.findAll(fileContent)) {
+      for (entry in QUOTED_PATTERN.findAll(block.groupValues[1])) {
+        result.add(entry.groupValues[1])
+      }
+    }
+    return result
+  }
+
   fun isSectionSkipped(sectionName: String): Boolean {
     val fileContent = fileContent ?: return false
     return fileContent.contains("### skip generation section `$sectionName`")
@@ -101,3 +120,6 @@ internal class BazelFileUpdater(private val file: Path) {
     "load(\"//build:dev_server_run_configurations.bzl\", \"dev_server_run_configurations\")"
   )
 }
+
+private val EXPORTS_FILES_PATTERN = Regex("""exports_files\(\s*\[([^]]*)]""")
+private val QUOTED_PATTERN = Regex("\"([^\"]+)\"")

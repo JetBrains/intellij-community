@@ -79,14 +79,13 @@ abstract class AbstractLayoutCodeProcessor private constructor(
   var infoCollector: LayoutCodeInfoCollector? = null
     private set
 
-  private sealed interface Target {
-    object Project : Target
-    class Module(val module: com.intellij.openapi.module.Module) : Target
-    // todo: BUG! includeSubdirs is unused
-    class Directory(val directory: PsiDirectory, val includeSubdirs: Boolean) : Target
-    class Files(val files: List<PsiFile>) : Target
-    class SingleFile(val psiFile: PsiFile) : Target
-  }
+  private sealed interface Target
+  private object ProjectTarget : Target
+  private class ModuleTarget(val module: Module) : Target
+  // todo: BUG! includeSubdirs is unused
+  private class DirectoryTarget(val directory: PsiDirectory, val includeSubdirs: Boolean) : Target
+  private class FilesTarget(val files: List<PsiFile>) : Target
+  private class SingleFileTarget(val psiFile: PsiFile) : Target
 
   protected constructor(
     project: Project,
@@ -95,7 +94,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
     processChangedTextOnly: Boolean,
   ) : this(
     project,
-    Target.Project,
+    ProjectTarget,
     progressText,
     commandName,
     processChangedTextOnly
@@ -125,7 +124,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
     processChangedTextOnly: Boolean,
   ) : this(
     project,
-    if (module != null) Target.Module(module) else Target.Project,
+    if (module != null) ModuleTarget(module) else ProjectTarget,
     progressText,
     commandName,
     processChangedTextOnly
@@ -140,7 +139,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
     processChangedTextOnly: Boolean,
   ) : this(
     project,
-    Target.Directory(directory, includeSubdirs),
+    DirectoryTarget(directory, includeSubdirs),
     progressText,
     commandName,
     processChangedTextOnly
@@ -154,7 +153,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
     processChangedTextOnly: Boolean,
   ) : this(
     project,
-    Target.SingleFile(psiFile),
+    SingleFileTarget(psiFile),
     progressText,
     commandName,
     processChangedTextOnly
@@ -169,7 +168,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
     processChangedTextOnly: Boolean,
   ) : this(
     project,
-    Target.Files(files.toList()),
+    FilesTarget(files.toList()),
     progressText,
     commandName,
     processChangedTextOnly
@@ -253,7 +252,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
   }
 
   open fun run() {
-    if (target is Target.SingleFile) {
+    if (target is SingleFileTarget) {
       PsiUtilCore.ensureValid(target.psiFile)
       val virtualFile = PsiUtilCore.getVirtualFile(target.psiFile)
       if (virtualFile != null) {
@@ -278,7 +277,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
   }
 
   fun runBackground() {
-    if (target is Target.SingleFile) {
+    if (target is SingleFileTarget) {
       PsiUtilCore.ensureValid(target.psiFile)
       val virtualFile = PsiUtilCore.getVirtualFile(target.psiFile)
       if (virtualFile != null) {
@@ -299,16 +298,16 @@ abstract class AbstractLayoutCodeProcessor private constructor(
   }
 
   private fun buildFilesIterator(): FileRecursiveIterator {
-    if (target is Target.Files) {
+    if (target is FilesTarget) {
       return FileRecursiveIterator(myProject, target.files)
     }
     if (processChangedTextOnly) {
       return buildChangedFilesIterator()
     }
-    if (target is Target.Directory) {
+    if (target is DirectoryTarget) {
       return FileRecursiveIterator(target.directory)
     }
-    if (target is Target.Module) {
+    if (target is ModuleTarget) {
       return FileRecursiveIterator(target.module)
     }
     return FileRecursiveIterator(myProject)
@@ -325,8 +324,8 @@ abstract class AbstractLayoutCodeProcessor private constructor(
   }
 
   private fun getAllSearchableDirsFromContext(): List<PsiDirectory> = when (target) {
-    is Target.Directory -> listOf(target.directory)
-    is Target.Module -> FileRecursiveIterator.collectModuleDirectories(target.module)
+    is DirectoryTarget -> listOf(target.directory)
+    is ModuleTarget -> FileRecursiveIterator.collectModuleDirectories(target.module)
     else -> FileRecursiveIterator.collectProjectDirectories(myProject)
   }
 
@@ -369,7 +368,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
 
   @Throws(IncorrectOperationException::class)
   fun runWithoutProgress() {
-    if (target !is Target.SingleFile) {
+    if (target !is SingleFileTarget) {
       return
     }
     val virtualFile = PsiUtilCore.getVirtualFile(target.psiFile)

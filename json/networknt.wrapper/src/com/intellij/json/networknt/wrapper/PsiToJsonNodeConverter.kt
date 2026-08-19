@@ -13,10 +13,12 @@ import tools.jackson.core.ObjectReadContext
 import tools.jackson.core.json.JsonFactory
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.node.JsonNodeFactory
+import java.lang.reflect.Method
 import java.math.BigDecimal
+import java.math.BigInteger
+import java.util.concurrent.atomic.AtomicBoolean
 
-private val LOG = Logger.getInstance("com.intellij.json.networknt.wrapper.PsiToJsonNodeConverter")
-
+private val LOG = Logger.getInstance("#com.intellij.json.networknt.wrapper.PsiToJsonNodeConverter")
 private val UNESCAPE_JSON_FACTORY = JsonFactory()
 
 /**
@@ -123,58 +125,134 @@ private fun convertArray(arrayAdapter: JsonArrayValueAdapter, walker: JsonLikePs
   return arrayNode
 }
 
-private fun convertString(adapter: JsonValueAdapter, walker: JsonLikePsiWalker): JsonNode {
-  val raw = walker.getNodeTextForValidation(adapter.delegate)
-  val unquoted = if (raw.length >= 2 && raw.startsWith('"') && raw.endsWith('"')) {
-    raw.substring(1, raw.length - 1)
-  }
-  else if (raw.length >= 2 && raw.startsWith('\'') && raw.endsWith('\'')) {
-    raw.substring(1, raw.length - 1)
+private fun convertString(adapter: JsonValueAdapter, walker: JsonLikePsiWalker): JsonNode? {
+  val raw = getNodeTextForConversion(adapter, walker)
+  val isSingleQuoted = raw.length >= 2 && raw.startsWith('\'') && raw.endsWith('\'')
+  if (isSingleQuoted && !walker.allowsSingleQuotes()) return null
+  val unquoted = if (walker.requiresValueQuotes()) {
+    when {
+      raw.length >= 2 && raw.startsWith('"') && raw.endsWith('"') -> raw.substring(1, raw.length - 1)
+      raw.length >= 2 && raw.startsWith('\'') && raw.endsWith('\'') -> raw.substring(1, raw.length - 1)
+      else -> null
+    }
   }
   else {
-    raw
+    null
   }
-  val unescaped = unescapeJsonString(unquoted)
+  val unescaped = if (unquoted != null) {
+    if (walker.requiresValueQuotes() && walker.allowsSingleQuotes()) unescapeJson5String(unquoted)
+    else unescapeJsonString(unquoted)
+  }
+  else raw
   return JsonNodeFactory.instance.stringNode(unescaped)
 }
 
 private fun convertBoolean(adapter: JsonValueAdapter, walker: JsonLikePsiWalker): JsonNode {
-  val text = walker.getNodeTextForValidation(adapter.delegate).trim()
-  return JsonNodeFactory.instance.booleanNode(text == "true")
+  val text = getNodeTextForConversion(adapter, walker).trim()
+  return JsonNodeFactory.instance.booleanNode(text.equals("true", ignoreCase = true))
 }
 
-private fun convertNumber(adapter: JsonValueAdapter, walker: JsonLikePsiWalker): JsonNode {
-  val text = walker.getNodeTextForValidation(adapter.delegate).trim()
+private val INT_RANGE = BigInteger.valueOf(Int.MIN_VALUE.toLong())..BigInteger.valueOf(Int.MAX_VALUE.toLong())
+private val LONG_RANGE = BigInteger.valueOf(Long.MIN_VALUE)..BigInteger.valueOf(Long.MAX_VALUE)
+
+// https://spec.json5.org/#numbers
+private fun json5NonFiniteDoubleOrNull(text: String): Double? = when (text) {
+  "Infinity", "+Infinity" -> Double.POSITIVE_INFINITY
+  "-Infinity" -> Double.NEGATIVE_INFINITY
+  "NaN", "+NaN", "-NaN" -> Double.NaN
+  else -> null
+}
+
+private fun convertNumber(adapter: JsonValueAdapter, walker: JsonLikePsiWalker): JsonNode? {
+  val text = getNodeTextForConversion(adapter, walker).trim()
+  // Standard JSON has no Infinity/NaN literals (RFC 8259) — allowsSingleQuotes() is this
+  // file's existing signal for "JSON5 dialect" (see convertString), reused here so a plain
+  // .json file keeps rejecting these tokens as numbers.
+  if (walker.allowsSingleQuotes()) {
+    json5NonFiniteDoubleOrNull(text)?.let { return JsonNodeFactory.instance.numberNode(it) }
+  }
   return try {
-    if ('.' in text || 'e' in text || 'E' in text) {
-      val bd = BigDecimal(text)
-      JsonNodeFactory.instance.numberNode(bd)
+    val unsigned = if (text.startsWith('-') || text.startsWith('+')) text.substring(1) else text
+    val isDecimalRadix = !unsigned.startsWith("0x", ignoreCase = true) &&
+                         !unsigned.startsWith("0o", ignoreCase = true) &&
+                         !unsigned.startsWith("0b", ignoreCase = true)
+    if (isDecimalRadix && ('.' in text || 'e' in text || 'E' in text)) {
+      JsonNodeFactory.instance.numberNode(BigDecimal(text))
     }
     else {
-      val longVal = java.lang.Long.parseLong(text)
-      if (longVal in Int.MIN_VALUE..Int.MAX_VALUE) {
-        JsonNodeFactory.instance.numberNode(longVal.toInt())
-      }
-      else {
-        JsonNodeFactory.instance.numberNode(longVal)
+      val integer = parseInteger(text)
+      when {
+        integer in INT_RANGE -> JsonNodeFactory.instance.numberNode(integer.toInt())
+        integer in LONG_RANGE -> JsonNodeFactory.instance.numberNode(integer.toLong())
+        else -> JsonNodeFactory.instance.numberNode(integer)
       }
     }
   }
-  catch (e: NumberFormatException) {
-    LOG.error("Failed to parse number from PSI text: '$text'", e)
-    JsonNodeFactory.instance.numberNode(0)
+  catch (_: NumberFormatException) {
+    // Do not invent a numeric value for syntax extensions unsupported by Jackson.
+    null
   }
 }
 
-// Uses Jackson (same engine networknt uses to parse schemas), so values seen by the validator
-// and by us are guaranteed to match on JSON spec escapes.
-//
-// Correct for JSON PSI and YAML double-quoted scalars in the common case. Semantically wrong for:
-//   - YAML single-quoted ('it''s' → should be it's)
-//   - YAML plain / block / folded scalars with literal backslashes
-//   - YAML-extended escapes outside JSON spec (\0, \a, \e, \x..)
-// When YAML is wired into networknt.wrapper classpath, migrate to a language-aware
-// JsonValueAdapter.getStringValue() so each PSI language can plug in its own unescape rules.
+private fun parseInteger(text: String): BigInteger {
+  var digits = text
+  val negative = digits.startsWith('-')
+  if (negative || digits.startsWith('+')) {
+    digits = digits.substring(1)
+  }
+
+  val radix = when {
+    digits.startsWith("0x", ignoreCase = true) -> 16
+    digits.startsWith("0o", ignoreCase = true) -> 8
+    digits.startsWith("0b", ignoreCase = true) -> 2
+    else -> 10
+  }
+  if (radix != 10) {
+    digits = digits.substring(2)
+  }
+
+  digits = digits.replace("_", "")
+  val integer = BigInteger(digits, radix)
+  return if (negative) integer.negate() else integer
+}
+
+private class YamlTextValueMethodCache(val classLoader: ClassLoader, val method: Method?)
+
+@Volatile
+private var yamlTextValueMethodCache: YamlTextValueMethodCache? = null
+private val loggedYamlReflectionFailure = AtomicBoolean(false)
+
+private fun getNodeTextForConversion(adapter: JsonValueAdapter, walker: JsonLikePsiWalker): String {
+  val raw = walker.getNodeTextForValidation(adapter.delegate)
+  if (walker.requiresValueQuotes()) return raw
+
+  // YAML's public validation-text API intentionally returns source syntax because legacy
+  // validation unquotes it itself. Networknt needs the decoded scalar value, so use the PSI
+  // interface only here without changing that shared API or adding a hard YAML dependency.
+  val delegate = adapter.delegate
+  val classLoader = delegate.javaClass.classLoader
+  var cache = yamlTextValueMethodCache
+  if (cache == null || cache.classLoader !== classLoader) {
+    cache = YamlTextValueMethodCache(classLoader, resolveYamlGetTextValueMethod(classLoader))
+    yamlTextValueMethodCache = cache
+  }
+  val method = cache.method ?: return raw
+  if (!method.declaringClass.isInstance(delegate)) return raw
+  return runCatching { method.invoke(delegate) as? String }
+    .onFailure { LOG.warn("Failed to decode YAML scalar value via reflection; falling back to raw source text", it) }
+    .getOrNull() ?: raw
+}
+
+private fun resolveYamlGetTextValueMethod(classLoader: ClassLoader): Method? =
+  runCatching {
+    Class.forName("org.jetbrains.yaml.psi.YAMLScalar", false, classLoader).getMethod("getTextValue")
+  }.onFailure {
+    if (loggedYamlReflectionFailure.compareAndSet(false, true)) {
+      LOG.warn("YAMLScalar.getTextValue() unavailable via reflection; YAML scalar decoding falls back to raw source text", it)
+    }
+  }.getOrNull()
+
+// Uses Jackson (the same engine networknt uses to parse schemas) for quoted JSON values.
 private fun unescapeJsonString(s: String): String {
   if ('\\' !in s) return s
   return try {
@@ -186,4 +264,63 @@ private fun unescapeJsonString(s: String): String {
   catch (_: Exception) {
     s
   }
+}
+
+private fun unescapeJson5String(s: String): String {
+  val result = StringBuilder(s.length)
+  var index = 0
+  while (index < s.length) {
+    val current = s[index]
+    if (current != '\\' || index + 1 >= s.length) {
+      result.append(current)
+      index++
+      continue
+    }
+
+    val escaped = s[index + 1]
+    when (escaped) {
+      '\'', '"', '\\', '/' -> result.append(escaped).also { index += 2 }
+      'b' -> result.append('\b').also { index += 2 }
+      'f' -> result.append('\u000C').also { index += 2 }
+      'n' -> result.append('\n').also { index += 2 }
+      'r' -> result.append('\r').also { index += 2 }
+      't' -> result.append('\t').also { index += 2 }
+      'v' -> result.append('\u000B').also { index += 2 }
+      '0' -> result.append('\u0000').also { index += 2 }
+      'x' -> {
+        val end = index + 4
+        val value = if (end <= s.length) s.substring(index + 2, end).toIntOrNull(16) else null
+        if (value != null) {
+          result.append(value.toChar())
+          index = end
+        }
+        else {
+          result.append('\\').append(escaped)
+          index += 2
+        }
+      }
+      'u' -> {
+        val end = index + 6
+        val value = if (end <= s.length) s.substring(index + 2, end).toIntOrNull(16) else null
+        if (value != null) {
+          result.append(value.toChar())
+          index = end
+        }
+        else {
+          result.append('\\').append(escaped)
+          index += 2
+        }
+      }
+      '\n' -> index += 2
+      '\r' -> {
+        index += if (index + 2 < s.length && s[index + 2] == '\n') 3 else 2
+      }
+      '\u2028', '\u2029' -> index += 2
+      else -> {
+        result.append(escaped)
+        index += 2
+      }
+    }
+  }
+  return result.toString()
 }

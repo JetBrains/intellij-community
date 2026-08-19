@@ -56,7 +56,9 @@ export const BLOCKED_TOOL_NAMES = new Set([
   'container_list_dir',
   'execute_terminal_command',
   'execute_tool',
-  'skill_search'
+  'skill_search',
+  // This repo builds through Bazel wrappers (`bazel build`, `tests.cmd`); an IDE JPS build duplicates and conflicts with them.
+  'build_project'
 ])
 
 /**

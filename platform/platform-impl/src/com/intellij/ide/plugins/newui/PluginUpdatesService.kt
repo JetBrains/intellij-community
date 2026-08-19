@@ -69,11 +69,6 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
     fun isNeedUpdate(pluginId: PluginId): Boolean {
       return runBlockingMaybeCancellable { getInstance().awaitHasUpdate(pluginId) }
     }
-
-    @JvmStatic
-    fun recalculateUpdates() {
-      getInstance().recalculateUpdates()
-    }
   }
 
   init {
@@ -92,7 +87,10 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
     for (provider in PluginUpdatesProvider.getInstances()) {
       coroutineScope.launch {
         provider.pluginUpdateEvents()
-          .catch { e -> LOG.warn("Plugin update provider failed: ${provider.javaClass.name}", e) }
+          .catch { e ->
+            rethrowControlFlowException(e)
+            LOG.warn("Plugin update provider failed: ${provider.javaClass.name}", e)
+          }
           .collect { event ->
             event?.let {
               providerSnapshots[provider] = event
@@ -153,7 +151,9 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
     }
   }
 
-  fun recalculateUpdates(): Job = coroutineScope.launch { triggerUpdates() }
+  fun recalculateUpdates() {
+    coroutineScope.launch { triggerUpdates() }
+  }
 
   suspend fun awaitUpdates(): Collection<PluginUiModel> {
     ensureUpdatesStarted()

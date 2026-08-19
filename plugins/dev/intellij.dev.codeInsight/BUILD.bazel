@@ -52,6 +52,7 @@ jvm_library(
 exports_files(
     [
         "intellij.dev.codeInsight.iml",
+        "resources/intellij.dev.codeInsight.xml",
     ],
     visibility = ["//visibility:public"],
 )

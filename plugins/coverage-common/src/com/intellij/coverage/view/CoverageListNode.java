@@ -99,7 +99,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
 
   @Override
   protected void update(final @NotNull PresentationData presentation) {
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       final Object object = getValue();
       if (object instanceof PsiNamedElement value) {
         CoverageViewManager.StateBean stateBean = CoverageViewManager.getInstance(myProject).getStateBean();

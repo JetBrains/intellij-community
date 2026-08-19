@@ -35,6 +35,12 @@
       - name: $MAVEN_REPOSITORY$/com/github/ajalt/mordant/mordant-jvm/3/mordant-jvm-3.jar
       - name: $MAVEN_REPOSITORY$/com/github/ajalt/mordant/mordant-core-jvm/3/mordant-core-jvm-3.jar
       - name: $MAVEN_REPOSITORY$/com/github/ajalt/colormath/colormath-jvm/3/colormath-jvm-3.jar
+- name: lib/intellij.libraries.xerial.snappy.java.jar
+  contentModules:
+  - name: intellij.libraries.xerial.snappy.java
+    libraries:
+      xerial.snappy.java:
+      - name: $MAVEN_REPOSITORY$/org/xerial/snappy/snappy-java/1/snappy-java-1.jar
 - name: lib/modules/intellij.evaluationPlugin.agent.jar
   contentModules:
   - name: intellij.evaluationPlugin.agent
@@ -85,10 +91,6 @@
     - name: $MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4/stax2-api-4.jar
     - name: $MAVEN_REPOSITORY$/com/fasterxml/woodstox/woodstox-core/5/woodstox-core-5.jar
     - name: $MAVEN_REPOSITORY$/org/apache/hadoop/hadoop-mapreduce-client-core/3/hadoop-mapreduce-client-core-3.jar
-    reason: <- intellij.evaluationPlugin.llm
-  - name: xerial.snappy.java
-    files:
-    - name: $MAVEN_REPOSITORY$/org/xerial/snappy/snappy-java/1/snappy-java-1.jar
     reason: <- intellij.evaluationPlugin.llm
   contentModules:
   - name: intellij.evaluationPlugin.llm

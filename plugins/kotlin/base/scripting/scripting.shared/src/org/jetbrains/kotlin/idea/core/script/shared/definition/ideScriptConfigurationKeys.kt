@@ -34,6 +34,8 @@ val IdeScriptCompilationConfigurationKeys.kotlinScriptTemplate: Key<KotlinScript
 
 val IdeScriptCompilationConfigurationKeys.reloadable: Key<Boolean> by PropertiesCollection.key(defaultValue = true)
 
+val IdeScriptCompilationConfigurationKeys.canBeSwitchedOff: Key<Boolean> by PropertiesCollection.key(defaultValue = true)
+
 data class KotlinScriptTemplate(var id: String = "") {
     @Nls
     var title: String = ""

@@ -203,7 +203,7 @@ class TestPluginXmlGeneratorTest {
   }
 
   @Test
-  fun `keeps module dependency when target is not globally embedded across products`(@TempDir tempDir: Path) {
+  fun `keeps module dependency on module embedded in another product`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("Idea") {
@@ -587,7 +587,7 @@ class TestPluginXmlGeneratorTest {
   }
 
   @Test
-  fun `preserved tests descriptor dependency does not add new test plugin plugin dependency`(@TempDir tempDir: Path) {
+  fun `test-only content module dependency does not add new test plugin plugin dependency`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("TestProduct") { bundlesPlugin("intellij.owner.plugin") }
@@ -648,7 +648,7 @@ class TestPluginXmlGeneratorTest {
   }
 
   @Test
-  fun `preserved tests descriptor dependency keeps existing test plugin plugin dependency`(@TempDir tempDir: Path) {
+  fun `test-only content module dependency keeps existing test plugin plugin dependency`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("TestProduct") { bundlesPlugin("intellij.owner.plugin") }
@@ -875,7 +875,7 @@ class TestPluginXmlGeneratorTest {
       existingXmlPluginDependencies = emptySet(),
       preserveExistingPluginDependencies = emptySet(),
       writtenPluginDependencies = emptyList(),
-      allJpsPluginDependencies = emptySet(),
+      requiredPluginDependencies = emptySet(),
       suppressedModules = emptySet(),
       suppressedPlugins = emptySet(),
       suppressionUsages = emptyList(),

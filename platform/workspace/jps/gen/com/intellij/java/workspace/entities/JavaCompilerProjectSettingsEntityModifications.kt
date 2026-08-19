@@ -27,7 +27,7 @@ interface JavaCompilerProjectSettingsEntityBuilder : WorkspaceEntityBuilder<Java
 
 internal object JavaCompilerProjectSettingsEntityType :
   EntityType<JavaCompilerProjectSettingsEntity, JavaCompilerProjectSettingsEntityBuilder>() {
-  override val entityClass: Class<JavaCompilerProjectSettingsEntity> get() = JavaCompilerProjectSettingsEntity::class.java
+  override val entityImplClass: Class<*> get() = JavaCompilerProjectSettingsEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = JavaCompilerProjectSettingsEntityImpl.Builder::class.java
   operator fun invoke(
     additionalOptions: List<String>,
@@ -49,7 +49,6 @@ fun MutableEntityStorage.modifyJavaCompilerProjectSettingsEntity(
 
 var ProjectSettingsEntityBuilder.javaCompilerSettings: JavaCompilerProjectSettingsEntityBuilder?
   by WorkspaceEntity.extensionBuilder(JavaCompilerProjectSettingsEntity::class.java)
-
 
 @JvmOverloads
 @JvmName("createJavaCompilerProjectSettingsEntity")

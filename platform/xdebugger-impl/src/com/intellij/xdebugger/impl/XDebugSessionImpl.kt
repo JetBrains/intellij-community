@@ -41,8 +41,10 @@ import com.intellij.platform.debugger.impl.rpc.XDebugSessionPausedInfo
 import com.intellij.platform.debugger.impl.rpc.XDebugTabLayouterDto
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabAbstractInfo
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfo
+import com.intellij.platform.debugger.impl.shared.UPDATE_EXECUTION_POSITION_REMOTE_TOPIC
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.platform.rpc.topics.sendToClient
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
@@ -85,7 +87,6 @@ import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess
-import com.intellij.xdebugger.impl.proxy.asProxy
 import com.intellij.xdebugger.impl.rpc.models.RunnerLayoutUiBridge
 import com.intellij.xdebugger.impl.rpc.models.XDebugSessionAdditionalTabComponentManager
 import com.intellij.xdebugger.impl.rpc.models.XDebugTabLayouterModel
@@ -934,8 +935,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   @Deprecated("Update should go via front-end listeners")
   override fun updateExecutionPosition() {
-    // Actually, it is just a fallback. All information should go via front-end listeners.
-    updateExecutionPosition(this.asProxy())
+    UPDATE_EXECUTION_POSITION_REMOTE_TOPIC.sendToClient(myProject, id)
   }
 
   val isTopFrameSelected: Boolean

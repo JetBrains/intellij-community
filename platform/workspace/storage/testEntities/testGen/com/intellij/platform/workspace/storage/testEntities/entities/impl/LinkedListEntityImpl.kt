@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
@@ -17,7 +16,6 @@ import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntity
@@ -28,13 +26,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.LinkedListE
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class LinkedListEntityImpl(private val dataSource: LinkedListEntityData) : LinkedListEntity, WorkspaceEntityBase(dataSource) {
-
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val symbolicId: LinkedListEntityId = super.symbolicId
 
   override val myName: String
@@ -47,7 +38,6 @@ internal class LinkedListEntityImpl(private val dataSource: LinkedListEntityData
       readField("next")
       return dataSource.next
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -55,36 +45,14 @@ internal class LinkedListEntityImpl(private val dataSource: LinkedListEntityData
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: LinkedListEntityData?) : ModifiableWorkspaceEntityBase<LinkedListEntity, LinkedListEntityData>(result),
                                                           LinkedListEntityBuilder {
     internal constructor() : this(LinkedListEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity LinkedListEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -98,7 +66,7 @@ internal class LinkedListEntityImpl(private val dataSource: LinkedListEntityData
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -110,14 +78,12 @@ internal class LinkedListEntityImpl(private val dataSource: LinkedListEntityData
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var myName: String
       get() = getEntityData().myName
@@ -132,22 +98,18 @@ internal class LinkedListEntityImpl(private val dataSource: LinkedListEntityData
         checkModificationAllowed()
         getEntityData(true).next = value
         changedProperty.add("next")
-
       }
 
     override fun getEntityClass(): Class<LinkedListEntity> = LinkedListEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class LinkedListEntityData : WorkspaceEntityData<LinkedListEntity>(), SoftLinkable {
   lateinit var myName: String
   lateinit var next: LinkedListEntityId
-
   internal fun isMyNameInitialized(): Boolean = ::myName.isInitialized
   internal fun isNextInitialized(): Boolean = ::next.isInitialized
-
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
     result.add(next)
@@ -159,7 +121,6 @@ internal class LinkedListEntityData : WorkspaceEntityData<LinkedListEntity>(), S
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val removedItem_next = mutablePreviousSet.remove(next)
     if (!removedItem_next) {
@@ -185,23 +146,8 @@ internal class LinkedListEntityData : WorkspaceEntityData<LinkedListEntity>(), S
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<LinkedListEntity> {
-    val modifiable = LinkedListEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): LinkedListEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = LinkedListEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): LinkedListEntity = LinkedListEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<LinkedListEntity, *> = LinkedListEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntity") as EntityMetadata
   }

@@ -35,8 +35,11 @@
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.foundation" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jna" scope="TEST" />
   </component>
 </module>

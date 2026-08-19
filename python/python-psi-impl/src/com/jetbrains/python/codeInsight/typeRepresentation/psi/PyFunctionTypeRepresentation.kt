@@ -39,10 +39,10 @@ import com.jetbrains.python.psi.types.PyCallableTypeImpl
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyFunctionTypeImpl
 import com.jetbrains.python.psi.types.PyType
-import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyTypeVarTypeImpl
+import com.jetbrains.python.psi.types.PyVariance
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), PyExpression {
@@ -124,7 +124,7 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
         emptyList(), // constraints
         boundType, // bound
         null, // defaultType (Ref<PyType>?)
-        PyTypeParameterType.Variance.INVARIANT // variance
+        PyVariance.INVARIANT // variance
       )
 
       result[paramName] = typeVar
@@ -170,15 +170,19 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
           if (namedParam != null) {
             val paramName = namedParam.name
             val paramType = namedParam.typeExpression?.let {
-              if (it is PyDoubleStarExpression)
-              // Named kwargs unpacked: `**name: **type`
-                resolveTypeExpression(it.expression!!, context, typeVarMap)
+              if (it is PyDoubleStarExpression) {
+                // Named kwargs unpacked: `**name: **type`
+                it.expression?.let { unpacked -> resolveTypeExpression(unpacked, context, typeVarMap) }
+              }
               else {
                 // Named kwargs: `**name: type`, adapt to `dict`
                 val builtins = PyBuiltinCache.getInstance(it)
-                PyCollectionTypeImpl(
-                  builtins.dictType!!.pyClass, false, listOf(builtins.strType, resolveTypeExpression(it, context, typeVarMap))
-                )
+                val dictType = builtins.dictType
+                dictType?.let { dict ->
+                  PyCollectionTypeImpl(
+                    dict.pyClass, false, listOf(builtins.strType, resolveTypeExpression(it, context, typeVarMap))
+                  )
+                }
               }
             }
             PyCallableParameterImpl.keywordContainerNonPsi(paramName, paramType)
@@ -213,7 +217,7 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
 
     // Otherwise, resolve normally
     return when (expr) {
-      is PyDoubleStarExpression -> PyTypingTypeProvider.getType(expr.expression!!, context)?.get()
+      is PyDoubleStarExpression -> expr.expression?.let { PyTypingTypeProvider.getType(it, context)?.get() }
       else -> PyTypingTypeProvider.getType(expr, context).derefOrUnknown()
     }
   }

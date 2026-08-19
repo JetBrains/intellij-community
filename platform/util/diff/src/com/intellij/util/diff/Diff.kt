@@ -18,7 +18,7 @@ object Diff {
 
   @JvmStatic
   fun splitLines(s: CharSequence): Array<String> {
-    return if (s.isEmpty()) arrayOf("") else LineTokenizer.tokenize(s, false, false)
+    return if (s.isEmpty()) arrayOf("") else LineTokenizer.tokenize(s, includeSeparators = false, skipLastEmptyLine = false)
   }
 
   @JvmStatic

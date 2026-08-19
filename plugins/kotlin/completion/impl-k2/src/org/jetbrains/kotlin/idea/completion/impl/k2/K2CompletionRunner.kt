@@ -11,15 +11,16 @@ import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeCopy
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
-import org.jetbrains.kotlin.analysis.api.components.expectedType
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.render
-import org.jetbrains.kotlin.analysis.api.components.typeCreator
+import org.jetbrains.kotlin.analysis.api.expressions.expectedType
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
@@ -235,6 +236,10 @@ internal fun createExtensionChecker(
     val castedReceiver = if (runtimeTypeWithErasedTypeParameters == null || runtimeTypeClassId == receiver?.expressionType?.symbol?.classId) {
         receiver
     } else if (receiver != null) {
+        // A local or an anonymous class has no `ClassId`, so it is rendered by its short name, and that name cannot be
+        // resolved in the dangling file of the cast below. The cast receiver would get an error type, which makes every
+        // extension look applicable (KTIJ-39555), so it is better not to check extensions of such a runtime type at all.
+        if (runtimeTypeClassId == null) return null
         // FIXME: check extensions applicable to the runtime type properly KTIJ-35532
         val codeFragment = "(${receiver.text} as $runtimeTypeWithErasedTypeParameters)"
         KtPsiFactory.contextual(receiver).createExpression(codeFragment)
@@ -252,7 +257,8 @@ internal fun createExtensionChecker(
     }
 }
 
-private fun <P : KotlinRawPositionContext> KaSession.createCommonSectionData(
+context(session: KaSession)
+private fun <P : KotlinRawPositionContext> createCommonSectionData(
     completionContext: K2CompletionContext<P>,
 ): K2CompletionSectionCommonData<P>? {
     CompletionCommonSectionDataSetupEvent().timeEvent {
@@ -270,7 +276,7 @@ private fun <P : KotlinRawPositionContext> KaSession.createCommonSectionData(
             visibilityChecker = visibilityChecker,
             symbolFromIndexProvider = symbolFromIndexProvider,
             importStrategyDetector = importStrategyDetector,
-            session = this@createCommonSectionData,
+            session = useSiteSession,
         )
     }
 }

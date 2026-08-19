@@ -8,6 +8,11 @@ import androidx.compose.runtime.Stable
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.ContextMenuRepresentation
 import org.jetbrains.jewel.ui.component.TextContextMenu
+import org.jetbrains.jewel.ui.component.gotit.GotItTooltipStyle
+import org.jetbrains.jewel.ui.component.gotit.LocalGotItButtonStyle
+import org.jetbrains.jewel.ui.component.gotit.LocalGotItTooltipStyle
+import org.jetbrains.jewel.ui.component.gotit.fallbackGotItTooltipButtonStyle
+import org.jetbrains.jewel.ui.component.gotit.fallbackGotItTooltipStyle
 import org.jetbrains.jewel.ui.component.styling.BadgeStyles
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
@@ -169,7 +174,99 @@ public class DefaultComponentStyling(
     public val outlinedSlimButtonStyle: ButtonStyle,
     /** The styles for badges. */
     public val badgeStyle: BadgeStyles,
+    /** The style for Got It tooltips. */
+    public val gotItTooltipStyle: GotItTooltipStyle,
+    /** The style for the buttons shown inside Got It tooltips. */
+    public val gotItButtonStyle: ButtonStyle,
 ) : ComponentStyling {
+    @Deprecated(
+        message = "Use the constructor with `gotItTooltipStyle` and `gotItButtonStyle`.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    public constructor(
+        checkboxStyle: CheckboxStyle,
+        chipStyle: ChipStyle,
+        circularProgressStyle: CircularProgressStyle,
+        defaultBannerStyle: DefaultBannerStyles,
+        comboBoxStyle: ComboBoxStyle,
+        defaultButtonStyle: ButtonStyle,
+        defaultDropdownStyle: DropdownStyle,
+        defaultSplitButtonStyle: SplitButtonStyle,
+        defaultTabStyle: TabStyle,
+        dividerStyle: DividerStyle,
+        editorTabStyle: TabStyle,
+        groupHeaderStyle: GroupHeaderStyle,
+        horizontalProgressBarStyle: HorizontalProgressBarStyle,
+        iconButtonStyle: IconButtonStyle,
+        transparentIconButtonStyle: IconButtonStyle,
+        inlineBannerStyle: InlineBannerStyles,
+        lazyTreeStyle: LazyTreeStyle,
+        linkStyle: LinkStyle,
+        menuStyle: MenuStyle,
+        outlinedButtonStyle: ButtonStyle,
+        popupContainerStyle: PopupContainerStyle,
+        outlinedSplitButtonStyle: SplitButtonStyle,
+        radioButtonStyle: RadioButtonStyle,
+        scrollbarStyle: ScrollbarStyle,
+        segmentedControlButtonStyle: SegmentedControlButtonStyle,
+        segmentedControlStyle: SegmentedControlStyle,
+        selectableLazyColumnStyle: SelectableLazyColumnStyle,
+        simpleListItemStyle: SimpleListItemStyle,
+        sliderStyle: SliderStyle,
+        textAreaStyle: TextAreaStyle,
+        textFieldStyle: TextFieldStyle,
+        tooltipStyle: TooltipStyle,
+        undecoratedDropdownStyle: DropdownStyle,
+        speedSearchStyle: SpeedSearchStyle,
+        searchMatchStyle: SearchMatchStyle,
+        popupAdStyle: PopupAdStyle,
+        defaultSlimButtonStyle: ButtonStyle,
+        outlinedSlimButtonStyle: ButtonStyle,
+        badgeStyle: BadgeStyles,
+    ) : this(
+        checkboxStyle,
+        chipStyle,
+        circularProgressStyle,
+        defaultBannerStyle,
+        comboBoxStyle,
+        defaultButtonStyle,
+        defaultDropdownStyle,
+        defaultSplitButtonStyle,
+        defaultTabStyle,
+        dividerStyle,
+        editorTabStyle,
+        groupHeaderStyle,
+        horizontalProgressBarStyle,
+        iconButtonStyle,
+        transparentIconButtonStyle,
+        inlineBannerStyle,
+        lazyTreeStyle,
+        linkStyle,
+        menuStyle,
+        outlinedButtonStyle,
+        popupContainerStyle,
+        outlinedSplitButtonStyle,
+        radioButtonStyle,
+        scrollbarStyle,
+        segmentedControlButtonStyle,
+        segmentedControlStyle,
+        selectableLazyColumnStyle,
+        simpleListItemStyle,
+        sliderStyle,
+        textAreaStyle,
+        textFieldStyle,
+        tooltipStyle,
+        undecoratedDropdownStyle,
+        speedSearchStyle,
+        searchMatchStyle,
+        popupAdStyle,
+        defaultSlimButtonStyle,
+        outlinedSlimButtonStyle,
+        badgeStyle,
+        fallbackGotItTooltipStyle(),
+        fallbackGotItTooltipButtonStyle(),
+    )
+
     @Deprecated("Use the variant with badgeStyle.", level = DeprecationLevel.HIDDEN)
     public constructor(
         checkboxStyle: CheckboxStyle,
@@ -250,6 +347,8 @@ public class DefaultComponentStyling(
         defaultSlimButtonStyle,
         outlinedSlimButtonStyle,
         fallbackBadgeStyle(),
+        fallbackGotItTooltipStyle(),
+        fallbackGotItTooltipButtonStyle(),
     )
 
     @Deprecated(
@@ -333,9 +432,11 @@ public class DefaultComponentStyling(
         fallbackDefaultSlimButtonStyle(defaultButtonStyle.colors),
         fallbackOutlinedSlimButtonStyle(outlinedButtonStyle.colors),
         fallbackBadgeStyle(),
+        fallbackGotItTooltipStyle(),
+        fallbackGotItTooltipButtonStyle(),
     )
 
-    @Deprecated("Use the variant with popupAdStyle.", level = DeprecationLevel.HIDDEN)
+    @Deprecated("Use the variant with popupAdStyle and gotItTooltipStyle.", level = DeprecationLevel.HIDDEN)
     public constructor(
         checkboxStyle: CheckboxStyle,
         chipStyle: ChipStyle,
@@ -412,6 +513,8 @@ public class DefaultComponentStyling(
         fallbackDefaultSlimButtonStyle(defaultButtonStyle.colors),
         fallbackOutlinedSlimButtonStyle(outlinedButtonStyle.colors),
         fallbackBadgeStyle(),
+        fallbackGotItTooltipStyle(),
+        fallbackGotItTooltipButtonStyle(),
     )
 
     @Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.HIDDEN)
@@ -489,6 +592,8 @@ public class DefaultComponentStyling(
         fallbackDefaultSlimButtonStyle(defaultButtonStyle.colors),
         fallbackOutlinedSlimButtonStyle(outlinedButtonStyle.colors),
         fallbackBadgeStyle(),
+        fallbackGotItTooltipStyle(),
+        fallbackGotItTooltipButtonStyle(),
     )
 
     @Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.HIDDEN)
@@ -565,6 +670,8 @@ public class DefaultComponentStyling(
         fallbackDefaultSlimButtonStyle(defaultButtonStyle.colors),
         fallbackOutlinedSlimButtonStyle(outlinedButtonStyle.colors),
         fallbackBadgeStyle(),
+        fallbackGotItTooltipStyle(),
+        fallbackGotItTooltipButtonStyle(),
     )
 
     @Composable
@@ -611,6 +718,8 @@ public class DefaultComponentStyling(
             LocalDefaultSlimButtonStyle provides defaultSlimButtonStyle,
             LocalOutlinedSlimButtonStyle provides outlinedSlimButtonStyle,
             LocalBadgeStyle provides badgeStyle,
+            LocalGotItTooltipStyle provides gotItTooltipStyle,
+            LocalGotItButtonStyle provides gotItButtonStyle,
         )
 
     override fun equals(other: Any?): Boolean {
@@ -658,6 +767,8 @@ public class DefaultComponentStyling(
         if (defaultSlimButtonStyle != other.defaultSlimButtonStyle) return false
         if (outlinedSlimButtonStyle != other.outlinedSlimButtonStyle) return false
         if (badgeStyle != other.badgeStyle) return false
+        if (gotItTooltipStyle != other.gotItTooltipStyle) return false
+        if (gotItButtonStyle != other.gotItButtonStyle) return false
 
         return true
     }
@@ -702,6 +813,8 @@ public class DefaultComponentStyling(
         result = 31 * result + defaultSlimButtonStyle.hashCode()
         result = 31 * result + outlinedSlimButtonStyle.hashCode()
         result = 31 * result + badgeStyle.hashCode()
+        result = 31 * result + gotItTooltipStyle.hashCode()
+        result = 31 * result + gotItButtonStyle.hashCode()
         return result
     }
 
@@ -741,10 +854,12 @@ public class DefaultComponentStyling(
             "tooltipStyle=$tooltipStyle, " +
             "undecoratedDropdownStyle=$undecoratedDropdownStyle, " +
             "speedSearchStyle=$speedSearchStyle, " +
-            "searchMatchStyle=$searchMatchStyle," +
+            "searchMatchStyle=$searchMatchStyle, " +
             "popupAdStyle=$popupAdStyle, " +
             "defaultSlimButtonStyle=$defaultSlimButtonStyle, " +
             "outlinedSlimButtonStyle=$outlinedSlimButtonStyle, " +
             "badgeStyle=$badgeStyle" +
+            "gotItTooltipStyle=$gotItTooltipStyle, " +
+            "gotItButtonStyle=$gotItButtonStyle" +
             ")"
 }

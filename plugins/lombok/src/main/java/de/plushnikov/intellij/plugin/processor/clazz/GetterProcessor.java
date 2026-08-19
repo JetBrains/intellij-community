@@ -159,18 +159,25 @@ public final class GetterProcessor extends AbstractClassProcessor {
 
   @Override
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
+    return shouldCreateGetter(psiField) ? LombokPsiElementUsage.READ : LombokPsiElementUsage.NONE;
+  }
+
+  public static boolean shouldCreateGetter(@NotNull PsiField psiField) {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
       final Collection<PsiMethod> classMethods = filterToleratedElements(PsiClassUtil.collectClassMethodsIntern(containingClass));
-
-
       final AccessorsInfo.AccessorsValues classAccessorsValues = AccessorsInfo.getAccessorsValues(containingClass);
       final GetterFieldProcessor fieldProcessor = getGetterFieldProcessor();
 
       if (shouldCreateGetter(psiField, fieldProcessor, classAccessorsValues, classMethods)) {
-        return LombokPsiElementUsage.READ;
+        return true;
       }
     }
-    return LombokPsiElementUsage.NONE;
+    return false;
+  }
+
+  @Override
+  public boolean contributesGetter(@NotNull PsiField psiField) {
+    return ContributorHelper.contributesGetter(this, psiField);
   }
 }

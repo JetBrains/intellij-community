@@ -335,7 +335,8 @@ public class GradleExtensionsSettings {
         configuration.isScriptClasspathConfiguration(),
         configuration.getDescription(),
         configuration.getDeclarationAlternatives(),
-        configuration.getCanBeDeclared()
+        configuration.getCanBeDeclared(),
+        configuration.getExtendsFrom()
       );
     }
   }
@@ -437,19 +438,22 @@ public class GradleExtensionsSettings {
     private final @Nullable String description;
     private final @NotNull List<String> declarationAlternatives;
     private final @Nullable Boolean canDeclareDependencies;
+    private final @NotNull List<String> extendsFrom;
 
     public GradleConfiguration(@NotNull String name,
                                boolean visible,
                                boolean scriptClasspath,
                                @Nullable String description,
                                @NotNull List<String> declarationAlternatives,
-                               @Nullable Boolean canDeclareDependencies) {
+                               @Nullable Boolean canDeclareDependencies,
+                               @NotNull List<String> extendsFrom) {
       this.name = name;
       this.visible = visible;
       this.scriptClasspath = scriptClasspath;
       this.description = description;
       this.declarationAlternatives = declarationAlternatives;
       this.canDeclareDependencies = canDeclareDependencies;
+      this.extendsFrom = extendsFrom;
     }
 
     public @NotNull String getName() {
@@ -479,6 +483,15 @@ public class GradleExtensionsSettings {
      */
     public @Nullable Boolean getCanDeclareDependencies() {
       return canDeclareDependencies;
+    }
+
+    /**
+     * @return names of the configurations this configuration directly extends from, without transitive ones.
+     * A dependency declared in an extended configuration is also present in this configuration.
+     * @see <a href="https://docs.gradle.org/current/kotlin-dsl/gradle/org.gradle.api.artifacts/-configuration/extends-from.html">Gradle Documentation</a>
+     */
+    public @NotNull List<String> getExtendsFrom() {
+      return extendsFrom;
     }
   }
 

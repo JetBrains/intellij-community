@@ -62,6 +62,8 @@ sealed class IjentNioPath protected constructor(
 
   abstract override fun toRealPath(vararg options: LinkOption): IjentNioPath
 
+  abstract override fun toString(): String
+
 
   override fun register(watcher: WatchService, events: Array<out WatchEvent.Kind<*>>, vararg modifiers: WatchEvent.Modifier): WatchKey {
     if (watcher is IjentNioWatchService) {
@@ -192,7 +194,11 @@ class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSystem, cach
       }.toNioPath(true)
   }
 
-  override fun toString(): String = eelPath.toString()
+  private val asString by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    eelPath.toString()
+  }
+
+  override fun toString(): String = asString
 
   /**
    * Commonly, instances of Path are not considered as equal if they actually represent the same path but come from different file systems.
@@ -332,7 +338,11 @@ internal class RelativeIjentNioPath(val segments: List<String>, nioFs: IjentNioF
     throw InvalidPathException(toString(), "Can't find a real path for a relative path")
   }
 
-  override fun toString(): String = segments.joinToString(nioFs.separator)
+  private val asString by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    segments.joinToString(nioFs.separator)
+  }
+
+  override fun toString(): String = asString
 
   /**
    * Commonly, instances of Path are not considered as equal if they actually represent the same path but come from different file systems.

@@ -28,6 +28,7 @@ import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.sk
 
 enum class PyTestAssertionType {
   TYPE,
+  EXPECTED_TYPE,
   IS_BUILTIN,
   EXPECTED_VARIANCE,
   INFERRED_VARIANCE,
@@ -35,6 +36,20 @@ enum class PyTestAssertionType {
   ;
 
   companion object {
+    /**
+     * Modifier of a `<SEVERITY>` assertion, switching the check to the highlight's tooltip.
+     *
+     * Example: ` WARNING TOOLTIP incompatible with protocol \n Attribute 'a' is missing`
+     *
+     * The expectation of a TOOLTIP has a contains-semantic, i.e., the text only needs to be contained in the actual tooltip.
+     * In case a tooltip is a multiline string, use `\n` as a line separator. Also, the contains-semantic applies to every
+     * expected line given in a multiline string.
+     *
+     * In case the expectation of a TOOLTIP contains closing html tags (`</`, or `/>`) it will be compared against the actual
+     * tooltip. Otherwise, the actual tooltip will be cleared of all HTML tags.
+     */
+    const val TOOLTIP_KEYWORD: String = "TOOLTIP"
+
     fun fromValue(value: String): PyTestAssertionType? {
       return entries.find { it.name.equals(value, ignoreCase = true) }
     }

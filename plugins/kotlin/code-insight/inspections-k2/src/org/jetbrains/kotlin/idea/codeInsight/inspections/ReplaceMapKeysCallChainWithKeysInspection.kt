@@ -70,7 +70,8 @@ internal class ReplaceMapKeysCallChainWithKeysInspection : KotlinApplicableInspe
         return PsiTreeUtil.findChildOfType(lambdaExpression, PsiComment::class.java) == null
     }
 
-    override fun KaSession.prepareContext(element: KtQualifiedExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtQualifiedExpression): Unit? {
         val callChainExpressions = CallChainExpressions.from(element) ?: return null
 
         val firstCall =

@@ -26,7 +26,8 @@ internal class ConvertToRawStringTemplateIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("convert.concatenation.to.raw.string")
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Context? {
         if (!isFirstStringPlusExpressionWithoutNewLineInOperands(element)) return null
         return Context(buildStringTemplateForBinaryExpression(element).createSmartPointer())
     }

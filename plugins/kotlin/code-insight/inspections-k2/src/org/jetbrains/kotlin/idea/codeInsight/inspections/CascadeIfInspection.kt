@@ -14,11 +14,11 @@ import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.utils.branches
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.convertIfToWhen
 import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.getWhenConditionSubjectCandidate
 import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.matches
+import org.jetbrains.kotlin.idea.codeinsight.utils.branches
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.KtBreakExpression
 import org.jetbrains.kotlin.psi.KtContinueExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -53,7 +53,8 @@ class CascadeIfInspection : KotlinApplicableInspectionBase.Simple<KtIfExpression
 
     override fun getApplicableRanges(element: KtIfExpression): List<TextRange> = ApplicabilityRanges.ifKeyword(element)
 
-    override fun KaSession.prepareContext(element: KtIfExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtIfExpression): Unit? {
         var current: KtIfExpression? = element
         var lastSubjectCandidate: KtExpression? = null
         while (current != null) {

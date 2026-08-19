@@ -3,9 +3,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.MetaAnnotationUtil;
-import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.AlternativeJrePathConverter;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExternalizablePath;
@@ -26,7 +24,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.junit2.configuration.JUnitSettingsEditor;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
@@ -45,7 +42,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -56,7 +52,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.JavaPsiFacade;
@@ -211,14 +206,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    if (Registry.is("ide.new.run.config.junit", true)) {
-      return new JUnitSettingsEditor(this);
-    }
-    SettingsEditorGroup<JUnitConfiguration> group = new SettingsEditorGroup<>();
-    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new JUnitConfigurable(getProject()));
-    JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
-    return group;
+    return new JUnitSettingsEditor(this);
   }
 
   public Data getPersistentData() {

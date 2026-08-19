@@ -12,9 +12,7 @@ import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 @OptIn(WorkspaceEntityInternalApi::class)
 internal object MetadataStorageImpl : MetadataStorageBase() {
   override fun initializeMetadata() {
-
     var typeMetadata: StorageTypeMetadata
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.WorkspaceEntity",
                                   entityDataFqName = "com.intellij.platform.workspace.storage.impl.WorkspaceEntityData",
                                   supertypes = listOf(),
@@ -28,9 +26,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = true)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId",
                                   entityDataFqName = "com.intellij.platform.workspace.storage.impl.WorkspaceEntityWithSymbolicIdData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -52,7 +48,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = true)
-
     addMetadata(typeMetadata)
   }
 

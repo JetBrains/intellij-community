@@ -20,9 +20,18 @@ import java.util.function.BooleanSupplier
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
-internal class NioPathTextField(val scope: CoroutineScope, val chooseFiles: Boolean) : JBTextField() {
+internal class NioPathTextField(
+  val scope: CoroutineScope,
+  val chooseFiles: Boolean,
+  val chooseArchives: Boolean = false,
+) : JBTextField() {
 
   var showHiddenSupplier: BooleanSupplier = BooleanSupplier { false }
+
+  /**
+   * Converts the text of this field into a path, see [UniversalFileChooserContributor.parsePresentablePath].
+   */
+  var pathParser: (String) -> Path? = { text -> runCatching { Path.of(text) }.getOrNull() }
 
   private var completionPopup: JBPopup? = null
 
@@ -58,17 +67,12 @@ internal class NioPathTextField(val scope: CoroutineScope, val chooseFiles: Bool
   private fun showCompletion(x: Int) {
     closeCompletionPopup()
     val currentText = text
-    val directory = try {
-      Path.of(currentText)
-    }
-    catch (_: Exception) {
-      return
-    }
+    val directory = pathParser(currentText) ?: return
 
     val showHidden = showHiddenSupplier.asBoolean
     scope.launch {
       val children = withContext(Dispatchers.IO) {
-        NioFileChooserUtil.safeGetChildren(directory, showHidden, showFiles = chooseFiles)
+        NioFileChooserUtil.safeGetChildren(directory, showHidden, showFiles = chooseFiles, showArchives = chooseArchives)
       }
       if (children.isNotEmpty()) {
         @Suppress("ForbiddenInSuspectContextMethod") // ModalityState.any() is required.

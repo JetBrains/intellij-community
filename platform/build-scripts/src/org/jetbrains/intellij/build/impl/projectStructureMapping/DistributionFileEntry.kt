@@ -1,15 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
-import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import java.nio.file.Path
 
 internal data class ContentReport(
   @JvmField val platform: List<DistributionFileEntry>,
-  @JvmField val bundledPlugins: List<PluginBuildDescriptor>,
-  @JvmField val nonBundledPlugins: List<PluginBuildDescriptor>,
+  @JvmField val bundledPlugins: List<PluginBuildResult>,
+  @JvmField val nonBundledPlugins: List<PluginBuildResult>,
 ) {
   fun all(): Sequence<DistributionFileEntry> = sequence {
     yieldAll(platform)
@@ -25,9 +25,13 @@ internal data class ContentReport(
 
 sealed interface DistributionFileEntry {
   /**
-   * Path to a file in IDE distribution
+   * Path used to access this entry. It may point to an immutable cache file which is linked into the distribution.
    */
   val path: Path
+
+  /** Logical path occupied by this entry in the IDE distribution. */
+  val distributionPath: Path
+    get() = path
 
   val relativeOutputFile: String?
 
@@ -54,6 +58,7 @@ data class CustomAssetEntry(
   override val path: Path,
   override val hash: Long,
   override val relativeOutputFile: String? = null,
+  override val distributionPath: Path = path,
 ) : DistributionFileEntry {
   override val type: String
     get() = "custom-asset"
@@ -76,6 +81,7 @@ internal data class ModuleLibraryFileEntry(
   override val hash: Long,
   override val relativeOutputFile: String?,
   override val owner: ModuleItem?,
+  override val distributionPath: Path = path,
 ) : DistributionFileEntry, LibraryFileEntry, ModuleOwnedFileEntry {
   override val type: String
     get() = "module-library-file"
@@ -92,6 +98,7 @@ internal data class ProjectLibraryEntry(
   override val hash: Long,
   override val size: Int,
   override val relativeOutputFile: String?,
+  override val distributionPath: Path = path,
 ) : DistributionFileEntry, LibraryFileEntry, ModuleOwnedFileEntry {
   override val type: String
     get() = "project-library"
@@ -110,6 +117,7 @@ data class ModuleOutputEntry(
   override val hash: Long,
   override val relativeOutputFile: String,
   @JvmField val reason: String? = null,
+  override val distributionPath: Path = path,
 ) : DistributionFileEntry, ModuleOwnedFileEntry {
   override val type: String
     get() = "module-output"

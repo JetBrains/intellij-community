@@ -26,7 +26,6 @@ import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
-import com.jetbrains.python.sdk.flavors.conda.fixCondaPathEnvIfNeeded
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
@@ -87,7 +86,7 @@ internal class PyCondaSdkTest {
   }
 
   /**
-   * When we create fresh local SDK on Windows, it must be patched with env vars, see [fixCondaPathEnvIfNeeded]
+   * When we create fresh local SDK on Windows, it must be patched with the conda activation env vars.
    */
   @Test
   fun testLocalActivationFix(): Unit =  timeoutRunBlocking(10.minutes) { 

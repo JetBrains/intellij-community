@@ -82,6 +82,8 @@ open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagP
    * @param resize `true` to enable resize, `false` to disable. Default is `false`
    * @return `this`
    */
+  @Deprecated("Use Kotlin UI DSL")
+  @ApiStatus.ScheduledForRemoval
   open fun resizeY(resize: Boolean): ComponentPanelBuilder {
     myResizeY = resize
     return this
@@ -94,6 +96,8 @@ open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagP
    * @param resize `true` to enable resize, `false` to disable. Default is `true`
    * @return `this`
    */
+  @Deprecated("Use Kotlin UI DSL")
+  @ApiStatus.ScheduledForRemoval
   open fun resizeX(resize: Boolean): ComponentPanelBuilder {
     myResizeX = resize
     return this
@@ -113,12 +117,16 @@ open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagP
    * 
    * @return `this`
    */
+  @Deprecated("Use Kotlin UI DSL")
+  @ApiStatus.ScheduledForRemoval
   open fun moveLabelOnTop(): ComponentPanelBuilder {
     myLabelOnTop = true
     valid = StringUtil.isEmpty(myCommentText) || StringUtil.isEmpty(myHTDescription)
     return this
   }
 
+  @Deprecated("Use Kotlin UI DSL")
+  @ApiStatus.ScheduledForRemoval
   open fun anchorLabelOn(anchor: UI.Anchor): ComponentPanelBuilder {
     myAnchor = anchor
     return this
@@ -132,6 +140,8 @@ open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagP
     return withComment(comment, true)
   }
 
+  @Deprecated("Use Kotlin UI DSL")
+  @ApiStatus.ScheduledForRemoval
   open fun withComment(
     comment: @NlsContexts.DetailedDescription String,
     allowAutoWrapping: Boolean,
@@ -142,6 +152,8 @@ open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagP
     return this
   }
 
+  @Deprecated("Use Kotlin UI DSL")
+  @ApiStatus.ScheduledForRemoval
   open fun withCommentIcon(icon: Icon): ComponentPanelBuilder {
     myCommentIcon = icon
     return this
@@ -155,6 +167,8 @@ open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagP
    * @param listener new `HyperlinkListener`
    * @return `this`
    */
+  @Deprecated("Use Kotlin UI DSL")
+  @ApiStatus.ScheduledForRemoval
   open fun withCommentHyperlinkListener(listener: HyperlinkListener): ComponentPanelBuilder {
     myHyperlinkListener = listener
     return this
@@ -169,6 +183,8 @@ open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagP
    * @return `this`
    */
   @ApiStatus.Internal
+  @Deprecated("Use Kotlin UI DSL")
+  @ApiStatus.ScheduledForRemoval
   fun withTopRightComponent(topRightComponent: JComponent): ComponentPanelBuilder {
     myTopRightComponent = topRightComponent
     valid = StringUtil.isEmpty(myCommentText) || StringUtil.isEmpty(myHTDescription)
@@ -180,6 +196,8 @@ open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagP
    * 
    * @return `this`
    */
+  @Deprecated("Use Kotlin UI DSL")
+  @ApiStatus.ScheduledForRemoval
   open fun moveCommentRight(): ComponentPanelBuilder {
     myCommentBelow = false
     return this
@@ -191,6 +209,8 @@ open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagP
    * @param description help tooltip description.
    * @return `this`
    */
+  @Deprecated("Use Kotlin UI DSL")
+  @ApiStatus.ScheduledForRemoval
   open fun withTooltip(description: @NlsContexts.Tooltip String): ComponentPanelBuilder {
     myHTDescription = description
     valid = StringUtil.isEmpty(myCommentText) || StringUtil.isEmpty(description)
@@ -206,6 +226,8 @@ open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagP
    * 
    * @return `this`
    */
+  @Deprecated("Use Kotlin UI DSL")
+  @ApiStatus.ScheduledForRemoval
   open fun withTooltipLink(linkText: @NlsContexts.LinkLabel String, action: Runnable): ComponentPanelBuilder {
     myHTLinkText = linkText
     myHTAction = action
@@ -483,6 +505,8 @@ open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagP
 
   companion object {
 
+    @Deprecated("Use Kotlin UI DSL")
+    @ApiStatus.ScheduledForRemoval
     const val MAX_COMMENT_WIDTH: Int = 70
 
     @JvmStatic
@@ -544,7 +568,8 @@ open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagP
       return createCommentComponent(commentText, isCommentBelow, MAX_COMMENT_WIDTH, true)
     }
 
-    @Deprecated("Use Kotlin UI DSL", level = DeprecationLevel.HIDDEN)
+    @Deprecated("Use Kotlin UI DSL")
+    @ApiStatus.ScheduledForRemoval
     @JvmStatic
     fun createCommentComponent(
       commentText: @NlsContexts.DetailedDescription String?,

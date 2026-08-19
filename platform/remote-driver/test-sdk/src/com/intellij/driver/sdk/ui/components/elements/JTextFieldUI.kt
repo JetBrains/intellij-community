@@ -11,6 +11,6 @@ import javax.swing.JTextField
 fun Finder.textField(@Language("xpath") xpath: String? = null) =
   x(xpath ?: xQuery { byType(JTextField::class.java) }, JTextFieldUI::class.java)
 
-fun Finder.textField(init: QueryBuilder.() -> String) = x(JTextFieldUI::class.java, init)
+fun Finder.textField(readableName: String? = null, init: QueryBuilder.() -> String) = x(JTextFieldUI::class.java, readableName, init)
 
 class JTextFieldUI(data: ComponentData) : JTextComponentUI(data)

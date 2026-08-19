@@ -17,7 +17,7 @@ interface EnumPropsEntityBuilder : WorkspaceEntityBuilder<EnumPropsEntity> {
 }
 
 internal object EnumPropsEntityType : EntityType<EnumPropsEntity, EnumPropsEntityBuilder>() {
-  override val entityClass: Class<EnumPropsEntity> get() = EnumPropsEntity::class.java
+  override val entityImplClass: Class<*> get() = EnumPropsEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = EnumPropsEntityImpl.Builder::class.java
   operator fun invoke(
     someEnum: EnumPropsEnum,

@@ -40,8 +40,10 @@ import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptManipu
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport.Companion.TEST_IMPLEMENTATION
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport.Companion.TEST_LIB_ID
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleRepositoryInheritanceChecker
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleVersionInfo
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleVersionProvider
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KaptGradleDependenciesManipulator
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SettingsRepositoriesMode
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SettingsScriptBuilder
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.assertApplicableInMultiplatform
@@ -93,6 +95,10 @@ class GroovyBuildScriptManipulator(
     override val scriptFile: GroovyFile,
     override val preferNewSyntax: Boolean
 ) : GradleBuildScriptManipulator<GroovyFile> {
+    override val kaptDependenciesManipulator: KaptGradleDependenciesManipulator? by lazy {
+        GroovyKaptGradleDependenciesManipulator.createIfApplicable(scriptFile)
+    }
+
     override fun isApplicable(file: PsiFile): Boolean = file is GroovyFile
 
     override fun usesOldSyntax(kotlinPluginName: String): Boolean {
@@ -117,6 +123,12 @@ class GroovyBuildScriptManipulator(
         val kotlinPluginExpression = pluginsBlock.findKotlinPluginExpression()
         val applyExpression = kotlinPluginExpression?.applyExpression ?: return false
         return applyExpression.arguments.firstOrNull().booleanValue() == false
+    }
+
+    override fun hasRepositoryConfiguredInScope(scopeNames: List<String>): Boolean = scopeNames.any { scopeName ->
+        val scopeBlock = scriptFile.getBlockByName(scopeName) ?: return@any false
+        val repositoriesBlock = scopeBlock.getBlockByName("repositories") ?: return@any false
+        isRepositoryConfigured(repositoriesBlock.text)
     }
 
     override fun PsiElement.getAllVariableStatements(variableName: String): List<PsiElement> {
@@ -208,9 +220,12 @@ class GroovyBuildScriptManipulator(
             settingsManipulator.addDependencyRepositories(version)
         } else {
             // Otherwise, add dependency repositories to the project build script.
-            scriptFile.getOrCreateRepositoriesBlock().apply {
-                addRepository(version)
-                addMavenCentralIfMissing()
+            val inheritedRepositoryConfigured = GradleRepositoryInheritanceChecker.hasRepositoryConfiguredInHierarchy(scriptFile)
+            if (getRepositoryForVersion(version) != null || !inheritedRepositoryConfigured) {
+                scriptFile.getOrCreateRepositoriesBlock().apply {
+                    addRepository(version)
+                    if (!inheritedRepositoryConfigured) addMavenCentralIfMissing()
+                }
             }
         }
 

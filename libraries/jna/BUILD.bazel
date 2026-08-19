@@ -1,0 +1,43 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.jna` start
+jvm_library(
+    name = "jna",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jna",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jna-jna"],
+    runtime_deps = ["@lib//:libraries-jna-jna"],
+)
+
+jvm_library(
+    name = "jna_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jna",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jna-jna"],
+    runtime_deps = [":jna"],
+)
+### auto-generated section `build intellij.libraries.jna` end
+
+### auto-generated section `iml intellij.libraries.jna` start
+exports_files(
+    [
+        "intellij.libraries.jna.iml",
+        "resources/intellij.libraries.jna.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.jna` end

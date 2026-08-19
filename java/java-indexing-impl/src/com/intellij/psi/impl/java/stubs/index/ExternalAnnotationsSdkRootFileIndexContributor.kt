@@ -39,4 +39,7 @@ class ExternalAnnotationsSdkRootFileIndexContributor : WorkspaceFileIndexContrib
     get() = listOf(DependencyDescription.OnReference(SdkId::class.java))
 }
 
+/**
+ * Marks external-annotation roots so they are indexed but not registered as VFS watch roots.
+ */
 private data class SdkAnnotationsFileSetData(override val sdkId: SdkId) : SdkFileSetData

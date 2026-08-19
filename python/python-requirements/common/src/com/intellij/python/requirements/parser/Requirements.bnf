@@ -1,0 +1,120 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+{
+  parserClass="com.intellij.python.requirements.parser.RequirementsParser"
+  parserUtilClass="com.intellij.lang.parser.GeneratedParserUtilBase"
+
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+  psiClassPrefix=""
+  psiImplClassSuffix="Impl"
+  psiPackage="com.intellij.python.requirements.parser.psi"
+  psiImplPackage="com.intellij.python.requirements.parser.psi.impl"
+
+  elementTypeHolderClass="com.intellij.python.requirements.parser.psi.RequirementsTypes"
+  elementTypeClass="com.intellij.python.requirements.parser.psi.RequirementsElementType"
+  tokenTypeClass="com.intellij.python.requirements.parser.psi.RequirementsTokenType"
+
+  psiImplUtilClass="com.intellij.python.requirements.parser.psi.PsiImplUtil"
+}
+
+requirementsFile ::= (specification | COMMENT | EOL)*
+
+private specification ::= (
+    url_req
+    | name_req
+    | uri_reference
+    | path_req
+    | option)
+    { recoverWhile=statement_recover }
+private statement_recover ::= !EOL
+
+package_name ::= PACKAGE_NAME_TOKEN { mixin="com.intellij.python.requirements.parser.psi.impl.RequirementsReferenceHost" }
+
+version_one          ::= version_cmp version {pin=1}
+version_cmp          ::= VERSION_CMP_TOKEN
+version              ::= VERSION_TOKEN
+private version_many ::= version_one (COMMA version_one)*
+versionspec          ::= LPARENTHESIS version_many RPARENTHESIS | version_many
+
+private python_dquote_str ::= DQUOTE QUOTED_STRING_TOKEN DQUOTE {pin=1}
+private python_squote_str ::= SQUOTE QUOTED_STRING_TOKEN SQUOTE {pin=1}
+python_str                ::= python_dquote_str | python_squote_str
+
+marker_op      ::= version_cmp | IN_OP | NOTIN_OP
+marker_name    ::= ENV_MARKER_NAME | python_str
+marker_expr    ::= (marker_name marker_op python_str)
+                   | (LPARENTHESIS marker RPARENTHESIS)
+marker_and     ::= marker_expr (AND marker_expr)* {pin(".*")=1}
+marker_or      ::= marker_and (OR marker_and)* {pin(".*")=1}
+private marker ::= marker_or
+quoted_marker  ::= SEMICOLON marker {pin=1}
+
+extras_list    ::= package_name (COMMA package_name)*
+extras         ::= LSBRACE extras_list RSBRACE {pin=1}
+
+option            ::= long_option | short_option
+editable_option   ::= EDITABLE_OPTION_IDENTIFIER
+short_option      ::= short_option_name option_value
+short_option_name ::= SHORT_OPTION_IDENTIFIER
+long_option       ::= long_option_name (EQUAL? option_value)? {pin=1}
+long_option_name  ::= LONG_OPTION_IDENTIFIER
+option_value      ::= OPTION_VALUE_TOKEN
+
+name_req ::= editable_option? package_name extras? versionspec? long_option* quoted_marker? { mixin="com.intellij.python.requirements.parser.psi.impl.RequirementsReferenceHost" }
+url_req  ::= editable_option? package_name extras? AT any_uri quoted_marker? {pin=4}
+
+path_req             ::= editable_option? path extras? quoted_marker? {pin=2}
+private abs_path     ::= (PATH_SEPARATOR PATH_SEGMENT?)+
+private win_abs_path ::= DRIVE_LETTER abs_path {pin=1}
+private rel_path     ::= PATH_SEGMENT abs_path? {pin=1}
+path                 ::= win_abs_path | abs_path | rel_path { mixin="com.intellij.python.requirements.parser.psi.impl.RequirementsReferenceHost" }
+
+uri_reference ::= editable_option? any_uri quoted_marker? {pin=2}
+vcs_revision  ::= (LETTER | DIGIT | UNDERSCORE | HYPHEN | DOT | URI_UNRESERVED | URI_SUB_DELIMITER | SLASH)+
+
+git_uri              ::= GIT_URI_SCHEME AT host COLON git_uri_path (SHARP fragment)? {pin=1}
+git_uri_path         ::= git_uri_path_segment (SLASH git_uri_path_segment?)* (AT vcs_revision)?
+git_uri_path_segment ::= (LETTER | DIGIT | UNDERSCORE | HYPHEN | DOT | URI_UNRESERVED | PCT_ENCODED | URI_SUB_DELIMITER)*
+
+bzr_launchpad_uri ::= BZR_LAUNCHPAD_SCHEME package_name (AT vcs_revision)? (SHARP fragment)? {pin=1}
+
+private any_uri ::= uri | git_uri | bzr_launchpad_uri
+
+uri           ::= scheme COLON SLASH SLASH authority uri_path? (QUESTION_MARK query)? (SHARP fragment)?
+scheme        ::= URI_SCHEME
+authority     ::= (userinfo AT)? host (COLON port)?
+host          ::= IP_literal | IPv4address | reg_name
+uri_path      ::= pchar+
+userinfo      ::= (URI_UNRESERVED | PCT_ENCODED | env_variable | URI_SUB_DELIMITER | DOLLAR_SIGN | COLON)*
+env_variable  ::= ENV_VARIABLE_START variable_name ENV_VARIABLE_END
+variable_name ::= ENV_VARIABLE_NAME
+port          ::= DIGIT+
+private IP_literal  ::= LSBRACE (IPv6address | IPvFuture) RSBRACE
+private IPvFuture   ::= 'v' hexdig+ DOT (URI_UNRESERVED | URI_SUB_DELIMITER | DOLLAR_SIGN | COLON)+
+private h16_colon   ::= h16 COLON
+private IPv6address ::= (
+                  h16_colon h16_colon h16_colon h16_colon h16_colon h16_colon ls32
+                  | COLON COLON h16_colon h16_colon h16_colon h16_colon h16_colon ls32
+                  | h16?  COLON COLON h16_colon h16_colon h16_colon h16_colon ls32
+                  | (h16_colon? h16)? COLON COLON h16_colon h16_colon h16_colon ls32
+                  | (h16_colon? h16_colon? h16 )? COLON COLON h16_colon h16_colon ls32
+                  | (h16_colon? h16_colon? h16_colon? h16 )? COLON COLON h16_colon ls32
+                  | (h16_colon? h16_colon? h16_colon? h16_colon? h16 )? COLON COLON ls32
+                  | (h16_colon? h16_colon? h16_colon? h16_colon? h16_colon? h16 )? COLON COLON h16
+                  | (h16_colon? h16_colon? h16_colon? h16_colon? h16_colon? h16_colon? h16 )? COLON COLON
+                  )
+private hexdig      ::= DIGIT | 'a' | 'A' | 'b' | 'B' | 'c' | 'C' | 'd' | 'D' | 'e' | 'E' | 'f' | 'F'
+private h16         ::= hexdig hexdig? hexdig? hexdig?
+private ls32        ::= h16_colon h16 | IPv4address
+private IPv4address ::= dec_octet DOT dec_octet DOT dec_octet DOT dec_octet
+private nz          ::= !"0" DIGIT
+private dec_octet   ::= (
+                  DIGIT // 0-9
+                  | nz DIGIT // 10-99
+                  | "1" DIGIT DIGIT // 100-199
+                  | "2" ("0" | "1" | "2" | "3" | "4") DIGIT // 200-249
+                  | "2" "5" ("0" | "1" | "2" | "3" | "4" | "5") )// %250-255
+private reg_name     ::= (URI_UNRESERVED | PCT_ENCODED | URI_SUB_DELIMITER | DOT | DIGIT)*
+private pchar        ::= DIGIT | DOT | URI_UNRESERVED | PCT_ENCODED | URI_SUB_DELIMITER | COLON | AT | SLASH
+query                ::= (pchar | QUESTION_MARK)*
+fragment             ::= (pchar | QUESTION_MARK)*

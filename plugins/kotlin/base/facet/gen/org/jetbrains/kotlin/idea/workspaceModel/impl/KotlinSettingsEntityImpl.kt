@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
@@ -25,9 +24,7 @@ import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceS
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.util.descriptors.ConfigFileItem
@@ -41,12 +38,10 @@ import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsId
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntityData) : KotlinSettingsEntity,
     WorkspaceEntityBase(dataSource) {
-
     private companion object {
         internal val MODULE_CONNECTION_ID: ConnectionId =
             ConnectionId.create(ModuleEntity::class.java, KotlinSettingsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
         private val connections = listOf<ConnectionId>(MODULE_CONNECTION_ID)
-
     }
 
     override val symbolicId: KotlinSettingsId = super.symbolicId
@@ -164,7 +159,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
             readField("flushNeeded")
             return dataSource.flushNeeded
         }
-
     override val entitySource: EntitySource
         get() {
             readField("entitySource")
@@ -175,32 +169,11 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
         return connections
     }
 
-
     internal class Builder(result: KotlinSettingsEntityData?) :
         ModifiableWorkspaceEntityBase<KotlinSettingsEntity, KotlinSettingsEntityData>(result), KotlinSettingsEntity.Builder {
         internal constructor() : this(KotlinSettingsEntityData())
 
-        override fun applyToBuilder(builder: MutableEntityStorage) {
-            if (this.diff != null) {
-                if (existsInBuilder(builder)) {
-                    this.diff = builder
-                    return
-                } else {
-                    error("Entity KotlinSettingsEntity is already created in a different builder")
-                }
-            }
-            this.diff = builder
-            addToBuilder()
-            this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-            this.currentEntityData = null
-// Process linked entities that are connected without a builder
-            processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
-        }
-
-        private fun checkInitialization() {
+        override fun checkInitialization() {
             val _diff = diff
             if (!getEntityData().isEntitySourceInitialized()) {
                 error("Field WorkspaceEntity#entitySource should be initialized")
@@ -325,14 +298,12 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
             updateChildToParentReferences(parents)
         }
 
-
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
                 checkModificationAllowed()
                 getEntityData(true).entitySource = value
                 changedProperty.add("entitySource")
-
             }
         override var moduleId: ModuleId
             get() = getEntityData().moduleId
@@ -340,7 +311,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
                 checkModificationAllowed()
                 getEntityData(true).moduleId = value
                 changedProperty.add("moduleId")
-
             }
         override var name: String
             get() = getEntityData().name
@@ -390,43 +360,11 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
                 configFileItemsUpdater.invoke(value)
             }
         override var module: ModuleEntityBuilder
-            get() {
-                val _diff = diff
-                return if (_diff != null) {
-                    ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleEntityBuilder)
-                        ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] as? ModuleEntityBuilder)
-                        ?: error("module is null for KotlinSettingsEntity")
-                } else {
-                    (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] as? ModuleEntityBuilder)
-                        ?: error("module is null for KotlinSettingsEntity")
-                }
-            }
+            get() = getParent(MODULE_CONNECTION_ID) as? ModuleEntityBuilder ?: error("module is null for KotlinSettingsEntity")
             set(value) {
-                checkModificationAllowed()
-                val _diff = diff
-                if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-// Setting backref of the list
-                    if (value is ModifiableWorkspaceEntityBase<*, *>) {
-                        val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
-                    }
-// else you're attaching a new entity to an existing entity that is not modifiable
-                    _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-                }
-                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-                    _diff.instrumentation.addChild(MODULE_CONNECTION_ID, value, this)
-                } else {
-// Setting backref of the list
-                    if (value is ModifiableWorkspaceEntityBase<*, *>) {
-                        val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-                        value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
-                    }
-// else you're attaching a new entity to an existing entity that is not modifiable
-                    this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
-                }
+                changeParentOfMany(value, MODULE_CONNECTION_ID)
                 changedProperty.add("module")
             }
-
         override var useProjectSettings: Boolean
             get() = getEntityData().useProjectSettings
             set(value) {
@@ -575,7 +513,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
                 checkModificationAllowed()
                 getEntityData(true).kind = value
                 changedProperty.add("kind")
-
             }
         override var compilerArguments: String?
             get() = getEntityData().compilerArguments
@@ -590,7 +527,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
                 checkModificationAllowed()
                 getEntityData(true).compilerSettings = value
                 changedProperty.add("compilerSettings")
-
             }
         override var targetPlatform: String?
             get() = getEntityData().targetPlatform
@@ -636,7 +572,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
 
         override fun getEntityClass(): Class<KotlinSettingsEntity> = KotlinSettingsEntity::class.java
     }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -663,88 +598,33 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
     lateinit var externalSystemRunTasks: MutableList<String>
     var version: Int = 0
     var flushNeeded: Boolean = false
-
     internal fun isModuleIdInitialized(): Boolean = ::moduleId.isInitialized
     internal fun isNameInitialized(): Boolean = ::name.isInitialized
     internal fun isSourceRootsInitialized(): Boolean = ::sourceRoots.isInitialized
     internal fun isConfigFileItemsInitialized(): Boolean = ::configFileItems.isInitialized
-
     internal fun isImplementedModuleNamesInitialized(): Boolean = ::implementedModuleNames.isInitialized
     internal fun isDependsOnModuleNamesInitialized(): Boolean = ::dependsOnModuleNames.isInitialized
     internal fun isAdditionalVisibleModuleNamesInitialized(): Boolean = ::additionalVisibleModuleNames.isInitialized
     internal fun isSourceSetNamesInitialized(): Boolean = ::sourceSetNames.isInitialized
-
     internal fun isExternalProjectIdInitialized(): Boolean = ::externalProjectId.isInitialized
-
     internal fun isPureKotlinSourceFoldersInitialized(): Boolean = ::pureKotlinSourceFolders.isInitialized
     internal fun isKindInitialized(): Boolean = ::kind.isInitialized
     internal fun isExternalSystemRunTasksInitialized(): Boolean = ::externalSystemRunTasks.isInitialized
-
-
     override fun getLinks(): Set<SymbolicEntityId<*>> {
         val result = HashSet<SymbolicEntityId<*>>()
         result.add(moduleId)
-        for (item in sourceRoots) {
-        }
-        for (item in configFileItems) {
-        }
-        for (item in implementedModuleNames) {
-        }
-        for (item in dependsOnModuleNames) {
-        }
-        for (item in additionalVisibleModuleNames) {
-        }
-        for (item in sourceSetNames) {
-        }
-        for (item in pureKotlinSourceFolders) {
-        }
-        for (item in externalSystemRunTasks) {
-        }
         return result
     }
 
     override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
         index.index(this, moduleId)
-        for (item in sourceRoots) {
-        }
-        for (item in configFileItems) {
-        }
-        for (item in implementedModuleNames) {
-        }
-        for (item in dependsOnModuleNames) {
-        }
-        for (item in additionalVisibleModuleNames) {
-        }
-        for (item in sourceSetNames) {
-        }
-        for (item in pureKotlinSourceFolders) {
-        }
-        for (item in externalSystemRunTasks) {
-        }
     }
 
     override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-// TODO verify logic
         val mutablePreviousSet = HashSet(prev)
         val removedItem_moduleId = mutablePreviousSet.remove(moduleId)
         if (!removedItem_moduleId) {
             index.index(this, moduleId)
-        }
-        for (item in sourceRoots) {
-        }
-        for (item in configFileItems) {
-        }
-        for (item in implementedModuleNames) {
-        }
-        for (item in dependsOnModuleNames) {
-        }
-        for (item in additionalVisibleModuleNames) {
-        }
-        for (item in sourceSetNames) {
-        }
-        for (item in pureKotlinSourceFolders) {
-        }
-        for (item in externalSystemRunTasks) {
         }
         for (removed in mutablePreviousSet) {
             index.remove(this, removed)
@@ -765,23 +645,8 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
         return changed
     }
 
-    override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<KotlinSettingsEntity> {
-        val modifiable = KotlinSettingsEntityImpl.Builder(null)
-        modifiable.diff = diff
-        modifiable.id = createEntityId()
-        return modifiable
-    }
-
-    override fun createEntity(snapshot: EntityStorageInstrumentation): KotlinSettingsEntity {
-        val entityId = createEntityId()
-        return snapshot.initializeEntity(entityId) {
-            val entity = KotlinSettingsEntityImpl(this)
-            entity.snapshot = snapshot
-            entity.id = entityId
-            entity
-        }
-    }
-
+    override fun newInstance(): KotlinSettingsEntity = KotlinSettingsEntityImpl(this)
+    override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<KotlinSettingsEntity, *> = KotlinSettingsEntityImpl.Builder(null)
     override fun getMetadata(): EntityMetadata {
         return MetadataStorageImpl.getMetadataByTypeFqn("org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity") as EntityMetadata
     }

@@ -8,7 +8,10 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class SpaceDependencyAuthenticationDataProvider extends DependencyAuthenticationDataProvider {
-  private static final List<String> PROVIDED_HOSTS = Arrays.asList("jetbrains.team", "jetbrains.space");
+  private static final List<String> PROVIDED_HOSTS = Arrays.asList(
+    "jetbrains.team",
+    "jetbrains.space",
+    "cache-redirector.jetbrains.com");
 
   @Override
   public AuthenticationData provideAuthenticationData(String url) {

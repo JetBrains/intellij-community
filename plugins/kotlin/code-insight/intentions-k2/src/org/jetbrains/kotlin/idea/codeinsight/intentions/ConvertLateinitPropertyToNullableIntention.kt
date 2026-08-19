@@ -6,6 +6,9 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -32,7 +35,8 @@ internal class ConvertLateinitPropertyToNullableIntention :
                 && element.initializer == null
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtProperty): Context {
+    context(session: KaSession)
+    override fun prepareContext(element: KtProperty): Context {
         val nullableType = element.returnType.withNullability(isMarkedNullable = true)
         return Context(nullableType.render(position = Variance.OUT_VARIANCE))
     }

@@ -19,7 +19,7 @@ internal class InterruptThreadAction : XDebuggerTreeSplitActionBase() {
     }
     val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return
     if (!node.isSuspendedJavaThread()) {
-      sessionProxy.coroutineScope.launch {
+      e.coroutineScope.launch {
         val executionStack = node.executionStackOrNull ?: return@launch
         XDebugManagerProxy.getInstance().withId(executionStack, sessionProxy) { xExecutionStackId ->
           JavaDebuggerSessionApi.getInstance().interruptThread(xExecutionStackId)

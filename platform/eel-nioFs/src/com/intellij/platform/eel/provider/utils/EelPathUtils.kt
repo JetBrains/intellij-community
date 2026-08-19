@@ -7,6 +7,7 @@ package com.intellij.platform.eel.provider.utils
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelUserPosixInfo
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.fs.EelWindowsFileInfo
 import com.intellij.platform.eel.fs.createTemporaryDirectory
@@ -110,22 +111,6 @@ object EelPathUtils {
     return eelPath.toString()
   }
 
-  /** If [path] is `\\wsl.localhost\Ubuntu\mnt\c\Program Files`, then actual path is `C:\Program Files` */
-  @JvmStatic
-  fun getActualPath(path: Path): Path = path.run {
-    if (
-      isAbsolute &&
-      nameCount >= 2 &&
-      getName(0).toString() == "mnt" &&
-      getName(1).toString().run { length == 1 && first().isLetter() }
-    )
-      asSequence()
-        .drop(2)
-        .map(Path::toString)
-        .fold(fileSystem.getPath("${getName(1).toString().uppercase()}:\\"), Path::resolve)
-    else
-      this
-  }
 
   /**
    * ```kotlin

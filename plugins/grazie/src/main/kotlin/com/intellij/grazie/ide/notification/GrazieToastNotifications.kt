@@ -10,7 +10,6 @@ import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -32,10 +31,7 @@ object GrazieToastNotifications {
   private val shownNotifications = MultiMap.createConcurrent<Group, WeakReference<Notification>>()
 
   private val MISSING_LANGUAGES_GROUP
-    get() = obtainGroup("Proofreading missing languages information")
-
-  internal val GENERAL_GROUP
-    get() = obtainGroup("Grazie notifications")
+    get() = NotificationGroupManager.getInstance().getNotificationGroup("Proofreading missing languages information")
 
   fun showMissedLanguages(project: Project) {
     val config = GrazieConfig.get()
@@ -47,6 +43,14 @@ object GrazieToastNotifications {
       .createNotification(msg("grazie.notification.missing-languages.title"),
                           msg("grazie.notification.missing-languages.body", langs.joinToString { it.englishName }),
                           NotificationType.WARNING)
+      .addAction(object : NotificationAction(msg("grazie.notification.missing-languages.action.download.remember")) {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          GrazieConfig.update { it.copy(autoUpdateLanguages = true) }
+          GrazieRemote.downloadMissing(project)
+          notification.expire()
+          logger.info("Automatic missing language downloads enabled")
+        }
+      })
       .addAction(object : NotificationAction(msg("grazie.notification.missing-languages.action.download", langs)) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           GrazieRemote.downloadMissing(project)
@@ -75,10 +79,6 @@ object GrazieToastNotifications {
     }
     shownNotifications.putValue(group, WeakReference(this))
     return this
-  }
-
-  private fun obtainGroup(id: String): NotificationGroup {
-    return NotificationGroupManager.getInstance().getNotificationGroup(id)
   }
 
   @Nls

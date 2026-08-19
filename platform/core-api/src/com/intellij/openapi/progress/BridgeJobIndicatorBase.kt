@@ -35,6 +35,7 @@ internal abstract class BridgeJobIndicatorBase(modalityState: ModalityState): Em
     else {
       PLACEHOLDER
     }
+    ProgressManager.canceled(this)
   }
 
   override fun isCanceled(): Boolean {

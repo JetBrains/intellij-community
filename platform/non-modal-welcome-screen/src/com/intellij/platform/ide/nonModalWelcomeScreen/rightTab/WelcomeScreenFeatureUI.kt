@@ -2,7 +2,7 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.jewel.ui.icon.IconKey
+import javax.swing.Icon
 
 /**
  * UI-part of `WelcomeScreenFeatureProvider`. Adds a button to the non-modal
@@ -24,5 +24,5 @@ abstract class WelcomeScreenFeatureUI {
 
   abstract val featureKey: String
 
-  abstract val icon: IconKey
+  abstract val icon: Icon
 }

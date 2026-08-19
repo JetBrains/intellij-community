@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.scripting.k2.definition
 
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.GradleScriptDefinition
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.core.script.shared.definition.canBeSwitchedOff
 import org.jetbrains.kotlin.idea.core.script.shared.definition.kotlinScriptDefinitionInlayHint
 import org.jetbrains.kotlin.idea.core.script.shared.definition.kotlinScriptTemplate
 import org.jetbrains.kotlin.idea.core.script.shared.definition.reloadable
@@ -19,5 +20,6 @@ fun GradleScriptDefinition.withIdeKeys(): GradleScriptDefinition = with {
         }
         kotlinScriptDefinitionInlayHint(null)
         reloadable(false)
+        canBeSwitchedOff(false)
     }
 }

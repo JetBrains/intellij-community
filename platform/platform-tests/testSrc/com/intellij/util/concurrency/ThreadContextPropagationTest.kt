@@ -233,6 +233,9 @@ class ThreadContextPropagationTest {
     val callbackSemaphore = Semaphore(1)
     var cancellationTracker by AtomicReference(0)
     val uiThreadFinishSemaphore = Semaphore(1)
+    // NBRA restarts the computation once the write action which cancelled it is done, so this may be released more than
+    // once. `Semaphore.up()` never goes below zero, so that is harmless.
+    val readActionStarted = Semaphore(1)
     var runAction by AtomicReference(false)
     val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Test NBRA", 1)
 
@@ -240,6 +243,7 @@ class ThreadContextPropagationTest {
       val future = withContext(element) {
         blockingContext {
           ReadAction.nonBlocking(Callable {
+            readActionStarted.up()
             while (!runAction) {
               // the action should complete only when we explicitly allow it
               Thread.sleep(10)
@@ -281,31 +285,44 @@ class ThreadContextPropagationTest {
 
 
       blockingContext {
-        // the testing
-        assertEquals(0, cancellationTracker) // not cancelled yet
-        assertFalse(callTracker) // not completed yet
+        try {
+          // `submit` above is asynchronous, and a write action can only cancel the read action while it is running.
+          // Without this handshake the write action below may win the race, nothing gets cancelled, and the assertion
+          // on `cancellationTracker` fails sporadically.
+          readActionStarted.timeoutWaitUp()
 
-        ApplicationManager.getApplication().invokeAndWait {
-          ApplicationManager.getApplication().runWriteAction {
-            // we just cancelled NBRA by a write action
+          // the testing
+          assertEquals(0, cancellationTracker) // not cancelled yet
+          assertFalse(callTracker) // not completed yet
+
+          ApplicationManager.getApplication().invokeAndWait {
+            ApplicationManager.getApplication().runWriteAction {
+              // we just cancelled NBRA by a write action
+            }
           }
+          assertEquals(1, cancellationTracker) // cancelled 1 time
+          assertFalse(callTracker) // not completed yet
+
+          runAction = true // read action is allowed to complete now
+          while (true) {
+            try {
+              PlatformTestUtil.waitForFuture(future)
+              break
+            }
+            catch (_: TimeoutException) {
+            }
+          }
+
+          assertEquals(1, cancellationTracker) // still cancelled 1 time
+          callbackSemaphore.timeoutWaitUp()
+          uiThreadFinishSemaphore.timeoutWaitUp()
         }
-        assertEquals(1, cancellationTracker) // cancelled 1 time
-        assertFalse(callTracker) // not completed yet
-
-        runAction = true // read action is allowed to complete now
-        while (true) {
-          try {
-            PlatformTestUtil.waitForFuture(future)
-            break
-          }
-          catch (_: TimeoutException) {
-          }
+        finally {
+          // The read action spins until `runAction` is set, and the test application teardown waits for all NBRA tasks to
+          // finish. Without this, any failure above would deadlock `cleanApplicationState` and the real assertion error
+          // would never be reported - the run would just time out.
+          future.cancel()
         }
-
-        assertEquals(1, cancellationTracker) // still cancelled 1 time
-        callbackSemaphore.timeoutWaitUp()
-        uiThreadFinishSemaphore.timeoutWaitUp()
       }
     }
   }

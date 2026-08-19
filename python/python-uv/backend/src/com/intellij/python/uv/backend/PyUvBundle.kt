@@ -5,7 +5,7 @@ import com.intellij.DynamicBundle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 
-internal object PyUvBundle {
+object PyUvBundle {
   private const val BUNDLE = "messages.PyUvBundle"
 
   private val INSTANCE = DynamicBundle(PyUvBundle::class.java, BUNDLE)

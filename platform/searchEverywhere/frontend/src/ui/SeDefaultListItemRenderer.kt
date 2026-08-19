@@ -4,6 +4,8 @@ package com.intellij.platform.searchEverywhere.frontend.ui
 import com.intellij.ide.ui.colors.color
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.searchEverywhere.isExactMatch
+import com.intellij.platform.searchEverywhere.isSemantic
 import com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationImpl
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
@@ -69,7 +71,15 @@ private fun String.withAccessibleAddition(s: String?) = if (s?.isNotEmpty() == t
 fun LcrRow<SeResultListRow>.weightTextIfEnabled(row: SeResultListRow) {
   if (!Registry.`is`("search.everywhere.new.show.diagnostics", false) || row !is SeResultListItemRow) return
 
-  text("${row.item.weight} - ${row.item.providerId.value.replace("SearchEverywhereContributor", "")}") {
+  val item = row.item
+  val diagnostics = listOf(
+    item.weight.toString(),
+    if (item.isExactMatch) "Exact" else null,
+    if (item.isSemantic) "Sem" else null,
+    item.providerId.value.replace("SearchEverywhereContributor", "")
+  ).filterNotNull().joinToString(" - ")
+
+  text(diagnostics) {
     attributes = SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES
   }
 }

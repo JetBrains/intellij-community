@@ -40,6 +40,7 @@ import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.Color;
 import java.util.Map;
@@ -59,7 +60,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * Java highlighting: reports compilation errors in Java code.
- * Internal class; do not use directly. 
+ * Internal class; do not use directly.
  * If you need to check whether a block of code contains Java errors, use {@link JavaErrorCollector}.
  * If you want to filter out some error messages, implement {@link JavaErrorFilter} extension.
  */
@@ -121,7 +122,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public boolean analyze(@NotNull PsiFile psiFile, boolean updateWholeFile, @NotNull HighlightInfoHolder holder, @NotNull Runnable highlight) {
+  public boolean analyze(@NotNull PsiFile psiFile,
+                         boolean updateWholeFile,
+                         @NotNull HighlightInfoHolder holder,
+                         @NotNull Runnable highlight) {
     try {
       prepare(holder, psiFile);
       if (updateWholeFile) {
@@ -166,7 +170,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(type);
     if (tooltip.isEmpty()) {
       info.descriptionAndTooltip(error.description());
-    } else {
+    }
+    else {
       if (myTooltipStyles == null) {
         myTooltipStyles = initTooltipStyles();
       }
@@ -193,7 +198,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       registerLazyFixes(error, lazyFixes, info);
     });
     error.psiForKind(EXPRESSION_EXPECTED, REFERENCE_UNRESOLVED, REFERENCE_AMBIGUOUS)
-      .or(() -> error.psiForKind(ACCESS_PRIVATE, ACCESS_PACKAGE_LOCAL, ACCESS_PROTECTED).map(psi -> tryCast(psi, PsiJavaCodeReferenceElement.class)))
+      .or(() -> error.psiForKind(ACCESS_PRIVATE, ACCESS_PACKAGE_LOCAL, ACCESS_PROTECTED)
+        .map(psi -> tryCast(psi, PsiJavaCodeReferenceElement.class)))
       .or(() -> error.psiForKind(TYPE_UNKNOWN_CLASS).map(PsiTypeElement::getInnermostComponentReferenceElement))
       .or(() -> error.psiForKind(CALL_AMBIGUOUS_NO_MATCH, CALL_UNRESOLVED).map(PsiMethodCallExpression::getMethodExpression))
       .ifPresent(ref -> UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, info));
@@ -201,34 +207,33 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   private static void registerLazyFixes(@NotNull JavaCompilationError<?, ?> error,
-                                Consumer<@NotNull Consumer<? super @NotNull CommonIntentionAction>> lazyFixes,
-                                HighlightInfo.Builder info) {
-    if (lazyFixes != null) {
-      PsiElement psi = error.psi();
-      Consumer<? super QuickFixActionRegistrar> lazyConsumer = registrar -> {
-        Project myProject;
+                                        @Nullable Consumer<@NotNull Consumer<? super @NotNull CommonIntentionAction>> lazyFixes,
+                                        HighlightInfo.@NotNull Builder info) {
+    if (lazyFixes == null) return;
+    PsiElement psi = error.psi();
+    Consumer<? super QuickFixActionRegistrar> lazyConsumer = registrar -> {
+      Project myProject;
 
-        if (!psi.isValid() || (myProject = psi.getProject()).isDisposed()
-            || DumbService.getInstance(myProject).isDumb()) {
-          // this will be restarted anyway on smart mode switch
-          return;
-        }
-        var fixConsumer = new Consumer<CommonIntentionAction>() {
-          boolean wasRegistered = false;
-          
-          @Override
-          public void accept(CommonIntentionAction fix) {
-            wasRegistered = true;
-            registrar.register(fix.asIntention());
-          }
-        };
-        lazyFixes.accept(fixConsumer);
-        if (fixConsumer.wasRegistered) {
-          DaemonCodeAnalyzerEx.getInstanceEx(myProject).rescheduleShowIntentionsPass(psi.getContainingFile(), info);
+      if (!psi.isValid() || (myProject = psi.getProject()).isDisposed()
+          || DumbService.getInstance(myProject).isDumb()) {
+        // this will be restarted anyway on smart mode switch
+        return;
+      }
+      var fixConsumer = new Consumer<CommonIntentionAction>() {
+        boolean wasRegistered = false;
+
+        @Override
+        public void accept(CommonIntentionAction fix) {
+          wasRegistered = true;
+          registrar.register(fix.asIntention());
         }
       };
-      info.registerLazyFixes(lazyConsumer);
-    }
+      lazyFixes.accept(fixConsumer);
+      if (fixConsumer.wasRegistered) {
+        DaemonCodeAnalyzerEx.getInstanceEx(myProject).rescheduleShowIntentionsPass(psi.getContainingFile(), info);
+      }
+    };
+    info.registerLazyFixes(lazyConsumer);
   }
 
   @Override

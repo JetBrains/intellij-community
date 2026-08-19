@@ -29,8 +29,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//platform/analysis-api:analysis",
         "//platform/core-impl",
         "//platform/core-api:core",
@@ -72,6 +72,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":postfix-templates",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/core-api:core_test_lib",
@@ -105,6 +107,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.codeInsight.postfixTemplates.iml",
+        "resources/intellij.kotlin.codeInsight.postfixTemplates.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -125,6 +128,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.codeInsight.postfixTemplates.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -144,13 +148,19 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_kotlin-codeInsight-postfixTemplates-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":kotlin-codeInsight-postfixTemplates-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-codeInsight-postfixTemplates-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//platform/analysis-api:analysis",
@@ -165,8 +175,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/refactoring",
         "//platform/refactoring:refactoring_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/util:util_test_lib",
         "//plugins/kotlin/base/psi",

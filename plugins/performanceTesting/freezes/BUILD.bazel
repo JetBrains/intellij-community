@@ -20,7 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:diogen-analysis",
+        "//platform/diagnostic/freezeAnalyzer",
         "//platform/platform-frontend:frontend",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
@@ -52,6 +52,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":freezes",
+        "//platform/diagnostic/freezeAnalyzer:freezeAnalyzer_test_lib",
         "//platform/platform-frontend:frontend_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
@@ -76,6 +77,7 @@ jvm_library(
 exports_files(
     [
         "intellij.performanceTesting.freezes.iml",
+        "resources/intellij.performanceTesting.freezes.xml",
     ],
     visibility = ["//visibility:public"],
 )

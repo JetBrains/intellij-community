@@ -105,14 +105,8 @@ class TerminalLocalPathTranslator(private val descriptor: EelDescriptor) {
       LOG.debug { "Failed to translate not absolute $absolutePath, skipping" }
       return null
     }
-    val eelPath = try {
-      absolutePath.asEelPath()
-    }
-    catch (_: EelPathException) {
-      null
-    }
-    if (eelPath != null && eelPath.descriptor == this.descriptor) {
-      return eelPath
+    absolutePath.asEelPathOfDescriptor(descriptor)?.let {
+      return it
     }
 
     // Try to cover some WSL path cases
@@ -180,7 +174,14 @@ class TerminalLocalPathTranslator(private val descriptor: EelDescriptor) {
       val newPathString = eelRootPath.wslRoot + winPathString.substring(path.wslRoot.length)
       try {
         val newPath = Path.of(newPathString)
-        return newPath.asEelPath().toString()
+        val newEelPath = newPath.asEelPathOfDescriptor(descriptor)
+        return if (newEelPath != null) {
+          newEelPath.toString()
+        }
+        else {
+          LOG.debug { "Failed to translate $newPathString after changing wsl prefix" }
+          null
+        }
       }
       catch (e: Exception) {
         LOG.debug(e) { "Failed to translate $newPathString after changing wsl prefix" }
@@ -233,6 +234,15 @@ class TerminalLocalPathTranslator(private val descriptor: EelDescriptor) {
       return entriesLeft.isEmpty() || entriesRight.isEmpty() ||
              entriesLeft.endsWith(descriptor.osFamily.pathSeparator) ||
              entriesRight.startsWith(descriptor.osFamily.pathSeparator)
+    }
+
+    private fun Path.asEelPathOfDescriptor(descriptor: EelDescriptor): EelPath? {
+      return try {
+        asEelPath().takeIf { it.descriptor == descriptor }
+      }
+      catch (_: EelPathException) {
+        null
+      }
     }
   }
 }

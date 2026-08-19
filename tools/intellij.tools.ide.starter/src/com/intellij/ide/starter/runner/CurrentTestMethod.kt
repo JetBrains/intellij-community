@@ -9,6 +9,7 @@ data class TestMethod(
   val testClass: Class<*>,
   val startTime: LocalDateTime = LocalDateTime.now(),
   var arguments: List<Any> = emptyList(),
+  val id: String = "${testClass.name}#$name/$displayName",
 ) {
   val clazzSimpleName: String = testClass.simpleName
   val clazz: String = testClass.name
@@ -30,9 +31,20 @@ object CurrentTestMethod {
 
   private val onChangeListeners = CopyOnWriteArrayList<(TestMethod?) -> Unit>()
 
+  /** Remembers the method that is about to run. Listeners are announced separately, by [publishToListeners]. */
   fun set(method: TestMethod?) {
     testMethod = method
-    onChangeListeners.forEach { it(method) }
+  }
+
+  /**
+   * Announces the remembered method to listeners.
+   *
+   * Called once the test runner has opened the test on the CI side, so that listeners may report metadata that attaches
+   * to the current test. Setting the method is deliberately not enough: the provider learns about a test before the
+   * runner has reported it to TeamCity.
+   */
+  fun publishToListeners() {
+    onChangeListeners.forEach { it(testMethod) }
   }
 
   fun get(): TestMethod? {

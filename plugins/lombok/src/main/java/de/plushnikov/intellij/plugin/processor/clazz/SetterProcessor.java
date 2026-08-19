@@ -119,15 +119,15 @@ public final class SetterProcessor extends AbstractClassProcessor {
     final SetterFieldProcessor fieldProcessor = getSetterFieldProcessor();
     final Collection<PsiField> setterFields = new ArrayList<>();
     for (PsiField psiField : psiClass.getFields()) {
-      if (shouldGenerateSetter(psiField, fieldProcessor, classMethods)) {
+      if (shouldCreateSetter(psiField, fieldProcessor, classMethods)) {
         setterFields.add(psiField);
       }
     }
     return setterFields;
   }
 
-  private static boolean shouldGenerateSetter(@NotNull PsiField psiField, @NotNull SetterFieldProcessor fieldProcessor,
-                                              @NotNull Collection<PsiMethod> classMethods) {
+  private static boolean shouldCreateSetter(@NotNull PsiField psiField, @NotNull SetterFieldProcessor fieldProcessor,
+                                            @NotNull Collection<PsiMethod> classMethods) {
     boolean createSetter = true;
     PsiModifierList modifierList = psiField.getModifierList();
     if (null != modifierList) {
@@ -153,16 +153,25 @@ public final class SetterProcessor extends AbstractClassProcessor {
 
   @Override
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
+    return shouldCreateSetter(psiField) ? LombokPsiElementUsage.WRITE : LombokPsiElementUsage.NONE;
+  }
+
+  public static boolean shouldCreateSetter(@NotNull PsiField psiField) {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
       final Collection<PsiMethod> classMethods = filterToleratedElements(PsiClassUtil.collectClassMethodsIntern(containingClass));
 
       final SetterFieldProcessor fieldProcessor = getSetterFieldProcessor();
 
-      if (shouldGenerateSetter(psiField, fieldProcessor, classMethods)) {
-        return LombokPsiElementUsage.WRITE;
+      if (shouldCreateSetter(psiField, fieldProcessor, classMethods)) {
+        return true;
       }
     }
-    return LombokPsiElementUsage.NONE;
+    return false;
+  }
+
+  @Override
+  public boolean contributesSetter(@NotNull PsiField psiField) {
+    return ContributorHelper.contributesSetter(this, psiField);
   }
 }

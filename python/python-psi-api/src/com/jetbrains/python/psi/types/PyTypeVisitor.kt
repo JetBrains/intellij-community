@@ -73,6 +73,10 @@ abstract class PyTypeVisitor<T> {
     return visitPyType(neverType)
   }
 
+  open fun visitPyTopType(topType: PyTopType): T? {
+    return visitPyType(topType)
+  }
+
   open fun visitAnyType(): T? {
     return if (PyAnyType.isEnabled) visitPyType(PyAnyType.Any) else null
   }

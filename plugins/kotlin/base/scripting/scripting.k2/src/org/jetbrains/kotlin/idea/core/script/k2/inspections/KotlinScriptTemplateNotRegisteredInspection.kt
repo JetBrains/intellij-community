@@ -17,6 +17,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptTemplatesFromDependenciesCache
@@ -51,7 +52,8 @@ internal class KotlinScriptTemplateNotRegisteredInspection :
 
     override fun getApplicableRanges(element: KtClass): List<TextRange> = ApplicabilityRange.single(element) { it.nameIdentifier }
 
-    override fun KaSession.prepareContext(element: KtClass): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtClass): Context? {
         if (element.symbol.annotations.none {
             it.classId?.asSingleFqName() == KOTLIN_SCRIPT_ANNOTATION_FQN
         }) return null

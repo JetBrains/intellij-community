@@ -13,7 +13,6 @@ import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.idea.AppMode
 import com.intellij.internal.performanceTests.ProjectInitializationDiagnostic
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -29,7 +28,9 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter.Companion.logStats
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.provider.EelInitialization
+import com.intellij.platform.eel.provider.EelNioFsBackend
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -47,15 +48,19 @@ import com.jetbrains.performancePlugin.profilers.Profiler.Companion.getCurrentPr
 import com.jetbrains.performancePlugin.profilers.ProfilersController
 import com.jetbrains.performancePlugin.utils.ReporterCommandAsTelemetrySpan
 import io.opentelemetry.context.Context
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.net.ConnectException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
@@ -71,6 +76,70 @@ private fun getTestFile(): Path {
     ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
   }
   return file
+}
+
+/** Outcome of a host-side `readdir` of the project directory. */
+private enum class ProjectDirState {
+  UNREADABLE,
+  MISSING,
+  EMPTY,
+  NON_EMPTY,
+}
+
+private fun probeProjectDir(path: Path): ProjectDirState {
+  val attributes = try {
+    Files.readAttributes(path, BasicFileAttributes::class.java)
+  }
+  // Keep this qualified: unqualified `NoSuchFileException` resolves to `kotlin.io.NoSuchFileException` (`kotlin.io` is
+  // a default import), which `Files` never throws, so a missing directory would be reported as UNREADABLE instead.
+  catch (_: java.nio.file.NoSuchFileException) {
+    return ProjectDirState.MISSING
+  }
+  if (!attributes.isDirectory) return ProjectDirState.MISSING
+  return Files.newDirectoryStream(path).use {
+    if (it.iterator().hasNext()) ProjectDirState.NON_EMPTY else ProjectDirState.EMPTY
+  }
+}
+
+/**
+ * Reads [projectPath] once over the (possibly remote) EEL/IJent filesystem, so that the command-line project-open
+ * detection that runs right after does not race a still-mounting `\\wsl.localhost\...` (WSL) or container (Docker) FS
+ * and fall back to a LightEdit frame.
+ *
+ * A host-side listing is used because that is exactly what the platform reads. Single attempt, no retries and no
+ * timeout: on a correctly provisioned target the mount answers right away, and when it does not, this only logs -
+ * normal open behavior still applies. The logged state is the diagnostic for a run that ends up in LightEdit anyway:
+ * `MISSING` means the project was never provisioned into the target, so waiting would not have helped either.
+ *
+ * IJPL-250122
+ */
+private suspend fun warmUpProjectContents(projectPath: Path) {
+  val start = System.currentTimeMillis()
+  var failure: Throwable? = null
+  val state = withContext(Dispatchers.IO) {
+    try {
+      probeProjectDir(projectPath)
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      failure = e
+      ProjectDirState.UNREADABLE
+    }
+  }
+
+  val details = "state=$state, elapsedMs=${System.currentTimeMillis() - start}, path='$projectPath'" +
+                ", routedToEelBackend=${EelNioFsBackend.instance?.resolveDescriptor(projectPath) != null}" +
+                ", fs=${projectPath.fileSystem.javaClass.name}"
+  if (state == ProjectDirState.NON_EMPTY) {
+    LOG.info("Project contents warmup: $details")
+  }
+  else {
+    LOG.warn("Project contents warmup: $details" +
+             (if (state == ProjectDirState.MISSING) "; the project was not provisioned into the target (mount or copy)" else "") +
+             "; project open may fall back to LightEdit", failure)
+  }
 }
 
 private object ProjectLoadedService {
@@ -219,7 +288,6 @@ private fun runScriptDuringIndexing(project: Project, alarm: Alarm) {
     }))
 }
 
-@Suppress("SpellCheckingInspection")
 @Internal
 class ProjectLoaded : ApplicationInitializedListener {
   override suspend fun execute() {
@@ -227,7 +295,16 @@ class ProjectLoaded : ApplicationInitializedListener {
     if (SystemProperties.getBooleanProperty("STARTER_TESTS_SUPPORT_TARGETS", false)
         || System.getenv("STARTER_TESTS_SUPPORT_TARGETS").toBoolean()) {
       IntegrationTestApplicationLoadListener.data?.let {
-        EelInitialization.runEelInitialization(Path.of(it.projectPath).getEelDescriptor())
+        val projectPath = Path.of(it.projectPath)
+        try {
+          EelInitialization.runEelInitialization(projectPath.getEelDescriptor())
+        }
+        catch (e: EelUnavailableException) {
+          LOG.error(e)
+        }
+        // Warm the EEL/IJent remote FS mount BEFORE re-evaluating the flags, so detection does not race a
+        // still-mounting WSL/Docker FS and fall back to a LightEdit frame (IJPL-250122).
+        warmUpProjectContents(projectPath)
         // Re-evaluate AppMode flags: the first setFlags call in Main.kt runs before EPs are loaded,
         // so MultiRoutingFileSystemBackend (Docker/WSL) isn't registered yet and mayHappenToBeAFile
         // can't resolve remote paths, incorrectly setting isLightEdit=true.
@@ -358,7 +435,7 @@ private fun registerOnFinishRunnables(future: CompletableFuture<*>, mustExitOnFa
  */
 private fun storeFailureToFile(errorMessage: Throwable) {
   try {
-    val failureCauseFile = Path.of(PathManager.getLogPath()).resolve("failure_cause.txt")
+    val failureCauseFile = LogDirHandler.currentLogDir().resolve("failure_cause.txt")
     Files.writeString(failureCauseFile, errorMessage.message + "\n" + errorMessage.stackTraceToString())
   }
   catch (e: Exception) {

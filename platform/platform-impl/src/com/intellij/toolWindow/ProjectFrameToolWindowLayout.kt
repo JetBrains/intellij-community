@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+import com.intellij.openapi.wm.ex.normalizeProjectFrameKey
 import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.util.xmlb.Converter
@@ -25,11 +26,6 @@ class ProjectFrameToolWindowLayoutBean {
   @Attribute
   @RequiredElement
   var id: String = ""
-
-  @JvmField
-  @Attribute("frameType")
-  @RequiredElement
-  var frameType: String = ""
 
   @JvmField
   @Attribute("applyMode", converter = ToolWindowLayoutApplyModeConverter::class)
@@ -125,34 +121,22 @@ class ProjectFrameToolWindowLayoutService {
     )
   }
 
-  fun isToolWindowRegistrationSuppressed(frameType: String?, toolWindowId: String): Boolean {
-    return isToolWindowRegistrationSuppressed(frameType = frameType, profileId = null, toolWindowId = toolWindowId)
+  fun isToolWindowRegistrationSuppressed(profileId: String?, toolWindowId: String): Boolean {
+    val normalizedToolWindowId = toolWindowId.normalizeProjectFrameKey() ?: return false
+    return getSuppressedToolWindowIds(profileId).contains(normalizedToolWindowId)
   }
 
-  fun isToolWindowRegistrationSuppressed(frameType: String?, profileId: String?, toolWindowId: String): Boolean {
-    val normalizedToolWindowId = toolWindowId.normalizeKey() ?: return false
-    return getSuppressedToolWindowIds(frameType = frameType, profileId = profileId).contains(normalizedToolWindowId)
-  }
-
-  fun getSuppressedToolWindowIds(frameType: String?): Set<String> {
-    return getSuppressedToolWindowIds(frameType = frameType, profileId = null)
-  }
-
-  fun getSuppressedToolWindowIds(frameType: String?, profileId: String?): Set<String> {
-    val normalizedFrameType = frameType.normalizeKey()
-    val normalizedProfileId = profileId.normalizeKey()
-    if (normalizedFrameType == null && normalizedProfileId == null) {
-      return emptySet()
-    }
+  fun getSuppressedToolWindowIds(profileId: String?): Set<String> {
+    val normalizedProfileId = profileId.normalizeProjectFrameKey() ?: return emptySet()
 
     val result = LinkedHashSet<String>()
     for (bean in EP_NAME.extensionList) {
-      if (bean.frameType.normalizeKey() != normalizedFrameType && bean.id.normalizeKey() != normalizedProfileId) {
+      if (bean.id.normalizeProjectFrameKey() != normalizedProfileId) {
         continue
       }
       for (toolWindow in bean.toolWindows) {
         if (!toolWindow.register) {
-          toolWindow.id.normalizeKey()?.let(result::add)
+          toolWindow.id.normalizeProjectFrameKey()?.let(result::add)
         }
       }
     }
@@ -160,11 +144,11 @@ class ProjectFrameToolWindowLayoutService {
   }
 
   private fun findProfileBean(profileId: String): ProjectFrameToolWindowLayoutBean? {
-    val normalizedProfileId = profileId.normalizeKey() ?: return null
+    val normalizedProfileId = profileId.normalizeProjectFrameKey() ?: return null
 
     var result: ProjectFrameToolWindowLayoutBean? = null
     for (bean in EP_NAME.extensionList) {
-      if (bean.id.normalizeKey() != normalizedProfileId) {
+      if (bean.id.normalizeProjectFrameKey() != normalizedProfileId) {
         continue
       }
 
@@ -185,7 +169,7 @@ class ProjectFrameToolWindowLayoutService {
       .associateTo(LinkedHashMap()) { (id, info) -> id to info.copy() }
 
     for (toolWindow in bean.toolWindows) {
-      val id = toolWindow.id.normalizeKey() ?: continue
+      val id = toolWindow.id.normalizeProjectFrameKey() ?: continue
       if (!toolWindow.register) {
         infos.remove(id)
         continue
@@ -196,7 +180,7 @@ class ProjectFrameToolWindowLayoutService {
       }
 
       val info = infos[id] ?: WindowInfoImpl()
-      val anchor = toolWindow.anchor.normalizeKey()?.let(ToolWindowAnchor::fromText)
+      val anchor = toolWindow.anchor.normalizeProjectFrameKey()?.let(ToolWindowAnchor::fromText)
       val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
       val needsOrder = info.id == null || info.toolWindowPaneId != paneId || (anchor != null && info.anchor != anchor) || info.order < 0
 
@@ -212,7 +196,7 @@ class ProjectFrameToolWindowLayoutService {
       toolWindow.visible?.let { info.isVisible = it }
       toolWindow.showStripeButton?.let { info.isShowStripeButton = it }
       toolWindow.weight?.let { info.weight = it }
-      toolWindow.contentUiType.normalizeKey()?.let { info.contentUiType = ToolWindowContentUiType.getInstance(it) }
+      toolWindow.contentUiType.normalizeProjectFrameKey()?.let { info.contentUiType = ToolWindowContentUiType.getInstance(it) }
       toolWindow.split?.let { info.isSplit = it }
       toolWindow.sideWeight?.let { info.sideWeight = it }
       infos[id] = info
@@ -223,11 +207,11 @@ class ProjectFrameToolWindowLayoutService {
 }
 
 private fun ProjectFrameToolWindowBean.hasLayoutAttributes(): Boolean {
-  return anchor.normalizeKey() != null ||
+  return anchor.normalizeProjectFrameKey() != null ||
          visible != null ||
          showStripeButton != null ||
          weight != null ||
-         contentUiType.normalizeKey() != null ||
+         contentUiType.normalizeProjectFrameKey() != null ||
          split != null ||
          sideWeight != null
 }
@@ -236,10 +220,6 @@ private fun getNextOrder(infos: Map<String, WindowInfoImpl>, anchor: ToolWindowA
   return infos.values.asSequence()
            .filter { it.toolWindowPaneId == WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID && it.anchor == anchor && it.order >= 0 }
            .maxOfOrNull { it.order + 1 } ?: 0
-}
-
-private fun String?.normalizeKey(): String? {
-  return this?.trim()?.takeIf { it.isNotEmpty() }
 }
 
 private val LOG = logger<ProjectFrameToolWindowLayoutService>()

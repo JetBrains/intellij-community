@@ -10,6 +10,8 @@ class Splash(Target):
     full_tk: bool
     tcl_lib: str
     tk_lib: str
+    tcl_data_dir: str
+    tk_data_dir: str
     name: str
     script_name: StrPath
     minify_script: bool

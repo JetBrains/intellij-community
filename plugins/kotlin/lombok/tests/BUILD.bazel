@@ -10,6 +10,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.lombok.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -25,7 +26,11 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.lombok.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":tests"],
+    runtime_deps = [
+        # do not sort,
+        ":tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -38,8 +43,6 @@ jvm_library(
         "//platform/lang-core:lang-core_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/tests-common:common-tests",
         "//plugins/kotlin/tests-common:common-tests_test_lib",
         "//platform/testFramework",
@@ -64,7 +67,8 @@ jvm_library(
         "//plugins/kotlin/maven/tests:tests_test_lib",
         "//plugins/maven/testFramework",
         "//plugins/maven/testFramework:testFramework_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
         "//plugins/kotlin/project-configuration",
         "//plugins/kotlin/project-configuration:project-configuration_test_lib",

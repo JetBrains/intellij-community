@@ -24,7 +24,7 @@ interface LibraryEntityBuilder : WorkspaceEntityBuilder<LibraryEntity> {
 }
 
 internal object LibraryEntityType : EntityType<LibraryEntity, LibraryEntityBuilder>() {
-  override val entityClass: Class<LibraryEntity> get() = LibraryEntity::class.java
+  override val entityImplClass: Class<*> get() = LibraryEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = LibraryEntityImpl.Builder::class.java
   operator fun invoke(
     name: String,

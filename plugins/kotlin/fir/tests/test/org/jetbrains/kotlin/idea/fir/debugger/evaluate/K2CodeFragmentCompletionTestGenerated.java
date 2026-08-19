@@ -104,6 +104,11 @@ public abstract class K2CodeFragmentCompletionTestGenerated extends AbstractK2Co
             public void testExtensionMethodForParameterizedTypeN() throws Exception {
                 runTest("../../completion/testData/basic/codeFragments/runtimeType/extensionMethodForParameterizedTypeN.kt");
             }
+
+            @TestMetadata("localClass.kt")
+            public void testLocalClass() throws Exception {
+                runTest("../../completion/testData/basic/codeFragments/runtimeType/localClass.kt");
+            }
         }
     }
 

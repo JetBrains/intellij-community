@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.util.caching
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.LowMemoryWatcher
@@ -89,6 +90,8 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(
                 useCache { cache ->
                     disposeIllegalEntry(cache, key)
                 }
+
+                rethrowControlFlowException(e)
 
                 logger.error(e)
             }
@@ -205,6 +208,8 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(
                     } catch (e: Throwable) {
                         iterator.remove()
                         disposeEntry(cache, entry)
+
+                        // FIXME: do not log control flow exceptions here
                         logger.error(e)
                     }
                 } else {

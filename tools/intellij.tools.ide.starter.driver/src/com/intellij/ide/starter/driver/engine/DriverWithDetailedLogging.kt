@@ -9,17 +9,16 @@ import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.ci.teamcity.TeamCityClient
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.useDockerContainer
-import com.intellij.ide.starter.report.FailureDetailsOnCI
+import com.intellij.ide.starter.report.DetailsOnCI
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
-import com.intellij.util.system.OS
-import com.intellij.tools.ide.util.common.replaceSpecialCharactersWithHyphens
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
+import org.opentest4j.TestAbortedException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
@@ -57,6 +56,9 @@ internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierar
       try {
         code()
       }
+      catch (e: TestAbortedException) {
+        throw e
+      }
       catch (e: Throwable) {
         throw detailedException(e)
       }
@@ -86,7 +88,7 @@ internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierar
 
   private fun detailedException(e: Throwable): DriverWithContextError {
     val screenshotPath = createErrorScreenshotOrNull()
-    runContext?.let {
+    runContext?.lastIdeReportingData?.let {
       saveHierarchy((it.logsDir / "ui-hierarchy").also { dir -> runCatching { dir.createDirectories() } }.toString())
     }
     val detailedMessage = buildString {
@@ -106,20 +108,22 @@ internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierar
           append("Screenshot: $prefix${path.invariantSeparatorsPathString}\n".color(LogColor.BLUE))
         }
         else {
-          runContext?.let { context ->
-            val artifactDir = context.contextName.replaceSpecialCharactersWithHyphens()
-            val artifactName = path.name.replaceSpecialCharactersWithHyphens()
-            val actualArtifactPathOnCi = TeamCityClient.publishTeamCityArtifacts(path, artifactDir, artifactName, false)
+          runContext?.lastIdeReportingData?.let { ideReportingData ->
+            val actualArtifactPathOnCi = TeamCityClient.publishTeamCityArtifacts(path, ideReportingData.humanReadableTestName, path.name, false)
             if (actualArtifactPathOnCi != null) {
               logOutput("Adding screenshot to metadata: $actualArtifactPathOnCi")
-              TeamCityReporter.reportTestMetadata(testName = null, type = TeamCityReporter.MetadataType.IMAGE, flowId = null, name = null, value = actualArtifactPathOnCi)
+              TeamCityReporter.reportTestMetadata(testName = null,
+                                                  type = TeamCityReporter.MetadataType.IMAGE,
+                                                  flowId = null,
+                                                  name = null,
+                                                  value = actualArtifactPathOnCi)
             }
           }
         }
       }
       if (CIServer.instance.isBuildRunningOnCI) {
         runContext?.let {
-          FailureDetailsOnCI.instance.getLinkToCIArtifacts(it)?.let { link ->
+          DetailsOnCI.instance.getLinkToCIArtifacts(it.lastIdeReportingData)?.let { link ->
             append("Artifacts: $link\n")
           }
         }

@@ -1,8 +1,13 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.copyright"/>
-    <module name="intellij.sh.core"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.sh.core"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <copyright.updater filetype="Shell Script" implementationClass="com.intellij.sh.copyright.ShUpdateCopyrightsProvider"/>

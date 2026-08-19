@@ -113,6 +113,9 @@ jvm_library(
 exports_files(
     [
         "intellij.java.langInjection.iml",
+        "resources/intellij.java.langInjection.xml",
+        "resources/resources/assertJ.xml",
+        "resources/resources/javaInjections.xml",
     ],
     visibility = ["//visibility:public"],
 )

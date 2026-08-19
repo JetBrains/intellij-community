@@ -59,6 +59,7 @@ jvm_library(
 exports_files(
     [
         "intellij.marketplaceMl.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -486,6 +486,11 @@ public abstract class HighLevelSmartCompletionHandlerTestGenerated extends Abstr
             runTest("../../completion/testData/handlers/smart/ConstructorForNullable.kt");
         }
 
+        @TestMetadata("ConstructorInArgWithCommentInLambda2.kt")
+        public void testConstructorInArgWithCommentInLambda2() throws Exception {
+            runTest("../../completion/testData/handlers/smart/ConstructorInArgWithCommentInLambda2.kt");
+        }
+
         @TestMetadata("ConstructorInsertsImport.kt")
         public void testConstructorInsertsImport() throws Exception {
             runTest("../../completion/testData/handlers/smart/ConstructorInsertsImport.kt");
@@ -514,6 +519,11 @@ public abstract class HighLevelSmartCompletionHandlerTestGenerated extends Abstr
         @TestMetadata("ConstructorWithParameters.kt")
         public void testConstructorWithParameters() throws Exception {
             runTest("../../completion/testData/handlers/smart/ConstructorWithParameters.kt");
+        }
+
+        @TestMetadata("ConstructorWithParamsInArgWithComment.kt")
+        public void testConstructorWithParamsInArgWithComment() throws Exception {
+            runTest("../../completion/testData/handlers/smart/ConstructorWithParamsInArgWithComment.kt");
         }
 
         @TestMetadata("DefaultParams.kt")
@@ -676,6 +686,16 @@ public abstract class HighLevelSmartCompletionHandlerTestGenerated extends Abstr
             runTest("../../completion/testData/handlers/smart/LambdaValue2.kt");
         }
 
+        @TestMetadata("LambdaWithComment.kt")
+        public void testLambdaWithComment() throws Exception {
+            runTest("../../completion/testData/handlers/smart/LambdaWithComment.kt");
+        }
+
+        @TestMetadata("LambdaWithComment2.kt")
+        public void testLambdaWithComment2() throws Exception {
+            runTest("../../completion/testData/handlers/smart/LambdaWithComment2.kt");
+        }
+
         @TestMetadata("LastNonOptionalParamIsFunction.kt")
         public void testLastNonOptionalParamIsFunction() throws Exception {
             runTest("../../completion/testData/handlers/smart/LastNonOptionalParamIsFunction.kt");
@@ -814,6 +834,21 @@ public abstract class HighLevelSmartCompletionHandlerTestGenerated extends Abstr
         @TestMetadata("ObjectFromType.kt")
         public void testObjectFromType() throws Exception {
             runTest("../../completion/testData/handlers/smart/ObjectFromType.kt");
+        }
+
+        @TestMetadata("ParameterWithComment.kt")
+        public void testParameterWithComment() throws Exception {
+            runTest("../../completion/testData/handlers/smart/ParameterWithComment.kt");
+        }
+
+        @TestMetadata("ParameterWithComment2.kt")
+        public void testParameterWithComment2() throws Exception {
+            runTest("../../completion/testData/handlers/smart/ParameterWithComment2.kt");
+        }
+
+        @TestMetadata("ParameterWithKDoc.kt")
+        public void testParameterWithKDoc() throws Exception {
+            runTest("../../completion/testData/handlers/smart/ParameterWithKDoc.kt");
         }
 
         @TestMetadata("QualifiedCallReplacementBug.kt")

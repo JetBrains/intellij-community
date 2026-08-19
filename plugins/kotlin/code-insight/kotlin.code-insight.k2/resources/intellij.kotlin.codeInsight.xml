@@ -16,6 +16,7 @@
     <module name="intellij.kotlin.base.statistics"/>
     <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.codeInsight.api"/>
+    <module name="intellij.kotlin.codeInsight.descriptions"/>
     <module name="intellij.kotlin.codeInsight.overrideImplement"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
     <module name="intellij.kotlin.codeInsight.utils"/>
@@ -27,9 +28,38 @@
     <module name="intellij.kotlin.references"/>
     <module name="intellij.kotlin.searching"/>
     <module name="intellij.kotlin.searching.base"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.impl.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.k2"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.velocity"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.structureView"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="kotlin.fir.frontend-independent"/>
-    <module name="intellij.kotlin.codeInsight.descriptions"/>
   </dependencies>
   <!-- endregion -->
 
@@ -40,6 +70,8 @@
             dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+
+    <annotationSupport language="kotlin" implementationClass="com.intellij.psi.impl.source.tree.java.JavaAnnotationSupport"/>
 
     <structureViewBuilder
             order="first"

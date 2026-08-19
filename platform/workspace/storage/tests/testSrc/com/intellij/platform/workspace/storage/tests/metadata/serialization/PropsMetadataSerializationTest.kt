@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.metadata.serialization
 
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import org.junit.Assert
@@ -9,6 +9,35 @@ import org.junit.Ignore
 import org.junit.Test
 
 class PropsMetadataSerializationTest: MetadataSerializationTest() {
+  @Test
+  fun `changed property data class entity`() {
+    val builder = createEmptyBuilder()
+
+    builder addEntity com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedPropertyDataClass(
+      text = "cache version",
+      propertyToChange = com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SpecialDataClass("cache text"),
+      SampleEntitySource("test")
+    )
+
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
+    Assert.assertEquals("""
+      Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedPropertyDataClass"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedPropertyDataClass"
+        Start comparing cache: Own property "propertyToChange"     with current: Own property "propertyToChange"
+          Start comparing cache: Custom type     with current: Custom type
+            Start comparing cache: Final class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SpecialDataClass"     with current: Final class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SpecialDataClass"
+              Start comparing cache: Own property "text"     with current: Own property "text"
+                Start comparing cache: Primitive type     with current: Parametrized type
+                  Cache: type = Parametrized type, Current: type = Primitive type    Result: not equal
+                End comparing cache: Primitive type     with current: Parametrized type    Result: not equal
+              End comparing cache: Own property "text"     with current: Own property "text"    Result: not equal
+            End comparing cache: Final class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SpecialDataClass"     with current: Final class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SpecialDataClass"    Result: not equal
+          End comparing cache: Custom type     with current: Custom type    Result: not equal
+        End comparing cache: Own property "propertyToChange"     with current: Own property "propertyToChange"    Result: not equal
+      End comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedPropertyDataClass"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedPropertyDataClass"    Result: not equal
+
+    """.trimIndent(), cacheDiff)
+  }
+
   // COMPUTABLE PROPERTIES
   @Test
   fun `computable prop entity`() {
@@ -20,7 +49,7 @@ class PropsMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
     Assert.assertEquals("""
       Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ComputablePropEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ComputablePropEntity"
         Sizes of cache properties (3) and current properties (4) are different    Result: not equal
@@ -38,13 +67,23 @@ class PropsMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
+  }
+
+  @Test
+  fun `changed symbolicId entity`() {
+    val builder = createEmptyBuilder()
+
+    builder addEntity com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputableSymbolicIdEntity(
+      text = "cache version",
+      SampleEntitySource("test")
+    )
+
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
     Assert.assertEquals("""
-      Start comparing cache: Final class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropEntityId"     with current: Final class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputablePropEntityId"
-        Start comparing cache: Own property "text"     with current: Own property "texts"
-          Cache: name = text, Current: name = texts    Result: not equal
-        End comparing cache: Own property "text"     with current: Own property "texts"    Result: not equal
-      End comparing cache: Final class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropEntityId"     with current: Final class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputablePropEntityId"    Result: not equal
+      Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputableSymbolicIdEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputableSymbolicIdEntity"
+        symbolicId    Result: not equal
+      End comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputableSymbolicIdEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputableSymbolicIdEntity"    Result: not equal
 
     """.trimIndent(), cacheDiff)
   }
@@ -61,7 +100,7 @@ class PropsMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
   }
 
 
@@ -79,7 +118,7 @@ class PropsMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
   }
 
   @Test
@@ -92,7 +131,7 @@ class PropsMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
     Assert.assertEquals("""
       Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.NullToNotNullEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.NullToNotNullEntity"
         Start comparing cache: Own property "nullString"     with current: Own property "nullString"
@@ -118,6 +157,6 @@ class PropsMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
   }
 }

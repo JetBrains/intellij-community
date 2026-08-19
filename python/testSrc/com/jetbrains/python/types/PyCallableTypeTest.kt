@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.types
 
-import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.allure.Layers
-import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Nested
@@ -36,7 +36,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       expr = var()
       # │    ^^^^^ WARNING Member 'Eggs2' of '() -> Literal["D"] | Eggs2' is not callable
       # └ TYPE Literal["D"] | Unknown
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-84030"])
@@ -52,7 +52,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
     #     └ WARNING FIXME No signature matches the arguments
         x(1)
     #     └ WARNING Expected type 'str', got 'Literal[1]' instead
-    """)
+    """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-91052"])
@@ -71,7 +71,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE B
           expr2 = x(1)
       #   └ TYPE A
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-91052"])
@@ -89,7 +89,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f2(x: (Callable[[int], A] | Callable[[], B]) & Callable[[], C]):
           expr = x()
       #   └ TYPE C
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-9605"])
@@ -102,7 +102,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       c = C()
       expr = c.foo
       #└ TYPE () -> Literal[0]
-      """)
+      """.trimIndent())
 
     @Test
     fun `function type rendered as callable`() = test("""
@@ -110,7 +110,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           pass
       expr = func
       #└ TYPE (x: int, /, s: str, *, k: bytes) -> None
-      """)
+      """.trimIndent())
 
     @Test
     fun `returned typing Callable`() = test("""
@@ -119,7 +119,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           pass
       expr = f()
       #└ TYPE (...) -> Unknown
-      """)
+      """.trimIndent())
 
     @Test
     fun `returned typing Callable with unknown parameters`() = test("""
@@ -128,7 +128,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           pass
       expr = f()
       #└ TYPE (...) -> int
-      """)
+      """.trimIndent())
 
     @Test
     fun `returned typing Callable with known parameters`() = test("""
@@ -137,7 +137,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           pass
       expr = f()
       #└ TYPE (int, str) -> int
-      """)
+      """.trimIndent())
 
     @Test
     fun `typing Callable type of parameter`() = test("""
@@ -146,7 +146,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def foo(expr: Callable[[int, str], str]):
       #       └ TYPE (int, str) -> str
           pass
-      """)
+      """.trimIndent())
 
     @Test
     fun `callable type with ellipsis from type comment`() = test("""
@@ -155,7 +155,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       expr = unknown() # type: Callable[..., int]
       #│     ^^^^^^^ ERROR Unresolved reference 'unknown'
       #└ TYPE (...) -> int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-18726"])
@@ -166,7 +166,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           # type: (Callable[[bool, str], int]) -> None
           expr = cb
       #   └ TYPE (bool, str) -> int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-18763"])
@@ -177,7 +177,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           # type: (Callable[..., int]) -> None
           expr = cb
       #   └ TYPE (...) -> int
-      """)
+      """.trimIndent())
 
     // NOTE: `testFunctionTypeCommentBadCallableParameter1`/`2` (PY-18726) were intentionally left out.
     // In the new framework these malformed `# type:` comments emit a syntax-level diagnostic whose
@@ -191,7 +191,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       if callable(a):
           expr = a
       #   └ TYPE (...) -> object
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79861"])
@@ -199,7 +199,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       if callable(a := 42):
           expr = a
       #   └ TYPE Literal[42]
-      """)
+      """.trimIndent())
 
     @Test
     fun `generic callable rendered with type parameters`() = test("""
@@ -208,7 +208,108 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       # using a list to widen to a PyCallableType
       expr = [f][0]
       #└ TYPE [T: int = str, *Ts = *tuple[int], **P = [str]](t: T) -> T
-      """)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-4025"])
+    fun `function assignments`() = test("""
+      def test():
+          def g(x):
+              '''
+              :type x: int
+              '''
+              return x
+          g("str") #fail
+      #     ^^^^^ WARNING Expected type 'int', got 'Literal["str"]' instead
+          h = g
+          h("str") #fail
+      #     ^^^^^ WARNING Expected type 'int', got 'Literal["str"]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-7179"])
+    fun `decorated function`() = test("""
+      def decorator(f):
+          return f
+
+      @decorator
+      def foo():
+          return 'foo'
+
+      print(foo + 3) # we know type at least
+      #     ^^^ WARNING Expected type 'int', got '() -> Literal["foo"]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-16055"])
+    fun `function return type`() = test("""
+      from typing import Optional, List, Union
+
+      def a(x):
+      # type: (List[int]) -> List[str]
+          return [x]
+      #          ^^^ WARNING Expected type 'list[str]', got 'list[list[int]]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-28364"])
+    fun `definition against callable instance`() = test("""
+      class B:
+          def __call__(self, *args, **kwargs):
+              pass
+
+      def some_fn(arg: B):
+          pass
+
+      some_fn(B)
+      #       └ WARNING Expected type 'B', got 'type[B]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-29993"])
+    fun `callable instance against other callable instance`() = test("""
+      class MyCls:
+          def __call__(self):
+              return True
+
+      class DifferentCls:
+          def __call__(self):
+              return True
+
+      def foo(arg: MyCls):
+          pass
+
+      foo(MyCls())
+      foo(DifferentCls())
+      #   ^^^^^^^^^^^^^^ WARNING Expected type 'MyCls', got 'DifferentCls' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-42205"])
+    fun `non reference callee`() = test("""
+      class CallableTest:
+          def __call__(self, arg=None):
+              pass
+      CallableTest()("bad 1")
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-43841"])
+    fun `py function against builtin function`() = test("""
+      class C:
+          def method(self, f):
+              '''
+              Parameters
+              ----------
+              f : function
+              '''
+          pass
+
+      def foo():
+          pass
+
+      C().method(foo)
+      """.trimIndent())
   }
 
   @Nested
@@ -228,7 +329,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = func(callback)
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-37876"])
@@ -248,7 +349,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = func(accepts_list_of_int)
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `decorator with argument called as function`() = test("""
@@ -268,7 +369,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = dec('foo')(func)
       #└ TYPE (str) -> int
-      """)
+      """.trimIndent())
 
     @Test
     fun `generic parameter of expected callable`() = test("""
@@ -290,7 +391,42 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = f(g)
       #└ TYPE int
-      """)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-10413"])
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `function parameter return type`() = test("""
+      def func(f, seq):
+          '''
+          :param f: my param
+          :type f: (unknown) -> str
+          :rtype: list[str]
+          '''
+          return [f(v) for v in seq]
+
+      def f(x):
+          return int(x)
+
+      def test():
+          for item in func(f, []):
+      #                    └ WARNING Expected type '(Unknown) -> str', got '(x: Unknown) -> int' instead
+              pass
+
+          for item in func(int, []):
+      #                    ^^^ WARNING Expected type '(Unknown) -> str', got 'type[int]' instead
+              pass
+
+          for item in func(lambda x: int(x), []):
+      #                    ^^^^^^^^^^^^^^^^ WARNING Expected type '(Unknown) -> str', got '(x: Unknown) -> int' instead
+              pass
+
+          for item in func(lambda x: str(x), []):
+              pass
+
+          for item in func(str, []):
+              pass
+      """.trimIndent())
   }
 
   @Nested
@@ -304,7 +440,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           '''
           expr = args
       #   └ TYPE tuple[int, ...]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19723"])
@@ -315,7 +451,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           '''
           expr = kwargs
       #   └ TYPE dict[str, int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19723"])
@@ -324,7 +460,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           for expr in kwargs:
       #       └ TYPE str
               pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19723"])
@@ -337,7 +473,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           pass
       expr = foo(1)
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19723"])
@@ -350,7 +486,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           pass
       expr = foo(1, "2")
       #└ TYPE int | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19723"])
@@ -363,7 +499,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           pass
       expr = foo(a=1)
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19723"])
@@ -376,7 +512,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           pass
       expr = foo(a=1, b="2")
       #└ TYPE int | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19723"])
@@ -384,7 +520,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def foo(*args: str):
           expr = args
       #   └ TYPE tuple[str, ...]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19723"])
@@ -392,7 +528,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def foo(**kwargs: int):
           expr = kwargs
       #   └ TYPE dict[str, int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19723"])
@@ -401,7 +537,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       ):
           expr = args
       #   └ TYPE tuple[str, ...]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19723"])
@@ -410,7 +546,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       ):
           expr = kwargs
       #   └ TYPE dict[str, int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-22513"])
@@ -424,14 +560,14 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = generic_kwargs(a=1, b='foo')
       #└ TYPE dict[str, int | str]
-      """)
+      """.trimIndent())
 
     @Test
     fun `dict comprehension from kwargs`() = test("""
       def test(**kwargs):
           expr = {k: v for k, v in kwargs.items()}
       #   └ TYPE dict[str, Unknown]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-55044"])
@@ -442,7 +578,53 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def foo(**x: Unpack[Movie]):
           expr = x
       #   └ TYPE dict[str, Unknown]
-      """)
+      """.trimIndent())
+
+    @Test
+    fun `positional arguments`() = test("""
+      def foo(*args):
+          '''
+          :type args: str
+          '''
+          pass
+
+      foo(1, '1')
+      #   └ WARNING Expected type 'str', got 'Literal[1]' instead
+      """.trimIndent())
+
+    @Test
+    fun `null argument mapped to positional parameter`() = test("""
+      class Kvas:
+          def __getitem__(self, *item):
+              pass
+
+      Kvas()[]
+      #      └ ERROR Expression expected
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-48798"])
+    fun `dict literal in keyword arguments`() = test("""
+      from typing import TypedDict
+      class Point(TypedDict):
+          x: int
+          y: int
+      class Movie(TypedDict):
+          name: str
+          year: int
+      def record_movie(movie: Movie) -> None: ...
+      record_movie(movie={'name': 'Blade Runner', 'year': 1984})
+      record_movie(movie={'year': 1984})
+      #                  ^^^^^^^^^^^^^^ WARNING TypedDict 'Movie' has missing key: 'name'
+      record_movie(movie={'name': 1984, 'year': 1984})
+      #                           ^^^^ WARNING Expected type 'str', got 'int' instead
+      record_movie(movie={})
+      #                  ^^ WARNING TypedDict 'Movie' has missing keys: 'name', 'year'
+      record_movie(movie={'name': '1984', 'year': 1984, 'director': 'Michael Radford'})
+      #                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Extra key 'director' for TypedDict 'Movie'
+      record_movie(movie=Point(x=123, y=321))
+      #            ^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'Movie', got 'Point' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -459,7 +641,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = Foo7.meth
       #└ TYPE (self: Foo7[int], /) -> Foo7[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76855"])
@@ -473,7 +655,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = Foo7[str].meth
       # └ TYPE (self: Foo7[str], /) -> Foo7[str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76855"])
@@ -487,7 +669,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = Foo7[str]().meth
       #└ TYPE (/) -> Foo7[str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89401"])
@@ -501,7 +683,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE (x: int) -> str
           expr = f(-1)
       #   └ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89401"])
@@ -515,7 +697,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE [U](x: U) -> U
           expr = f('abb')
       #   └ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89401"])
@@ -529,7 +711,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE (x: str) -> int
           expr = f('abb')
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89401"])
@@ -543,7 +725,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE [U](x: U) -> tuple[int, U]
           expr = f('abb')
       #   └ TYPE tuple[int, str]
-    """)
+    """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89401"])
@@ -565,7 +747,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE Overload[[U](x: U, y: int) -> tuple[int, U, str], [U](x: U, y: str) -> tuple[int, U, bytes]]
           expr = f('abb', 'abc')
       #   └ TYPE tuple[int, str, bytes]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89401"])
@@ -587,7 +769,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE () -> int
           expr = f()
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @TestFor(issues = ["PY-89400"])
     @Test
@@ -601,7 +783,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(receiver: A[int] | B[str]):
           expr = receiver.foo()
       #   └ TYPE tuple[int, A[int]] | str
-      """)
+      """.trimIndent())
 
     @Test
     fun `bound method self in varargs`() = test("""
@@ -625,7 +807,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #└ TYPE (*args: A[str]) -> int
       expr = a.f()
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-90249"])
@@ -638,7 +820,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE () -> int
           expr = x.get()
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-90249"])
@@ -651,7 +833,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE () -> int | () -> str
           expr = get()
       #   └ TYPE int | str
-      """)
+      """.trimIndent())
 
     @Test
     fun `bound method returning self of type var`() = test("""
@@ -665,7 +847,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE T
           v2 = y.get()
       #   └ TYPE Y
-      """)
+      """.trimIndent())
 
     @Test
     fun `bound method returning generic of type var`() = test("""
@@ -680,7 +862,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE int | str
           v3 = z.get()
       #   └ TYPE int | str
-      """)
+      """.trimIndent())
 
     @Test
     fun `metaclass method call on class`() = test("""
@@ -691,14 +873,55 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = Class.foo()
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @TestFor(issues = ["PY-90557"])
     @Test
     fun `method inherited from object stays unbound when accessed on class`() = test("""
       expr = int.__str__
       #└ TYPE (self: int) -> str
-      """)
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-83644"])
+    @Test
+    fun `dunder call annotated as attribute is not bound`() = test("""
+      from typing import Callable
+
+      class Wrapped:
+          __call__: Callable[[int], str]
+
+      def f(w: Wrapped):
+          expr = w(1)
+      #   └ TYPE str
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-83644"])
+    @Test
+    fun `dunder call annotated with type variable`() = test("""
+      from typing import Callable
+
+      class Wrapped[F]:
+          __call__: F
+
+      def f(w: Wrapped[Callable[[], int]]):
+          expr = w()
+      #   └ TYPE int
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-83644"])
+    @Test
+    fun `annotated callable attribute is not bound`() = test("""
+      from typing import Callable
+
+      class C:
+          h: Callable[[int], int]
+
+      def f(c: C):
+          expr = c.h
+      #   └ TYPE (int) -> int
+          expr2 = c.h(1)
+      #   └ TYPE int
+      """.trimIndent())
 
     @Test
     fun `call type preserves generic parameter`() = test("""
@@ -709,7 +932,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def add[T](c: MyList[T], v: T):
           expr = c.add(v)
       #   └ TYPE MyList[T]
-      """)
+      """.trimIndent())
 
     @TestFor(issues = ["PY-89079"])
     @Test
@@ -723,7 +946,21 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE int
           _ = items[0](1)
       #   └ TYPE int
-      """)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-24930"])
+    fun `call operator`() = test("""
+      class Foo:
+          def __call__(self, arg: int):
+              return arg
+
+      bar = Foo()
+      bar.__call__("s")
+      #            ^^^ WARNING Expected type 'int', got 'Literal["s"]' instead
+      bar("s")
+      #   ^^^ WARNING Expected type 'int', got 'Literal["s"]' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -739,7 +976,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(i):
           expr = i
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85768"])
@@ -754,7 +991,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(i):
           expr = i
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85768"])
@@ -771,7 +1008,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(i):
           expr = i
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85768"])
@@ -788,7 +1025,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(i):
           expr = i
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85768"])
@@ -803,7 +1040,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(i):
           expr = i
       #   └ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85768"])
@@ -816,7 +1053,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(i):
           expr = i
       #   └ TYPE T
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79204"])
@@ -829,7 +1066,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(i):
           expr = i
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79204"])
@@ -843,7 +1080,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
         def m(self) -> None:
           expr = self
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79204"])
@@ -859,7 +1096,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(a, b, c):
           expr = c
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79204"])
@@ -876,7 +1113,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           # despite not fully matching, we can still match `b` with `y`
           expr = b
       #   └ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79204"])
@@ -892,7 +1129,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(a, b, /):
           expr = a
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79204"])
@@ -911,7 +1148,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(i):
           expr = i
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89342"])
@@ -927,7 +1164,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(*args):
           expr = args[100]
       #   └ TYPE Unknown FIXME int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89342"])
@@ -943,7 +1180,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(**kwargs):
           expr = kwargs["100"]
       #   └ TYPE Unknown FIXME int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89342"])
@@ -959,7 +1196,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(*, y, x):
           expr = x
       #   └ TYPE Unknown FIXME int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89342"])
@@ -975,7 +1212,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(a, b):
           expr = b
       #   └ TYPE *tuple[int, str] FIXME int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85768"])
@@ -990,7 +1227,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(i):
           expr = i
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-36444"])
@@ -1004,7 +1241,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       with generator_function() as value:
           expr = value
       #   └ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-36444"])
@@ -1021,16 +1258,16 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       with cm as file:
           expr = file
       #   └ TYPE TextIOWrapper[_WrappedBuffer]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71674"])
+    @TestCaseOptions(assertRecursionPrevention = false)
     fun `context manager decorator on method`() = test(
       // Matching `Iterator[str]` against the recursive `Generator` protocol (whose `__iter__`
       // returns `Generator[...]`, while `Iterator.__iter__` returns `Self`) is mutually
       // recursive, so recursion prevention legitimately engages while inferring the type of the
       // `@contextmanager`-decorated method.
-      defaultTestOptions.copy(assertRecursionPrevention = false),
       """
       from contextlib import contextmanager
       from typing import Iterator
@@ -1045,7 +1282,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       with MyClass().as_context() as value:
           expr = value
       #   └ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85027"])
@@ -1064,24 +1301,23 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = NonWorkingClass().add_two
       #└ TYPE (x: float | int, y: float | int) -> float | int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-51768"])
-    fun `imported decorated function with ParamSpec`() = test(
-      """
+    fun `imported decorated function with ParamSpec`() = test("""
       from mod import f
 
       expr = f
       #└ TYPE (x: int) -> None
-      """,
+      """.trimIndent(),
       "lib.py" to """
         from typing import Callable
 
 
         def decorator[**P, R](fn: Callable[P, R]) -> Callable[P, R]:
             return fn
-        """,
+        """.trimIndent(),
       "mod.py" to """
         from lib import decorator
 
@@ -1089,18 +1325,16 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
         @decorator
         def f(x: int) -> None:
             pass
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85027"])
-    fun `imported bound method decorated with ParamSpec`() = test(
-      """
+    fun `imported bound method decorated with ParamSpec`() = test("""
       from mod import NonWorkingClass
 
       expr = NonWorkingClass().add_two
       #└ TYPE (x: float | int, y: float | int) -> float | int
-      """,
+      """.trimIndent(),
       "mod.py" to """
         from typing import Callable
 
@@ -1113,8 +1347,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
             @outer_decorator
             def add_two(self, x: float, y: float) -> float:
                 return x + y
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-90348"])
@@ -1129,7 +1362,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           expr = self
       #   └ TYPE Self@C
           return a
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -1151,12 +1384,11 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = changes_return_type_to_str(returns_int)
       #└ TYPE (a: str, b: bool) -> str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-59127"])
-    fun `ParamSpec in imported file`() = test(
-      """
+    fun `ParamSpec in imported file`() = test("""
       from mod import changes_return_type_to_str
 
       def returns_int(a: str, b: bool) -> int:
@@ -1164,7 +1396,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = changes_return_type_to_str(returns_int)
       #└ TYPE (a: str, b: bool) -> str
-      """,
+      """.trimIndent(),
       "mod.py" to """
         from typing import Callable, ParamSpec
 
@@ -1173,8 +1405,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
         def changes_return_type_to_str(x: Callable[P, int]) -> Callable[P, str]:
             ...
-        """,
-    )
+        """.trimIndent())
 
     @Test
     fun `ParamSpec args kwargs in annotations`() = test("""
@@ -1187,7 +1418,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = func
       #└ TYPE (c: (**P) -> int, *args: **P, **kwargs: **P) -> None
-      """)
+      """.trimIndent())
 
     @Test
     fun `ParamSpec args kwargs in type comments`() = test("""
@@ -1204,7 +1435,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = func
       #└ TYPE (c: (**P) -> int, *args: **P, **kwargs: **P) -> None
-      """)
+      """.trimIndent())
 
     @Test
     fun `ParamSpec args kwargs in function type comment`() = test("""
@@ -1218,16 +1449,15 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = func
       #└ TYPE (c: (**P) -> int, *args: **P, **kwargs: **P) -> None
-      """)
+      """.trimIndent())
 
     @Test
-    fun `ParamSpec args kwargs in imported file`() = test(
-      """
+    fun `ParamSpec args kwargs in imported file`() = test("""
       from mod import func
 
       expr = func
       #└ TYPE (c: (**P) -> int, *args: **P, **kwargs: **P) -> None
-      """,
+      """.trimIndent(),
       "mod.py" to """
         from typing import Callable, ParamSpec
 
@@ -1235,8 +1465,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
         def func(c: Callable[P, int], *args: P.args, **kwargs: P.kwargs) -> None:
             ...
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -1257,7 +1486,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = foo(x_y, y_x)
       #└ TYPE (y: int, x: str) -> bool
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -1282,7 +1511,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = Y(a, 1)
       #└ TYPE Y[int, [q: int, p: str, r: bool]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -1307,7 +1536,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = Y(a, '1').f
       #└ TYPE (q: int) -> str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -1332,7 +1561,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = Y(a, '1').f
       #└ TYPE (int, s: str, b: bool) -> str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -1357,7 +1586,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = Y(a, '1').f
       #└ TYPE (int, bool, s: str, b: bool) -> str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -1383,7 +1612,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = Y(a, '1').g
       #└ TYPE (bool, dict[str, list[str]], s: str, b: bool) -> str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -1408,7 +1637,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = Y(a, '1').attr
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -1426,7 +1655,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = add(bar)
       #└ TYPE (str, x: int, *args: bool) -> bool
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -1444,7 +1673,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = add(bar)
       #└ TYPE (str, bool, x: int, *args: bool) -> bool
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -1462,7 +1691,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = remove(bar)
       #└ TYPE (*args: bool) -> bool
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -1485,7 +1714,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = transform(bar)
       #└ TYPE (str, *args: bool) -> bool
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-61883"])
@@ -1499,12 +1728,11 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = changes_return_type_to_str(returns_int)
       #└ TYPE (a: str, b: bool) -> str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-61883"])
-    fun `ParamSpec in imported file with PEP695 syntax`() = test(
-      """
+    fun `ParamSpec in imported file with PEP695 syntax`() = test("""
       from a import changes_return_type_to_str
 
       def returns_int(a: str, b: bool) -> int:
@@ -1512,14 +1740,13 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = changes_return_type_to_str(returns_int)
       #└ TYPE (a: str, b: bool) -> str
-      """,
+      """.trimIndent(),
       "a.py" to """
         from typing import Callable
 
         def changes_return_type_to_str[**P](x: Callable[P, int]) -> Callable[P, str]:
             ...
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-61883"])
@@ -1540,7 +1767,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = transform(bar)
       #└ TYPE (str, *args: bool) -> bool
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-61883"])
@@ -1561,7 +1788,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = Y(a, 1)
       #└ TYPE Y[int, [q: int, p: str, r: bool]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-61883"])
@@ -1569,7 +1796,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def foo[**P]():
          expr = P
       #   └ TYPE ParamSpec
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-70484"])
@@ -1584,7 +1811,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       expr = deco(unresolved)
       #│          ^^^^^^^^^^ ERROR Unresolved reference 'unresolved'
       #└ TYPE (*args, **kwargs) -> str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-70484"])
@@ -1598,7 +1825,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = deco()
       #└ TYPE ((**P) -> Any) -> (**P) -> int
-      """)
+      """.trimIndent())
 
     @Test
     fun `mixing up Concatenate and TypeVarTuple`() = test("""
@@ -1616,7 +1843,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = f((1, 2), g)
       #└ TYPE (int, int, x: int, y: str) -> int
-      """)
+      """.trimIndent())
 
     @Test
     fun `ParamSpec in Concatenate mapped to another ParamSpec`() = test("""
@@ -1631,7 +1858,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       def g(fn: Callable[P2, Any]) -> Callable[Concatenate[int, P2], Any]:
          ...
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-82871"])
@@ -1640,7 +1867,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr: Callable[Concatenate[int, ...], str]
       #└ TYPE (Concatenate(int, ...)) -> str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77601"])
@@ -1654,7 +1881,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       c = MyClass[str, int, bool]()
       expr = c.call()
       #└ TYPE (str, int, bool) -> int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77601"])
@@ -1669,7 +1896,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       c = MyClass[str, int]() # WARNING Passed type arguments do not match type parameters [T, **P] of class 'MyClass'
       expr = c.call()
       #└ TYPE (...) -> int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77601"])
@@ -1684,7 +1911,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       c = MyClass[str, [int]]()
       expr = c.call()
       #└ TYPE (int) -> str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77541"])
@@ -1699,7 +1926,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def g[**P2, R2](callback: MyCallable[P2, R2]) -> MyCallable[P2, R2]: # WARNING Expected type 'MyCallable[**P2, R2]', got 'None' instead
           expr = f(callback)
       #   └ TYPE MyCallable[**P2, R2]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77541"])
@@ -1716,7 +1943,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def g[**P2, R2](callback: MyCallable[Concatenate[int, P2], R2]) -> MyCallable[P2, R2]: # WARNING Expected type 'MyCallable[**P2, R2]', got 'None' instead
           expr = f(callback)
       #   └ TYPE MyCallable[Concatenate(int, **P2), R2]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79060"])
@@ -1731,7 +1958,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = f(expects_int_str)
       #└ TYPE MyCallable[[int, n: int, s: str]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79060"])
@@ -1745,7 +1972,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def param_spec_replaced_with_another_param_spec[**P4](fn: Callable[P4, Any]):
           expr = f(fn)
       #   └ TYPE MyCallable[Concatenate(int, **P4)]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79060"])
@@ -1759,7 +1986,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def param_spec_replaced_with_concatenate[**P3](fn: Callable[Concatenate[int, P3], Any]):
           expr = f(fn)
       #   └ TYPE MyCallable[Concatenate(int, int, **P3)]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -1772,7 +1999,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       class Foo(Generic[DefaultP]): ...
       expr = Foo
       #└ TYPE type[Foo[[str, int]]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1780,7 +2007,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       class Foo[**P = [str, int]]: ...
       expr = Foo
       #└ TYPE type[Foo[[str, int]]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1790,7 +2017,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       class Foo(Generic[DefaultP]): ...
       expr = Foo()
       #└ TYPE Foo[[str, int]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1800,7 +2027,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       class Foo(Generic[DefaultP]): ...
       expr = Foo()
       #└ TYPE Foo[[]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1808,7 +2035,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       class Foo[**P = [str, int]]: ...
       expr = Foo()
       #└ TYPE Foo[[str, int]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1816,7 +2043,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       class Foo[**P = []]: ...
       expr = Foo()
       #└ TYPE Foo[[]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1826,7 +2053,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       class Foo(Generic[DefaultP]): ...
       expr = Foo[[int, bool]]()
       #└ TYPE Foo[[int, bool]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1839,7 +2066,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           return decorator
       expr = catch_exception() # WARNING Parameter 'function' unfilled
       #└ TYPE (float | int, bool) -> int | None
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1852,7 +2079,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           return decorator
       expr = catch_exception() # WARNING Parameter 'function' unfilled
       #└ TYPE () -> int | None
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1867,7 +2094,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def some_func(a: str, b: int, c: list[float]) -> float: ...
       expr = catch_exception(some_func)
       #└ TYPE (a: str, b: int, c: list[float | int]) -> float | int | None
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1878,7 +2105,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           pass
       expr = wrapper
       #└ TYPE (func: (str, int) -> str) -> None
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1889,7 +2116,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           pass
       expr = wrapper
       #└ TYPE (func: (str, str) -> bool) -> None
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1897,7 +2124,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       class Clazz[**P1, **P2 = P1, **P3 = P2]: ...
       expr = Clazz[[str]]()
       #└ TYPE Clazz[[str], [str], [str]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1909,7 +2136,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       class Clazz(Generic[P1, P2, P3]): ...
       expr = Clazz[[str]]()
       #└ TYPE Clazz[[str], [str], [str]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1922,7 +2149,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       class Clazz(Generic[P1, P2, P3, P4]): ...
       expr = Clazz()
       #└ TYPE Clazz[[str], [str], [bool, bool], [bool, bool]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1935,7 +2162,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
               ...
       expr = ClassA().x
       #└ TYPE (int, str, str) -> None | None
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1943,7 +2170,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       class Clazz[**P1, **P2 = P1, **P3 = P2]: ...
       expr = Clazz[..., [float]]()
       #└ TYPE Clazz[Unknown, [float | int], [float | int]]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -1962,7 +2189,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       generic_kwargs(a=1, b='foo')
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-17962"])
@@ -2001,7 +2228,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       cllbl_c([], [])
       #       │   ^^ WARNING Expected type 'str', got 'list[Unknown]' instead
       #       ^^ WARNING Expected type 'int', got 'list[Unknown]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-44575"])
@@ -2013,7 +2240,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def myfoo(*args: int) -> int:
         pass
       mymap(myfoo, [1, 2, 3])
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-16994"])
@@ -2050,7 +2277,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       foo(matching_number_arguments__wrong_types) # WARNING Expected type '(int, str, int) -> bool', got '(a: int, b: str, c: str) -> bool' instead
       foo(too_many_arguments__correct_types) # WARNING Expected type '(int, str, int) -> bool', got '(a: int, b: str, c: int, d: str) -> bool' instead
       foo(too_many_arguments__wrong_types) # WARNING Expected type '(int, str, int) -> bool', got '(a: int, b: str, c: str, d: str) -> bool' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `callable with TypeIs return assignable`() = test("""
@@ -2064,7 +2291,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
          ...
 
       foo(is_str) # WARNING Expected type '(Any) -> TypeIs[int]', got '(x: Any) -> TypeIs[str]' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `callable with TypeIs return same type assignable`() = test("""
@@ -2078,7 +2305,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
          ...
 
       foo(is_str)
-      """)
+      """.trimIndent())
 
     @Test
     fun `callable with TypeIs return narrower not assignable`() = test("""
@@ -2098,7 +2325,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
          ...
 
       foo(is_str) # WARNING Expected type '(Any) -> TypeIs[D]', got '(x: Any) -> TypeIs[B]' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `callable with TypeIs return wider not assignable`() = test("""
@@ -2117,7 +2344,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def is_str(x: Any) -> TypeIs[D]:
          ...
       foo(is_str) # WARNING Expected type '(Any) -> TypeIs[B]', got '(x: Any) -> TypeIs[D]' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `TypeIs and TypeGuard are not assignable to each other`() = test("""
@@ -2139,13 +2366,12 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       takes_typeguard(is_int_typeis) # WARNING Expected type '(object) -> TypeGuard[int]', got '(val: object) -> TypeIs[int]' instead
       takes_typeis(is_int_typeguard) # WARNING Expected type '(object) -> TypeIs[int]', got '(val: object) -> TypeGuard[int]' instead
       takes_typeis(is_int_typeis)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-74277"])
-    fun `passing TypeIs callable`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON312),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON312)
+    fun `passing TypeIs callable`() = test("""
       from typing_extensions import TypeIs, Callable
 
       def takes_narrower(x: int | str, narrower: Callable[[object], TypeIs[int]]):
@@ -2158,8 +2384,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           return isinstance(x, bool)
 
       takes_narrower(42, is_bool) # WARNING Expected type '(object) -> TypeIs[int]', got '(x: object) -> TypeIs[bool]' instead
-      """,
-    )
+      """.trimIndent())
 
     @Test
     fun `callable subtyping covariance contravariance`() = test("""
@@ -2182,7 +2407,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           f7: Callable[[int], int] = cb1  # OK
           f8: Callable[[int], int] = cb2 # WARNING Expected type '(int) -> int', got '(float | int) -> float | int' instead
           f9: Callable[[int], int] = cb3  # OK
-      """)
+      """.trimIndent())
 
     @Test
     fun `callable subtyping parameter kinds`() = test("""
@@ -2207,7 +2432,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
           f5: KwOnly = standard  # OK
           f6: KwOnly = pos_only # WARNING Expected type 'KwOnly', got 'PosOnly' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `callable subtyping args parameter`() = test("""
@@ -2232,7 +2457,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
           f5: FloatArgs = no_args # WARNING Expected type 'FloatArgs', got 'NoArgs' instead
           f6: FloatArgs = int_args # WARNING Expected type 'FloatArgs', got 'IntArgs' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `callable subtyping args parameter 2`() = test("""
@@ -2265,7 +2490,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           f9: IntArgs = str_args # WARNING Expected type 'IntArgs', got 'StrArgs' instead
           f10: Standard = int_str_args # WARNING Expected type 'Standard', got 'IntStrArgs' instead
           f11: Standard = str_args # WARNING Expected type 'Standard', got 'StrArgs' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `callable subtyping kwargs parameters`() = test("""
@@ -2290,7 +2515,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
           f5: FloatKwargs = no_kwargs # WARNING Expected type 'FloatKwargs', got 'NoKwargs' instead
           f6: FloatKwargs = int_kwargs # WARNING Expected type 'FloatKwargs', got 'IntKwargs' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `callable subtyping kwargs parameters 2`() = test("""
@@ -2323,7 +2548,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           f9: IntKwargs = str_kwargs # WARNING Expected type 'IntKwargs', got 'StrKwargs' instead
           f10: Standard = int_str_kwargs # WARNING Expected type 'Standard', got 'IntStrKwargs' instead
           f11: Standard = str_kwargs # WARNING Expected type 'Standard', got 'StrKwargs' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `callable subtyping default arguments`() = test("""
@@ -2348,7 +2573,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
           f5: NoX = default_arg  # OK
           f6: NoX = no_default_arg # WARNING Expected type 'NoX', got 'NoDefaultArg' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `signatures with ParamSpec`() = test("""
@@ -2365,7 +2590,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
         # These two types are equivalent
         f1: TypeAliasWithP[P] = proto  # OK
         f2: ProtocolWithP[P] = ta  # OK
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76883"])
@@ -2382,7 +2607,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def foo(c1: C1, c2: C2):
           _: C1 = c2
           _: C2 = c1
-      """)
+      """.trimIndent())
 
     @Test
     fun `wildcard signatures`() = test("""
@@ -2397,7 +2622,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def foo(e: Expected, a: Actual):
           _: Expected = a
           _: Actual = e
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-87802"])
@@ -2416,7 +2641,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       v: Proto = f # WARNING Expected type 'Proto', got '(x: int) -> None' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77539"])
@@ -2427,7 +2652,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       compatible: MyCallable[[int], object] = MyCallable[[object], str]()
       incompatible1: MyCallable[[object], object] = MyCallable[[int], str]() # WARNING Expected type 'MyCallable[[object], object]', got 'MyCallable[[int], str]' instead
       incompatible2: MyCallable[[int], str] = MyCallable[[object], object]() # WARNING Expected type 'MyCallable[[int], str]', got 'MyCallable[[object], object]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77541"])
@@ -2441,7 +2666,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       def g[**P2, R2](callback: MyCallable[P2, R2]) -> MyCallable[P2, R2]:
           return f(callback)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-82871"])
@@ -2469,14 +2694,11 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       call = single_int
       call = int_bool
-      #^^^ WARNING Redeclared 'call' defined above without usage
       call = single_str
-      #│     ^^^^^^^^^^ WARNING Expected type '(Concatenate(int, ...)) -> str', got '(x: str) -> str' instead
-      #^^^ WARNING Redeclared 'call' defined above without usage
+      #      ^^^^^^^^^^ WARNING Expected type '(Concatenate(int, ...)) -> str', got '(x: str) -> str' instead
       call = empty
-      #│     ^^^^^ WARNING Expected type '(Concatenate(int, ...)) -> str', got '() -> str' instead
-      #^^^ WARNING Redeclared 'call' defined above without usage
-      """)
+      #      ^^^^^ WARNING Expected type '(Concatenate(int, ...)) -> str', got '() -> str' instead
+      """.trimIndent())
 
     @TestFor(issues = ["PY-89912"])
     @Test
@@ -2498,7 +2720,148 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       shape = Shape()
       shape.apply(accept_circle)
       #           ^^^^^^^^^^^^^ WARNING Expected type '(Shape) -> None', got '(c: Circle) -> None' instead
-      """)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-35544"])
+    fun `less specific callable against more specific`() = test("""
+      from typing import Callable
+
+      class MainClass:
+          pass
+
+      class SubClass(MainClass):
+          pass
+
+      def f(p: Callable[[SubClass], int]):
+          pass
+
+      def g(p: MainClass) -> int:
+          pass
+
+      f(g)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-37876"])
+    fun `generic callables in generic classes`() = test("""
+      from typing import Iterable, TypeVar, Generic
+      T = TypeVar("T")
+      class MyClass(Generic[T]):
+          def __init__(self, data: Iterable[T]):
+              sorted(data, key=self.my_func)
+          def my_func(self, elem: T) -> int:
+              pass
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-37876"])
+    fun `bounded generic parameter of expected callable parameter 1`() = test("""
+      from typing import Callable, TypeVar
+
+      T = TypeVar('T', bound=int)
+
+      def func(c: Callable[[T], None]):
+          pass
+
+      def accepts_anything(x: object) -> None:
+          pass
+
+      func(accepts_anything)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-37876"])
+    fun `bounded generic parameter of expected callable parameter 2`() = test("""
+      from typing import Callable, TypeVar
+
+      T = TypeVar('T', bound=int)
+
+      def func(c: Callable[[T], None]):
+          pass
+
+      def accepts_str(x: str) -> None:
+          pass
+
+      func(accepts_str)
+      #    ^^^^^^^^^^^ WARNING Expected type '(T ≤: int) -> None', got '(x: str) -> None' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-37876"])
+    fun `generic parameter of two expected callable parameters`() = test("""
+      from typing import Callable, TypeVar, assert_type
+
+      class BadType(int, str):
+          pass
+
+      T = TypeVar('T')
+
+      def func(c1: Callable[[T], None], c2: Callable[[T], None]) -> T:
+          pass
+
+      def accepts_str(x: str) -> None:
+          pass
+
+      def accepts_int(x: int) -> None:
+          pass
+
+      res = func(accepts_str, accepts_int)
+      assert_type(res, "str & int")
+      #           │         └ WARNING Class 'type' does not define '__and__', so the '&' operator cannot be used on its instances
+      #           ^^^ WARNING Expected type 'str & int', got 'int | str' instead
+      """.trimIndent())
+
+    @Test
+    fun `bounded generic parameter of expected callable return`() = test("""
+      from typing import Callable, TypeVar
+
+      T = TypeVar('T', bound=int)
+
+      def func(c: Callable[[], T]):
+          pass
+
+      def returns_str() -> str:
+          pass
+
+      func(returns_str)
+      #    ^^^^^^^^^^^ WARNING Expected type '() -> T ≤: int', got '() -> str' instead
+      """.trimIndent())
+
+    @Test
+    fun `constraint generic parameter of expected callable parameter`() = test("""
+      from typing import Callable, TypeVar
+
+      T = TypeVar('T', int, bool) # using constraint here
+
+      def func(c: Callable[[T], None]):
+          pass
+
+      def accepts_anything(x: str) -> None:
+          pass
+
+      func(accepts_anything)
+      #    ^^^^^^^^^^^^^^^^ WARNING Expected type '(T ≤: int | bool) -> None', got '(x: str) -> None' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-37876"])
+    fun `generic parameter of expected callable mapped by other argument`() = test("""
+      from typing import Callable, TypeVar
+
+      T = TypeVar('T')
+
+      def func(x: T, c: Callable[[T], None]) -> None:
+          pass
+
+      def accepts_anything(x: str) -> None:
+          pass
+
+      # Bug: Expected error.
+      # `Callable[[str], None]` is assignable to `Callable[[int | str], None]`.
+      # Thus, substitution `T` -> `int | str` is considered valid.
+      func(42, accepts_anything)
+      """.trimIndent())
   }
 
   @Nested
@@ -2519,7 +2882,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       changes_return_type_to_str(returns_int)("42", 42) # WARNING Expected type 'bool', got 'Literal[42]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -2543,7 +2906,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       expr = Y(a, '1').f("42") # WARNING Expected type 'int', got 'Literal["42"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -2567,7 +2930,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       expr = Y(a, '1').f(42, 42) # WARNING Expected type 'str', got 'Literal[42]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -2593,7 +2956,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       expr = Y(a, '1').f(42, 42, 42)
       #                      │   ^^ WARNING Expected type 'bool', got 'Literal[42]' instead
       #                      ^^ WARNING Expected type 'str', got 'Literal[42]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -2610,7 +2973,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       add(bar)("42", 42, 42) # WARNING Expected type 'bool', got 'Literal[42]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -2627,7 +2990,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       add(bar)("42", "42", True) # WARNING Expected type 'int', got 'Literal["42"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -2644,7 +3007,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       add(bar)(42, 42, True) # WARNING Expected type 'str', got 'Literal[42]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -2663,7 +3026,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       add(bar)(42, [42], 3, True)
       #        │   ^^^^ WARNING Expected type 'list[str]', got 'list[Literal[42]]' instead
       #        ^^ WARNING Expected type 'str', got 'Literal[42]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -2680,7 +3043,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       add(bar)("42", 42, True, True, True)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -2697,7 +3060,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       remove(bar)(42) # WARNING Expected type 'bool', got 'Literal[42]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -2714,7 +3077,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       remove(bar)(True)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -2731,7 +3094,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       remove(bar)(True, True)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -2748,7 +3111,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       remove(bar)()
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49935"])
@@ -2770,7 +3133,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       transform(bar)(42) # WARNING Expected type 'str', got 'Literal[42]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79098"])
@@ -2792,7 +3155,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
               f(fn)
           def longer_param_list[**P3](fn: Callable[[int, int, int], None]):
               f(fn)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79098"])
@@ -2817,7 +3180,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
               g(fn)
           def longer_param_list[**P3](fn: MyCallable[[int, int, int], None]):
               g(fn)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-50403"])
@@ -2846,7 +3209,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       res4 = twice(a_int_b_str, b=1, a="A")
       #                         │    ^^^^^ WARNING Expected type 'int', got 'Literal["A"]' instead
       #                         ^^^ WARNING Expected type 'str', got 'Literal[1]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-50403"])
@@ -2866,7 +3229,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       caller(func, 42) # WARNING Parameter 's' unfilled (from ParamSpec 'P')
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-50403"])
@@ -2886,7 +3249,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       caller(func, 42, 'foo', None) # WARNING Unexpected argument (from ParamSpec 'P')
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-50403"])
@@ -2908,7 +3271,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       caller(func, bar=42)
       #            │     └ WARNING Parameter 'foo' unfilled (from ParamSpec 'P')
       #            ^^^^^^ WARNING Unexpected argument (from ParamSpec 'P')
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-50403"])
@@ -2928,7 +3291,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       caller(func, 42, n=42) # WARNING Unexpected argument (from ParamSpec 'P')
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80704"])
@@ -2941,13 +3304,11 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       class Derived2(Base[str]): ...
       b = Derived2()
-      #│  ^^^^^^^^^^ WARNING Expected type 'Base[[int]]', got 'Derived2' instead
-      #\ WARNING Redeclared 'b' defined above without usage
+      #   ^^^^^^^^^^ WARNING Expected type 'Base[[int]]', got 'Derived2' instead
 
       class Derived3[**P](Base[P]): ...
       b = Derived3()
-      #\ WARNING Redeclared 'b' defined above without usage
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80704"])
@@ -2965,9 +3326,8 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       class Mismatch:
           f: Callable[[str], None]
       p = Mismatch()
-      #│  ^^^^^^^^^^ WARNING Expected type 'Proto[[int]]', got 'Mismatch' instead
-      #\ WARNING Redeclared 'p' defined above without usage
-      """)
+      #   ^^^^^^^^^^ WARNING Expected type 'Proto[[int]]', got 'Mismatch' instead
+      """.trimIndent())
 
     @Test
     fun `ParamSpec protocol empty`() = test("""
@@ -2976,7 +3336,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       class Proto[**P](Protocol): ...
 
       _: Proto[[]] = 1
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80775"])
@@ -2990,7 +3350,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           def f(self, i: int) -> None: ...
 
       p: Proto[[int]] = Impl()
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76850"])
@@ -3023,7 +3383,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
               foo(1, *args, **kwargs)  # OK
               foo(x=1, *args, **kwargs) # WARNING Unexpected argument (from ParamSpec 'P')
           return bar
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76850"])
@@ -3045,7 +3405,42 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       twice(a_int_b_str, "A", 1)
       #                  │    └ WARNING Expected type 'str', got 'Literal[1]' instead
       #                  ^^^ WARNING Expected type 'int', got 'Literal["A"]' instead
-      """)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-45438"])
+    fun `function against callback protocol`() = test("""
+      from typing import Protocol
+
+      class NamedParam(Protocol):
+          def __call__(self, arg: float) -> float:
+              pass
+
+      class StarParam(Protocol):
+          def __call__(self, *args: float) -> float:
+              pass
+
+      def named_parameter(arg: float) -> float:
+          pass
+
+      def named_parameter_wrong_type(arg: int) -> float:
+          pass
+
+      def star_parameter(*args: float) -> float:
+          pass
+
+      def star_parameter_wrong_type(*args: int) -> float:
+          pass
+
+      foo0: NamedParam = named_parameter
+      foo1: NamedParam = named_parameter_wrong_type
+      #                  ^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'NamedParam', got '(arg: int) -> float | int' instead
+      foo2: StarParam = star_parameter
+      foo3: StarParam = star_parameter_wrong_type
+      #                 ^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'StarParam', got '(*args: int) -> float | int' instead
+      foo4: StarParam = named_parameter
+      #                 ^^^^^^^^^^^^^^^ WARNING Expected type 'StarParam', got '(arg: float | int) -> float | int' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -3072,18 +3467,17 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       router = Router()
       router.route(-2)
       router.route("") # WARNING Expected type 'int', got 'Literal[""]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-23067"])
-    fun `functools wraps multi file`() = test(
-      """
+    fun `functools wraps multi file`() = test("""
       from m import Router
 
       router = Router()
       router.route(-2)
       router.route("") # WARNING Expected type 'int', got 'Literal[""]' instead
-      """,
+      """.trimIndent(),
       "m.py" to """
         import functools
 
@@ -3103,38 +3497,8 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
             @functools.wraps(wrapped=Route.__init__)
             def route(self, s: str):
                 pass
-        """,
-    )
+        """.trimIndent())
   }
-
-  @Test
-  fun `call on non-reference callee with default parameter`() = test("""
-    class CallableTest:
-        def __call__(self, arg=None):
-            pass
-
-    CallableTest()("bad 1")
-    """)
-
-  @Test
-  @TestFor(issues = ["PY-35544"])
-  fun `less specific callable accepted for more specific callable parameter`() = test("""
-    from typing import Callable
-
-    class MainClass:
-        pass
-
-    class SubClass(MainClass):
-        pass
-
-    def f(p: Callable[[SubClass], int]):
-        pass
-
-    def g(p: MainClass) -> int:
-        pass
-
-    f(g)
-    """)
 
   @Test
   @TestFor(issues = ["PY-90658"])
@@ -3143,5 +3507,5 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
     
     _: Callable[[int], int] | None = lambda a: a
     #                                       └ TYPE int
-    """)
+    """.trimIndent())
 }

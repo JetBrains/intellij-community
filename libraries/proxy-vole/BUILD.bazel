@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.proxy.vole.iml",
+        "resources/intellij.libraries.proxy.vole.xml",
     ],
     visibility = ["//visibility:public"],
 )

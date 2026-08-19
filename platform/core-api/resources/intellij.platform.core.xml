@@ -2,9 +2,85 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.util.coroutines"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint qualifiedName="com.intellij.exportable" beanClass="com.intellij.openapi.components.ServiceBean" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.backedVirtualFileProvider" interface="com.intellij.notebook.editor.BackedVirtualFileProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.projectCustomDataSynchronizer" interface="com.intellij.openapi.project.ProjectCustomDataSynchronizer" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.virtualFileCustomDataProvider" interface="com.intellij.openapi.vfs.VirtualFileCustomDataProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.virtualFileCustomDataConsumer" interface="com.intellij.openapi.vfs.VirtualFileCustomDataConsumer" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.fileDocumentManagerListener" interface="com.intellij.openapi.fileEditor.FileDocumentManagerListener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.itemPresentationProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.navigation.ItemPresentationProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.stripTrailingSpacesFilterFactory" interface="com.intellij.openapi.editor.StripTrailingSpacesFilterFactory" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint qualifiedName="com.intellij.tree.CustomLanguageASTComparator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.tree.CustomLanguageASTComparator"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.projectPreInit" interface="com.intellij.openapi.startup.InitProjectActivity" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.pathMacroContributor" interface="com.intellij.openapi.application.PathMacroContributor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.utf8BomOptionProvider" interface="com.intellij.openapi.vfs.encoding.Utf8BomOptionProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.fileEncodingProvider" interface="com.intellij.openapi.vfs.encoding.FileEncodingProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.ide.dynamicPluginVetoer" interface="com.intellij.ide.plugins.DynamicPluginVetoer" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.diagnostic.freezeListener" interface="com.intellij.diagnostic.FreezeListener" dynamic="true"/>
+    <!-- com.intellij.psi.PsiElement -->
+    <extensionPoint qualifiedName="com.intellij.cantBeStatic" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lang.foldingBuilder" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.folding.FoldingBuilder"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.customFoldingProvider" interface="com.intellij.lang.folding.CustomFoldingProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.fileType.fileViewProviderFactory" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.FileViewProviderFactory"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.definitionsScopedSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.indexPatternSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.symbolNavigation" dynamic="true" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+      <with attribute="forClass" implements="com.intellij.model.Symbol"/>
+      <with attribute="implementationClass" implements="com.intellij.navigation.SymbolNavigationProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.symbolDeclarationPresentationProvider" dynamic="true"
+                    beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+      <with attribute="forClass" implements="com.intellij.model.psi.PsiSymbolDeclaration"/>
+      <with attribute="implementationClass"
+            implements="com.intellij.model.presentation.SymbolDeclarationPresentationProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.elementDescriptionProvider" interface="com.intellij.psi.ElementDescriptionProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.psi.referenceProvider" beanClass="com.intellij.psi.PsiReferenceProviderBean">
+      <with attribute="providerClass" implements="com.intellij.psi.PsiReferenceProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.psi.declarationProvider" dynamic="true" interface="com.intellij.model.psi.PsiSymbolDeclarationProvider"/>
+    <extensionPoint qualifiedName="com.intellij.readWriteAccessDetector" interface="com.intellij.codeInsight.highlighting.ReadWriteAccessDetector" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.referenceProviderType" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.PsiReferenceProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.filetype.stubBuilder" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.stubs.BinaryFileStubBuilder"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.metaDataContributor" interface="com.intellij.psi.meta.MetaDataContributor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.todoIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.util.indexing.DataIndexer"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.problemFileHighlightFilter" interface="com.intellij.openapi.util.Condition" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.aliasingPsiTargetMapper" interface="com.intellij.psi.targets.AliasingPsiTargetMapper" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.gotoFileFuzzyMatcherFactory"
+                    interface="com.intellij.util.fuzzyMatching.GotoFileFuzzyMatcherFactory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lang.directNavigationProvider" dynamic="true" interface="com.intellij.navigation.DirectNavigationProvider"/>
+    <extensionPoint qualifiedName="com.intellij.basicWordSelectionFilter" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentAvailabilityService" open="true"
+                        serviceImplementation="com.intellij.execution.wsl.DummyWslIjentAvailabilityService"/>
+  </extensions>
+  <applicationListeners>
+    <listener class="com.intellij.openapi.util.registry.EarlyAccessRegistryManagerListener" activeInTestMode="false"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+  </applicationListeners>
 </idea-plugin>

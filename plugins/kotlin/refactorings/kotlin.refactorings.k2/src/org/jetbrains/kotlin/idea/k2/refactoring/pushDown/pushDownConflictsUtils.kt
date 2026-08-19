@@ -11,12 +11,24 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
+import org.jetbrains.kotlin.analysis.api.signatures.asSignature
+import org.jetbrains.kotlin.analysis.api.signatures.substitute
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.emptySubstitutor
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.visibility.createUseSiteVisibilityChecker
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
@@ -39,7 +51,8 @@ import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 
-internal fun KaSession.analyzePushDownConflicts(
+context(session: KaSession)
+internal fun analyzePushDownConflicts(
     context: K2PushDownContext,
     usages: Array<out UsageInfo>
 ): MultiMap<PsiElement, String> {
@@ -67,7 +80,8 @@ internal fun KaSession.analyzePushDownConflicts(
 }
 
 @OptIn(KaExperimentalApi::class)
-internal fun KaSession.checkConflicts(
+context(session: KaSession)
+internal fun checkConflicts(
     conflicts: MultiMap<PsiElement, String>,
     context: K2PushDownContext,
     targetClass: PsiElement,
@@ -91,13 +105,13 @@ internal fun KaSession.checkConflicts(
     val substitutor = createInheritanceTypeSubstitutor(
         subClass = targetClassSymbol,
         superClass = sourceClass.symbol as KaClassSymbol,
-    ) ?: KaSubstitutor.Empty(token)
+    ) ?: emptySubstitutor
 
     if (!context.sourceClass.isInterface() && targetClass is KtClass && targetClass.isInterface()) {
         val message = KotlinBundle.message(
             "text.0.inherits.from.1.it.will.not.be.affected.by.refactoring",
-            targetClassSymbol.renderForConflicts(analysisSession = this),
-            context.sourceClass.symbol.renderForConflicts(analysisSession = this),
+            targetClassSymbol.renderForConflicts(),
+            context.sourceClass.symbol.renderForConflicts(),
         )
         conflicts.putValue(targetClass, message.capitalize())
     }
@@ -111,7 +125,8 @@ internal fun KaSession.checkConflicts(
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.checkMemberClashing(
+context(session: KaSession)
+private fun checkMemberClashing(
     conflicts: MultiMap<PsiElement, String>,
     context: K2PushDownContext,
     member: KtNamedDeclaration,
@@ -130,17 +145,17 @@ private fun KaSession.checkMemberClashing(
                 if (callableSymbol.modality != KaSymbolModality.ABSTRACT && member !in membersToKeepAbstract) {
                     val message = KotlinBundle.message(
                         "text.0.already.contains.1",
-                        targetClassSymbol.renderForConflicts(analysisSession = this),
-                        clashingSymbol.renderForConflicts(analysisSession = this),
+                        targetClassSymbol.renderForConflicts(),
+                        clashingSymbol.renderForConflicts(),
                     )
                     conflicts.putValue(clashingDeclaration, StringUtil.capitalize(message))
                 }
                 if (!clashingDeclaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
                     val message = KotlinBundle.message(
                         "text.0.in.1.will.override.corresponding.member.of.2.after.refactoring",
-                        clashingSymbol.renderForConflicts(analysisSession = this),
-                        targetClassSymbol.renderForConflicts(analysisSession = this),
-                        context.sourceClass.symbol.renderForConflicts(analysisSession = this),
+                        clashingSymbol.renderForConflicts(),
+                        targetClassSymbol.renderForConflicts(),
+                        context.sourceClass.symbol.renderForConflicts(),
                     )
                     conflicts.putValue(clashingDeclaration, StringUtil.capitalize(message))
                 }
@@ -155,7 +170,7 @@ private fun KaSession.checkMemberClashing(
                 ?.let {
                     val message = KotlinBundle.message(
                         "text.0.already.contains.nested.class.1",
-                        targetClassSymbol.renderForConflicts(analysisSession = this),
+                        targetClassSymbol.renderForConflicts(),
                         CommonRefactoringUtil.htmlEmphasize(member.name ?: "")
                     )
                     conflicts.putValue(it, message.capitalize())
@@ -165,7 +180,8 @@ private fun KaSession.checkMemberClashing(
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.checkSuperCalls(
+context(session: KaSession)
+private fun checkSuperCalls(
     conflicts: MultiMap<PsiElement, String>,
     context: K2PushDownContext,
     member: KtNamedDeclaration,
@@ -197,7 +213,8 @@ private fun KaSession.checkSuperCalls(
     )
 }
 
-private fun KaSession.checkExternalUsages(
+context(session: KaSession)
+private fun checkExternalUsages(
     conflicts: MultiMap<PsiElement, String>,
     member: PsiElement,
     targetClassSymbol: KaClassSymbol,
@@ -206,7 +223,7 @@ private fun KaSession.checkExternalUsages(
         val calleeExpr = ref.element as? KtSimpleNameExpression ?: continue
         val resolvedCall = calleeExpr.resolveToCall()?.singleFunctionCallOrNull() ?: continue
         val callElement = calleeExpr.parentOfType<KtCallExpression>() ?: continue
-        val dispatchReceiver = resolvedCall.partiallyAppliedSymbol.dispatchReceiver
+        val dispatchReceiver = resolvedCall.dispatchReceiver
         if (dispatchReceiver == null) continue
         val receiverClassSymbol = dispatchReceiver.type.expandedSymbol ?: continue
         if (receiverClassSymbol != targetClassSymbol && !receiverClassSymbol.isSubClassOf(targetClassSymbol)) {
@@ -215,7 +232,8 @@ private fun KaSession.checkExternalUsages(
     }
 }
 
-private fun KaSession.checkVisibility(
+context(session: KaSession)
+private fun checkVisibility(
     conflicts: MultiMap<PsiElement, String>,
     member: KtNamedDeclaration,
     targetClass: KtClassOrObject,
@@ -226,9 +244,9 @@ private fun KaSession.checkVisibility(
         if (!isVisible(targetSymbol, targetClass)) {
             val message = KotlinBundle.message(
                 "text.0.uses.1.which.is.not.accessible.from.2",
-                member.symbol.renderForConflicts(analysisSession = this),
-                targetSymbol.renderForConflicts(analysisSession = this),
-                targetClass.symbol.renderForConflicts(analysisSession = this)
+                member.symbol.renderForConflicts(),
+                targetSymbol.renderForConflicts(),
+                targetClass.symbol.renderForConflicts()
             )
             conflicts.putValue(target, message.capitalize())
         }
@@ -250,7 +268,8 @@ private fun KaSession.checkVisibility(
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.isVisible(what: KaDeclarationSymbol, where: PsiElement): Boolean {
+context(session: KaSession)
+private fun isVisible(what: KaDeclarationSymbol, where: PsiElement): Boolean {
     val file = (where.containingFile as? KtFile)?.symbol ?: return false
     return createUseSiteVisibilityChecker(file, receiverExpression = null, where).isVisible(what)
 }

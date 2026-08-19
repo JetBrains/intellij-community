@@ -20,6 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//platform/pluginManager/shared.base",
         "//platform/kernel/rpc",
         "//platform/core-api:core",
         "//platform/kernel/shared:kernel",
@@ -47,6 +48,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":shared",
+        "//platform/pluginManager/shared.base:shared.base_test_lib",
         "//platform/kernel/rpc:rpc_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
@@ -67,6 +69,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.pluginManager.shared.iml",
+        "resources/intellij.platform.pluginManager.shared.xml",
     ],
     visibility = ["//visibility:public"],
 )

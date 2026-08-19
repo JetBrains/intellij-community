@@ -1,7 +1,7 @@
 from _typeshed import SupportsKeysAndGetItem, Unused
 from collections.abc import Iterable
-from typing import Final, Literal, NoReturn, TypeAlias, overload
-from typing_extensions import Self
+from typing import Final, Literal, TypeAlias, overload
+from typing_extensions import Never, Self
 
 from .util import AbstractKeystore, AbstractKeystoreEntry
 
@@ -107,11 +107,9 @@ class SecretKeyEntry(AbstractKeystoreEntry):
 
     # Not implemented by pyjks
     @classmethod
-    def new(  # type: ignore[override]
-        cls, alias: str, sealed_obj: bool, algorithm: str, key: bytes, key_size: int
-    ) -> NoReturn: ...
+    def new(cls, alias: str, sealed_obj: bool, algorithm: str, key: bytes, key_size: int) -> Never: ...  # type: ignore[override]
     # Not implemented by pyjks
-    def encrypt(self, key_password: str) -> NoReturn: ...
+    def encrypt(self, key_password: str) -> Never: ...
 
 class KeyStore(AbstractKeystore):
     entries: dict[str, TrustedCertEntry | PrivateKeyEntry | SecretKeyEntry]  # type: ignore[assignment]

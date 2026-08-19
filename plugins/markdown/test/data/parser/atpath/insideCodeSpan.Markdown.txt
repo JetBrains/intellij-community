@@ -1,0 +1,8 @@
+MarkdownFile
+  MarkdownParagraph(Markdown:PARAGRAPH)
+    PsiElement(Markdown:Markdown:TEXT)('See')
+    PsiWhiteSpace(' ')
+    MarkdownCodeSpan(Markdown:Markdown:CODE_SPAN)
+      PsiElement(Markdown:Markdown:BACKTICK)('`')
+      PsiElement(Markdown:Markdown:AT_PATH_TOKEN)('@src/com/example/KotlinClass.kt')
+      PsiElement(Markdown:Markdown:BACKTICK)('`')

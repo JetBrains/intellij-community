@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.lang.Language
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
@@ -70,7 +71,7 @@ abstract class CodeStyleSettingsCustomDataSynchronizer<T : CustomCodeStyleSettin
         }
       }
       catch (e: Exception) {
-        if (e is CancellationException) throw e
+        rethrowControlFlowException(e)
         LOG.error(e)
         return@mapNotNull null
       }
@@ -125,7 +126,7 @@ abstract class CodeStyleSettingsCustomDataSynchronizer<T : CustomCodeStyleSettin
         custom.copyFrom(oldCustom)
       }
       finally {
-        if (e is CancellationException) throw e
+        rethrowControlFlowException(e)
       }
     }
   }

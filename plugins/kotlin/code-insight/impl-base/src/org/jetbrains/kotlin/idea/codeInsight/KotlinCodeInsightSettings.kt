@@ -16,11 +16,11 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 @State(name = "KotlinCodeInsightWorkspaceSettings", storages = [Storage(WORKSPACE_FILE)])
 class KotlinCodeInsightWorkspaceSettings : PersistentStateComponent<KotlinCodeInsightWorkspaceSettings> {
     @JvmField
-    var optimizeImportsOnTheFly = false
+    var optimizeImportsOnTheFly: Boolean = false
 
-    override fun getState() = this
+    override fun getState(): KotlinCodeInsightWorkspaceSettings = this
 
-    override fun loadState(state: KotlinCodeInsightWorkspaceSettings) = XmlSerializerUtil.copyBean(state, this)
+    override fun loadState(state: KotlinCodeInsightWorkspaceSettings): Unit = XmlSerializerUtil.copyBean(state, this)
 
     companion object {
         fun getInstance(project: Project): KotlinCodeInsightWorkspaceSettings = project.service()
@@ -31,11 +31,11 @@ class KotlinCodeInsightWorkspaceSettings : PersistentStateComponent<KotlinCodeIn
 @State(name = "KotlinCodeInsightSettings", storages = [Storage("editor.codeinsight.xml")], category = SettingsCategory.CODE)
 class KotlinCodeInsightSettings : PersistentStateComponent<KotlinCodeInsightSettings> {
     @JvmField
-    var addUnambiguousImportsOnTheFly = false
+    var addUnambiguousImportsOnTheFly: Boolean = false
 
-    override fun getState() = this
+    override fun getState(): KotlinCodeInsightSettings = this
 
-    override fun loadState(state: KotlinCodeInsightSettings) = XmlSerializerUtil.copyBean(state, this)
+    override fun loadState(state: KotlinCodeInsightSettings): Unit = XmlSerializerUtil.copyBean(state, this)
 
     companion object {
         fun getInstance(): KotlinCodeInsightSettings = service()

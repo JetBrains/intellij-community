@@ -45,6 +45,12 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
     "Search Everywhere file mask content"
   )
 
+  private val outsideRootFixture = moduleFixture.sourceRootFixture()
+  private val fileOutsideProjectDir by outsideRootFixture.virtualFileFixture(
+    "se_outside_project_5c1d.txt",
+    "Outside project directory content 5c1d"
+  )
+
   private val subdir1Fixture = moduleFixture.sourceRootFixture(pathFixture = projectFixture.pathInProjectFixture(Path("subdir1")))
   private val subdir2Fixture = moduleFixture.sourceRootFixture(pathFixture = projectFixture.pathInProjectFixture(Path("subdir2")))
   private val scopedFileInSubdir1 by subdir1Fixture.virtualFileFixture(
@@ -132,6 +138,34 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
       it.setBinaryContent(content.toByteArray())
     }
     file
+  }
+
+  @Test
+  fun search_text_finds_content_root_outside_project_directory() = runBlocking(Dispatchers.Default) {
+    awaitExternalChangesAndIndexing(project)
+    testMcpTool(
+      SearchToolset::search_text.name,
+      buildJsonObject { put("q", JsonPrimitive("Outside project directory content 5c1d")) }
+    ) { actualResult ->
+      val reported = parseResult(actualResult.textContent.text).filePaths()
+        .filter { it.endsWith(fileOutsideProjectDir.name) }
+      assertThat(reported).isNotEmpty()
+      assertThat(reported).allMatch { it.startsWith("..") || Path(it).isAbsolute }
+    }
+  }
+
+  @Test
+  fun search_file_finds_content_root_outside_project_directory() = runBlocking(Dispatchers.Default) {
+    awaitExternalChangesAndIndexing(project)
+    testMcpTool(
+      SearchToolset::search_file.name,
+      buildJsonObject { put("q", JsonPrimitive(fileOutsideProjectDir.name)) }
+    ) { actualResult ->
+      val reported = parseResult(actualResult.textContent.text).filePaths()
+        .filter { it.endsWith(fileOutsideProjectDir.name) }
+      assertThat(reported).isNotEmpty()
+      assertThat(reported).allMatch { it.startsWith("..") || Path(it).isAbsolute }
+    }
   }
 
   @Test

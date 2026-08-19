@@ -21,9 +21,9 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/asm",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
         "//platform/util",
         "//platform/core-api:core",
         "//platform/core-impl",
@@ -67,6 +67,9 @@ jvm_library(
         # do not sort,
         ":evaluation",
         "//libraries/asm:asm_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
         "//platform/util:util_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
@@ -102,6 +105,7 @@ jvm_library(
 exports_files(
     [
         "kotlin.jvm-debugger.evaluation.iml",
+        "resources/kotlin.jvm-debugger.evaluation.xml",
     ],
     visibility = ["//visibility:public"],
 )

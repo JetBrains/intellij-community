@@ -1,0 +1,9 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.ideScriptConfigurationControlFacade"
+            interface="kotlin.script.experimental.intellij.IdeScriptConfigurationControlFacade"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

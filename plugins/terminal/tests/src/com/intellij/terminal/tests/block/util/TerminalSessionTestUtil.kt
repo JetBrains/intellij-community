@@ -43,9 +43,9 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.isRegularFile
 
 internal object TerminalSessionTestUtil {
-
   fun startBlockTerminalSession(
     project: Project,
     shellPath: String,
@@ -263,7 +263,11 @@ internal object TerminalSessionTestUtil {
       "pwsh.exe",
     ).mapNotNull {
       val path = Path.of(it)
-      if (Files.isRegularFile(path)) path else PathEnvironmentVariableUtil.findInPath(it)?.toPath()
+      when {
+        Files.isRegularFile(path) -> path
+        '/' !in it -> PathEnvironmentVariableUtil.findFirst(it)
+        else -> null
+      }
     }
   }
 }

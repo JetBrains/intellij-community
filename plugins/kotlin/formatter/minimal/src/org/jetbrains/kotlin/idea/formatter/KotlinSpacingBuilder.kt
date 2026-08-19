@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.formatter
 
 import com.intellij.formatting.ASTBlock
@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.util.requireNode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.psiUtil.children
-import org.jetbrains.kotlin.psi.stubs.elements.KtModifierListElementType
 import kotlin.math.max
 
 fun CommonCodeStyleSettings.createSpaceBeforeRBrace(numSpacesOtherwise: Int, textRange: TextRange): Spacing? {
@@ -210,5 +209,5 @@ fun rules(
 
 internal fun ASTNode.startOfDeclaration(): ASTNode? = children().firstOrNull {
     val elementType = it.elementType
-    elementType !is KtModifierListElementType<*> && elementType !in KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET
+    elementType != KtNodeTypes.MODIFIER_LIST && elementType !in KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET
 }

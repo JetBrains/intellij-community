@@ -17,24 +17,17 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.PyDataclassNames
-import com.jetbrains.python.codeInsight.PyDataclassNames.Attrs
-import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
-import com.jetbrains.python.codeInsight.PyDataclassParameters
-import com.jetbrains.python.codeInsight.hasPydanticDataclassDecorator
-import com.jetbrains.python.codeInsight.isPydanticModel
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Attrs
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
+import com.jetbrains.python.codeInsight.getDataclassInitVars
 import com.jetbrains.python.codeInsight.parseDataclassParameters
-import com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider
+import com.jetbrains.python.codeInsight.stdlib.PyAttrsDataclassType
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibDataclassType
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.extensions.afterDefInMethod
 import com.jetbrains.python.extensions.inParameterList
-import com.jetbrains.python.psi.PyArgumentList
-import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.PyParameterList
-import com.jetbrains.python.psi.PyPsiFacade
-import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PySubscriptionExpression
 
 class PyDataclassCompletionContributor : CompletionContributor(), DumbAware {
@@ -44,12 +37,6 @@ class PyDataclassCompletionContributor : CompletionContributor(), DumbAware {
   init {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement().afterDefInMethod(), PostInitProvider)
     extend(CompletionType.BASIC, PlatformPatterns.psiElement().inParameterList(), AttrsValidatorParameterProvider)
-    extend(
-      CompletionType.BASIC,
-      PlatformPatterns.psiElement()
-        .withParents(PyReferenceExpression::class.java, PyArgumentList::class.java, PyClass::class.java),
-      PydanticModelKeywordProvider,
-    )
   }
 
   private object PostInitProvider : CompletionProvider<CompletionParameters>() {
@@ -61,10 +48,10 @@ class PyDataclassCompletionContributor : CompletionContributor(), DumbAware {
       val dataclassParameters = parseDataclassParameters(cls, typeEvalContext)
       if (dataclassParameters == null || !dataclassParameters.init) return
 
-      if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
+      if (dataclassParameters.type == PyStdlibDataclassType) {
         val postInitParameters = mutableListOf(PyNames.CANONICAL_SELF)
 
-        PyDataclassTypeProvider.Helper.getInitVars(cls, dataclassParameters, typeEvalContext).orEmpty().forEach {
+        getDataclassInitVars(cls, dataclassParameters, typeEvalContext).orEmpty().forEach {
           val name = it.targetExpression.name
           val typeHint = PyTypingTypeProvider.getAnnotationValue(it.targetExpression, typeEvalContext)
           if (name != null && typeHint is PySubscriptionExpression) {
@@ -82,7 +69,7 @@ class PyDataclassCompletionContributor : CompletionContributor(), DumbAware {
         addMethodToResult(result, cls, typeEvalContext,
                           Dataclasses.DUNDER_POST_INIT, postInitParameters.joinToString(prefix = "(", postfix = ")"))
       }
-      else if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
+      else if (dataclassParameters.type == PyAttrsDataclassType) {
         addMethodToResult(result, cls, typeEvalContext, Attrs.DUNDER_POST_INIT)
       }
     }
@@ -104,40 +91,9 @@ class PyDataclassCompletionContributor : CompletionContributor(), DumbAware {
 
       val typeEvalContext = parameters.getTypeEvalContext()
 
-      if (parseDataclassParameters(cls, typeEvalContext)?.type?.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
+      if (parseDataclassParameters(cls, typeEvalContext)?.type == PyAttrsDataclassType) {
         result.addElement(LookupElementBuilder.create(if (index == 1) "attribute" else "value").withIcon(AllIcons.Nodes.Parameter))
       }
-    }
-  }
-
-  private object PydanticModelKeywordProvider : CompletionProvider<CompletionParameters>() {
-
-    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-      val cls = PsiTreeUtil.getParentOfType(parameters.position, PyClass::class.java) ?: return
-      val typeEvalContext = parameters.getTypeEvalContext()
-      if (!isPydanticModel(cls, typeEvalContext) || hasPydanticDataclassDecorator(cls, typeEvalContext)) return
-
-      val existingKeywords = cls.superClassExpressionList?.arguments.orEmpty()
-        .filterIsInstance<PyKeywordArgument>()
-        .mapNotNull { it.keyword }
-        .toSet()
-
-      for (keyword in getPydanticConfigDictKeys(cls)) {
-        if (keyword !in existingKeywords) {
-          result.addElement(
-            LookupElementBuilder.create("$keyword=")
-              .withIcon(AllIcons.Nodes.Parameter)
-          )
-        }
-      }
-    }
-
-    private fun getPydanticConfigDictKeys(anchor: PyClass): Set<String> {
-      val psiFacade = PyPsiFacade.getInstance(anchor.project)
-      val configDict = PyDataclassNames.Pydantic.CONFIG_DICT_QUALIFIED_NAMES
-                         .firstNotNullOfOrNull { psiFacade.createClassByQName(it, anchor) }
-                       ?: return emptySet()
-      return configDict.classAttributes.mapNotNull { it.name }.toSet()
     }
   }
 }

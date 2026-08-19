@@ -4,9 +4,9 @@ from http.cookies import SimpleCookie
 from io import BytesIO, IOBase
 from json import JSONEncoder
 from re import Pattern
-from types import TracebackType
 from typing import Any, Generic, Literal, NoReturn, TypeAlias, TypedDict, type_check_only
 
+from _typeshed import ExcInfo
 from asgiref.typing import ASGIVersions
 from django.contrib.auth.models import _User
 from django.contrib.sessions.backends.base import SessionBase
@@ -86,7 +86,7 @@ class _RequestFactory(Generic[_T]):
         self,
         *,
         json_encoder: type[JSONEncoder] = ...,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **defaults: Any,
     ) -> None: ...
@@ -97,7 +97,7 @@ class _RequestFactory(Generic[_T]):
         data: _GetDataType = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _T: ...
@@ -108,7 +108,7 @@ class _RequestFactory(Generic[_T]):
         content_type: str = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _T: ...
@@ -118,7 +118,7 @@ class _RequestFactory(Generic[_T]):
         data: Any = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _T: ...
@@ -127,7 +127,7 @@ class _RequestFactory(Generic[_T]):
         path: _StrOrPromise,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _T: ...
@@ -138,7 +138,7 @@ class _RequestFactory(Generic[_T]):
         content_type: str = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _T: ...
@@ -149,7 +149,7 @@ class _RequestFactory(Generic[_T]):
         content_type: str = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _T: ...
@@ -160,7 +160,7 @@ class _RequestFactory(Generic[_T]):
         content_type: str = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _T: ...
@@ -171,7 +171,7 @@ class _RequestFactory(Generic[_T]):
         content_type: str = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _T: ...
@@ -183,7 +183,7 @@ class _RequestFactory(Generic[_T]):
         content_type: str | None = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _T: ...
@@ -258,7 +258,7 @@ class _MonkeyPatchedASGIResponse(_ASGIResponse):
     redirect_chain: list[tuple[str, int]]
 
 class ClientMixin:
-    def store_exc_info(self, **kwargs: Any) -> None: ...
+    def store_exc_info(self, **kwargs: object) -> None: ...
     def check_exception(self, response: HttpResponseBase) -> NoReturn: ...
     @property
     def session(self) -> SessionBase: ...
@@ -273,15 +273,15 @@ class ClientMixin:
 class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
     handler: ClientHandler
     raise_request_exception: bool
-    exc_info: tuple[type[BaseException], BaseException, TracebackType] | None
+    exc_info: ExcInfo | None
     extra: dict[str, Any] | None
-    headers: dict[str, Any]
+    headers: Mapping[str, str] | None
     def __init__(
         self,
         enforce_csrf_checks: bool = ...,
         raise_request_exception: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **defaults: Any,
     ) -> None: ...
@@ -295,7 +295,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         follow: bool = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedWSGIResponse: ...
@@ -308,7 +308,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         follow: bool = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedWSGIResponse: ...
@@ -320,7 +320,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         follow: bool = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedWSGIResponse: ...
@@ -333,7 +333,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         follow: bool = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedWSGIResponse: ...
@@ -346,7 +346,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         follow: bool = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedWSGIResponse: ...
@@ -359,7 +359,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         follow: bool = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedWSGIResponse: ...
@@ -372,7 +372,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         follow: bool = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedWSGIResponse: ...
@@ -384,7 +384,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         follow: bool = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedWSGIResponse: ...
@@ -392,15 +392,15 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
 class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGIResponse]]):
     handler: AsyncClientHandler
     raise_request_exception: bool
-    exc_info: Any
+    exc_info: ExcInfo | None
     extra: dict[str, Any] | None
-    headers: dict[str, Any]
+    headers: Mapping[str, str] | None
     def __init__(
         self,
         enforce_csrf_checks: bool = ...,
         raise_request_exception: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **defaults: Any,
     ) -> None: ...
@@ -414,7 +414,7 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         follow: bool = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedASGIResponse: ...
@@ -427,7 +427,7 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         follow: bool = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedASGIResponse: ...
@@ -439,7 +439,7 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         follow: bool = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedASGIResponse: ...
@@ -452,7 +452,7 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         follow: bool = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedASGIResponse: ...
@@ -465,7 +465,7 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         follow: bool = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedASGIResponse: ...
@@ -478,7 +478,7 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         follow: bool = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedASGIResponse: ...
@@ -491,7 +491,7 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         follow: bool = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedASGIResponse: ...
@@ -503,7 +503,7 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         follow: bool = ...,
         secure: bool = ...,
         *,
-        headers: Mapping[str, Any] | None = ...,
+        headers: Mapping[str, str] | None = ...,
         query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedASGIResponse: ...

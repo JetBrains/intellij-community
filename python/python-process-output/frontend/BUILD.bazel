@@ -58,6 +58,7 @@ jvm_library(
         "//python/python-process-output/common",
         "//libraries/kotlin/reflect",
         "//python/common",
+        "//platform/util/coroutines",
     ],
 )
 
@@ -94,7 +95,8 @@ jvm_library(
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
-        "@lib//:kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
@@ -126,6 +128,7 @@ jvm_library(
         "//python/python-test-env/junit5",
         "//python/python-test-env/junit5:junit5_test_lib",
         "//python/common:common_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.processOutput.frontend` end
@@ -134,6 +137,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.processOutput.frontend.iml",
+        "resources/intellij.python.processOutput.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -212,7 +216,8 @@ jvm_library(
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
-        "@lib//:kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
         "//platform/projectModel-api:projectModel",

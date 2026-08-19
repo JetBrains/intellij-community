@@ -712,6 +712,53 @@ class EelChannelToolsTest {
     assertArrayEquals(lines.toTypedArray(), result.toTypedArray(), "Wrong lines collected")
   }
 
+  /**
+   * The terminator is not part of the line, and a stream ending on one has no last line to report.
+   */
+  @CartesianTest
+  fun testLinesFraming(@IntRangeSource(from = 1, to = 4) blockSize: Int): Unit = timeoutRunBlocking {
+    suspend fun collect(text: String): List<String> {
+      val channel = ByteArrayInputStreamLimited(text.encodeToByteArray(), blockSize).consumeAsEelChannel()
+      val result = mutableListOf<String>()
+      channel.lines(Charsets.UTF_8).collect(result::add)
+      return result
+    }
+
+    assertEquals(listOf("one", "two"), collect("one\ntwo\n"), "Terminated stream")
+    assertEquals(listOf("one", "two"), collect("one\ntwo"), "Unterminated last line")
+    assertEquals(listOf("a", "", "b"), collect("a\n\nb\n"), "Empty line in the middle")
+    assertEquals(listOf<String>(), collect(""), "Empty stream")
+    assertEquals(listOf(""), collect("\n"), "Nothing but a terminator")
+    assertEquals(listOf("a", "b"), collect("a\r\nb\r\n"), "CRLF, possibly split between reads")
+    assertEquals(listOf("50%\r100%"), collect("50%\r100%\n"), "A lone CR does not end a line")
+    assertEquals(listOf("a\r"), collect("a\r"), "A CR is only dropped as the first half of a CRLF")
+  }
+
+  /**
+   * Guards against reading byte by byte, which makes the read cost scale with the payload size.
+   */
+  @Test
+  fun testLinesReadInChunks(): Unit = timeoutRunBlocking {
+    val bytes = ("a".repeat(512 * 1024) + "\n").encodeToByteArray()
+    val stream = ByteArrayInputStreamLimited(bytes, bytes.size)
+    stream.consumeAsEelChannel().lines(Charsets.UTF_8).collect { }
+    assertTrue(stream.reads.get() < bytes.size / 1024, "One line of ${bytes.size} bytes took ${stream.reads} reads")
+  }
+
+  /**
+   * The buffer size bounds what a single read takes from the channel, not the length of a line.
+   */
+  @Test
+  fun testLinesBufferSize(): Unit = timeoutRunBlocking {
+    val line = "a".repeat(4096)
+    val bytes = "$line\n".encodeToByteArray()
+    val stream = ByteArrayInputStreamLimited(bytes, bytes.size)
+    val result = mutableListOf<String>()
+    stream.consumeAsEelChannel().lines(Charsets.UTF_8, 64).collect(result::add)
+    assertEquals(listOf(line), result, "Wrong lines collected")
+    assertTrue(stream.reads.get() >= bytes.size / 64, "${bytes.size} bytes in 64-byte reads took ${stream.reads} reads")
+  }
+
   @Nested
   inner class ReversibleAdapters {
     @Test
@@ -771,8 +818,13 @@ private class ByteArrayChannelLimited(private val blockSize: Int) : WritableByte
  */
 private class ByteArrayInputStreamLimited(data: ByteArray, private val blockSize: Int) : InputStream() {
   private val iterator = data.iterator()
+
+  /** One read per `receive`, so this also counts the reads of the channel above the stream. */
+  val reads: AtomicInteger = AtomicInteger()
+
   override fun read(): Int = if (iterator.hasNext()) iterator.next().toInt() else -1
   override fun read(b: ByteArray, off: Int, len: Int): Int {
+    reads.incrementAndGet()
     if (!iterator.hasNext()) return -1
     val bytesToWrite = min(len, blockSize)
     var i = 0

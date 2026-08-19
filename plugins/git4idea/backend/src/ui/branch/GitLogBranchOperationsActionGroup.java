@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogDataKeys;
@@ -154,7 +153,7 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
     actions.add(singleRepoActions);
 
     String refPresentation = GitBranchPopupActions.truncateBranchName(ref.getName(), project);
-    String text = showBranchesPopup ? refPresentation : GitBundle.message("branches.branch.0", StringUtil.escapeMnemonics(refPresentation));
+    String text = showBranchesPopup ? refPresentation : GitBundle.message("branches.branch.0", refPresentation);
     ActionGroup group = new DefaultActionGroup(actions);
     group.getTemplatePresentation().setText(text, false);
     group.setPopup(true);
@@ -169,7 +168,7 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
     singleRepoActions.setPopup(false);
 
     String tagPresentation = GitBranchPopupActions.truncateBranchName(ref.getName(), project);
-    String text = showTagsPopup ? tagPresentation : GitBundle.message("branches.tag.0", StringUtil.escapeMnemonics(tagPresentation));
+    String text = showTagsPopup ? tagPresentation : GitBundle.message("branches.tag.0", tagPresentation);
     ActionGroup group = new DefaultActionGroup(singleRepoActions);
     group.getTemplatePresentation().setText(text, false);
     group.setPopup(true);

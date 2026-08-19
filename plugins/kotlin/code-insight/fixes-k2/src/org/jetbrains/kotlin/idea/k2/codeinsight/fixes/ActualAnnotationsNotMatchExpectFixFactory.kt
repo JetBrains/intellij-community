@@ -18,7 +18,8 @@ internal object ActualAnnotationsNotMatchExpectFixFactory {
 
     val factory = KotlinQuickFixFactory.ModCommandBased { diagnostics: KaFirDiagnostic.ActualAnnotationsNotMatchExpect -> createQuickFixes(diagnostics) }
 
-    private fun KaSession.createQuickFixes(diagnostic: KaFirDiagnostic.ActualAnnotationsNotMatchExpect): List<ModCommandAction> {
+    context(session: KaSession)
+    private fun createQuickFixes(diagnostic: KaFirDiagnostic.ActualAnnotationsNotMatchExpect): List<ModCommandAction> {
         val expectAnnotationEntry = diagnostic.incompatibilityType.expectAnnotation.psi as? KtAnnotationEntry
             ?: return emptyList()
 

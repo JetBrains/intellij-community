@@ -1,5 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+# `DevDistMain` has no binary of its own here. It resolves every module and library jar by label through the
+# runfiles tree, so an assembler that can actually assemble has to carry a repository's whole jar set as `data`;
+# that binary is `//build:dev_dist_assembler` in the ultimate repository, and its community counterpart will
+# live beside the community jar set the same way.
+
 ### auto-generated section `build intellij.platform.buildScripts.devBuildServer` start
 jvm_library(
     name = "buildScripts-devBuildServer",
@@ -40,6 +45,7 @@ jvm_library(
         "//platform/util/zip",
         "//libraries/kotlinx/serialization/protobuf",
         "//platform/buildData",
+        "//platform/devIdeConfig",
     ],
 )
 
@@ -78,6 +84,7 @@ jvm_library(
         "//platform/util/zip:zip_test_lib",
         "//libraries/kotlinx/serialization/protobuf:protobuf_test_lib",
         "//platform/buildData:buildData_test_lib",
+        "//platform/devIdeConfig:devIdeConfig_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.devBuildServer` end

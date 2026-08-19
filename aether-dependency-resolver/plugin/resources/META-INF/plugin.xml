@@ -1,12 +1,25 @@
-<!--suppress PluginXmlPluginLogo -->
-<idea-plugin implementation-detail="true">
+<idea-plugin>
   <id>intellij.java.aetherDependencyResolver.plugin</id>
-  <name>Aether Dependency Resolver</name>
-  <description>Provides Aether dependency resolver modules for IntelliJ-based IDEs.</description>
+  <name>Artifacts Repository Resolver</name>
   <vendor>JetBrains</vendor>
+  <category>Build Tools</category>
+  <description><![CDATA[
+    Resolves and downloads artifacts from Maven repositories, and provides search across Maven repositories to help you find and add dependencies.
+    <br/>
+    Other plugins rely on this functionality, for example, the Database Tools and SQL plugin uses it to download database drivers.
+  ]]></description>
+
   <content namespace="jetbrains">
     <module name="intellij.java.aetherDependencyResolver" loading="required"/>
     <module name="intellij.libraries.maven.resolver.provider" loading="embedded"/>
+    <module name="intellij.libraries.maven.resolver.transport" loading="embedded"/>
     <module name="intellij.libraries.plexus.utils" loading="embedded"/>
+    <module name="intellij.repository.search.common"/>
+    <module name="intellij.repository.search.completion"/>
+    <module name="intellij.repository.search.ultimate"/>
+  </content>
+
+  <content>
+    <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
   </content>
 </idea-plugin>

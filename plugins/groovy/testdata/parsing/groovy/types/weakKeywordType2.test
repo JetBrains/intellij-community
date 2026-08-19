@@ -1,0 +1,138 @@
+enum E {
+    as, permits, trait, sealed, record, var, val, yield
+}
+class val {
+    val() {}
+}
+class var {
+    var() {}
+}
+
+-----
+Groovy script
+  Enumeration definition
+    Modifiers
+      <empty list>
+    PsiElement(enum)('enum')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('E')
+    Implements clause
+      <empty list>
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      Enumeration constants
+        Enumeration constant
+          Modifiers
+            <empty list>
+          PsiElement(as)('as')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        Enumeration constant
+          Modifiers
+            <empty list>
+          PsiElement(permits)('permits')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        Enumeration constant
+          Modifiers
+            <empty list>
+          PsiElement(trait)('trait')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        Enumeration constant
+          Modifiers
+            <empty list>
+          PsiElement(sealed)('sealed')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        Enumeration constant
+          Modifiers
+            <empty list>
+          PsiElement(record)('record')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        Enumeration constant
+          Modifiers
+            <empty list>
+          PsiElement(var)('var')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        Enumeration constant
+          Modifiers
+            <empty list>
+          PsiElement(val)('val')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        Enumeration constant
+          Modifiers
+            <empty list>
+          PsiElement(yield)('yield')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
+  PsiElement(new line)('\n')
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(val)('val')
+    Extends clause
+      <empty list>
+    Implements clause
+      <empty list>
+    Permits clause
+      <empty list>
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      Constructor
+        Modifiers
+          <empty list>
+        PsiElement(val)('val')
+        Parameter list
+          PsiElement(()('(')
+          PsiElement())(')')
+        Throw clause
+          <empty list>
+        PsiWhiteSpace(' ')
+        Open block
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
+  PsiElement(new line)('\n')
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(var)('var')
+    Extends clause
+      <empty list>
+    Implements clause
+      <empty list>
+    Permits clause
+      <empty list>
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      Constructor
+        Modifiers
+          <empty list>
+        PsiElement(var)('var')
+        Parameter list
+          PsiElement(()('(')
+          PsiElement())(')')
+        Throw clause
+          <empty list>
+        PsiWhiteSpace(' ')
+        Open block
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
+  PsiElement(new line)('\n')

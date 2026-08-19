@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ClassPathUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
+import com.intellij.openapi.util.UtilThreadingAssertions;
 import com.intellij.util.ArrayUtil;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositoryCache;
@@ -254,11 +255,16 @@ public final class ArtifactRepositoryManager {
     return result.toArray(ArrayUtil.EMPTY_CLASS_ARRAY);
   }
 
+  /**
+   * Must be called on a background thread without holding a read lock.
+   */
   public @NotNull Collection<File> resolveDependency(String groupId,
                                                      String artifactId,
                                                      String version,
                                                      boolean includeTransitiveDependencies,
                                                      List<String> excludedDependencies) throws Exception {
+    UtilThreadingAssertions.softAssertHeavyBackgroundActivity();
+
     Collection<Artifact> artifacts = resolveDependencyAsArtifact(groupId, artifactId, version, EnumSet.of(ArtifactKind.ARTIFACT),
                                                                  includeTransitiveDependencies, excludedDependencies);
     if (artifacts.isEmpty()) {
@@ -272,8 +278,13 @@ public final class ArtifactRepositoryManager {
     return files;
   }
 
-  /// Not a thread-safe method due to [org.apache.maven.model.validation.DefaultModelValidator#validIds]
+  /**
+   * Must be called on a background thread without holding a read lock.
+   * Not a thread-safe method due to [org.apache.maven.model.validation.DefaultModelValidator#validIds]
+   */
   public @Nullable ArtifactDependencyNode collectDependencies(String groupId, String artifactId, String versionConstraint) throws Exception {
+    UtilThreadingAssertions.softAssertHeavyBackgroundActivity();
+
     Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
     CollectRequest collectRequest = createCollectRequest(groupId, artifactId, constraints, EnumSet.of(ArtifactKind.ARTIFACT));
     ArtifactDependencyTreeBuilder builder = new ArtifactDependencyTreeBuilder();
@@ -290,9 +301,14 @@ public final class ArtifactRepositoryManager {
     return builder.getRoot();
   }
 
+  /**
+   * Must be called on a background thread without holding a read lock.
+   */
   public @NotNull Collection<Artifact> resolveDependencyAsArtifact(String groupId, String artifactId, String versionConstraint,
                                                                    Set<ArtifactKind> artifactKinds, boolean includeTransitiveDependencies,
                                                                    List<String> excludedDependencies) throws Exception {
+    UtilThreadingAssertions.softAssertHeavyBackgroundActivity();
+
     List<Artifact> artifacts = new ArrayList<>();
     VersionConstraint originalConstraints = asVersionConstraint(versionConstraint);
     for (ArtifactKind kind : artifactKinds) {
@@ -317,32 +333,23 @@ public final class ArtifactRepositoryManager {
         }
 
         if (!requests.isEmpty()) {
-          try {
+          if (kind == ArtifactKind.ARTIFACT) {
             List<ArtifactResult> resultList = runWithRetry(session, s -> RepositorySystemHolder.getInstance().resolveArtifacts(s, requests));
-
             for (ArtifactResult result : resultList) {
               artifacts.add(result.getArtifact());
             }
           }
-          catch (ArtifactResolutionException e) {
-            if (kind != ArtifactKind.ARTIFACT) {
-              // for sources and javadocs, try to process requests one-by-one and fetch at least something
-              if (requests.size() > 1) {
-                for (ArtifactRequest request : requests) {
-                  try {
-                    // Don't retry on sources or javadocs resolution: used only in IDE, will only waste user's time if the artifact does not
-                    // exist.
-                    ArtifactResult result = RepositorySystemHolder.getInstance().resolveArtifact(session, request);
-                    artifacts.add(result.getArtifact());
-                  }
-                  catch (ArtifactResolutionException ignored) {
-                  }
-                }
+          else {
+            // Resolve optional artifacts separately: a batch takes exclusive locks for the entire dependency graph while downloading
+            // any missing item. Overlapping graphs then block each other even when most coordinates are unrelated.
+            for (ArtifactRequest request : requests) {
+              try {
+                // Don't retry optional artifacts: used only in IDE, will only waste user's time if the artifact does not exist.
+                ArtifactResult result = RepositorySystemHolder.getInstance().resolveArtifact(session, request);
+                artifacts.add(result.getArtifact());
               }
-            }
-            else {
-              // for ArtifactKind.ARTIFACT should fail if at least one request in this group fails
-              throw e;
+              catch (ArtifactResolutionException ignored) {
+              }
             }
           }
         }
@@ -401,9 +408,14 @@ public final class ArtifactRepositoryManager {
     return session;
   }
 
+  /**
+   * Must be called on a background thread without holding a read lock.
+   */
   public @NotNull Collection<Artifact> resolveDependencyAsArtifactStrict(String groupId, String artifactId, String versionConstraint,
                                                                          ArtifactKind kind, boolean includeTransitiveDependencies,
                                                                          List<String> excludedDependencies) throws Exception {
+    UtilThreadingAssertions.softAssertHeavyBackgroundActivity();
+
     List<Artifact> artifacts = new ArrayList<>();
     List<ArtifactRequest> requests = new ArrayList<>();
     Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
@@ -487,8 +499,12 @@ public final class ArtifactRepositoryManager {
 
   /**
    * Gets the versions (in ascending order) that matched the requested range.
+   * <p>
+   * Must be called on a background thread without holding a read lock.
    */
   public @NotNull List<Version> getAvailableVersions(String groupId, String artifactId, String versionConstraint, ArtifactKind artifactKind) throws Exception {
+    UtilThreadingAssertions.softAssertHeavyBackgroundActivity();
+
     VersionRangeResult result = RepositorySystemHolder.getInstance().resolveVersionRange(
       mySessionFactory.createDefaultSession(),
       createVersionRangeRequest(groupId, artifactId, asVersionConstraint(versionConstraint), artifactKind)
@@ -496,20 +512,34 @@ public final class ArtifactRepositoryManager {
     return result.getVersions();
   }
 
+  /**
+   * Must be called on a background thread without holding a read lock.
+   */
   public static RemoteRepository createRemoteRepository(String id, String url) {
     return createRemoteRepository(id, url, null, true);
   }
 
+  /**
+   * Must be called on a background thread without holding a read lock.
+   */
   public static RemoteRepository createRemoteRepository(String id, String url,
                                                         boolean allowSnapshots) {
     return createRemoteRepository(id, url, null, allowSnapshots);
   }
 
+  /**
+   * Must be called on a background thread without holding a read lock.
+   */
   public static RemoteRepository createRemoteRepository(String id, String url, ArtifactAuthenticationData authenticationData) {
     return createRemoteRepository(id, url, authenticationData, true);
   }
 
+  /**
+   * Must be called on a background thread without holding a read lock.
+   */
   public static RemoteRepository createRemoteRepository(String id, String url, ArtifactAuthenticationData authenticationData, boolean allowSnapshots) {
+    UtilThreadingAssertions.softAssertHeavyBackgroundActivity();
+
     // for maven repos repository type should be 'default'
     RemoteRepository.Builder builder = new RemoteRepository.Builder(id, "default", url);
 

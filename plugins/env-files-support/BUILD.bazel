@@ -76,6 +76,8 @@ jvm_library(
 exports_files(
     [
         "intellij.dotenv.iml",
+        "src/main/resources/META-INF/js.xml",
+        "src/main/resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

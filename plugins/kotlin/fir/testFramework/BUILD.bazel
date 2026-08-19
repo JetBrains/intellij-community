@@ -22,6 +22,7 @@ jvm_library(
     ),
     module_name = "kotlin.fir.testFramework",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -38,16 +39,21 @@ jvm_library(
     kotlinc_opts = ":custom_testFramework",
     module_name = "kotlin.fir.testFramework",
     visibility = ["//visibility:public"],
-    runtime_deps = [":testFramework"],
+    runtime_deps = [
+        # do not sort,
+        ":testFramework",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:opentest4j",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/opentest4j",
+        "//libraries/opentest4j:opentest4j_test_lib",
         "//java/java-runtime:rt",
         "//java/java-runtime:rt_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/test-framework",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//java/java-psi-api:psi",

@@ -20,7 +20,9 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "@lib//:kotlinc-kotlin-jps-common",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
@@ -74,6 +76,9 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":jvm",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/execution-impl:execution-impl_test_lib",
@@ -117,6 +122,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.runConfigurations.jvm.iml",
+        "resources/intellij.kotlin.runConfigurations.jvm.xml",
     ],
     visibility = ["//visibility:public"],
 )

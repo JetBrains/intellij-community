@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
@@ -354,21 +354,17 @@ public final class PsiImplUtil {
     ASTNode node = nameElement.getNode();
     LOG.assertTrue(node != null);
 
-    if (node.getElementType() == GroovyTokenTypes.mIDENT || TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS.contains(node.getElementType())) {
+    IElementType token = node.getElementType();
+    if (TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS.contains(token)) {
       return nameElement.getText();
     }
 
-    if (GroovyTokenSets.STRING_LITERALS.contains(node.getElementType())) {
+    if (GroovyTokenSets.STRING_LITERALS.contains(token)) {
       final Object value = GrLiteralImpl.getLiteralValue(nameElement);
-      if (value instanceof String) {
-        return (String)value;
-      }
-      else {
-        return GrStringUtil.removeQuotes(nameElement.getText());
-      }
+      return value instanceof String s ? s : GrStringUtil.removeQuotes(nameElement.getText());
     }
 
-    throw new IncorrectOperationException("incorrect name element: " + node.getElementType() + ", named element: " + namedElement);
+    throw new IncorrectOperationException("incorrect name element: " + token + ", named element: " + namedElement);
   }
 
   public static void removeNewLineAfter(@NotNull GrStatement statement) {

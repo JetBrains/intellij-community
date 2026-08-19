@@ -3,11 +3,13 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
 public final class MoveCaretRightAction extends EditorAction {
   public MoveCaretRightAction() {
     super(new MoveCaretLeftOrRightHandler(MoveCaretLeftOrRightHandler.Direction.RIGHT));
+    getTemplatePresentation().setRWLockRequired(LockFreeEditorActions.needLockForArrowActions());
   }
 }

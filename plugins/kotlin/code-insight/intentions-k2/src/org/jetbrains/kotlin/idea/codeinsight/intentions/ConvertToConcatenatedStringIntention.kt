@@ -2,12 +2,15 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.intentions
 
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.ConvertToConcatenatedStringIntentionBase
 import org.jetbrains.kotlin.psi.KtExpression
 
 internal class ConvertToConcatenatedStringIntention : ConvertToConcatenatedStringIntentionBase() {
     override fun isExpressionOfStringType(expression: KtExpression): Boolean = analyze(expression) {
-      expression.expressionType?.isStringType == true
+      expression.expressionType?.classId == KaStandardTypeClassIds.STRING
     }
 }

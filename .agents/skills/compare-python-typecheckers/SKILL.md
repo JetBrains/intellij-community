@@ -1,6 +1,6 @@
 ---
 name: compare-python-typecheckers
-description: Compare Python type inference with ty, pyrefly, basedpyright, mypy, and zuban.
+description: Compare Python type inference with ty, pyrefly, and basedpyright.
 ---
 
 # Compare Python type checkers

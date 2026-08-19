@@ -100,7 +100,7 @@ class CacheControl(Generic[_ScopeT]):
     proxy_revalidate: exists_property[Literal["response"]]
     max_age: value_property[int, None, Literal[-1], None]
     s_maxage: value_property[int, None, None, Literal["response"]]
-    s_max_age = s_maxage
+    s_max_age = s_maxage  # pyrefly: ignore [unknown-name]
     stale_while_revalidate: value_property[int, None, None, Literal["response"]]
     stale_if_error: value_property[int, None, None, Literal["response"]]
     def copy(self) -> Self: ...

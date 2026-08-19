@@ -275,7 +275,8 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   private Runnable getBrowseRunnable(@Nullable Project project) {
     var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
       .withTitle(ExecutionBundle.message("run.configuration.select.alternate.jre.label"))
-      .withDescription(ExecutionBundle.message("run.configuration.select.jre.dir.label"));
+      .withDescription(ExecutionBundle.message("run.configuration.select.jre.dir.label"))
+      .withEnvironmentRestricted(true);
     return new BrowseFolderRunnable<>(project, descriptor, getComponent(), JreComboboxEditor.TEXT_COMPONENT_ACCESSOR);
   }
 

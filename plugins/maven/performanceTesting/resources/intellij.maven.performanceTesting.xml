@@ -3,6 +3,17 @@
   <dependencies>
     <plugin id="com.jetbrains.performancePlugin"/>
     <module name="intellij.java.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.repository.search.common"/>
   </dependencies>
   <!-- endregion -->

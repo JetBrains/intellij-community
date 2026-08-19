@@ -36,6 +36,16 @@ class HighlightingTest : BaseTestCase() {
 
   @NeedsCloud
   @Test
+  fun `test no highlighting around path elements`() {
+    myFixture.configureByText("a.md", """
+      Another potential issue. More English Text for language detection.
+      @community/plugins/markdown/core/src/org/intellij/plugins/markdown/lang/MarkdownLazyElementType.java . New sentence
+    """.trimIndent())
+    myFixture.checkHighlighting()
+  }
+
+  @NeedsCloud
+  @Test
   fun `test MLEC and rules md all languages`() {
     enableLanguages(setOf(Lang.AMERICAN_ENGLISH, Lang.RUSSIAN), testRootDisposable)
 

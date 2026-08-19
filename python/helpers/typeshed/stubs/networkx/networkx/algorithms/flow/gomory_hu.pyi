@@ -10,4 +10,6 @@ __all__ = ["gomory_hu_tree"]
 default_flow_func = edmonds_karp
 
 @_dispatchable
-def gomory_hu_tree(G: Graph[_Node], capacity: str = "capacity", flow_func: Callable[..., Incomplete] | None = None): ...
+def gomory_hu_tree(
+    G: Graph[_Node], capacity: str = "capacity", flow_func: Callable[..., Incomplete] | None = None
+) -> Graph[Incomplete]: ...

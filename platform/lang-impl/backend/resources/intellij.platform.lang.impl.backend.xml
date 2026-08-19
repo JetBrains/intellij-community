@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.rhizomedb"/>
@@ -8,10 +8,64 @@
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.rpc.backend"/>
   </dependencies>
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.lang.impl.backend.IdeLanguageCustomizationApiProvider"/>
+
+    <intentionAction>
+      <language/>
+      <className>com.intellij.ide.scratch.ScratchFromSelectionIntention</className>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <language/>
+      <className>com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction</className>
+    </intentionAction>
+    <intentionAction>
+      <language/>
+      <className>com.intellij.formatting.contextConfiguration.ConfigureCodeStyleOnSelectedFragment</className>
+    </intentionAction>
+    <intentionAction>
+      <language/>
+      <className>com.intellij.codeInsight.hints.AddToExcludeListCurrentMethodIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <language/>
+      <className>com.intellij.codeInsight.hints.DisableCustomHintsOption</className>
+    </intentionAction>
+    <intentionAction>
+      <language/>
+      <className>com.intellij.codeInsight.hints.EnableCustomHintsOption</className>
+    </intentionAction>
+    <intentionAction>
+      <language/>
+      <className>com.intellij.codeInsight.intention.impl.QuickEditAction</className>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.language.injection</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <language/>
+      <className>com.intellij.codeInsight.intention.impl.ConvertRelativePathToAbsoluteIntentionAction</className>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <language/>
+      <className>com.intellij.codeInsight.intention.impl.ConvertAbsolutePathToRelativeIntentionAction</className>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <!--Must be available both in data and template language-->
+      <language/>
+      <className>com.intellij.psi.templateLanguages.ChooseTemplateDataLanguageIntention</className>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+      <skipBeforeAfter>true</skipBeforeAfter>
+    </intentionAction>
   </extensions>
 </idea-plugin>

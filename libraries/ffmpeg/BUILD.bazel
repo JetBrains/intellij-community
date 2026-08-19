@@ -1,0 +1,78 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.ffmpeg` start
+jvm_library(
+    name = "ffmpeg",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.ffmpeg",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-ffmpeg-ffmpeg-javacpp",
+        "@lib//:libraries-ffmpeg-ffmpeg-linux-x64",
+        "@lib//:libraries-ffmpeg-ffmpeg-macos-aarch64",
+        "@lib//:libraries-ffmpeg-ffmpeg-macos-x64",
+        "@lib//:libraries-ffmpeg-ffmpeg-windows-x64",
+        "@lib//:libraries-ffmpeg-javacpp-linux-x64",
+        "@lib//:libraries-ffmpeg-javacpp-macos-aarch64",
+        "@lib//:libraries-ffmpeg-javacpp-macos-x64",
+        "@lib//:libraries-ffmpeg-javacpp-windows-x64",
+        "@lib//:libraries-ffmpeg-ffmpeg",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-ffmpeg-ffmpeg-javacpp",
+        "@lib//:libraries-ffmpeg-ffmpeg-linux-x64",
+        "@lib//:libraries-ffmpeg-ffmpeg-macos-aarch64",
+        "@lib//:libraries-ffmpeg-ffmpeg-macos-x64",
+        "@lib//:libraries-ffmpeg-ffmpeg-windows-x64",
+        "@lib//:libraries-ffmpeg-javacpp-linux-x64",
+        "@lib//:libraries-ffmpeg-javacpp-macos-aarch64",
+        "@lib//:libraries-ffmpeg-javacpp-macos-x64",
+        "@lib//:libraries-ffmpeg-javacpp-windows-x64",
+        "@lib//:libraries-ffmpeg-ffmpeg",
+    ],
+)
+
+jvm_library(
+    name = "ffmpeg_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.ffmpeg",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-ffmpeg-ffmpeg-javacpp",
+        "@lib//:libraries-ffmpeg-ffmpeg-linux-x64",
+        "@lib//:libraries-ffmpeg-ffmpeg-macos-aarch64",
+        "@lib//:libraries-ffmpeg-ffmpeg-macos-x64",
+        "@lib//:libraries-ffmpeg-ffmpeg-windows-x64",
+        "@lib//:libraries-ffmpeg-javacpp-linux-x64",
+        "@lib//:libraries-ffmpeg-javacpp-macos-aarch64",
+        "@lib//:libraries-ffmpeg-javacpp-macos-x64",
+        "@lib//:libraries-ffmpeg-javacpp-windows-x64",
+        "@lib//:libraries-ffmpeg-ffmpeg",
+    ],
+    runtime_deps = [":ffmpeg"],
+)
+### auto-generated section `build intellij.libraries.ffmpeg` end
+
+### auto-generated section `iml intellij.libraries.ffmpeg` start
+exports_files(
+    [
+        "intellij.libraries.ffmpeg.iml",
+        "resources/intellij.libraries.ffmpeg.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.ffmpeg` end

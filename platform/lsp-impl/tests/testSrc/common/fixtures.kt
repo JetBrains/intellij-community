@@ -14,7 +14,7 @@ import com.intellij.testFramework.junit5.fixture.testFixture
 /**
  * Registers the [PROBLEM_FILE_HIGHLIGHT_FILTER_EP] EP and a filter extension on the project's extension area.
  *
- * The EP is declared in `LangExtensionPoints.xml` with `area="IDEA_PROJECT"`, which isn't loaded in the test environment.
+ * The EP is declared in `intellij.platform.core.xml` with `area="IDEA_PROJECT"`, which isn't loaded in the test environment.
  * Without it, [WolfTheProblemSolverImpl.isToBeHighlighted] returns `false` and
  * [WolfTheProblemSolverImpl.reportProblemsFromExternalSource] silently ignores the call.
  *
@@ -47,7 +47,7 @@ private const val PROBLEM_FILE_HIGHLIGHT_FILTER_EP = "com.intellij.problemFileHi
  * Wires [MockWolfTheProblemSolver] with a real [WolfTheProblemSolverImpl] delegate.
  *
  * In headless mode (tests), [WolfTheProblemSolver.getInstance] returns [MockWolfTheProblemSolver]
- * (see `headlessImplementation` in `PlatformLangComponents.xml`), which makes all operations no-ops.
+ * (see `headlessImplementation` in `intellij.platform.lang.impl.xml`), which makes all operations no-ops.
  * We wire in a real solver via [MockWolfTheProblemSolver.setDelegate],
  * following the same pattern as `WolfTheProblemSolverTest.prepareWolf`.
  *

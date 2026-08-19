@@ -1,30 +1,28 @@
-<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin>
   <module value="com.intellij.modules.lang.actions"/>
 
   <actions>
-    <action id="IncrementalSearch" class="com.intellij.codeInsight.navigation.actions.IncrementalSearchAction"/>
+    <reference ref="IncrementalSearch"/>
 
     <group id="LangCodeInsightActions">
-      <action id="EditorSelectWord" class="com.intellij.openapi.editor.actions.SelectWordAtCaretAction"/>
-      <action id="EditorSelectWordAtCurrentCaret" class="com.intellij.openapi.editor.actions.SelectWordAtCurrentCaretAction"/>
-      <action id="EditorUnSelectWord" class="com.intellij.openapi.editor.actions.UnselectWordAtCaretAction"/>
+      <reference ref="EditorSelectWord"/>
+      <reference ref="EditorSelectWordAtCurrentCaret"/>
+      <reference ref="EditorUnSelectWord"/>
 
       <add-to-group group-id="EditorActions" anchor="last"/>
     </group>
 
-    <action id="ClassNameCompletion" class="com.intellij.codeInsight.completion.actions.ClassNameCompletionAction"/>
-    <action id="SurroundWithLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.SurroundWithTemplateAction"/>
+    <reference ref="ClassNameCompletion"/>
+    <reference ref="SurroundWithLiveTemplate"/>
 
     <group id="GenerateGroup">
-      <action id="OverrideMethods" class="com.intellij.codeInsight.generation.actions.OverrideMethodsAction"/>
-      <action id="ImplementMethods" class="com.intellij.codeInsight.generation.actions.ImplementMethodsAction"/>
-      <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.DelegateMethodsAction"/>
-      <group id="GenerateFromTestCreatorsGroup" class="com.intellij.testIntegration.GenerateFromTestCreatorsGroup"/>
+      <reference ref="OverrideMethods"/>
+      <reference ref="ImplementMethods"/>
+      <reference ref="DelegateMethods"/>
+      <reference ref="GenerateFromTestCreatorsGroup"/>
     </group>
 
-    <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"
-            icon="AllIcons.Actions.IntentionBulbGrey"/>
+    <reference ref="ShowIntentionActions"/>
 
     <group id="ShowIntentionsGroup" compact="true">
       <reference ref="ShowIntentionActions"/>
@@ -32,32 +30,32 @@
       <add-to-group group-id="EditorPopupMenu" anchor="first"/>
     </group>
 
-    <action id="TogglePopupHints" class="com.intellij.codeInsight.daemon.impl.TogglePopupHintsAction"/>
+    <reference ref="TogglePopupHints"/>
 
-    <action id="CodeInspection.OnEditor" class="com.intellij.codeInspection.actions.CodeInspectionOnEditorAction"/>
+    <reference ref="CodeInspection.OnEditor"/>
 
-    <action id="EditorIndentLineOrSelection" class="com.intellij.openapi.editor.actions.IndentLineOrSelectionAction">
+    <reference ref="EditorIndentLineOrSelection">
       <add-to-group group-id="EditorActions"/>
-    </action>
+    </reference>
 
-    <action id="BraceOrQuoteOut" class="com.intellij.codeInsight.editorActions.BraceOrQuoteOutAction"/>
+    <reference ref="BraceOrQuoteOut"/>
 
-    <action id="ToggleRenderedDocPresentation" class="com.intellij.codeInsight.documentation.render.ToggleRenderedDocPresentationAction"/>
+    <reference ref="ToggleRenderedDocPresentation"/>
     <group id="DocCommentGutterIconContextMenu">
-      <action id="ToggleRenderedDocPresentationForAll" class="com.intellij.codeInsight.documentation.render.ToggleRenderAllDocs"/>
+      <reference ref="ToggleRenderedDocPresentationForAll"/>
     </group>
 
     <group id="CodeInsightEditorActions">
       <reference ref="LookupActions"/>
-      <action id="EmacsStyleIndent" class="com.intellij.codeInsight.editorActions.EmacsStyleIndentAction"/>
-      <action id="EditorCodeBlockStart" class="com.intellij.codeInsight.editorActions.CodeBlockStartAction"/>
-      <action id="EditorCodeBlockEnd" class="com.intellij.codeInsight.editorActions.CodeBlockEndAction"/>
-      <action id="EditorMatchBrace" class="com.intellij.codeInsight.editorActions.MatchBraceAction">
+      <reference ref="EmacsStyleIndent"/>
+      <reference ref="EditorCodeBlockStart"/>
+      <reference ref="EditorCodeBlockEnd"/>
+      <reference ref="EditorMatchBrace">
         <add-to-group group-id="NavigateInFileGroup" anchor="after" relative-to-action="MethodUp"/>
-      </action>
-      <action id="EditorCodeBlockStartWithSelection" class="com.intellij.codeInsight.editorActions.CodeBlockStartWithSelectionAction"/>
-      <action id="EditorCodeBlockEndWithSelection" class="com.intellij.codeInsight.editorActions.CodeBlockEndWithSelectionAction"/>
-      <action id="EditorCompleteStatement" class="com.intellij.codeInsight.editorActions.smartEnter.SmartEnterAction"/>
+      </reference>
+      <reference ref="EditorCodeBlockStartWithSelection"/>
+      <reference ref="EditorCodeBlockEndWithSelection"/>
+      <reference ref="EditorCompleteStatement"/>
 
       <add-to-group group-id="EditorActions" anchor="last"/>
     </group>
@@ -67,19 +65,18 @@
     <group id="NewProjectOrModuleGroup">
     </group>
 
-    <action id="SaveFileAsTemplate" class="com.intellij.ide.actions.SaveFileAsTemplateAction">
+    <reference ref="SaveFileAsTemplate">
       <add-to-group group-id="FileMenu" anchor="after" relative-to-action="FileOtherSettingsGroup"/>
-    </action>
+    </reference>
 
 
-    <action id="ChangeTemplateDataLanguage" class="com.intellij.psi.templateLanguages.ChangeTemplateDataLanguageAction">
+    <reference ref="ChangeTemplateDataLanguage">
       <add-to-group group-id="FilePropertiesGroup" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
-    </action>
+    </reference>
 
-    <!-- LightEdit Mode -->
-    <action id="LightEditOpenFileInProject" class="com.intellij.ide.lightEdit.actions.LightEditOpenFileInProjectAction"/>
+    <reference ref="LightEditOpenFileInProject"/>
 
     <group id="LightEditModePopup">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ShowIntentionsGroup"/>
@@ -92,36 +89,34 @@
       <add-to-group group-id="EditSmartGroup" anchor="before" relative-to-action="EditorUnindentSelection"/>
     </reference>
 
-    <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction">
+    <reference ref="CopyReference">
       <add-to-group group-id="CopyReferencePopupGroup" anchor="after" relative-to-action="CopyExternalReferenceGroup"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
       <add-to-group group-id="Copy.Paste.Special" anchor="first"/>
-    </action>
+    </reference>
 
-    <action id="CopyAsRichText" class="com.intellij.openapi.editor.richcopy.CopyAsRichTextAction">
+    <reference ref="CopyAsRichText">
       <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
-    </action>
+    </reference>
 
-    <action id="CopyAsPlainText" class="com.intellij.openapi.editor.richcopy.CopyAsPlainTextAction">
+    <reference ref="CopyAsPlainText">
       <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
       <add-to-group group-id="Copy.Paste.Special" anchor="after" relative-to-action="CopyReference"/>
-    </action>
+    </reference>
 
     <group id="ShowUsagesPinGroup"/>
 
     <group id="FindUsagesMenuGroup" popup="true">
-      <action id="FindUsages" class="com.intellij.find.actions.FindUsagesAction"/>
-      <action id="ShowSettingsAndFindUsages" class="com.intellij.find.actions.FindUsagesAction$ShowSettingsAndFindUsages"/>
-      <action id="ShowUsages" class="com.intellij.find.actions.ShowUsagesAction"/>
+      <reference ref="FindUsages"/>
+      <reference ref="ShowSettingsAndFindUsages"/>
+      <reference ref="ShowUsages"/>
       <separator/>
-      <action id="FindUsagesInFile" class="com.intellij.find.actions.FindUsagesInFileAction"/>
-      <action id="HighlightUsagesInFile" class="com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction"/>
-      <action id="GotoNextElementUnderCaretUsage"
-              class="com.intellij.codeInsight.daemon.impl.actions.GotoNextElementUnderCaretUsageAction"/>
-      <action id="GotoPrevElementUnderCaretUsage"
-              class="com.intellij.codeInsight.daemon.impl.actions.GotoPrevElementUnderCaretUsageAction"/>
-      <group id="ShowRecentFindUsagesGroup" class="com.intellij.find.impl.ShowRecentFindUsagesGroup" popup="true"/>
+      <reference ref="FindUsagesInFile"/>
+      <reference ref="HighlightUsagesInFile"/>
+      <reference ref="GotoNextElementUnderCaretUsage"/>
+      <reference ref="GotoPrevElementUnderCaretUsage"/>
+      <reference ref="ShowRecentFindUsagesGroup"/>
 
       <add-to-group group-id="EditMenu" anchor="after" relative-to-action="FindMenuGroup"/>
     </group>
@@ -133,31 +128,27 @@
       <add-to-group group-id="EditSelectGroup" anchor="last"/>
     </group>
 
-    <action id="GotoDeclarationOnly" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyAction"/>
+    <reference ref="GotoDeclarationOnly"/>
 
 
     <!-- View -->
     <group id="QuickActions">
       <separator/>
-      <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction"/>
-      <action id="QuickTypeDefinition" class="com.intellij.codeInsight.hint.actions.ShowTypeDefinitionAction"/>
-      <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction"/>
+      <reference ref="QuickImplementations"/>
+      <reference ref="QuickTypeDefinition"/>
+      <reference ref="QuickJavaDoc"/>
 
       <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewAppearanceGroup"/>
     </group>
 
     <group id="Documentation.Navigation">
-      <action id="Documentation.Back" icon="AllIcons.Actions.Back" use-shortcut-of="Back"
-              class="com.intellij.lang.documentation.ide.actions.DocumentationBackAction"/>
-      <action id="Documentation.Forward" icon="AllIcons.Actions.Forward" use-shortcut-of="Forward"
-              class="com.intellij.lang.documentation.ide.actions.DocumentationForwardAction"/>
-      <action id="Documentation.EditSource" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSource"
-              class="com.intellij.lang.documentation.ide.actions.DocumentationEditSourceAction"/>
+      <reference ref="Documentation.Back"/>
+      <reference ref="Documentation.Forward"/>
+      <reference ref="Documentation.EditSource"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
-    <action id="Documentation.ViewExternal" icon="AllIcons.General.Web" use-shortcut-of="ExternalJavaDoc"
-            class="com.intellij.lang.documentation.ide.actions.DocumentationViewExternalAction"/>
+    <reference ref="Documentation.ViewExternal"/>
     <group id="Documentation.PrimaryGroup">
       <!--
       These actions are added to the context menu, to the popup menu, and to the toolbar.
@@ -167,115 +158,82 @@
       <reference ref="Documentation.Navigation"/>
       <reference ref="Documentation.ViewExternal"/>
     </group>
-    <action id="Documentation.ToggleShowInPopup"
-            class="com.intellij.lang.documentation.ide.actions.ToggleShowDocsInPopupAction"/>
-    <action id="Documentation.ToggleAutoShow"
-            class="com.intellij.lang.documentation.ide.actions.ToggleAutoShowAction"/>
-    <action id="Documentation.ToggleAutoUpdate"
-            class="com.intellij.lang.documentation.ide.actions.ToggleAutoUpdateAction"/>
-    <action id="Documentation.KeepTab"
-            class="com.intellij.lang.documentation.ide.actions.KeepTabAction">
+    <reference ref="Documentation.ToggleShowInPopup"/>
+    <reference ref="Documentation.ToggleAutoShow"/>
+    <reference ref="Documentation.ToggleAutoUpdate"/>
+    <reference ref="Documentation.KeepTab">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
-    </action>
+    </reference>
 
     <group id="CodeEditorBaseGroup">
       <group id="CodeEditorViewGroup">
-        <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction"/>
-        <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>
-        <action id="ExpressionTypeInfo" class="com.intellij.codeInsight.hint.actions.ShowExpressionTypeAction"/>
-        <action id="EditorContextInfo" class="com.intellij.codeInsight.hint.actions.ShowContainerInfoAction"/>
-        <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction"/>
+        <reference ref="ExternalJavaDoc"/>
+        <reference ref="ParameterInfo"/>
+        <reference ref="ExpressionTypeInfo"/>
+        <reference ref="EditorContextInfo"/>
+        <reference ref="ShowErrorDescription"/>
       </group>
       <separator/>
 
       <add-to-group group-id="ViewMenu" relative-to-action="QuickActions" anchor="after"/>
     </group>
 
-    <action id="ShowHoverInfo" class="com.intellij.openapi.editor.actions.ShowHoverInfoAction"/>
+    <reference ref="ShowHoverInfo"/>
 
-    <action id="ShowGutterIconsSettings" class="com.intellij.application.options.editor.GutterIconsConfigurable$ShowSettingsAction">
+    <reference ref="ShowGutterIconsSettings">
       <add-to-group group-id="EditorGutterPopupMenu" anchor="last"/>
       <add-to-group group-id="DocCommentGutterIconContextMenu"/>
-    </action>
+    </reference>
 
-    <action id="FixDocComment" class="com.intellij.codeInsight.editorActions.FixDocCommentAction"/>
-    <action id="QuickPreview" class="com.intellij.codeInsight.hint.actions.QuickPreviewAction">
-      <keyboard-shortcut first-keystroke="SPACE" keymap="$default"/>
-    </action>
+    <reference ref="FixDocComment"/>
+    <reference ref="QuickPreview"/>
 
-    <action id="ViewNavigationBar" class="com.intellij.ide.actions.navbar.ViewNavigationBarAction">
+    <reference ref="ViewNavigationBar">
       <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewToolBar"/>
-      <override-text place="NavBar"/>
-    </action>
+    </reference>
 
-    <group id="NavbarLocationGroup" popup="true" class="com.intellij.ide.actions.navbar.NavBarLocationGroup">
+    <reference ref="NavbarLocationGroup">
       <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewNavigationBar"/>
-      <action id="NavBarLocationTop" class="com.intellij.ide.actions.navbar.NavBarTopLocationAction"/>
-      <action id="NavBarLocationBottom" class="com.intellij.ide.actions.navbar.NavBarBottomLocationAction"/>
-      <action id="NavBarLocationHide" class="com.intellij.ide.actions.navbar.HideNavBarAction"/>
-      <separator/>
-      <action id="ShowMembersInNavigationBar" class="com.intellij.ide.actions.ShowNavigationBarMembersAction"/>
-    </group>
+    </reference>
 
-    <action id="ViewMembersInNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarMembersAction">
+    <reference ref="ViewMembersInNavigationBar">
       <add-to-group group-id="UIToggleActions" relative-to-action="NavbarLocationGroup" anchor="after"/>
-      <override-text place="NavBar"/>
-    </action>
+    </reference>
 
-    <action id="ViewImportPopups" class="com.intellij.openapi.editor.actions.ToggleShowImportPopupsAction">
+    <reference ref="ViewImportPopups">
       <add-to-group group-id="EditorToggleActions" anchor="after" relative-to-action="EditorToggleShowIndentLines"/>
-    </action>
+    </reference>
 
 
 
-    <!-- Go To -->
-    <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction">
+    <reference ref="GotoClass">
       <add-to-group group-id="GoToTargetEx" anchor="before" relative-to-action="GotoFile"/>
-    </action>
-    <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction">
-      <override-text place="MainMenu"/>
+    </reference>
+    <reference ref="GotoSymbol">
       <add-to-group group-id="GoToTargetEx" anchor="after" relative-to-action="GotoFile"/>
-    </action>
-    <action id="TextSearchAction" class="com.intellij.find.impl.TextSearchContributor$Companion$TextSearchAction">
+    </reference>
+    <reference ref="TextSearchAction">
       <add-to-group group-id="GoToTargetEx" anchor="after" relative-to-action="GotoSymbol"/>
-    </action>
+    </reference>
 
     <group id="GoToCodeGroup">
       <separator/>
-      <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
+      <reference ref="SelectIn"/>
       <separator/>
-      <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction">
-        <override-text place="MainMenu"/>
-        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
-      </action>
-      <!--suppress PluginXmlCapitalization -->
-      <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction">
-        <!--suppress PluginXmlCapitalization -->
-        <override-text place="MainMenu"/>
-        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
-      </action>
-      <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction">
-        <override-text place="MainMenu"/>
-        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
-      </action>
-      <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction">
-        <override-text place="MainMenu"/>
-        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
-      </action>
-      <action id="GotoTest" class="com.intellij.testIntegration.GotoTestOrCodeAction">
-        <override-text place="MainMenu"/>
-        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
-        <synonym key="action.GotoTest.text.subject"/>
-      </action>
-      <action id="GotoRelated" class="com.intellij.ide.actions.GotoRelatedSymbolAction"/>
+      <reference ref="GotoDeclaration"/>
+      <reference ref="GotoImplementation"/>
+      <reference ref="GotoTypeDeclaration"/>
+      <reference ref="GotoSuperMethod"/>
+      <reference ref="GotoTest"/>
+      <reference ref="GotoRelated"/>
       <separator/>
-      <action id="ShowFilePath" class="com.intellij.ide.actions.ShowFilePathAction">
+      <reference ref="ShowFilePath">
         <add-to-group group-id="RevealGroup" anchor="last"/>
-      </action>
+      </reference>
       <group id="HierarchyGroup">
-        <action id="TypeHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction"/>
-        <action id="MethodHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseMethodHierarchyAction"/>
-        <action id="CallHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseCallHierarchyAction"/>
+        <reference ref="TypeHierarchy"/>
+        <reference ref="MethodHierarchy"/>
+        <reference ref="CallHierarchy"/>
       </group>
       <separator/>
 
@@ -284,43 +242,26 @@
 
     <!-- Code -->
     <group id="Floating.CodeToolbar" popup="false" searchable="false">
-      <group id="Floating.CodeToolbar.Extract" popup="true" class="com.intellij.ui.codeFloatingToolbar.RefactorDropdownActionGroup"
-             searchable="false" />
-      <group id="Floating.CodeToolbar.Surround" popup="true" class="com.intellij.ui.codeFloatingToolbar.RefactorDropdownActionGroup"
+      <reference ref="Floating.CodeToolbar.Extract"/>
+      <group id="Floating.CodeToolbar.Surround" popup="true"
              searchable="false">
-        <!--suppress PluginXmlCapitalization -->
-        <action id="Floating.CodeToolbar.SurroundWithTryCatch" class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
-        <!--suppress PluginXmlCapitalization -->
-        <action id="Floating.CodeToolbar.SurroundWithTryCatchFinally"
-                class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
-        <!--suppress PluginXmlCapitalization -->
-        <action id="Floating.CodeToolbar.SurroundWithIf" class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
+        <reference ref="Floating.CodeToolbar.SurroundWithTryCatch"/>
+        <reference ref="Floating.CodeToolbar.SurroundWithTryCatchFinally"/>
+        <reference ref="Floating.CodeToolbar.SurroundWithIf"/>
       </group>
     </group>
 
-    <action id="CodeFloatingToolbar.GotoNextMenu" class="com.intellij.ui.codeFloatingToolbar.GotoNextFloatingToolbarMenu" />
-    <action id="CodeFloatingToolbar.GotoPrevMenu" class="com.intellij.ui.codeFloatingToolbar.GotoPreviousFloatingToolbarMenu" />
-    <action id="Floating.CodeToolbar.Disable" class="com.intellij.ui.codeFloatingToolbar.DisableCodeFloatingToolbarAction" />
+    <reference ref="CodeFloatingToolbar.GotoNextMenu"/>
+    <reference ref="CodeFloatingToolbar.GotoPrevMenu"/>
+    <reference ref="Floating.CodeToolbar.Disable"/>
 
     <group id="InlineCompletion" popup="true">
-      <action id="CallInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.action.CallInlineCompletionAction">
-        <keyboard-shortcut first-keystroke="shift alt BACK_SLASH" keymap="$default"/>
-      </action>
-      <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">
-        <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
-      </action>
-      <action id="InsertInlineCompletionWordAction"
-              class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionWordAction"
-              use-shortcut-of="EditorNextWord"/>
-      <action id="InsertInlineCompletionLineAction"
-              class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionLineAction"
-              use-shortcut-of="EditorLineEnd"/>
-      <action id="NextInlineCompletionSuggestionAction" class="com.intellij.codeInsight.inline.completion.SwitchInlineCompletionVariantAction$Next">
-        <keyboard-shortcut first-keystroke="alt CLOSE_BRACKET" keymap="$default"/>
-      </action>
-      <action id="PrevInlineCompletionSuggestionAction" class="com.intellij.codeInsight.inline.completion.SwitchInlineCompletionVariantAction$Prev">
-        <keyboard-shortcut first-keystroke="alt OPEN_BRACKET" keymap="$default"/>
-      </action>
+      <reference ref="CallInlineCompletionAction"/>
+      <reference ref="InsertInlineCompletionAction"/>
+      <reference ref="InsertInlineCompletionWordAction"/>
+      <reference ref="InsertInlineCompletionLineAction"/>
+      <reference ref="NextInlineCompletionSuggestionAction"/>
+      <reference ref="PrevInlineCompletionSuggestionAction"/>
       <separator/>
       <group id="InlineCompletion.Settings" popup="true" internal="true"/>
     </group>
@@ -328,196 +269,167 @@
     <group id="CodeMenu" popup="true">
       <reference ref="OverrideMethods"/>
       <reference ref="ImplementMethods"/>
-      <action id="Generate" class="com.intellij.codeInsight.generation.actions.GenerateAction"/>
+      <reference ref="Generate"/>
       <separator/>
 
-      <group id="CodeCompletionGroup" class="com.intellij.codeInsight.completion.actions.CodeCompletionGroup" popup="true">
-        <action id="CodeCompletion" class="com.intellij.codeInsight.completion.actions.CodeCompletionAction"/>
-        <action id="SmartTypeCompletion" class="com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction">
-          <synonym key="action.SmartTypeCompletion.synonym"/>
-          <synonym key="action.SmartTypeCompletion.synonym2"/>
-        </action>
-        <separator/>
-        <reference ref="EditorCompleteStatement"/>
-        <separator/>
-        <action id="HippieCompletion" class="com.intellij.codeInsight.completion.actions.HippieCompletionAction"/>
-        <action id="HippieBackwardCompletion" class="com.intellij.codeInsight.completion.actions.HippieBackwardCompletionAction"/>
-        <separator/>
-        <reference ref="CallInlineCompletionAction"/>
-        <reference ref="InsertInlineCompletionAction"/>
-        <reference ref="InsertInlineCompletionWordAction"/>
-        <reference ref="InsertInlineCompletionLineAction"/>
-        <!--suppress PluginXmlCapitalization -->
-        <action class="com.intellij.codeInsight.completion.command.configuration.EnableCommandCompletionAction"
-                id="EnableCommandCompletion"/>
-      </group>
+      <reference ref="CodeCompletionGroup"/>
 
       <group id="InspectCodeInCodeMenuGroup">
         <separator/>
         <group id="InspectCodeGroup">
-          <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
-          <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
+          <reference ref="InspectCode"/>
+          <reference ref="CodeCleanup"/>
         </group>
 
         <group id="AnalyzeActionsPopup" popup="true">
           <group id="AnalyzeActions">
-            <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction" />
-            <action id="RunInspection" class="com.intellij.codeInspection.actions.RunInspectionAction" />
-            <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.ConfigureHighlightingLevelAction"/>
-            <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
+            <reference ref="SilentCodeCleanup"/>
+            <reference ref="RunInspection"/>
+            <reference ref="PopupHector"/>
+            <reference ref="ViewOfflineInspection"/>
             <separator/>
-            <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction">
-              <override-text place="MainMenu"/>
-              <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
-            </action>
-            <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction">
-              <override-text place="MainMenu"/>
-              <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
-            </action>
+            <reference ref="SliceBackward"/>
+            <reference ref="SliceForward"/>
           </group>
         </group>
 
         <group id="AnalyzePlatformMenu">
-          <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction">
-            <override-text place="EditorPopup"/>
-          </action>
+          <reference ref="Unscramble"/>
         </group>
       </group>
 
       <separator/>
-      <action id="InsertLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.ListTemplatesAction"/>
-      <action id="SaveAsTemplate" class="com.intellij.codeInsight.template.actions.SaveAsTemplateAction"/>
+      <reference ref="InsertLiveTemplate"/>
+      <reference ref="SaveAsTemplate"/>
       <separator/>
-      <action id="SurroundWith" class="com.intellij.codeInsight.generation.actions.SurroundWithAction"/>
-      <action id="Unwrap" class="com.intellij.codeInsight.unwrap.UnwrapAction"/>
+      <reference ref="SurroundWith"/>
+      <reference ref="Unwrap"/>
       <separator/>
 
       <group id="FoldingGroup" popup="true">
-        <action id="ExpandRegion" class="com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction"/>
-        <action id="ExpandRegionRecursively" class="com.intellij.codeInsight.folding.impl.actions.ExpandRegionRecursivelyAction"/>
-        <action id="ExpandAllRegions" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllRegionsAction"/>
+        <reference ref="ExpandRegion"/>
+        <reference ref="ExpandRegionRecursively"/>
+        <reference ref="ExpandAllRegions"/>
         <separator/>
-        <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction"/>
-        <action id="CollapseRegionRecursively" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionRecursivelyAction"/>
-        <action id="CollapseAllRegions" class="com.intellij.codeInsight.folding.impl.actions.CollapseAllRegionsAction"/>
+        <reference ref="CollapseRegion"/>
+        <reference ref="CollapseRegionRecursively"/>
+        <reference ref="CollapseAllRegions"/>
         <separator/>
         <group id="ExpandToLevel" popup="true">
-          <action id="ExpandToLevel1" class="com.intellij.codeInsight.folding.impl.actions.ExpandToLevel1Action"/>
-          <action id="ExpandToLevel2" class="com.intellij.codeInsight.folding.impl.actions.ExpandToLevel2Action"/>
-          <action id="ExpandToLevel3" class="com.intellij.codeInsight.folding.impl.actions.ExpandToLevel3Action"/>
-          <action id="ExpandToLevel4" class="com.intellij.codeInsight.folding.impl.actions.ExpandToLevel4Action"/>
-          <action id="ExpandToLevel5" class="com.intellij.codeInsight.folding.impl.actions.ExpandToLevel5Action"/>
+          <reference ref="ExpandToLevel1"/>
+          <reference ref="ExpandToLevel2"/>
+          <reference ref="ExpandToLevel3"/>
+          <reference ref="ExpandToLevel4"/>
+          <reference ref="ExpandToLevel5"/>
         </group>
         <group id="ExpandAllToLevel" popup="true">
-          <action id="ExpandAllToLevel1" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllToLevel1Action"/>
-          <action id="ExpandAllToLevel2" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllToLevel2Action"/>
-          <action id="ExpandAllToLevel3" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllToLevel3Action"/>
-          <action id="ExpandAllToLevel4" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllToLevel4Action"/>
-          <action id="ExpandAllToLevel5" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllToLevel5Action"/>
+          <reference ref="ExpandAllToLevel1"/>
+          <reference ref="ExpandAllToLevel2"/>
+          <reference ref="ExpandAllToLevel3"/>
+          <reference ref="ExpandAllToLevel4"/>
+          <reference ref="ExpandAllToLevel5"/>
         </group>
         <separator/>
         <group id="LanguageSpecificFoldingGroup">
-          <action id="ExpandDocComments" class="com.intellij.codeInsight.folding.impl.actions.ExpandDocCommentsAction"/>
-          <action id="CollapseDocComments" class="com.intellij.codeInsight.folding.impl.actions.CollapseDocCommentsAction"/>
+          <reference ref="ExpandDocComments"/>
+          <reference ref="CollapseDocComments"/>
         </group>
         <separator/>
-        <action id="ExpandCollapseToggleAction" class="com.intellij.codeInsight.folding.impl.actions.ExpandCollapseToggleAction" />
+        <reference ref="ExpandCollapseToggleAction"/>
         <separator/>
-        <action id="CollapseSelection" class="com.intellij.codeInsight.folding.impl.actions.CollapseSelectionAction"/>
-        <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction"/>
+        <reference ref="CollapseSelection"/>
+        <reference ref="CollapseBlock"/>
       </group>
 
       <separator/>
 
       <group id="CommentGroup">
-        <action id="CommentByLineComment" class="com.intellij.codeInsight.generation.actions.CommentByLineCommentAction"
-                icon="AllIcons.Actions.InlayRenameInComments">
+        <reference ref="CommentByLineComment">
           <add-to-group group-id="Floating.CodeToolbar" anchor="after" relative-to-action="Floating.CodeToolbar.Surround" />
-        </action>
-        <action id="CommentByBlockComment" class="com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction"/>
+        </reference>
+        <reference ref="CommentByBlockComment"/>
       </group>
 
       <group id="CodeFormatGroup">
-        <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction" icon="AllIcons.Actions.ReformatCode">
+        <reference ref="ReformatCode">
           <add-to-group group-id="Floating.CodeToolbar" anchor="after" relative-to-action="CommentByLineComment" />
-          <synonym key="action.ReformatCode.synonym1"/>
-        </action>
-        <action id="ShowReformatFileDialog" class="com.intellij.codeInsight.actions.ShowReformatFileDialog"/>
-        <action id="AutoIndentLines" class="com.intellij.codeInsight.generation.actions.AutoIndentLinesAction"/>
-        <action id="OptimizeImports" class="com.intellij.codeInsight.actions.OptimizeImportsAction"/>
-        <action id="RearrangeCode" class="com.intellij.application.options.codeStyle.arrangement.action.RearrangeCodeAction"/>
+        </reference>
+        <reference ref="ShowReformatFileDialog"/>
+        <reference ref="AutoIndentLines"/>
+        <reference ref="OptimizeImports"/>
+        <reference ref="RearrangeCode"/>
       </group>
 
       <separator/>
-      <action id="MoveStatementDown" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementDownAction"/>
-      <action id="MoveStatementUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementUpAction"/>
-      <action id="MoveElementLeft" class="com.intellij.codeInsight.editorActions.moveLeftRight.MoveElementLeftAction"/>
-      <action id="MoveElementRight" class="com.intellij.codeInsight.editorActions.moveLeftRight.MoveElementRightAction"/>
-      <action id="MoveLineDown" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveLineDownAction"/>
-      <action id="MoveLineUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveLineUpAction"/>
+      <reference ref="MoveStatementDown"/>
+      <reference ref="MoveStatementUp"/>
+      <reference ref="MoveElementLeft"/>
+      <reference ref="MoveElementRight"/>
+      <reference ref="MoveLineDown"/>
+      <reference ref="MoveLineUp"/>
       <separator/>
 
       <separator/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
     </group>
 
-    <action id="ConfigureInspectionsAction" class="com.intellij.codeInsight.daemon.impl.ConfigureInspectionsAction"/>
+    <reference ref="ConfigureInspectionsAction"/>
 
     <group id="ParameterNameHints">
-      <action id="ShowSettingsWithAddedPattern" class="com.intellij.codeInsight.hints.ShowSettingsWithAddedPattern"/>
-      <action id="ToggleInlineHintsAction" class="com.intellij.codeInsight.hints.ToggleInlineHintsAction"/>
-      <action id="ShowParameterHintsSettings" class="com.intellij.codeInsight.hints.ShowParameterHintsSettings"/>
+      <reference ref="ShowSettingsWithAddedPattern"/>
+      <reference ref="ToggleInlineHintsAction"/>
+      <reference ref="ShowParameterHintsSettings"/>
       <separator/>
-      <action id="ToggleCompletionHintsAction" class="com.intellij.codeInsight.hints.ToggleCompletionHintsAction"/>
+      <reference ref="ToggleCompletionHintsAction"/>
     </group>
 
     <group id="InlayMenu"  popup="true" >
-      <action id="DisableDeclarativeInlayAction" class="com.intellij.codeInsight.hints.declarative.impl.DisableDeclarativeInlayAction" />
+      <reference ref="DisableDeclarativeInlayAction"/>
     </group>
 
-    <action id="ToggleInlayHintsGloballyAction" class="com.intellij.codeInsight.hints.ToggleInlayHintsGloballyAction"/>
-    <action id="CodeVisionToggleAction" class="com.intellij.codeInsight.hints.codeVision.CodeVisionToggleAction" />
+    <reference ref="ToggleInlayHintsGloballyAction"/>
+    <reference ref="CodeVisionToggleAction"/>
 
     <!-- Refactor -->
     <group id="RefactoringMenu" popup="true">
-    <action id="Refactorings.QuickListPopupAction" class="com.intellij.refactoring.actions.RefactoringQuickListPopupAction"/>
-      <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction"/>
-      <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
+    <reference ref="Refactorings.QuickListPopupAction"/>
+      <reference ref="RenameElement"/>
+      <reference ref="ChangeSignature"/>
       <separator/>
-      <group id="IntroduceActionsGroup" popup="true" class="com.intellij.ide.actions.PopupInMainMenuActionGroup">
-        <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction">
+      <group id="IntroduceActionsGroup" popup="true">
+        <reference ref="IntroduceVariable">
           <add-to-group group-id="Floating.CodeToolbar.Extract" />
-        </action>
-        <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction">
+        </reference>
+        <reference ref="IntroduceConstant">
           <add-to-group group-id="Floating.CodeToolbar.Extract" />
-        </action>
-        <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
-        <action id="IntroduceParameter" class="com.intellij.refactoring.actions.IntroduceParameterAction">
+        </reference>
+        <reference ref="IntroduceField"/>
+        <reference ref="IntroduceParameter">
           <add-to-group group-id="Floating.CodeToolbar.Extract" />
-        </action>
+        </reference>
         <separator/>
-        <action id="IntroduceParameterObject" class="com.intellij.refactoring.actions.IntroduceParameterObjectAction"/>
+        <reference ref="IntroduceParameterObject"/>
         <separator/>
-        <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction">
+        <reference ref="ExtractMethod">
           <add-to-group group-id="Floating.CodeToolbar.Extract" anchor="first" />
-        </action>
+        </reference>
         <separator/>
-        <action id="ExtractClass" class="com.intellij.refactoring.actions.ExtractClassAction"/>
-        <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
-        <action id="ExtractInterface" class="com.intellij.refactoring.actions.ExtractInterfaceAction"/>
-        <action id="ExtractSuperclass" class="com.intellij.refactoring.actions.ExtractSuperclassAction"/>
-        <action id="ExtractModule" class="com.intellij.refactoring.actions.ExtractModuleAction"/>
+        <reference ref="ExtractClass"/>
+        <reference ref="ExtractInclude"/>
+        <reference ref="ExtractInterface"/>
+        <reference ref="ExtractSuperclass"/>
+        <reference ref="ExtractModule"/>
       </group>
-      <action id="Inline" class="com.intellij.refactoring.actions.InlineAction"/>
+      <reference ref="Inline"/>
       <separator/>
-      <action id="Move" class="com.intellij.refactoring.actions.MoveAction"/>
-      <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction"/>
-      <action id="SafeDelete" class="com.intellij.refactoring.actions.SafeDeleteAction"/>
+      <reference ref="Move"/>
+      <reference ref="CopyElement"/>
+      <reference ref="SafeDelete"/>
       <separator/>
 
-      <action id="MembersPullUp" class="com.intellij.refactoring.actions.PullUpAction"/>
-      <action id="MemberPushDown" class="com.intellij.refactoring.actions.PushDownAction"/>
-      <action id="InvertBoolean" class="com.intellij.refactoring.actions.InvertBooleanAction"/>
+      <reference ref="MembersPullUp"/>
+      <reference ref="MemberPushDown"/>
+      <reference ref="InvertBoolean"/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
     </group>
 
@@ -525,39 +437,31 @@
     <group id="ToolsBasicGroup">
       <add-to-group group-id="ToolsMenu" anchor="first"/>
     </group>
-    <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction">
+    <reference ref="NewScratchFile">
       <add-to-group group-id="ConsoleEditorPopupMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>
-      <override-text place="EditorPopup"/>
-    </action>
-    <action id="NewScratchBuffer" class="com.intellij.ide.scratch.ScratchFileActions$NewBufferAction"/>
-    <action id="Scratch.ChangeLanguage" class="com.intellij.ide.scratch.ScratchFileActions$ChangeLanguageAction">
+    </reference>
+    <reference ref="NewScratchBuffer"/>
+    <reference ref="Scratch.ChangeLanguage">
       <add-to-group group-id="EditorPopupMenu2"/>
-    </action>
-    <action id="Scratch.ShowFilesPopup" class="com.intellij.ide.scratch.ScratchFileActions$ShowFilesPopupAction"/>
-    <action id="Scratch.ExportToScratch" class="com.intellij.ide.scratch.ScratchFileActions$ExportToScratchAction"/>
+    </reference>
+    <reference ref="Scratch.ShowFilesPopup"/>
+    <reference ref="Scratch.ExportToScratch"/>
 
-    <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup">
+    <reference ref="ExternalToolsGroup">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </group>
+    </reference>
 
     <group id="NewGroup" popup="true" searchable="false">
-      <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction" icon="AllIcons.FileTypes.Text">
-        <!--suppress PluginXmlCapitalization -->
-        <override-text place="NewElementInProjectViewPopupEmptyTextLink" />
-        <override-text place="GoToAction"/>
-      </action>
+      <reference ref="NewFile"/>
       <reference ref="NewScratchFile"/>
-      <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction">
-        <override-text place="GoToAction"/>
-      </action>
+      <reference ref="NewDir"/>
       <group id="FileTemplateSeparatorGroup" searchable="false"/> <!-- kept for backward compatibility -->
-      <group id="NewWebDevelopment" class="com.intellij.ide.actions.NewWebDevelopmentGroup"/>
-      <group id="NewMicroservices" class="com.intellij.ide.actions.NewMicroservicesGroup"/>
-      <group id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
+      <reference ref="NewWebDevelopment"/>
+      <reference ref="NewMicroservices"/>
+      <reference ref="NewFromTemplate"/>
     </group>
 
-    <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup"
-           popup="true" searchable="false" use-shortcut-of="NewElement"/>
+    <reference ref="WeighingNewGroup"/>
     <reference ref="AssociateWithFileType"/>
 
     <!-- Toolbar -->
@@ -581,8 +485,8 @@
       <group id="LeftToolbarSideGroup">
         <reference ref="Back"/>
         <reference ref="Forward"/>
-        <action id="SegmentedVcsControlAction" class="com.intellij.execution.segmentedVcsWidget.SegmentedVcsControlAction"/>
-        <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.rider.SearchEverywhereRiderMainToolbarAction"/>
+        <reference ref="SegmentedVcsControlAction"/>
+        <reference ref="SearchEverywhereNewToolbarAction"/>
       </group>
       <group id="RightToolbarSideGroup">
         <reference ref="RunToolbarWidgetAction"/>
@@ -600,23 +504,22 @@
       <reference ref="$Delete"/>
       <reference ref="Scratch.ChangeLanguage"/>
       <group id="MarkFileAs">
-        <action id="OverrideFileTypeAction" class="com.intellij.openapi.file.exclude.OverrideFileTypeAction"/>
-        <action id="ReverteOverrideFileTypeAction" class="com.intellij.openapi.file.exclude.ReverteOverrideFileTypeAction"/>
+        <reference ref="OverrideFileTypeAction"/>
+        <reference ref="ReverteOverrideFileTypeAction"/>
       </group>
     </group>
 
     <group id="ProjectViewPopupMenuSettingsGroup">
-      <group id="MarkRootGroup" class="com.intellij.ide.projectView.actions.MarkRootGroup" popup="true">
-      </group>
+      <reference ref="MarkRootGroup"/>
     </group>
 
     <group id="ProjectViewPopupMenu">
       <reference ref="WeighingNewGroup"/>
       <reference ref="AssociateWithFileType"/>
-      <action id="RestoreDefaultExtensionScripts" class="com.intellij.ide.extensionResources.RestoreBundledExtensionsAction"/>
+      <reference ref="RestoreDefaultExtensionScripts"/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
-      <action id="ProjectViewEditSource" use-shortcut-of="EditSource" class="com.intellij.ide.actions.ProjectViewEditSourceAction"/>
+      <reference ref="ProjectViewEditSource"/>
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
@@ -632,9 +535,9 @@
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <reference ref="CacheRecovery"/>
-      <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction" icon="AllIcons.Actions.Refresh"/>
+      <reference ref="SynchronizeCurrentFile"/>
       <separator/>
-      <action id="GoToLinkTarget" class="com.intellij.ide.actions.GoToLinkTargetAction"/>
+      <reference ref="GoToLinkTarget"/>
       <separator/>
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
@@ -650,11 +553,11 @@
     </group>
 
     <group id="RemoveBom.Group">
-      <action id="RemoveBom" class="com.intellij.openapi.editor.actions.RemoveBomAction"/>
+      <reference ref="RemoveBom"/>
       <add-to-group group-id="FilePropertiesGroup" anchor="after" relative-to-action="ChangeFileEncodingAction"/>
     </group>
     <group id="AddBom.Group">
-      <action id="AddBom" class="com.intellij.openapi.editor.actions.AddBomAction"/>
+      <reference ref="AddBom"/>
       <add-to-group group-id="FilePropertiesGroup" anchor="after" relative-to-action="RemoveBom.Group"/>
     </group>
 
@@ -699,100 +602,46 @@
 
     <group id="ProjectView.ToolWindow.SecondaryActions">
       <group id="ProjectView.ToolWindow.Behavior.Actions" popup="true">
-        <action id="ProjectView.OpenInPreviewTab"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$OpenInPreviewTab"/>
-        <action id="ProjectView.AutoscrollToSource"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollToSource"
-                icon="AllIcons.General.AutoscrollToSource"/>
-        <action id="ProjectView.OpenDirectoriesWithSingleClick"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$OpenDirectoriesWithSingleClick"/>
-        <action id="ProjectView.AutoscrollFromSource"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollFromSource"
-                icon="AllIcons.General.AutoscrollFromSource"/>
+        <reference ref="ProjectView.OpenInPreviewTab"/>
+        <reference ref="ProjectView.AutoscrollToSource"/>
+        <reference ref="ProjectView.OpenDirectoriesWithSingleClick"/>
+        <reference ref="ProjectView.AutoscrollFromSource"/>
       </group>
       <group id="ProjectView.ToolWindow.Appearance.Actions" popup="true">
         <separator key="group.ProjectView.ToolWindow.Appearance.Show.text"/>
-        <action id="ProjectView.ShowModules"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowModules"
-                icon="AllIcons.Actions.GroupByModule">
-          <override-text place="ToolwindowPopup"/>
-        </action>
-        <action id="ProjectView.ShowMembers"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowMembers"
-                icon="AllIcons.ObjectBrowser.ShowMembers">
-          <override-text place="ToolwindowPopup"/>
-        </action>
-        <action id="ProjectView.ShowExcludedFiles"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowExcludedFiles">
-          <override-text place="ToolwindowPopup"/>
-        </action>
-        <action id="ProjectView.ShowVisibilityIcons"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowVisibilityIcons">
-          <override-text place="ToolwindowPopup"/>
-        </action>
-        <action id="ProjectView.ShowLibraryContents"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowLibraryContents"
-                icon="AllIcons.ObjectBrowser.ShowLibraryContents">
-          <override-text place="ToolwindowPopup"/>
-        </action>
-        <action id="ProjectView.ShowScratchesAndConsoles"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowScratchesAndConsoles">
-          <override-text place="ToolwindowPopup"/>
-        </action>
-        <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
+        <reference ref="ProjectView.ShowModules"/>
+        <reference ref="ProjectView.ShowMembers"/>
+        <reference ref="ProjectView.ShowExcludedFiles"/>
+        <reference ref="ProjectView.ShowVisibilityIcons"/>
+        <reference ref="ProjectView.ShowLibraryContents"/>
+        <reference ref="ProjectView.ShowScratchesAndConsoles"/>
+        <reference ref="ViewInplaceComments"/>
         <separator/>
-        <action id="ProjectView.FlattenModules"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenModules"
-                icon="AllIcons.ObjectBrowser.FlattenModules"/>
-        <action id="ProjectView.FlattenPackages"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenPackages"
-                icon="AllIcons.ObjectBrowser.FlattenPackages"/>
-        <action id="ProjectView.AbbreviatePackageNames"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AbbreviatePackageNames"
-                icon="AllIcons.ObjectBrowser.AbbreviatePackageNames"/>
-        <action id="ProjectView.HideEmptyMiddlePackages"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$HideEmptyMiddlePackages"/>
-        <action id="ProjectView.CompactDirectories"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$CompactDirectories"/>
+        <reference ref="ProjectView.FlattenModules"/>
+        <reference ref="ProjectView.FlattenPackages"/>
+        <reference ref="ProjectView.AbbreviatePackageNames"/>
+        <reference ref="ProjectView.HideEmptyMiddlePackages"/>
+        <reference ref="ProjectView.CompactDirectories"/>
         <separator/>
-        <action id="ProjectView.FileNesting"
-                class="com.intellij.ide.projectView.impl.ConfigureFilesNestingAction"/>
+        <reference ref="ProjectView.FileNesting"/>
         <separator/>
-        <action id="ProjectView.CustomizeTrees"
-                class="com.intellij.ide.projectView.impl.CustomizeTreesAction"/>
+        <reference ref="ProjectView.CustomizeTrees"/>
       </group>
       <group id="ProjectView.ToolWindow.Sort.Actions" popup="true">
-        <action id="ProjectView.ManualOrder"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ManualOrder"
-                icon="AllIcons.ObjectBrowser.Sorted"/>
-        <action id="ProjectView.SortByName"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByName">
-          <override-text place="ToolwindowPopup"/>
-        </action>
-        <action id="ProjectView.SortByType"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByType"
-                icon="AllIcons.ObjectBrowser.SortByType">
-          <override-text place="ToolwindowPopup"/>
-        </action>
-        <action id="ProjectView.SortByTimeDescending"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByTimeDescending">
-          <override-text place="ToolwindowPopup"/>
-        </action>
-        <action id="ProjectView.SortByTimeAscending"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByTimeAscending">
-          <override-text place="ToolwindowPopup"/>
-        </action>
+        <reference ref="ProjectView.ManualOrder"/>
+        <reference ref="ProjectView.SortByName"/>
+        <reference ref="ProjectView.SortByType"/>
+        <reference ref="ProjectView.SortByTimeDescending"/>
+        <reference ref="ProjectView.SortByTimeAscending"/>
         <separator/>
-        <action id="ProjectView.FoldersAlwaysOnTop"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FoldersAlwaysOnTop"/>
+        <reference ref="ProjectView.FoldersAlwaysOnTop"/>
       </group>
-      <action id="ScopeView.EditScopes"
-              class="com.intellij.ide.scopeView.EditScopesAction"
-              icon="AllIcons.Ide.LocalScope"/>
+      <reference ref="ScopeView.EditScopes"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
+    <group id="Structure.ViewOptions" searchable="false" popup="true" icon="AllIcons.Actions.GroupBy"/>
     <group id="StructureViewToolbar"/>
     <group id="StructureViewFloatingToolbar" popup="true"/>
 
@@ -864,40 +713,40 @@
     </group>
 
     <group id="TreeNodeExclusion">
-      <action id="UsageView.Include" class="com.intellij.ide.actions.exclusion.IncludeTreeNodeAction"/>
-      <action id="UsageView.Exclude" class="com.intellij.ide.actions.exclusion.ExcludeTreeNodeAction" use-shortcut-of="$Delete"/>
+      <reference ref="UsageView.Include"/>
+      <reference ref="UsageView.Exclude"/>
     </group>
 
     <group id="UsageView.Popup">
-      <action id="UsageView.Rerun" class="com.intellij.usages.actions.RerunSearchAction" icon="AllIcons.Actions.Refresh" use-shortcut-of="Rerun"/>
+      <reference ref="UsageView.Rerun"/>
       <separator/>
       <reference ref="EditSource"/>
       <reference ref="OpenInRightSplit"/>
       <reference ref="TreeNodeExclusion"/>
-      <action id="UsageView.Remove" class="com.intellij.usages.actions.RemoveUsageAction" use-shortcut-of="$Cut"/>
+      <reference ref="UsageView.Remove"/>
       <separator/>
-      <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" use-shortcut-of="ShowSearchHistory"/>
+      <reference ref="UsageView.ShowRecentFindUsages"/>
       <separator/>
       <reference ref="RunContextGroup"/>
       <separator/>
       <reference ref="ExportToTextFile"/>
     </group>
 
-    <action id="NewElementSamePlace" class="com.intellij.ide.actions.NewElementSamePlaceAction"/>
+    <reference ref="NewElementSamePlace"/>
 
-    <action id="ChangeCodeStyleScheme" class="com.intellij.ide.actions.QuickChangeCodeStyleSchemeAction">
+    <reference ref="ChangeCodeStyleScheme">
       <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeColorScheme"/>
-    </action>
+    </reference>
 
-    <action id="ChangeInspectionProfile" class="com.intellij.ide.actions.QuickChangeInspectionProfileAction">
+    <reference ref="ChangeInspectionProfile">
       <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeCodeStyleScheme"/>
-    </action>
-    <action id="TypeHierarchyBase.BaseOnThisType" class="com.intellij.ide.hierarchy.TypeHierarchyBrowserBase$BaseOnThisTypeAction" use-shortcut-of="TypeHierarchy"/>
-    <action id="MethodHierarchy.BaseOnThisMethod" class="com.intellij.ide.hierarchy.MethodHierarchyBrowserBase$BaseOnThisMethodAction" use-shortcut-of="MethodHierarchy"/>
-    <action id="CallHierarchy.BaseOnThisMethod" class="com.intellij.ide.hierarchy.CallHierarchyBrowserBase$BaseOnThisMethodAction" use-shortcut-of="CallHierarchy"/>
-    <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.ViewClassHierarchyAction"/>
-    <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.ViewSubtypesHierarchyAction"/>
-    <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.ViewSupertypesHierarchyAction"/>
+    </reference>
+    <reference ref="TypeHierarchyBase.BaseOnThisType"/>
+    <reference ref="MethodHierarchy.BaseOnThisMethod"/>
+    <reference ref="CallHierarchy.BaseOnThisMethod"/>
+    <reference ref="TypeHierarchy.Class"/>
+    <reference ref="TypeHierarchy.Subtypes"/>
+    <reference ref="TypeHierarchy.Supertypes"/>
 
     <group id="TypeHierarchyPopupMenu">
       <reference ref="TypeHierarchyBase.BaseOnThisType"/>
@@ -954,61 +803,32 @@
     <group id="ConsoleView.PopupMenu">
       <reference ref="ConsoleEditorPopupMenu"/>
       <separator/>
-      <action id="ConsoleView.ClearAll" class="com.intellij.execution.actions.ClearConsoleAction"/>
+      <reference ref="ConsoleView.ClearAll"/>
     </group>
 
-    <action id="DumpLookupElementWeights" class="com.intellij.internal.DumpLookupElementWeights">
+    <reference ref="DumpLookupElementWeights">
       <add-to-group group-id="MaintenanceGroup" anchor="last"/>
-    </action>
+    </reference>
 
-    <action id="JumpToColorsAndFonts" class="com.intellij.application.options.colors.JumpToColorsAndFontsAction" icon="AllIcons.General.Settings"/>
+    <reference ref="JumpToColorsAndFonts"/>
 
     <!-- Arrangement rules -->
     <group id="ArrangementRulesGroup">
-      <action id="Arrangement.Rule.Add"
-              use-shortcut-of="NewElement"
-              class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"/>
-      <action id="Arrangement.Rule.Section.Add"
-              class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementSectionRuleAction"/>
-      <action id="Arrangement.Rule.Remove"
-              use-shortcut-of="$Delete"
-              class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction"/>
-      <action id="Arrangement.Rule.Edit"
-              class="com.intellij.application.options.codeStyle.arrangement.action.EditArrangementRuleAction">
-        <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
-      </action>
-      <action id="Arrangement.Rule.Match.Condition.Move.Up"
-              class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleUpAction">
-        <keyboard-shortcut keymap="$default" first-keystroke="alt UP"/>
-      </action>
-      <action id="Arrangement.Rule.Match.Condition.Move.Down"
-              class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleDownAction">
-        <keyboard-shortcut keymap="$default" first-keystroke="alt DOWN"/>
-      </action>
-      <action id="Arrangement.Custom.Token.Rule.Edit"
-              class="com.intellij.application.options.codeStyle.arrangement.action.EditRuleAliasesDefinitionAction"/>
-      <action id="Arrangement.Rule.Group.Condition.Move.Up"
-              use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Up"
-              class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleUpAction"/>
-      <action id="Arrangement.Rule.Group.Condition.Move.Down"
-              use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Down"
-              class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleDownAction"/>
+      <reference ref="Arrangement.Rule.Add"/>
+      <reference ref="Arrangement.Rule.Section.Add"/>
+      <reference ref="Arrangement.Rule.Remove"/>
+      <reference ref="Arrangement.Rule.Edit"/>
+      <reference ref="Arrangement.Rule.Match.Condition.Move.Up"/>
+      <reference ref="Arrangement.Rule.Match.Condition.Move.Down"/>
+      <reference ref="Arrangement.Custom.Token.Rule.Edit"/>
+      <reference ref="Arrangement.Rule.Group.Condition.Move.Up"/>
+      <reference ref="Arrangement.Rule.Group.Condition.Move.Down"/>
 
-      <action id="Arrangement.Alias.Rule.Add"
-              use-shortcut-of="NewElement"
-              class="com.intellij.application.options.codeStyle.arrangement.action.tokens.AddArrangementAliasRuleAction"/>
-      <action id="Arrangement.Alias.Rule.Remove"
-              use-shortcut-of="$Delete"
-              class="com.intellij.application.options.codeStyle.arrangement.action.tokens.RemoveArrangementAliasRuleAction"/>
-      <action id="Arrangement.Alias.Rule.Edit"
-              use-shortcut-of="Arrangement.Rule.Edit"
-              class="com.intellij.application.options.codeStyle.arrangement.action.tokens.EditArrangementAliasRuleAction"/>
-      <action id="Arrangement.Alias.Rule.Match.Condition.Move.Up"
-              use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Up"
-              class="com.intellij.application.options.codeStyle.arrangement.action.tokens.MoveArrangementAliasRuleUpAction"/>
-      <action id="Arrangement.Alias.Rule.Match.Condition.Move.Down"
-              use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Down"
-              class="com.intellij.application.options.codeStyle.arrangement.action.tokens.MoveArrangementAliasRuleDownAction"/>
+      <reference ref="Arrangement.Alias.Rule.Add"/>
+      <reference ref="Arrangement.Alias.Rule.Remove"/>
+      <reference ref="Arrangement.Alias.Rule.Edit"/>
+      <reference ref="Arrangement.Alias.Rule.Match.Condition.Move.Up"/>
+      <reference ref="Arrangement.Alias.Rule.Match.Condition.Move.Down"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
@@ -1047,46 +867,44 @@
       <reference ref="Arrangement.Rule.Group.Condition.Move.Down"/>
     </group>
 
-    <action id="SeverityEditorDialog" class="com.intellij.codeInspection.ex.SeverityEditorDialogAction"/>
+    <reference ref="SeverityEditorDialog"/>
 
-    <action class="com.intellij.codeInsight.codeVision.ShowCodeVisionPopupAction" id="CodeVision.ShowMore" />
+    <reference ref="CodeVision.ShowMore"/>
 
     <group id="InspectionToolWindow.TreePopup" compact="true">
       <reference ref="EditSource"/>
       <reference ref="FindUsages"/>
       <reference ref="TreeNodeExclusion"/>
       <separator/>
-      <group id="QuickFixes" class="com.intellij.codeInspection.ui.actions.QuickFixesViewActionGroup"/>
+      <reference ref="QuickFixes"/>
       <separator/>
-      <group id="SuppressFixes" class="com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper"/>
+      <reference ref="SuppressFixes"/>
       <separator/>
-      <action id="EditInspectionSettings" class="com.intellij.codeInspection.ui.actions.EditSettingsAction"/>
-      <action id="DisableInspection" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$DisableInspection"/>
-      <action id="RunInspectionOn" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$RunInspectionOn"/>
+      <reference ref="EditInspectionSettings"/>
+      <reference ref="DisableInspection"/>
+      <reference ref="RunInspectionOn"/>
     </group>
 
     <group id="ExtractMethodToolWindow.TreePopup" compact="true">
       <reference ref="EditSource"/>
       <reference ref="TreeNodeExclusion"/>
     </group>
-    <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
+    <reference ref="RenameFile">
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="last"/>
-    </action>
-    <action id="UpdateRunningApplication" class="com.intellij.execution.update.UpdateRunningApplicationAction"
-            icon="AllIcons.Javaee.UpdateRunningApplication">
-      <keyboard-shortcut first-keystroke="control F10" keymap="$default"/>
+    </reference>
+    <reference ref="UpdateRunningApplication">
       <add-to-group group-id="DebugReloadGroup" anchor="last"/>
-    </action>
+    </reference>
 
     <!--region TouchBar-->
     <group id="TouchBarEditorSearch">
-      <action id="EditorSearchSession.ToggleMatchCase" class="com.intellij.find.editorHeaderActions.ToggleMatchCase"/>
-      <action id="EditorSearchSession.ToggleWholeWordsOnlyAction" class="com.intellij.find.editorHeaderActions.ToggleWholeWordsOnlyAction"/>
-      <action id="EditorSearchSession.ToggleRegex" class="com.intellij.find.editorHeaderActions.ToggleRegex"/>
+      <reference ref="EditorSearchSession.ToggleMatchCase"/>
+      <reference ref="EditorSearchSession.ToggleWholeWordsOnlyAction"/>
+      <reference ref="EditorSearchSession.ToggleRegex"/>
       <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
       <separator text="type.large"/>
-      <action id="EditorSearchSession.PrevOccurrence" class="com.intellij.find.editorHeaderActions.PrevOccurrenceAction"/>
-      <action id="EditorSearchSession.NextOccurrenceAction" class="com.intellij.find.editorHeaderActions.NextOccurrenceAction"/>
+      <reference ref="EditorSearchSession.PrevOccurrence"/>
+      <reference ref="EditorSearchSession.NextOccurrenceAction"/>
       <group id="TouchBarEditorSearch_ctrl">
         <reference ref="EditorSearchSession.ToggleMatchCase"/>
         <reference ref="EditorSearchSession.ToggleWholeWordsOnlyAction"/>
@@ -1097,53 +915,73 @@
 
     <!--endregion-->
 
-    <action id="IdeScriptingConsole" class="com.intellij.ide.script.RunIdeConsoleAction">
+    <reference ref="IdeScriptingConsole">
       <add-to-group group-id="MaintenanceGroup"/>
-    </action>
+    </reference>
 
-    <action id="CompletionQualityStats" class="com.intellij.internal.CompletionQualityStatsAction" internal="true">
+    <reference ref="CompletionQualityStats">
       <add-to-group group-id="Internal" anchor="last"/>
-    </action>
-    <action id="ShowControlFlowAction" class="com.intellij.internal.cfgView.ShowControlFlowAction" internal="true">
+    </reference>
+    <reference ref="ShowControlFlowAction">
       <add-to-group group-id="Internal" anchor="last"/>
-    </action>
+    </reference>
 
-    <action id="FileChooser.LightEditGotoOpenedFile"
-            class="com.intellij.ide.lightEdit.actions.LightEditGotoOpenedFileAction"
-            icon="AllIcons.General.Locate">
+    <reference ref="FileChooser.LightEditGotoOpenedFile">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoDesktop"/>
-    </action>
+    </reference>
 
-    <action class="com.intellij.ide.hierarchy.actions.ActivateHierarchyToolWindowAction" id="ActivateHierarchyToolWindow">
+    <reference ref="ActivateHierarchyToolWindow">
       <add-to-group group-id="ActivateToolWindowActions"/>
-    </action>
+    </reference>
 
-    <action id="SwitchFileBasedIndexStorageAction"
-            class="com.intellij.util.indexing.impl.storage.SwitchFileBasedIndexStorageAction"/>
+    <reference ref="SwitchFileBasedIndexStorageAction"/>
 
-    <action id="ClickLink" class="com.intellij.codeInsight.navigation.actions.ClickLinkAction"
-            use-shortcut-of="GotoDeclaration" />
+    <reference ref="ClickLink"/>
 
-    <action id="ForceIndexRescanning" internal="true" class="com.intellij.util.indexing.ForceIndexRescanningAction" icon="AllIcons.Actions.Refresh"/>
-    <action id="ForceIndexRebuild" internal="true" class="com.intellij.util.indexing.ForceIndexRebuildAction" icon="AllIcons.Actions.Refresh"/>
+    <reference ref="ForceIndexRescanning"/>
+    <reference ref="ForceIndexRebuild"/>
 
-    <action id="ToggleFileBasedIndexes" internal="true" class="com.intellij.util.indexing.internal.ToggleFileBasedIndexesAction"/>
-    <action id="PauseScanningAndIndexing" internal="true" class="com.intellij.util.indexing.internal.PauseScanningAndIndexingAction"/>
+    <reference ref="ToggleFileBasedIndexes"/>
+    <reference ref="PauseScanningAndIndexing"/>
 
     <group id="Internal.Dump" internal="true" popup="true">
-      <action id="DumpExtensions" internal="true" class="com.intellij.internal.DumpExtensionsAction"/>
-      <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
-      <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
-      <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"/>
-      <action id="DumpScreenConfiguration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
-      <action id="DumpIElementTypesAction" internal="true" class="com.intellij.internal.DumpIElementTypesAction"/>
-      <action id="DumpLoadedInspectionsAction" internal="true" class="com.intellij.internal.DumpLoadedInspectionsAction"/>
-      <action id="DumpPluginDescriptorsAction" internal="true" class="com.intellij.internal.DumpPluginDescriptorsAction"/>
-      <action id="DumpRunConfigurationTypesAction" internal="true" class="com.intellij.internal.DumpRunConfigurationTypesAction"/>
-      <action id="DumpFormattingModel" class="com.intellij.internal.DumpFormattingModelAction" internal="true"/>
-      <action id="CheckClassLoading" internal="true" class="com.intellij.internal.CheckClassLoadingAction"/>
-      <action id="DumpCodeStyleCache" class="com.intellij.ide.actions.DumpCodeStyleCacheAction"/>
+      <reference ref="DumpExtensions"/>
+      <reference ref="DumpInspectionDescriptions"/>
+      <reference ref="DumpIntentionsDescriptions"/>
+      <reference ref="ScanSourceCommentsAction"/>
+      <reference ref="DumpScreenConfiguration"/>
+      <reference ref="DumpIElementTypesAction"/>
+      <reference ref="DumpLoadedInspectionsAction"/>
+      <reference ref="DumpPluginDescriptorsAction"/>
+      <reference ref="DumpRunConfigurationTypesAction"/>
+      <reference ref="DumpFormattingModel"/>
+      <reference ref="CheckClassLoading"/>
+      <reference ref="DumpCodeStyleCache"/>
       <add-to-group group-id="Internal" anchor="last"/>
+    </group>
+
+    <group id="Jcef.ContextMenuGroup" popup="true"/>
+  </actions>
+  <actions resource-bundle="messages.UsageViewBundle">
+    <reference ref="UsageGrouping.ShortFilePath"/>
+
+    <group id="UsageGroupingActionGroup">
+      <reference ref="UsageGrouping.Module"/>
+      <reference ref="UsageGrouping.Scope"/>
+      <reference ref="UsageGrouping.Directory"/>
+      <reference ref="UsageGrouping.UsageType"/>
+      <reference ref="UsageGrouping.FlattenModules"/>
+      <reference ref="UsageGrouping.FileStructure"/>
+      <reference ref="UsageGrouping.DirectoryStructure"/>
+      <add-to-group group-id="Other.KeymapGroup" anchor="last"/>
+    </group>
+    <group id="UsageFilteringActionGroup">
+      <reference ref="UsageFiltering.ReadAccess"/>
+      <reference ref="UsageFiltering.WriteAccess"/>
+      <reference ref="UsageFiltering.GeneratedCode"/>
+      <reference ref="UsageFiltering.Imports"/>
+      <reference ref="UsageFiltering.Comments"/>
+      <add-to-group group-id="Other.KeymapGroup" anchor="after" relative-to-action="UsageGroupingActionGroup"/>
     </group>
   </actions>
 </idea-plugin>

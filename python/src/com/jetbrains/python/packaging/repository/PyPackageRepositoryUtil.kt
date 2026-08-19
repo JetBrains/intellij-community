@@ -11,7 +11,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.PyPIPackageUtil
-import com.jetbrains.python.packaging.PyPackageVersionComparator
+import com.intellij.python.requirements.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.common.ProjectUrl
 import com.jetbrains.python.packaging.common.PythonPackageDetails

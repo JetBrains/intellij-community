@@ -45,8 +45,11 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
 
 
   public void testGetTestName() {
-    String result = TestDataGuessByExistingFilesUtil.getTestName("testTestName");
-    assertEquals("TestName", result);
+    assertEquals("TestName", TestDataGuessByExistingFilesUtil.getTestName("testTestName"));
+    // Kotlin backtick names, e.g. `fun `test alias-bound-unsound`()`
+    assertEquals("alias-bound-unsound", TestDataGuessByExistingFilesUtil.getTestName("test alias-bound-unsound"));
+    assertEquals("some name", TestDataGuessByExistingFilesUtil.getTestName("test some name "));
+    assertEquals("", TestDataGuessByExistingFilesUtil.getTestName("test"));
   }
 
   public void testMoreRelevantFiles() {

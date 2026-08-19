@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.client
 
 import fleet.multiplatform.shims.MultiplatformConcurrentHashMap
@@ -68,16 +68,30 @@ import kotlinx.coroutines.selects.whileSelect
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.Continuation
-import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.startCoroutine
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.TimeSource
 
-internal val RPC_TIMEOUT = 60_000.milliseconds
+internal val RPC_TIMEOUT = 1.minutes
+
+/**
+ * Tells apart the reasons for a call to run out of [RPC_TIMEOUT]: a stuck interceptor, a connection that never came up,
+ * or a request that was sent but was not answered.
+ *
+ * Returns one of a fixed set of phrases: it ends up in an exception message, which has to stay free of varying data
+ * to remain groupable. Timings and ids are logged separately.
+ */
+private fun timeoutPhase(interceptedAfter: Duration?, routeAvailableAfter: Duration?): String =
+  when {
+    interceptedAfter == null -> "stuck in the request interceptor"
+    routeAvailableAfter == null -> "the route did not become available"
+    else -> "no response"
+  }
 
 private data class OutgoingRequest(
   val route: UID,
@@ -624,8 +638,13 @@ private class RpcClient(
       // stream/flow can deliver its first batch together with the result (one roundtrip)
       streamBudget = rpcStrategy.prefetchStrategy.streamStarted(),
     )
+    // the marks below tell apart the phases of the call in case it times out, they are only written by this coroutine
+    val callStarted = TimeSource.Monotonic.markNow()
+    var interceptedAfter: Duration? = null
+    var routeAvailableAfter: Duration? = null
     withTimeoutOrNull(RPC_TIMEOUT) {
       val callRequest = requestInterceptor.interceptCallRequest(uninterceptedRequest)
+      interceptedAfter = callStarted.elapsedNow()
       logger.trace { "Interceptor completed for request $callRequest" }
       if (rpcStrategy.awaitConnection) {
         logger.trace { "request $requestId, waiting for ${call.route} to become available" }
@@ -635,6 +654,7 @@ private class RpcClient(
       else if (grayList.contains(call.route)) {
         throw RouteClosedException(call.route, rpcCallFailureMessage(callRequest, "Route ${call.route} closed"))
       }
+      routeAvailableAfter = callStarted.elapsedNow()
 
       suspendCancellableCoroutine { cc ->
         val request = OutgoingRequest(route = call.route,
@@ -719,7 +739,18 @@ private class RpcClient(
         logger.trace { "Result published for request $requestId" }
 
       }
-    } ?: throw RpcTimeoutException("Request $uninterceptedRequest has timed out after ${RPC_TIMEOUT}ms", cause = null)
+    } ?: run {
+      // everything that varies between occurrences goes to the log, so that the exception message stays groupable
+      logger.warn {
+        "Timed out request ${call.display()}[#$requestId]: " +
+        "interceptor ${interceptedAfter?.let { "took $it" } ?: "did not finish"}, " +
+        "route ${routeAvailableAfter?.let { "became available after $it" } ?: "never became available"}"
+      }
+      throw RpcTimeoutException(
+        rpcCallFailureMessage(call.display(), "timed out after $RPC_TIMEOUT, ${timeoutPhase(interceptedAfter, routeAvailableAfter)}"),
+        cause = null,
+      )
+    }
   }
 
   private fun registerStreams(

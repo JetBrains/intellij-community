@@ -87,6 +87,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.scriptDebugger.ui.iml",
+        "resources/intellij.platform.scriptDebugger.ui.xml",
     ],
     visibility = ["//visibility:public"],
 )

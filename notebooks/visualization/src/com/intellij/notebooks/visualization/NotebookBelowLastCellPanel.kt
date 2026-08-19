@@ -28,7 +28,8 @@ class NotebookBelowLastCellPanel(
   private var isHighlighted = false
 
   private val toolbar = JupyterAddNewCellToolbar(ActionUtil.getActionGroup("Jupyter.CreateNewCellsPanel")!!,
-                                                 toolbarTargetComponent = this@NotebookBelowLastCellPanel)
+                                                 toolbarTargetComponent = this@NotebookBelowLastCellPanel,
+                                                 editor = editor)
 
   init {
     if (editor.isOrdinaryNotebookEditor()) {

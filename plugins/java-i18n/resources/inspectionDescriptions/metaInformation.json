@@ -3,6 +3,34 @@
     {
       "id": "DialogTitleCapitalization",
       "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnusedMessageFormatParameter",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "InconsistentResourceBundle",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "DuplicateStringLiteralInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SuspiciousLocalesLanguages",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnresolvedPropertyKey",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HardCodedStringLiteral",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnsupportedCharacter",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

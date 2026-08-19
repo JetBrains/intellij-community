@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -48,7 +49,8 @@ class RedundantUpperBoundInspection : KotlinApplicableInspectionBase.Simple<KtTy
     override fun isApplicableByPsi(element: KtTypeParameter): Boolean =
         element.extendsBound != null
 
-    override fun KaSession.prepareContext(element: KtTypeParameter): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtTypeParameter): Unit? {
         val bound = element.extendsBound ?: return null
         return bound.type.isNullableAnyType().asUnit
     }

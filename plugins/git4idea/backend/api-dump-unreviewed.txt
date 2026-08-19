@@ -153,8 +153,6 @@ f:git4idea.GitUtil
 - s:gitTime(java.util.Date):java.lang.String
 - s:hasLocalChanges(Z,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
 - s:isCaseOnlyChange(java.lang.String,java.lang.String):Z
-- s:isHashString(java.lang.String):Z
-- s:isHashString(java.lang.String,Z):Z
 - s:joinToHtml(java.util.Collection):java.lang.String
 - s:mention(java.util.Collection):java.lang.String
 - s:parseRemoteBranch(java.lang.String,java.util.Collection):git4idea.GitRemoteBranch
@@ -821,7 +819,6 @@ f:git4idea.branch.GitRebaseParams$RebaseUpstream$Commit
 - f:getCommit():com.intellij.vcs.log.Hash
 f:git4idea.branch.GitRebaseParams$RebaseUpstream$Companion
 - f:fromNullableString(java.lang.String):git4idea.branch.GitRebaseParams$RebaseUpstream
-- f:fromRefString(java.lang.String):git4idea.branch.GitRebaseParams$RebaseUpstream$Reference
 c:git4idea.branch.GitRebaseParams$RebaseUpstream$Reference
 - git4idea.branch.GitRebaseParams$RebaseUpstream
 - <init>(java.lang.String):V
@@ -4597,8 +4594,6 @@ git4idea.stash.GitStashTrackerListener
 - a:stashesUpdated():V
 f:git4idea.stash.GitStashUtils
 - sf:createStashHandler(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.Collection,java.lang.String[]):git4idea.commands.GitLineHandler
-- sf:createStashHandler(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z,java.lang.String):git4idea.commands.GitLineHandler
-- bs:createStashHandler$default(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z,java.lang.String,I,java.lang.Object):git4idea.commands.GitLineHandler
 - sf:loadStashStack(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.List
 - sf:refreshStash(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
 f:git4idea.stash.ui.GitApplyStashAction

@@ -1,0 +1,42 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.completion.ranking.swift` start
+jvm_library(
+    name = "completion-ranking-swift",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.completion.ranking.swift",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-completion-ranking-swift-completion-ranking-swift"],
+    runtime_deps = ["@lib//:libraries-completion-ranking-swift-completion-ranking-swift"],
+)
+
+jvm_library(
+    name = "completion-ranking-swift_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.completion.ranking.swift",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-completion-ranking-swift-completion-ranking-swift"],
+    runtime_deps = [":completion-ranking-swift"],
+)
+### auto-generated section `build intellij.libraries.completion.ranking.swift` end
+
+### auto-generated section `iml intellij.libraries.completion.ranking.swift` start
+exports_files(
+    [
+        "intellij.libraries.completion.ranking.swift.iml",
+        "resources/intellij.libraries.completion.ranking.swift.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.completion.ranking.swift` end

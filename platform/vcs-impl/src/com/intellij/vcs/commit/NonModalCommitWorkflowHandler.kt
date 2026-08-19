@@ -86,15 +86,15 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
   private var smartChecksWereBlocked = false
 
-  private val checkinErrorNotifications = SingletonNotificationManager(VcsNotifier.importantNotification().displayId,
+  private val checkinErrorNotifications = SingletonNotificationManager(VcsNotifier.IMPORTANT_NOTIFICATION_GROUP_ID,
                                                                        NotificationType.ERROR)
 
   private val postCommitChecksHandler: PostCommitChecksHandler get() = PostCommitChecksHandler.getInstance(project)
   private var pendingPostCommitChecks: PendingPostCommitChecks? = null
 
   protected fun setupCommitHandlersTracking() {
-    CheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
-    VcsCheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
+    CheckinHandlerFactory.EP_NAME.addChangeListener(coroutineScope, Runnable { commitHandlersChanged() })
+    VcsCheckinHandlerFactory.EP_NAME.addChangeListener(coroutineScope, Runnable { commitHandlersChanged() })
   }
 
   private fun commitHandlersChanged() {

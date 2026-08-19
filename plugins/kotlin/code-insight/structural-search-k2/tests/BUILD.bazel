@@ -10,7 +10,11 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.codeInsight.structuralSearch.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/execution"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
+        "//platform/execution",
+    ],
 )
 
 jvm_library(
@@ -26,10 +30,15 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.codeInsight.structuralSearch.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":tests"],
+    runtime_deps = [
+        # do not sort,
+        ":tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle",
@@ -48,8 +57,6 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//platform/structuralsearch:structuralSearch",
         "//platform/structuralsearch:structuralSearch_test_lib",
         "//platform/structuralsearch/plugin",

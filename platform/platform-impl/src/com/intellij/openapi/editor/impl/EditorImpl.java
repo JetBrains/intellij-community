@@ -90,8 +90,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
-import com.intellij.openapi.editor.elf.ElfFeatureFlag;
 import com.intellij.openapi.editor.elf.Elf;
+import com.intellij.openapi.editor.elf.ElfFeatureFlag;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -297,6 +297,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TooManyListenersException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -425,6 +426,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final @NotNull SoftWrapModelImpl mySoftWrapModel;
   private final @NotNull InlayModelImpl myInlayModel;
 
+  private @NotNull EditorScrollableIncrementProvider myScrollableIncrementProvider = EditorScrollableIncrementProvider.DEFAULT;
+
   @MouseSelectionState
   private int myMouseSelectionState;
   private @Nullable FoldRegion myMouseSelectedRegion;
@@ -467,6 +470,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final SingleEdtTaskScheduler mouseSelectionStateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
   private Runnable mouseSelectionStateResetRunnable;
   private final SingleEdtTaskScheduler errorStripeDelayedRepaintAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+  // cached, because a burst of highlighter changes requests the repaint once per change
+  private final Runnable errorStripeDelayedRepaintTask = this::invokeDelayedErrorStripeRepaint;
 
   private int myDragOnGutterSelectionStartLine = -1;
   private RangeMarker myDraggedRange;
@@ -536,7 +541,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * (see {@link TextRangeScalarUtil} for how to unpack).
    * -1 means repaint is not needed.
    * */
-  private volatile long myErrorStripeNeedsRepaintRange = -1;
+  private final AtomicLong myErrorStripeNeedsRepaintRange = new AtomicLong(-1);
 
   private final List<EditorPopupHandler> myPopupHandlers = new ArrayList<>();
 
@@ -567,7 +572,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     assertIsDispatchThread();
     myProject = project;
     myDocument = (DocumentEx)document;
-    myElfDocument = (DocumentEx)Elf.getElf().getElfDocument(document);
+    myElfDocument = ElfFeatureFlag.isEnabled() ? (DocumentEx)Elf.getElf().getElfDocument(document) : myDocument;
     myVirtualFile = file;
     myState = new EditorState();
     myState.refreshAll();
@@ -992,11 +997,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void queueErrorStipeRepaintRequest(int start, int end) {
-    long range = myErrorStripeNeedsRepaintRange;
     long requested = TextRangeScalarUtil.toScalarRange(start, end);
     // merge existing request with the new
-    myErrorStripeNeedsRepaintRange = TextRangeScalarUtil.union(range == -1 ? requested : range, requested);
-    errorStripeDelayedRepaintAlarm.cancelAndRequest(50, ()->invokeDelayedErrorStripeRepaint()); // in case nobody called repaint
+    myErrorStripeNeedsRepaintRange.accumulateAndGet(requested,
+                                                    (existing, added) -> existing == -1 ? added
+                                                                                        : TextRangeScalarUtil.union(existing, added));
+    // Throttle rather than debounce: the range above is what the repaint reads when it fires, so re-arming the alarm
+    // carries no extra information and only pushes the repaint out. A burst of highlighter changes - highlighting every
+    // match of a search over a big file adds tens of thousands - would otherwise cancel and relaunch a coroutine per
+    // change, and a burst spread over several events would keep the stripe blank for as long as it lasts, because every
+    // change pushes the repaint out by another delay.
+    errorStripeDelayedRepaintAlarm.request(50, errorStripeDelayedRepaintTask); // in case nobody called repaint
   }
 
   private void errorStripeMarkerChanged(@NotNull RangeHighlighterEx highlighter) {
@@ -1355,6 +1366,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public @NotNull ScrollingModelEx getScrollingModel() {
     return myScrollingModel;
+  }
+
+  /**
+   * Returns the provider that computes the Swing {@link javax.swing.Scrollable} unit/block increments this editor
+   * reports, i.e., the granularity the platform's wheel/scrollbar scrolling snaps to.
+   */
+  @ApiStatus.Internal
+  public @NotNull EditorScrollableIncrementProvider getScrollableIncrementProvider() {
+    return myScrollableIncrementProvider;
+  }
+
+  /**
+   * Overrides the scroll increment granularity for this editor.
+   */
+  @ApiStatus.Internal
+  public void setScrollableIncrementProvider(@NotNull EditorScrollableIncrementProvider provider) {
+    myScrollableIncrementProvider = provider;
   }
 
   @Override
@@ -1762,11 +1790,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private boolean processKeyTyped(char c) {
-    AtomicBoolean result = new AtomicBoolean(false);
-    Elf.getElf().withElfScope(() -> {
-      result.set(processKeyTyped0(c));
-    });
-    return result.get();
+    if (ElfFeatureFlag.isEnabled()) {
+      return Elf.getElf().withElfScope(() -> processKeyTyped0(c));
+    }
+    return processKeyTyped0(c);
   }
 
   private boolean processKeyTyped0(char c) {
@@ -2236,11 +2263,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @RequiresEdt
   void invokeDelayedErrorStripeRepaint() {
-    long range = myErrorStripeNeedsRepaintRange;
+    // Cancel before taking the range, not after: from here on a concurrent queueErrorStipeRepaintRequest (highlighters
+    // can be changed in BGT) sees no pending request and arms a fresh alarm, so a range merged in after the getAndSet
+    // below cannot be dropped. The worst case is one alarm that fires and finds nothing to repaint.
+    errorStripeDelayedRepaintAlarm.cancel();
+    long range = myErrorStripeNeedsRepaintRange.getAndSet(-1);
     if (range != -1) {
-      errorStripeDelayedRepaintAlarm.cancel();
       myMarkupModel.repaint(TextRangeScalarUtil.startOffset(range), TextRangeScalarUtil.endOffset(range));
-      myErrorStripeNeedsRepaintRange = -1;
     }
   }
 
@@ -2249,7 +2278,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Document document = e.getDocument();
     if (document.isInBulkUpdate()) return;
 
-    if (myErrorStripeNeedsRepaintRange != -1) {
+    if (myErrorStripeNeedsRepaintRange.get() != -1) {
       queueErrorStipeRepaintRequest(e.getOffset(), e.getOffset() + e.getNewLength());
       invokeDelayedErrorStripeRepaint();
     }
@@ -5120,20 +5149,32 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static boolean isColumnSelectionDragEvent(@NotNull MouseEvent e) {
-    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
+  private boolean isColumnSelectionDragEvent(@NotNull MouseEvent e) {
+    String actionId = EditorMouseActionsOverrider.EP_NAME.computeSafeIfAny(
+      overrider -> overrider.getCreateRectangularSelectionOnMouseDragActionId(this)
+    );
+    return isMouseActionEvent(e, actionId != null ? actionId : IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
   }
 
-  private static boolean isToggleCaretEvent(@NotNull MouseEvent e) {
-    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET) || isAddRectangularSelectionEvent(e);
+  private boolean isToggleCaretEvent(@NotNull MouseEvent e) {
+    String actionId = EditorMouseActionsOverrider.EP_NAME.computeSafeIfAny(
+      overrider -> overrider.getAddOrRemoveCaretActionId(this)
+    );
+    return isMouseActionEvent(e, actionId != null ? actionId : IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET) || isAddRectangularSelectionEvent(e);
   }
 
-  private static boolean isAddRectangularSelectionEvent(@NotNull MouseEvent e) {
-    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
+  private boolean isAddRectangularSelectionEvent(@NotNull MouseEvent e) {
+    String actionId = EditorMouseActionsOverrider.EP_NAME.computeSafeIfAny(
+      overrider -> overrider.getAddRectangularSelectionOnMouseDragActionId(this)
+    );
+    return isMouseActionEvent(e, actionId != null ? actionId : IdeActions.ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
   }
 
-  private static boolean isCreateRectangularSelectionEvent(@NotNull MouseEvent e) {
-    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
+  private boolean isCreateRectangularSelectionEvent(@NotNull MouseEvent e) {
+    String actionId = EditorMouseActionsOverrider.EP_NAME.computeSafeIfAny(
+      overrider -> overrider.getCreateRectangularSelectionActionId(this)
+    );
+    return isMouseActionEvent(e, actionId != null ? actionId : IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
   }
 
   private static boolean isMouseActionEvent(@NotNull MouseEvent e, @NotNull String actionId) {

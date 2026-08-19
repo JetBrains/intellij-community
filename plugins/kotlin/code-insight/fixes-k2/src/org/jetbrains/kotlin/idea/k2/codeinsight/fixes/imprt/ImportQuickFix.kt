@@ -15,16 +15,16 @@ import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.util.SlowOperations
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
@@ -62,13 +62,21 @@ class ImportQuickFix internal constructor(
         file: KtFile,
         filterSuggestions: (Collection<FqName>) -> Collection<FqName>
     ): QuestionAction? {
-        val filteredFqNames = filterSuggestions(importVariants.map { it.fqName }).toSet()
-        if (filteredFqNames.size != 1) return null
+        val filteredFqNames =
+            filterSuggestions(importVariants.map { it.fqName }).toSet()
+        if (filteredFqNames.isEmpty()) return null
 
-        val singleSuggestion = importVariants.filter { it.fqName in filteredFqNames }.first()
-        if ((singleSuggestion as SymbolBasedAutoImportVariant).canNotBeImportedOnTheFly) return null
+        val singleNonDeprecatedSuggestion =
+            // single non-deprecated
+            importVariants.singleOrNull { it.fqName in filteredFqNames && !it.deprecated } ?:
+            // or single over all deprecated
+            importVariants.takeIf { it.all(AutoImportVariant::deprecated) }?.singleOrNull { it.fqName in filteredFqNames }
 
-        return ImportQuestionAction(file.project, editor, file, listOf(singleSuggestion), onTheFly = true)
+        if (singleNonDeprecatedSuggestion == null ||
+            (singleNonDeprecatedSuggestion as SymbolBasedAutoImportVariant).canNotBeImportedOnTheFly
+        ) return null
+
+        return ImportQuestionAction(file.project, editor, file, listOf(singleNonDeprecatedSuggestion), onTheFly = true)
     }
 
     override fun showHint(editor: Editor): Boolean {

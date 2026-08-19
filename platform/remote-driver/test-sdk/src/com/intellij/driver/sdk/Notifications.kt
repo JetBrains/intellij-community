@@ -23,10 +23,17 @@ interface NotificationType {
 @Remote("com.intellij.notification.ActionCenter")
 interface ActionCenter {
   fun getNotifications(project: Project?): List<Notification>
+  fun expireNotifications(project: Project?)
 }
 
 fun Driver.getNotifications(project: Project? = singleProject()): Collection<Notification> {
   return withContext(OnDispatcher.EDT) {
     utility<ActionCenter>().getNotifications(project)
+  }
+}
+
+fun Driver.expireNotifications(project: Project? = singleProject()) {
+  return withContext(OnDispatcher.EDT) {
+    utility<ActionCenter>().expireNotifications(project)
   }
 }

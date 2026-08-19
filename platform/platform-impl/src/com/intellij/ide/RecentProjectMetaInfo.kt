@@ -19,7 +19,8 @@ class RecentProjectMetaInfo : BaseState() {
   var opened: Boolean by property(false)
 
   /**
-   * If true, the project will not be reopened on startup and not displayed in the recent projects list.
+   * If true, the project is not displayed in the recent projects list. It is also not reopened on startup unless its
+   * project-frame type opts in with `reopenWhenHidden` (see `com.intellij.projectFrameType`).
    * Suitable for internal projects that should not be accessed by usual ways of opening projects.
    */
   @get:Attribute

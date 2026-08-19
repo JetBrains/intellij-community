@@ -318,8 +318,6 @@ fun loadHotswapDetectionInitScript(
 private val JUNIT_3_COMPARISON_FAILURE = listOf("junit.framework.ComparisonFailure")
 private val JUNIT_4_COMPARISON_FAILURE = listOf("org.junit.ComparisonFailure")
 private val ASSERTION_FAILED_ERROR = listOf("org.opentest4j.AssertionFailedError")
-private val FILE_COMPARISON_FAILURE = listOf("com.intellij.rt.execution.junit.FileComparisonFailure",
-                                             "junit.framework.ComparisonFailure")
 
 @ApiStatus.Internal
 fun loadIjTestLoggerInitScript(): String {
@@ -330,19 +328,8 @@ fun loadIjTestLoggerInitScript(): String {
     loadEnhanceGradleDaemonClasspathInit(listOf(
       JUNIT_3_COMPARISON_FAILURE,
       JUNIT_4_COMPARISON_FAILURE,
-      ASSERTION_FAILED_ERROR,
-      FILE_COMPARISON_FAILURE
+      ASSERTION_FAILED_ERROR
     ))
-  )
-}
-
-@ApiStatus.Internal
-fun loadFileComparisonTestLoggerInitScript(): String {
-  return joinInitScripts(
-    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TestEventLogger.gradle"),
-    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/FileComparisonTestEventLogger.gradle"),
-    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/FileComparisonTestEventLoggerInit.gradle"),
-    loadEnhanceGradleDaemonClasspathInit(listOf(FILE_COMPARISON_FAILURE))
   )
 }
 

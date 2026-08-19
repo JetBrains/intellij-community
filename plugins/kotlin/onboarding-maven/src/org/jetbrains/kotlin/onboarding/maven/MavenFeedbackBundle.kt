@@ -8,7 +8,8 @@ import org.jetbrains.annotations.PropertyKey
 @NonNls
 private const val BUNDLE = "messages.MavenFeedbackBundle"
 
-internal object MavenFeedbackBundle : DynamicBundle(BUNDLE) {
+internal object MavenFeedbackBundle {
+    private val instance = DynamicBundle(MavenFeedbackBundle::class.java, BUNDLE)
     @Suppress("SpreadOperator")
-    fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any) = getMessage(key, *params)
+    fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any) = instance.getMessage(key, *params)
 }

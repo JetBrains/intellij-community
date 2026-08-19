@@ -39,6 +39,11 @@ abstract class FirUastApiTest : AbstractFirUastTest() {
         fun testReturnJumpTargets() {
             doCheck("uast-kotlin-fir/tests/testData/declaration/returns.kt", ::checkReturnJumpTargets)
         }
+
+        @TestMetadata("breakAndContinue.kt")
+        fun testBreakAndContinueJumpTargets() {
+            doCheck("uast-kotlin-fir/tests/testData/declaration/breakAndContinue.kt", ::checkBreakAndContinueJumpTargets)
+        }
     }
 
     @TestMetadata("../uast-kotlin/tests/testData")

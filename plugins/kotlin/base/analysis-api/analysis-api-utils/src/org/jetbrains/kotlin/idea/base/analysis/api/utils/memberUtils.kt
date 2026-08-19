@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerS
  * will be `null`, but the enum entry will also not contain any member declarations.
  */
 fun KaDeclarationSymbol.getSymbolContainingMemberDeclarations(): KaDeclarationContainerSymbol? = when (this) {
-    is KaEnumEntrySymbol -> enumEntryInitializer
+    is KaEnumEntrySymbol -> initializer
     is KaDeclarationContainerSymbol -> this
     else -> null
 }

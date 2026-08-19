@@ -21,6 +21,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.util.ui.UIUtil;
@@ -250,6 +251,82 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
           </colors>
         </scheme>""",
       serialize(scheme));
+  }
+
+  @TestFor(issues = "IJPL-223521")
+  public void testWriteTextAttributesWithAlpha() {
+    enableTextAttributesTransparency();
+    EditorColorSchemeTestCase.assertXmlOutputEquals(
+      """
+        <scheme name="test" version="142" parent_scheme="Default">
+          <attributes>
+            <option name="TEST_TRANSPARENT_TEXT">
+              <value>
+                <option name="FOREGROUND" value="af1d1d80" />
+                <option name="BACKGROUND" value="808182" />
+              </value>
+            </option>
+          </attributes>
+        </scheme>""",
+      serialize(schemeWithTransparentText()));
+  }
+
+  /**
+   * With {@code editor.text.attributes.transparency} off the scheme must be written exactly as it was before
+   * transparency support, so that turning the key on is the only thing that changes the saved format.
+   */
+  @TestFor(issues = "IJPL-223521")
+  public void testWriteTextAttributesWithAlphaWhenTransparencyDisabled() {
+    assertFalse(Registry.is("editor.text.attributes.transparency"));
+    EditorColorSchemeTestCase.assertXmlOutputEquals(
+      """
+        <scheme name="test" version="142" parent_scheme="Default">
+          <attributes>
+            <option name="TEST_TRANSPARENT_TEXT">
+              <value>
+                <option name="FOREGROUND" value="af1d1d" />
+                <option name="BACKGROUND" value="808182" />
+              </value>
+            </option>
+          </attributes>
+        </scheme>""",
+      serialize(schemeWithTransparentText()));
+  }
+
+  @TestFor(issues = "IJPL-223521")
+  public void testTextAttributesAlphaSurvivesWriteRead() {
+    enableTextAttributesTransparency();
+    TextAttributesKey key = TextAttributesKey.createTextAttributesKey("TEST_TRANSPARENT_TEXT_ROUND_TRIP");
+    TextAttributes attributes = new TextAttributes(new Color(0xAF, 0x1D, 0x1D, 0x80), new Color(0x1D, 0x1D, 0xAF, 0x40),
+                                                   null, EffectType.BOXED, Font.PLAIN);
+    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(key, attributes);
+    assertEquals(attributes, result.second);
+    assertEquals(0x80, result.second.getForegroundColor().getAlpha());
+    assertEquals(0x40, result.second.getBackgroundColor().getAlpha());
+  }
+
+  @TestFor(issues = "IJPL-223521")
+  public void testTextAttributesAlphaDroppedWhenTransparencyDisabled() {
+    assertFalse(Registry.is("editor.text.attributes.transparency"));
+    TextAttributesKey key = TextAttributesKey.createTextAttributesKey("TEST_OPAQUE_TEXT_ROUND_TRIP");
+    TextAttributes attributes = new TextAttributes(new Color(0xAF, 0x1D, 0x1D, 0x80), null,
+                                                   null, EffectType.BOXED, Font.PLAIN);
+    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(key, attributes);
+    assertEquals(new Color(0xAF, 0x1D, 0x1D), result.second.getForegroundColor());
+  }
+
+  private void enableTextAttributesTransparency() {
+    Registry.get("editor.text.attributes.transparency").setValue(true, getTestRootDisposable());
+  }
+
+  private static @NotNull EditorColorsScheme schemeWithTransparentText() {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
+    EditorColorsScheme scheme = (EditorColorsScheme)defaultScheme.clone();
+    scheme.setName("test");
+    scheme.setAttributes(TextAttributesKey.createTextAttributesKey("TEST_TRANSPARENT_TEXT"),
+                         new TextAttributes(new Color(0xAF, 0x1D, 0x1D, 0x80), new Color(0x80, 0x81, 0x82),
+                                            null, EffectType.BOXED, Font.PLAIN));
+    return scheme;
   }
 
   public void testWriteInheritedFromDefault() {

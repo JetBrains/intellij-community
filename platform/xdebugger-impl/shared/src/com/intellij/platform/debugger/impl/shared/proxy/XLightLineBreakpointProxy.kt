@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import org.jetbrains.annotations.ApiStatus
 
@@ -25,10 +24,8 @@ interface XLightLineBreakpointProxy {
 
   fun isEnabled(): Boolean
   fun updateIcon()
-  fun createGutterIconRenderer(): GutterIconRenderer?
+  fun getGutterIconRenderer(): GutterIconRenderer?
 
-  @RequiresBackgroundThread
-  fun doUpdateUI(callOnUpdate: () -> Unit = {})
 }
 
 @ApiStatus.Internal

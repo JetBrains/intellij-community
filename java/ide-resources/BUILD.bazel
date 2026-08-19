@@ -32,6 +32,8 @@ jvm_library(
 exports_files(
     [
         "intellij.java.ide.resources.iml",
+        "resources/META-INF/JavaIdePlugin.xml",
+        "resources/ProductivityFeaturesRegistry.xml",
     ],
     visibility = ["//visibility:public"],
 )

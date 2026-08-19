@@ -55,6 +55,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.base.projectModel.iml",
+        "resources/intellij.kotlin.base.projectModel.xml",
     ],
     visibility = ["//visibility:public"],
 )

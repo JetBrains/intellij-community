@@ -14,7 +14,7 @@ data class McpClientInfo(
   val displayName: String = "${name.baseName}${if (scope is Scope.Project) " (Project)" else ""}"
 
   enum class Name(val baseName: String) {
-    VS_CODE("VSCode"),
+    VS_CODE("Visual Studio Code"),
     CLAUDE_APP("Claude App"),
     WINDSURF("Windsurf"),
     CURSOR("Cursor"),

@@ -375,12 +375,12 @@ public class GitPushOperation {
 
   private static boolean isBranch(@NotNull GitPushNativeResult result) {
     String sourceRef = result.getSourceRef();
-    return sourceRef.startsWith(GitBranch.REFS_HEADS_PREFIX) || GitUtil.isHashString(sourceRef, false);
+    return sourceRef.startsWith(GitBranch.REFS_HEADS_PREFIX) || GitUtil.isPossibleHash(sourceRef);
   }
 
   private static boolean isHash(@NotNull GitPushNativeResult result) {
     String sourceRef = result.getSourceRef();
-    return GitUtil.isHashString(sourceRef, false);
+    return GitUtil.isPossibleHash(sourceRef);
   }
 
   private static boolean isHeadRelativeReference(@NotNull GitPushNativeResult result) {

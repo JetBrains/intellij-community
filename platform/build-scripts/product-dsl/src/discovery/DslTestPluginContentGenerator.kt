@@ -90,13 +90,22 @@ internal suspend fun computePluginContentFromDslSpec(
       }
     }
   }
+  // A `private` module is only reachable from the plugin that declares it, so a descriptor-declared dependency on one
+  // has to be copied into this test plugin rather than borrowed from whichever production plugin happens to package it
+  // (IJPL-252475). JPS-derived dependencies are exempt: they never reach a descriptor, so the runtime never resolves
+  // them — see the `fromJpsTarget` branches below.
+  val privateModules = HashSet<ContentModuleName>()
+  // Which of them may also be registered in the plugin's implicit namespace. A module that has descriptor dependencies
+  // of its own cannot: from the implicit namespace it would no longer see an `internal` module of the shared one.
   val privateLeafLibraryModules = HashSet<ContentModuleName>()
   if (descriptorCache != null) {
     for (moduleName in descriptorBackedModules) {
-      val descriptorInfo = descriptorCache.getOrAnalyze(moduleName.value)
-      if (moduleName.value.startsWith(LIB_MODULE_PREFIX) &&
-          descriptorInfo?.moduleVisibility == ModuleVisibilityValue.PRIVATE &&
-          descriptorInfo.existingModuleDependencies.isEmpty()) {
+      val descriptorInfo = descriptorCache.getOrAnalyze(moduleName.value) ?: continue
+      if (descriptorInfo.moduleVisibility != ModuleVisibilityValue.PRIVATE) {
+        continue
+      }
+      privateModules.add(moduleName)
+      if (moduleName.value.startsWith(LIB_MODULE_PREFIX) && descriptorInfo.existingModuleDependencies.isEmpty()) {
         privateLeafLibraryModules.add(moduleName)
       }
     }
@@ -270,14 +279,14 @@ internal suspend fun computePluginContentFromDslSpec(
       rootDeclaredModuleByModule.putIfAbsent(effectiveDepName, rootDeclaredModuleByModule.get(moduleName) ?: moduleName)
       allowedMissingPluginIdsByModule.putIfAbsent(effectiveDepName, allowedMissingPluginIdsByModule.get(moduleName) ?: emptySet())
 
-      val isPrivateLeafLibraryDep = effectiveDepName in privateLeafLibraryModules && collectTargetDependencies(effectiveDepName).isEmpty()
+      val isPrivateDep = effectiveDepName in privateModules
 
       // Already resolvable via module sets or plugin content - skip auto-add and don't traverse.
-      // Private leaf descriptor dependencies must still be copied into the test plugin instead of relying
+      // Private descriptor dependencies must still be copied into the test plugin instead of relying
       // on private modules from production plugins.
       val isResolvableModule = effectiveDepName in resolvableModuleNames
-      if (isResolvableModule && (fromJpsTarget || !isPrivateLeafLibraryDep)) {
-        if (fromJpsTarget && isPrivateLeafLibraryDep) {
+      if (isResolvableModule && (fromJpsTarget || !isPrivateDep)) {
+        if (fromJpsTarget && isPrivateDep) {
           processedModules.remove(effectiveDepName)
         }
         debug("dslTestDeps") { "skip resolvable dep=$effectiveDepName from=$moduleName" }
@@ -285,8 +294,8 @@ internal suspend fun computePluginContentFromDslSpec(
       }
 
       val isBundledPluginContentDep = isBundledPluginContent(effectiveDepName)
-      if (isBundledPluginContentDep && (fromJpsTarget || !isPrivateLeafLibraryDep)) {
-        if (fromJpsTarget && isPrivateLeafLibraryDep) {
+      if (isBundledPluginContentDep && (fromJpsTarget || !isPrivateDep)) {
+        if (fromJpsTarget && isPrivateDep) {
           processedModules.remove(effectiveDepName)
         }
         debug("dslTestDeps") { "skip bundled production plugin content dep=$effectiveDepName from=$moduleName" }
@@ -383,7 +392,7 @@ internal suspend fun computePluginContentFromDslSpec(
         debug("dslTestDeps") { "skip no descriptor dep=$effectiveDepName from=$moduleName" }
         return
       }
-      val namespace = if (isPrivateLeafLibraryDep) {
+      val namespace = if (effectiveDepName in privateLeafLibraryModules) {
         null
       }
       else {

@@ -9,6 +9,7 @@ import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindSelected
 import kotlinx.coroutines.launch
@@ -116,6 +117,23 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
             setter = { settings.state.enableFileDrop = it }
           )
       }
+      buttonsGroup(MarkdownBundle.message("markdown.smart.keys.configurable.emphasis.group.name")) {
+        row {
+          radioButton(
+            MarkdownBundle.message("markdown.smart.keys.configurable.emphasis.asterisks"),
+            MarkdownCodeInsightSettings.EmphasisStyle.ASTERISKS
+          )
+        }
+        row {
+          radioButton(
+            MarkdownBundle.message("markdown.smart.keys.configurable.emphasis.underscores"),
+            MarkdownCodeInsightSettings.EmphasisStyle.UNDERSCORES
+          )
+        }
+      }.bind(
+        getter = { settings.state.emphasisStyle },
+        setter = { settings.state.emphasisStyle = it }
+      )
     }
   }
 

@@ -22,7 +22,7 @@ interface JavaModuleCompilerOptionsEntityBuilder : WorkspaceEntityBuilder<JavaMo
 
 internal object JavaModuleCompilerOptionsEntityType :
   EntityType<JavaModuleCompilerOptionsEntity, JavaModuleCompilerOptionsEntityBuilder>() {
-  override val entityClass: Class<JavaModuleCompilerOptionsEntity> get() = JavaModuleCompilerOptionsEntity::class.java
+  override val entityImplClass: Class<*> get() = JavaModuleCompilerOptionsEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = JavaModuleCompilerOptionsEntityImpl.Builder::class.java
   operator fun invoke(
     additionalOptions: List<String>,
@@ -44,7 +44,6 @@ fun MutableEntityStorage.modifyJavaModuleCompilerOptionsEntity(
 
 var ModuleEntityBuilder.javaCompilerOptions: JavaModuleCompilerOptionsEntityBuilder?
   by WorkspaceEntity.extensionBuilder(JavaModuleCompilerOptionsEntity::class.java)
-
 
 @JvmOverloads
 @JvmName("createJavaModuleCompilerOptionsEntity")

@@ -55,7 +55,8 @@ jvm_library(
         "//python/python-exec-service:community-execService",
         "//python/python-exec-service/execService.python",
         "//python/python-uv/backend",
-        "//python/python-sdk:sdk",
+        "//python/python-sdk/backend",
+        "//python/python-pyproject:pyproject",
     ],
 )
 
@@ -95,7 +96,8 @@ jvm_library(
         "//python/python-exec-service:community-execService_test_lib",
         "//python/python-exec-service/execService.python:execService.python_test_lib",
         "//python/python-uv/backend:backend_test_lib",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
+        "//python/python-pyproject:pyproject_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.pytools.ui` end
@@ -104,6 +106,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.pytools.ui.iml",
+        "resources/intellij.python.pytools.ui.xml",
     ],
     visibility = ["//visibility:public"],
 )

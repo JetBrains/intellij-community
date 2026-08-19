@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface PyFile extends PyAstFile, PyElement, PsiFile, PyDocStringOwner, ScopeOwner {
+public interface PyFile extends PyAstFile, PyTypedElement, PsiFile, PyDocStringOwner, ScopeOwner {
   @Override
   default List<PyStatement> getStatements() {
     //noinspection unchecked

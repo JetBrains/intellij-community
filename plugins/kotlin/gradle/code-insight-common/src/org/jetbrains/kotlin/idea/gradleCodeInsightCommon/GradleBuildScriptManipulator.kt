@@ -66,6 +66,7 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
 
     val scriptFile: Psi
     val preferNewSyntax: Boolean
+    val kaptDependenciesManipulator: KaptGradleDependenciesManipulator?
 
     fun usesOldSyntax(kotlinPluginName: String): Boolean
     fun isConfiguredWithOldSyntax(kotlinPluginName: String): Boolean
@@ -80,6 +81,8 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
      * ```
      */
     fun hasKotlinPluginApplyFalse(): Boolean
+
+    fun hasRepositoryConfiguredInScope(scopeNames: List<String>): Boolean
 
     fun configureBuildScripts(
         kotlinPluginName: String,

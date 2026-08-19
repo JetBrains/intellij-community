@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
+import com.intellij.openapi.editor.markup.AttributesFlyweight;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
@@ -1046,6 +1047,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     public @Nullable Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> getFallbackKeyDescriptor() {
       return myBaseAttributeDescriptor;
     }
+    @Override
+    public boolean isTransparencyEnabled() { return AttributesFlyweight.isTransparencySupported(); }
   }
 
   private static final class EditorSettingColorDescription extends ColorAndFontDescription implements UiInspectorContextProvider {

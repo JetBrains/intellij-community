@@ -74,6 +74,24 @@ interface ApplicationStarter {
   val isHeadless: Boolean get() = true
 
   /**
+   * Controls whether the platform may collect and report feature usage statistics while this starter runs.
+   *
+   * The flag is only consulted when the application runs in a headless environment. In non-headless mode
+   * (when [isHeadless] returns `false`) statistics are always governed by the normal user-consent flow,
+   * and overriding this property to `false` has no effect.
+   *
+   * In headless mode statistics are suppressed by default (the default value is `!isHeadless`), so that
+   * runs on CI, in tests, and in other automated environments do not pollute the collected data.
+   * Starters representing a user-facing product feature should override and return `true` to opt in.
+   *
+   * Opting in does not bypass user consent: the platform still checks it,
+   * see `StatisticsUploadAssistant.isCollectAllowed`.
+   *
+   * Keep the default for starters used by CI jobs, tests or build tooling.
+   */
+  val shouldReportStatistics: Boolean get() = !isHeadless
+
+  /**
    * Applications that are capable of processing command-line arguments within a running IDE instance
    * should return `true` from this method and implement [processExternalCommandLine].
    */

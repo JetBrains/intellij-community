@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.client
 
 import fleet.rpc.RemoteApiDescriptor
@@ -9,6 +9,7 @@ import fleet.rpc.client.proxy.SuspendInvocationHandler
 import fleet.rpc.core.ConnectionStatus
 import fleet.rpc.core.InstanceId
 import fleet.rpc.core.PrefetchStrategy
+import fleet.rpc.core.rpcCallFailureMessage
 import fleet.util.UID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -129,7 +130,7 @@ internal fun reconnectingRpcClient(attempts: StateFlow<ConnectionStatus<IRpcClie
           throw x
         }
         Unit
-      } ?: throw RpcTimeoutException("Client did not connect after $RPC_TIMEOUT", null)
+      } ?: throw RpcTimeoutException(rpcCallFailureMessage(call.display(), "client did not connect after $RPC_TIMEOUT"), null)
     }
   }
 }

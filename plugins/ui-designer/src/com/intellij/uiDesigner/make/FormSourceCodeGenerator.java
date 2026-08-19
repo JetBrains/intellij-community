@@ -65,6 +65,7 @@ import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
+import com.intellij.uiDesigner.lw.EnumDescriptor;
 import com.intellij.uiDesigner.lw.FontDescriptor;
 import com.intellij.uiDesigner.lw.IButtonGroup;
 import com.intellij.uiDesigner.lw.IconDescriptor;
@@ -1168,7 +1169,8 @@ public final class FormSourceCodeGenerator {
         pushIcon((IconDescriptor) value);
       }
       else if (property instanceof LwIntroEnumProperty) {
-        pushVar(propertyClass.replace('$', '.') + "." + value.toString());
+        //noinspection DataFlowIssue
+        pushVar(propertyClass.replace('$', '.') + "." + ((EnumDescriptor)value).getConstantName());
       }
       else {
         throw new RuntimeException("unexpected property class: " + propertyClass);

@@ -3,6 +3,7 @@ package com.intellij.util.concurrency
 
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
+import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
 import java.util.concurrent.FutureTask
 import java.util.concurrent.atomic.AtomicBoolean
@@ -14,9 +15,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal class CancellationFutureTask<V>(
   private val job: Job,
   callable: ContextCallable<V>,
-  val executionTracker: AtomicBoolean,
-  val context: ChildContext,
-) : FutureTask<V>(callable) {
+  executionTracker: AtomicBoolean,
+  context: ChildContext,
+) : ShallowCancellationFutureTask<V>(context, executionTracker, callable) {
 
   init {
     job.invokeOnCompletion(onCancelling = true, invokeImmediately = true) {
@@ -28,13 +29,21 @@ internal class CancellationFutureTask<V>(
     }
   }
 
+  override fun additionalCancellation() {
+    job.cancel(null)
+  }
+}
+
+internal open class ShallowCancellationFutureTask<V>(private val childContext: ChildContext, private val executionTracker: AtomicBoolean, callable: Callable<V>): FutureTask<V>(callable) {
   override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
     val isCurrentlyRunning = executionTracker.getAndSet(true)
     val result = super.cancel(mayInterruptIfRunning)
-    job.cancel(null)
+    additionalCancellation()
     if (!isCurrentlyRunning) {
-      context.cancelAllIntelliJElements()
+      childContext.cancelAllIntelliJElements()
     }
     return result
   }
+
+  protected open fun additionalCancellation() {}
 }

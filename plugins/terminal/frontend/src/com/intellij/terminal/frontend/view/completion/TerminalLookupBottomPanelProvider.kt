@@ -18,6 +18,7 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.Badge
 import com.intellij.ui.components.JBHtmlPane
 import com.intellij.ui.components.JBHtmlPaneConfiguration
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
@@ -79,7 +80,7 @@ internal class TerminalLookupBottomPanelProvider : LookupBottomPanelProvider {
   }
 
   private fun Row.promotion() {
-    icon(AllIcons.General.New_badge)
+    icon(Badge.new)
       .align(AlignY.CENTER)
       .customize(UnscaledGaps(right = 6))
 

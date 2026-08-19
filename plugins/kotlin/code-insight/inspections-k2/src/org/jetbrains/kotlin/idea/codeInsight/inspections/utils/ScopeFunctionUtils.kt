@@ -85,7 +85,8 @@ internal fun isSimpleLambdaParameterCase(lambdaExpression: KtLambdaExpression): 
  * Checks if a receiver value is from the function literal we're converting.
  * This helps identify which property/method calls should be transformed.
  */
-internal fun KaSession.isReceiverFromFunctionLiteral(receiver: KaReceiverValue?, functionLiteral: KtFunctionLiteral?): Boolean {
+context(session: KaSession)
+internal fun isReceiverFromFunctionLiteral(receiver: KaReceiverValue?, functionLiteral: KtFunctionLiteral?): Boolean {
     if (receiver is KaExplicitReceiverValue) return receiver.expression.mainReference?.resolve() == functionLiteral
     if (receiver is KaImplicitReceiverValue) return receiver.getThisReceiverOwner()?.psi == functionLiteral
     return false

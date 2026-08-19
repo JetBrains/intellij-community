@@ -24,6 +24,10 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     get() = state.showProblemsInCodeBlocks
     set(value) { state.showProblemsInCodeBlocks = value }
 
+  var isStripTrailingSpacesOnSave: Boolean
+    get() = state.isStripTrailingSpacesOnSave
+    set(value) { state.isStripTrailingSpacesOnSave = value }
+
   var splitLayout: TextEditorWithPreview.Layout
     get() = state.splitLayout
     set(value) { state.splitLayout = value }
@@ -59,6 +63,10 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
   var isFileGroupingEnabled: Boolean
     get() = state.isFileGroupingEnabled
     set(value) { state.isFileGroupingEnabled = value }
+
+  var useFileDirectoryForCommands: Boolean?
+    get() = state.useFileDirectoryForCommands
+    set(value) { state.useFileDirectoryForCommands = value }
 
   override fun noStateLoaded() {
     super.noStateLoaded()

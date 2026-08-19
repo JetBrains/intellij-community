@@ -88,6 +88,8 @@ jvm_library(
 exports_files(
     [
         "intellij.uiDesigner.iml",
+        "resources/META-INF/DesignerCorePlugin.xml",
+        "resources/intellij.uiDesigner.xml",
     ],
     visibility = ["//visibility:public"],
 )

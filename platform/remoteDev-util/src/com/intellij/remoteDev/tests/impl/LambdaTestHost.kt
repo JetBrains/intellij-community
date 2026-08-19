@@ -331,8 +331,14 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
               val urls = lambda.classPath.map { Path(it).toUri().toURL() }
               URLClassLoader(urls.toTypedArray(), testModuleDescriptor?.pluginClassLoader ?: this::class.java.classLoader).use { cl ->
                 SerializedLambdaWithIdeContextHelper().let { loader ->
+                  // Decoded as `Serializable`, which is what both `runInFrontend(parameters)` and
+                  // `runSerializedLambda(parameters)` declare. Asking for `String` here did not reject anything —
+                  // `decodeObject`'s type parameter is erased, so its `as?` narrowed to `Serializable` and a
+                  // `List<String>` parameter arrived intact, only to fail with a `ClassCastException` at the first
+                  // frame that believed the declared element type. Every existing caller passes strings and casts
+                  // them back, so nothing depended on the narrower read.
                   val params = lambda.parametersBase64.map {
-                    loader.decodeObject<String>(it, classLoader = cl) ?: error("Parameter $it is not serializable")
+                    loader.decodeObject<Serializable>(it, classLoader = cl) ?: error("Parameter $it is not serializable")
                   }
                   val serializableConsumer =
                     loader.getSuspendingSerializableConsumer<LambdaIdeContext, Any>(lambda.serializedDataBase64, classLoader = cl)

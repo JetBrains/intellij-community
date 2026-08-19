@@ -20,13 +20,13 @@ jvm_library(
     exports = [
         # do not sort,
         "//platform/remote-driver/client",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
     ],
     deps = [
         # do not sort,
         "//platform/remote-driver/client",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/serialization/json",
@@ -34,6 +34,7 @@ jvm_library(
         "//platform/remote-driver/model",
         "//platform/util",
         "//platform/platform-api:ide",
+        "//tools/intellij.tools.ide.util.common:ide-util-common",
     ],
 )
 
@@ -50,19 +51,22 @@ jvm_library(
         # do not sort,
         "//platform/remote-driver/client",
         "//platform/remote-driver/client:client_test_lib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-stdlib",
     ],
     runtime_deps = [
         # do not sort,
         ":driver-sdk",
         "//platform/remote-driver/client:client_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//platform/remote-driver/model:model_test_lib",
         "//platform/util:util_test_lib",
         "//platform/platform-api:ide_test_lib",
+        "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
     ],
 )
 ### auto-generated section `build intellij.driver.sdk` end
@@ -71,6 +75,7 @@ jvm_library(
 exports_files(
     [
         "intellij.driver.sdk.iml",
+        "resources/intellij.driver.sdk.xml",
     ],
     visibility = ["//visibility:public"],
 )

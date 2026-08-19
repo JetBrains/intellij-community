@@ -82,6 +82,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.projectWizard.compose.iml",
+        "resources/intellij.kotlin.projectWizard.compose.xml",
     ],
     visibility = ["//visibility:public"],
 )

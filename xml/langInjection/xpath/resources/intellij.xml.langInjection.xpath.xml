@@ -1,8 +1,9 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="XPathView"/>
     <module name="intellij.platform.backend"/>
+    <plugin id="XPathView"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.xml.langInjection"/>

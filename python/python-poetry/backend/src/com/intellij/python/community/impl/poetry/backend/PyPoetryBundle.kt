@@ -5,7 +5,7 @@ import com.intellij.DynamicBundle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 
-internal object PyPoetryBundle {
+object PyPoetryBundle {
   private const val BUNDLE = "messages.PyPoetryBundle"
 
   private val INSTANCE = DynamicBundle(PyPoetryBundle::class.java, BUNDLE)

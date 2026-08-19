@@ -1,6 +1,6 @@
 ---
 name: writing-tests
-description: Write IntelliJ JUnit 5 tests with fixtures, lifecycle, EDT, registry, and system properties.
+description: Write IntelliJ JUnit 5 tests with fixtures, lifecycle, and EDT.
 ---
 
 # Writing Tests
@@ -8,6 +8,18 @@ description: Write IntelliJ JUnit 5 tests with fixtures, lifecycle, EDT, registr
 Guidelines for writing tests in IntelliJ IDEA codebase.
 
 For examples, see `community/platform/testFramework/junit5/test/showcase/`.
+
+## Place Tests in the Owning Module
+
+Put a test in the test module associated with the production module it exercises. Do not place it in a downstream module merely because
+that module has the production module on its test classpath. Check the production module's `.iml` file and neighboring tests before adding
+a new test.
+
+In particular, code in `org.jetbrains.intellij.build.io` under `community/build/tasks` belongs to
+`intellij.idea.community.build.tasks.tests` (`community/build/tasks/test`), not `intellij.platform.buildScripts.tests`. The
+`BUILD_SCRIPTS_PLATFORM_TESTS` group deliberately excludes `org.jetbrains.intellij.build.io.*` to avoid matching build-task tests by class
+name across module boundaries. Putting such a test in the build-scripts test module leaves it outside every community test group and causes
+`UltimateProjectTestsStructureTest` to fail.
 
 ## Prefer JUnit 5 over JUnit 4
 

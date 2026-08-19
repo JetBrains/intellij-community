@@ -47,7 +47,6 @@ import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
-import com.intellij.xdebugger.impl.updateExecutionPosition
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -172,9 +171,6 @@ private class MonolithSessionProxy(val session: XDebugSession) : XDebugSessionPr
 
   override fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean) {
     session.setCurrentStackFrame(executionStack, frame, isTopFrame)
-    if (session.currentStackFrame === frame) {
-      updateExecutionPosition(this)
-    }
   }
 
   override fun isTopFrameSelected(): Boolean {

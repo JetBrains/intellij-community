@@ -6,7 +6,6 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -27,27 +26,27 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
     fun `heterogeneous tuple literal`() = test("""
       expr = ('1', 1, 1)
       # └ TYPE tuple[Literal['1'], Literal[1], Literal[1]]
-      """)
+      """.trimIndent())
 
     @Test
     fun `large heterogeneous tuple literal`() = test("""
       expr = ('1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
       #└ TYPE tuple[Literal['1'], Literal[1], Literal[1], Literal[1], Literal[1], Literal[1], Literal[1], Literal[1], Literal[1], Literal[1], Literal[1]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-57621"])
     fun `single element tuple literal`() = test("""
       expr = (1,)
       #└ TYPE tuple[Literal[1]]
-      """)
+      """.trimIndent())
 
     @Test
     fun `tuple element by literal index`() = test("""
       t = ('a', 2)
       expr = t[0]
       # └ TYPE Literal['a']
-      """)
+      """.trimIndent())
 
     @Test
     fun `tuple element by literal index parameter`() = test("""
@@ -55,7 +54,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def foo(t: tuple[int, str, List[bool]], i: Literal[2]):
           expr = t[i]
       #   └ TYPE list[bool]
-      """)
+      """.trimIndent())
 
     @Test
     fun `tuple element by literal index union`() = test("""
@@ -63,7 +62,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def foo(t: tuple[int, str, List[bool]], i: Literal[0, -1]):
           expr = t[i]
       #   └ TYPE int | list[bool]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-64474"])
@@ -71,7 +70,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       xs = (1, True, "foo")
       expr = xs[-2]
       #└ TYPE Literal[True]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-64474"])
@@ -81,14 +80,14 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       #│        │        ^^ WARNING Tuple index out of range
       #│        ^^^ WARNING Tuple index out of range
       #└ TYPE tuple[Unknown, Unknown]
-      """)
+      """.trimIndent())
 
     @Test
     fun `homogeneous tuple element accessed with out of bound index`() = test("""
       xs: tuple[str, ...] = tuple(['foo'])
       expr = xs[-10], xs[10]
       #└ TYPE tuple[str, str]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -102,7 +101,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
           return ('a', 1)
       expr = x() # WARNING Parameter 'b' unfilled
       #└ TYPE tuple[Literal[1], Literal['a']] | tuple[Literal['a'], Literal[1]]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -114,7 +113,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def f(expr: Tuple):
       #          └ TYPE tuple
           pass
-      """)
+      """.trimIndent())
 
     @Test
     fun `parametrized typing Tuple annotation`() = test("""
@@ -123,7 +122,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def f(expr: Tuple[int, str]):
       #          └ TYPE tuple[int, str]
           pass
-      """)
+      """.trimIndent())
 
     @Test
     fun `homogeneous tuple annotation`() = test("""
@@ -132,7 +131,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def f(xs: Tuple[int, ...]):
           expr = xs
       #   └ TYPE tuple[int, ...]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-18762"])
@@ -143,7 +142,16 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
           # type: (Tuple[int, ...]) -> None
           expr = xs
       #   └ TYPE tuple[int, ...]
-      """)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-10967"])
+    fun `default tuple parameter`() = test("""
+      def f(x=(), y=('foo', 'bar')):
+          pass
+
+      f([1, 2, 3], ['foo'])
+      """.trimIndent())
   }
 
   @Nested
@@ -152,7 +160,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
     fun `tuple slice type`() = test("""
       l = (1, 2, 3); expr = l[0:1]
       #              └ TYPE tuple
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-18560"])
@@ -163,7 +171,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       factory = RectangleFactory()
       expr = factory[:]
       # └ TYPE Literal[1]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-33651"])
@@ -172,7 +180,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       x: Tuple[int, ...]
       expr = x[0:]
       #└ TYPE tuple[int, ...]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -181,44 +189,44 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
     fun `tuple from tuple`() = test("""
       expr = tuple(('1', 2, 3))
       #└ TYPE tuple[Literal['1'], Literal[2], Literal[3]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19826"])
     fun `list from tuple`() = test("""
       expr = list(('1', 2, 3))
       #└ TYPE list[str | int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `dict from tuple`() = test("""
       expr = dict((('1', 1), (2, 2), (3, '3')))
       #└ TYPE dict[str | int, int | str]
-      """)
+      """.trimIndent())
 
     @Test
     fun `set from tuple`() = test("""
       expr = set(('1', 2, 3))
       #└ TYPE set[str | int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `tuple from list`() = test("""
       expr = tuple(['1', 2, 3])
       #└ TYPE tuple[str | int, ...]
-      """)
+      """.trimIndent())
 
     @Test
     fun `tuple from dict`() = test("""
       expr = tuple({'1': 'a', 2: 'b', 3: 4})
       # └ TYPE tuple[str | int, ...]
-      """)
+      """.trimIndent())
 
     @Test
     fun `tuple from set`() = test("""
       expr = tuple({'1', 2, 3})
       #└ TYPE tuple[str | int, ...]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -229,7 +237,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       for expr in xs:
       #   └ TYPE Literal[1, 'a']
           pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-18762"])
@@ -242,7 +250,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       for x in xs:
           expr = x
       #   └ TYPE int
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -252,13 +260,13 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
     fun `tuple concatenation`() = test("""
       expr = (1,) + (True, 'spam') + ()
       #└ TYPE tuple[Literal[1], Literal[True], Literal['spam']]
-      """)
+      """.trimIndent())
 
     @Test
     fun `tuple multiplication`() = test("""
       expr = (1, False) * 2
       #└ TYPE tuple[Literal[1], Literal[False], Literal[1], Literal[False]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-18762"])
@@ -269,7 +277,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       #    ^^^^^^^ ERROR Unresolved reference 'unknown'
       expr = xs * 42
       #└ TYPE tuple[int, ...]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -279,26 +287,26 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       t = ('a', 2)
       (expr, q) = t
       # └ TYPE Literal['a']
-      """)
+      """.trimIndent())
 
     @Test
     fun `tuple destructuring`() = test("""
       _, expr = (1, 'val')
       #  └ TYPE Literal['val']
-      """)
+      """.trimIndent())
 
     @Test
     fun `parens tuple destructuring`() = test("""
       (_, expr) = (1, 'val')
       #   └ TYPE Literal['val']
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19825"])
     fun `sub tuple destructuring`() = test("""
       (a, (_, expr)) = (1, (2,'val'))
       #       └ TYPE Literal['val']
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19825"])
@@ -306,7 +314,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       xs = (2,'val')
       (a, (_, expr)) = (1, xs)
       #       └ TYPE Literal['val']
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-10967"])
@@ -314,7 +322,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def foo(xs=(1, 2)):
         expr, foo = xs
       # └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-18762"])
@@ -325,7 +333,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       #    ^^^^^^^ ERROR Unresolved reference 'unknown'
       expr, yx = xs
       #  └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-9334"])
@@ -334,7 +342,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
           for i, (expr, v) in [(0, ('foo', []))]:
       #           └ TYPE str
               print(expr)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-38928"])
@@ -342,7 +350,60 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       for ((_, expr)) in [(1, 'foo')]:
       #         └ TYPE str
           pass
-      """)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89352"])
+    fun `unpack target correct type`() = test("""
+      x: int
+      x, = "a",
+      #    ^^^ WARNING Expected type 'int', got 'Literal["a"]' instead
+      (x,) = "a",
+      #      ^^^ WARNING Expected type 'int', got 'Literal["a"]' instead
+      [x] = "a",
+      #     ^^^ WARNING Expected type 'int', got 'Literal["a"]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89352"])
+    fun `unpack target correct type starred`() = test("""
+      x: int
+      *x, = [1, 2, 3]
+      #     ^^^^^^^^^ WARNING Expected type 'int', got 'list[int]' instead
+      (*x,) = [1, 2, 3]
+      #       ^^^^^^^^^ WARNING Expected type 'int', got 'list[int]' instead
+      [*x] = [1, 2, 3]
+      #      ^^^^^^^^^ WARNING Expected type 'int', got 'list[int]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-12592"])
+    fun `spread operator`() = test("""
+      a = []
+      b, c, d = 1, *a
+
+      t = (1, 2)
+      b, c, d = 1, *t
+      b, c, d, e = 1, *t
+      #            ^^^^^ WARNING Not enough values to unpack from 'tuple[Literal[1], Literal[1], Literal[2]]': expected 4, got 3
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-12592"])
+    fun `starred target binds correct values`() = test("""
+      a: list[int | str]
+      b: bool
+
+      *a, b = 1, "a", False
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-12592"])
+    fun `starred target binds last value`() = test("""
+      b: bool
+      *a, b = 1, 2, "x"
+      #             ^^^ WARNING Expected type 'bool', got 'Literal["x"]' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -352,34 +413,34 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
     fun `generic iterable unpacking no brackets`() = test("""
       _, expr, _ = [1, 2, 3]
       #  └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-29489"])
     fun `generic iterable unpacking parentheses`() = test("""
       (_, expr, _) = [1, 2, 3]
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-29489"])
     fun `generic iterable unpacking square brackets`() = test("""
       [_, expr] = [1, 2, 3]
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-29489"])
     fun `non generic iterable unpacking`() = test("""
       _, expr = "ab"
       #  └ TYPE LiteralString
-      """)
+      """.trimIndent())
 
     @Test
     fun `unpacking to nested targets in square brackets in assignments`() = test("""
       [_, [[expr], _]] = "foo", ((42,), "bar")
       #     └ TYPE Literal[42]
-      """)
+      """.trimIndent())
 
     @Test
     fun `unpacking to nested targets in square brackets in for loops`() = test("""
@@ -387,14 +448,14 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       for [_, [expr]] in xs:
       #        └ TYPE str
           pass
-      """)
+      """.trimIndent())
 
     @Test
     fun `unpacking to nested targets in square brackets in comprehensions`() = test("""
       xs = [(1, ("foo",))]
       ys = [expr for [_, [expr]] in xs]
       #     └ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89977"])
@@ -403,7 +464,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
           for expr, e in a:
       #       └ TYPE int
               pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89977"])
@@ -412,7 +473,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
           for [b, expr] in a:
       #           └ TYPE int
               pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89977"])
@@ -420,7 +481,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def f(a: list[list[int]]):
           ys = [expr for expr, e in a]
       #         └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89977"])
@@ -429,7 +490,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
           for head, *expr in a:
       #               └ TYPE list[int]
               pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89977"])
@@ -437,7 +498,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def f(xs: list[int]):
           h, *expr = xs
       #       └ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89977"])
@@ -445,7 +506,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def f(xs: list[int]):
           a1, *expr, a3 = xs
       #        └ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89977"])
@@ -454,7 +515,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
           for expr, *tail in a:
       #         └ TYPE int
               pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89977"])
@@ -462,7 +523,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def f():
           a, (expr, c) = (1, [2, 3])
       #          └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89977"])
@@ -471,7 +532,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
           for p, (expr, r) in x:
       #              └ TYPE str
               pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89977"])
@@ -480,7 +541,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
           for p, [*expr] in x:
       #             └ TYPE list[str]
               pass
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -492,7 +553,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
                        [[node_a], second_edge] = edges
                        expr = node_a
       #                       └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86873"])
@@ -501,7 +562,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
                        [[node_a], second_edge] = edges
                        expr = second_edge
       #                       └ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86873"])
@@ -510,7 +571,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
                        [edge, [node_b]] = edges
                        expr = node_b
       #                       └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86873"])
@@ -519,7 +580,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
                        [edge, [node_b]] = edges
                        expr = edge
       #                       └ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86873"])
@@ -528,7 +589,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
                        [edge, [node_b], edge_2] = edges
                        expr = node_b
       #                       └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86873"])
@@ -537,7 +598,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
                        [[node_a], [node_b], [node_c]] = edges
                        expr = (node_a, node_b, node_c)
       #                       └ TYPE tuple[int, int, int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86873"])
@@ -546,7 +607,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
                        [edge, [node_a]] = edges
                        expr = node_a
       #                       └ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86873"])
@@ -555,7 +616,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
                        [edge, [edge_2, [node_a]]] = edges
                        expr = node_a
       #                       └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86873"])
@@ -564,7 +625,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
                        [edge, [edge_2, [node_a]]] = edges
                        expr = edge_2
       #                       └ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86873"])
@@ -573,7 +634,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
                        [edge, [edge_2, [node_a]]] = edges
                        expr = edge
       #                       └ TYPE list[list[int]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86873"])
@@ -582,7 +643,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
           [[node_a], second_edge] = edges
           a: int = node_a
           c: list[int] = second_edge
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -593,7 +654,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       t = (1, 'hello')
       expr = [t]
       #└ TYPE list[tuple[int, str]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-57621"])
@@ -601,7 +662,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       t = (1, 'hello')
       expr = (t, t)
       #└ TYPE tuple[tuple[Literal[1], Literal['hello']], tuple[Literal[1], Literal['hello']]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-57621"])
@@ -609,7 +670,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def f[T](t: T) -> list[T]: ...
       expr = f((1, "hello"))
       #└ TYPE list[tuple[int, str]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-57621"])
@@ -617,7 +678,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def f[T](t: T) -> tuple[list[T], T] | T: ...
       expr = f((1, 'hello'))
       #└ TYPE tuple[list[tuple[int, str]], tuple[Literal[1], Literal['hello']]] | tuple[Literal[1], Literal['hello']]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-57621"])
@@ -625,7 +686,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def f[T](t: T) -> T: ...
       expr = f((1, "hello"))
       #└ TYPE tuple[Literal[1], Literal["hello"]]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -658,7 +719,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
 
       ints = (1, 2)  # type: Tuple[int, ...]
       expects_two_ints(ints) # WARNING Expected type 'tuple[int, int]', got 'tuple[int, ...]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-9924"])
@@ -666,7 +727,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       t = (1, 2, 3, 4)
       s = slice(0, 2)
       y = t[s]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79129"])
@@ -683,14 +744,14 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
 
       def bar(t: tuple[int, ...]):
           t[10]
-      """)
+      """.trimIndent())
 
     @Test
     fun `tuple types are covariant on assignment`() = test("""
       def func(p1: tuple[int, int], p2: tuple[float, complex]):
           t1: tuple[float, complex] = p1
           t2: tuple[int, int] = p2 # WARNING Expected type 'tuple[int, int]', got 'tuple[float | int, complex | float | int]' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `tuple Any is bidirectionally compatible with any tuple`() = test("""
@@ -698,7 +759,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def func(p1: tuple[Any], p2: tuple[float]):
           v1: tuple[Any] = p2
           v2: tuple[float] = p1
-      """)
+      """.trimIndent())
 
     @Test
     fun `tuple Any arbitrary length can be assigned to any tuple`() = test("""
@@ -706,21 +767,61 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def func(p1: tuple[Any, ...]):
           v1: tuple[float, float] = p1
           v2: tuple[float, ...] = p1
-      """)
+      """.trimIndent())
 
     @Test
     fun `tuple Any arbitrary length is assignable from any tuple`() = test("""
       from typing import Any
       def func(p1: tuple[float, float]):
           v1: tuple[Any, ...] = p1
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-64359"])
-    fun `tuple dict values`() = test(TestOptions(assertRecursionPrevention = false), """
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `tuple dict values`() = test("""
       def f(a: dict[str, int]):
           b: tuple[int, ...] = tuple(a.values())
-      """)
+      """.trimIndent())
+
+    @Test
+    fun `list tuple`() = test("""
+      def f(spam, eggs):
+          '''
+          :type spam: list of string
+          :type eggs: (bool, int, dict)
+          '''
+          return spam, eggs
+
+      def test():
+          f([1, 2, 3], (False, 2, ''))
+      #     │          ^^^^^^^^^^^^^^ WARNING Expected type 'tuple[bool, int, dict]', got 'tuple[Literal[False], Literal[2], Literal[""]]' instead
+      #     ^^^^^^^^^ WARNING Expected type 'list[str]', got 'list[Literal[1, 2, 3]]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90219"])
+    fun `tuple not compatible with named tuple`() = test("""
+      from typing import NamedTuple
+
+      class N(NamedTuple):
+          a: int
+
+      n1: N = N(1)
+      n2: N = (1,)
+      #       ^^^^ WARNING Expected type 'N', got 'tuple[Literal[1]]' instead
+
+      class M(NamedTuple):
+          a: int
+
+      n3: N = M(1)
+      #       ^^^^ WARNING Expected type 'N', got 'M' instead
+
+      class N2(N): ...
+
+      def f(n2: N2):
+        n4: N = n2
+      """.trimIndent())
   }
 
   @Nested
@@ -729,13 +830,13 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
     fun `homogeneous unpacked tuple is assignable to homogeneous tuple`() = test("""
       def func(p1: tuple[int, *tuple[int, ...]]):
           v1: tuple[int, ...] = p1
-      """)
+      """.trimIndent())
 
     @Test
     fun `homogeneous unpacked tuple is not assignable to non homogeneous tuple of size 1`() = test("""
       def func(p: tuple[int, *tuple[int, ...]]):
           v: tuple[int] = p # WARNING Expected type 'tuple[int]', got 'tuple[int, *tuple[int, ...]]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-88727"])
@@ -746,7 +847,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       foo("hello", 1)
       #   │        └ WARNING Expected type 'str', got 'Literal[1]' instead
       #   ^^^^^^^ WARNING Expected type 'int', got 'Literal["hello"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-88727"])
@@ -757,7 +858,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       foo(1, 3.14)
       foo("wrong", "a", 3.14) # WARNING Expected type 'int', got 'Literal["wrong"]' instead
       foo(1, "a", "b", "c", "d") # WARNING Expected type 'float | int', got 'Literal["d"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-88727"])
@@ -770,7 +871,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       foo("wrong", "a", True) # WARNING Expected type 'int', got 'Literal["wrong"]' instead
       foo(1, 2, True) # WARNING Expected type 'str', got 'Literal[2]' instead
       foo(1, "a", "wrong") # WARNING Expected type 'bool', got 'Literal["wrong"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76908"])
@@ -782,7 +883,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def func(p: tuple[int, *tuple[str, ...]]):
           expr = test_seq(p)
       #   └ TYPE Sequence[int | str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76908"])
@@ -794,7 +895,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def func(p: tuple[int, *tuple[complex, *tuple[str, ...]]]):
           expr = test_seq(p)
       #   └ TYPE Sequence[int | complex | float | str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-43585"])
@@ -802,7 +903,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def f(first: int, rest: list[int]):
           expr = (first, *rest)
       #   └ TYPE tuple[int, *tuple[int, ...]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-43585"])
@@ -810,7 +911,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def f(first: int, rest: tuple[str, ...]):
           expr = (first, *rest)
       #   └ TYPE tuple[int, *tuple[str, ...]]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -829,7 +930,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
 
       def func4(args: tuple[str, tuple[int, ...]]):
           s, (x, y) = args
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85232"])
@@ -849,7 +950,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def f(rows: list[str]):
           for first, second in rows:
               pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-90173"])
@@ -863,7 +964,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def f(items: list[int]):
           z: str
           z, _ = items # WARNING Expected type 'str', got 'int' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-90173"])
@@ -880,7 +981,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
           a: str
           for a, b in matrix: # WARNING Expected type 'str', got 'int' instead
               pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-39258"])
@@ -900,14 +1001,14 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def func4(rows: list[tuple[str, tuple[int, ...]]]):
           for s, (x, y) in rows:
               pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-27205"])
     fun `tuple literal splicing a fixed tuple matches its target type`() = test("""
       def f(t: tuple[int, int]):
           expr = (1, *t)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-40735"])
@@ -918,7 +1019,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       foo(*("1",), 1)
       foo(*a, 1)
       foo(*("1", 2))
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-40735"])
@@ -927,7 +1028,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
 
       xe = "1", 2
       foo(*xe, 3) # WARNING Unexpected argument
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-40735"])
@@ -938,7 +1039,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       foo(*("1", 2))
       foo(*("1",), "2") # WARNING Expected type 'int', got 'Literal["2"]' instead
       foo(*("1", "2")) # WARNING Expected type 'int', got 'Literal["2"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-40735"])
@@ -948,15 +1049,92 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       xe = "1",
       foo(*xe, 2)
       foo(*xe, "2") # WARNING Expected type 'int', got 'Literal["2"]' instead
-      """)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-12592"])
+    fun `unpack annotated target mismatch`() = test("""
+    a = 1, 2
+    b: str
+    b, c = a
+    #      └ WARNING Expected type 'str', got 'int' instead
+    """.trimIndent())
+
+    @Test
+    fun `star operator type mismatch`() = test("""
+      def f(a, b, c): pass
+
+      f(*1)
+      #  └ WARNING Expected an iterable, got 'Literal[1]'
+      f(*(1))
+      #  ^^^ WARNING Expected an iterable, got 'Literal[1]'
+      (*1,)
+      # └ WARNING Expected an iterable, got 'Literal[1]'
+      [*1]
+      # └ WARNING Expected an iterable, got 'Literal[1]'
+      {*1}
+      # └ WARNING Expected an iterable, got 'Literal[1]'
+      {*(1)}
+      # ^^^ WARNING Expected an iterable, got 'Literal[1]'
+
+      def g(**kwargs): pass
+
+      g(**1)
+      #   └ WARNING Expected a mapping, got 'Literal[1]'
+      g(**(1))
+      #   ^^^ WARNING Expected a mapping, got 'Literal[1]'
+      {**1}
+      #  └ WARNING Expected a mapping, got 'Literal[1]'
+      {**(1)}
+      #  ^^^ WARNING Expected a mapping, got 'Literal[1]'
+      """.trimIndent())
+
+    @Test
+    fun `star operator type mismatch no false positive`() = test("""
+      def f(*args, **kwargs): pass
+
+      f(*(1, 2, 3))
+      f(**{"a": 1})
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-12592"])
+    fun `star unpack in type context`() = test("""
+      def f(*a: *tuple[int, str]): ...
+
+      x: tuple[*tuple[int, str]]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-4357", "PY-4360", "PY-12592"])
+    fun `tuple unpack count balance`() = test("""
+      a, b, c = 1, 2, 3, 4
+      #         ^^^^^^^^^^ WARNING Too many values to unpack from 'tuple[Literal[1], Literal[2], Literal[3], Literal[4]]': expected 3, got 4
+      a, b, c, d = 1, 2, 3, 4
+      a = 1, 2, 3, 4
+
+      c = 1, 2, 3
+      a, b = c
+      #      └ WARNING Too many values to unpack from 'tuple[Literal[1], Literal[2], Literal[3]]': expected 2, got 3
+      (a, b) = 1, 2, 3
+      #        ^^^^^^^ WARNING Too many values to unpack from 'tuple[Literal[1], Literal[2], Literal[3]]': expected 2, got 3
+
+      *a, b = 1, 2, 3
+      *a, b, c = 1, 2
+      b, c, *a, d = 1, 2
+      #             ^^^^ WARNING Not enough values to unpack from 'tuple[Literal[1], Literal[2]]': expected 3, got 2
+      a, *b, c, *d = 1, 2, 3, 4, 5, 6
+      #^^^^^^^^^^^ WARNING Only one starred expression allowed in assignment
+      """.trimIndent())
   }
 
   @Test
   @TestFor(issues = ["PY-23138"])
+  @TestCaseOptions(assertRecursionPrevention = false)
   fun `homogeneous tuple plus heterogeneous tuple with the same elements type`() =
-    test(TestOptions(assertRecursionPrevention = false), """
+    test("""
     A = tuple(sorted([1, 4, 2]))
 
     B = A + (4, 6, 7, 8)
-    """)
+    """.trimIndent())
 }

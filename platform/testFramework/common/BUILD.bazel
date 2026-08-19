@@ -56,10 +56,12 @@ jvm_library(
         "//platform/testFramework/core",
         "//platform/diagnostic",
         "//platform/diagnostic/telemetry",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/platform-impl/bootstrap/kernel",
         "//platform/progress/shared:ide-progress",
         "//platform/build-scripts/downloader",
+        "//platform/workspace/storage",
+        "//platform/backend/workspace",
     ],
 )
 
@@ -103,9 +105,12 @@ jvm_library(
         "//platform/testFramework/core:core_test_lib",
         "//platform/diagnostic:diagnostic_test_lib",
         "//platform/diagnostic/telemetry:telemetry_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/platform-impl/bootstrap/kernel:kernel_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
         "//platform/build-scripts/downloader:downloader_test_lib",
+        "//platform/workspace/storage:storage_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.common` end
@@ -114,6 +119,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.testFramework.common.iml",
+        "resources/intellij.platform.testFramework.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

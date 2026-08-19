@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Experimental
 @file:OptIn(EelDelicateApi::class)
 
@@ -6,6 +6,7 @@ package com.intellij.platform.eel
 
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.impl.eelProxyImpl
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 
 // TODO Move to a separate package along with EelTunnelsApi
@@ -143,15 +144,18 @@ interface EelTunnelsApiRunProxyOpts {
   /** For internal use inside Eel only. */
   @Suppress("PropertyName")
   @get:ApiStatus.Internal
+  @get:VisibleToClasses("com.intellij.platform.ijent.functional.tunnels.EelProxyTest")
   val _acceptorInfo: Pair<EelTunnelsApi, Any?>? get() = null
 
   /** For internal use inside Eel only. */
   @Suppress("PropertyName")
   @get:ApiStatus.Internal
+  @get:VisibleToClasses("com.intellij.platform.ijent.functional.tunnels.EelProxyTest")
   val _connectorInfo: Pair<EelTunnelsApi, Any?>? get() = null
 
   /** For internal use inside Eel only. */
   @Suppress("PropertyName")
   @get:ApiStatus.Internal
+  @get:VisibleToClasses("com.intellij.platform.ijent.functional.tunnels.EelProxyTest")
   val _fakeProxyPossible: Boolean get() = true
 }

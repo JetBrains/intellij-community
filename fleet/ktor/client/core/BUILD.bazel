@@ -76,7 +76,7 @@ jvm_library(
         "@lib//:fleet-io-ktor-websocket-serialization",
         "@lib//:fleet-io-ktor-websockets",
         "@lib//:fleet-io-ktor-http-cio",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinx-coroutines-core",
         "@lib//:kotlinx-coroutines-slf4j",
@@ -110,7 +110,11 @@ jvm_library(
         "@lib//:fleet-io-ktor-websockets",
         "@lib//:fleet-io-ktor-http-cio",
     ],
-    runtime_deps = [":core"],
+    runtime_deps = [
+        # do not sort,
+        ":core",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
 )
 ### auto-generated section `build fleet.ktor.client.core` end
 

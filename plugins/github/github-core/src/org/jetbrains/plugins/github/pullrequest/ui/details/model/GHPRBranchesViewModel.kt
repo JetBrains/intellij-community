@@ -4,15 +4,13 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model
 import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.provider.utils.EelSystemFolderUtils
 import git4idea.GitStandardRemoteBranch
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitHostingUrlUtil.getUriFromRemoteUrl
@@ -21,12 +19,16 @@ import git4idea.remote.hosting.HostedGitRepositoryRemote
 import git4idea.remote.hosting.changesSignalFlow
 import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHRepository
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
@@ -34,6 +36,7 @@ import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import java.net.URI
+import java.nio.file.Path
 
 private val LOG = logger<GHPRBranchesViewModel>()
 
@@ -62,11 +65,11 @@ class GHPRBranchesViewModel internal constructor(
     }
   }
 
-  override val isCheckedOut: SharedFlow<Boolean> = gitRepository.changesSignalFlow().withInitial(Unit)
+  override val isCheckedOut: StateFlow<Boolean> = gitRepository.changesSignalFlow().withInitial(Unit)
     .combine(detailsState) { _, details ->
       val remote = details.getHeadRemoteDescriptor(mapping.remote) ?: return@combine false
-      GitRemoteBranchesUtil.isRemoteBranchCheckedOut(gitRepository, remote, details.headRefName)
-    }.modelFlow(cs, thisLogger())
+      GitRemoteBranchesUtil.testRemoteBranchCheckedOut(gitRepository, remote, details.headRefName)
+    }.stateIn(cs, SharingStarted.Eagerly, false)
 
   private val _showBranchesRequests = MutableSharedFlow<CodeReviewBranches>()
   override val showBranchesRequests: SharedFlow<CodeReviewBranches> = _showBranchesRequests
@@ -80,7 +83,8 @@ class GHPRBranchesViewModel internal constructor(
   }
 
   override val canCheckoutInNewWorktree: Boolean
-    get() = GitWorkingTreesService.isWorktreeCreationSupported(gitRepository)
+    // A new worktree can't be created for a branch that is already checked out in the current one.
+    get() = GitWorkingTreesService.isWorktreeCreationSupported(gitRepository) && !isCheckedOut.value
 
   override fun checkoutInNewWorktree() {
     val details = detailsState.value
@@ -140,6 +144,11 @@ class GHPRBranchesViewModel internal constructor(
     fun GHPullRequest.getBaseRemoteDescriptor(remoteUrlCoordinates: GitRemoteUrlCoordinates): HostedGitRepositoryRemote? =
       baseRepository?.getRemoteDescriptor(remoteUrlCoordinates)
 
+    // The parent dir must live in the same Eel environment (WSL/Docker/local) as the repository,
+    // otherwise the worktree ends up created on the wrong (e.g. host Windows) filesystem for a WSL project.
+    internal fun getReviewWorktreesParentDir(project: Project): Path =
+      EelSystemFolderUtils.getSystemFolder(project).resolve("tmp").resolve(REVIEW_WORKTREES_DIR_NAME)
+
     internal suspend fun fetchAndCheckoutBranch(remoteUrlCoordinates: GitRemoteUrlCoordinates, details: GHPullRequest) {
       val baseRepository = details.baseRepository ?: run {
         LOG.warn("Can't checkout remote branch for PR ${details.number} because base repository is missing")
@@ -166,7 +175,9 @@ class GHPRBranchesViewModel internal constructor(
       val remoteDescriptor = headRepository.getRemoteDescriptor(remoteUrlCoordinates)
       val prId = details.prId
       val worktreeName = "${remoteUrlCoordinates.repository.root.name}_PR_${details.number}"
-      val parentDir = PathManager.getTempDir().resolve(REVIEW_WORKTREES_DIR_NAME)
+      val parentDir = withContext(Dispatchers.IO) {
+        getReviewWorktreesParentDir(remoteUrlCoordinates.repository.project)
+      }
       GitRemoteBranchesUtil.fetchAndCheckoutInNewWorktree(remoteUrlCoordinates.repository,
                                                           remoteDescriptor,
                                                           details.headRefName,

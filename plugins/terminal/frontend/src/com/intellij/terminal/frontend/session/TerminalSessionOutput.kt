@@ -21,16 +21,10 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.block.ui.withLock
-import org.jetbrains.plugins.terminal.session.impl.TerminalAliasesReceivedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalBeepEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalCommandFinishedEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalCommandStartedEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalCompletionFinishedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalPromptFinishedEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalPromptStartedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalState
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import kotlin.time.Duration.Companion.milliseconds
@@ -96,6 +90,7 @@ internal fun createTerminalOutputFlow(
           startLineLogicalIndex = actualContentUpdate.startLineLogicalIndex,
           cursorLogicalLineIndex = cursorPosition.logicalLineIndex,
           cursorColumnIndex = cursorPosition.column,
+          osc8Hyperlinks = actualContentUpdate.osc8Hyperlinks,
           readTime = outputLatencyTracker.getCurUpdateTtyReadTimeAndReset(),
         )
       }
@@ -226,31 +221,10 @@ internal fun createTerminalOutputFlow(
         collectAndSendEvents(contentUpdate = null, otherEvent = null)
       }
     }
-
-    override fun commandStarted(command: String) {
-      collectAndSendEvents(contentUpdate = null, otherEvent = TerminalCommandStartedEvent(command))
-    }
-
-    override fun commandFinished(command: String, exitCode: Int, currentDirectory: String?) {
-      collectAndSendEvents(contentUpdate = null, otherEvent = TerminalCommandFinishedEvent(command, exitCode, currentDirectory))
-    }
-
-    override fun promptStarted() {
-      collectAndSendEvents(contentUpdate = null, otherEvent = TerminalPromptStartedEvent)
-    }
-
-    override fun promptFinished() {
-      collectAndSendEvents(contentUpdate = null, otherEvent = TerminalPromptFinishedEvent)
-    }
-
-    override fun aliasesReceived(aliasesRaw: String) {
-      collectAndSendEvents(contentUpdate = null, otherEvent = TerminalAliasesReceivedEvent(aliasesRaw))
-    }
-
-    override fun completionFinished(result: String) {
-      collectAndSendEvents(contentUpdate = null, otherEvent = TerminalCompletionFinishedEvent(result))
-    }
   })
+  shellIntegrationController.addEventSink { event ->
+    collectAndSendEvents(contentUpdate = null, otherEvent = event)
+  }
 
   if (services.startupOptions.processType == TerminalProcessType.SHELL) {
     val workingDirectoryTrackingScope = coroutineScope.childScope("Working directory tracking")

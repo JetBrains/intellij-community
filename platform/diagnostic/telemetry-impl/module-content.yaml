@@ -1,0 +1,5 @@
+- name: dist.all/lib/intellij.platform.diagnostic.telemetry.impl.jar
+  modules:
+  - name: intellij.platform.diagnostic.telemetry.exporters
+  - name: intellij.platform.diagnostic.telemetry.impl
+  - name: intellij.platform.util.http

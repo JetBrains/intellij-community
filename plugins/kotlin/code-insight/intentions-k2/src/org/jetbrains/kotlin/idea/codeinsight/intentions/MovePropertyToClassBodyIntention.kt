@@ -6,13 +6,15 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaAnnotationCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isApplicableTargetSet
 import org.jetbrains.kotlin.idea.base.psi.mustHaveOnlyPropertiesInPrimaryConstructor
@@ -136,7 +138,8 @@ class MovePropertyToClassBodyIntention : KotlinApplicableModCommandAction<KtPara
         delete()
     }
 
-    override fun KaSession.prepareContext(element: KtParameter): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtParameter): Unit? {
         if (!element.isPropertyParameter()) return null
         val containingClass = element.containingClass() ?: return null
         return Unit.takeIf { !containingClass.mustHaveOnlyPropertiesInPrimaryConstructor() }

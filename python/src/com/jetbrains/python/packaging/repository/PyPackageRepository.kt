@@ -14,7 +14,7 @@ import com.intellij.util.xmlb.annotations.Transient
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPIPackageUtil
-import com.jetbrains.python.packaging.PyPackageVersionComparator
+import com.intellij.python.requirements.PyPackageVersionComparator
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCacheService

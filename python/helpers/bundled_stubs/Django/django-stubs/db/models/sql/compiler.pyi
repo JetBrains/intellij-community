@@ -1,6 +1,7 @@
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from datetime import date, datetime
 from decimal import Decimal
+from re import Pattern
 from typing import Any, Literal, TypeAlias, overload
 from uuid import UUID
 
@@ -11,13 +12,12 @@ from django.db.models.base import Model
 from django.db.models.expressions import BaseExpression, Expression, Ref
 from django.db.models.sql.query import Query
 from django.db.models.sql.subqueries import AggregateQuery, DeleteQuery, InsertQuery, UpdateQuery
-from django.utils.datastructures import _ListOrTuple
 from django.utils.functional import cached_property
-from typing_extensions import override
+from typing_extensions import deprecated, override
 
 _ParamT: TypeAlias = str | int
 
-_ParamsT: TypeAlias = _ListOrTuple[_ParamT]
+_ParamsT: TypeAlias = tuple[_ParamT, ...]
 _AsSqlType: TypeAlias = tuple[str, _ParamsT]
 
 class PositionRef(Ref):
@@ -31,7 +31,7 @@ class SQLCompiler:
     select: Any
     annotation_col_map: Any
     klass_info: Any
-    ordering_parts: Any
+    ordering_parts: Pattern[str]
     def __init__(
         self, query: Query, connection: BaseDatabaseWrapper, using: str | None, elide_empty: bool = True
     ) -> None: ...
@@ -52,8 +52,10 @@ class SQLCompiler:
         order_by: list[tuple[Expression, tuple[str, _ParamsT, bool]]],
     ) -> list[_AsSqlType]: ...
     def collapse_group_by(
-        self, expressions: list[Expression], having: list[Expression] | tuple
+        self, expressions: list[Expression], having: list[Expression] | tuple[Any, ...]
     ) -> list[Expression]: ...
+    @classmethod
+    def get_select_from_parent(cls, klass_info: dict[str, Any]) -> None: ...
     def get_select(
         self,
         with_col_aliases: bool = False,
@@ -65,6 +67,8 @@ class SQLCompiler:
         order_by: list[tuple[Expression, tuple[str, _ParamsT, bool]]],
         select: list[tuple[Expression, _AsSqlType, str | None]],
     ) -> list[tuple[Expression, _AsSqlType, None]]: ...
+    def quote_name(self, name: str) -> str: ...
+    @deprecated("SQLCompiler.quote_name_unless_alias() is deprecated. Use .quote_name() instead.")
     def quote_name_unless_alias(self, name: str) -> str: ...
     def compile(self, node: BaseExpression) -> _AsSqlType: ...
     def get_combinator_sql(self, combinator: str, all: bool) -> tuple[list[str], list[int] | list[str]]: ...
@@ -98,10 +102,12 @@ class SQLCompiler:
         restricted: bool | None = None,
     ) -> list[dict[str, Any]]: ...
     def get_select_for_update_of_arguments(self) -> list[Any]: ...
-    def get_converters(self, expressions: list[Expression]) -> dict[int, tuple[list[Callable], Expression]]: ...
+    def get_converters(
+        self, expressions: list[Expression]
+    ) -> dict[int, tuple[list[Callable[..., Any]], Expression]]: ...
     def apply_converters(
-        self, rows: Iterable[Iterable[Any]], converters: dict[int, tuple[list[Callable], Expression]]
-    ) -> Iterator[list[None | date | datetime | float | Decimal | UUID | bytes | str]]: ...
+        self, rows: Iterable[Iterable[Any]], converters: dict[int, tuple[list[Callable[..., Any]], Expression]]
+    ) -> Iterator[list[date | datetime | float | Decimal | UUID | bytes | str | None]]: ...
     def has_composite_fields(self, expressions: Iterable[Expression]) -> bool: ...
     def composite_fields_to_tuples(
         self, rows: Iterable[Any], expressions: Iterable[Expression]
@@ -142,7 +148,7 @@ class SQLInsertCompiler(SQLCompiler):
     def field_as_sql(
         self,
         field: Field[Any, Any] | None,
-        get_placeholder: Callable[[Any, SQLInsertCompiler, BaseDatabaseWrapper], str],
+        get_placeholder_sql: Callable[[Any, SQLInsertCompiler, BaseDatabaseWrapper], _AsSqlType],
         val: Any,
     ) -> _AsSqlType: ...
     def prepare_value(self, field: Any, value: Any) -> Any: ...

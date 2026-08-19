@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.agent
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.terminal.frontend.action.TerminalAgentsSelectorPresentationUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.ui.components.Badge
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentMode
 import org.junit.Test
@@ -38,7 +38,7 @@ internal class TerminalAgentSelectorPresentationTest : BasePlatformTestCase() {
     assertThat(presentation.text).contains("Install Agent CLI").contains("by Vendor")
     assertThat(presentation.text.indexOf("Install Agent CLI")).isLessThan(presentation.text.indexOf("by Vendor"))
     assertThat(presentation.getClientProperty(ActionUtil.SECONDARY_TEXT)).isNull()
-    assertThat(presentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isEqualTo(AllIcons.General.New_badge)
+    assertThat(presentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isEqualTo(Badge.new)
   }
 
   @Test
@@ -72,6 +72,6 @@ internal class TerminalAgentSelectorPresentationTest : BasePlatformTestCase() {
 
     assertThat(presentation.text).contains("Agent").contains("by Vendor")
     assertThat(presentation.getClientProperty(ActionUtil.SECONDARY_TEXT)).isNull()
-    assertThat(presentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isEqualTo(AllIcons.General.New_badge)
+    assertThat(presentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isEqualTo(Badge.new)
   }
 }

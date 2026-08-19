@@ -15,7 +15,7 @@ assert_type(pow(1, 0, None), Literal[1])
 # that passing 0 for the third argument will lead to an exception being raised
 # (see discussion in #8566)
 #
-# assert_type(pow(2, 4, 0), NoReturn)
+# assert_type(pow(2, 4, 0), Never)
 
 assert_type(pow(2, 4), int)
 # pyright infers a literal type here, but mypy does not.

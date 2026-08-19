@@ -27,7 +27,7 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
-import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 import org.jetbrains.intellij.build.impl.BUILT_IN_HELP_MODULE_NAME
@@ -72,7 +72,7 @@ internal suspend fun buildNonBundledPlugins(
   isUpdateFromSources: Boolean,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
-): List<PluginBuildDescriptor> {
+): List<PluginBuildResult> {
   return context.executeStep(spanBuilder("build non-bundled plugins").setAttribute("count", state.pluginsToPublish.size.toLong()), BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
     buildNonBundledPlugins(
       scope = this,
@@ -98,7 +98,7 @@ private suspend fun buildNonBundledPlugins(
   isUpdateFromSources: Boolean,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
-): List<PluginBuildDescriptor> {
+): List<PluginBuildResult> {
   if (pluginsToPublish.isEmpty()) {
     return emptyList()
   }

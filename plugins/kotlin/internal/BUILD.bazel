@@ -27,9 +27,9 @@ jvm_library(
         "//plugins/kotlin/frontend-independent",
         "//java/openapi:java",
         "//plugins/kotlin/base/plugin",
-        "@lib//:kotlinc-low-level-api-fir",
+        "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir",
         "//plugins/kotlin/base/analysis",
-        "@lib//:kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//platform/util:util-ui",
@@ -57,7 +57,9 @@ jvm_library(
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
         "//java/openapi:java_test_lib",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir_test_lib",
         "//plugins/kotlin/base/analysis:analysis_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/util:util-ui_test_lib",
@@ -71,6 +73,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.internal.iml",
+        "resources/intellij.kotlin.internal.xml",
     ],
     visibility = ["//visibility:public"],
 )

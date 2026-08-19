@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io
 
 import com.intellij.openapi.util.text.StringUtil
@@ -51,6 +51,7 @@ class CustomUserDockerTestImageProvider : DockerTestImageProvider {
   )
 }
 
+@Suppress("checkedExceptions")
 @TestApplicationWithEel(osesMayNotHaveRemoteEels = [OS.WINDOWS, OS.LINUX, OS.MAC])
 @ParameterizedClass
 @DockerTest(imageProvider = CustomUserDockerTestImageProvider::class)
@@ -71,41 +72,15 @@ class FileAttributesReadingTest(val eelHolder: EelHolder) {
     val userProfile = envVars["USERPROFILE"] ?: return
 
     val nioAttributes = object : BasicFileAttributes {
-      override fun lastModifiedTime(): FileTime {
-        return FileTime.from(Instant.now())
-      }
-
-      override fun lastAccessTime(): FileTime {
-        return lastModifiedTime()
-      }
-
-      override fun creationTime(): FileTime {
-        return lastModifiedTime()
-      }
-
-      override fun isRegularFile(): Boolean {
-        return false
-      }
-
-      override fun isDirectory(): Boolean {
-        return true
-      }
-
-      override fun isSymbolicLink(): Boolean {
-        return false
-      }
-
-      override fun isOther(): Boolean {
-        return true
-      }
-
-      override fun size(): Long {
-        return 0
-      }
-
-      override fun fileKey(): Any? {
-        return null
-      }
+      override fun lastModifiedTime(): FileTime = FileTime.from(Instant.now())
+      override fun lastAccessTime(): FileTime = lastModifiedTime()
+      override fun creationTime(): FileTime = lastModifiedTime()
+      override fun isRegularFile(): Boolean = false
+      override fun isDirectory(): Boolean = true
+      override fun isSymbolicLink(): Boolean = false
+      override fun isOther(): Boolean = true
+      override fun size(): Long = 0
+      override fun fileKey(): Any? = null
     }
 
     val rootAttributes = FileAttributes.fromNio(EelPath.parse(systemDrive + '\\', eelHolder.eel.descriptor).asNioPath(), nioAttributes)
@@ -668,7 +643,6 @@ class FileAttributesReadingTest(val eelHolder: EelHolder) {
   }
 
   companion object {
-
     private fun resolveSymLink(path: Path): String? {
       val realPath = FileSystemUtil.resolveSymLink(path.absolutePathString())
       if (realPath != null && (path.getEelDescriptor().osFamily == EelOsFamily.Windows && realPath.startsWith("\\\\") || Files.exists(Path.of(realPath)))) {
@@ -697,10 +671,14 @@ class FileAttributesReadingTest(val eelHolder: EelHolder) {
     }
 
     private fun getAttributesNullable(path: Path): FileAttributes? {
-      val directoryListElement = listWithAttributesUsingEel(path, setOf(path.name))[path.name]
+      val directoryListElement = try {
+        listWithAttributesUsingEel(path.asEelPath(), setOf(path.name))[path.name]
+      } catch (_: IOException) {
+        null
+      }
       val singleFileAttributes = try {
         readAttributesUsingEel(path)
-      } catch (e: IOException) {
+      } catch (_: IOException) {
         null
       }
       assertEquals(directoryListElement, singleFileAttributes)

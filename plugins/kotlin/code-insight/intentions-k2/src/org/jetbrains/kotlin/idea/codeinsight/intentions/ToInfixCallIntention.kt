@@ -6,6 +6,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -38,7 +39,8 @@ internal class ToInfixCallIntention : KotlinApplicableModCommandAction<KtCallExp
     override fun getApplicableRanges(element: KtCallExpression): List<TextRange> =
         ApplicabilityRanges.calleeExpression(element)
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Unit? {
         val dotQualified = element.getQualifiedExpressionForSelector() as? KtDotQualifiedExpression ?: return null
 
         val functionSymbol = getFunctionSymbol(element) ?: return null
@@ -74,7 +76,8 @@ private fun hasSingleNonNamedArgument(element: KtCallExpression): Boolean {
     return argument.getArgumentExpression() != null
 }
 
-private fun KaSession.getFunctionSymbol(element: KtCallExpression): KaNamedFunctionSymbol? {
+context(session: KaSession)
+private fun getFunctionSymbol(element: KtCallExpression): KaNamedFunctionSymbol? {
     val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
     return call.symbol as? KaNamedFunctionSymbol
 }

@@ -21,9 +21,9 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:gradle",
+        "//libraries/gradle",
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
@@ -46,6 +46,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":tooling-proxy",
+        "//libraries/gradle:gradle_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
         "//libraries/jspecify:jspecify_test_lib",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
@@ -58,6 +60,7 @@ jvm_library(
 exports_files(
     [
         "intellij.gradle.toolingProxy.iml",
+        "resources/intellij.gradle.toolingProxy.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -90,7 +93,8 @@ jvm_library(
     runtime_deps = [":toolingProxy-tests"],
     deps = [
         # do not sort,
-        "@lib//:gradle",
+        "//libraries/gradle",
+        "//libraries/gradle:gradle_test_lib",
         "@lib//:kotlin-stdlib",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
         "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",

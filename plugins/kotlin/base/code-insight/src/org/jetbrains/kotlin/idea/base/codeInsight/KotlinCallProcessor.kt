@@ -8,26 +8,24 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaDelegatedConstructorCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaPartiallyAppliedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.KaPartiallyAppliedSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.KaPartiallyAppliedVariableSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaForLoopCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
@@ -50,7 +48,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentName
 
 sealed interface CallTarget {
     val caller: KtElement
-    val partiallyAppliedSymbol: KaPartiallyAppliedSymbol<KaCallableSymbol, KaCallableSignature<KaCallableSymbol>>?
+    val call: KaCall?
     val symbol: KaCallableSymbol
 
     val anchor: PsiElement
@@ -73,49 +71,47 @@ sealed interface TypedCallTarget<out S : KaCallableSymbol, out C : KaCallableSig
 
 class VariableCallTarget(
     override val caller: KtElement,
-    override val partiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol>
+    override val call: KaVariableAccessCall
 ) : TypedCallTarget<KaVariableSymbol, KaVariableSignature<KaVariableSymbol>> {
     override val symbol: KaVariableSymbol
-        get() = partiallyAppliedSymbol.symbol
+        get() = call.symbol
 }
 
 class FunctionCallTarget(
     override val caller: KtElement,
-    override val partiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaFunctionSymbol>
+    override val call: KaFunctionCall<*>
 ) : TypedCallTarget<KaFunctionSymbol, KaFunctionSignature<KaFunctionSymbol>> {
     override val symbol: KaFunctionSymbol
-        get() = partiallyAppliedSymbol.symbol
+        get() = call.symbol
 }
-
-class DesugaredFunctionCallTarget(
-    override val caller: KtElement,
-    override val symbol: KaFunctionSymbol,
-    override val partiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol>? = null,
-) : TypedCallTarget<KaFunctionSymbol, KaFunctionSignature<KaFunctionSymbol>>
 
 interface KotlinCallTargetProcessor {
     /**
      * Processes a successfully resolved [CallTarget].
      * If false is returned from this function, no further elements will be processed.
      */
-    fun KaSession.processCallTarget(target: CallTarget): Boolean
+    context(session: KaSession)
+    fun processCallTarget(target: CallTarget): Boolean
 
     /**
      * Processes a call that resolved as an error.
      * If false is returned from this function, no further elements will be processed.
      */
-    fun KaSession.processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean
+    context(session: KaSession)
+    fun processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean
 }
 
-private fun (KaSession.(CallTarget) -> Unit).toCallTargetProcessor(): KotlinCallTargetProcessor {
+private fun (context(KaSession) (CallTarget) -> Unit).toCallTargetProcessor(): KotlinCallTargetProcessor {
     val processor = this
     return object : KotlinCallTargetProcessor {
-        override fun KaSession.processCallTarget(target: CallTarget): Boolean {
+        context(session: KaSession)
+        override fun processCallTarget(target: CallTarget): Boolean {
             processor(target)
             return true
         }
 
-        override fun KaSession.processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean {
+        context(session: KaSession)
+        override fun processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean {
             return true
         }
     }
@@ -131,7 +127,7 @@ object KotlinCallProcessor {
         KDoc::class.java
     )
 
-    fun process(element: PsiElement, processor: KaSession.(CallTarget) -> Unit) {
+    fun process(element: PsiElement, processor: context(KaSession) (CallTarget) -> Unit) {
         process(element, processor.toCallTargetProcessor())
     }
 
@@ -187,31 +183,12 @@ object KotlinCallProcessor {
 
     private fun handle(element: KtElement, processor: KotlinCallTargetProcessor): Boolean {
         analyze(element) {
-            fun handleSpecial(element: KtElement): Boolean {
-                val symbols = element.mainReference?.resolveToSymbols() ?: return true
-                for (symbol in symbols) {
-                    if (symbol !is KaFunctionSymbol) continue
-                    with(processor) {
-                        if (!processCallTarget(DesugaredFunctionCallTarget(element, symbol))) return false
-                    }
-                }
-                return true
-            }
-
-            if (element is KtForExpression) {
-                return handleSpecial(element)
-            }
-
-            if (element is KtDestructuringDeclarationEntry) {
-                return handleSpecial(element)
-            }
-
             val callInfo = element.resolveToCall()
             val call = callInfo?.successfulCallOrNull<KaCall>()
 
             return with(processor) {
                 if (call != null) {
-                    return processResolvedCall(processor, element, call)
+                    processResolvedCall(processor, element, call)
                 } else {
                     processUnresolvedCall(element, callInfo)
                 }
@@ -220,23 +197,31 @@ object KotlinCallProcessor {
     }
 
 
-    fun KaSession.processResolvedCall(targetProcessor: KotlinCallTargetProcessor, element: KtElement, call: KaCall): Boolean {
+    @OptIn(KaExperimentalApi::class)
+    context(session: KaSession)
+    fun processResolvedCall(targetProcessor: KotlinCallTargetProcessor, element: KtElement, call: KaCall): Boolean {
         with(targetProcessor) {
             return when (call) {
-                is KaDelegatedConstructorCall -> processCallTarget(FunctionCallTarget(element, call.partiallyAppliedSymbol))
-                is KaSimpleFunctionCall -> processCallTarget(FunctionCallTarget(element, call.partiallyAppliedSymbol))
+                is KaDelegatedConstructorCall -> processCallTarget(FunctionCallTarget(element, call))
+                is KaFunctionCall<*> -> processCallTarget(FunctionCallTarget(element, call))
                 is KaCompoundVariableAccessCall -> {
-                    processCallTarget(VariableCallTarget(element, call.variablePartiallyAppliedSymbol))
-                    processCallTarget(FunctionCallTarget(element, call.compoundOperation.operationPartiallyAppliedSymbol))
+                    processCallTarget(VariableCallTarget(element, call.variableCall))
+                    processCallTarget(FunctionCallTarget(element, call.operationCall))
                 }
 
-                is KaSimpleVariableAccessCall -> {
-                    processCallTarget(VariableCallTarget(element, call.partiallyAppliedSymbol))
+                is KaVariableAccessCall -> {
+                    processCallTarget(VariableCallTarget(element, call))
                 }
 
                 is KaCompoundArrayAccessCall -> {
-                    processCallTarget(FunctionCallTarget(element, call.getPartiallyAppliedSymbol))
-                    processCallTarget(FunctionCallTarget(element, call.setPartiallyAppliedSymbol))
+                    processCallTarget(FunctionCallTarget(element, call.getterCall))
+                    processCallTarget(FunctionCallTarget(element, call.setterCall))
+                }
+
+                is KaForLoopCall -> {
+                    processCallTarget(FunctionCallTarget(element, call.nextCall))
+                    processCallTarget(FunctionCallTarget(element, call.iteratorCall))
+                    processCallTarget(FunctionCallTarget(element, call.hasNextCall))
                 }
 
                 else -> true
@@ -245,7 +230,7 @@ object KotlinCallProcessor {
     }
 }
 
-fun KotlinCallProcessor.process(elements: Collection<PsiElement>, processor: KaSession.(CallTarget) -> Unit) {
+fun KotlinCallProcessor.process(elements: Collection<PsiElement>, processor: context(KaSession) (CallTarget) -> Unit) {
     process(elements, processor.toCallTargetProcessor())
 }
 

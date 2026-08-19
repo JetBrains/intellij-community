@@ -67,6 +67,7 @@ jvm_library(
 exports_files(
     [
         "intellij.ml.models.local.java.iml",
+        "resources/intellij.ml.models.local.java.xml",
     ],
     visibility = ["//visibility:public"],
 )

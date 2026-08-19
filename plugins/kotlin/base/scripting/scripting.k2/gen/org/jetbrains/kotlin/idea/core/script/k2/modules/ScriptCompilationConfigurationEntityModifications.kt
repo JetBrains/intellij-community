@@ -19,7 +19,7 @@ interface ScriptCompilationConfigurationEntityBuilder : WorkspaceEntityBuilder<S
 
 internal object ScriptCompilationConfigurationEntityType :
     EntityType<ScriptCompilationConfigurationEntity, ScriptCompilationConfigurationEntityBuilder>() {
-    override val entityClass: Class<ScriptCompilationConfigurationEntity> get() = ScriptCompilationConfigurationEntity::class.java
+    override val entityImplClass: Class<*> get() = ScriptCompilationConfigurationEntityImpl::class.java
     override val entityImplBuilderClass: Class<*> get() = ScriptCompilationConfigurationEntityImpl.Builder::class.java
     operator fun invoke(
         data: ByteArray,

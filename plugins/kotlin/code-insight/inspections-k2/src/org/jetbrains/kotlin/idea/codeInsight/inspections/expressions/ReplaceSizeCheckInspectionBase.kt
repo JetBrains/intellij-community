@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
@@ -56,7 +57,8 @@ internal sealed class ReplaceSizeCheckInspectionBase :
             ?.name != methodToReplaceWith.methodName
                 && extractTargetExpressionFromPsi(element) != null
 
-    final override fun KaSession.prepareContext(element: KtBinaryExpression): ReplacementInfo? {
+    context(session: KaSession)
+    final override fun prepareContext(element: KtBinaryExpression): ReplacementInfo? {
         val replaceableCall = extractTargetExpressionFromPsi(element)
             ?.takeUnless { it is KtSafeQualifiedExpression }
             ?.resolveToCall()

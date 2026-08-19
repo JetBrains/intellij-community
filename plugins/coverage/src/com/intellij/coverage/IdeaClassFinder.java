@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
-import com.intellij.coverage.analysis.JavaCoverageClassesEnumerator;
+import com.intellij.coverage.analysis.CoverageOutputRoots;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -45,7 +45,7 @@ final class IdeaClassFinder extends ClassFinder {
     final Module[] modules = ModuleManager.getInstance(myProject).getModules();
     final CoverageDataManager coverageManager = CoverageDataManager.getInstance(myProject);
     for (Module module : modules) {
-      final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(coverageManager, module, myCurrentSuite.isTrackTestFolders());
+      final VirtualFile[] roots = CoverageOutputRoots.getRoots(coverageManager, module, myCurrentSuite.isTrackTestFolders());
       for (VirtualFile root : roots) {
         entries.add(new ClassPathEntry(root.getPath()));
       }

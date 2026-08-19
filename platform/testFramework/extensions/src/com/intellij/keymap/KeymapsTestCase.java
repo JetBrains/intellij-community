@@ -56,6 +56,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"alt shift LEFT",           "Diff.PrevChange", "PreviousEditorTab"},
       {"alt shift PERIOD",         "AiCodeReview.Editor.NextFinding", "EditorIncreaseFontSizeGlobal"},
       {"alt shift RIGHT",          "Diff.NextChange", "NextEditorTab"},
+      {"alt shift button1",        "EditorAddOrRemoveCaret", "Terminal.CreateRectangularSelectionOnMouseDrag"},
       {"button1 doubleClick",      "Git.Log.Branches.Change.Branch.Filter", "Console.TableResult.GotoReferencedResult", "Git.WorkingTrees.Open"},
       {"button2",                  "EditorPasteFromX11", "GotoDeclaration", "EditorCreateRectangularSelectionOnMouseDrag"},
       {"control 1",                "FileChooser.GotoHome", "GotoBookmark1", "DuplicatesForm.SendToLeft"},
@@ -138,7 +139,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift V",                  "Graph.DistributeNodes.Vertically", "JupyterNotebookPasteCellAboveCommandModeAction"},
       {"shift alt A", "NotebookInsertCodeCellAboveAction", "VcsHistory.ShowAllAffected"},
       {"shift alt B", "NotebookInsertCodeCellAction", "tasks.open.in.browser", "sql.SelectInDatabaseView"},
-      {"shift alt ENTER",          "AIAssistant.Editor.AcceptMultiLineCompletion", "Console.TableResult.EditValueMaximized", "JupyterDebugAction", "SplitChooser"},
+      {"shift alt ENTER",          "AIAssistant.Editor.AcceptMultiLineCompletion", "Console.TableResult.EditValueMaximized", "JupyterDebugAction", "SplitChooser", "MoveToolWindowTabToEditorAction"},
       {"shift alt F7",             "ForceStepInto", "StepIntoMyCode"},
       {"shift alt G",              "EditorAddCaretPerSelectedLine", "hg4idea.QGotoFromPatches"},
       {"shift alt M",              "ChangesView.Move", "Vcs.MoveChangedLinesToChangelist"},
@@ -150,7 +151,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift control H",          "ChangesView.ShelveSilently", "MethodHierarchy"},
       {"shift control M",          "EditorMatchBrace", "RInsertPipeAction"},
       {"shift control MINUS",      "CollapseAllRegions", "NotebookSplitCellAction"},
-      {"shift control S",          "Github.PullRequest.Changed.MarkViewed.Toggle", "org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"},
+      {"shift control S",          "Github.PullRequest.Changed.MarkViewed.Toggle", "SaveAs", "org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"},
       {"shift control T",          "GotoTest", "ServiceView.ShowServices", "Terminal.NewTab"},
       {"shift control TAB",        "Switcher", "Diff.FocusOppositePane"},
       {"shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase", "Markdown.Styling.CreateLink"},
@@ -534,7 +535,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"alt MINUS",                "Back", "RInsertAssignmentAction"},
       {"ctrl ADD",                 "EditorIncreaseFontSize", "ExpandAll", "ExpandExpandableComponent"},
       {"ctrl B",                   "Compile", "org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"},
-      {"ctrl D",                   "CompareTwoFiles", "Diff.ShowDiff", "Compare.SameVersion", "FileChooser.GotoDesktop", "SelectNextOccurrence", "SendEOF",
+      {"ctrl D",                   "CompareTwoFiles", "Diff.ShowDiff", "Compare.SameVersion", "FileChooser.GotoDesktop", "SelectNextOccurrence",
                                    "Terminal.CloseSession", "org.jetbrains.r.console.RConsoleViewImpl.REofAction"},
       {"ctrl ENTER",               "Console.Execute.Multiline", "DirDiffMenu.SynchronizeDiff.All", "EditorStartNewLine", "NotebookRunCellAction",
                                    "PyExecuteCellAction", "ViewSource", "org.jetbrains.r.actions.RunSelection", "Terminal.SmartCommandExecution.Run",
@@ -573,7 +574,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta ADD",                 "EditorIncreaseFontSize", "ExpandAll", "ExpandExpandableComponent"},
       {"meta B",                   "Compile", "org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"},
       {"meta BACK_SPACE",          "EditorDeleteToLineStart", "$Delete"},
-      {"meta D",                   "CompareTwoFiles", "Diff.ShowDiff", "Compare.SameVersion", "FileChooser.GotoDesktop", "SelectNextOccurrence", "SendEOF"},
+      {"meta D",                   "CompareTwoFiles", "Diff.ShowDiff", "Compare.SameVersion", "FileChooser.GotoDesktop", "SelectNextOccurrence"},
       {"meta DOWN",                "EditorTextEnd", "Terminal.SelectPrompt", "Terminal.LineDown", "NotebookSelectCellBelowAction"},
       {"meta ENTER",               "Console.Execute.Multiline", "DirDiffMenu.SynchronizeDiff.All", "EditorStartNewLine", "ViewSource",
                                    "org.jetbrains.r.actions.RunSelection", "Terminal.SmartCommandExecution.Run", "SplitChooser.Duplicate",
@@ -636,7 +637,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "IDEtalk.SearchUserHistory", "IDEtalk.Rename", "CIDR.Lang.Cpp.GenerateDefinitions", "ActivateErrorsInSolutionToolWindow",
     "ActivateUnitTestsToolWindow", "ActivateDatabaseToolWindow", "ActivateBuildToolWindow", "ActivateNuGetToolWindow",
     "RiderBackendAction-EncapsulateField", "SwitchHeaderSource", "BuildProject", "RebuildProject", "BuildSolutionAction",
-    "RebuildSolutionAction",
+    "RebuildSolutionAction", "SaveAs",
     "ActivateInspectionResultsToolWindow", ""
   );
 
@@ -656,7 +657,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "Table-selectLastRowExtendSelection",
     "Vcs.CombinedDiff.CaretToPrevBlock",
     "Vcs.CombinedDiff.CaretToNextBlock",
-    "Terminal.PasteFromHistory"
+    "Terminal.PasteFromHistory",
+    "Terminal.CreateRectangularSelectionOnMouseDrag"
   );
 
   private static final Set<String> DEFAULT_CONFLICT_SAFE_GROUPS = Set.of(

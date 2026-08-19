@@ -1,4 +1,4 @@
-<idea-plugin visibility="public">
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
@@ -6,7 +6,22 @@
     <module name="intellij.platform.backend"/>
     <module name="intellij.java.analysis.impl"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
     <module name="intellij.platform.structureView"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.logicalStructureElementsProvider implementationClass="com.intellij.lang.java.logical.ClassOwnerLogicalStructureElementsProvider"
+                                           forClass="com.intellij.psi.PsiClassOwner"/>
+    <lang.logicalStructureTreeElementProvider
+      id="javaPsiClassLogicalStructureTreeElementProvider"
+      implementation="com.intellij.lang.java.logical.JavaPsiClassLogicalStructureTreeElementProvider"/>
+  </extensions>
+
+  <xi:include href="/META-INF/RegistryKeysStructureView.xml"/>
 </idea-plugin>

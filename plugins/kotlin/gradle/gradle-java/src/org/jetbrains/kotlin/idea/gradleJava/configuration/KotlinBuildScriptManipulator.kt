@@ -45,7 +45,9 @@ import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSuppor
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport.Companion.IMPLEMENTATION
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport.Companion.TEST_IMPLEMENTATION
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport.Companion.TEST_LIB_ID
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleRepositoryInheritanceChecker
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleVersionProvider
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KaptGradleDependenciesManipulator
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SettingsRepositoriesMode
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.assertApplicableInMultiplatform
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.canBeConfigured
@@ -88,6 +90,10 @@ class KotlinBuildScriptManipulator(
     override val scriptFile: KtFile,
     override val preferNewSyntax: Boolean
 ) : GradleBuildScriptManipulator<KtFile> {
+    override val kaptDependenciesManipulator: KaptGradleDependenciesManipulator? by lazy {
+        KotlinKaptGradleDependenciesManipulator.createIfApplicable(scriptFile)
+    }
+
     override fun isApplicable(file: PsiFile): Boolean = file is KtFile
 
     private val gradleVersion = GradleVersionProvider.fetchGradleVersion(scriptFile)
@@ -155,6 +161,16 @@ class KotlinBuildScriptManipulator(
         val pluginsBlock = getPluginsBlock() ?: return false
         val kotlinPluginExpression = pluginsBlock.findPluginExpressions(::isKotlinPluginIdentifier)
         return kotlinPluginExpression?.applyExpression?.arguments?.firstOrNull()?.isFalseConstant() == true
+    }
+
+    override fun hasRepositoryConfiguredInScope(scopeNames: List<String>): Boolean = scopeNames.any { scopeName ->
+        val scopeBlock = scriptFile.findScriptInitializer(scopeName)?.getBlock()
+            ?: return@any false
+
+        scopeBlock.getChildrenOfType<KtCallExpression>().any { call ->
+            call.calleeExpression?.referencedNameOrNull() == "repositories" &&
+                    call.getBlock()?.text?.let(::isRepositoryConfigured) == true
+        }
     }
 
     override fun findAndRemoveKotlinVersionFromBuildScript(): Boolean {
@@ -242,9 +258,15 @@ class KotlinBuildScriptManipulator(
             val settingsFile = scriptFile.module?.getTopLevelBuildScriptSettingsPsiFile()
             val settingsManipulator = settingsFile?.let(GradleBuildScriptSupport::findManipulator)
             val repositoriesMode = settingsManipulator?.getSettingsRepositoriesMode()
+            val usesSettingsRepositories = repositoriesMode == SettingsRepositoriesMode.PREFER_SETTINGS ||
+                    repositoriesMode == SettingsRepositoriesMode.FAIL_ON_PROJECT_REPOS
+            val inheritedRepositoryConfigured = !usesSettingsRepositories &&
+                    GradleRepositoryInheritanceChecker.hasRepositoryConfiguredInHierarchy(scriptFile)
+            // Resolve the project repositories block before adding dependencies to preserve the conventional block order,
+            // but do not create one when Gradle is configured to use repositories from settings.
             val projectRepositoriesBlock = when (repositoriesMode) {
                 SettingsRepositoriesMode.PREFER_SETTINGS, SettingsRepositoriesMode.FAIL_ON_PROJECT_REPOS -> null
-                else -> getRepositoriesBlock()
+                else -> if (!inheritedRepositoryConfigured) getRepositoriesBlock() else null
             }
 
             // Add test dependency - for KMP projects, add to commonTest source set; otherwise to top-level dependencies
@@ -258,10 +280,7 @@ class KotlinBuildScriptManipulator(
 
             // Repositories declared in dependencyResolutionManagement take precedence only when
             // repositoriesMode is PREFER_SETTINGS or FAIL_ON_PROJECT_REPOS.
-            if (
-                repositoriesMode == SettingsRepositoriesMode.PREFER_SETTINGS ||
-                repositoriesMode == SettingsRepositoriesMode.FAIL_ON_PROJECT_REPOS
-            ) {
+            if (usesSettingsRepositories) {
                 // Add dependency repositories to settings.gradle(.kts).
                 changedFiles.storeOriginalFileContent(settingsFile)
                 settingsManipulator.addDependencyRepositories(version)
@@ -269,7 +288,10 @@ class KotlinBuildScriptManipulator(
                 // Otherwise, add dependency repositories to the project build script.
                 projectRepositoriesBlock?.apply {
                     addRepositoryIfMissing(version)
-                    addMavenCentralIfMissing()
+
+                    if (!inheritedRepositoryConfigured) {
+                        addMavenCentralIfMissing()
+                    }
                 }
             }
 

@@ -6,6 +6,7 @@ import com.intellij.formatting.SpacingBuilder
 import com.intellij.formatting.Wrap
 import com.intellij.formatting.WrapType
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.tree.TokenSet
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
@@ -75,7 +76,7 @@ internal object MarkdownBlocks {
   fun filterFromWhitespaces(sequence: Sequence<ASTNode>) = sequence.filter {
     it.elementType !in MarkdownTokenTypeSets.WHITE_SPACES
     // Dirty hack cause for some reason Markdown parser thinks that `>`, `:` are whitespaces
-    || (it.elementType in MarkdownTokenTypeSets.WHITE_SPACES && it.text.isNotBlank())
+    || (it.elementType in MarkdownTokenTypeSets.WHITE_SPACES && it.text.any { char -> !StringUtil.isWhiteSpace(char) })
   }
 
   private val emphasisLikeElements = TokenSet.create(

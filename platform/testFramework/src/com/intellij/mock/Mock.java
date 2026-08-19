@@ -23,6 +23,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtilRt;
+import kotlin.Lazy;
 import kotlin.coroutines.Continuation;
 import kotlinx.coroutines.flow.StateFlow;
 import kotlinx.coroutines.flow.StateFlowKt;
@@ -470,7 +471,9 @@ public final class Mock {
     }
 
     @Override
-    public @NotNull FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+    public @NotNull FileEditorState readState(@NotNull Element sourceElement,
+                                              @NotNull Project project,
+                                              @NotNull Lazy<@Nullable VirtualFile> file) {
       throw new UnsupportedOperationException();
     }
 

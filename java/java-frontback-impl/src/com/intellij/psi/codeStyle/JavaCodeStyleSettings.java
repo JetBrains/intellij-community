@@ -182,6 +182,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Ja
   public boolean LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = true;
   public boolean PRESERVE_MODULE_IMPORTS = true;
   public boolean DELETE_UNUSED_MODULE_IMPORTS = false;
+  public boolean KEEP_BLANK_LINES_BETWEEN_IMPORTS = false;
   public boolean USE_FQ_CLASS_NAMES;
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
   public boolean INSERT_INNER_CLASS_IMPORTS;
@@ -375,6 +376,14 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Ja
 
   public void setDeleteUnusedModuleImports(boolean value) {
     this.DELETE_UNUSED_MODULE_IMPORTS = value;
+  }
+
+  public boolean isKeepBlankLinesBetweenImports() {
+    return KEEP_BLANK_LINES_BETWEEN_IMPORTS;
+  }
+
+  public void setKeepBlankLinesBetweenImports(boolean value) {
+    this.KEEP_BLANK_LINES_BETWEEN_IMPORTS = value;
   }
 
   @Override

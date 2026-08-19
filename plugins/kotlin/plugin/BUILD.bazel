@@ -1,18 +1,29 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build kotlin.plugin` start
+### auto-generated section `build intellij.kotlin.plugin` start
 jvm_library(
     name = "plugin",
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "kotlin.plugin",
+    module_name = "intellij.kotlin.plugin",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
+        "@lib//:kotlinc-kotlin-jps-common",
+    ],
 )
 
 jvm_library(
@@ -22,17 +33,35 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    module_name = "kotlin.plugin",
+    module_name = "intellij.kotlin.plugin",
     visibility = ["//visibility:public"],
-    runtime_deps = [":plugin"],
+    runtime_deps = [
+        # do not sort,
+        ":plugin",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
+    ],
 )
-### auto-generated section `build kotlin.plugin` end
+### auto-generated section `build intellij.kotlin.plugin` end
 
-### auto-generated section `iml kotlin.plugin` start
+### auto-generated section `iml intellij.kotlin.plugin` start
 exports_files(
     [
-        "kotlin.plugin.iml",
+        "intellij.kotlin.plugin.iml",
+        "resources/META-INF/caches.xml",
+        "resources/META-INF/command-completion-k2.xml",
+        "resources/META-INF/file-types.xml",
+        "resources/META-INF/jps.xml",
+        "resources/META-INF/kotlin-core.xml",
+        "resources/META-INF/language.xml",
+        "resources/META-INF/plugin.xml",
+        "resources/META-INF/scripting-v1.xml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml kotlin.plugin` end
+### auto-generated section `iml intellij.kotlin.plugin` end

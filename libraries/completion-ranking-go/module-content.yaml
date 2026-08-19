@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.completion.ranking.go.jar
+  modules:
+  - name: intellij.libraries.completion.ranking.go
+    libraries:
+      completion-ranking-go:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-go/0/completion-ranking-go-0.jar

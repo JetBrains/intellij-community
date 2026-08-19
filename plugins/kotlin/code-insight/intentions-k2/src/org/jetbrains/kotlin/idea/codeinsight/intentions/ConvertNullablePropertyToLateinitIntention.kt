@@ -7,7 +7,13 @@ import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.withNullability
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
@@ -56,7 +62,8 @@ internal class ConvertNullablePropertyToLateinitIntention : KotlinApplicableModC
         element.initializer = null
     }
 
-    override fun KaSession.prepareContext(element: KtProperty): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtProperty): Unit? {
         val returnType = element.symbol.returnType
 
         if (!element.isLocal) {
@@ -65,7 +72,7 @@ internal class ConvertNullablePropertyToLateinitIntention : KotlinApplicableModC
         }
 
         val nonNullableType = returnType.withNullability(false)
-        if (nonNullableType is KaTypeParameterType || nonNullableType.isPrimitive) return null
+        if (nonNullableType is KaTypeParameterType || nonNullableType.classId in KaStandardTypeClassIds.PRIMITIVES) return null
 
         val classifier = nonNullableType.expandedSymbol
         if (classifier is KaNamedClassSymbol && classifier.isInline) return null

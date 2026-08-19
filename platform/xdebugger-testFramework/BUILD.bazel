@@ -89,6 +89,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.debugger.testFramework.iml",
+        "resources/intellij.platform.debugger.testFramework.xml",
     ],
     visibility = ["//visibility:public"],
 )

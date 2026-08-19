@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "leakDetection-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":leakDetection-tests_test_lib"],
+)
+### skip generation section `test intellij.dev.leakDetection.tests`
+
 ### auto-generated section `build intellij.dev.leakDetection` start
 jvm_library(
     name = "leakDetection",
@@ -69,6 +77,7 @@ jvm_library(
 exports_files(
     [
         "intellij.dev.leakDetection.iml",
+        "resources/intellij.dev.leakDetection.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -152,10 +161,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.dev.leakDetection.tests` end
-
-### auto-generated section `test intellij.dev.leakDetection.tests` start
-jps_test(
-    name = "leakDetection-tests_test",
-    runtime_deps = [":leakDetection-tests_test_lib"],
-)
-### auto-generated section `test intellij.dev.leakDetection.tests` end

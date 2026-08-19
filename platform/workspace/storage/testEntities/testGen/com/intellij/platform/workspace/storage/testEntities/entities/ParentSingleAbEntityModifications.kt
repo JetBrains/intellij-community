@@ -17,7 +17,7 @@ interface ParentSingleAbEntityBuilder : WorkspaceEntityBuilder<ParentSingleAbEnt
 }
 
 internal object ParentSingleAbEntityType : EntityType<ParentSingleAbEntity, ParentSingleAbEntityBuilder>() {
-  override val entityClass: Class<ParentSingleAbEntity> get() = ParentSingleAbEntity::class.java
+  override val entityImplClass: Class<*> get() = ParentSingleAbEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ParentSingleAbEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

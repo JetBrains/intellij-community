@@ -96,6 +96,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.updateChecker.iml",
+        "resources/intellij.platform.ide.updateChecker.xml",
     ],
     visibility = ["//visibility:public"],
 )

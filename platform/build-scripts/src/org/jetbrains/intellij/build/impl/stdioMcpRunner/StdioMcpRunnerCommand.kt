@@ -9,10 +9,7 @@ internal fun generateStdioMcpRunnerLaunchData(ideContext: BuildContext, os: OsFa
   commands = listOf("stdioMcpServer"),
   vmOptionsFilePath = "${if (os == OsFamily.MACOS) "../bin" else "bin"}/mcp-server.vmoptions",
   bootClassPathJarNames = ideContext.bootClassPathJarNames + listOf(
-    "../plugins/mcpserver/lib/mcpserver.jar",
-    "../plugins/mcpserver/lib/io.modelcontextprotocol.kotlin.sdk.jar",
-    "../plugins/mcpserver/lib/io.github.oshai.kotlin.logging.jvm.jar",
-    "../plugins/mcpserver/lib/ktor-server-sse-jvm.jar",
+    "../plugins/mcpserver-plugin/lib/intellij.mcpserver.stdio.jar",
   ),
   mainClass = "com.intellij.mcpserver.stdio.McpStdioRunnerKt",
 )

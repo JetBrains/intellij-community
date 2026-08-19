@@ -53,6 +53,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.community.helpersLocator.iml",
+        "resources/intellij.python.community.helpersLocator.xml",
     ],
     visibility = ["//visibility:public"],
 )

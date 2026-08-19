@@ -1,0 +1,7 @@
+package ppp;
+
+public interface I {
+  static int extra() {
+    return 2;
+  }
+}

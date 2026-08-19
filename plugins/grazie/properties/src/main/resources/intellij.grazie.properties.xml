@@ -5,6 +5,9 @@
     <module name="intellij.properties.backend.psi"/>
     <module name="intellij.grazie.core"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.util.ex"/>
     <module name="intellij.properties.backend"/>
   </dependencies>
   <!-- endregion -->

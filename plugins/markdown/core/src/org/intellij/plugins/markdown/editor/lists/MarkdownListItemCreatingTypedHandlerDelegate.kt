@@ -12,7 +12,7 @@ import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.editor.lists.ListRenumberUtils.renumberInBulk
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentRange
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 
@@ -22,7 +22,7 @@ import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 internal class MarkdownListItemCreatingTypedHandlerDelegate : TypedHandlerDelegate() {
 
   override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
-    if (file !is MarkdownFile || c != ' ') {
+    if (!file.supportsMarkdown() || c != ' ') {
       return Result.CONTINUE
     }
     if (!MarkdownCodeInsightSettings.getInstance().state.renumberListsOnType) {

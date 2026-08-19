@@ -32,9 +32,9 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
         "//platform/analysis-api:analysis",
         "//platform/code-style-api:codeStyle",
         "//platform/core-api:core",
@@ -53,7 +53,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
         "//plugins/kotlin/base/analysis",
-        "@lib//:kotlinc-analysis-api-impl-base",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//plugins/kotlin/base/code-insight",
     ],
 )
@@ -71,6 +71,9 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-codeInsight-overrideImplement",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/core-api:core_test_lib",
@@ -89,6 +92,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
         "//plugins/kotlin/base/analysis:analysis_test_lib",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
     ],
 )
@@ -98,6 +102,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.codeInsight.overrideImplement.iml",
+        "resources/intellij.kotlin.codeInsight.overrideImplement.xml",
     ],
     visibility = ["//visibility:public"],
 )

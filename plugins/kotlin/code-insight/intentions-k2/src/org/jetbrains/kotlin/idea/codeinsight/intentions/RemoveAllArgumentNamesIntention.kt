@@ -44,7 +44,8 @@ internal class RemoveAllArgumentNamesIntention :
         return arguments.count { it.isNamed() } > 1
     }
 
-    override fun KaSession.prepareContext(element: KtCallElement): ArgumentsDataContext? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallElement): ArgumentsDataContext? {
         val context = collectArgumentsContext(element) ?: return null
         val argumentsThatCanBeUnnamed = context.argumentsThatCanBeUnnamed
         if (argumentsThatCanBeUnnamed.isEmpty()) return null

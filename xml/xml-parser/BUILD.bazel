@@ -67,6 +67,7 @@ jvm_library(
 exports_files(
     [
         "intellij.xml.parser.iml",
+        "resources/intellij.xml.parser.xml",
     ],
     visibility = ["//visibility:public"],
 )

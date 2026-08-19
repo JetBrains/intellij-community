@@ -200,6 +200,12 @@ jvm_library(
 exports_files(
     [
         "intellij.java.guiForms.designer.iml",
+        "resources/ClientPropertiesManager.xml",
+        "resources/META-INF/plugin.xml",
+        "resources/Palette2.xml",
+        "resources/com/intellij/uiDesigner/NewDialog.xml",
+        "resources/com/intellij/uiDesigner/NewForm.xml",
+        "resources/gui-designer-properties.xml",
     ],
     visibility = ["//visibility:public"],
 )

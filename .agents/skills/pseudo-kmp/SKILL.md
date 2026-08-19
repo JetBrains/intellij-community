@@ -1,6 +1,6 @@
 ---
 name: pseudo-kmp
-description: Create, migrate, or modify IntelliJ pseudo-KMP modules using expect/actual emulation.
+description: Create or modify IntelliJ pseudo-KMP expect/actual modules.
 ---
 
 # Pseudo-KMP Modules

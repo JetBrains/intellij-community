@@ -48,7 +48,8 @@ internal class UnfoldReturnToWhenIntention : KotlinApplicableModCommandAction<Kt
             null
         }
 
-    override fun KaSession.prepareContext(element: KtReturnExpression): List<String>? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtReturnExpression): List<String>? {
         val whenExpression = element.returnedExpression as? KtWhenExpression ?: return null
         val labelName = element.getLabelName()
 

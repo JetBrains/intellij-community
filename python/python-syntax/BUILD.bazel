@@ -88,6 +88,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.syntax.iml",
+        "resources/intellij.python.syntax.xml",
     ],
     visibility = ["//visibility:public"],
 )

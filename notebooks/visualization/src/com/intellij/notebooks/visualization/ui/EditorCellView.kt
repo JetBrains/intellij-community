@@ -75,7 +75,7 @@ class EditorCellView(val cell: EditorCell) : EditorCellViewComponent() {
   private fun updateOutputs() = runInEdt {
     if (hasOutputs()) {
       if (outputs == null) {
-        outputs = EditorCellOutputsView(editor, cell).also {
+        outputs = EditorCellOutputsView(editor, cell, input.dragAssistant).also {
           add(it)
         }
         updateFolding()

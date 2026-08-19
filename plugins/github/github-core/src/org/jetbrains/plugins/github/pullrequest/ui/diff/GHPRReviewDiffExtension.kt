@@ -98,7 +98,7 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
                 }
                 val activeRangesTracker = CodeReviewActiveRangesTracker()
                 editor.showCodeReview(model) { inlayModel ->
-                  createRenderer(inlayModel, userIcon, activeRangesTracker).also { inlayRenderer ->
+                  createRenderer(editor, inlayModel, userIcon, activeRangesTracker).also { inlayRenderer ->
                     launchNow {
                       CodeReviewEditorInlayRangeOutlineUtils.showInlayOutline(editor, model, inlayModel, inlayRenderer, activeRangesTracker)
                     }

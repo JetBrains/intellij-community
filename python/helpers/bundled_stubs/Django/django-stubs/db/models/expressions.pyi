@@ -2,7 +2,7 @@ import datetime
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from decimal import Decimal
 from enum import Enum
-from typing import Any, ClassVar, Generic, Literal, TypeAlias
+from typing import Any, ClassVar, Generic, Literal, Never, Self, TypeAlias
 
 from django.core.exceptions import FieldError
 from django.db.backends.base.base import BaseDatabaseWrapper
@@ -14,7 +14,7 @@ from django.db.models.sql.compiler import SQLCompiler, _AsSqlType, _ParamsT
 from django.db.models.sql.query import Query
 from django.utils.deconstruct import _Deconstructible
 from django.utils.functional import cached_property
-from typing_extensions import Never, Self, TypeVar, override
+from typing_extensions import TypeVar, override
 
 _OutputField = TypeVar("_OutputField", bound=Field[Any, Any], default=Field[Any, Any])
 _Numeric: TypeAlias = float | Decimal
@@ -75,7 +75,7 @@ class BaseExpression:
     set_returning: bool
     allows_composite_expressions: bool
     def __init__(self, output_field: Field[Any, Any] | None = None) -> None: ...
-    def get_db_converters(self, connection: BaseDatabaseWrapper) -> list[Callable]: ...
+    def get_db_converters(self, connection: BaseDatabaseWrapper) -> list[Callable[..., Any]]: ...
     def get_source_expressions(self) -> list[Any]: ...
     def set_source_expressions(self, exprs: Sequence[Combinable | Expression]) -> None: ...
     def as_sql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...
@@ -102,7 +102,7 @@ class BaseExpression:
     @cached_property
     def output_field(self) -> Field[Any, Any]: ...
     @cached_property
-    def convert_value(self) -> Callable: ...
+    def convert_value(self) -> Callable[..., Any]: ...
     def get_lookup(self, lookup: str) -> type[Lookup] | None: ...
     def get_transform(self, name: str) -> type[Transform] | None: ...
     def relabeled_clone(self, change_map: Mapping[str, str]) -> Self: ...
@@ -145,7 +145,7 @@ class DurationExpression(CombinedExpression):
     def compile(self, side: Combinable, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...
 
 class TemporalSubtraction(CombinedExpression):
-    output_field: ClassVar[fields.DurationField]
+    output_field: ClassVar[fields.DurationField[Any, Any]]
     def __init__(self, lhs: Combinable, rhs: Combinable) -> None: ...
 
 class F(_Deconstructible, Combinable):
@@ -220,6 +220,11 @@ class Value(Expression):
     @property
     @override
     def empty_result_set_value(self) -> Any: ...
+    def as_sqlite(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
+
+class JSONNull(Value):
+    def __init__(self) -> None: ...
+    def as_mysql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...
 
 class RawSQL(Expression):
     params: list[Any]
@@ -326,7 +331,7 @@ class Subquery(BaseExpression, Combinable, Generic[_OutputField]):
     query: Query
     extra: dict[Any, Any]
     def __init__(
-        self, queryset: Query | QuerySet | Subquery, output_field: _OutputField | None = None, **extra: Any
+        self, queryset: Query | QuerySet[Any] | Subquery, output_field: _OutputField | None = None, **extra: Any
     ) -> None: ...
     @property
     def external_aliases(self) -> set[str]: ...
@@ -337,8 +342,8 @@ class Subquery(BaseExpression, Combinable, Generic[_OutputField]):
     ) -> _AsSqlType: ...
 
 class Exists(Subquery):
-    output_field: ClassVar[fields.BooleanField]
-    def __init__(self, queryset: Query | QuerySet | Subquery, **kwargs: Any) -> None: ...
+    output_field: ClassVar[fields.BooleanField[Any, Any]]
+    def __init__(self, queryset: Query | QuerySet[Any] | Subquery, **kwargs: Any) -> None: ...
 
 class OrderBy(Expression):
     template: str

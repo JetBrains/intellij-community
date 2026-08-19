@@ -87,6 +87,7 @@ jvm_library(
 exports_files(
     [
         "intellij.groovy.structuralSearch.iml",
+        "resources/intellij.groovy.structuralSearch.xml",
     ],
     visibility = ["//visibility:public"],
 )

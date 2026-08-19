@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,13 +27,10 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRMentionableUsersProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsViewModel
 import java.util.Date
-import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
 interface GHPRTimelineCommentViewModel : GHViewModelWithTextCompletion {
   val author: GHActor
@@ -63,7 +61,7 @@ internal class UpdateableGHPRTimelineCommentViewModel(
   viewModelWithTextCompletion: GHViewModelWithTextCompletion,
   initialData: GHIssueComment,
 ) : GHPRTimelineCommentViewModel, GHPRTimelineItem.Comment, GHViewModelWithTextCompletion by viewModelWithTextCompletion {
-  private val cs = parentCs.childScope("GitHub Pull Request Timeline Comment View Model")
+  private val cs = parentCs.childScope("GitHub Pull Request Timeline Comment View Model", Dispatchers.Default)
   private val taskLauncher = SingleCoroutineLauncher(cs)
 
   private val currentUser: GHUser = dataContext.securityService.currentUser

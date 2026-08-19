@@ -53,6 +53,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.grpc.iml",
+        "resources/intellij.libraries.grpc.xml",
     ],
     visibility = ["//visibility:public"],
 )

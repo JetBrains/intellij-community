@@ -1,0 +1,10 @@
+package a;
+
+import mockapt.Bench;
+
+public class BenchOne {
+  @Bench("AverageTime")
+  public long one() {
+    return 1L;
+  }
+}

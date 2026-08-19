@@ -451,13 +451,6 @@ f:com.intellij.codeInsight.codeVision.AppCodeVisionInitializationHost
 f:com.intellij.codeInsight.codeVision.AppCodeVisionInitializationHost$Companion
 - f:getInstance():com.intellij.codeInsight.codeVision.AppCodeVisionInitializationHost
 - f:getInstanceSuspending(kotlin.coroutines.Continuation):java.lang.Object
-f:com.intellij.codeInsight.codeVision.CodeVisionBundle
-- com.intellij.DynamicBundle
-- sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionBundle$Companion
-- <init>():V
-f:com.intellij.codeInsight.codeVision.CodeVisionBundle$Companion
-- f:message(java.lang.String,java.lang.Object[]):java.lang.String
-- f:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 Fc:com.intellij.codeInsight.codeVision.CodeVisionHost
 - sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionHost$Companion
 - sf:defaultVisibleLenses:I
@@ -2413,6 +2406,7 @@ f:com.intellij.find.impl.livePreview.LivePreview
 - com.intellij.openapi.editor.colors.EditorColorsListener
 - com.intellij.openapi.editor.event.DocumentListener
 - com.intellij.openapi.editor.event.SelectionListener
+- searchResultsAppended(com.intellij.find.impl.livePreview.SearchResults,java.util.List):V
 f:com.intellij.find.impl.livePreview.LivePreviewController
 - dispose():V
 - moveCursor(com.intellij.find.impl.livePreview.SearchResults$Direction):V
@@ -2440,6 +2434,7 @@ com.intellij.find.impl.livePreview.SearchResults$SearchResultsListener
 - afterSelectionUpdate():V
 - beforeSelectionUpdate():V
 - a:cursorMoved():V
+- searchResultsAppended(com.intellij.find.impl.livePreview.SearchResults,java.util.List):V
 - a:searchResultsUpdated(com.intellij.find.impl.livePreview.SearchResults):V
 - updateFinished():V
 c:com.intellij.find.replaceInProject.ReplaceInProjectManager
@@ -3799,6 +3794,7 @@ a:com.intellij.ide.util.projectWizard.AbstractNewProjectStep
 - com.intellij.openapi.project.DumbAware
 - com.intellij.openapi.wm.impl.welcomeScreen.ActionsWithPanelProvider
 - p:<init>(com.intellij.ide.util.projectWizard.AbstractNewProjectStep$Customization):V
+- ps:createOpenProjectOptions(com.intellij.openapi.project.Project,java.lang.String,java.util.function.Consumer):com.intellij.ide.impl.OpenProjectTask
 - s:created(com.intellij.openapi.project.Project):Z
 c:com.intellij.ide.util.projectWizard.AbstractNewProjectStep$AbstractCallback
 - com.intellij.util.PairConsumer
@@ -3940,6 +3936,7 @@ f:com.intellij.largeFilesEditor.editor.LargeFileEditorProvider
 - com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider
 - com.intellij.openapi.project.DumbAware
 - <init>():V
+- readState(org.jdom.Element,com.intellij.openapi.project.Project,kotlin.Lazy):com.intellij.openapi.fileEditor.FileEditorState
 com.intellij.largeFilesEditor.encoding.LargeFileEditorAccess
 - a:getCharsetName():java.lang.String
 - a:getEditor():com.intellij.openapi.editor.Editor
@@ -4070,6 +4067,7 @@ c:com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider
 - com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 - com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - <init>():V
+- readState(org.jdom.Element,com.intellij.openapi.project.Project,kotlin.Lazy):com.intellij.openapi.fileEditor.FileEditorState
 f:com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory
 - com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 - <init>():V
@@ -4588,6 +4586,7 @@ f:com.intellij.platform.ModuleAttachListener$Companion
 f:com.intellij.platform.ModuleAttachProcessor
 - com.intellij.projectImport.ProjectAttachProcessor
 - attachToProjectAsync(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- isEnabled(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.openapi.project.Project):Z
 f:com.intellij.platform.ModuleAttachProcessorKt
 - sf:getMultiProjectDisplayName(com.intellij.openapi.project.Project):java.lang.String
 com.intellij.platform.backend.documentation.DocumentationContent

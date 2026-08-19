@@ -22,7 +22,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//libraries/groovy",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//plugins/groovy/rt-constants:constants-rt",
     ],
 )
@@ -48,6 +48,7 @@ jvm_library(
         # do not sort,
         ":rt",
         "//libraries/groovy:groovy_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/groovy/rt-constants:constants-rt_test_lib",
     ],
 )

@@ -15,14 +15,12 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "//platform/kernel/rpc",
         "//fleet/andel",
         "//fleet/kernel",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/kernel/rpc",
         "//fleet/andel",
         "//fleet/kernel",
         "//libraries/kotlinx/coroutines/core",
@@ -47,8 +45,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "//platform/kernel/rpc",
-        "//platform/kernel/rpc:rpc_test_lib",
         "//fleet/andel",
         "//fleet/andel:andel_test_lib",
         "//fleet/kernel",
@@ -57,7 +53,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":pasta",
-        "//platform/kernel/rpc:rpc_test_lib",
         "//fleet/andel:andel_test_lib",
         "//fleet/kernel:kernel_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",

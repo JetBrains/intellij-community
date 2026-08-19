@@ -48,6 +48,7 @@ private val CORE: PersistentMap<String, String> = persistentHashMapOf(
   "intellij.platform.jewel.markdown.extensions.autolink" to "jewel-markdown-extensions-autolink",
   "intellij.platform.jewel.markdown.extensions.gfmAlerts" to "jewel-markdown-extensions-gfm-alerts",
   "intellij.platform.jewel.markdown.extensions.images" to "jewel-markdown-extensions-images",
+  "intellij.platform.jewel.markdown.extensions.frontMatter" to "jewel-markdown-extensions-front-matter",
 )
 
 private val NOT_PUBLISHED: Set<String> = setOf(
@@ -61,6 +62,7 @@ private val transitiveJewelDependencies = persistentHashMapOf(
   "jewel-decorated-window" to setOf("jewel-foundation", "jewel-ui"),
   "jewel-markdown-core" to setOf("jewel-foundation"),
   "jewel-markdown-extensions-autolink" to setOf("jewel-foundation", "jewel-ui"),
+  "jewel-markdown-extensions-front-matter" to setOf("jewel-foundation", "jewel-ui"),
   "jewel-markdown-extensions-gfm-alerts" to setOf("jewel-foundation", "jewel-ui"),
   "jewel-markdown-extensions-gfm-strikethrough" to setOf("jewel-foundation", "jewel-ui"),
   "jewel-markdown-extensions-gfm-tables" to setOf("jewel-foundation", "jewel-ui"),
@@ -154,6 +156,14 @@ internal object JewelMavenArtifacts {
         "net.java.dev.jna" -> {
           // Add it only to Jewel Standalone INT UI modules, as it's unnecessary for other modules
           if (module.name == "intellij.platform.jewel.intUi.standalone") {
+            add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
+          }
+        }
+        "com.jetbrains.intellij.platform" -> {
+          // Publish the Icons API modules (icons-api / icons-api-rendering / icons-impl) as compile
+          // dependencies, so consumers of the Jewel Standalone artifacts get IconManager on their
+          // classpath and can both boot IntUiTheme and compile against the public Icon/iconKey APIs.
+          if (coordinates.artifactId.startsWith("icons-")) {
             add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
           }
         }

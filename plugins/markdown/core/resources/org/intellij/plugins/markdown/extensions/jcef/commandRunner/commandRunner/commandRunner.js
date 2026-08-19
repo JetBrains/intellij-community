@@ -96,7 +96,7 @@ if (window.__IntelliJTools === undefined) {
     if (cmdType === 'block') {
       runBlock(cmd + ":" + firstLineHash + ":" + e.clientX + ":" + e.clientY + ":" + needsConfirmation);
     } else {
-      runLine(cmd + ":" + needsConfirmation);
+      runLine(cmd + ":" + e.clientX + ":" + e.clientY + ":" + needsConfirmation);
     }
   };
 

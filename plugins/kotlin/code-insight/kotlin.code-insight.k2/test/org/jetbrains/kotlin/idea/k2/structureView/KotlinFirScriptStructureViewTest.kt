@@ -20,12 +20,9 @@ import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsMod
 import org.jetbrains.kotlin.idea.core.script.k2.getOrCreateScriptConfigurationId
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.modules.modifyKotlinScriptEntity
-import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.shared.definition.kotlinScriptTemplate
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import java.io.File
 import java.util.jar.JarOutputStream
@@ -39,9 +36,11 @@ import kotlin.script.experimental.api.implicitReceivers
 import kotlin.script.experimental.api.importScripts
 import kotlin.script.experimental.api.providedProperties
 import kotlin.script.experimental.host.FileScriptSource
+import kotlin.script.experimental.host.ScriptDefinition
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.host.configurationDependencies
 import kotlin.script.experimental.host.createScriptDefinitionFromTemplate
+import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
@@ -293,7 +292,7 @@ class KotlinFirScriptStructureViewTest : KotlinLightCodeInsightFixtureTestCase()
         val hostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
             configurationDependencies.append(JvmDependency(definitionJar))
         }
-        val (compilationConfiguration, evaluationConfiguration) = createScriptDefinitionFromTemplate(
+        val definition = createScriptDefinitionFromTemplate(
             KotlinType(ScriptTemplateWithArgs::class),
             hostConfiguration,
             compilation = {
@@ -311,16 +310,14 @@ class KotlinFirScriptStructureViewTest : KotlinLightCodeInsightFixtureTestCase()
             },
         )
 
-        val definition = ScriptDefinition.FromConfigurations(
-            hostConfiguration,
-            compilationConfiguration,
-            evaluationConfiguration,
-        )
-
         project.registerExtension(
-            SCRIPT_DEFINITIONS_SOURCES,
-            object : ScriptDefinitionsSource {
-                override val definitions: Sequence<ScriptDefinition> = sequenceOf(definition)
+            ScriptDefinitionsProvider.EP_NAME,
+            object : ScriptDefinitionsProvider {
+                override val id: String = "KotlinFirScriptStructureViewTest"
+                override fun provideDefinitions(
+                    baseHostConfiguration: ScriptingHostConfiguration,
+                    loadedScriptDefinitions: List<ScriptDefinition>,
+                ): Iterable<ScriptDefinition> = listOf(definition)
             },
             testRootDisposable,
         )

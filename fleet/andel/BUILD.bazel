@@ -60,7 +60,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinx-collections-immutable",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//fleet/util/core",
         "@lib//:kotlinx-serialization-core",
         "@lib//:kotlinx-serialization-json",
@@ -91,6 +91,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":andel",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//fleet/util/core:core_test_lib",
         "//fleet/util/codepoints:codepoints_test_lib",
         "//fleet/bifurcan:bifurcan_test_lib",
@@ -104,6 +105,7 @@ jvm_library(
 exports_files(
     [
         "fleet.andel.iml",
+        "resources/fleet.andel.xml",
     ],
     visibility = ["//visibility:public"],
 )

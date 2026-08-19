@@ -21,7 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/analysis-api:analysis",
         "//platform/lang-api:lang",
         "//platform/core-api:core",
@@ -56,6 +56,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":migration",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/core-api:core_test_lib",
@@ -84,6 +85,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.migration.iml",
+        "resources/intellij.kotlin.migration.xml",
     ],
     visibility = ["//visibility:public"],
 )

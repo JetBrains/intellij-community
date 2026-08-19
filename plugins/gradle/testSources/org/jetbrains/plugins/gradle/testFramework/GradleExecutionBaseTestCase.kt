@@ -1,10 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
+import com.intellij.build.BuildView
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.platform.testFramework.assertion.BuildViewAssertions
-import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.testFramework.utils.vfs.deleteRecursively
@@ -37,10 +36,14 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     get() = executionEnvironmentFixture.getExecutionEnvironment()
 
   private var _buildViewFixture: BuildViewTestFixture? = null
-  val buildViewFixture: BuildViewTestFixture
+  private val buildViewFixture: BuildViewTestFixture
     get() = requireNotNull(_buildViewFixture) {
       "Gradle execution build view fixture wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
     }
+
+  val buildView: BuildView get() = buildViewFixture.buildView
+  val syncView: BuildView get() = buildViewFixture.syncView
+  val runView: BuildView get() = executionEnvironment.buildView
 
   private var _executionFixture: GradleExecutionTestFixture? = null
   val executionFixture: GradleExecutionTestFixture
@@ -119,30 +122,6 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
 
   suspend fun <R> awaitAnyGradleTaskExecution(action: suspend () -> R): R {
     return executionFixture.awaitAnyGradleTaskExecution(action)
-  }
-
-  fun assertSyncViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
-    buildViewFixture.assertSyncViewTree(assert)
-  }
-
-  fun assertSyncViewNode(nodeText: String, assert: (String) -> Unit) {
-    buildViewFixture.assertSyncViewNode(nodeText, assert)
-  }
-
-  fun assertSyncViewSelectedNode(nodeText: String, assert: (String) -> Unit) {
-    buildViewFixture.assertSyncViewSelectedNode(nodeText, assert)
-  }
-
-  fun assertBuildViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
-    buildViewFixture.assertBuildViewTree(assert)
-  }
-
-  fun assertRunViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
-    BuildViewAssertions.assertBuildViewTree(executionEnvironment.buildView, assert)
-  }
-
-  fun assertRunViewConsoleText(nodeText: String, assert: (String) -> Unit) {
-    BuildViewAssertions.assertBuildViewNodeConsoleText(executionEnvironment.buildView, nodeText, assert)
   }
 
   fun assertTestEventsContain(className: String, methodName: String? = null) {

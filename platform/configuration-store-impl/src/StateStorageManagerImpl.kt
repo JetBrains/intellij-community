@@ -83,7 +83,8 @@ open class StateStorageManagerImpl(
   /**
    * Returns an old list.
    */
-  internal fun setMacros(list: List<Macro>): List<Macro> {
+  @ApiStatus.Internal
+  fun setMacros(list: List<Macro>): List<Macro> {
     val oldValue = macros
     macros = list
     return oldValue
@@ -410,4 +411,5 @@ private class TrackedDirectoryStorage(
   controller = controller,
 ), StorageVirtualFileTracker.TrackedStorage
 
-internal data class Macro(@JvmField val key: String, @JvmField var value: Path)
+@ApiStatus.Internal
+data class Macro(@JvmField val key: String, @JvmField var value: Path)

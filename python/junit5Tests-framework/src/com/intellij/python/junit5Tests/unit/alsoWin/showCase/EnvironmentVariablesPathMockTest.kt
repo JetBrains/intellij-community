@@ -1,10 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.showCase
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.python.junit5Tests.framework.mockPathAndAdd
 import com.intellij.python.junit5Tests.framework.unMockPath
 import com.intellij.util.EnvironmentUtil
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import org.hamcrest.CoreMatchers
 import org.hamcrest.MatcherAssert
 import org.junit.jupiter.api.AfterEach
@@ -35,13 +37,18 @@ class EnvironmentVariablesPathMockTest {
 
   @BeforeEach
   fun setUp() {
-    PathEnvironmentVariableUtil.findInPath("someData") // Let this class cache something to see how we mock it
+    PathEnvironmentVariableUtil.findFirst("someData") // Let this class cache something to see how we mock it
     environment.mockPathAndAdd(fakeDir)
   }
 
   @AfterEach
   fun tearDown() {
     environment.unMockPath()
+    assert(PathEnvironmentVariableUtil.getPathVariableValue() != null)
+    @OptIn(LowLevelLocalMachineAccess::class) // "Path" in wrong case is Win-only problem
+    if (OS.CURRENT == OS.Windows) {
+      assert(EnvironmentUtil.getEnvironmentMap()["pAth"] != null)
+    }
   }
 
   @Test

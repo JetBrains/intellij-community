@@ -6,7 +6,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
 import com.intellij.terminal.JBTerminalWidget
@@ -18,6 +17,7 @@ import com.intellij.terminal.frontend.toolwindow.getTerminalTab
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.plugins.terminal.TerminalEditorTabSupportUtil
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.ui.TerminalContainer
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareTitle
@@ -80,7 +80,7 @@ internal class MoveTerminalSessionToEditorAction : ToolWindowContextMenuActionBa
     if (project == null
         || !TerminalToolWindowManager.isTerminalToolWindow(toolWindow)
         || content == null
-        || Registry.`is`("toolwindow.open.tab.in.editor")) {
+        || !TerminalEditorTabSupportUtil.isOldImplementationEnabled()) {
       e.presentation.isEnabledAndVisible = false
       return
     }

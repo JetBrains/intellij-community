@@ -32,6 +32,8 @@ class ShellStartupOptions private constructor(builder: Builder) {
   val widget: TerminalWidget? = builder.widget
   val shellIntegration: ShellIntegration? = builder.shellIntegration
   val envVariables: Map<String, String> = builder.envVariables
+  @ApiStatus.Internal
+  val emulatorType: TerminalEmulatorType? = builder.emulatorType
   internal val startupMoment: TerminalStartupMoment? = builder.startupMoment
 
   @get:ApiStatus.Internal
@@ -56,7 +58,8 @@ class ShellStartupOptions private constructor(builder: Builder) {
       widget,
       shellIntegration,
       envVariables,
-      startupMoment
+      startupMoment,
+      this@ShellStartupOptions.emulatorType,
     )
   }
 
@@ -68,7 +71,8 @@ class ShellStartupOptions private constructor(builder: Builder) {
            ", shellIntegration=$shellIntegration" +
            ", envVariables=$envVariables" +
            ", processType=$processType" +
-           ", widget=${widget != null}"
+           ", widget=${widget != null}" +
+           ", emulatorType=$emulatorType"
   }
 
   @ApiStatus.Internal
@@ -93,6 +97,8 @@ class ShellStartupOptions private constructor(builder: Builder) {
     var shellIntegration: ShellIntegration? = null,
     var envVariables: Map<String, String> = emptyMap(),
     internal var startupMoment: TerminalStartupMoment? = null,
+    @get:ApiStatus.Internal
+    var emulatorType: TerminalEmulatorType? = null,
   ) {
 
     var workingDirectory: @MultiRoutingFileSystemPath String?
@@ -126,6 +132,8 @@ class ShellStartupOptions private constructor(builder: Builder) {
     fun shellIntegration(shellIntegration: ShellIntegration?) = also { this.shellIntegration = shellIntegration }
     @JvmName("startupMoment")
     internal fun startupMoment(startupMoment: TerminalStartupMoment?) = also { this.startupMoment = startupMoment }
+    @ApiStatus.Internal
+    fun emulatorType(emulatorType: TerminalEmulatorType?): Builder = also { this.emulatorType = emulatorType }
 
     fun modify(modifier: (Builder) -> Unit): Builder = also {
       modifier(this)

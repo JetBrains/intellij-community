@@ -117,6 +117,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.debugger.impl.frontend.iml",
+        "resources/intellij.platform.debugger.impl.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -204,6 +205,8 @@ jvm_library(
         "//platform/execution-impl/frontend:frontend_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testFramework/extensions:testExtensions",
         "//platform/testFramework/extensions:testExtensions_test_lib",
         "//platform/xdebugger-impl/shared",

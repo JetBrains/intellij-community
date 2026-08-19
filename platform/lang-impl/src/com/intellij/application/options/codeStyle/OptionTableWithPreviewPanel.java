@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.LangBundle;
@@ -114,6 +114,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         return super.getPreferredSize();
       }
     };
+    scrollPane.setBorder(JBUI.Borders.empty());
     myPanel.add(scrollPane
       , new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                JBInsets.emptyInsets(), 0, 0));

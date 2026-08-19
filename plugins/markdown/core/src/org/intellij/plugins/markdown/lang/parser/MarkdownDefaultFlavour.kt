@@ -26,6 +26,9 @@ import org.intellij.markdown.parser.sequentialparsers.impl.ImageParser
 import org.intellij.markdown.parser.sequentialparsers.impl.InlineLinkParser
 import org.intellij.markdown.parser.sequentialparsers.impl.MathParser
 import org.intellij.markdown.parser.sequentialparsers.impl.ReferenceLinkParser
+import org.intellij.plugins.markdown.lang.parser.at.MarkdownAtPathElementTypes
+import org.intellij.plugins.markdown.lang.parser.at.MarkdownAtPathLexer
+import org.intellij.plugins.markdown.lang.parser.at.MarkdownAtPathSequentialParser
 import org.intellij.plugins.markdown.lang.parser.blocks.DefinitionListMarkerProvider
 import org.intellij.plugins.markdown.lang.parser.blocks.frontmatter.FrontMatterHeaderMarkerProvider
 import org.intellij.plugins.markdown.lang.parser.testlink.TestLinkSequentialParser
@@ -42,7 +45,7 @@ open class MarkdownDefaultFlavour: MarkdownFlavourDescriptor {
   override val sequentialParserManager: SequentialParserManager = DefaultSequentialParserManager()
 
   override fun createInlinesLexer(): MarkdownLexer {
-    return delegate.createInlinesLexer()
+    return MarkdownLexer(MarkdownAtPathLexer(delegate.createInlinesLexer()))
   }
 
   override fun createHtmlGeneratingProviders(linkMap: LinkMap, baseURI: URI?): Map<IElementType, GeneratingProvider> {
@@ -59,6 +62,7 @@ open class MarkdownDefaultFlavour: MarkdownFlavourDescriptor {
     providers[DefinitionListMarkerProvider.TERM] = SimpleInlineTagProvider("dt")
     providers[DefinitionListMarkerProvider.DEFINITION_MARKER] = TransparentInlineHolderProvider()
     providers[FrontMatterHeaderMarkerProvider.FRONT_MATTER_HEADER] = FrontMatterGeneratingProvider()
+    providers[MarkdownAtPathElementTypes.PATH] = TransparentInlineHolderProvider()
   }
 
   private fun addCustomHeaderProviders(providers: MutableMap<IElementType, GeneratingProvider>) {
@@ -82,6 +86,7 @@ open class MarkdownDefaultFlavour: MarkdownFlavourDescriptor {
         ImageParser(),
         InlineLinkParser(),
         TestLinkSequentialParser(),
+        MarkdownAtPathSequentialParser(),
         ReferenceLinkParser(),
         EmphasisLikeParser(EmphStrongDelimiterParser(), StrikeThroughDelimiterParser())
       )

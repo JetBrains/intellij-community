@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.commons.pool2.jar
+  modules:
+  - name: intellij.libraries.commons.pool2
+    libraries:
+      commons-pool2:
+      - name: $MAVEN_REPOSITORY$/org/apache/commons/commons-pool2/2/commons-pool2-2.jar

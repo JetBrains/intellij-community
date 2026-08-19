@@ -67,6 +67,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.pluginManager.frontend.iml",
+        "resources/intellij.platform.pluginManager.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )

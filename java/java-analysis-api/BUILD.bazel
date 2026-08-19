@@ -83,6 +83,8 @@ jvm_library(
 exports_files(
     [
         "intellij.java.analysis.iml",
+        "resources/META-INF/RegistryKeysAnalysisApi.xml",
+        "resources/intellij.java.analysis.xml",
     ],
     visibility = ["//visibility:public"],
 )

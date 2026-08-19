@@ -1,12 +1,25 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.frontend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.libraries.opentelemetry.semconv"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.recentFiles.frontend"/>
-    <module name="intellij.platform.structureView.frontend"/>
     <module name="intellij.platform.structureView"/>
-    <!-- endregion -->
+    <module name="intellij.platform.structureView.frontend"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.jetbrains.performancePlugin">
     <commandProvider implementation="com.intellij.performanceTesting.frontend.FrontendCommandProvider"/>

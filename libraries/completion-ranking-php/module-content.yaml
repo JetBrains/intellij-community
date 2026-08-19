@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.completion.ranking.php.jar
+  modules:
+  - name: intellij.libraries.completion.ranking.php
+    libraries:
+      completion-ranking-php:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-php/0/completion-ranking-php-0.jar

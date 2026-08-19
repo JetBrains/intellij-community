@@ -41,7 +41,6 @@ import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.ast.PyAstFunction.Modifier;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.PyDataclassParameters;
-import com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -123,6 +122,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.jetbrains.python.codeInsight.PyDataclassesKt.getDataclassInitVars;
 import static com.jetbrains.python.codeInsight.PyDataclassesKt.parseDataclassParameters;
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyDeprecationUtilKt.extractDeprecationMessageFromDecorator;
@@ -371,7 +371,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     PyDataclassParameters dcParams = parseDataclassParameters(cls, context);
     if (dcParams != null && dcParams.getSlots()) {
       List<String> result = new ArrayList<>();
-      var initVars = PyDataclassTypeProvider.Helper.getInitVars(cls, dcParams, context);
+      var initVars = getDataclassInitVars(cls, dcParams, context);
       var initVarTargets = initVars == null ? emptySet() : ContainerUtil.map2Set(initVars, iv -> iv.getTargetExpression());
       var attributes = cls.getClassAttributes();
 

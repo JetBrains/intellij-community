@@ -7,34 +7,21 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.text.NameUtilCore
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.allSupertypes
 import org.jetbrains.kotlin.analysis.api.components.approximateToSuperPublicDenotableOrSelf
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isAnyType
-import org.jetbrains.kotlin.analysis.api.components.isBooleanType
-import org.jetbrains.kotlin.analysis.api.components.isByteType
-import org.jetbrains.kotlin.analysis.api.components.isCharSequenceType
-import org.jetbrains.kotlin.analysis.api.components.isCharType
-import org.jetbrains.kotlin.analysis.api.components.isDoubleType
-import org.jetbrains.kotlin.analysis.api.components.isFloatType
-import org.jetbrains.kotlin.analysis.api.components.isFunctionType
-import org.jetbrains.kotlin.analysis.api.components.isIntType
-import org.jetbrains.kotlin.analysis.api.components.isLongType
-import org.jetbrains.kotlin.analysis.api.components.isShortType
-import org.jetbrains.kotlin.analysis.api.components.isStringType
-import org.jetbrains.kotlin.analysis.api.components.isUByteType
-import org.jetbrains.kotlin.analysis.api.components.isUIntType
-import org.jetbrains.kotlin.analysis.api.components.isULongType
-import org.jetbrains.kotlin.analysis.api.components.isUShortType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.type
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.allSupertypes
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isFunctionType
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Case.CAMEL
@@ -50,6 +37,7 @@ import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunctionType
 import org.jetbrains.kotlin.psi.KtNullableType
@@ -217,13 +205,16 @@ class KotlinNameSuggester(
      *  - `listOf(<selection>5</selection>)` -> {element}
      *  - `ints.filter <selection>{ it > 0 }</selection>` -> {predicate}
      */
-    @OptIn(KaContextParameterApi::class, KaExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun suggestNamesByValueArgument(expression: KtExpression, validator: (String) -> Boolean): Sequence<String> {
         val argumentExpression = expression.getOutermostParenthesizerOrThis()
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return emptySequence()
         val callElement = getCallElement(valueArgument) ?: return emptySequence()
-        val resolvedCall = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return emptySequence()
+
+        val resolvedCall =
+            callElement.tryResolveCall()?.calls?.singleOrNull { it is KaFunctionCall<*> } as? KaFunctionCall<*> ?: return emptySequence()
+
         val argExpr = valueArgument.getArgumentExpression()
         val parameter = resolvedCall.valueArgumentMapping[argExpr]?.symbol
         // either a parameter or a context argument is expected in this position
@@ -258,7 +249,8 @@ class KotlinNameSuggester(
                 return@sequence
             }
 
-            if (presentableType.isCharSequenceType || presentableType.isStringType) {
+            val presentableTypeClassId = presentableType.classId
+            if (presentableTypeClassId == KaStandardTypeClassIds.CHAR_SEQUENCE || presentableTypeClassId == KaStandardTypeClassIds.STRING) {
                 registerCompoundName("string")
                 registerCompoundName("str")
                 registerCompoundName("s")
@@ -290,7 +282,7 @@ class KotlinNameSuggester(
             }
 
             // when the presentable iterable element type is `Any`, don't suggest `anies`
-            val presentableElementType = getIterableElementType(presentableType)?.let { getPresentableType(it) }?.takeUnless { it.isAnyType }
+            val presentableElementType = getIterableElementType(presentableType)?.let { getPresentableType(it) }?.takeUnless { it.classId == KaStandardTypeClassIds.ANY }
 
             if (presentableElementType != null) {
                 registerClassNames(presentableElementType) { Strings.pluralize(it) }
@@ -350,7 +342,7 @@ class KotlinNameSuggester(
                     type.parameters.forEach { process(it.typeReference?.typeElement) }
                     val returnType = type.returnTypeReference
                     if (returnType != null) {
-                        if (returnType.type.isBooleanType) {
+                        if (returnType.type.classId == KaStandardTypeClassIds.BOOLEAN) {
                             add("predicate")
                         } else {
                             add("to")
@@ -656,19 +648,18 @@ class KotlinNameSuggester(
 }
 
 context(_: KaSession)
-private fun getPrimitiveType(type: KaType): PrimitiveType? {
-    return when {
-        type.isBooleanType -> PrimitiveType.BOOLEAN
-        type.isCharType -> PrimitiveType.CHAR
-        type.isByteType || type.isUByteType -> PrimitiveType.BYTE
-        type.isShortType || type.isUShortType -> PrimitiveType.SHORT
-        type.isIntType || type.isUIntType -> PrimitiveType.INT
-        type.isLongType || type.isULongType -> PrimitiveType.LONG
-        type.isFloatType -> PrimitiveType.FLOAT
-        type.isDoubleType -> PrimitiveType.DOUBLE
+private fun getPrimitiveType(type: KaType): PrimitiveType? =
+    when (type.classId) {
+        KaStandardTypeClassIds.BOOLEAN -> PrimitiveType.BOOLEAN
+        KaStandardTypeClassIds.CHAR -> PrimitiveType.CHAR
+        KaStandardTypeClassIds.BYTE, StandardClassIds.UByte -> PrimitiveType.BYTE
+        KaStandardTypeClassIds.SHORT, StandardClassIds.UShort -> PrimitiveType.SHORT
+        KaStandardTypeClassIds.INT, StandardClassIds.UInt -> PrimitiveType.INT
+        KaStandardTypeClassIds.LONG, StandardClassIds.ULong -> PrimitiveType.LONG
+        KaStandardTypeClassIds.FLOAT -> PrimitiveType.FLOAT
+        KaStandardTypeClassIds.DOUBLE -> PrimitiveType.DOUBLE
         else -> null
     }
-}
 
 private val ITERABLE_LIKE_CLASS_IDS: Collection<ClassId> = hashSetOf(StandardClassIds.Iterable, StandardClassIds.Array)
 

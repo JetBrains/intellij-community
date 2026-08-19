@@ -272,10 +272,14 @@ If this behavior is unexpected, please consult the documentation for com.intelli
  */
 @Deprecated("Use resetThreadContext", ReplaceWith("resetThreadContext(action)"))
 fun resetThreadContext(): AccessToken {
-  return withThreadLocal(tlCoroutineContext) { _ ->
-    @OptIn(InternalCoroutinesApi::class)
+  return withThreadLocal(tlCoroutineContext) {
     val currentSnapshot = IntelliJCoroutinesFacade.currentThreadCoroutineContext()
-    InstalledThreadContext(currentSnapshot, null)
+    if (currentSnapshot == null) {
+      // optimization for excessive allocations
+      INITIAL_THREAD_CONTEXT
+    } else {
+      InstalledThreadContext(currentSnapshot, null)
+    }
   }
 }
 

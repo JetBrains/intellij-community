@@ -1,0 +1,43 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.keychain` start
+jvm_library(
+    name = "keychain",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.keychain",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-keychain-keychain"],
+    runtime_deps = ["@lib//:libraries-keychain-keychain"],
+)
+
+jvm_library(
+    name = "keychain_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.keychain",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-keychain-keychain"],
+    runtime_deps = [":keychain"],
+)
+### auto-generated section `build intellij.libraries.keychain` end
+
+### auto-generated section `iml intellij.libraries.keychain` start
+exports_files(
+    [
+        "intellij.libraries.keychain.iml",
+        "resources/intellij.libraries.keychain.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.keychain` end

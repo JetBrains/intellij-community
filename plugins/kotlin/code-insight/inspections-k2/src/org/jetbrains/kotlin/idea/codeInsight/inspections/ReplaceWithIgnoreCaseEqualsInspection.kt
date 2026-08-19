@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -54,7 +55,8 @@ class ReplaceWithIgnoreCaseEqualsInspection : KotlinApplicableInspectionBase.Sim
   }
 
   @OptIn(KaExperimentalApi::class)
-  override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
+  context(session: KaSession)
+  override fun prepareContext(element: KtBinaryExpression): Unit? {
     val leftCall = element.left?.getCallExpressionIfCaseConversion() ?: return null
     val rightCall = element.right?.getCallExpressionIfCaseConversion() ?: return null
 

@@ -19,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//platform/kernel/rpc.backend",
         "//platform/kernel/backend",
@@ -42,6 +42,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":backend",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",
         "//platform/kernel/backend:backend_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
@@ -56,6 +57,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.updateChecker.backend.iml",
+        "resources/intellij.platform.ide.updateChecker.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

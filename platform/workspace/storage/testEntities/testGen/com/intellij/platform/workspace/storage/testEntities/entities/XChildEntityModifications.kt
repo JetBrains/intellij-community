@@ -20,7 +20,7 @@ interface XChildEntityBuilder : WorkspaceEntityBuilder<XChildEntity> {
 }
 
 internal object XChildEntityType : EntityType<XChildEntity, XChildEntityBuilder>() {
-  override val entityClass: Class<XChildEntity> get() = XChildEntity::class.java
+  override val entityImplClass: Class<*> get() = XChildEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = XChildEntityImpl.Builder::class.java
   operator fun invoke(
     childProperty: String,

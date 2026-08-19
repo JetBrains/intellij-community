@@ -48,8 +48,10 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     supports_aggregate_order_by_clause: bool
     supports_any_value: bool
     supports_tuple_comparison_against_subquery: bool
-    supports_json_negative_indexing: bool
 
+    @cached_property
+    @override
+    def supports_json_negative_indexing(self) -> bool: ...  # type: ignore[override]
     @cached_property
     @override
     def django_test_skips(self) -> dict[str, set[str]]: ...  # type: ignore[override]
@@ -79,3 +81,15 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     @cached_property
     @override
     def supports_tuple_lookups(self) -> bool: ...  # type: ignore[override]
+    @cached_property
+    @override
+    def supports_uuid4_function(self) -> bool: ...  # type: ignore[override]
+    @cached_property
+    @override
+    def supports_uuid4_function_in_default(self) -> bool: ...  # type: ignore[override]
+    @cached_property
+    @override
+    def supports_stored_generated_columns(self) -> bool: ...  # type: ignore[override]
+    @cached_property
+    @override
+    def supports_bit_aggregations(self) -> bool: ...  # type: ignore[override]

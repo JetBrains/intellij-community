@@ -1,13 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ide.nonModalWelcomeScreen.DefaultFileDragAndDropHandler
 import com.intellij.platform.ide.nonModalWelcomeScreen.FileDragAndDropHandler
 import com.intellij.platform.project.projectId
@@ -15,7 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.jewel.ui.icon.IconKey
+import java.awt.Image
 import java.util.function.Supplier
 import javax.swing.Icon
 
@@ -23,20 +22,14 @@ import javax.swing.Icon
 interface WelcomeRightTabContentProvider {
   val coroutineScope: CoroutineScope
 
-  // Use Valkyrie IDEA plugin to generate the ImageVector
-  val backgroundImageVectorLight: ImageVector
-  val backgroundImageVectorDark: ImageVector
+  val backgroundImageVectorLight: Image
+  val backgroundImageVectorDark: Image
 
   val fileTypeIcon: Icon
   val title: Supplier<@Nls String>
   val secondaryTitle: Supplier<@Nls String>
-  
-  /**
-   * Optional product icon to display above the title (48x48).
-   * Use Valkyrie IDEA plugin to generate the ImageVector from SVG.
-   * Return null if no icon should be displayed.
-   */
-  val productIcon: ImageVector? get() = null
+
+  val productIcon: Icon? get() = null
 
   val isDisableOptionVisible: Boolean
   val isStartupSwitchPanelOptionVisible: Boolean
@@ -49,10 +42,8 @@ interface WelcomeRightTabContentProvider {
     return project.service<WelcomeScreenPreventWelcomeTabFocusService>().isAllowedFocusOnWelcomeTab()
   }
 
-  @Composable
   fun getFeatureButtonModels(project: Project): List<FeatureButtonModel>
 
-  @Composable
   fun getAdditionalInfoButtonModels(project: Project): List<InfoButtonModel> = emptyList()
 
   /**
@@ -61,7 +52,7 @@ interface WelcomeRightTabContentProvider {
    */
   class InfoButtonModel(
     val text: String,
-    val icon: IconKey,
+    val icon: Icon,
     val onClick: (Project, CoroutineScope) -> Unit,
   )
 
@@ -70,7 +61,6 @@ interface WelcomeRightTabContentProvider {
    * The outer list is a list of rows stacked vertically; the inner list is the row's components
    * laid out left-to-right, so a component's position in the row defines its column.
    */
-  @Composable
   fun getAdditionalComponents(project: Project): List<List<WelcomeContent>> = emptyList()
 
   fun getFileDragAndDropHandler(): FileDragAndDropHandler = DefaultFileDragAndDropHandler
@@ -82,7 +72,7 @@ interface WelcomeRightTabContentProvider {
     /** Non-interactive text label with an optional trailing [icon] (e.g. a Beta badge). */
     class Text(
       val text: @Nls String,
-      val icon: IconKey? = null,
+      val icon: Icon? = null,
       val tint: Color = Color.Unspecified,
     ) : WelcomeContent
 
@@ -101,9 +91,8 @@ interface WelcomeRightTabContentProvider {
    * register a `WelcomeScreenFeatureBackend` implementation.
    */
   open class FeatureButtonModel(
-    val text: String,
-    val icon: IconKey,
-    val tint: Color = Color.Unspecified,
+    @NlsSafe val text: String,
+    val icon: Icon,
     val onClick: (Project, CoroutineScope) -> Unit,
   )
 
@@ -114,10 +103,9 @@ interface WelcomeRightTabContentProvider {
     val featureKey: String,
     val isAlwaysAvailable: Boolean = false,
     text: String,
-    icon: IconKey,
-    tint: Color = Color.Unspecified,
+    icon: Icon,
     val beforeOnClick: suspend (Project) -> Unit = {}
-  ) : FeatureButtonModel(text, icon, tint, { project, coroutineScope ->
+  ) : FeatureButtonModel(text, icon, { project, coroutineScope ->
     coroutineScope.launch {
       beforeOnClick(project)
       WelcomeScreenFeatureApi.getInstance().onClick(project.projectId(), featureKey)

@@ -6,7 +6,7 @@ import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
 import com.intellij.lang.Language
 
 class ExperimentTypeScriptMLRankingProvider : CatBoostJarCompletionModelProvider(
-  CompletionRankingModelsBundle.message("ml.completion.experiment.model.ts"), "typescript_features_exp", "typescript_model_exp"), ExperimentModelProvider {
+  CompletionRankingModelsBundle.message("ml.completion.experiment.model.ts"), "typescript_features", "typescript_model"), ExperimentModelProvider {
 
   override fun isLanguageSupported(language: Language): Boolean = language.displayName.compareTo("typescript", ignoreCase = true) == 0
 

@@ -4,6 +4,7 @@ import com.intellij.tools.ide.util.common.logOutput
 import java.io.PrintWriter
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.ArrayDeque
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.createDirectories
@@ -132,6 +133,37 @@ sealed class ExecOutputRedirect {
     override fun read(): String = ""
 
     override fun toString(): String = "stdout"
+  }
+
+  /**
+   * Writes every output line to stdout and retains the last [maxLines] lines for later diagnostics.
+   *
+   * The bounded tail prevents long-running processes from accumulating their entire output in memory.
+   */
+  internal class ToStdOutAndTail(
+    private val prefix: String,
+    private val maxLines: Int = 200,
+  ) : ExecOutputRedirect() {
+    private val tail = ArrayDeque<String>(maxLines)
+
+    init {
+      require(maxLines > 0) { "The number of retained output lines must be positive" }
+    }
+
+    override fun redirectLine(line: String) {
+      reportOnStdoutIfNecessary(line)
+      logOutput("  $prefix $line")
+      synchronized(tail) {
+        if (tail.size == maxLines) tail.removeFirst()
+        tail.addLast("$prefix $line")
+      }
+    }
+
+    override fun read(): String = synchronized(tail) {
+      tail.joinToString(System.lineSeparator())
+    }
+
+    override fun toString(): String = "stdout with the last $maxLines lines retained"
   }
 
   data class ToStdOutAndString(val prefix: String) : ExecOutputRedirect() {

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.gradle.statistics
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.kotlin.idea.gradle.statistics.v2.flow.KotlinBuildToolFusFlowProcessor
 import org.junit.jupiter.api.Named.named
 import org.junit.jupiter.params.ParameterizedTest
@@ -14,13 +15,20 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 
+@TestApplication
 class KotlinBuildToolsFusFlowTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("getFilesToExpectedMetrics")
     fun testFusFlowProcessor(fusProfileFile: List<Path>, buildId: String, expectedFusMetrics: Set<String>, checkExactMatch: Boolean) {
         val aggregatedFusMetric = KotlinBuildToolFusFlowProcessor.aggregateMetricsForBuildId(buildId, fusProfileFile)
 
-        val actualFusMetric = aggregatedFusMetric?.map { "${it.metric.metricRawName}=${it.value}" }?.toSet()
+        val actualFusMetric = aggregatedFusMetric?.map {
+            when {
+                // PROJECT_PATH is anonymized with a salt (see EventLogConfiguration.anonymize)
+                it.metric.metricRawName == "PROJECT_PATH" -> "${it.metric.metricRawName}=$PROJECT_PATH_PLACEHOLDER"
+                else -> "${it.metric.metricRawName}=${it.value}"
+            }
+        }?.toSet()
         if (actualFusMetric == null) {
             assertFails { "aggregatedFusMetric should not be null" }
             return
@@ -80,10 +88,18 @@ class KotlinBuildToolsFusFlowTest {
                     "build_id.finish-profile",
                 ).map(::mapProfileNameToPathInResourcesSrc),
                 "build_id",
-                setOf("PROJECT_PATH=line with special symbols !^&*()_+{\\n}[@#\$%]", "BUILD_FAILED=false", "BUILD_FINISH_TIME=10000000", "BUILD_SRC_EXISTS=false", "CONFIGURATION_API_COUNT=1"),
+                setOf(
+                    "PROJECT_PATH=$PROJECT_PATH_PLACEHOLDER",
+                    "BUILD_FAILED=false",
+                    "BUILD_FINISH_TIME=10000000",
+                    "BUILD_SRC_EXISTS=false",
+                    "CONFIGURATION_API_COUNT=1"
+                ),
                 true
             ).toArguments("testMetricValidation"),
         )
+
+        private const val PROJECT_PATH_PLACEHOLDER = "<PROJECT_PATH>"
     }
 }
 

@@ -1,150 +1,78 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.openapi.editor.ex.DocumentModState
+import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
-import com.intellij.openapi.editor.ex.LineIterator
-import com.intellij.openapi.editor.impl.modTree.ModificationTree
-import com.intellij.openapi.editor.impl.modTree.ModificationTreeImpl
-import com.intellij.openapi.util.TextRange
-import com.intellij.util.text.CharArrayUtil
-import com.intellij.util.text.ImmutableCharSequence
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntList
-import java.lang.ref.SoftReference
+import com.intellij.openapi.editor.ex.DocumentSputnik
+import com.intellij.openapi.editor.ex.DocumentSputniks
+import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.util.Key
 
 internal class DocumentSnapshotImpl private constructor(
-  private val text: ImmutableCharSequence,
-  private val modStamp: Long,
-  private val modSequence: Int,
-  private var lineSet: LineSet?,                  // non-volatile intentionally, see getLineSet()
-  private var modTree: ModificationTree?,         // non-volatile intentionally, see tree()
-  private var textString: SoftReference<String>?, // non-volatile intentionally, see string()
+  private val text: DocumentText,
+  private val modState: DocumentModState,
+  private val sputniks: DocumentSputniks,
 ) : DocumentSnapshot {
 
-  constructor(chars: CharSequence) : this(
-    text = CharArrayUtil.createImmutableCharSequence(chars),
-    modStamp = DocumentModStamp.next(),
-    modSequence = 0,
-    lineSet = null,
-    modTree = null,
-    textString = null,
+  constructor(text: DocumentText) : this(
+    text = text,
+    modState = DocumentModStateImpl(),
+    sputniks = DocumentSputniksImpl.EMPTY,
   )
 
-  override fun text(): ImmutableCharSequence {
+  override fun text(): DocumentText {
     return text
   }
 
-  override fun charSequence(): CharSequence {
-    // TODO: use it in EditorPainter because String.charAt may improve performance during painting
-    val string = textString?.get()
-    if (string != null) {
-      return string
+  override fun modState(): DocumentModState {
+    return modState
+  }
+
+  override fun <S : DocumentSputnik> sputnik(key: Key<S>): S? {
+    @Suppress("UNCHECKED_CAST") // sound because setSputnik associates a sputnik only with a key of its own type
+    return sputniks.get(key) as S?
+  }
+
+  override fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot {
+    if (this === metadata || text === metadata.text()) {
+      return metadata
     }
-    return text
+    return this
   }
 
-  override fun string(range: TextRange): String {
-    val textInRange = text.subSequence(range.startOffset, range.endOffset)
-    return textInRange.toString()
-  }
-
-  /**
-   * Lazy cache read/assigned without synchronization. Safe because [String] is a final-field immutable (JLS 17.5):
-   * a racy reader sees either no value (and recomputes) or a fully constructed [String].
-   *
-   * Unlike [lineSet], [textString] is usually not performance-critical, so it could be a `volatile` field with a
-   * double-checked approach. It is kept non-volatile only to stay consistent with the similar [lineSet] field.
-   */
-  override fun string(): String {
-    var string = textString?.get()
-    if (string != null) {
-      return string
+  override fun applyOp(op: DocumentOp): DocumentSnapshot {
+    val newText = text.applyOp(op)
+    val newModState = modState.applyOp(text, newText, op)
+    val canAffectSputniks = op is DocumentOp.SetSputnik
+    if (newText === text && newModState === modState && !canAffectSputniks) {
+      return this
     }
-    string = text.toString()
-    textString = SoftReference(string)
-    return string
-  }
-
-  override fun textLength(): Int {
-    // TODO: hot method, optimize
-    //  the length is constant, create a field textLength?
-    return text.length
-  }
-
-  override fun modStamp(): Long {
-    return modStamp
-  }
-
-  override fun modSequence(): Int {
-    return modSequence
-  }
-
-  override fun lineCount(): Int {
-    val lineCount = getLineSet().lineCount
-    assert(lineCount >= 0)
-    return lineCount
-  }
-
-  override fun lineNumber(offset: Int): Int {
-    return getLineSet().findLineIndex(offset)
-  }
-
-  override fun lineStartOffset(line: Int): Int {
-    if (line == 0) {
-      return 0 // otherwise, it would crash for the zero-length text
+    val oldSnapshot = this
+    val newSnapshot = if (newText === text && newModState === modState) {
+      this
+    } else {
+      DocumentSnapshotImpl(newText, newModState, sputniks)
     }
-    return getLineSet().getLineStart(line)
-  }
-
-  override fun lineEndOffset(line: Int): Int {
-    if (line == 0 && textLength() == 0) {
-      return 0
+    if (sputniks === DocumentSputniksImpl.EMPTY && !canAffectSputniks) {
+      return newSnapshot
     }
-    val lineSet = getLineSet()
-    val result = lineSet.getLineEnd(line) - lineSet.getSeparatorLength(line)
-    assert(result >= 0)
-    return result
-  }
-
-  override fun lineSeparatorLength(line: Int): Int {
-    val separatorLength = getLineSet().getSeparatorLength(line)
-    assert(separatorLength >= 0)
-    return separatorLength
-  }
-
-  override fun isLineModified(line: Int): Boolean {
-    val lineSet = this.lineSet
-    return lineSet != null && lineSet.isModified(line)
-  }
-
-  override fun lineIterator(): LineIterator {
-    return getLineSet().createIterator()
-  }
-
-  /**
-   * Same non-volatile lazy field as [textString]
-   */
-  override fun modTree(): ModificationTree {
-    var modTree = this.modTree
-    if (modTree != null) {
-      return modTree
+    return sputniks.applyOp(oldSnapshot, newSnapshot, op) { newSputniks ->
+      DocumentSnapshotImpl(newText, newModState, newSputniks)
     }
-    modTree = ModificationTreeImpl.initial(textLength())
-    this.modTree = modTree
-    return modTree
   }
 
   override fun dumpState(): String {
     val dump = StringBuilder()
     dump.append("intervals:\n")
-    val lineCount: Int = lineCount()
+    val lineCount: Int = text.lineCount()
     for (line in 0..<lineCount) {
       dump
         .append(line)
         .append(": ")
-        .append(lineStartOffset(line))
+        .append(text.lineStartOffset(line))
         .append("-")
-        .append(lineEndOffset(line))
+        .append(text.lineEndOffset(line))
         .append(", ")
     }
     if (lineCount > 0) {
@@ -153,186 +81,9 @@ internal class DocumentSnapshotImpl private constructor(
     return dump.toString()
   }
 
-  override fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentSnapshot {
-    val newModSequence = if (incrementModSeq) nextModSequence() else modSequence
-    if (modStamp == newModStamp && modSequence == newModSequence) {
-      return this
-    }
-    return DocumentSnapshotImpl(text, newModStamp, newModSequence, lineSet, modTree, textString)
-  }
-
-  override fun withClearedLineFlags(
-    startLine: Int,
-    endLine: Int,
-    exceptLines: IntArray,
-  ): DocumentSnapshotImpl {
-    if (this.lineSet == null) {
-      // there were no text changes if line set is not created yet
-      return this
-    }
-    var lineSet = getLineSet()
-    val modifiedLines: IntList
-    if (exceptLines.isEmpty()) {
-      modifiedLines = EMPTY_INDICES
-    } else {
-      modifiedLines = IntArrayList(exceptLines.size)
-      for (line in exceptLines) {
-        // TODO: why line < 0 || line >= lineSet.lineCount
-        //  silently ignored not IndexOutOfBoundsException?
-        if (0 <= line && line < lineSet.lineCount) {
-          if (lineSet.isModified(line)) {
-            modifiedLines.add(line)
-          }
-        }
-      }
-    }
-    lineSet = lineSet.clearModificationFlags(startLine, endLine)
-    lineSet = lineSet.setModified(modifiedLines)
-    return withLineSet(lineSet)
-  }
-
-  override fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot {
-    if (this === metadata) {
-      return this
-    }
-    if (this.text === metadata.text()) {
-      return metadata
-    }
-    // discard metadata.text, see doc [com.intellij.openapi.editor.ex.DocumentMutator]
-    return DocumentSnapshotImpl(
-      this.text,
-      metadata.modStamp(),
-      metadata.modSequence(),
-      this.lineSet,
-      this.modTree,
-      this.textString,
-    )
-  }
-
-  override fun withText(
-    newWholeText: ImmutableCharSequence,
-    startOffset: Int,
-    endOffset: Int,
-    newFragment: CharSequence,
-    newModStamp: Long,
-    wholeTextReplaced: Boolean,
-    clearLineFlags: Boolean,
-    clearModTree: Boolean,
-  ): DocumentSnapshotImpl {
-    val oldFragmentLength = endOffset - startOffset
-    val newFragmentLength = newFragment.length
-    val diff = newFragmentLength - oldFragmentLength
-    val oldText = text
-    val oldTextLength = oldText.length
-    val newTextLength = newWholeText.length
-    assert((oldTextLength + diff) == newTextLength) {
-      "prevTextLength = " + oldTextLength +
-      "; event.getNewLength() = " + newFragmentLength +
-      "; event.getOldLength() = " + oldFragmentLength +
-      "; nextTextLength = " + newTextLength
-    }
-    val oldLineSet = getLineSet()
-    var newLineSet = oldLineSet.update(
-      oldText,
-      startOffset,
-      endOffset,
-      newFragment,
-      wholeTextReplaced,
-    )
-    assert(newTextLength == newLineSet.length) {
-      "nextTextLength = " + newTextLength +
-      "; nextLineSet.getLength() = " + newLineSet.length
-    }
-    if (clearLineFlags) {
-      newLineSet = newLineSet.clearModificationFlags(0, Int.MAX_VALUE)
-    }
-    val newModSequence = nextModSequence()
-    val newTree = if (clearModTree) {
-      null
-    } else {
-      updateModTree(oldFragmentLength, newFragmentLength, startOffset, endOffset)
-    }
-    return DocumentSnapshotImpl(newWholeText, newModStamp, newModSequence, newLineSet, newTree, null)
-  }
-
-  private fun withLineSet(newLineSet: LineSet?): DocumentSnapshotImpl {
-    if (this.lineSet === newLineSet) {
-      return this
-    }
-    return DocumentSnapshotImpl(text, modStamp, modSequence, newLineSet, modTree, textString)
-  }
-
-  /**
-   * Lazy cache read/assigned without synchronization. Safe because [LineSet] is a final-field immutable (JLS 17.5):
-   * a racy reader sees either `null` (and recomputes) or a fully constructed instance.
-   *
-   * Performance-critical: [lineSet] backs the very frequently called [lineStartOffset]/[lineEndOffset],
-   * so the field is intentionally non-volatile to avoid per-read volatile overhead on this hot path.
-   */
-  private fun getLineSet(): LineSet {
-    var lineSet = this.lineSet
-    if (lineSet != null) {
-      return lineSet
-    }
-    lineSet = LineSet.createLineSet(text)
-    this.lineSet = lineSet
-    return lineSet
-  }
-
-  private fun updateModTree(
-    oldFragmentLength: Int,
-    newFragmentLength: Int,
-    startOffset: Int,
-    endOffset: Int,
-  ): ModificationTree {
-    val oldTree = modTree()
-    if (oldFragmentLength == 0 && newFragmentLength != 0) {
-      return oldTree.insert(startOffset, newFragmentLength)
-    }
-    if (oldFragmentLength != 0 && newFragmentLength == 0) {
-      return oldTree.delete(startOffset, startOffset + oldFragmentLength)
-    }
-    return oldTree
-      .delete(startOffset, endOffset)
-      .insert(startOffset, newFragmentLength)
-  }
-
-  private fun nextModSequence(): Int {
-    return modSequence + 1
-  }
-
-  private fun presentation(obj: Any?): String {
-    if (obj == null) {
-      return "null"
-    }
-    if (obj is SoftReference<*>) {
-      return if (obj.get() == null) {
-        "<null>"
-      } else {
-        "<not-null>"
-      }
-    }
-    val hex = Integer.toHexString(System.identityHashCode(obj))
-    return "@$hex"
-  }
-
   override fun toString(): String {
-    val id = presentation(this)
-    val ms = modStamp
-    val mq = modSequence
-    val tx = presentation(text)
-    val ls = presentation(lineSet)
-    val st = presentation(textString)
-    return "DocumentSnapshot" + id + '{' +
-           "modStamp=" + ms +
-           ", modSequence=" + mq +
-           ", text=" + tx +
-           ", lineSet=" + ls +
-           ", string=" + st +
-           '}'
-  }
-
-  companion object {
-    private val EMPTY_INDICES: IntList = IntArrayList(0)
+    val id = Integer.toHexString(System.identityHashCode(this))
+    val sputnikId = Integer.toHexString(System.identityHashCode(sputniks))
+    return "DocumentSnapshot@$id{text=$text, modState=$modState, sputniks=@$sputnikId}"
   }
 }

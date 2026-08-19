@@ -2,6 +2,14 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+jps_test(
+    name = "pyproject-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":pyproject-tests_test_lib"],
+)
+### skip generation section `test intellij.python.pyproject.tests`
+
 ### auto-generated section `build intellij.python.pyproject` start
 create_kotlinc_options(
     name = "custom_pyproject",
@@ -34,7 +42,7 @@ jvm_library(
         "//python/openapi:community",
         "//python/python-psi-impl:psi-impl",
         "//platform/core-api:core",
-        "//python/python-sdk:sdk",
+        "//python/python-sdk/backend",
         "//platform/util",
         "//plugins/toml/core",
         "//libraries/tuweni/toml",
@@ -59,7 +67,7 @@ jvm_library(
         "//platform/core-ui",
         "//jps/model-api:model",
         "//platform/util:util-ui",
-        "//python/python-requirements:requirements",
+        "//python/python-requirements/backend",
     ],
 )
 
@@ -84,7 +92,7 @@ jvm_library(
         "//python/openapi:community_test_lib",
         "//python/python-psi-impl:psi-impl_test_lib",
         "//platform/core-api:core_test_lib",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
         "//platform/util:util_test_lib",
         "//plugins/toml/core:core_test_lib",
         "//libraries/tuweni/toml:toml_test_lib",
@@ -109,7 +117,7 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//jps/model-api:model_test_lib",
         "//platform/util:util-ui_test_lib",
-        "//python/python-requirements:requirements_test_lib",
+        "//python/python-requirements/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.pyproject` end
@@ -118,6 +126,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.pyproject.iml",
+        "resources/intellij.python.pyproject.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -174,8 +183,8 @@ jvm_library(
         "//python/python-psi-impl:psi-impl_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
-        "//python/python-sdk:sdk",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend",
+        "//python/python-sdk/backend:backend_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
         "//platform/util-ex",
@@ -245,10 +254,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.python.pyproject.tests` end
-
-### auto-generated section `test intellij.python.pyproject.tests` start
-jps_test(
-    name = "pyproject-tests_test",
-    runtime_deps = [":pyproject-tests_test_lib"],
-)
-### auto-generated section `test intellij.python.pyproject.tests` end

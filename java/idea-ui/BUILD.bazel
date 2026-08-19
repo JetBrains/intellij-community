@@ -1,5 +1,20 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
+
+jps_test(
+    name = "ui-tests_test",
+    timeout = "moderate",
+    data = [BAZEL_TARGETS_JSON],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+    ],
+    tags = ["community-aggregator"],
+    runtime_deps = [":ui-tests_test_lib"],
+)
+### skip generation section `test intellij.java.ui.tests`
 
 ### auto-generated section `build intellij.java.ui` start
 jvm_library(
@@ -48,7 +63,7 @@ jvm_library(
         "//platform/observable",
         "//platform/diff-api:diff",
         "//libraries/guava",
-        "@lib//:jna",
+        "//libraries/jna",
         "//platform/external-system-api:externalSystem",
         "//platform/external-system-impl:externalSystem-impl",
         "//libraries/stream",
@@ -123,6 +138,7 @@ jvm_library(
         "//platform/observable:observable_test_lib",
         "//platform/diff-api:diff_test_lib",
         "//libraries/guava:guava_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//platform/external-system-api:externalSystem_test_lib",
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//libraries/stream:stream_test_lib",
@@ -163,6 +179,8 @@ jvm_library(
 exports_files(
     [
         "intellij.java.ui.iml",
+        "resources/META-INF/RegistryKeysJavaUi.xml",
+        "resources/intellij.java.ui.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -218,6 +236,8 @@ jvm_library(
         "//java/testFramework:testFramework_test_lib",
         "//aether-dependency-resolver",
         "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
+        "//aether-dependency-resolver/plugin",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//java/execution/impl",
         "//java/execution/impl:impl_test_lib",
         "//libraries/assertj-core",
@@ -302,6 +322,14 @@ jvm_library(
         "//libraries/junit5:junit5_test_lib",
         "//libraries/junit5-params",
         "//libraries/junit5-params:junit5-params_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
+        "//libraries/lucene.common",
+        "//libraries/lucene.common:lucene.common_test_lib",
+        "//spellchecker/xml",
+        "//spellchecker/xml:xml_test_lib",
+        "//platform/vcs/plugin",
+        "//platform/vcs/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.ui.tests` end
@@ -314,10 +342,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.ui.tests` end
-
-### auto-generated section `test intellij.java.ui.tests` start
-jps_test(
-    name = "ui-tests_test",
-    runtime_deps = [":ui-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.ui.tests` end

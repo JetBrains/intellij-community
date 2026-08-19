@@ -12,7 +12,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.buildSubstitutor
 import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols

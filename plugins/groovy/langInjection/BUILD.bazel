@@ -72,6 +72,7 @@ jvm_library(
 exports_files(
     [
         "intellij.groovy.langInjection.iml",
+        "resources/intellij.groovy.langInjection.xml",
     ],
     visibility = ["//visibility:public"],
 )

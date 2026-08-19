@@ -22,7 +22,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "@lib//:diogen-analysis",
         "//libraries/fastutil",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -39,6 +39,7 @@ jvm_library(
         # do not sort,
         ":freezeAnalyzer",
         "//libraries/fastutil:fastutil_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.diagnostic.freezeAnalyzer` end
@@ -47,6 +48,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.diagnostic.freezeAnalyzer.iml",
+        "resources/intellij.platform.diagnostic.freezeAnalyzer.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -526,18 +526,21 @@ internal open class IconsClassGenerator(
       }
     }
 
+    // a deprecated icon is stored in `compatibilityResources`, while `imageFile` keeps the original path
+    val physicalImageFile = image.resolvePhysicalFile(imageFile)
+
     var javaDoc: String
     var key: Int
     try {
       if (file.toString().endsWith(".svg")) {
         // don't mask any exception for svg file
-        val data = loadAndNormalizeSvgFile(imageFile).toByteArray()
+        val data = loadAndNormalizeSvgFile(physicalImageFile).toByteArray()
         val size = getSvgDocumentSize(data = data)
         key = hasher.hash(data, file.fileName.toString())
         javaDoc = "/** ${size.width.toInt()}x${size.height.toInt()} */ "
       }
       else {
-        val loadedImage = Files.newInputStream(file).use { loadRasterImage(it) }
+        val loadedImage = Files.newInputStream(image.resolvePhysicalFile(file)).use { loadRasterImage(it) }
         key = 0
         javaDoc = "/** ${loadedImage.width}x${loadedImage.height} */ "
       }
@@ -576,7 +579,7 @@ internal open class IconsClassGenerator(
           result.append(' ').append(' ')
         }
       }
-      result.append(line).append('\n')
+      result.append(line.trimEnd()).append('\n')
     }
   }
 

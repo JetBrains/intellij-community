@@ -7,6 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module" module-name="intellij.mcpserver" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.mcpserver.toolsets" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.mcpserver.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.mcpserver.stdio" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.mcpserver.terminal" scope="RUNTIME" />

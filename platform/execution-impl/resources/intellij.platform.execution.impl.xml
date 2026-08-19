@@ -1,4 +1,6 @@
-<idea-plugin visibility="internal">
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <module value="com.intellij.modules.execution"/>
+
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.rhizomedb"/>
@@ -7,6 +9,7 @@
     <module name="intellij.libraries.hash4j"/>
     <module name="intellij.libraries.jediterm.core"/>
     <module name="intellij.libraries.jediterm.ui"/>
+    <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
@@ -23,6 +26,7 @@
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
@@ -37,7 +41,7 @@
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.rd.community"/>
     <module name="intellij.platform.remote.core"/>
-    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.rpc.topics"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.coroutines"/>
@@ -48,5 +52,139 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactory"
                         serviceImplementation="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactoryImpl"/>
+    <executionTargetType implementation="com.intellij.execution.wsl.target.WslTargetType" os="windows"/>
+    <consoleFilterProvider implementation="com.intellij.execution.filters.UrlFilter$UrlFilterProvider"/>
+    <notificationGroup id="Execution" displayType="TOOL_WINDOW" bundle="messages.ExecutionBundle" key="notification.group.execution"/>
+    <projectService serviceInterface="com.intellij.execution.RunManager" open="true"
+                    serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
+    <projectPreInit implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer" order="after initialProjectSynchronizer"/>
+    <pathMacroFilter implementation="com.intellij.execution.configuration.RunConfigurationPathMacroFilter"/>
+    <projectFileScanner implementation="com.intellij.execution.impl.RunConfigurationInArbitraryFileScanner"/>
+    <vfs.asyncListener implementation="com.intellij.execution.impl.RCInArbitraryFileListener"/>
+    <editorNotificationProvider implementation="com.intellij.execution.impl.RunConfigEditorNotificationProvider"/>
+    <stepsBeforeRunProvider implementation="com.intellij.execution.impl.RunConfigurationBeforeRunProvider"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector$RunConfigurationUtilValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationExecutorUtilValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunTargetValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.execution.impl.statistics.MacroNameValidationRule"/>
+    <postStartupActivity implementation="com.intellij.execution.impl.RunConfigurationFeatureCollector"/>
+    <applicationService serviceInterface="com.intellij.execution.ui.FragmentStatisticsService"
+                        serviceImplementation="com.intellij.execution.impl.statistics.FragmentedStatisticsServiceImpl"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.ProgramRunnerUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.MacroUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.target.TargetCounterUsagesCollector"/>
+    <statistics.collectorExtension implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageLanguageExtension"/>
+    <statistics.collectorExtension implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeLanguageExtension"/>
+    <refactoring.elementListenerProvider implementation="com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider"/>
+    <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
+                        serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>
+    <actionConfigurationCustomizer implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryActionConfigurationTuner"/>
+    <applicationService serviceInterface="com.intellij.execution.impl.NewRunConfigurationTreePopupFactory" open="true"
+                        serviceImplementation="com.intellij.execution.impl.DefaultNewRunConfigurationTreePopupFactory"/>
+    <projectService serviceInterface="com.intellij.execution.ui.RunContentManager"
+                    serviceImplementation="com.intellij.execution.ui.RunContentManagerImpl"/>
+    <applicationService serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
+    <projectService serviceInterface="com.intellij.execution.ui.RunnerLayoutUi$Factory"
+                    serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutUiFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.execution.ExecutionManager"
+                    serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
+    <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager"
+                    serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
+    <executionTargetProvider implementation="com.intellij.execution.DefaultExecutionTargetProvider"/>
+    <configurationType implementation="com.intellij.execution.compound.CompoundRunConfigurationType"/>
+    <projectConfigurable groupId="build" id="Runtime.Targets.Configurable" bundle="messages.IdeBundle"
+                         key="configurable.Runtime.Targets.Configurable.display.name"
+                         provider="com.intellij.execution.target.TargetEnvironmentsConfigurableProvider"/>
+    <projectConfigurable groupId="tools"
+                         provider="com.intellij.execution.startup.ProjectStartupConfigurable$ProjectStartupConfigurableProvider"
+                         bundle="messages.ExecutionBundle"
+                         key="configurable.ProjectStartupConfigurable.display.name"
+                         id="preferences.startup.tasks" nonDefaultProject="true"/>
+    <postStartupActivity implementation="com.intellij.execution.startup.ProjectStartupRunner"/>
+    <notificationGroup id="Project Startup Tasks Messages" displayType="NONE" bundle="messages.ExecutionBundle"
+                       key="notification.group.startup.task"/>
+    <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
+    <projectSettings service="com.intellij.execution.ExecutionTargetManagerImpl"/>
+    <applicationSettings service="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
+    <projectSettings service="com.intellij.execution.impl.RunManagerImpl"/>
+    <programRunner implementation="com.intellij.execution.runners.DefaultRunProgramRunner" order="last"/>
+    <applicationService serviceInterface="com.intellij.execution.ui.ExecutionUiService"
+                        serviceImplementation="com.intellij.execution.ui.ExecutionUiServiceImpl"/>
+    <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
+    <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" bundle="messages.LangBundle" key="run.toolbar.configurable.title"/>
+    <console.folding implementation="com.intellij.execution.wsl.WslDistributionConsoleFolding" os="windows"/>
+    <projectService serviceInterface="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager" open="true"
+                    serviceImplementation="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager"/>
+    <customizableActionGroupProvider implementation="com.intellij.execution.ui.RunTabCustomizableActionGroupProvider"/>
+    <postStartupActivity implementation="com.intellij.execution.ui.ExecutionReasonableHistoryManager" order="last"/>
+    <executionTargetType implementation="com.intellij.execution.target.EelTargetType"/>
+
+    <postStartupActivity implementation="com.intellij.execution.runToolbar.RunToolbarInitializeService"/>
+
+    <actionConfigurationCustomizer implementation="com.intellij.execution.runToolbar.MyActionConfigurationCustomizer"/>
+
+    <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal" visible="false"/>
+
+    <registryKey defaultValue="false"
+                 description="Run implementation for split mode."
+                 key="run.toolwindow.split.enabled"
+                 restartRequired="true"/>
+    <remote.customDataContextSerializer implementation="com.intellij.execution.RunContentDescriptorIdSerializer"/>
+    <remote.customDataContextSerializer implementation="com.intellij.execution.ExecutionEnvironmentIdSerializer"/>
+    <uiDataRule implementation="com.intellij.execution.RunContentDescriptorIdDataRule"/>
+    <uiDataRule implementation="com.intellij.execution.ExecutionEnvironmentIdDataRule"/>
+    <projectSettings service="com.intellij.execution.startup.ProjectStartupLocalConfiguration"/>
+    <projectSettings service="com.intellij.execution.startup.ProjectStartupSharedConfiguration"/>
+    <projectSettings service="com.intellij.execution.impl.IprRunManagerImpl"/>
+    <projectSettings service="com.intellij.execution.ui.RunConfigurationStartHistory"/>
+    <projectSettings service="com.intellij.execution.runToolbar.RunToolbarSettings"/>
+    <applicationSettings service="com.intellij.terminal.TerminalUiSettingsManager"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.runLineMarkerContributor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.execution.lineMarker.RunLineMarkerContributor"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.beforeRunStartupTasks" interface="com.intellij.execution.startup.BeforeRunStartupTasks" area="IDEA_PROJECT" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.runConfigurationTemplateProvider" interface="com.intellij.execution.impl.RunConfigurationTemplateProvider" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.runConfigurationBeforeRunProviderDelegate" interface="com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.console.folding" interface="com.intellij.execution.ConsoleFolding" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.testSrcLocator" interface="com.intellij.testIntegration.TestLocationProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.module.workingDirectoryProvider" interface="com.intellij.openapi.module.WorkingDirectoryProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.runningApplicationUpdaterProvider" interface="com.intellij.execution.update.RunningApplicationUpdaterProvider" dynamic="true"/>
+    <extensionPoint interface="com.intellij.execution.DisplayDescriptorChooser"
+                    dynamic="true"
+                    qualifiedName="com.intellij.execution.displayDescriptorChooser" />
+
+    <!-- Multi-Launch: Extension points -->
+    <extensionPoint qualifiedName="com.intellij.multilaunch.task.definition"
+                    interface="com.intellij.execution.multilaunch.execution.executables.TaskExecutableTemplate"
+                    dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.multilaunch.condition.template"
+                    interface="com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate"
+                    dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.execution.impl.runSessionService"
+                    interface="com.intellij.execution.RunSessionService"
+                    dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.execution.consolePauseStateProvider"
+                    interface="com.intellij.execution.ui.ExecutionConsolePauseStateProvider"
+                    dynamic="true" />
+
+    <extensionPoint qualifiedName="com.intellij.execution.processHandlerPidProvider"
+                    interface="com.intellij.execution.impl.ProcessHandlerPidProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+  <projectListeners>
+    <listener class="com.intellij.execution.runToolbar.RunToolbarComponentService$MyExecutionListener"
+              topic="com.intellij.execution.ExecutionListener"/>
+    <listener class="com.intellij.execution.ui.RunPopupVoidExecutionListener"
+              topic="com.intellij.execution.ExecutionListener"/>
+  </projectListeners>
+  <xi:include href="intellij.platform.execution.impl.actions.xml"/>
 </idea-plugin>

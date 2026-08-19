@@ -25,7 +25,9 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -35,7 +37,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentListener;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LeakHunter;
@@ -75,7 +77,7 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 public class RangeMarkerTest extends LightPlatformTestCase {
-  private PsiDocumentManagerImpl documentManager;
+  private PsiDocumentManagerEx documentManager;
   private PsiToDocumentSynchronizer synchronizer;
   private Document document;
   private PsiFile psiFile;
@@ -85,7 +87,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject());
+    documentManager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(getProject());
     synchronizer = documentManager.getSynchronizer();
   }
 
@@ -687,7 +689,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   public void testStickingToRight() {
-    RangeMarkerImpl marker = (RangeMarkerImpl)createMarker("ab", 1, 1);
+    RangeMarkerEx marker = createMarker("ab", 1, 1);
     marker.setStickingToRight(true);
     insertString(marker.getDocument(), 1, " ");
     assertTrue(marker.isValid());
@@ -883,7 +885,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       }
       document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', N));
 
-      final DocumentEx finalDocument = document;
+      DocumentEx finalDocument = document;
       WriteCommandAction.runWriteCommandAction(getProject(), () -> {
         List<Pair<RangeMarker, TextRange>> adds = new ArrayList<>();
         List<Pair<RangeMarker, TextRange>> dels = new ArrayList<>();
@@ -1017,18 +1019,56 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     return createMarker(string, start, end);
   }
 
-  public void testRangeMarkersAreWeakReferenced() {
-    final Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
+  public void testRangeMarkerInstancesAreNotRetainedByDocument() {
+    Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
     Set<RangeMarker> markers = new HashSet<>();
     for (int i = 0; i < 10; i++) {
       markers.add(document.createRangeMarker(0, document.getTextLength()));
     }
 
-    LeakHunter.checkLeak(document, RangeMarker.class, markers::contains);
+    LeakHunter.checkLeak(document, RangeMarker.class, o -> markers.contains(o));
   }
 
-  public void testRangeMarkersAreLazyCreated() {
-    final Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
+  public void testRangeMarkerDoesNotRetainDocumentIfNotNeeded() {
+    VirtualFile virtualFile = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "   ");
+    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    RangeMarker marker = document.createRangeMarker(0, 1);
+    LeakHunter.checkLeak(marker, Document.class, _ -> true);
+  }
+
+  public void testRangeMarkerUserDataIsAvailableWhenProcessingOverlappingMarkers() {
+    RangeMarker marker = createMarker("0123456789", 2, 5);
+    Key<Object> key = Key.create("range.marker.test.data");
+    Object value = new Object();
+    marker.putUserData(key, value);
+
+    Ref<RangeMarker> processedMarker = new Ref<>();
+    assertTrue(((DocumentEx)document).processRangeMarkersOverlappingWith(2, 5, candidate -> {
+      processedMarker.set(candidate);
+      return true;
+    }));
+
+    assertNotNull(processedMarker.get());
+    assertSame(value, processedMarker.get().getUserData(key));
+  }
+
+  public void testRangeMarkersAreGarbageCollectableAndWhenTheyHaveTheyLeaveNoTracesInDocumentEvenTheirIds() {
+    DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
+    Ref<RangeMarkerEx> markerRef = new Ref<>((RangeMarkerEx)document.createRangeMarker(0, document.getTextLength()));
+    long markerId = markerRef.get().getId();
+    Reference<RangeMarkerEx> reference = new WeakReference<>(markerRef.get());
+    markerRef.set(null);
+    GCUtil.tryGcSoftlyReachableObjects(()->reference.get() == null);
+
+    document.processRangeMarkers(m -> {
+      assertFalse("Found marker with id:"+markerId+": "+m, ((RangeMarkerEx)m).getId() == markerId);
+      return true;
+    });
+  }
+
+  // in case of SnapshotRangeMarkerImpl we don't share nodes
+  public void _testRangeMarkersAreLazyCreated() {
+    Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
     RangeMarker m1 = document.createRangeMarker(2, 4);
     RangeMarker m2 = document.createRangeMarker(2, 4);
 
@@ -1366,7 +1406,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   @PerformanceUnitTest
-  public void testGetOffsetPerformance() {
+  public void testGetStartEndOffsetPerformance() {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     List<RangeMarker> markers = new ArrayList<>();
     int N = 100_000;
@@ -1376,17 +1416,20 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
+    insertString(doc, 0, " ");
+    for (RangeMarker rm : markers) {
+      assertTrue(rm.isValid());
+    }
     Benchmark.newBenchmark("RM.getStartOffset", ()->{
-      insertString(doc, 0, " ");
       for (int i=0; i<1000; i++) {
+        int length = 0;
         for (RangeMarker rm : markers) {
-          int length = rm.getEndOffset() - rm.getStartOffset();
-          assertEquals(1, length);
-          assertTrue(rm.isValid());
+          length += rm.getEndOffset() - rm.getStartOffset();
         }
+        assertEquals(markers.size(), length);
       }
-      deleteString(doc, 0, 1);
     }).start();
+    deleteString(doc, 0, 1);
   }
 
   @PerformanceUnitTest
@@ -1664,8 +1707,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   public void testRangeMarkerMustNotCreatePotentiallyExpensiveDocumentOnDispose() {
     // need to be physical file
     VirtualFile vf = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "blah");
-    RangeMarkerImpl m = (RangeMarkerImpl)LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(vf, 1);
-    assertNull(m.getCachedDocument());
+    RangeMarker m = LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(vf, 1);
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(vf));
 
     getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(PsiDocumentListener.TOPIC, (doc, _, _) -> {
       if (vf.equals(FileDocumentManager.getInstance().getFile(doc))) {
@@ -1678,50 +1721,53 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
   public void testGetTextRangeMustBeAtomic_Stress() throws ExecutionException, InterruptedException {
     int len = 1000;
-    RangeMarkerImpl marker = (RangeMarkerImpl)createMarker(" ".repeat(len), 10, 11);
+    DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(" ".repeat(len));
+    RangeMarker marker = document.createRangeMarker(10, 11);
+
     TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      Random random = new Random();
       while (!t.isTimedOut()) {
-        int s = random.nextInt(len - 1);
-        marker.setRange(TextRangeScalarUtil.toScalarRange(s, s + 1));
+        TextRange range = marker.getTextRange();
+        assertEquals(range.toString(), 1, range.getLength());
       }
     });
     while (!t.isTimedOut()) {
-      TextRange range = marker.getTextRange();
-      assertEquals(range.toString(), 1, range.getLength());
+      insertString(document, 0, "x");
+      Thread.yield();
+      deleteString(document, 0, 1);
     }
     future.get();
+    Reference.reachabilityFence(document);
   }
 
   public void testRangeMarkerMustPreserveItsOffsetsSomeTimeAfterDeath() {
-    createRemoveCheck(
+    checkCreateRemove(
       () -> createMarker("xxxxx", 1, 3),
-      RangeMarker::dispose);
+      marker -> marker.dispose());
 
-    createRemoveCheck(
+    checkCreateRemove(
       () -> createMarker("xxxxx", 2, 3),
       marker -> ((DocumentEx)marker.getDocument()).removeRangeMarker((RangeMarkerEx)marker));
 
-    createRemoveCheck(
-      () -> DocumentMarkupModel.forDocument(document, getProject(), true).addRangeHighlighter(2, 4, 0, null, HighlighterTargetArea.EXACT_RANGE),
+    checkCreateRemove(
+      () -> (RangeMarkerEx)DocumentMarkupModel.forDocument(document, getProject(), true).addRangeHighlighter(2, 4, 0, null, HighlighterTargetArea.EXACT_RANGE),
       highlighter -> highlighter.dispose());
 
-    createRemoveCheck(
-      () -> DocumentMarkupModel.forDocument(document, getProject(), true).addRangeHighlighter(2, 4, 0, null, HighlighterTargetArea.EXACT_RANGE),
+    checkCreateRemove(
+      () -> (RangeMarkerEx)DocumentMarkupModel.forDocument(document, getProject(), true).addRangeHighlighter(2, 4, 0, null, HighlighterTargetArea.EXACT_RANGE),
       highlighter -> DocumentMarkupModel.forDocument(document, getProject(), true).removeHighlighter((RangeHighlighter)highlighter));
 
-    createRemoveCheck(
+    checkCreateRemove(
       () -> {
         VirtualFile virtualFile = createFile("x.txt", "xxx").getVirtualFile();
-        return LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(virtualFile, 2);
+        return (RangeMarkerEx)LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(virtualFile, 2);
       },
-      RangeMarker::dispose);
+      marker1 -> marker1.dispose());
     
-    createRemoveCheck(
+    checkCreateRemove(
       () -> {
         VirtualFile virtualFile = createFile("x.txt", "xxx").getVirtualFile();
-        return LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(virtualFile, 2);
+        return (RangeMarkerEx)LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(virtualFile, 2);
       },
       marker -> {
         gcDocument();
@@ -1729,19 +1775,25 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       });
   }
 
-  private static void createRemoveCheck(Supplier<? extends RangeMarker> creator, Consumer<? super RangeMarker> remover) {
-    RangeMarker marker = creator.get();
+  private static void checkCreateRemove(@NotNull Supplier<? extends RangeMarkerEx> creator, @NotNull Consumer<? super RangeMarker> remover) {
+    RangeMarkerEx marker = creator.get();
     assertTrue(marker.isValid());
     TextRange range = marker.getTextRange();
     remover.accept(marker);
     assertFalse(marker.isValid());
     assertEquals(range, marker.getTextRange());
-    assertEquals(TextRangeScalarUtil.toScalarRange(range), ((RangeMarkerImpl)marker).getScalarRange());
+    assertEquals(TextRangeScalarUtil.toScalarRange(range), marker.getScalarRange());
   }
 
   public void testInvalidOffsetMustThrow() {
     assertThrows(IllegalArgumentException.class, () -> createMarker("xxxx", 2, 1));
     assertThrows(IllegalArgumentException.class, () -> createMarker("xxxx", -1, 1));
     assertThrows(IllegalArgumentException.class, () -> createMarker("xxxx", 1, 5));
+  }
+
+  public void testUnderlyingTextDeletionMustLeadToInvalidation() {
+    RangeMarkerEx marker = createMarker("12345", 1, 3);
+    deleteString(document, 0, 4);
+    assertFalse(marker.isValid());
   }
 }

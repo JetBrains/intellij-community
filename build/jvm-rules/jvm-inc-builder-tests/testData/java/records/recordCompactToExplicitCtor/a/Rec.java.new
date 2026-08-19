@@ -1,0 +1,6 @@
+public record Rec(int a) {
+  public Rec(int a) {
+    if (a < 0) throw new IllegalArgumentException();
+    this.a = a;
+  }
+}

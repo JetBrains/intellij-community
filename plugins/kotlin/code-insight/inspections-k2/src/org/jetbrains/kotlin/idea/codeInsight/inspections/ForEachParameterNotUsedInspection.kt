@@ -13,8 +13,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
-import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
@@ -22,6 +20,9 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -83,7 +84,7 @@ internal class ForEachParameterNotUsedInspection :
                         val receiverType = receiverExpression.expressionType
                         if (receiverType?.isSubtypeOf(StandardClassIds.Collection) == true)
                             "size"
-                        else if (receiverType?.isSubtypeOf(DefaultTypeClassIds.CHAR_SEQUENCE) == true)
+                        else if (receiverType?.isSubtypeOf(KaStandardTypeClassIds.CHAR_SEQUENCE) == true)
                             "length"
                         else
                             "count()"
@@ -124,7 +125,8 @@ internal class ForEachParameterNotUsedInspection :
         }
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): UnusedForEachParameterInfo? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): UnusedForEachParameterInfo? {
         // Synthetic check: ...forEach { }
         val calleeExpression = element.calleeExpression as? KtNameReferenceExpression
         if (calleeExpression?.getReferencedName() != FOREACH) return null
@@ -159,7 +161,6 @@ internal class ForEachParameterNotUsedInspection :
                     val symbol = (element as? KtElement)
                         ?.resolveToCall()
                         ?.singleVariableAccessCall()
-                        ?.partiallyAppliedSymbol
                         ?.symbol as? KaValueParameterSymbol
                     // it, which belongs to the lambda in question
                     used = symbol?.isImplicitLambdaParameter == true &&

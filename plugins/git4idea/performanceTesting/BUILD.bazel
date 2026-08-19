@@ -79,6 +79,7 @@ jvm_library(
 exports_files(
     [
         "intellij.vcs.git.performanceTesting.iml",
+        "resources/intellij.vcs.git.performanceTesting.xml",
     ],
     visibility = ["//visibility:public"],
 )

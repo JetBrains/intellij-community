@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.google.common.base.Strings;
@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FastUtilHashingStrategies;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.IdeUtilIoBundle;
+import com.intellij.util.system.OS;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -534,20 +535,20 @@ public class GeneralCommandLine implements UserDataHolder {
       }
     }
 
-    String exePath = myExePath;
-    if (exePath.indexOf(File.separatorChar) == -1) {
-      String lookupPath = myEnvParams.get("PATH");
-      if (lookupPath == null && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && SystemInfo.isMac) {
-        String shellPath = EnvironmentUtil.getValue("PATH");
+    var exePath = myExePath;
+    if (exePath.indexOf('/') == -1 && exePath.indexOf('\\') == -1) {
+      var lookupPath = myEnvParams.get("PATH");
+      if (lookupPath == null && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && OS.CURRENT == OS.macOS) {
+        var shellPath = EnvironmentUtil.getValue("PATH");
         if (!Objects.equals(shellPath, System.getenv("PATH"))) {
           lookupPath = shellPath;
         }
       }
       if (lookupPath != null) {
-        File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, lookupPath, null);
+        var exeFile = PathEnvironmentVariableUtil.findFirst(myExePath, lookupPath);
         if (exeFile != null) {
           LOG.debug(exePath + " => " + exeFile);
-          exePath = exeFile.getPath();
+          exePath = exeFile.toString();
         }
       }
     }

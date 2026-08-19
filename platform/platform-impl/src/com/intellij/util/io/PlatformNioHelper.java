@@ -6,7 +6,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.impl.local.windows.WindowsBufferedDirectoryStream;
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter;
 import com.intellij.platform.eel.EelOsFamily;
+import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.LocalEelMachine;
 import com.intellij.platform.eel.provider.utils.JEelUtils;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,8 +43,6 @@ public final class PlatformNioHelper {
 
   /// Whether directory enumeration for {@code directory} should use the Windows-native
   /// [WindowsBufferedDirectoryStream] instead of the stock [Files#newDirectoryStream].
-  /// Gated on the path's EEL OS family (so WSL/remote paths keep using the stock stream)
-  /// and the {@code vfs.windows.use.buffered.directory.stream} registry flag.
   public static boolean useWindowsBufferedDirectoryStream(@NotNull Path directory) {
     var eelPath = JEelUtils.toEelPath(directory);
     var osFamily = eelPath != null ? eelPath.getDescriptor().getOsFamily() : null;

@@ -15,9 +15,11 @@
 - a:onHealthHealthStatusChanged(com.intellij.ui.jcef.JBCefHealthMonitor$Status):V
 *e:com.intellij.ui.jcef.JBCefHealthMonitor$Status
 - java.lang.Enum
+- sf:CEF_SERVER_DISCONNECTED:com.intellij.ui.jcef.JBCefHealthMonitor$Status
 - sf:GPU_PROCESS_FAILED:com.intellij.ui.jcef.JBCefHealthMonitor$Status
 - sf:OK:com.intellij.ui.jcef.JBCefHealthMonitor$Status
 - sf:RUN_UNDER_SUPER_USER:com.intellij.ui.jcef.JBCefHealthMonitor$Status
+- sf:STARTUP_TEST_FAILED:com.intellij.ui.jcef.JBCefHealthMonitor$Status
 - sf:UNKNOWN:com.intellij.ui.jcef.JBCefHealthMonitor$Status
 - sf:UNPRIVILEGED_USER_NS_DISABLED:com.intellij.ui.jcef.JBCefHealthMonitor$Status
 - s:valueOf(java.lang.String):com.intellij.ui.jcef.JBCefHealthMonitor$Status

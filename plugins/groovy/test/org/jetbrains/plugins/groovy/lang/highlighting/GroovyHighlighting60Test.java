@@ -25,12 +25,76 @@ public class GroovyHighlighting60Test extends LightGroovyTestCase implements Hig
   public void testSimpleVal() {
     highlightingTest("""
                        val x = 1
+                       val (a, b) = [-1, 0]
                        for (val y : [1, 2, 3]) {
                          println y
                        }
                        class X {
-                         var
+                         val
                            x = 2
+                       }
+                       """);
+  }
+
+  public void testIncorrectVal() {
+    highlightingTest(
+      """
+        class X {
+          <error descr="Modifier 'val' not allowed on methods">val</error> x(val <error descr="Duplicate modifier 'val'">val</error> p) {
+            val <error descr="Duplicate modifier 'val'">val</error> y = 1
+          }
+        }""");
+  }
+
+  public void testFinalEnum() {
+    highlightingTest("<error descr=\"Modifier 'final' not allowed here\"><caret>final</error> enum E {}");
+    myFixture.launchAction(myFixture.findSingleIntention("Remove 'final'"));
+    myFixture.checkResult("enum E {}");
+  }
+
+  public void testWeakKeywordTypeDefinitions() {
+    highlightingTest("""
+                       class as {
+                           as() {
+                               new trait(1)
+                           }
+                       }
+                       class record {
+                           record() {}
+                       }
+                       class sealed {
+                           sealed() {}
+                       }
+                       enum En {
+                           as, permits, trait, sealed, record, var, val, yield
+                       }
+                       
+                       class trait {
+                           trait(var i) {}
+                       }
+                       class <error descr="'val' is a restricted type name and cannot be used as the identifier of a type declaration">val</error> {
+                           val() {}
+                       }
+                       class <error descr="'var' is a restricted type name and cannot be used as the identifier of a type declaration">var</error> {
+                           var() {}
+                       }
+                       class yield {
+                           yield() {}
+                       }
+                       """);
+  }
+
+  public void testWeakKeywordImportAlias() {
+    highlightingTest("""
+                       import java.lang.String as trait
+                       println (trait)"yes"
+                       """);
+  }
+
+  public void testWeakKeywordLabeledStatement() {
+    highlightingTest("""
+                       trait: for (val x in [1, 2, 4]) {
+                         if (x == 2) break trait;
                        }
                        """);
   }

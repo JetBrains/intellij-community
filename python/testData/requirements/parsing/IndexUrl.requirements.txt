@@ -1,2 +1,0 @@
---index-url https://example.com
--i https://example.com

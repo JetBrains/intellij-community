@@ -5,9 +5,12 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -42,9 +45,10 @@ internal object ConvertStringToCharLiteralFixFactory {
         getFixes(diagnostic.psi, diagnostic.expectedType)
     }
 
-    private fun KaSession.getFixes(element: PsiElement?, expectedType: KaType): List<ConvertStringToCharLiteralFix> {
+    context(session: KaSession)
+    private fun getFixes(element: PsiElement?, expectedType: KaType): List<ConvertStringToCharLiteralFix> {
         if (element !is KtStringTemplateExpression) return emptyList()
-        if (!expectedType.isCharType) return emptyList()
+        if (expectedType.classId != KaStandardTypeClassIds.CHAR) return emptyList()
 
         val charLiteral = ConvertStringToCharLiteralUtils.prepareCharLiteral(element) ?: return emptyList()
         analyze(charLiteral) {

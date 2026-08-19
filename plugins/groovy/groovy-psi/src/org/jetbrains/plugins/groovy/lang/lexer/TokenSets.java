@@ -174,11 +174,6 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.VARIAB
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes.RECORD_TYPE_DEFINITION;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAMBDA_BODY;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAMBDA_BODY_SWITCH_AWARE;
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_PERMITS;
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_RECORD;
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VAL;
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VAR;
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_YIELD;
 
 public interface TokenSets {
 
@@ -229,18 +224,20 @@ public interface TokenSets {
   );
 
   TokenSet CONTEXTUAL_KEYWORDS = TokenSet.create(
-    KW_PERMITS,
-    KW_RECORD,
-    KW_VAL,
-    KW_VAR,
-    KW_YIELD
+    kPERMITS,
+    kRECORD,
+    kSEALED,
+    kVAL,
+    kVAR,
+    kYIELD
   );
 
-  TokenSet PROPERTY_NAMES = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, CONTEXTUAL_KEYWORDS, TokenSet.create(
-    mIDENT,
-    mREGEX_LITERAL,
-    mDOLLAR_SLASH_REGEX_LITERAL
-  ));
+  TokenSet GROOVY_KEYWORDS = TokenSet.create(kAS, kIN, kTRAIT);
+
+  TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF, kAS, kIN, kPERMITS, kRECORD, kSEALED, kTRAIT, kVAL, kVAR, kYIELD);
+
+  TokenSet PROPERTY_NAMES = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, CONTEXTUAL_KEYWORDS,
+                                           TokenSet.create(mIDENT, mREGEX_LITERAL, mDOLLAR_SLASH_REGEX_LITERAL));
 
   TokenSet KEYWORDS = TokenSet.create(
     kABSTRACT, kAS, kASSERT,
@@ -353,8 +350,6 @@ public interface TokenSets {
     Map.entry(mBXOR_ASSIGN, mBXOR),
     Map.entry(mSTAR_STAR_ASSIGN, mSTAR_STAR)
   );
-
-  TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF, kIN, kAS, kTRAIT, kVAL, kVAR, kYIELD, kRECORD);
 
   TokenSet BLOCK_SET = TokenSet.create(
     CLOSABLE_BLOCK,

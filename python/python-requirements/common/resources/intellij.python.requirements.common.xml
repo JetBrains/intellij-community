@@ -1,0 +1,41 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.pyDependenciesFileProvider"
+                    interface="com.jetbrains.python.requirements.PyDependenciesFileProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Requirements.txt"
+              implementationClass="com.intellij.python.requirements.RequirementsFileType"
+              fieldName="INSTANCE"
+              language="Requirements"
+              fileNamesCaseInsensitive="requirements.txt"/>
+    <lang.parserDefinition
+      language="Requirements"
+      implementationClass="com.intellij.python.requirements.parser.RequirementsParserDefinition"/>
+    <lang.commenter
+      language="Requirements"
+      implementationClass="com.intellij.python.requirements.RequirementsCommenter"/>
+    <lang.syntaxHighlighterFactory
+      language="Requirements"
+      implementationClass="com.jetbrains.python.requirements.RequirementsSyntaxHighlighterFactory"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <pyDependenciesFileProvider implementation="com.jetbrains.python.requirements.impl.SetupPyFileProvider"/>
+    <pyDependenciesFileProvider implementation="com.jetbrains.python.requirements.impl.RequirementsTxtFileProvider"/>
+  </extensions>
+</idea-plugin>

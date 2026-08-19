@@ -9,6 +9,7 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.PyExecutableCache
 import com.intellij.python.pytools.Version
 import com.intellij.python.pytools.performToolInstallation
 import com.intellij.ui.components.ActionLink
@@ -28,7 +29,6 @@ import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
 internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
@@ -37,6 +37,10 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
 ) : PythonNewEnvironmentCreator<P>(model) {
   internal lateinit var basePythonComboBox: PythonInterpreterComboBox<P>
   internal lateinit var executablePath: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>
+
+  // Persist the tool path only when the user explicitly browsed/typed it, never an autodetected fill.
+  override val persistToolExecutableOnSetup: Boolean
+    get() = this::executablePath.isInitialized && executablePath.isUserEdited
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
@@ -140,7 +144,8 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", pyTool.presentableName)) {
       val eel = model.projectPathFlows.projectPath.first()?.getEelDescriptor()?.toEelApi() ?: localEel
       when (val r = pyTool.performToolInstallation(eel)) {
-        is Result.Success -> savePathToExecutableToProperties(PathHolder.Eel(r.result) as? P)
+        // Don't persist the installed path; just drop the detection cache so the next lookup finds it.
+        is Result.Success -> PyExecutableCache.getInstance().invalidate(eel.descriptor, pyTool)
         is Result.Failure -> errorSink.emit(r.error)
       }
     }

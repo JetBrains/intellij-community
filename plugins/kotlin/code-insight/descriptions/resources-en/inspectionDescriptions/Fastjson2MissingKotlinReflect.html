@@ -1,0 +1,72 @@
+<html>
+<body>
+<p>Reports usages of <code>fastjson2</code> or <code>fastjson2-kotlin</code> in Kotlin code when <code>kotlin-reflect</code> is missing from
+    the containing module's classpath.</p>
+
+<p>According to the Fastjson2 documentation, <code>kotlin-reflect</code> is recommended when using Kotlin data classes or constructor-based
+    parameter passing.</p>
+
+<p>Without <code>kotlin-reflect</code>, constructor parameter names may not be resolved in some environments, which may cause
+    deserialization of Kotlin classes to fail or produce incorrect results.</p>
+
+<!-- tooltip end -->
+
+<p>Example:</p>
+
+<pre><code lang="kotlin">
+// FILE: Main.kt
+
+import com.alibaba.fastjson2.JSON
+
+data class User(
+    val name: String,
+    val age: Int,
+)
+
+fun main() {
+    val json = """{"name":"Alice","age":30}"""
+
+    // Without kotlin-reflect, deserialization of Kotlin classes
+    // may fail or produce incorrect results in some environments.
+    val user = JSON.parseObject(json, User::class.java)
+
+    println(user)
+}
+</code></pre>
+
+<p>The quick-fix adds a <code>kotlin-reflect</code> dependency to the affected module.</p>
+
+<p>Quick-fix result in <code>build.gradle.kts</code>:</p>
+
+<pre><code lang="kotlin">
+// FILE: build.gradle.kts
+dependencies {
+    implementation("com.alibaba.fastjson2:fastjson2:2.0.63")
+    // or implementation("com.alibaba.fastjson2:fastjson2-kotlin:2.0.63")
+
+    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version") // added by quick-fix
+}
+</code></pre>
+
+<p>Quick-fix result in <code>pom.xml</code>:</p>
+
+<pre><code lang="xml">
+// FILE: pom.xml
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;com.alibaba.fastjson2&lt;/groupId&gt;
+        &lt;artifactId&gt;fastjson2&lt;/artifactId&gt;
+        &lt;version&gt;2.0.63&lt;/version&gt;
+    &lt;/dependency&gt;
+    &lt;!-- or fastjson2-kotlin --&gt;
+
+    &lt;!-- added by quick-fix --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.jetbrains.kotlin&lt;/groupId&gt;
+        &lt;artifactId&gt;kotlin-reflect&lt;/artifactId&gt;
+        &lt;version&gt;${kotlin.version}&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+</code></pre>
+</body>
+</html>

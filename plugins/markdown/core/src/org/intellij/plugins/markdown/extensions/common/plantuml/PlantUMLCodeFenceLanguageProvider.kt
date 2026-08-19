@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.fileTypes.UnknownFileType
 import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider
+import org.jetbrains.annotations.ApiStatus
 
 class PlantUMLCodeFenceLanguageProvider: CodeFenceLanguageProvider {
   override fun getLanguageByInfoString(infoString: String): Language? {
@@ -31,7 +32,8 @@ class PlantUMLCodeFenceLanguageProvider: CodeFenceLanguageProvider {
       "puml"
     )
 
-    internal fun isPlantUmlInfoString(infoString: String): Boolean {
+    @ApiStatus.Internal
+    fun isPlantUmlInfoString(infoString: String): Boolean {
       return infoString.lowercase() in aliases
     }
 

@@ -16,9 +16,8 @@ var version: Int
 var name: String
 var isSimple: Boolean
 }
-
 internal object SubSimpleEntityType : EntityType<SubSimpleEntity, SubSimpleEntityBuilder>(){
-override val entityClass: Class<SubSimpleEntity> get() = SubSimpleEntity::class.java
+override val entityImplClass: Class<*> get() = SubSimpleEntityImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = SubSimpleEntityImpl.Builder::class.java
 operator fun invoke(
 version: Int,
@@ -36,12 +35,10 @@ init?.invoke(builder)
 return builder
 }
 }
-
 fun MutableEntityStorage.modifySubSimpleEntity(
 entity: SubSimpleEntity,
 modification: SubSimpleEntityBuilder.() -> Unit,
 ): SubSimpleEntity = modifyEntity(SubSimpleEntityBuilder::class.java, entity, modification)
-
 @JvmOverloads
 @JvmName("createSubSimpleEntity")
 fun SubSimpleEntity(

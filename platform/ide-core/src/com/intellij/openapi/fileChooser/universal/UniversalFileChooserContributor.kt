@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileChooser.universal
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.nio.file.FileSystems
@@ -17,8 +18,6 @@ interface UniversalFileChooserContributor {
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<UniversalFileChooserContributor> = ExtensionPointName("com.intellij.universalFileChooserContributor")
-
-    fun findOwner(path: Path): UniversalFileChooserContributor? = EP_NAME.findFirstSafe { ext -> ext.ownsPath(path) }
 
     fun getFilteredSystemRoots(predicate: (Path) -> Boolean): List<Root> {
       return FileSystems.getDefault().getRootDirectories().filter(predicate).map { asDefaultRoot(it) }
@@ -58,12 +57,17 @@ interface UniversalFileChooserContributor {
 
   data class Presentation(
     @get:Nls val presentableName: String,
-    val icon: Icon? = null
+    val icon: Icon? = null,
+    @get:Nls val comment: String? = null,
   )
 
   suspend fun getPresentation(path: Path): Presentation? = null
 
   fun getFileName(path: Path): String? = path.fileName?.toString()
+
+  fun getPresentablePath(path: Path): @NlsSafe String = path.toString()
+
+  fun parsePresentablePath(text: String): Path? = runCatching { Path.of(text) }.getOrNull()
 
   fun getDesktopPath(): Path? = null
 
@@ -79,5 +83,9 @@ class SingleRootContributor(
 ) : UniversalFileChooserContributor by delegate {
   override suspend fun getRoots(): List<UniversalFileChooserContributor.Root> = delegate.getFilteredRoots(rootPath)
 }
+
+@ApiStatus.Internal
+fun Collection<UniversalFileChooserContributor>.findOwner(path: Path): UniversalFileChooserContributor? =
+  firstOrNull { runCatching { it.ownsPath(path) }.getOrDefault(false) }
 
 

@@ -60,6 +60,7 @@ jvm_library(
 exports_files(
     [
         "intellij.tasks.trac.iml",
+        "resources/intellij.tasks.trac.xml",
     ],
     visibility = ["//visibility:public"],
 )

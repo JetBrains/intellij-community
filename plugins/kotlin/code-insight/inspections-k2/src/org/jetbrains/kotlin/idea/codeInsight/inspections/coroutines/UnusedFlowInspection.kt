@@ -10,10 +10,10 @@ import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutinesIds
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -118,7 +118,8 @@ internal class UnusedFlowInspection : KotlinApplicableInspectionBase<KtExpressio
         return selectApplicableRanges(element, element)?.let { listOf(it) } ?: super.getApplicableRanges(element)
     }
 
-    override fun KaSession.prepareContext(element: KtExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtExpression): Unit? {
         // We check if the element is a flow value and if it is used as an expression (i.e. its value is used).
         // If it is not used, then the user forgot to collect this flow.
         val returnType = (element.resolveExpression() as? KaCallableSymbol)?.returnType as? KaClassType ?: return null

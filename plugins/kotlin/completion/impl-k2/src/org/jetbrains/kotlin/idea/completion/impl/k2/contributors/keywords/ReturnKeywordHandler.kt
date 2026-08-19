@@ -8,15 +8,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.isClassType
-import org.jetbrains.kotlin.analysis.api.components.isNullable
-import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.createKeywordElementWithSpace
 import org.jetbrains.kotlin.idea.completion.implCommon.keywords.isInlineFunctionCall
 import org.jetbrains.kotlin.idea.completion.isLikelyInPositionForReturn
-import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
+import org.jetbrains.kotlin.idea.completion.implCommon.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.completion.labelNameToTail
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -61,7 +62,7 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTok
                         result,
                         returnType,
                         label = null,
-                        isLikelyInPositionForReturn(expression, parent, returnType.isUnitType)
+                        isLikelyInPositionForReturn(expression, parent, returnType.classId == KaStandardTypeClassIds.UNIT)
                     )
                 }
                 break
@@ -78,7 +79,7 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTok
         label: Name?,
         isLikelyInPositionForReturn: Boolean = false
     ) {
-        val isUnit = returnType.isUnitType
+        val isUnit = returnType.classId == KaStandardTypeClassIds.UNIT
         result.add(createKeywordElementWithSpace("return", tail = label?.labelNameToTail().orEmpty(), addSpaceAfter = !isUnit).also {
             it.isReturnAtHighlyLikelyPosition = isLikelyInPositionForReturn
         })

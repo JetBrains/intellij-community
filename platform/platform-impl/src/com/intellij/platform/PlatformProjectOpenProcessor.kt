@@ -16,11 +16,14 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -119,11 +122,17 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         projectName = dummyProjectName,
         runConfigurators = false,
         runConversionBeforeOpen = false,
-        beforeOpen = { project ->
-          project.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
-          options.beforeOpen?.invoke(project) ?: true
+        beforeOpenTasks = buildList {
+          add { project ->
+            project.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
+            true
+          }
+          addAll(options.beforeOpenTasks)
         }
-      )
+      ).let {
+        // both callers of this go on to `openFileFromCommandLine`, which is what releases the hold this asks for
+        it.markAsOpeningFileAfterProjectOpen()
+      }
     }
 
     private fun createTempProjectAndOpenFile(file: Path, options: OpenProjectTask): Project? {
@@ -146,20 +155,22 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return project
     }
 
+    /**
+     * Do not use this method. It should be private. Use [ProjectUtil.openOrImport] or [ProjectUtil.openOrImportAsync]
+     */
     @Internal
     fun doOpenProject(file: Path, originalOptions: OpenProjectTask): Project? {
       LOG.info("Opening (sync) $file")
 
       if (originalOptions.createModule && Files.isDirectory(file)) {
-        val options = runUnderModalProgressIfIsEdt {
-          createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null).copy(
-            projectName = originalOptions.projectName,
-            beforeOpen = {
-              it.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
-              true
-            }
-          )
-        }
+        val options = originalOptions.copy(
+          runConfigurators = originalOptions.runConfigurators ?: true,
+          projectRootDir = originalOptions.projectRootDir ?: file,
+          beforeOpenTasks = originalOptions.beforeOpenTasks + { project ->
+            project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
+            true
+          }
+        )
         return ProjectManagerEx.getInstanceEx().openProject(file, options)
       }
 
@@ -205,7 +216,14 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
       val project = ProjectManagerEx.getInstanceEx().openProject(
         projectStoreBaseDir = baseDir,
-        options = if (baseDir == file) options else options.copy(projectName = file.fileName.toString())
+        // the flag is set on exactly the condition under which `openFileFromCommandLine` is called below, so the hold it asks for is
+        // always the one that call releases
+        options = if (baseDir == file) {
+          options
+        }
+        else {
+          options.copy(projectName = file.fileName.toString()).markAsOpeningFileAfterProjectOpen()
+        }
       )
       if (project != null && file != baseDir) {
         openFileFromCommandLine(project, file, options.line, options.column)
@@ -213,18 +231,31 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return project
     }
 
-    suspend fun openProjectAsync(file: Path, originalOptions: OpenProjectTask = OpenProjectTask()): Project? {
+    /**
+     * Do not use this method. It should be private. Use [ProjectUtil.openOrImportAsync]
+     */
+    @Internal
+    suspend fun openProjectAsync(file: Path, originalOptions: OpenProjectTask): Project? {
       LOG.info("Opening (async) $file")
 
       val isDirectory = Files.isDirectory(file)
       if (originalOptions.createModule && isDirectory) {
-        // todo: originalOptions should not be dropped
+        // todo: this is a shortcut to bypass all the "normal" logic and let project be imported via directory configurators only.
+        //  createModule is a rather new thing. Moreover, it is @Internal. It has no external usages yet, and  only a few internal usages.
+        //  Effectively, this condition means: if we reached PlatformProjectOpenProcessor with a directory, then use directory configurators
+        //   (except a very few very special cases: opening a directory (usually as a temp project) and opening a temp project)
+        //   (We also have bazel plugin which sets createModule to false, but at the same time it explicitly sets runConfigurators=true)
+        //  Earlier we had `createOptionsToOpenDotIdeaOrCreateNewIfNotExists` instead of `originalOptions.copy`, and it worked as follows:
+        //   if we reach this place with a directory - then forget originalOptions, and try to open the folder as exisitng .idea project
+        //   or create a new .idea project here and import it via directory condifurators.
+        //  Now we try to not reject existing originalOptions and capture the intent (most notably - runConfigurators flag) on the callers side.
         return ProjectManagerEx.getInstanceEx().openProjectAsync(
           projectIdentityFile = file,
-          options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null).copy(
-            projectName = originalOptions.projectName,
-            beforeOpen = {
-              it.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
+          options = originalOptions.copy(
+            runConfigurators = originalOptions.runConfigurators ?: true,
+            projectRootDir = originalOptions.projectRootDir ?: file,
+            beforeOpenTasks = originalOptions.beforeOpenTasks + { project ->
+              project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
               true
             }
           ),
@@ -273,7 +304,13 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
       val project = ProjectManagerEx.getInstanceEx().openProjectAsync(
         projectIdentityFile = baseDir,
-        options = if (baseDir == file) options else options.copy(projectName = file.fileName.toString())
+        // as in `doOpenProject`: set on exactly the condition under which `openFileFromCommandLine` is called below
+        options = if (baseDir == file) {
+          options
+        }
+        else {
+          options.copy(projectName = file.fileName.toString()).markAsOpeningFileAfterProjectOpen()
+        }
       )
       if (project != null && file != baseDir) {
         openFileFromCommandLine(project, file, options.line, options.column)
@@ -348,11 +385,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmStatic
     suspend fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
       return OpenProjectTask {
-        runConfigurators = true
-        isNewProject = !ProjectUtil.isValidProjectPath(projectDir)
-        this.projectToClose = projectToClose
-        useDefaultProjectAsTemplate = true
-        projectRootDir = projectDir
+        configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir, projectToClose)
       }
     }
 
@@ -362,6 +395,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       isNewProject = !ProjectUtil.isValidProjectPath(projectDir)
       this.projectToClose = projectToClose
       useDefaultProjectAsTemplate = true
+      projectRootDir = projectDir
     }
   }
 
@@ -404,26 +438,58 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     get() = "text editor"
 }
 
+/**
+ * Opens a file named on the command line, once the project it belongs to is open.
+ *
+ * Every caller opens the project with [OpenProjectTask.opensFileAfterProjectOpen] set, so a hold on the editor empty state is waiting
+ * to be released here: this navigation happens after project open has finished and released its own hold, and without the extra hold
+ * the empty state would be shown for as long as it takes to get here and then immediately replaced by this file.
+ */
 private fun openFileFromCommandLine(project: Project, file: Path, line: Int, column: Int) {
   StartupManager.getInstance(project).runAfterOpened {
     ApplicationManager.getApplication().invokeLater(Runnable {
-      if (project.isDisposed || !Files.exists(file)) {
-        return@Runnable
-      }
+      try {
+        if (project.isDisposed || !Files.exists(file)) {
+          return@Runnable
+        }
 
-      val virtualFile = ProjectUtilCore.getFileAndRefresh(file) ?: return@Runnable
-      val navigatable = if (line > 0) {
-        OpenFileDescriptor(project, virtualFile, line - 1, column.coerceAtLeast(0))
+        val virtualFile = ProjectUtilCore.getFileAndRefresh(file) ?: return@Runnable
+        val navigatable = if (line > 0) {
+          OpenFileDescriptor(project, virtualFile, line - 1, column.coerceAtLeast(0))
+        }
+        else {
+          PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
+        }
+        navigatable.navigate(true)
       }
-      else {
-        PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
+      finally {
+        // in a `finally`, so that a file that turned out not to exist releases the hold as well as one that opened
+        endStartupEmptyStatePresentationHold(project)
       }
-      navigatable.navigate(true)
     }, ModalityState.nonModal(), project.disposed)
   }
 }
 
-internal suspend fun attachToProjectAsync(
+/**
+ * Releases the hold [OpenProjectTask.opensFileAfterProjectOpen] asked for.
+ *
+ * Nothing to release if the editor area was never built: `mainSplitters` is a `lateinit` assigned inside `initJob`, and where that job
+ * did not complete, editor restoring never took a hold either.
+ */
+@RequiresEdt
+private fun endStartupEmptyStatePresentationHold(project: Project) {
+  if (project.isDisposed) {
+    return
+  }
+  val fileEditorManager = project.serviceIfCreated<FileEditorManager>() as? FileEditorManagerImpl ?: return
+  if (!fileEditorManager.initJob.isCompleted || fileEditorManager.initJob.isCancelled) {
+    return
+  }
+  fileEditorManager.mainSplitters.endStartupEmptyStatePresentationHold()
+}
+
+@Internal
+suspend fun attachToProjectAsync(
   projectToClose: Project,
   projectDir: Path,
   processor: ProjectAttachProcessor? = null,
@@ -434,17 +500,18 @@ internal suspend fun attachToProjectAsync(
     return false
   }
   if (processor != null) {
-    return attachImpl(processor, projectToClose, projectDir, callback, beforeOpen)
+    return attachSafe(processor, projectToClose, projectDir, callback, beforeOpen)
   }
   for (attachProcessor in ProjectAttachProcessor.EP_NAME.lazySequence()) {
-    if (attachImpl(attachProcessor, projectToClose, projectDir, callback, beforeOpen)) {
+    if (attachSafe(attachProcessor, projectToClose, projectDir, callback, beforeOpen)) {
       return true
     }
   }
   return false
 }
 
-private suspend fun attachImpl(
+@Internal
+suspend fun attachSafe(
   attachProcessor: ProjectAttachProcessor,
   projectToClose: Project,
   projectDir: Path,

@@ -5,10 +5,12 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.ex.DocumentRangeMarkerTree
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentSputnik
+import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
+import com.intellij.openapi.util.Key
 import com.intellij.util.DocumentEventUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.text.ImmutableCharSequence
@@ -23,15 +25,15 @@ import kotlin.concurrent.Volatile
  * later sync pass. Those writes do not take the application write lock.
  *
  * Reverting elf changes and applying real changes to elf are synchronization
- * operations. They run on EDT with write access, outside an elf scope, and keep
- * the UI-side view consistent with the real document after conflict handling or
- * real-document edits.
+ * operations. They run on EDT with write access and are entered outside an elf
+ * scope; each operation performs its elf-view mutations inside an elf scope of
+ * its own to keep the UI-side view consistent with the real document after
+ * conflict handling or real-document edits.
  */
 internal abstract class DocumentElfMutator(
   private val settingsElf: DocumentSettings,
   private val dispatcher: DocumentMagicEventDispatcher,
-  tree: DocumentRangeMarkerTree,
-) : DocumentMutatorImpl(settingsElf, dispatcher, tree) {
+) : DocumentMutatorImpl(settingsElf, dispatcher) {
   @Volatile private var textChangeInProgress = false
   @Volatile private var isApplyingRealChangesToElf = false
   @Volatile private var revertingChangeEvent: DocumentEvent? = null
@@ -47,13 +49,15 @@ internal abstract class DocumentElfMutator(
     check(changes.isNotEmpty()) { "no elf changes to revert" }
     val initialBulkModeStatus = dispatcher.elf().isInBulkUpdate()
     val hostDocument = changes.first().changeEvent.document
-    try {
-      for (change in changes.asReversed()) {
-        dispatcher.setBulkElfUpdateStatus(hostDocument, change.isInBulkUpdate)
-        revertChange(change)
+    Elf.getElf().withElfScope {
+      try {
+        for (change in changes.asReversed()) {
+          dispatcher.setBulkElfUpdateStatus(hostDocument, change.isInBulkUpdate)
+          revertChange(change)
+        }
+      } finally {
+        dispatcher.setBulkElfUpdateStatus(hostDocument, initialBulkModeStatus)
       }
-    } finally {
-      dispatcher.setBulkElfUpdateStatus(hostDocument, initialBulkModeStatus)
     }
   }
 
@@ -65,20 +69,27 @@ internal abstract class DocumentElfMutator(
     val initialBulkModeStatus = dispatcher.elf().isInBulkUpdate()
     val hostDocument = changes.first().changeEvent.document
     isApplyingRealChangesToElf = true
-    try {
-      for (change in changes) {
-        dispatcher.setBulkElfUpdateStatus(hostDocument, change.isInBulkUpdate)
-        changeText(
-          getSnapshot(),
-          change.changeEvent,
-          change.snapshotAfter.text(),
-          DocumentModStamp.next(),
-          false, // TODO: why false?
-        )
+    Elf.getElf().withElfScope {
+      try {
+        for (change in changes) {
+          dispatcher.setBulkElfUpdateStatus(hostDocument, change.isInBulkUpdate)
+          val snapshotBefore = getSnapshot()
+          changeText(
+            snapshotBefore,
+            change.changeEvent,
+            syncPatch(
+              change.changeEvent,
+              snapshotBefore,
+              change.snapshotAfter.text().chars(),
+              DocumentModStamp.next(),
+              false, // TODO: why false?
+            ),
+          )
+        }
+      } finally {
+        isApplyingRealChangesToElf = false
+        dispatcher.setBulkElfUpdateStatus(hostDocument, initialBulkModeStatus)
       }
-    } finally {
-      isApplyingRealChangesToElf = false
-      dispatcher.setBulkElfUpdateStatus(hostDocument, initialBulkModeStatus)
     }
   }
 
@@ -90,6 +101,11 @@ internal abstract class DocumentElfMutator(
   final override fun clearLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray) {
     assertIsInElfScope()
     throw UnsupportedOperationException("ElfDocument does not support clearLineFlags yet")
+  }
+
+  final override fun <S : DocumentSputnik> setSputnik(key: Key<S>, sputnik: (DocumentSnapshot) -> S?): DocumentSnapshot {
+    assertIsInElfScope()
+    throw UnsupportedOperationException("ElfDocument does not support setSputnik yet")
   }
 
   final override fun insertString(
@@ -166,16 +182,14 @@ internal abstract class DocumentElfMutator(
   final override fun changeText(
     snapshotBefore: DocumentSnapshot,
     changeEvent: DocumentEvent,
-    newWholeText: ImmutableCharSequence,
-    newModStamp: Long,
-    clearLineFlags: Boolean,
+    patch: DocumentTextPatch,
   ): DocumentSnapshot {
     assertNotNestedModification()
     val snapshotAfter: DocumentSnapshot
     textChangeInProgress = true
     try {
       snapshotAfter = dispatcher.withFiringElfTextUpdate(revertingChangeEvent, changeEvent) {
-        updateText(snapshotBefore, changeEvent, newWholeText, newModStamp, clearLineFlags)
+        updateText(snapshotBefore, patch)
       }
     } finally {
       textChangeInProgress = false
@@ -186,9 +200,7 @@ internal abstract class DocumentElfMutator(
         ElfTextChange(
           snapshotBefore,
           changeEvent,
-          newWholeText,
-          newModStamp,
-          clearLineFlags,
+          patch,
           dispatcher.elf().isInBulkUpdate(),
           CommandProcessor.getInstance().currentCommandProject,
           CommandProcessor.getInstance().currentCommandName,
@@ -202,55 +214,93 @@ internal abstract class DocumentElfMutator(
 
   private fun updateText(
     snapshotBefore: DocumentSnapshot,
-    changeEvent: DocumentEvent,
-    newWholeText: ImmutableCharSequence,
-    newModStamp: Long,
-    clearLineFlags: Boolean,
+    patch: DocumentTextPatch,
   ): DocumentSnapshot {
-    return updateAndGet { latest ->
-      // modStamp or other metadata could be changed during before-change listeners, should merge it into final snapshot
-      val merged = snapshotBefore.withMetadata(latest)
-      merged.withText(
-        newWholeText,
-        changeEvent.offset,
-        changeEvent.offset + changeEvent.oldLength,
-        changeEvent.newFragment,
-        newModStamp,
-        changeEvent.isWholeTextReplaced,
-        clearLineFlags,
-        false,
-      )
-    }
+    return updateAndGet { latest -> mergeAndPatch(snapshotBefore, latest, patch) }
   }
 
   private fun revertChange(change: ElfTextChange) {
     val eventToRevert = change.changeEvent
-    val currentSnapshot = getSnapshot() // safe to get snapshot because outside elfScope
+    // Safe to read despite running inside the operation's elf scope: nothing runs between this read and changeText,
+    // whose nested-modification guard rejects elf text changes from listeners, and elf metadata cannot change either —
+    // setModStamp/clearLineFlags are unsupported for elf, and updateText merges the latest metadata at CAS time anyway.
+    val currentSnapshot = getSnapshot()
+    val currentText = currentSnapshot.text()
     val initialStartOffset = if (eventToRevert is DocumentEventImpl) eventToRevert.initialStartOffset else eventToRevert.offset
     val changeEvent = DocumentEventImpl(
       eventToRevert.document,
       eventToRevert.offset,
       eventToRevert.newFragment,
       eventToRevert.oldFragment,
-      currentSnapshot.modStamp(),
+      currentSnapshot.modState().stamp(),
       eventToRevert.isWholeTextReplaced,
       initialStartOffset,
       eventToRevert.newLength,
       getRevertMoveOffset(eventToRevert),
-      currentSnapshot.textLength(),
+      currentText.length(),
     )
     revertingChangeEvent = eventToRevert
     try {
       changeText(
         currentSnapshot,
         changeEvent,
-        change.snapshotBefore.text(),
-        DocumentModStamp.next(),
-        change.clearLineFlags,
+        syncPatch(
+          changeEvent,
+          currentSnapshot,
+          change.snapshotBefore.text().chars(),
+          DocumentModStamp.next(),
+          change.patch.clearLineFlags(),
+        ),
       )
     } finally {
       revertingChangeEvent = null
     }
+  }
+
+  /**
+   * Patch applying [changeEvent] on top of [snapshotBefore] during synchronization.
+   * A whole-text replacement takes [wholeText] as the resulting text, reusing the instance
+   * (restoring the original text for a revert, sharing the real snapshot's text for a replay).
+   */
+  private fun syncPatch(
+    changeEvent: DocumentEvent,
+    snapshotBefore: DocumentSnapshot,
+    wholeText: ImmutableCharSequence,
+    newModStamp: Long,
+    clearLineFlags: Boolean,
+  ): DocumentTextPatch {
+    val originStartOffset = if (changeEvent is DocumentEventImpl) {
+      changeEvent.initialStartOffset
+    } else {
+      changeEvent.offset
+    }
+    val originEndOffset = originStartOffset + (if (changeEvent is DocumentEventImpl) {
+      changeEvent.initialOldLength
+    } else {
+      changeEvent.oldLength
+    })
+    if (changeEvent.isWholeTextReplaced) {
+      return DocumentTextPatch.complex(
+        startOffset = 0,
+        endOffset = snapshotBefore.text().length(),
+        newFragment = wholeText,
+        newModStamp = newModStamp,
+        clearLineFlags = true,
+        originStartOffset = originStartOffset,
+        originEndOffset = originEndOffset,
+        moveOffset = changeEvent.moveOffset,
+      )
+    }
+    return DocumentTextPatch.complex(
+      startOffset = changeEvent.offset,
+      endOffset = changeEvent.offset + changeEvent.oldLength,
+      newFragment = changeEvent.newFragment,
+      newModStamp = newModStamp,
+      clearLineFlags = clearLineFlags,
+      originStartOffset = originStartOffset,
+      originEndOffset = originEndOffset,
+      moveOffset = changeEvent.moveOffset,
+    )
   }
 
   private fun getRevertMoveOffset(changeEvent: DocumentEvent): Int {

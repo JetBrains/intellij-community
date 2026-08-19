@@ -5,7 +5,5 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface PyCallSiteOwner : PyElement {
-  fun getReceiver(resolvedCallee: PyCallable?): PyExpression?
-
   fun getArguments(resolvedCallee: PyCallable?): List<PyExpression>
 }

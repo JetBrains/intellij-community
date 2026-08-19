@@ -79,6 +79,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WindowRoundedCornersManager
+import com.intellij.ui.components.Badge
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.icons.getDisabledIcon
 import com.intellij.ui.mac.MacFullScreenControlsManager
@@ -579,7 +580,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
           val theme = group.items.find { info -> info.id == value.themeId}
           if (theme != null) {
             if (theme.isRestartRequired()) {
-              icon(AllIcons.General.Beta)
+              icon(Badge.beta)
               if (!welcomeMode && value.themeId != currentTheme?.id && group.items.find { info -> info.id == currentTheme?.id} == null) {
                 icon(getDisabledIcon(AllIcons.Actions.Restart, null))
                 toolTipText = IdeBundle.message("ide.restart.required.comment")
@@ -1283,9 +1284,8 @@ private class OurPopupFactory(private val delegate: PopupFactory) : PopupFactory
         DialogWrapper.cleanupWindowListeners(window)
       }
     })
-    if ((IdeaPopupMenuUI.isUnderPopup(contents) || (SystemInfoRt.isWindows || IdeaPopupMenuUI.isUnderMainMenu(contents)))
-        && WindowRoundedCornersManager.isAvailable()) {
-      if ((SystemInfoRt.isMac && StartupUiUtil.isDarkTheme) || SystemInfoRt.isWindows) {
+    if (contents is JPopupMenu && IdeaPopupMenuUI.isRoundBorder()) {
+      if ((SystemInfoRt.isMac && StartupUiUtil.isDarkTheme) || SystemInfoRt.isWindows || StartupUiUtil.isWaylandToolkit()) {
         WindowRoundedCornersManager.setRoundedCorners(window, JBUI.CurrentTheme.Popup.borderColor(true))
       }
       else {

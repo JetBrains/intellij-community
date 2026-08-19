@@ -7,6 +7,11 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
+    name = "libraries_jetbrains_annotations_provided",
+    lib = "//libraries/jetbrains/annotations",
+)
+
+jvm_provided_library(
     name = "platform_ide-core_provided",
     lib = "//platform/ide-core",
 )
@@ -80,9 +85,9 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib-provided",
-        "@lib//:jetbrains-annotations-provided",
         "//platform/kernel/rpc.backend",
         ":xml_emmet_provided",
+        ":libraries_jetbrains_annotations_provided",
         ":platform_ide-core_provided",
         ":platform_lang-impl_provided",
         ":platform_util-ui_provided",
@@ -112,7 +117,8 @@ jvm_library(
         "@lib//:kotlin-stdlib-provided",
         "//xml/emmet",
         "//xml/emmet:emmet_test_lib",
-        "@lib//:jetbrains-annotations-provided",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/ide-core",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/lang-impl",
@@ -144,6 +150,7 @@ jvm_library(
 exports_files(
     [
         "intellij.xml.emmet.backend.iml",
+        "resources/intellij.xml.emmet.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

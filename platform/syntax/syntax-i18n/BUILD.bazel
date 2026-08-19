@@ -43,7 +43,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         ":platform_multiplatformSupport_provided",
     ],
 )
@@ -63,10 +63,12 @@ jvm_library(
         ":i18n",
         "//platform/multiplatformSupport",
         "//platform/multiplatformSupport:multiplatformSupport_test_lib",
-        "@lib//:kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
         "@lib//:kotlin-test",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.syntax.i18n` end
@@ -113,11 +115,13 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/multiplatformSupport",
         "//platform/multiplatformSupport:multiplatformSupport_test_lib",
-        "@lib//:kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
         "@lib//:kotlin-test",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.syntax.i18n.tests` end

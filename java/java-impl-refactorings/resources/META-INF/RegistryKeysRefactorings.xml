@@ -1,0 +1,7 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="false" description="Suggested refactoring from call-site in Java"
+                 key="ide.java.refactoring.suggested.call.site"/>
+  </extensions>
+</idea-plugin>

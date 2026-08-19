@@ -102,7 +102,56 @@ suspend fun createCompilationContext(
   enableCoroutinesDump: Boolean = true,
   customBuildPaths: BuildPaths? = null,
 ): CompilationContextImpl {
-  if (!options.useCompiledClassesFromProjectOutput) {
+  return doCreateCompilationContext(
+    projectHome = projectHome,
+    buildOutputRootEvaluator = buildOutputRootEvaluator,
+    options = options,
+    setupTracer = setupTracer,
+    enableCoroutinesDump = enableCoroutinesDump,
+    customBuildPaths = customBuildPaths,
+    isCompilationRequired = isCompilationRequired(options),
+    isBazelBacked = isRunningFromBazelOut(),
+  )
+}
+
+/**
+ * A dev build assembles an IDE out of classes that something else already produced - Bazel, a compiled-classes
+ * archive, or a JPS output directory it is pointed at. It never compiles, so it must not prepare the JPS compiler
+ * either: doing so downloads a Kotlin compiler and a JDK for nothing, and under Bazel
+ * [org.jetbrains.intellij.build.kotlin.KotlinBinaries.loadKotlinJpsPluginToClassPath] refuses outright, which used
+ * to abort the whole launch. JPS compilation has been unimplemented since MRI-3677 anyway.
+ */
+@Internal
+suspend fun createDevBuildCompilationContext(
+  projectHome: Path,
+  buildOutputRootEvaluator: (JpsProject) -> Path,
+  options: BuildOptions,
+  customBuildPaths: BuildPaths,
+): CompilationContextImpl {
+  return doCreateCompilationContext(
+    projectHome = projectHome,
+    buildOutputRootEvaluator = buildOutputRootEvaluator,
+    options = options,
+    setupTracer = false,
+    // will be enabled later in [com.intellij.platform.ide.bootstrap.enableJstack] instead
+    enableCoroutinesDump = false,
+    customBuildPaths = customBuildPaths,
+    isCompilationRequired = false,
+    isBazelBacked = isDevBuildBazelBacked(),
+  )
+}
+
+private suspend fun doCreateCompilationContext(
+  projectHome: Path,
+  buildOutputRootEvaluator: (JpsProject) -> Path,
+  options: BuildOptions,
+  setupTracer: Boolean,
+  enableCoroutinesDump: Boolean,
+  customBuildPaths: BuildPaths?,
+  isCompilationRequired: Boolean,
+  isBazelBacked: Boolean,
+): CompilationContextImpl {
+  if (isCompilationRequired) {
     // disable compression - otherwise, our zstd/zip cannot compress efficiently
     System.setProperty("jps.storage.do.compression", "false")
     System.setProperty("jps.new.storage.cache.size.mb", "96")
@@ -128,13 +177,16 @@ suspend fun createCompilationContext(
     logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
   }
 
-  val isCompilationRequired = isCompilationRequired(options)
-
   val mavenLibrariesDownloadLocation = options.mavenLibrariesDownloadLocation
   val mavenRepositoryPath = when {
     mavenLibrariesDownloadLocation != null -> mavenLibrariesDownloadLocation.absolutePathString()
+    // A manifest-backed Bazel build must not inspect ~/.m2, MAVEN_OPTS or a system Maven installation. The project
+    // model still needs a value for $MAVEN_REPOSITORY$, so point it at a deliberately absent path in declared scratch.
+    BazelBuildInputs.isConfigured -> requireNotNull(customBuildPaths) {
+      "Manifest-backed Bazel builds must declare scratch build paths"
+    }.tempDir.resolve("maven-repository-do-not-use").absolutePathString()
     // set this to a missing path, so the code won't access library downloaded by maven
-    isRunningFromBazelOut() -> getMavenRepositoryPath() + "-do-not-use-maven-repository-with-bazel"
+    isBazelBacked -> getMavenRepositoryPath() + "-do-not-use-maven-repository-with-bazel"
     else -> getMavenRepositoryPath()
   }
   val model = loadProject(projectHome = projectHome, kotlinBinaries = KotlinBinaries(COMMUNITY_ROOT), isCompilationRequired = isCompilationRequired, mavenRepositoryPath = mavenRepositoryPath)

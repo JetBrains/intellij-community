@@ -7,6 +7,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
@@ -36,7 +37,8 @@ internal class ReplaceSubstringWithIndexingOperationInspection : ReplaceSubstrin
         return arguments[0].getArgumentExpression() is KtConstantExpression && arguments[1].getArgumentExpression() is KtConstantExpression
     }
 
-    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         if (!resolvesToMethod(element, "kotlin.text.substring")) return null
         val arguments = element.callExpression?.valueArguments ?: return null
 

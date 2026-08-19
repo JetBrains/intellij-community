@@ -32,6 +32,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.problemView.core.iml",
+        "resources/intellij.platform.problemView.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

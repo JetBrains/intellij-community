@@ -14,9 +14,8 @@ private interface PrivateEntityBuilder: WorkspaceEntityBuilder<PrivateEntity>{
 override var entitySource: EntitySource
 var name: String
 }
-
 private object PrivateEntityType : EntityType<PrivateEntity, PrivateEntityBuilder>(){
-override val entityClass: Class<PrivateEntity> get() = PrivateEntity::class.java
+override val entityImplClass: Class<*> get() = PrivateEntityImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = PrivateEntityImpl.Builder::class.java
 operator fun invoke(
 name: String,
@@ -30,12 +29,10 @@ init?.invoke(builder)
 return builder
 }
 }
-
 private fun MutableEntityStorage.modifyPrivateEntity(
 entity: PrivateEntity,
 modification: PrivateEntityBuilder.() -> Unit,
 ): PrivateEntity = modifyEntity(PrivateEntityBuilder::class.java, entity, modification)
-
 @JvmOverloads
 @JvmName("createPrivateEntity")
 private fun PrivateEntity(

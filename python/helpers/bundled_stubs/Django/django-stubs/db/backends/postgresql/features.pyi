@@ -11,6 +11,7 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     can_return_columns_from_insert: bool
     can_return_rows_from_bulk_insert: bool
     has_real_datatype: bool
+    has_native_boolean_field: bool
     has_native_uuid_field: bool
     has_native_duration_field: bool
     has_native_json_field: bool
@@ -44,6 +45,13 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     supports_deferrable_unique_constraints: bool
     has_json_operators: bool
     json_key_contains_list_matching_requires_list: bool
+    supports_uuid4_function: bool
+    @cached_property
+    @override
+    def supports_uuid7_function(self) -> bool: ...  # type: ignore[override]
+    @cached_property
+    @override
+    def supports_uuid7_function_shift(self) -> bool: ...  # type: ignore[override]
     @cached_property
     @override
     def django_test_skips(self) -> dict[str, set[str]]: ...  # type: ignore[override]
@@ -54,16 +62,19 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     def uses_server_side_binding(self) -> bool: ...
     @cached_property
     @override
+    def max_query_params(self) -> int | None: ...  # type: ignore[override]
+    @cached_property
+    @override
     def prohibits_null_characters_in_text_exception(self) -> tuple[type[Exception], str]: ...  # type: ignore[override]
     @cached_property
     @override
     def introspected_field_types(self) -> dict[str, str]: ...  # type: ignore[override]
     @cached_property
-    def is_postgresql_15(self) -> bool: ...
-    @cached_property
     def is_postgresql_16(self) -> bool: ...
     @cached_property
     def is_postgresql_17(self) -> bool: ...
+    @cached_property
+    def is_postgresql_18(self) -> bool: ...
     supports_covering_indexes: bool
     supports_non_deterministic_collations: bool
     can_return_rows_from_update: bool
@@ -74,3 +85,9 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     @property
     @override
     def supports_any_value(self) -> bool: ...  # type: ignore[override]
+    @property
+    @override
+    def supports_virtual_generated_columns(self) -> bool: ...  # type: ignore[override]
+    @property
+    @override
+    def supports_uuid4_function_in_default(self) -> bool: ...  # type: ignore[override]

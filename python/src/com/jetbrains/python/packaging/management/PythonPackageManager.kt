@@ -86,7 +86,8 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
    * and the rest are shown as transitive.
    * When false (default), all installed packages are considered declared.
    */
-  internal open val installedPackagesIncludeTransitive: Boolean = false
+  @ApiStatus.Internal
+  open val installedPackagesIncludeTransitive: Boolean = false
 
   @get:ApiStatus.Internal
   protected abstract val dependenciesFilesRelativePaths: List<Path>
@@ -117,12 +118,13 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   @Volatile
   private var installedPackagesMetadata: Map<PyPackageName, PythonPackageMetadata> = emptyMap()
 
-  @ApiStatus.Internal
-  internal open val treeProvider: DependencyTreeProvider? = null
+  @get:ApiStatus.Internal
+  open val treeProvider: DependencyTreeProvider? = null
 
-  internal abstract val repositoryManager: PythonRepositoryManager
+  @get:ApiStatus.Internal
+  abstract val repositoryManager: PythonRepositoryManager
 
-  @ApiStatus.Internal
+  @get:ApiStatus.Internal
   open val dependenciesExporter: DependenciesExporter? = null
 
   @ApiStatus.Internal
@@ -326,7 +328,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
    */
   @ApiStatus.Internal
   @CheckReturnValue
-  internal abstract suspend fun installPackageCommand(
+  abstract suspend fun installPackageCommand(
     installRequest: PythonPackageInstallRequest,
     options: List<String>,
     module: Module? = null,
@@ -335,7 +337,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
   @ApiStatus.Internal
   @CheckReturnValue
-  internal open suspend fun installPackageDetachedCommand(
+  open suspend fun installPackageDetachedCommand(
     installRequest: PythonPackageInstallRequest,
     options: List<String>,
   ): PyResult<Unit> =

@@ -31,6 +31,7 @@ import com.intellij.platform.pluginSystem.parser.impl.parsePluginXml
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.pluginSystem.testFramework.isModuleSetPath
 import com.intellij.platform.pluginSystem.testFramework.loadRawPluginDescriptorInTest
+import com.intellij.platform.pluginSystem.testFramework.loadXIncludeReferenceFromResolvedRoots
 import com.intellij.platform.pluginSystem.testFramework.resolveModuleSetPath
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.SmartList
@@ -520,12 +521,6 @@ class PluginDependenciesValidator private constructor(
 
   private inner class PluginMainModuleFromSourceXIncludeLoader(private val layout: PluginLayoutDescription): XIncludeLoader {
     override fun loadXIncludeReference(path: String): LoadedXIncludeReference? {
-      // Handle external library paths
-      if (path in options.pathsIncludedFromLibrariesViaXiInclude || path.startsWith("META-INF/tips-")) {
-        //todo: support loading from libraries
-        return LoadedXIncludeReference("<idea-plugin/>".encodeToByteArray(), "dummy tag for external $path")
-      }
-
       // Handle module set files using shared resolution logic
       if (isModuleSetPath(path)) {
         val fileName = path.substringAfterLast('/')
@@ -535,13 +530,17 @@ class PluginDependenciesValidator private constructor(
         }
       }
 
-      // Handle other files from module classpaths
-      return layout.jpsModulesInClasspath
+      val moduleSourceReference = layout.jpsModulesInClasspath
         .asSequence()
         .mapNotNull { project.findModuleByName(it) }
         .flatMap { it.productionSourceRoots }
         .firstNotNullOfOrNull { it.findFile(path) }
         ?.let { LoadedXIncludeReference(Files.readAllBytes(it), it.pathString) }
+      if (moduleSourceReference != null) {
+        return moduleSourceReference
+      }
+
+      return loadXIncludeReferenceFromResolvedRoots(path, layout.libraryRootsInClasspath.asSequence())
     }
 
     override fun toString(): String {

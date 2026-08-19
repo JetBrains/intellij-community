@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
+import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.util.Iterators;
 import org.jetbrains.jps.util.SystemInfo;
 
@@ -31,6 +32,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,7 +53,6 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   private static final FileObjectKindFilter<File> ourKindFilter = new FileObjectKindFilter<>(File::getName);
 
   private final Context myContext;
-  private final @Nullable JpsJavacFileProvider myJpsJavacFileProvider; // todo: replace with InputFileDataProvider
   private final @Nullable InputFileDataProvider myInputFileDataProvider;
   private final boolean myJavacBefore9;
   private final Collection<? extends JavaSourceTransformer> mySourceTransformers;
@@ -81,31 +82,17 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   private final Map<String, JavaFileObject> myInputSourcesIndex = new HashMap<>();
   private final List<Closeable> myCloseables = new ArrayList<>();
 
-  // todo: remove
-  public JpsJavacFileManager(final Context context,
-                             boolean javacBefore9,
-                             Collection<? extends JavaSourceTransformer> transformers,
-                             @Nullable final JpsJavacFileProvider javacFileProvider) {
-    this(context, javacBefore9, transformers, javacFileProvider, null);
+  public JpsJavacFileManager(final Context context, boolean javacBefore9, Collection<? extends JavaSourceTransformer> transformers) {
+    this(context, javacBefore9, transformers, null);
   }
   
   public JpsJavacFileManager(final Context context,
                              boolean javacBefore9,
                              Collection<? extends JavaSourceTransformer> transformers,
                              @Nullable final InputFileDataProvider inputContentProvider) {
-    this(context, javacBefore9, transformers, null, inputContentProvider);
-  }
-
-  JpsJavacFileManager(final Context context,
-                             boolean javacBefore9,
-                             Collection<? extends JavaSourceTransformer> transformers,
-                             @Nullable final JpsJavacFileProvider javacFileProvider,
-                             @Nullable final InputFileDataProvider inputContentProvider
-                              ) {
     super(context.getStandardFileManager());
     myJavacBefore9 = javacBefore9;
     mySourceTransformers = transformers;
-    myJpsJavacFileProvider = javacFileProvider;
     myInputFileDataProvider = inputContentProvider;
     myContext = new Context() {
       @Nullable
@@ -176,56 +163,57 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
 
   /** @noinspection Since15*/ //@Override
   public JavaFileObject getJavaFileForOutputForOriginatingFiles(Location location, String className, JavaFileObject.Kind kind, FileObject... originatingFiles) throws IOException {
-    FileObject sibling = originatingFiles != null && originatingFiles.length > 0? originatingFiles[0] : null;
-    return getJavaFileForOutput(location, className, kind, sibling);
+    if (kind != JavaFileObject.Kind.SOURCE && kind != JavaFileObject.Kind.CLASS) {
+      throw new IllegalArgumentException("Invalid kind " + kind);
+    }
+    return getFileForOutput(location, kind, externalizeFileName(className, kind.extension), className, Iterators.asIterable(originatingFiles));
   }
 
   @Override
   public JavaFileObject getJavaFileForOutput(Location location, String className, JavaFileObject.Kind kind, FileObject sibling) throws IOException {
-    if (kind != JavaFileObject.Kind.SOURCE && kind != JavaFileObject.Kind.CLASS) {
-      throw new IllegalArgumentException("Invalid kind " + kind);
+    if (sibling != null) {
+      return getJavaFileForOutputForOriginatingFiles(location, className, kind, sibling);
     }
-    return getFileForOutput(location, kind, externalizeFileName(className, kind.extension), className, sibling);
+    return getJavaFileForOutputForOriginatingFiles(location, className, kind);
   }
 
   /** @noinspection Since15*/ //@Override
   public FileObject getFileForOutputForOriginatingFiles(Location location, String packageName, String relativeName, FileObject... originatingFiles) throws IOException {
-    FileObject sibling = originatingFiles != null && originatingFiles.length > 0? originatingFiles[0] : null;
-    return getFileForOutput(location, packageName, relativeName, sibling);
+    String fileName = packageName.isEmpty()? relativeName : externalizeFileName(packageName, "/", relativeName);
+    return getFileForOutput(location, JpsFileObject.findKind(fileName), fileName, null, Iterators.asIterable(originatingFiles));
   }
 
   @Override
   public FileObject getFileForOutput(Location location, String packageName, String relativeName, FileObject sibling) throws IOException {
-    final String fileName = packageName.isEmpty()? relativeName : externalizeFileName(packageName, "/", relativeName);
-    return getFileForOutput(location, JpsFileObject.findKind(fileName), fileName, null, sibling);
+    if (sibling != null) {
+      return getFileForOutputForOriginatingFiles(location, packageName, relativeName, sibling);
+    }
+    return getFileForOutputForOriginatingFiles(location, packageName, relativeName);
   }
 
-  private JavaFileObject getFileForOutput(Location location, JavaFileObject.Kind kind, String fileName, @Nullable String className, FileObject sibling) throws IOException {
+  private JavaFileObject getFileForOutput(Location location, JavaFileObject.Kind kind, String fileName, @Nullable String className, Iterable<FileObject> siblings) throws IOException {
     checkCanceled();
 
-    if (myJpsJavacFileProvider != null && kind == JavaFileObject.Kind.CLASS) {
-      JavaFileObject result = myJpsJavacFileProvider.getFileForOutput(fileName, className, sibling);
-      if (result != null) {
-        return result;
+    Collection<URI> originatingSources = new LinkedHashSet<>();
+    for (FileObject sibling : siblings) {
+      if (sibling instanceof JavaFileObject && ((JavaFileObject)sibling).getKind() == JavaFileObject.Kind.SOURCE) {
+        if (sibling instanceof OutputFileObject) {
+          // the output is built from a generated source: attribute it to the generated source's own originating sources;
+          // the generated source itself is a transient file and is not a part of the compiled source set
+          for (URI uri : ((OutputFileObject)sibling).getSourceUris()) {
+            originatingSources.add(uri);
+          }
+        }
+        else {
+          originatingSources.add(sibling.toUri());
+        }
       }
     }
 
-    Iterable<URI> originatingSources = null;
-    if (sibling instanceof JavaFileObject) {
-      final JavaFileObject javaFileObject = (JavaFileObject)sibling;
-      if (javaFileObject.getKind() == JavaFileObject.Kind.SOURCE) {
-        originatingSources = Iterators.asIterable(javaFileObject.toUri());
-      }
-    }
-    if (originatingSources == null) {
-      final Collection<String> originating = lookupOriginatingNames(className, fileName);
-      if (originating != null) {
-        for (String origQName : originating) {
-          JavaFileObject found = lookupInputSource(origQName);
-          if (found != null) {
-            originatingSources = Iterators.flat(originatingSources, Iterators.asIterable(found.toUri()));
-          }
-        }
+    for (String origQName : lookupOriginatingNames(className, fileName)) {
+      JavaFileObject found = lookupInputSource(origQName);
+      if (found != null) {
+        originatingSources.add(found.toUri());
       }
     }
 
@@ -238,7 +226,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
     }
     else if (location == StandardLocation.SOURCE_OUTPUT) {
       if (dir == null) {
-        if (originatingSources != null) {
+        if (!originatingSources.isEmpty()) {
           dir = findOutputDir(StandardLocation.CLASS_OUTPUT, originatingSources);
         }
         if (dir == null) {
@@ -247,9 +235,22 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
       }
     }
     final File file = (dir == null? new File(fileName).getAbsoluteFile() : new File(dir, fileName));
-    final boolean isGenerated = (sibling instanceof OutputFileObject && ((OutputFileObject)sibling).getKind() == JavaFileObject.Kind.SOURCE) /*created from generated source*/ || hasOriginatingNames(className, fileName);
+    final boolean isGenerated =
+      Iterators.find(siblings, sibling -> sibling instanceof OutputFileObject && ((OutputFileObject)sibling).getKind() == JavaFileObject.Kind.SOURCE) != null /*created from generated source*/
+      || hasOriginatingNames(className, fileName);
+
+    BinaryContent content = null;
+    if (myInputFileDataProvider != null && isFileSystemLocation(location)/*is location supported by the file data provider*/) {
+      // pre-populate the object with previously stored content, if any:
+      // enable annotation processors reading resources via Filer.getResource(CLASS_OUTPUT, ...) to see the output file content
+      InputFileDataProvider.FileData data = myInputFileDataProvider.find(location, fileName);
+      if (data != null) {
+        content = new BinaryContent(data.getContent());
+      }
+    }
+
     return new OutputFileObject(
-      myContext, dir, fileName, file, kind, className, originatingSources == null ? Collections.emptyList() : originatingSources, myEncodingName, null, location, isGenerated
+      myContext, dir, fileName, file, kind, className, !originatingSources.isEmpty()? Arrays.asList(originatingSources.toArray(new URI[0])) : Collections.emptyList(), myEncodingName, content, location, isGenerated
     );
   }
 
@@ -257,9 +258,9 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
     if (className != null) {
       Collection<String> dotsResult = myGeneratedToOriginatingMap.get(className.replace('/', '.'));
       // normalize classname: eclipse compiler sometimes outputs internal class names
-      return dotsResult != null? dotsResult : myGeneratedToOriginatingMap.get(className.replace('.', '/'));
+      return dotsResult != null? dotsResult : myGeneratedToOriginatingMap.getOrDefault(className.replace('.', '/'), Collections.emptyList());
     }
-    return myGeneratedToOriginatingMap.get(fileName);
+    return myGeneratedToOriginatingMap.getOrDefault(fileName, Collections.emptyList());
   }
 
   private boolean hasOriginatingNames(@Nullable String className, String fileName) {
@@ -271,9 +272,9 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   }
 
   @Nullable
-  private File findOutputDir(Location location, @Nullable Iterable<URI> sources) {
+  private File findOutputDir(Location location, @NotNull Iterable<URI> sources) {
     File dir = null;
-    if (sources != null && location == StandardLocation.CLASS_OUTPUT) {
+    if (location == StandardLocation.CLASS_OUTPUT) {
       for (URI uri : sources) {
         dir = getSingleOutputDirectory(location, uri);
         if (dir != null) {
@@ -440,12 +441,6 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
         return inferred;
       }
     }
-    else if (myJpsJavacFileProvider != null) {
-      String inferred = myJpsJavacFileProvider.inferBinaryName(location, file);
-      if (inferred != null) {
-        return inferred;
-      }
-    }
     return super.inferBinaryName(location, _fo);
   }
 
@@ -534,9 +529,9 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
       if (isFileSystemLocation(location)) {
         // we consider here only locations that are known to be file-based
 
-        Iterable<JavaFileObject> providersContent = Iterators.flat(
-          myJpsJavacFileProvider != null? myJpsJavacFileProvider.list(location, packageName, kinds, recurse) : Collections.emptyList(),
-          Iterators.map(myInputFileDataProvider != null? myInputFileDataProvider.list(location, packageName, kinds, recurse) : null, fd -> new ExtInputFileObject(location, fd.getPath(), myEncodingName, fd.getContent())));
+        Iterable<JavaFileObject> providersContent = Iterators.map(
+          myInputFileDataProvider != null? myInputFileDataProvider.list(location, packageName, kinds, recurse) : null, fd -> new ExtInputFileObject(location, fd.getPath(), myEncodingName, fd.getContent())
+        );
 
         final Iterable<? extends File> locationRoots = getLocation(location);
         if (Iterators.isEmpty(locationRoots)) {

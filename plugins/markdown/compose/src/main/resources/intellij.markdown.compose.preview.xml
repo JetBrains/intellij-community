@@ -1,12 +1,16 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.compose"/>
-    <module name="intellij.platform.compose.markdown"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.coil"/>
     <module name="intellij.libraries.compose.foundation.desktop"/>
-    <!-- endregion -->
+    <module name="intellij.platform.compose"/>
+    <module name="intellij.platform.compose.markdown"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="org.intellij.markdown">
     <html.panel.provider implementation="com.intellij.markdown.compose.preview.ComposePanelProvider"/>
   </extensions>

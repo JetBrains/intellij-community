@@ -359,7 +359,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
           return true //do not test kotlin decompiler here
         }
         if (psiFile !is ClsFileImpl) {
-          throw AssertionError("PSI file for ${file.name} should be an instance of ${ClsFileImpl::javaClass.name}")
+          throw AssertionError("PSI file for ${file.name} should be an instance of ${ClsFileImpl::class.java.name}")
         }
 
         if (file.nameWithoutExtension in negativeTests) {

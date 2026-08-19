@@ -24,7 +24,7 @@ interface KotlinForwardDeclarationsWorkspaceEntityBuilder : WorkspaceEntityBuild
 
 internal object KotlinForwardDeclarationsWorkspaceEntityType :
     EntityType<KotlinForwardDeclarationsWorkspaceEntity, KotlinForwardDeclarationsWorkspaceEntityBuilder>() {
-    override val entityClass: Class<KotlinForwardDeclarationsWorkspaceEntity> get() = KotlinForwardDeclarationsWorkspaceEntity::class.java
+    override val entityImplClass: Class<*> get() = KotlinForwardDeclarationsWorkspaceEntityImpl::class.java
     override val entityImplBuilderClass: Class<*> get() = KotlinForwardDeclarationsWorkspaceEntityImpl.Builder::class.java
     operator fun invoke(
         forwardDeclarationRoots: Set<VirtualFileUrl>,
@@ -47,7 +47,6 @@ fun MutableEntityStorage.modifyKotlinForwardDeclarationsWorkspaceEntity(
 
 var LibraryEntityBuilder.kotlinForwardDeclarationsWorkspaceEntity: KotlinForwardDeclarationsWorkspaceEntityBuilder?
         by WorkspaceEntity.extensionBuilder(KotlinForwardDeclarationsWorkspaceEntity::class.java)
-
 
 @JvmOverloads
 @JvmName("createKotlinForwardDeclarationsWorkspaceEntity")

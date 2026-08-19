@@ -20,7 +20,8 @@ interface KotlinAutoImportCallableWeigher {
      * @param unresolvedReferenceExpression the expression where this import can be applied.
      * @return extra weight to add. Can be any number.
      */
-    fun KaSession.weigh(
+    context(session: KaSession)
+    fun weigh(
         symbolToBeImported: KaCallableSymbol,
         unresolvedReferenceExpression: KtNameReferenceExpression
     ): Int
@@ -29,7 +30,8 @@ interface KotlinAutoImportCallableWeigher {
         val EP_NAME: ExtensionPointName<KotlinAutoImportCallableWeigher> =
             ExtensionPointName.create("com.intellij.kotlin.autoImportCallableWeigher")
 
-        fun KaSession.weigh(
+        context(session: KaSession)
+        fun weigh(
             symbolToBeImported: KaCallableSymbol,
             unresolvedReferenceExpression: KtNameReferenceExpression
         ): Int {

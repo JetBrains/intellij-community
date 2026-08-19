@@ -42,10 +42,14 @@ internal class PyPackageTreeCellRenderer(
     private set
   private var currentRow: Int = -1
 
-  /** Trailing action icon (delete or install) painted inline after the row content. */
+  /** Trailing icon painted inline after the row content: a row action, or a running-install spinner. */
   var trailingIcon: Icon? = null
     private set
   var trailingIconX: Int = -1
+    private set
+
+  /** What [trailingIcon] means for click handling and tooltips; `null` whenever [trailingIcon] is `null`. */
+  var trailingIconKind: TrailingIconKind? = null
     private set
 
   /** Inline change-version icon painted right after the version text. */
@@ -74,6 +78,7 @@ internal class PyPackageTreeCellRenderer(
     currentRow = row
     trailingIcon = null
     trailingIconX = -1
+    trailingIconKind = null
     inlineChangeVersionIcon = null
     inlineChangeVersionIconX = -1
     toolTipText = null
@@ -127,6 +132,16 @@ internal class PyPackageTreeCellRenderer(
     finally {
       g2.dispose()
     }
+  }
+
+  /**
+   * Fills the trailing icon slot, keeping the icon and its [kind] in sync by construction — a `null`
+   * [icon] reserves the geometry without painting anything and leaves [trailingIconKind] `null`.
+   */
+  private fun setTrailingIcon(x: Int, icon: Icon?, kind: TrailingIconKind) {
+    trailingIconX = x
+    trailingIcon = icon
+    trailingIconKind = icon?.let { kind }
   }
 
   private fun isAncestorOnlyMatch(pkg: DisplayablePackage): Boolean {
@@ -225,8 +240,7 @@ internal class PyPackageTreeCellRenderer(
                         rowIndent - cellChromeWidth() - DELETE_ICON.iconWidth - JBUI.scale(DefaultTreeUI.HORIZONTAL_SELECTION_OFFSET)
     val padTo = maxOf(viewportPadTo, minPadTo)
     appendTextPadding(padTo)
-    trailingIconX = textLeftOffset() + padTo
-    trailingIcon = if (showActions) DELETE_ICON else null
+    setTrailingIcon(textLeftOffset() + padTo, if (showActions) DELETE_ICON else null, TrailingIconKind.ACTION)
     appendTextPadding(padTo + DELETE_ICON.iconWidth)
   }
 
@@ -271,21 +285,30 @@ internal class PyPackageTreeCellRenderer(
     appendTextPadding(padTo)
     val leftOff = textLeftOffset()
 
-    if (showActions) {
-      val linkStyle = if (packagesTree.linkHoveredRow == currentRow) SimpleTextAttributes.STYLE_UNDERLINE else SimpleTextAttributes.STYLE_PLAIN
-      val linkAttributes = SimpleTextAttributes(linkStyle, LINK_COLOR)
-      linkStartX = padTo
-      append(linkText, linkAttributes)
-      linkEndX = linkStartX + textWidth
-      appendTextPadding(padTo + textWidth + gap)
-      trailingIconX = leftOff + padTo + textWidth + gap
-      trailingIcon = INSTALL_ICON
-      appendTextPadding(padTo + blockWidth)
+    val iconX = leftOff + padTo + textWidth + gap
+    when (chooseInstallableTrailingIconKind(isInstalling = packagesTree.isInstalling(pkg.name), showActions = showActions)) {
+      TrailingIconKind.PROGRESS -> {
+        // Install in progress (started here, from the info pane, or from the dialog): show a greyed,
+        // non-clickable "Install" label with a spinner in place of the + icon, regardless of hover.
+        // linkStartX/linkEndX stay -1 so the text half is inert; the spinner itself opens the
+        // installation output instead of the install dialog (PY-91529).
+        val disabledAttributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getInactiveTextColor())
+        append(linkText, disabledAttributes)
+        appendTextPadding(padTo + textWidth + gap)
+        setTrailingIcon(iconX, AnimatedIcon.Default.INSTANCE, TrailingIconKind.PROGRESS)
+      }
+      TrailingIconKind.ACTION -> {
+        val linkStyle = if (packagesTree.linkHoveredRow == currentRow) SimpleTextAttributes.STYLE_UNDERLINE else SimpleTextAttributes.STYLE_PLAIN
+        val linkAttributes = SimpleTextAttributes(linkStyle, LINK_COLOR)
+        linkStartX = padTo
+        append(linkText, linkAttributes)
+        linkEndX = linkStartX + textWidth
+        appendTextPadding(padTo + textWidth + gap)
+        setTrailingIcon(iconX, INSTALL_ICON, TrailingIconKind.ACTION)
+      }
+      null -> setTrailingIcon(iconX, null, TrailingIconKind.ACTION)
     }
-    else {
-      trailingIconX = leftOff + padTo + textWidth + gap
-      appendTextPadding(padTo + blockWidth)
-    }
+    appendTextPadding(padTo + blockWidth)
   }
 
   private fun rightAlignPadding(depth: Int, blockWidth: Int, iconWidth: Int): Int {
@@ -355,6 +378,31 @@ internal fun chooseInlineChangeVersionIcon(
   isLocalInstall -> null
   hasUpdate -> updateAvailableIcon
   showActions -> defaultActionIcon
+  else -> null
+}
+
+/**
+ * What the trailing icon of a row means, so that everything hit-testing it (click handling,
+ * tooltips) has to spell out both cases instead of assuming every trailing icon is actionable.
+ */
+internal enum class TrailingIconKind {
+  /** A row action the user invokes: install, uninstall. */
+  ACTION,
+
+  /** A running-install spinner; clicking it shows that install's output rather than acting on the row. */
+  PROGRESS,
+}
+
+/**
+ * Chooses what the trailing icon of an installable row stands for, `null` for "no icon".
+ *
+ * Extracted from the renderer so the precedence can be unit-tested without a Swing tree: a running
+ * install outranks the hover state, so the row shows a spinner instead of an install icon even while
+ * hovered (PY-91529).
+ */
+internal fun chooseInstallableTrailingIconKind(isInstalling: Boolean, showActions: Boolean): TrailingIconKind? = when {
+  isInstalling -> TrailingIconKind.PROGRESS
+  showActions -> TrailingIconKind.ACTION
   else -> null
 }
 

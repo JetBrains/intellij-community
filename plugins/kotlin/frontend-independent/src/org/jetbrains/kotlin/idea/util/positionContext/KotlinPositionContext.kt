@@ -206,6 +206,7 @@ class KotlinWithSubjectEntryPositionContext(
     override val explicitReceiver: KtExpression?,
     val subjectExpression: KtExpression,
     val whenCondition: KtWhenCondition,
+    val needsArrow: Boolean
 ) : KotlinSimpleNameReferencePositionContext()
 
 class KotlinCallableReferencePositionContext(
@@ -287,12 +288,12 @@ object KotlinPositionContextDetector {
     private fun detectForPositionWithoutReference(position: PsiElement): KotlinRawPositionContext? {
         val parent = position.parent ?: return null
         val grandparent = parent.parent
-        return when {
-            parent is KtClassLikeDeclaration && parent.nameIdentifier == position -> {
+        return when (parent) {
+            is KtClassLikeDeclaration if parent.nameIdentifier == position -> {
                 KotlinClassifierNamePositionContext(position, parent)
             }
 
-            parent is KtParameter -> {
+            is KtParameter -> {
                 if (parent.ownerFunction is KtPrimaryConstructor) {
                     KotlinPrimaryConstructorParameterPositionContext(position, parent)
                 } else {
@@ -300,7 +301,7 @@ object KotlinPositionContextDetector {
                 }
             }
 
-            parent is PsiErrorElement && grandparent is KtClassBody -> {
+            is PsiErrorElement if grandparent is KtClassBody -> {
                 KotlinMemberDeclarationExpectedPositionContext(position, grandparent)
             }
 
@@ -334,13 +335,16 @@ object KotlinPositionContextDetector {
             }
 
             parent is KtWhenCondition && subjectExpressionForWhenCondition != null -> {
+                val entry = parent.parent as KtWhenEntry
+                val needsArrow = entry.conditions.size == 1 && entry.arrow == null
                 KotlinWithSubjectEntryPositionContext(
-                    position,
-                    reference,
-                    nameExpression,
-                    explicitReceiver,
-                    subjectExpressionForWhenCondition,
+                    position = position,
+                    reference = reference,
+                    nameExpression = nameExpression,
+                    explicitReceiver = explicitReceiver,
+                    subjectExpression = subjectExpressionForWhenCondition,
                     whenCondition = parent,
+                    needsArrow = needsArrow
                 )
             }
 
@@ -436,8 +440,8 @@ object KotlinPositionContextDetector {
     ): KotlinRawPositionContext {
         val typeReference = (userType.parent as? KtTypeReference)?.takeIf { it.typeElement == userType }
         val typeReferenceOwner = typeReference?.parent
-        return when {
-            typeReferenceOwner is KtConstructorCalleeExpression -> {
+        return when (typeReferenceOwner) {
+            is KtConstructorCalleeExpression -> {
                 val constructorCall = typeReferenceOwner.takeIf { it.typeReference == typeReference }
                 val annotationEntry = (constructorCall?.parent as? KtAnnotationEntry)?.takeIf { it.calleeExpression == constructorCall }
                 annotationEntry?.let {
@@ -445,14 +449,14 @@ object KotlinPositionContextDetector {
                 }
             }
 
-            typeReferenceOwner is KtSuperExpression -> {
+            is KtSuperExpression -> {
                 val superTypeCallEntry = typeReferenceOwner.takeIf { it.superTypeQualifier == typeReference }
                 superTypeCallEntry?.let {
                     KotlinSuperTypeCallNameReferencePositionContext(position, reference, nameExpression, explicitReceiver, it)
                 }
             }
 
-            typeReferenceOwner is KtTypeConstraint && typeReferenceOwner.children.any { it is PsiErrorElement } -> {
+            is KtTypeConstraint if typeReferenceOwner.children.any { it is PsiErrorElement } -> {
                 KotlinIncorrectPositionContext(position)
             }
 

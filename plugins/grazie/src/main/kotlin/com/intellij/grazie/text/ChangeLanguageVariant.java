@@ -9,6 +9,7 @@ import com.intellij.grazie.GrazieConfig;
 import com.intellij.grazie.jlanguage.Lang;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumSet;
 import java.util.Set;
 
-record ChangeLanguageVariant(Lang from, Lang to, boolean wasOxford, boolean toOxford, String text) implements LocalQuickFix {
+record ChangeLanguageVariant(Lang from, Lang to, boolean wasOxford, boolean toOxford, String text) implements LocalQuickFix, DumbAware {
 
   static final String BRITISH_OXFORD_ID = EnglishParameters.Variant.BRITISH_OXFORD_ID;
 

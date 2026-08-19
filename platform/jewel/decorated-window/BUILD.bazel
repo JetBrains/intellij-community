@@ -45,14 +45,14 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/jewel/ui",
         "//libraries/compose-foundation-desktop",
         "//platform/jewel/foundation",
         "//libraries/compose-runtime-desktop",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
         "//libraries/jbr",
-        "@lib//:jna",
+        "//libraries/jna",
     ],
 )
 
@@ -70,12 +70,14 @@ jvm_library(
         # do not sort,
         ":decorated-window",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/jewel/ui:ui_test_lib",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
         "//platform/jewel/foundation:foundation_test_lib",
         "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
         "//libraries/jbr:jbr_test_lib",
+        "//libraries/jna:jna_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.decoratedWindow` end
@@ -84,6 +86,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.jewel.decoratedWindow.iml",
+        "src/main/resources/intellij.platform.jewel.decoratedWindow.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -133,10 +136,13 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-test",
-        "@lib//:kotlin-test-assertions-core-jvm",
-        "@lib//:kotlin-test-junit",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
         "//libraries/jbr",
         "//libraries/jbr:jbr_test_lib",
         "//libraries/kotlinx/coroutines/core",

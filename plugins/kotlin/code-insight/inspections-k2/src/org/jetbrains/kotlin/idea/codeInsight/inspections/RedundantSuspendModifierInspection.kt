@@ -87,7 +87,8 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
         val expressions = containingFunction.locallyExecutedExpressions()
 
         KotlinCallProcessor.process(expressions, object : KotlinCallTargetProcessor {
-            override fun KaSession.processCallTarget(target: CallTarget): Boolean {
+            context(session: KaSession)
+            override fun processCallTarget(target: CallTarget): Boolean {
                 val symbol = target.symbol
                 if ((symbol.isSuspendSymbol() && symbol.psi != containingFunction) || symbol.isTodoSymbol()) {
                     isSuspendModifierRedundant = false
@@ -96,7 +97,8 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
                 return true
             }
 
-            override fun KaSession.processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean {
+            context(session: KaSession)
+            override fun processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean {
                 if (callInfo != null) {
                     // A callInfo of null means that the element could not be resolved at all, so it is not even unresolved.
                     // For example, if the element is not an expression, so we ignore those cases.
@@ -146,7 +148,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
             .descendants { element ->
                 when (element) {
                     is KtClassLikeDeclaration -> false
-                    is KtFunction -> session.isInlinedArgument(element)
+                    is KtFunction -> isInlinedArgument(element)
                     else -> true
                 }
             }

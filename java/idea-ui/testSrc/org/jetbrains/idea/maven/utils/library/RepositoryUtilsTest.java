@@ -32,13 +32,13 @@ public class RepositoryUtilsTest extends LibraryTest {
     super.setUp();
 
     // set up fake maven repository
-    ServiceContainerUtil.registerServiceInstance(myProject, RemoteRepositoriesConfiguration.class, new RemoteRepositoriesConfiguration() {
+    ServiceContainerUtil.registerOrReplaceServiceInstance(myProject, RemoteRepositoriesConfiguration.class, new RemoteRepositoriesConfiguration() {
       @NotNull
       @Override
       public List<RemoteRepositoryDescription> getRepositories() {
         return List.of(RepositoryUtilsTest.this.myMavenRepoDescription);
       }
-    });
+    }, getTestRootDisposable());
   }
 
   public void testLibraryReloadFixesCorruptedJar() throws IOException {

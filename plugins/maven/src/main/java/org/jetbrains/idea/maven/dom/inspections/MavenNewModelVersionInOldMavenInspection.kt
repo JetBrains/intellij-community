@@ -38,7 +38,7 @@ import kotlin.io.path.name
 import kotlin.io.path.writeText
 
 
-private val VERSION_TO_UPDATE_TO = "4.0.0-rc-5"
+private val VERSION_TO_UPDATE_TO = "4.0.0-rc-6"
 
 class MavenNewModelVersionInOldMavenInspection : BasicDomElementsInspection<MavenDomProjectModel?>(MavenDomProjectModel::class.java) {
   override fun getGroupDisplayName(): String {

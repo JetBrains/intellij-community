@@ -21,6 +21,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -128,7 +129,10 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     if (structure == null) return children;
     List<CoverageNodeInfo> infos = structure.getChildrenInfo(getNodeId(node));
     for (CoverageNodeInfo info : infos) {
-      children.add(new JavaCoverageNode(myProject, info.getValue(), mySuitesBundle, info.getName()));
+      PsiNamedElement psiElement = structure.getPsiElement(info.getId());
+      if (psiElement != null) {
+        children.add(new JavaCoverageNode(myProject, psiElement, mySuitesBundle, info.getName()));
+      }
     }
     return children;
   }

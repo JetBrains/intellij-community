@@ -19,15 +19,15 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
-private val log = logger<XLineBreakpointManager>()
+private val log = logger<XLineBreakpointManager<*>>()
 
 @ApiStatus.Internal
-class XLineBreakpointManager(
+class XLineBreakpointManager<B : XLineBreakpointProxy>(
   internal val project: Project,
   private val manager: XBreakpointManagerProxy,
 ): XLineBreakpointManagerProxy {
-  private val myBreakpointsById = ConcurrentHashMap<XBreakpointId, XLineBreakpointProxy>()
-  private val myBreakpointsByFile = MultiMap.createConcurrent<VirtualFile, XLineBreakpointProxy>()
+  private val myBreakpointsById = ConcurrentHashMap<XBreakpointId, B>()
+  private val myBreakpointsByFile = MultiMap.createConcurrent<VirtualFile, B>()
 
   fun onFileDeleted(file: VirtualFile) {
     removeBreakpoints(getFileBreakpoints(file))
@@ -42,7 +42,7 @@ class XLineBreakpointManager(
     }
   }
 
-  fun registerBreakpoint(breakpoint: XLineBreakpointProxy) {
+  fun registerBreakpoint(breakpoint: B) {
     myBreakpointsById[breakpoint.id] = breakpoint
     log.debug { "Register line breakpoint ${breakpoint.id} ${breakpoint.javaClass.simpleName}: ${breakpoint.getFileUrl()}" }
     val file = breakpoint.getFile()
@@ -54,7 +54,7 @@ class XLineBreakpointManager(
     }
   }
 
-  fun unregisterBreakpoint(breakpoint: XLineBreakpointProxy) {
+  fun unregisterBreakpoint(breakpoint: B) {
     val removed = myBreakpointsById.remove(breakpoint.id) != null
     val removedByFile = breakpoint.getFile()?.let { myBreakpointsByFile.remove(it, breakpoint) } ?: false
     if (removed != removedByFile) {
@@ -66,16 +66,16 @@ class XLineBreakpointManager(
     log.debug { "Unregister line breakpoint ${breakpoint.id} [removed=$removed] ${breakpoint.javaClass.simpleName}: ${breakpoint.getFileUrl()}" }
   }
 
-  override fun getDocumentBreakpointProxies(document: Document): Collection<XLineBreakpointProxy> {
+  override fun getDocumentBreakpointProxies(document: Document): Collection<B> {
     val file = FileDocumentManager.getInstance().getFile(document) ?: return emptyList()
     return getFileBreakpoints(file)
   }
 
-  override fun getAllBreakpoints(): Collection<XLineBreakpointProxy> {
+  override fun getAllBreakpoints(): Collection<B> {
     return myBreakpointsById.values
   }
 
-  fun getFileBreakpoints(file: VirtualFile): Collection<XLineBreakpointProxy> {
+  fun getFileBreakpoints(file: VirtualFile): Collection<B> {
     return myBreakpointsByFile[file]
   }
 

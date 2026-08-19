@@ -75,8 +75,8 @@ internal object GHPRReviewSuggestedChangeComponentFactory {
             applyApplicability(block.applicability)
           }
           cs.launchNow {
-            vm.isOnReviewBranch.collect {
-              if (!it) {
+            vm.isOnReviewBranch.collect { isOnReviewBranch ->
+              if (isOnReviewBranch == null || !isOnReviewBranch) {
                 applyLocallyAction.isEnabled = false
                 optionButton.isEnabled = false
                 optionButton.optionTooltipText =

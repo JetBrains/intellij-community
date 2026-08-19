@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+End of files
+Compiling files:
+  java/classModifiers/droppedSealed/a/A.java
+End of files
+Cleaning output files:
+  C.class
+  Switcher.class
+End of files
+Compiling files:
+  java/classModifiers/droppedSealed/a/C.java
+  java/classModifiers/droppedSealed/a/Switcher.java
+End of files
+------------------------------------------
+Exit code: ERROR

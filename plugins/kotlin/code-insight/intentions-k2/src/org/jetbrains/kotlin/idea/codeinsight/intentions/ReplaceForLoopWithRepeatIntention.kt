@@ -46,7 +46,8 @@ internal class ReplaceForLoopWithRepeatIntention :
         return !body.collectDescendantsOfType<KtBreakExpression>().any { findRelevantLoopForExpression(it) == element }
     }
 
-    override fun KaSession.prepareContext(element: KtForExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtForExpression): Context? {
         val loopRange = element.loopRange as? KtBinaryExpression ?: return null
 
         if (!loopRange.isZeroBasedRange()) return null

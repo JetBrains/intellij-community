@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -44,7 +45,8 @@ class MainKtsAnnotationUsageInPlainKtsInspection : KotlinApplicableInspectionBas
         return shortName in MAIN_KTS_ANNOTATION_SHORT_NAMES && !element.containingKtFile.isMainKtsScript()
     }
 
-    override fun KaSession.prepareContext(element: KtAnnotationEntry): String? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtAnnotationEntry): String? {
         val annotationShortName = element.shortName?.asString() ?: return null
 
         val annotationFqName = element

@@ -21,7 +21,7 @@ internal class CreateRendererAction : AnAction(), SplitDebuggerAction {
   override fun actionPerformed(e: AnActionEvent) {
     val session = DebuggerUIUtil.getSessionProxy(e) ?: return
     val (_, xValue, _) = getSelectedJavaValuesWithDescriptors(e).singleOrNull() ?: return
-    session.coroutineScope.launch {
+    e.coroutineScope.launch {
       XDebugManagerProxy.getInstance().withId(xValue, session) { xValueId ->
         JavaDebuggerLuxActionsApi.getInstance().showCreateRendererDialog(xValueId)
       }

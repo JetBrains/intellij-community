@@ -13,13 +13,13 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.ConverterSettings
-import org.jetbrains.kotlin.j2k.J2KPostProcessingRunner
-import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.ParseContext
 import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
+import org.jetbrains.kotlin.j2k.PostProcessor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.nj2k.KotlinJ2KK2Bundle
+import org.jetbrains.kotlin.j2k.JavaToKotlinConverter
+import org.jetbrains.kotlin.j2k.KotlinJ2kBundle
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
@@ -39,7 +39,7 @@ fun ElementAndTextList.convertCodeToKotlin(
     project: Project,
     targetFile: KtFile
 ): ConversionResult {
-    val converter = J2kConverterExtension.extension().createJavaToKotlinConverter(
+    val converter = JavaToKotlinConverter(
         project,
         targetFile.module,
         ConverterSettings.defaultSettings,
@@ -49,7 +49,7 @@ fun ElementAndTextList.convertCodeToKotlin(
     val inputElements = this.toList().filterIsInstance<PsiElement>()
     val (results, _, converterContext) = runWithModalProgressBlocking(
         project,
-        KotlinJ2KK2Bundle.message("copy.text.convert.java.to.kotlin.title")
+        KotlinJ2kBundle.message("copy.text.convert.java.to.kotlin.title")
     ) {
             // A non-blocking read action is essential here 
             // to be able to show a modal progress window right away
@@ -68,7 +68,7 @@ fun ElementAndTextList.convertCodeToKotlin(
             val originalText = element.text
             originalCodeBuilder.append(originalText)
 
-            val result = results[resultIndex]
+            val result = results.getOrNull(resultIndex)
             resultIndex++
 
             if (result != null) {
@@ -143,8 +143,7 @@ fun runPostProcessing(
     bounds: TextRange?,
     converterContext: ConverterContext?
 ) {
-    val postProcessor = J2kConverterExtension.extension().createPostProcessor()
-    runWithModalProgressBlocking(project, KotlinJ2KK2Bundle.message("copy.text.convert.java.to.kotlin.title")) {
-        J2KPostProcessingRunner.run(postProcessor, file, converterContext, bounds)
+    runWithModalProgressBlocking(project, KotlinJ2kBundle.message("copy.text.convert.java.to.kotlin.title")) {
+        PostProcessor.run(file, converterContext, bounds)
     }
 }

@@ -246,7 +246,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
 
     private void triggerLookupUsed(@NotNull FinishType finishType, @Nullable LookupElement currentItem,
                                    char completionChar) {
-      if (!Elf.getElf().isPsiInteractionAllowed()) {
+      if (Elf.getElf().isUnsupportedOperationGuardActive()) {
         // TODO: why fus is collected on EDT during typing?
         return;
       }

@@ -54,6 +54,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.testcontainers.iml",
+        "resources/intellij.libraries.testcontainers.xml",
     ],
     visibility = ["//visibility:public"],
 )

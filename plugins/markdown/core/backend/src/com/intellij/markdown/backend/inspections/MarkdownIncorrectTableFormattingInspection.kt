@@ -9,6 +9,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasValidAlignment
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.isCorrectlyFormatted
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
 import com.intellij.markdown.backend.intentions.IntentionOnElementAtCaretWrapper
 import com.intellij.markdown.backend.intentions.FixCellAlignmentIntention
 import com.intellij.markdown.backend.intentions.ReformatTableIntention
@@ -24,7 +25,8 @@ class MarkdownIncorrectTableFormattingInspection: LocalInspectionTool() {
     return object: MarkdownElementVisitor() {
       override fun visitTable(table: MarkdownTable) {
         super.visitTable(table)
-        if (!table.isCorrectlyFormatted(checkAlignment = false)) {
+        val tableStyle = getTableStyle(table.containingFile)
+        if (!table.isCorrectlyFormatted(tableStyle, checkAlignment = false)) {
           holder.registerProblem(
             table,
             MarkdownBundle.message("markdown.incorrect.table.formatting.inspection.description"),
@@ -37,9 +39,10 @@ class MarkdownIncorrectTableFormattingInspection: LocalInspectionTool() {
         super.visitElement(element)
         val cell = element as? MarkdownTableCell ?: return
         val table = cell.parentTable ?: return
+        val tableStyle = getTableStyle(cell.containingFile)
         val alignment = table.getColumnAlignment(cell.columnIndex)
         if (alignment != MarkdownTableSeparatorRow.CellAlignment.NONE) {
-          if (!cell.hasValidAlignment()) {
+          if (!cell.hasValidAlignment(tableStyle)) {
             holder.registerProblem(
               element,
               MarkdownBundle.message("markdown.incorrect.table.formatting.inspection.local.cell.description"),

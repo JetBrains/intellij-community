@@ -131,14 +131,15 @@ fun Project.guessProjectDir() : VirtualFile? {
   }
 
   val baseDirectories = getBaseDirectories()
-  val baseDirectory = baseDirectories.firstOrNull { it.fileSystem is LocalFileSystem && it.isValid} ?: baseDirectories.firstOrNull()
+  val baseDirectory = baseDirectories.firstOrNull { it.fileSystem is LocalFileSystem && it.isValid }
+                      ?: baseDirectories.firstOrNull { it.isValid }
   if (baseDirectory != null) {
     return baseDirectory
   }
 
   val modules = ModuleManager.getInstance(this).modules
   val module = if (modules.size == 1) modules.first() else modules.firstOrNull { it.name == this.name }
-  module?.guessModuleDir()?.let { return it }
+  module?.guessModuleDir()?.takeIf { it.isValid }?.let { return it }
   return LocalFileSystem.getInstance().findFileByPath(basePath!!)
 }
 

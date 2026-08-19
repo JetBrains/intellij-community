@@ -37,6 +37,7 @@ class TerminalOptionsProvider(internal val coroutineScope: CoroutineScope) : Per
     state = newState
 
     ExperimentalTerminalMigration.migrateTerminalEngineOnce(options = this)
+    ClassicTerminalMigration.migrateTerminalEngineOnce(options = this)
     migrateApplicationTitleSettingOnce()
 
     // In the case of RemDev settings are synced from backend to frontend using `loadState` method.

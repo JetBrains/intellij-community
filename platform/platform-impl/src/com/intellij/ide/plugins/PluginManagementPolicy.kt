@@ -24,6 +24,9 @@ interface PluginManagementPolicy {
    * Pay close attention to the fact that if multiple plugin sources are present, there can be more than one [remoteDescriptor]
    * with a version higher than one in [localDescriptor].
    *
+   * This method also controls cases when [localDescriptor] is incompatible with IDE version or marked as broken,
+   * and [remoteDescriptor] has lower version but works with current version of IDE.
+   *
    * @see [com.intellij.ide.plugins.PluginNode]
    */
   fun isUpgradeAllowed(localDescriptor: IdeaPluginDescriptor?, remoteDescriptor: IdeaPluginDescriptor?): Boolean

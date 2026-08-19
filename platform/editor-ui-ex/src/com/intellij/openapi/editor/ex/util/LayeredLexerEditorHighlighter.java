@@ -435,7 +435,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
         return keys;
       }
       // some SyntaxHighlighters implemented in so convoluted way that their getTokenHighlights() changed myKeysMap, so we can't call it inside computeIfAbsent to avoid CME
-      TextAttributesKey[] syntaxTokens = mySyntaxHighlighter.getTokenHighlights(tokenType);
+      TextAttributesKey[] syntaxTokens = tokenType == null ? TextAttributesKey.EMPTY_ARRAY : mySyntaxHighlighter.getTokenHighlights(tokenType);
       return myKeysMap.computeIfAbsent(notNulled, _ -> SyntaxHighlighterBase.pack(myBackground, syntaxTokens));
     }
 

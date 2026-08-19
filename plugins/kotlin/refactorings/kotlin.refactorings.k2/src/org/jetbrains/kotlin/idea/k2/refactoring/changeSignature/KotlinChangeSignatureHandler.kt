@@ -9,14 +9,17 @@ import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.actions.ChangeSignatureAction
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangePropertySignatureDialog
@@ -77,7 +80,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
                     is KtReferenceExpression -> {
                         val symbol = element.mainReference.resolveToSymbol()
                         when {
-                          symbol is KaValueParameterSymbol && symbol.generatedPrimaryConstructorProperty == null -> null
+                          symbol is KaValueParameterSymbol && symbol.primaryConstructorProperty == null -> null
                           symbol is KaConstructorSymbol && symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED -> symbol.containingDeclaration
                           else -> symbol
                         }

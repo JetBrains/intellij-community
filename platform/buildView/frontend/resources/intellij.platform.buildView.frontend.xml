@@ -11,12 +11,14 @@
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.execution.impl.frontend"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->

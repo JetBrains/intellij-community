@@ -36,9 +36,11 @@ fun CoroutineScope.createSkippableJob(
 
 /**
  * Filter is applied only to files, not to directories.
+ *
+ * Returns the files that were written; see [copyDir].
  */
-fun copyDirWithFileFilter(fromDir: Path, targetDir: Path, fileFilter: Predicate<Path>) {
-  copyDir(sourceDir = fromDir, targetDir = targetDir, fileFilter = fileFilter)
+fun copyDirWithFileFilter(fromDir: Path, targetDir: Path, fileFilter: Predicate<Path>): List<Path> {
+  return copyDir(sourceDir = fromDir, targetDir = targetDir, fileFilter = fileFilter)
 }
 
 suspend fun zip(targetFile: Path, dir: Path, context: CompilationContext) {

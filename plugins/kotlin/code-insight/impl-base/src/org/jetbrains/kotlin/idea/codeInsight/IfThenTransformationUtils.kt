@@ -16,13 +16,12 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.diagnostics
-import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
-import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
+import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.components.smartCastInfo
+import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
@@ -30,6 +29,12 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.psi.expressionComparedToNull
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatement
@@ -180,10 +185,11 @@ object IfThenTransformationUtils {
 
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
-    private fun conditionIsSenseless(data: IfThenTransformationData): Boolean = data.condition
-        .diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-        .map { it.diagnosticClass }
-        .any { it == KaFirDiagnostic.SenselessComparison::class || it == KaFirDiagnostic.UselessIsCheck::class }
+    private fun conditionIsSenseless(data: IfThenTransformationData): Boolean =
+        data.condition
+            .directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+            .map { it.diagnosticClass }
+            .any { it == KaFirDiagnostic.SenselessComparison::class || it == KaFirDiagnostic.UselessIsCheck::class }
 
 
     fun buildTransformationData(ifExpression: KtIfExpression): IfThenTransformationData? {
@@ -236,8 +242,8 @@ object IfThenTransformationUtils {
         val transformationData = buildTransformationData(element) ?: return null
         val transformationStrategy = IfThenTransformationStrategy.create(transformationData) ?: return null
 
-        if (element.expressionType?.isUnitType != false) return null
-        if (!session.clausesReplaceableByElvis(transformationData)) return null
+        if (element.expressionType?.classId == KaStandardTypeClassIds.UNIT) return null
+        if (!clausesReplaceableByElvis(transformationData)) return null
         val checkedExpressions = listOfNotNull(
             transformationData.checkedExpression,
             transformationData.baseClause,
@@ -260,7 +266,8 @@ object IfThenTransformationUtils {
         return expressionToCheck.smartCastInfo?.isStable == false
     }
 
-    private fun KaSession.clausesReplaceableByElvis(data: IfThenTransformationData): Boolean =
+    context(session: KaSession)
+    private fun clausesReplaceableByElvis(data: IfThenTransformationData): Boolean =
         when {
             data.negatedClause == null || data.negatedClause.isNullOrBlockExpression() == true ->
                 false
@@ -289,7 +296,8 @@ object IfThenTransformationUtils {
         "java.lang.NullPointerException"
     )
 
-    private fun KaSession.throwsNullPointerExceptionWithNoArguments(throwExpression: KtThrowExpression): Boolean {
+    context(session: KaSession)
+    private fun throwsNullPointerExceptionWithNoArguments(throwExpression: KtThrowExpression): Boolean {
         val thrownExpression = throwExpression.thrownExpression as? KtCallExpression ?: return false
 
         val nameExpression = thrownExpression.calleeExpression as? KtNameReferenceExpression ?: return false
@@ -305,7 +313,8 @@ object IfThenTransformationUtils {
         return innerExpression is KtBlockExpression || innerExpression.node.elementType == KtNodeTypes.NULL
     }
 
-    private fun KaSession.conditionHasIncompatibleTypes(data: IfThenTransformationData): Boolean {
+    context(session: KaSession)
+    private fun conditionHasIncompatibleTypes(data: IfThenTransformationData): Boolean {
         val isExpression = data.condition as? KtIsExpression ?: return false
         val targetType = isExpression.typeReference?.type ?: return true
         if (targetType.isNullable) return true
@@ -321,10 +330,12 @@ object IfThenTransformationUtils {
         return arguments.any { it?.isSimplifiableTo(argument) == true } && arguments.all { it is KtNameReferenceExpression }
     }
 
-    private fun KaSession.hasImplicitReceiverReplaceableBySafeCall(data: IfThenTransformationData): Boolean =
+    context(session: KaSession)
+    private fun hasImplicitReceiverReplaceableBySafeCall(data: IfThenTransformationData): Boolean =
         data.checkedExpression is KtThisExpression && getImplicitReceiverValue(data) != null
 
-    private fun KaSession.getImplicitReceiverValue(data: IfThenTransformationData): KaReceiverValue? {
+    context(session: KaSession)
+    private fun getImplicitReceiverValue(data: IfThenTransformationData): KaReceiverValue? {
         val resolvedCall = data.baseClause.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() ?: return null
         return resolvedCall.getImplicitReceivers().firstOrNull()
     }
@@ -400,7 +411,7 @@ sealed class IfThenTransformationStrategy {
         private fun KtExpression.collectVariableCalls(): Set<KtCallExpression> = this
             .parentsOfType<KtExpression>(withSelf = true)
             .mapNotNull { it.getSelectorOrThis() as? KtCallExpression }
-            .filter { it.isImplicitInvokeCall() == true }
+            .filter { it.isImplicitInvokeCall() }
             .toSet()
     }
 }
@@ -511,7 +522,7 @@ class IfThenToElviFix(private val context: IfThenToElvisInspectionData) : Kotlin
         }
     }
 
-    fun asModCommandAction(element: KtIfExpression) = object : PsiUpdateModCommandAction<KtIfExpression>(element) {
+    fun asModCommandAction(element: KtIfExpression): PsiUpdateModCommandAction<KtIfExpression> = object : PsiUpdateModCommandAction<KtIfExpression>(element) {
         override fun invoke(
             context: ActionContext,
             element: KtIfExpression,

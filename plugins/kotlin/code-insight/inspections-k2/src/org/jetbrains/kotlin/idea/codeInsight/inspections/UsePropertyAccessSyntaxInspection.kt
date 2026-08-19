@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.components.syntheticJavaPropertiesScope
+import org.jetbrains.kotlin.analysis.api.scopes.syntheticJavaPropertiesScope
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
@@ -47,13 +47,13 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.isFunctionType
 import org.jetbrains.kotlin.analysis.api.types.isFunctionalInterface
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isNothingType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
 import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.types.receiverType
 import org.jetbrains.kotlin.analysis.api.types.restore
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
@@ -251,13 +251,13 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
                 val setterIsExpressionForFunction = methodIsExpressionForFunction(qualifiedOrCall)
                 val setterIsExpressionForPropertyAccessor = methodIsExpressionForPropertyAccessor(qualifiedOrCall)
                 if (setterIsExpressionForFunction || setterIsExpressionForPropertyAccessor) {
-                    if (!returnType.isUnitType) {
+                    if (returnType.classId != KaStandardTypeClassIds.UNIT) {
                         // Covered with the test "dontReplaceSetterForFunctionWithExpressionBody"
                         return
                     }
                     convertExpressionToBlockBodyData = ConvertExpressionToBlockBodyData(
-                        returnType.isUnitType,
-                        returnType.isNothingType,
+                        returnType.classId == KaStandardTypeClassIds.UNIT,
+                        returnType.classId == KaStandardTypeClassIds.NOTHING,
                         returnType.isMarkedNullable,
                         returnType.render(position = Variance.OUT_VARIANCE)
                     )

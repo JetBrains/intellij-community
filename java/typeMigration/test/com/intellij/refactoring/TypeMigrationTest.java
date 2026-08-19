@@ -865,10 +865,13 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testBooleanGetterMethodName() {
+    //test getter migration `is` -> `get`:
     doTestFieldType("fooMigrateName", PsiTypes.intType());
   }
 
   public void testBooleanGetterMethodName2() {
+    //test _no_ getter migration `is` -> `get`
+    // (see MigrateGetterNameSetting.showChooserDialog() for how 'DontMigrateName' controls migration):
     doTestFieldType("fooDontMigrateName", PsiTypes.intType());
   }
 

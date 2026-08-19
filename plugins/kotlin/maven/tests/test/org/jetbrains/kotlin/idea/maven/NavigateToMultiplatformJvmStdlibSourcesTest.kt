@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.maven
 
@@ -7,8 +7,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndSeparatedMultiplatformJvmStdlibDescriptor
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
@@ -32,14 +31,14 @@ class NavigateToMultipartJvmStdlibSourcesTest : LightJavaCodeInsightFixtureTestC
                 mapOf("" to "").<caret>mapNotNull {  }
             }
         """.trimIndent())!!
-        assertEquals("Library sources of kotlin-stdlib", KaModuleProvider.getModule(project, stdlibCommonElement, null).moduleDescription)
+        assertEquals("Library sources of kotlin-stdlib", stdlibCommonElement.kaModule(null).moduleDescription)
 
         val stdlibJvmElement = configureAndResolve("""
             fun bar() {
                 <caret>sortedMapOf(1 to 2)
             }
         """.trimIndent())!!
-        assertEquals("Library sources of kotlin-stdlib", KaModuleProvider.getModule(project, stdlibJvmElement, null).moduleDescription)
+        assertEquals("Library sources of kotlin-stdlib", stdlibJvmElement.kaModule(null).moduleDescription)
     }
 
     private fun configureAndResolve(text: String): PsiElement? {

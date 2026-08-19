@@ -1,11 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.merge.flow
 
+import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.merge.MergeConflictIterativeDataHolder
 import com.intellij.openapi.vcs.merge.MergeConflictsTreeTable
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
@@ -55,7 +57,7 @@ internal class IterativeMergeFlowDelegateTest {
       files = listOf(file),
       onClose = {},
       onAcceptAndFinish = { acceptAndFinishRequested = true },
-      acceptForResolution = {},
+      acceptForResolution = { _, _ -> },
       showMergeDialog = {},
       toggleGroupByDirectory = {},
       resolveAutomatically = {},
@@ -102,7 +104,7 @@ internal class IterativeMergeFlowDelegateTest {
       files = listOf(file),
       onClose = {},
       onAcceptAndFinish = {},
-      acceptForResolution = {},
+      acceptForResolution = { _, _ -> },
       showMergeDialog = {},
       toggleGroupByDirectory = {},
       resolveAutomatically = {},
@@ -123,6 +125,92 @@ internal class IterativeMergeFlowDelegateTest {
     button.doClick()
 
     assertEquals(listOf(file), action.performedContext?.selectionHintFiles)
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun magicWandButtonLogsPressedAndSessionEvents(@TestDisposable disposable: Disposable) {
+    val file = LightVirtualFile("conflicts/sample.txt", "text")
+    val delegate = IterativeMergeFlowDelegate(
+      project = project,
+      iterativeDataHolder = MergeConflictIterativeDataHolder(project, disposable),
+      table = createTable(),
+      columnNames = listOf("Name", "Yours", "Theirs"),
+      mergeDialogCustomizer = MergeDialogCustomizer(),
+      rootPane = JRootPane(),
+      files = listOf(file),
+      onClose = {},
+      onAcceptAndFinish = {},
+      acceptForResolution = { _, _ -> },
+      showMergeDialog = {},
+      toggleGroupByDirectory = {},
+      resolveAutomatically = {},
+      getGroupByDirectory = { false },
+      updateTable = {},
+    )
+
+    val panel = delegate.createCenterPanel()
+    delegate.createSouthPanel()
+    delegate.onTreeChanged(listOf(file), processedFiles = emptyList(), unmergeableFileSelected = false, unacceptableFileSelected = false)
+
+    val magicWand = UIUtil.findComponentsOfType(panel, JButton::class.java)
+      .single { it.text == VcsBundle.message("multiple.file.iterative.merge.resolve.automatically") }
+    assertTrue(magicWand.isEnabled)
+
+    // No merge models are prepared in this harness, so the wand resolves nothing -> NO_EFFECT.
+    // A single press logs the per-file event(s) plus one session event with the press's best result.
+    val events = FUCollectorTestCase.collectLogEvents(disposable) {
+      magicWand.doClick()
+    }
+
+    val pressed = events.single { it.event.id == "magic.wand.pressed" }
+    assertEquals("NO_EFFECT", pressed.event.data["magic_wand_result"])
+    assertEquals("ITERATIVE", pressed.event.data["flow"])
+    val session = events.single { it.event.id == "magic.wand.session.result" }
+    assertEquals("NO_EFFECT", session.event.data["magic_wand_result"])
+    assertEquals("ITERATIVE", session.event.data["flow"])
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun acceptAndFinishButtonLogsDialogAcceptEvent(@TestDisposable disposable: Disposable) {
+    val file = LightVirtualFile("conflicts/sample.txt", "text")
+    var acceptAndFinishRequested = false
+    val delegate = IterativeMergeFlowDelegate(
+      project = project,
+      iterativeDataHolder = MergeConflictIterativeDataHolder(project, disposable),
+      table = createTable(),
+      columnNames = listOf("Name", "Yours", "Theirs"),
+      mergeDialogCustomizer = MergeDialogCustomizer(),
+      rootPane = JRootPane(),
+      files = listOf(file),
+      onClose = {},
+      onAcceptAndFinish = { acceptAndFinishRequested = true },
+      acceptForResolution = { _, _ -> },
+      showMergeDialog = {},
+      toggleGroupByDirectory = {},
+      resolveAutomatically = {},
+      getGroupByDirectory = { false },
+      updateTable = {},
+    )
+
+    delegate.createCenterPanel()
+    val south = delegate.createSouthPanel()
+    // Marking the file as processed enables the accept button and puts the dialog in the "all reviewed" (two-button) state.
+    delegate.onTreeChanged(listOf(file), processedFiles = listOf(file), unmergeableFileSelected = false, unacceptableFileSelected = false)
+
+    val acceptButton = UIUtil.findComponentsOfType(south, JButton::class.java)
+      .single { it.text == VcsBundle.message("multiple.file.iterative.merge.accept.finish") }
+    assertTrue(acceptButton.isEnabled)
+
+    val events = FUCollectorTestCase.collectLogEvents(disposable) {
+      acceptButton.doClick()
+    }
+
+    val accept = events.single { it.event.id == "dialog.accepted" }
+    assertEquals(true, accept.event.data["all_reviewed"])
+    assertEquals("ITERATIVE", accept.event.data["flow"])
+    assertTrue(acceptAndFinishRequested)
   }
 
   private fun createTable(): MergeConflictsTreeTable {

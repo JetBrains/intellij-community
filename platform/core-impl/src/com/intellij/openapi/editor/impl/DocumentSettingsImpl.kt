@@ -180,7 +180,7 @@ internal class DocumentSettingsImpl private constructor(
         CoreBundle.message("attempt.to.modify.read.only.document.error.message"),
       )
     }
-    for (guard in DocumentWriteAccessGuard.EP_NAME.extensionList) {
+    for (guard in DocumentWriteAccessGuard.EP_NAME.extensionsIfPointIsRegistered) {
       val result = guard.isWritable(hostDocument)
       if (!result.isSuccess) {
         throw ReadOnlyModificationException(

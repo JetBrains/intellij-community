@@ -7,6 +7,7 @@ import com.intellij.driver.sdk.waitFor
 import com.intellij.ide.starter.driver.engine.BackgroundRun
 import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.runner.IDEHandle
+import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.utils.catchAll
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.runBlocking
@@ -14,14 +15,16 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-class RemoteDevBackgroundRun(
+open class RemoteDevBackgroundRun(
   val backendRun: BackgroundRun,
   frontendProcess: IDEHandle,
   frontendDriver: Driver,
   frontendStartResult: Deferred<IDEStartResult>,
+  frontendRunContext: IDERunContext,
 ) : BackgroundRun(startResult = frontendStartResult,
                   driverWithoutAwaitedConnection = frontendDriver,
-                  process = frontendProcess) {
+                  process = frontendProcess,
+                  runContext = frontendRunContext) {
   override fun <R> useDriverAndCloseIde(closeIdeTimeout: Duration, takeScreenshot: Boolean, shutdownHook: Driver.() -> Unit, block: Driver.() -> R): IDEStartResult {
     try {
       waitAndPrepareForTest()
@@ -44,6 +47,10 @@ class RemoteDevBackgroundRun(
   private fun waitAndPrepareForTest() {
     awaitBackendIsConnected()
     awaitVisibleFrameFrontend()
+    awaitFrontendReadyForTest()
+  }
+
+  protected open fun awaitFrontendReadyForTest() {
     driver.awaitLuxInitialized()
   }
 

@@ -1,1 +1,1 @@
-F*<caret>*oo _<caret>_
+F*<caret>*oo *<caret>*

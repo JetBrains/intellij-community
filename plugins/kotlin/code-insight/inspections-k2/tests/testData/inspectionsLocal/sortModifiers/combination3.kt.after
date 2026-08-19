@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
+// PROBLEM: KDoc should precede the modifiers
+/**
+ * documentation
+ */
+@Deprecated("Deprecated")
+context(i: Int)
+private val foo: Int
+    get() = i

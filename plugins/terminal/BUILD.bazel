@@ -1,5 +1,14 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
+# Checkout directories that plugin layouts copy into a distribution verbatim (`withResource*`). They are
+# resolved against the module content root and exist in no jar, so a dev assembly that materializes its own
+# project tree has to declare them. Consumed through `ULTIMATE_EXTRA_PROJECT_FILES`.
+filegroup(
+    name = "dev_dist_resources",
+    srcs = glob(["resources/shell-integrations/**"]),
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `build intellij.terminal` start
 jvm_provided_library(
     name = "libraries_opentelemetry_provided",
@@ -34,7 +43,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "//platform/kernel/rpc",
+        "//platform/kernel/rpc.lite",
         "//platform/analysis-api:analysis",
         "//platform/code-style-api:codeStyle",
         "//platform/util/concurrency",
@@ -49,7 +58,7 @@ jvm_library(
         "//platform/ide-core",
         "//libraries/guava",
         "//libraries/pty4j",
-        "@lib//:jna",
+        "//libraries/jna",
         "//platform/projectModel-api:projectModel",
         "//platform/remote-core",
         "//libraries/jediterm-core",
@@ -68,10 +77,10 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
         "//libraries/caffeine",
         "//platform/refactoring",
-        "@lib//:terminal-terminal-completion-db-with-extensions",
+        "//plugins/terminal/libraries:libraries-completionDbWithExtensions",
         "//platform/util/coroutines",
         "//platform/util/text-matching",
-        "@lib//:terminal-completion-ranking-sh",
+        "//libraries/completion-ranking-sh",
         "//platform/feedback",
         "//libraries/kotlinx/datetime",
         "//platform/diagnostic/telemetry",
@@ -109,7 +118,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":terminal",
-        "//platform/kernel/rpc:rpc_test_lib",
+        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
@@ -124,6 +133,7 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//libraries/guava:guava_test_lib",
         "//libraries/pty4j:pty4j_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/remote-core:remote-core_test_lib",
         "//libraries/jediterm-core:jediterm-core_test_lib",
@@ -142,8 +152,10 @@ jvm_library(
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/caffeine:caffeine_test_lib",
         "//platform/refactoring:refactoring_test_lib",
+        "//plugins/terminal/libraries:libraries-completionDbWithExtensions_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util/text-matching:text-matching_test_lib",
+        "//libraries/completion-ranking-sh:completion-ranking-sh_test_lib",
         "//platform/feedback:feedback_test_lib",
         "//libraries/kotlinx/datetime:datetime_test_lib",
         "//platform/diagnostic/telemetry:telemetry_test_lib",
@@ -177,6 +189,8 @@ jvm_library(
 exports_files(
     [
         "intellij.terminal.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/META-INF/terminal.xml",
     ],
     visibility = ["//visibility:public"],
 )

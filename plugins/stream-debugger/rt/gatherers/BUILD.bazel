@@ -1,0 +1,43 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.debugger.streams.java.rt.gatherers` start
+jvm_library(
+    name = "gatherers",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.debugger.streams.java.rt.gatherers",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "gatherers_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.debugger.streams.java.rt.gatherers",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":gatherers"],
+)
+### auto-generated section `build intellij.debugger.streams.java.rt.gatherers` end
+
+### auto-generated section `iml intellij.debugger.streams.java.rt.gatherers` start
+exports_files(
+    [
+        "intellij.debugger.streams.java.rt.gatherers.iml",
+        "resources/intellij.debugger.streams.java.rt.gatherers.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.debugger.streams.java.rt.gatherers` end

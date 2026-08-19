@@ -264,8 +264,8 @@ public final class PythonSdkType extends SdkType {
    */
   public static void patchEnvironmentVariablesForVirtualenv(@NotNull Map<String, String> environment,
                                                             @NotNull Sdk sdk) {
-    final Map<String, String> virtualEnv = PySdkUtil.activateVirtualEnv(sdk);
-    if (!virtualEnv.isEmpty()) {
+    final Map<String, String> virtualEnv = SdkExtKt.activationEnvironmentBlocking(sdk).getSuccessOrNull();
+    if (virtualEnv != null && !virtualEnv.isEmpty()) {
       for (Map.Entry<String, String> entry : virtualEnv.entrySet()) {
         final String key = entry.getKey();
         final String value = entry.getValue();

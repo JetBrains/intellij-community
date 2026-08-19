@@ -23,7 +23,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/util",
         "//platform/util/base/multiplatform",
-        "@lib//:jna",
+        "//libraries/jna",
     ],
 )
 
@@ -41,6 +41,7 @@ jvm_library(
         ":wintools",
         "//platform/util:util_test_lib",
         "//platform/util/base/multiplatform:multiplatform_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/hamcrest",
@@ -53,6 +54,7 @@ jvm_library(
 exports_files(
     [
         "intellij.community.wintools.iml",
+        "resources/intellij.community.wintools.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -91,7 +93,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/util",
         "//platform/util:util_test_lib",
-        "@lib//:jna",
+        "//libraries/jna",
+        "//libraries/jna:jna_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/hamcrest",

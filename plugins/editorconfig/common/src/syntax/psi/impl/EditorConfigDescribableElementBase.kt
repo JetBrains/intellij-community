@@ -7,7 +7,7 @@ import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.psi.PsiReference
 
 abstract class EditorConfigDescribableElementBase(node: ASTNode) : ASTWrapperPsiElement(node), EditorConfigDescribableElement {
@@ -30,7 +30,7 @@ abstract class EditorConfigDescribableElementBase(node: ASTNode) : ASTWrapperPsi
 
 
   override fun getReference(): PsiReference? {
-    return ApplicationManager.getApplication().service<EditorConfigReferenceSupport>().getReference(this)
+    return ApplicationManager.getApplication().serviceOrNull<EditorConfigReferenceSupport>()?.getReference(this)
   }
 
   final override fun toString(): String = text

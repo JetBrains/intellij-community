@@ -169,6 +169,12 @@ internal sealed interface FileViewProviderCache {
   @Contract(pure = true)
   fun canViewProviderBeResurrected(viewProvider: AbstractFileViewProvider): Boolean
 
+  /**
+   * Explains why [viewProvider] cannot be resurrected, or returns `null` when it can.
+   */
+  @Contract(pure = true)
+  fun getRecreationFailureReason(viewProvider: AbstractFileViewProvider): String?
+
   fun interface CacheEntryConsumer {
     fun consume(file: VirtualFile, context: CodeInsightContext, provider: FileViewProvider)
   }

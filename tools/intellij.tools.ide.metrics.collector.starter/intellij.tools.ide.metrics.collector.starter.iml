@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry.semconv" />
-    <orderEntry type="library" scope="TEST" name="kotlin-test-assertions-core-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTestAssertionsCoreJvm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.mockito" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
@@ -26,6 +26,6 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" />
-    <orderEntry type="library" scope="PROVIDED" name="kodein-di-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kodein.di.jvm" scope="PROVIDED" />
   </component>
 </module>

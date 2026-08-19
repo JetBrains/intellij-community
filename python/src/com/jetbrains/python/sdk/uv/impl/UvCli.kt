@@ -1,14 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv.impl
 
-import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.intellij.python.uv.backend.UV_TOOL
+import com.intellij.python.pytools.resolveExecutable
+import com.intellij.python.uv.backend.UvPyTool
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.pathValidation.PlatformAndRoot
@@ -18,7 +17,6 @@ import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.runExecutableWithProgress
-import com.jetbrains.python.sdk.ToolCommandSpec
 import com.jetbrains.python.sdk.uv.UvCli
 import com.jetbrains.python.uv.UV_LOCK
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -72,17 +70,8 @@ private class UvCliImpl<P : PathHolder>(val dispatcher: CoroutineDispatcher, val
     }
 }
 
-suspend fun getUvExecutableLocal(eel: EelApi = localEel): Path? = getUvExecutable(EelFileSystem(eel), null)?.path
-
-internal suspend fun <P : PathHolder> getUvExecutable(fileSystem: FileSystem<P>, pathFromSdk: FullPathOnTarget?): P? =
-  UV_TOOL.getToolExecutable(fileSystem, pathFromSdk)
-
-internal val UV_TOOL_COMMAND_SPEC: ToolCommandSpec
-  get() = UV_TOOL.toCommandSpec()
-
-
 suspend fun hasUvExecutableLocal(): Boolean {
-  return getUvExecutableLocal() != null
+  return UvPyTool.getInstance().resolveExecutable(EelFileSystem(localEel)) != null
 }
 
 internal suspend fun createUvCliLocal(uv: Path? = null, dispatcher: CoroutineDispatcher = Dispatchers.IO): PyResult<UvCli<PathHolder.Eel>> {
@@ -94,7 +83,7 @@ internal suspend fun <P : PathHolder> createUvCli(
   fileSystem: FileSystem<P>,
   dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ): PyResult<UvCli<P>> {
-  val path = uv ?: getUvExecutable(fileSystem, null)
+  val path = uv ?: UvPyTool.getInstance().resolveExecutable(fileSystem, null)
   val error = validateUvExecutable(path, fileSystem.platformAndRoot)
   return if (error != null) {
     PyResult.localizedError(error.message)

@@ -5,14 +5,15 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.readText
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.jetbrains.python.Result
-import com.jetbrains.python.sdk.findAmongRoots
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
+import com.jetbrains.python.project.resolveFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.tuweni.toml.Toml
@@ -33,13 +34,13 @@ const val PY_PROJECT_TOML: String = "pyproject.toml"
 const val PY_PROJECT_TOML_PROJECT: String = "project"
 
 @Internal
-const val PY_PROJECT_TOML_BUILD_SYSTEM: String = "build-system"
+internal const val PY_PROJECT_TOML_BUILD_SYSTEM: String = "build-system"
 
 @Internal
 const val PY_PROJECT_TOML_DEPENDENCY_GROUPS: String = "dependency-groups"
 
 @Internal
-const val PY_PROJECT_TOML_TOOL_PREFIX: String = "tool"
+internal const val PY_PROJECT_TOML_TOOL_PREFIX: String = "tool"
 
 
 /**
@@ -67,8 +68,9 @@ sealed class PyProjectIssue {
 /**
  * A general handler for `pyproject.toml` files.
  */
+@ConsistentCopyVisibility
 @Internal
-data class PyProjectToml(
+data class PyProjectToml internal constructor(
   /**
    * Represents the parsed `pyproject.toml` file.
    */
@@ -114,8 +116,12 @@ data class PyProjectToml(
   fun getDependencyGroupNames(): List<String> {
     val groupsTable = toml.getTable(PY_PROJECT_TOML_DEPENDENCY_GROUPS)
     val extraGroups = groupsTable?.keySet()?.toList() ?: emptyList()
-    val optionalGroups = project?.dependencies?.optional?.keys?.toList() ?: emptyList()
-    return DEFAULT_GROUP_NAMES + extraGroups + optionalGroups
+    val optionalGroups = project.dependencies.optional.keys.toList()
+    return buildList {
+      addAll(DEFAULT_GROUP_NAMES)
+      addAll(extraGroups)
+      addAll(optionalGroups)
+    }
   }
 
   companion object {
@@ -131,7 +137,7 @@ data class PyProjectToml(
       return readAction {
         val psiFile = PsiManager.getInstance(project).findFile(pyProjectFile) ?: return@readAction null
         CachedValuesManager.getManager(project).getCachedValue(psiFile, CACHE_KEY, {
-          CachedValueProvider.Result.create(parse(pyProjectFile.readText()), pyProjectFile)
+          CachedValueProvider.Result.create(parse(psiFile.text), psiFile)
         }, false)
       }
     }
@@ -267,7 +273,9 @@ data class PyProjectToml(
      * Returns null if not found.
      */
     suspend fun findPyProjectTomlFile(module: Module): PyProjectTomlFile? {
-      return findAmongRoots(module, PY_PROJECT_TOML)?.let { PyProjectTomlFile(it) }
+      return module.asPyProject()?.resolveFile(PY_PROJECT_TOML)
+        ?.let { LocalFileSystem.getInstance().findFileByNioFile(it) }
+        ?.let { PyProjectTomlFile(it) }
     }
 
     suspend fun findInRoot(moduleBasePath: Path): Path? = withContext(Dispatchers.IO) {

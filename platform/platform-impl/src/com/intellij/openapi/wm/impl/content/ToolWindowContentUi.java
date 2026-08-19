@@ -61,6 +61,7 @@ import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.util.Alarm;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LocationOnDragTracker;
 import com.intellij.util.ui.StatusText;
@@ -99,6 +100,13 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
   private static final @NonNls String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
   public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
   @ApiStatus.Internal public static final String HEADER_ICON = "HeaderIcon";
+
+  /**
+   * Enables separate actions for tool window tabs context menu and tool window kebub context menu,
+   * removes empty space context menu.
+   */
+  @ApiStatus.Internal
+  public static final Key<Boolean> CLEANED_TOOL_WINDOW_CONTEXT_MENUS = Key.create("CleanedToolWindowContextMenus");
 
   @ApiStatus.Internal
   public static final DataKey<ToolWindowContentUi> DATA_KEY = DataKey.create("ToolWindowContentUi");
@@ -606,18 +614,24 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
       @Override
       public void invokePopup(final Component comp, final int x, final int y) {
         final Content content = c instanceof BaseLabel ? ((BaseLabel)c).getContent() : null;
-        ui.showContextMenu(comp, x, y, ui.window.createPopupGroup(false), content);
+        ActionGroup toolWindowGroup =
+          ClientProperty.isTrue(ui.window.getComponent(), CLEANED_TOOL_WINDOW_CONTEXT_MENUS) ? null : ui.window.createPopupGroup(false);
+        ui.showContextMenu(comp, x, y, toolWindowGroup, content);
       }
     });
 
     c.putClientProperty(TOOLWINDOW_UI_INSTALLED, Boolean.TRUE);
   }
 
-  private void initActionGroup(@NotNull DefaultActionGroup group, @Nullable Content content) {
-    if (content == null) {
-      return;
-    }
+  private void initContentActionGroup(@NotNull DefaultActionGroup group, @NotNull Content content) {
     var actionManager = ActionManager.getInstance();
+
+    // group `ToolWindowTabContextMenu` defines additional content actions
+    ActionGroup contentGroup =
+      ObjectUtils.tryCast(ActionManager.getInstance().getAction("ToolWindowTabContextMenu"), ActionGroup.class);
+    if (contentGroup != null) {
+      group.add(contentGroup);
+    }
 
     group.addSeparator();
     group.add(new TabbedContentAction.CloseAction(content));
@@ -660,14 +674,20 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
       return;
     }
 
-    DefaultActionGroup configuredGroup = (DefaultActionGroup)ActionManager.getInstance().getAction("ToolWindowContextMenu");
     DefaultActionGroup group = new DefaultActionGroup();
-    group.copyFromGroup(configuredGroup);
-    if (selectedContent != null) {
-      initActionGroup(group, selectedContent);
+
+    // group `ToolWindowContextMenu` defines actions which should be added to both tab and empty space context menus
+    DefaultActionGroup configuredGroup =
+      ObjectUtils.tryCast(ActionManager.getInstance().getAction("ToolWindowContextMenu"), DefaultActionGroup.class);
+    if (configuredGroup != null) {
+      group.copyFromGroup(configuredGroup);
     }
 
-    if (toolWindowGroup != null) {
+    if (selectedContent != null) {
+      initContentActionGroup(group, selectedContent);
+    }
+
+    if (toolWindowGroup != null && !ClientProperty.isTrue(window.getComponent(), CLEANED_TOOL_WINDOW_CONTEXT_MENUS)) {
       group.add(toolWindowGroup);
     }
 

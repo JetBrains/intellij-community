@@ -20,7 +20,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.disposableFixture
-import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
@@ -42,7 +42,7 @@ class UnsatisfiedRequirementInspectionTest {
   private val testDisposable by disposableFixture()
   private val tempDir = tempPathFixture()
   private val project = projectFixture(tempDir, openAfterCreation = true)
-  private val module = project.moduleFixture(tempDir, addPathToSourceRoot = true)
+  private val module = project.pyModuleFixture(tempDir, addPathToSourceRoot = true)
 
   @Suppress("unused")
   private val venvFixture = pySdkFixture().pyUvVenvFixture(

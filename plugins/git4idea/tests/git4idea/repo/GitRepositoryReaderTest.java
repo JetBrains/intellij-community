@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.RegistryKeyRule;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.vcs.log.Hash;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -35,6 +37,10 @@ import java.util.Map;
 
 @RunWith(Parameterized.class)
 public class GitRepositoryReaderTest extends GitPlatformTest {
+
+  @Rule
+  public final RegistryKeyRule registryKeyRule = new RegistryKeyRule("git.read.branches.from.disk", true);
+
   @NotNull private final File myTestCaseDir;
 
   private File myTempDir;

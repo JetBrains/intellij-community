@@ -65,7 +65,7 @@ public class RncHighlighter extends SyntaxHighlighterBase implements DumbAware {
   }
 
   @Override
-  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+  public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType tokenType) {
     return pack(ourMap1.get(tokenType));
   }
 }

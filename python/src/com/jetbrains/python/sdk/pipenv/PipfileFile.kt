@@ -2,7 +2,7 @@
 package com.jetbrains.python.sdk.pipenv
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.python.requirements.icons.PythonRequirementsIcons
+import com.intellij.python.requirements.common.icons.PythonRequirementsCommonIcons
 import com.jetbrains.python.requirements.PyDependenciesFile
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.Icon
@@ -14,5 +14,5 @@ const val PIP_FILE: String = "Pipfile"
 const val PIP_FILE_LOCK: String = "Pipfile.lock"
 
 internal data class PipfileFile(override val virtualFile: VirtualFile) : PyDependenciesFile {
-  override val icon: Icon get() = PythonRequirementsIcons.Requirements
+  override val icon: Icon get() = PythonRequirementsCommonIcons.Requirements
 }

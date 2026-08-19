@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
 import com.dynatrace.hash4j.hashing.Hashing
@@ -63,13 +63,14 @@ import kotlin.error
 import kotlin.getValue
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.lazy
+import kotlin.let
 
 private val LOG = Logger.getLogger(BuildDependenciesDownloader::class.java.name)
 private val fileLocks = StripedMutex(1024)
 private val cleanupFlag = AtomicBoolean(false)
 
 // increment on semantic changes in extract code to invalidate all current caches
-private const val EXTRACT_CODE_VERSION = 5
+private const val EXTRACT_CODE_VERSION = 6
 
 // increment on semantic changes in download code to invalidate all current caches,
 // e.g., when some issues in extraction code were fixed
@@ -122,27 +123,55 @@ object BuildDependenciesDownloader {
   }
 
   fun getTargetFile(communityRoot: BuildDependenciesCommunityRoot, uriString: String): Path {
+    return getTargetFile(communityRoot = communityRoot, uriString = uriString, contentSha256 = null)
+  }
+
+  internal fun getTargetFile(communityRoot: BuildDependenciesCommunityRoot, uriString: String, contentSha256: String?): Path {
     val lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1)
-    val hashString = hashString("${uriString}V${DOWNLOAD_CODE_VERSION}").substring(0, 10)
+    val cacheIdentity = if (contentSha256 == null) {
+      "${uriString}V${DOWNLOAD_CODE_VERSION}"
+    }
+    else {
+      "${uriString}V${DOWNLOAD_CODE_VERSION}S${contentSha256}"
+    }
+    val hashString = hashString(cacheIdentity).substring(0, 10)
     return getDownloadCachePath(communityRoot).resolve("${hashString}-${lastNameFromUri}")
   }
 
-  @Synchronized
+  /**
+   * The project-local download cache (`<communityRoot>/build/download`), or its
+   * [BuildDependenciesConstants.DOWNLOAD_CACHE_DIR_PROPERTY] override. Deliberately not the
+   * TeamCity persistent cache: callers use this for extraction targets whose flag files are
+   * project-local too, so both must move together or not at all.
+   */
+  fun getDownloadCacheDirectory(communityRoot: BuildDependenciesCommunityRoot): Path = getProjectLocalDownloadCache(communityRoot)
+
+  /**
+   * The blocking form of [extractToCacheLocation], for a Java caller or a build script that is not
+   * a coroutine - the same shape as [downloadFileToCacheLocation] above.
+   *
+   * It delegates rather than repeating the extraction: sharing the striped `fileLocks` is what keeps
+   * a blocking and a suspending extraction of the same directory out of each other's way. The object
+   * monitor this used to hold did neither - it serialized every extraction in the process against
+   * every other, while excluding nothing at all on the suspending path.
+   */
+  @JvmStatic
   fun extractFileToCacheLocation(
     communityRoot: BuildDependenciesCommunityRoot,
     archiveFile: Path,
     vararg options: BuildDependenciesExtractOptions,
   ): Path {
-    cleanUpIfRequired(communityRoot)
-    val cachePath = getDownloadCachePath(communityRoot)
-    val hash = hashString(archiveFile.toString() + getExtractOptionsShortString(options) + EXTRACT_CODE_VERSION).substring(0, 6)
-    val directoryName = "${archiveFile.fileName}.${hash}.d"
-    val targetDirectory = cachePath.resolve(directoryName)
-    val flagFile = cachePath.resolve("${directoryName}.flag")
-    extractFileWithFlagFileLocation(archiveFile, targetDirectory, flagFile, options)
-    return targetDirectory
+    return runBlocking {
+      extractToCacheLocation(
+        archiveFile = archiveFile,
+        communityRoot = communityRoot,
+        cacheKey = archiveCacheKey(archiveFile = archiveFile, sha256 = null),
+        options = options,
+      )
+    }
   }
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use BuildDependenciesDownloader.extractFile(communityRoot, archiveFile, options)", level = DeprecationLevel.ERROR)
   fun extractFileSync(archiveFile: Path, target: Path, communityRoot: BuildDependenciesCommunityRoot) {
     runBlocking {
@@ -156,19 +185,42 @@ object BuildDependenciesDownloader {
     communityRoot: BuildDependenciesCommunityRoot,
     vararg options: BuildDependenciesExtractOptions,
   ) {
+    extractFile(archiveFile = archiveFile, target = target, communityRoot = communityRoot, sha256 = null, options = options)
+  }
+
+  /**
+   * Extracts into a caller-chosen [target], reusing an existing extraction when [sha256] - or, without
+   * one, the archive path - still matches what the flag file records.
+   */
+  suspend fun extractFile(
+    archiveFile: Path,
+    target: Path,
+    communityRoot: BuildDependenciesCommunityRoot,
+    sha256: String?,
+    options: Array<out BuildDependenciesExtractOptions>,
+  ) {
     cleanUpIfRequired(communityRoot)
     fileLocks.getLock(target.toString()).withLock {
-      // Extracting different archive files into the same target should overwrite the target each time.
-      // That's why `flagFile` should be dependent only on the target location.
-      val hash = hashString(target.toString()).substring(0, 6)
-      val flagFile = getProjectLocalDownloadCache(communityRoot).resolve("${hash}-${target.fileName}.flag.txt")
-      extractFileWithFlagFileLocation(archiveFile, target, flagFile, options)
+      extractFileWithFlagFileLocation(
+        archiveFile = archiveFile,
+        targetDirectory = target,
+        flagFile = extractFlagFile(target, communityRoot),
+        cacheKey = archiveCacheKey(archiveFile = archiveFile, sha256 = sha256),
+        options = options,
+      )
     }
   }
 
+  // Extracting different archive files into the same target should overwrite the target each time.
+  // That's why `flagFile` should be dependent only on the target location.
+  private fun extractFlagFile(target: Path, communityRoot: BuildDependenciesCommunityRoot): Path {
+    val hash = hashString(target.toString()).substring(0, 6)
+    return getProjectLocalDownloadCache(communityRoot).resolve("${hash}-${target.fileName}.flag.txt")
+  }
+
   fun cleanUpIfRequired(communityRoot: BuildDependenciesCommunityRoot) {
-    if (!cleanupFlag.getAndSet(true)) {
-      // run only once per process
+    // run only once per process - `getAndSet` reports what was there before, so the first caller is the one that runs
+    if (cleanupFlag.getAndSet(true)) {
       return
     }
     if (TeamCityHelper.isUnderTeamCity) {
@@ -195,42 +247,92 @@ object BuildDependenciesDownloader {
   }
 }
 
-suspend fun extractFileToCacheLocation(archiveFile: Path, communityRoot: BuildDependenciesCommunityRoot, stripRoot: Boolean = false): Path = withContext(Dispatchers.IO) {
+suspend fun extractFileToCacheLocation(archiveFile: Path, communityRoot: BuildDependenciesCommunityRoot, stripRoot: Boolean = false): Path {
+  return extractToCacheLocation(
+    archiveFile = archiveFile,
+    communityRoot = communityRoot,
+    cacheKey = archiveCacheKey(archiveFile = archiveFile, sha256 = null),
+    options = if (stripRoot) STRIP_ROOT_OPTIONS else EMPTY_OPTIONS,
+  )
+}
+
+/**
+ * Extracts [archiveFile] into a directory of the download cache named after [cacheKey].
+ *
+ * Nothing is written beside [archiveFile], so the archive itself may live on a read-only filesystem -
+ * a Bazel runfiles tree, or the read-only share the macOS UI-test VM mounts the host checkout through.
+ */
+@ApiStatus.Internal
+suspend fun extractToCacheLocation(
+  archiveFile: Path,
+  communityRoot: BuildDependenciesCommunityRoot,
+  cacheKey: String,
+  options: Array<out BuildDependenciesExtractOptions>,
+): Path = withContext(Dispatchers.IO) {
   cleanUpIfRequired(communityRoot)
 
-  val archivePath = archiveFile.invariantSeparatorsPathString
-  val archivePathHash = Hashing.xxh3_64().hashBytesToLong(archivePath.encodeToByteArray())
-
-  fileLocks.getLockByHash(archivePathHash).withLock {
-    val cachePath = getDownloadCachePath(communityRoot)
-
-    val hasher = Hashing.xxh3_64().hashStream()
-      .putLong(archivePathHash)
-      .putInt(archivePath.length)
-      .putBoolean(stripRoot)
-      .putInt(EXTRACT_CODE_VERSION)
-
-    val dirName = "${archiveFile.fileName}.${Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX)}.d"
-    val targetDir = cachePath.resolve(dirName)
-    val flagFile = cachePath.resolve("$dirName.flag")
+  fileLocks.getLockByHash(Hashing.xxh3_64().hashBytesToLong(cacheKey.encodeToByteArray())).withLock {
+    val location = extractCacheLocation(
+      cachePath = getDownloadCachePath(communityRoot),
+      archiveFile = archiveFile,
+      cacheKey = cacheKey,
+      options = options,
+    )
     extractFileWithFlagFileLocation(
       archiveFile = archiveFile,
-      targetDirectory = targetDir,
-      flagFile = flagFile,
-      options = if (stripRoot) arrayOf(BuildDependenciesExtractOptions.STRIP_ROOT) else EMPTY_OPTIONS,
+      targetDirectory = location.targetDirectory,
+      flagFile = location.flagFile,
+      cacheKey = cacheKey,
+      options = options,
     )
-    return@withLock targetDir
+    return@withLock location.targetDirectory
   }
 }
 
+/**
+ * What identifies an archive for extraction caching: its SHA-256 where the build knows it - a
+ * preloaded Bazel input, whose runfiles path differs per test target and per sandbox and so cannot
+ * key anything - and its resolved path otherwise.
+ *
+ * The path is resolved, not merely taken as given, so that two presentations of one archive
+ * (`dir/./a.zip`, `dir/../dir/a.zip`) stay one cache entry.
+ */
+@ApiStatus.Internal
+fun archiveCacheKey(archiveFile: Path, sha256: String?): String {
+  return sha256 ?: archiveFile.toRealPath(LinkOption.NOFOLLOW_LINKS).invariantSeparatorsPathString
+}
+
+private class ExtractCacheLocation(@JvmField val targetDirectory: Path, @JvmField val flagFile: Path)
+
+private fun extractCacheLocation(
+  cachePath: Path,
+  archiveFile: Path,
+  cacheKey: String,
+  options: Array<out BuildDependenciesExtractOptions>,
+): ExtractCacheLocation {
+  val hash = Hashing.xxh3_64().hashStream()
+    .putString(cacheKey)
+    .putString(getExtractOptionsShortString(options))
+    .putInt(EXTRACT_CODE_VERSION)
+    .asLong
+  val dirName = "${archiveFile.fileName}.${Long.toUnsignedString(hash, Character.MAX_RADIX)}.d"
+  return ExtractCacheLocation(targetDirectory = cachePath.resolve(dirName), flagFile = cachePath.resolve("$dirName.flag"))
+}
+
 private val EMPTY_OPTIONS = emptyArray<BuildDependenciesExtractOptions>()
+private val STRIP_ROOT_OPTIONS = arrayOf(BuildDependenciesExtractOptions.STRIP_ROOT)
+
+private fun downloadCacheDirOverride(): Path? {
+  return System.getProperty(BuildDependenciesConstants.DOWNLOAD_CACHE_DIR_PROPERTY)?.let { Path.of(it) }
+}
 
 private fun getProjectLocalDownloadCache(communityRoot: BuildDependenciesCommunityRoot): Path {
-  return Files.createDirectories(communityRoot.communityRoot.resolve("build/download"))
+  val cacheDir = downloadCacheDirOverride() ?: communityRoot.communityRoot.resolve("build/download")
+  return Files.createDirectories(cacheDir)
 }
 
 private fun getDownloadCachePath(communityRoot: BuildDependenciesCommunityRoot): Path {
-  val path: Path = if (TeamCityHelper.isUnderTeamCity) {
+  val path: Path = if (downloadCacheDirOverride() == null && TeamCityHelper.isUnderTeamCity) {
     TeamCityHelper.persistentCachePath ?: error("'agent.persistent.cache' system property is required under TeamCity")
   }
   else {
@@ -241,7 +343,7 @@ private fun getDownloadCachePath(communityRoot: BuildDependenciesCommunityRoot):
 }
 
 private fun getExpectedFlagFileContent(
-  archiveFile: Path,
+  cacheKey: String,
   targetDirectory: Path,
   options: Array<out BuildDependenciesExtractOptions>,
 ): ByteArray {
@@ -257,7 +359,7 @@ private fun getExpectedFlagFileContent(
   })
 
   return """$EXTRACT_CODE_VERSION
-${archiveFile.toRealPath(LinkOption.NOFOLLOW_LINKS)}
+$cacheKey
 fileCount:$fileCount
 fileSizeSum:$fileSizeSum
 options:${getExtractOptionsShortString(options)}
@@ -265,7 +367,7 @@ options:${getExtractOptionsShortString(options)}
 }
 
 private fun checkFlagFile(
-  archiveFile: Path,
+  cacheKey: String,
   flagFile: Path,
   targetDirectory: Path,
   options: Array<out BuildDependenciesExtractOptions>,
@@ -274,17 +376,18 @@ private fun checkFlagFile(
     return false
   }
   val existingContent = Files.readAllBytes(flagFile)
-  return existingContent.contentEquals(getExpectedFlagFileContent(archiveFile, targetDirectory, options))
+  return existingContent.contentEquals(getExpectedFlagFileContent(cacheKey, targetDirectory, options))
 }
 
-// assumes a file at `archiveFile` is immutable
+// assumes a file at `archiveFile` is immutable, and treats it as read-only: nothing is written to it or beside it
 private fun extractFileWithFlagFileLocation(
   archiveFile: Path,
   targetDirectory: Path,
   flagFile: Path,
+  cacheKey: String,
   options: Array<out BuildDependenciesExtractOptions>,
 ) {
-  if (checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
+  if (checkFlagFile(cacheKey, flagFile, targetDirectory, options)) {
     LOG.fine("Skipping extract to $targetDirectory since flag file $flagFile is correct")
 
     // update file modification time to maintain FIFO caches, i.e., in a persistent cache dir on TeamCity agent
@@ -326,7 +429,8 @@ private fun extractFileWithFlagFileLocation(
   val magicNumber = start.order(ByteOrder.LITTLE_ENDIAN).getInt(0)
   when {
     magicNumber == -0x2d04ad8 -> {
-      val unwrappedArchiveFile = archiveFile.parent.resolve(archiveFile.fileName.toString() + ".unwrapped")
+      // beside the target rather than beside the archive: a preloaded archive lives in the runfiles tree, which is read-only
+      val unwrappedArchiveFile = Files.createTempFile(targetDirectory.parent, archiveFile.fileName.toString(), ".unwrapped")
       try {
         Files.newOutputStream(unwrappedArchiveFile).use { out ->
           ZstdInputStreamNoFinalizer(Files.newInputStream(archiveFile)).use { input ->
@@ -356,8 +460,11 @@ private fun extractFileWithFlagFileLocation(
       )
     }
   }
-  Files.write(flagFile, getExpectedFlagFileContent(archiveFile, targetDirectory, options))
-  check(checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
+  // the expected content is computed once and compared against what landed: recomputing it through `checkFlagFile`
+  // would walk the whole extracted tree a second time, which for a JBR-sized one is not free
+  val expectedFlagFileContent = getExpectedFlagFileContent(cacheKey, targetDirectory, options)
+  Files.write(flagFile, expectedFlagFileContent)
+  check(Files.readAllBytes(flagFile).contentEquals(expectedFlagFileContent)) {
     "'checkFlagFile' must be true right after extracting the archive. flagFile:${flagFile} archiveFile:${archiveFile} target:${targetDirectory}"
   }
 }

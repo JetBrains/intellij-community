@@ -15,9 +15,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
     val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
     val primitiveTypeMapNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Map")
-
     var typeMetadata: StorageTypeMetadata
-
     typeMetadata =
       FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntitySource",
                                         properties = listOf(OwnPropertyMetadata(isComputable = false,
@@ -29,9 +27,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                   typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
                                                                                 withDefault = false)),
                                         supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
-
     addMetadata(typeMetadata)
-
     typeMetadata =
       EntityMetadata(fqName = "com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity",
                      entityDataFqName = "com.intellij.openapi.externalSystem.settings.workspaceModel.impl.ExternalProjectsBuildClasspathEntityData",
@@ -106,7 +102,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                              withDefault = false)),
                      extProperties = listOf(),
                      isAbstract = false)
-
     addMetadata(typeMetadata)
   }
 

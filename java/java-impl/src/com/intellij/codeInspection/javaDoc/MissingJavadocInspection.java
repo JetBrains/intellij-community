@@ -18,6 +18,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnonymousClass;
@@ -57,6 +58,7 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -69,6 +71,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -393,8 +396,12 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
     if (!psiMethod.isConstructor() && !PsiTypes.voidType().equals(psiMethod.getReturnType())) {
       boolean hasReturnTag = ContainerUtil.exists(tags, tag -> "return".equals(tag.getName()));
       if (!hasReturnTag) {
-        String message = JavaBundle.message("inspection.javadoc.problem.missing.tag", "<code>@return</code>");
-        problem(holder, toHighlight, message, new JavaDocFixes.AddMissingTagFix("return", ""));
+        // @return has an inline variant
+        if (!PsiUtil.isAvailable(JavaFeature.JAVADOC_INLINE_RETURN_TAG, psiMethod) ||
+            PsiDocComment.findInlineTagByName(Objects.requireNonNull(psiMethod.getDocComment()), "return").isEmpty()) {
+          String message = JavaBundle.message("inspection.javadoc.problem.missing.tag", "<code>@return</code>");
+          problem(holder, toHighlight, message, new JavaDocFixes.AddMissingTagFix("return", ""));
+        }
       }
     }
   }

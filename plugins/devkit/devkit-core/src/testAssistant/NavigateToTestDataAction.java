@@ -95,7 +95,8 @@ public final class NavigateToTestDataAction extends AnAction implements TestTree
 
     if (name.startsWith("test")) {
       String testDataPath = ReadAction.compute(() -> TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass()));
-      final TestDataReferenceCollector collector = new TestDataReferenceCollector(testDataPath, name.substring(4));
+      final TestDataReferenceCollector collector =
+        new TestDataReferenceCollector(testDataPath, TestDataGuessByExistingFilesUtil.getTestName(name));
       return collector.collectTestDataReferences(method);
     }
 

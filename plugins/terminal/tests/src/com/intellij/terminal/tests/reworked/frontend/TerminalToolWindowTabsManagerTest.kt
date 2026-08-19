@@ -24,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.junit.jupiter.api.Test
 
@@ -178,10 +179,30 @@ internal class TerminalToolWindowTabsManagerTest {
     }
   }
 
+  @Test
+  fun `emulatorType from the builder is exposed in the tab processOptions`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    withTerminalToolWindow { _, manager, _ ->
+      val tab = manager.createTestTab(name = "Ghostty tab", emulatorType = TerminalEmulatorType.Ghostty)
+
+      assertThat(tab.processOptions.emulatorType).isEqualTo(TerminalEmulatorType.Ghostty)
+    }
+  }
+
+  @Test
+  fun `emulatorType is null in processOptions when not specified`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    withTerminalToolWindow { _, manager, _ ->
+      val tab = manager.createTestTab(name = "Default emulator tab")
+
+      // Null means "unspecified": the session then uses TerminalEmulatorType.default.
+      assertThat(tab.processOptions.emulatorType).isNull()
+    }
+  }
+
   private fun TerminalToolWindowTabsManager.createTestTab(
     name: String? = null,
     addToToolWindow: Boolean = true,
     contentManager: ContentManager? = null,
+    emulatorType: TerminalEmulatorType? = null,
   ): TerminalToolWindowTab {
     return createTabBuilder()
       .tabName(name)
@@ -189,6 +210,7 @@ internal class TerminalToolWindowTabsManagerTest {
       .deferSessionStartUntilUiShown(true)  // Do not start a real terminal process
       .contentManager(contentManager)
       .shouldAddToToolWindow(addToToolWindow)
+      .emulatorType(emulatorType)
       .createTab()
   }
 

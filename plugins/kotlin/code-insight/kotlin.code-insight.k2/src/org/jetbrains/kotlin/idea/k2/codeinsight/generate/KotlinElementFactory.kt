@@ -22,30 +22,20 @@ import org.jetbrains.java.generate.element.MethodElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
-import org.jetbrains.kotlin.analysis.api.types.allSupertypes
-import org.jetbrains.kotlin.analysis.api.types.isAnyType
-import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
-import org.jetbrains.kotlin.analysis.api.components.isBooleanType
-import org.jetbrains.kotlin.analysis.api.components.isByteType
-import org.jetbrains.kotlin.analysis.api.components.isCharType
-import org.jetbrains.kotlin.analysis.api.types.isDoubleType
-import org.jetbrains.kotlin.analysis.api.types.isFloatType
-import org.jetbrains.kotlin.analysis.api.types.isIntType
-import org.jetbrains.kotlin.analysis.api.types.isLongType
-import org.jetbrains.kotlin.analysis.api.components.isNestedArray
-import org.jetbrains.kotlin.analysis.api.types.isNullable
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
-import org.jetbrains.kotlin.analysis.api.components.isShortType
-import org.jetbrains.kotlin.analysis.api.components.isStringType
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
-import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.allSupertypes
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
+import org.jetbrains.kotlin.analysis.api.types.isNestedArray
+import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.buildClassTypeWithStarProjections
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -138,7 +128,7 @@ object KotlinElementFactory {
 
         // misc
         me.isDeprecated = method.symbol.isDeprecated()
-        me.isReturnTypeVoid = type.isUnitType
+        me.isReturnTypeVoid = type.classId == KaStandardTypeClassIds.UNIT
 
         // modifiers
         if (modifiers?.hasModifier(KtTokens.ABSTRACT_KEYWORD) == true) {
@@ -160,17 +150,18 @@ object KotlinElementFactory {
         element.isArray = type.isArrayOrPrimitiveArray
 
         element.isNestedArray = type.isNestedArray
-        element.isPrimitive = type.isPrimitive
-        element.isByte = type.isByteType
-        element.isShort = type.isShortType
-        element.isInt = type.isIntType
-        element.isLong = type.isLongType
-        element.isChar = type.isCharType
-        element.isFloat = type.isFloatType
-        element.isDouble = type.isDoubleType
-        element.isBoolean = type.isBooleanType
-        element.isVoid = type.isUnitType
-        element.isString = type.isStringType
-        element.isObject = type.isAnyType
+        val typeClassId = type.classId
+        element.isPrimitive = typeClassId in KaStandardTypeClassIds.PRIMITIVES
+        element.isByte = typeClassId == KaStandardTypeClassIds.BYTE
+        element.isShort = typeClassId == KaStandardTypeClassIds.SHORT
+        element.isInt = typeClassId == KaStandardTypeClassIds.INT
+        element.isLong = typeClassId == KaStandardTypeClassIds.LONG
+        element.isChar = typeClassId == KaStandardTypeClassIds.CHAR
+        element.isFloat = typeClassId == KaStandardTypeClassIds.FLOAT
+        element.isDouble = typeClassId == KaStandardTypeClassIds.DOUBLE
+        element.isBoolean = typeClassId == KaStandardTypeClassIds.BOOLEAN
+        element.isVoid = typeClassId == KaStandardTypeClassIds.UNIT
+        element.isString = typeClassId == KaStandardTypeClassIds.STRING
+        element.isObject = typeClassId == KaStandardTypeClassIds.ANY
     }
 }

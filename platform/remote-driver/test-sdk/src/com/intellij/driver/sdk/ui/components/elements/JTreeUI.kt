@@ -17,7 +17,6 @@ import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
 import com.intellij.driver.sdk.ui.CellRendererReader
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
-import com.intellij.driver.sdk.ui.boundsOnScreen
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.Icon
@@ -34,6 +33,8 @@ import javax.swing.JTree
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+
+private const val TREE_DIAGNOSTIC_PATH_LIMIT = 100
 
 fun Finder.tree(@Language("xpath") xpath: String? = null) =
   x(xpath ?: xQuery { byType(JTree::class.java) }, JTreeUiComponent::class.java)
@@ -71,7 +72,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     waitForNodesLoaded()
     findRow(predicate)?.let {
       clickRow(it, point)
-    } ?: throw PathNotFoundException("row not found")
+    } ?: throw rowNotFoundException("click row matching predicate")
   }
 
   fun selectRows(rowFilter: (List<String>) -> List<String>) {
@@ -94,7 +95,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     waitForNodesLoaded()
     findRow(predicate)?.let {
       rightClickRow(it)
-    } ?: throw PathNotFoundException("row not found")
+    } ?: throw rowNotFoundException("right-click row matching predicate")
   }
 
   fun doubleClickRow(row: Int, point: Point? = null) {
@@ -110,7 +111,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     waitForNodesLoaded()
     findRow(predicate)?.let {
       doubleClickRow(it, point)
-    } ?: throw PathNotFoundException("row not found")
+    } ?: throw rowNotFoundException("double-click row matching predicate")
   }
 
   fun clickPath(vararg path: String, fullMatch: Boolean = true) {
@@ -240,12 +241,8 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getComponentAtRow(row: Int): Component = fixture.getComponentAtRow(row)
 
-  fun dragAndDropRowByNumberToPoint(row: Int, to:Point) {
-    val actualLocation = this.boundsOnScreen.location.apply {
-      val rowLocation = fixture.scrollToRowAndGetVisibleCenter(row)
-      translate(rowLocation.x, rowLocation.y)
-    }
-    driver.ui.dragAndDrop(actualLocation, to)
+  fun dragAndDropRowByNumberTo(row: Int, to: UiComponent, toPoint: Point? = null) {
+    driver.ui.dragAndDrop(this, fixture.scrollToRowAndGetVisibleCenter(row), to, toPoint)
   }
 
   fun waitForNodesLoaded(timeout: Duration = 10.seconds) {
@@ -255,6 +252,51 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   private fun findRow(predicate: (String) -> Boolean): Int? {
     return collectExpandedPaths().singleOrNull { predicate(it.path.last()) }?.row
   }
+
+  private fun rowNotFoundException(action: String): PathNotFoundException {
+    val expandedPaths = collectExpandedPaths()
+    val selectedPaths = collectSelectedPaths()
+    return PathNotFoundException(buildString {
+      appendLine("row not found while trying to $action in ${this@JTreeUiComponent}")
+      appendLine("Expanded paths (${expandedPaths.size}):")
+      appendExpandedPaths(expandedPaths)
+      appendLine("Selected paths (${selectedPaths.size}):")
+      appendSelectedPaths(selectedPaths)
+    }.trimEnd())
+  }
+
+  private fun StringBuilder.appendExpandedPaths(paths: List<TreePathToRow>) {
+    if (paths.isEmpty()) {
+      appendLine("  <none>")
+      return
+    }
+
+    paths.take(TREE_DIAGNOSTIC_PATH_LIMIT).forEach {
+      appendLine("  row ${it.row}: ${it.path.formatTreePath()}")
+    }
+    appendRemainingCount(paths.size)
+  }
+
+  private fun StringBuilder.appendSelectedPaths(paths: List<TreePath>) {
+    if (paths.isEmpty()) {
+      appendLine("  <none>")
+      return
+    }
+
+    paths.take(TREE_DIAGNOSTIC_PATH_LIMIT).forEach {
+      appendLine("  ${it.path.formatTreePath()}")
+    }
+    appendRemainingCount(paths.size)
+  }
+
+  private fun StringBuilder.appendRemainingCount(totalCount: Int) {
+    val remainingCount = totalCount - TREE_DIAGNOSTIC_PATH_LIMIT
+    if (remainingCount > 0) {
+      appendLine("  ... $remainingCount more")
+    }
+  }
+
+  private fun List<String>.formatTreePath(): String = joinToString(" | ")
 
   private fun translateRowPoint(row: Int, point: Point): Point = fixture.getRowPoint(row).apply { translate(point.x, point.y) }
 

@@ -56,11 +56,13 @@ internal class PythonLanguageRuntimeUI(
 
   override fun createPanel(): DialogPanel {
     val targetEnvironmentConfiguration = targetSupplier.get()
+    val projectPath = getProjectPath()
     val model = PythonLocalAddInterpreterModel(
-      ProjectPathFlows.create(getProjectPath()),
+      ProjectPathFlows.create(projectPath),
       TargetFileSystem(
         targetEnvironmentConfiguration = targetEnvironmentConfiguration,
         pythonLanguageRuntimeConfiguration = config,
+        targetProbeWorkingDirectory = projectPath,
       )
     )
     model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)

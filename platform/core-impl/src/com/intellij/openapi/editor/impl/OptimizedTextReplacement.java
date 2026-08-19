@@ -1,17 +1,29 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.ex.DocumentTextPatch;
 import com.intellij.util.text.ImmutableCharSequence;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
-final class OptimizedTextReplacement {
+/**
+ * Computes a text replacement: trims the common prefix/suffix to produce the narrowed change-event parameters,
+ * and builds the {@link DocumentTextPatch} for the resulting snapshot (reusing the caller's sequence as the whole
+ * new text when the entire document is replaced).
+ */
+@ApiStatus.Internal
+@VisibleForTesting
+public final class OptimizedTextReplacement { // TODO: refactor me
   private final ImmutableCharSequence wholeText;
   private final int initialStartOffset;
   private final int initialEndOffset;
   private final CharSequence initialNewFragment;
   private final boolean initialWholeTextReplaced;
+  private final long newModStamp;
+  private final boolean clearLineFlags;
 
-  private ImmutableCharSequence newWholeText;
+  private DocumentTextPatch patch;
   private int startOffset;
   private int endOffset;
   private int moveOffset;
@@ -19,19 +31,23 @@ final class OptimizedTextReplacement {
   private CharSequence oldFragment;
   private CharSequence newFragment;
 
-  OptimizedTextReplacement(
+  public OptimizedTextReplacement(
     @NotNull ImmutableCharSequence wholeText,
     int initialStartOffset,
     int initialEndOffset,
     int initialMoveOffset,
     @NotNull CharSequence initialNewFragment,
-    boolean initialWholeTextReplaced
+    boolean initialWholeTextReplaced,
+    long newModStamp,
+    boolean clearLineFlags
   ) {
     this.wholeText = wholeText;
     this.initialStartOffset = initialStartOffset;
     this.initialEndOffset = initialEndOffset;
     this.initialNewFragment = initialNewFragment;
     this.initialWholeTextReplaced = initialWholeTextReplaced;
+    this.newModStamp = newModStamp;
+    this.clearLineFlags = clearLineFlags;
 
     this.startOffset = initialStartOffset;
     this.endOffset = initialEndOffset;
@@ -40,7 +56,7 @@ final class OptimizedTextReplacement {
     this.newFragment = initialNewFragment;
   }
 
-  boolean perform() {
+  public boolean perform() {
     int newStartOffset = initialStartOffset;
     int newEndOffset = initialEndOffset;
     int newStartInString = 0;
@@ -76,33 +92,52 @@ final class OptimizedTextReplacement {
       this.newFragment = initialNewFragment.subSequence(newStartInString, newEndInString);
       this.moveOffset = newStartOffset;
     }
+    // the whole-text condition mirrors DocumentEventImpl.isWholeTextReplaced:
+    // an empty document cannot have its "whole text replaced"
+    boolean patchClearLineFlags = clearLineFlags || (wholeTextReplaced && wholeText.length() != 0);
     // For a whole-text replacement reuse the original (untrimmed) sequence as the new text: prefix/suffix
     // trimming above only narrows the change event, it must not shrink the resulting document text.
-    if (wholeTextReplaced && initialNewFragment instanceof ImmutableCharSequence) {
-      this.newWholeText = (ImmutableCharSequence) initialNewFragment;
+    // The full-range check guards against a partial-range request abusing the whole-text flag.
+    if (wholeTextReplaced &&
+        initialStartOffset == 0 && initialEndOffset == wholeText.length() &&
+        initialNewFragment instanceof ImmutableCharSequence) {
+      this.patch = DocumentTextPatch.complex(
+        0,
+        wholeText.length(),
+        initialNewFragment,
+        newModStamp,
+        patchClearLineFlags,
+        initialStartOffset,
+        initialEndOffset,
+        moveOffset
+      );
     } else {
-      this.newWholeText = wholeText.replace(startOffset, endOffset, newFragment);
-      if (!(newFragment instanceof String)) {
-        this.newFragment = newWholeText.subtext(startOffset, startOffset + newFragment.length());
-      }
+      // decouple the event/patch fragment from the caller's possibly mutable sequence
+      this.newFragment = ImmutableCharSequence.asImmutable(newFragment);
+      this.patch = DocumentTextPatch.complex(
+        startOffset,
+        endOffset,
+        newFragment,
+        newModStamp,
+        patchClearLineFlags,
+        initialStartOffset,
+        initialEndOffset,
+        moveOffset
+      );
     }
     return false;
   }
 
-  @NotNull ImmutableCharSequence getNewWholeText() {
-    return newWholeText;
+  public @NotNull DocumentTextPatch getPatch() {
+    return patch;
   }
 
-  int getStartOffset() {
+  public int getStartOffset() {
     return startOffset;
   }
 
-  int getEndOffset() {
+  public int getEndOffset() {
     return endOffset;
-  }
-
-  int getMoveOffset() {
-    return moveOffset;
   }
 
   @NotNull CharSequence getOldFragment() {
@@ -115,13 +150,5 @@ final class OptimizedTextReplacement {
 
   boolean isWholeTextReplaced() {
     return wholeTextReplaced;
-  }
-
-  int getInitialStartOffset() {
-    return initialStartOffset;
-  }
-
-  int getInitialOldLength() {
-    return initialEndOffset - initialStartOffset;
   }
 }

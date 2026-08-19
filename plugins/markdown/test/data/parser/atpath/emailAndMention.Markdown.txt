@@ -1,0 +1,6 @@
+MarkdownFile
+  MarkdownParagraph(Markdown:PARAGRAPH)
+    PsiElement(Markdown:Markdown:TEXT)('Contact user@example.com or')
+    PsiWhiteSpace(' ')
+    MarkdownAtPath(Markdown:Markdown:AT_PATH)
+      PsiElement(Markdown:Markdown:AT_PATH_TOKEN)('@username')

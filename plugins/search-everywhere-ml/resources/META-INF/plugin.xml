@@ -15,6 +15,14 @@
 
   <dependencies>
     <module name="intellij.json.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <!-- endregion -->
   </dependencies>
   <content namespace="jetbrains">
     <module name="intellij.platform.ml.logs"/>
@@ -25,6 +33,10 @@
     <module name="intellij.searchEverywhereMl.ranking.java"/>
     <module name="intellij.searchEverywhereMl.ranking.yaml"/>
     <module name="intellij.searchEverywhereMl.ranking.vcs"/>
+  </content>
+  <content>
+    <module name="intellij.libraries.search.everywhere.find.all.model" loading="required"/>
+    <module name="intellij.libraries.search.everywhere.find.ec.model" loading="required"/>
   </content>
 
   <resource-bundle>messages.searchEverywhereMlCoreBundle</resource-bundle>

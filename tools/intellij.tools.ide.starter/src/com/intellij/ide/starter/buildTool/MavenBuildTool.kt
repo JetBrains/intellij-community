@@ -38,7 +38,7 @@ open class MavenBuildTool(testContext: IDETestContext) : BuildTool(BuildToolType
   }
 
   init {
-    EventsBus.subscribe(GradleBuildTool::javaClass, 1.minutes) { event: IdeAfterLaunchEvent ->
+    EventsBus.subscribe(GradleBuildTool::class.java, 1.minutes) { event: IdeAfterLaunchEvent ->
       if (event.runContext.testContext === testContext) {
         destroyMavenIndexerProcessIfExists()
       }

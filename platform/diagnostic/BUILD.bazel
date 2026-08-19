@@ -18,7 +18,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/fastutil",
     ],
 )
@@ -37,6 +37,7 @@ jvm_library(
         # do not sort,
         ":diagnostic",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
     ],
 )

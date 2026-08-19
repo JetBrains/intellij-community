@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.gradle.jar
+  modules:
+  - name: intellij.libraries.gradle
+    libraries:
+      Gradle:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9/gradle-api-9.jar

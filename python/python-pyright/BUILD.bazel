@@ -25,7 +25,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/lang-impl",
         "//python:python-community-impl",
-        "//python/python-sdk:sdk",
+        "//python/python-sdk/backend",
         "//python/python-core-impl:community-core-impl",
         "@lib//:kotlin-stdlib",
         "//platform/code-style-impl:codeStyle-impl",
@@ -66,7 +66,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
         "//python:python-community-impl_test_lib",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
         "//python/python-core-impl:community-core-impl_test_lib",
         "//platform/code-style-impl:codeStyle-impl_test_lib",
         "//platform/editor-ui-ex:editor-ex_test_lib",
@@ -99,6 +99,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.pyright.iml",
+        "resources/intellij.python.pyright.xml",
     ],
     visibility = ["//visibility:public"],
 )

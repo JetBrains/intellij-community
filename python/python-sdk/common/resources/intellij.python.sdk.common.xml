@@ -1,0 +1,29 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.rpc.topics"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <!-- Evo interpreter widget registry keys. Declared here (common) so they register in both the frontend process
+       (widget) and the backend process (PyEvoSdkApiProvider), since Registry is per-process. -->
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="python.evolution.widget" defaultValue="false" restartRequired="true"
+                 description="Enables the 'Evo Module Python Interpreter' widget in the status bar (PoC)"/>
+    <registryKey key="python.evolution.widget.cache.seconds" defaultValue="3"
+                 description="Evo interpreter widget: how long (seconds) after closing the popup a re-open reuses the built tree before rebuilding"/>
+    <registryKey key="python.evolution.widget.slow.threshold.seconds" defaultValue="5"
+                 description="Evo interpreter widget: a tool whose env scan takes longer than this (seconds) is cached and shown with a reload icon"/>
+    <registryKey key="python.evolution.widget.slow.cache.seconds" defaultValue="600"
+                 description="Evo interpreter widget: how long (seconds) a slow tool's environment list is cached"/>
+  </extensions>
+</idea-plugin>

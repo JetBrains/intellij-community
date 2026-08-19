@@ -35,10 +35,11 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/reflect",
         "//plugins/kotlin/references",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-compiler-fir",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/indexing-api:indexing",
@@ -107,6 +108,10 @@ jvm_library(
         ":kotlin-codeInsight-inspections",
         "//libraries/kotlin/reflect:reflect_test_lib",
         "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/indexing-api:indexing_test_lib",
@@ -165,6 +170,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.codeInsight.inspections.iml",
+        "resources/intellij.kotlin.codeInsight.inspections.xml",
     ],
     visibility = ["//visibility:public"],
 )

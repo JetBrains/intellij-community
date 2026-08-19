@@ -18,4 +18,3 @@ interface AbstractChildWithLinkToParentEntityBuilder<T : AbstractChildWithLinkTo
 @Parent
 var AbstractChildWithLinkToParentEntityBuilder<out AbstractChildWithLinkToParentEntity>.parent: ParentWithLinkToAbstractChildBuilder?
   by WorkspaceEntity.extensionBuilder(ParentWithLinkToAbstractChild::class.java)
-

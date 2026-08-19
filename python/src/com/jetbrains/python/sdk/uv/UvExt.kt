@@ -28,7 +28,8 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
-import com.jetbrains.python.sdk.uv.impl.getUvExecutable
+import com.intellij.python.pytools.resolveExecutable
+import com.intellij.python.uv.backend.UvPyTool
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import io.github.z4kn4fein.semver.Version
@@ -81,7 +82,7 @@ private suspend fun createEelUvExecutionContext(
 ): UvExecutionContext.Eel {
   val eelApi = workingDir.getEelDescriptor().toEelApi()
   val fileSystem = EelFileSystem(eelApi)
-  val uvPath = getUvExecutable(fileSystem, uvPathString)
+  val uvPath = UvPyTool.getInstance().resolveExecutable(fileSystem, uvPathString)
   return UvExecutionContext.Eel(
     workingDir = workingDir,
     venvPath = fileSystem.resolvePythonHome(PathHolder.Eel(Path.of(pythonBinaryPath))),
@@ -97,7 +98,7 @@ private suspend fun createTargetUvExecutionContext(
   targetConfig: TargetEnvironmentConfiguration,
 ): UvExecutionContext.Target {
   val fileSystem = TargetFileSystem(targetConfig, PythonLanguageRuntimeConfiguration())
-  val uvPath = getUvExecutable(fileSystem, uvPathString)
+  val uvPath = UvPyTool.getInstance().resolveExecutable(fileSystem, uvPathString)
   return UvExecutionContext.Target(
     workingDir = workingDir,
     venvPath = fileSystem.resolvePythonHome(PathHolder.Target(pythonBinaryPath)),

@@ -11,7 +11,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -22,6 +21,8 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -104,7 +105,8 @@ internal class SimplifyNestedEachInScopeFunctionInspection :
         context: Context,
     ): KotlinModCommandQuickFix<KtCallExpression> = SimplifyNestedEachFix(context.innerCallName, context.returnsToRelabel)
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Context? {
         val scopeFunctionName = element.getCallingShortNameOrNull(scopeFunctions) ?: return null
         val lambdaArgument = element.valueArguments.singleOrNull() as? KtLambdaArgument ?: return null
         val (labelExpression, lambdaExpression) = lambdaArgument.getArgumentExpression()?.unpackLabelAndLambdaExpression() ?: return null

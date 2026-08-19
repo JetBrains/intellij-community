@@ -35,7 +35,7 @@ internal class XMarkObjectActionHandler : MarkObjectActionHandler() {
     val detachedView = DebuggerUIUtil.isInDetachedTree(event)
     val treeState = XDebuggerTreeState.saveState(node.tree)
 
-    session.coroutineScope.launch(Dispatchers.EDT) {
+    event.coroutineScope.launch(Dispatchers.EDT) {
       if (performMarkObject(event, node, markers, session)) {
         if (detachedView) {
           node.tree.rebuildAndRestore(treeState)

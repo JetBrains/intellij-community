@@ -1,18 +1,20 @@
 from _typeshed import Incomplete
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Mapping
 from logging import Logger
-from typing import Any, Final
+from typing import Final, TypeVar
 from typing_extensions import Self
 
+from . import amqp_object
 from .callback import CallbackManager
 from .connection import Connection
-from .data import _ArgumentMapping
 from .exchange_type import ExchangeType
 from .frame import Body, Header, Method
 from .spec import Basic, BasicProperties, Confirm, Exchange, Queue, Tx
 
+_Method = TypeVar("_Method", bound=amqp_object.Method)
+
 LOGGER: Logger
-MAX_CHANNELS: Final[int]
+MAX_CHANNELS: Final = 65535
 
 class Channel:
     CLOSED: Final = 0
@@ -27,11 +29,11 @@ class Channel:
 
     def __init__(self, connection: Connection, channel_number: int, on_open_callback: Callable[[Self], object]) -> None: ...
     def __int__(self) -> int: ...
-    def add_callback(self, callback, replies, one_shot: bool = True) -> None: ...
-    def add_on_cancel_callback(self, callback) -> None: ...
-    def add_on_close_callback(self, callback) -> None: ...
-    def add_on_flow_callback(self, callback) -> None: ...
-    def add_on_return_callback(self, callback) -> None: ...
+    def add_callback(self, callback: Callable[..., object], replies: Iterable[Incomplete], one_shot: bool = True) -> None: ...
+    def add_on_cancel_callback(self, callback: Callable[[Method[Basic.Cancel]], object]) -> None: ...
+    def add_on_close_callback(self, callback: Callable[[Channel, Exception], object]) -> None: ...
+    def add_on_flow_callback(self, callback: Callable[[bool], object]) -> None: ...
+    def add_on_return_callback(self, callback: Callable[[Channel, Basic.Return, BasicProperties, bytes], object]) -> None: ...
     def basic_ack(self, delivery_tag: int = 0, multiple: bool = False) -> None: ...
     def basic_cancel(
         self, consumer_tag: str = "", callback: Callable[[Method[Basic.CancelOk]], object] | None = None
@@ -43,7 +45,7 @@ class Channel:
         auto_ack: bool = False,
         exclusive: bool = False,
         consumer_tag: str | None = None,
-        arguments: _ArgumentMapping | None = None,
+        arguments: Mapping[str, Incomplete] | None = None,
         callback: Callable[[Method[Basic.ConsumeOk]], object] | None = None,
     ) -> str: ...
     def basic_get(
@@ -82,7 +84,7 @@ class Channel:
         destination: str,
         source: str,
         routing_key: str = "",
-        arguments: _ArgumentMapping | None = None,
+        arguments: Mapping[str, Incomplete] | None = None,
         callback: Callable[[Method[Exchange.BindOk]], object] | None = None,
     ) -> None: ...
     def exchange_declare(
@@ -93,7 +95,7 @@ class Channel:
         durable: bool = False,
         auto_delete: bool = False,
         internal: bool = False,
-        arguments: _ArgumentMapping | None = None,
+        arguments: Mapping[str, Incomplete] | None = None,
         callback: Callable[[Method[Exchange.DeclareOk]], object] | None = None,
     ) -> None: ...
     def exchange_delete(
@@ -107,7 +109,7 @@ class Channel:
         destination: str | None = None,
         source: str | None = None,
         routing_key: str = "",
-        arguments: _ArgumentMapping | None = None,
+        arguments: Mapping[str, Incomplete] | None = None,
         callback: Callable[[Method[Exchange.UnbindOk]], object] | None = None,
     ) -> None: ...
     def flow(self, active: bool, callback: Callable[[bool], object] | None = None) -> None: ...
@@ -125,7 +127,7 @@ class Channel:
         queue: str,
         exchange: str,
         routing_key: str | None = None,
-        arguments: _ArgumentMapping | None = None,
+        arguments: Mapping[str, Incomplete] | None = None,
         callback: Callable[[Method[Queue.BindOk]], object] | None = None,
     ) -> None: ...
     def queue_declare(
@@ -135,7 +137,7 @@ class Channel:
         durable: bool = False,
         exclusive: bool = False,
         auto_delete: bool = False,
-        arguments: _ArgumentMapping | None = None,
+        arguments: Mapping[str, Incomplete] | None = None,
         callback: Callable[[Method[Queue.DeclareOk]], object] | None = None,
     ) -> None: ...
     def queue_delete(
@@ -151,7 +153,7 @@ class Channel:
         queue: str,
         exchange: str | None = None,
         routing_key: str | None = None,
-        arguments: _ArgumentMapping | None = None,
+        arguments: Mapping[str, Incomplete] | None = None,
         callback: Callable[[Method[Queue.UnbindOk]], object] | None = None,
     ): ...
     def tx_commit(self, callback: Callable[[Method[Tx.CommitOk]], object] | None = None) -> None: ...
@@ -160,4 +162,4 @@ class Channel:
 
 class ContentFrameAssembler:
     def __init__(self) -> None: ...
-    def process(self, frame_value: Method[Any] | Header | Body) -> tuple[Incomplete, Incomplete, bytes] | None: ...
+    def process(self, frame_value: Method[_Method] | Header | Body) -> tuple[Method[_Method], Header, bytes] | None: ...

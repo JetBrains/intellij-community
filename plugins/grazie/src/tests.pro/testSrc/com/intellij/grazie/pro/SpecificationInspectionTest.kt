@@ -8,10 +8,11 @@ import ai.grazie.rules.promptAnalysis.LlmAnalyzer
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.Replacement
 import com.google.gson.JsonObject
+import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationBaseInspection
 import com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationContradictionInspection
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
@@ -21,15 +22,27 @@ private const val NOT_USED = "Not used"
 internal class SpecificationInspectionTest : BaseTestCase() {
   @BeforeEach
   fun setUp() {
-    Registry.get("grazie.specification.semantics.enabled").setValue(true, testRootDisposable)
+    GrazieConfig.update { it.copy(specificationAnalysisEnabled = true) }
     GrazieTestUtil.registerGrazieCloudConnectorWithQuota(testRootDisposable)
   }
 
   @Test
   fun `test regular Markdown files are not checked`() {
-    myFixture.enableInspections(SpecificationTestInspection(emptyList<TestIssue>()))
+    var analysisCalled = false
+    myFixture.enableInspections(SpecificationTestInspection(emptyList<TestIssue>()) { analysisCalled = true })
     myFixture.configureByText("README.md", "This is some specification")
     myFixture.checkHighlighting()
+    assertFalse(analysisCalled)
+  }
+
+  @Test
+  fun `test disabled analysis does not call analyzer or report issues`() {
+    GrazieConfig.update { it.copy(specificationAnalysisEnabled = false) }
+    var analysisCalled = false
+    myFixture.enableInspections(SpecificationTestInspection(emptyList<TestIssue>()) { analysisCalled = true })
+    myFixture.configureByText("AGENT.md", "This is some specification")
+    myFixture.checkHighlighting()
+    assertFalse(analysisCalled)
   }
 
   @Test
@@ -109,8 +122,11 @@ internal class SpecificationInspectionTest : BaseTestCase() {
     assertNotNull(myFixture.getAvailableIntention("Navigate to contradiction at beautiful.md:L1"))
   }
 
-  internal class SpecificationTestInspection<T>(private val issues: List<LlmIssue<T>>) : SpecificationBaseInspection<T>() {
-    override fun getAnalyzer(file: PsiFile): LlmAnalyzer<T> = TestLlmAnalyzer(issues)
+  internal class SpecificationTestInspection<T>(
+    private val issues: List<LlmIssue<T>>,
+    private val onAnalyze: () -> Unit = {},
+  ) : SpecificationBaseInspection<T>() {
+    override fun getAnalyzer(file: PsiFile): LlmAnalyzer<T> = TestLlmAnalyzer(issues, onAnalyze)
   }
 
   internal class SpecificationContradictionTestInspection(private val issues: List<LlmContradiction>) :
@@ -118,9 +134,14 @@ internal class SpecificationInspectionTest : BaseTestCase() {
     override fun getAnalyzer(file: PsiFile): LlmAnalyzer<Contradiction> = TestLlmAnalyzer<Contradiction>(issues)
   }
 
-  internal class TestLlmAnalyzer<T>(private val issues: List<LlmIssue<T>>) : LlmAnalyzer<T>() {
-    override fun analyze(text: String, client: SuspendableAPIGatewayClient): WithSpending<List<LlmIssue<T>>> =
-      WithSpending(issues, 0.0)
+  internal class TestLlmAnalyzer<T>(
+    private val issues: List<LlmIssue<T>>,
+    private val onAnalyze: () -> Unit = {},
+  ) : LlmAnalyzer<T>() {
+    override fun analyze(text: String, client: SuspendableAPIGatewayClient): WithSpending<List<LlmIssue<T>>> {
+      onAnalyze()
+      return WithSpending(issues, 0.0)
+    }
 
     // Those methods are not required because `analyze` is overridden
     override fun getAnalysisPrompt(): String = TODO(NOT_USED)

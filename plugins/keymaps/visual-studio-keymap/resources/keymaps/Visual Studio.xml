@@ -379,6 +379,7 @@
   <action id="SaveAll">
     <keyboard-shortcut first-keystroke="control shift S"/>
   </action>
+  <action id="SaveAs"/>
   <action id="SaveDocument">
     <keyboard-shortcut first-keystroke="control S" />
   </action>
@@ -618,6 +619,7 @@
   <action id="ZoomOutIdeAction"/>
   <action id="Console.Open"/>
 
+  <action id="MoveToolWindowTabToEditorAction"/>
 
   <!--KNOWN CONFLICTS: https://youtrack.jetbrains.com/issue/IDEA-268674-->
   <!--MISSING VISUAL STUDIO SHORTCUTS-->

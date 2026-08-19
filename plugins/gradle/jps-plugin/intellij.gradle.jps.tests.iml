@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="Gradle" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gradle" scope="TEST" />
     <orderEntry type="module-library" scope="TEST">
       <library name="ant" type="repository">
         <properties maven-id="org.apache.ant:ant:1.10.15">

@@ -14,7 +14,10 @@ import org.junit.jupiter.api.Test
 import java.awt.Dimension
 import java.awt.Rectangle
 import javax.swing.JComponent
+import javax.swing.JPanel
 import kotlin.test.assertEquals
+import kotlin.test.assertNotSame
+import kotlin.test.assertNull
 import kotlin.test.assertSame
 
 @TestApplication
@@ -156,6 +159,137 @@ class ActionToolbarTest {
     for (i in listOf(0, 2, 3)) {
       assertSame(oldButtons[i], newButtons[i], "The button must be reused! [$i]")
     }
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun testComponentNameFromTemplatePresentationNamesTheButton() {
+    val action = NamedAction("1", "toolbar.test.first")
+    val toolbar = ActionToolbarImpl("Test", MutableGroup(action), false)
+    PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync())
+
+    assertEquals("toolbar.test.first", toolbar.buttonFor(action).name)
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun testComponentNameIsReappliedAfterToolbarRebuild() {
+    val action = NamedAction("1", "toolbar.test.first")
+    val group = MutableGroup(action)
+    val toolbar = ActionToolbarImpl("Test", group, false)
+    PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync())
+    val firstButton = toolbar.buttonFor(action)
+    assertEquals("toolbar.test.first", firstButton.name)
+
+    // A changed child count makes `replaceButtonsForNewActionInstances` bail out, so `actionsUpdated`
+    // takes the real rebuild path: `removeAll()` + `fillToolBar`, constructing brand-new buttons.
+    // That is the whole point of putting the name on the action: a name stamped on the button from
+    // outside would be gone from here on.
+    group.children = arrayOf(action, NamedAction("2", null))
+    PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync())
+    val secondButton = toolbar.buttonFor(action)
+
+    assertNotSame(firstButton, secondButton,
+                  "The toolbar must have re-created the button, otherwise this test asserts nothing")
+    assertEquals("toolbar.test.first", secondButton.name)
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun testComponentNameFallsBackToTemplateWhenCopyFromDroppedIt() {
+    // `Presentation.copyFrom` reconciles the two client-property maps and drops every key the source
+    // lacks, which is how a live presentation loses a name its template still declares.
+    class A : AnAction("1", "1", null) {
+      val donor: Presentation = Presentation("donor")
+
+      init {
+        templatePresentation.putClientProperty(ActionUtil.COMPONENT_NAME, "toolbar.test.first")
+      }
+
+      override fun actionPerformed(e: AnActionEvent) = Unit
+      override fun update(e: AnActionEvent) {
+        e.presentation.copyFrom(donor)
+      }
+    }
+
+    val action = A()
+    val toolbar = ActionToolbarImpl("Test", MutableGroup(action), false)
+    PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync())
+
+    assertNull(toolbar.presentationFactory.getPresentation(action).getClientProperty(ActionUtil.COMPONENT_NAME),
+               "The copy must have cleared the key from the live presentation, otherwise the fallback is untested")
+    assertEquals("toolbar.test.first", toolbar.buttonFor(action).name,
+                 "`ActionUtil.getComponentName` must fall back to the template presentation")
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun testCustomComponentKeepsItsOwnName() {
+    class A : AnAction("1", "1", null), CustomComponentAction {
+      init {
+        templatePresentation.putClientProperty(ActionUtil.COMPONENT_NAME, "toolbar.test.fromAction")
+      }
+
+      override fun actionPerformed(e: AnActionEvent) = Unit
+      override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+        return JPanel().also { it.name = "toolbar.test.fromComponent" }
+      }
+    }
+
+    val toolbar = ActionToolbarImpl("Test", MutableGroup(A()), false)
+    PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync())
+
+    assertEquals("toolbar.test.fromComponent", toolbar.components.single().name,
+                 "The component named itself; the toolbar must not overwrite that")
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun testCustomComponentWithoutOwnNameGetsTheActionName() {
+    class A : AnAction("1", "1", null), CustomComponentAction {
+      init {
+        templatePresentation.putClientProperty(ActionUtil.COMPONENT_NAME, "toolbar.test.fromAction")
+      }
+
+      override fun actionPerformed(e: AnActionEvent) = Unit
+      override fun createCustomComponent(presentation: Presentation, place: String): JComponent = JPanel()
+    }
+
+    val toolbar = ActionToolbarImpl("Test", MutableGroup(A()), false)
+    PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync())
+
+    assertEquals("toolbar.test.fromAction", toolbar.components.single().name)
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun testNoComponentNameKeyLeavesTheButtonUnnamed() {
+    val action = NamedAction("1", null)
+    val toolbar = ActionToolbarImpl("Test", MutableGroup(action), false)
+    PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync())
+
+    assertNull(toolbar.buttonFor(action).name, "Buttons must not be named unless the action asks for it")
+  }
+
+  private class NamedAction(text: String, componentName: String?) : AnAction(text, text, null) {
+    init {
+      if (componentName != null) {
+        templatePresentation.putClientProperty(ActionUtil.COMPONENT_NAME, componentName)
+      }
+    }
+
+    override fun actionPerformed(e: AnActionEvent) = Unit
+  }
+
+  private class MutableGroup(vararg actions: AnAction) : ActionGroup() {
+    var children: Array<AnAction> = arrayOf(*actions)
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> = children
+  }
+
+  private fun ActionToolbarImpl.buttonFor(action: AnAction): ActionButton {
+    return components.filterIsInstance<ActionButton>().single { it.action === action }
   }
 
   private fun ActionToolbarImpl.assertToolbarTexts(vararg expected: String) {

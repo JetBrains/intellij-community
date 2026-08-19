@@ -58,6 +58,11 @@ internal class TypesMetadataComparator private constructor(
 
       if (current is EntityMetadata) {
         cache as EntityMetadata
+        val cacheSymbolicIdMetadata = cache.properties.find { it.isComputable && it.name == "symbolicId" }
+        if (cacheSymbolicIdMetadata != null) {
+          val currentSymbolicIdMetadata = current.properties.find { it.isComputable && it.name == "symbolicId" }
+          compare("symbolicId", currentSymbolicIdMetadata, cacheSymbolicIdMetadata)
+        }
         compare("entity data", cache.entityDataFqName, current.entityDataFqName, fqnsComparator)
         compare("isAbstract", cache.isAbstract, current.isAbstract)
         compareAll("extension properties",

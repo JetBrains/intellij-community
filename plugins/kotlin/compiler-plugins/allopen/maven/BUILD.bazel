@@ -20,7 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-allopen-compiler-plugin",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/jps",
@@ -44,6 +44,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":maven",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/kotlin/base/jps:jps_test_lib",
         "//plugins/kotlin/maven:maven_test_lib",
@@ -59,6 +60,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.allopen.maven.iml",
+        "resources/intellij.kotlin.compilerPlugins.allopen.maven.xml",
     ],
     visibility = ["//visibility:public"],
 )

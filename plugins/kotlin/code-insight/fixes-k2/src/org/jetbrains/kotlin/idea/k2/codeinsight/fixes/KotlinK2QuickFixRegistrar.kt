@@ -542,6 +542,11 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(LetImplementInterfaceFixFactories.assignmentTypeMismatchFixFactory)
         registerFactory(LetImplementInterfaceFixFactories.initializerTypeMismatchFixFactory)
         registerFactory(LetImplementInterfaceFixFactories.returnTypeMismatchFixFactory)
+
+        registerFactory(KotlinTimeToJavaInstantFixFactories.argumentTypeMismatchFixFactory)
+        registerFactory(KotlinTimeToJavaInstantFixFactories.returnTypeMismatchFixFactory)
+        registerFactory(KotlinTimeToJavaInstantFixFactories.initializerTypeMismatchFixFactory)
+        registerFactory(KotlinTimeToJavaInstantFixFactories.assignmentTypeMismatchFixFactory)
     }
 
     private val needExplicitType = KtQuickFixesListBuilder.registerPsiQuickFix {

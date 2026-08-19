@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 
 public final class YamlGenericValueAdapter implements JsonValueAdapter {
   private static final Pattern FLOAT_PATTERN = Pattern.compile("[-+]?(\\.[0-9]+|[0-9]+(\\.[0-9]*)?)([eE][-+]?[0-9]+)?");
+  private static final Pattern INTEGER_PATTERN = Pattern.compile("[-+]?(?:0[bB][0-1_]+|0[oO][0-7_]+|0[xX][0-9a-fA-F_]+|[0-9][0-9_]*)");
 
   private static final @NotNull Set<String> NULLS = Set.of("null", "Null", "NULL", "~");
   private static final @NotNull Set<String> BOOLS = Set.of("true", "True", "TRUE", "false", "False", "FALSE");
@@ -101,6 +102,11 @@ public final class YamlGenericValueAdapter implements JsonValueAdapter {
     return false;
   }
 
+  @Override
+  public boolean shouldCheckAsValue() {
+    return !isNonFinite(getTextWithoutRefs());
+  }
+
   private static boolean isNumber(@Nullable String s) {
     if (s == null) return false;
     return isInteger(s) || isFloat(s);
@@ -116,34 +122,23 @@ public final class YamlGenericValueAdapter implements JsonValueAdapter {
   }
 
   private static boolean matchesInt(@NotNull String s) {
-    char charZero = s.charAt(0);
-    int startIndex = (charZero == '-' || charZero == '+') ? 1 : 0;
-    char baseSign = ' ';
-    boolean expectBase = false;
-    for (int i = startIndex; i < s.length(); ++i) {
-      if (i == startIndex && s.charAt(i) == '0') {
-        if (startIndex != 0) return false;
-        expectBase = true;
-        continue;
-      }
-      if (i == startIndex + 1 && expectBase) {
-        char c = s.charAt(i);
-        if (c != 'o' && c != 'x') return false;
-        baseSign = c;
-      }
-
-      if (baseSign == ' ' && !Character.isDigit(s.charAt(i))) return false;
-      else if (baseSign == 'o' && !StringUtil.isOctalDigit(s.charAt(i))) return false;
-      else if (baseSign == 'x' && !StringUtil.isHexDigit(s.charAt(i))) return false;
-    }
-    return true;
+    return INTEGER_PATTERN.matcher(s).matches();
   }
 
   // http://yaml.org/spec/1.2/spec.html#id2804092
   private static boolean isFloat(@NotNull String s) {
-    if (INFS.contains(trimSign(s)) || NANS.contains(s)) return true;
+    if (INFS.contains(trimSign(s)) || NANS.contains(trimSign(s))) return true;
     if (hasTag(s, "float")) return true;
     return FLOAT_PATTERN.matcher(s).matches();
+  }
+
+  private static boolean isNonFinite(@NotNull String s) {
+    if (hasTag(s, "float")) {
+      int spaceIndex = s.indexOf(' ');
+      s = spaceIndex > 0 ? s.substring(spaceIndex + 1).trim() : "";
+    }
+    String value = trimSign(s);
+    return INFS.contains(value) || NANS.contains(value);
   }
 
   private static @NotNull String trimSign(@NotNull String s) {

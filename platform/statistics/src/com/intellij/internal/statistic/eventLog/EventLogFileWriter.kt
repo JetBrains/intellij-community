@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -28,8 +29,8 @@ open class EventLogFileWriter(
   private val maxFileSizeInBytes: Int,
   private val logFilePathProvider: (dir: Path) -> File,
   private val maxFileAge: Duration = 7.days,
-  ) : AutoCloseable {
-  
+) : AutoCloseable {
+
   @ApiStatus.Internal
   constructor(
     dir: Path,
@@ -135,6 +136,7 @@ open class EventLogFileWriter(
       if (logs.isEmpty()) {
         return
       }
+      val now = System.currentTimeMillis()
       val activeLog = getActiveLogName()
       var oldestFile: Long = -1
       var failedDeletingFiles = 0
@@ -142,9 +144,16 @@ open class EventLogFileWriter(
         if (StringUtil.equals(file.name, activeLog)) continue
         val lastModified = file.lastModified()
         if (lastModified < oldestAcceptable) {
+          val sizeBytes = file.length()
+          val buildType = EventLogFile(file).getType()
+          val firstEventMs = EventLogFileStats.readFirstEventMs(file)
           if (!file.delete()) {
             System.err.println("Failed deleting old FUS file $file")
             failedDeletingFiles ++
+          }
+          else {
+            val ageMs = if (firstEventMs > 0) now - firstEventMs else -1L
+            logDeletedFile(FileDeletionCause.AGE, ageMs, now - lastModified, sizeBytes, buildType)
           }
         }
         else if (lastModified < oldestFile || oldestFile == -1L) {
@@ -154,6 +163,17 @@ open class EventLogFileWriter(
       oldestExistingFile = oldestFile
       eventLogSystemCollector?.logDeletedFilesCalculated(logs.size, logs.size - failedDeletingFiles, failedDeletingFiles)
     }
+  }
+
+  /** Logs a single file removed by [cleanUpOldFiles]. Overridable so tests can capture the reported metrics. */
+  protected open fun logDeletedFile(
+    cause: FileDeletionCause,
+    ageMs: Long,
+    queuedMs: Long,
+    sizeBytes: Long,
+    buildType: EventLogBuildType,
+  ) {
+    eventLogSystemCollector?.logFileDeleted(cause, ageMs, queuedMs, sizeBytes, buildType)
   }
 
   fun cleanUp() {

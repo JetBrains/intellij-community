@@ -415,7 +415,7 @@ public final class RecursionManager {
 
     // PY-39529
     "com.jetbrains.python.psi.PyKnownDecoratorUtil.resolveDecorator(",
-    "com.jetbrains.python.psi.impl.references.PyReferenceImpl.multiResolve(",
+    "com.jetbrains.python.psi.impl.references.PyReferenceBase.multiResolve(",
   };
 
   private static final class MemoizedValue {

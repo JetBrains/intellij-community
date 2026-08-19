@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptServi
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
-import java.io.File
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 
 abstract class AbstractScriptHighlightingMetaInfoTest : AbstractHighlightingMetaInfoTest() {
@@ -69,9 +68,5 @@ abstract class AbstractScriptHighlightingMetaInfoTest : AbstractHighlightingMeta
         }
     }
 
-    protected open class CustomDefinitionProviderForTest(override val id: String) : ScriptDefinitionsProvider {
-        override fun getDefinitionClasses(): Iterable<String> = emptyList()
-        override fun getDefinitionsClassPath(): Iterable<File> = emptyList()
-        override fun useDiscovery(): Boolean = false
-    }
+    protected open class CustomDefinitionProviderForTest(override val id: String) : ScriptDefinitionsProvider
 }

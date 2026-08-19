@@ -5,6 +5,8 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
+import com.intellij.terminal.tests.reworked.util.outputPattern
+import com.intellij.terminal.tests.reworked.util.updateContent
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -26,61 +28,61 @@ internal class TerminalOutputModelEventConsistencyTest : BasePlatformTestCase() 
 
   @Test
   fun `first content update`() = consistencyTest { sut ->
-    sut.updateContent(0L, "text\n", emptyList())
+    sut.updateContent(0L, outputPattern("text\n"))
   }
 
   @Test
   fun `several content updates`() = consistencyTest { sut ->
-    sut.updateContent(0L, "text1\n", emptyList())
-    sut.updateContent(1L, "text2\n", emptyList())
+    sut.updateContent(0L, outputPattern("text1\n"))
+    sut.updateContent(1L, outputPattern("text2\n"))
   }
 
   @Test
   fun `automatically adding empty lines on content update`() = consistencyTest { sut ->
-    sut.updateContent(0L, "text1\n", emptyList())
-    sut.updateContent(999L, "text2\n", emptyList())
+    sut.updateContent(0L, outputPattern("text1\n"))
+    sut.updateContent(999L, outputPattern("text2\n"))
   }
 
   @Test
   fun `automatically adding empty lines on cursor update`() = consistencyTest { sut ->
-    sut.updateContent(0L, "text1\n", emptyList())
+    sut.updateContent(0L, outputPattern("text1\n"))
     sut.updateCursorPosition(999L, 0)
   }
 
   @Test
   fun `automatically adding spaces on cursor update`() = consistencyTest { sut ->
-    sut.updateContent(0L, "text1\n", emptyList())
+    sut.updateContent(0L, outputPattern("text1\n"))
     sut.updateCursorPosition(999L, 100500)
   }
 
   @Test
   fun `trimming - no highlightings`() = consistencyTest(maxLength = 5) { sut ->
-    sut.updateContent(0L, "01234", emptyList())
-    sut.updateContent(0L, "0123456789", emptyList())
+    sut.updateContent(0L, outputPattern("01234"))
+    sut.updateContent(0L, outputPattern("0123456789"))
   }
 
   @Test
   fun `trimming - with highlightings`() = consistencyTest(maxLength = 5) { sut ->
-    sut.updateContent(0L, "01234", listOf(styleRange(0L, 5L)))
-    sut.updateContent(0L, "0123456789", listOf(styleRange(5L, 10L)))
-    sut.updateContent(3L, "a", listOf(styleRange(0L, 1L)))
+    sut.updateContent(0L, outputPattern("<s1>01234</s1>"))
+    sut.updateContent(0L, outputPattern("01234<s1>56789</s1>"))
+    sut.updateContent(3L, outputPattern("<s1>a</s1>"))
   }
 
   @Test
   fun `clear - with highlightings`() = consistencyTest { sut ->
-    sut.updateContent(0L, "01", emptyList())
-    sut.updateContent(1L, "23", listOf(styleRange(0L, 2L)))
-    sut.updateContent(0L, "", emptyList())
+    sut.updateContent(0L, outputPattern("01"))
+    sut.updateContent(1L, outputPattern("<s1>23</s1>"))
+    sut.updateContent(0L, outputPattern(""))
   }
 
   @Test
   fun `trim then clear - with highlightings`() = consistencyTest(maxLength = 10) { sut ->
-    sut.updateContent(0L, "01", emptyList())
-    sut.updateContent(1L, "23", listOf(styleRange(0L, 2L)))
-    sut.updateContent(2L, "45", listOf(styleRange(1L, 2L)))
-    sut.updateContent(3L, "67", listOf(styleRange(0L, 1L)))
-    sut.updateContent(4L, "89", listOf(styleRange(0L, 2L)))
-    sut.updateContent(0L, "", emptyList())
+    sut.updateContent(0L, outputPattern("01"))
+    sut.updateContent(1L, outputPattern("<s1>23</s1>"))
+    sut.updateContent(2L, outputPattern("4<s1>5</s1>"))
+    sut.updateContent(3L, outputPattern("<s1>6</s1>7"))
+    sut.updateContent(4L, outputPattern("<s1>89</s1>"))
+    sut.updateContent(0L, outputPattern(""))
   }
 
   private inline fun consistencyTest(maxLength: Int = 0, crossinline block: (MutableTerminalOutputModel) -> Unit): Unit = timeoutRunBlocking(

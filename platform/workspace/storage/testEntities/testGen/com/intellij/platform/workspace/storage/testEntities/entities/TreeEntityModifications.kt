@@ -19,7 +19,7 @@ interface TreeEntityBuilder : WorkspaceEntityBuilder<TreeEntity> {
 }
 
 internal object TreeEntityType : EntityType<TreeEntity, TreeEntityBuilder>() {
-  override val entityClass: Class<TreeEntity> get() = TreeEntity::class.java
+  override val entityImplClass: Class<*> get() = TreeEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = TreeEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,

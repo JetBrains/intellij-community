@@ -4,14 +4,15 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsStatusComponentFactory
-import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.ui.ExperimentalUI
@@ -27,9 +28,14 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRReviewerState
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRReviewerStateUIUtil
+import org.jetbrains.plugins.github.pullrequest.ui.details.action.GHPRReRequestReviewerAction
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.GHPRRemoveReviewerAction
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError.AlreadyResolvedLocally
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError.DetailsNotLoaded
@@ -70,18 +76,16 @@ object GHPRStatusChecksComponentFactory {
                                                                              reviewStatusVm.isDraft))
       add(CodeReviewDetailsStatusComponentFactory.createNeedReviewerComponent(scope, reviewFlowVm.reviewerReviews))
       add(CodeReviewDetailsStatusComponentFactory.createReviewersReviewStateComponent(
-        scope, reviewFlowVm.reviewerReviews,
-        reviewerActionProvider = { reviewer ->
-          DefaultActionGroup(GHPRRemoveReviewerAction(scope, project, reviewFlowVm, reviewer).toAnAction())
-        },
-        reviewerNameProvider = { reviewer -> reviewer.getPresentableName() },
-        avatarKeyProvider = { reviewer -> reviewer.avatarUrl },
-        iconProvider = { reviewState, iconKey, iconSize ->
+        scope, reviewFlowVm.reviewerReviewStates,
+        statusText = { reviewer, reviewState -> GHPRReviewerStateUIUtil.getText(reviewState, reviewer.getPresentableName()) },
+        avatarIcon = { reviewer, reviewState ->
           CodeReviewAvatarUtils.createIconWithOutline(
-            avatarIconsProvider.getIcon(iconKey, iconSize),
-            ReviewDetailsUIUtil.getReviewStateIconBorder(reviewState)
+            avatarIconsProvider.getIcon(reviewer.avatarUrl, Avatar.Sizes.OUTLINED),
+            GHPRReviewerStateUIUtil.getBorderColor(reviewState)
           )
-        }
+        },
+        statusIcon = { _, reviewState -> GHPRReviewerStateUIUtil.getStatusIcon(reviewState) },
+        actionGroup = { reviewer, reviewState -> createReviewerActionGroup(scope, reviewFlowVm, reviewer, reviewState) },
       ))
       bindChildIn(scope, GHPRAIReviewExtension.singleFlow) { extension ->
         if (extension == null) return@bindChildIn null
@@ -100,6 +104,24 @@ object GHPRStatusChecksComponentFactory {
         if (mergeability == null) loadingPanel else scrollableStatusesPanel
       })
     }
+  }
+
+  private fun createReviewerActionGroup(
+    scope: CoroutineScope,
+    reviewFlowVm: GHPRReviewFlowViewModel,
+    reviewer: GHPullRequestRequestedReviewer,
+    reviewState: GHPRReviewerState,
+  ): ActionGroup? {
+    if (!reviewFlowVm.userCanManageReview) return null
+
+    val actions = buildList {
+      // A re-request only makes sense once the reviewer has already reviewed; removal is always available.
+      if (!reviewState.isAwaitingReview) {
+        add(GHPRReRequestReviewerAction(scope, reviewFlowVm, reviewer).toAnAction())
+      }
+      add(GHPRRemoveReviewerAction(scope, reviewFlowVm, reviewer).toAnAction())
+    }
+    return DefaultActionGroup(actions)
   }
 
   private fun createConflictsStatusComponentIn(

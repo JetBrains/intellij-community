@@ -1,5 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
+import com.intellij.ide.starter.ide.IdeRunMode
 import com.intellij.lambda.testFramework.starter.IdeInstance
 import com.intellij.util.containers.orNull
 import org.junit.platform.engine.EngineExecutionListener
@@ -54,17 +55,15 @@ class TranslatingExecutionListener(
 
     val synthetic = getOrCreateSyntheticDescriptor(testDescriptor)
     startedDescriptors.add(synthetic.uniqueId)
+    delegate.executionStarted(synthetic)
 
     try {
       IdeInstance.startIde(modeContainer.mode)
     }
     catch (e: Throwable) {
-      delegate.executionStarted(synthetic)
       delegate.executionFinished(synthetic, TestExecutionResult.failed(e))
       throw e
     }
-
-    delegate.executionStarted(synthetic)
   }
 
   override fun executionFinished(testDescriptor: TestDescriptor, testExecutionResult: TestExecutionResult) {

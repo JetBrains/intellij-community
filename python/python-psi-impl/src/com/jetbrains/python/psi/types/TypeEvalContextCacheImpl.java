@@ -14,8 +14,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Caches context by their constraints (to prevent context cache loss). Flushes cache every PSI change or low memory conditions.
- * Class is thread safe.
+ * Caches context by their constraints (to prevent context cache loss). Class is thread safe.
+ * <p>
+ * Contexts for user code are flushed on every PSI change or low memory conditions. Contexts for library code are kept in a
+ * separate map that deliberately outlives PSI changes — that is the point of the split — and is flushed only by
+ * {@link PyLibraryModificationTracker} (roots change, dumb mode, forced reparse, or an edit inside a library file), low
+ * memory conditions, or a change to the type engine settings.
  * See {@link #getContext(TypeEvalContext)}
  *
  * @author Ilya.Kazakevich
@@ -44,8 +48,10 @@ final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
         // This method is called if cache is empty. Create new map for it.
         // Concurrent map allows several threads to call get and put, so it is thread safe but not atomic
         final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = ContainerUtil.createConcurrentSoftValueMap();
+        // library types come from the same engine, and nothing else invalidates them when its settings change
         return new CachedValueProvider.Result<>(map, PyLibraryModificationTracker.Companion.getInstance(project),
-                                                myLowMemoryModificationTracker);
+                                                myLowMemoryModificationTracker,
+                                                PyTypeEngineSettingsModificationTracker.getInstance(project));
       }
     });
 

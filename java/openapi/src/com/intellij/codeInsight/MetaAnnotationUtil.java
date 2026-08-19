@@ -194,6 +194,35 @@ public abstract class MetaAnnotationUtil {
     return result;
   }
 
+  /**
+   * Finds all annotation classes directly annotated with an annotation of the given fully qualified name.
+   * <p>
+   * Unlike {@link #getChildren(PsiClass, GlobalSearchScope)}, matching is performed by the annotation's fully qualified name rather
+   * than by resolving to a particular {@link PsiClass}. This makes the result deterministic when the annotation is present in
+   * several jars on the classpath (e.g. different library versions), and it also finds usages whose annotation type is not
+   * resolvable in the project at all. The annotation class itself does not need to be present in the project.
+   * 
+   * @param project current project
+   * @param annotationFqn annotation fully-qualified name to search
+   * @param scope scope to search in
+   */
+  public static @Unmodifiable Set<PsiClass> getChildren(@NotNull Project project,
+                                                        @NotNull String annotationFqn,
+                                                        @NotNull GlobalSearchScope scope) {
+    Set<PsiClass> result = CollectionFactory.createCustomHashingStrategySet(HASHING_STRATEGY);
+    AnnotatedElementsSearch.searchPsiClasses(project, annotationFqn, scope).forEach(processorResult -> {
+      ProgressManager.checkCanceled();
+      if (processorResult.isAnnotationType()) {
+        result.add(processorResult);
+      }
+      return true;
+    });
+
+    if (result.isEmpty()) return Collections.emptySet();
+
+    return result;
+  }
+
   public static @Unmodifiable Collection<PsiClass> getAnnotatedTypes(@NotNull Module module, @NotNull String annotationName) {
     Map<String, Collection<PsiClass>> map = CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
       Map<String, Collection<PsiClass>> factoryMap = ConcurrentFactoryMap.createMap(key -> {

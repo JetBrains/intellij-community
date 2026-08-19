@@ -487,6 +487,7 @@ class UnindexedFilesScanner(
               }
             }
             catch (t: Throwable) {
+              @Suppress("RethrowControlFlowExceptionWithUtil")
               if (t is CancellationException) throw t
               if (t is ControlFlowException) {
                 LOG.warn("Unexpected exception during scanning: ${t.message}")
@@ -540,7 +541,9 @@ class UnindexedFilesScanner(
           }
         }
       }
-      catch (e: Exception) {
+      // A plugin's code (e.g. an index input filter) may throw an Error -- NoClassDefFoundError.
+      // Such an Error must not escape and cancel the scanning of _all_ the other providers.
+      catch (e: Throwable) {
         scanningRequest.markUnsuccessful()
 
         // Some code doesn't care if we are inside a non-cancellable section, or in a coroutine.
@@ -602,11 +605,18 @@ class UnindexedFilesScanner(
                 }
               }
             }
-            catch (e: CancellationException) {
-              files.addFirst(file)
-              throw e
-            }
-            catch (e: Exception) {
+            catch (e: Throwable) {
+              if (e is CancellationException || e is ControlFlowException) {
+                //Cancellation is not a failure: the read action is restarted (ReadAction.CannotReadException is a PCE), so the
+                // file must stay in the queue to be scanned again.
+                files.addFirst(file)
+                throw e
+              }
+
+              // A plugin's code invoked from getFileStatus()/applyPushers() may throw an Error -- e.g. a broken
+              // index input filter throwing NoClassDefFoundError for every file. Skip the file, keep scanning the rest,
+              // and make sure the incomplete result is not mistaken for a complete one
+              scanningRequest.markUnsuccessful()
               LOG.error("Error while scanning ${file.presentableUrl}\n" +
                         "To reindex this file IDE has to be restarted", e)
             }

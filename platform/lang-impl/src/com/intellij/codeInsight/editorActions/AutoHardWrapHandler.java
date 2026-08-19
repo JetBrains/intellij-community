@@ -152,7 +152,7 @@ public class AutoHardWrapHandler {
                           Math.max(0, margin - FormatConstants.getReservedLineWrapWidthInColumns(editor)))
     );
 
-    int wrapOffset = strategy.calculateWrapPosition(document, project, startOffset, endOffset, maxPreferredOffset, true, false);
+    int wrapOffset = strategy.calculateWrapPosition(editor, startOffset, endOffset, maxPreferredOffset, true, false);
     if (wrapOffset < 0) {
       return;
     }

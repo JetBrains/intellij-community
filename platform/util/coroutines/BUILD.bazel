@@ -30,7 +30,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/kotlinx/coroutines/core",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
@@ -50,6 +50,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":coroutines",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     ],
@@ -60,6 +61,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.util.coroutines.iml",
+        "resources/intellij.platform.util.coroutines.xml",
     ],
     visibility = ["//visibility:public"],
 )

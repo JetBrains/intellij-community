@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
@@ -36,13 +37,15 @@ abstract class KotlinPsiDiagnosticBasedInspectionBase<
      *
      * @param element a physical PSI
      */
-    abstract fun KaSession.prepareContextByDiagnostic(
+    context(session: KaSession)
+    abstract fun prepareContextByDiagnostic(
         element: E,
         diagnostic: D,
     ): C?
 
     @OptIn(KaExperimentalApi::class)
-    final override fun KaSession.prepareContext(element: E): C? =
+    context(session: KaSession)
+    final override fun prepareContext(element: E): C? =
         element.directDiagnostics(filter = diagnosticFilter)
             .firstNotNullOfOrNull { diagnosticType.safeCast(it) }
             ?.let { prepareContextByDiagnostic(element, it) }

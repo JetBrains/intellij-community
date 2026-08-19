@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.HierarchicalMethodSignature;
@@ -22,6 +23,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiMethod;
@@ -478,7 +480,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     if (modifierList != null && mirror.getModifierList() != null) setMirror(modifierList, mirror.getModifierList());
     if (mirror.getNameIdentifier() != null) setMirrorChecked(getNameIdentifier(), mirror.getNameIdentifier());
     if (mirror.getTypeParameterList() != null) setMirrorChecked(getTypeParameterList(), mirror.getTypeParameterList());
-    if (mirror.getExtendsList() != null) setMirrorChecked(getExtendsList(), mirror.getExtendsList());
+    if (mirror.getExtendsList() != null) setExtendsListMirrorChecked(getExtendsList(), mirror.getExtendsList());
     if (mirror.getImplementsList() != null) setMirrorChecked(getImplementsList(), mirror.getImplementsList());
 
     if (mirror instanceof PsiExtensibleClass) {
@@ -498,6 +500,23 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
 
   private static <T extends PsiElement> void setMirrorChecked(@NotNull T stub, @NotNull T mirror) {
     setMirror(stub, mirror);
+  }
+
+  private void setExtendsListMirrorChecked(@NotNull PsiReferenceList stubList, @NotNull PsiReferenceList mirrorList) {
+    if (stubList.getReferenceElements().length == 0 && spellsOutImplicitSuperclass(mirrorList)) {
+      return;
+    }
+    setMirror(stubList, mirrorList);
+  }
+
+  private boolean spellsOutImplicitSuperclass(@NotNull PsiReferenceList mirrorList) {
+    String implicitSuperclass = isEnum() ? CommonClassNames.JAVA_LANG_ENUM :
+                                isRecord() ? CommonClassNames.JAVA_LANG_RECORD :
+                                null;
+    if (implicitSuperclass == null) return false;
+    PsiJavaCodeReferenceElement[] mirrorRefs = mirrorList.getReferenceElements();
+    // the reference name is compared instead of the qualified one: resolve must not be triggered while wiring mirrors
+    return mirrorRefs.length == 1 && StringUtil.getShortName(implicitSuperclass).equals(mirrorRefs[0].getReferenceName());
   }
 
   private static <T extends PsiElement> void setMirrorsChecked(@NotNull List<T> stubs, @NotNull List<T> mirrors) {

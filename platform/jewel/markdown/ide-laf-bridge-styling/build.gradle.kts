@@ -32,6 +32,7 @@ repositories {
 dependencies {
     api(projects.markdown.core)
     api(projects.ideLafBridge)
+    compileOnly(projects.markdown.extensions.frontMatter)
     compileOnly(projects.markdown.extensions.gfmAlerts)
     compileOnly(projects.markdown.extensions.gfmTables)
 

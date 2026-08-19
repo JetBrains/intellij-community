@@ -6,15 +6,14 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.RestartableLexer;
 import com.intellij.lexer.TokenIterator;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.elf.ElfFeatureFlag;
 import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.elf.ElfFeatureFlag;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -49,6 +48,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
 
 public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance(LexerEditorHighlighter.class);
@@ -155,7 +156,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
         throw e;
       }
       catch (Throwable t) {
-        if (t instanceof ControlFlowException) throw t;
+        rethrowControlFlowException(t);
 
         LOG.error("Error creating highlighter iterator at offset " + startOffset + " in " + this, t);
         return new EmptyEditorHighlighter().createIterator(startOffset);

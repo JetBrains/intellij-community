@@ -27,7 +27,8 @@ internal class RemoveEmptySecondaryConstructorBodyInspection :
         }
     }
 
-    override fun KaSession.prepareContext(element: KtBlockExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtBlockExpression): Unit? {
         if (element.parent !is KtSecondaryConstructor) return null
         if (element.statements.isNotEmpty()) return null
 

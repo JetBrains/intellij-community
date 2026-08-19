@@ -385,7 +385,7 @@ public final class Utils {
   }
 
   public boolean isSameOrInheritorOf(JvmClass who, JvmClass whom) {
-    return find(recurseDepth(who, cl -> flat(map(who.getSuperTypes(), this::getClassesByName)), true), cl -> cl.getReferenceID().equals(whom.getReferenceID())) != null;
+    return find(recurseDepth(who, cl -> flat(map(cl.getSuperTypes(), this::getClassesByName)), true), cl -> cl.getReferenceID().equals(whom.getReferenceID())) != null;
   }
 
   public boolean inheritsFromUnknownClass(JvmClass aClass) {

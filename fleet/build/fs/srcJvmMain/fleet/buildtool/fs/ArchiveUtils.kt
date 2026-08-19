@@ -37,6 +37,7 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.createSymbolicLinkPointingTo
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
+import kotlin.io.path.extension
 import kotlin.io.path.fileAttributesView
 import kotlin.io.path.getPosixFilePermissions
 import kotlin.io.path.inputStream
@@ -572,6 +573,33 @@ private fun ZipArchiveEntry.resetLastModifiedTime(reproducibilityMode: Reproduci
     }
   }
 }
+
+/**
+ * Extracts [archive] into [destination], choosing the extractor by the archive extension (`.zip`, `.tar.gz`,
+ * `.tar.zst`, or a plain `.tar`). The inverse of [packDirectory], so it accepts every distribution archive
+ * `generate-distribution` emits.
+ */
+fun extractArchive(
+  archive: Path,
+  destination: Path,
+  temporaryDir: Path,
+  stripTopLevelFolder: Boolean,
+  cleanDestination: Boolean,
+  logger: Logger,
+) {
+  when {
+    archive.extension == "zip" ->
+      extractZip(archive, destination, stripTopLevelFolder, cleanDestination, temporaryDir, logger)
+    archive.name.endsWith(".tar.gz") ->
+      extractTarGz(archive, destination, stripTopLevelFolder, cleanDestination, temporaryDir, logger)
+    archive.name.endsWith(".tar.zst") ->
+      extractTarZst(archive, destination, stripTopLevelFolder, cleanDestination, temporaryDir, logger)
+    archive.extension == "tar" ->
+      extractTar(archive, destination, stripTopLevelFolder, cleanDestination, temporaryDir = temporaryDir, logger = logger)
+    else -> error("Unsupported archive format: $archive")
+  }
+}
+
 
 
 private fun Path.getFilePermissions(vararg options: LinkOption): FilePermissions {

@@ -10,8 +10,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import kotlin.Lazy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class HttpFileEditorProvider implements FileEditorProvider, DumbAware {
   @Override
@@ -30,7 +32,9 @@ final class HttpFileEditorProvider implements FileEditorProvider, DumbAware {
   }
 
   @Override
-  public @NotNull FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull FileEditorState readState(@NotNull Element sourceElement,
+                                            @NotNull Project project,
+                                            @NotNull Lazy<@Nullable VirtualFile> file) {
     return new TextEditorState();
   }
 

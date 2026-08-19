@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.requirement
 
 import com.intellij.openapi.module.Module
@@ -12,7 +12,7 @@ import com.jetbrains.python.packaging.management.listDeclaredPackagesAsync
 import com.jetbrains.python.packaging.management.listInstalledPackagesAsync
 import com.jetbrains.python.psi.PyUtil
 
-class DeclaredButNotInstalledPackagesChecker(
+internal class DeclaredButNotInstalledPackagesChecker(
   ignoredPackages: Collection<PyPackageName>,
 ) {
   private val ignoredPackageNames: Set<PyPackageName> = ignoredPackages.toHashSet()

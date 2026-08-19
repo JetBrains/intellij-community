@@ -19,7 +19,7 @@ interface AttachedEntityToNullableParentBuilder : WorkspaceEntityBuilder<Attache
 }
 
 internal object AttachedEntityToNullableParentType : EntityType<AttachedEntityToNullableParent, AttachedEntityToNullableParentBuilder>() {
-  override val entityClass: Class<AttachedEntityToNullableParent> get() = AttachedEntityToNullableParent::class.java
+  override val entityImplClass: Class<*> get() = AttachedEntityToNullableParentImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = AttachedEntityToNullableParentImpl.Builder::class.java
   operator fun invoke(
     data: String,
@@ -42,7 +42,6 @@ fun MutableEntityStorage.modifyAttachedEntityToNullableParent(
 @Parent
 var AttachedEntityToNullableParentBuilder.nullableRef: MainEntityToParentBuilder?
   by WorkspaceEntity.extensionBuilder(MainEntityToParent::class.java)
-
 
 @JvmOverloads
 @JvmName("createAttachedEntityToNullableParent")

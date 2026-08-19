@@ -14,12 +14,10 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
-import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.vcs.log.VcsLogAggregatedStoredRefs;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
@@ -50,12 +48,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
-import static com.intellij.util.ui.UI.PanelFactory.grid;
-import static com.intellij.util.ui.UI.PanelFactory.panel;
-
 public final class GitRefDialog extends DialogWrapper {
-  private final TextFieldWithCompletion myTextField;
-  private final JComponent myCenterPanel;
+
+  private final @NotNull GitRefDialogUi ui;
 
   public GitRefDialog(@NotNull Project project,
                       @NotNull List<GitRepository> repositories,
@@ -65,12 +60,7 @@ public final class GitRefDialog extends DialogWrapper {
     setTitle(title);
 
     TextCompletionProvider completionProvider = getCompletionProvider(project, repositories, getDisposable());
-    myTextField = new TextFieldWithCompletion(project, completionProvider, "", true, true, false);
-
-    myCenterPanel = grid()
-      .add(panel(new JBLabel(message)))
-      .add(panel(myTextField))
-      .createPanel();
+    ui = new GitRefDialogUi(project, completionProvider, message);
 
     init();
   }
@@ -112,17 +102,17 @@ public final class GitRefDialog extends DialogWrapper {
 
 
   public @NotNull String getReference() {
-    return StringUtil.trim(myTextField.getText(), CharFilter.NOT_WHITESPACE_FILTER);
+    return StringUtil.trim(ui.textField.getText(), CharFilter.NOT_WHITESPACE_FILTER);
   }
 
   @Override
   protected @Nullable JComponent createCenterPanel() {
-    return myCenterPanel;
+    return ui.panel;
   }
 
   @Override
   public @Nullable JComponent getPreferredFocusedComponent() {
-    return myTextField;
+    return ui.textField;
   }
 
   private static @NotNull Collection<VcsRef> collectCommonVcsRefs(@NotNull Stream<? extends VcsRef> stream) {

@@ -83,6 +83,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.warmup.iml",
+        "resources/intellij.platform.warmup.xml",
     ],
     visibility = ["//visibility:public"],
 )

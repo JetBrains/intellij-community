@@ -1,7 +1,7 @@
-import sys
 from collections.abc import Callable, Iterable
-from typing import Any, Protocol, overload, type_check_only
+from typing import Any, Protocol, Self, overload, type_check_only
 
+from _typeshed import StrPath
 from django.core.files.base import File
 from django.core.files.images import ImageFile
 from django.core.files.storage import Storage
@@ -11,12 +11,11 @@ from django.db.models.expressions import Expression
 from django.db.models.fields import NOT_PROVIDED, Field, _ErrorMessagesMapping
 from django.db.models.query_utils import DeferredAttribute
 from django.db.models.utils import AltersData
-from django.utils._os import _PathCompatible
 from django.utils.choices import _Choices
 from django.utils.functional import _StrOrPromise
-from typing_extensions import Self, TypeVar, override
+from typing_extensions import TypeVar, override
 
-class FieldFile(File, AltersData):
+class FieldFile(File[Any], AltersData):
     instance: Model
     field: FileField
     storage: Storage
@@ -36,16 +35,13 @@ class FieldFile(File, AltersData):
     def size(self) -> int: ...
     @override
     def open(self, mode: str = "rb") -> Self: ...  # type: ignore[override]
-    def save(self, name: str, content: File, save: bool = True) -> None: ...
+    def save(self, name: str, content: File[Any], save: bool = True) -> None: ...
     def delete(self, save: bool = True) -> None: ...
     @property
     @override
     def closed(self) -> bool: ...
-    if sys.version_info >= (3, 11):
-        @override
-        def __getstate__(self) -> dict[str, Any]: ...
-    else:
-        def __getstate__(self) -> dict[str, Any]: ...
+    @override
+    def __getstate__(self) -> dict[str, Any]: ...
     def __setstate__(self, state: dict[str, Any]) -> None: ...
 
 class FileDescriptor(DeferredAttribute):
@@ -58,18 +54,18 @@ _M = TypeVar("_M", bound=Model, contravariant=True)
 
 @type_check_only
 class _UploadToCallable(Protocol[_M]):
-    def __call__(self, instance: _M, filename: str, /) -> _PathCompatible: ...
+    def __call__(self, instance: _M, filename: str, /) -> StrPath: ...
 
 class FileField(Field[Any, Any]):
     attr_class: type[FieldFile]
     descriptor_class: type[FileDescriptor]
     storage: Storage
-    upload_to: _PathCompatible | _UploadToCallable
+    upload_to: StrPath | _UploadToCallable[Any]
     def __init__(
         self,
         verbose_name: _StrOrPromise | None = None,
         name: str | None = None,
-        upload_to: _PathCompatible | _UploadToCallable = "",
+        upload_to: StrPath | _UploadToCallable[Any] = "",
         storage: Storage | Callable[[], Storage] | None = None,
         *,
         max_length: int | None = ...,
@@ -107,7 +103,7 @@ class FileField(Field[Any, Any]):
     def __get__(self, instance: Any, owner: Any) -> Self: ...
     @override
     def contribute_to_class(self, cls: type[Model], name: str, **kwargs: Any) -> None: ...  # type: ignore[override]
-    def generate_filename(self, instance: Model | None, filename: _PathCompatible) -> str: ...
+    def generate_filename(self, instance: Model | None, filename: StrPath) -> str: ...
 
 class ImageFileDescriptor(FileDescriptor):
     field: ImageField

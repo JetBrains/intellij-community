@@ -101,6 +101,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.externalSystem.iml",
+        "resources/intellij.platform.externalSystem.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -15,9 +15,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     override fun initializeMetadata() {
         val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
         val primitiveTypeIntNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Int")
-
         var typeMetadata: StorageTypeMetadata
-
         typeMetadata = FinalClassMetadata.ClassMetadata(
             fqName = "org.jetbrains.kotlin.gradle.scripting.k2.importing.GradleKotlinDslBaseScriptEntitySource",
             properties = listOf(
@@ -216,9 +214,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                 "org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource"
             )
         )
-
         addMetadata(typeMetadata)
-
         typeMetadata = FinalClassMetadata.ClassMetadata(
             fqName = "org.jetbrains.kotlin.gradle.scripting.k2.importing.GradleKotlinDslScriptEntitySource",
             properties = listOf(
@@ -417,9 +413,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                 "org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource"
             )
         )
-
         addMetadata(typeMetadata)
-
         typeMetadata = FinalClassMetadata.ClassMetadata(
             fqName = "org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntityId",
             properties = listOf(
@@ -442,9 +436,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
             ),
             supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
         )
-
         addMetadata(typeMetadata)
-
         typeMetadata = EntityMetadata(
             fqName = "org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntity",
             entityDataFqName = "org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.impl.GradleScriptDefinitionEntityData",
@@ -589,7 +581,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
             extProperties = listOf(),
             isAbstract = false
         )
-
         addMetadata(typeMetadata)
     }
 
@@ -614,7 +605,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
             typeFqn = "org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntityId",
             metadataHash = -922050183
         )
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1637225356)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -1355069587)
         addMetadataHash(
             typeFqn = "org.jetbrains.kotlin.gradle.scripting.k2.importing.GradleKotlinDslBaseScriptEntitySource",
             metadataHash = -198136545

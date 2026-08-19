@@ -116,7 +116,7 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
             .takeWhile { ourPrevMaps[it]?.isDisplayable != isDisplayable }
             .toList().asReversed()
           val topParent = if (components.isEmpty()) component else UIUtil.getParent(components[0])
-          val initial = if (topParent == null) null else ourPrevMaps[topParent]!!
+          val initial = if (topParent == null) null else ourPrevMaps[topParent]
 
           var keyCount: Int
           var cachedData: CachedData?

@@ -171,7 +171,7 @@ public final class TrigramBuilder {
   public static @NotNull IntSet getTrigrams(@NotNull CharSequence text, @Nullable Runnable checkCanceled) {
     State state = new State(new AddonlyIntSet(1 + text.length() / 8));
     char[] array = CharArrayUtil.fromSequenceWithoutCopying(text);
-    return array != null ? state.processArray(array) : state.processSequence(text, checkCanceled);
+    return array != null ? state.processArray(array, checkCanceled) : state.processSequence(text, checkCanceled);
   }
 
   private static class State {
@@ -213,9 +213,14 @@ public final class TrigramBuilder {
       return set;
     }
 
-    AddonlyIntSet processArray(char[] text) {
+    AddonlyIntSet processArray(char[] text, @Nullable Runnable checkCanceled) {
+      int i = 0;
       for (char c : text) {
         process(c);
+        if (checkCanceled != null && i % 10000 == 0) {
+          checkCanceled.run();
+        }
+        i++;
       }
       return set;
     }

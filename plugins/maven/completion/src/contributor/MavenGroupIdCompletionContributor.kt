@@ -6,16 +6,19 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
+import com.intellij.maven.completion.MAVEN_DEPENDENCY_COMPLETION
 import com.intellij.maven.completion.icon
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionEvent
-import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.repository.search.completion.lookup.StrictOrderWeigher
 import com.intellij.repository.search.completion.lookup.StrictOrderWeigherData
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.mapNotNull
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionHandler
@@ -47,20 +50,17 @@ class MavenGroupIdCompletionContributor : MavenCoordinateCompletionContributor("
         }
       }
     }
-    val grouped = mutableMapOf<String, MutableList<String>>()
-    val sources = mutableMapOf<String, DependencyCompletionContributionSource>()
-    service.suggestCompletions(DependencyCompletionRequest(groupId, context)).collect { event ->
-      if (event !is DependencyCompletionEvent.Item) return@collect
-      val item = event.result
-      if ((artifactId.isEmpty() || item.artifactId == artifactId) && item.groupId !in addedGroupIds) {
-        grouped.getOrPut(item.groupId) { mutableListOf() }.add(item.version)
-        sources.putIfAbsent(item.groupId, item.source)
+
+    service.suggestGroupCompletions(DependencyGroupCompletionRequest(groupId, artifactId, context))
+      .mapNotNull { event ->
+        if (event !is DependencyCompletionEvent.Item) return@mapNotNull null
+        val item = event.result
+        item.result to item.source
       }
-    }
-    for ((grp, versions) in grouped) {
-      val source = sources[grp]!!
-      result.addElement(buildLookup(MavenRepoArtifactInfo(grp, artifactId, versions), grp, source, index++, completionPrefix))
-    }
+      .filter { it.first !in addedGroupIds }
+      .collect { (grp, source) ->
+        result.addElement(buildLookup(MavenRepoArtifactInfo(grp, artifactId, emptyList()), grp, source, index++, completionPrefix))
+      }
   }
 
   private fun buildLookup(info: MavenRepoArtifactInfo, displayText: String,
@@ -74,5 +74,6 @@ class MavenGroupIdCompletionContributor : MavenCoordinateCompletionContributor("
         it.putUserData(StrictOrderWeigher.ORDER_KEY, StrictOrderWeigherData(source, index))
         it.putUserData(SUPPRESS_QUICK_DEFINITION, true)
         it.putUserData(SUPPRESS_QUICK_DOCUMENTATION, true)
+        it.putUserData(MAVEN_DEPENDENCY_COMPLETION, true)
       })
 }

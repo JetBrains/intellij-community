@@ -17,7 +17,7 @@ interface OptionalOneToOneParentEntityBuilder : WorkspaceEntityBuilder<OptionalO
 }
 
 internal object OptionalOneToOneParentEntityType : EntityType<OptionalOneToOneParentEntity, OptionalOneToOneParentEntityBuilder>() {
-  override val entityClass: Class<OptionalOneToOneParentEntity> get() = OptionalOneToOneParentEntity::class.java
+  override val entityImplClass: Class<*> get() = OptionalOneToOneParentEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = OptionalOneToOneParentEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

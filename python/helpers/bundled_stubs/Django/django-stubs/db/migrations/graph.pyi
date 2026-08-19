@@ -52,7 +52,7 @@ class MigrationGraph:
     def ensure_not_cyclic(self) -> None: ...
     def make_state(
         self,
-        nodes: None | tuple[str, str] | Sequence[tuple[str, str]] = None,
+        nodes: tuple[str, str] | Sequence[tuple[str, str]] | None = None,
         at_end: bool = True,
         real_apps: list[str] | None = None,
     ) -> ProjectState: ...

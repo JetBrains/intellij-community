@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.RainbowVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
-import com.intellij.codeInsight.highlighting.PassRunningAssert;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -52,12 +51,6 @@ class HighlightVisitorRunner {
     myScheme = scheme;
     myRunVisitors = runVisitors;
     myHighlightErrorElements = highlightErrorElements;
-  }
-
-  private static final PassRunningAssert HIGHLIGHTING_PERFORMANCE_ASSERT =
-    new PassRunningAssert("the expensive method should not be called inside the highlighting pass");
-  static void assertHighlightingPassNotRunning() {
-    HIGHLIGHTING_PERFORMANCE_ASSERT.assertPassNotRunning();
   }
 
   private @NotNull HighlightVisitor @NotNull [] cloneAndFilterHighlightVisitors(@NotNull PsiFile psiFile, @Nullable TextAttributesScheme colorsScheme) {

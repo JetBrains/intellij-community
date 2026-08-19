@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jetbrains.annotations.jar
+  modules:
+  - name: intellij.libraries.jetbrains.annotations
+    libraries:
+      jetbrains-annotations:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/annotations/26/annotations-26.jar

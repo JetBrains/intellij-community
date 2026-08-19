@@ -120,7 +120,24 @@ class K2CheckDescriptorMultiModuleMoveTest : AbstractK2CheckDescriptorMultiModul
                 setTargetFile(moveModel, "CustomName.kt")
             },
             checkMoveDescriptor = {
-                assert(!isFileMove(it)) { "File move should not be done if the file name is changed" }
+                assert(isFileMove(it)) { "File move was expected, but found ${it::class.java.canonicalName}" }
+            },
+        )
+    }
+
+    @TestMetadata("moveTheOnlyDeclarationInFileToExistingPackageChangeFileName")
+    @Throws(Exception::class)
+    fun testMoveTheOnlyDeclarationInFileToExistingPackageChangeFileName() {
+        doTest(
+            "moveTheOnlyDeclarationInFileToExistingPackageChangeFileName/moveTheOnlyDeclarationInFileToExistingPackageChangeFileName.test",
+            configureMoveModel = { moveModel ->
+                setAllMoveSettingsOn(moveModel)
+                setMoveModelSetting(moveModel.mppDeclarations, false)
+                setNewTargetPackageInSameRoot(moveModel, FqName("bar"))
+                setTargetFile(moveModel, "CustomName.kt")
+            },
+            checkMoveDescriptor = {
+                assert(isFileMove(it)) { "File move was expected, but found ${it::class.java.canonicalName}" }
             },
         )
     }
@@ -198,6 +215,23 @@ class K2CheckDescriptorMultiModuleMoveTest : AbstractK2CheckDescriptorMultiModul
                 setAllMoveSettingsOn(moveModel)
                 setMoveModelSetting(moveModel.mppDeclarations, false)
                 setNewTargetPackageInSameRoot(moveModel, FqName("bar"))
+            },
+            checkMoveDescriptor = {
+                assert(isFileMove(it)) { "File move was expected, but found ${it::class.java.canonicalName}" }
+            },
+        )
+    }
+
+    @TestMetadata("moveDeclarationsAsFileRefsInJava")
+    @Throws(Exception::class)
+    fun testMoveDeclarationsAsFileRefsInJava() {
+        doTest(
+            "moveDeclarationsAsFileRefsInJava/moveDeclarationsAsFileRefsInJava.test",
+            configureMoveModel = { moveModel ->
+                setAllMoveSettingsOn(moveModel)
+                setMoveModelSetting(moveModel.mppDeclarations, false)
+                setNewTargetPackageInSameRoot(moveModel, FqName("bar"))
+                setTargetFile(moveModel, "CustomName.kt")
             },
             checkMoveDescriptor = {
                 assert(isFileMove(it)) { "File move was expected, but found ${it::class.java.canonicalName}" }

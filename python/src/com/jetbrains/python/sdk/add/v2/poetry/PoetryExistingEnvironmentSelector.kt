@@ -1,13 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2.poetry
 
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.impl.poetry.common.POETRY_UI_INFO
-import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -18,7 +16,8 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
-import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
+import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
+import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.poetry.createPoetrySdk
 import com.jetbrains.python.sdk.poetry.detectPoetryEnvs
@@ -33,7 +32,7 @@ internal class PoetryExistingEnvironmentSelector<P : PathHolder>(model: PythonMu
   override val toolState: ToolValidator<P> = model.poetryViewModel.toolValidator
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.poetryViewModel.poetryExecutable
   override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
-    savePathForEelOnly(pathHolder) { path -> PropertiesComponent.getInstance().poetryPath = path.toString() }
+    model.fileSystem.persistCustomToolPath(pathHolder, PoetryPyTool.getInstance())
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {

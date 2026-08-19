@@ -740,6 +740,16 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../../completion/testData/weighers/basic/NullForIfConditionOnTheRight.kt");
         }
 
+        @TestMetadata("NullableAny.kt")
+        public void testNullableAny() throws Exception {
+            runTest("../../completion/testData/weighers/basic/NullableAny.kt");
+        }
+
+        @TestMetadata("NullableAny2.kt")
+        public void testNullableAny2() throws Exception {
+            runTest("../../completion/testData/weighers/basic/NullableAny2.kt");
+        }
+
         @TestMetadata("Packages.kt")
         public void testPackages() throws Exception {
             runTest("../../completion/testData/weighers/basic/Packages.kt");

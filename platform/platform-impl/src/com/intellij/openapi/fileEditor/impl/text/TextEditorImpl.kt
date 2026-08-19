@@ -34,6 +34,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorLocation
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl.Companion.getDocumentLanguage
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
@@ -335,6 +336,7 @@ private suspend fun setHighlighterToEditor(project: Project, file: VirtualFile, 
       // editor.setHighlighter also sets text, but we set it here to avoid executing related work in EDT
       // (the document text is compared, so, double work is not performed)
       highlighter.setText(document.immutableCharSequence)
+      //SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file)
       highlighter
     }
   }

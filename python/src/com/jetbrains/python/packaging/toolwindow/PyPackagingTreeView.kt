@@ -260,17 +260,39 @@ internal class PyPackagingTreeView(
 
   private fun createNewRepository(repository: PyPackageRepository, items: List<DisplayablePackage>, moreItems: Int, sortedAll: List<DisplayablePackage>) {
     val newTree = PyPackagesTree(project, controller)
-    newTree.items = items
-    if (sortedAll.size > items.size) newTree.primeSortedMatches(sortedAll)
-    newTree.pendingMore = moreItems
     val newTreeGroup = PyPackagingTreeGroup(repository, newTree, container, showHeader = true, useTreeNodeHeader = true)
     newTreeGroup.items = items
+    if (sortedAll.size > items.size) newTree.primeSortedMatches(sortedAll)
+    newTree.pendingMore = moreItems
     repositories.add(newTreeGroup)
     newTreeGroup.addTo(uninstalledContainerPanel)
     newTree.addTreeSelectionListener {
       syncTreeSelection(newTree)
+      maybePrefetchMore(newTree)
     }
     synchronizeScrollPaneSize()
+  }
+
+  /**
+   * Prefetches the next page as soon as selection lands on (or near) the last row and more
+   * results are available. Works regardless of input source — keyboard, trackpad, or the outer
+   * scroll bar — so `DOWN`, `PAGE_DOWN`, `END`, and mouse-wheel-driven wrap-around all trigger
+   * pagination through the same path (PY-90501). No key-code branching: the tree does not
+   * need to know which action moved the selection.
+   */
+  private fun maybePrefetchMore(tree: PyPackagesTree) {
+    if (isLoadingMore) return
+    if (tree.pendingMore <= 0) return
+    val row = tree.selectionRows?.firstOrNull() ?: return
+    if (row < tree.rowCount - 1) return
+    isLoadingMore = true
+    try {
+      tree.loadMore()
+      synchronizeScrollPaneSize()
+    }
+    finally {
+      isLoadingMore = false
+    }
   }
 
   private var scrollLoaderInstalled: Boolean = false

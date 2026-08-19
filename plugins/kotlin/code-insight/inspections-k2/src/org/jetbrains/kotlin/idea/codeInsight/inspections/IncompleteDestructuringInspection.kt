@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
@@ -46,7 +47,8 @@ internal class IncompleteDestructuringInspection :
     override fun getApplicableRanges(element: KtDestructuringDeclaration): List<TextRange> =
         ApplicabilityRanges.destructuringDeclarationParens(element)
 
-    override fun KaSession.prepareContext(element: KtDestructuringDeclaration): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDestructuringDeclaration): Context? {
         val primaryParameters = extractPrimaryParameters(element) ?: return null
         val currentEntries = element.entries
         if (currentEntries.size == primaryParameters.size) return null
@@ -102,7 +104,8 @@ internal class IncompleteDestructuringInspection :
     }
 }
 
-private fun KaSession.generateNames(
+context(session: KaSession)
+private fun generateNames(
     element: KtDestructuringDeclaration,
     primaryParameters: List<KaValueParameterSymbol>,
 ): List<String> {
@@ -121,7 +124,8 @@ private fun KaSession.generateNames(
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.generateTypesIfNeeded(
+context(session: KaSession)
+private fun generateTypesIfNeeded(
     element: KtDestructuringDeclaration,
     primaryParameters: List<KaValueParameterSymbol>,
 ): List<String> {

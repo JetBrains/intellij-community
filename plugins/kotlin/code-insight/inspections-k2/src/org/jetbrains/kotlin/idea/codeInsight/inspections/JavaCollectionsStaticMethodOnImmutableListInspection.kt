@@ -46,7 +46,8 @@ internal class JavaCollectionsStaticMethodOnImmutableListInspection :
         *LocalQuickFix.EMPTY_ARRAY
     )
 
-    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDotQualifiedExpression): Context? {
         val (methodName, firstArg) = getMethodIfItsArgumentIsImmutableList(element) ?: return null
         return Context(methodName, firstArg)
     }

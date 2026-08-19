@@ -93,4 +93,14 @@ public interface AnnotationPackageSupport {
   default boolean isNonNullUsedForInstrumentation() {
     return false;
   }
+
+  /**
+   * Tells whether the supplied annotation is this support's unspecified-nullness annotation in the sense of JSpecify.
+   *
+   * @param annotation annotation to check
+   * @return true if the bound walk may go through this annotation
+   */
+  default boolean shouldGoThroughUnspecifiedNullnessAnnotation(@NotNull PsiAnnotation annotation) {
+    return false;
+  }
 }

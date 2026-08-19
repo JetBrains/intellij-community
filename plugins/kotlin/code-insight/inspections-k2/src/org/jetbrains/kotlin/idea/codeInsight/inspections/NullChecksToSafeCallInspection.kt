@@ -8,14 +8,14 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.components.isStableForSmartCasting
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.isStableForSmartCasting
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -43,7 +43,8 @@ internal class NullChecksToSafeCallInspection : KotlinApplicableInspectionBase.S
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean =
         collectNullCheckExpressions(element) != null
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? =
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Unit? =
         isNullChecksToSafeCallFixAvailable(element).asUnit
 
     override fun createQuickFix(

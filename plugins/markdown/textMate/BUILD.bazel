@@ -65,6 +65,7 @@ jvm_library(
 exports_files(
     [
         "intellij.markdown.fenceInjector.textMate.iml",
+        "resources/intellij.markdown.fenceInjector.textMate.xml",
     ],
     visibility = ["//visibility:public"],
 )

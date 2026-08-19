@@ -82,7 +82,7 @@ internal class SimpleTreeAssertionImpl<T> private constructor() : SimpleTreeAsse
   companion object {
 
     fun <T> assertTree(actualTree: SimpleTree<T>, isUnordered: Boolean, assert: SimpleTreeAssertion<T>.() -> Unit) {
-      val actualMutableTree = actualTree.deepCopyTree()
+      val actualMutableTree = actualTree.toMutableTree()
       val assertion = buildTreeAssertion(assert)
       val expectedMutableTree = SimpleTreeImpl(assertion.expectedChildren)
       sortTree(expectedMutableTree, actualMutableTree, isUnordered)
@@ -90,7 +90,7 @@ internal class SimpleTreeAssertionImpl<T> private constructor() : SimpleTreeAsse
     }
 
     fun <T> assertTree(expectedTree: SimpleTree<T>, actualTree: SimpleTree<T>, isUnordered: Boolean) {
-      val actualMutableTree = actualTree.deepCopyTree()
+      val actualMutableTree = actualTree.toMutableTree()
       val expectedMutableTree = expectedTree.mapTreeValues { node ->
         NodeAssertionOptions<T>(
           matcher = NodeMatcher.name(node.name),

@@ -17,6 +17,7 @@
  */
 package com.intellij.compose.ide.plugin.shared
 
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -47,3 +48,11 @@ val JETPACK_PREVIEW_FQ_NAME: FqName = FqName("$JETPACK_PREVIEW_TOOLING_PACKAGE.$
 val JETPACK_PREVIEW_CLASS_ID: ClassId = ClassId.topLevel(JETPACK_PREVIEW_FQ_NAME)
 val JETPACK_PREVIEW_PARAMETER_FQ_NAME: FqName = FqName("$JETPACK_PREVIEW_TOOLING_PACKAGE.$PREVIEW_PARAMETER_CLASS_NAME")
 val JETPACK_PREVIEW_PARAMETER_CLASS_ID: ClassId = ClassId.topLevel(JETPACK_PREVIEW_PARAMETER_FQ_NAME)
+
+const val COMPOSE_RESOURCES_PACKAGE: String = "org.jetbrains.compose.resources"
+
+val COMPOSE_IMAGE_RESOURCE_NAME: Name = Name.identifier("imageResource")
+val COMPOSE_IMAGE_RESOURCE_CALLABLE_ID: CallableId = CallableId(FqName(COMPOSE_RESOURCES_PACKAGE), COMPOSE_IMAGE_RESOURCE_NAME)
+val COMPOSE_PAINTER_RESOURCE_NAME: Name = Name.identifier("painterResource")
+val COMPOSE_PAINTER_RESOURCE_FQ_NAME: FqName = FqName("$COMPOSE_RESOURCES_PACKAGE.$COMPOSE_PAINTER_RESOURCE_NAME")
+val COMPOSE_FOUNDATION_IMAGE_CALLABLE_ID: CallableId = CallableId(FqName("androidx.compose.foundation"), Name.identifier("Image"))

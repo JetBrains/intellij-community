@@ -6,9 +6,8 @@ import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
-import org.jetbrains.kotlin.analysis.api.types.isDoubleType
-import org.jetbrains.kotlin.analysis.api.types.isFloatType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.codeinsight.utils.EmptinessCheckFunctionUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.RedundantIfInspectionBase
@@ -17,11 +16,11 @@ import org.jetbrains.kotlin.psi.KtIfExpression
 
 internal class RedundantIfInspection : RedundantIfInspectionBase() {
     override fun isBooleanExpression(expression: KtExpression): Boolean = analyze(expression) {
-        expression.expressionType?.isBooleanType == true
+        expression.expressionType?.classId == KaStandardTypeClassIds.BOOLEAN
     }
 
     override fun isNotNullableBooleanExpression(expression: KtExpression): Boolean = analyze(expression) {
-        expression.expressionType?.let { it.isBooleanType && !it.isMarkedNullable } == true
+        expression.expressionType?.let { it.classId == KaStandardTypeClassIds.BOOLEAN && !it.isMarkedNullable } ?: false
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class)
@@ -40,6 +39,6 @@ internal class RedundantIfInspection : RedundantIfInspectionBase() {
     context(_: KaSession)
     private fun KtExpression?.isFloatingPointType(): Boolean {
         val type = this?.expressionType ?: return false
-        return type.isFloatType || type.isDoubleType
+        return type.classId == KaStandardTypeClassIds.FLOAT || type.classId == KaStandardTypeClassIds.DOUBLE
     }
 }

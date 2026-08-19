@@ -190,7 +190,7 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
       return VcsLogBundle.message("vcs.log.commit.prefix", hash.toShortString());
     }
     if (commitId instanceof String commitString) {
-      if (VcsLogUtil.HASH_PREFIX_REGEX.matcher(commitString).matches()) {
+      if (VcsLogUtil.GIT_HASH_PREFIX_REGEX.matcher(commitString).matches()) {
         return VcsLogBundle.message("vcs.log.commit.or.reference.prefix", VcsLogUtil.getShortHash(commitString));
       }
     }

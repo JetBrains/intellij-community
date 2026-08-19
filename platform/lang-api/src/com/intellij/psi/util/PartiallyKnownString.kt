@@ -2,8 +2,8 @@
 package com.intellij.psi.util
 
 import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ContributedReferenceHost
 import com.intellij.psi.ElementManipulators
@@ -185,10 +185,13 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 
         try {
           val escaper = host.createLiteralTextEscaper()
-          val decode = escaper.decode(segmentRange, StringBuilder())
-          if (decode) {
-            val start = escaper.getOffsetInHost(inSegmentStart, segmentRange)
-            val end = escaper.getOffsetInHost(inSegmentEnd, segmentRange)
+          val decoded = StringBuilder()
+          if (escaper.decode(segmentRange, decoded)) {
+            val decodedLength = decoded.length
+            val clampedStart = inSegmentStart.coerceIn(0, decodedLength)
+            val clampedEnd = inSegmentEnd.coerceIn(clampedStart, decodedLength)
+            val start = escaper.getOffsetInHost(clampedStart, segmentRange)
+            val end = escaper.getOffsetInHost(clampedEnd, segmentRange)
             if (start != -1 && end != -1 && start <= end)
               return TextRange(start, end)
             else {
@@ -201,7 +204,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
           }
         }
         catch (e: Exception) {
-          if (e is ControlFlowException) throw e
+          rethrowControlFlowException(e)
           logger<PartiallyKnownString>().error(
             "decoding of ${segmentRange} failed for $host inSegment = [$inSegmentStart, $inSegmentEnd]", e, *mkAttachments(host)
           )

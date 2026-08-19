@@ -8,7 +8,7 @@ import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.components.isPublicApi
+import org.jetbrains.kotlin.analysis.api.visibility.isPublicApi
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.config.AnalysisFlags
@@ -83,7 +83,7 @@ class PublicApiImplicitTypeInspection(
                 // we want to report them only when Explicit API is disabled in the compiler.
                 val reportPublic = declaration.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) == ExplicitApiMode.DISABLED
 
-                return reportPublic && isPublicApi(declarationSymbol)
+                return reportPublic && declarationSymbol.isPublicApi
             }
         }
     }

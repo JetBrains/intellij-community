@@ -1,2 +1,3 @@
-version = "6.21.*"
+version = "6.22.*"
 upstream-repository = "https://github.com/pyinstaller/pyinstaller"
+partial-stub = true

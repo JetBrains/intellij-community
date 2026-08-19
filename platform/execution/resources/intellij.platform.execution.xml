@@ -19,9 +19,32 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.runContentManagerExtension"
                     interface="com.intellij.execution.ui.RunContentManagerExtension" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.execution.syntheticConfigurationTypeProvider"
+                    interface="com.intellij.execution.configurations.SyntheticConfigurationTypeProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.execution.ongoingRunConfigurationProvider"
+                    interface="com.intellij.execution.configurations.OngoingRunConfigurationProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.configurationType" interface="com.intellij.execution.configurations.ConfigurationType" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.runConfigurationsSettings" interface="com.intellij.execution.configurations.RunConfigurationsSettings" area="IDEA_PROJECT"/>
+    <extensionPoint qualifiedName="com.intellij.programRunner" interface="com.intellij.execution.runners.ProgramRunner" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.executor" interface="com.intellij.execution.Executor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.runToolbarProcess" interface="com.intellij.execution.runToolbar.RunToolbarProcess" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.stepsBeforeRunProvider" interface="com.intellij.execution.BeforeRunTaskProvider" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.runConfigurationTargetEnvironmentAdjusterFactory" interface="com.intellij.execution.target.RunConfigurationTargetEnvironmentAdjuster$Factory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.executionTargetType"
+                    interface="com.intellij.execution.target.TargetEnvironmentType" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.executionTargetLanguageRuntimeType"
+                    interface="com.intellij.execution.target.LanguageRuntimeType" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.analyzeStacktraceFilter" interface="com.intellij.execution.filters.Filter" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.execution.inlineResumeCreator" interface="com.intellij.execution.InlineResumeCreator" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectSettings service="com.intellij.diagnostic.logging.LogConsolePreferences"/>
     <projectSettings service="com.intellij.execution.target.TargetEnvironmentsManager"/>
+    <projectService serviceInterface="com.intellij.execution.AdditionalRunningOptions" open="true"
+                    serviceImplementation="com.intellij.execution.EmptyAdditionalRunningOptions"/>
+    <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>
+    <projectService serviceImplementation="com.intellij.execution.configurations.RunConfigurationVcsSupport" open="true"/>
   </extensions>
 </idea-plugin>

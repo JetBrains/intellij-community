@@ -61,6 +61,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.indexing.serializers.iml",
+        "resources/intellij.java.indexing.serializers.xml",
     ],
     visibility = ["//visibility:public"],
 )

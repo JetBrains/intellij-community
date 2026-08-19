@@ -39,7 +39,6 @@ def _java_info(target):
 def _partitioned_srcs(srcs):
     kt_srcs = []
     java_srcs = []
-    form_srcs = []
     src_jars = []
 
     for f in srcs:
@@ -48,15 +47,17 @@ def _partitioned_srcs(srcs):
         elif f.path.endswith(".java"):
             java_srcs.append(f)
         elif f.path.endswith(".form"):
-            form_srcs.append(f)
+            # don't compile forms, they're in srcs only for compatibility reasons
+            pass
         elif f.path.endswith(".srcjar"):
             src_jars.append(f)
+        else:
+            fail("Unknown extension in srcs list: " + f.path)
 
     return struct(
         kt = kt_srcs,
         java = java_srcs,
-        forms = form_srcs,
-        all_srcs = kt_srcs + java_srcs + form_srcs,
+        all_srcs = kt_srcs + java_srcs,
         src_jars = src_jars,
     )
 

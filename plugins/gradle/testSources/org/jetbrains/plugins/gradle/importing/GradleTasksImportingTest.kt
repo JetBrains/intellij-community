@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
@@ -18,7 +19,7 @@ class GradleTasksImportingTest : BuildViewMessagesImportingTestCase() {
       // do not apply any plugins
     }
     importProject()
-    assertSyncViewTree {
+    assertBuildViewTree(syncView) {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning()
       }
@@ -44,7 +45,7 @@ class GradleTasksImportingTest : BuildViewMessagesImportingTestCase() {
       // do not apply any plugins
     }
     importProject()
-    assertSyncViewTree {
+    assertBuildViewTree(syncView) {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning()
       }
@@ -55,7 +56,7 @@ class GradleTasksImportingTest : BuildViewMessagesImportingTestCase() {
     assertThat(findTasks(path("project2"))).isNotEmpty
   }
 
-  private fun findTasks(projectPath: String) : Collection<TaskData> {
+  private fun findTasks(projectPath: String): Collection<TaskData> {
     return ExternalSystemApiUtil.findProjectTasks(myProject, SYSTEM_ID, projectPath)
   }
 }

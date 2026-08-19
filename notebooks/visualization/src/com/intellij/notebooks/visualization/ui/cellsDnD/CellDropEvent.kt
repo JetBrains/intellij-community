@@ -5,4 +5,5 @@ import com.intellij.notebooks.visualization.ui.EditorCell
 data class CellDropEvent(
   val sourceCell: EditorCell,
   val targetCell: CellDropTarget,
+  val sourceCells: List<EditorCell> = listOf(sourceCell),
 )

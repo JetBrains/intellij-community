@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
@@ -26,6 +27,38 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MarkupModelTest extends AbstractEditorTest {
+  public void testFilteredIteratorsUseHighlighterFlavorFlags() {
+    initText(" ");
+    Document document = getDocument(getFile());
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+    RangeHighlighter highlighter = markupModel.addRangeHighlighter(0, 1, 0, null, HighlighterTargetArea.EXACT_RANGE);
+
+    assertIteratorEmpty(markupModel.overlappingErrorStripeIterator(0, 1));
+    highlighter.setErrorStripeMarkColor(Color.RED);
+    assertIteratorContainsOnly(markupModel.overlappingErrorStripeIterator(0, 1), highlighter);
+    highlighter.setErrorStripeMarkColor(null);
+    assertIteratorEmpty(markupModel.overlappingErrorStripeIterator(0, 1));
+
+    assertIteratorEmpty(markupModel.overlappingGutterIterator(0, 1));
+    highlighter.setGutterIconRenderer(MarkupModelStressTest.DUMMY_GUTTER_ICON_RENDERER);
+    assertIteratorContainsOnly(markupModel.overlappingGutterIterator(0, 1), highlighter);
+    highlighter.setGutterIconRenderer(null);
+    assertIteratorEmpty(markupModel.overlappingGutterIterator(0, 1));
+  }
+
+  private static void assertIteratorEmpty(MarkupIterator<RangeHighlighterEx> iterator) {
+    try (iterator) {
+      assertFalse(iterator.hasNext());
+    }
+  }
+
+  private static void assertIteratorContainsOnly(MarkupIterator<RangeHighlighterEx> iterator, RangeHighlighter highlighter) {
+    try (iterator) {
+      assertSame(highlighter, iterator.next());
+      assertFalse(iterator.hasNext());
+    }
+  }
+
   public void testMarkupModelListenersDoWork() {
     ThreadingAssertions.assertEventDispatchThread();
     initText(" ".repeat(100));

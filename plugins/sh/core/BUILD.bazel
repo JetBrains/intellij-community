@@ -97,6 +97,9 @@ jvm_library(
 exports_files(
     [
         "intellij.sh.core.iml",
+        "resources/colors/ShDarcula.xml",
+        "resources/colors/ShDefault.xml",
+        "resources/intellij.sh.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -29,7 +29,7 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io",
         "//libraries/jsoup",
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util",
         "//platform/extensions",
         "//platform/core-api:core",
@@ -42,6 +42,7 @@ jvm_library(
         "//platform/workspace/storage",
         "//platform/workspace/jps",
         "//platform/ide-core",
+        "//platform/util-ex",
     ],
 )
 
@@ -68,6 +69,7 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//libraries/jsoup:jsoup_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util:util_test_lib",
         "//platform/extensions:extensions_test_lib",
         "//platform/core-api:core_test_lib",
@@ -80,6 +82,7 @@ jvm_library(
         "//platform/workspace/storage:storage_test_lib",
         "//platform/workspace/jps:jps_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community` end
@@ -88,6 +91,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.community.iml",
+        "resources/intellij.python.community.xml",
     ],
     visibility = ["//visibility:public"],
 )

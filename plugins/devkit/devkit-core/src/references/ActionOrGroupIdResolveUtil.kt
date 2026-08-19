@@ -11,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScopesCore.projectProductionScope
 import com.intellij.psi.search.ProjectScope.getLibrariesScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.util.PairProcessor
+import com.intellij.util.PerformanceAssertions
 import com.intellij.util.Processor
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.dom.Extension
@@ -54,7 +55,9 @@ internal object ActionOrGroupIdResolveUtil {
 
   @JvmStatic
   fun processActivateToolWindowActions(project: Project, processor: Processor<Extension>) {
-    processAllExtensionCandidates(project, "com.intellij.toolWindow", processor)
+    PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911").use {
+      processAllExtensionCandidates(project, "com.intellij.toolWindow", processor)
+    }
   }
 
   @JvmStatic

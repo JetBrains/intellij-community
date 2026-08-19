@@ -2,7 +2,6 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -37,6 +36,8 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
 
 @ApiStatus.Internal
 public class JavaHomeFinderBasic {
@@ -169,7 +170,7 @@ public class JavaHomeFinderBasic {
         catch (InvalidPathException ignored) {
         }
         catch (Exception e) {
-          if (e instanceof ControlFlowException) throw e;
+          rethrowControlFlowException(e);
           log.warn("Failed to get Java home path for " + p, e);
         }
       }

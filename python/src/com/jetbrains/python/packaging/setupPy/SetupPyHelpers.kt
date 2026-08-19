@@ -11,7 +11,7 @@ import com.intellij.psi.PsiManager
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.packaging.PyRequirementParser
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyDictLiteralExpression

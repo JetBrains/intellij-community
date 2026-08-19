@@ -10,8 +10,9 @@ import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
@@ -195,7 +196,7 @@ object SimplifyBooleanWithConstantsUtils {
     private fun hasNotNullableBooleanType(expression: KtExpression): Boolean {
         analyze(expression) {
             val ktType = expression.expressionType ?: return false
-            return ktType.isBooleanType && !ktType.isNullable
+            return ktType.classId == KaStandardTypeClassIds.BOOLEAN && !ktType.isNullable
         }
     }
 }

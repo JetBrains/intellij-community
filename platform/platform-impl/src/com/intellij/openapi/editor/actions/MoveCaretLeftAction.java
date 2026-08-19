@@ -9,5 +9,6 @@ import org.jetbrains.annotations.ApiStatus;
 public final class MoveCaretLeftAction extends EditorAction {
   public MoveCaretLeftAction() {
     super(new MoveCaretLeftOrRightHandler(MoveCaretLeftOrRightHandler.Direction.LEFT));
+    getTemplatePresentation().setRWLockRequired(LockFreeEditorActions.needLockForArrowActions());
   }
 }

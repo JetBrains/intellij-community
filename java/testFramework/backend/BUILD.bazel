@@ -62,6 +62,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.testFramework.backend.iml",
+        "resources/intellij.java.testFramework.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

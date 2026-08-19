@@ -56,7 +56,7 @@ jvm_library(
         "//libraries/caffeine",
         "@lib//:kotlin-stdlib-provided",
         "//libraries/hash4j",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/mvstore",
         "//libraries/http-client",
         "//libraries/maven-resolver-provider",
@@ -111,6 +111,7 @@ jvm_library(
         "//libraries/caffeine:caffeine_test_lib",
         "@lib//:kotlin-stdlib-provided",
         "//libraries/hash4j:hash4j_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/mvstore:mvstore_test_lib",
         "//libraries/http-client:http-client_test_lib",
         "//libraries/maven-resolver-provider:maven-resolver-provider_test_lib",
@@ -128,6 +129,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.jps.build.iml",
+        "resources/intellij.platform.jps.build.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -16,14 +16,16 @@ import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDeprecationLevel
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.syntheticJavaPropertiesScope
-import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.scopes.syntheticJavaPropertiesScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeprecationLevel
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.deprecation
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.hasOrOverridesCallableId
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -57,7 +59,8 @@ class ConflictingExtensionPropertyInspection : KotlinApplicableInspectionBase<Kt
     override fun getApplicableRanges(element: KtProperty): List<TextRange> =
         ApplicabilityRanges.declarationName(element)
 
-    override fun KaSession.prepareContext(element: KtProperty): Boolean? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtProperty): Boolean? {
         if (element.symbol.deprecation?.level == KaDeprecationLevel.HIDDEN) return null
         val conflictingExtension = element.conflictingSyntheticExtension() ?: return null
         return element.isSameAsSynthetic(conflictingExtension)

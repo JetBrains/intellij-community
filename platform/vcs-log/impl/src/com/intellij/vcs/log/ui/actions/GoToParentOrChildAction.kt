@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.VcsLogBundle
@@ -25,6 +26,11 @@ import java.awt.Component
 import java.awt.event.KeyEvent
 
 internal open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
+
+  init {
+    templatePresentation.isRWLockRequired = Registry.`is`("actions.update.and.perform.arrow.actions.with.rw.lock")
+  }
+
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 

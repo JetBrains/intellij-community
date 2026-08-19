@@ -237,7 +237,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval
-    public static final @NotNull Icon EnableNewUi = load("actions/enableNewUi.svg", 0, 0);
+    /** 16x16 */ public static final @NotNull Icon EnableNewUi = load("actions/enableNewUi.svg", 944382817, 0);
   }
 
   public static final class Breakpoints {
@@ -510,6 +510,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Terraform = load("expui/fileTypes/terraform.svg", 15103612, 2);
     /** 16x16 */ public static final @NotNull Icon Text = load("expui/fileTypes/text.svg", "fileTypes/text.svg", -444897274, 0);
     /** 16x16 */ public static final @NotNull Icon Toml = load("expui/fileTypes/toml.svg", 1967853425, 2);
+    /** 16x16 */ public static final @NotNull Icon TypeScript = load("expui/fileTypes/typeScript.svg", 2024070316, 2);
     /** 16x16 */ public static final @NotNull Icon UiForm = load("expui/fileTypes/uiForm.svg", "fileTypes/uiForm.svg", -734581860, 0);
     /** 16x16 */ public static final @NotNull Icon Unknown = load("expui/fileTypes/unknown.svg", "fileTypes/unknown.svg", 1094896438, 0);
     /** 16x16 */ public static final @NotNull Icon Vue = load("expui/fileTypes/vue.svg", 1065828359, 0);
@@ -525,7 +526,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Add = load("expui/general/add.svg", "general/add.svg", -906460278, 2);
     /** 20x20 */ public static final @NotNull Icon Add_20x20 = load("expui/general/add@20x20.svg", 1639986855, 2);
     /** 16x16 */ public static final @NotNull Icon AddJdk = load("general/addJdk.svg", 1591845252, 2);
-    /** 38x15 */ public static final @NotNull Icon Alpha = load("general/alpha.svg", -764382938, 2);
     /** 16x16 */ public static final @NotNull Icon ArrowDown = load("expui/general/chevronDown.svg", "general/arrowDown.svg", 2097510840, 2);
     /** 9x5 */ public static final @NotNull Icon ArrowDownSmall = load("general/arrowDownSmall.svg", -53159950, 2);
     /** 16x16 */ public static final @NotNull Icon ArrowLeft = load("expui/general/chevronLeft.svg", "general/arrowLeft.svg", -1023615143, 2);
@@ -540,7 +540,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon BalloonInformation = load("expui/status/info.svg", "general/balloonInformation.svg", -271775484, 2);
     /** 16x16 */ public static final @NotNull Icon BalloonWarning = load("expui/status/warning.svg", "general/balloonWarning.svg", -1328195733, 2);
     /** 12x12 */ public static final @NotNull Icon BalloonWarning12 = load("general/balloonWarning12.svg", -1427088229, 2);
-    /** 32x15 */ public static final @NotNull Icon Beta = load("general/beta.svg", -226198495, 2);
     /** 8x4 */ public static final @NotNull Icon ButtonDropTriangle = load("general/buttonDropTriangle.svg", -1607029215, 2);
     /** 16x16 */ public static final @NotNull Icon ChevronDown = load("expui/general/chevronDown.svg", "general/chevron-down.svg", -2068897744, 0);
     /** 16x16 */ public static final @NotNull Icon ChevronLeft = load("expui/general/chevronLeft.svg", "general/chevron-left.svg", -1889245888, 0);
@@ -626,7 +625,6 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ModifiedSelected = load("general/modifiedSelected.svg", 251018616, 0);
     /** 16x16 */ public static final @NotNull Icon MoreTabs = load("general/moreTabs.svg", -82809530, 2);
     /** 16x16 */ public static final @NotNull Icon Mouse = load("general/mouse.svg", 1719479873, 2);
-    /** 38x16 */ public static final @NotNull Icon New_badge = load("general/new_badge.svg", 394698412, 2);
     /** 16x16 */ public static final @NotNull Icon Note = load("expui/status/infoOutline.svg", "general/note.svg", -2137204668, 0);
     /** 24x24 */ public static final @NotNull Icon NotificationError = load("general/notificationError.svg", -172459168, 2);
     /** 24x24 */ public static final @NotNull Icon NotificationInfo = load("general/notificationInfo.svg", -1956337174, 2);
@@ -671,7 +669,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Tree = load("expui/general/tree.svg", "general/tree.svg", 699730744, 0);
     /** 16x16 */ public static final @NotNull Icon TreeHovered = load("expui/general/treeHovered.svg", "general/treeHovered.svg", -805484505, 0);
     /** 16x16 */ public static final @NotNull Icon TreeSelected = load("expui/general/treeSelected.svg", "general/treeSelected.svg", -1128936978, 0);
-    /** 32x16 */ public static final @NotNull Icon TrialBadge = load("general/trialBadge.svg", -1779199569, 0);
     /** 16x16 */ public static final @NotNull Icon User = load("expui/general/user.svg", "general/user.svg", 100112941, 0);
     /** 16x16 */ public static final @NotNull Icon Vcs = load("expui/general/vcs.svg", 1023462254, 2);
     /** 16x16 */ public static final @NotNull Icon Warning = load("expui/status/warning.svg", "general/warning.svg", 748587837, 2);
@@ -681,6 +678,30 @@ public class AllIcons {
     /** 20x20 */ public static final @NotNull Icon WindowsMenu_20x20 = load("expui/general/windowsMenu@20x20.svg", 2146328371, 2);
     /** 16x16 */ public static final @NotNull Icon ZoomIn = load("general/zoomIn.svg", -997549918, 2);
     /** 16x16 */ public static final @NotNull Icon ZoomOut = load("general/zoomOut.svg", -2077385866, 2);
+
+    /** @deprecated to be removed, use Badge.alpha instead */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
+    /** 38x15 */ public static final @NotNull Icon Alpha = load("general/alpha.svg", -764382938, 2);
+
+    /** @deprecated to be removed, use Badge.beta instead */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
+    /** 32x15 */ public static final @NotNull Icon Beta = load("general/beta.svg", -226198495, 2);
+
+    /** @deprecated to be removed, use Badge.new/Badge.newBadge instead */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
+    /** 38x16 */ public static final @NotNull Icon New_badge = load("general/new_badge.svg", 394698412, 2);
+
+    /** @deprecated to be removed, use Badge.trial instead */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
+    /** 32x16 */ public static final @NotNull Icon TrialBadge = load("general/trialBadge.svg", -1779199569, 0);
   }
 
   public static final class Graph {
@@ -1505,7 +1526,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval
-    public static final @NotNull Icon MeetNewUi = load("expui/toolwindows/meetNewUi.svg", 0, 0);
+    /** 16x16 */ public static final @NotNull Icon MeetNewUi = load("expui/toolwindows/meetNewUi.svg", -215928280, 2);
   }
 
   public static final class TransferSettings {

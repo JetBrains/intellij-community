@@ -13,6 +13,8 @@ import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
 import com.intellij.platform.eel.fs.EelOpenedFile
 import com.intellij.platform.eel.fs.EelPosixFileInfo
+import com.intellij.platform.eel.fs.EelSearchEvent
+import com.intellij.platform.eel.fs.EelSearchOptions
 import com.intellij.platform.eel.fs.EelWindowsFileInfo
 import com.intellij.platform.eel.fs.StreamingReadResult
 import com.intellij.platform.eel.fs.StreamingWriteResult
@@ -209,6 +211,12 @@ private class IjentFailSafeFileSystemPosixApiImpl(
   override suspend fun prefetchDirectories(roots: Collection<EelPath>): Flow<Pair<EelPath, EelFileInfo>> =
     holder.withDelegateRetrying { prefetchDirectories(roots) }
 
+  // Obtain-only retry, deliberately without the mid-collect replay walkDirectory gets: a search
+  // that dies mid-stream cannot be replayed without re-emitting the events already delivered,
+  // and both consumers fall back to local enumeration on a failed stream anyway.
+  override suspend fun search(options: EelSearchOptions): Flow<EelSearchEvent> =
+    holder.withDelegateRetrying { search(options) }
+
   override suspend fun listDirectory(
     path: EelPath,
   ): EelResult<Collection<String>, EelFileSystemApi.ListDirectoryError> =
@@ -388,6 +396,12 @@ private class IjentFailSafeFileSystemWindowsApiImpl(
 
   override suspend fun prefetchDirectories(roots: Collection<EelPath>): Flow<Pair<EelPath, EelFileInfo>> =
     holder.withDelegateRetrying { prefetchDirectories(roots) }
+
+  // Obtain-only retry, deliberately without the mid-collect replay walkDirectory gets: a search
+  // that dies mid-stream cannot be replayed without re-emitting the events already delivered,
+  // and both consumers fall back to local enumeration on a failed stream anyway.
+  override suspend fun search(options: EelSearchOptions): Flow<EelSearchEvent> =
+    holder.withDelegateRetrying { search(options) }
 
   override suspend fun listDirectory(
     path: EelPath,

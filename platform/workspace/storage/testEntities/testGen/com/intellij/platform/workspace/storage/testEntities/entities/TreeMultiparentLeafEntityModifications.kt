@@ -20,7 +20,7 @@ interface TreeMultiparentLeafEntityBuilder : WorkspaceEntityBuilder<TreeMultipar
 }
 
 internal object TreeMultiparentLeafEntityType : EntityType<TreeMultiparentLeafEntity, TreeMultiparentLeafEntityBuilder>() {
-  override val entityClass: Class<TreeMultiparentLeafEntity> get() = TreeMultiparentLeafEntity::class.java
+  override val entityImplClass: Class<*> get() = TreeMultiparentLeafEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = TreeMultiparentLeafEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,

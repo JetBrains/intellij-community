@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
-import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
+import org.jetbrains.kotlin.j2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -24,22 +24,6 @@ import org.jetbrains.kotlin.resolve.ImportPath
  * NOTE: This class is J2K-specific, do not confuse it with [com.intellij.codeInsight.actions.OptimizeImportsProcessor].
  */
 class OptimizeImportsProcessing : FileBasedPostProcessing() {
-    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: ConverterContext) {
-        if (!shouldTryToOptimizeImports(file, rangeMarker)) return
-
-        val optimizeImportsFacility = KotlinOptimizeImportsFacility.getInstance()
-        val optimizedImports = runReadAction {
-            val importData = optimizeImportsFacility.analyzeImports(file) ?: return@runReadAction null
-            optimizeImportsFacility.prepareOptimizedImports(file, importData)
-        }
-
-        if (optimizedImports != null) {
-            runUndoTransparentActionInEdt(inWriteAction = true) {
-                optimizeImportsFacility.replaceImports(file, optimizedImports)
-            }
-        }
-    }
-
     private fun shouldTryToOptimizeImports(file: KtFile, rangeMarker: RangeMarker?): Boolean {
         val elements = runReadAction {
             when {

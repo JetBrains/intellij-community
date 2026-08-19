@@ -22,7 +22,11 @@ class KaLibraryFallbackDependenciesModuleImpl(override val dependentLibrary: KaL
     override val directFriendDependencies: List<KaModule> get() = emptyList()
 
     override val baseContentScope: GlobalSearchScope
-        get() = ProjectScope.getLibrariesScope(project).intersectWith(GlobalSearchScope.notScope(dependentLibrary.contentScope))
+        get() {
+            // The `KaLibraryFallbackDependenciesModule` contract requires the base content scope to contain only library *classes*, not
+            // library sources.
+            return ProjectScope.getLibraryClassesScope(project).intersectWith(GlobalSearchScope.notScope(dependentLibrary.contentScope))
+        }
 
     override val targetPlatform: TargetPlatform
         get() = dependentLibrary.targetPlatform

@@ -107,6 +107,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.todo.iml",
+        "resources/intellij.platform.todo.xml",
     ],
     visibility = ["//visibility:public"],
 )

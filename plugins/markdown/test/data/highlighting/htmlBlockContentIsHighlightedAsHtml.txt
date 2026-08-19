@@ -22,8 +22,7 @@ hero
     HTML_ATTRIBUTE_VALUE => DEFAULT_STRING
 >
     HTML_TAG => DEFAULT_TAG => TEXT
-\n
-    HTML_CODE => TEXT
+
 ␣␣
     HTML_CODE => TEXT
 <
@@ -60,9 +59,7 @@ section
     HTML_TAG_NAME => DEFAULT_KEYWORD
 >
     HTML_TAG => DEFAULT_TAG => TEXT
-\n
-    HTML_CODE => TEXT
-\n
+\n\n
     HTML_CODE => TEXT
 <!--
     HTML_COMMENT => DEFAULT_LINE_COMMENT

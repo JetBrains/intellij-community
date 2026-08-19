@@ -25,9 +25,11 @@ import git4idea.repo.GitRepositoryTagsHolderImpl
 import git4idea.test.GitPlatformTest
 import git4idea.test.TestDataUtil
 import git4idea.test.branch
+import git4idea.test.cd
 import git4idea.test.checkout
 import git4idea.test.checkoutNew
 import git4idea.test.git
+import git4idea.test.gitInit
 import git4idea.test.registerRepo
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.runBlocking
@@ -209,7 +211,8 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
 
   private fun resetToFreshState(repo: GitRepository) {
     repo.root.toNioPath().resolve(GitUtil.DOT_GIT).deleteRecursively()
-    repo.git("init")
+    cd(repo)
+    gitInit()
   }
 
   private fun createRefs(repo: GitRepository, ensureTags: Boolean = false) {

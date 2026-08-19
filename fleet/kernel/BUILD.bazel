@@ -117,6 +117,7 @@ jvm_library(
 exports_files(
     [
         "fleet.kernel.iml",
+        "resources/fleet.kernel.xml",
     ],
     visibility = ["//visibility:public"],
 )

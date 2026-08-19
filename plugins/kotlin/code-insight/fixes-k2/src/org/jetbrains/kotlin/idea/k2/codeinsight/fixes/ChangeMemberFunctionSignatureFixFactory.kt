@@ -14,12 +14,13 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
-import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KaSingleTypeParameterSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -27,13 +28,21 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.approximateToDenotableSubtypeOrSelf
+import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -51,6 +60,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeParameterList
+import org.jetbrains.kotlin.psi.addRemoveModifier.setModifierList
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.types.Variance
 import java.util.BitSet
@@ -82,7 +92,8 @@ internal object ChangeMemberFunctionSignatureFixFactory {
     /**
      * Computes all the signatures a 'functionElement' could be changed to in order to remove NOTHING_TO_OVERRIDE error.
      */
-    private fun KaSession.computePossibleSignatures(functionElement: KtNamedFunction): List<Signature> {
+    context(session: KaSession)
+    private fun computePossibleSignatures(functionElement: KtNamedFunction): List<Signature> {
         if (functionElement.valueParameterList == null) { // we won't be able to modify its signature
             return emptyList()
         }
@@ -100,7 +111,8 @@ internal object ChangeMemberFunctionSignatureFixFactory {
      * Changes function's signature to match superFunction's signature. Returns new descriptor.
      */
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.signatureToMatch(function: KaFunctionSymbol, superFunction: KaNamedFunctionSymbol): Signature {
+    context(session: KaSession)
+    private fun signatureToMatch(function: KaFunctionSymbol, superFunction: KaNamedFunctionSymbol): Signature {
         val superParameters = superFunction.valueParameters
         val parameters = function.valueParameters
         val subClass = function.containingSymbol
@@ -147,7 +159,8 @@ internal object ChangeMemberFunctionSignatureFixFactory {
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.getSignature(
+    context(session: KaSession)
+    private fun getSignature(
         substitutor: KaSubstitutor?,
         types: List<KaType>,
         names: List<String>,
@@ -156,6 +169,23 @@ internal object ChangeMemberFunctionSignatureFixFactory {
         isPreview: Boolean
     ): String {
         return buildString {
+            val declarationRenderer = if (isPreview) {
+                KaDeclarationRendererForSource.WITH_SHORT_NAMES
+            } else {
+                KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
+                    annotationRenderer = annotationRenderer.with {
+                        annotationFilter = KaRendererAnnotationsFilter { annotation, _ -> targetFile != null && keepAnnotation(annotation, targetFile) }
+                    }
+                }
+            }
+
+            if (superFunction.contextParameters.isNotEmpty()) {
+                append(superFunction.contextParameters.joinToString(", ", "context(", ") ") { contextParameterSymbol ->
+                    (contextParameterSymbol.name.takeUnless { it.isSpecial }?.render() ?: "_") +
+                            ": " +
+                            contextParameterSymbol.returnType.render(declarationRenderer.typeRenderer, Variance.INVARIANT)
+                })
+            }
             if (superFunction.isSuspend) {
                 append("suspend ")
             }
@@ -176,15 +206,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
             }
 
             append("fun ")
-            val declarationRenderer = if (isPreview) {
-                KaDeclarationRendererForSource.WITH_SHORT_NAMES
-            } else {
-                KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
-                    annotationRenderer = annotationRenderer.with {
-                        annotationFilter = KaRendererAnnotationsFilter { annotation, _ -> targetFile != null && keepAnnotation(annotation, targetFile) }
-                    }
-                }
-            }
+
             if (superFunction.typeParameters.isNotEmpty()) {
                 append(superFunction.typeParameters.joinToString(prefix = "<", postfix = "> ") {
                     it.render(declarationRenderer.with {
@@ -217,7 +239,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
                     Variance.INVARIANT
                 )
             })
-            superFunction.returnType.takeUnless { it.isUnitType }?.let {
+            superFunction.returnType.takeUnless { it.classId == KaStandardTypeClassIds.UNIT }?.let {
                 append(": ")
                 append((substitutor?.substitute(it) ?: it).render(declarationRenderer.typeRenderer, Variance.INVARIANT))
             }
@@ -225,16 +247,18 @@ internal object ChangeMemberFunctionSignatureFixFactory {
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.renderParameterAnnotations(
+    context(session: KaSession)
+    private fun renderParameterAnnotations(
         parameter: KaValueParameterSymbol,
         declarationRenderer: KaDeclarationRenderer
     ): String {
         val printer = PrettyPrinter()
-        declarationRenderer.annotationRenderer.renderAnnotations(this, parameter, printer)
+        declarationRenderer.annotationRenderer.renderAnnotations(session, parameter, printer)
         return printer.toString()
     }
 
-    private fun KaSession.keepAnnotation(annotation: KaAnnotation, targetFile: KtFile): Boolean {
+    context(session: KaSession)
+    private fun keepAnnotation(annotation: KaAnnotation, targetFile: KtFile): Boolean {
         val classId = annotation.classId ?: return false
         val symbol = findClass(classId)
 
@@ -247,7 +271,8 @@ internal object ChangeMemberFunctionSignatureFixFactory {
         isRequiresOptInFqName(annotation.classId?.asSingleFqName())
     }
 
-    private fun KaSession.matchParameters(
+    context(session: KaSession)
+    private fun matchParameters(
         parameterChooser: ParameterChooser,
         superParameters: List<KaValueParameterSymbol>,
         parameters: List<KaValueParameterSymbol>,
@@ -271,7 +296,8 @@ internal object ChangeMemberFunctionSignatureFixFactory {
         }
     }
 
-    private fun KaSession.getPossibleSuperFunctions(functionSymbol: KaFunctionSymbol): List<KaNamedFunctionSymbol> {
+    context(session: KaSession)
+    private fun getPossibleSuperFunctions(functionSymbol: KaFunctionSymbol): List<KaNamedFunctionSymbol> {
         val containingClass = functionSymbol.containingSymbol as? KaClassSymbol ?: return emptyList()
 
         val name = functionSymbol.name ?: return emptyList()
@@ -305,6 +331,30 @@ internal object ChangeMemberFunctionSignatureFixFactory {
 
             if (patternFunction.hasModifier(KtTokens.SUSPEND_KEYWORD)) {
                 function.addModifier(KtTokens.SUSPEND_KEYWORD)
+            }
+
+            val modifierList = function.modifierList
+            val newModifierList = patternFunction.modifierList
+            if (newModifierList != null) {
+                if (modifierList != null) {
+                    val contextParameterList = modifierList.contextParameterList
+                    val newContextParameterList = newModifierList.contextParameterList
+                    if (newContextParameterList != null) {
+                        val contextParameters = if (contextParameterList == null) {
+                            modifierList.addBefore(newContextParameterList, modifierList.firstChild)
+                        } else {
+                            contextParameterList.replace(newContextParameterList)
+                        }
+                        shortenReferences(contextParameters as KtElement)
+                    } else {
+                        contextParameterList?.delete()
+                    }
+                } else {
+                    function.setModifierList(newModifierList)
+                    shortenReferences(function.modifierList!!)
+                }
+            } else {
+                modifierList?.contextParameterList?.delete()
             }
 
             val newTypeRef = function.setTypeReference(patternFunction.typeReference)

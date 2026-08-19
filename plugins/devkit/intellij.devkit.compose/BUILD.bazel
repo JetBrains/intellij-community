@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.devkit.compose` start
@@ -55,8 +55,8 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//plugins/kotlin/base/facet",
         "//plugins/kotlin/base/jps",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
-        "@lib//:kotlinc-analysis-api-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//platform/lang-impl",
         "//uast/uast-common:uast",
@@ -112,8 +112,8 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "//plugins/kotlin/base/facet:facet_test_lib",
         "//plugins/kotlin/base/jps:jps_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
-        "@lib//:kotlinc-analysis-api-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//platform/lang-impl:lang-impl_test_lib",
         "//uast/uast-common:uast_test_lib",
@@ -139,6 +139,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.compose.iml",
+        "resources/intellij.devkit.compose.xml",
     ],
     visibility = ["//visibility:public"],
 )

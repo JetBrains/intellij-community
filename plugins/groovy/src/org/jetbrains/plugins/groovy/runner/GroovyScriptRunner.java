@@ -20,10 +20,18 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class GroovyScriptRunner {
+
+  private static final ConcurrentHashMap<String, Path> EXTRACTED_CONF_CACHE = new ConcurrentHashMap<>();
 
   public abstract boolean isValidModule(@NotNull Module module);
 
@@ -45,18 +53,31 @@ public abstract class GroovyScriptRunner {
   }
 
   public static String getPathInConf(String fileName) {
-    try {
-      final String jarPath = PathUtil.getJarPathForClass(GroovyLanguage.class);
-      if (new File(jarPath).isFile()) { //jar; distribution mode
-        return new File(jarPath, "../" + fileName).getCanonicalPath();
-      }
+    final Path jarPath = Path.of(PathUtil.getJarPathForClass(GroovyLanguage.class));
 
-      //else, it's directory in out, development mode
-      return new File(jarPath, "conf/" + fileName).getCanonicalPath();
+    if (Files.isRegularFile(jarPath)) { //jar; distribution or dev-run jar-cache mode
+      Path candidate = jarPath.resolveSibling(fileName).normalize().toAbsolutePath();
+      if (Files.exists(candidate)) return candidate.toString();
+      // jar-cache / Bazel dev: script is inside the JAR
+      return EXTRACTED_CONF_CACHE.computeIfAbsent(fileName, name -> {
+        URL resource = GroovyLanguage.class.getResource("/conf/" + name);
+        if (resource == null) throw new RuntimeException("Groovy resource not found: /conf/" + name);
+        try {
+          Path tempFile = Files.createTempFile("groovy_conf_", "_" + name);
+          tempFile.toFile().deleteOnExit();
+          try (InputStream in = resource.openStream()) {
+            Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+          }
+          return tempFile;
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }).toString();
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+
+    //else, it's directory in out, development mode
+    return jarPath.resolve("conf").resolve(fileName).normalize().toAbsolutePath().toString();
   }
 
   public static void setGroovyHome(JavaParameters params, @NotNull String groovyHome) {

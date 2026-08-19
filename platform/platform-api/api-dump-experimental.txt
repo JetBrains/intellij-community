@@ -15,25 +15,9 @@ f:com.intellij.execution.filters.HyperlinkInfoBaseKt
 *:com.intellij.featureStatistics.FeaturesRegistryListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:featureUsed(com.intellij.featureStatistics.FeatureDescriptor):V
-*e:com.intellij.ide.Region
-- java.lang.Enum
-- sf:AFRICA:com.intellij.ide.Region
-- sf:AMERICAS:com.intellij.ide.Region
-- sf:APAC:com.intellij.ide.Region
-- sf:CHINA:com.intellij.ide.Region
-- sf:EUROPE:com.intellij.ide.Region
-- sf:MIDDLE_EAST:com.intellij.ide.Region
-- sf:NOT_SET:com.intellij.ide.Region
-- sf:OCEANIA:com.intellij.ide.Region
-- externalName():java.lang.String
-- s:fromExternalName(java.lang.String):com.intellij.ide.Region
-- getDisplayKey():java.lang.String
-- getDisplayName():java.lang.String
-- getDisplayOrdinal():I
-- s:valueOf(java.lang.String):com.intellij.ide.Region
-- s:values():com.intellij.ide.Region[]
-*f:com.intellij.ide.RegionSettings
-- s:getRegion():com.intellij.ide.Region
+*:com.intellij.ide.RegionSettings$RegionSettingsListener
+- sf:UPDATE_TOPIC:com.intellij.util.messages.Topic
+- a:regionChanged():V
 a:com.intellij.ide.SaveAndSyncHandler
 - *f:getExternalChangesTracker():com.intellij.openapi.util.ModificationTracker
 f:com.intellij.ide.dnd.SmoothAutoScroller
@@ -446,6 +430,18 @@ f:com.intellij.ui.components.BulkListModelKt
 c:com.intellij.ui.components.JBScrollPane
 - javax.swing.JScrollPane
 - *sf:FORCE_HORIZONTAL_SCROLL:com.intellij.openapi.util.Key
+*c:com.intellij.ui.components.ShimmerLabel
+- com.intellij.ui.components.JBLabel
+- <init>():V
+- <init>(java.lang.String):V
+- <init>(java.lang.String,javax.swing.Icon):V
+- <init>(java.lang.String,javax.swing.Icon,I):V
+- b:<init>(java.lang.String,javax.swing.Icon,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- addNotify():V
+- f:isShimmering():Z
+- p:paintComponent(java.awt.Graphics):V
+- removeNotify():V
+- f:setShimmering(Z):V
 c:com.intellij.ui.components.fields.ExtendableTextField
 - com.intellij.ui.components.JBTextField
 - com.intellij.ui.components.fields.ExtendableTextComponent
@@ -934,8 +930,6 @@ com.intellij.util.net.JdkProxyCustomizer
 - s:requestBuilder(java.net.URI):java.net.http.HttpRequest$Builder
 - s:send(java.net.http.HttpClient,java.net.http.HttpRequest,java.net.http.HttpResponse$BodyHandler):java.lang.Object
 - s:userAgent():java.lang.String
-com.intellij.util.net.ProxySettings
-- *a:setProxyConfiguration(com.intellij.util.net.ProxyConfiguration):V
 *:com.intellij.util.ui.table.EditableTable
 - sf:KEY:com.intellij.openapi.util.Key
 - a:updateAction(com.intellij.openapi.actionSystem.Presentation,I,I):V

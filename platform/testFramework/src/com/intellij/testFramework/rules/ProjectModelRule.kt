@@ -36,6 +36,8 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RuleChain
+import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.common.testWorkspaceModelLeak
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -69,13 +71,12 @@ open class ProjectModelRule : TestRule {
     }
 
     public override fun after() {
-      try {
-        PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-        filePointerTracker.assertPointersAreDisposed()
-      }
-      finally {
-        _project = null
-      }
+      runAll(
+        { testWorkspaceModelLeak(project) },
+        { PlatformTestUtil.forceCloseProjectWithoutSaving(project) },
+        { filePointerTracker.assertPointersAreDisposed() },
+        { _project = null }
+      )
     }
   }
 
@@ -147,7 +148,7 @@ open class ProjectModelRule : TestRule {
     addSdk(sdk)
     return sdk
   }
-  
+
   fun addSdk(sdk: Sdk) {
     runWriteActionAndWait {
       ProjectJdkTable.getInstance(project).addJdk(sdk, disposableRule.disposable)
@@ -210,7 +211,7 @@ open class ProjectModelRule : TestRule {
       it.name = newName
     }
   }
-  
+
   fun modifyLibrary(library: Library, action: (LibraryEx.ModifiableModelEx) -> Unit) {
     val model = library.modifiableModel as LibraryEx.ModifiableModelEx
     action(model)

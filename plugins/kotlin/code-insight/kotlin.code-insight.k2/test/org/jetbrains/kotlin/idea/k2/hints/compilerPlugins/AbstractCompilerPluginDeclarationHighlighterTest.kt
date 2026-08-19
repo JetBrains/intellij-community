@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.Paths
 import java.util.concurrent.Callable
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.readText
 
@@ -37,7 +38,7 @@ abstract class AbstractCompilerPluginDeclarationHighlighterTest : BasePlatformTe
                 val lines = CompilerPluginDeclarationHighlighter.highlightCode(testFileCode, ktFile, myFixture.editor.colorsScheme)
                 renderLines(lines)
             }
-        }).get()
+        }).get(2, TimeUnit.MINUTES)
 
         KotlinTestUtils.assertEqualsToFile(testFile.resolveSibling(testFile.nameWithoutExtension + ".res"), rendered)
     }

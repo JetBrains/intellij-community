@@ -41,8 +41,16 @@ public abstract class SplitAction extends AnAction implements DumbAware, ActionR
 
     VirtualFile file = window.getContextFile();
     if (closeSource && file != null) {
-      file.putUserData(EditorWindow.DRAG_START_PINNED_KEY, window.isFilePinned(file));
-      window.closeFile(file, false, false);
+      Boolean previousClosingToReopen = file.getUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN);
+      file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true);
+      file.putUserData(EditorWindow.DRAG_START_PINNED_KEY,  window.isFilePinned(file));
+
+      try {
+        window.closeFile(file, false, false);
+      }
+      finally {
+        file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, previousClosingToReopen);
+      }
     }
 
     window.split(orientation, true, file, true);

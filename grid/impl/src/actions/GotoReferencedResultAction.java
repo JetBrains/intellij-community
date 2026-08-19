@@ -4,6 +4,7 @@ import com.intellij.database.DataGridBundle;
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.run.ResultReference;
 import com.intellij.database.util.DataGridUIUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +15,11 @@ import java.util.function.Predicate;
 import static com.intellij.database.datagrid.GridUtil.IN_REFERENCE;
 
 public class GotoReferencedResultAction extends GotoResultAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
 
   @Override
   protected boolean isEnabled(@NotNull DataGrid grid, @NotNull AnActionEvent e) {

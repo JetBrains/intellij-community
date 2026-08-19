@@ -1,6 +1,11 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.devkit.gradle.tooling` start
+jvm_provided_library(
+    name = "libraries_gradle_provided",
+    lib = "//libraries/gradle",
+)
+
 jvm_library(
     name = "gradle-tooling",
     srcs = glob(
@@ -20,9 +25,9 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-        "@lib//:gradle-provided",
+        ":libraries_gradle_provided",
     ],
 )
 
@@ -39,8 +44,10 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":gradle-tooling",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
-        "@lib//:gradle-provided",
+        "//libraries/gradle",
+        "//libraries/gradle:gradle_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.gradle.tooling` end
@@ -49,6 +56,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.gradle.tooling.iml",
+        "resources/intellij.devkit.gradle.tooling.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -46,10 +46,27 @@ data class BuildOptions(
   @JvmField var useCompiledClassesFromProjectOutput: Boolean = getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode),
 
   /**
+   * If `true`, every non-scrambled content module's own descriptor is inlined into the product descriptor as CDATA
+   * while the platform layout is built.
+   *
+   * The inlined result reaches the distribution through exactly two files, and one assembly owns both: the `META-INF`
+   * descriptor patched into [ProductProperties.applicationInfoModule]'s jar, and the `plugin-classpath.txt` prefix.
+   * Nothing else reads it - not the jar a module lands in, not its module set, not which fragment owns it - so a
+   * fragment that produces neither used to resolve some four hundred descriptors and discard the result. That is not
+   * merely wasted work: reading a descriptor out of a module's jar makes that jar an input of the fragment, which is
+   * how a single content module's source change came to re-run every fragment of the distribution.
+   *
+   * Only a split assembly turns it off, and only for a fragment that owns neither file; `layoutPlatform` fails if such
+   * a fragment turns out to pack the application-info module after all.
+   */
+  @JvmField var embedProductContentModuleDescriptors: Boolean = true,
+
+  /**
    * In addition to production compilation sources, allow various functions to use and traverse test output.
    * It is necessary. e.g., to run tests in a dev-build-provided environment.
    */
   var useTestCompilationOutput: Boolean = getBooleanProperty(USE_TEST_COMPILATION_OUTPUT_PROPERTY, defaultValue = USE_TEST_COMPILATION_OUTPUT_DEFAULT_VALUE),
+  @Internal @JvmField val testCompilationOutputModules: Set<String> = getSetProperty(USE_TEST_COMPILATION_OUTPUT_MODULES_PROPERTY),
 
   @JvmField val cleanOutDir: Boolean = getBooleanProperty(CLEAN_OUTPUT_DIRECTORY_PROPERTY, true),
 
@@ -97,6 +114,20 @@ data class BuildOptions(
   @JvmField internal val validateModuleStructure: Boolean = getBooleanProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY),
 
   @JvmField internal val isUnpackedDist: Boolean = false,
+
+  /**
+   * If `true`, the assembled distribution is a disposable dev build that is only ever launched - from a run
+   * configuration, from a test lane, from a Bazel output - and never shipped.
+   *
+   * Deliberately *not* [isInDevelopmentMode], which is merely "not on a CI server" and is true for a release-shaped
+   * build on a developer machine. This one is set by [org.jetbrains.intellij.build.dev.copyWithDevBuildOverrides],
+   * the single owner of the dev overrides, so both dev paths - the in-process assembly and the one nested in a real
+   * build - agree on it.
+   *
+   * The one thing it currently decides is the build date stamped into `ApplicationInfo.xml`: a dev distribution stamps
+   * none, so that the IDE resolves its build time at startup and no EAP expiration period can run out on it.
+   */
+  @JvmField internal val isDevDistribution: Boolean = false,
 
   /**
    * If `true`, the project modules will be compiled incrementally.
@@ -247,6 +278,7 @@ data class BuildOptions(
      * It is necessary. e.g., to run tests in a dev-build-provided environment.
      */
     const val USE_TEST_COMPILATION_OUTPUT_PROPERTY: String = "idea.build.pack.test.source.enabled"
+    const val USE_TEST_COMPILATION_OUTPUT_MODULES_PROPERTY: String = "idea.build.pack.test.source.modules"
     const val USE_TEST_COMPILATION_OUTPUT_DEFAULT_VALUE: Boolean = false
 
     /**
@@ -395,6 +427,11 @@ data class BuildOptions(
   var useLocalNSIS: String? = null
 
   /**
+   * When set, overrides [WindowsDistributionCustomizer.useBigNsisInstaller] for all products.
+   */
+  var useNsisBigInstaller: Boolean? = System.getProperty("intellij.build.nsis.big")?.toBooleanStrictOrNull()
+
+  /**
    * When `true`, builds and uses a local version of `jetbraind`.
    */
   var useLocalJetbrainsDaemon: Boolean = getBooleanProperty("intellij.build.local.jetbrainsd", false)
@@ -481,6 +518,12 @@ data class BuildOptions(
    */
   @Experimental
   var generateRuntimeModuleRepository: Boolean = getBooleanProperty("intellij.build.generate.runtime.module.repository", true)
+
+  /**
+   * If the option is set to `true`, plugins with `plugin.xml` marked with `BUILD_USING_BAZEL_MARKER` in a comment will be built by Bazel
+   */
+  @Internal
+  var buildPluginsByBazel: Boolean = getBooleanProperty("intellij.build.build.plugins.by.bazel", false)
 
   /**
    * Specifies a prefix to use when looking for an artifact of a [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] to be bundled with distributions.

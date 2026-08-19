@@ -7,9 +7,9 @@ import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.buildSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.types.type
@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.findSamSymbolOrNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -139,7 +140,7 @@ private fun prepareFunctionText(
     }
 
     val returnTypeText = samMethod.returnType
-        .takeIf { !it.isUnitType && it !is KaErrorType }
+        .takeIf { it.classId != KaStandardTypeClassIds.UNIT && it !is KaErrorType }
         ?.let(substitutor::substitute)
         ?.let { returnType ->
             val adjustedType = if (preparedFunction.typeReference?.text?.endsWith("?") == false) {

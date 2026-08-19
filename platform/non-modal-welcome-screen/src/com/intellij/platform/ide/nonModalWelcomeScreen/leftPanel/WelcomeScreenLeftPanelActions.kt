@@ -3,12 +3,15 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel
 import com.intellij.ide.IdeView
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil
@@ -16,23 +19,37 @@ import com.intellij.openapi.wm.impl.welcomeScreen.createToolWindowWelcomeScreenV
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.function.Supplier
 import javax.swing.JComponent
 
 internal class WelcomeScreenLeftPanelActions(val project: Project) {
-  fun createButtonsComponent(): JComponent {
-    val actionManager = ActionManager.getInstance()
-    // TODO: Do something with the action group. Now it only is present in Rider
-    var group = (actionManager.getAction("NonModalWelcomeScreen.LeftTabActions") as? ActionGroup)
-    if (group == null) {
-      group = DefaultActionGroup()
-      actionManager.getAction("WelcomeScreen.OpenDirectoryProject")?.let { group.add(it) }
-      actionManager.getAction("NonModalWelcomeScreen.LeftTabActions.New.Action")?.let { group.add(it) }
-      actionManager.getAction("ProjectFromVersionControl")?.let { group.add(it) }
-      actionManager.getAction("NonModalWelcomeScreen.RemoteDevelopmentActions")?.let { group.add(it) }
-    }
-
+  fun createButtonsComponent(scope: CoroutineScope): JComponent {
+    val group = DefaultActionGroup()
     val toolbar = createToolWindowWelcomeScreenVerticalToolbar(group)
+
+    scope.launch {
+      val actionManager = serviceAsync<ActionManager>()
+      // TODO: Do something with the action group. Now it only is present in Rider
+      val actions = (actionManager.getAction("NonModalWelcomeScreen.LeftTabActions") as? DefaultActionGroup)
+
+      if (actions == null) {
+        actionManager.getAction("WelcomeScreen.OpenDirectoryProject")?.let { group.add(it) }
+        actionManager.getAction("NonModalWelcomeScreen.LeftTabActions.New.Action")?.let { group.add(it) }
+        actionManager.getAction("ProjectFromVersionControl")?.let { group.add(it) }
+        actionManager.getAction("NonModalWelcomeScreen.RemoteDevelopmentActions")?.let { group.add(it) }
+      }
+      else {
+        actions.childActionsOrStubs.forEach(group::add)
+      }
+
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        toolbar.updateActionsAsync()
+      }
+    }
 
     return UiDataProvider.wrapComponent(toolbar.component) { sink ->
       sink[WelcomeScreenActionsUtil.NON_MODAL_WELCOME_SCREEN] = true

@@ -14,6 +14,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -172,12 +174,13 @@ class NonIndexableFilesDequeImpl internal constructor(
       // Would be great but the plaform callsites don't allow this
       //ThreadingAssertions.assertBackgroundThread()
       //ThreadingAssertions.assertNoReadAccess()
-      Cancellation.executeInNonCancelableSection {
+      // Have to to each with cancellations :( or platform gets angry
+      //nonCancellableIfFileIsLocal(file) { file ->
         if (file.isValid && !file.isRecursiveOrCircularSymlink) {
           val children = file.children
           childrenProcessor(children)
         }
-      }
+      //}
       if (indexableFileSetsFromFile.nonRecursive.isNotEmpty()) return false // skip only the current file, children can be non-indexable
       return true
     }

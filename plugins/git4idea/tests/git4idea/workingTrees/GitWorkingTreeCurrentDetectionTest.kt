@@ -1,95 +1,89 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.workingTrees
 
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
 import git4idea.GitStandardLocalBranch
 import git4idea.GitWorkingTree
 import git4idea.actions.ref.GitSingleRefAction
-import git4idea.repo.GitRepository
-import git4idea.repo.GitWorkingTreeHolderImpl
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.git
 import git4idea.test.registerRepo
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class GitWorkingTreeCurrentDetectionTest : GitSingleRepoTest() {
+@TestApplication
+@RegistryKey("git.enable.working.trees.feature", "true")
+internal class GitWorkingTreeCurrentDetectionTest {
+  private val contextFixture = gitWorkingTreeSingleRepoFixture()
+  private val context: GitSingleRepoContext get() = contextFixture.get()
 
-  override fun setUp() {
-    super.setUp()
-    Registry.get("git.enable.working.trees.feature").setValue(true, testRootDisposable)
-  }
+  @Test
+  fun `test current branch is not reported as checked out in another worktree`(): Unit = with(context) {
+    repo.ensureWorkingTreesUpToDateForTests()
 
-  fun `test current branch is not reported as checked out in another worktree`() {
-    repo.reloadWorkingTrees()
-
-    assertSameElements(
-      repo.workingTreeHolder.getWorkingTrees(),
-      listOf(GitWorkingTree(repo.root.path, repo.currentBranch!!.fullName, true, true)),
+    assertThat(repo.workingTreeHolder.getWorkingTrees()).containsExactlyInAnyOrderElementsOf(
+      listOf(GitWorkingTree(repo.root.path, repo.currentBranch!!.fullName, true, true))
     )
-    assertNull(GitSingleRefAction.getWorkingTreeWithRef(repo.currentBranch!!, repo, skipCurrentWorkingTree = true))
+    assertThat(GitSingleRefAction.getWorkingTreeWithRef(repo.currentBranch!!, repo, skipCurrentWorkingTree = true)).isNull()
   }
 
-  fun `test branch in a sibling worktree is reported as checked out elsewhere`() {
+  @Test
+  fun `test branch in a sibling worktree is reported as checked out elsewhere`(): Unit = with(context) {
     val featurePath = testNioRoot.resolve("feature")
     git("worktree add -b feature $featurePath")
-    repo.reloadWorkingTrees()
+    repo.ensureWorkingTreesUpToDateForTests()
 
     val trees = repo.workingTreeHolder.getWorkingTrees()
-    assertSameElements(
-      trees,
+    assertThat(trees).containsExactlyInAnyOrderElementsOf(
       listOf(
         GitWorkingTree(repo.root.path, repo.currentBranch!!.fullName, true, true),
         GitWorkingTree(featurePath.toString(), "refs/heads/feature", false, false),
-      ),
+      )
     )
 
     val featureTree = trees.single { !it.isMain }
-    assertEquals(featureTree, GitSingleRefAction.getWorkingTreeWithRef(GitStandardLocalBranch("feature"), repo, skipCurrentWorkingTree = true))
-    assertNull(GitSingleRefAction.getWorkingTreeWithRef(repo.currentBranch!!, repo, skipCurrentWorkingTree = true))
+    assertThat(GitSingleRefAction.getWorkingTreeWithRef(GitStandardLocalBranch("feature"), repo, skipCurrentWorkingTree = true))
+      .isEqualTo(featureTree)
+    assertThat(GitSingleRefAction.getWorkingTreeWithRef(repo.currentBranch!!, repo, skipCurrentWorkingTree = true)).isNull()
   }
 
-  fun `test worktree nested inside the main repo directory is detected`() {
+  @Test
+  fun `test worktree nested inside the main repo directory is detected`(): Unit = with(context) {
     val nestedPath = projectNioRoot.resolve("nested")
     git("worktree add -b nested $nestedPath")
-    repo.reloadWorkingTrees()
+    repo.ensureWorkingTreesUpToDateForTests()
 
     val trees = repo.workingTreeHolder.getWorkingTrees()
-    assertSameElements(
-      trees,
+    assertThat(trees).containsExactlyInAnyOrderElementsOf(
       listOf(
         GitWorkingTree(repo.root.path, repo.currentBranch!!.fullName, true, true),
         GitWorkingTree(nestedPath.toString(), "refs/heads/nested", false, false),
-      ),
+      )
     )
 
     val nestedTree = trees.single { !it.isMain }
-    assertEquals(nestedTree, GitSingleRefAction.getWorkingTreeWithRef(GitStandardLocalBranch("nested"), repo, skipCurrentWorkingTree = true))
+    assertThat(GitSingleRefAction.getWorkingTreeWithRef(GitStandardLocalBranch("nested"), repo, skipCurrentWorkingTree = true))
+      .isEqualTo(nestedTree)
   }
 
-  fun `test from a linked worktree the main branch is reported as checked out elsewhere`() {
+  @Test
+  fun `test from a linked worktree the main branch is reported as checked out elsewhere`(): Unit = with(context) {
     val mainBranch = repo.currentBranch!!
     val featurePath = testNioRoot.resolve("feature")
     git("worktree add -b feature $featurePath")
 
     val linkedRepo = registerRepo(project, featurePath)
-    linkedRepo.reloadWorkingTrees()
+    linkedRepo.ensureWorkingTreesUpToDateForTests()
 
     // The linked worktree's own (feature) branch must not be considered busy.
-    assertNull(GitSingleRefAction.getWorkingTreeWithRef(GitStandardLocalBranch("feature"), linkedRepo, skipCurrentWorkingTree = true))
+    assertThat(GitSingleRefAction.getWorkingTreeWithRef(GitStandardLocalBranch("feature"), linkedRepo, skipCurrentWorkingTree = true))
+      .isNull()
 
     // The main branch is checked out in the (now non-current) main worktree.
     val blocking = GitSingleRefAction.getWorkingTreeWithRef(mainBranch, linkedRepo, skipCurrentWorkingTree = true)
-    assertNotNull("Main branch should be reported as checked out in the main worktree", blocking)
-    assertTrue("The blocking worktree should be the main one", blocking!!.isMain)
-    assertEquals(repo.root.path, blocking.path.path)
-  }
-
-  private fun GitRepository.reloadWorkingTrees() {
-    runBlocking {
-      withContext(Dispatchers.IO) {
-        (workingTreeHolder as GitWorkingTreeHolderImpl).updateState()
-      }
-    }
+    assertThat(blocking).describedAs("Main branch should be reported as checked out in the main worktree").isNotNull()
+    assertThat(blocking!!.isMain).describedAs("The blocking worktree should be the main one").isTrue()
+    assertThat(blocking.path.path).isEqualTo(repo.root.path)
   }
 }

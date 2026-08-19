@@ -22,11 +22,11 @@ import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.test.env.junit5.LspToolVersions
 import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
-import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.isSuccess
-import com.jetbrains.python.packaging.PyRequirementParser
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -190,7 +190,7 @@ internal class PyLspToolEnvFixtures {
 
   private val tempPathFixture = tempPathFixture()
   val projectFixture = projectFixture(openAfterCreation = true)
-  val moduleFixture = projectFixture.moduleFixture(tempPathFixture, addPathToSourceRoot = true)
+  val moduleFixture = projectFixture.pyModuleFixture(tempPathFixture, addPathToSourceRoot = true)
   val venvFixture = pySdkFixture().pyVenvFixture(
     where = tempPathFixture,
     addToSdkTable = true,

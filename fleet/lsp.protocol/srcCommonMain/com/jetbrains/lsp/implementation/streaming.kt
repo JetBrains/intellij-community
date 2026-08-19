@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.ListSerializer
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Streams results using partial results protocol if possible, otherwise collects all results and returns them directly.
@@ -46,7 +47,7 @@ suspend fun <R> Flow<R>.streamResults(
 ) {
     val ser = ListSerializer(resultSerializer)
     // `chunkedByTimeout` to ensure that we do not spam the client with too many progress notifications.
-    chunkedByTimeout(BUFFERING_TIME_BETWEEN_SENDING_BATCH_RESULTS_MS)
+    chunkedByTimeout(BUFFERING_TIME_BETWEEN_SENDING_BATCH_RESULTS)
         .collect { partialResult ->
             lspClient.notify(
                 ProgressNotificationType,
@@ -62,4 +63,4 @@ suspend fun <R> Flow<R>.streamResults(
 /**
  * Default time interval in milliseconds between sending batched results to the client.
  */
-private const val BUFFERING_TIME_BETWEEN_SENDING_BATCH_RESULTS_MS = 50L
+private val BUFFERING_TIME_BETWEEN_SENDING_BATCH_RESULTS = 50.milliseconds

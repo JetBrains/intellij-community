@@ -3,6 +3,10 @@
   <dependencies>
     <plugin id="org.intellij.groovy"/>
     <module name="intellij.dev.codeInsight"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
   </dependencies>
   <!-- endregion -->
 

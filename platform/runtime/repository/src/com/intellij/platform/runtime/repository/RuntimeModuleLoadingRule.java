@@ -26,9 +26,8 @@ public enum RuntimeModuleLoadingRule {
   OPTIONAL,
 
   /**
-   * The module provides code which can be reused in other modules rather when user-visible functionality, it will be loaded only if some 
-   * {@link #REQUIRED} or {@link #OPTIONAL} module depends on it.
-   * This variant <strong>isn't implemented yet</strong> and currently treated the same way as {@link OPTIONAL} (see IJPL-242789).
+   * The module provides code which can be reused in other modules rather when user-visible functionality, it will not be loaded if
+   * it has no dependents that need to be loaded.
    */
   ON_DEMAND,
 }

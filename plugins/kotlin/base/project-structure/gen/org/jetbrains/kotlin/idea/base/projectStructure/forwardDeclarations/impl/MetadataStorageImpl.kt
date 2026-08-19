@@ -16,9 +16,7 @@ import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 internal object MetadataStorageImpl : MetadataStorageBase() {
     override fun initializeMetadata() {
         val primitiveTypeSetNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Set")
-
         var typeMetadata: StorageTypeMetadata
-
         typeMetadata = FinalClassMetadata.ObjectMetadata(
             fqName = "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinFwdWorkspaceEntitySource",
             properties = listOf(
@@ -36,9 +34,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
             ),
             supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource")
         )
-
         addMetadata(typeMetadata)
-
         typeMetadata = EntityMetadata(
             fqName = "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity",
             entityDataFqName = "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.impl.KotlinForwardDeclarationsWorkspaceEntityData",
@@ -101,7 +97,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
             ),
             isAbstract = false
         )
-
         addMetadata(typeMetadata)
     }
 

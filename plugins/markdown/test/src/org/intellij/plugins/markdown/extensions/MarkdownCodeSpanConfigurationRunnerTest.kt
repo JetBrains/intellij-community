@@ -2,13 +2,25 @@ package org.intellij.plugins.markdown.extensions
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.execution.RunManager
+import com.intellij.execution.application.ApplicationConfigurationType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import javax.swing.Icon
 
 internal class MarkdownCodeSpanConfigurationRunnerTest : LightJavaCodeInsightFixtureTestCase() {
+
+  fun `test code span run marker is shown for existing run configuration`() {
+    addRunConfiguration()
+    configureMarkdown("`Smoke Tests Dev`")
+
+    val markers = findRunMarkers(AllIcons.RunConfigurations.TestState.Run)
+    assertEquals(1, markers.size)
+    assertEquals(1, getPopupActionCount(markers))
+  }
 
   fun `test code span run marker is shown for Java class with main method`() {
     addJavaClassWithMainMethod("JavaClass")
@@ -59,9 +71,16 @@ internal class MarkdownCodeSpanConfigurationRunnerTest : LightJavaCodeInsightFix
     """.trimIndent())
   }
 
-  private fun findRunMarkers(): List<LineMarkerInfo<*>> {
+  private fun addRunConfiguration() {
+    val runManager = RunManager.getInstance(project)
+    runManager.addConfiguration(
+      runManager.createConfiguration("Smoke Tests Dev", ApplicationConfigurationType.getInstance().configurationFactories.single())
+    )
+  }
+
+  private fun findRunMarkers(icon: Icon = AllIcons.RunConfigurations.TestState.Run_run): List<LineMarkerInfo<*>> {
     return DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, project)
-      .filter { it.icon == AllIcons.RunConfigurations.TestState.Run_run }
+      .filter { it.icon == icon }
   }
 
   private fun getPopupActionCount(markers: List<LineMarkerInfo<*>>): Int {

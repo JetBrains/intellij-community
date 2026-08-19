@@ -24,12 +24,14 @@ import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
@@ -45,6 +47,23 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
   public SplitButtonAction(@NotNull ActionGroup actionGroup) {
     super(actionGroup);
     setPopup(true);
+  }
+
+  /**
+   * The half of {@code component} a press runs the main action from, or {@code null} when it is not a split button.
+   * <p>
+   * The two zones are the button's contract with whatever presses it — hit testing here, and anything driving the
+   * control from outside — so they are computed once rather than reproduced by each caller.
+   */
+  @ApiStatus.Internal
+  public static @Nullable Rectangle getActionZone(@NotNull Component component) {
+    return component instanceof SplitButton splitButton ? splitButton.actionZone() : null;
+  }
+
+  /** The chevron half of {@code component}, which opens the popup. See {@link #getActionZone}. */
+  @ApiStatus.Internal
+  public static @Nullable Rectangle getPopupZone(@NotNull Component component) {
+    return component instanceof SplitButton splitButton ? splitButton.popupZone() : null;
   }
 
   public @NotNull ActionGroup getActionGroup() {
@@ -214,18 +233,33 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
       return selectedAction instanceof Toggleable && Toggleable.isSelected(myPresentation);
     }
 
-      @Override
-    protected void onMousePressed(@NotNull MouseEvent e) {
+    /**
+     * The main-action half.
+     * <p>
+     * Its arrow width includes the right inset, unlike the one {@link #paintComponent} clips with: the paint pass
+     * measures inside the already-removed insets and this one measures the whole component. Keep them apart.
+     */
+    private @NotNull Rectangle actionZone() {
       Rectangle baseRect = new Rectangle(getSize());
-      JBInsets.removeFrom(baseRect, getInsets());
-      int arrowWidth = ARROW_DOWN.getIconWidth() + JBUIScale.scale(7);
+      return new Rectangle(baseRect.x, baseRect.y, baseRect.width - pressArrowWidth(), baseRect.height);
+    }
 
-      Rectangle execButtonRect = new Rectangle(baseRect.x, baseRect.y, baseRect.width - arrowWidth, baseRect.height);
-      Rectangle arrowButtonRect = new Rectangle(execButtonRect.x + execButtonRect.width, baseRect.y, arrowWidth, baseRect.height);
+    /** The chevron half; see {@link #actionZone}. */
+    private @NotNull Rectangle popupZone() {
+      Rectangle baseRect = new Rectangle(getSize());
+      int arrowWidth = pressArrowWidth();
+      return new Rectangle(baseRect.x + baseRect.width - arrowWidth, baseRect.y, arrowWidth, baseRect.height);
+    }
 
+    private int pressArrowWidth() {
+      return ARROW_DOWN.getIconWidth() + JBUIScale.scale(7) + getInsets().right;
+    }
+
+    @Override
+    protected void onMousePressed(@NotNull MouseEvent e) {
       Point p = e.getPoint();
-      mousePressType = execButtonRect.contains(p) ? MousePressType.Action :
-                       arrowButtonRect.contains(p) ? MousePressType.Popup :
+      mousePressType = actionZone().contains(p) ? MousePressType.Action :
+                       popupZone().contains(p) ? MousePressType.Popup :
                        MousePressType.None;
     }
 

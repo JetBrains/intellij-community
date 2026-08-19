@@ -38,6 +38,7 @@ object StandardKotlinNames {
         @JvmField val flatten: FqName = BASE_COLLECTIONS_PACKAGE + "flatten"
         @JvmField val map: FqName = BASE_COLLECTIONS_PACKAGE + "map"
         @JvmField val mapIndexed: FqName = BASE_COLLECTIONS_PACKAGE + "mapIndexed"
+        @JvmField val mapNotNull: FqName = BASE_COLLECTIONS_PACKAGE + "mapNotNull"
         @JvmField val emptyList: FqName = BASE_COLLECTIONS_PACKAGE + "emptyList"
         @JvmField val emptyMap: FqName = BASE_COLLECTIONS_PACKAGE + "emptyMap"
         @JvmField val emptySet: FqName = BASE_COLLECTIONS_PACKAGE + "emptySet"
@@ -157,6 +158,7 @@ object StandardKotlinNames {
 
     @JvmField val context: FqName = BUILT_INS_PACKAGE_FQ_NAME + "context"
     @JvmField val WITH_CALLABLE_ID: CallableId = CallableId(BASE_KOTLIN_PACKAGE, Name.identifier("with"))
+    @JvmField val contextCallableId : CallableId = CallableId(BASE_KOTLIN_PACKAGE, Name.identifier("context"))
 
     private val collectionTransformationFunctionNames = listOf(
         "chunked",

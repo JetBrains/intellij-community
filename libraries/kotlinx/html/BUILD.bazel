@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.kotlinx.html.iml",
+        "resources/intellij.libraries.kotlinx.html.xml",
     ],
     visibility = ["//visibility:public"],
 )

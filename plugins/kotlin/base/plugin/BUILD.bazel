@@ -20,13 +20,13 @@ jvm_library(
     runtime_deps = ["//platform/util/trove"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-impl:ide-impl",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common",
         "//libraries/guava",
         "//jps/model-api:model",
@@ -66,12 +66,14 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":plugin",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/commons/compress",
         "//libraries/commons/compress:compress_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/guava:guava_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
@@ -114,6 +116,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.base.plugin.iml",
+        "resources/intellij.kotlin.base.plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

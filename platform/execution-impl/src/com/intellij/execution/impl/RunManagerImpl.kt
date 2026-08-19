@@ -435,7 +435,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
   private fun deleteRunConfigsFromArbitraryFilesNotWithinProjectContent() {
     ReadAction
       .nonBlocking(Callable {
-        lock.read { rcInArbitraryFileManager.findRunConfigsThatAreNotWithinProjectContent() }
+        rcInArbitraryFileManager.findRunConfigsThatAreNotWithinProjectContent(lock)
       })
       .coalesceBy(this)
       .expireWith(project)
@@ -466,7 +466,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
 
     for (filePath in updatedFilePaths) {
       val deletedAndAddedRunConfigs = runReadActionBlocking {
-        lock.read { rcInArbitraryFileManager.loadChangedRunConfigsFromFile(this, filePath) }
+        rcInArbitraryFileManager.loadChangedRunConfigsFromFile(this, lock, filePath)
       }
 
       for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {

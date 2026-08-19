@@ -62,7 +62,7 @@ class GradleJavaSyncPerformanceTest(private val gradleVersion: GradleVersion) {
 
     @Test
     fun test() {
-      Benchmark.newBenchmark("Gradle sync ($gradleVersion, $projectParameters)", ::attempt)
+      Benchmark.newBenchmark(projectParameters.toString(), ::attempt)
         .setup(::setup)
         .attempts(10)
         .runAsStressTest()

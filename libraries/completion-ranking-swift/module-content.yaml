@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.completion.ranking.swift.jar
+  modules:
+  - name: intellij.libraries.completion.ranking.swift
+    libraries:
+      completion-ranking-swift:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-swift/0/completion-ranking-swift-0.jar

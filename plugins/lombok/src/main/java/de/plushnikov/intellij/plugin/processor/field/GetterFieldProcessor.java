@@ -10,6 +10,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
+import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -156,5 +157,12 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
   @Override
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     return LombokPsiElementUsage.READ;
+  }
+
+  @Override
+  public boolean contributesGetter(@NotNull PsiField psiField) {
+    PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, getSupportedAnnotationClasses());
+    if (psiAnnotation == null) return false;
+    return validate(psiAnnotation, psiField, new ProblemProcessingSink());
   }
 }

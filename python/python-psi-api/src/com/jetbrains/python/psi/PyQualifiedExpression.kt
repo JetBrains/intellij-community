@@ -6,6 +6,5 @@ import com.jetbrains.python.ast.PyAstQualifiedExpression
 /**
  * Represents a qualified expression, that is, of "a.b.c..." sort.
  */
-interface PyQualifiedExpression : PyAstQualifiedExpression, PyExpression {
-  override fun getQualifier(): PyExpression?
+interface PyQualifiedExpression : PyAstQualifiedExpression, PyExpression, PyQualifiedElement {
 }

@@ -8,9 +8,14 @@ import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.asNioPath
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalHyperlinkFilterContext
 
-internal class TerminalHyperlinkFilterContextImpl(override val eelDescriptor: EelDescriptor) : TerminalHyperlinkFilterContext {
+@ApiStatus.Internal
+class TerminalHyperlinkFilterContextImpl(
+  override val eelDescriptor: EelDescriptor,
+  override val userHomeDirectory: EelPath,
+) : TerminalHyperlinkFilterContext {
   @Volatile
   private var workingDirectory: VirtualFile? = null
 

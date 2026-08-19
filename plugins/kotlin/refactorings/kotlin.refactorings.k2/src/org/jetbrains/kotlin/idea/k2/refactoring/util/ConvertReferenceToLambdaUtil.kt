@@ -6,10 +6,10 @@ import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
-import org.jetbrains.kotlin.analysis.api.components.receiverType
-import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
+import org.jetbrains.kotlin.analysis.api.types.receiverType
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -49,7 +49,7 @@ object ConvertReferenceToLambdaUtil {
         val valueArgumentParent = element.parent as? KtValueArgument
         val callGrandParent = valueArgumentParent?.parent?.parent as? KtCallExpression
         val resolvedCall = callGrandParent?.resolveToCall()?.successfulFunctionCallOrNull()
-        val matchingParameterType = resolvedCall?.argumentMapping?.get(element)?.returnType
+        val matchingParameterType = resolvedCall?.valueArgumentMapping?.get(element)?.returnType
         val matchingParameterIsExtension = matchingParameterType is KaFunctionType && matchingParameterType.receiverType != null
 
         val receiverExpression = element.receiverExpression

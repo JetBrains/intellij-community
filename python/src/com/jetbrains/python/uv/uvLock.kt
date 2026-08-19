@@ -3,9 +3,10 @@ package com.jetbrains.python.uv
 
 import com.intellij.openapi.module.Module
 import com.intellij.util.FileName
-import com.jetbrains.python.sdk.findAmongRoots
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
+import com.jetbrains.python.project.resolveFile
 import java.nio.file.Path
 
 val UV_LOCK: FileName = FileName("uv.lock")
 
-suspend fun findUvLock(module: Module): Path? = module.findAmongRoots(UV_LOCK)
+suspend fun findUvLock(module: Module): Path? = module.asPyProject()?.resolveFile(UV_LOCK)

@@ -77,6 +77,8 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.lsp.iml",
+        "resources/META-INF/intellij.moduleSets.libraries.lsp4j.xml",
+        "resources/intellij.platform.lsp.xml",
     ],
     visibility = ["//visibility:public"],
 )

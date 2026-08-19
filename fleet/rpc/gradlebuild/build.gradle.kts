@@ -72,10 +72,10 @@ kotlin {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
-    implementation(jps.org.jetbrains.annotations1504825916.get())
     implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.core.jvm930800474.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
       isTransitive = false
     }
+    implementation(jps.org.jetbrains.annotations1504825916.get())
     implementation(project(":fleet.reporting.api"))
     implementation(project(":fleet.reporting.shared"))
     implementation(project(":fleet.multiplatform.shims"))

@@ -9,7 +9,7 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.intellij.plugins.markdown.editor.isMarkdownScratchFile
-import org.intellij.plugins.markdown.lang.hasMarkdownType
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 
 internal class AddFloatingToolbarTextEditorCustomizer : TextEditorCustomizer {
   override fun customize(textEditor: TextEditor, coroutineScope: CoroutineScope) {
@@ -34,8 +34,7 @@ internal class AddFloatingToolbarTextEditorCustomizer : TextEditorCustomizer {
   }
 
   private fun shouldAcceptEditor(editor: TextEditor): Boolean {
-    val file = editor.file
-    return file.hasMarkdownType() || shouldAcceptScratchFile(editor)
+    return editor.editor.supportsMarkdown() || shouldAcceptScratchFile(editor)
   }
 
   private fun shouldAcceptScratchFile(editor: TextEditor): Boolean {

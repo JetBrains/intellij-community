@@ -1,0 +1,5 @@
+public class Sub extends Base {
+  public static int m() {
+    return 2;
+  }
+}

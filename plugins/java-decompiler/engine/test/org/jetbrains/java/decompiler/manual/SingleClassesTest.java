@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.manual;
 
-import org.jetbrains.java.decompiler.manual.fixtures.SingleClassesTestBase;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.ClassFormatException;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.manual.fixtures.SingleClassesTestBase;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -196,6 +196,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testCustomSyntheticRecords() { doTest("pkg/TestCustomSyntheticRecords"); }
   @Test public void testFinally() { doTest("pkg/TestFinally"); }
   @Test public void testEnumInit() { doTest("pkg/TestEnumInit"); }
+  @Test public void testLocalEnum() { doTest("pkg/TestLocalEnum"); }
   @Test public void testGenericInit() { doTest("pkg/TestInitGeneric"); }
   @Test public void testNotNullRecord() { doTest("pkg/TestNotNullRecord"); }
   @Test public void testNestedInheritor() { doTest("pkg/TestNestedInheritor"); }

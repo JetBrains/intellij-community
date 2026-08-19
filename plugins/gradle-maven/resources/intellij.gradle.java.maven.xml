@@ -1,12 +1,22 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="org.intellij.groovy"/>
     <module name="intellij.maven"/>
     <module name="intellij.gradle.java"/>
+    <plugin id="org.intellij.groovy"/>
     <module name="intellij.gradle.java.groovy"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.maven.completion"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.repository.search.completion"/>
   </dependencies>
   <!-- endregion -->

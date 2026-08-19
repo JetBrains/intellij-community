@@ -53,6 +53,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.jackson3.iml",
+        "resources/intellij.libraries.jackson3.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs
 
 import com.intellij.concurrency.installThreadContext
 import com.intellij.execution.process.ProcessIOExecutorService
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -61,9 +62,10 @@ class DiskQueryRelay<Param : Any, Result>(function: Function<in Param, out Resul
   fun accessDiskWithCheckCanceled(arg: Param): Result {
     val startedAtNs = System.nanoTime()
     try {
-      if (!isInCancellableContext()) {
+      if (shouldNotDispatch()) {
         return function.apply(arg)
       }
+
       val future = myTasks.computeIfAbsent(arg) { eachArg: Param ->
         executor.submit(Callable {
           installThreadContext(coroutineScope.coroutineContext, true) {
@@ -110,7 +112,7 @@ class DiskQueryRelay<Param : Any, Result>(function: Function<in Param, out Resul
     @JvmStatic
     @Throws(ProcessCanceledException::class)
     fun <Result, E : Exception> compute(task: ThrowableComputable<Result, E>, executor: ExecutorService): Result {
-      if (!isInCancellableContext()) {
+      if (shouldNotDispatch()) {
         return task.compute()
       }
 
@@ -175,6 +177,14 @@ class DiskQueryRelay<Param : Any, Result>(function: Function<in Param, out Resul
 
     @ApiStatus.Internal
     fun tasksRequested(): Int = tasksRequestedCount.get()
+
+    private fun shouldNotDispatch(): Boolean {
+      return !isInCancellableContext() || isInWriteAction()
+    }
+
+    private fun isInWriteAction() : Boolean {
+      return ApplicationManager.getApplication()?.isWriteAccessAllowed ?: false
+    }
   }
 
   @Service(Service.Level.APP)

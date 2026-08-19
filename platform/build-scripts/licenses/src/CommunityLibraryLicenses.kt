@@ -56,6 +56,10 @@ object CommunityLibraryLicenses {
       .copyrightText("Copyright (C) The Android Open Source Project")
       .suppliedByOrganizations(Suppliers.GOOGLE),
 
+    androidDependency("AndroidX Navigation Event Compose Desktop", libraryName = "androidx.navigationevent.navigationevent.compose.desktop"),
+
+    androidDependency("AndroidX Navigation Event Desktop", libraryName = "androidx.navigationevent.navigationevent.desktop"),
+
     LibraryLicense("antlr4-runtime", libraryName = "antlr4-runtime", url = "https://github.com/antlr/antlr4")
       .newBsd("https://github.com/antlr/antlr4/blob/dev/LICENSE.txt"),
 
@@ -1357,10 +1361,6 @@ object CommunityLibraryLicenses {
     LibraryLicense("thriftpy2", version = "0.4.13", attachedTo = "intellij.python", url = "https://github.com/Thriftpy/thriftpy2/")
       .mit("https://github.com/Thriftpy/thriftpy2/blob/master/LICENSE"),
 
-    LibraryLicense("toml4j", libraryName = "toml4j", url = "https://github.com/mwanji/toml4j")
-      .mit("https://github.com/mwanji/toml4j/blob/master/LICENSE")
-      .suppliedByPersons("Moandji Ezana"),
-
     // for traceprocessor-proto module library in intellij.android.profilersAndroid
     LibraryLicense("Trang", libraryName = "trang-core.jar", version = LibraryLicense.CUSTOM_REVISION, url = "https://relaxng.org/jclark/trang.html")
       .newBsd("https://opensource.org/license/bsd-3-clause/"),
@@ -1470,27 +1470,15 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("com.jetbrains.fus.reporting.ap.validation.all"),
     jetbrainsLibrary("com.jetbrains.fus.reporting.fus-api"),
     jetbrainsLibrary("completion-log-events"),
-    jetbrainsLibrary("completion-ranking-cpp-exp"),
     jetbrainsLibrary("completion-ranking-css-exp"),
     jetbrainsLibrary("completion-ranking-dart-exp"),
-    jetbrainsLibrary("completion-ranking-go-exp"),
     jetbrainsLibrary("completion-ranking-html-exp"),
     jetbrainsLibrary("completion-ranking-java"),
-    jetbrainsLibrary("completion-ranking-java-exp"),
-    jetbrainsLibrary("completion-ranking-java-exp2"),
-    jetbrainsLibrary("completion-ranking-js-exp"),
     jetbrainsLibrary("completion-ranking-kotlin"),
-    jetbrainsLibrary("completion-ranking-kotlin-exp"),
-    jetbrainsLibrary("completion-ranking-php-exp"),
     jetbrainsLibrary("completion-ranking-python-exp"),
     jetbrainsLibrary("completion-ranking-python-with-full-line"),
-    jetbrainsLibrary("completion-ranking-ruby-exp"),
-    jetbrainsLibrary("completion-ranking-rust-exp"),
     jetbrainsLibrary("completion-ranking-scala-exp"),
     jetbrainsLibrary("completion-ranking-sh"),
-    jetbrainsLibrary("completion-ranking-sh-exp"),
-    jetbrainsLibrary("completion-ranking-swift-exp"),
-    jetbrainsLibrary("completion-ranking-typescript-exp"),
     jetbrainsLibrary("debugger-agent"),
     jetbrainsLibrary("debugger-memory-agent"),
     jetbrainsLibrary("diogen-analysis"),

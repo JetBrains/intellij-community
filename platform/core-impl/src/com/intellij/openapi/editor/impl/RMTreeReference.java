@@ -26,7 +26,7 @@ import static com.intellij.reference.SoftReference.dereference;
 public final class RMTreeReference extends WeakReference<RangeMarkerTree<RangeMarkerEx>> {
   private final @NotNull VirtualFile virtualFile;
 
-  RMTreeReference(@NotNull RangeMarkerTree<RangeMarkerEx> referent, @NotNull VirtualFile virtualFile) {
+  private RMTreeReference(@NotNull RangeMarkerTree<RangeMarkerEx> referent, @NotNull VirtualFile virtualFile) {
     super(referent, RM_TREE_QUEUE);
     this.virtualFile = virtualFile;
   }
@@ -40,15 +40,13 @@ public final class RMTreeReference extends WeakReference<RangeMarkerTree<RangeMa
   /**
    * makes range marker without creating the document (which could be expensive)
    */
-  public static @NotNull RangeMarker createRangeMarkerForVirtualFile(
-    @NotNull VirtualFile file,
-    int offset,
-    int startLine,
-    int startCol,
-    int endLine,
-    int endCol,
-    boolean persistent
-  ) {
+  public static @NotNull RangeMarker createRangeMarkerForVirtualFile(@NotNull VirtualFile file,
+                                                                     int offset,
+                                                                     int startLine,
+                                                                     int startCol,
+                                                                     int endLine,
+                                                                     int endCol,
+                                                                     boolean persistent) {
     int estimatedLength = RangeMarkerImpl.estimateDocumentLength(file);
     offset = Math.min(offset, estimatedLength);
     RangeMarkerImpl marker = persistent
@@ -59,10 +57,14 @@ public final class RMTreeReference extends WeakReference<RangeMarkerTree<RangeMa
     while (true) {
       Reference<RangeMarkerTree<RangeMarkerEx>> oldRef = file.getUserData(key);
       tree = dereference(oldRef);
-      if (tree != null) break;
+      if (tree != null) {
+        break;
+      }
       tree = new RangeMarkerTree<>();
       RMTreeReference reference = new RMTreeReference(tree, file);
-      if (file.replace(key, oldRef, reference)) break;
+      if (file.replace(key, oldRef, reference)) {
+        break;
+      }
     }
     tree.addInterval(marker, offset, offset, false, false, false, 0);
     return marker;
@@ -81,35 +83,29 @@ public final class RMTreeReference extends WeakReference<RangeMarkerTree<RangeMa
     processQueue();
     // if a marker is retained, then so is its node and the whole tree
     // (ignore the race when marker is gc-ed right after this call - it's harmless)
-    return dereference(f.getUserData(RANGE_MARKERS_KEY)) != null ||
-           dereference(f.getUserData(PERSISTENT_RANGE_MARKERS_KEY)) != null;
+    return dereference(f.getUserData(RANGE_MARKERS_KEY)) != null || dereference(f.getUserData(PERSISTENT_RANGE_MARKERS_KEY)) != null;
   }
 
   @TestOnly
   public static boolean areRangeMarkersRetainedFor0(@NotNull VirtualFile f) {
-    return f.getUserData(RANGE_MARKERS_KEY) != null ||
-           f.getUserData(PERSISTENT_RANGE_MARKERS_KEY) != null;
+    return f.getUserData(RANGE_MARKERS_KEY) != null || f.getUserData(PERSISTENT_RANGE_MARKERS_KEY) != null;
   }
 
-  static void getSaveRMTree(
-    @NotNull VirtualFile f,
-    @NotNull DocumentEx d,
-    @NotNull RangeMarkerTree<RangeMarkerEx> rmt,
-    @NotNull RangeMarkerTree<RangeMarkerEx> prmt,
-    int tabSize
-  ) {
+  static void getSaveRMTree(@NotNull VirtualFile f,
+                            @NotNull DocumentEx d,
+                            @NotNull RangeMarkerTree<RangeMarkerEx> rmt,
+                            @NotNull RangeMarkerTree<RangeMarkerEx> prmt,
+                            int tabSize) {
     processQueue();
     getSaveRMTree(f, d, RANGE_MARKERS_KEY, rmt, tabSize);
     getSaveRMTree(f, d, PERSISTENT_RANGE_MARKERS_KEY, prmt, tabSize);
   }
 
-  private static void getSaveRMTree(
-    @NotNull VirtualFile f,
-    @NotNull DocumentEx d,
-    @NotNull Key<Reference<RangeMarkerTree<RangeMarkerEx>>> key,
-    @NotNull RangeMarkerTree<RangeMarkerEx> tree,
-    int tabSize
-  ) {
+  private static void getSaveRMTree(@NotNull VirtualFile f,
+                                    @NotNull DocumentEx d,
+                                    @NotNull Key<Reference<RangeMarkerTree<RangeMarkerEx>>> key,
+                                    @NotNull RangeMarkerTree<RangeMarkerEx> tree,
+                                    int tabSize) {
     RMTreeReference freshRef = new RMTreeReference(tree, f);
     Reference<RangeMarkerTree<RangeMarkerEx>> oldRef;
     do {

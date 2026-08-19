@@ -15,7 +15,7 @@ val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.writ
  * - `true` means that [edtWriteAction] will first dispatch to EDT and then block the UI thread until the lock can be acquired
  */
 @ApiStatus.Internal
-val useBlockingEdtWriteActionImplementation: Boolean = System.getProperty("idea.use.blocking.edt.write.action.implementation", "true").toBoolean()
+val useBlockingEdtWriteActionImplementation: Boolean = System.getProperty("idea.use.blocking.edt.write.action.implementation", "false").toBoolean()
 
 /**
  * - `true` means some high-level Swing code will use write-intent lock defensively for execution of user's code
@@ -77,7 +77,7 @@ val allowUsingFrozenPsi: Boolean = System.getProperty("ide.allow.using.frozen.ps
  * - `true` means that the write-bias in the Read/Write lock will be strengthened, and read actions will not start while there is a pending write.
  */
 @get:ApiStatus.Internal
-val stallReadActionsIfThereIsPendingWrite: Boolean = System.getProperty("ide.stall.read.actions.while.there.is.pending.write", "false").toBoolean()
+val stallReadActionsIfThereIsPendingWrite: Boolean = System.getProperty("ide.stall.read.actions.while.there.is.pending.write", "true").toBoolean()
 
 /**
  * Represents the deadline before blocking read lock acquisition starts compensating parallelism for coroutine worker threads

@@ -27,7 +27,7 @@ public class PyForceStepIntoAction extends ForceStepIntoAction {
       }
 
       @Override
-      protected void perform(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
+      protected void perform(@NotNull XDebugSessionProxy session, @NotNull AnActionEvent event) {
         throw new IllegalStateException("Should not be called");
       }
 

@@ -7,14 +7,12 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.OptionalStringEntity
@@ -26,18 +24,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.OptionalStr
 internal class OptionalStringEntityImpl(private val dataSource: OptionalStringEntityData) : OptionalStringEntity,
                                                                                             WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val data: String?
     get() {
       readField("data")
       return dataSource.data
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -45,36 +36,14 @@ internal class OptionalStringEntityImpl(private val dataSource: OptionalStringEn
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: OptionalStringEntityData?) :
     ModifiableWorkspaceEntityBase<OptionalStringEntity, OptionalStringEntityData>(result), OptionalStringEntityBuilder {
     internal constructor() : this(OptionalStringEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity OptionalStringEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -82,7 +51,7 @@ internal class OptionalStringEntityImpl(private val dataSource: OptionalStringEn
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -93,14 +62,12 @@ internal class OptionalStringEntityImpl(private val dataSource: OptionalStringEn
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var data: String?
       get() = getEntityData().data
@@ -112,31 +79,13 @@ internal class OptionalStringEntityImpl(private val dataSource: OptionalStringEn
 
     override fun getEntityClass(): Class<OptionalStringEntity> = OptionalStringEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OptionalStringEntityData : WorkspaceEntityData<OptionalStringEntity>() {
   var data: String? = null
-
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<OptionalStringEntity> {
-    val modifiable = OptionalStringEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): OptionalStringEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = OptionalStringEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): OptionalStringEntity = OptionalStringEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<OptionalStringEntity, *> = OptionalStringEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.OptionalStringEntity") as EntityMetadata
   }

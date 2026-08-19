@@ -19,6 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
+import org.jetbrains.plugins.terminal.session.impl.Osc8Hyperlink
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.toDto
@@ -397,6 +398,39 @@ internal class TerminalTypeAheadTest : BasePlatformTestCase() {
     controller.type("!")
     controller.applyPendingUpdates()
     controller.model.assertMatches(outputPattern("hello<cursor>"))
+  }
+
+  @Test
+  fun `rollback preserves OSC8 links from the initial snapshot`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val controllerScope = childScope("TerminalTypeAheadController")
+    try {
+      val outputModel = TerminalTestUtil.createOutputModel()
+      // Seed an OSC8 link before the controller is created, so it is part of the controller's initial snapshot.
+      outputModel.updateContent(0L, "link here", emptyList(), listOf(Osc8Hyperlink(0L, 4L, "https://example.com")))
+
+      val sessionModel = TerminalSessionModelImpl()
+      val shellIntegration = TerminalShellIntegrationImpl(outputModel, sessionModel, controllerScope.asDisposable())
+      shellIntegration.onPromptStarted(TerminalOffset.ZERO)
+      shellIntegration.onPromptFinished(TerminalOffset.ZERO)
+      val controller = TerminalTypeAheadOutputModelControllerV2(
+        project,
+        outputModel,
+        CompletableDeferred(shellIntegration),
+        controllerScope,
+        enableInMonolith = true,
+      )
+
+      // A prediction with no confirming server event, then a rollback that reapplies the initial snapshot.
+      controller.type("!")
+      controller.applyPendingUpdates()
+
+      val links = outputModel.getOsc8Hyperlinks()
+      assertEquals(1, links.size)
+      assertEquals("https://example.com", links.single().uri)
+    }
+    finally {
+      controllerScope.cancel()
+    }
   }
 
   // -- cursor events --

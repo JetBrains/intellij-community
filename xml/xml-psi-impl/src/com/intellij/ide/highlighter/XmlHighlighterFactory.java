@@ -3,9 +3,10 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import org.jetbrains.annotations.NotNull;
 
 public final class XmlHighlighterFactory {
-  public static EditorHighlighter createXMLHighlighter(EditorColorsScheme settings) {
+  public static @NotNull EditorHighlighter createXMLHighlighter(@NotNull EditorColorsScheme settings) {
     return HighlighterFactory.createHighlighter(new XmlFileHighlighter(), settings);
   }
 }

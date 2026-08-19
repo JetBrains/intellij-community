@@ -4,12 +4,14 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
@@ -28,7 +30,8 @@ internal object ConvertCollectionFixFactory {
         }
     }
 
-    private fun KaSession.getConversionTypeOrNull(expressionType: KaType, expectedType: KaType): CollectionType? {
+    context(session: KaSession)
+    private fun getConversionTypeOrNull(expressionType: KaType, expectedType: KaType): CollectionType? {
         val expressionCollectionType = getCollectionType(expressionType) ?: return null
         val expectedCollectionType = getCollectionType(expectedType) ?: return null
         if (expressionCollectionType == expectedCollectionType) return null
@@ -37,7 +40,8 @@ internal object ConvertCollectionFixFactory {
         return expectedCollectionType.specializeFor(expressionCollectionType)
     }
 
-    private fun KaSession.createFixIfAvailable(
+    context(session: KaSession)
+    private fun createFixIfAvailable(
         element: PsiElement,
         expectedType: KaType,
         actualType: KaType,
@@ -53,7 +57,8 @@ internal object ConvertCollectionFixFactory {
         return listOfNotNull(fix)
     }
 
-    private fun KaSession.createReplaceWithMutableCollectionFactoryFix(
+    context(session: KaSession)
+    private fun createReplaceWithMutableCollectionFactoryFix(
         expression: KtExpression,
         expectedType: KaType,
         actualType: KaType,
@@ -78,7 +83,8 @@ internal object ConvertCollectionFixFactory {
         return ReplaceWithMutableCollectionFactoryFix(expression, literalFunctionName)
     }
 
-    private fun KaSession.createConvertCollectionFix(
+    context(session: KaSession)
+    private fun createConvertCollectionFix(
         element: KtExpression,
         expectedType: KaType,
         actualType: KaType,
@@ -113,7 +119,8 @@ internal object ConvertCollectionFixFactory {
     }
 }
 
-private fun KaSession.areTypeArgumentsCompatible(expectedType: KaType, actualType: KaType): Boolean {
+context(session: KaSession)
+private fun areTypeArgumentsCompatible(expectedType: KaType, actualType: KaType): Boolean {
     val actualClassType = actualType as? KaClassType ?: return false
     val expectedClassType = expectedType as? KaClassType ?: return false
 

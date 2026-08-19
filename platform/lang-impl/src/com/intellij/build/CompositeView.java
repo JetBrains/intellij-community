@@ -33,9 +33,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * @author Vladislav.Soroka
@@ -112,14 +112,29 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     return viewClass.isInstance(view) ? viewClass.cast(view) : null;
   }
 
+  public @NotNull T getOrAddView(@NotNull String viewName, @NotNull Supplier<? extends T> createView) {
+    var view = getView(viewName);
+    if (view == null) {
+      view = createView.get();
+      addView(view, viewName);
+    }
+    return view;
+  }
+
   public void withView(@NotNull String viewName, @NotNull Consumer<? super T> consumer) {
     var view = getView(viewName);
     if (view != null) {
       consumer.accept(view);
     }
     else {
-      myDeferredViewConsumers.computeIfAbsent(viewName, k -> new CopyOnWriteArrayList<>())
-        .add(consumer);
+      myDeferredViewConsumers.compute(viewName, (_, v) -> {
+        var consumers = v;
+        if (consumers == null) {
+          consumers = new ArrayList<>();
+        }
+        consumers.add(consumer);
+        return consumers;
+      });
     }
   }
 

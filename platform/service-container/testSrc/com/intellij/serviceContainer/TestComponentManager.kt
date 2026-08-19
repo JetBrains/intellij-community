@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.configurationStore.NonPersistentStore
@@ -34,9 +34,7 @@ class TestComponentManager(
     val originalService = getServiceIfCreated(clazz)
     assert(originalService === null) { "Service should not be created before preload: $originalService" }
 
-    // empty descriptor, it is not used
-    val mockDescriptor = ServiceDescriptor(null, null, null, null, false, false, null, ServiceDescriptor.PreloadMode.TRUE, null, null)
-    preloadService(mockDescriptor, clazz.name)
+    preloadService(clazz.name)
 
     val preloadedService = getServiceIfCreated(clazz)
     assert(preloadedService !== null) { "Service was not preloaded: $clazz" }

@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.devkit.uiDsl` start
 jvm_library(
@@ -33,7 +33,7 @@ jvm_library(
         "//plugins/devkit/devkit-core:core",
         "//platform/analysis-api:analysis",
         "//java/java-psi-api:psi",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/util:util-ui",
         "//platform/platform-impl/concurrency",
     ],
@@ -64,7 +64,7 @@ jvm_library(
         "//plugins/devkit/devkit-core:core_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//java/java-psi-api:psi_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/platform-impl/concurrency:concurrency_test_lib",
     ],
@@ -75,6 +75,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.uiDsl.iml",
+        "resources/intellij.devkit.uiDsl.xml",
     ],
     visibility = ["//visibility:public"],
 )

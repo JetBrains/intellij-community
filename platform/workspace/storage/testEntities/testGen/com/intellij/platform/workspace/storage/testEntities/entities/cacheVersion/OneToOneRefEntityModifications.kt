@@ -19,7 +19,7 @@ interface OneToOneRefEntityBuilder : WorkspaceEntityBuilder<OneToOneRefEntity> {
 }
 
 internal object OneToOneRefEntityType : EntityType<OneToOneRefEntity, OneToOneRefEntityBuilder>() {
-  override val entityClass: Class<OneToOneRefEntity> get() = OneToOneRefEntity::class.java
+  override val entityImplClass: Class<*> get() = OneToOneRefEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = OneToOneRefEntityImpl.Builder::class.java
   operator fun invoke(
     version: Int,

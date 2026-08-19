@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -58,7 +60,8 @@ internal class SetterBackingFieldAssignmentInspection : KotlinApplicableInspecti
         return listOf(range)
     }
 
-    override fun KaSession.prepareContext(element: KtPropertyAccessor): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtPropertyAccessor): Unit? {
         val property = element.property
         if (!isBackingFieldRequired(property)) return null
         val parameter = element.valueParameters.singleOrNull() ?: return null

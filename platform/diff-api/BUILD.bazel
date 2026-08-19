@@ -67,6 +67,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.diff.iml",
+        "resources/intellij.platform.diff.xml",
     ],
     visibility = ["//visibility:public"],
 )

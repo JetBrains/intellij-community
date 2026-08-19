@@ -1,7 +1,7 @@
-from typing import Any, Literal, type_check_only
+from typing import Any, Literal, Self, type_check_only
 
 from django.utils.functional import LazyObject
-from typing_extensions import Self, override
+from typing_extensions import override
 
 # explicit dependency on standard settings to make it loaded
 from . import global_settings  # noqa: F401
@@ -9,6 +9,12 @@ from . import global_settings  # noqa: F401
 ENVIRONMENT_VARIABLE: Literal["DJANGO_SETTINGS_MODULE"]
 DEFAULT_STORAGE_ALIAS: Literal["default"]
 STATICFILES_STORAGE_ALIAS: Literal["staticfiles"]
+
+# RemovedInDjango70Warning.
+SIGNED_COOKIE_LEGACY_SALT_DEPRECATED_MSG: str
+USE_BLANK_CHOICE_DASH_DEPRECATED_MSG: str
+DEPRECATED_EMAIL_SETTINGS: set[str]
+EMAIL_SETTING_DEPRECATED_MSG: str
 
 # required for plugin to be able to distinguish this specific instance of LazySettings from others
 @type_check_only

@@ -8,6 +8,9 @@ import java.nio.file.Path
 interface ModuleOutputProvider {
   val useTestCompilationOutput: Boolean
 
+  /** Whether descriptor lookup and explicit test-output reads may use [module]'s test compilation output. */
+  fun isTestCompilationOutputEnabled(module: JpsModule): Boolean = useTestCompilationOutput
+
   /**
    * Returns all modules from the project model if available.
    * Used for graph enrichment in analysis-only flows.

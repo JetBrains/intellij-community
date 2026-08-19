@@ -15,7 +15,7 @@ abstract class IDEScreenRecorder(protected val recordingDir: Path, protected val
   companion object {
     fun create(
       runContext: IDERunContext,
-      recordingDir: Path = runContext.logsDir.resolve("screenRecording"),
+      recordingDir: Path = runContext.lastIdeReportingData.logsDir.resolve("screenRecording"),
       recordingFilePrefix: String = "ScreenRecording ${SimpleDateFormat("yyyy-MM-dd 'at' HH.mm.ss").format(Date())}",
     ): IDEScreenRecorder {
       val options = runContext.calculateVmOptions()

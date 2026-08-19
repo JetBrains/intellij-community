@@ -4,6 +4,7 @@ package com.intellij.python.hatch
 import com.intellij.python.hatch.PyHatchBundle.message
 import com.intellij.python.hatch.icons.PythonHatchIcons
 import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.PackageManagerPyTool
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -14,7 +15,7 @@ import javax.swing.Icon
  * backend, bumps and manages project versions, publishes packages to PyPI, and runs project scripts.
  */
 @ApiStatus.Internal
-class HatchPyTool : PyTool {
+class HatchPyTool : PyTool, PackageManagerPyTool {
   override val presentableName: String = "Hatch"
   override val packageName: PyPackageName = PyPackageName.from("hatch")
   override val description: String get() = message("python.hatch.tool.description")

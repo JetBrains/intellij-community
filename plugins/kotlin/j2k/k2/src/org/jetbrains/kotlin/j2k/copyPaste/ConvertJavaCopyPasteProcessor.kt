@@ -16,7 +16,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
-import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import java.awt.datatransfer.Transferable
 import kotlin.system.measureTimeMillis
 
@@ -70,8 +69,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
         val copiedJavaCode = values.single() as CopiedJavaCode
         val conversionData = ConversionData.prepare(copiedJavaCode, project)
 
-        val converter = J2kConverterExtension.extension()
-            .createCopyPasteConverter(project, editor, conversionData, targetData)
+        val converter = K2J2KCopyPasteConverter(project, editor, conversionData.elementsAndTexts, targetData)
 
         val textLength = copiedJavaCode.startOffsets.indices.sumOf { copiedJavaCode.endOffsets[it] - copiedJavaCode.startOffsets[it] }
         if (textLength < MAX_TEXT_LENGTH_TO_CONVERT_WITHOUT_ASKING_USER && converter.convertAndRestoreReferencesIfTextIsUnchanged()) {

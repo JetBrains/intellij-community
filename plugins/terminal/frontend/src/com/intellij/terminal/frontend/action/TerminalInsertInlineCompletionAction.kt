@@ -5,11 +5,16 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessio
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
 internal class TerminalInsertInlineCompletionAction : TerminalPromotedDumbAwareAction() {
+  init {
+    templatePresentation.isRWLockRequired = Registry.`is`("actions.update.and.perform.arrow.actions.with.rw.lock")
+  }
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

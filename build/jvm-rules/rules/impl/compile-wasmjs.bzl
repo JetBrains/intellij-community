@@ -27,8 +27,40 @@ KtWasmJsInfo = provider(
         "link_klibs": "depset(File): klibs that must be given to the Wasm/JS linker, propagated transitively",
         "klib": "File: klib of this module",
         "source_jar": "File: sources of this module",
+        "npm_packages": """depset(struct(specifier, label, files)): NPM packages required at runtime by a binary
+          linked with that library, propagated transitively along the runtime (link) closure. `specifier` is the
+          bare import specifier (the npm package name), `label` the npm package target, and `files` its files
+          depset (an npm package directory whose root contains a package.json).""",
     },
 )
+
+def npm_package_entries(runtime_npm_package_deps_attr):
+    """Converts an `runtime_npm_package_deps_attr` attribute (bare import specifier -> npm package files target) into
+    the entries carried by `KtWasmJsInfo.npm_packages`."""
+    return [
+        struct(
+            specifier = specifier,
+            label = target.label,
+            files = target[DefaultInfo].files,
+        )
+        for specifier, target in runtime_npm_package_deps_attr.items()
+    ]
+
+def merged_npm_packages(entries, owner):
+    """Merges npm package entries into a dict keyed by specifier, failing on a specifier provided by
+    two different targets: npm packages of a linked binary live in a single flat `/node_modules/`."""
+    merged = {}
+    for entry in entries:
+        existing = merged.get(entry.specifier)
+        if existing != None and existing.label != entry.label:
+            fail("%s requires the npm package '%s' from conflicting targets: %s and %s" % (
+                owner,
+                entry.specifier,
+                existing.label,
+                entry.label,
+            ))
+        merged[entry.specifier] = entry
+    return merged
 
 def _wasmjs_ir_output_name(ctx):
     return ctx.attr.ir_output_name or ctx.attr.module_name
@@ -79,6 +111,12 @@ def wasmjs_compile_actions(ctx):
 
     exported_deps_exported_compiler_plugins = depset([], transitive = [dep[KotlinInfo].exported_compiler_plugins for dep in ctx.attr.exports if KotlinInfo in dep])
 
+    # npm packages follow the runtime (link) closure, like link_klibs
+    npm_packages = depset(
+        npm_package_entries(ctx.attr.runtime_npm_package_deps),
+        transitive = [d[KtWasmJsInfo].npm_packages for d in ctx.attr.exports + ctx.attr.deps + ctx.attr.runtime_deps],
+    )
+
     if not srcs:
         return [
             KtWasmJsInfo(
@@ -86,6 +124,7 @@ def wasmjs_compile_actions(ctx):
                 link_klibs = link_libraries,
                 klib = None,
                 source_jar = None,  # TODO: support that
+                npm_packages = npm_packages,
             ),
             KotlinInfo(
                 exported_compiler_plugins = exported_deps_exported_compiler_plugins,
@@ -155,6 +194,7 @@ def wasmjs_compile_actions(ctx):
             link_klibs = all_link_libraries,
             klib = klib_out,
             source_jar = None,  # TODO: support that
+            npm_packages = npm_packages,
         ),
         KotlinInfo(
             exported_compiler_plugins = exported_deps_exported_compiler_plugins,
@@ -168,8 +208,8 @@ def wasmjs_link_action(ctx, ir_output_name, module_klib, link_klibs):
     """Registers the KotlinLinkWasmJs action linking `module_klib` against `link_klibs`.
 
     `link_klibs` is expected to already contain `module_klib` (as `KtWasmJsInfo.link_klibs` does).
-    Requires on ctx: kotlinc_opts, _wasm_source_maps, _wasmjs_builder, _wasmjs_builder_jvm_flags,
-    _wasmjs_builder_launcher, _tool_java_runtime.
+    Requires on ctx: kotlinc_opts, source_maps, source_map_base_dirs, source_map_prefix, _wasmjs_builder,
+    _wasmjs_builder_jvm_flags, _wasmjs_builder_launcher, _tool_java_runtime.
 
     Returns the declared linked output directory (`<ir_output_name>-js`).
     """
@@ -179,8 +219,22 @@ def wasmjs_link_action(ctx, ir_output_name, module_klib, link_klibs):
     link_args.add("-Xir-produce-js")
     link_args.add("-Xinclude=%s" % module_klib.path)  # TODO: what is the `-Xinclude`, is that what will be linked?
     link_args.add("-Xir-dce")
-    if ctx.attr._wasm_source_maps[BuildSettingInfo].value:
+    if ctx.attr.source_maps:
         link_args.add("-source-map")
+        if ctx.attr.source_map_prefix:
+            # A prefix switches the compiler off link-output-relative paths onto paths relative to the
+            # source roots, and without explicit roots it derives them itself (the common ancestor of the
+            # sources), which is what put `..` in the emitted paths. Every path the compiler sees is
+            # exec-root-relative, hence the `.` default of `source_map_base_dirs`; the builder resolves the
+            # roots against the exec root (see `PATH_LIST_ARGS` in WasmJsBuildWorker.kt, which also explains
+            # why they must end up absolute).
+            link_args.add_joined(
+                "-source-map-base-dirs",
+                ctx.attr.source_map_base_dirs,
+                join_with = ctx.configuration.host_path_separator,
+                omit_if_empty = True,
+            )
+            link_args.add("-source-map-prefix", ctx.attr.source_map_prefix)
     link_args.add_joined("-libraries", [klib.path for klib in link_klibs.to_list()], join_with = ctx.configuration.host_path_separator, omit_if_empty = True)
 
     java_runtime = ctx.attr._tool_java_runtime[java_common.JavaRuntimeInfo]

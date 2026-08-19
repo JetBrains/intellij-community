@@ -16,7 +16,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util-rt",
         "//libraries/fastutil",
         "@lib//:kotlin-stdlib",
@@ -39,6 +39,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":base",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util-rt:util-rt_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",

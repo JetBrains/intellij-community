@@ -2,10 +2,28 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.lsp.impl"/>
+    <module name="intellij.libraries.eclipse.lsp4j"/>
+    <module name="intellij.libraries.eclipse.lsp4j.jsonrpc"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.lsp"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.python.lsp.core"/>
     <module name="intellij.python.pytools"/>
     <module name="intellij.python.pytools.ui"/>
+    <module name="intellij.xml.parser"/>
   </dependencies>
   <!-- endregion -->
 

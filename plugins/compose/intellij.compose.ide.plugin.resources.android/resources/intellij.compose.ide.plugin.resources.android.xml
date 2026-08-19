@@ -1,7 +1,11 @@
 <idea-plugin package="com.intellij.compose.ide.plugin.resources.android">
   <dependencies>
     <plugin id="org.jetbrains.android"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.compose.ide.plugin.resources"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.compose.ide.plugin.resources">

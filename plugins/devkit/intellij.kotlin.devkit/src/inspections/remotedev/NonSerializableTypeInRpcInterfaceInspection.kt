@@ -8,8 +8,11 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle.message
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
+import org.jetbrains.kotlin.analysis.api.components.isClassType
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -19,10 +22,14 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -201,7 +208,8 @@ internal class NonSerializableTypeInRpcInterfaceInspection : LocalInspectionTool
        *                we don't need semantical equality comparison here, as probably it's better to check a type twice
        *                than perform an expensive type equality operation
        */
-      private fun KaSession.findNonSerializableProperty(
+      context(session: KaSession)
+      private fun findNonSerializableProperty(
         type: KaClassType?,
         propertyPath: MutableList<String> = mutableListOf(),
         typePath: MutableList<KaClassType>,
@@ -255,7 +263,8 @@ internal class NonSerializableTypeInRpcInterfaceInspection : LocalInspectionTool
        * 2. Types with serializers provided by `kotlinx.serialization` in `kotlinx.serialization.builtins`.
        * 3. `SendChannel`, `ReceiveChannel`, `Flow`, `Deferred` (corresponding serializers are in `fleet.rpc.core.SerializationKt`).
        */
-      private fun KaSession.findNonSerializablePropertyInTypeOrArguments(
+      context(session: KaSession)
+      private fun findNonSerializablePropertyInTypeOrArguments(
         type: KaClassType?,
         propertyPath: MutableList<String>,
         typePath: MutableList<KaClassType>,
@@ -311,7 +320,8 @@ internal class NonSerializableTypeInRpcInterfaceInspection : LocalInspectionTool
         return false
       }
 
-      private fun KaSession.hasSerializer(typeSymbol: KaClassLikeSymbol?): Boolean {
+      context(session: KaSession)
+      private fun hasSerializer(typeSymbol: KaClassLikeSymbol?): Boolean {
         val namedClassSymbol = typeSymbol as? KaNamedClassSymbol ?: return false
         val serializerFunctionContainer = when (namedClassSymbol.classKind) {
                                             KaClassKind.OBJECT -> namedClassSymbol
@@ -320,7 +330,8 @@ internal class NonSerializableTypeInRpcInterfaceInspection : LocalInspectionTool
         return serializerFunctionContainer.declaredMemberScope.declarations.any { isKotlinSerializationFunction(it) }
       }
 
-      private fun KaSession.isKotlinSerializationFunction(symbol: KaDeclarationSymbol): Boolean {
+      context(session: KaSession)
+      private fun isKotlinSerializationFunction(symbol: KaDeclarationSymbol): Boolean {
         return symbol is KaNamedFunctionSymbol &&
                symbol.name.asString() == "serializer" &&
                symbol.returnType.isClassType(kSerializedClassId)

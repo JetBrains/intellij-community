@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions.contexts
 
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtContextParameterList
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
@@ -123,8 +122,8 @@ object ContextParameterUtils {
     /**
      * Checks if the given call expression is a call to the `kotlin.context` function.
      */
-    @OptIn(KaExperimentalApi::class)
-    fun KaSession.isKotlinContextCall(call: KtCallExpression): Boolean {
+    context(session: KaSession)
+    fun isKotlinContextCall(call: KtCallExpression): Boolean {
         val symbol = call.calleeExpression?.mainReference?.resolveToSymbol() as? KaFunctionSymbol ?: return false
         return symbol.callableId?.asSingleFqName() == FqName("kotlin.context")
     }

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.reformatColumnOnChange
 import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsIndices
+import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
 
 @Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase() {
@@ -90,6 +91,37 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
     doTest(before, after)
   }
 
+  fun `test compact empty cell keeps one padding space around caret`() {
+    withTableStyle(project, TableStyle.COMPACT) {
+      configureFromFileText(
+        "some.md",
+        """
+        | a |
+        | --- |
+        | <caret> |
+        """.trimIndent()
+      )
+      val table = TableUtils.findTable(file, 0)!!
+      runWriteActionAndWait {
+        table.reformatColumnOnChange(
+          editor.document,
+          editor.caretModel.allCarets,
+          0,
+          trimToMaxContent = true,
+          tableStyle = TableStyle.COMPACT,
+        )
+        commitDocument(editor.document)
+      }
+      checkResultByText(
+        """
+        | a |
+        | --- |
+        | <caret>|
+        """.trimIndent()
+      )
+    }
+  }
+
   fun `test multiple columns with right alignment and multiple carets`() {
     // language=Markdown
     val before = """
@@ -165,7 +197,13 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
     }, testRootDisposable)
 
     runWriteActionAndWait {
-      table.reformatColumnOnChange(editor.document, editor.caretModel.allCarets, 0, trimToMaxContent = true)
+      table.reformatColumnOnChange(
+        editor.document,
+        editor.caretModel.allCarets,
+        0,
+        trimToMaxContent = true,
+        tableStyle = TableStyle.ALIGNED,
+      )
       commitDocument(editor.document)
     }
 
@@ -179,7 +217,13 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
     val table = TableUtils.findTable(file, 0)!!
     runWriteActionAndWait {
       for (columnIndex in table.columnsIndices) {
-        table.reformatColumnOnChange(editor.document, editor.caretModel.allCarets, columnIndex, trimToMaxContent)
+        table.reformatColumnOnChange(
+          editor.document,
+          editor.caretModel.allCarets,
+          columnIndex,
+          trimToMaxContent,
+          tableStyle = TableStyle.ALIGNED,
+        )
         commitDocument(editor.document)
       }
     }

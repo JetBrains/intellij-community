@@ -124,6 +124,7 @@ def loads(
     object_pairs_hook: Callable[[list[tuple[Any, Any]]], Any] | None = None,
     use_decimal: bool = False,
     allow_nan: bool = False,
+    array_hook: Callable[[list[Any]], Any] | None = None,  # transforms a JSON value to an arbitrary value
     **kw: Any,
 ) -> Any: ...
 @overload
@@ -138,6 +139,7 @@ def loads(
     object_pairs_hook: Callable[[list[tuple[Any, Any]]], Any] | None = None,
     use_decimal: bool = False,
     allow_nan: bool = False,
+    array_hook: Callable[[list[Any]], Any] | None = None,  # transforms a JSON value to an arbitrary value
 ) -> Any: ...
 
 @overload
@@ -153,6 +155,7 @@ def load(
     object_pairs_hook: Callable[[list[tuple[Any, Any]]], Any] | None = None,
     use_decimal: bool = False,
     allow_nan: bool = False,
+    array_hook: Callable[[list[Any]], Any] | None = None,  # transforms a JSON value to an arbitrary value
     **kw: Any,
 ) -> Any: ...
 @overload
@@ -167,6 +170,7 @@ def load(
     object_pairs_hook: Callable[[list[tuple[Any, Any]]], Any] | None = None,
     use_decimal: bool = False,
     allow_nan: bool = False,
+    array_hook: Callable[[list[Any]], Any] | None = None,  # transforms a JSON value to an arbitrary value
 ) -> Any: ...
 
 def simple_first(kv: tuple[_T, object]) -> tuple[bool, _T]: ...

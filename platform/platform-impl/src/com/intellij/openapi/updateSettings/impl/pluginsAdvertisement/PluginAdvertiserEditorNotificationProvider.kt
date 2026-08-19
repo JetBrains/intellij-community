@@ -64,6 +64,10 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       return null
     }
 
+    if (isAdvertisementSuppressed(project, file)) {
+      return null
+    }
+
     val providedSuggestion = SUGGESTION_EP_NAME.extensionList
       .firstNotNullOfOrNull { it.getSuggestion(project, file) }
 
@@ -295,6 +299,14 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
 }
 
 private val SUGGESTION_EP_NAME: ExtensionPointName<PluginSuggestionProvider> = ExtensionPointName("com.intellij.pluginSuggestionProvider")
+
+private val SUPPRESSOR_EP_NAME: ExtensionPointName<PluginAdvertiserSuppressor> = ExtensionPointName("com.intellij.pluginAdvertiserSuppressor")
+
+@VisibleForTesting
+@ApiStatus.Internal
+fun isAdvertisementSuppressed(project: Project, file: VirtualFile): Boolean {
+  return SUPPRESSOR_EP_NAME.extensionList.any { it.isSuppressedFor(project, file) }
+}
 
 private val loggedPluginSuggestions: MutableCollection<PluginId> = Collections.synchronizedSet(HashSet())
 private val loggedIdeSuggestions: MutableCollection<String> = Collections.synchronizedSet(HashSet())

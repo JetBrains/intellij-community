@@ -208,6 +208,8 @@ jvm_library(
 exports_files(
     [
         "intellij.java.compiler.impl.iml",
+        "resources/META-INF/RegistryKeysCompilerImpl.xml",
+        "resources/intellij.java.compiler.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

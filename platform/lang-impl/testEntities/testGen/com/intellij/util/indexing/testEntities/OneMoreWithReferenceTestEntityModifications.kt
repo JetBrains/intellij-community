@@ -18,7 +18,7 @@ interface OneMoreWithReferenceTestEntityBuilder : WorkspaceEntityBuilder<OneMore
 }
 
 internal object OneMoreWithReferenceTestEntityType : EntityType<OneMoreWithReferenceTestEntity, OneMoreWithReferenceTestEntityBuilder>() {
-  override val entityClass: Class<OneMoreWithReferenceTestEntity> get() = OneMoreWithReferenceTestEntity::class.java
+  override val entityImplClass: Class<*> get() = OneMoreWithReferenceTestEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = OneMoreWithReferenceTestEntityImpl.Builder::class.java
   operator fun invoke(
     references: List<DependencyItem>,

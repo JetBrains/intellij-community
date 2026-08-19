@@ -57,6 +57,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.ast.iml",
+        "resources/intellij.python.ast.xml",
     ],
     visibility = ["//visibility:public"],
 )

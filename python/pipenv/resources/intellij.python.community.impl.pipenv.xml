@@ -1,10 +1,14 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.python.sdk"/>
-    <module name="intellij.python.processOutput.common"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.core"/>
     <module name="intellij.python.community"/>
+    <module name="intellij.python.processOutput.common"/>
     <module name="intellij.python.pytools"/>
+    <module name="intellij.python.sdk.backend"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <python.pytools.pyTool implementation="com.intellij.python.community.impl.pipenv.PipEnvPyTool"/>
     <python.processOutput.common.processOutputIconMapping implementation="com.intellij.python.community.impl.pipenv.PipenvIconMapping"/>

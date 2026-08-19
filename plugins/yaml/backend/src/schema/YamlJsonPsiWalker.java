@@ -109,6 +109,10 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
   public PsiElement findElementToCheck(@NotNull PsiElement element) {
     PsiElement current = element;
     while (current != null && !(current instanceof PsiFile)) {
+      // Typing inside a comment must not trigger schema-based completion or validation (IJPL-249582).
+      if (current instanceof PsiComment) {
+        return null;
+      }
       if (current instanceof YAMLValue || current instanceof YAMLKeyValue) {
         return current;
       }

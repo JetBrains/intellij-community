@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
@@ -355,7 +354,7 @@ class OutflowSlicer(
         val receiverValue = functionCall.partiallyAppliedSymbol.dispatchReceiver as? KaExplicitReceiverValue ?: return
         var receiverType: KaType? = receiverValue.type
         var receiverExpression = receiverValue.expression
-        if (receiverExpression is KtReferenceExpression && functionCall is KaSimpleFunctionCall && functionCall is KaImplicitInvokeCall) {
+        if (receiverExpression is KtReferenceExpression && functionCall is KaImplicitInvokeCall) {
             val target = receiverExpression.mainReference.resolve()
             if (target is KtCallableDeclaration) {
                 receiverType = (target.symbol as? KaCallableSymbol)?.returnType

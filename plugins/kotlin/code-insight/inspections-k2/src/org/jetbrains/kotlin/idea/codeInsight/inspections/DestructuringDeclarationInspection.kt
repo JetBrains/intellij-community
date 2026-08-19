@@ -13,7 +13,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -29,6 +28,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -82,7 +82,8 @@ internal class DestructuringDeclarationInspection(@JvmField var reportNonParamet
     ): KotlinModCommandQuickFix<KtDeclaration> =
         UseDestructureDeclarationFix(context)
 
-    override fun KaSession.prepareContext(element: KtDeclaration): UsagesToRemove? =
+    context(session: KaSession)
+    override fun prepareContext(element: KtDeclaration): UsagesToRemove? =
         collectUsagesToRemove(element)
 
     override fun getProblemDescription(

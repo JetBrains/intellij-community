@@ -17,10 +17,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/vcs-impl"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/vcs-api:vcs",
         "//platform/util",
         "//platform/core-api:core",
@@ -44,7 +45,9 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":vcs",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/vcs-api:vcs_test_lib",
+        "//platform/vcs-impl:vcs-impl_test_lib",
         "//platform/util:util_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
@@ -60,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.codeInsight.vcs.iml",
+        "resources/intellij.kotlin.codeInsight.vcs.xml",
     ],
     visibility = ["//visibility:public"],
 )

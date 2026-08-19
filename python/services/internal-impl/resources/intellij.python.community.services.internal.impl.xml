@@ -1,9 +1,13 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.python.community"/>
     <module name="intellij.python.psi.impl"/>
-    <module name="intellij.python.sdk"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.python.community"/>
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.services.shared"/>
+    <module name="intellij.python.sdk.backend"/>
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>

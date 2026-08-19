@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.objenesis.iml",
+        "resources/intellij.libraries.objenesis.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -19,7 +19,7 @@ class bdist(Command):
     no_format_option: ClassVar[tuple[str, ...]]
     default_format: ClassVar[dict[str, str]]
     format_commands: ClassVar[ListCompat]
-    format_command = format_commands
+    format_command = format_commands  # pyrefly: ignore [unknown-name]
 
     def initialize_options(self) -> None: ...
     def finalize_options(self) -> None: ...

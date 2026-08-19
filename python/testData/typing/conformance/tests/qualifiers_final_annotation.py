@@ -2,7 +2,7 @@
 Tests the typing.Final special form.
 """
 
-from typing import ClassVar, Final, Literal, NamedTuple, assert_type
+from typing import ClassVar, Final, Literal, NamedTuple, TypedDict, assert_type
 
 # Specification: https://typing.readthedocs.io/en/latest/spec/qualifiers.html#id1
 
@@ -120,6 +120,20 @@ x: list[Final[int]] = []  # E
 
 def func1(x: Final[list[int]]) -> None:  # E
     ...
+
+
+# > ``Final`` cannot be used as a qualifier for a TypedDict item or a
+# > NamedTuple field. Such usage also generates an error at runtime.
+
+
+class TDWithFinal(TypedDict):
+    a: int
+    b: Final[int]  # E: Final not allowed in a TypedDict
+
+
+class NTWithFinal(NamedTuple):
+    a: int
+    b: Final[int]  # E: Final not allowed in a NamedTuple
 
 
 # > Type checkers should treat uses of a final name that was initialized with

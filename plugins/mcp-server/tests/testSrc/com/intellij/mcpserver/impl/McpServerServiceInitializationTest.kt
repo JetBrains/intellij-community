@@ -13,7 +13,7 @@ internal class McpServerServiceInitializationTest {
   @Test
   @SystemProperty(propertyKey = IJ_MCP_FORCE_ENABLE_PROPERTY, propertyValue = "false")
   fun `reading running state does not initialize tools`() {
-    val settings = McpServerSettings.getInstance().state
+    val settings = McpServerSettings.getInstance()
     val wasEnabled = settings.enableMcpServer
     settings.enableMcpServer = false
     try {

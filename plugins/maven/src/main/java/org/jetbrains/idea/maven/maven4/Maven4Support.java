@@ -51,10 +51,12 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
     final List<Path> classpath = new ArrayList<>();
 
     if (MavenUtil.isRunningFromSources()) {
+      // JPS module outputs only - no assembled plugin layout to read from
       MavenLog.LOG.debug("collecting classpath for local run");
       prepareClassPathForLocalRunAndUnitTests(distribution.getVersion(), classpath);
     }
     else {
+      // an installed IDE *and* a dev build: both ship the same plugin layout
       MavenLog.LOG.debug("collecting classpath for production");
       prepareClassPathForProduction(classpath);
     }
@@ -70,7 +72,7 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
 
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<Path> classpath) {
     BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
-    BundledMavenDownloader.INSTANCE.downloadMaven4LibsSync(communityRoot);
+    Path maven4Libs = BundledMavenDownloader.INSTANCE.downloadMaven4LibsSync(communityRoot);
 
     classpath.add(PathManager.getJarForClass(MavenId.class));
     classpath.add(locateModuleOutput("intellij.maven.server"));
@@ -78,8 +80,7 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
     classpath.add(locateModuleOutput("intellij.maven.server.telemetry"));
     classpath.addAll(MavenUtil.collectClasspath(MavenServerTelemetryClasspathUtil.TELEMETRY_CLASSES));
 
-    Path parentPath = MavenUtil.getMavenPluginParentFile();
-    addDir(classpath, parentPath.resolve("maven40-server-impl/lib"), f -> true);
+    addDir(classpath, maven4Libs, ignored -> true);
 
     classpath.add(locateModuleOutput("intellij.maven.server.m40"));
   }

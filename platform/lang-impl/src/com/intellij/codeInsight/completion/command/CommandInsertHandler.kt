@@ -11,10 +11,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
+import com.intellij.util.PlatformUtils
 
 /**
  * A handler for managing the insertion of commands during code completion.
@@ -34,20 +36,23 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
         startOffset = originalEditor.second
         editor = originalEditor.first
         psiFile = PsiDocumentManager.getInstance(context.project).getPsiFile(editor.getDocument()) ?: return
-        val installedEditor = editor.getUserData(INSTALLED_EDITOR)
-        if (installedEditor != null) {
-          // local (monolith) read-only flow: close the command inlay before executing the command
-          Disposer.dispose(installedEditor)
-        }
-        else if (!NonWriteAccessCommandCompletionSupport.Backend.isRemoteBackendEditor(context.editor)) {
-          // no inlay on the original editor and the completion editor is not a remote-dev backend document
-          // (in the remote flow this handler runs on the backend, where the inlay exists only on the frontend
-          // and is disposed there together with the lookup) — the inlay was disposed concurrently, so executing
-          // the command would act on a stale context; bail out
-          return
+        // which flow we are in is defined by where the original editor came from, not by the state of the inlay:
+        // in the remote flow this handler runs on the backend, where the inlay exists only on the frontend
+        if (!NonWriteAccessCommandCompletionSupport.Backend.isRemoteBackendEditor(context.editor)) {
+          // the remote flow delegates insertion to the backend (the item arrives as RpcInsertHandler.Backend),
+          // so getting here on the client would mean executing the command without the real PSI
+          if (PlatformUtils.isJetBrainsClient()) return
+          // local (monolith) read-only flow: the inlay is normally disposed together with the lookup,
+          // which happens before this handler runs, but close it here as well in case it is still shown
+          editor.getUserData(INSTALLED_EDITOR)?.let { Disposer.dispose(it) }
         }
       }
       else {
+        if (NonWriteAccessCommandCompletionSupport.Backend.isRemoteBackendEditor(context.editor)) {
+          logger<CommandInsertHandler>().warn(
+            "command completion: the original editor is gone, skipping ${completionCommand.javaClass.name}")
+          return
+        }
         commandProcessor.executeCommand(context.project, {
           // Remove the dots and command text from the document
           startOffset = removeCommandText(context)

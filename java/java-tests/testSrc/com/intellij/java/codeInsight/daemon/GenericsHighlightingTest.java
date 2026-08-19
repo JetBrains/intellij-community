@@ -79,6 +79,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testEnum242390() { doTest7(false); }
   public void testSameErasure() { doTest5(false); }
   public void testPairsWithSameErasure() { doTest5(false); }
+  public void testTypeParameterBoundsOrder() { doTest5(false); }
   public void testMethods() { doTest5(false); }
   public void testFields() { doTest5(false); }
   public void testStaticImports() { doTest5(true); }

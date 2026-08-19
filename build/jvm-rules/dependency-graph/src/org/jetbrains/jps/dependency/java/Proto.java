@@ -18,12 +18,14 @@ public class Proto implements ExternalizableGraphElement {
   private final String signature;
   private final String name;
   private final @NotNull Iterable<ElementAnnotation> annotations;
+  private final @NotNull Iterable<ElementAnnotation> typeAnnotations;
 
-  public Proto(@NotNull JVMFlags flags, String signature, String name, @NotNull Iterable<ElementAnnotation> annotations) {
+  public Proto(@NotNull JVMFlags flags, String signature, String name, @NotNull Iterable<ElementAnnotation> annotations, @NotNull Iterable<ElementAnnotation> typeAnnotations) {
     this.access = flags;
     this.signature = signature == null? "" : GraphElementInterner.intern(signature);
     this.name = name == null? "" : GraphElementInterner.intern(name);
     this.annotations = annotations;
+    this.typeAnnotations = typeAnnotations;
   }
 
   public Proto(GraphDataInput in) throws IOException {
@@ -31,6 +33,7 @@ public class Proto implements ExternalizableGraphElement {
     signature = in.readUTF();
     name = in.readUTF();
     annotations = RW.readCollection(in, () -> new ElementAnnotation(in));
+    typeAnnotations = RW.readCollection(in, () -> new ElementAnnotation(in));
   }
 
   @Override
@@ -39,6 +42,7 @@ public class Proto implements ExternalizableGraphElement {
     out.writeUTF(signature);
     out.writeUTF(name);
     RW.writeCollection(out, annotations, t -> t.write(out));
+    RW.writeCollection(out, typeAnnotations, t -> t.write(out));
   }
 
   public final JVMFlags getFlags() {
@@ -55,6 +59,10 @@ public class Proto implements ExternalizableGraphElement {
 
   public final @NotNull Iterable<ElementAnnotation> getAnnotations() {
     return annotations;
+  }
+
+  public final @NotNull Iterable<ElementAnnotation> getTypeAnnotations() {
+    return typeAnnotations;
   }
 
   public final boolean isPublic() {
@@ -125,16 +133,18 @@ public class Proto implements ExternalizableGraphElement {
 
   public class Diff<V extends Proto> implements Difference {
     private final Supplier<Specifier<ElementAnnotation, ElementAnnotation.Diff>> myAnnotationsDiff;
+    private final Supplier<Specifier<ElementAnnotation, ElementAnnotation.Diff>> myTypeAnnotationsDiff;
     protected final V myPast;
 
     public Diff(V past) {
       myPast = past;
       myAnnotationsDiff = Utils.lazyValue(() -> Difference.deepDiff(myPast.getAnnotations(), getAnnotations()));
+      myTypeAnnotationsDiff = Utils.lazyValue(() -> Difference.deepDiff(myPast.getTypeAnnotations(), getTypeAnnotations()));
     }
 
     @Override
     public boolean unchanged() {
-      return !flagsChanged() && !signatureChanged() && annotations().unchanged();
+      return !flagsChanged() && !signatureChanged() && annotations().unchanged() && typeAnnotations().unchanged();
     }
 
     public boolean flagsChanged() {
@@ -167,6 +177,10 @@ public class Proto implements ExternalizableGraphElement {
 
     public Specifier<ElementAnnotation, ElementAnnotation.Diff> annotations() {
       return myAnnotationsDiff.get();
+    }
+
+    public Specifier<ElementAnnotation, ElementAnnotation.Diff> typeAnnotations() {
+      return myTypeAnnotationsDiff.get();
     }
   }
 

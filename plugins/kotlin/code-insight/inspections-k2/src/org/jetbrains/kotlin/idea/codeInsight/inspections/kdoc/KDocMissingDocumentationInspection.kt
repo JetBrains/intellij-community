@@ -9,16 +9,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.visibility.isPublicApi
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.highlighting.kdoc.findKDocByPsi
 import org.jetbrains.kotlin.idea.inspections.describe
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
-import org.jetbrains.kotlin.idea.highlighting.kdoc.findKDocByPsi
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -45,8 +47,9 @@ internal class KDocMissingDocumentationInspection : KotlinApplicableInspectionBa
     override fun getApplicableRanges(element: KtNamedDeclaration): List<TextRange> =
         ApplicabilityRanges.declarationName(element)
 
-    override fun KaSession.prepareContext(element: KtNamedDeclaration): Unit? {
-        val symbol = element.symbol.takeIf { isPublicApi(it) } ?: return null
+    context(session: KaSession)
+    override fun prepareContext(element: KtNamedDeclaration): Unit? {
+        val symbol = element.symbol.takeIf { it.isPublicApi } ?: return null
         return (symbol is KaCallableSymbol && symbol.hasInheritedKDoc()).not().asUnit
     }
 
@@ -71,7 +74,7 @@ internal class KDocMissingDocumentationInspection : KotlinApplicableInspectionBa
             element: KtNamedDeclaration,
             updater: ModPsiUpdater,
         ) {
-            element.addBefore(KDocElementFactory(project).createKDocFromText("/**\n* \n*/\n"), element.firstChild)
+            element.addBefore(KDocElementFactory(project).createKDocFromText("/**\n* \n*/"), element.firstChild)
 
             val section = element.firstChild.getChildOfType<KDocSection>() ?: return
             val asterisk = section.firstChild

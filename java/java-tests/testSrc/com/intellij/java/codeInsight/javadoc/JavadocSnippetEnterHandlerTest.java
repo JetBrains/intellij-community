@@ -3,8 +3,10 @@ package com.intellij.java.codeInsight.javadoc;
 
 import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
+@TestDataPath("/codeInsight/javadoc/snippet/enterhandler")
 public class JavadocSnippetEnterHandlerTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected String getBasePath() {

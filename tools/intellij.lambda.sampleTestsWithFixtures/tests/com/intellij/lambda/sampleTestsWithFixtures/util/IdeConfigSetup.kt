@@ -7,7 +7,9 @@ import org.junit.jupiter.api.extension.ExtensionContext
 class IdeConfigSetup : BeforeAllCallback {
   override fun beforeAll(context: ExtensionContext) {
     IdeStartConfig.current = IdeStartConfig(
-      configureTestContext = { applyVMOptionsPatch { inUnitTestMode() } }
+      key = "lambda-sample-fixtures-unit-test-mode",
+      configureTestContext = { applyVMOptionsPatch { inUnitTestMode() } },
+      forceKill = true // run with fixtures can't stop properly, todo
     )
   }
 }

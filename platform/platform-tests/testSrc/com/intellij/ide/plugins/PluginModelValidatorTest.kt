@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.platform.pluginSystem.testFramework.isLibraryXiIncludeTarget
 import com.intellij.testFramework.PlatformTestUtil.getCommunityPath
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -161,6 +162,13 @@ class PluginModelValidatorTest {
 
     val info = model.moduleNameToInfo["intellij.plugin.module"]
     assertThat(info?.descriptorFile?.fileName?.toString()).isEqualTo("intellij.plugin.module.xml")
+  }
+
+  @Test
+  fun `library xi include target uses prefix match only when target ends with wildcard`() {
+    assertThat(isLibraryXiIncludeTarget("/META-INF/tips-java.xml", listOf("META-INF/tips-*"))).isTrue()
+    assertThat(isLibraryXiIncludeTarget("/META-INF/tips-java.xml", listOf("META-INF/tips-"))).isFalse()
+    assertThat(isLibraryXiIncludeTarget("/META-INF/tips-java.xml", listOf("META-INF/tips-java.xml"))).isTrue()
   }
 
   private suspend fun validatePluginModel(project: JpsProject): PluginValidationResult = validatePluginModel(project, root)

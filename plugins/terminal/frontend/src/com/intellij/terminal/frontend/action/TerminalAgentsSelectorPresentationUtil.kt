@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.action
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.components.Badge
 import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -37,6 +37,6 @@ object TerminalAgentsSelectorPresentationUtil {
     presentation.text = buildText(terminalAgent, mode)
     presentation.icon = terminalAgent.icon
     presentation.putClientProperty(ActionUtil.SECONDARY_TEXT, null)
-    presentation.putClientProperty(ActionUtil.SECONDARY_ICON, if (showNewBadge) AllIcons.General.New_badge else null)
+    presentation.putClientProperty(ActionUtil.SECONDARY_ICON, if (showNewBadge) Badge.new else null)
   }
 }

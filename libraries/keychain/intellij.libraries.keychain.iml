@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="keychain" type="repository">
+        <properties maven-id="com.jetbrains:keychain:4.4.3">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/keychain/4.4.3/keychain-4.4.3.jar">
+              <sha256sum>8e1186cccf455e34775c35cc39c690d0064922570ce799c63ac409210d17e8cc</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-core/4.0.0/dbus-java-core-4.0.0.jar">
+              <sha256sum>b082a52ee22be4a01ed24d8212135c1632c53dabf1b962f2552fd8b4ea9eb2da</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-transport-native-unixsocket/4.0.0/dbus-java-transport-native-unixsocket-4.0.0.jar">
+              <sha256sum>13baa50e0808c237b11ab31e9a50af65a12f0f14c511b4e4b3377a13c31e32db</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.slf4j:slf4j-api" />
+            <dependency maven-id="net.java.dev.jna:jna-platform" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/keychain/4.4.3/keychain-4.4.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-core/4.0.0/dbus-java-core-4.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-transport-native-unixsocket/4.0.0/dbus-java-transport-native-unixsocket-4.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/keychain/4.4.3/keychain-4.4.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-core/4.0.0/dbus-java-core-4.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-transport-native-unixsocket/4.0.0/dbus-java-transport-native-unixsocket-4.0.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

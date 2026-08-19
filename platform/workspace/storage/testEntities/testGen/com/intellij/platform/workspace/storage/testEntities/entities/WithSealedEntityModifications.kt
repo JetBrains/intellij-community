@@ -19,7 +19,7 @@ interface WithSealedEntityBuilder : WorkspaceEntityBuilder<WithSealedEntity> {
 }
 
 internal object WithSealedEntityType : EntityType<WithSealedEntity, WithSealedEntityBuilder>() {
-  override val entityClass: Class<WithSealedEntity> get() = WithSealedEntity::class.java
+  override val entityImplClass: Class<*> get() = WithSealedEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = WithSealedEntityImpl.Builder::class.java
   operator fun invoke(
     classes: List<MySealedClass>,

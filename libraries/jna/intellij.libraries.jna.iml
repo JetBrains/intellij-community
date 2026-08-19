@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="jna" type="repository">
+        <properties maven-id="net.java.dev.jna:jna-platform:5.19.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.19.1/jna-platform-5.19.1.jar">
+              <sha256sum>3b3864f5b449e9c3c24b16861524b622b086563f44e0cd8384c8efc5a6052f82</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.19.1/jna-5.19.1.jar">
+              <sha256sum>4fb141dd8ef6b0585ffceea4bc49602fbc6312fa977e2c488794ea3e6aafecae</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <ANNOTATIONS>
+          <root url="file://$MODULE_DIR$/../../lib/annotations/jna" />
+        </ANNOTATIONS>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.19.1/jna-platform-5.19.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.19.1/jna-5.19.1.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.19.1/jna-platform-5.19.1-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.19.1/jna-5.19.1-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.19.1/jna-platform-5.19.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.19.1/jna-5.19.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

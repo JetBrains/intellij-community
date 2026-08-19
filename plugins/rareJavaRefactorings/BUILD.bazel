@@ -103,6 +103,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.rareRefactorings.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

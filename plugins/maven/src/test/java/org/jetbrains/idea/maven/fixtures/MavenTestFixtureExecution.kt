@@ -121,10 +121,12 @@ fun MavenImportingTestFixture.debugMavenRunConfiguration(parameters: MavenRunner
   sema.down()
   var charset: Charset? = null
 
-  ExecutionUtil.doRunConfiguration(configuration, DefaultDebugExecutor.getDebugExecutorInstance(), null, null, null) { environment ->
-    environment.callback = ProgramRunner.Callback { descriptor ->
-      descriptor.processHandler!!.addProcessListener(MyTestExecutionListener(stdout, stderr, system, sema, descriptor))
-      charset = (descriptor.processHandler as? BaseProcessHandler<*>)?.charset
+  runInEdtAndWait {
+    ExecutionUtil.doRunConfiguration(configuration, DefaultDebugExecutor.getDebugExecutorInstance(), null, null, null) { environment ->
+      environment.callback = ProgramRunner.Callback { descriptor ->
+        descriptor.processHandler!!.addProcessListener(MyTestExecutionListener(stdout, stderr, system, sema, descriptor))
+        charset = (descriptor.processHandler as? BaseProcessHandler<*>)?.charset
+      }
     }
   }
   sema.waitFor(maxTimeToWait.inWholeMilliseconds)

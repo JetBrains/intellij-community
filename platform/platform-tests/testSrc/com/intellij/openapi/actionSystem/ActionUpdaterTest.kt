@@ -6,15 +6,20 @@ import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.NonTrivialActionGroup
 import com.intellij.ide.actions.PopupInMainMenuActionGroup
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.SkipOperation
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
@@ -485,12 +490,15 @@ class ActionUpdaterTest {
 
       val lockingActionHadReadAccess = AtomicBoolean(false)
       val nonLockingActionHadReadAccess = AtomicBoolean(false)
+      val nonLockingActionPerformHadWriteIntentAccess = AtomicBoolean(false)
+
 
       val lockingAction = object : AnAction("locking") {
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
         override fun actionPerformed(e: AnActionEvent) {}
         override fun update(e: AnActionEvent) {
           lockingActionHadReadAccess.set(application.isReadAccessAllowed)
+          runReadActionBlocking {  }
         }
       }
 
@@ -499,9 +507,16 @@ class ActionUpdaterTest {
           templatePresentation.isRWLockRequired = false
         }
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-        override fun actionPerformed(e: AnActionEvent) {}
+        override fun actionPerformed(e: AnActionEvent) {
+          nonLockingActionPerformHadWriteIntentAccess.set(application.isWriteIntentLockAcquired)
+          WriteIntentReadAction.run {  } // check that no (logged) errors are happening, we permit running explicit WI
+        }
         override fun update(e: AnActionEvent) {
           nonLockingActionHadReadAccess.set(application.isReadAccessAllowed)
+          val error = LoggedErrorProcessor.executeAndReturnLoggedError {
+            runReadActionBlocking {  }
+          }
+          assertTrue { error.message!!.contains("The Read/Write lock is disallowed for an action") }
         }
       }
 
@@ -514,8 +529,13 @@ class ActionUpdaterTest {
         )
       }
 
+      withContext(Dispatchers.UiWithModelAccess) {
+        ActionManager.getInstance().tryToExecute(nonLockingAction, null, null, null, true)
+      }
+
       assertTrue(lockingActionHadReadAccess.get(), "Locking action should have read access")
       assertTrue(!nonLockingActionHadReadAccess.get(), "Non-locking action should NOT have read access")
+      assertTrue(!nonLockingActionPerformHadWriteIntentAccess.get(), "Non-locking actionPerformed should NOT have write-intent access")
     }
     finally {
       registryKey.setValue(prevValue)

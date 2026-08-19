@@ -2,11 +2,17 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.completion.ml.ranking"/>
-    <module name="intellij.platform.ide.internal"/>
     <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.preferences"/>
+    <module name="intellij.libraries.completion.ranking.kotlin"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.internal"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
   </dependencies>
   <!-- endregion -->
 

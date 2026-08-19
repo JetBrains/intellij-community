@@ -1,11 +1,15 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.json"/>
     <module name="intellij.json.backend"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.lang"/>
     <module name="intellij.platform.structureView"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <lang.psiStructureViewFactory language="JSON" implementationClass="com.intellij.json.structureView.JsonStructureViewBuilderFactory"/>

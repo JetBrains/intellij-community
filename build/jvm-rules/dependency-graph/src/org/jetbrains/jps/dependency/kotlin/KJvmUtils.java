@@ -93,6 +93,17 @@ final class KJvmUtils {
           return p.getName();
         }
       }
+      String name = method.getName();
+      if (name.endsWith("$default")) {
+        // the synthetic '<name>$default' default-argument dispatcher
+        String origin = name.substring(0, name.length() - "$default".length());
+        for (KmFunction f : allKmFunctions(cls)) {
+          JvmMethodSignature originSig = JvmExtensionsKt.getSignature(f);
+          if (originSig != null && origin.equals(originSig.getName())) {
+            return f.getName();
+          }
+        }
+      }
     }
     // apart from lookups with actual property name, kotlinc generates lookups with getter/setter bytecode names
     // these lookups, named after property bytecode getter and setter, allow to distinguish between property read and write access usages in .kt file

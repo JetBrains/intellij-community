@@ -14,7 +14,7 @@ public class GroovyFixesTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.configureByText("gr.groovy", """
       var <caret>var integers = [1, 2, 3]
       """);
-    myFixture.launchAction(myFixture.findSingleIntention("Remove unnecessary 'var'"));
+    myFixture.launchAction(myFixture.findSingleIntention("Remove 'var' modifier"));
     myFixture.checkResult("""
                             var integers = [1, 2, 3]
                             """);

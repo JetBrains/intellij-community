@@ -28,10 +28,11 @@ jvm_library(
         "//platform/ide-core",
         "//libraries/kotlin/reflect",
         "//plugins/kotlin/references",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//libraries/guava",
         "//platform/indexing-api:indexing",
         "//jps/model-api:model",
@@ -91,6 +92,10 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//libraries/kotlin/reflect:reflect_test_lib",
         "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//libraries/guava:guava_test_lib",
         "//platform/indexing-api:indexing_test_lib",
         "//jps/model-api:model_test_lib",
@@ -135,6 +140,7 @@ jvm_library(
 exports_files(
     [
         "kotlin.fir.frontend-independent.iml",
+        "resources-en/kotlin.fir.frontend-independent.xml",
     ],
     visibility = ["//visibility:public"],
 )

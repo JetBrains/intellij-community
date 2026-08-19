@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -52,7 +53,8 @@ internal class DoubleBangInspection :
         ApplicabilityRange.single(element) { it.operationReference }
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtPostfixExpression): String? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtPostfixExpression): String? {
         if (element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).any {
                 it is KaFirDiagnostic.UnnecessaryNotNullAssertion
             }

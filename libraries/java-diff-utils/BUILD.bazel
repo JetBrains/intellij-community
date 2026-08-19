@@ -1,0 +1,43 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.java.diff.utils` start
+jvm_library(
+    name = "java-diff-utils",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.java.diff.utils",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-java-diff-utils-java-diff-utils"],
+    runtime_deps = ["@lib//:libraries-java-diff-utils-java-diff-utils"],
+)
+
+jvm_library(
+    name = "java-diff-utils_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.java.diff.utils",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-java-diff-utils-java-diff-utils"],
+    runtime_deps = [":java-diff-utils"],
+)
+### auto-generated section `build intellij.libraries.java.diff.utils` end
+
+### auto-generated section `iml intellij.libraries.java.diff.utils` start
+exports_files(
+    [
+        "intellij.libraries.java.diff.utils.iml",
+        "resources/intellij.libraries.java.diff.utils.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.java.diff.utils` end

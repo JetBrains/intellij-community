@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
 import com.intellij.openapi.application.ApplicationManager
@@ -22,7 +22,7 @@ interface ProxySettings {
 
   fun getProxyConfiguration(): ProxyConfiguration
 
-  @ApiStatus.Experimental // maybe make it internal if we decide that plugins must not edit user settings
+  @ApiStatus.Internal
   fun setProxyConfiguration(proxyConfiguration: ProxyConfiguration)
 }
 
@@ -30,5 +30,6 @@ fun interface ProxyConfigurationProvider {
   fun getProxyConfiguration(): ProxyConfiguration
 }
 
+@Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated("Pointless; use `ProxySettings.getProxyConfiguration` directly", level = DeprecationLevel.ERROR)
 fun ProxySettings.asConfigurationProvider(): ProxyConfigurationProvider = ProxyConfigurationProvider(this::getProxyConfiguration)

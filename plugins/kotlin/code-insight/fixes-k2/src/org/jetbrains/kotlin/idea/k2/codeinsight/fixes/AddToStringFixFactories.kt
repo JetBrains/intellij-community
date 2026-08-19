@@ -4,7 +4,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddToStringFix
 import org.jetbrains.kotlin.psi.KtExpression
@@ -12,10 +15,12 @@ import org.jetbrains.kotlin.psi.KtReturnExpression
 
 internal object AddToStringFixFactories {
 
-    private fun KaSession.getFixes(element: PsiElement?, expectedType: KaType, actualType: KaType): List<AddToStringFix> {
+    context(session: KaSession)
+    private fun getFixes(element: PsiElement?, expectedType: KaType, actualType: KaType): List<AddToStringFix> {
         if (element !is KtExpression || element is KtReturnExpression) return emptyList()
         return buildList {
-            if (expectedType.isStringType || expectedType.isCharSequenceType) {
+            val classId = expectedType.classId
+            if (classId == KaStandardTypeClassIds.STRING || classId == KaStandardTypeClassIds.CHAR_SEQUENCE) {
                 add(AddToStringFix(element, useSafeCallOperator = false))
                 if (expectedType.isMarkedNullable && actualType.isMarkedNullable) {
                     add(AddToStringFix(element, useSafeCallOperator = true))

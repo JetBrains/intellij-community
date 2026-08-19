@@ -7,8 +7,36 @@
     <module name="intellij.libraries.ktor.network.tls"/>
     <module name="intellij.libraries.ktor.server.cio"/>
     <module name="intellij.libraries.ktor.client.cio"/>
+    <module name="fleet.rhizomedb"/>
+    <module name="fleet.rhizomedb.transactor"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.night.config.toml"/>
+    <module name="intellij.libraries.opentelemetry"/>
     <module name="intellij.mcpserver.stdio"/>
-    <module name="intellij.platform.compose"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
 
@@ -25,9 +53,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider"/>
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.McpServerService"/>
-    <applicationService serviceInterface="com.intellij.mcpserver.impl.McpSessionProjectResolver" serviceImplementation="com.intellij.mcpserver.impl.McpSessionProjectResolverImpl"/>
-
-    <applicationService serviceImplementation="com.intellij.mcpserver.toolsets.general.SymbolSearchEngine" open="true"/>
+    <applicationService serviceInterface="com.intellij.mcpserver.impl.McpSessionProjectResolver" serviceImplementation="com.intellij.mcpserver.impl.McpSessionProjectResolverImpl" open="true"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector$McpToolNameValidator"/>
@@ -44,19 +70,8 @@
     <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.SettingsBasedMcpToolFilterProvider" />
     <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.RegistryKeyMcpToolFilterProvider" />
     <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.IndividualRegistryKeyMcpToolFilterProvider" />
-    <mcpServer.projectDependenciesProvider implementation="com.intellij.mcpserver.toolsets.general.JpsDependenciesProvider" />
 
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.ExecutionToolset" />
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.AnalysisToolset" />
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FileToolset" />
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FormattingToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.UniversalToolset" />
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.ReadToolset" />
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.PatchToolset" />
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.SearchToolset" />
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.CodeInsightToolset" />
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.RefactoringToolset" />
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.DiagnosticsToolset" />
 
     <registryKey defaultValue="true"
                  description="Whether to return output schema and structured output from tools"
@@ -77,16 +92,10 @@
                  description="Throttle interval in milliseconds for MCP progress notifications and keep-alives"
                  key="mcp.server.progress.notification.interval.ms"/>
 
-    <applicationSettings service="com.intellij.mcpserver.settings.McpServerSettings"/>
-    <applicationSettings service="com.intellij.mcpserver.settings.McpToolDisallowListSettings"/>
-    <applicationSettings service="com.intellij.mcpserver.settings.McpToolFilterSettings"/>
+    <applicationSettings service="com.intellij.mcpserver.settings.McpServerSettingsImpl"/>
+    <applicationSettings service="com.intellij.mcpserver.settings.McpToolDisallowListSettingsImpl"/>
+    <applicationSettings service="com.intellij.mcpserver.settings.McpToolFilterSettingsImpl"/>
   </extensions>
 
   <resource-bundle>messages.McpServerBundle</resource-bundle>
-
-  <actions>
-    <action id="com.intellij.mcpserver.actions.ShowMcpToolsAction" class="com.intellij.mcpserver.actions.ShowMcpToolsAction">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
-  </actions>
 </idea-plugin>

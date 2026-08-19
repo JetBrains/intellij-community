@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 class MarkdownSettingsState: BaseState() {
   var areInjectionsEnabled by property(true)
   var showProblemsInCodeBlocks by property(false)
+  var isStripTrailingSpacesOnSave: Boolean by property(false)
 
   @get:XMap
   var enabledExtensions by map<String, Boolean>()
@@ -19,6 +20,7 @@ class MarkdownSettingsState: BaseState() {
   var isVerticalSplit by property(true)
   var isAutoScrollEnabled by property(true)
   var isRunnerEnabled by property(true)
+  var useFileDirectoryForCommands: Boolean? by property(null) { it == null }
   var isFileGroupingEnabled by property(false)
 
   var useCustomStylesheetPath by property(false)

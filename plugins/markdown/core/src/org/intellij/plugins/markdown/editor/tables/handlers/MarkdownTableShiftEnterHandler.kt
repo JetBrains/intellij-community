@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.siblings
+import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
 import org.intellij.plugins.markdown.editor.tables.buildEmptyRow
@@ -53,10 +54,12 @@ internal class MarkdownTableShiftEnterHandler(private val baseHandler: EditorAct
     val table = TableUtils.findTable(row) ?: return false
     val emptyRow = table.buildEmptyRow().toString()
     executeCommand(table.project) {
-      val content = "\n$emptyRow"
       val line = document.getLineNumber(caretOffset)
       val lineEndOffset = document.getLineEndOffset(line)
-      document.insertString(lineEndOffset, content)
+      val lineStartOffset = document.getLineStartOffset(line)
+      val indentEndOffset = CharArrayUtil.shiftForward(document.charsSequence, lineStartOffset, " \t")
+      val indent = document.charsSequence.subSequence(lineStartOffset, indentEndOffset)
+      document.insertString(lineEndOffset, "\n$indent$emptyRow")
       currentCaret.moveToOffset(document.getLineEndOffset(line + 1))
     }
     return true

@@ -7,7 +7,6 @@ import org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDuplicateDependenc
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.util.KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS
 import org.jetbrains.plugins.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
 import org.jetbrains.plugins.gradle.testFramework.util.VERSION_CATALOGS_SUPPORTED_VERSIONS
 import org.jetbrains.plugins.gradle.testFramework.util.assertThatKotlinDslScriptsModelImportIsSupported
@@ -17,6 +16,13 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 
 class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCase() {
+
+    override fun setUp() {
+        super.setUp()
+        if (isMissingDeprecationAnnotationAddedToKotlinDsl(gradleVersion)) {
+            disableBuiltInKotlinHighlighters()
+        }
+    }
 
     private fun runTest(
         gradleVersion: GradleVersion,
@@ -91,7 +97,7 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
             testHighlighting(
                 """
                 dependencies {
-                    <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
                     <weak_warning>implementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
                 }
                 """.trimIndent()
@@ -394,15 +400,15 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-    fun testCustomConfigurationSimple(gradleVersion: GradleVersion) {
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    fun testCustomConfigurationDoesNotExtendApi(gradleVersion: GradleVersion) {
         runTest(gradleVersion, withVersionCatalogs = false) {
             testHighlighting(
                 """
-                val customConf by configurations.creating {}
+                val customConf = configurations.named("customConf").get()
                 dependencies {
-                    <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
-                    <weak_warning>customConf("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                    customConf("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
                 }
                 """.trimIndent()
             )
@@ -411,14 +417,31 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    @TargetVersions(VERSION_CATALOGS_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    fun testCustomConfigurationSimple(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, withVersionCatalogs = false) {
+            testHighlighting(
+                """
+                val customConf = configurations.named("customConf").get()
+                dependencies {
+                    <weak_warning>customConf("org.jetbrains.kotlin:kotlin-other:2.2.0")</weak_warning>
+                    <weak_warning>customConf("org.jetbrains.kotlin:kotlin-other:2.2.0")</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    @TargetVersions(VERSION_CATALOGS_SUPPORTED_VERSIONS)
     fun testCustomConfigurationVersionCatalog(gradleVersion: GradleVersion) {
         runTest(gradleVersion, withVersionCatalogs = true) {
             testHighlighting(
                 """
-                val customConf by configurations.creating {}
+                val customConf = configurations.named("customConf").get()
                 dependencies {
-                    <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+                    <weak_warning>customConf("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
                     <weak_warning>customConf(libs.kotlin.std.lib.simple)</weak_warning>
                 }
                 """.trimIndent()
@@ -930,8 +953,43 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
                 """
                 dependencies {
                     implementation("org.projectlombok:lombok:1.18.20")
-                    <weak_warning>annotationProcessor("org.projectlombok:lombok:1.18.20")</weak_warning>
-                    <weak_warning>testAnnotationProcessor("org.projectlombok:lombok:1.18.20")</weak_warning>
+                    annotationProcessor("org.projectlombok:lombok:1.18.20")
+                    testAnnotationProcessor("org.projectlombok:lombok:1.18.20")
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    fun testExtendingConfigurationsHierarchy(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, withVersionCatalogs = false) {
+            testHighlighting(
+                """
+                dependencies {
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                    <weak_warning>implementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+                    <weak_warning>testImplementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    fun testNotExtendingConfigurations(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, withVersionCatalogs = false) {
+            testHighlighting(
+                """
+                dependencies {
+                    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                    compileOnly("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                    runtimeOnly("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                    testCompileOnly("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
                 }
                 """.trimIndent()
             )
@@ -967,6 +1025,42 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
                     api(projects.subproject1)
                     <weak_warning>api(projects.subproject1.sub)</weak_warning>
                     <weak_warning>api(projects.subproject1.sub)</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    fun `test custom configuration directly extending implementation`(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, withVersionCatalogs = false) {
+            codeInsightFixture.enableInspections(GradleAvoidDuplicateDependenciesInspection::class.java)
+            testHighlighting(
+                """
+                val customExtendingImplementation = configurations.named("customExtendingImplementation").get()
+                dependencies {
+                    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                    <weak_warning>customExtendingImplementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+    fun `test custom configuration indirectly extending api`(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, withVersionCatalogs = false) {
+            codeInsightFixture.enableInspections(GradleAvoidDuplicateDependenciesInspection::class.java)
+            testHighlighting(
+                """
+                val customExtendingImplementation = configurations.named("customExtendingImplementation").get()
+                dependencies {
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                    <weak_warning>customExtendingImplementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
                 }
                 """.trimIndent()
             )

@@ -1,19 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.execution.Platform;
-import com.intellij.ide.IdeBundle;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
@@ -33,19 +23,28 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 final class SettingsHelper {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
-  private static final String MISSING_LIBS_SUPPORT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360016421559";
-
-  static final @NotNull NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = NotNullLazyValue.createValue(() -> {
-    return NotificationGroup.create("JCEF", NotificationDisplayType.BALLOON, true, null, null, null);
-  });
-
+  private static final String SETTINGS_CHROMIUM_SPECIAL_ARGS_KEY = "cef_chromium_special_args";
+  private static final boolean SKIP_CHROMIUM_SPECIAL_ARGS = Utils.getBoolean("jcef_skip_chromium_special_args", false);
   private static String ourLinuxDistribution = null;
 
   static boolean isOffScreenRenderingModeEnabled() {
@@ -55,8 +54,6 @@ final class SettingsHelper {
   static CefSettings loadSettings(@NotNull JCefAppConfig config) {
     CefSettings settings = config.getCefSettings();
     settings.windowless_rendering_enabled = isOffScreenRenderingModeEnabled();
-    settings.log_severity = getLogLevel();
-    settings.log_file = getChromiumLogPath();
 
     //todo[tav] IDEA-260446 & IDEA-260344 However, without proper background the CEF component flashes white in dark themes
     //settings.background_color = settings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
@@ -123,8 +120,8 @@ final class SettingsHelper {
   }
 
   @NotNull
-  static String @NotNull [] loadArgs(@NotNull JCefAppConfig config, @NotNull CefSettings settings, @Nullable BoolRef doTrackGPUCrashes) {
-    String[] argsFromProviders = JBCefAppRequiredArgumentsProvider
+  static String @NotNull [] loadArgs(@NotNull CefSettings settings, @Nullable BoolRef doTrackGPUCrashes) {
+    String[] args = JBCefAppRequiredArgumentsProvider
       .getProviders()
       .stream()
       .flatMap(p -> {
@@ -133,8 +130,6 @@ final class SettingsHelper {
       })
       .distinct()
       .toArray(String[]::new);
-
-    String[] args = ArrayUtil.mergeArrays(config.getAppArgs(), argsFromProviders);
 
     JBCefProxySettings proxySettings = JBCefProxySettings.getInstance();
     String[] proxyArgs = null;
@@ -177,7 +172,7 @@ final class SettingsHelper {
 
     if (Registry.is("ide.browser.jcef.gpu.disable")) {
       // Add possibility to disable GPU (see IDEA-248140)
-      args = ArrayUtil.mergeArrays(args, "--disable-gpu", "--disable-gpu-compositing");
+      args = ArrayUtil.mergeArrays(args, SettingsHelper.ChromiumArgs.DISABLE_GPU);
     }
 
     final boolean trackGPUCrashes = Registry.is("ide.browser.jcef.gpu.infinitecrash");
@@ -217,68 +212,74 @@ final class SettingsHelper {
       args = ArrayUtil.mergeArrays(args, "--ozone-platform=x11");
     }
 
+    if (!SKIP_CHROMIUM_SPECIAL_ARGS) {
+      final PropertiesComponent props = PropertiesComponent.getInstance();
+      final List<String> specialArgs = props.getList(SETTINGS_CHROMIUM_SPECIAL_ARGS_KEY);
+      if (specialArgs != null && !specialArgs.isEmpty()) {
+        args = ArrayUtil.mergeArrays(args, ArrayUtil.toStringArray(specialArgs));
+      }
+    }
+
     return args;
   }
 
-  static void showNotificationDisableGPU() {
-    Notification notification = NOTIFICATION_GROUP.getValue().createNotification(
-      IdeBundle.message("notification.content.jcef.gpucrash.title"),
-      IdeBundle.message("notification.content.jcef.gpucrash.message", ApplicationInfo.getInstance().getFullApplicationName()),
-      NotificationType.ERROR);
+  static void saveChromiumArgs(String[] args) {
+    if (args == null || args.length == 0)
+      return;
 
-    notification.addAction(new AnAction(IdeBundle.message("notification.content.jcef.gpucrash.action.restart")) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        ApplicationManager.getApplication().restart();
+    final PropertiesComponent props = PropertiesComponent.getInstance();
+    props.setList(SETTINGS_CHROMIUM_SPECIAL_ARGS_KEY, Arrays.asList(args));
+  }
+
+  static Path findCrashStacktrace() {
+    //  C++: std::strftime(buf, sizeof(buf), "%Y-%m-%d_%H-%M-%S", std::localtime(&now));
+    final SimpleDateFormat sdf = new SimpleDateFormat("y-M-d_H-m-s");
+
+    try {
+      Map<Date, Path> m = new HashMap<>();
+      try (Stream<Path> paths = Files.list(Paths.get(System.getProperty("java.io.tmpdir")))) {
+        paths.filter(Files::isRegularFile).forEach(f -> {
+          final String fname = f.getFileName().toString();
+          final String prefix = "crash_stacktrace_";
+          final String suffix = ".txt";
+          if (fname.startsWith(prefix) && fname.endsWith(suffix)) {
+            final String sdate = fname.substring(prefix.length() + 1, fname.indexOf(suffix));
+            Date d = null;
+            try {
+              d = sdf.parse(sdate);
+            } catch (ParseException e) {
+              LOG.debug("Can't parse date from crash_stacktrace file '" + fname + "'.", e);
+            }
+            m.put(d, f);
+          }
+        });
       }
-    });
-    if (!Registry.is("ide.browser.jcef.gpu.disable")) {
-      //noinspection DialogTitleCapitalization
-      notification.addAction(new AnAction(IdeBundle.message("notification.content.jcef.gpucrash.action.disable")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          Registry.get("ide.browser.jcef.gpu.disable").setValue(true);
-          ApplicationManager.getApplication().restart();
-        }
-      });
+
+      if (m.size() == 1) {
+        return m.values().iterator().next();
+      }
+
+      if (m.size() > 1) {
+        List<Date> dates = new ArrayList<>(m.keySet());
+        Collections.sort(dates, Comparator.naturalOrder());
+        return m.get(dates.getFirst());
+      }
+    } catch (Throwable e) {
+      LOG.debug(e);
     }
-    notification.notify(null);
+    return null;
   }
 
-  static CefSettings.LogSeverity getLogLevel() {
-    String level = Utils.getString("ide.browser.jcef.log.level", "disable").toLowerCase(Locale.ENGLISH);
-    return switch (level) {
-      case "disable" -> CefSettings.LogSeverity.LOGSEVERITY_DISABLE;
-      case "verbose" -> CefSettings.LogSeverity.LOGSEVERITY_VERBOSE;
-      case "info" -> CefSettings.LogSeverity.LOGSEVERITY_INFO;
-      case "warning" -> CefSettings.LogSeverity.LOGSEVERITY_WARNING;
-      case "error" -> CefSettings.LogSeverity.LOGSEVERITY_ERROR;
-      case "fatal" -> CefSettings.LogSeverity.LOGSEVERITY_FATAL;
-      default -> CefSettings.LogSeverity.LOGSEVERITY_DISABLE;
-    };
-  }
+  final static class ChromiumArgs {
+    static final String[] DISABLE_GPU = new String[]{"--disable-gpu", "--disable-gpu-compositing"};
 
-  static boolean isDebugMode() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      // Temporary code for debugging (IJPL-149228), TODO: remove later
+    static boolean isDisabledGPU(Collection<String> chromiumArgs) {
+      for  (String arg : DISABLE_GPU) {
+        if (!chromiumArgs.contains(arg))
+          return false;
+      }
       return true;
     }
-    return Utils.getBoolean("jcef_debug", false);
-  }
-
-  static String getLogPath() {
-    if (Utils.getBoolean("JCEF_USE_IDE_LOG")) // just for convenient debugging
-      return PathManager.getLogPath() + Platform.current().fileSeparator + "idea.log";
-
-    final String def = PathManager.getLogPath() + Platform.current().fileSeparator + "jcef_" + ProcessHandle.current().pid() + ".log";
-    final String result = Utils.getString("ide.browser.jcef.log.path", def).trim();
-    return result.isEmpty() || result.equals("null") || result.equals("stderr") ? null : result;
-  }
-
-  static String getChromiumLogPath() {
-    final String def = PathManager.getLogPath() + Platform.current().fileSeparator + "jcef_chromium_" + ProcessHandle.current().pid() + ".log";
-    final String result = Utils.getString("ide.browser.jcef.log_chromium.path", def).trim();
-    return result.isEmpty() || result.equals("null") || result.equals("stderr") ? null : result;
   }
 
   private static @Nullable String readLinuxDistributionFromOsRelease() {

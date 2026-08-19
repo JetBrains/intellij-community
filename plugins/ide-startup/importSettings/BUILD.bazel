@@ -55,7 +55,7 @@ jvm_library(
         "//libraries/miglayout-swing",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/core",
-        "@lib//:jna",
+        "//libraries/jna",
         "@lib//:sqlite",
         "//libraries/classgraph",
         "//platform/util:util-ui",
@@ -107,6 +107,7 @@ jvm_library(
         "//libraries/miglayout-swing:miglayout-swing_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//libraries/classgraph:classgraph_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/testFramework",
@@ -128,6 +129,7 @@ jvm_library(
 exports_files(
     [
         "intellij.ide.startup.importSettings.iml",
+        "resources/intellij.ide.startup.importSettings.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -219,7 +221,8 @@ jvm_library(
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/core:core_test_lib",
-        "@lib//:jna",
+        "//libraries/jna",
+        "//libraries/jna:jna_test_lib",
         "@lib//:sqlite",
         "//libraries/classgraph",
         "//libraries/classgraph:classgraph_test_lib",

@@ -11,7 +11,7 @@ import com.intellij.platform.workspace.jps.entities.projectLibraries
 import com.intellij.platform.workspace.jps.entities.sourceRoots
 import com.intellij.platform.workspace.jps.serialization.impl.JpsConfigurationFilesChange
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.testFramework.junit5.TestApplication
@@ -31,7 +31,7 @@ class JpsProjectReloadingTest {
 
   @BeforeEach
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManagerImpl()
+    virtualFileManager = ConcurrentVirtualFileUrlManager()
   }
 
   @ParameterizedTest(name = "unloaded = {0}")

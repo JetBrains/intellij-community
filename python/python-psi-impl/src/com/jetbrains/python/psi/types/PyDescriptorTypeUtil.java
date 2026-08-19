@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -28,6 +29,10 @@ public final class PyDescriptorTypeUtil {
                                                              @Nullable PyType attributeType,
                                                              @NotNull TypeEvalContext context) {
     if (!expression.isQualified()) return null;
+    if (attributeType instanceof PyUnionType unionType) {
+      return mapDescriptorUnion(unionType, member -> getDunderGetReturnType(expression, instanceType, member, context));
+    }
+
     final PyClassLikeType targetType = as(attributeType, PyClassLikeType.class);
     if (targetType == null || targetType.isDefinition()) return null;
 
@@ -42,6 +47,10 @@ public final class PyDescriptorTypeUtil {
   public static @Nullable Ref<PyType> getExpectedValueTypeForDunderSet(@NotNull PyQualifiedExpression targetExpression,
                                                                        @Nullable PyType attributeType,
                                                                        @NotNull TypeEvalContext context) {
+    if (attributeType instanceof PyUnionType unionType) {
+      return mapDescriptorUnion(unionType, member -> getExpectedValueTypeForDunderSet(targetExpression, member, context));
+    }
+
     final PyClassLikeType targetType = as(attributeType, PyClassLikeType.class);
     if (targetType == null || targetType.isDefinition()) return null;
 
@@ -51,6 +60,28 @@ public final class PyDescriptorTypeUtil {
     if (members == null || members.isEmpty()) return null;
 
     return getExpectedTypeFromDunderSet(targetExpression, attributeType, context);
+  }
+
+  /**
+   * Resolves each union member via {@code resolver}: a non-null result replaces the member, others are kept.
+   * Returns {@code null} when no member resolved, so plain unions keep their original type.
+   */
+  private static @Nullable Ref<PyType> mapDescriptorUnion(@NotNull PyUnionType unionType,
+                                                          @NotNull Function<@Nullable PyType, @Nullable Ref<PyType>> resolver) {
+    boolean anyDescriptor = false;
+    final List<PyType> mapped = new ArrayList<>();
+    for (PyType member : unionType.getMembers()) {
+      final Ref<PyType> resolved = resolver.apply(member);
+      if (resolved != null) {
+        anyDescriptor = true;
+        mapped.add(resolved.get());
+      }
+      else {
+        mapped.add(member);
+      }
+    }
+    if (!anyDescriptor) return null;
+    return Ref.create(PyUnionType.union(mapped));
   }
 
   private static @Nullable Ref<PyType> getTypeFromSyntheticDunderGetCall(@NotNull PyQualifiedExpression expression,
@@ -89,7 +120,7 @@ public final class PyDescriptorTypeUtil {
     if (qualifier != null && attributeType instanceof PyCallableType) {
       PyType qualifierType = context.getType(qualifier);
       if (qualifierType instanceof PyClassType classType && !classType.isDefinition()) {
-        objectArgumentType = qualifierType;
+        objectArgumentType = qualifierType; // TODO: Incorrect: can be union
       }
     }
     List<PyType> argumentTypes = new ArrayList<>();

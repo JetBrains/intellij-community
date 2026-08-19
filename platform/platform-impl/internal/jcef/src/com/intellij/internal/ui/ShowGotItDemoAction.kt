@@ -20,6 +20,7 @@ import com.intellij.ui.GotItTextBuilder
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.WebAnimationUtils
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.COLUMNS_LARGE
 import com.intellij.ui.dsl.builder.Cell
@@ -30,7 +31,6 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.layout.not
 import com.intellij.ui.paint.LinePainter2D
@@ -275,7 +275,7 @@ internal class ShowGotItDemoAction : DumbAwareAction() {
         PropertiesComponent.getInstance().setValue(LAST_OPENED_LOTTIE_FILE, lottieJsonPath)
       }
       if (showIconOrStep && showIcon) gotItBuilder.withIcon(icon)
-      if (showIconOrStep && showStepNumber) gotItBuilder.withStepNumber(stepText)
+      if (showIconOrStep && showStepNumber) gotItBuilder.withStepText(stepText)
       if (showHeader) gotItBuilder.withHeader(headerText)
       if (showLink && actionLink) {
         gotItBuilder.withLink(actionLinkText) { ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)?.show() }

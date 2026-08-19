@@ -184,7 +184,7 @@ internal enum class EdtDispatcherKind(
 
   fun presentableName(): String = when (this) {
     EDT -> "Dispatchers.EDT"
-    LAX_UI -> "Dispatchers.ui(RELAX)"
+    LAX_UI -> "Dispatchers.UiWithModelAccess"
     UI -> "Dispatchers.UI"
     MAIN -> "Dispatchers.Main"
   }

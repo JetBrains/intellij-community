@@ -1,6 +1,7 @@
 package com.intellij.mcpserver.settings
 
 import com.intellij.mcpserver.McpTool
+import com.intellij.mcpserver.settings.McpToolDisallowListSettings.ToolState
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SimplePersistentStateComponent
@@ -9,23 +10,36 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Property
-import com.intellij.util.xmlb.annotations.XMap
 import com.intellij.util.xmlb.annotations.XCollection
+import com.intellij.util.xmlb.annotations.XMap
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-@Service
-@State(name = "McpToolDisallowListSettings", storages = [Storage("mcpToolDisallowList.xml")])
-internal class McpToolDisallowListSettings : SimplePersistentStateComponent<McpToolDisallowListSettings.MyState>(MyState()) {
+interface McpToolDisallowListSettings {
   companion object {
     @JvmStatic
-    fun getInstance(): McpToolDisallowListSettings = service()
+    fun getInstance(): McpToolDisallowListSettings = service<McpToolDisallowListSettingsImpl>()
   }
 
-  private val _toolStatesFlow = MutableStateFlow(state.getToolStates())
+  var toolStates: Map<String, ToolState>
 
   val toolStatesFlow: StateFlow<Map<String, ToolState>>
+
+  fun toolStateFor(tool: McpTool): ToolState
+
+  data class ToolState(
+    val enabled: Boolean = true,
+    val routerOnly: Boolean = true,
+  )
+}
+
+@Service
+@State(name = "McpToolDisallowListSettings", storages = [Storage("mcpToolDisallowList.xml")])
+internal class McpToolDisallowListSettingsImpl : McpToolDisallowListSettings, SimplePersistentStateComponent<McpToolDisallowListSettingsImpl.MyState>(MyState()) {
+  private val _toolStatesFlow = MutableStateFlow(state.getToolStates())
+
+  override val toolStatesFlow: StateFlow<Map<String, ToolState>>
     get() = _toolStatesFlow.asStateFlow()
 
   override fun loadState(state: MyState) {
@@ -37,7 +51,7 @@ internal class McpToolDisallowListSettings : SimplePersistentStateComponent<McpT
     _toolStatesFlow.value = this.state.getToolStates()
   }
 
-  var toolStates: Map<String, ToolState>
+  override var toolStates: Map<String, ToolState>
     get() = state.getToolStates()
     set(value) {
       state.toolStatesData.clear()
@@ -46,17 +60,12 @@ internal class McpToolDisallowListSettings : SimplePersistentStateComponent<McpT
       _toolStatesFlow.value = value
     }
 
-  fun toolStateFor(tool: McpTool): ToolState {
+  override fun toolStateFor(tool: McpTool): ToolState {
     val states = toolStates
     return states[tool.descriptor.fullyQualifiedName]
            ?: states[tool.descriptor.name]
            ?: ToolState()
   }
-
-  data class ToolState(
-    val enabled: Boolean = true,
-    val routerOnly: Boolean = true,
-  )
 
   internal class ToolStateBean() : BaseState() {
     constructor(toolState: ToolState) : this() {

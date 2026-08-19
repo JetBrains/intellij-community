@@ -14,7 +14,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.util.rt.java8",
     visibility = ["//visibility:public"],
-    deps = ["@lib//:jetbrains-annotations"],
+    deps = ["//libraries/jetbrains/annotations"],
 )
 
 jvm_library(
@@ -27,7 +27,11 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.util.rt.java8",
     visibility = ["//visibility:public"],
-    runtime_deps = [":rt-java8"],
+    runtime_deps = [
+        # do not sort,
+        ":rt-java8",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.util.rt.java8` end
 

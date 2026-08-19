@@ -10,10 +10,9 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.project.projectId
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
@@ -158,6 +157,9 @@ class SeTabDelegate(
    * Defines if results can be shown in <i>Find</i> toolwindow.
    */
   suspend fun canBeShownInFindResults(): Boolean {
+    // The Find tool window is populated by the backend (SeRemoteApi.openInFindToolWindow):
+    // in IJ Light the action cannot work, so it is not offered (IJPL-252054)
+    if (SeRemoteApi.tryGetInstance() == null && IdeProductMode.isLight) return false
     return providers.getValue().canBeShownInFindResults()
   }
 
@@ -173,12 +175,14 @@ class SeTabDelegate(
   ): Boolean {
     if (project == null) return false
 
-    return SeRemoteApi.getInstance().openInFindToolWindow(project.projectId(),
-                                                          session,
-                                                          dataContextId,
-                                                          providers.getValue().getProviderIds(disabledProviders ?: emptyList()),
-                                                          params,
-                                                          isAllTab)
+    // tryGetInstance: awaiting the connection would suspend a click forever in IJ Light (IJPL-252054)
+    val remoteApi = SeRemoteApi.tryGetInstance() ?: return false
+    return remoteApi.openInFindToolWindow(project.projectId(),
+                                          session,
+                                          dataContextId,
+                                          providers.getValue().getProviderIds(disabledProviders ?: emptyList()),
+                                          params,
+                                          isAllTab)
   }
 
   /**
@@ -385,8 +389,7 @@ class SeTabDelegate(
 
       val availableRemoteProviders = when {
         projectId == null -> null
-        !service<RemoteApiProviderService>().isServiceOperational() -> null
-        else -> SeRemoteApi.getInstance().getAvailableProviderIds(projectId, session, dataContextId)
+        else -> SeRemoteApi.tryGetInstance()?.getAvailableProviderIds(projectId, session, dataContextId)
       }
 
       val essentialRemoteProviderIds = availableRemoteProviders?.essential?.filter {

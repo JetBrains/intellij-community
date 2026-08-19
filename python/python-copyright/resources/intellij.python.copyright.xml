@@ -1,7 +1,11 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.copyright"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.python.community.impl"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij.copyright">
     <updater filetype="Python" implementationClass="com.intellij.python.copyright.PyUpdateCopyrightsProvider"/>

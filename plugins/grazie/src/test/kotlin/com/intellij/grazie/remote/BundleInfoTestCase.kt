@@ -40,10 +40,20 @@ abstract class BundleInfoTestCase: BasePlatformTestCase() {
         continue
       }
       val path = downloadLanguages(descriptor)
-      expected[key] = "private const val ${key}_CHECKSUM = \"${GrazieRemote.checksum(path)}\""
-      actual[key] = "private const val ${key}_CHECKSUM = \"${descriptor.checksum}\""
+      val checksum = GrazieRemote.checksum(path)
+      val contentChecksum = if (descriptor.contentChecksum == descriptor.checksum) checksum else checksum(path)
+      expected[key] = formatChecksums(key, checksum, contentChecksum)
+      actual[key] = formatChecksums(key, descriptor.checksum, descriptor.contentChecksum)
     }
     assertEquals(message, expected.values.joinToString("\n"), actual.values.joinToString("\n"))
+  }
+
+  protected open fun checksum(path: Path): String = GrazieRemote.checksum(path)
+
+  private fun formatChecksums(key: String, checksum: String, contentChecksum: String): String {
+    if (checksum == contentChecksum) return "private const val ${key}_CHECKSUM = \"$checksum\""
+    return "private const val ${key}_JAR_CHECKSUM = \"$checksum\"\n" +
+           "private const val ${key}_CONTENT_CHECKSUM = \"$contentChecksum\""
   }
 
   private fun downloadLanguages(descriptor: RemoteLangDescriptor): Path {

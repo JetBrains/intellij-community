@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,12 +9,12 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-
 @State(name = "GroovyApplicationSettings", storages = @Storage("groovy_config.xml"), category = SettingsCategory.CODE)
 public class GroovyApplicationSettings implements PersistentStateComponent<GroovyApplicationSettings> {
 
   public boolean INTRODUCE_LOCAL_CREATE_FINALS = false;
   public boolean INTRODUCE_LOCAL_SELECT_DEF = true;
+  public Type INTRODUCE_TYPE = null;
   public boolean FORCE_RETURN = false;
   public Boolean EXTRACT_METHOD_SPECIFY_TYPE = null;
   public String EXTRACT_METHOD_VISIBILITY = null;
@@ -30,10 +29,16 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
   @Override
   public void loadState(@NotNull GroovyApplicationSettings groovyApplicationSettings) {
     XmlSerializerUtil.copyBean(groovyApplicationSettings, this);
+    if (INTRODUCE_TYPE == null) {
+      INTRODUCE_TYPE = INTRODUCE_LOCAL_SELECT_DEF ? Type.DEF : Type.TYPED;
+    }
   }
 
   public static GroovyApplicationSettings getInstance() {
     return ApplicationManager.getApplication().getService(GroovyApplicationSettings.class);
   }
 
+  public enum Type {
+    DEF, FINAL, VAR, VAL, TYPED
+  }
 }

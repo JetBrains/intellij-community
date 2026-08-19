@@ -16,10 +16,12 @@
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.diagnostic.telemetry.impl"/>
     <module name="intellij.platform.diff"/>
     <module name="intellij.platform.diff.impl"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.lang"/>

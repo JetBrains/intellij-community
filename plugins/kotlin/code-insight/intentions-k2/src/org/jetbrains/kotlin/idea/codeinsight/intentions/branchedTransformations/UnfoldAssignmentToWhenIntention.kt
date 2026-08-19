@@ -45,5 +45,6 @@ class UnfoldAssignmentToWhenIntention :
         }
     }
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit = Unit
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Unit = Unit
 }

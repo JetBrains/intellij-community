@@ -22,7 +22,6 @@ import com.intellij.platform.debugger.impl.rpc.InlineBreakpointVariantWithMatchi
 import com.intellij.platform.debugger.impl.rpc.InlineBreakpointVariantsOnLine
 import com.intellij.platform.debugger.impl.rpc.TimeoutSafeResult
 import com.intellij.platform.debugger.impl.rpc.VariantSelectedResponse
-import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeDto
@@ -42,6 +41,7 @@ import com.intellij.platform.debugger.impl.rpc.XLineBreakpointVariantDto
 import com.intellij.platform.debugger.impl.rpc.XNoBreakpointPossibleResponse
 import com.intellij.platform.debugger.impl.rpc.XRemoveBreakpointResponse
 import com.intellij.platform.debugger.impl.rpc.XToggleLineBreakpointResponse
+import com.intellij.platform.debugger.impl.rpc.xExpression
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.util.DocumentUtil
@@ -137,7 +137,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     }
   }
 
-  override suspend fun addBreakpointThroughLux(projectId: ProjectId, typeId: XBreakpointTypeId): TimeoutSafeResult<XBreakpointDto?> {
+  override suspend fun addBreakpointThroughLux(projectId: ProjectId, typeId: XBreakpointTypeId): TimeoutSafeResult<XBreakpointId?> {
     val project = projectId.findProjectOrNull() ?: return CompletableDeferred(value = null)
     val type = XBreakpointUtil.findType(typeId.id) ?: return CompletableDeferred(value = null)
     return project.service<BackendXBreakpointTypeApiProjectCoroutineScope>().cs.async(Dispatchers.EDT) {
@@ -145,7 +145,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
       val rawBreakpoint = type.addBreakpoint(project, null)
       val xBreakpointBase = rawBreakpoint as? XBreakpointBase<*, *, *>
       LOG.debug { "[$requestId] Adding breakpoint through lux: ${xBreakpointBase?.breakpointId}" }
-      xBreakpointBase?.toRpc()
+      xBreakpointBase?.breakpointId
     }
   }
 
@@ -251,7 +251,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
       setVerticalPlacement(placement)
       if (request.isLogging) {
         setSuspendPolicy(SuspendPolicy.NONE)
-        setLogExpressionIfEnabled(request.logExpression)
+        setLogExpressionIfEnabled(request.logExpression?.xExpression())
       }
       setTemporary(request.isTemporary)
     }
@@ -340,6 +340,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
       enabledIcon = enabledIcon.rpcId(),
       disabledIcon = disabledIcon.rpcId(),
       suspendNoneIcon = suspendNoneIcon.rpcId(),
+      suspendNoneDisabledIcon = suspendNoneDisabledIcon.rpcId(),
       mutedEnabledIcon = mutedEnabledIcon.rpcId(),
       mutedDisabledIcon = mutedDisabledIcon.rpcId(),
       pendingIcon = pendingIcon?.rpcId(),

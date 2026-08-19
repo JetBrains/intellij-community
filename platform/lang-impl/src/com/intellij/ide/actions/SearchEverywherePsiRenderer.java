@@ -16,6 +16,7 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,8 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
   private EditorColorsScheme scheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
 
   public SearchEverywherePsiRenderer(Disposable parent) {
+    ThreadingAssertions.softAssertAwtOperationsThread();
+
     setLayout(new SELayout());
 
     ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(LafManagerListener.TOPIC, _ -> {

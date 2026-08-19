@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.annotations.NativePath
+import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -31,10 +32,11 @@ internal class BackendTerminalHyperlinkFacade(
   private val debugName: String,
   private val project: Project,
   eelDescriptor: EelDescriptor,
+  homeDirectory: EelPath,
   coroutineScope: CoroutineScope,
 ) {
   private val mutex = Mutex()
-  private val filterContext = TerminalHyperlinkFilterContextImpl(eelDescriptor)
+  private val filterContext = TerminalHyperlinkFilterContextImpl(eelDescriptor, homeDirectory)
   private val filterWrapper = CompositeFilterWrapper(project, coroutineScope, filterContext).also {
     it.getFilter() // kickstart computation
   }

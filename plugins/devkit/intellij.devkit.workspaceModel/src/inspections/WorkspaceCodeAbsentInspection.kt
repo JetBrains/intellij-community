@@ -12,7 +12,7 @@ import com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.workspaceModel.codegen.engine.SKIPPED_TYPES
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex

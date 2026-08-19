@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.util.SuvorovProgress
 import com.intellij.openapi.util.SystemInfo
@@ -98,7 +99,7 @@ private const val DURATION_FILE_NAME = ".duration"
 private const val PID_FILE_NAME = ".pid"
 private val ideStartTime = ZonedDateTime.now()
 
-private val EP_NAME = ExtensionPointName<PerformanceListener>("com.intellij.idePerformanceListener")
+private val EP_NAME = ExtensionPointName<FreezeListener>("com.intellij.diagnostic.freezeListener")
 
 internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : PerformanceWatcher() {
   private val logDir = PathManager.getLogDir()
@@ -144,12 +145,16 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
         ApplicationManager.getApplication().serviceAsync<RegistryManager>()
 
         taskFlow.collectLatest { task ->
-          if (task == null) {
-            return@collectLatest
-          }
+          if (task == null) return@collectLatest
 
           delay(unresponsiveInterval.toLong().milliseconds)
-          task.edtFrozen()
+          try {
+            task.edtFrozen()
+          }
+          catch (e: Exception) {
+            rethrowControlFlowException(e)
+            LOG.warn("Task edtFrozen failed", e)
+          }
         }
       }
     }
@@ -282,8 +287,8 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
     val freezePopupStampAfterMeasurement = SuvorovProgress.currentFreezePopupStamp()
     swingApdex = swingApdex.withEvent(TOLERABLE_LATENCY, latencyMs)
 
-    val data = PerformanceListener.UiLagData(latencyMs, freezePopupStampAfterMeasurement.wasShownSince(freezePopupStampBeforeMeasurement))
-    EP_NAME.forEachExtensionSafe {
+    val data = FreezeListener.UiLagData(latencyMs, freezePopupStampAfterMeasurement.wasShownSince(freezePopupStampBeforeMeasurement))
+    EP_NAME.forEachExtensionSafeAsync {
       it.uiResponded(data)
     }
   }
@@ -443,7 +448,7 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
       }
     }
 
-    fun edtFrozen() {
+    suspend fun edtFrozen() {
       if (!state.compareAndSet(CheckerState.CHECKING, CheckerState.FREEZE_DETECTED)) {
         return
       }
@@ -462,13 +467,13 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
       }
     }
 
-    private fun startFreezeReporting(): PerformanceWatcherSamplingTask {
+    @Suppress("BlockingMethodInNonBlockingContext")
+    private suspend fun startFreezeReporting(): PerformanceWatcherSamplingTask {
       val freezeFolder = "${THREAD_DUMPS_PREFIX}freeze-${formatTime(ZonedDateTime.now())}-${buildName()}"
-
       val reportDir = logDir.resolve(freezeFolder)
       Files.createDirectories(reportDir)
 
-      EP_NAME.forEachExtensionSafe {
+      EP_NAME.forEachExtensionSafeAsync {
         it.uiFreezeStarted(reportDir, coroutineScope)
       }
 
@@ -488,14 +493,14 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
         val freezeFolder = task.freezeFolder
         val freezeDir = logDir.resolve(freezeFolder)
 
-        EP_NAME.forEachExtensionSafe {
+        EP_NAME.forEachExtensionSafeAsync {
           it.uiFreezeFinished(durationMs, freezeDir)
         }
         publisher?.uiFreezeFinished(durationMs, freezeDir)
 
         val reportDir = postProcessReportFolder(durationMs = durationMs, task = task, dir = logDir.resolve(freezeFolder), logDir = logDir)
 
-        EP_NAME.forEachExtensionSafe {
+        EP_NAME.forEachExtensionSafeAsync {
           it.uiFreezeRecorded(durationMs, reportDir)
         }
       }
@@ -537,8 +542,7 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
         Files.createDirectories(parent)
         Files.writeString(parent.resolve(DURATION_FILE_NAME), durationInSeconds.toString())
 
-        currentCoroutineContext().ensureActive()
-        EP_NAME.forEachExtensionSafe {
+        EP_NAME.forEachExtensionSafeAsync {
           it.dumpedThreads(file, threadDump)
         }
 
@@ -586,6 +590,18 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
       return "$activityName took ${currentTime - startMillis}ms; general responsiveness: ${
         watcher.generalApdex.summarizePerformanceSince(startGeneralSnapshot)
       }; EDT responsiveness: ${watcher.swingApdex.summarizePerformanceSince(startSwingSnapshot)}"
+    }
+  }
+}
+
+private suspend fun <T : Any> ExtensionPointName<T>.forEachExtensionSafeAsync(apply: suspend (listener: T) -> Unit) {
+  for (listener in extensionList) {
+    try {
+      apply(listener)
+    }
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      LOG.warn("Exception during extension point call", e)
     }
   }
 }
@@ -783,8 +799,8 @@ private suspend fun reportCrashesIfAny() {
     }
   }
 
-  IdeaFreezeReporter.saveAppInfo(appInfoFile, overwrite = true)
   withContext(Dispatchers.IO) {
+    IdeaFreezeReporter.saveAppInfo(appInfoFile, overwrite = true)
     Files.createDirectories(pidFile.parent)
     Files.writeString(pidFile, ProcessHandle.current().pid().toString())
   }

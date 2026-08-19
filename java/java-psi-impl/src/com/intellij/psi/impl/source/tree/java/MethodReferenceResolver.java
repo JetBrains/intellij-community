@@ -57,7 +57,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(reference);
 
     PsiClass containingClass = qualifierResolveResult.getContainingClass();
-    PsiSubstitutor substitutor = qualifierResolveResult.getSubstitutor();
+    PsiSubstitutor substitutor = PsiMethodReferenceUtil.getTypeToSearchSubstitutor(qualifierResolveResult, reference);
 
     if (containingClass != null) {
       PsiElement element = reference.getReferenceNameElement();

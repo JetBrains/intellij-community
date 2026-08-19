@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
@@ -150,21 +151,22 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
     GrVariable variable = getVariable();
     assert variable != null && variable.getInitializerGroovy() != null;
     final PsiType initializerType = variable.getInitializerGroovy().getType();
-    TypeConstraint[] constraints = initializerType != null && !initializerType.equals(PsiTypes.nullType()) ? new SupertypeConstraint[]{SupertypeConstraint.create(initializerType)}
-                                                                                                           : TypeConstraint.EMPTY_ARRAY;
-    ChooseTypeExpression typeExpression = new ChooseTypeExpression(constraints, variable.getManager(), variable.getResolveScope(), true, GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_SELECT_DEF);
-    PsiElement element = getTypeELementOrDef(variable);
+    TypeConstraint[] constraints = initializerType != null && !initializerType.equals(PsiTypes.nullType()) 
+                                   ? new SupertypeConstraint[]{SupertypeConstraint.create(initializerType)}
+                                   : TypeConstraint.EMPTY_ARRAY;
+    ChooseTypeExpression typeExpression = new ChooseTypeExpression(constraints, variable.getManager(), variable.getResolveScope(), true,
+                                                                   GroovyApplicationSettings.getInstance().INTRODUCE_TYPE);
+    PsiElement element = getTypeElementOrDef(variable);
     if (element == null) return;
     builder.replaceElement(element, "Variable_type", typeExpression, true, true);
   }
 
-  private static @Nullable PsiElement getTypeELementOrDef(@NotNull GrVariable variable) {
+  private static @Nullable PsiElement getTypeElementOrDef(@NotNull GrVariable variable) {
     GrTypeElement typeElement = variable.getTypeElementGroovy();
     if (typeElement != null) return typeElement;
 
     GrModifierList modifierList = variable.getModifierList();
-    if (modifierList != null) return modifierList.getModifier(GrModifier.DEF);
-    return null;
+    return modifierList != null ? modifierList.getModifier(GrModifier.DEF) : null;
   }
 
   @Override
@@ -194,7 +196,21 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
 
   @Override
   protected void saveSettings(@NotNull GrVariable variable) {
-    GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_SELECT_DEF = variable.getDeclaredType() == null;
+    if (variable.hasModifierProperty(GrModifier.DEF)) {
+      GroovyApplicationSettings.getInstance().INTRODUCE_TYPE = GroovyApplicationSettings.Type.DEF;
+    }
+    else if (variable.hasModifierProperty(GrModifier.VAR)) {
+      GroovyApplicationSettings.getInstance().INTRODUCE_TYPE = GroovyApplicationSettings.Type.VAR;
+    }
+    else if (variable.hasModifierProperty(GrModifier.VAL)) {
+      GroovyApplicationSettings.getInstance().INTRODUCE_TYPE = GroovyApplicationSettings.Type.VAL;
+    }
+    else if (variable.hasModifierProperty(PsiModifier.FINAL) && variable.getTypeElementGroovy() == null) {
+      GroovyApplicationSettings.getInstance().INTRODUCE_TYPE = GroovyApplicationSettings.Type.FINAL;
+    }
+    else {
+      GroovyApplicationSettings.getInstance().INTRODUCE_TYPE = GroovyApplicationSettings.Type.TYPED;
+    }
   }
 
   @Override

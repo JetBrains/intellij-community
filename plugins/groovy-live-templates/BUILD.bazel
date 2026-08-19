@@ -19,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/groovy",
         "//platform/analysis-api:analysis",
@@ -44,6 +44,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":groovy-live-templates",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/groovy:groovy_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
@@ -60,6 +61,7 @@ jvm_library(
 exports_files(
     [
         "intellij.groovy.live.templates.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

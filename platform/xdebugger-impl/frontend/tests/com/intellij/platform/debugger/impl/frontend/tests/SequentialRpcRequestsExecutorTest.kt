@@ -115,6 +115,46 @@ internal class SequentialRpcRequestsExecutorTest {
     assertTrue(loggedErrors.map { it.message }.contains("boom"))
   }
 
+  @Test
+  fun `cancelled queued submit request is not executed`() = runTest { executor ->
+    val releaseFirstRequest = CompletableDeferred<Unit>()
+    val cancelledRequestStarted = CompletableDeferred<Unit>()
+
+    val firstRequest = executor.submit {
+      releaseFirstRequest.await()
+    }
+    val cancelledRequest = executor.submit {
+      cancelledRequestStarted.complete(Unit)
+    }
+
+    cancelledRequest.cancel()
+    releaseFirstRequest.complete(Unit)
+    firstRequest.await()
+
+    assertFalse(cancelledRequestStarted.isCompleted)
+  }
+
+  @Test
+  fun `cancelling submit request cancels its execution`() = runTest { executor ->
+    val requestStarted = CompletableDeferred<Unit>()
+    val requestCancelled = CompletableDeferred<Unit>()
+    val request = executor.submit {
+      try {
+        requestStarted.complete(Unit)
+        CompletableDeferred<Nothing>().await()
+      }
+      finally {
+        requestCancelled.complete(Unit)
+      }
+    }
+
+    requestStarted.await()
+    request.cancel()
+
+    requestCancelled.await()
+    assertTrue(request.isCancelled)
+  }
+
   private fun runTest(test: suspend (SequentialRpcRequestsExecutor) -> Unit) = runBlocking {
     val scope = childScope("SequentialRpcRequestsExecutor")
     val executor = SequentialRpcRequestsExecutor.create(scope)

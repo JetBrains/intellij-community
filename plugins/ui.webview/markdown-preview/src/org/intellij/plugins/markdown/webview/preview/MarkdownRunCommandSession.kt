@@ -11,6 +11,7 @@ import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunne
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerPlace
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.TrustedProjectUtil
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.getMarkdownCommandWorkingDirectory
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.getMarkdownCommandWorkingDirectories
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 
 internal class MarkdownRunCommandSession private constructor(
@@ -59,10 +60,9 @@ internal class MarkdownRunCommandSession private constructor(
 
   private class Resolver(
     private val project: Project,
-    virtualFile: VirtualFile?,
+    private val virtualFile: VirtualFile?,
     private val candidates: List<MarkdownCommandCandidate>,
   ) {
-    private val workingDirectory = virtualFile?.let { getMarkdownCommandWorkingDirectory(project, it) }
     private val commands = LinkedHashMap<String, MarkdownRunCommand>()
     private val lineCommands = LinkedHashMap<String, MarkdownRunCommand.Line>()
 
@@ -87,12 +87,12 @@ internal class MarkdownRunCommandSession private constructor(
         } ?: continue
         commands[command.descriptor.id] = command
       }
-      return MarkdownRunCommandSession(project, workingDirectory, commands)
+      return MarkdownRunCommandSession(project, getWorkingDirectory(), commands)
     }
 
     private fun resolveLine(candidate: MarkdownCommandCandidate, allowRunConfigurations: Boolean): MarkdownRunCommand.Line? {
       val command = candidate.rawCommand.trim()
-      if (!CommandRunnerExtension.matches(project, workingDirectory, true, command, allowRunConfigurations)) return null
+      if (!CommandRunnerExtension.matches(project, getWorkingDirectories(), true, command, allowRunConfigurations)) return null
       val title = MarkdownBundle.message("markdown.runner.launch.command", command)
       return MarkdownRunCommand.Line(
         descriptor = candidate.toDescriptor(title),
@@ -120,6 +120,10 @@ internal class MarkdownRunCommandSession private constructor(
       val lang = CodeFenceLanguageGuesser.guessLanguageForInjection(language)
       return MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(lang) }
     }
+
+    private fun getWorkingDirectory(): String? = virtualFile?.let { getMarkdownCommandWorkingDirectory(project, it) }
+
+    private fun getWorkingDirectories(): List<String> = virtualFile?.let { getMarkdownCommandWorkingDirectories(project, it) } ?: emptyList()
   }
 }
 

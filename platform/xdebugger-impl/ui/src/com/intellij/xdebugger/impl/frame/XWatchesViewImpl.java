@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -40,6 +41,7 @@ import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
+import com.intellij.platform.debugger.impl.ui.XDebuggerUiBundle;
 import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -48,6 +50,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.util.CoroutineScopeKt;
 import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -72,7 +75,6 @@ import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchNode;
 import com.intellij.xdebugger.impl.inline.InlineWatchesRootNode;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
-import com.intellij.platform.debugger.impl.ui.XDebuggerUiBundle;
 import com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
@@ -86,6 +88,8 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.util.DisposableUtilKt;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,6 +118,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 @ApiStatus.Internal
 public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView, XInlineWatchesView {
@@ -307,8 +312,31 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
           });
           XDebugSessionProxy session = getSessionProxy();
           if (session != null) {
-            InlineCompletion.INSTANCE.install(editor, session.getCoroutineScope());
+            installInlineCompletion(editor, session.getCoroutineScope());
           }
+        }
+
+        private static void installInlineCompletion(EditorEx editor, CoroutineScope scope) {
+          InlineCompletion.INSTANCE.install(editor, scope);
+
+          // The session and editor have independent lifecycles. Run removal once and drop the editor-capturing runnable so the
+          // surviving lifecycle listener does not retain a disposed editor.
+          final AtomicReference<Runnable> disposeInlineCompletionRef = new AtomicReference<>(
+            () -> { InlineCompletion.INSTANCE.remove(editor); }
+          );
+          final Runnable doDisposeInlineCompletion = () -> {
+            final Runnable disposeImpl = disposeInlineCompletionRef.getAndSet(null);
+            if (disposeImpl != null) {
+              ApplicationManager.getApplication().invokeLater(disposeImpl);
+            }
+          };
+
+          // The debugger session can end while the watches editor is still alive.
+          DisposableUtilKt.onTermination(CoroutineScopeKt.asDisposable(scope), () -> {
+            doDisposeInlineCompletion.run();
+          });
+          // The watches editor can be recreated while the debugger session is still active.
+          EditorUtil.disposeWithEditor(editor, () -> { doDisposeInlineCompletion.run(); });
         }
       };
     final JComponent editorComponent = myEvaluateComboBox.getEditorComponent();

@@ -21,7 +21,7 @@ import com.intellij.mcpserver.stdio.IJ_MCP_ALLOWED_TOOLS
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.toolsets.general.UniversalToolset
 import com.intellij.mcpserver.toolwindow.TransportType
-import com.intellij.mcpserver.widget.enableIfNotExplicitlyDisabled
+import com.intellij.mcpserver.util.enableIfNotExplicitlyDisabled
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
@@ -34,6 +34,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.util.asDisposable
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.cio.CIO
@@ -145,17 +146,42 @@ open class McpServerService(val cs: CoroutineScope) {
     suspend fun getInstanceAsync(): McpServerService = serviceAsync()
 
     internal val callId = AtomicInteger(0)
+
+    @ApiStatus.Internal
+    fun useRouterByDefault() {
+      McpToolFilterSettings.getInstance().invocationMode = McpSessionInvocationMode.VIA_ROUTER
+    }
   }
 
-  private val toolsStateProviderDelegate = lazy {
-    McpToolsListProvider(cs)
-  }
+  private val toolsStateProviderLock = Any()
 
+  @Volatile
+  private var toolsStateProviderOrNull: McpToolsListProvider? = null
+
+  /**
+   * Synchronous fallback for the non-suspend API. Converting the tools is slow, so this must not be called on the EDT;
+   * prefer [toolsStateProviderAsync], which also converts them concurrently.
+   */
+  @get:RequiresBackgroundThread
   internal val toolsStateProvider: McpToolsListProvider
-    get() = toolsStateProviderDelegate.value
+    get() = toolsStateProviderOrNull ?: publishToolsStateProvider(McpToolsListProvider.computeAllMcpTools())
+
+  internal suspend fun toolsStateProviderAsync(): McpToolsListProvider {
+    return toolsStateProviderOrNull ?: publishToolsStateProvider(McpToolsListProvider.computeAllMcpToolsAsync())
+  }
+
+  /**
+   * The tools are converted before the lock is taken, so a caller that loses the race merely discards its own list and
+   * the extension point listeners are registered exactly once.
+   */
+  private fun publishToolsStateProvider(initialTools: McpToolsListProvider.ProviderTools): McpToolsListProvider {
+    return synchronized(toolsStateProviderLock) {
+      toolsStateProviderOrNull ?: McpToolsListProvider(cs, initialTools).also { toolsStateProviderOrNull = it }
+    }
+  }
 
   @TestOnly
-  internal fun isToolsStateProviderInitialized(): Boolean = toolsStateProviderDelegate.isInitialized()
+  internal fun isToolsStateProviderInitialized(): Boolean = toolsStateProviderOrNull != null
 
   private val server = MutableStateFlow(startGlobalServerIfEnabled())
 
@@ -184,12 +210,12 @@ open class McpServerService(val cs: CoroutineScope) {
     get() = connectionAddressProvider.serverStreamUrl
 
   fun start() {
-    McpServerSettings.getInstance().state.enableMcpServer = true
+    McpServerSettings.getInstance().enableMcpServer = true
     settingsChanged(true)
   }
 
   fun stop() {
-    McpServerSettings.getInstance().state.enableMcpServer = false
+    McpServerSettings.getInstance().enableMcpServer = false
     settingsChanged(false)
   }
 
@@ -274,7 +300,8 @@ open class McpServerService(val cs: CoroutineScope) {
     return currentServer.engineConfig.connectors.firstOrNull()?.host?.takeUnless { it.isBlank() }
   }
 
-  internal fun settingsChanged(enabled: Boolean) {
+  //todo: I think that should be a subscription to McpServerSettings
+  fun settingsChanged(enabled: Boolean) {
     server.update { currentServer ->
       val effectivelyEnabled = enabled || isMcpServerForceEnabled()
       if (!effectivelyEnabled) {
@@ -298,12 +325,12 @@ open class McpServerService(val cs: CoroutineScope) {
   }
 
   private fun startGlobalServerIfEnabled(): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? {
-    if (!isMcpServerEffectivelyEnabled(McpServerSettings.getInstance().state.enableMcpServer)) return null
+    if (!isMcpServerEffectivelyEnabled(McpServerSettings.getInstance().enableMcpServer)) return null
     return startGlobalServer()
   }
 
   private fun startGlobalServer(): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? {
-    val settings = McpServerSettings.getInstance().state
+    val settings = McpServerSettings.getInstance()
     val forcePortState = getForcedMcpServerPortState()
     val desiredPort = when (forcePortState) {
       ForcedPortState.Absent -> settings.mcpServerPort
@@ -334,6 +361,11 @@ open class McpServerService(val cs: CoroutineScope) {
         // save to settings can be done asynchronously
         settings.mcpServerPort = server.engine.resolvedConnectors().first().port
       }
+    }
+    // Warm the tool list up here rather than lazily on first use: this is where the latency matters, and it keeps the
+    // reflection-heavy conversion in a coroutine, so neither an incoming session nor the settings UI has to block on it.
+    cs.launch {
+      toolsStateProviderAsync()
     }
     return server
   }
@@ -467,7 +499,7 @@ open class McpServerService(val cs: CoroutineScope) {
     }.start(wait = false)
   }
 
-  internal fun getMcpTools(
+  fun getMcpTools(
     filter: McpToolFilter? = null,
     useFiltersFromEP: Boolean = true,
     clientInfo: Implementation? = null,
@@ -482,8 +514,34 @@ open class McpServerService(val cs: CoroutineScope) {
                                invocationMode = invocationMode)
   }
 
+  /**
+   * Same as [getMcpTools], but never blocks the calling thread on the initial tool conversion.
+   */
+  suspend fun getMcpToolsAsync(
+    filter: McpToolFilter? = null,
+    useFiltersFromEP: Boolean = true,
+    clientInfo: Implementation? = null,
+    sessionOptions: McpSessionOptions? = null,
+    invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT,
+  ): List<McpTool> {
+    return getMcpToolsFilteredAsync(filter,
+                                    useFiltersFromEP,
+                                    excludeProviders = emptySet(),
+                                    clientInfo = clientInfo,
+                                    sessionOptions = sessionOptions,
+                                    invocationMode = invocationMode)
+  }
+
+  /**
+   * The very first call converts all tools and therefore must not happen on the EDT; afterwards this is a plain
+   * state flow read. Use [getAllMcpToolsAsync] wherever the caller cannot know whether the tools are warm.
+   */
   internal fun getAllMcpTools(): List<McpTool> {
     return toolsStateProvider.allTools.value
+  }
+
+  internal suspend fun getAllMcpToolsAsync(): List<McpTool> {
+    return toolsStateProviderAsync().allTools.value
   }
 
   /**
@@ -500,11 +558,28 @@ open class McpServerService(val cs: CoroutineScope) {
   }
 
   /**
+   * Same as [getMcpToolsFiltered], but never blocks the calling thread on the initial tool conversion.
+   */
+  suspend fun getMcpToolsFilteredAsync(
+    filter: McpToolFilter? = null,
+    useFiltersFromEP: Boolean = true,
+    excludeProviders: Set<Class<out McpToolFilterProvider>>,
+    clientInfo: Implementation? = null,
+    sessionOptions: McpSessionOptions? = null,
+    invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT,
+  ): List<McpTool> {
+    toolsStateProviderAsync()
+    return withContext(Dispatchers.Default) {
+      getMcpToolsFiltered(filter, useFiltersFromEP, excludeProviders, clientInfo, sessionOptions, invocationMode)
+    }
+  }
+
+  /**
    * Returns MCP tools filtered by all filter providers except those specified in [excludeProviders].
    * This is useful for UI that needs to show tools filtered by some providers but not others
    * (e.g., showing tools for disallow list configuration without applying the disallow-list filter itself).
    */
-  internal fun getMcpToolsFiltered(
+  fun getMcpToolsFiltered(
     filter: McpToolFilter? = null,
     useFiltersFromEP: Boolean = true,
     excludeProviders: Set<Class<out McpToolFilterProvider>>,

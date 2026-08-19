@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  JavaConst.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/staticImportedConstantChanged/a/JavaConst.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_javaUsedInKotlin_staticImportedConstantChanged-a.kotlin_module
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/staticImportedConstantChanged/a/use.kt
+End of files
+------------------------------------------
+Exit code: OK

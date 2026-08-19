@@ -58,9 +58,12 @@ class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectMo
         val hasJsExecution = PomFile.KotlinGoals.Js in allGoalsSet || PomFile.KotlinGoals.TestJs in allGoalsSet
 
         val pomKotlinPlugins = pom.findKotlinPlugins()
+        val isPomProject = pom.domModel.packaging.stringValue == "pom"
+        val smartDefaultsDisabled = mavenProject.properties.getProperty("kotlin.smart.defaults.enabled")?.toBoolean() == false
 
         for (kotlinPlugin in pomKotlinPlugins) {
-            if (PomFile.KotlinGoals.Compile !in allGoalsSet && PomFile.KotlinGoals.Js !in allGoalsSet) {
+            val hasSmartDefaults = !smartDefaultsDisabled && isPomProject && kotlinPlugin.extensions.value == true
+            if (!hasSmartDefaults && PomFile.KotlinGoals.Compile !in allGoalsSet && PomFile.KotlinGoals.Js !in allGoalsSet) {
                 val fixes = if (hasJavaFiles) {
                     arrayOf(AddExecutionLocalFix(domFileElement.file, module, kotlinPlugin, PomFile.KotlinGoals.Compile))
                 } else {

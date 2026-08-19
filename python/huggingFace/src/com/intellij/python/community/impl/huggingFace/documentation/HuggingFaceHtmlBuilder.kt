@@ -82,7 +82,7 @@ class HuggingFaceHtmlBuilder(
 
     val linkRow = HtmlChunk.tag("a")
       .attr("href", HuggingFaceURLProvider.getEntityCardLink(modelInfo.itemId, entityKind).toString())
-      .child(HtmlChunk.text(PyHuggingFaceBundle.getMessage("python.hugging.face.open.on.link.text")))
+      .child(HtmlChunk.text(PyHuggingFaceBundle.message("python.hugging.face.open.on.link.text")))
       .wrapWith("p")
 
     val headerContainer = HtmlChunk.div()

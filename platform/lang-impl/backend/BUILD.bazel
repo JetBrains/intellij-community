@@ -26,6 +26,7 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/util",
         "//platform/kernel/backend",
+        "//platform/kernel/rpc.backend",
         "//jps/model-api:model",
         "//platform/ide-core",
         "//fleet/rhizomedb",
@@ -49,6 +50,7 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",
         "//platform/kernel/backend:backend_test_lib",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
         "//jps/model-api:model_test_lib",
         "//platform/backend:backend_test_lib",
         "//platform/ide-core:ide-core_test_lib",
@@ -61,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.lang.impl.backend.iml",
+        "resources/intellij.platform.lang.impl.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

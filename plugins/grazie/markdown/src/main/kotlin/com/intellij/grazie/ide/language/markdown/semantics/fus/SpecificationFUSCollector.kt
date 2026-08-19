@@ -3,13 +3,17 @@ package com.intellij.grazie.ide.language.markdown.semantics.fus
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.Specification
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.WithSpending
+import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.ide.msg.GrazieInitializerManager
+import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.components.service
 import kotlin.math.roundToLong
 
-internal object SpecificationFUSCollector: CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("grazie.semantics", 5)
+internal object SpecificationFUSCollector: CounterUsagesCollector(), GrazieStateLifecycle {
+  private val GROUP = EventLogGroup("grazie.semantics", 6)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -24,8 +28,20 @@ internal object SpecificationFUSCollector: CounterUsagesCollector() {
   private val FILE_COUNT_FIELD = EventFields.RoundedInt("fileCount")
   private val INDEX_FIELD = EventFields.Int("index")
   private val TOTAL_FIELD = EventFields.Int("total")
+  private val ENABLED_EVENT_FIELD = EventFields.Boolean("analysisEnabled")
 
   private const val COEFFICIENT = 1_000_000L
+
+  init {
+    service<GrazieInitializerManager>().register(this)
+  }
+
+  override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
+    if (prevState.specificationAnalysisEnabled != newState.specificationAnalysisEnabled) {
+      analysisEnabled.log(ENABLED_EVENT_FIELD.with(newState.specificationAnalysisEnabled))
+    }
+  }
+
 
 
   fun suggestionAccepted(index: Int, total: Int) = acceptSuggestionEvent.log(
@@ -75,5 +91,10 @@ internal object SpecificationFUSCollector: CounterUsagesCollector() {
     "suggestion.shown",
     INDEX_FIELD,
     TOTAL_FIELD,
+  )
+
+  private val analysisEnabled = GROUP.registerVarargEvent(
+    "analysis.enabled",
+    ENABLED_EVENT_FIELD,
   )
 }

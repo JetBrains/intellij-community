@@ -130,6 +130,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.inspect.iml",
+        "resources/intellij.platform.inspect.xml",
     ],
     visibility = ["//visibility:public"],
 )

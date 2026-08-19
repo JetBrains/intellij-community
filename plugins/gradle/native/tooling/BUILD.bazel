@@ -28,10 +28,10 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-        "@lib//:gradle",
+        "//libraries/gradle",
         "//platform/object-serializer:objectSerializer-annotations",
         "//libraries/commons/lang3",
     ],
@@ -50,8 +50,10 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":tooling",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
+        "//libraries/gradle:gradle_test_lib",
         "//platform/object-serializer:objectSerializer-annotations_test_lib",
         "//libraries/commons/lang3:lang3_test_lib",
     ],

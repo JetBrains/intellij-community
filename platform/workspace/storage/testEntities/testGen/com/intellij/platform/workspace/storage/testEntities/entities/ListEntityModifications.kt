@@ -18,7 +18,7 @@ interface ListEntityBuilder : WorkspaceEntityBuilder<ListEntity> {
 }
 
 internal object ListEntityType : EntityType<ListEntity, ListEntityBuilder>() {
-  override val entityClass: Class<ListEntity> get() = ListEntity::class.java
+  override val entityImplClass: Class<*> get() = ListEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ListEntityImpl.Builder::class.java
   operator fun invoke(
     data: List<String>,

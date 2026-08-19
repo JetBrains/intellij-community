@@ -9,6 +9,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,18 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class CoverageDataManager {
+  private static final Key<CoverageAnnotator> SUPPRESSED_PRESENTATION_ANNOTATOR_KEY = Key.create("coverage.suppressed.presentation.annotator");
+
+  @ApiStatus.Internal
+  public static void setSuppressedPresentation(@NotNull RunConfigurationBase<?> configuration, @NotNull CoverageAnnotator annotator) {
+    configuration.putUserData(SUPPRESSED_PRESENTATION_ANNOTATOR_KEY, annotator);
+  }
+
+  static @Nullable CoverageAnnotator takeSuppressedPresentationAnnotator(@NotNull RunConfigurationBase<?> configuration) {
+    CoverageAnnotator annotator = configuration.getUserData(SUPPRESSED_PRESENTATION_ANNOTATOR_KEY);
+    configuration.putUserData(SUPPRESSED_PRESENTATION_ANNOTATOR_KEY, null);
+    return annotator;
+  }
 
   CoverageDataManager() { }
 
@@ -93,6 +106,11 @@ public abstract class CoverageDataManager {
    * Called each time after a coverage suite is completely processed: data is loaded and accumulated
    */
   public void coverageDataCalculated(@NotNull CoverageSuitesBundle suite) {}
+
+  /**
+   * Called when coverage data loading or accumulation fails.
+   */
+  public void coverageDataCalculationFailed(@NotNull CoverageSuitesBundle suite) {}
 
   /**
    * Remove suite

@@ -3,9 +3,10 @@ package org.jetbrains.kotlin.idea.fir.search
 
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.LightVirtualFile
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analysisScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtElement

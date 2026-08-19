@@ -22,6 +22,14 @@ public abstract class JvmElementUsage implements Usage {
     myOwner = GraphElementInterner.intern(new JvmNodeReferenceID(in));
   }
 
+  static @NotNull JvmNodeReferenceID toOnDemandScope(@NotNull JvmNodeReferenceID scopeId) {
+    // transform '$' used in names of inner classes into '/' delimiter to reflect inner classes nesting
+    String name = scopeId.getNodeName();
+    String canonical = name.replace('$', '/');
+    //noinspection StringEquality,StringEqualitySSR
+    return canonical == name? scopeId : new JvmNodeReferenceID(canonical);
+  }
+
   @Override
   public void write(GraphDataOutput out) throws IOException {
     myOwner.write(out);

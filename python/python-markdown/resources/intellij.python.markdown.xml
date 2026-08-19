@@ -3,6 +3,9 @@
   <dependencies>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.markdown"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.lang.impl"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="org.intellij.markdown">

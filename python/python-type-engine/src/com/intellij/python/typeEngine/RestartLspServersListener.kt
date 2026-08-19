@@ -16,10 +16,11 @@ import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
-import com.intellij.python.pyrefly.PyreflyConfiguration
 import com.intellij.python.pyrefly.PyreflyPyTool
 import com.intellij.python.pyrefly.PyreflyUsageCollector
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
+import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.PyToolsState
+import com.intellij.python.pytools.ui.PyToolTypeEnginePreview
 import com.intellij.python.pytools.ui.getInstalledToolPackage
 import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.packaging.PythonVersionValue
@@ -27,7 +28,7 @@ import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.management.ui.installPyRequirementsBackground
-import com.jetbrains.python.packaging.pyRequirement
+import com.intellij.python.requirements.pyRequirement
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.sdk.PySdkListener
 import com.jetbrains.python.sdk.isReadOnly
@@ -59,10 +60,6 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
     if (typeEngineProjectSettings.typeEngine != PyTypeEngineType.PYREFLY)
       return
 
-    val pyreflyConfiguration = project.service<PyreflyConfiguration>()
-    if (pyreflyConfiguration.executableDiscoveryMode != ExecutableDiscoveryMode.INTERPRETER)
-      return
-
     val manager = PythonPackageManager.forSdk(project, sdk)
     project.service<TypeInferenceCoroutine>().coroutineScope.launch {
       val isInstalled = manager.getInstalledToolPackage(PyreflyPyTool.getInstance()) != null
@@ -86,9 +83,34 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
     project.service<TypeInferenceCoroutine>().coroutineScope.launch {
       val typeEngineProjectSettings = PyTypeEngineProjectSettings.getInstance(project)
 
-      // The type engine no longer force-enables the matching LSP tool: the two capabilities are
-      // independent (PY-90550). We still auto-install Pyrefly when it becomes the selected engine;
-      // the per-module "already installed?" check makes this a no-op when it is up to date.
+      // Selecting an engine enables its External Tools tool (committed here, when the engine change is
+      // applied), so it works even if the External Tools page was never opened. Persist only the flag;
+      // the engine's LSP server is handled by updateLspServers.
+      val state = PyToolsState.getInstance(project)
+      PyTool.findByPackageName(typeEngineProjectSettings.typeEngine.packageName)?.let { tool ->
+        if (!state.isEnabled(tool)) state.setEnabled(tool, true)
+      }
+
+      // Tools the user chose to turn off while switching the engine away from them (the "turn the tool
+      // off too?" prompt). Committed here so it works without opening the External Tools page.
+      val preview = PyToolTypeEnginePreview.getInstance(project)
+      val toDisable = preview.pendingDisable.get()
+      if (toDisable.isNotEmpty()) {
+        withContext(Dispatchers.EDT) {
+          toDisable.forEach { pkg ->
+            PyTool.findByPackageName(pkg)?.let { tool ->
+              if (state.isEnabled(tool)) {
+                state.setEnabled(tool, false)
+                tool.onEnabledChanged(project, false)
+              }
+            }
+          }
+        }
+        preview.pendingDisable.set(emptySet())
+      }
+
+      // We still auto-install Pyrefly when it becomes the selected engine; the per-module "already
+      // installed?" check makes this a no-op when it is up to date.
       if (typeEngineProjectSettings.typeEngine == PyTypeEngineType.PYREFLY) {
         project.modules.forEach { module ->
           val pythonSdk = module.getSdk() ?: return@forEach

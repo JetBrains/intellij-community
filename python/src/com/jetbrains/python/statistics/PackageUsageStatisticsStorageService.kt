@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.statistics
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -23,8 +23,7 @@ import kotlin.concurrent.write
   reportStatistic = false,
   reloadable = false,
 )
-@ApiStatus.Internal
-class PyPackageUsageStatistics : PersistentStateComponent<PyPackageUsageStatistics.LibraryUsageStatisticsState> {
+internal class PyPackageUsageStatistics : PersistentStateComponent<PyPackageUsageStatistics.LibraryUsageStatisticsState> {
   private val lock = ReentrantReadWriteLock()
   private var statistics = Object2IntOpenHashMap<PackageUsage>()
 
@@ -62,7 +61,7 @@ class PyPackageUsageStatistics : PersistentStateComponent<PyPackageUsageStatisti
 }
 
 // All properties are nullable because otherwise serialization will not work
-data class PackageUsage(
+internal data class PackageUsage(
   var name: String? = null,
   var version: String? = null,
   var interpreterTypeValue: String? = null,

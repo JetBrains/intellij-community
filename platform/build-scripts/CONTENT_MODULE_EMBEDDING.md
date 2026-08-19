@@ -711,7 +711,7 @@ if (!pluginLayout.pathsToScramble.isEmpty()) {
   <id>com.intellij</id>
   <name>IDEA CORE</name>
   <module value="com.intellij.modules.platform" />
-  <xi:include href="/META-INF/PlatformLangComponents.xml" />
+  <xi:include href="/META-INF/Core.xml" />
   <!-- ... 300+ more lines ... -->
   <!-- </editor-fold> -->
 </idea-plugin>

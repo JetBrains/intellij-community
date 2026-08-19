@@ -10,9 +10,10 @@ import org.jetbrains.annotations.PropertyKey
 @NonNls
 private const val BUNDLE = "messages.KotlinNewProjectWizardBundle"
 
-object KotlinNewProjectWizardBundle : DynamicBundle(BUNDLE) {
+object KotlinNewProjectWizardBundle {
+    private val instance = DynamicBundle(KotlinNewProjectWizardBundle::class.java, BUNDLE)
     @Nls
     @JvmStatic
-    fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
+    fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = instance.getMessage(key, *params)
 
 }

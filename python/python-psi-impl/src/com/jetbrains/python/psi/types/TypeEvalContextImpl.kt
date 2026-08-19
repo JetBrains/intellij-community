@@ -57,7 +57,7 @@ open class TypeEvalContextImpl internal constructor(
   protected val myEvaluated: MutableMap<PyTypedElement?, PyType?> = getConcurrentMapForCachingTypes()
   protected val myEvaluatedReturn: MutableMap<PyCallable?, PyType?> = getConcurrentMapForCachingTypes()
   protected val contextTypeCache: ConcurrentMap<Pair<Any, Any>, PyType> = getConcurrentMapForCachingTypes()
-  protected val myVarianceCache: MutableMap<PyTypeParameterType, PyTypeParameterType.Variance> = getConcurrentMapForCaching()
+  protected val myVarianceCache: MutableMap<PyTypeParameterType, PyVariance> = getConcurrentMapForCaching()
   protected val mySubstitutionsCache: MutableMap<SubstitutionsIdentifier, PyTypeChecker.GenericSubstitutions> = getConcurrentMapForCaching()
 
   internal constructor(
@@ -297,7 +297,7 @@ open class TypeEvalContextImpl internal constructor(
   }
 
   @ApiStatus.Internal
-  override fun getVarianceCache(): MutableMap<PyTypeParameterType, PyTypeParameterType.Variance> {
+  override fun getVarianceCache(): MutableMap<PyTypeParameterType, PyVariance> {
     return myVarianceCache
   }
 

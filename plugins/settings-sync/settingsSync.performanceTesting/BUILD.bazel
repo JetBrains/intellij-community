@@ -53,6 +53,7 @@ jvm_library(
 exports_files(
     [
         "intellij.settingsSync.performanceTesting.iml",
+        "resources/intellij.settingsSync.performanceTesting.xml",
     ],
     visibility = ["//visibility:public"],
 )

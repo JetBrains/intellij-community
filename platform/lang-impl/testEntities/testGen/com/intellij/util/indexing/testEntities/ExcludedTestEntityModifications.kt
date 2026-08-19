@@ -18,7 +18,7 @@ interface ExcludedTestEntityBuilder : WorkspaceEntityBuilder<ExcludedTestEntity>
 }
 
 internal object ExcludedTestEntityType : EntityType<ExcludedTestEntity, ExcludedTestEntityBuilder>() {
-  override val entityClass: Class<ExcludedTestEntity> get() = ExcludedTestEntity::class.java
+  override val entityImplClass: Class<*> get() = ExcludedTestEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ExcludedTestEntityImpl.Builder::class.java
   operator fun invoke(
     root: VirtualFileUrl,

@@ -9,7 +9,6 @@ import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTom
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -18,10 +17,10 @@ import org.junit.jupiter.api.assertThrows
 @TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/uv_workspace_extras_and_transitive")
 internal class UvWorkspaceExtrasAndTransitiveTest {
   companion object {
-    private val tempDirFixture = tempPathFixture()
-    private val projectFixture = projectFixture(pathFixture = tempDirFixture)
+    private val projectFixture = projectFixture()
   }
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -30,10 +29,13 @@ internal class UvWorkspaceExtrasAndTransitiveTest {
     assertThrows<AssertionError> {
       f.assertProjectStructure(
         ExpectedModule("pythonproject", contentRoot = ".", deps = listOf("sub-project-a", "sub-project-b"), sourceRoots = listOf("src")),
-        ExpectedModule("sub-project-a", contentRoot = "sub-projects" / "sub-project-a", deps = listOf("extra-utils", "sub-project-b"), sourceRoots = listOf("src")),
+        ExpectedModule("sub-project-a",
+                       contentRoot = "sub-projects" / "sub-project-a",
+                       deps = listOf("extra-utils", "sub-project-b"),
+                       sourceRoots = listOf("src")),
         ExpectedModule("sub-project-b", contentRoot = "sub-projects" / "sub-project-b", deps = emptyList(), sourceRoots = listOf("src")),
         ExpectedModule("extra-utils", contentRoot = "local-libs" / "extra-utils", deps = emptyList(), sourceRoots = emptyList()),
       )
-      }
+    }
   }
 }

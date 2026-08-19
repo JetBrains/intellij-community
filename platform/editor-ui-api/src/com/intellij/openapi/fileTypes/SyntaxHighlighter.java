@@ -57,9 +57,10 @@ public interface SyntaxHighlighter {
   /**
    * Returns the list of text attribute keys used for highlighting the specified token type. The attributes of all attribute keys
    * returned for the token type are successively merged to obtain the color and attributes of the token.
+   * Do not modify the returned array, it may damage the internal structures.
    *
    * @param tokenType The token type for which the highlighting is requested.
    * @return The array of text attribute keys.
    */
-  TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType);
+  @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType tokenType);
 }

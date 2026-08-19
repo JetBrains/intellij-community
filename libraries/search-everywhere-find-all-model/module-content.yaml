@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.search.everywhere.find.all.model.jar
+  modules:
+  - name: intellij.libraries.search.everywhere.find.all.model
+    libraries:
+      find-all-model-experimental:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/252/find-all-model-252.jar

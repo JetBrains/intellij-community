@@ -11,14 +11,15 @@ from django.db.models.expressions import Combinable, Expression
 from django.db.models.fields import NOT_PROVIDED, _ErrorMessagesDict, _ErrorMessagesMapping
 from django.db.models.fields.mixins import CheckFieldDefaultMixin
 from django.db.models.lookups import Transform
+from django.db.models.sql.compiler import _AsSqlType
 from django.utils.choices import _Choices
 from django.utils.functional import _StrOrPromise
 from typing_extensions import TypeVar, override
 
 # __set__ value type
-_ST = TypeVar("_ST")
+_ST = TypeVar("_ST", contravariant=True)
 # __get__ return type
-_GT = TypeVar("_GT")
+_GT = TypeVar("_GT", covariant=True)
 
 class ArrayField(CheckPostgresInstalledMixin, CheckFieldDefaultMixin, Field[_ST, _GT]):
     _pyi_private_set_type: Sequence[Any] | Combinable
@@ -26,13 +27,13 @@ class ArrayField(CheckPostgresInstalledMixin, CheckFieldDefaultMixin, Field[_ST,
 
     empty_strings_allowed: bool
     default_error_messages: ClassVar[_ErrorMessagesDict]
-    base_field: Field
+    base_field: Field[Any, Any]
     size: int | None
     default_validators: list[_ValidatorCallable]
     from_db_value: Any
     def __init__(
         self,
-        base_field: Field,
+        base_field: Field[Any, Any],
         size: int | None = None,
         *,
         verbose_name: _StrOrPromise | None = ...,
@@ -66,7 +67,7 @@ class ArrayField(CheckPostgresInstalledMixin, CheckFieldDefaultMixin, Field[_ST,
     def description(self) -> str: ...  # type: ignore[override]
     @override
     def cast_db_type(self, connection: BaseDatabaseWrapper) -> str: ...
-    def get_placeholder(self, value: Unused, compiler: Unused, connection: BaseDatabaseWrapper) -> str: ...
+    def get_placeholder_sql(self, value: Unused, compiler: Unused, connection: BaseDatabaseWrapper) -> _AsSqlType: ...
     @override
     def get_transform(self, name: str) -> type[Transform] | None: ...
 

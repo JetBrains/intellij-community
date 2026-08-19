@@ -20,15 +20,27 @@ import com.intellij.psi.impl.light.LightTypeParameterBuilder
 import com.intellij.psi.impl.light.LightTypeParameterListBuilder
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.asPsiType
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertyAccessorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
+import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.restore
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.utils.SmartSet
@@ -51,7 +63,7 @@ import org.jetbrains.uast.kotlin.internal.toPsiType
 internal class UastFakeDeserializedSymbolLightMethod
 @OptIn(KaExperimentalApi::class)
 constructor(
-    private val original: KaSymbolPointer<KaNamedFunctionSymbol>,
+    private val original: KaSymbolPointer<KaCallableSymbol>,
     name: String,
     containingClass: PsiClass,
     private val context: KtElement,
@@ -67,10 +79,12 @@ constructor(
 
     init {
         analyzeForUast(context) {
-            val functionSymbol = original.restoreSymbol()
-            if (functionSymbol?.location == KaSymbolLocation.TOP_LEVEL ||
-                functionSymbol?.isStatic == true
-            ) {
+            val callableSymbol = original.restoreSymbol()
+
+            val isTopLevel = callableSymbol?.location == KaSymbolLocation.TOP_LEVEL ||
+                    (callableSymbol as? KaPropertyAccessorSymbol)?.containingDeclaration?.location == KaSymbolLocation.TOP_LEVEL
+
+            if (isTopLevel || callableSymbol?.isStatic == true) {
                 addModifier(PsiModifier.STATIC)
             }
         }
@@ -81,8 +95,8 @@ constructor(
     private val _returnType: PsiType?
         get() = returnTypePart.getOrBuild {
             analyzeForUast(context) {
-                val functionSymbol = original.restoreSymbol() ?: return@analyzeForUast PsiTypes.nullType()
-                val returnType = functionSymbol.returnType
+                val callableSymbol = original.restoreSymbol() ?: return@analyzeForUast PsiTypes.nullType()
+                val returnType = callableSymbol.returnType
                 val substitutedType = if (returnType is KaTypeParameterType) {
                     lookupTypeArgument(returnType) ?: returnType
                 } else
@@ -100,7 +114,8 @@ constructor(
         }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.lookupTypeArgument(type: KaTypeParameterType): KaType? {
+    context(session: KaSession)
+    private fun lookupTypeArgument(type: KaTypeParameterType): KaType? {
         for (symbolPointer in typeArgumentMapping.keys) {
             val typeParameterSymbol = symbolPointer.restoreSymbol()
             if (typeParameterSymbol == type.symbol) {
@@ -119,8 +134,8 @@ constructor(
     override fun isSuspendFunction(): Boolean =
         _isSuspend.getOrBuild {
             analyzeForUast(context) {
-                val functionSymbol = original.restoreSymbol() ?: return@analyzeForUast false
-                functionSymbol.isSuspend
+                val callableSymbol = original.restoreSymbol() ?: return@analyzeForUast false
+                callableSymbol.isSuspend
             }
         }
 
@@ -129,26 +144,26 @@ constructor(
     override fun isUnitFunction(): Boolean =
         _isUnit.getOrBuild {
             analyzeForUast(context) {
-                val functionSymbol = original.restoreSymbol() ?: return@analyzeForUast false
-                functionSymbol.returnType.isUnitType
+                val callableSymbol = original.restoreSymbol() ?: return@analyzeForUast false
+                callableSymbol.returnType.classId == KaStandardTypeClassIds.UNIT
             }
         }
 
     override fun computeNullability(): UNullability? {
         return analyzeForUast(context) {
-            val functionSymbol = original.restoreSymbol() ?: return@analyzeForUast null
-            functionSymbol.psi?.let { psi ->
+            val callableSymbol = original.restoreSymbol() ?: return@analyzeForUast null
+            callableSymbol.psi?.let { psi ->
                 val hasInheritedGenericType = baseResolveProviderService.hasInheritedGenericType(psi)
                 if (hasInheritedGenericType) {
                     // Inherited generic type: nullity will be determined at use-site
                     return@analyzeForUast null
                 }
             }
-            if (functionSymbol.isSuspend) {
+            if (callableSymbol.isSuspend) {
                 // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
                 return@analyzeForUast UNullability.NULLABLE
             }
-            val returnType = functionSymbol.returnType
+            val returnType = callableSymbol.returnType
 
             return when {
                 returnType.hasFlexibleNullability -> UNullability.UNKNOWN
@@ -160,8 +175,8 @@ constructor(
 
     override fun computeAnnotations(annotations: SmartSet<PsiAnnotation>) {
         analyzeForUast(context) {
-            val functionSymbol = original.restoreSymbol() ?: return
-            for (annoApp in functionSymbol.annotations) {
+            val callableSymbol = original.restoreSymbol() ?: return
+            for (annoApp in callableSymbol.annotations) {
                 annotations.add(
                     UastFakeDeserializedSymbolAnnotation(original, annoApp.classId, context, annoApp.psi)
                 )
@@ -184,8 +199,9 @@ constructor(
             return myExtendsListPart.getOrBuild {
                 val extendsList = super.getExtendsList()
                 analyzeForUast(context) {
-                    val functionSymbol = original.restoreSymbol() ?: return extendsList
-                    val typeParamSymbol = functionSymbol.typeParameters[index]
+                    val callableSymbol = original.restoreSymbol() ?: return extendsList
+                    val targetSymbol = (callableSymbol as? KaPropertyAccessorSymbol)?.containingDeclaration as? KaPropertySymbol ?: callableSymbol
+                    val typeParamSymbol = targetSymbol.typeParameters[index]
                     for (bound in typeParamSymbol.upperBounds) {
                         val psiType = bound.asPsiType(context, allowErrorTypes = true)
                         if (psiType is PsiClassType) extendsList.addReference(psiType)
@@ -208,8 +224,9 @@ constructor(
                     val context = this@UastFakeDeserializedSymbolLightMethod.context
 
                     analyzeForUast(context) l@{
-                        val functionSymbol = original.restoreSymbol() ?: return@l
-                        for ((i, typeParamSymbol) in functionSymbol.typeParameters.withIndex()) {
+                        val callableSymbol = original.restoreSymbol() ?: return@l
+                        val targetSymbol = (callableSymbol as? KaPropertyAccessorSymbol)?.containingDeclaration as? KaPropertySymbol ?: callableSymbol
+                        for ((i, typeParamSymbol) in targetSymbol.typeParameters.withIndex()) {
                             typeParameterList.addParameter(
                                 UastFakeDeserializedSymbolLightParameter(typeParamSymbol.name.identifier, typeParameterOwner, i)
                             )
@@ -233,9 +250,9 @@ constructor(
                     val context = this@UastFakeDeserializedSymbolLightMethod.context
 
                     analyzeForUast(context) l@{
-                        val functionSymbol = original.restoreSymbol() ?: return@l
-                        val functionSymbolPtr = functionSymbol.createPointer()
-                        functionSymbol.receiverParameter?.let { receiverParameter ->
+                        val callableSymbol = original.restoreSymbol() ?: return@l
+                        val callableSymbolPtr = callableSymbol.createPointer()
+                        callableSymbol.receiverParameter?.let { receiverParameter ->
                             val receiverOrigin = receiverParameter.psi as? KtTypeReference ?: context
                             parameterList.addParameter(
                                 UastKotlinPsiParameterBase(
@@ -246,7 +263,7 @@ constructor(
                                     ktOrigin = receiverOrigin
                                 ) {
                                     analyzeForUast(context) {
-                                        functionSymbolPtr.restoreSymbol()
+                                        callableSymbolPtr.restoreSymbol()
                                             ?.receiverType
                                             ?.asPsiType(context, allowErrorTypes = true)
                                             ?: UastErrorType
@@ -255,7 +272,7 @@ constructor(
                             )
                         }
 
-                        for (valueParamSymbol in functionSymbol.valueParameters) {
+                        for (valueParamSymbol in callableSymbol.valueParameters) {
                             val valueParamSymbolPtr = valueParamSymbol.createPointer()
                             parameterList.addParameter(
                                 UastKotlinPsiParameterBase(
@@ -281,3 +298,15 @@ constructor(
             }
         }
 }
+
+context(_: KaSession)
+private val KaCallableSymbol.isStatic get() = when (this) {
+    is KaNamedFunctionSymbol -> isStatic
+    is KaPropertySymbol -> isStatic
+    is KaPropertyAccessorSymbol -> (containingDeclaration as? KaPropertySymbol)?.isStatic == true
+    else -> false
+}
+
+private val KaCallableSymbol.isSuspend get() = (this as? KaNamedFunctionSymbol)?.isSuspend == true
+
+private val KaCallableSymbol.valueParameters get() = (this as? KaFunctionSymbol)?.valueParameters.orEmpty()

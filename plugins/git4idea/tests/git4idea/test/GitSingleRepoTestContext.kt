@@ -22,11 +22,23 @@ interface GitSingleRepoContext : GitPlatformTestContext {
 fun TestFixture<GitPlatformTestContext>.gitSingleRepoFixture(makeInitialCommit: Boolean): TestFixture<GitSingleRepoContext> = testFixture {
   val gitPlatformContext = init()
   val repo = createRepository(gitPlatformContext.project, gitPlatformContext.projectNioRoot, makeInitialCommit)
-  val result = object : GitSingleRepoContext, GitPlatformTestContext by gitPlatformContext {
+  initialized(gitPlatformContext.withRepo(repo)) {}
+}
+
+/**
+ * Same as [gitSingleRepoFixture], but for a project whose repository already exists on disk, e.g. a clone
+ * or a linked working tree prepared before the project was opened. The root is only registered as a VCS root.
+ */
+fun TestFixture<GitPlatformTestContext>.gitExistingSingleRepoFixture(): TestFixture<GitSingleRepoContext> = testFixture {
+  val gitPlatformContext = init()
+  val repo = registerRepo(gitPlatformContext.project, gitPlatformContext.projectNioRoot)
+  initialized(gitPlatformContext.withRepo(repo)) {}
+}
+
+private fun GitPlatformTestContext.withRepo(repo: GitRepository): GitSingleRepoContext =
+  object : GitSingleRepoContext, GitPlatformTestContext by this {
     override val repo = repo
   }
-  initialized(result) {}
-}
 
 fun GitSingleRepoContext.build(f: RepoBuilder.() -> Unit) = build(repo, f)
 

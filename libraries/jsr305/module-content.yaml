@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jsr305.jar
+  modules:
+  - name: intellij.libraries.jsr305
+    libraries:
+      jsr305:
+      - name: $MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3/jsr305-3.jar

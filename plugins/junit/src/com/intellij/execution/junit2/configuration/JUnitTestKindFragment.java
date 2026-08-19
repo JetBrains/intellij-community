@@ -22,6 +22,8 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -37,6 +39,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -45,6 +49,7 @@ import java.awt.GridBagLayout;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.intellij.execution.junit2.configuration.JUnitConfigurationModel.ALL_IN_PACKAGE;
@@ -62,7 +67,6 @@ import static com.intellij.execution.junit2.configuration.JUnitConfigurationMode
 public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfiguration, JPanel> {
 
   private final JUnitConfigurationModel myModel;
-  private final ConfigurationModuleSelector myModuleSelector;
   private final ComboBox<Integer> myTypeChooser;
   private final JComponent[] myFields = new JComponent[BY_SOURCE_CHANGES + 1];
   private final Map<JComponent, String> myHints = new HashMap<>();
@@ -75,11 +79,10 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     super("junit.test.kind", null, null, new JPanel(new GridBagLayout()), 90, null, null, configuration -> true);
     myModel = new JUnitConfigurationModel(project);
     myModel.setListener((oldKind, kind) -> kindChanged(oldKind, kind));
-    myModuleSelector = moduleSelector;
     myTypeChooser = new ComboBox<>();
     CommandLinePanel.setMinimumWidth(component(), 500);
     component().add(myTypeChooser, new GridBagConstraints());
-    myModel.reloadTestKindModel(myTypeChooser, myModuleSelector.getModule(), () -> {
+    myModel.reloadTestKindModel(myTypeChooser, moduleSelector.getModule(), () -> {
       myTypeChooser.addActionListener(e -> myModel.setType(myTypeChooser.getItem()));
     });
     myTypeChooser.setRenderer(BuilderKt.textListCellRenderer("", value -> getKindName(value)));
@@ -104,8 +107,8 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     InsertPathAction.addTo(directoryField.getTextField(), dirFileChooser);
     FileChooserFactory.getInstance().installFileCompletion(directoryField.getTextField(), dirFileChooser, true, null);
 
-    BrowseModuleValueActionListener<?>[] browsers = JUnitConfigurable.createBrowsers(project, moduleSelector, packageField, pattern, category, () -> getClassName());
-    JavaCodeFragment.VisibilityChecker classVisibilityChecker = JUnitConfigurable.createClassVisibilityChecker((JUnitConfigurable.TestClassBrowser)browsers[CLASS]);
+    BrowseModuleValueActionListener<?>[] browsers = JUnitBrowsers.createBrowsers(project, moduleSelector, packageField, pattern, category, () -> getClassName());
+    JavaCodeFragment.VisibilityChecker classVisibilityChecker = JUnitBrowsers.createClassVisibilityChecker((JUnitBrowsers.TestClassBrowser<?>)browsers[CLASS]);
     myClassField = ClassEditorField.createClassField(project, () -> moduleSelector.getModule(), classVisibilityChecker, browsers[CLASS]);
     EditorTextFieldWithBrowseButton methodField = new EditorTextFieldWithBrowseButton(project, true,
                                                                                       JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
@@ -130,7 +133,7 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     setupField(TAGS, myTagsField, null, null, null);
 
     myChangeLists = new ComboBox<>();
-    JUnitConfigurable.setupChangeLists(project, myChangeLists);
+    setupChangeLists(project, myChangeLists);
     setupField(BY_SOURCE_CHANGES, myChangeLists, null, null, null);
     setupField(BY_SOURCE_POSITION, new JLabel(), null, null, null); // empty stub
     setValidation((configuration) -> {
@@ -149,6 +152,26 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
       infos.add(RuntimeConfigurationException.validate(component, () -> testObject.checkConfiguration()));
       return infos;
     });
+  }
+
+  private static void setupChangeLists(Project project, JComboBox<String> comboBox) {
+    final DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+    comboBox.setModel(model);
+    model.addElement(JUnitBundle.message("test.discovery.by.all.changes.combo.item"));
+
+    if (!project.isDefault()) {
+      final List<LocalChangeList> changeLists = ChangeListManager.getInstance(project).getChangeLists();
+      for (LocalChangeList changeList : changeLists) {
+        model.addElement(changeList.getName());
+      }
+    }
+  }
+
+  private static String[] setArrayFromText(String text) {
+    if (text.isEmpty()) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+    return text.split("\u001B");
   }
 
   @Override
@@ -218,10 +241,10 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
 
   @Override
   protected void applyEditorTo(@NotNull JUnitConfiguration s) {
-    s.getPersistentData().setUniqueIds(JUnitConfigurable.setArrayFromText(myUniqueIdField.getText()));
+    s.getPersistentData().setUniqueIds(setArrayFromText(myUniqueIdField.getText()));
     s.getPersistentData().setTags(myTagsField.getText());
     s.getPersistentData().setChangeList(myChangeLists.getItem());
-    myModel.apply(myModuleSelector.getModule(), s, myClassField);
+    myModel.apply(s, myClassField);
     validate(s);
   }
 }

@@ -27,7 +27,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/diagnostic/telemetry",
         "//libraries/opentelemetry",
         "//libraries/opentelemetry-semconv",
@@ -57,6 +57,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":telemetry.exporters",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/diagnostic/telemetry:telemetry_test_lib",
         "//libraries/opentelemetry:opentelemetry_test_lib",
         "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",

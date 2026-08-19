@@ -337,7 +337,7 @@ ItemPresentation:
     presentableText: IntrinsicConstEvaluation
     locationString: (kotlin.internal)
     icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/annotationKotlin.svg, Local])
-TargetElement: @kotlin.annotation.Target @kotlin.annotation.Retention @kotlin.SinceKotlin internal final annotation class IntrinsicConstEvaluation public constructor() : kotlin.Annotation {
+TargetElement: @kotlin.annotation.Target(allowedTargets = [kotlin.annotation.AnnotationTarget.CONSTRUCTOR, kotlin.annotation.AnnotationTarget.FUNCTION, kotlin.annotation.AnnotationTarget.PROPERTY])
 QualifiedName: kotlin.internal.IntrinsicConstEvaluation
 
 NavigationItem:
@@ -373,7 +373,7 @@ ItemPresentation:
     presentableText: IntroducedAt
     locationString: (kotlin)
     icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/annotationKotlin.svg, Public])
-TargetElement: @kotlin.annotation.Target @kotlin.annotation.MustBeDocumented @kotlin.SinceKotlin @kotlin.ExperimentalVersionOverloading public final annotation class IntroducedAt public constructor(version: kotlin.String) : kotlin.Annotation {
+TargetElement: @kotlin.annotation.Target(allowedTargets = [kotlin.annotation.AnnotationTarget.VALUE_PARAMETER])
 QualifiedName: kotlin.IntroducedAt
 
 NavigationItem:

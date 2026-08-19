@@ -280,7 +280,8 @@ class PluginTestSetupBuilder(private val tempDir: Path) {
     // Create content modules first
     for (spec in contentModules) {
       val moduleDir = tempDir.resolve(spec.name.replace('.', '/'))
-      val resourcesDir = moduleDir.resolve("resources")
+      val inTestResources = spec.descriptorInTestResources
+      val resourcesDir = moduleDir.resolve(if (inTestResources) "testResources" else "resources")
       Files.createDirectories(resourcesDir)
 
       val jpsModule = project.addModule(spec.name, JpsJavaModuleType.INSTANCE)
@@ -288,10 +289,17 @@ class PluginTestSetupBuilder(private val tempDir: Path) {
         JpsModuleSerializationDataExtensionImpl.ROLE,
         JpsModuleSerializationDataExtensionImpl(moduleDir),
       )
-      jpsModule.addSourceRoot(JpsPathUtil.pathToUrl(resourcesDir.toString()), JavaResourceRootType.RESOURCE)
+      jpsModule.addSourceRoot(
+        JpsPathUtil.pathToUrl(resourcesDir.toString()),
+        if (inTestResources) JavaResourceRootType.TEST_RESOURCE else JavaResourceRootType.RESOURCE,
+      )
 
       // Write descriptor XML
       Files.writeString(resourcesDir.resolve("${spec.name}.xml"), spec.descriptor)
+
+      spec.resourceFiles.forEach { (fileName, fileContent) ->
+        Files.writeString(resourcesDir.resolve(fileName), fileContent)
+      }
 
       // Track JPS dependencies for this content module (just module names for plugin-level tracking)
       contentModuleJpsDeps.put(spec.name, spec.jpsDependencies.map { it.moduleName })
@@ -410,6 +418,7 @@ class TestPluginBuilder(private val name: String) {
 
   /** If true, plugin dependencies are auto-derived from JPS deps. */
   var isTestPlugin: Boolean = false
+
   private val contentModules = LinkedHashSet<String>()
   private val contentLoadings = LinkedHashMap<String, com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue?>()
   private val moduleDependencies = LinkedHashSet<String>()
@@ -444,13 +453,26 @@ class TestPluginBuilder(private val name: String) {
 @JpsTestDsl
 class TestContentModuleBuilder(private val name: String) {
   var descriptor: String = """<idea-plugin package="com.test"/>"""
+
+  /**
+   * Put the descriptor into a `testResources` root of type [JavaResourceRootType.TEST_RESOURCE] instead of the production
+   * `resources` root, as real test-only modules do (e.g. `CIDR/clion-profiling/tests`).
+   */
+  var descriptorInTestResources: Boolean = false
+
   private val jpsDependencies = mutableListOf<TestJpsDependency>()
+  private val resourceFiles = LinkedHashMap<String, String>()
 
   fun jpsDependency(moduleName: String, scope: JpsJavaDependencyScope = JpsJavaDependencyScope.COMPILE) {
     jpsDependencies.add(TestJpsDependency(moduleName, scope))
   }
 
-  internal fun build() = TestContentModuleSpec(name, descriptor, jpsDependencies.toList())
+  /** Writes an additional file next to the descriptor in the resource root (e.g. an xi:included actions XML). */
+  fun resourceFile(fileName: String, content: String) {
+    resourceFiles.put(fileName, content)
+  }
+
+  internal fun build() = TestContentModuleSpec(name, descriptor, jpsDependencies.toList(), descriptorInTestResources, resourceFiles.toMap())
 }
 
 internal data class TestJpsDependency(
@@ -506,6 +528,8 @@ internal data class TestContentModuleSpec(
   @JvmField val name: String,
   @JvmField val descriptor: String,
   @JvmField val jpsDependencies: List<TestJpsDependency>,
+  @JvmField val descriptorInTestResources: Boolean = false,
+  @JvmField val resourceFiles: Map<String, String> = emptyMap(),
 )
 internal data class TestProductSpec(
   @JvmField val name: String,
@@ -782,6 +806,7 @@ internal fun testGenerationModel(
   pluginAllowedMissingDependencies: Map<ContentModuleName, Set<ContentModuleName>> = emptyMap(),
   testLibraryAllowedInModule: Map<ContentModuleName, Set<String>> = emptyMap(),
   productAllowedMissing: Map<String, Set<ContentModuleName>> = emptyMap(),
+  dslTestPluginsByProduct: Map<String, List<org.jetbrains.intellij.build.productLayout.TestPluginSpec>> = emptyMap(),
 ): GenerationModel {
   val effectiveOutputProvider = outputProvider ?: stubModuleOutputProvider()
   val effectiveFileUpdater = fileUpdater ?: DeferredFileUpdater(Path.of("."))
@@ -812,7 +837,7 @@ internal fun testGenerationModel(
     generatedArtifactWritePolicy = GeneratedArtifactWritePolicy(generationMode, effectiveFileUpdater),
     scope = GlobalScope,
     pluginGraph = pluginGraph,
-    dslTestPluginsByProduct = emptyMap(),
+    dslTestPluginsByProduct = dslTestPluginsByProduct,
     dslTestPluginDependencyChains = emptyMap(),
     dslTestPluginSuppressionUsages = emptyList(),
     productAllowedMissing = productAllowedMissing,

@@ -19,7 +19,7 @@ interface LeftEntityBuilder : WorkspaceEntityBuilder<LeftEntity>, CompositeBaseE
 }
 
 internal object LeftEntityType : EntityType<LeftEntity, LeftEntityBuilder>() {
-  override val entityClass: Class<LeftEntity> get() = LeftEntity::class.java
+  override val entityImplClass: Class<*> get() = LeftEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = LeftEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

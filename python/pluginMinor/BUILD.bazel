@@ -29,6 +29,7 @@ jvm_library(
         "//platform/util/jdom",
         "//platform/ide-core",
         "@lib//:kotlin-stdlib",
+        "//python/python-core-impl:community-core-impl",
     ],
 )
 
@@ -53,6 +54,7 @@ jvm_library(
         "//python/pluginCore/impl:impl_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//python/python-core-impl:community-core-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.plugin.minor` end
@@ -61,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.community.plugin.minor.iml",
+        "resources/intellij.python.community.plugin.minor.xml",
     ],
     visibility = ["//visibility:public"],
 )

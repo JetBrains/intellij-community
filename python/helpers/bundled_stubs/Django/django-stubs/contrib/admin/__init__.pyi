@@ -14,6 +14,8 @@ from .filters import RelatedOnlyFieldListFilter as RelatedOnlyFieldListFilter
 from .filters import SimpleListFilter as SimpleListFilter
 from .options import HORIZONTAL as HORIZONTAL
 from .options import VERTICAL as VERTICAL
+from .options import Action as Action
+from .options import ActionLocation as ActionLocation
 from .options import ModelAdmin as ModelAdmin
 from .options import ShowFacets as ShowFacets
 from .options import StackedInline as StackedInline
@@ -26,6 +28,8 @@ def autodiscover() -> None: ...
 __all__ = [
     "HORIZONTAL",
     "VERTICAL",
+    "Action",
+    "ActionLocation",
     "AdminSite",
     "AllValuesFieldListFilter",
     "BooleanFieldListFilter",

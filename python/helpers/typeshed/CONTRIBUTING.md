@@ -202,8 +202,8 @@ This has the following keys:
 * `skip` (default: `false`): Whether stubtest should be run against this
   package. Please avoid setting this to `true`, and add a comment if you have
   to.
-* `ignore-missing-stub`: When set to `true`, this will add the
-  `--ignore-missing-stub` option to the stubtest call. See
+* `ignore-missing-stub` (default: `false`): When set to `true`, this will add
+  the `--ignore-missing-stub` option to the stubtest call. See
   [tests/README.md](./tests/README.md) for more information. In most cases,
   this field should be identical to `partial-stub`.
 * `stubtest-dependencies` (default: `[]`): A list of Python packages that need
@@ -216,6 +216,10 @@ This has the following keys:
   that need to be installed for stubtest to run successfully
 * `choco-dependencies` (default: `[]`): A list of Windows Chocolatey packages
   that need to be installed for stubtest to run successfully
+* `extras` (default: `[]`): A list of optional dependency groups
+  ([extras](https://packaging.python.org/en/latest/specifications/core-metadata/#provides-extra-multiple-use))
+  that need to be installed for stubtest to run successfully.
+  For example, `extras = ["foo"]` installs the package as `<package>[foo]`.
 * `supported-platforms` (default: all platforms): A list of OSes on which
   stubtest can be run. When a package is not platform-specific, this should
   not be set. If the package is platform-specific, this should usually be set
@@ -238,6 +242,42 @@ distribution.
 The format of all `METADATA.toml` files can be checked by running
 `python3 ./tests/check_typeshed_structure.py`.
 
+### Dependencies
+
+When a third-party stub package depends on another package, there are several
+strategies available, depending on whether the other package is typed.
+
+1. If the other package is typed and includes a `py.typed` marker, add that
+    package to the `dependencies` key in `METADATA.toml`. This might fail the
+    stub uploader checks, in which case you can ask the maintainers for help.
+2. Otherwise, if a type package is available, add that package to the
+    `dependencies` key. If the type package originates from typeshed, the
+    stub uploader checks should succeed.
+3. In case the dependency in untyped and no stubs are available, you may stub
+    the dependency in your type stubs. For example:
+
+    ```python
+    from typing import Any
+    # from fruzzle import Frobnicator  # won't work
+
+    _Frobnicator: TypeAlias = Any  # actually fruzzle.Frobnicator
+    ```
+
+    In more complex or advanced cases you may instead opt to add a stubs
+    is a separate helper package:
+
+    ```python
+    # stubs/my-stubs/my_stubs/_fruzzle.pyi
+
+    # Utility stubs for the untyped "fruzzle" package.
+
+    from typing import Any, Protocol
+
+    Frobnicator: TypeAlias = Any
+
+    class Flubberer(Protocol):
+        def flubb_it(self, x: int, /) -> str: ...
+    ```
 
 ## Making Changes
 
@@ -319,6 +359,25 @@ augment the project's concrete implementation, not the project's
 documentation.  Whenever you find them disagreeing, model the type
 information after the actual implementation and file an issue on the
 project's tracker to fix their documentation.
+
+### Deprecations (using the `@deprecated` decorator)
+
+Generally deprecactions using the `@deprecated` decorator are added more
+liberally in typeshed than runtime deprecation warnings. Here are some
+guidelines that can be deviated from in special cases.
+
+Use `@deprecated` if and only if
+
+- a feature is deprecated at runtime (either using `@deprecated` or with a
+  runtime warning); or
+- a feature is documented to be deprecated (e.g. in API documention,
+  docstrings, or comments).
+
+For standard library features that are not deprecated in all Python versions
+currently supported by typeshed use `@deprecated` for
+
+- all versions starting with the "Deprecated since" version, plus
+- all versions for which an alternative is available.
 
 ### Docstrings
 

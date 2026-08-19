@@ -49,6 +49,9 @@ class MarkdownCustomCodeStyleSettings(settings: CodeStyleSettings) : CustomCodeS
   var FORCE_ONE_SPACE_AFTER_BLOCKQUOTE_SYMBOL: Boolean = true
 
   @JvmField
+  var USE_FIXED_INDENTS_FOR_SUBLISTS: Boolean = true
+
+  @JvmField
   var WRAP_TEXT_IF_LONG = true
 
   @JvmField
@@ -62,4 +65,11 @@ class MarkdownCustomCodeStyleSettings(settings: CodeStyleSettings) : CustomCodeS
 
   @JvmField
   var FORMAT_TABLES = true
+
+  @JvmField
+  var TABLE_STYLE: Int = TableStyle.ALIGNED.ordinal
+
+  var tableStyle: TableStyle
+    get() = TableStyle.entries[TABLE_STYLE]
+    set(value) { TABLE_STYLE = value.ordinal }
 }

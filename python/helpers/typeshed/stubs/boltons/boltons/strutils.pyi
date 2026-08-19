@@ -1,5 +1,5 @@
 from _typeshed import ReadableBuffer
-from collections.abc import Callable, Generator, Iterable, Sized
+from collections.abc import Callable, Generator, Iterable, Sequence, Sized
 from html.parser import HTMLParser
 from re import Pattern
 from typing import Literal, overload
@@ -32,8 +32,6 @@ class DeaccenterDict(dict[int, int]):
 def bytes2human(nbytes: int, ndigits: int = 0) -> str: ...
 
 class HTMLTextExtractor(HTMLParser):
-    strict: bool
-    convert_charrefs: bool
     result: list[str]
     def __init__(self) -> None: ...
     def handle_data(self, d: str) -> None: ...
@@ -66,6 +64,7 @@ class MultiReplace:
 def multi_replace(text: str, sub_map: dict[str, str], **kwargs) -> str: ...
 def unwrap_text(text: str, ending: str | None = "\n\n") -> str: ...
 def removeprefix(text: str, prefix: str) -> str: ...
+def human_readable_list(items: Sequence[str], delimiter: str = ",", conjunction: str = "and", *, oxford: bool = True) -> str: ...
 
 __all__ = [
     "camel2under",
@@ -100,4 +99,5 @@ __all__ = [
     "multi_replace",
     "unwrap_text",
     "removeprefix",
+    "human_readable_list",
 ]

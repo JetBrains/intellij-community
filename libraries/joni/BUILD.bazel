@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.joni.iml",
+        "resources/intellij.libraries.joni.xml",
     ],
     visibility = ["//visibility:public"],
 )

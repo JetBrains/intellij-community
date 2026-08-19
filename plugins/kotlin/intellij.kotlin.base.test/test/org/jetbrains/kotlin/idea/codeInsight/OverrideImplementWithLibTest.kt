@@ -38,4 +38,8 @@ abstract class OverrideImplementWithLibTest<T : ClassMember> : AbstractOverrideI
     fun testJavaClsParameterNames() {
         doMultiOverrideFileTest()
     }
+
+    fun testContextParameterNames() {
+        doImplementFileTest()
+    }
 }

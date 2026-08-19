@@ -81,5 +81,6 @@ internal class RedundantLabelInspection : KotlinApplicableInspectionBase.Simple<
 
     }
 
-    override fun KaSession.prepareContext(element: KtLabeledExpression) = Unit
+    context(session: KaSession)
+    override fun prepareContext(element: KtLabeledExpression) = Unit
 }

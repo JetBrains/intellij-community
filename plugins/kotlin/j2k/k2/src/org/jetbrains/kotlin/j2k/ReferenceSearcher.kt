@@ -3,6 +3,9 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -40,6 +43,22 @@ object IdeaReferenceSearcher : ReferenceSearcher {
 
         val searchScope =
             GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.projectScope(element.project), *fileTypes.toTypedArray())
-        return ReferencesSearch.search(element, searchScope).findAll()
+
+        // Some candidates can fail FIR resolution mid-search (KT-73836-like issues). Collecting via `forEach`
+        // instead of `findAll` keeps whatever was already found if a later candidate's resolution throws,
+        // instead of discarding all results found so far.
+        val results = mutableListOf<PsiReference>()
+        try {
+            ReferencesSearch.search(element, searchScope).forEach { reference ->
+                results.add(reference)
+            }
+        } catch (e: ProcessCanceledException) {
+            throw e
+        } catch (t: Throwable) {
+            LOG.error("Usage search for '$element' aborted early after finding ${results.size} usage(s)", t)
+        }
+        return results
     }
+
+    private val LOG: Logger = logger<IdeaReferenceSearcher>()
 }

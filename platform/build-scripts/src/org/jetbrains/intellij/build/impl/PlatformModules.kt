@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.OutboundSemiGraph
 import io.opentelemetry.api.trace.Span
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.BuildContext
@@ -24,12 +23,8 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
-import java.util.SortedSet
-
-@Suppress("RemoveRedundantQualifierName")
-private val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = java.util.Map.of(
-  "jetbrains-annotations", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
-)
+import java.util.TreeMap
+import java.util.TreeSet
 
 private fun addModule(relativeJarPath: String, moduleNames: Sequence<String>, productLayout: ProductModulesLayout, layout: PlatformLayout) {
   layout.withModules(
@@ -47,7 +42,7 @@ suspend fun createPlatformLayout(context: BuildContext): PlatformLayout {
   )
 }
 
-internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>, context: BuildContext): PlatformLayout {
+internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: Map<String, Set<String>>, context: BuildContext): PlatformLayout {
   val productLayout = context.productProperties.productLayout
   val descriptorCacheContainer = DescriptorCacheContainer()
   val layout = PlatformLayout(descriptorCacheContainer)
@@ -90,8 +85,12 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "intellij.platform.eel.nioFs",  // NIO bridge for EEL (EelPath <-> Path conversions, EelPathBoundDescriptor)
   ), productLayout = productLayout, layout = layout)
 
-  // todo as content module
+  // todo as content module (IJPL-252372)
+  // see ClassPathUtil.getUtilClassPath and ArtifactRepositoryManager.getClassesFromDependencies -
+  // these libraries are used by JPS and must be a part of util-8.jar
   layout.withProjectLibraries(sequenceOf(
+    "Log4J",
+    "kotlin-stdlib",
     "slf4j-api",
     "slf4j-jdk14",
   ), UTIL_8_JAR)
@@ -243,35 +242,23 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   layout.libAsProductModule = libAsProductModule
 
   // sqlite - used by DB and "import settings" (temporarily)
-  layout.alwaysPackToPlugin(listOf("flexmark", "sqlite"))
-  for (item in projectLibrariesUsedByPlugins) {
-    val libName = item.libraryName
-    if (!libAsProductModule.contains(libName) && !layout.isProjectLibraryExcluded(libName) && !layout.isLibraryAlwaysPackedIntoPlugin(libName)) {
-      layout.includedProjectLibraries.add(item)
+  layout.alwaysPackToPlugin(listOf("sqlite"))
+  val violations = TreeMap<String, Set<String>>()
+  for ((libName, dependentModules) in projectLibrariesUsedByPlugins) {
+    if (layout.hasLibrary(libName) ||
+        libAsProductModule.contains(libName) ||
+        layout.isProjectLibraryExcluded(libName) ||
+        layout.isLibraryAlwaysPackedIntoPlugin(libName)) {
+      continue
     }
+
+    violations.put(libName, dependentModules)
   }
-
-  // as a separate step, not a part of computing implicitModules, as we should collect libraries from such implicitly included modules
-  layout.collectProjectLibrariesFromIncludedModules(outputProvider) { libName, module ->
-    // this module is used only when running IDE from sources, no need to include its dependencies, see IJPL-125
-    if (module.name == "intellij.platform.buildScripts.downloader" && libName == "zstd-jni") {
-      return@collectProjectLibrariesFromIncludedModules
+  check(violations.isEmpty()) {
+    "Project libraries used by plugins must be converted to content modules:\n" +
+    violations.entries.joinToString(separator = "\n") { (libraryName, moduleNames) ->
+      "  '$libraryName' used by " + moduleNames.joinToString { "'$it'" }
     }
-
-    if (libAsProductModule.contains(libName)) {
-      return@collectProjectLibrariesFromIncludedModules
-    }
-
-    layout.includedProjectLibraries
-      .addOrGet(
-        ProjectLibraryData(
-          libraryName = libName,
-          packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libName, LibraryPackMode.MERGED),
-          reason = "<- ${module.name}",
-          owner = null,
-        )
-      )
-      .dependentModules.computeIfAbsent("core") { mutableListOf() }.add(module.name)
   }
 
   val platformMainModule = "intellij.platform.starter"
@@ -350,8 +337,15 @@ suspend fun collectExportedLibrariesFromLibraryModules(
   return result
 }
 
-internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): SortedSet<ProjectLibraryData> {
-  val result = ObjectLinkedOpenHashSet<ProjectLibraryData>()
+/**
+ * Project library name to the names of the modules of non-`auto` plugins which depend on it.
+ * Such a library must be provided by the platform - see the check in [createPlatformLayout].
+ *
+ * `auto` plugins are skipped here, as their content modules are known only during packaging (read from `plugin.xml`);
+ * such a library is checked by `JarPackager.checkImplicitProjectLibraries` instead.
+ */
+internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): Map<String, Set<String>> {
+  val result = TreeMap<String, MutableSet<String>>()
   val pluginLayoutsByJpsModuleNames = getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules, productLayout = context.productProperties.productLayout)
 
   val helper = (context as BuildContextImpl).jarPackagerDependencyHelper
@@ -373,12 +367,7 @@ internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, 
           continue
         }
 
-        val packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libName, LibraryPackMode.MERGED)
-        // TODO: owner is null in this case? Since it is loaded by platform
-        result.addOrGet(ProjectLibraryData(libraryName = libName, packMode = packMode, reason = "<- $moduleName", owner = null))
-          .dependentModules
-          .computeIfAbsent(plugin.directoryName) { mutableListOf() }
-          .add(moduleName)
+        result.computeIfAbsent(libName) { TreeSet() }.add(moduleName)
       }
     }
   }

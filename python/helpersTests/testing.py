@@ -120,8 +120,15 @@ class HelpersTestCase(unittest.TestCase):
     def assertDirsEqual(self, actual_dir, expected_dir):
         actual_dir_children = sorted(os.listdir(actual_dir))
         expected_dir_children = sorted(os.listdir(expected_dir))
-        self.assertEqual(expected_dir_children, actual_dir_children,
-                         'Children differ at {!r}'.format(actual_dir))
+        try:
+            self.assertEqual(expected_dir_children, actual_dir_children,
+                             'Children differ at {!r}'.format(actual_dir))
+        except AssertionError:
+            if _override_test_data:
+                self.log.warning("Overriding the file tree at {}".format(expected_dir))
+                shutil.rmtree(expected_dir)
+                shutil.copytree(actual_dir, expected_dir)
+            raise
         for actual_child, expected_child in zip(actual_dir_children,
                                                 expected_dir_children):
             actual_child = os.path.join(actual_dir, actual_child)

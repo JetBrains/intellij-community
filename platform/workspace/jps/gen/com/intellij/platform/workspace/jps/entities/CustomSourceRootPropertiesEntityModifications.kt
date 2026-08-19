@@ -21,7 +21,7 @@ interface CustomSourceRootPropertiesEntityBuilder : WorkspaceEntityBuilder<Custo
 
 internal object CustomSourceRootPropertiesEntityType :
   EntityType<CustomSourceRootPropertiesEntity, CustomSourceRootPropertiesEntityBuilder>() {
-  override val entityClass: Class<CustomSourceRootPropertiesEntity> get() = CustomSourceRootPropertiesEntity::class.java
+  override val entityImplClass: Class<*> get() = CustomSourceRootPropertiesEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = CustomSourceRootPropertiesEntityImpl.Builder::class.java
   operator fun invoke(
     propertiesXmlTag: String,

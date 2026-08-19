@@ -1,0 +1,235 @@
+load("@rules_java//java:defs.bzl", "java_binary", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import", "kt_jvm_library", "kt_jvm_test")
+
+java_library(
+    name = "clikt-dependencies",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@lib//:fleet-clikt",
+        "@lib//:fleet-clikt-core",
+        "@lib//:kotlinx-coroutines-core",
+    ],
+)
+
+kt_jvm_import(
+    name = "kotlinpoet",
+    jar = "@jewel_deps_kotlinpoet//file",
+    visibility = ["//visibility:private"],
+)
+
+kt_jvm_import(
+    name = "ktfmt",
+    jar = "@jewel_deps_ktfmt//file",
+    visibility = ["//visibility:private"],
+)
+
+kt_jvm_library(
+    name = "jewel-bazel-scripts-utils",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/JewelBazelScriptsUtils.kt"],
+    deps = ["@lib//:kotlinx-coroutines-core"],
+)
+
+kt_jvm_library(
+    name = "clikt-utils",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/CliktUtils.kt"],
+    deps = [
+        ":clikt-dependencies",
+        ":jewel-bazel-scripts-utils",
+    ],
+)
+
+kt_jvm_library(
+    name = "ktfmt-runner-lib",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/KtfmtRunner.kt"],
+    deps = [
+        ":jewel-bazel-scripts-utils",
+        ":ktfmt",
+    ],
+)
+
+kt_jvm_library(
+    name = "jewel-version-updater",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/JewelVersionUpdater.kt"],
+    deps = [
+        ":jewel-bazel-scripts-utils",
+        "@lib//:kotlinx-coroutines-core",
+    ],
+)
+
+kt_jvm_library(
+    name = "annotate-api-dumps",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/AnnotateApiDumpChanges.kt"],
+    deps = [
+        ":clikt-dependencies",
+        ":clikt-utils",
+        ":jewel-bazel-scripts-utils",
+    ],
+)
+
+kt_jvm_library(
+    name = "check-api-dumps",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/CheckApiDumps.kt"],
+    deps = [
+        ":clikt-dependencies",
+        ":clikt-utils",
+        ":jewel-bazel-scripts-utils",
+    ],
+)
+
+kt_jvm_library(
+    name = "compare-branches",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/CompareBranches.kt"],
+    deps = [
+        ":clikt-dependencies",
+        ":jewel-bazel-scripts-utils",
+    ],
+)
+
+kt_jvm_library(
+    name = "validate-maven-artifacts",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/ValidateMavenArtifacts.kt"],
+    deps = [
+        ":clikt-dependencies",
+        ":clikt-utils",
+        ":jewel-bazel-scripts-utils",
+    ],
+)
+
+java_binary(
+    name = "ktfmtFormat",
+    args = ["format"],
+    main_class = "org.jetbrains.jewel.scripts.bazel.KtfmtRunnerKt",
+    runtime_deps = [":ktfmt-runner-lib"],
+)
+
+java_binary(
+    name = "ktfmtCheck",
+    args = ["check"],
+    main_class = "org.jetbrains.jewel.scripts.bazel.KtfmtRunnerKt",
+    runtime_deps = [":ktfmt-runner-lib"],
+)
+
+java_binary(
+    name = "jewelVersionUpdater",
+    main_class = "org.jetbrains.jewel.scripts.bazel.JewelVersionUpdaterKt",
+    runtime_deps = [":jewel-version-updater"],
+)
+
+java_binary(
+    name = "annotateApiDumpChanges",
+    main_class = "org.jetbrains.jewel.scripts.bazel.AnnotateApiDumpChangesKt",
+    runtime_deps = [":annotate-api-dumps"],
+)
+
+java_binary(
+    name = "checkApiDumps",
+    main_class = "org.jetbrains.jewel.scripts.bazel.CheckApiDumpsKt",
+    runtime_deps = [":check-api-dumps"],
+)
+
+# Run this on CLI like: bazel run //platform/jewel/build-scripts/bazel:compareBranches -- branch1 branch2
+java_binary(
+    name = "compareBranches",
+    main_class = "org.jetbrains.jewel.scripts.bazel.CompareBranchesKt",
+    runtime_deps = [":compare-branches"],
+)
+
+# Run this on CLI like: bazel run //platform/jewel/build-scripts/bazel:validateMavenArtifacts -- branch1 branch2
+java_binary(
+    name = "validateMavenArtifacts",
+    main_class = "org.jetbrains.jewel.scripts.bazel.ValidateMavenArtifactsKt",
+    runtime_deps = [":validate-maven-artifacts"],
+)
+
+# Tests
+kt_jvm_test(
+    name = "bazel-test-utils",
+    srcs = ["src/test/kotlin/org/jetbrains/jewel/scripts/bazel/BazelTestUtils.kt"],
+)
+
+kt_jvm_test(
+    name = "jewelBazelScriptsUtilsTest",
+    srcs = [
+        "src/test/kotlin/org/jetbrains/jewel/scripts/bazel/FakeCommandRunner.kt",
+        "src/test/kotlin/org/jetbrains/jewel/scripts/bazel/JewelBazelScriptsUtilsTest.kt",
+    ],
+    associates = [":jewel-bazel-scripts-utils"],
+    test_class = "org.jetbrains.jewel.scripts.bazel.JewelBazelScriptsUtilsTest",
+    deps = [
+        "@lib//:junit4",
+        "@lib//:kotlinx-coroutines-test",
+        "@rules_kotlin//kotlin/compiler:kotlin-test",
+    ],
+)
+
+kt_jvm_test(
+    name = "annotateApiDumpChangesTest",
+    srcs = [
+        "src/test/kotlin/org/jetbrains/jewel/scripts/bazel/AnnotateApiDumpChangesTest.kt",
+        "src/test/kotlin/org/jetbrains/jewel/scripts/bazel/FakeCommandRunner.kt",
+    ],
+    associates = [":annotate-api-dumps"],
+    test_class = "org.jetbrains.jewel.scripts.bazel.AnnotateApiDumpChangesTest",
+    deps = [
+        ":bazel-test-utils",
+        ":jewel-bazel-scripts-utils",
+        "@lib//:junit4",
+        "@lib//:kotlinx-coroutines-test",
+        "@rules_kotlin//kotlin/compiler:kotlin-test",
+    ],
+)
+
+kt_jvm_test(
+    name = "checkApiDumpsTest",
+    srcs = [
+        "src/test/kotlin/org/jetbrains/jewel/scripts/bazel/CheckApiDumpsTest.kt",
+        "src/test/kotlin/org/jetbrains/jewel/scripts/bazel/FakeCommandRunner.kt",
+    ],
+    associates = [":check-api-dumps"],
+    test_class = "org.jetbrains.jewel.scripts.bazel.CheckApiDumpsTest",
+    deps = [
+        ":clikt-dependencies",
+        ":jewel-bazel-scripts-utils",
+        "@lib//:junit4",
+        "@lib//:kotlinx-coroutines-test",
+        "@rules_kotlin//kotlin/compiler:kotlin-test",
+    ],
+)
+
+kt_jvm_test(
+    name = "compareBranchesTest",
+    srcs = [
+        "src/test/kotlin/org/jetbrains/jewel/scripts/bazel/CompareBranchesTest.kt",
+        "src/test/kotlin/org/jetbrains/jewel/scripts/bazel/FakeCommandRunner.kt",
+    ],
+    associates = [":compare-branches"],
+    # Tests don't need a real workspace root (git calls go through FakeCommandRunner, path-existence checks go
+    # through the injected pathExists), just some valid directory to pass the isDirectory check.
+    env = {"BUILD_WORKSPACE_DIRECTORY": "."},
+    test_class = "org.jetbrains.jewel.scripts.bazel.CompareBranchesTest",
+    deps = [
+        ":clikt-dependencies",
+        ":jewel-bazel-scripts-utils",
+        "@lib//:junit4",
+        "@lib//:kotlinx-coroutines-test",
+        "@rules_kotlin//kotlin/compiler:kotlin-test",
+    ],
+)
+
+kt_jvm_test(
+    name = "validateMavenArtifactsTest",
+    srcs = [
+        "src/test/kotlin/org/jetbrains/jewel/scripts/bazel/FakeCommandRunner.kt",
+        "src/test/kotlin/org/jetbrains/jewel/scripts/bazel/ValidateMavenArtifactsTest.kt",
+    ],
+    associates = [":validate-maven-artifacts"],
+    test_class = "org.jetbrains.jewel.scripts.bazel.ValidateMavenArtifactsTest",
+    deps = [
+        ":bazel-test-utils",
+        ":clikt-dependencies",
+        ":jewel-bazel-scripts-utils",
+        "@lib//:junit4",
+        "@lib//:kotlinx-coroutines-test",
+        "@rules_kotlin//kotlin/compiler:kotlin-test",
+    ],
+)

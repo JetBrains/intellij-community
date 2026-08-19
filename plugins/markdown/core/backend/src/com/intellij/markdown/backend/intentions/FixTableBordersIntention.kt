@@ -16,6 +16,7 @@ import org.intellij.plugins.markdown.editor.tables.TableProps
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.calculateActualTextRange
 import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsCount
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
@@ -47,10 +48,17 @@ internal class FixTableBordersIntention: PsiElementBaseIntentionAction() {
         fixSeparatorRow(it)
       }
     }
-    if (editor != null && !table.isCorrectlyFormatted()) {
-      val document = editor.document
+    val tableStyle = getTableStyle(table.containingFile)
+    val document = editor?.document ?: PsiDocumentManager.getInstance(project).getDocument(table.containingFile) ?: return
+    if (!table.isCorrectlyFormatted(tableStyle)) {
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
-      TableFormattingUtils.reformatAllColumns(table, document, trimToMaxContent = true, preventExpand = false)
+      TableFormattingUtils.reformatAllColumns(
+        table,
+        document,
+        tableStyle,
+        trimToMaxContent = true,
+        preventExpand = false,
+      )
     }
   }
 

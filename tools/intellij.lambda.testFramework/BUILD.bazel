@@ -1,5 +1,13 @@
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+jps_test(
+    name = "lambda-testFramework-tests_test",
+    jvm_flags = ["-Didea.test.grouped.execution=false"],
+    runtime_deps = [":lambda-testFramework-tests_test_lib"],
+)
+### skip generation section `test intellij.lambda.testFramework.tests`
 
 ### auto-generated section `build intellij.lambda.testFramework` start
 create_kotlinc_options(
@@ -53,7 +61,7 @@ jvm_library(
         "//platform/xdebugger-impl:debugger-impl",
         "//platform/util/concurrency",
         "//platform/usageView",
-        "@lib//:kodein-di-jvm",
+        "//libraries/kodein-di-jvm",
         "//tools/intellij.tools.ide.starter:ide-starter",
         "//tools/intellij.tools.ide.starter.product.idea.ultimate:ide-starter-product-idea-ultimate",
         "//tools/intellij.tools.ide.util.common:ide-util-common",
@@ -111,6 +119,7 @@ jvm_library(
         "//platform/xdebugger-impl:debugger-impl_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/usageView:usageView_test_lib",
+        "//libraries/kodein-di-jvm:kodein-di-jvm_test_lib",
         "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
         "//tools/intellij.tools.ide.starter.product.idea.ultimate:ide-starter-product-idea-ultimate_test_lib",
         "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
@@ -134,7 +143,76 @@ jvm_library(
 exports_files(
     [
         "intellij.lambda.testFramework.iml",
+        "resources/intellij.lambda.testFramework.xml",
+        "resources/projects/TestApp/.idea/misc.xml",
+        "resources/projects/TestApp/.idea/modules.xml",
+        "resources/projects/hello-world/.idea/encodings.xml",
+        "resources/projects/hello-world/.idea/misc.xml",
+        "resources/projects/hello-world/.idea/modules.xml",
+        "resources/projects/hello-world/.idea/project-template.xml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.lambda.testFramework` end
+
+### auto-generated section `build intellij.lambda.testFramework.tests` start
+create_kotlinc_options(
+    name = "custom_lambda-testFramework-tests",
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "lambda-testFramework-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.lambda.testFramework.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "lambda-testFramework-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//tools/intellij.lambda.testFramework:lambda-testFramework",
+        "//tools/intellij.lambda.testFramework:lambda-testFramework_test_lib",
+    ],
+    kotlinc_opts = ":custom_lambda-testFramework-tests",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [":lambda-testFramework-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/testFramework/common",
+        "//platform/testFramework/common:common_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+    ],
+)
+### auto-generated section `build intellij.lambda.testFramework.tests` end
+
+### auto-generated section `iml intellij.lambda.testFramework.tests` start
+exports_files(
+    [
+        "intellij.lambda.testFramework.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.lambda.testFramework.tests` end

@@ -15,7 +15,7 @@ LocalDiskJarCacheManager.kt
 LocalDiskJarCacheEntryStorage.kt
   - cache hit path (`tryUseCacheEntry`)
   - cache miss write path (`produceAndCache`)
-  - target materialization (hard link or copy)
+  - target materialization (copy, `COPY_ATTRIBUTES` for copy-on-write)
 
 LocalDiskJarCacheMetadata.kt
   - metadata read/validate/decode
@@ -94,7 +94,7 @@ computeIfAbsent
   |     - allowed only if useCacheAsTargetFile == false
   |     - skipped if `<key>__<name>.jar.mark` exists
   |     - validate metadata + payload
-  |     - materialize target (link/copy)
+  |     - materialize target (copy)
   |     - touch metadata mtime (throttled in-memory, no read-before-touch)
   |
   +-- fallback under in-process per-key lock

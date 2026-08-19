@@ -53,6 +53,7 @@
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.frontend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared.tests" scope="TEST" />

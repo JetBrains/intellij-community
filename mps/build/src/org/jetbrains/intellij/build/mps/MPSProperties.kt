@@ -114,8 +114,8 @@ class MPSProperties : JetBrainsProductProperties() {
             layout.excludeFromModule("intellij.platform.testFramework", "mockito-extensions/**")
 
             layout.withModule("intellij.java.rt", "idea_rt.jar")
-            layout.withProjectLibrary("Eclipse", LibraryPackMode.MERGED)
-            layout.withProjectLibrary("http-client", LibraryPackMode.MERGED)
+            layout.withProjectLibrary("Eclipse", "lib.jar", "withProjectLibrary")
+            layout.withProjectLibrary("http-client", "lib.jar", "withProjectLibrary")
             layout.withoutProjectLibrary("Ant")
             layout.withoutProjectLibrary("Gradle")
             layout.withProjectLibrary("maven-resolver-provider", LibraryPackMode.STANDALONE_MERGED)
@@ -188,6 +188,10 @@ class MPSProperties : JetBrainsProductProperties() {
         deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
 
         moduleSet(CommunityModuleSets.ideCommon())
+
+        // JSP base modules — the Java plugin's intellij.jsp/intellij.jsp.spi content modules depend on
+        // intellij.jsp.base, which java-capable products provide (see CommunityProductFragments.javaIdeBaseFragment).
+        moduleSet(CommunityModuleSets.jspBase())
 
         module("intellij.platform.whatsNew")
         module("intellij.ide.startup.importSettings")

@@ -73,10 +73,10 @@ kotlin {
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.json.jvm231489733.get().let { "${it.group}:kotlinx-serialization-json:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.org.jetbrains.annotations1504825916.get())
     implementation(jps.org.jetbrains.kotlinx.kotlinx.io.core.jvm479158162.get().let { "${it.group}:kotlinx-io-core:${it.version}" }) {
       exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
+    implementation(jps.org.jetbrains.annotations1504825916.get())
     implementation(project(":fleet.util.core"))
   }
   // KOTLIN__MARKER_END

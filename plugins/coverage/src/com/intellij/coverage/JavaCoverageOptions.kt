@@ -44,11 +44,6 @@ internal class JavaCoverageOptions(private val project: Project) : UiDslUnnamedC
           .bindSelected(coverageOptionsProvider::testModulesCoverage)
       }
       row {
-        checkBox(JavaCoverageBundle.message("settings.coverage.java.ignore.implicitly.declared.default.constructors"))
-          .bindSelected(coverageOptionsProvider::ignoreImplicitConstructors)
-          .visibleIf(isIdeaRunner)
-      }
-      row {
         val excludeAnnotationsPanel = object : AnnotationsPanel(
           project, JavaCoverageBundle.message("settings.coverage.java.exclude.panel"), coverageOptionsProvider.excludeAnnotationPatterns,
           JavaCoverageOptionsProvider.defaultExcludeAnnotationPatterns

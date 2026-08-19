@@ -3533,6 +3533,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             public void testTopLevelProperty() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/addContext/topLevelProperty.kt");
             }
+
+            @TestMetadata("withModalityKeyword.kt")
+            public void testWithModalityKeyword() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addContext/withModalityKeyword.kt");
+            }
+
+            @TestMetadata("withSuspendKeyword.kt")
+            public void testWithSuspendKeyword() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addContext/withSuspendKeyword.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -3798,6 +3808,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/infix.kt");
             }
 
+            @TestMetadata("localAndOuterCandidates.kt")
+            public void testLocalAndOuterCandidates() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/localAndOuterCandidates.kt");
+            }
+
             @TestMetadata("localValue.kt")
             public void testLocalValue() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/localValue.kt");
@@ -3864,6 +3879,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("lambda.kt")
             public void testLambda() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/surroundWithContext/lambda.kt");
+            }
+
+            @TestMetadata("localAndOuterCandidates.kt")
+            public void testLocalAndOuterCandidates() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/surroundWithContext/localAndOuterCandidates.kt");
+            }
+
+            @TestMetadata("localDeclaredInsideExistingContext.kt")
+            public void testLocalDeclaredInsideExistingContext() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/surroundWithContext/localDeclaredInsideExistingContext.kt");
             }
 
             @TestMetadata("noCandidateInScope.kt")
@@ -8175,6 +8200,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/methodToProperty.kt");
             }
 
+            @TestMetadata("nestedClassInExpression.kt")
+            public void testNestedClassInExpression() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/nestedClassInExpression.kt");
+            }
+
             @TestMetadata("noReplacement.kt")
             public void testNoReplacement() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/noReplacement.kt");
@@ -9880,6 +9910,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("annotatedClass.kt")
+        public void testAnnotatedClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/annotatedClass.kt");
+        }
+
+        @TestMetadata("enumEntry.kt")
+        public void testEnumEntry() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/enumEntry.kt");
+        }
+
         @TestMetadata("funWithKDoc.kt")
         public void testFunWithKDoc() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/funWithKDoc.kt");
@@ -9905,9 +9945,97 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/publicClass.kt");
         }
 
+        @TestMetadata("topLevelProperty.kt")
+        public void testTopLevelProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/topLevelProperty.kt");
+        }
+
         @TestMetadata("withIndentation.kt")
         public void testWithIndentation() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/withIndentation.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant")
+    public static class KotlinTimeToJavaInstant extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("assignmentTypeMismatch.kt")
+        public void testAssignmentTypeMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/assignmentTypeMismatch.kt");
+        }
+
+        @TestMetadata("chainExpression.kt")
+        public void testChainExpression() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/chainExpression.kt");
+        }
+
+        @TestMetadata("existingImport.kt")
+        public void testExistingImport() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/existingImport.kt");
+        }
+
+        @TestMetadata("functionExpectedType.kt")
+        public void testFunctionExpectedType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/functionExpectedType.kt");
+        }
+
+        @TestMetadata("initializerTypeMismatch.kt")
+        public void testInitializerTypeMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/initializerTypeMismatch.kt");
+        }
+
+        @TestMetadata("initializerTypeMismatchForParameter.kt")
+        public void testInitializerTypeMismatchForParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/initializerTypeMismatchForParameter.kt");
+        }
+
+        @TestMetadata("namesakeExpectedType.kt")
+        public void testNamesakeExpectedType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/namesakeExpectedType.kt");
+        }
+
+        @TestMetadata("noExpectedType.kt")
+        public void testNoExpectedType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/noExpectedType.kt");
+        }
+
+        @TestMetadata("nullableArgumentForNonNullableParameter.kt")
+        public void testNullableArgumentForNonNullableParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/nullableArgumentForNonNullableParameter.kt");
+        }
+
+        @TestMetadata("replaceKotlinInstant.kt")
+        public void testReplaceKotlinInstant() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/replaceKotlinInstant.kt");
+        }
+
+        @TestMetadata("replaceNullable.kt")
+        public void testReplaceNullable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/replaceNullable.kt");
+        }
+
+        @TestMetadata("replaceWithParentheses.kt")
+        public void testReplaceWithParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/replaceWithParentheses.kt");
+        }
+
+        @TestMetadata("trailingLambda.kt")
+        public void testTrailingLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/trailingLambda.kt");
+        }
+
+        @TestMetadata("unrelatedExpectedType.kt")
+        public void testUnrelatedExpectedType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/unrelatedExpectedType.kt");
+        }
+
+        @TestMetadata("unrelatedPassedType.kt")
+        public void testUnrelatedPassedType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/unrelatedPassedType.kt");
         }
     }
 
@@ -11169,6 +11297,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("addContextParameter.kt")
+            public void testAddContextParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addContextParameter.kt");
+            }
+
             @TestMetadata("addFunction.kt")
             public void testAddFunction() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addFunction.kt");
@@ -11319,6 +11452,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeDefinitelyNotNull.kt");
             }
 
+            @TestMetadata("changeParameterTypeFunctionType.kt")
+            public void testChangeParameterTypeFunctionType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeFunctionType.kt");
+            }
+
             @TestMetadata("changeParameterTypeInInterface.kt")
             public void testChangeParameterTypeInInterface() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeInInterface.kt");
@@ -11334,9 +11472,19 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeModifyOrder.kt");
             }
 
+            @TestMetadata("changeParameterTypeNullable.kt")
+            public void testChangeParameterTypeNullable() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeNullable.kt");
+            }
+
             @TestMetadata("changeParameterTypeOpenOverride.kt")
             public void testChangeParameterTypeOpenOverride() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeOpenOverride.kt");
+            }
+
+            @TestMetadata("changeParameterTypeOperator.kt")
+            public void testChangeParameterTypeOperator() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeOperator.kt");
             }
 
             @TestMetadata("changeParameterTypeSingleExpressionFunction.kt")
@@ -11389,6 +11537,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/overrideJavaMethod.kt");
             }
 
+            @TestMetadata("removeContextParameter.kt")
+            public void testRemoveContextParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/removeContextParameter.kt");
+            }
+
             @TestMetadata("removeFunctionReciever.kt")
             public void testRemoveFunctionReciever() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/removeFunctionReciever.kt");
@@ -11412,6 +11565,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("removeTypeParameter.kt")
             public void testRemoveTypeParameter() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/removeTypeParameter.kt");
+            }
+
+            @TestMetadata("replaceContextParameter.kt")
+            public void testReplaceContextParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/replaceContextParameter.kt");
             }
 
             @TestMetadata("suspendFunction.kt")

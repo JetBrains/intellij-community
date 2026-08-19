@@ -6,8 +6,8 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -70,7 +70,8 @@ class SafeCastWithReturnInspection : KotlinApplicableInspectionBase.Simple<KtBin
         return !(leftExpressionReferenceName != "as?" && leftExpressionReferenceName != "as")
     }
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Unit? {
         val withRHS = element.left?.safeDeparenthesize() as? KtBinaryExpressionWithTypeRHS ?: return null
         if (element.isUsedAsExpression) {
             val lambda = withRHS.getStrictParentOfType<KtLambdaExpression>() ?: return null

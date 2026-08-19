@@ -557,6 +557,15 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       action.updateCustomComponent(customComponent, presentation)
     }
 
+    // A custom component is named the same way an ActionButton is, so one action-side declaration serves both
+    // kinds of control and a surface that swaps between them stays addressable. Only ever a fill-in: whatever
+    // the action named the component, in createCustomComponent or in updateCustomComponent, keeps its name.
+    // Outside the create branch as well, so a component cached under COMPONENT_KEY by some earlier owner is
+    // not the one case that comes back unnamed.
+    if (customComponent.name == null) {
+      ActionUtil.getComponentName(anAction, presentation)?.let { componentName -> customComponent.name = componentName }
+    }
+
     val clickable = UIUtil.findComponentOfType(customComponent, AbstractButton::class.java)
     if (clickable != null) {
       class ToolbarClicksCollectorListener : MouseAdapter() {
@@ -1237,7 +1246,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       pairs.add(Replacement(buttonIndex - 1, next))
     }
 
-    if (pairs.size == effectiveNewActions.size) {
+    if (pairs.isNotEmpty() && pairs.size == effectiveNewActions.size) {
       return false // no gain from in-place updates
     }
 

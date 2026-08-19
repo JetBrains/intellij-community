@@ -3,11 +3,23 @@
 *f:com.intellij.platform.rpc.topics.ApplicationRemoteTopicKt
 - sf:ApplicationRemoteTopic(java.lang.String,kotlinx.serialization.KSerializer):com.intellij.platform.rpc.topics.ApplicationRemoteTopic
 - sf:broadcast(com.intellij.platform.rpc.topics.ApplicationRemoteTopic,java.lang.Object):V
+*:com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener
+- *sf:Companion:com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener$Companion
+- a:getTopic():com.intellij.platform.rpc.topics.ApplicationRemoteTopic
+- a:handleEvent(java.lang.Object):V
+*f:com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 *:com.intellij.platform.rpc.topics.ProjectRemoteTopic
 - com.intellij.platform.rpc.topics.RemoteTopic
 *f:com.intellij.platform.rpc.topics.ProjectRemoteTopicKt
 - sf:ProjectRemoteTopic(java.lang.String,kotlinx.serialization.KSerializer):com.intellij.platform.rpc.topics.ProjectRemoteTopic
 - sf:broadcast(com.intellij.platform.rpc.topics.ProjectRemoteTopic,com.intellij.openapi.project.Project,java.lang.Object):V
+*:com.intellij.platform.rpc.topics.ProjectRemoteTopicListener
+- *sf:Companion:com.intellij.platform.rpc.topics.ProjectRemoteTopicListener$Companion
+- a:getTopic():com.intellij.platform.rpc.topics.ProjectRemoteTopic
+- a:handleEvent(com.intellij.openapi.project.Project,java.lang.Object):V
+*f:com.intellij.platform.rpc.topics.ProjectRemoteTopicListener$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 *:com.intellij.platform.rpc.topics.RemoteTopic
 - a:getId():java.lang.String
 - a:getSerializer():kotlinx.serialization.KSerializer

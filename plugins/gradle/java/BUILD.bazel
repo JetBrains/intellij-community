@@ -85,6 +85,7 @@ jvm_library(
         "//platform/execution",
         "//platform/testRunner",
         "//plugins/properties/properties-psi-impl:backend-psi",
+        "//plugins/gradle/properties",
     ],
 )
 
@@ -165,6 +166,7 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//platform/testRunner:testRunner_test_lib",
         "//plugins/properties/properties-psi-impl:backend-psi_test_lib",
+        "//plugins/gradle/properties:properties_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.java` end
@@ -173,6 +175,7 @@ jvm_library(
 exports_files(
     [
         "intellij.gradle.java.iml",
+        "resources/intellij.gradle.java.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -256,8 +259,6 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//java/java-psi-api:psi_test_lib",
         "//platform/observable",
-        "//java/java-runtime:rt",
-        "//java/java-runtime:rt_test_lib",
         "//plugins/gradle/properties",
         "//plugins/gradle/properties:properties_test_lib",
         "//plugins/gradle/java",
@@ -280,7 +281,8 @@ jvm_library(
         "//plugins/maven-server-api:maven-server_test_lib",
         "//libraries/mockito",
         "//libraries/mockito:mockito_test_lib",
-        "@lib//:mockito-kotlin",
+        "//libraries/mockito-kotlin",
+        "//libraries/mockito-kotlin:mockito-kotlin_test_lib",
         "//java/execution/impl",
         "//java/execution/impl:impl_test_lib",
         "//java/java-frontback-psi-api:frontback-psi",

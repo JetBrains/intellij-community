@@ -20,8 +20,18 @@
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.completion.ml.ranking"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.internal"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.ml"/>
     <module name="intellij.platform.ml.impl"/>
+    <module name="intellij.platform.statistics"/>
     <!-- endregion -->
   </dependencies>
 

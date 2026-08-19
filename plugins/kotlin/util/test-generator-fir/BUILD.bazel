@@ -10,7 +10,11 @@ jvm_library(
     ),
     module_name = "kotlin.util.test-generator-fir",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/kotlin/copyright/fir-tests:kotlin-copyright-tests"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
+        "//plugins/kotlin/copyright/fir-tests:kotlin-copyright-tests",
+    ],
 )
 
 jvm_library(
@@ -26,13 +30,18 @@ jvm_library(
     ),
     module_name = "kotlin.util.test-generator-fir",
     visibility = ["//visibility:public"],
-    runtime_deps = [":test-generator-fir"],
+    runtime_deps = [
+        # do not sort,
+        ":test-generator-fir",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/reflect",
         "//libraries/kotlin/reflect:reflect_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
@@ -43,8 +52,6 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform-tests",

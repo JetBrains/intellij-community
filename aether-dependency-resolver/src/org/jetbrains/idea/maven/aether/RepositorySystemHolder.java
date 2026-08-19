@@ -2,19 +2,22 @@
 package org.jetbrains.idea.maven.aether;
 
 import org.apache.maven.model.Activation;
+import org.apache.maven.model.Model;
 import org.apache.maven.model.Profile;
 import org.apache.maven.model.building.DefaultModelBuilderFactory;
 import org.apache.maven.model.building.ModelBuilder;
+import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblemCollector;
 import org.apache.maven.model.profile.ProfileActivationContext;
 import org.apache.maven.model.profile.activation.ProfileActivator;
+import org.apache.maven.model.validation.DefaultModelValidator;
+import org.apache.maven.model.validation.ModelValidator;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory;
 import org.eclipse.aether.impl.DefaultServiceLocator;
 import org.eclipse.aether.internal.impl.TrackingFileManager;
 import org.eclipse.aether.named.NamedLockFactory;
-import org.eclipse.aether.named.providers.LocalReadWriteLockNamedLockFactory;
 import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
 import org.eclipse.aether.spi.connector.transport.TransporterFactory;
 import org.eclipse.aether.transport.file.FileTransporterFactory;
@@ -35,13 +38,24 @@ final class RepositorySystemHolder {
     locator.addService(RepositoryConnectorFactory.class, BasicRepositoryConnectorFactory.class);
     locator.addService(TransporterFactory.class, FileTransporterFactory.class);
     locator.addService(TransporterFactory.class, HttpTransporterFactory.class);
-    locator.addService(NamedLockFactory.class, LocalReadWriteLockNamedLockFactory.class);
+    locator.setServices(NamedLockFactory.class, new FairLocalReadWriteLockNamedLockFactory());
     locator.setServices(ModelBuilder.class, new DefaultModelBuilderFactory() {
       @Override
       public ProfileActivator[] newProfileActivators() {
         // allow pom profiles to make dependency resolution deterministic and predictable:
         // consider all possible dependencies the artifact can potentially have.
         return new ProfileActivator[] {new ProfileActivatorProxy(super.newProfileActivators())};
+      }
+
+      // Note(k15tfu): Temporarily synchronize DefaultModelValidator#validateEffectiveModel to allow concurrent dependency collection.  See https://github.com/apache/maven/pull/11734 and https://youtrack.jetbrains.com/issue/IJPL-251892.
+      @Override
+      protected ModelValidator newModelValidator() {
+        return new DefaultModelValidator(newModelVersionPropertiesProcessor()) {
+          @Override
+          public synchronized void validateEffectiveModel(Model model, ModelBuildingRequest request, ModelProblemCollector problems) {
+            super.validateEffectiveModel(model, request, problems);
+          }
+        };
       }
     }.newInstance());
     locator.setErrorHandler(new DefaultServiceLocator.ErrorHandler() {

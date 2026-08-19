@@ -9,6 +9,7 @@
     <module name="intellij.libraries.netty.codec.http"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.scriptDebugger.protocolReaderRuntime"/>
     <module name="intellij.platform.util.ex"/>

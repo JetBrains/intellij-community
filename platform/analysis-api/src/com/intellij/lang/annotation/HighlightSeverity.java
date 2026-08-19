@@ -39,6 +39,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
    * The standard severity level for information annotations.
    */
   @SuppressWarnings("UnresolvedPropertyKey")
+  @NotNull
   public static final HighlightSeverity INFORMATION =
     new HighlightSeverity(
       "INFORMATION",
@@ -47,7 +48,8 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
       InspectionsBundle.messagePointer("information.severity.capitalized"),
       InspectionsBundle.messagePointer("information.severity.count.message"));
   
-  @SuppressWarnings("UnresolvedPropertyKey") 
+  @SuppressWarnings("UnresolvedPropertyKey")
+  @NotNull
   public static final HighlightSeverity TEXT_ATTRIBUTES =
     new HighlightSeverity(
       "TEXT ATTRIBUTES",
@@ -60,6 +62,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
    * The severity level for errors or warnings obtained from server.
    */
   @SuppressWarnings("UnresolvedPropertyKey")
+  @NotNull
   public static final HighlightSeverity GENERIC_SERVER_ERROR_OR_WARNING =
     new HighlightSeverity(
       "SERVER PROBLEM",
@@ -72,6 +75,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
   /** @deprecated use {@link #WEAK_WARNING} */
   @Deprecated
   @SuppressWarnings("UnresolvedPropertyKey")
+  @NotNull
   public static final HighlightSeverity INFO =
     new HighlightSeverity(
       "INFO",
@@ -82,6 +86,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
     );
 
   @SuppressWarnings("UnresolvedPropertyKey")
+  @NotNull
   public static final HighlightSeverity WEAK_WARNING =
     new HighlightSeverity(
       "WEAK WARNING",
@@ -95,6 +100,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
    * The standard severity level for warning annotations.
    */
   @SuppressWarnings("UnresolvedPropertyKey")
+  @NotNull
   public static final HighlightSeverity WARNING =
     new HighlightSeverity(
       "WARNING",
@@ -108,6 +114,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
    * The standard severity level for error annotations.
    */
   @SuppressWarnings("UnresolvedPropertyKey")
+  @NotNull
   public static final HighlightSeverity ERROR =
     new HighlightSeverity(
       "ERROR",
@@ -120,7 +127,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
   /**
    * Standard severity levels.
    */
-  public static final HighlightSeverity[] DEFAULT_SEVERITIES =
+  public static final @NotNull HighlightSeverity @NotNull [] DEFAULT_SEVERITIES =
     {INFORMATION, TEXT_ATTRIBUTES, GENERIC_SERVER_ERROR_OR_WARNING, INFO, WEAK_WARNING, WARNING, ERROR};
 
   /**

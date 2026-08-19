@@ -30,30 +30,32 @@ def traveling_salesman_problem(
     cycle: bool = True,
     method: Callable[..., Incomplete] | None = None,
     **kwargs,
-): ...
+) -> list[Incomplete]: ...
 @_dispatchable
 def asadpour_atsp(
     G: DiGraph[_Node], weight: str | None = "weight", seed: int | RandomState | None = None, source: str | None = None
-): ...
+) -> list[Incomplete]: ...
 @_dispatchable
-def held_karp_ascent(G: Graph[_Node], weight="weight"): ...
+def held_karp_ascent(
+    G: Graph[_Node], weight: str = "weight"
+) -> tuple[float, dict[Incomplete, Incomplete] | Graph[Incomplete]]: ...
 @_dispatchable
 def spanning_tree_distribution(G: Graph[_Node], z: Mapping[Incomplete, Incomplete]) -> dict[Incomplete, Incomplete]: ...
 @_dispatchable
-def greedy_tsp(G: Graph[_Node], weight: str | None = "weight", source=None): ...
+def greedy_tsp(G: Graph[_Node], weight: str | None = "weight", source=None) -> list[Incomplete]: ...
 @_dispatchable
 def simulated_annealing_tsp(
     G: Graph[_Node],
-    init_cycle,
+    init_cycle: Literal["greedy"] | Iterable[Incomplete],
     weight: str | None = "weight",
     source=None,
     temp: int | None = 100,
-    move="1-1",
+    move: Callable[..., Incomplete] | Literal["1-1", "1-0"] = "1-1",
     max_iterations: int | None = 10,
     N_inner: int | None = 100,
-    alpha=0.01,
+    alpha: float = 0.01,
     seed: int | RandomState | None = None,
-): ...
+) -> list[Incomplete]: ...
 @_dispatchable
 def threshold_accepting_tsp(
     G: Graph[_Node],
@@ -61,9 +63,9 @@ def threshold_accepting_tsp(
     weight: str | None = "weight",
     source=None,
     threshold: int | None = 1,
-    move="1-1",
+    move: Callable[..., Incomplete] | Literal["1-1", "1-0"] = "1-1",
     max_iterations: int | None = 10,
     N_inner: int | None = 100,
-    alpha=0.1,
+    alpha: float = 0.1,
     seed: int | RandomState | None = None,
-): ...
+) -> list[Incomplete]: ...

@@ -19,6 +19,7 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.RunsInEdt
+import com.intellij.testFramework.SystemPropertyRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.Ksuid
 import org.assertj.core.api.Assertions.assertThat
@@ -34,6 +35,11 @@ class RegistryKeyBeanPluginTest {
   //@JvmField
   //val inMemoryFs = InMemoryFsRule()
   // private val rootPath get() = inMemoryFs.fs.getPath("/")
+
+  @Rule
+  @JvmField
+  // Synthetic plugins in this test do not contribute index extensions.
+  val skipIndexReload = SystemPropertyRule("intellij.indexes.skip.reload.on.plugin.load.unload", "true")
 
   @Rule
   @JvmField

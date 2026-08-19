@@ -1,12 +1,12 @@
 from collections.abc import Callable, Iterable, Iterator
 from contextlib import AbstractContextManager
 from types import TracebackType
-from typing import Any, TypeAlias
+from typing import Any, Self, TypeAlias
 
 from django.http.request import HttpRequest
 from django.template.base import Node, Origin, Template
 from django.template.loader_tags import IncludeNode
-from typing_extensions import Self, override
+from typing_extensions import override
 
 _ContextKeys: TypeAlias = int | str | Node
 
@@ -14,7 +14,7 @@ _ContextValues: TypeAlias = dict[str, Any] | Context
 
 class ContextPopException(Exception): ...
 
-class ContextDict(dict):
+class ContextDict(dict[Any, Any]):
     context: BaseContext
     def __init__(self, context: BaseContext, *args: Any, **kwargs: Any) -> None: ...
     def __enter__(self) -> Self: ...
@@ -77,7 +77,7 @@ class RequestContext(Context):
         self,
         request: HttpRequest,
         dict_: dict[str, Any] | None = None,
-        processors: list[Callable] | None = None,
+        processors: list[Callable[..., Any]] | None = None,
         use_l10n: bool | None = None,
         use_tz: bool | None = None,
         autoescape: bool = True,

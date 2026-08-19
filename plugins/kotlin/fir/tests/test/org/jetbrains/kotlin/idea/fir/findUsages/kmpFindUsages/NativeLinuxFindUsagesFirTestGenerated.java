@@ -1030,6 +1030,11 @@ public abstract class NativeLinuxFindUsagesFirTestGenerated extends AbstractFind
             runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/overrides.0.kt");
         }
 
+        @TestMetadata("privateInterfaceMemberUsedThroughNonPrivateSubclass.0.kt")
+        public void testPrivateInterfaceMemberUsedThroughNonPrivateSubclass() throws Exception {
+            runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/privateInterfaceMemberUsedThroughNonPrivateSubclass.0.kt");
+        }
+
         @TestMetadata("privateKotlinClass.0.kt")
         public void testPrivateKotlinClass() throws Exception {
             runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/privateKotlinClass.0.kt");

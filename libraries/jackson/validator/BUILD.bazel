@@ -44,6 +44,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.jackson.validator.iml",
+        "resources/intellij.libraries.jackson.validator.xml",
     ],
     visibility = ["//visibility:public"],
 )

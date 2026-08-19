@@ -7,8 +7,9 @@ import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.coverage.JavaCoverageEngine
 import com.intellij.coverage.JavaCoverageEngineExtension
 import com.intellij.coverage.analysis.AnalysisUtils
+import com.intellij.coverage.analysis.ClassFilesLocator
+import com.intellij.coverage.analysis.CoverageOutputRoots
 import com.intellij.coverage.analysis.JavaCoverageAnnotator
-import com.intellij.coverage.analysis.JavaCoverageClassesEnumerator
 import com.intellij.coverage.analysis.PackageAnnotator
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.openapi.application.runReadAction
@@ -165,7 +166,7 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
             val packageVMName = AnalysisUtils.fqnToInternalName(packageName)
 
             val topLevelClassNames = runReadActionBlocking { collectClassFilePrefixes(file) }
-            return JavaCoverageClassesEnumerator.collectClassFiles(outputRootPath, packageVMName, topLevelClassNames.toSet())
+            return ClassFilesLocator.collectClassFiles(outputRootPath, packageVMName, topLevelClassNames.toSet())
         }
 
         private fun getRelativeClassPath(outputRoot: Path, classFile: Path): String? {
@@ -183,10 +184,10 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
             val fileIndex = ProjectRootManager.getInstance(file.project).fileIndex
             val inTests = runReadAction { fileIndex.getKotlinSourceRootType(file.virtualFile) } == TestSourceKotlinRootType
             val manager = CoverageDataManager.getInstance(file.project)
-            JavaCoverageClassesEnumerator.getRoots(manager, module, inTests).let {
+            CoverageOutputRoots.getRoots(manager, module, inTests).let {
                 if (it.isNotEmpty()) return it
             }
-            return findJvmModule(module)?.let { candidate ->  JavaCoverageClassesEnumerator.getRoots(manager, candidate, inTests) }
+            return findJvmModule(module)?.let { candidate -> CoverageOutputRoots.getRoots(manager, candidate, inTests) }
         }
 
         private fun findJvmModule(module: Module): Module? {

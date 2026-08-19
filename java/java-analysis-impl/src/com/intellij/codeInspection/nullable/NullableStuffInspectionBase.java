@@ -54,6 +54,7 @@ import com.intellij.psi.PsiClassObjectAccessExpression;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiDiamondType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiExpression;
@@ -96,6 +97,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil;
 import com.intellij.psi.impl.search.JavaOverridingMethodsSearcher;
+import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.JavaPsiRecordUtil;
@@ -148,6 +150,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @Deprecated @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = true;
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLABLE_RETURN_OVERRIDES_NOTNULL = true;
   /**
    * @deprecated the field remains to minimize changes to users' inspection profiles.
    */
@@ -158,7 +161,10 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLABILITY_ANNOTATION_ON_LOCALS = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE = false;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = false;
-  @SuppressWarnings("WeakerAccess") public boolean REPORT_UNSPECIFIED_BOUND_CONFLICTS = false;
+  /**
+   * see <a href="https://github.com/jspecify/jspecify/issues/49">jspecify/jspecify#49</a>.
+   */
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL = false;
   /**
    * @deprecated the field remains to minimize changes to users' inspection profiles.
    */
@@ -189,7 +195,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           "REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER".equals(name) && "true".equals(value) ||
           "REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS".equals(name) && "false".equals(value) ||
           "REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE".equals(name) && "false".equals(value) ||
-          "REPORT_UNSPECIFIED_BOUND_CONFLICTS".equals(name) && "false".equals(value) ||
+          "REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL".equals(name) && "false".equals(value) ||
+          "REPORT_NULLABLE_RETURN_OVERRIDES_NOTNULL".equals(name) && "true".equals(value) ||
           "REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER".equals(name) && "true".equals(value)) {
         node.removeContent(child);
       }
@@ -547,8 +554,12 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
               if (TypeNullability.ofTypeParameter(typeParameters[i]).nullability() != Nullability.NOT_NULL) continue;
               TypeNullability nullability = type.getNullability();
               Nullability typeNullability = nullability.nullability();
-              if (typeNullability != Nullability.NOT_NULL &&
-                  !(typeNullability == Nullability.UNKNOWN && type instanceof PsiWildcardType wildcardType && !wildcardType.isExtends())) {
+              if (type instanceof PsiWildcardType wildcardType &&
+                  (nullability.source() instanceof NullabilitySource.ExtendsBound ||
+                   typeNullability == Nullability.UNKNOWN && !wildcardType.isExtends())) {
+                continue;
+              }
+              if (typeNullability != Nullability.NOT_NULL) {
                 String annotationToAdd = manager.getDefaultAnnotation(Nullability.NOT_NULL, reference);
                 PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationToAdd, element.getResolveScope());
                 List<LocalQuickFix> fixes = new ArrayList<>();
@@ -561,11 +572,17 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                   nullability == TypeNullability.UNKNOWN && !REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE ?
                   ProblemHighlightType.INFORMATION :
                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-                if (!isOnTheFly && level == ProblemHighlightType.INFORMATION) continue;
-                holder.registerProblem(typeArgument,
-                                       JavaAnalysisBundle.message("non.null.type.argument.is.expected"),
-                                       level,
-                                       fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+                LocalQuickFix[] fixArray = fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
+                if (level == ProblemHighlightType.INFORMATION) {
+                  if (!isOnTheFly) continue;
+                  holder.registerProblem(typeArgument,
+                                         JavaAnalysisBundle.message("non.null.type.argument.is.expected"),
+                                         level,
+                                         fixArray);
+                }
+                else {
+                  reportProblem(holder, typeArgument, fixArray, "non.null.type.argument.is.expected");
+                }
               }
             }
           }
@@ -701,8 +718,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     JavaTypeNullabilityUtil.NullabilityConflictContext
       context = JavaTypeNullabilityUtil.getNullabilityConflictInAssignment(expectedType, declaredExpectedType, actualType,
                                                                            new JavaTypeNullabilityUtil.NullabilityConflictOptions(
-                                                                             REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS,
-                                                                             REPORT_UNSPECIFIED_BOUND_CONFLICTS)
+                                                                             REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS)
                                                                            );
     JavaTypeNullabilityUtil.NullabilityConflict conflict = context.nullabilityConflict();
     String messageKey = switch (conflict) {
@@ -1089,6 +1105,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(holder.getProject());
 
     checkSupers(method, holder, annotated, superMethods);
+    checkTypeParameterBounds(method, holder, superMethods);
     checkParameters(method, holder, superMethods, nullableManager);
     checkOverriders(method, holder, annotated, nullableManager);
     checkConflictingContainerAnnotations(holder, method.getModifierList());
@@ -1117,11 +1134,75 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
       PsiTypeElement returnTypeElement = method.getReturnTypeElement();
       if (returnTypeElement != null &&
-          checkNestedGenericClasses(holder, returnTypeElement, superMethod.getReturnType(), method.getReturnType(),
-                                    ConflictNestedTypeProblem.OVERRIDING_NESTED_TYPE_PROBLEM)) {
+          checkNestedGenericClasses(holder, returnTypeElement, substitutedSuperType(method, superMethod, superMethod.getReturnType()),
+                                    method.getReturnType(), ConflictNestedTypeProblem.OVERRIDING_NESTED_TYPE_PROBLEM)) {
         break;
       }
     }
+  }
+
+  /**
+   * Reports a method type parameter of an override whose bound narrows the nullable bound inherited from
+   * the corresponding super-method type parameter:
+   * <pre>{@code
+   * @NullMarked
+   * interface Filter<T extends @Nullable Object> { <U extends T> void take(U in); }
+   *
+   * @NullMarked
+   * interface Narrowed extends Filter<@Nullable Object> {
+   *   <U> void take(U in);  // reported: U is bounded by Object, while Filter's U accepts null
+   * }
+   * }</pre>
+   */
+  private void checkTypeParameterBounds(@NotNull PsiMethod method,
+                                       @NotNull ProblemsHolder holder,
+                                       @NotNull List<? extends PsiMethod> superMethods) {
+    PsiTypeParameter[] typeParameters = method.getTypeParameters();
+    if (typeParameters.length == 0) return;
+    PsiClass derived = method.getContainingClass();
+    if (derived == null) return;
+    for (PsiMethod superMethod : superMethods) {
+      PsiTypeParameter[] superTypeParameters = superMethod.getTypeParameters();
+      PsiClass base = superMethod.getContainingClass();
+      if (base == null || superTypeParameters.length != typeParameters.length) continue;
+      PsiSubstitutor classSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(base, derived, PsiSubstitutor.EMPTY);
+      if (classSubstitutor == null) continue;
+      for (int i = 0; i < typeParameters.length; i++) {
+        if (reportNarrowedTypeParameterBound(holder, typeParameters[i], superTypeParameters[i], classSubstitutor, base)) return;
+      }
+    }
+  }
+
+  private boolean reportNarrowedTypeParameterBound(@NotNull ProblemsHolder holder,
+                                                  @NotNull PsiTypeParameter typeParameter,
+                                                  @NotNull PsiTypeParameter superTypeParameter,
+                                                  @NotNull PsiSubstitutor classSubstitutor,
+                                                  @NotNull PsiClass base) {
+    if (boundNullability(superTypeParameter, classSubstitutor).nullability() != Nullability.NULLABLE) return false;
+    TypeNullability typeNullability = TypeNullability.ofTypeParameter(typeParameter);
+    Nullability nullability = typeNullability.nullability();
+    if (nullability == Nullability.NULLABLE) return false;
+    //isUnspecifiedNullness - mostly for jspecify benchmark, the main error is nullability == Nullability.NOT_NULL
+    if (nullability == Nullability.UNKNOWN && !JavaTypeNullabilityUtil.isUnspecifiedNullness(typeNullability)) return false;
+    PsiIdentifier nameIdentifier = typeParameter.getNameIdentifier();
+    PsiElement anchor = nameIdentifier != null ? nameIdentifier : typeParameter;
+    String messageKey = nullability == Nullability.NOT_NULL
+                        ? "inspection.nullable.problems.NotNull.type.parameter.bound.overrides.Nullable"
+                        : "inspection.nullable.problems.unspecified.type.parameter.bound.overrides.Nullable";
+    reportProblem(holder, anchor, LocalQuickFix.EMPTY_ARRAY, messageKey,
+                  typeParameter.getName(), ClassPresentationUtil.getSimpleNameForClass(base));
+    return true;
+  }
+
+  /**
+   * {@link TypeNullability#ofTypeParameter} works on the declaration, so it cannot see that {@code U extends T} became
+   * {@code U extends @Nullable Object} for a particular subtype; the bounds have to be substituted first.
+   */
+  private static @NotNull TypeNullability boundNullability(@NotNull PsiTypeParameter typeParameter,
+                                                          @NotNull PsiSubstitutor classSubstitutor) {
+    PsiClassType[] bounds = typeParameter.getExtendsListTypes();
+    if (bounds.length == 0) return TypeNullability.ofTypeParameter(typeParameter);
+    return TypeNullability.intersect(ContainerUtil.map(bounds, bound -> classSubstitutor.substitute(bound).getNullability()));
   }
 
   private static NullableNotNullManager getNullityManager(PsiMethod method) {
@@ -1136,7 +1217,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   private boolean isNullableOverridingNotNull(Annotated methodInfo, PsiMethod superMethod) {
-    return REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE && methodInfo.isDeclaredNullable && isNotNullNotInferred(superMethod, true, false);
+    return REPORT_NULLABLE_RETURN_OVERRIDES_NOTNULL && methodInfo.isDeclaredNullable && isNotNullNotInferred(superMethod, true, false);
   }
 
   private boolean isNonAnnotatedOverridingNotNull(PsiMethod method, PsiMethod superMethod) {
@@ -1193,12 +1274,25 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                               List<PsiParameter> superParameters) {
     PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
     if (nameIdentifier == null) return;
-    PsiParameter nullableSuper = findNullableSuperForNotNullParameter(parameter, superParameters, PsiSubstitutor.EMPTY);
+    NullableSuperParameter nullableSuper = findNullableSuperForNotNullParameter(parameter, superParameters, PsiSubstitutor.EMPTY);
     if (nullableSuper != null) {
       PsiAnnotation annotation = findAnnotation(parameter, nullableManager.getNotNulls(), true);
+      PsiElement anchor = annotation != null ? annotation : nameIdentifier;
+      if (nullableSuper.viaInstantiation()) {
+        reportProblem(holder, anchor, "inspection.nullable.problems.NotNull.parameter.overrides.parameter.instantiated.as.nullable",
+                      getPresentableAnnoName(parameter));
+      }
+      else {
+        reportProblem(holder, anchor, "inspection.nullable.problems.NotNull.parameter.overrides.Nullable",
+                      getPresentableAnnoName(parameter), getPresentableAnnoName(nullableSuper.parameter()));
+      }
+    }
+    PsiParameter notNullSuperForNullable = findNotNullSuperForNullableParameter(parameter, superParameters);
+    if (notNullSuperForNullable != null) {
+      PsiAnnotation annotation = findAnnotation(parameter, nullableManager.getNullables(), true);
       reportProblem(holder, annotation != null ? annotation : nameIdentifier,
-                    "inspection.nullable.problems.NotNull.parameter.overrides.Nullable",
-                    getPresentableAnnoName(parameter), getPresentableAnnoName(nullableSuper));
+                    "inspection.nullable.problems.Nullable.parameter.overrides.NotNull",
+                    getPresentableAnnoName(parameter), getPresentableAnnoName(notNullSuperForNullable));
     }
     PsiParameter notNullSuper = findNotNullSuperForNonAnnotatedParameter(nullableManager, parameter, superParameters);
     if (notNullSuper != null) {
@@ -1221,12 +1315,75 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     PsiTypeElement typeElement = parameter.getTypeElement();
     if (typeElement != null) {
       for (PsiParameter superParameter : superParameters) {
-        if(checkNestedGenericClasses(holder, typeElement, parameter.getType(), superParameter.getType(),
+        if(checkNestedGenericClasses(holder, typeElement, parameter.getType(), substitutedSuperParameterType(parameter, superParameter),
                                      ConflictNestedTypeProblem.OVERRIDING_NESTED_TYPE_PROBLEM)){
           break;
         }
       }
     }
+  }
+
+  private static @NotNull PsiType substitutedSuperParameterType(@NotNull PsiParameter parameter,
+                                                                @NotNull PsiParameter superParameter) {
+    PsiType superType = superParameter.getType();
+    if (!(parameter.getDeclarationScope() instanceof PsiMethod method) ||
+        !(superParameter.getDeclarationScope() instanceof PsiMethod superMethod)) {
+      return superType;
+    }
+    PsiType substituted = substitutedSuperType(method, superMethod, superType);
+    return substituted != null ? substituted : superType;
+  }
+
+  /**
+   * A type written in the super method refers to the type parameters of the <em>super</em> declaration: those of the base
+   * class, which the derived class instantiates, and those of the super method, which are not the ones of the override:
+   * <pre>{@code
+   * interface Box<X extends @Nullable Object> {}
+   * interface Filter<T extends @Nullable Object> { <U extends T> Box<U> take(Box<U> in); }
+   *
+   * interface Ok extends Filter<Object> {
+   *   <U> Box<U> take(Box<U> in);          // fine: Filter's U is bounded by Object here as well
+   * }
+   *
+   * interface Narrowed extends Filter<@Nullable Object> {
+   *   <U> Box<U> take(Box<U> in);          // a mismatch: U drops the nullable bound
+   * }
+   * }</pre>
+   * In both the super type is {@code Box<U_super>}, where {@code U_super} is bounded by {@code T} and therefore reads
+   * as nullable. Unsubstituted, both look like a nullability mismatch in the type argument -- including {@code Ok}.
+   * The {@code Narrowed} case is reported by {@link #checkTypeParameterBounds}, which points at the type parameter itself.
+   */
+  private static @Nullable PsiType substitutedSuperType(@NotNull PsiMethod method,
+                                                        @NotNull PsiMethod superMethod,
+                                                        @Nullable PsiType superType) {
+    if (superType == null) return null;
+    PsiClass derived = method.getContainingClass();
+    PsiClass base = superMethod.getContainingClass();
+    if (derived == null || base == null) return superType;
+    PsiSubstitutor substitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(base, derived, PsiSubstitutor.EMPTY);
+    if (substitutor == null) return superType;
+    PsiTypeParameter[] typeParameters = method.getTypeParameters();
+    PsiTypeParameter[] superTypeParameters = superMethod.getTypeParameters();
+    if (typeParameters.length == superTypeParameters.length) {
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
+      for (int i = 0; i < typeParameters.length; i++) {
+        substitutor = substitutor.put(superTypeParameters[i], factory.createType(typeParameters[i]));
+      }
+    }
+    return substitutor.substitute(superType);
+  }
+
+  /**
+   * The opposite direction of {@link #findNullableSuperForNotNullParameter}: an override that widens a parameter to
+   * nullable. This cannot break callers -- the override accepts more than the supertype promises -- and the JLS says
+   * nothing about it either way, since {@code @Nullable String} and {@code @NotNull String} are the same type as far as
+   * override-equivalent signatures go. That is why it is guarded by {@link #REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL}:
+   * only JSpecify, which requires the parameter nullness to match exactly, treats it as a nullness mismatch.
+   */
+  private @Nullable PsiParameter findNotNullSuperForNullableParameter(@NotNull PsiParameter parameter,
+                                                                     @NotNull List<? extends PsiParameter> superParameters) {
+    if (!REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL || !isNullableNotInferred(parameter, false)) return null;
+    return ContainerUtil.find(superParameters, sp -> isNotNullNotInferred(sp, false, IGNORE_EXTERNAL_SUPER_NOTNULL));
   }
 
   private @Nullable PsiParameter findNotNullSuperForNonAnnotatedParameter(NullableNotNullManager nullableManager,
@@ -1238,25 +1395,45 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
            : null;
   }
 
-  private @Nullable PsiParameter findNullableSuperForNotNullParameter(@NotNull PsiParameter parameter,
-                                                                      @NotNull List<? extends PsiParameter> superParameters, 
-                                                                      @NotNull PsiSubstitutor superSubstitutor) {
+  /**
+   * @param viaInstantiation the super parameter is not declared nullable itself: its type is a type variable of unspecified
+   *                         nullness that this subtype instantiates with a nullable type. The distinction matters for the
+   *                         message, which would otherwise claim that a {@code @NullnessUnspecified} parameter is overridden.
+   */
+  private record NullableSuperParameter(@NotNull PsiParameter parameter, boolean viaInstantiation) {
+  }
+
+  private @Nullable NullableSuperParameter findNullableSuperForNotNullParameter(@NotNull PsiParameter parameter,
+                                                                               @NotNull List<? extends PsiParameter> superParameters,
+                                                                               @NotNull PsiSubstitutor superSubstitutor) {
     if (!REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE || !isNotNullNotInferred(parameter, false, false)) return null;
     PsiClass derived = PsiUtil.getContainingClass(parameter);
     for (PsiParameter superParameter : superParameters) {
       PsiClass base = PsiUtil.getContainingClass(superParameter);
-      PsiSubstitutor substitutor = base == null || derived == null ? PsiSubstitutor.EMPTY : 
+      PsiSubstitutor substitutor = base == null || derived == null ? PsiSubstitutor.EMPTY :
                                    TypeConversionUtil.getMaybeSuperClassSubstitutor(base, derived, superSubstitutor);
       if (substitutor == null) {
         // may happen if A extends B implements C and methods are declared in B and C
         substitutor = superSubstitutor;
       }
-      PsiType superType = substitutor.substitute(superParameter.getType());
+      PsiType declaredSuperType = superParameter.getType();
+      PsiType superType = substitutor.substitute(declaredSuperType);
       if (DfaPsiUtil.getElementNullabilityForRead(superType, superParameter) == Nullability.NULLABLE) {
-        return superParameter;
+        return new NullableSuperParameter(superParameter, false);
+      }
+      if (isUnspecifiedInstantiatedWithNullable(declaredSuperType, substitutor)) {
+        return new NullableSuperParameter(superParameter, true);
       }
     }
     return null;
+  }
+
+  private static boolean isUnspecifiedInstantiatedWithNullable(@NotNull PsiType declaredType,
+                                                               @NotNull PsiSubstitutor substitutor) {
+    if (!JavaTypeNullabilityUtil.isUnspecifiedNullness(declaredType.getNullability())) return false;
+    if (!(PsiUtil.resolveClassInClassTypeOnly(declaredType) instanceof PsiTypeParameter typeParameter)) return false;
+    PsiType substituted = substitutor.substitute(typeParameter);
+    return substituted != null && substituted.getNullability().nullability() == Nullability.NULLABLE;
   }
 
   private boolean isNotNullParameterOverridingNonAnnotated(NullableNotNullManager nullableManager,

@@ -52,7 +52,8 @@ internal class FilterIsInstanceCallWithClassLiteralArgumentInspection : KotlinAp
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
         element.calleeExpression?.text == "filterIsInstance" && element.valueArguments.singleOrNull()?.isClassLiteral() == true
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Unit? {
         if (element.resolveToFunctionSymbol()?.callableId != FILTER_IS_INSTANCE_CALLABLE_ID) return null
 
         return element.valueArguments

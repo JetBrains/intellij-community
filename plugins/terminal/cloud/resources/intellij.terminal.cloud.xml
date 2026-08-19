@@ -1,6 +1,14 @@
 <idea-plugin>
   <dependencies>
     <plugin id="com.intellij.modules.remoteServers"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.jediterm.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.remoteServers"/>
+    <module name="intellij.platform.remoteServers.agent.rt"/>
+    <module name="intellij.platform.remoteServers.impl"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.remoteServer.impl.runtime.log.CloudTerminalProvider"

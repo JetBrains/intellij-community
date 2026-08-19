@@ -34,7 +34,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common",
         "//libraries/kotlinx/coroutines/core",
         "//platform/analysis-api:analysis",
@@ -57,7 +57,8 @@ jvm_library(
         "//platform/core-ui",
         "//platform/core-impl",
         "//plugins/kotlin/base/resources:kotlin-base-resources",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//platform/util:util-ui",
     ],
 )
@@ -75,6 +76,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":util",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
@@ -89,7 +91,8 @@ jvm_library(
         "//platform/indexing-api:indexing_test_lib",
         "//java/java-psi-api:psi_test_lib",
         "//java/java-psi-impl:psi-impl_test_lib",
-        "@lib//:kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
         "//libraries/kotlin/test:libraries-kotlinTest",
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/junit4",
@@ -101,6 +104,8 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//platform/util:util-ui_test_lib",
     ],
 )
@@ -110,6 +115,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.base.util.iml",
+        "resources/intellij.kotlin.base.util.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -163,7 +169,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-jps-common",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
@@ -187,7 +194,8 @@ jvm_library(
         "//platform/indexing-api:indexing_test_lib",
         "//java/java-psi-impl:psi-impl",
         "//java/java-psi-impl:psi-impl_test_lib",
-        "@lib//:kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
         "@lib//:kotlin-test",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
@@ -203,7 +211,8 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//plugins/kotlin/base/resources:kotlin-base-resources",
         "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.util.tests` end

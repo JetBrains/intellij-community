@@ -6,7 +6,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.getLibraryRoots
 import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.nio.file.Path
+import kotlin.io.path.name
 
 private val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
 
@@ -19,17 +21,38 @@ fun removeVersionFromJar(fileName: String): String {
 @Internal
 fun nameToJarFileName(name: String): String = sanitizeFileName(name.lowercase(), replacement = "-") { it == ' ' } + ".jar"
 
+/**
+ * The name a library is known by in the distribution: its own name, or - for an unnamed (`#`-prefixed) module library - the file name of its
+ * single JAR.
+ */
+@Internal
+fun getLibraryFileName(lib: JpsLibrary): String {
+  val name = lib.name
+  if (name.startsWith('#')) {
+    // unnamed module libraries in the IntelliJ project may have only one root
+    val paths = lib.getPaths(JpsOrderRootType.COMPILED)
+    require(paths.size == 1) {
+      "Unnamed module library has more than one element: $paths"
+    }
+    return paths[0].name
+  }
+  return name
+}
+
 private val agentLibrariesNotForcedInSeparateJars = listOf(
-  "ideformer",
   "code-agents",
   "code-prompt-agents"
 )
 
+/**
+ * Libraries that have to stay standalone jar files: agents are attached by path at runtime, and `-rt` / `maven-` jars are loaded by
+ * external processes. Objenesis is deliberately absent - it is an ordinary library, and hoisting it out of the content module that wraps it
+ * left that module's jar empty, so every module depending on the wrapper failed to resolve the classes (IJPL-252372).
+ */
 @Internal
 fun isSeparateLibraryJar(fileName: String): Boolean {
   return fileName.endsWith("-rt.jar") ||
          fileName.startsWith("byte-buddy-") ||
-         fileName.startsWith("objenesis-") ||
          (fileName.contains("-agent") && agentLibrariesNotForcedInSeparateJars.none { fileName.contains(it) }) ||
          fileName.startsWith("maven-")
 }

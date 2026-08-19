@@ -8,18 +8,23 @@
     <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptDefinitionsSource"
-            interface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
-
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.kotlinScriptFilter"
-            interface="org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptProcessingFilter"
+            qualifiedName="org.jetbrains.kotlin.scriptDefinitionsProvider"
+            interface="kotlin.script.experimental.intellij.ScriptDefinitionsProvider"
             area="IDEA_PROJECT"
             dynamic="true"/>
 
@@ -54,13 +59,9 @@
 
     <fileType name="script-definition-marker" fieldName="INSTANCE"
               implementationClass="org.jetbrains.kotlin.idea.core.script.shared.definition.ScriptDefinitionMarkerFileType"/>
-    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.core.script.shared.ScriptingSettingsFUSCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptDefinitionsSource
-            id="BridgeScriptDefinitionsContributor"
-            implementation="org.jetbrains.kotlin.idea.core.script.shared.definition.BridgeScriptDefinitionsContributor"/>
     <idea.base.platforms.targetPlatformDetector
             implementation="org.jetbrains.kotlin.idea.core.script.v1.ScriptingTargetPlatformDetector"/>
   </extensions>

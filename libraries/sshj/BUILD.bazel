@@ -35,6 +35,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.sshj.iml",
+        "resources/intellij.libraries.sshj.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.ex
 
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -35,6 +36,14 @@ import org.jetbrains.annotations.ApiStatus
  * 6) text = 'ab'   // t1 gets nested modification exception
  * ```
  * cases (5) and (6) are T_O_D_O to be fixed
+ *
+ * A change is computed against the snapshot captured at the start of the operation, but published against the
+ * snapshot found at CAS time. The two are reconciled by [DocumentSnapshot.withMetadata]: if the snapshot found
+ * at CAS time still has the same text the operation started from, it is taken as a whole and the change is
+ * applied on top of it -- that is how a metadata-only update that raced the change, a modification stamp set
+ * from another thread say, survives. Otherwise that snapshot's text has already moved on to some other change,
+ * so it is discarded wholesale, metadata included, and the change is applied to the text the operation started
+ * from instead. That is how a losing text mutation is overridden in cases (1) and (2).
  */
 @ApiStatus.Internal
 interface DocumentMutator {
@@ -44,7 +53,7 @@ interface DocumentMutator {
    *
    * Safe to perform concurrently.
    * @param incrementModSequence whether the modSequence should be incremented
-   * @see DocumentSnapshot.withModStamp
+   * @see DocumentSnapshot.applyOp
    */
   fun setModStamp(newModStamp: Long, incrementModSequence: Boolean)
 
@@ -53,7 +62,7 @@ interface DocumentMutator {
    *
    * It is unsafe to perform concurrently with text mutations because line numbers may become outdated causing an exception
    *
-   * @see DocumentSnapshot.withClearedLineFlags
+   * @see DocumentSnapshot.applyOp
    */
   fun clearLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray)
 
@@ -117,4 +126,15 @@ interface DocumentMutator {
     newModStamp: Long,
     wholeTextReplaced: Boolean,
   )
+
+  /**
+   * Atomically attaches the sputnik returned by [sputnik] under [key], or detaches it if [sputnik] returns
+   * `null`.
+   *
+   * [sputnik] may be invoked more than once per call -- a lost publish race re-invokes it against the newly
+   * found snapshot -- so it must be pure and side-effect free.
+   *
+   * @see DocumentSnapshot.applyOp
+   */
+  fun <S : DocumentSputnik> setSputnik(key: Key<S>, sputnik: (DocumentSnapshot) -> S?): DocumentSnapshot
 }

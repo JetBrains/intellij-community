@@ -73,6 +73,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.stacktrace.iml",
+        "resources/intellij.devkit.stacktrace.xml",
     ],
     visibility = ["//visibility:public"],
 )

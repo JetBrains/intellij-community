@@ -432,6 +432,8 @@ f:com.intellij.execution.multilaunch.design.ExecutableRow
 a:com.intellij.execution.multilaunch.design.components.IconCheckBoxList
 - com.intellij.ui.CheckBoxList
 - <init>():V
+a:com.intellij.execution.multilaunch.execution.conditions.Condition
+- getOptionLabel():java.lang.String
 f:com.intellij.execution.multilaunch.execution.executables.impl.RunConfigurationExecutableManager$RunConfigurationExecutable
 - com.intellij.execution.multilaunch.execution.executables.Executable
 - f:getSettings():com.intellij.execution.RunnerAndConfigurationSettings
@@ -476,6 +478,7 @@ f:com.intellij.execution.ui.BeforeRunFragment
 - s:createGroup():java.util.List
 f:com.intellij.execution.ui.CommonParameterFragments
 - s:createEnvParameters():com.intellij.execution.ui.SettingsEditorFragment
+- s:createEnvParameters(com.intellij.openapi.project.Project):com.intellij.execution.ui.SettingsEditorFragment
 - createRedirectFragment():com.intellij.execution.ui.SettingsEditorFragment
 - s:createRunHeader():com.intellij.execution.ui.SettingsEditorFragment
 - getFragments():java.util.List
@@ -484,6 +487,7 @@ f:com.intellij.execution.ui.CommonParameterFragments
 c:com.intellij.execution.ui.CommonProgramParametersPanel
 - javax.swing.JPanel
 - com.intellij.ui.PanelWithAnchor
+- pf:myProject:com.intellij.openapi.project.Project
 - <init>():V
 - <init>(com.intellij.openapi.project.Project):V
 - <init>(Z):V
@@ -515,6 +519,7 @@ f:com.intellij.execution.ui.ProgramInputRedirectPanel
 - javax.swing.JPanel
 - com.intellij.ui.PanelWithAnchor
 - <init>():V
+- <init>(com.intellij.openapi.project.Project):V
 - applyTo(com.intellij.execution.InputRedirectAware$InputRedirectOptions):V
 - getComponent():com.intellij.openapi.ui.TextFieldWithBrowseButton
 - reset(com.intellij.execution.InputRedirectAware$InputRedirectOptions):V
@@ -619,6 +624,7 @@ c:com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 - com.jediterm.terminal.ui.settings.DefaultSettingsProvider
 - <init>():V
 - getCursorShape():com.jediterm.terminal.CursorShape
+- getMoveToolWindowTabToEditorActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
 - getTerminalFont():java.awt.Font
 c:com.intellij.terminal.JBTerminalWidget
 - com.jediterm.terminal.ui.JediTermWidget
@@ -643,6 +649,7 @@ com.intellij.terminal.JBTerminalWidgetListener
 - isGotoNextSplitTerminalAvailable():Z
 - moveTabLeft():V
 - moveTabRight():V
+- moveToolWindowTabToEditor():V
 - a:onNewSession():V
 - a:onNextTabSelected():V
 - a:onPreviousTabSelected():V

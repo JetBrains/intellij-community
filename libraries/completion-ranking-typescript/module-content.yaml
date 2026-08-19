@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.completion.ranking.typescript.jar
+  modules:
+  - name: intellij.libraries.completion.ranking.typescript
+    libraries:
+      completion-ranking-typescript:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-typescript/0/completion-ranking-typescript-0.jar

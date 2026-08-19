@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeVarTupleType
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.PyVariance
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
@@ -214,8 +215,8 @@ internal object PyTypeDiff {
     val typeParameter = definition?.typeArguments?.getOrNull(index) as? PyTypeParameterType ?: return Variance.COVARIANT
     if (typeParameter !is PyTypeVarType) return Variance.COVARIANT
     return when (PyInferredVarianceJudgment.getDeclaredOrInferredVariance(typeParameter, context)) {
-      PyTypeParameterType.Variance.CONTRAVARIANT -> Variance.CONTRAVARIANT
-      PyTypeParameterType.Variance.INVARIANT -> Variance.INVARIANT
+      PyVariance.CONTRAVARIANT -> Variance.CONTRAVARIANT
+      PyVariance.INVARIANT -> Variance.INVARIANT
       else -> Variance.COVARIANT
     }
   }

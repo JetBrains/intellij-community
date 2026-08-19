@@ -186,7 +186,7 @@ class PyUnusedImportsInspection : PyInspection() {
       val visibleName = importElement.getVisibleName()
       val owner = ScopeUtil.getScopeOwner(importElement)
       if (visibleName == null || owner == null) return
-      val allWrites: List<PsiElement> = ScopeUtil.getElementsOfAccessType(visibleName, owner, ReadWriteInstruction.ACCESS.WRITE)
+      val allWrites = ScopeUtil.getElementsOfAccessType(visibleName, owner, ReadWriteInstruction.ACCESS.WRITE)
       val hasWriteInsideGuard = allWrites.any { guard.isAncestor(it) }
       if (!hasWriteInsideGuard && !shouldSkipMissingWriteInsideGuard(guard, visibleName)) {
         myImportsInsideGuard.add(importElement)

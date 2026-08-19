@@ -44,6 +44,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.kotlinx.coroutines.debug.iml",
+        "resources/intellij.libraries.kotlinx.coroutines.debug.xml",
     ],
     visibility = ["//visibility:public"],
 )

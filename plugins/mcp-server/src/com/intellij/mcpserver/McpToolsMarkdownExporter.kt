@@ -156,8 +156,8 @@ object McpToolsMarkdownExporter {
   /**
    * Generates markdown documentation for all currently available MCP tools.
    */
-  fun generateMarkdownForAllTools(): String {
-    return generateMarkdown(McpServerService.getInstance().getMcpTools())
+  suspend fun generateMarkdownForAllTools(): String {
+    return generateMarkdown(McpServerService.getInstance().getMcpToolsAsync())
   }
 
   private data class SchemaTableRow(

@@ -71,6 +71,7 @@ jvm_library(
 exports_files(
     [
         "intellij.searchEverywhereLucene.frontend.iml",
+        "resources/intellij.searchEverywhereLucene.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )

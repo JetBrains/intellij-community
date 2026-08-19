@@ -36,7 +36,7 @@ jvm_library(
         "//platform/indexing-api:indexing",
         "//platform/usageView-impl",
         "//platform/workspace/jps",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//platform/ide-core",
         "//platform/analysis-api:analysis",
@@ -69,6 +69,7 @@ jvm_library(
         "//platform/indexing-api:indexing_test_lib",
         "//platform/usageView-impl:usageView-impl_test_lib",
         "//platform/workspace/jps:jps_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/usageView:usageView_test_lib",
@@ -89,6 +90,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.apiDump.lang.iml",
+        "resources/intellij.devkit.apiDump.lang.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -140,7 +142,8 @@ jvm_library(
         "//platform/usageView-impl:usageView-impl_test_lib",
         "//platform/workspace/jps",
         "//platform/workspace/jps:jps_test_lib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-stdlib",
         "//platform/ide-core",
         "//platform/analysis-api:analysis",

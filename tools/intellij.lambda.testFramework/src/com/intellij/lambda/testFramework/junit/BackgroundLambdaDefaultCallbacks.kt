@@ -37,26 +37,46 @@ class BackgroundLambdaDefaultCallbacks : BeforeAllCallback, BeforeEachCallback, 
 
   override fun beforeAll(context: ExtensionContext) {
     callbackInvoker(context, "Before all") { rdTestSession, contextName -> rdTestSession.beforeAll.startSuspending(contextName) }
+      ?.let { delivery ->
+        lifecycleCoordinator.beforeAllDelivered(context.requiredTestClass.name, "Before all", delivery.ide)
+      }
   }
 
   override fun beforeEach(context: ExtensionContext) {
     callbackInvoker(context, "Before each") { rdTestSession, contextName -> rdTestSession.beforeEach.startSuspending(contextName) }
+      ?.let { delivery ->
+        lifecycleCoordinator.beforeEachDelivered(
+          testId = context.uniqueId,
+          className = context.requiredTestClass.name,
+          callbackName = "Before each",
+          ideIdentity = delivery.ide,
+        )
+      }
   }
 
   override fun afterEach(context: ExtensionContext) {
-    callbackInvoker(context, "After each") { rdTestSession, contextName -> rdTestSession.afterEach.startSuspending(contextName) }
+    try {
+      callbackInvoker(context, "After each") { rdTestSession, contextName -> rdTestSession.afterEach.startSuspending(contextName) }
+    }
+    finally {
+      lifecycleCoordinator.afterEachFinished(context.uniqueId)
+    }
   }
 
   override fun afterAll(context: ExtensionContext) {
-    callbackInvoker(context, "After all") { rdTestSession, contextName -> rdTestSession.afterAll.startSuspending(contextName) }
+    try {
+      callbackInvoker(context, "After all") { rdTestSession, contextName -> rdTestSession.afterAll.startSuspending(contextName) }
+    }
+    finally {
+      lifecycleCoordinator.afterAllFinished(context.requiredTestClass.name)
+    }
   }
-
 
   private fun callbackInvoker(
     context: ExtensionContext,
     callbackName: String,
     callback: suspend (LambdaRdTestSession, String) -> Unit,
-  ) {
+  ): CallbackDelivery? {
     val contextName = buildString {
       append(context.requiredTestClass.name)
       context.testMethod.getOrNull()?.let { append(".${it.name} ") }
@@ -65,20 +85,14 @@ class BackgroundLambdaDefaultCallbacks : BeforeAllCallback, BeforeEachCallback, 
 
     if (!isStarted()) {
       thisLogger().warn("IDE wasn't started yet.Skipping $callbackName for $contextName")
-      return
+      return null
     }
 
+    val currentIde = ide
     try {
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking(testSuiteSupervisorScope.coroutineContext) {
-        ide.apply {
-          listOfNotNull(this, backendIdeWithLambda).map { it.rdSession }.forEach { session ->
-            val title = session.getRdIdeTypePrefix() + callbackName
-            runLogged(title, getTimeoutHonouringDebug(30.seconds)) {
-              callback(session, title)
-            }
-          }
-        }
+        currentIde.invokeLifecycleCallback(callbackName, callback)
       }
     }
     catch (e: Throwable) {
@@ -86,7 +100,7 @@ class BackgroundLambdaDefaultCallbacks : BeforeAllCallback, BeforeEachCallback, 
         thisLogger().warn("Got a logger error during $callbackName for $contextName", e)
         // this is just a logged error thrown as exception in case of platform test framework modules are enabled on IDE side, can be skipped
         // probably should be handled better by turning off this behavior on the test framework side
-        return
+        return CallbackDelivery(currentIde)
       }
       val message = "$callbackName failed for $contextName"
       catchAll("Gathering thread dumps '$message'") {
@@ -95,11 +109,10 @@ class BackgroundLambdaDefaultCallbacks : BeforeAllCallback, BeforeEachCallback, 
 
           suspend fun IdeWithLambda.dumpProcess(runContext: IDERunContext) {
             collectJavaThreadDumpSuspendable(runContext.testContext.ide.resolveAndDownloadTheSameJDKOrFallback(),
-                                             runContext.logsDir,
+                                             runContext.lastIdeReportingData.logsDir,
                                              backgroundRun.process.id.toLong(),
-                                             runContext.logsDir.resolve(getArtifactsFileName(callbackName,
-                                                                                             "ThreadDumps-$contextName",
-                                                                                             "log")))
+                                             runContext.lastIdeReportingData.logsDir.resolve(
+                                               getArtifactsFileName(callbackName, "ThreadDumps-$contextName", "log")))
           }
           ide.dumpProcess(IdeInstance.runContext.frontendContext)
           ide.backendIdeWithLambda?.let { backendIde ->
@@ -119,8 +132,58 @@ class BackgroundLambdaDefaultCallbacks : BeforeAllCallback, BeforeEachCallback, 
       }
 
       IdeInstance.stopIde()
-      IdeInstance.publishArtifacts()
       throw e
+    }
+    return CallbackDelivery(currentIde)
+  }
+
+  private data class CallbackDelivery(
+    val ide: IdeWithLambda,
+  )
+
+  companion object {
+    private val lifecycleCoordinator = BackgroundLambdaLifecycleCoordinator()
+
+    /**
+     * Replays the active IDE-side JUnit lifecycle after [IdeInstance.recycleIde] creates a new RD session.
+     *
+     * Call this exactly once with the returned replacement [IdeWithLambda]. A duplicate call for the same
+     * replacement is a no-op. If replay fails, the replacement IDE is stopped so later tests cannot reuse a
+     * session whose lifecycle was only partially restored.
+     */
+    @JvmStatic
+    fun replayActiveLifecycleAfterRecycle(recycledIde: IdeWithLambda) {
+      try {
+        @Suppress("RAW_RUN_BLOCKING")
+        runBlocking(testSuiteSupervisorScope.coroutineContext) {
+          lifecycleCoordinator.replayAfterRecycle(recycledIde) { callback ->
+            when (callback.phase) {
+              LifecyclePhase.BEFORE_ALL -> recycledIde.invokeLifecycleCallback(callback.callbackName) { session, contextName ->
+                session.beforeAll.startSuspending(contextName)
+              }
+              LifecyclePhase.BEFORE_EACH -> recycledIde.invokeLifecycleCallback(callback.callbackName) { session, contextName ->
+                session.beforeEach.startSuspending(contextName)
+              }
+            }
+          }
+        }
+      }
+      catch (failure: Throwable) {
+        IdeInstance.stopIde()
+        throw failure
+      }
+    }
+  }
+}
+
+private suspend fun IdeWithLambda.invokeLifecycleCallback(
+  callbackName: String,
+  callback: suspend (LambdaRdTestSession, String) -> Unit,
+) {
+  listOfNotNull(this, backendIdeWithLambda).map { it.rdSession }.forEach { session ->
+    val title = session.getRdIdeTypePrefix() + callbackName
+    runLogged(title, getTimeoutHonouringDebug(30.seconds)) {
+      callback(session, title)
     }
   }
 }

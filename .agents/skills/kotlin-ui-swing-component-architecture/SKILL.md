@@ -1,6 +1,6 @@
 ---
 name: kotlin-ui-swing-component-architecture
-description: Design IntelliJ Swing UI components, state flow, EDT work, and lifecycle ownership.
+description: Design IntelliJ Swing UI components, state flow, and EDT work.
 ---
 
 # Swing feature component architecture
@@ -160,6 +160,8 @@ Inspect every listener and callback for blocking operations, including:
 - Expensive parsing or computation
 
 Capture required input on the EDT, run expensive work away from it, then return to the EDT before updating state or rendering. Follow the surrounding module's platform coroutine, modality, read/write-action, and dispatcher conventions. Prefer a coroutine scope tied to the feature lifecycle; never use `GlobalScope`. If using `SwingUtilities.invokeLater`, verify that platform modality and disposal semantics do not require an IntelliJ scheduling API instead.
+
+Modality rides in the coroutine context and defers on the EDT: capture a `ModalityState` per operation on the submitting thread (`ModalityState.defaultModalityState()`) and pass it to the work — `launch(modality.asContextElement())` or `invokeLater(runnable, modality)` — rather than freezing one modality onto a long-lived scope. Work submitted with a modality lower than the currently open modal dialog is deferred until that dialog closes, which reads as a hang; completing with the modality captured at submit time dispatches it inside the originating modal state. `ModalityState.any()` is the opposite trap — it never defers, so a non-trivial callback can run inside an unrelated modal dialog while your model is mid-transition (reentrancy / inconsistent state); reserve `any()` for trivial, state-independent bookkeeping.
 
 For concurrent requests, cancel obsolete work or tag requests and ignore stale completion. Preserve coroutine cancellation rather than converting it into a user-visible failure. Re-check lifecycle before applying results.
 

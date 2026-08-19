@@ -24,6 +24,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.testng",
     visibility = ["//visibility:public"],
     exports = ["@lib//:test_n_g"],
@@ -35,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.testng.iml",
+        "resources/intellij.libraries.testng.xml",
     ],
     visibility = ["//visibility:public"],
 )

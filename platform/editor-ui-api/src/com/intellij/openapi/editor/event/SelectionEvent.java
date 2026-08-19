@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.event;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventObject;
 
@@ -26,7 +27,7 @@ public class SelectionEvent extends EventObject {
   private final Pair<TextRange[], TextRange> myNewRanges;
 
 
-  public SelectionEvent(Editor editor,
+  public SelectionEvent(@NotNull Editor editor,
                         int[] oldSelectionStarts, int[] oldSelectionEnds,
                         int[] newSelectionStarts, int[] newSelectionEnds) {
     super(editor);
@@ -39,7 +40,7 @@ public class SelectionEvent extends EventObject {
 
   }
 
-  public SelectionEvent(Editor editor, int oldStart, int oldEnd, int newStart, int newEnd) {
+  public SelectionEvent(@NotNull Editor editor, int oldStart, int oldEnd, int newStart, int newEnd) {
     this(editor, new int[]{oldStart}, new int[]{oldEnd}, new int[]{newStart}, new int[]{newEnd});
   }
 
@@ -47,23 +48,23 @@ public class SelectionEvent extends EventObject {
     assert starts.length == ends.length;
   }
 
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return (Editor) getSource();
   }
 
-  public TextRange getOldRange() {
+  public @NotNull TextRange getOldRange() {
     return myOldRanges.second;
   }
 
-  public TextRange getNewRange() {
+  public @NotNull TextRange getNewRange() {
     return myNewRanges.second;
   }
 
-  public TextRange[] getOldRanges() {
+  public @NotNull TextRange @NotNull[] getOldRanges() {
     return myOldRanges.first;
   }
 
-  public TextRange[] getNewRanges() {
+  public @NotNull TextRange @NotNull[] getNewRanges() {
     return myNewRanges.first;
   }
 

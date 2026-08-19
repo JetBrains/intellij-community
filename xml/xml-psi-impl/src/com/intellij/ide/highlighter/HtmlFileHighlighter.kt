@@ -1,16 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter
 
-import com.intellij.ide.highlighter.XmlFileHighlighter.Companion.EMBEDDED_HIGHLIGHTERS
-import com.intellij.ide.highlighter.XmlFileHighlighter.Companion.registerAdditionalHighlighters
-import com.intellij.ide.highlighter.XmlFileHighlighter.EmbeddedTokenHighlighterExtensionPointListener
 import com.intellij.lexer.HtmlLexer
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.XmlHighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
-import com.intellij.openapi.progress.Cancellation
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.xml.XmlTokenType.TAG_WHITE_SPACE
 import com.intellij.psi.xml.XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER
@@ -42,23 +38,21 @@ import com.intellij.psi.xml.XmlTokenType.XML_TAG_END
 import com.intellij.psi.xml.XmlTokenType.XML_TAG_NAME
 import com.intellij.util.containers.MultiMap
 
-open class HtmlFileHighlighter :
-  SyntaxHighlighterBase() {
-
+open class HtmlFileHighlighter : SyntaxHighlighterBase() {
   override fun getHighlightingLexer(): Lexer {
     return HtmlLexer(true)
   }
 
   override fun getTokenHighlights(tokenType: IElementType): Array<out TextAttributesKey> {
-    synchronized(javaClass) {
-      return pack(XmlHighlighterColors.HTML_CODE, ourMap[tokenType].toTypedArray())
-    }
+    return Holder.ourMap.getOrDefault(tokenType, Holder.HTML_CODE_ARRAY)
   }
 
-  private companion object {
-    private val ourMap = MultiMap.create<IElementType, TextAttributesKey>()
-
+  private object Holder {
+    @JvmStatic
+    val ourMap: XmlFileHighlighter.AttributeArrayMapStorage
+    val HTML_CODE_ARRAY: Array<out TextAttributesKey> = pack(XmlHighlighterColors.HTML_CODE)
     init {
+      val ourMap: MultiMap<IElementType, TextAttributesKey> = MultiMap.create()
       ourMap.putValue(XML_TAG_CHARACTERS, XmlHighlighterColors.HTML_TAG)
 
       for (type in sequenceOf(XML_COMMENT_START, XML_COMMENT_END, XML_COMMENT_CHARACTERS,
@@ -90,11 +84,8 @@ open class HtmlFileHighlighter :
       ourMap.putValue(XML_ENTITY_REF_TOKEN, XmlHighlighterColors.HTML_ENTITY_REFERENCE)
 
       ourMap.putValue(XML_BAD_CHARACTER, HighlighterColors.BAD_CHARACTER)
-
-      Cancellation.computeInNonCancelableSection<Unit, Nothing> {
-        // PCE in static initializer breaks class initialization
-        registerAdditionalHighlighters(ourMap)
-        EMBEDDED_HIGHLIGHTERS.addExtensionPointListener(EmbeddedTokenHighlighterExtensionPointListener(ourMap), null)
+      this.ourMap = XmlFileHighlighter.createMapAndListenForExtensionChanges(ourMap) {
+          attributes -> pack(XmlHighlighterColors.HTML_CODE, attributes)
       }
     }
   }

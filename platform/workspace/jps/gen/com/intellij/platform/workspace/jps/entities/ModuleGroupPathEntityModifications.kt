@@ -21,7 +21,7 @@ interface ModuleGroupPathEntityBuilder : WorkspaceEntityBuilder<ModuleGroupPathE
 }
 
 internal object ModuleGroupPathEntityType : EntityType<ModuleGroupPathEntity, ModuleGroupPathEntityBuilder>() {
-  override val entityClass: Class<ModuleGroupPathEntity> get() = ModuleGroupPathEntity::class.java
+  override val entityImplClass: Class<*> get() = ModuleGroupPathEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ModuleGroupPathEntityImpl.Builder::class.java
   operator fun invoke(
     path: List<String>,

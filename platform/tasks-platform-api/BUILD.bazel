@@ -52,6 +52,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.tasks.iml",
+        "resources/intellij.platform.tasks.xml",
     ],
     visibility = ["//visibility:public"],
 )

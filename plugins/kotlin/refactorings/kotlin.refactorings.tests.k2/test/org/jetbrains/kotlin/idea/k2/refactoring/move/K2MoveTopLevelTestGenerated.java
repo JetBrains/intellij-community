@@ -503,6 +503,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveTypealiasToFile/moveTypealiasToFile.test");
     }
 
+    @TestMetadata("kotlin/movedLambdaInvalidatedByRetargeting/movedLambdaInvalidatedByRetargeting.test")
+    public void testKotlin_movedLambdaInvalidatedByRetargeting_MovedLambdaInvalidatedByRetargeting() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/movedLambdaInvalidatedByRetargeting/movedLambdaInvalidatedByRetargeting.test");
+    }
+
     @TestMetadata("kotlin/mutualDependency/mutualDependency.test")
     public void testKotlin_mutualDependency_MutualDependency() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/mutualDependency/mutualDependency.test");

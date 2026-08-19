@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -216,16 +215,39 @@ abstract class NonModalWindowWrapper(
     this.content = content
     this.minWindowSize = minSize
     activeWindow = createAwtWindow(isFloat, content, minSize, initialSize)
-    loadAndRegisterWindowState(activeWindow)
+    loadWindowState(activeWindow)
     fitWindowToScreen(activeWindow)
     installWindowListeners()
     installToolkitListener()
   }
 
-  private fun loadAndRegisterWindowState(window: Window) {
+  private fun loadWindowState(window: Window) {
     val key = dimensionKey ?: return
-    val state = WindowStateService.getInstance(project).getState(key, window)
-    state?.applyTo(window)
+    val service = WindowStateService.getInstance(project)
+    val location = service.getLocation(key)
+    val size = service.getSize(key)
+    if (location != null && size != null) {
+      val rect = Rectangle(location.x, location.y, size.width, size.height)
+      ScreenUtil.fitToScreen(rect)
+      window.bounds = rect
+    }
+    else if (size != null) {
+      window.size = size
+      window.setLocationRelativeTo(getIdeJFrame())
+    }
+    else if (location != null) {
+      window.location = location
+    }
+    else {
+      window.setLocationRelativeTo(getIdeJFrame())
+    }
+  }
+
+  private fun saveWindowState(window: Window) {
+    val key = dimensionKey ?: return
+    val service = WindowStateService.getInstance(project)
+    service.putLocation(key, window.location)
+    service.putSize(key, window.size)
   }
 
   /**
@@ -241,6 +263,13 @@ abstract class NonModalWindowWrapper(
    */
   private fun fitWindowToScreen(window: Window) {
     clampMinimumSizeToScreen(window)
+    window.bounds = fitBoundsToScreen(window.bounds)
+  }
+
+  private fun fitBoundsToScreen(bounds: Rectangle): Rectangle {
+    val rect = Rectangle(bounds)
+    ScreenUtil.fitToScreen(rect)
+    return rect
   }
 
   /**
@@ -324,25 +353,22 @@ abstract class NonModalWindowWrapper(
     }
 
     override fun setSize(width: Int, height: Int) {
-      val rect = Rectangle(location.x, location.y, width, height)
-      ScreenUtil.fitToScreen(rect)
-      super.setSize(rect.width, rect.height)
+      val rect = fitBoundsToScreen(Rectangle(location.x, location.y, width, height))
       if (location.x != rect.x || location.y != rect.y) {
         setLocation(rect.x, rect.y)
       }
+      super.setSize(rect.width, rect.height)
     }
 
     override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
       clampMinimumSizeToScreen(this)
-      val rect = Rectangle(x, y, width, height)
-      ScreenUtil.fitToScreen(rect)
+      val rect = fitBoundsToScreen(Rectangle(x, y, width, height))
       super.setBounds(rect.x, rect.y, rect.width, rect.height)
     }
 
     override fun setBounds(r: Rectangle) {
       clampMinimumSizeToScreen(this)
-      ScreenUtil.fitToScreen(r)
-      super.setBounds(r)
+      super.setBounds(fitBoundsToScreen(r))
     }
 
     override fun uiDataSnapshot(sink: DataSink): Unit = this@NonModalWindowWrapper.uiDataSnapshot(sink)
@@ -356,25 +382,22 @@ abstract class NonModalWindowWrapper(
     }
 
     override fun setSize(width: Int, height: Int) {
-      val rect = Rectangle(location.x, location.y, width, height)
-      ScreenUtil.fitToScreen(rect)
-      super.setSize(rect.width, rect.height)
+      val rect = fitBoundsToScreen(Rectangle(location.x, location.y, width, height))
       if (location.x != rect.x || location.y != rect.y) {
         setLocation(rect.x, rect.y)
       }
+      super.setSize(rect.width, rect.height)
     }
 
     override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
       clampMinimumSizeToScreen(this)
-      val rect = Rectangle(x, y, width, height)
-      ScreenUtil.fitToScreen(rect)
+      val rect = fitBoundsToScreen(Rectangle(x, y, width, height))
       super.setBounds(rect.x, rect.y, rect.width, rect.height)
     }
 
     override fun setBounds(r: Rectangle) {
       clampMinimumSizeToScreen(this)
-      ScreenUtil.fitToScreen(r)
-      super.setBounds(r)
+      super.setBounds(fitBoundsToScreen(r))
     }
 
     override fun uiDataSnapshot(sink: DataSink): Unit = this@NonModalWindowWrapper.uiDataSnapshot(sink)
@@ -400,7 +423,6 @@ abstract class NonModalWindowWrapper(
     installWindowListeners()
     savedDefaultButton?.let { (activeWindow as RootPaneContainer).rootPane.defaultButton = it }
     activeWindow.bounds = oldBounds
-    dimensionKey?.let { WindowStateService.getInstance(project).getState(it, activeWindow) }
     if (wasVisible) {
       showActiveWindow()
       activeWindow.toFront()
@@ -433,14 +455,7 @@ abstract class NonModalWindowWrapper(
       }
 
       override fun windowClosing(e: WindowEvent) {
-        // On Linux/Windows, the desktop sends WINDOW_CLOSING to every window simultaneously.
-        // The non-modal window may receive it before the IDE frame, so isExitInProgress is
-        // still false here. Defer via invokeLater so the IDE frame's handler runs first and
-        // sets isExitInProgress=true before we check.
-        EventQueue.invokeLater {
-          if (ApplicationManagerEx.getApplicationEx().isExitInProgress) return@invokeLater
-          onWindowClosing(e)
-        }
+        onWindowClosing(e)
       }
     }
     windowListener = adapter
@@ -636,6 +651,7 @@ abstract class NonModalWindowWrapper(
       }
       activeWindow.toFront()
       activeWindow.requestFocus()
+      getPreferredFocusComponent()?.requestFocusInWindow()
       return
     }
     showActiveWindow()
@@ -652,6 +668,7 @@ abstract class NonModalWindowWrapper(
     isDisposed = true
     windowListener?.let { activeWindow.removeWindowListener(it) }
     windowListener = null
+    saveWindowState(activeWindow)
     Disposer.dispose(frameDisposable)
     disposeWindow(activeWindow)
   }

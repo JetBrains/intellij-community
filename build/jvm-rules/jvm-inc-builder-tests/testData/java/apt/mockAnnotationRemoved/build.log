@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/MockHints
+  META-INF/MockList
+  a/BenchFirst.class
+  a/BenchSecond.class
+  a/gen/BenchFirstGen.class
+  a/gen/BenchSecondGen.class
+End of files
+Compiling files:
+  java/apt/mockAnnotationRemoved/a/BenchFirst.java
+  java/apt/mockAnnotationRemoved/a/BenchSecond.java
+End of files
+------------------------------------------
+Exit code: OK

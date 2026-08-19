@@ -29,19 +29,20 @@ interface ContextProvider<E : KtElement, C : Any> {
      *
      * @param element a physical PSI
      */
-    fun KaSession.prepareContext(element: E): C?
+    context(session: KaSession)
+    fun prepareContext(element: E): C?
 }
 
 @OptIn(KaExperimentalApi::class)
 fun <E : KtElement, C : Any> ContextProvider<E, C>.getElementContext(
     element: E,
 ): C? = if (element.containingFile.copyOrigin == null) analyze(element) {
-    contextOf<KaSession>().prepareContext(element)
+    prepareContext(element)
 } else analyzeCopy(
     element,
     KaDanglingFileResolutionModeProvider.getDanglingFileResolutionMode(element)
 ) {
-    contextOf<KaSession>().prepareContext(element)
+    prepareContext(element)
 }
 
 inline val Boolean?.asUnit: Unit?

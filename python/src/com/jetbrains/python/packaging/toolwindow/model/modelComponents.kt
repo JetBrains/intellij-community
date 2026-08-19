@@ -3,9 +3,9 @@ package com.jetbrains.python.packaging.toolwindow.model
 
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.PyPackageVersion
-import com.jetbrains.python.packaging.PyPackageVersionComparator
-import com.jetbrains.python.packaging.PyPackageVersionNormalizer
+import com.intellij.python.requirements.PyPackageVersion
+import com.intellij.python.requirements.PyPackageVersionComparator
+import com.intellij.python.requirements.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.intellij.python.pyproject.PyDependencyGroup

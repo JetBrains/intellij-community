@@ -53,7 +53,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/compose-foundation-desktop",
         "//libraries/skiko",
     ],
@@ -80,6 +80,7 @@ jvm_library(
         # do not sort,
         ":foundation",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
         "//libraries/skiko:skiko_test_lib",
         "//libraries/compose-foundation-desktop-junit",
@@ -92,6 +93,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.jewel.foundation.iml",
+        "src/main/resources/intellij.platform.jewel.foundation.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -155,7 +157,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/compose-foundation-desktop",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
         "//libraries/skiko",

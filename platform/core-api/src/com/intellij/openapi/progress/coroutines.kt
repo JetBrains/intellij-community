@@ -152,15 +152,15 @@ fun <T> runBlockingCancellable(compensateParallelism: Boolean, action: suspend C
 
 private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParallelism: Boolean, action: suspend CoroutineScope.() -> T): T {
   assertRunBlockingBackgroundThreadAndNoWriteAction()
-  return prepareThreadContext { ctx ->
-    if (!allowOrphan && ctx[Job] == null) {
-      LOG.error(IllegalStateException("There is no ProgressIndicator or Job in this thread, the current job is not cancellable."))
-    }
-    wrapInReadActionIfCurrentlyWriteAction {
+  return wrapInReadActionIfCurrentlyWriteAction {
+    prepareThreadContext { ctx ->
+      if (!allowOrphan && ctx[Job] == null) {
+        LOG.error(IllegalStateException("There is no ProgressIndicator or Job in this thread, the current job is not cancellable."))
+      }
+
       val (lockContext, cleanup) = getLockContext(ctx)
       try {
         if (compensateParallelism) {
-          @OptIn(InternalCoroutinesApi::class)
           IntelliJCoroutinesFacade.runBlockingWithParallelismCompensation(ctx + lockContext, action)
         }
         else {

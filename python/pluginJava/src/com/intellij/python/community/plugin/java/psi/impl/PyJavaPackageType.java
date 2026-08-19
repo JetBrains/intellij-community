@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.java.psi.impl;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -25,11 +25,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class PyJavaPackageType implements PyType {
+final class PyJavaPackageType implements PyType {
   private final PsiPackage myPackage;
   private final @Nullable Module myModule;
 
-  public PyJavaPackageType(PsiPackage aPackage, @Nullable Module module) {
+  PyJavaPackageType(PsiPackage aPackage, @Nullable Module module) {
     myPackage = aPackage;
     myModule = module;
   }

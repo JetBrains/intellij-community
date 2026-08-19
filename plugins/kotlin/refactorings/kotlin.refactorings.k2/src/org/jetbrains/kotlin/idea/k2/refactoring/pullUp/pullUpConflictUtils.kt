@@ -9,14 +9,17 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.memberScope
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaRendererBodyMemberScopeProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KaDeclarationModifiersRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaModifierListRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
+import org.jetbrains.kotlin.analysis.api.signatures.substitute
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -26,10 +29,14 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsi
-import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.emptySubstitutor
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -61,11 +68,8 @@ import org.jetbrains.kotlin.utils.keysToMap
 
 @Nls
 @OptIn(KaExperimentalApi::class)
-internal fun KaDeclarationSymbol.renderForConflicts(
-    analysisSession: KaSession,
-): String = with(analysisSession) {
-    renderForConflict(CallableRenderer)
-}
+context(session: KaSession)
+internal fun KaDeclarationSymbol.renderForConflicts(): String = renderForConflict(CallableRenderer)
 
 @KaExperimentalApi
 private val NoModifierListRenderer = object : KaModifierListRenderer {
@@ -88,16 +92,18 @@ private val CallableRenderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.w
 }
 
 @OptIn(KaExperimentalApi::class)
-internal fun KaSession.getClashingMemberInTargetClass(
+context(session: KaSession)
+internal fun getClashingMemberInTargetClass(
     data: K2PullUpData,
     callableSymbol: KaCallableSymbol,
 ): KaCallableSymbol? {
-    val targetClassSymbol = data.getTargetClassSymbol(analysisSession = this) as? KaDeclarationContainerSymbol ?: return null
-    val substitutor = data.getSourceToTargetClassSubstitutor(analysisSession = this)
+    val targetClassSymbol = data.getTargetClassSymbol() as? KaDeclarationContainerSymbol ?: return null
+    val substitutor = data.getSourceToTargetClassSubstitutor()
     return targetClassSymbol.findCallableMemberBySignature(callableSymbol.substitute(substitutor))
 }
 
-private fun KaSession.checkClashWithSuperDeclaration(
+context(session: KaSession)
+private fun checkClashWithSuperDeclaration(
     data: K2PullUpData,
     member: KtNamedDeclaration,
     memberSymbol: KaDeclarationSymbol,
@@ -110,16 +116,17 @@ private fun KaSession.checkClashWithSuperDeclaration(
     if (memberSymbol !is KaCallableSymbol) return
     val clashingSuper = getClashingMemberInTargetClass(data, memberSymbol) ?: return
     if (clashingSuper.modality == KaSymbolModality.ABSTRACT) return
-    val targetClassSymbol = data.getTargetClassSymbol(analysisSession = this)
+    val targetClassSymbol = data.getTargetClassSymbol()
     val conflictMessage = KotlinBundle.message(
         "text.class.0.already.contains.member.1",
-        targetClassSymbol.renderForConflicts(analysisSession = this),
-        memberSymbol.renderForConflicts(analysisSession = this)
+        targetClassSymbol.renderForConflicts(),
+        memberSymbol.renderForConflicts()
     )
     conflicts.putValue(member, conflictMessage.capitalize())
 }
 
-private fun KaSession.handleParameterClash(
+context(session: KaSession)
+private fun handleParameterClash(
     parameter: KtParameter,
     parameterSymbol: KaDeclarationSymbol,
     conflicts: MultiMap<PsiElement, String>,
@@ -132,7 +139,7 @@ private fun KaSession.handleParameterClash(
         val renderedClashingParameter = renderParameter(clashingParameter)
         val clashMessage = KotlinBundle.message(
             "text.property.would.conflict.with.superclass.primary.constructor.parameter.0",
-            parameterSymbol.render(analysisSession = this),
+            parameterSymbol.renderSymbol(),
             renderedClashingParameter,
         )
         conflicts.putValue(parameter, clashMessage.capitalize())
@@ -150,9 +157,8 @@ private fun renderParameter(parameter: KtParameter): String = buildString {
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaValueParameterSymbol.render(
-    analysisSession: KaSession,
-): String = with(analysisSession) {
+context(session: KaSession)
+private fun KaValueParameterSymbol.renderSymbol(): String {
     val keyword = if (isVal) "val" else "var"
     val name = name.asString()
     val renderedType = returnType.render(
@@ -171,14 +177,15 @@ private fun PsiClass.isSourceOrTarget(data: K2PullUpData): Boolean {
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.checkAccidentalOverrides(
+context(session: KaSession)
+private fun checkAccidentalOverrides(
     data: K2PullUpData,
     member: KtNamedDeclaration,
     memberSymbol: KaDeclarationSymbol,
     conflicts: MultiMap<PsiElement, String>,
 ) {
     if (memberSymbol is KaCallableSymbol && !member.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
-        val memberSymbolInTargetClass = memberSymbol.substitute(data.getSourceToTargetClassSubstitutor(analysisSession = this))
+        val memberSymbolInTargetClass = memberSymbol.substitute(data.getSourceToTargetClassSubstitutor())
         val sequence =
             HierarchySearchRequest<PsiElement>(data.targetClass, data.targetClass.useScope()).searchInheritors().asIterable().asSequence()
                 .filterNot { it.isSourceOrTarget(data) }.mapNotNull { it.unwrapped }.filterIsInstance<KtClassOrObject>()
@@ -186,9 +193,7 @@ private fun KaSession.checkAccidentalOverrides(
         for (it in sequence) {
             val subClassSymbol = it.symbol as KaClassSymbol
             val substitutor =
-                createInheritanceTypeSubstitutor(subClassSymbol, data.getTargetClassSymbol(analysisSession = this)) ?: KaSubstitutor.Empty(
-                    token
-                )
+                createInheritanceTypeSubstitutor(subClassSymbol, data.getTargetClassSymbol()) ?: emptySubstitutor
 
             val memberSymbolInSubClass = memberSymbolInTargetClass.substitute(substitutor)
             val clashingMemberSymbol = memberSymbolInSubClass.let {
@@ -198,8 +203,8 @@ private fun KaSession.checkAccidentalOverrides(
             val clashingMember = clashingMemberSymbol.sourcePsi<PsiElement>() ?: continue
             val message = KotlinBundle.message(
                 "text.member.0.in.super.class.will.clash.with.existing.member.of.1",
-                memberSymbol.renderForConflicts(analysisSession = this),
-                it.symbol.renderForConflicts(analysisSession = this)
+                memberSymbol.renderForConflicts(),
+                it.symbol.renderForConflicts()
             )
 
             conflicts.putValue(clashingMember, message.capitalize())
@@ -207,20 +212,22 @@ private fun KaSession.checkAccidentalOverrides(
     }
 }
 
-private fun KaSession.checkInnerClassToInterface(
+context(session: KaSession)
+private fun checkInnerClassToInterface(
     data: K2PullUpData, member: KtNamedDeclaration, memberSymbol: KaDeclarationSymbol, conflicts: MultiMap<PsiElement, String>
 ) {
     if (data.isInterfaceTarget && memberSymbol is KaNamedClassSymbol && memberSymbol.isInner) {
         val message = KotlinBundle.message(
             "text.inner.class.0.cannot.be.moved.to.interface",
-            memberSymbol.renderForConflicts(analysisSession = this),
+            memberSymbol.renderForConflicts(),
         )
         conflicts.putValue(member, message.capitalize())
     }
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.checkVisibility(
+context(session: KaSession)
+private fun checkVisibility(
     data: K2PullUpData, memberInfo: KotlinMemberInfo, memberSymbol: KaDeclarationSymbol, conflicts: MultiMap<PsiElement, String>
 ) {
     fun reportConflictIfAny(targetSymbol: KaDeclarationSymbol) {
@@ -232,8 +239,8 @@ private fun KaSession.checkVisibility(
         if (!targetElement.isVisibleTo(data.targetClass)) {
             val message = RefactoringBundle.message(
                 "0.uses.1.which.is.not.accessible.from.the.superclass",
-                memberSymbol.renderForConflicts(analysisSession = this),
-                targetSymbol.renderForConflicts(analysisSession = this),
+                memberSymbol.renderForConflicts(),
+                targetSymbol.renderForConflicts(),
             )
             conflicts.putValue(target, message.capitalize())
         }
@@ -244,7 +251,7 @@ private fun KaSession.checkVisibility(
     if (memberInfo.isToAbstract && member is KtCallableDeclaration) {
         if (member.typeReference == null) {
             (memberSymbol as KaCallableSymbol).returnType.let { returnType ->
-                val typeInTargetClass = data.getSourceToTargetClassSubstitutor(analysisSession = this).substitute(returnType)
+                val typeInTargetClass = data.getSourceToTargetClassSubstitutor().substitute(returnType)
                 val symbolToCheck = typeInTargetClass.expandedSymbol
                 if (symbolToCheck != null) {
                     reportConflictIfAny(symbolToCheck)
@@ -265,7 +272,8 @@ private fun KaSession.checkVisibility(
     }
 }
 
-internal fun KaSession.collectConflicts(
+context(session: KaSession)
+internal fun collectConflicts(
     sourceClass: KtClassOrObject,
     targetClass: PsiNamedElement,
     memberInfos: List<KotlinMemberInfo>,
@@ -287,7 +295,8 @@ internal fun KaSession.collectConflicts(
     checkVisibilityInAbstractedMembers(memberInfos, conflicts)
 }
 
-internal fun KaSession.checkVisibilityInAbstractedMembers(
+context(session: KaSession)
+internal fun checkVisibilityInAbstractedMembers(
     memberInfos: List<KotlinMemberInfo>,
     conflicts: MultiMap<PsiElement, String>,
 ) {
@@ -306,8 +315,8 @@ internal fun KaSession.checkVisibilityInAbstractedMembers(
             if (!target.willBeMoved(membersToMove)) return@forEachDescendantOfType
             if (target.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
                 val targetSymbol = target.symbol
-                val memberText = memberSymbol.renderForConflicts(analysisSession = this)
-                val targetText = targetSymbol.renderForConflicts(analysisSession = this)
+                val memberText = memberSymbol.renderForConflicts()
+                val targetText = targetSymbol.renderForConflicts()
                 val message = KotlinBundle.message("text.0.uses.1.which.will.not.be.accessible.from.subclass", memberText, targetText)
                 conflicts.putValue(target, message.capitalize())
             }
@@ -315,7 +324,8 @@ internal fun KaSession.checkVisibilityInAbstractedMembers(
     }
 }
 
-private fun KaSession.checkFunInterfaceConstraints(
+context(session: KaSession)
+private fun checkFunInterfaceConstraints(
     data: K2PullUpData,
     memberInfo: KotlinMemberInfo,
     memberSymbol: KaDeclarationSymbol,

@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.webview.impl.linux
 
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.webview.impl.WebViewLogger
 import com.intellij.util.ui.StartupUiUtil
-import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Window
@@ -34,7 +34,7 @@ internal object LinuxX11WindowUtil {
       getWindow.invoke(peer) as? Long
     }
     catch (e: Exception) {
-      if (e is CancellationException) throw e
+      rethrowControlFlowException(e)
       WebViewLogger.LOG.warn("Failed to resolve Linux X11 window id for WebView host", e)
       null
     }

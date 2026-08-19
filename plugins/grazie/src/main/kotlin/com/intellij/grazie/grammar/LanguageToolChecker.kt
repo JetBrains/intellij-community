@@ -203,6 +203,7 @@ private val an_vs_a_exclusions = mapOf(
     Regex("xlsx", RegexOption.IGNORE_CASE),
     Regex("mp3", RegexOption.IGNORE_CASE),
     Regex("url", RegexOption.IGNORE_CASE),
+    Regex("sms", RegexOption.IGNORE_CASE),
     Regex("(8|1[18](\\D|(\\d{3}|\\d{6}|\\d{9})[$\\D])).+", RegexOption.IGNORE_CASE)
   ),
   "a" to listOf(

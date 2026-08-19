@@ -27,6 +27,8 @@ internal class BazelCompilationContextTest {
     val moduleName = "intellij.test.module"
     val module = mock(JpsModule::class.java)
     `when`(module.name).thenReturn(moduleName)
+    val productionOnlyModule = mock(JpsModule::class.java)
+    `when`(productionOnlyModule.name).thenReturn("intellij.production.only")
 
     val project = mock(JpsProject::class.java)
     `when`(project.modules).thenReturn(listOf(module))
@@ -35,7 +37,7 @@ internal class BazelCompilationContextTest {
     val state = BazelModuleOutputProviderState(
       modules = project.modules,
       projectHome = tempDir,
-      bazelOutputRoot = tempDir,
+      bazelOutputRootResolver = { tempDir },
       bazelTargetsLoader = {
         loadCounter.incrementAndGet()
         BazelTargetsInfo.TargetsFile(
@@ -50,6 +52,7 @@ internal class BazelCompilationContextTest {
             ),
           ),
           projectLibraries = emptyMap(),
+          pluginDistributionTargets = emptyMap(),
         )
       },
     )
@@ -69,24 +72,80 @@ internal class BazelCompilationContextTest {
       options = BuildOptions(useTestCompilationOutput = true),
       paths = buildPaths(tempDir.resolve("copy-out-tests"), tempDir.resolve("copy-project-tests")),
     ) as BazelCompilationContext
+    val selectiveTestCopy = baseContext.createCopy(
+      messages = mock(BuildMessages::class.java),
+      options = BuildOptions(testCompilationOutputModules = setOf(moduleName)),
+      paths = buildPaths(tempDir.resolve("copy-out-selective-tests"), tempDir.resolve("copy-project-selective-tests")),
+    ) as BazelCompilationContext
 
     val baseProvider = baseContext.outputProvider
     val productionProvider = productionCopy.outputProvider
     val testProvider = testCopy.outputProvider
+    val selectiveTestProvider = selectiveTestCopy.outputProvider
 
     assertThat(baseProvider).isNotSameAs(productionProvider)
     assertThat(baseProvider).isNotSameAs(testProvider)
     assertThat(baseContext.outputProviderState).isSameAs(productionCopy.outputProviderState)
     assertThat(baseContext.outputProviderState).isSameAs(testCopy.outputProviderState)
+    assertThat(baseContext.outputProviderState).isSameAs(selectiveTestCopy.outputProviderState)
 
     baseContext.outputProviderState.bazelTargetsMap
     productionCopy.outputProviderState.bazelTargetsMap
     testCopy.outputProviderState.bazelTargetsMap
+    selectiveTestCopy.outputProviderState.bazelTargetsMap
 
     assertThat(loadCounter.get()).isEqualTo(1)
     assertThat(baseProvider.useTestCompilationOutput).isFalse()
     assertThat(productionProvider.useTestCompilationOutput).isFalse()
     assertThat(testProvider.useTestCompilationOutput).isTrue()
+    assertThat(selectiveTestProvider.useTestCompilationOutput).isFalse()
+    assertThat(selectiveTestProvider.isTestCompilationOutputEnabled(module)).isTrue()
+    assertThat(selectiveTestProvider.isTestCompilationOutputEnabled(productionOnlyModule)).isFalse()
+  }
+
+  @Test
+  fun `Bazel output root is resolved only when a library path is needed`(@TempDir tempDir: Path) {
+    val moduleName = "intellij.test.module"
+    val module = mock(JpsModule::class.java)
+    `when`(module.name).thenReturn(moduleName)
+
+    val resolveCounter = AtomicInteger()
+    val state = BazelModuleOutputProviderState(
+      modules = listOf(module),
+      projectHome = tempDir,
+      bazelOutputRootResolver = {
+        resolveCounter.incrementAndGet()
+        tempDir.resolve("output-base")
+      },
+      bazelTargetsLoader = {
+        BazelTargetsInfo.TargetsFile(
+          modules = mapOf(
+            moduleName to BazelTargetsInfo.TargetsFileModuleDescription(
+              productionTargets = emptyList(),
+              productionJars = emptyList(),
+              testTargets = emptyList(),
+              testJars = emptyList(),
+              exports = emptyList(),
+              moduleLibraries = emptyMap(),
+            ),
+          ),
+          projectLibraries = emptyMap(),
+          pluginDistributionTargets = emptyMap(),
+        )
+      },
+    )
+
+    // everything a dev build touches to lay out module outputs must work without an output base: under a copied
+    // classpath there is no `bazel-out` to derive one from, and under runfiles every path comes from a label
+    state.bazelTargetsMap
+    state.findRequiredModule(moduleName)
+    assertThat(BazelModuleOutputProvider(state, scope = null, useTestCompilationOutput = false).toString())
+      .contains("bazelOutputRoot=<not resolved>")
+    assertThat(resolveCounter.get()).isEqualTo(0)
+
+    assertThat(state.bazelOutputRoot).isEqualTo(tempDir.resolve("output-base"))
+    assertThat(state.bazelOutputRoot).isEqualTo(tempDir.resolve("output-base"))
+    assertThat(resolveCounter.get()).isEqualTo(1)
   }
 
   private fun testCompilationContext(project: JpsProject, tempDir: Path, options: BuildOptions): CompilationContext {

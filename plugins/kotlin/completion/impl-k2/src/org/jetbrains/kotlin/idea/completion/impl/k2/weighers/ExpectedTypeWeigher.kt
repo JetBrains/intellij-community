@@ -8,17 +8,16 @@ import com.intellij.openapi.util.Key
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaStandardTypeClassIds
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.components.isNothingType
-import org.jetbrains.kotlin.analysis.api.components.isNullable
-import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.components.isUnitType
-import org.jetbrains.kotlin.analysis.api.components.typeCreator
-import org.jetbrains.kotlin.analysis.api.components.upperBoundIfFlexible
-import org.jetbrains.kotlin.analysis.api.components.withNullability
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
+import org.jetbrains.kotlin.analysis.api.types.upperBoundIfFlexible
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
@@ -28,6 +27,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
+import org.jetbrains.kotlin.idea.codeinsight.utils.isNullableAnyType
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -42,54 +42,63 @@ internal object ExpectedTypeWeigher {
 
     context(_: KaSession)
     fun addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KaSymbol?) {
-        // In case of flexible types, we choose the upper bound here to be more lenient for weighing purposes
-        val expectedType = context.expectedType?.upperBoundIfFlexible()
-
         // The expected type was already set elsewhere, we prefer these results
         if (lookupElement.matchesExpectedType != null) return
 
+        // In case of flexible types, we choose the upper bound here to be more lenient for weighing purposes
+        val expectedType = context.expectedType?.upperBoundIfFlexible()
+
         lookupElement.matchesExpectedType = when {
-            symbol != null -> if (expectedType != null) {
-                // If the symbol is a Typealias, we want to use the original symbol for matching the expected type
-                val expandedSymbol = (symbol as? KaTypeAliasSymbol)?.expandedType?.expandedSymbol ?: symbol
-                matchesExpectedType(expandedSymbol, expectedType)
-            } else MatchesExpectedType.NON_TYPABLE
+            symbol != null -> symbol.matchesExpectedType(expectedType)
             lookupElement.`object` is NamedArgumentLookupObject -> MatchesExpectedType.MATCHES
-            lookupElement.`object` is KeywordLookupObject && expectedType != null -> {
-                @OptIn(KaExperimentalApi::class)
-                val actualType = when (lookupElement.lookupString) {
-                    KtTokens.NULL_KEYWORD.value -> typeCreator.classType(KaStandardTypeClassIds.NOTHING) {
-                            isMarkedNullable = true
-                        }
-
-                    KtTokens.TRUE_KEYWORD.value,
-                    KtTokens.FALSE_KEYWORD.value -> typeCreator.classType(KaStandardTypeClassIds.BOOLEAN)
-
-                    else -> null
-                } ?: return
-
-                MatchesExpectedType.matches(actualType, expectedType)
-            }
-
+            lookupElement.`object` is KeywordLookupObject -> keywordMatchesExpectedType(lookupElement.lookupString, expectedType)
             else -> null
         }
     }
 
     context(_: KaSession)
-    private fun matchesExpectedType(
-        symbol: KaSymbol,
-        expectedType: KaType,
-    ) = when {
-        symbol is KaEnumEntrySymbol && expectedType.isEnum() && symbol.returnType.isSubtypeOf(expectedType) ->
-            MatchesExpectedType.MATCHES_PREFERRED
+    private fun KaSymbol.matchesExpectedType(expectedType: KaType?): MatchesExpectedType {
+        if (expectedType == null) return MatchesExpectedType.NON_TYPABLE
 
-        symbol is KaClassSymbol && expectedType.expandedSymbol?.let { symbol == it || symbol.isSubClassOf(it) } == true ->
-            MatchesExpectedType.MATCHES
+        // If the symbol is a Typealias, we want to use the original symbol for matching the expected type
+        val expandedSymbol = (this as? KaTypeAliasSymbol)?.expandedType?.expandedSymbol ?: this
+        return when {
+            expandedSymbol is KaEnumEntrySymbol && expectedType.isEnum() && expandedSymbol.returnType.isSubtypeOf(expectedType) ->
+                MatchesExpectedType.MATCHES_PREFERRED
 
-        symbol !is KaCallableSymbol -> MatchesExpectedType.NON_TYPABLE
+            expandedSymbol is KaClassSymbol && expectedType.expandedSymbol?.let { expandedSymbol == it || expandedSymbol.isSubClassOf(it) } == true ->
+                MatchesExpectedType.MATCHES
 
-        expectedType.isUnitType -> MatchesExpectedType.MATCHES
-        else -> MatchesExpectedType.matches(symbol.returnType, expectedType)
+            expandedSymbol !is KaCallableSymbol -> MatchesExpectedType.NON_TYPABLE
+
+            expectedType.classId == KaStandardTypeClassIds.UNIT -> MatchesExpectedType.MATCHES
+            else -> MatchesExpectedType.matches(expandedSymbol.returnType, expectedType)
+        }
+    }
+
+    context(_: KaSession)
+    private fun keywordMatchesExpectedType(keyword: String, expectedType: KaType?): MatchesExpectedType? {
+        if (expectedType == null) return null
+
+        if (keyword == KtTokens.NULL_KEYWORD.value && expectedType.isNullableAnyType()) {
+            return MatchesExpectedType.MATCHES_PREFERRED
+        }
+
+        val actualType = keywordType(keyword) ?: return null
+        return MatchesExpectedType.matches(actualType, expectedType)
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
+    private fun keywordType(keyword: String): KaType? = when (keyword) {
+        KtTokens.NULL_KEYWORD.value -> typeCreator.classType(KaStandardTypeClassIds.NOTHING) {
+            isMarkedNullable = true
+        }
+
+        KtTokens.TRUE_KEYWORD.value,
+        KtTokens.FALSE_KEYWORD.value -> typeCreator.classType(KaStandardTypeClassIds.BOOLEAN)
+
+        else -> null
     }
 
     internal var LookupElement.matchesExpectedType by UserDataProperty(Key<MatchesExpectedType>("MATCHES_EXPECTED_TYPE"))
@@ -133,12 +142,12 @@ internal object ExpectedTypeWeigher {
             fun matches(actualType: KaType, expectedType: KaType): MatchesExpectedType = when {
                 // We exclude the Nothing type because it would match everything, but we should not give it priority.
                 // The only exception where we should prefer is for the `null` constant, which will be of type `Nothing?`
-                actualType.isNothingType && !actualType.isMarkedNullable -> NOT_MATCHES
+                actualType.classId == KaStandardTypeClassIds.NOTHING && !actualType.isMarkedNullable -> NOT_MATCHES
 
                 actualType.isSubtypeOf(expectedType) -> MATCHES
 
                 // This matches for `null`, which should not ever be suggested for non-nullable expecte types
-                actualType.isNothingType && actualType.isMarkedNullable && !expectedType.isNullable -> NOT_MATCHES
+                actualType.classId == KaStandardTypeClassIds.NOTHING && actualType.isMarkedNullable && !expectedType.isNullable -> NOT_MATCHES
 
                 actualType.withNullability(false).isSubtypeOf(expectedType) -> MATCHES_WITHOUT_NULLABILITY
 

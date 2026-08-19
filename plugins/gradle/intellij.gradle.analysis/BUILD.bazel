@@ -60,6 +60,7 @@ jvm_library(
 exports_files(
     [
         "intellij.gradle.analysis.iml",
+        "resources/intellij.gradle.analysis.xml",
     ],
     visibility = ["//visibility:public"],
 )

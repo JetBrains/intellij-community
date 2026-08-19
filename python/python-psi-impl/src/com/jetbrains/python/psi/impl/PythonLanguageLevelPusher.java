@@ -16,12 +16,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentIteratorEx;
-import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -34,6 +32,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.psi.FilePropertyKey;
 import com.intellij.psi.FilePropertyKeyImpl;
 import com.intellij.psi.SingleRootFileViewProvider;
@@ -42,12 +41,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeNodeProcessingResult;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.messages.SimpleMessageBusConnection;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl;
 import com.jetbrains.python.PyLanguageFacade;
 import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
-import com.jetbrains.python.module.PyModuleService;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
@@ -133,11 +132,12 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
 
   private static @Nullable Sdk findSdkForFileOutsideTheProject(Project project, VirtualFile file) {
     if (file != null) {
-      final List<OrderEntry> orderEntries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(file);
-      for (OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof JdkOrderEntry) {
-          return ((JdkOrderEntry)orderEntry).getJdk();
-        }
+      var snapshot = WorkspaceModel.getInstance(project).getCurrentSnapshot();
+      var sdkEntities = ProjectRootManager.getInstance(project).getFileIndex().findContainingSdks(file);
+      var sdks = ContainerUtil.mapNotNull(sdkEntities, (sdk) -> SdkBridgeImpl.Companion.findSdk(snapshot, sdk));
+
+      if (!sdks.isEmpty()) {
+        return sdks.getFirst();
       }
     }
     return null;

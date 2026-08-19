@@ -53,6 +53,7 @@ c:com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
 - equals(java.lang.Object):Z
 - s:fromText(java.lang.String):com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
 - s:fromText(java.lang.String,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
+- s:fromTextAndLanguage(java.lang.String,com.intellij.lang.Language):com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
 - getCustomInfo():java.lang.String
 - getExpression():java.lang.String
 - getLanguage():com.intellij.lang.Language

@@ -77,6 +77,30 @@ class KotlinMavenInspectionTestGenerated(mavenVersion: String, modelVersion: Str
     }
 
     @Test
+    @TestMetadata("parentPomWithExplicitSmartDefaults.xml")
+    fun testParentPomWithExplicitSmartDefaults() {
+        runTest("testData/maven-inspections/parentPomWithExplicitSmartDefaults.xml")
+    }
+
+    @Test
+    @TestMetadata("parentPomWithExtensionsDisabled.xml")
+    fun testParentPomWithExtensionsDisabled() {
+        runTest("testData/maven-inspections/parentPomWithExtensionsDisabled.xml")
+    }
+
+    @Test
+    @TestMetadata("parentPomWithSmartDefaults.xml")
+    fun testParentPomWithSmartDefaults() {
+        runTest("testData/maven-inspections/parentPomWithSmartDefaults.xml")
+    }
+
+    @Test
+    @TestMetadata("parentPomWithoutSmartDefaults.xml")
+    fun testParentPomWithoutSmartDefaults() {
+        runTest("testData/maven-inspections/parentPomWithoutSmartDefaults.xml")
+    }
+
+    @Test
     @TestMetadata("sameVersionPluginLibrary.xml")
     fun testSameVersionPluginLibrary() {
         runTest("testData/maven-inspections/sameVersionPluginLibrary.xml")

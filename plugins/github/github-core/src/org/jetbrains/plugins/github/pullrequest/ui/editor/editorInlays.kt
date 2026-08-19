@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.codereview.editor.CodeReviewActiveRangesTra
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel
 import com.intellij.collaboration.util.Hideable
+import com.intellij.openapi.editor.Editor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
@@ -36,9 +37,9 @@ internal sealed interface GHPREditorMappedComponentModel : CodeReviewInlayModel.
   }
 }
 
-internal fun CoroutineScope.createRenderer(model: GHPREditorMappedComponentModel, userIcon: Icon, activeRangesTracker: CodeReviewActiveRangesTracker): CodeReviewComponentInlayRenderer =
+internal fun CoroutineScope.createRenderer(editor: Editor, model: GHPREditorMappedComponentModel, userIcon: Icon, activeRangesTracker: CodeReviewActiveRangesTracker): CodeReviewComponentInlayRenderer =
   when (model) {
-    is GHPREditorMappedComponentModel.Thread<*> -> GHPRReviewThreadEditorInlayRenderer(this, model, activeRangesTracker)
-    is GHPREditorMappedComponentModel.NewComment<*> -> GHPRNewCommentEditorInlayRenderer(this, model, activeRangesTracker)
+    is GHPREditorMappedComponentModel.Thread<*> -> GHPRReviewThreadEditorInlayRenderer(this, editor, model, activeRangesTracker)
+    is GHPREditorMappedComponentModel.NewComment<*> -> GHPRNewCommentEditorInlayRenderer(this, editor, model, activeRangesTracker)
     is GHPREditorMappedComponentModel.AIComment -> GHPRAICommentEditorInlayRenderer(userIcon, model.vm)
   }

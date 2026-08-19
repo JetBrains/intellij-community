@@ -34,7 +34,6 @@ import com.intellij.python.pytools.Version
 import com.jetbrains.python.sdk.add.v2.withAdjustedWidth
 import com.jetbrains.python.sdk.add.v2.createInstallCondaFix
 import com.jetbrains.python.sdk.add.v2.displayLoaderWhen
-import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
 import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import com.jetbrains.python.sdk.add.v2.validatablePathField
 import com.jetbrains.python.sdk.add.v2.withExtendableTextFieldEditor
@@ -60,8 +59,11 @@ internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAdd
   private val isReloadLinkVisible = AtomicBooleanProperty(false)
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.condaViewModel.condaExecutable
   override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
-    savePathForEelOnly(pathHolder) { path -> saveLocalPythonCondaPath(path) }
+    (pathHolder as? PathHolder.Eel)?.let { if (model.fileSystem.isLocal) saveLocalPythonCondaPath(it.path) }
   }
+
+  // Conda's reader has no detection fallback, so it keeps persisting on setup (persister gated to local).
+  override val persistToolExecutableOnSetup: Boolean get() = true
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {

@@ -1,12 +1,12 @@
 package com.intellij.ide.starter.junit5.events
 
+import com.intellij.ide.starter.data.TestCases
 import com.intellij.ide.starter.junit5.config.KillOutdatedProcessesAfterEach
 import com.intellij.ide.starter.junit5.hyphenateWithClass
 import com.intellij.ide.starter.project.NoProject
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.runner.TestContextInitializedEvent
 import com.intellij.tools.ide.starter.bus.EventsBus
-import examples.data.TestCases
 import io.kotest.assertions.timing.eventually
 import io.kotest.matchers.collections.shouldHaveSize
 import kotlinx.coroutines.runBlocking

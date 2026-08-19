@@ -9,5 +9,6 @@ import org.jetbrains.annotations.ApiStatus;
 public final class MoveCaretDownAction extends EditorAction {
   public MoveCaretDownAction() {
     super(new MoveCaretUpOrDownHandler(MoveCaretUpOrDownHandler.Direction.DOWN));
+    getTemplatePresentation().setRWLockRequired(LockFreeEditorActions.needLockForArrowActions());
   }
 }

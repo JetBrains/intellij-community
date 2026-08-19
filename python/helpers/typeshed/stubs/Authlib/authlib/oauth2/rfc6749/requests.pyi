@@ -70,9 +70,12 @@ class OAuth2Request(OAuth2Payload):
     @property
     @deprecated("'request.redirect_uri' is deprecated in favor of 'request.payload.redirect_uri'")
     def redirect_uri(self) -> str: ...
+
     @property
-    @deprecated("'request.scope' is deprecated in favor of 'request.payload.scope'")
     def scope(self) -> str: ...
+    @scope.setter
+    def scope(self, value: str) -> None: ...
+
     @property
     @deprecated("'request.state' is deprecated in favor of 'request.payload.state'")
     def state(self) -> str | None: ...

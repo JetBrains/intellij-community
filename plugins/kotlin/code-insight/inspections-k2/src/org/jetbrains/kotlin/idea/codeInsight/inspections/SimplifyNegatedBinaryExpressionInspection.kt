@@ -27,7 +27,8 @@ import org.jetbrains.kotlin.psi.prefixExpressionVisitor
 internal class SimplifyNegatedBinaryExpressionInspection :
     KotlinApplicableInspectionBase.Simple<KtPrefixExpression, Boolean>() {
 
-    override fun KaSession.prepareContext(element: KtPrefixExpression): Boolean? =
+    context(session: KaSession)
+    override fun prepareContext(element: KtPrefixExpression): Boolean? =
         if (element.canBeSimplified()) element.canBeSimplifiedWithoutChangingSemantics() else null
 
     override fun isApplicableByPsi(element: KtPrefixExpression): Boolean = element.canBeSimplified()

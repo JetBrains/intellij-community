@@ -7,7 +7,6 @@ import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.dataFlow.HardcodedContracts;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.OptionControllerProvider;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.codeserver.core.JavaPsiAnnotationUtil;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
@@ -18,7 +17,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
@@ -30,10 +28,7 @@ import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -44,9 +39,7 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
@@ -227,6 +220,11 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     return support == null || support.canAnnotateLocals();
   }
 
+  @Override
+  public boolean shouldGoThroughUnspecifiedNullnessAnnotation(@NotNull PsiAnnotation annotation) {
+    return ContainerUtil.exists(myAnnotationSupports, support -> support.shouldGoThroughUnspecifiedNullnessAnnotation(annotation));
+  }
+
   private @Nullable AnnotationPackageSupport findAnnotationSupport(String name) {
     AnnotationPackageSupport support = myDefaultUnknowns.get(name);
     if (support == null) {
@@ -355,31 +353,12 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       return Collections.emptyMap();
     }
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () -> {
-      GlobalSearchScope scope = new DelegatingGlobalSearchScope(GlobalSearchScope.allScope(myProject)) {
-        @Override
-        public boolean contains(@NotNull VirtualFile file) {
-          return super.contains(file) && !FileTypeRegistry.getInstance().isFileOfType(file, JavaFileType.INSTANCE);
-        }
-      };
-      PsiClass[] nickDeclarations = JavaPsiFacade.getInstance(myProject).findClasses(Jsr305Support.TYPE_QUALIFIER_NICKNAME, scope);
-      Map<String, Nullability> result = StreamEx.of(nickDeclarations)
-        .flatCollection(tqNick -> MetaAnnotationUtil.getChildren(tqNick, scope))
-        .prepend(getPossiblyUnresolvedJavaNicknameUsages())
-        .filter(Jsr305Support::isNullabilityNickName)
-        .toMap(PsiClass::getQualifiedName, Jsr305Support::getNickNamedNullability, (n1, n2) -> n1 == n2 ? n1 : Nullability.UNKNOWN);
+      Map<String, Nullability> result =
+        StreamEx.of(MetaAnnotationUtil.getChildren(myProject, Jsr305Support.TYPE_QUALIFIER_NICKNAME, GlobalSearchScope.allScope(myProject)))
+          .filter(Jsr305Support::isNullabilityNickName)
+          .toMap(PsiClass::getQualifiedName, Jsr305Support::getNickNamedNullability, (n1, n2) -> n1 == n2 ? n1 : Nullability.UNKNOWN);
       return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });
-  }
-
-  // some frameworks use jsr305 annotations but don't have them in classpath
-  private @NotNull StreamEx<PsiClass> getPossiblyUnresolvedJavaNicknameUsages() {
-    Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().getAnnotations(StringUtil.getShortName(
-      Jsr305Support.TYPE_QUALIFIER_NICKNAME), myProject, GlobalSearchScope.allScope(myProject));
-    return StreamEx.of(annotations).map(PsiElement::getContext)
-      .filter(context -> context instanceof PsiModifierList)
-             .map(PsiElement::getContext)
-             .select(PsiClass.class)
-             .filter(PsiClass::isAnnotationType);
   }
 
   @Override
@@ -584,7 +563,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     public @NotNull OptionController forContext(@NotNull PsiElement context) {
       Project project = context.getProject();
       return ((NullableNotNullManagerImpl)getInstance(project)).getOptionController()
-        .onValueSet((bindId, value) -> ProjectInspectionProfileManager.getInstance(project).fireProfileChanged());
+        .onValueSet((_, _) -> ProjectInspectionProfileManager.getInstance(project).fireProfileChanged());
     }
 
     @Override

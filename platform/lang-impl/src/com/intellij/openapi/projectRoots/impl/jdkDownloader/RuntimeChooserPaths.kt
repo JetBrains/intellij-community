@@ -6,8 +6,8 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.NlsSafe
@@ -33,7 +33,7 @@ class RuntimeChooserPaths {
         resolveSuggestedHome(indicator)
       }
       catch (t: Throwable) {
-        if (t is ControlFlowException) throw t
+        rethrowControlFlowException(t)
         LOG.warn("resolve failed. ${t.message}", t)
         return@runWithProgress null
       }
@@ -75,7 +75,7 @@ class RuntimeChooserPaths {
           }
         }
         catch (t: Throwable) {
-          if (t is ControlFlowException) throw t
+          rethrowControlFlowException(t)
           LOG.warn("Failed to change boot runtime in $jdkFileShadow. ${t.message}", t)
           RuntimeChooserMessages.showErrorMessage(LangBundle.message("dialog.message.choose.ide.runtime.unknown.error", t.localizedMessage))
         }

@@ -39,7 +39,8 @@ internal class RemoveExplicitTypeArgumentsInspection : KotlinApplicableInspectio
         return RemoveExplicitTypeArgumentsUtils.isApplicableByPsi(callExpression)
     }
 
-    override fun KaSession.prepareContext(element: KtTypeArgumentList): Unit? = areTypeArgumentsRedundant(element).asUnit
+    context(session: KaSession)
+    override fun prepareContext(element: KtTypeArgumentList): Unit? = areTypeArgumentsRedundant(element).asUnit
 
     override fun InspectionManager.createProblemDescriptor(
         element: KtTypeArgumentList,

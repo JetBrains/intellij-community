@@ -1,0 +1,24 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.hdr.histogram"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.protobuf"/>
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.libraries.opentelemetry.exporter.otlp.common"/>
+    <module name="intellij.libraries.opentelemetry.extension.kotlin"/>
+    <module name="intellij.libraries.opentelemetry.semconv"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.util.coroutines"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.openTelemetryExporterProvider"
+                    interface="com.intellij.platform.diagnostic.telemetry.impl.OpenTelemetryExporterProvider" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

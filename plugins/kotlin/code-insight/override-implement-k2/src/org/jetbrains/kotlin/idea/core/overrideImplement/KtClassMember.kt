@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiversOwner
-import org.jetbrains.kotlin.analysis.api.components.combinedDeclaredMemberScope
+import org.jetbrains.kotlin.analysis.api.scopes.combinedDeclaredMemberScope
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverLabelRenderer
@@ -61,7 +61,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
 import org.jetbrains.kotlin.idea.core.TemplateKind
@@ -475,7 +476,7 @@ fun KaDeclarationRenderer.Builder.withoutLabel() {
 }
 
 //todo rewrite after KT-66192 is implemented
-@OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
+@OptIn(KaExperimentalApi::class)
 object ContextParametersListRenderer: KaContextReceiverListRenderer {
     override fun renderContextReceivers(
         analysisSession: KaSession,
@@ -484,7 +485,7 @@ object ContextParametersListRenderer: KaContextReceiverListRenderer {
         typeRenderer: KaTypeRenderer,
         printer: PrettyPrinter
     ) {
-        if (owner is KaCallableSymbol && owner.contextParameters.any { it.psi is KtParameter }) {
+        if (owner is KaCallableSymbol && owner.contextParameters.isNotEmpty()) {
             printer {
                 append("context(")
                 printCollection(owner.contextParameters) { contextParameter ->
@@ -561,7 +562,7 @@ private fun generateFunction(
     bodyType: BodyType,
 ): KtCallableDeclaration {
     val returnType = symbol.returnType
-    val returnsUnit = returnType.isUnitType
+    val returnsUnit = returnType.classId == KaStandardTypeClassIds.UNIT
 
     val canHaveBody = symbol is KaNamedFunctionSymbol || symbol is KaConstructorSymbol && !symbol.isPrimary
     val isToKeepAbstract = isToKeepAbstract(mode, symbol)
@@ -697,7 +698,7 @@ private fun generateProperty(
     bodyType: BodyType,
 ): KtCallableDeclaration {
     val returnType = symbol.returnType
-    val returnsNotUnit = !returnType.isUnitType
+    val returnsNotUnit = returnType.classId != KaStandardTypeClassIds.UNIT
 
     val isToKeepAbstract = isToKeepAbstract(mode, symbol)
     val body = if (bodyType != BodyType.NoBody && !isToKeepAbstract) {

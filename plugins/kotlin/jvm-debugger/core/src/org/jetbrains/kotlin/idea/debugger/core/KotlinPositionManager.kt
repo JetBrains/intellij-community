@@ -73,11 +73,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.functionType
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
@@ -227,7 +231,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                     if (defaultPsiFile != null) {
                         return readAction { SourcePosition.createFromLine(defaultPsiFile, 0) }
                     }
-                } catch (e: AbsentInformationException) {
+                } catch (_: AbsentInformationException) {
                     // ignored
                 }
             }
@@ -509,7 +513,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     private fun KtCallExpression.getBytecodeMethodName(): String? = runDumbAnalyze(this, fallback = null) f@{
         val resolvedCall = resolveToCall()?.successfulFunctionCallOrNull() ?: return@f null
-        val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return@f null
+        val symbol = resolvedCall.symbol as? KaNamedFunctionSymbol ?: return@f null
         getByteCodeMethodName(symbol)
     }
 
@@ -579,7 +583,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
         val isUnitReturnType = runDumbAnalyze(function, fallback = false) {
             val functionalType = function.functionType
-            (functionalType as? KaFunctionType)?.returnType?.isUnitType == true
+            (functionalType as? KaFunctionType)?.returnType?.classId == KaStandardTypeClassIds.UNIT
         }
         if (!isUnitReturnType) {
             // We always must specify return explicitly
@@ -617,7 +621,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             } else {
                 defaultInternalName(location)
             }
-        } catch (e: AbsentInformationException) {
+        } catch (_: AbsentInformationException) {
             defaultInternalName(location)
         }
 
@@ -734,7 +738,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             }
 
             return locations.filter { it.sourceName(KOTLIN_STRATA_NAME) == position.file.name }
-        } catch (e: AbsentInformationException) {
+        } catch (_: AbsentInformationException) {
             throw NoDataException.INSTANCE
         }
     }
@@ -866,7 +870,7 @@ private fun hasInlinedLinesToAsync(
 private fun fallbackHasInlinedLinesTo(referenceType: ReferenceType, line: Int, sourceCandidatesInternalName: List<String>): Boolean {
     val locations = try {
         DebuggerUtilsAsync.locationsOfLineSync(referenceType, KOTLIN_STRATA_NAME, null, line)
-    } catch (e: AbsentInformationException) {
+    } catch (_: AbsentInformationException) {
         emptyList()
     }
     return locations.any { location ->
@@ -1010,7 +1014,7 @@ private suspend fun KtFunction.isSamLambda(): Boolean {
         val parentCall = KtPsiUtil.getParentCallIfPresent(this@isSamLambda) as? KtCallExpression ?: return@f false
         val call = parentCall.resolveToCall()?.successfulFunctionCallOrNull() ?: return@f false
         val valueArgument = parentCall.getContainingValueArgument(this@isSamLambda) ?: return@f false
-        val argument = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return@f false
+        val argument = call.valueArgumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return@f false
         argument.returnType is KaUsualClassType
     }
 }

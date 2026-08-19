@@ -25,6 +25,8 @@ import kotlin.io.path.relativeTo
 
 internal const val ROBOTS_FILE_NAME = "icon-robots.txt"
 
+private const val COMPATIBILITY_RESOURCES_DIR_NAME = "compatibilityResources"
+
 private val EMPTY_IMAGE_FLAGS = ImageFlags(used = false, flat = false, deprecation = null)
 
 internal class ImageInfo(
@@ -35,6 +37,14 @@ internal class ImageInfo(
   private var flags = EMPTY_IMAGE_FLAGS
   private val images = ArrayList<Path>()
 
+  /**
+   * The resource root the files are physically stored in, when it differs from [sourceRoot].
+   * Deprecated icons are moved to `compatibilityResources`, but [images] keeps the original
+   * [sourceRoot]-relative paths, so that the generated icon path stays the same.
+   */
+  @JvmField
+  var physicalRoot: Path? = null
+
   val files: List<Path>
     get() = images
 
@@ -42,7 +52,23 @@ internal class ImageInfo(
     val copy = ImageInfo(id = id.removePrefix(prefix), sourceRoot = sourceRoot, phantom = phantom)
     copy.images.addAll(images)
     copy.flags = flags
+    copy.physicalRoot = physicalRoot
     return copy
+  }
+
+  /**
+   * Maps a [sourceRoot]-relative path from [files] to the file that actually exists on disk.
+   * Returns [file] itself if it is already there, so that a deprecation replacement,
+   * which is resolved against [sourceRoot], is not affected.
+   */
+  fun resolvePhysicalFile(file: Path): Path {
+    val root = physicalRoot ?: return file
+    if (Files.exists(file) || !file.startsWith(sourceRoot.path)) {
+      return file
+    }
+
+    val physicalFile = root.resolve(sourceRoot.path.relativize(file))
+    return if (Files.exists(physicalFile)) physicalFile else file
   }
 
   @Synchronized
@@ -151,7 +177,17 @@ internal class ImageCollector(
   private val usedIconRobots: MutableSet<Path> = ConcurrentHashMap.newKeySet()
   private var mappingFile: Path? = null
 
+  /**
+   * Resource roots holding deprecated icons, which are excluded from the regular collecting.
+   * They are still used to resolve phantom icons, see [processPhantomIcons].
+   */
+  private var compatibilityRoots: List<Path> = emptyList()
+
   fun collect(module: JpsModule, includePhantom: Boolean = false): Collection<ImageInfo> {
+    compatibilityRoots = module.sourceRoots.mapNotNull { sourceRoot ->
+      sourceRoot.path.takeIf { it.fileName.toString() == COMPATIBILITY_RESOURCES_DIR_NAME && sourceRoot.rootType == JavaResourceRootType.RESOURCE }
+    }
+
     for (sourceRoot in module.sourceRoots) {
       if (sourceRoot.rootType != JavaResourceRootType.RESOURCE) {
         continue
@@ -172,7 +208,7 @@ internal class ImageCollector(
       val excludeDirectories = moduleConfig?.excludePackages
         ?.map { rootDir.resolve(it.replace('.', '/')) }?.toSet() ?: emptySet()
 
-      if (rootDir.fileName.toString() != "compatibilityResources") {
+      if (rootDir.fileName.toString() != COMPATIBILITY_RESOURCES_DIR_NAME) {
         processRoot(sourceRoot, rootDir, excludeDirectories)
       }
       else if (java.lang.Boolean.getBoolean("remove.extra.icon.robots.files")) {
@@ -279,12 +315,51 @@ internal class ImageCollector(
       val iconFile = root.resolve(icon.first.removePrefix("/").removePrefix(File.separator))
       val paths = ImageInfo(id, sourceRoot, true)
       paths.addImage(iconFile, icon.second)
+      addCompatibilityVariants(info = paths, iconFile = iconFile, sourceRoot = sourceRoot, flags = icon.second)
 
       if (phantomIcons.containsKey(id)) {
         throw Exception("Duplicated phantom icon found: $id\n$root/${ROBOTS_FILE_NAME}")
       }
 
       phantomIcons.put(id, paths)
+    }
+  }
+
+  /**
+   * A deprecated icon is moved to `compatibilityResources`, so [iconFile] no longer exists.
+   * Register the remaining variants (`_dark`, `@2x`, `@2x_dark`, `_stroke`) found there, so that
+   * [ImageInfo.getFlags] reports the same flags as before the icon was deprecated.
+   *
+   * Paths are added as [sourceRoot]-relative ones, because [ImageInfo.sourceCodeParameterName]
+   * resolves them against [sourceRoot] to compute the path used in the generated icon class.
+   */
+  private fun addCompatibilityVariants(info: ImageInfo, iconFile: Path, sourceRoot: JpsModuleSourceRoot, flags: ImageFlags) {
+    if (compatibilityRoots.isEmpty() || Files.exists(iconFile)) {
+      return
+    }
+
+    val sourceRootPath = sourceRoot.path
+    if (!iconFile.startsWith(sourceRootPath)) {
+      return
+    }
+
+    val relativePath = sourceRootPath.relativize(iconFile)
+    for (compatibilityRoot in compatibilityRoots) {
+      val compatibilityFile = compatibilityRoot.resolve(relativePath)
+      if (!Files.exists(compatibilityFile)) {
+        continue
+      }
+
+      info.physicalRoot = compatibilityRoot
+      val directory = compatibilityFile.parent ?: continue
+      // the variants are siblings of the icon, so comparing the names without a prefix is enough
+      val basicName = ImageType.getBasicName(compatibilityFile.fileName.toString(), "")
+      for (file in directory.listDirectoryEntries()) {
+        if (file != compatibilityFile && isImage(file, iconsOnly) && ImageType.getBasicName(file.fileName.toString(), "") == basicName) {
+          info.addImage(sourceRootPath.resolve(compatibilityRoot.relativize(file)), flags)
+        }
+      }
+      return
     }
   }
 

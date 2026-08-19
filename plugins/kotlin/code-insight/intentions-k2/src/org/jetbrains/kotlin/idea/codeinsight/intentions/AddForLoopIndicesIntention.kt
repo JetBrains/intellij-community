@@ -8,9 +8,10 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.config.LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses
 import org.jetbrains.kotlin.config.LanguageFeature.EnableNameBasedDestructuringShortForm
 import org.jetbrains.kotlin.config.LanguageFeature.NameBasedDestructuring
@@ -61,7 +62,8 @@ class AddForLoopIndicesIntention :
         return element.loopRange != null
     }
 
-    override fun KaSession.prepareContext(element: KtForExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtForExpression): Context? {
         val loopRange = element.loopRange ?: return null
         val loopParameter = element.loopParameter ?: return null
 

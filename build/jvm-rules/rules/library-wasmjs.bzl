@@ -67,6 +67,16 @@ wasmjs_library = rule(
             doc = """Value for the compiler's `-ir-output-name`: the klib uniqueName, which determines the
               per-module JS/Wasm file names emitted by (multimodule) linking. Defaults to `module_name`.""",
         ),
+        "runtime_npm_package_deps": attr.string_keyed_label_dict(
+            allow_files = True,
+            doc = """Runtime NPM package dependencies.
+              Propagated transitively into final linked Wasm module.
+              
+              Dict of "bare import specifier" String to "pointing to NPM package files" Label
+
+              e.g. "@js-joda/core": "@npm-_js-joda_core-1_2_3_http//:files"
+            """,
+        ),
         "_wasmjs_builder": attr.label(
             default = "//kotlin-builder-wasmjs:kotlin-builder-wasmjs_deploy.jar",
             allow_single_file = True,

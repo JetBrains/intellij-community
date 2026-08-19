@@ -201,6 +201,11 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     return element;
   }
 
+  @Override
+  public void noStateLoaded() {
+    resetToDefaultTodoPatterns();
+  }
+
   public void colorSettingsChanged() {
     for (TodoPattern pattern : myTodoPatterns) {
       TodoAttributes attributes = pattern.getAttributes();

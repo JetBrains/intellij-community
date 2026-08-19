@@ -1,8 +1,13 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.sdk.backend"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.remote.core"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.execService"/>
@@ -17,6 +22,6 @@
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <python.pytools.pyTool implementation="com.intellij.python.uv.backend.UvPyTool"/>
-    <python.pytools.pyToolManagerProvider implementation="com.intellij.python.uv.backend.UvToolManagerProvider" order="first"/>
+    <python.pytools.genericPyToolManagerProvider implementation="com.intellij.python.uv.backend.UvToolManagerProvider" order="first"/>
   </extensions>
 </idea-plugin>

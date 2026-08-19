@@ -40,10 +40,11 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     Iterable<JvmField> fields,
     Iterable<JvmMethod> methods,
     Iterable<ElementAnnotation> annotations,
+    Iterable<ElementAnnotation> typeAnnotations,
     Iterable<ElemType> annotationTargets, @Nullable RetentionPolicy retentionPolicy, @NotNull Iterable<Usage> usages, @NotNull Iterable<JvmMetadata<?, ?>> metadata
   ) {
-    
-    super(flags, signature, fqName, outFilePath, annotations, usages, metadata);
+
+    super(flags, signature, fqName, outFilePath, annotations, typeAnnotations, usages, metadata);
     mySuperFqName = superFqName == null || OBJECT_CLASS_NAME.equals(superFqName)? "" : GraphElementInterner.intern(superFqName);
     myOuterFqName = outerFqName == null? "" : GraphElementInterner.intern(outerFqName);
     myInterfaces = collect(map(interfaces, GraphElementInterner::intern), new ArrayList<>());

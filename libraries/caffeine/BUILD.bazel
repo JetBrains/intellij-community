@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.caffeine.iml",
+        "resources/intellij.libraries.caffeine.xml",
     ],
     visibility = ["//visibility:public"],
 )

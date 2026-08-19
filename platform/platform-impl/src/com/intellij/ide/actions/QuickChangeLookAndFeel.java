@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.ui.components.Badge;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.icons.IconUtilKt;
 import com.intellij.ui.popup.ActionPopupOptions;
@@ -144,7 +145,7 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
 
     if (lafAction.myLookAndFeelInfo.isRestartRequired()) {
       if (icon1 != null) {
-        icon1.setIcon(AllIcons.General.Beta);
+        icon1.setIcon(Badge.beta);
       }
 
       if (!isSelected) {

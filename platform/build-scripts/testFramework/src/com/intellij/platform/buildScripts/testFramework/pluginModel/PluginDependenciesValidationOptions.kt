@@ -37,11 +37,6 @@ data class PluginDependenciesValidationOptions(
   val missingRuntimeDeps: List<MissingRuntimeDep> = emptyList(),
 
   /**
-   * Relative paths to XML files which are located in libraries and included in plugin descriptors via `<xi:include>`.
-   */
-  val pathsIncludedFromLibrariesViaXiInclude: Set<String> = emptySet(),
-
-  /**
    * Specifies the minimum number of modules which should be checked by the validator.
    * This is used to ensure that the validator won't stop checking many modules due to some mistake in the validation code.
    */

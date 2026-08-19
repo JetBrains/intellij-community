@@ -5,8 +5,10 @@ import com.intellij.concurrency.callable
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.concurrency.runnable
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.edtWriteAction
@@ -18,6 +20,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.CeProcessCanceledException
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -29,6 +32,7 @@ import com.intellij.openapi.progress.blockingContextScope
 import com.intellij.openapi.progress.childCallable
 import com.intellij.openapi.progress.impl.ProgressResult
 import com.intellij.openapi.progress.impl.ProgressRunner
+import com.intellij.openapi.progress.jobToIndicator
 import com.intellij.openapi.progress.loggedError
 import com.intellij.openapi.progress.neverEndingStory
 import com.intellij.openapi.progress.prepareThreadContext
@@ -44,6 +48,7 @@ import com.intellij.openapi.progress.withRootJob
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -53,6 +58,7 @@ import com.intellij.util.application
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -69,6 +75,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.asCancellablePromise
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -955,7 +962,65 @@ class CancellationPropagationTest {
     job2.cancelAndJoin()
   }
 
+  /**
+   * `LaterInvocator.invokeAndWait` abandons the queued runnable (`runnableRef.set(null)`) when
+   * `ProgressManager.checkCanceled()` throws in its wait loop. That runnable is the `ContextRunnable` which owns the child job
+   * created by `ApplicationImpl.doInvokeAndWait`, and the job is completed only by *executing* the runnable.
+   *
+   * Cancellation of the progress indicator does not cancel the calling coroutine, so nothing cancels that child job either,
+   * and the caller's job can never complete. See CPP-51434: a dumb task hit this and `DumbService.hasScheduledTasks()`
+   * stayed `true` forever.
+   */
+  @Test
+  fun `abandoned invokeAndWait does not prevent completion of parent job`(): Unit = timeoutRunBlocking(60.seconds) {
+    // a scope of our own: a leaked child job must not wedge the whole test
+    val callerScope = childScope("abandoned invokeAndWait caller", Dispatchers.Default)
+    try {
+      val indicator = EmptyProgressIndicator()
+      val abandoned = Semaphore(1)
+      val runnableExecuted = AtomicBoolean(false)
 
+      // `async` so that a failure inside the body is reported by `await()` below instead of becoming an unhandled exception
+      val caller = callerScope.async(start = CoroutineStart.LAZY) {
+        try {
+          // `jobToIndicator` propagates cancellation job -> indicator only, which is exactly the asymmetry under test
+          jobToIndicator(coroutineContext.job, indicator) {
+            // cancel the *indicator*: `checkCanceled()` will throw, but the coroutine job stays alive
+            indicator.cancel()
+            assertThrows<ProcessCanceledException> {
+              application.invokeAndWait({ runnableExecuted.set(true) }, ModalityState.nonModal())
+            }
+          }
+        }
+        finally {
+          abandoned.up()
+        }
+      }
+
+      application.withModality {
+        // while a modal entity is active, `NonBlockingFlushQueue` parks the non-modal runnable in its "skipped" queue,
+        // so it cannot start before `invokeAndWait` gives up waiting
+        caller.start()
+        abandoned.timeoutWaitUp()
+      }
+      // Leaving modality re-includes the skipped runnable into the queue. `Dispatchers.EDT` schedules with the same metadata
+      // (non-modal, write-intent), so per the ordering guarantee of `NonBlockingFlushQueue` the block below can only run after
+      // the abandoned runnable has been processed - as a no-op, because `runnableRef` is already null.
+      withContext(Dispatchers.EDT) {}
+
+      assertFalse(runnableExecuted.get(), "the abandoned runnable must not be executed")
+      val completed = withTimeoutOrNull(10.seconds) { caller.join(); true } ?: false
+      caller.takeIf { it.isCompleted }?.await() // surface a failure from the body, if any
+      assertTrue(completed) {
+        "`invokeAndWait` leaked a child job, so the caller can never complete." +
+        "\nCaller children: ${caller.children.toList()}" +
+        "\nCoroutine dump:\n${dumpCoroutines(callerScope, stripDump = false)}"
+      }
+    }
+    finally {
+      callerScope.cancel() // release the leaked child so that the test can terminate
+    }
+  }
 
 
   @Test

@@ -133,6 +133,7 @@ jvm_library(
 exports_files(
     [
         "intellij.markdown.jcef.iml",
+        "resources/intellij.markdown.jcef.xml",
     ],
     visibility = ["//visibility:public"],
 )

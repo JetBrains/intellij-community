@@ -51,6 +51,7 @@ interface NamedEntity : WorkspaceEntityWithSymbolicId {
 
 interface NamedChildEntity : WorkspaceEntity {
   val childProperty: String
+
   @Parent
   val parentEntity: NamedEntity
 
@@ -90,37 +91,52 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithSymbolicId {
 
 }
 
-// ------------------------------ Persistent Id ---------------
-
-data class ParentNameId(private val name: String) : SymbolicEntityId<ParentEntityWithSymbolicId> {
+// -------------------------------------------- Parent-Child-Dependent SymbolicIds --------------------------------------------
+data class PCDId1(private val name: String) : SymbolicEntityId<PcdParent1Entity> {
   override val presentableName: String
-    get() = name
-
-  override fun toString(): String = name
+    get() = "PCD1 / $name"
 }
 
-data class ChildNameIdWithParentId(private val name: String, private val parentId: ParentNameId) : SymbolicEntityId<ChildEntityWithSymbolicId> {
+data class PCDId2(private val version: Int) : SymbolicEntityId<PcdParent2Entity> {
   override val presentableName: String
-    get() = "$name (${parentId.presentableName})"
-
-  override fun toString(): String = "$name (${parentId.presentableName})"
+    get() = "PCD2 / $version"
 }
 
-// ------------------------- Entity with SymbolicId which uses parent's SymbolicId ------------------
-
-interface ParentEntityWithSymbolicId : WorkspaceEntityWithSymbolicId {
-  val myName: String
-  val children: List<ChildEntityWithSymbolicId>
-
-  override val symbolicId: ParentNameId 
-    get() = ParentNameId(myName)
+data class PCDIdChild(private val data: Boolean, private val id1: PCDId1, private val id2: PCDId2) : SymbolicEntityId<PcdChildEntity> {
+  override val presentableName: String
+    get() = "PCD3 / $data / ${id1.presentableName} / ${id2.presentableName}"
 }
 
-interface ChildEntityWithSymbolicId : WorkspaceEntityWithSymbolicId {
-  val myName: String
+// -------------------------------------------- CMPLX Entites --------------------------------------------
+interface PcdParent1Entity : WorkspaceEntityWithSymbolicId {
+  val name: String
+  val version: Int
+  val child: PcdChildEntity?
+  override val symbolicId: PCDId1
+    get() = PCDId1(name)
+}
+
+interface PcdParent2Entity : WorkspaceEntityWithSymbolicId {
+  val name: String
+  val version: Int
+  val children: List<PcdChildEntity>
+  override val symbolicId: PCDId2
+    get() = PCDId2(version)
+}
+
+interface PcdChildEntity : WorkspaceEntityWithSymbolicId {
+  val data: Boolean
+
   @Parent
-  val parent: ParentEntityWithSymbolicId
+  val parent1: PcdParent1Entity
 
-  override val symbolicId: ChildNameIdWithParentId
-    get() = ChildNameIdWithParentId(myName, parent.symbolicId)
+  @Parent
+  val parent2: PcdParent2Entity
+  override val symbolicId: PCDIdChild
+    get() = PCDIdChild(data, parent1.symbolicId, parent2.symbolicId)
+}
+
+interface PcdChildReferencer : WorkspaceEntity {
+  val data: String
+  val relatedChildEntity: PCDIdChild
 }

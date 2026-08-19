@@ -64,6 +64,7 @@ import static com.intellij.notification.NotificationAction.createSimpleExpiring;
 /** Internal API. See a note in {@link MessagePool}. */
 @ApiStatus.Internal
 public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustomStatusBarWidget {
+  private static final Logger LOG = Logger.getInstance(IdeMessagePanel.class);
 
   private static final boolean NOTIFICATIONS_ENABLED = !System.getProperty("idea.fatal.error.notification").equals("disabled");
 
@@ -84,6 +85,8 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
 
   private final IdeMessageAction action = new IdeMessageAction();
   private final AtomicBoolean pluginUpdateScheduled = new AtomicBoolean(false);
+
+  private final MessagePoolAdvisor releaseExceptionsFilter = new IdeMessagePanelReleaseExceptionsFilter();
 
   private final ClickListener onClick = new ClickListener() {
     @Override
@@ -112,6 +115,14 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
 
     messagePool.addAdvisor(this);
 
+    var application = ApplicationManager.getApplication();
+    if (application != null && !application.isEAP() && !application.isInternal()) {
+      if (!ExceptionAutoReportUtil.INSTANCE.isAutoReportVisibleBlocking()) {
+        LOG.debug("Suppressing bundled exceptions in release build, automatic reporting is not available");
+        messagePool.addAdvisor(releaseExceptionsFilter);
+      }
+    }
+
     updateIconAndNotify();
   }
 
@@ -128,6 +139,7 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
   @Override
   public void dispose() {
     messagePool.removeAdvisor(this);
+    messagePool.removeAdvisor(releaseExceptionsFilter);
   }
 
   @Override
@@ -212,7 +224,7 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
     if (app.isInternal() || app.isEAP()
         || NOTIFICATIONS_ENABLED
         || showPluginError(message.getThrowable(), message.getMessage(), findPlugin(message.getThrowable()))) {
-
+      LOG.debug("Update error indicator");
       UIUtil.invokeLaterIfNeeded(() -> {
         updateIconAndNotify();
       });
@@ -236,7 +248,8 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
     return !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(new IdeaLoggingEvent(message, throwable));
   }
 
-  private static boolean isBuiltIn(@NotNull IdeaPluginDescriptor plugin) {
+  static boolean isBuiltIn(@Nullable IdeaPluginDescriptor plugin) {
+    if (plugin == null) return true;
     return plugin.isBundled() || PluginManagerCore.isUpdatedBundledPlugin(plugin);
   }
 

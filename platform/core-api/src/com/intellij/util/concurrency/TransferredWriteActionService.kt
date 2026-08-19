@@ -45,5 +45,5 @@ interface TransferredWriteActionService {
    */
   @RequiresWriteLock
   @RequiresEdt
-  fun <T> runOnBackgroundThreadWithTransferredWriteActionAndWait(@RequiresBackgroundThread @RequiresWriteLock action: Runnable)
+  fun runOnBackgroundThreadWithTransferredWriteActionAndWait(@RequiresBackgroundThread @RequiresWriteLock action: Runnable)
 }

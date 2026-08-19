@@ -3,7 +3,7 @@ UnionScope
         KaFirJvmLibraryRestrictionScope
         UnionScope
             IntersectionScope
-                Libraries
+                Library Classes
                 NotScope
                     IntersectionScope
                         KaEntityBasedLibraryModuleScope

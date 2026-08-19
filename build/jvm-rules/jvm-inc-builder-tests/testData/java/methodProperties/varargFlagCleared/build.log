@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  X.class
+End of files
+Compiling files:
+  java/methodProperties/varargFlagCleared/a/X.java
+End of files
+Cleaning output files:
+  Use.class
+End of files
+Compiling files:
+  java/methodProperties/varargFlagCleared/a/Use.java
+End of files
+------------------------------------------
+Exit code: ERROR

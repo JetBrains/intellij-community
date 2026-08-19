@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
@@ -19,7 +18,6 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.util.indexing.testEntities.DependencyItem
@@ -33,18 +31,11 @@ import com.intellij.util.indexing.testEntities.ReferredTestEntityId
 internal class OneMoreWithReferenceTestEntityImpl(private val dataSource: OneMoreWithReferenceTestEntityData) :
   OneMoreWithReferenceTestEntity, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val references: List<DependencyItem>
     get() {
       readField("references")
       return dataSource.references
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -52,37 +43,15 @@ internal class OneMoreWithReferenceTestEntityImpl(private val dataSource: OneMor
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: OneMoreWithReferenceTestEntityData?) :
     ModifiableWorkspaceEntityBase<OneMoreWithReferenceTestEntity, OneMoreWithReferenceTestEntityData>(result),
     OneMoreWithReferenceTestEntityBuilder {
     internal constructor() : this(OneMoreWithReferenceTestEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity OneMoreWithReferenceTestEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -93,7 +62,7 @@ internal class OneMoreWithReferenceTestEntityImpl(private val dataSource: OneMor
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -111,14 +80,12 @@ internal class OneMoreWithReferenceTestEntityImpl(private val dataSource: OneMor
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     private val referencesUpdater: (value: List<DependencyItem>) -> Unit = { value ->
 
@@ -144,15 +111,12 @@ internal class OneMoreWithReferenceTestEntityImpl(private val dataSource: OneMor
 
     override fun getEntityClass(): Class<OneMoreWithReferenceTestEntity> = OneMoreWithReferenceTestEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OneMoreWithReferenceTestEntityData : WorkspaceEntityData<OneMoreWithReferenceTestEntity>(), SoftLinkable {
   lateinit var references: MutableList<DependencyItem>
-
   internal fun isReferencesInitialized(): Boolean = ::references.isInitialized
-
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
     for (item in references) {
@@ -168,7 +132,6 @@ internal class OneMoreWithReferenceTestEntityData : WorkspaceEntityData<OneMoreW
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     for (item in references) {
       val removedItem_item_reference = mutablePreviousSet.remove(item.reference)
@@ -202,28 +165,16 @@ internal class OneMoreWithReferenceTestEntityData : WorkspaceEntityData<OneMoreW
         it
       }
     }
+
     if (references_data != null) {
       references = references_data as MutableList<DependencyItem>
     }
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<OneMoreWithReferenceTestEntity> {
-    val modifiable = OneMoreWithReferenceTestEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): OneMoreWithReferenceTestEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = OneMoreWithReferenceTestEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
+  override fun newInstance(): OneMoreWithReferenceTestEntity = OneMoreWithReferenceTestEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<OneMoreWithReferenceTestEntity, *> =
+    OneMoreWithReferenceTestEntityImpl.Builder(null)
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.util.indexing.testEntities.OneMoreWithReferenceTestEntity") as EntityMetadata

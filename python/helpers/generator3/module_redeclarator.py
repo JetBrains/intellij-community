@@ -902,6 +902,9 @@ class ModuleRedeclarator(object):
                 and mod_name not in surely_not_imported_mods
                 and not import_is_from_top
             ):
+                # XXX This is questionable: Why don't we want to import from .py files
+                # ("pure" modules) in extension modules?
+                # (introduced in ded34aa205ef23ef1faa140dfae66189a49368f1)
                 # import looks valid, but maybe it's a .py file? we're certain not to import from .py
                 # e.g. this rules out _collections import collections and builtins import site.
                 try:

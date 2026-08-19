@@ -1,15 +1,16 @@
 from _typeshed import GenericPath, Incomplete, StrPath
 from collections.abc import Iterator
 from types import CodeType
-from typing import AnyStr, ClassVar, Final, Literal, TypeVar
+from typing import ClassVar, Final, Literal, TypeVar
 from zipfile import _ZipFileMode
 
 from .. import Command
 
 _StrPathT = TypeVar("_StrPathT", bound=StrPath)
+_StrOrBytesT = TypeVar("_StrOrBytesT", str, bytes)
 
 def strip_module(filename): ...
-def sorted_walk(dir: GenericPath[AnyStr]) -> Iterator[tuple[AnyStr, list[AnyStr], list[AnyStr]]]: ...
+def sorted_walk(dir: GenericPath[_StrOrBytesT]) -> Iterator[tuple[_StrOrBytesT, list[_StrOrBytesT], list[_StrOrBytesT]]]: ...
 def write_stub(resource, pyfile) -> None: ...
 
 class bdist_egg(Command):

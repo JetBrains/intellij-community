@@ -20,15 +20,15 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
         "//platform/external-system-impl:externalSystem-impl",
         "//platform/platform-impl:ide-impl",
-        "@lib//:gradle",
+        "//libraries/gradle",
         "//jps/model-api:model",
         "//platform/observable",
         "//platform/ide-core",
@@ -75,11 +75,14 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-gradle-codeInsight-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//libraries/gradle:gradle_test_lib",
         "//jps/model-api:model_test_lib",
         "//platform/observable:observable_test_lib",
         "//platform/ide-core:ide-core_test_lib",
@@ -119,6 +122,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.gradle.codeInsight.common.iml",
+        "resources/intellij.kotlin.gradle.codeInsight.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

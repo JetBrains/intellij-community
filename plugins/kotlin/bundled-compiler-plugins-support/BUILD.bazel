@@ -27,7 +27,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/core-api:core",
         "//platform/lang-api:lang",
         "@lib//:kotlinc-allopen-compiler-plugin",
@@ -40,7 +40,7 @@ jvm_library(
         "@lib//:kotlinc-scripting-compiler-plugin",
         "@lib//:kotlinc-js-plain-objects-compiler-plugin",
         "//plugins/kotlin/base/plugin",
-        "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
+        "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin",
         "@lib//:kotlinc-kotlin-dataframe-compiler-plugin",
     ],
 )
@@ -58,9 +58,11 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":compilerPlugins-support-bundled",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.support.bundled` end
@@ -69,6 +71,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.support.bundled.iml",
+        "resources/intellij.kotlin.compilerPlugins.support.bundled.xml",
     ],
     visibility = ["//visibility:public"],
 )

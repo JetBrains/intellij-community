@@ -18,20 +18,26 @@ import java.awt.Desktop.getDesktop
 import java.net.URI.create
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.markdown.standalone.ProvideMarkdownStyling
 import org.jetbrains.jewel.intui.markdown.standalone.dark
 import org.jetbrains.jewel.intui.markdown.standalone.light
 import org.jetbrains.jewel.intui.markdown.standalone.styling.dark
+import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.frontmatter.dark
+import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.frontmatter.light
 import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.alerts.dark
 import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.alerts.light
 import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.tables.dark
 import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.tables.light
 import org.jetbrains.jewel.intui.markdown.standalone.styling.light
+import org.jetbrains.jewel.intui.standalone.code.highlighting.SimpleCodeHighlighter
+import org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors
 import org.jetbrains.jewel.markdown.LazyMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.extensions.autolink.AutolinkProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterRendererExtension
+import org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertRendererExtension
@@ -63,6 +69,7 @@ internal fun MarkdownPreview(rawMarkdown: CharSequence, modifier: Modifier = Mod
         MarkdownProcessor(
             listOf(
                 AutolinkProcessorExtension,
+                FrontMatterProcessorExtension,
                 GitHubAlertProcessorExtension,
                 GitHubStrikethroughProcessorExtension(),
                 GitHubTableProcessorExtension,
@@ -90,6 +97,7 @@ internal fun MarkdownPreview(rawMarkdown: CharSequence, modifier: Modifier = Mod
                     rendererExtensions =
                         listOf(
                             coil3ImageRendererExtension,
+                            FrontMatterRendererExtension(FrontMatterStyling.dark()),
                             GitHubAlertRendererExtension(AlertStyling.dark(), markdownStyling),
                             GitHubStrikethroughRendererExtension,
                             GitHubTableRendererExtension(GfmTableStyling.dark(), markdownStyling),
@@ -101,6 +109,7 @@ internal fun MarkdownPreview(rawMarkdown: CharSequence, modifier: Modifier = Mod
                     rendererExtensions =
                         listOf(
                             coil3ImageRendererExtension,
+                            FrontMatterRendererExtension(FrontMatterStyling.light()),
                             GitHubAlertRendererExtension(AlertStyling.light(), markdownStyling),
                             GitHubStrikethroughRendererExtension,
                             GitHubTableRendererExtension(GfmTableStyling.light(), markdownStyling),
@@ -111,8 +120,12 @@ internal fun MarkdownPreview(rawMarkdown: CharSequence, modifier: Modifier = Mod
 
     // Using the values from the GitHub rendering to ensure contrast
     val background = remember(instanceUuid) { if (isDark) Color(0xff0d1117) else Color.White }
+    val codeHighlighter =
+        remember(isDark) {
+            SimpleCodeHighlighter(if (isDark) SyntaxHighlightColors.dark() else SyntaxHighlightColors.light())
+        }
 
-    ProvideMarkdownStyling(markdownStyling, blockRenderer, NoOpCodeHighlighter) {
+    ProvideMarkdownStyling(markdownStyling, blockRenderer, codeHighlighter) {
         val lazyListState = rememberLazyListState()
         VerticallyScrollableContainer(lazyListState as ScrollableState, modifier.background(background)) {
             LazyMarkdown(

@@ -2,10 +2,11 @@
 
 package org.jetbrains.kotlin.idea.fir.codeInsight
 
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
 import org.jetbrains.kotlin.idea.codeInsight.OverrideImplementTestMixIn
 import org.jetbrains.kotlin.idea.core.overrideImplement.AbstractGenerateMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember

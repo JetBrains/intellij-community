@@ -28,7 +28,6 @@ public enum DumbModeBlockedFunctionality {
   GotoTarget,
   GotoTypeDeclaration,
   GroovyMarkers,
-  Gwt,
   Intentions,
   JfrStackFrames,
   Jpa,

@@ -74,6 +74,7 @@ jvm_library(
 exports_files(
     [
         "intellij.mcpserver.stdio.iml",
+        "resources/intellij.mcpserver.stdio.xml",
     ],
     visibility = ["//visibility:public"],
 )

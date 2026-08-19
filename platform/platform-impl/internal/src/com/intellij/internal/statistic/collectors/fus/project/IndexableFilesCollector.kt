@@ -6,12 +6,14 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
-import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo
 import kotlinx.coroutines.isActive
 import kotlin.coroutines.coroutineContext
 
@@ -29,7 +31,7 @@ internal class IndexableFilesCollector : ProjectUsagesCollector() {
     var allIndexableFiles = 0
     var inContentIndexableFiles = 0
 
-    val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+    val fileIndex = WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx
 
     val nonIndexableFiles = countNonIndexableFiles(project)
 
@@ -38,14 +40,13 @@ internal class IndexableFilesCollector : ProjectUsagesCollector() {
         return@ContentIterator false
       }
 
-      runReadActionBlocking {
-        if (fileOrDir.isValid && !fileOrDir.isDirectory && !fileIndex.isExcluded(fileOrDir)) {
-          if (fileIndex.isInContent(fileOrDir)) {
-            inContentIndexableFiles++
-          }
-          allIndexableFiles++
+      if (fileOrDir.isValid && !fileOrDir.isDirectory && !fileIndex.isExcluded(fileOrDir)) {
+        if (fileIndex.isInContent(fileOrDir)) {
+          inContentIndexableFiles++
         }
+        allIndexableFiles++
       }
+
       true
     }, project, null)
 
@@ -66,4 +67,9 @@ internal class IndexableFilesCollector : ProjectUsagesCollector() {
     }
     return allNonIndexableFiles
   }
+}
+
+private fun WorkspaceFileIndexEx.isExcluded(file: VirtualFile): Boolean {
+  val info: WorkspaceFileInternalInfo = this.getFileInfo(file, true, true, true, true, true, true, true)
+  return info === WorkspaceFileInternalInfo.NonWorkspace.IGNORED || info === WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
 }

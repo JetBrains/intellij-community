@@ -8,8 +8,22 @@
   ]]></description>
 
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+    <!-- endregion -->
   </dependencies>
+  <content namespace="jetbrains"/>
 
   <resource-bundle>messages.LspUiBundle</resource-bundle>
 
@@ -20,6 +34,7 @@
                          instance="com.intellij.lsp.ui.settings.LspServersConfigurable"
                          parentId="tools"/>
     <platform.lsp.integrationProvider implementation="com.intellij.lsp.ui.ConfigurableLspIntegrationProvider"/>
+    <pluginAdvertiserSuppressor implementation="com.intellij.lsp.ui.LspConfiguredPluginAdvertiserSuppressor"/>
     <statistics.projectUsagesCollector implementation="com.intellij.lsp.ui.statistics.LspServerUsagesCollector"/>
     <projectSettings service="com.intellij.lsp.ui.settings.LspServerSettings"/>
   </extensions>

@@ -1,18 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
-import com.intellij.execution.Platform
 import com.intellij.openapi.components.service
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.UploadConfig
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
-import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -24,19 +21,17 @@ import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.packaging.PyRequirementParser
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.sdk.ToolCommandExecutor
-import com.jetbrains.python.sdk.ToolSearchPath
-import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.TargetFileSystemCache
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.pySdkAdditionalData
-import com.jetbrains.python.sdk.runTool
+import com.intellij.python.pytools.runTool
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import io.github.z4kn4fein.semver.Version
@@ -52,16 +47,12 @@ import kotlin.io.path.name
  */
 private val VERSION_2 = "2.0.0".toVersion()
 
+@Internal
+@PyInternalExecApi
+const val POETRY_TOML = "poetry.toml"
 
-internal val POETRY_TOOL: ToolCommandExecutor = ToolCommandExecutor(
-  "poetry",
-  // TODO: Poetry from store isn't detected because local eel doesn't obey appx binaries. We need to fix it on eel side
-  additionalSearchPaths = listOf(ToolSearchPath.RelativePathFromHome(listOf(".poetry", ".bin"), Platform.WINDOWS)),
-  getToolPathFromSettings = { poetryPath }
-)
 
 private val POETRY_EXCLUDE_NON_DIGITS_REGEX = Regex("""\D+$""")
-private const val POETRY_TOML = "poetry.toml"
 private const val POETRY_LOCK = "poetry.lock"
 private val POETRY_PROJECT_FILES = listOf(PY_PROJECT_TOML, POETRY_LOCK, POETRY_TOML)
 private val POETRY_PROJECT_DOWNLOAD_CONFIG = DownloadConfig(relativePaths = POETRY_PROJECT_FILES)
@@ -85,7 +76,7 @@ internal suspend fun <P : PathHolder> runPoetry(
   val env = baseEnv.toMutableMap().apply {
     if (inProjectEnv != null) put("POETRY_VIRTUALENVS_IN_PROJECT", inProjectEnv.toString())
   }
-  return POETRY_TOOL.runTool(
+  return PoetryPyTool.getInstance().runTool(
     fileSystem = fileSystem,
     pathFromSdk = poetryExecutable?.toString(),
     dirPath = projectPath,
@@ -112,20 +103,6 @@ internal suspend fun runPoetry(
   )
 }
 
-
-/**
- * Returns the configured poetry executable or detects it automatically on the given [fileSystem].
- */
-@Internal
-internal suspend fun <P : PathHolder> getPoetryExecutable(fileSystem: FileSystem<P>): P? =
-  POETRY_TOOL.getToolExecutable(fileSystem, pathFromSdk = null)
-
-/**
- * Returns the configured poetry executable or detects it automatically.
- */
-@Internal
-internal suspend fun getPoetryExecutable(eel: EelApi = localEel): Path? =
-  getPoetryExecutable(EelFileSystem(eel))?.path
 
 /**
  * Runs poetry command for the specified Poetry SDK.

@@ -1,11 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors.conda
 
+import com.intellij.execution.Platform
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.packaging.getCondaBasePython
+import com.jetbrains.python.sdk.activationEnvironment
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
@@ -35,11 +38,28 @@ fun addCondaPythonToTargetCommandLine(targetedCommandLineBuilder: TargetedComman
     condaEnv.addCondaToTargetBuilder(targetedCommandLineBuilder)
     targetedCommandLineBuilder.addParameter("python")
   }
-  if (sdk != null) {
-    targetedCommandLineBuilder.fixCondaPathEnvIfNeeded(sdk)
+  targetedCommandLineBuilder.applyCondaActivationEnv(sdk, condaEnv)
+}
+
+/**
+ * Applies the conda environment's activation environment to this builder through the regular activation pipeline.
+ * Local Windows only (conda's DLL/PATH bugs are Windows-specific and activation reads the local shell): with an
+ * [sdk] the target env is activated, otherwise the base conda env (used e.g. by the package cache). The base
+ * install's `Library\bin` is contributed by the conda activation post-processor.
+ */
+private fun TargetedCommandLineBuilder.applyCondaActivationEnv(sdk: Sdk?, condaEnv: PyCondaEnv) {
+  if (request.targetPlatform.platform != Platform.WINDOWS || request.configuration != null) return
+  val activationEnv = runBlockingMaybeCancellable {
+    if (sdk != null) {
+      sdk.activationEnvironment()
+    }
+    else {
+      val baseCondaPython = getCondaBasePython(condaEnv.fullCondaPathOnTarget) ?: return@runBlockingMaybeCancellable null
+      Path.of(baseCondaPython).activationEnvironment()
+    }
   }
-  else {
-    targetedCommandLineBuilder.fixCondaPathEnvIfNeeded(condaEnv.fullCondaPathOnTarget)
+  for ((name, value) in activationEnv?.successOrNull ?: emptyMap()) {
+    addEnvironmentVariable(name, value)
   }
 }
 

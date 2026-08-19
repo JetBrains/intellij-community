@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.issue
 
 import com.intellij.build.FilePosition
@@ -172,11 +172,11 @@ private class IncompatibleGradleJvmAndGradleBuildIssue(
     when {
       gradleVersion != null && oldestCompatibleGradleVersion != null && gradleVersion < oldestCompatibleGradleVersion -> {
         addDescription(GradleBundle.message("gradle.build.issue.gradle.compatible.minimum.description", oldestCompatibleGradleVersion.version))
-        addGradleVersionQuickFix(projectPath, oldestCompatibleGradleVersion)
+        addGradleWrapperVersionQuickFix(projectPath, oldestCompatibleGradleVersion)
       }
       gradleVersion != null && latestCompatibleGradleVersion != null && gradleVersion > latestCompatibleGradleVersion -> {
         addDescription(GradleBundle.message("gradle.build.issue.gradle.compatible.maximum.description", latestCompatibleGradleVersion.version))
-        addGradleVersionQuickFix(projectPath, latestCompatibleGradleVersion)
+        addGradleWrapperVersionQuickFix(projectPath, latestCompatibleGradleVersion)
       }
     }
   }

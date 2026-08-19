@@ -18,13 +18,32 @@
     <module name="intellij.kotlin.codeInsight"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
     <module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs.impl"/>
     <module name="kotlin.jvm.shared"/>
   </dependencies>
   <!-- endregion -->
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.jvm.k2.scratch.KotlinScratchDefinitionSource"/>
+    <scriptDefinitionsProvider implementation="org.jetbrains.kotlin.idea.jvm.k2.scratch.KotlinScratchDefinitionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -37,6 +56,11 @@
     <projectService serviceInterface="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileAutoRunner"
                     serviceImplementation="org.jetbrains.kotlin.idea.jvm.k2.scratch.ScratchFileAutoRunnerK2"/>
   </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <testDiffProvider language="kotlin" implementationClass="com.intellij.execution.testframework.JvmTestDiffProvider"/>
+  </extensions>
+
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 
   <actions>

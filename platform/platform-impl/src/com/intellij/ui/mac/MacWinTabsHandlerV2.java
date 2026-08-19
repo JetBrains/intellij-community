@@ -148,12 +148,17 @@ public final class MacWinTabsHandlerV2 extends MacWinTabsHandler {
 
     IdeFrameImpl[] frames = new IdeFrameImpl[length];
 
-    for (int i = 0, founded = 0; i < allLength && founded < length; i++) {
+    int found = 0;
+    for (int i = 0; i < allLength && found < length; i++) {
       int index = Foundation.invoke(tabs, "indexOfObject:", allWindows[i]).intValue();
       if (index != -1) {
         frames[index] = allFrames[i];
-        founded++;
+        found++;
       }
+    }
+
+    if (found != length) {
+      return null; // native tab group and IDE frames are not synchronized yet
     }
 
     return new TabsInfo(frames, helpersMap);
@@ -171,7 +176,7 @@ public final class MacWinTabsHandlerV2 extends MacWinTabsHandler {
       int index = ArrayUtil.indexOfIdentity(info.frames, myFrame);
 
       for (IdeFrameImpl frame : info.frames) {
-        if (frame == myFrame || isTabsNotVisible(frame)) {
+        if (isTabsNotVisible(frame)) {
           createTabBarsForFrame(frame, info.helpersMap.get(frame), info.frames);
         }
         else {

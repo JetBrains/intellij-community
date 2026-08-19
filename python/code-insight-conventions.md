@@ -2,6 +2,23 @@
 
 Conventions for work in code-insight modules.
 
+## New files: Kotlin
+
+- Write all new classes / files in Kotlin. Editing existing Java in place is fine.
+
+## General code style guidelines
+
+- Strive to write self-explanatory code. Don't add comments unless they explain something 
+  non-obvious from the code.
+- In general, don't put issue numbers for the tickets currently being worked on in code comments. 
+  Keeping them in commit messages and identifying the corresponding issues with `git blame` is 
+  enough. Referring to other related tickets, e.g., to followup tasks in TODO comments or reported 
+  corner cases and blockers justifying a non-obvious workaround is perfectly fine, though.
+- Familiarize yourself with the Python-specific helper APIs, primarily `PyUtil` and `PyPsiUtils`.
+- When doing PSI tree traversal, use the standard extension methods on `PsiElement` defined in
+  `psiTreeUtil.kt`, as well as static helper methods from `PsiTreeUtil`. In some cases
+  `SyntaxTraverser` can also come handy.
+
 ## Types
 
 ### Prefer `PyAnyType` over raw `null`
@@ -73,7 +90,6 @@ To run one checker by hand: `uvx ty check test.py`, `uvx pyrefly check test.py`,
     result = f(1)
     # └ TYPE int
     """)
-  }
   ```
 
 ### annotate with `@TestFor`
@@ -100,7 +116,32 @@ To run one checker by hand: `uvx ty check test.py`, `uvx pyrefly check test.py`,
   `com.intellij.python.junit5Tests.unit.PyVersionSpecifiersTest`) and confirm the run
   reports a non-zero test count.
 
-## New files: Kotlin
+### Python 2 and Python 3 in tests
 
-- Write all new classes / files in Kotlin. Editing existing Java in place is
-  fine.
+- All new test scenarios should be checked against the latest supported version of Python 3 unless
+  the test is testing the boundary of a feature: that a new feature is not supported in an older
+  version of the language, or a deprecated feature is no longer supported in a newer version.
+- When selecting a suitable test class for new tests, start with checking newer code 
+  insight tests, inheriting from `PyCodeInsightTestCase` (many are listed in
+  `PyPureTypingTestSuite`). Update the legacy tests, inheriting from `PyTestCase`, only if the
+  changed functionality is something not covered by `PyCodeInsightTestCase`, e.g. formatting,
+  refactorings, editing actions, etc. or there are many related test cases already present in one
+  of the legacy tests that is yet to be ported.
+- Some legacy test classes have separate Python 2 and Python 3 variants, e.g.
+  `PyArgumentListInspectionTest` for Python 2 scenarios and `Py3ArgumentListInspectionTest` for
+  Python 3 scenarios. The main difference is that non-"Py3" versions of tests use the Python 2
+  version of the standard library in the bundled copy of Typeshed. 
+  When extending a legacy test, use the "Py3" version of a test class whenever it's available.
+
+### Update the standard test suites
+
+- Add all new tests to the relevant standard test suites, in particular `PythonAllTestsSuite` for
+  all tests and `PyPureTypingTestSuite` and `PythonAllTypesTestSuite` for tests involving type 
+  inference and type checking.
+
+### Add multifile tests for changes involving PSI stubs
+
+- For changes that involve PSI stubs and having different analysis paths for elements with available
+  complete AST vs. only PSI stub trees (often controlled with `TypeEvalContext.maySwitchToAST`,
+  `StubAwareComputation` or `StubBasedPsiElement.getStub`) add test scenarios with
+  multiple Python files and imported names to make sure that analysis results in both cases match.

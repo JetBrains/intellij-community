@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProjectWizard.collector
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -15,9 +15,9 @@ import com.jetbrains.python.statistics.INTERPRETER_CREATION_MODE
 import com.jetbrains.python.statistics.INTERPRETER_TYPE
 import com.jetbrains.python.statistics.PREVIOUSLY_CONFIGURED
 import com.jetbrains.python.statistics.PYTHON_VERSION
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 
-@Internal
+@ApiStatus.Internal
 object PythonNewProjectWizardCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup {
@@ -25,7 +25,7 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
   }
 
   private val GROUP = EventLogGroup("python.new.project.wizard", 12)
-  const val PROJECT_GENERATED_EVENT_ID = "project.generated"
+  private const val PROJECT_GENERATED_EVENT_ID = "project.generated"
   private val INHERIT_GLOBAL_SITE_PACKAGE_FIELD = EventFields.Boolean("inherit_global_site_package")
   private val MAKE_AVAILABLE_TO_ALL_PROJECTS = EventFields.Boolean("make_available_to_all_projects")
   private val IS_WSL_CONTEXT = EventFields.Boolean("wsl_context")
@@ -51,7 +51,7 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
   private val USE_EXISTING_VENV_FIX = GROUP.registerEvent("existing.venv")
 
   @JvmStatic
-  fun <T> logPythonNewProjectGenerated(
+  internal fun <T> logPythonNewProjectGenerated(
     info: InterpreterStatisticsInfo,
     pythonVersion: LanguageLevel,
     generator: T,
@@ -72,12 +72,13 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
+  @ApiStatus.Internal
   fun logDjangoAdminSelected(djangoAdminSelected: Boolean) {
     DJANGO_ADMIN_CHECKED.log(djangoAdminSelected)
   }
 
   @JvmStatic
-  fun logExistingVenvFixUsed() {
+  internal fun logExistingVenvFixUsed() {
     USE_EXISTING_VENV_FIX.log()
   }
 }

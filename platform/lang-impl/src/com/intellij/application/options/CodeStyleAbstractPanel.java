@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
@@ -54,6 +54,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PresentableEnumUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.ApiStatus;
@@ -164,6 +165,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument("");
     EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument);
+    editor.getScrollPane().setBorder(JBUI.Borders.empty());
     fillEditorSettings(editor.getSettings());
     myLastDocumentModificationStamp = editor.getDocument().getModificationStamp();
     return editor;

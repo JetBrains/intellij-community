@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSign
 import org.jetbrains.kotlin.idea.k2.refactoring.renameParameter
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
@@ -27,7 +28,8 @@ class ConvertReceiverParameterToContextParameterIntention : SelfTargetingIntenti
 
     override fun isApplicableTo(element: KtTypeReference, caretOffset: Int): Boolean {
         if (!element.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) return false
-        return (element.parent as? KtNamedFunction)?.receiverTypeReference == element // disabled for properties, TODO KTIJ-34531
+        val callable = element.parent as? KtCallableDeclaration ?: return false
+        return callable.receiverTypeReference == element && (callable is KtNamedFunction || callable is KtProperty)
     }
 
     override fun applyTo(element: KtTypeReference, editor: Editor?) {
@@ -48,14 +50,14 @@ class ConvertReceiverParameterToContextParameterIntention : SelfTargetingIntenti
 
     private fun configureChangeInfo(changeInfo: KotlinChangeInfo): Boolean {
         val oldReceiverInfo = changeInfo.oldReceiverInfo ?: return false
-        changeInfo.receiverParameterInfo = null
         oldReceiverInfo.isContextParameter = true
+        changeInfo.receiverParameterInfo = null
         return true
     }
 
     private fun renameLastContextParameter(ktCallable: KtCallableDeclaration, editor: Editor?) {
         if (!ktCallable.isValid || editor == null || editor.isDisposed) return
-        val lastContextParameter = ktCallable.getContextParameters()?.lastOrNull() ?: return
+        val lastContextParameter = ktCallable.getContextParameters().lastOrNull() ?: return
         renameParameter(lastContextParameter, editor)
     }
 }

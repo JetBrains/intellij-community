@@ -59,6 +59,7 @@ jvm_library(
 exports_files(
     [
         "intellij.markdown.frontmatter.yaml.iml",
+        "src/main/resources/intellij.markdown.frontmatter.yaml.xml",
     ],
     visibility = ["//visibility:public"],
 )

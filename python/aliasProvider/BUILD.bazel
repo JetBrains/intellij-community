@@ -21,8 +21,7 @@ jvm_library(
         "//python/python-syntax:syntax",
         "//python/python-psi-api:psi",
         "//python/python-psi-impl:psi-impl",
-        "//python/python-sdk:sdk",
-        "//python/python-sdk-ui:sdk-ui",
+        "//python/python-sdk/backend",
         "//python/python-pyproject:pyproject",
         "//python/python-core-impl:community-core-impl",
         "//python/impl.helperLocator:community-helpersLocator",
@@ -59,8 +58,7 @@ jvm_library(
         "//python/python-syntax:syntax_test_lib",
         "//python/python-psi-api:psi_test_lib",
         "//python/python-psi-impl:psi-impl_test_lib",
-        "//python/python-sdk:sdk_test_lib",
-        "//python/python-sdk-ui:sdk-ui_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
         "//python/python-pyproject:pyproject_test_lib",
         "//python/python-core-impl:community-core-impl_test_lib",
         "//python/impl.helperLocator:community-helpersLocator_test_lib",
@@ -84,6 +82,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.community.aliasProvider.iml",
+        "resources/intellij.python.community.aliasProvider.xml",
     ],
     visibility = ["//visibility:public"],
 )

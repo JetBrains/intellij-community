@@ -12,10 +12,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
@@ -87,6 +90,24 @@ internal class PyInstallDialogVersionPanel(
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     addActionListener { onInstall() }
   }
+
+  /**
+   * Replaces [installButton] once an install of the current target finishes (green "Installed" /
+   * red "Installation failed"). Mutually exclusive with the button in the controls row; hidden by
+   * default. Driven by [applyInstallControlState].
+   *
+   * Floors its height to the button's so swapping button↔label keeps the controls row the same
+   * height — otherwise the shorter label shrinks the FlowLayout row and top-aligns it, shifting the
+   * whole row (including the version chooser) upward.
+   */
+  private val installStatusLabel: JBLabel = object : JBLabel() {
+    override fun getPreferredSize(): Dimension {
+      val size = super.getPreferredSize()
+      size.height = maxOf(size.height, installButton.preferredSize.height)
+      return size
+    }
+  }.apply { isVisible = false }
+
   val descriptionToggle: JToggleButton = object : JToggleButton(AllIcons.Actions.PreviewDetailsVertically) {
     init {
       toolTipText = message("python.packaging.install.dialog.show.description")
@@ -123,6 +144,7 @@ internal class PyInstallDialogVersionPanel(
     val panel = JPanel(BorderLayout()).apply {
       isOpaque = false
       preferredSize = Dimension(-1, JBUI.CurrentTheme.List.rowHeight() * 2 + JBValue.UIInteger("Component.focusWidth", 2).get() * 2)
+      border = JBUI.Borders.customLineTop(JBUI.CurrentTheme.Popup.separatorColor())
     }
     val mainPanel = JPanel(BorderLayout()).apply {
       isOpaque = false
@@ -133,6 +155,7 @@ internal class PyInstallDialogVersionPanel(
     val controlsPanel = JPanel(FlowLayout(FlowLayout.RIGHT, UIUtil.getRegularPanelInsets().left, 0)).apply { isOpaque = false }
     controlsPanel.add(versionButton)
     controlsPanel.add(editableCheckbox)
+    controlsPanel.add(installStatusLabel)
     controlsPanel.add(installButton)
 
     mainPanel.add(controlsPanel, BorderLayout.EAST)
@@ -164,8 +187,14 @@ internal class PyInstallDialogVersionPanel(
     selectedPackageName = name
     packageInfoLabel.text = "$name ($repoName)"
     packageInfoLabel.icon = PyPackageIcons.PackageGray
-    resetVersionState(repoName)
+    // Order matters: ask the presenter for the new view state (which snapshots documentation
+    // + version list for the *newly* selected package) BEFORE clearing local state. The old
+    // sequence — `resetVersionState` first, then `onPackageSelected` — meant the presenter
+    // was called after we had wiped `selectedPackageName` / `availableVersions`, so on a
+    // rapid re-select (typing filters the list, selection follows) the documentation pane
+    // briefly rendered the previous package while the version state was mid-reset.
     val state = presenter.onPackageSelected(descriptionToggle.isSelected)
+    resetVersionState(repoName)
     applyViewState(state)
   }
 
@@ -196,6 +225,72 @@ internal class PyInstallDialogVersionPanel(
     selectedPackageName = null
     selectedRepository = null
     applyViewState(presenter.onSelectionCleared())
+  }
+
+  /**
+   * Drives the install-control slot from a per-target state the host computes.
+   * [InstallControlState.INSTALLABLE] leaves the ordinary button and an interactive version
+   * selector; [InstallControlState.INSTALLING] disables the button (spinner) and locks the version
+   * selector; [InstallControlState.INSTALLED] / [InstallControlState.FAILED] hide the button and
+   * the selector and show a status label in their place — the installed version, when known, is
+   * folded into the "Installed" text. [hideInstallStatus] is used when no target is active.
+   */
+  fun applyInstallControlState(state: InstallControlState, installedVersion: String?) {
+    when (state) {
+      InstallControlState.INSTALLABLE -> {
+        setVersionSelectionEnabled(true)
+        installButton.icon = null
+        installButton.disabledIcon = null
+        installButton.isVisible = true
+        installStatusLabel.isVisible = false
+      }
+      InstallControlState.INSTALLING -> {
+        setVersionSelectionEnabled(false)
+        // Set disabledIcon too: a disabled JButton paints its disabledIcon, so pointing that at the
+        // AnimatedIcon is what keeps the spinner animating while the button is greyed out.
+        installButton.icon = AnimatedIcon.Default.INSTANCE
+        installButton.disabledIcon = AnimatedIcon.Default.INSTANCE
+        installButton.isEnabled = false
+        installButton.isVisible = true
+        installStatusLabel.isVisible = false
+      }
+      InstallControlState.INSTALLED -> {
+        versionButton.isVisible = false
+        val text = if (installedVersion != null) message("python.packaging.install.dialog.installed.version", installedVersion)
+                   else message("python.packaging.install.dialog.installed")
+        showStatus(AllIcons.General.InspectionsOK, text, SUCCESS_FOREGROUND)
+      }
+      InstallControlState.FAILED -> {
+        versionButton.isVisible = false
+        showStatus(AllIcons.General.Error, message("python.packaging.install.dialog.installation.failed"), NamedColorUtil.getErrorForeground())
+      }
+    }
+  }
+
+  /** Hides the status label without forcing the button visible — used when no install target is active. */
+  fun hideInstallStatus() {
+    setVersionSelectionEnabled(true)
+    installButton.icon = null
+    installButton.disabledIcon = null
+    installStatusLabel.isVisible = false
+  }
+
+  private var versionSelectionEnabled = true
+
+  /** Locks/unlocks the version selector (used while an install is running): greys the text and ignores clicks. */
+  private fun setVersionSelectionEnabled(enabled: Boolean) {
+    versionSelectionEnabled = enabled
+    versionButton.cursor = Cursor.getPredefinedCursor(if (enabled) Cursor.HAND_CURSOR else Cursor.DEFAULT_CURSOR)
+    val fg = if (enabled) UIUtil.getLabelForeground() else UIUtil.getInactiveTextColor()
+    for (child in versionButton.components) (child as? JBLabel)?.foreground = fg
+  }
+
+  private fun showStatus(icon: javax.swing.Icon, @Nls text: String, fg: java.awt.Color) {
+    installButton.isVisible = false
+    installStatusLabel.icon = icon
+    installStatusLabel.text = text
+    installStatusLabel.foreground = fg
+    installStatusLabel.isVisible = true
   }
 
   suspend fun notifyInstallError(msg: @NlsContexts.NotificationContent String) {
@@ -283,6 +378,7 @@ internal class PyInstallDialogVersionPanel(
   }
 
   private fun showVersionPopup(component: JComponent) {
+    if (!versionSelectionEnabled) return
     if (selectedPackageName == null) return
     loadVersionsJob?.cancel()
     loadVersionsJob = packagingService.serviceScope.launch {
@@ -335,7 +431,15 @@ internal class PyInstallDialogVersionPanel(
     if (!summary.isNullOrEmpty()) return "<html><body><p>${StringUtil.escapeXmlEntities(summary)}</p></body></html>"
     return "<html><body><p>${message("python.toolwindow.packages.no.description.placeholder")}</p></body></html>"
   }
+
+  private companion object {
+    // Green "Installed" foreground; falls back to a green pair if the L&F doesn't define the key.
+    private val SUCCESS_FOREGROUND: JBColor = JBColor.namedColor("Label.successForeground", JBColor(0x368746, 0x5FAD65))
+  }
 }
+
+/** State of the install-control slot for the currently active target. @see PyInstallDialogVersionPanel.applyInstallControlState */
+internal enum class InstallControlState { INSTALLABLE, INSTALLING, INSTALLED, FAILED }
 
 /**
  * How the install dialog should turn a package's `description` field into HTML for the JCEF panel.

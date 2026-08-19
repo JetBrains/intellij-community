@@ -3,6 +3,7 @@ from _typeshed import Incomplete
 from kafka.record.abc import ABCRecord, ABCRecordBatch, ABCRecordBatchBuilder
 
 class LegacyRecordBase:
+    __slots__ = ()
     HEADER_STRUCT_V0: Incomplete
     HEADER_STRUCT_V1: Incomplete
     LOG_OVERHEAD: Incomplete
@@ -25,6 +26,7 @@ class LegacyRecordBase:
     NO_TIMESTAMP: int
 
 class LegacyRecordBatch(ABCRecordBatch, LegacyRecordBase):
+    __slots__ = ("_buffer", "_magic", "_offset", "_length", "_crc", "_timestamp", "_attributes", "_decompressed")
     def __init__(self, buffer, magic) -> None: ...
     @property
     def base_offset(self): ...
@@ -40,6 +42,7 @@ class LegacyRecordBatch(ABCRecordBatch, LegacyRecordBase):
     def __iter__(self): ...
 
 class LegacyRecord(ABCRecord):
+    __slots__ = ("_magic", "_offset", "_timestamp", "_timestamp_type", "_key", "_value", "_crc", "_crc_bytes")
     def __init__(self, magic, offset, timestamp, timestamp_type, key, value, crc, crc_bytes) -> None: ...
     @property
     def magic(self): ...
@@ -62,6 +65,7 @@ class LegacyRecord(ABCRecord):
     def size_in_bytes(self): ...
 
 class LegacyRecordBatchBuilder(ABCRecordBatchBuilder, LegacyRecordBase):
+    __slots__ = ("_magic", "_compression_type", "_batch_size", "_buffer")
     def __init__(self, magic, compression_type, batch_size) -> None: ...
     def append(self, offset, timestamp, key, value, headers=None): ...
     def build(self): ...
@@ -75,6 +79,7 @@ class LegacyRecordBatchBuilder(ABCRecordBatchBuilder, LegacyRecordBase):
     def estimate_size_in_bytes(cls, magic, compression_type, key, value): ...
 
 class LegacyRecordMetadata:
+    __slots__ = ("_crc", "_size", "_timestamp", "_offset")
     def __init__(self, offset, crc, size, timestamp) -> None: ...
     @property
     def offset(self): ...

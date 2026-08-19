@@ -21,7 +21,9 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/references",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//libraries/guava",
         "//platform/core-api:core",
         "//plugins/kotlin/base/util",
@@ -49,6 +51,9 @@ jvm_library(
         # do not sort,
         ":psi",
         "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//libraries/guava:guava_test_lib",
         "//platform/core-api:core_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
@@ -68,6 +73,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.base.psi.iml",
+        "resources/intellij.kotlin.base.psi.xml",
     ],
     visibility = ["//visibility:public"],
 )

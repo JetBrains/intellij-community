@@ -2,7 +2,7 @@
 package com.intellij.platform.project.module
 
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -19,7 +19,8 @@ interface ModuleStateApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): ModuleStateApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<ModuleStateApi>())
+      // TODO: IJPL-252054
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<ModuleStateApi>())
     }
   }
 }

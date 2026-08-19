@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.cloud.config.client.iml",
+        "resources/intellij.libraries.cloud.config.client.xml",
     ],
     visibility = ["//visibility:public"],
 )

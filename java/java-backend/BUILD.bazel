@@ -76,6 +76,8 @@ jvm_library(
         "//java/idea-ui:ui",
         "//uast/uast-java-ide:java-uast-ide",
         "//platform/backend",
+        "//platform/built-in-server:builtInServer-impl",
+        "//RegExpSupport:regexp",
     ],
 )
 
@@ -121,6 +123,8 @@ jvm_library(
         "//java/idea-ui:ui_test_lib",
         "//uast/uast-java-ide:java-uast-ide_test_lib",
         "//platform/backend:backend_test_lib",
+        "//platform/built-in-server:builtInServer-impl_test_lib",
+        "//RegExpSupport:regexp_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.backend` end
@@ -129,6 +133,13 @@ jvm_library(
 exports_files(
     [
         "intellij.java.backend.iml",
+        "resources/META-INF/GlobalInspections.xml",
+        "resources/META-INF/InspectionGadgets.xml",
+        "resources/META-INF/Inspections.xml",
+        "resources/META-INF/JavaActions.xml",
+        "resources/META-INF/JavaPlugin.xml",
+        "resources/META-INF/RegistryKeys.xml",
+        "resources/intellij.java.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

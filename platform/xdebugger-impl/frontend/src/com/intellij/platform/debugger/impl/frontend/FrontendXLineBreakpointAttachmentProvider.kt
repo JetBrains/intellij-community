@@ -7,6 +7,14 @@ import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
+enum class XBreakpointCreationTrigger {
+  /** Loaded from the snapshot obtained when frontend synchronization starts. */
+  FRONTEND_INIT,
+  /** Added after initial frontend breakpoint synchronization. Likely added manually during the current session. */
+  BREAKPOINT_EVENT,
+}
+
 /**
  * Extension point for creating attachments for frontend line breakpoints.
  *
@@ -26,11 +34,13 @@ interface FrontendXLineBreakpointAttachmentProvider {
    * @param breakpoint the breakpoint to create an attachment for
    * @param breakpointScope a coroutine scope tied to the breakpoint's lifecycle;
    *        when the breakpoint is disposed, this scope is cancelled
+   * @param creationTrigger whether the breakpoint came from the initial backend snapshot or was added later
    * @return an attachment, or `null` if this provider does not want to attach to this breakpoint
    */
   fun createAttachment(
     breakpoint: XLineBreakpointProxy,
     breakpointScope: CoroutineScope,
+    creationTrigger: XBreakpointCreationTrigger,
   ): XBreakpointAttachment?
 
   companion object {
@@ -47,9 +57,10 @@ interface FrontendXLineBreakpointAttachmentProvider {
     fun createAttachments(
       breakpoint: XLineBreakpointProxy,
       breakpointScope: CoroutineScope,
+      creationTrigger: XBreakpointCreationTrigger,
     ): List<XBreakpointAttachment> {
       return EP_NAME.extensionList.mapNotNull { provider ->
-        provider.createAttachment(breakpoint, breakpointScope)
+        provider.createAttachment(breakpoint, breakpointScope, creationTrigger)
       }
     }
   }

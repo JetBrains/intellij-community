@@ -39,6 +39,10 @@ data class PluginLayoutDescription(
    * Names of JPS modules which are included in the classpath of the main plugin module.
    */
   val jpsModulesInClasspath: Set<String>,
+  /**
+   * Resolved roots of libraries which are included in the classpath of the main plugin module.
+   */
+  val libraryRootsInClasspath: List<Path> = emptyList(),
 )
 
 /**
@@ -72,6 +76,7 @@ suspend fun createLayoutProviderByContentReport(
     content = content,
     mainModuleOfCorePlugin = mainModuleOfCorePlugin,
     corePluginDescriptorPath = corePluginDescriptorPath,
+    outputProvider = outputProvider,
     mainModulesWithPluginDescriptor = collectMainModulesWithPluginDescriptor(content = content, outputProvider = outputProvider),
   )
 }
@@ -100,6 +105,7 @@ private class ContentReportBasedPluginLayoutProvider(
   private val content: ParsedContentReport,
   private val mainModuleOfCorePlugin: String,
   private val corePluginDescriptorPath: String,
+  private val outputProvider: ModuleOutputProvider,
   private val mainModulesWithPluginDescriptor: Set<String>,
 ) : PluginLayoutProvider {
   private val mainModulesOfBundledPlugins by lazy {
@@ -133,7 +139,8 @@ private class ContentReportBasedPluginLayoutProvider(
       mainModuleName = mainModuleOfCorePlugin,
       pluginDescriptorPath = corePluginDescriptorPath,
       mainLibDir = "dist.all/lib",
-      jarsToIgnore = setOf("dist.all/lib/testFramework.jar")
+      jarsToIgnore = setOf("dist.all/lib/testFramework.jar"),
+      libraryRootResolver = outputProvider::findLibraryRoots,
     )
   }
 
@@ -160,7 +167,8 @@ private class ContentReportBasedPluginLayoutProvider(
       mainModuleName = mainModule.name,
       pluginDescriptorPath = pluginDescriptorPath,
       mainLibDir = "lib",
-      jarsToIgnore = emptySet()
+      jarsToIgnore = emptySet(),
+      libraryRootResolver = outputProvider::findLibraryRoots,
     )
   }
 
@@ -305,13 +313,32 @@ internal fun toPluginLayoutDescription(
   pluginDescriptorPath: String,
   mainLibDir: String,
   jarsToIgnore: Set<String>,
+  libraryRootResolver: (libraryName: String, moduleLibraryModuleName: String?) -> List<Path> = { _, _ -> emptyList() },
 ): PluginLayoutDescription {
+  val libEntries = entries
+    .asSequence()
+    .filter { it.name.substringBeforeLast('/', "") == mainLibDir && it.name !in jarsToIgnore }
+    .toList()
+  val projectLibraries = libEntries
+    .asSequence()
+    .flatMap { entry ->
+      val projectLibraryNames = entry.projectLibraries.asSequence().map { it.name }
+      val fileProjectLibraryName = listOfNotNull(entry.library.takeIf { entry.module == null }).asSequence()
+      projectLibraryNames + fileProjectLibraryName
+    }
+    .toCollection(LinkedHashSet())
+  val moduleLibraries = libEntries
+    .asSequence()
+    .flatMap { it.modules + it.contentModules }
+    .flatMap { module -> module.libraries.keys.asSequence().filterNot { it.endsWith(".jar") }.map { it to module.name } }
+    .toCollection(LinkedHashSet())
+
   return PluginLayoutDescription(
     mainJpsModule = mainModuleName,
     pluginDescriptorPath = pluginDescriptorPath,
-    jpsModulesInClasspath = entries
-      .asSequence()
-      .filter { it.name.substringBeforeLast('/', "") == mainLibDir && it.name !in jarsToIgnore }
-      .flatMapTo(LinkedHashSet()) { entry -> entry.modules.map { it.name } }
+    jpsModulesInClasspath = libEntries
+      .flatMapTo(LinkedHashSet()) { entry -> entry.modules.map { it.name } },
+    libraryRootsInClasspath = projectLibraries.flatMap { libraryRootResolver(it, null) } +
+                              moduleLibraries.flatMap { (libraryName, moduleName) -> libraryRootResolver(libraryName, moduleName) },
   )
 }

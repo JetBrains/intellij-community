@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.aalto.xml.iml",
+        "resources/intellij.libraries.aalto.xml.xml",
     ],
     visibility = ["//visibility:public"],
 )

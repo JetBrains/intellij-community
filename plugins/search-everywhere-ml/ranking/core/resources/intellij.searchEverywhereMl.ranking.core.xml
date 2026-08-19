@@ -1,14 +1,36 @@
 <idea-plugin visibility="internal">
   <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jackson.module.kotlin"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.internal"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.ml.impl"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.searchEverywhere.frontend"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.libraries.search.everywhere.find.all.model"/>
+    <module name="intellij.libraries.search.everywhere.find.ec.model"/>
     <module name="intellij.searchEverywhereMl.ranking.ext"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij.searchEverywhereMl">
     <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.ActionKeyProvider"/>

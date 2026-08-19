@@ -5,14 +5,18 @@ import com.intellij.codeInsight.editorActions.CopyPastePostProcessor
 import com.intellij.codeInsight.editorActions.TextBlockTransferable
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
@@ -27,7 +31,9 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
+import org.jetbrains.kotlin.j2k.PostProcessor
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.j2k.KotlinJ2kBundle
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassBody
@@ -36,6 +42,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.analysisContext
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
@@ -51,8 +58,6 @@ private val LOG = Logger.getInstance(ConvertTextJavaCopyPasteProcessor::class.ja
  * we prepare a dummy file with some constructed context and place the copy-pasted code in this file before conversion.
  *
  * See also [ConvertJavaCopyPasteProcessor] for the related case of code copy-pasted from a Java file into a Kotlin file.
- *
- * Tests: [org.jetbrains.kotlin.j2k.k2.K2TextJavaToKotlinCopyPasteConversionTestGenerated].
  */
 class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferableData>() {
     private class MyTransferableData(val text: String) : TextBlockTransferableData {
@@ -133,8 +138,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
         val copiedJavaCode = prepareCopiedJavaCodeByContext(text, javaConversionContext, pasteTarget)
         val conversionData = ConversionData.prepare(copiedJavaCode, project)
 
-        val converter = J2KTextCopyPasteConverter(project, editor, conversionData, targetData)
-        val conversionTime = measureTimeMillis { converter.convert() }
+        val conversionTime = measureTimeMillis { convert(project, editor, conversionData, targetData) }
         J2KFusCollector.log(
             type = ConversionType.TEXT_EXPRESSION,
             conversionTime,
@@ -143,6 +147,58 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
         )
 
         Util.conversionPerformed = true
+    }
+
+    private fun convert(
+        project: Project,
+        editor: Editor,
+        conversionData: ConversionData,
+        targetData: TargetData,
+    ) {
+        val additionalImports = tryToResolveImports(project, conversionData, targetData.file)
+
+        val importsInsertOffset = targetData.file.importList?.endOffset ?: 0
+        var convertedImportsText = additionalImports.convertCodeToKotlin(project, targetData.file).text
+        if (targetData.file.importDirectives.isEmpty() && importsInsertOffset > 0) {
+            convertedImportsText = "\n" + convertedImportsText
+        }
+
+        val conversionResult = conversionData.elementsAndTexts.convertCodeToKotlin(project, targetData.file)
+        val convertedText = conversionResult.text
+
+        val boundsAfterReplace = runWriteAction {
+            if (convertedImportsText.isNotBlank()) {
+                targetData.document.insertString(importsInsertOffset, convertedImportsText)
+            }
+            targetData.document.replaceString(targetData.bounds.startOffset, targetData.bounds.endOffset, convertedText)
+
+            val endOffsetAfterReplace = targetData.bounds.startOffset + convertedText.length
+            editor.caretModel.moveToOffset(endOffsetAfterReplace)
+
+            targetData.document.createRangeMarker(targetData.bounds.startOffset, endOffsetAfterReplace)
+        }
+
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+
+        for (fqName in conversionResult.importsToAdd) {
+            PostProcessor.insertImport(targetData.file, fqName)
+        }
+
+        runPostProcessing(project, targetData.file, boundsAfterReplace.asTextRange, conversionResult.converterContext)
+    }
+
+    private fun tryToResolveImports(project: Project, conversionData: ConversionData, targetFile: KtFile): ElementAndTextList {
+        return runWithModalProgressBlocking(project, KotlinJ2kBundle.message("copy.text.adding.imports")) {
+            val resolver = readAction {
+                K2PlainTextPasteImportResolver(conversionData, targetFile)
+            }
+            val imports = resolver.generateRequiredImports()
+            val newlineSeparatedImports = imports.flatMap { importStatement ->
+                listOf("\n", importStatement)
+            } + "\n\n"
+
+            ElementAndTextList(newlineSeparatedImports)
+        }
     }
 
     private val KtElement.kotlinPasteContext: KotlinContext
@@ -198,8 +254,21 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
             JavaContext.TOP_LEVEL -> isParsedAsJavaFile(text)
             JavaContext.CLASS_BODY -> isParsedAsJavaFile("class Dummy { $text\n}")
             JavaContext.IN_BLOCK -> isParsedAsJavaFile("class Dummy { void foo() {$text\n}\n}")
-            JavaContext.EXPRESSION -> isParsedAsJavaFile("class Dummy { Object field = $text; }")
+            JavaContext.EXPRESSION -> isParsedAsSingleJavaExpression(text, project)
         }
+    }
+
+    /**
+     * A plain [isParsedAsFile] check is not enough: a top-level comma makes the wrapper parse as a valid
+     * multi-variable field declaration. For example, `a = 1, b = 2` (a Kotlin named-argument list) yields
+     * `Object field = a = 1, b = 2;`, declaring two fields `field` and `b` with no parse error, and J2K would
+     * be triggered on non-Java text (KTIJ-36990).
+     */
+    private fun isParsedAsSingleJavaExpression(text: String, project: Project): Boolean {
+        val psiFile = parseAsFile("class Dummy { Object field = $text; }", JavaFileType.INSTANCE, project)
+        if (psiFile.anyDescendantOfType<PsiErrorElement>()) return false
+        val singleClass = (psiFile as? PsiJavaFile)?.classes?.singleOrNull() ?: return false
+        return singleClass.fields.size == 1
     }
 
     private fun isParsedAsKotlinCode(text: String, kotlinContext: KotlinContext, project: Project): Boolean {

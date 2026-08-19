@@ -14,11 +14,11 @@ import com.intellij.platform.eel.provider.asNioPath
 /**
  * Finds absolute file path links in terminal output.
  *
- * Detects both Linux-style absolute paths (starting with `/`) and Windows-style absolute paths
- * (starting with drive letter like `C:\` or `C:/`).
+ * Detects Linux-style absolute paths (starting with `/`), Windows-style absolute paths
+ * (starting with drive letter like `C:\` or `C:/`), and home-relative paths (starting with `~/` or `~\`).
  *
  * This class uses a state machine to parse paths character by character for maximum performance.
- * 
+ *
  * Originally, copy-pasted from `com.android.tools.idea.gradle.project.build.output.GenericFileFilter`.
  */
 internal class TerminalAbsolutePathLinkFinder(
@@ -27,6 +27,7 @@ internal class TerminalAbsolutePathLinkFinder(
   private val indexOffset: Int,
   private val localFileSystem: LocalFileSystem,
   private val eelDescriptor: EelDescriptor?,
+  private val homeDirectory: EelPath?,
   private val foundLinkSink: (Filter.ResultItem) -> Unit,
 ) {
 
@@ -70,7 +71,12 @@ internal class TerminalAbsolutePathLinkFinder(
       // other than the file system root (e.g. progress indicators like "[10 / 1,000]").
       return null
     }
-    val file = findFileByPathIfCached(path)
+    val resolvedPath = if (path[0] == '~') {
+      // '~' is only entered in PATH mode when immediately followed by a separator, see `find()`.
+      homeDirectory?.let { it.toString() + path.substring(1) } ?: return null
+    }
+    else path
+    val file = findFileByPathIfCached(resolvedPath)
     return if (file != null) {
       createInvisibleLink(
         indexOffset + pathStartIndex,
@@ -101,6 +107,10 @@ internal class TerminalAbsolutePathLinkFinder(
               // Start parsing a Linux path
               startPathMode()
             }
+            line[i] == '~' && (line.getOrNull(i + 1) == '/' || line.getOrNull(i + 1) == '\\') -> {
+              // Start parsing a home-relative path, e.g. "~/foo" or "~\foo"
+              startPathMode()
+            }
             line[i] in 'A'..'Z' && (line.startsWith(":\\", startIndex = i + 1) || line.startsWith(":/", startIndex = i + 1) ) -> {
               // Start parsing a Windows path
               startPathMode()
@@ -123,6 +133,11 @@ internal class TerminalAbsolutePathLinkFinder(
                    */
                   if ((i - 3) > pathStartIndex && line[i - 1] == ':' && line[i - 2] in 'A'..'Z' && line[i - 3].isWhitespace()) {
                     i -= 5
+                    startNormalMode()
+                  }
+                  else if ((i - 2) > pathStartIndex && line[i - 1] == '~' && line[i - 2].isWhitespace()) {
+                    // Could be the start of a new home-relative path, e.g. "... ~/foo"
+                    i -= 3
                     startNormalMode()
                   }
                   else if ((i - 1) > pathStartIndex && line[i -1].isWhitespace()) {

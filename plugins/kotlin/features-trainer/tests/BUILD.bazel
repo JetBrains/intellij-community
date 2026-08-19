@@ -21,7 +21,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-impl:ide-impl",
         "//platform/analysis-api:analysis",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//plugins/kotlin/formatter",
     ],
 )
@@ -62,7 +62,8 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//plugins/kotlin/formatter",
         "//plugins/kotlin/formatter:formatter_test_lib",
         "//platform/testFramework",

@@ -17,6 +17,18 @@
   files:
   - name: $MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0/mlapi-core-0.jar
   reason: <- intellij.platform.ml.logs
+- name: lib/modules/intellij.libraries.search.everywhere.find.all.model.jar
+  contentModules:
+  - name: intellij.libraries.search.everywhere.find.all.model
+    libraries:
+      find-all-model-experimental:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/252/find-all-model-252.jar
+- name: lib/modules/intellij.libraries.search.everywhere.find.ec.model.jar
+  contentModules:
+  - name: intellij.libraries.search.everywhere.find.ec.model
+    libraries:
+      find-ec-model-experimental:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/252/find-ec-model-252.jar
 - name: lib/modules/intellij.searchEverywhereMl.ranking.core.jar
   contentModules:
   - name: intellij.searchEverywhereMl.ranking.core
@@ -33,10 +45,6 @@
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/252/find-classes-model-252.jar
       find-classes-model-experimental:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/252/find-classes-model-252.jar
-      find-all-model-experimental:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/252/find-all-model-252.jar
-      find-ec-model-experimental:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/252/find-ec-model-252.jar
 - name: lib/modules/intellij.searchEverywhereMl.ranking.ext.jar
   contentModules:
   - name: intellij.searchEverywhereMl.ranking.ext

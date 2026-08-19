@@ -52,6 +52,7 @@ jvm_library(
 exports_files(
     [
         "intellij.editorconfig.backend.spellchecking.iml",
+        "resources/intellij.editorconfig.backend.spellchecking.xml",
     ],
     visibility = ["//visibility:public"],
 )

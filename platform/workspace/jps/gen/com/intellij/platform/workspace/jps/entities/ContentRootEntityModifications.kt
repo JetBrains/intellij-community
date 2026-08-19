@@ -25,7 +25,7 @@ interface ContentRootEntityBuilder : WorkspaceEntityBuilder<ContentRootEntity> {
 }
 
 internal object ContentRootEntityType : EntityType<ContentRootEntity, ContentRootEntityBuilder>() {
-  override val entityClass: Class<ContentRootEntity> get() = ContentRootEntity::class.java
+  override val entityImplClass: Class<*> get() = ContentRootEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ContentRootEntityImpl.Builder::class.java
   operator fun invoke(
     url: VirtualFileUrl,

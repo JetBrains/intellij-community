@@ -204,7 +204,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.UI;
@@ -1244,7 +1243,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
         cornerType = PopupCornerType.RoundedWindow;
       }
       if (cornerType != PopupCornerType.None) {
-        if ((SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
+        if ((SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows || StartupUiUtil.isWaylandToolkit()) {
           roundedCornerParams = new Object[]{cornerType,
             myPopupBorderColor == null ? JBUI.CurrentTheme.Popup.borderColor(true) : myPopupBorderColor};
           // must set the border before calculating the size below

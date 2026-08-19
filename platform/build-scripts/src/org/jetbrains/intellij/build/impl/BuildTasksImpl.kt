@@ -3,9 +3,10 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
+import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
@@ -27,6 +28,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.DistFileContent
 import org.jetbrains.intellij.build.InMemoryDistFileContent
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -38,7 +40,6 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.PluginDistribution
-import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.add64IfNeeded
@@ -84,7 +85,6 @@ import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFilePermission
 import java.util.Collections
 import java.util.EnumSet
-import java.util.SortedSet
 import java.util.concurrent.TimeUnit
 import java.util.zip.Deflater
 import kotlin.io.path.exists
@@ -140,10 +140,10 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
       SoftwareBillOfMaterials.STEP_ID,
     )
     context.reportDistributionBuildNumber()
-    BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
-    BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
+    BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot)
+    BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
-    BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+    BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
     val arch = if (SystemInfoRt.isMac && CpuArch.isIntel64() && CpuArch.isEmulated()) {
       JvmArchitecture.aarch64
     }
@@ -464,7 +464,7 @@ internal fun additionalProperties(): VmProperties = VmProperties(mapOf("user.hom
 
 private suspend fun distributionState(
   pluginsToPublish: Set<PluginLayout>,
-  projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>,
+  projectLibrariesUsedByPlugins: Map<String, Set<String>>,
   context: BuildContext,
 ): DistributionBuilderState {
   val platform = createPlatformLayout(projectLibrariesUsedByPlugins, context)
@@ -686,14 +686,19 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Co
   }
 
   if (layout is PluginLayout) {
-    checkModules(modules = layout.excludedLibraries.keys, fieldName = "excludedModuleLibraries in $description", outputProvider)
-    for ((key, value) in layout.excludedLibraries.entries) {
-      val libraries = (if (key == null) context.project.libraryCollection else context.outputProvider.findRequiredModule(key).libraryCollection).libraries
-      for (libraryName in value) {
+    checkModules(modules = layout.excludedModuleLibraries.keys, fieldName = "excludeModuleLibrary in $description", outputProvider)
+    for ((moduleName, libraryNames) in layout.excludedModuleLibraries) {
+      val libraries = context.outputProvider.findRequiredModule(moduleName).libraryCollection.libraries
+      for (libraryName in libraryNames) {
         check(libraries.any { getLibraryFileName(it) == libraryName }) {
-          val where = key?.let { "module '$it'" } ?: "project"
-          "Cannot find library '$libraryName' in $where (used in 'excludedModuleLibraries' in $description)"
+          "Cannot find library '$libraryName' in module '$moduleName' (used in 'excludeModuleLibrary' in $description)"
         }
+      }
+    }
+
+    for (libraryName in layout.excludedProjectLibraries) {
+      check(context.project.libraryCollection.findLibrary(libraryName) != null) {
+        "Cannot find project library '$libraryName' (used in 'excludeProjectLibrary' in $description)"
       }
     }
 
@@ -725,9 +730,9 @@ private fun checkPluginDuplicates(nonTrivialPlugins: List<PluginLayout>) {
   }
 }
 
-private fun checkModules(modules: Collection<String?>?, fieldName: String, outputProvider: ModuleOutputProvider) {
+private fun checkModules(modules: Collection<String>?, fieldName: String, outputProvider: ModuleOutputProvider) {
   if (modules != null) {
-    val unknownModules = modules.filter { it != null && outputProvider.findModule(it) == null }
+    val unknownModules = modules.filter { outputProvider.findModule(it) == null }
     check(unknownModules.isEmpty()) {
       "The following modules from $fieldName aren't found in the project: $unknownModules, ensure you use module name instead of plugin id"
     }
@@ -872,6 +877,7 @@ private suspend fun buildCrossPlatformOnlyPlugins(context: BuildContext): Pair<P
 
   val targetDir = context.paths.tempDir.resolve("cross-platform-only-plugins")
 
+  val mainModuleToPluginLayout = crossPlatformPlugins.associateBy { it.mainModule }
   val builtPlugins = spanBuilder("build cross-platform-only plugins")
     .setAttribute("count", crossPlatformPlugins.size.toLong())
     .use {
@@ -889,7 +895,10 @@ private suspend fun buildCrossPlatformOnlyPlugins(context: BuildContext): Pair<P
       )
     }
 
-  return targetDir to builtPlugins
+  val descriptorsOfBuiltPlugins = builtPlugins.map { buildResult ->
+    PluginBuildDescriptor(mainModuleToPluginLayout.getValue(buildResult.mainModule), buildResult)
+  }
+  return targetDir to descriptorsOfBuiltPlugins
 }
 
 private suspend fun checkClassFiles(root: Path, isDistAll: Boolean, context: BuildContext) {
@@ -1209,8 +1218,18 @@ internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext)
   }
 }
 
-internal fun copyDistFiles(newDir: Path, os: OsFamily, arch: JvmArchitecture, libcImpl: LibcImpl, context: BuildContext) {
+internal fun copyDistFiles(
+  newDir: Path,
+  os: OsFamily,
+  arch: JvmArchitecture,
+  libcImpl: LibcImpl,
+  context: BuildContext,
+  include: (DistFile) -> Boolean = { true },
+) {
   for (item in context.getDistFiles(os, arch, libcImpl)) {
+    if (!include(item)) {
+      continue
+    }
     val targetFile = newDir.resolve(item.relativePath)
     Files.createDirectories(targetFile.parent)
     if (item.content is LocalDistFileContent) {

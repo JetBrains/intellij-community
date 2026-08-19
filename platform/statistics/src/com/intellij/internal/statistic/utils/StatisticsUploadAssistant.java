@@ -2,10 +2,13 @@
 package com.intellij.internal.statistic.utils;
 
 import com.intellij.ide.ConsentOptionsProvider;
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType;
+import com.intellij.idea.AppMode;
 import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo;
 import com.intellij.internal.statistic.eventLog.EventLogInternalSendConfig;
 import com.intellij.internal.statistic.eventLog.ExternalEventLogSettings;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
+import com.intellij.internal.statistic.eventLog.FileDeletionCause;
 import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener;
 import com.intellij.internal.statistic.eventLog.connection.EventLogSettingsClient;
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
@@ -44,7 +47,12 @@ public final class StatisticsUploadAssistant {
     }
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      return isHeadlessStatisticsEnabled();
+      if (isHeadlessStatisticsEnabled()) {
+        return true;
+      }
+      if (!AppMode.isStatisticsAllowedByStarter()) {
+        return false;
+      }
     }
 
     // Prohibit sending statistics if the client is running on TC. TC can collect statistics but not send.
@@ -62,7 +70,12 @@ public final class StatisticsUploadAssistant {
 
   public static boolean isCollectAllowed(@NotNull BooleanSupplier isAllowedByUserConsent) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      return isHeadlessStatisticsEnabled();
+      if (isHeadlessStatisticsEnabled()) {
+        return true;
+      }
+      if (!AppMode.isStatisticsAllowedByStarter()) {
+        return false;
+      }
     }
 
     if (!isDisableCollectStatistics() && !isCollectionForceDisabled()) {
@@ -130,6 +143,12 @@ public final class StatisticsUploadAssistant {
         int failed = errors.size();
         getEventLogProvider(recorderId).getEventLogSystemLogger$intellij_platform_statistics()
           .logFilesSend(totalLocalFiles, success, failed, false, successfullySentFiles, errors);
+      }
+
+      @Override
+      public void onFileDeletedAfterSend(@NotNull FileDeletionCause cause, long sizeBytes, long ageMs, long queuedMs, @NotNull EventLogBuildType buildType) {
+        getEventLogProvider(recorderId).getEventLogSystemLogger$intellij_platform_statistics()
+          .logFileDeleted(cause, ageMs, queuedMs, sizeBytes, buildType);
       }
     };
 

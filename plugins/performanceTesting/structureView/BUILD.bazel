@@ -1,0 +1,69 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.performanceTesting.structureView` start
+jvm_library(
+    name = "structureView",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.performanceTesting.structureView",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//plugins/performanceTesting/core:performanceTesting",
+        "//platform/analysis-api:analysis",
+        "//platform/util/concurrency",
+        "//platform/core-api:core",
+        "//platform/diagnostic/telemetry",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/structure-view-impl:structureView",
+        "//libraries/opentelemetry",
+    ],
+)
+
+jvm_library(
+    name = "structureView_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.performanceTesting.structureView",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":structureView",
+        "//plugins/performanceTesting/core:performanceTesting_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/diagnostic/telemetry:telemetry_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/structure-view-impl:structureView_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+    ],
+)
+### auto-generated section `build intellij.performanceTesting.structureView` end
+
+### auto-generated section `iml intellij.performanceTesting.structureView` start
+exports_files(
+    [
+        "intellij.performanceTesting.structureView.iml",
+        "resources/intellij.performanceTesting.structureView.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.performanceTesting.structureView` end

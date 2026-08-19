@@ -1,5 +1,5 @@
 # This workflow is for testing typeshed's scripts and tests themselves
-name: Meta-tests
+name: Infrastructure tests
 
 on:
   workflow_dispatch:
@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   mypy:
-    name: Check scripts and tests with mypy
+    name: "mypy: type check"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -48,7 +48,7 @@ jobs:
           --platform=${{ matrix.platform }}
 
   pyright:
-    name: Check scripts and tests with pyright
+    name: "pyright: type check"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -72,7 +72,7 @@ jobs:
           project: ./pyrightconfig.scripts_and_tests.json
 
   stubsabot-dry-run:
-    name: Stubsabot dry run
+    name: "stubsabot: dry run"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

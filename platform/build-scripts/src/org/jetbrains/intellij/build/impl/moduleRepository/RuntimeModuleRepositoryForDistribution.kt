@@ -13,7 +13,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.getEmbeddedProductTempPluginDir
 import org.jetbrains.intellij.build.classPath.resolveAndCacheDescriptorForEmbeddedProduct
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
@@ -72,7 +72,10 @@ internal suspend fun generateRuntimeModuleRepositoryForDistribution(
       .forEach { distribution ->
         val targetDirectory = osSpecificDistPaths.getValue(distribution)
         val actualPlatformEntries = contentReport.platform.filter { it.path.startsWith(commonTargetDirectory) || it.path.startsWith(targetDirectory) }
-        val actualPlugins = contentReport.bundledPlugins.filter { (it.os == null || it.os == distribution.os) && (it.arch == null || it.arch == distribution.arch) }
+        val actualPlugins = contentReport.bundledPlugins.filter {
+          (it.os == null || it.os == distribution.os) &&
+          (it.arch == null || it.arch == distribution.arch)
+        }
         generateRepositoryForDistribution(
           targetDirectory = targetDirectory,
           platformEntries = actualPlatformEntries,
@@ -176,12 +179,12 @@ private suspend fun generateRepositoryForDistribution(
   targetDirectory: Path,
   platformEntries: List<DistributionFileEntry>,
   context: BuildContext,
-  bundledPlugins: List<PluginBuildDescriptor>,
-  additionalFrontendOnlyPlugins: List<PluginBuildDescriptor>,
+  bundledPlugins: List<PluginBuildResult>,
+  additionalFrontendOnlyPlugins: List<PluginBuildResult>,
   platformLayout: PlatformLayout,
   entryPathRelativizer: (Path) -> Path?,
 ) {
-  val pluginDescriptorModulesForAdditionalFrontendPlugins = additionalFrontendOnlyPlugins.mapTo(HashSet()) { it.layout.mainModule }
+  val pluginDescriptorModulesForAdditionalFrontendPlugins = additionalFrontendOnlyPlugins.mapTo(HashSet()) { it.mainModule }
   val corePluginDescriptorModuleName = context.productProperties.applicationInfoModule
   val embeddedFrontendDescriptorModuleName = context.getEmbeddedFrontendProductContext()?.productProperties?.applicationInfoModule
   val originalPluginDescriptorsData = fetchPluginDescriptorsData(
@@ -193,7 +196,7 @@ private suspend fun generateRepositoryForDistribution(
   )
   val pluginDescriptorsData = removeDataForSuppressedPlugins(originalPluginDescriptorsData, context)
   val pluginConfigurationModuleToDistributionEntries =
-    (bundledPlugins + additionalFrontendOnlyPlugins).associateByTo(HashMap(), { it.layout.mainModule }, { it.distribution })
+    (bundledPlugins + additionalFrontendOnlyPlugins).associateByTo(HashMap(), { it.mainModule }, { it.distribution })
   pluginConfigurationModuleToDistributionEntries[corePluginDescriptorModuleName] = platformEntries
   val pluginHeadersData = try {
     generateRuntimePluginHeaders(pluginDescriptorsData, pluginConfigurationModuleToDistributionEntries, entryPathRelativizer, context.project)
@@ -252,7 +255,7 @@ private fun removeDataForSuppressedPlugins(originalPluginDescriptorsData: List<P
 private suspend fun computeDescriptorsForAdditionalFrontendPlugins(
   context: BuildContext,
   platformLayout: PlatformLayout,
-): List<PluginBuildDescriptor> {
+): List<PluginBuildResult> {
   return TraceManager.spanBuilder("compute layout of additional plugins for embedded frontend").use {
     val embeddedFrontendContext = context.getEmbeddedFrontendProductContext() ?: return@use emptyList()
 
@@ -287,11 +290,11 @@ private suspend fun computeDescriptorsForAdditionalFrontendPlugins(
     )
 
     val additionalFrontendPlugins = mutableListOf(
-      PluginBuildDescriptor(
+      PluginBuildResult(
+        mainModule = embeddedFrontendDescriptorModuleName,
         dir = embeddedFrontendTargetDir,
         os = null,
         arch = null,
-        layout = PluginLayout.plugin(embeddedFrontendDescriptorModuleName),
         distribution = embeddedFrontendPlatformEntries,
       )
     )

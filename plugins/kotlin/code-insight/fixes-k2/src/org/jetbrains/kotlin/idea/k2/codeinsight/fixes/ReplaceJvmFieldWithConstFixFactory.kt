@@ -2,7 +2,12 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.utils.checkMayBeConstantByFields
 import org.jetbrains.kotlin.idea.quickfix.ReplaceJvmFieldWithConstFix
@@ -11,14 +16,15 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 internal object ReplaceJvmFieldWithConstFixFactory {
-    private fun KaSession.createQuickFix(annotation: KtAnnotationEntry): ReplaceJvmFieldWithConstFix? {
+    context(session: KaSession)
+    private fun createQuickFix(annotation: KtAnnotationEntry): ReplaceJvmFieldWithConstFix? {
         val property = annotation.getParentOfType<KtProperty>(false) ?: return null
         val initializer = property.initializer ?: return null
         if (!property.checkMayBeConstantByFields()) return null
 
         val returnType = property.returnType
         if (returnType.isMarkedNullable) return null
-        if (!returnType.isPrimitive && !returnType.isStringType) return null
+        if (returnType.classId !in KaStandardTypeClassIds.PRIMITIVES && returnType.classId != KaStandardTypeClassIds.STRING) return null
 
         if (initializer.evaluate() == null) {
             return null

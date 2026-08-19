@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
@@ -11,6 +11,24 @@ import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 class PartiallyExcludedChangesTest : BasePartiallyExcludedChangesTest() {
   private val FILE_1 = "file1.txt"
   private val FILE_2 = "file2.txt"
+
+  // Regression guard for IJPL-249904: getIncludedSet() is queried once per rendered changes-tree node, so it must
+  // return a cached snapshot between reads (not rebuild the whole set each time) and only recompute after the
+  // inclusion actually changes. Without caching, rendering a large change set - especially under screen-reader
+  // accessibility traversal - rebuilds an N-element set per node and freezes the UI.
+  fun `test included set is cached between reads and invalidated on change`() {
+    setHolderPaths("file1", "file2", "file3")
+    include("file1", "file2")
+
+    val first = getIncludedSet()
+    assertSame("repeated getIncludedSet() reads must reuse the cached snapshot", first, getIncludedSet())
+
+    exclude("file1")
+    val afterMutation = getIncludedSet()
+    assertNotSame("cache must be invalidated after the inclusion changes", first, afterMutation)
+    assertSameElements(afterMutation.map { it.name }, listOf("file2"))
+    assertSame("cache must be reused again after being rebuilt", afterMutation, getIncludedSet())
+  }
 
   fun `test operations without trackers`() {
     setHolderPaths("file1", "file2", "file3", "file4", "file5")

@@ -1,10 +1,15 @@
 <idea-plugin package="ru.adelf.idea.dotenv.java">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.backend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi"/>
-    <!-- endregion -->
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.projectModel"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="JAVA" implementationClass="ru.adelf.idea.dotenv.java.JavaEnvCompletionContributor"/>
     <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.java.JavaEnvCompletionContributor"/>

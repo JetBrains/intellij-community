@@ -11,6 +11,7 @@ def _wasmjs_provided_libraries(ctx):
         link_klibs = depset([]),  # never link provided libraries
         klib = lib[KtWasmJsInfo].klib,
         source_jar = lib[KtWasmJsInfo].source_jar,
+        npm_packages = depset([]),  # provided libraries are never linked, their runtime host supplies their npm packages
     )
 
     kotlinInfo = lib[KotlinInfo] if KotlinInfo in lib else None
@@ -43,7 +44,12 @@ def _wasmjs_provided_library(name, visibility, lib):
 
 wasmjs_provided_library = macro(
     attrs = {
-        "lib": attr.label(mandatory = True, allow_files = False, providers = [KtWasmJsInfo, KotlinInfo], configurable = False),
+        "lib": attr.label(
+            mandatory = True,
+            allow_files = False,
+            providers = [KtWasmJsInfo, KotlinInfo],
+            configurable = False,
+        ),
     },
     implementation = _wasmjs_provided_library,
 )

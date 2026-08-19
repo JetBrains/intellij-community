@@ -1,7 +1,6 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.daemon.quickFix.ActionHint;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.psi.PsiComment;
@@ -11,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class AddCommentViaAPITest extends LightQuickFixParameterizedTestCase {
+public class AddCommentViaAPITest extends PropertiesLightQuickFixParameterizedTestCase {
 
   private PsiParserFacade myParser;
 

@@ -7,14 +7,17 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.impl.FilePropertyPusher
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
@@ -23,14 +26,20 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.containers.orNull
 import com.intellij.util.text.nullize
 import com.jetbrains.python.PythonTestUtil
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserSymbols.COMMENT_CHAR
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserSymbols.FIXME_KEYWORD
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserSymbols.GUIDE_BAR
@@ -44,25 +53,30 @@ import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.sc
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.skipWhitespace
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.skipWhitespaceAndGuides
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionType
+import com.jetbrains.python.codeInsight.completion.PyTestAssertionType.Companion.TOOLTIP_KEYWORD
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.fixtures.PyTestAssertionInliner.findCounterparts
 import com.jetbrains.python.fixtures.PyTestAssertionParser.parseAssertions
 import com.jetbrains.python.inspections.PyAbstractClassInspection
 import com.jetbrains.python.inspections.PyArgumentListInspection
 import com.jetbrains.python.inspections.PyAssertTypeInspection
+import com.jetbrains.python.inspections.PyAttrsDataclassInspection
 import com.jetbrains.python.inspections.PyCallingNonCallableInspection
 import com.jetbrains.python.inspections.PyClassVarInspection
 import com.jetbrains.python.inspections.PyDataclassInspection
+import com.jetbrains.python.inspections.PyDataclassTransformInspection
 import com.jetbrains.python.inspections.PyDunderSlotsInspection
 import com.jetbrains.python.inspections.PyEnumInspection
 import com.jetbrains.python.inspections.PyFinalInspection
 import com.jetbrains.python.inspections.PyInitNewSignatureInspection
+import com.jetbrains.python.inspections.PyMethodOverridingInspection
 import com.jetbrains.python.inspections.PyNewStyleGenericSyntaxInspection
 import com.jetbrains.python.inspections.PyNewTypeInspection
 import com.jetbrains.python.inspections.PyOverloadsInspection
 import com.jetbrains.python.inspections.PyOverridesInspection
 import com.jetbrains.python.inspections.PyProtocolInspection
 import com.jetbrains.python.inspections.PyRedeclarationInspection
+import com.jetbrains.python.inspections.PyStdlibDataclassInspection
 import com.jetbrains.python.inspections.PyTypeAliasRedeclarationInspection
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.inspections.PyTypeHintsInspection
@@ -71,6 +85,7 @@ import com.jetbrains.python.inspections.PyVarianceInspection
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyReferenceExpression
@@ -79,7 +94,7 @@ import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.IntentionalUnstubbing
 import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
+import com.jetbrains.python.psi.types.PyExpectedTypeJudgement.getExpectedType
 import com.jetbrains.python.psi.types.PyExpectedVarianceJudgment.getExpectedVariance
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrInferredVariance
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -98,7 +113,10 @@ import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.TestMethodOrder
+import org.junit.jupiter.api.fail
+import java.lang.reflect.Method
 import kotlin.math.abs
+import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 
@@ -168,41 +186,71 @@ abstract class PyCodeInsightTestCase {
   protected var testCallCount = 0
 
 
-  data class TestOptions(
+  @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+  @Retention(AnnotationRetention.RUNTIME)
+  annotation class TestInspections(
+    val enableInspections: Array<KClass<out LocalInspectionTool>> = [],
+    val disableInspections: Array<KClass<out LocalInspectionTool>> = [],
+  )
+
+  private fun TestInspections.enableInspectionsAsClasses(): Set<Class<out LocalInspectionTool>> =
+    this.enableInspections.mapTo(mutableSetOf()) { it.java }
+
+  private fun TestInspections.disableInspectionsAsClasses(): Set<Class<out LocalInspectionTool>> =
+    this.disableInspections.mapTo(mutableSetOf()) { it.java }
+
+
+  @Target(AnnotationTarget.FUNCTION) // on purpose not including AnnotationTarget.CLASS to avoid users overseeing options
+  @Retention(AnnotationRetention.RUNTIME)
+  annotation class TestCaseOptions(
+    val testFileName: String = "aaa.py",
     val enableWarnings: Boolean = true,
     val enableWeakWarnings: Boolean = true,
     val enableInfos: Boolean = false,
-    val languageLevel: LanguageLevel = LanguageLevel.getLatest(),
+    val languageLevel: LanguageLevel = LanguageLevel.PYTHON315,
     val assertRecursionPrevention: Boolean = true,
     val assertSdkRootsNotParsed: Boolean = true,
     val enablePyAnyType: Boolean = true,
-    val enableInspections: Set<Class<out LocalInspectionTool>> = emptySet(),
-    val disableInspections: Set<Class<out LocalInspectionTool>> = emptySet(),
-    val copyDirectoryToProject: List<Pair<String, String>> = emptyList(),
+    val copyDirectoryToProject: Array<CopyDirectory> = [],
+    val additionalSdkRoots: Array<SdkRoot> = [],
   )
 
+  annotation class CopyDirectory(
+    val source: String,
+    val destination: String,
+  )
 
-  /** Default test options in tests. Override if required. */
-  open val defaultTestOptions: TestOptions = TestOptions()
+  annotation class SdkRoot(
+    val path: String,
+    val type: OrderRootTypeEnum,
+  )
 
-  /** Default test file name in tests. Override if required. */
-  open val defaultTestFileName: String = "aaa.py"
+  enum class OrderRootTypeEnum(val orderRootType: OrderRootType) {
+    CLASSES(OrderRootType.CLASSES),
+    SOURCES(OrderRootType.SOURCES),
+
+    @Suppress("unused")
+    DOCUMENTATION(OrderRootType.DOCUMENTATION);
+  }
 
   /** Default inspections to be enabled in tests. Override if required. */
   open val defaultInspections: Set<Class<out LocalInspectionTool>> = setOf(
     PyUnresolvedReferencesInspection::class.java,
     PyTypeCheckerInspection::class.java,
-    PyRedeclarationInspection::class.java,
     PyAbstractClassInspection::class.java,
     PyArgumentListInspection::class.java,
     PyAssertTypeInspection::class.java,
     PyCallingNonCallableInspection::class.java,
     PyClassVarInspection::class.java,
     PyDataclassInspection::class.java,
+    PyStdlibDataclassInspection::class.java,
+    PyAttrsDataclassInspection::class.java,
+    PyDataclassTransformInspection::class.java,
     PyDunderSlotsInspection::class.java,
     PyEnumInspection::class.java,
     PyFinalInspection::class.java,
     PyInitNewSignatureInspection::class.java,
+    PyMethodOverridingInspection::class.java,
     PyNewStyleGenericSyntaxInspection::class.java,
     PyNewTypeInspection::class.java,
     PyOverloadsInspection::class.java,
@@ -214,139 +262,180 @@ abstract class PyCodeInsightTestCase {
     PyTypeAliasRedeclarationInspection::class.java,
   )
 
+  private lateinit var myTestInspections: TestInspections
+  private lateinit var myTestCaseOptions: TestCaseOptions
+
   companion object {
+    private const val PY_ANY_TYPE_KEY = "python.type.any"
+
+    private data class CachedFixture(val options: TestCaseOptions, val fixture: CodeInsightTestFixture)
+
+    private lateinit var testClassName: String
+    private var cachedFixture: CachedFixture? = null
+
     @JvmStatic
-    protected lateinit var myFixture: CodeInsightTestFixture // only one active fixture per JVM is possible
+    protected val myFixture: CodeInsightTestFixture
+      get() = cachedFixture?.fixture ?: error("No fixture set up")
 
     @BeforeAll
     @JvmStatic
-    fun setUpFixture(testInfo: TestInfo) {
+    fun setUpTestClass(testInfo: TestInfo) {
+      val testClass = testInfo.testClass.orNull() ?: PyCodeInsightTestCase::class.java
+      testClassName = testClass.simpleName
+    }
+
+    private fun ensureFixture(testCaseOptions: TestCaseOptions) {
+      if (!isAffectingFixture(testCaseOptions)) return
+
+      cachedFixture?.fixture?.tearDown()
+      val fixture = createFixture(testCaseOptions)
+      cachedFixture = CachedFixture(testCaseOptions, fixture)
+    }
+
+    private fun isAffectingFixture(testCaseOptions: TestCaseOptions): Boolean {
+      val cachedTestOptions = cachedFixture?.options
+      return cachedTestOptions == null
+             || cachedTestOptions.languageLevel != testCaseOptions.languageLevel
+             || cachedTestOptions.enablePyAnyType != testCaseOptions.enablePyAnyType
+    }
+
+    private fun createFixture(testCaseOptions: TestCaseOptions): CodeInsightTestFixture {
       val factory = IdeaTestFixtureFactory.getFixtureFactory()
-      val testClass = testInfo.testClass.orElse(PyCodeInsightTestCase::class.java)!!
-      val projectDescriptor = PyLightProjectDescriptor(LanguageLevel.getLatest())
-      val builder = factory.createLightFixtureBuilder(projectDescriptor, testClass.simpleName)
-      myFixture = factory.createCodeInsightFixture(builder.fixture, LightTempDirTestFixtureImpl(true))
-      myFixture.testDataPath = PythonTestUtil.getTestDataPath()
-      myFixture.setUp()
+      val projectDescriptor = PyLightProjectDescriptor(testCaseOptions.languageLevel)
+      val builder = factory.createLightFixtureBuilder(projectDescriptor, testClassName)
+      val fixture = factory.createCodeInsightFixture(builder.fixture, LightTempDirTestFixtureImpl(true))
+      fixture.testDataPath = PythonTestUtil.getTestDataPath()
+      fixture.setUp()
       InspectionProfileImpl.INIT_INSPECTIONS = true
+      Registry.get(PY_ANY_TYPE_KEY).setValue(testCaseOptions.enablePyAnyType)
+      return fixture
     }
 
     @AfterAll
     @JvmStatic
     fun tearDownFixture() {
-      InspectionProfileImpl.INIT_INSPECTIONS = false
-      myFixture.tearDown()
-      FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher::class.java).flushLanguageLevelCache()
-      IntentionalUnstubbing.resetForciblyUnstubbedFileSet()
+      RunAll.runAll(
+        { IntentionalUnstubbing.resetForciblyUnstubbedFileSet() },
+        { Registry.get(PY_ANY_TYPE_KEY).resetToDefault() },
+        { InspectionProfileImpl.INIT_INSPECTIONS = false },
+        { cachedFixture?.fixture?.tearDown() },
+        { cachedFixture = null },
+      )
     }
   }
 
 
   @BeforeEach
-  fun setUpPerTest() {
+  fun setUpPerTest(testInfo: TestInfo) {
     testCallCount = 0
+    myTestInspections = findTestInspections(testInfo.testMethod.orNull())
+    myTestCaseOptions = testInfo.testMethod.orNull()?.getAnnotation(TestCaseOptions::class.java) ?: TestCaseOptions()
+    ensureFixture(myTestCaseOptions)
+  }
+
+  private fun findTestInspections(testMethod: Method?): TestInspections {
+    if (testMethod == null) return TestInspections()
+    val atMethod = testMethod.getAnnotation(TestInspections::class.java)
+    if (atMethod != null) return atMethod
+    val atClass = generateSequence(testMethod.declaringClass) { it.enclosingClass }
+        .firstNotNullOfOrNull { it.getAnnotation(TestInspections::class.java) }
+    if (atClass != null) return atClass
+    return TestInspections()
   }
 
   @AfterEach
   fun tearDownPerTest() {
-    runInEdtAndWait {
-      // close any open editors
-      val fem = FileEditorManager.getInstance(myFixture.project)
-      fem.openFiles.forEach { fem.closeFile(it) }
-
-      // wipe temp dir
-      WriteAction.runAndWait<RuntimeException> {
-        myFixture.tempDirFixture.getFile(".")?.children?.forEach { it.delete(this) }
-      }
-    }
-
-    // reset project-scoped state
-    setLanguageLevel(null)
-    if (myFixture.module != null) {
-      PyNamespacePackagesService.getInstance(myFixture.module).resetAllNamespacePackages()
-    }
-
-    // wait for indexes
-    waitUntilIndexesAreReady(myFixture.project)
-    Assertions.assertTrue(testCallCount < 2, "Test method `test` should not be called more than once per JUnit test")
+    RunAll.runAll(
+      {
+        runInEdtAndWait {
+          // close any open editors
+          val fem = FileEditorManager.getInstance(myFixture.project)
+          fem.openFiles.forEach { fem.closeFile(it) }
+          // wipe temp dir
+          WriteAction.runAndWait<RuntimeException> {
+            myFixture.tempDirFixture.getFile(".")?.children?.forEach { it.delete(this) }
+          }
+        }
+      },
+      { if (myFixture.module != null) PyNamespacePackagesService.getInstance(myFixture.module).resetAllNamespacePackages() },
+      { waitUntilIndexesAreReady(myFixture.project) },
+      { Assertions.assertTrue(testCallCount < 2, "Test method `test` should be called only once per JUnit test") },
+    )
   }
 
-  protected fun setLanguageLevel(languageLevel: LanguageLevel?) {
-    val project = myFixture.project
-    if (project != null) {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(project, languageLevel)
-      waitUntilIndexesAreReady(project)
+  protected fun setAdditionalSdkRoots(additionalSdkRoots: Array<SdkRoot>, addElseRemove: Boolean) {
+    if (additionalSdkRoots.isEmpty()) return
+    val sdk = PythonSdkUtil.findPythonSdk(myFixture.module)!!
+
+    runWriteAction {
+      val modificator = sdk.getSdkModificator()
+      for (sdkRoot in additionalSdkRoots) {
+        val absPath = PythonTestUtil.getTestDataPath() + "/" + sdkRoot.path
+        val testDataDir = StandardFileSystems.local().findFileByPath(absPath)
+        if (testDataDir == null) {
+          fail("Could not find additional SDK root at $absPath")
+        }
+        if (addElseRemove) {
+          modificator.addRoot(testDataDir, sdkRoot.type.orderRootType)
+        }
+        else {
+          modificator.removeRoot(testDataDir, sdkRoot.type.orderRootType)
+        }
+      }
+      modificator.commitChanges()
     }
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
   }
 
   protected fun test(@Language("Python") fileContent: String, vararg otherFiles: Pair<String, String>) {
-    test(defaultTestOptions, defaultTestFileName, fileContent, *otherFiles)
-  }
-
-  protected fun test(fileName: String, @Language("Python") fileContent: String, vararg otherFiles: Pair<String, String>) {
-    test(defaultTestOptions, fileName, fileContent, *otherFiles)
-  }
-
-  protected fun test(options: TestOptions, @Language("Python") fileContent: String, vararg otherFiles: Pair<String, String>) {
-    test(options, defaultTestFileName, fileContent, *otherFiles)
-  }
-
-  protected fun test(
-    options: TestOptions = defaultTestOptions,
-    fileName: String = defaultTestFileName,
-    @Language("Python") fileContent: String,
-    vararg otherFiles: Pair<String, String>,
-  ) {
     // using the shared `myFixture.projectDisposable` would accumulate flag modifications
     // across all tests and dispose them only at @AfterAll, which can leave them non-nested and
     // trip RecursionManager's "Non-nested assertion flag modifications" check.
     val recursionFlagDisposable = Disposer.newDisposable("PyCodeInsightTestCase recursion-prevention flag")
-    if (options.assertRecursionPrevention) {
+    if (myTestCaseOptions.assertRecursionPrevention) {
       RecursionManager.assertOnRecursionPrevention(recursionFlagDisposable)
     }
     else {
       RecursionManager.disableAssertOnRecursionPrevention(recursionFlagDisposable)
     }
-    setLanguageLevel(options.languageLevel)
-
-    val anyTypeKey = Registry.get("python.type.any")
-    val oldAnyType = anyTypeKey.asBoolean()
-    anyTypeKey.setValue(options.enablePyAnyType)
 
     try {
-      doTest(options, fileName, fileContent, otherFiles)
+      setAdditionalSdkRoots(myTestCaseOptions.additionalSdkRoots, true)
+      doTest(fileContent, otherFiles)
     }
     finally {
-      setLanguageLevel(null)
-      anyTypeKey.setValue(oldAnyType)
+      setAdditionalSdkRoots(myTestCaseOptions.additionalSdkRoots, false)
       Disposer.dispose(recursionFlagDisposable)
       testCallCount++
     }
   }
 
-  private fun doTest(options: TestOptions, fileName: String, fileContent: String, otherFiles: Array<out Pair<String, String>>) {
-    for ((from, to) in options.copyDirectoryToProject) {
-      myFixture.copyDirectoryToProject(from, to)
+  private fun doTest(fileContent: String, otherFiles: Array<out Pair<String, String>>) {
+    for (copyDirectory in myTestCaseOptions.copyDirectoryToProject) {
+      myFixture.copyDirectoryToProject(copyDirectory.source, copyDirectory.destination)
     }
     for ((filename, content) in otherFiles) {
       myFixture.createFile(filename, content.trimIndent())
     }
     val originalText = fileContent.trimIndent()
     val expectedAssertions = parseAssertions(originalText)
-    val currentFile = myFixture.configureByText(fileName, PyTestAssertionParser.maskAssertions(originalText, expectedAssertions))
+    val assertions = PyTestAssertionParser.maskAssertions(originalText, expectedAssertions)
+    val currentFile = myFixture.configureByText(myTestCaseOptions.testFileName, assertions)
 
-    val testInspections = defaultInspections - options.disableInspections + options.enableInspections
+    val testInspections =
+      defaultInspections - myTestInspections.disableInspectionsAsClasses() + myTestInspections.enableInspectionsAsClasses()
+
     val inspectionInstances = testInspections.map { it.getDeclaredConstructor().newInstance() }.toTypedArray()
     myFixture.enableInspections(*inspectionInstances)
 
     try {
-      collectAndCheckHighlighting(options, originalText, expectedAssertions)
+      collectAndCheckHighlighting(originalText, expectedAssertions)
     }
     finally {
-        myFixture.disableInspections(*inspectionInstances)
+      myFixture.disableInspections(*inspectionInstances)
     }
 
-    if (options.assertSdkRootsNotParsed) {
+    if (myTestCaseOptions.assertSdkRootsNotParsed) {
       runReadActionBlocking {
         assertSdkRootsNotParsed(currentFile)
       }
@@ -374,7 +463,7 @@ abstract class PyCodeInsightTestCase {
   }
 
 
-  private fun collectAndCheckHighlighting(options: TestOptions, expectedText: String, expectedAssertions: List<PyTestAssertion>): Duration {
+  private fun collectAndCheckHighlighting(expectedText: String, expectedAssertions: List<PyTestAssertion>): Duration {
     val project = myFixture.project
     runInEdtAndWait { PsiDocumentManager.getInstance(project).commitAllDocuments() }
     val file = myFixture.file as? PsiFileImpl ?: error("Expected PsiFileImpl, got ${myFixture.file?.javaClass}")
@@ -386,7 +475,7 @@ abstract class PyCodeInsightTestCase {
     val (highlights, duration) = measureTimedValue {
       myFixture.doHighlighting()
     }
-    val actualAssertions = computeAssertions(options, document, highlights, expectedAssertions)
+    val actualAssertions = computeAssertions(document, highlights, expectedAssertions)
 
     val actualText = PyTestAssertionInliner.generateActualText(expectedText, expectedAssertions, actualAssertions)
     if (expectedText != actualText) {
@@ -408,18 +497,20 @@ abstract class PyCodeInsightTestCase {
   }
 
   private fun computeAssertions(
-    options: TestOptions,
     document: Document,
     highlights: @Unmodifiable List<HighlightInfo>,
     expectedAssertions: List<PyTestAssertion>,
   ): List<PyTestAssertion> {
     val actualAssertions = mutableListOf<PyTestAssertion>()
-    actualAssertions += createActualAssertionsForInspections(options, document, highlights)
+    actualAssertions += createActualAssertionsForInspections(document, highlights, expectedAssertions)
 
     runReadActionBlocking {
       for (expectedAssertion in expectedAssertions) {
         if (defaultSeverityNames.contains(expectedAssertion.type)) {
           continue // actual inspection-related assertions have been added above
+        }
+        if (expectedAssertion.isWildcard) {
+          continue // wildcard actuals are fabricated in createActualAssertionsForInspections only when a real issue matched
         }
         actualAssertions += createActualAssertionsForNonInspections(expectedAssertion)
       }
@@ -445,22 +536,23 @@ abstract class PyCodeInsightTestCase {
   }
 
   private fun createActualAssertionsForInspections(
-    options: TestOptions,
     document: Document,
     highlights: List<HighlightInfo>,
+    expectedAssertions: List<PyTestAssertion>,
   ): List<PyTestAssertion> {
     val actualAssertions = mutableListOf<PyTestAssertion>()
+    val allExpectedAssertions = expectedAssertions.toMutableSet()
 
     for (highlight in highlights) {
       val typeName = when (highlight.severity) {
         HighlightSeverity.WARNING,
-          -> if (options.enableWarnings) highlight.severity else continue
+          -> if (myTestCaseOptions.enableWarnings) highlight.severity else continue
         HighlightSeverity.WEAK_WARNING,
-          -> if (options.enableWeakWarnings) highlight.severity else continue
+          -> if (myTestCaseOptions.enableWeakWarnings) highlight.severity else continue
         @Suppress("DEPRECATION")
         HighlightSeverity.INFO,
         HighlightSeverity.INFORMATION,
-          -> if (options.enableInfos) highlight.severity else continue
+          -> if (myTestCaseOptions.enableInfos) highlight.severity else continue
         HighlightInfoType.INJECTED_FRAGMENT_SEVERITY,
         HighlightInfoType.INJECTED_FRAGMENT_SYNTAX_SEVERITY,
           -> continue // ignore
@@ -471,15 +563,58 @@ abstract class PyCodeInsightTestCase {
       val codeColumnStart = highlight.startOffset - document.getLineStartOffset(codeLineStart)
       val codeLineEnd = document.getLineNumber(highlight.endOffset)
       val codeColumnEnd = highlight.endOffset - document.getLineStartOffset(codeLineEnd)
-      val actualAssertion = PyTestAssertion(codeOffsetStart = highlight.startOffset,
-                                            codeLineStart = codeLineStart,
-                                            codeColumnStart = codeColumnStart,
-                                            codeColumnEnd = codeColumnEnd,
-                                            type = typeName.name.replace(" ", "-"),
-                                            content = highlight.description ?: "")
+      val actualAssertionNoContent = PyTestAssertion(codeOffsetStart = highlight.startOffset,
+                                                     codeLineStart = codeLineStart,
+                                                     codeColumnStart = codeColumnStart,
+                                                     codeColumnEnd = codeColumnEnd,
+                                                     type = typeName.name.replace(" ", "-"),
+                                                     content = "")
+
+      val counterparts = findCounterparts(expectedAssertions, listOf(actualAssertionNoContent))
+      val expectedAssertion = counterparts[actualAssertionNoContent]
+      val newContent = when {
+        expectedAssertion == null
+          -> highlight.description
+        expectedAssertion.content.split(" ").firstOrNull() == TOOLTIP_KEYWORD
+          -> toolTipAssertionContent(expectedAssertion, highlight)
+        else -> highlight.description
+      }
+      val actualAssertion = actualAssertionNoContent.copy(content = newContent ?: "")
       actualAssertions.add(actualAssertion)
+      allExpectedAssertions.remove(expectedAssertion)
     }
+
+    // adds: x = "s" # WARNING FIXME expect new issue
+    for (expectedButMissingAssertion in allExpectedAssertions) {
+      if (defaultSeverityNames.contains(expectedButMissingAssertion.type) && expectedButMissingAssertion.hasFixme && expectedButMissingAssertion.content.isBlank()) {
+        actualAssertions.add(expectedButMissingAssertion.copy())
+      }
+    }
+
+    // adds: x = "s" # ISSUES *
+    for (expectedAssertion in expectedAssertions) {
+      if (expectedAssertion.isWildcard && expectedAssertion !in allExpectedAssertions) {
+        actualAssertions.add(expectedAssertion.copy())
+      }
+    }
+
     return actualAssertions
+  }
+
+  private fun toolTipAssertionContent(expectedAssertion: PyTestAssertion, highlight: HighlightInfo): String {
+    val toolTip = highlight.toolTip ?: return "$TOOLTIP_KEYWORD No tooltip on the matched highlight"
+    val payload = expectedAssertion.content.removePrefix("$TOOLTIP_KEYWORD ")
+    val expectsHtml = "</" in payload || "/>" in payload
+    val plainDescription = normalizeExplanationText(highlight.description)
+    val toolTipText = if (expectsHtml) toolTip else toolTipToPlainText(toolTip)
+    val plainToolTipText = normalizeExplanationText(toolTipText)
+    val onlyToolTip = plainToolTipText.removePrefix(plainDescription)
+    val fragments = payload.split("\\n").map { normalizeExplanationText(it) }
+
+    for (fragment in fragments) {
+      if (!onlyToolTip.contains(fragment)) return "$TOOLTIP_KEYWORD $onlyToolTip"
+    }
+    return expectedAssertion.content
   }
 
   private fun createActualAssertionsForNonInspections(expectedAssertion: PyTestAssertion): PyTestAssertion {
@@ -501,17 +636,18 @@ abstract class PyCodeInsightTestCase {
       }
     }
 
-    if (parent is PyStringLiteralExpression) {
+    if (parent is PyStringLiteralExpression && parent.findParentOfType<PyAnnotation>() != null) {
       val offsetStart = expectedAssertion.codeOffsetStart - parent.textRange.startOffset - 1
       val strLitValue = parent.stringValue
       val syntheticElement = PyUtil.createExpressionFromFragment(strLitValue, parent)
                              ?: throw AssertionError("Expression not found in string literal '$strLitValue' at pos $offsetStart")
       parent = PsiTreeUtil.getParentOfType(syntheticElement.findElementAt(offsetStart), PyExpression::class.java)
-                       ?: throw AssertionError("Expression not found in string literal '$strLitValue' at pos $offsetStart")
+               ?: throw AssertionError("Expression not found in string literal '$strLitValue' at pos $offsetStart")
     }
 
     val actualContent = when (PyTestAssertionType.fromValue(expectedAssertion.type)) {
       PyTestAssertionType.TYPE -> assertType(expectedAssertion, parent)
+      PyTestAssertionType.EXPECTED_TYPE -> assertExpectedType(parent)
       PyTestAssertionType.IS_BUILTIN -> assertIsBuiltin(parent)
       PyTestAssertionType.EXPECTED_VARIANCE -> assertExpectedVariance(parent)
       PyTestAssertionType.INFERRED_VARIANCE -> assertInferredVariance(parent)
@@ -524,6 +660,7 @@ abstract class PyCodeInsightTestCase {
     return actualAssertion
   }
 
+  /** Asserts the declared or inferred type of a given typable element. */
   private fun assertType(expectedAssertion: PyTestAssertion, elem: PsiElement): String {
     val expr = elem as? PyTypedElement ?: elem.findParentOfType<PyTypedElement>()
     if (expr == null) {
@@ -546,21 +683,64 @@ abstract class PyCodeInsightTestCase {
     return actualTypeCA
   }
 
+  /**
+   * Asserts the expected type based on a given location in the AST.
+   * In the example `a: int = x` x is expected to be `int` or a subtype.
+   *
+   * @see [getExpectedType]
+   */
+  private fun assertExpectedType(elem: PsiElement): String {
+    val expr = elem as? PyExpression ?: elem.findParentOfType<PyExpression>()
+    if (expr == null) {
+      return "Expression not found for expected type assertion"
+    }
+    val context = codeAnalysis(expr.project, expr.containingFile).withTracing()
+    return PythonDocumentationProvider.getTypeName(getExpectedType(expr, context), context)
+  }
+
+  /** Asserts whether a given element is a builtin or not. */
   private fun assertIsBuiltin(element: PsiElement): String {
     val isBuiltin = getInstance(element).isBuiltin(element)
     return if (isBuiltin) "" else "FALSE"
   }
 
+  /**
+   * Asserts the expected variance based on a given location in the AST.
+   *
+   * @see [getExpectedVariance]
+   */
   private fun assertExpectedVariance(element: PsiElement): String {
     val context = userInitiated(element.project, element.containingFile)
-    val actualVariance = if (element is PyReferenceExpression) getExpectedVariance(element, context) else null
-    return actualVariance?.name ?: "NULL"
+    if (element !is PyReferenceExpression) {
+      return "Expected variance only available for PyReferenceExpressions"
+    }
+    val actualVariance = getExpectedVariance(element, context)
+    return actualVariance.name
   }
 
+  /**
+   * Asserts the declared or inferred variance based on a given typable element,
+   * usually a type variable.
+   *
+   * @see [getDeclaredOrInferredVariance]
+   */
   private fun assertInferredVariance(element: PsiElement): String {
     val context = userInitiated(element.project, element.containingFile)
-    val actualVariance = if (element is PyTypedElement) getDeclaredOrInferredVariance(element, context) else null
-    return actualVariance?.name ?: "NULL"
+    if (element !is PyTypedElement) {
+      return "Inferred variance only available for PyTypedElements"
+    }
+    val actualVariance = getDeclaredOrInferredVariance(element, context)
+    return actualVariance?.name ?: "Unknown"
+  }
+
+  /** Strips HTML tags, unescapes entities, and collapses whitespace to render a tooltip as one line of plain text. */
+  private fun toolTipToPlainText(toolTip: String): String {
+    return StringUtil.collapseWhiteSpace(StringUtil.removeHtmlTags(toolTip))
+  }
+
+  /** Removes quote-like characters that differ between the description-style test fragments and the tooltip's markup. */
+  private fun normalizeExplanationText(text: String): String {
+    return text.replace("'", "").replace("`", "").trim()
   }
 }
 
@@ -741,12 +921,13 @@ private object PyTestAssertionInliner {
   ): PyTestAssertion? {
     return expectedAssertions
       .filter { it !in usedExpected && areCounterparts(it, actual) }
-      .minWithOrNull(
-        compareBy(
-          { expected -> if (expected.content == actual.content) 0 else 1 },
-          { expected -> abs(expected.codeColumnStart - actual.codeColumnStart) },
-        )
-      )
+      .minByOrNull { expected ->
+        when {
+          expected.content == actual.content -> 0
+          expected.isWildcard -> 1
+          else -> abs(expected.codeColumnStart - actual.codeColumnStart) + 2
+        }
+      }
   }
 
   private fun areCounterparts(expected: PyTestAssertion, actual: PyTestAssertion): Boolean {
@@ -792,7 +973,7 @@ private object PyTestAssertionInliner {
         replaceInlineAssertion(result, inlineExpected, inlineActual)
       }
       else if (inlineUnmatchedExpectedAssertions.size == 1) {
-        // keep
+        removeAssertions(result, inlineUnmatchedExpectedAssertions)
       }
       else {
         val actualAndPlaceholderAssertions = actualAssertions + unmatchedAssertions.filter { it.content.isBlank() && it.hasFixme }
@@ -818,7 +999,7 @@ private object PyTestAssertionInliner {
   private fun replaceCommentAssertion(
     text: StringBuilder,
     expectedAssertions: List<PyTestAssertion>,
-    actualAndPlaceholderAssertions: List<PyTestAssertion>
+    actualAndPlaceholderAssertions: List<PyTestAssertion>,
   ) {
     removeAssertions(text, expectedAssertions)
     if (actualAndPlaceholderAssertions.isEmpty()) return
@@ -908,7 +1089,7 @@ object PyTestAssertionParser {
       if (parsedStart.codeColumnStart == -1
           && PyTestAssertionType.fromValue(parsedStart.type) == null
           && !defaultSeverityNames.contains(parsedStart.type)
-        ) {
+      ) {
         // for trailing test assertions with unknown assertion type we assume it's a comment
         lineIndex++
         continue
@@ -1262,6 +1443,21 @@ object PyTestAssertionParser {
 }
 
 
+@Subsystems.CodeInsight
+@Layers.Functional
+class PyCodeInsightTestOptionsTest {
+
+  @Test
+  fun `default to latest language level`() {
+    val actualLatestLL = LanguageLevel.getLatest()
+    val testCaseOptionsLL = PyCodeInsightTestCase.TestCaseOptions().languageLevel
+    Assertions.assertEquals(actualLatestLL, testCaseOptionsLL)
+  }
+}
+
+
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyCodeInsightTestCaseAssertionParserAndInlinerTest {
 
   @Test
@@ -1420,103 +1616,120 @@ class PyCodeInsightTestCaseAssertionParserAndInlinerTest {
     Assertions.assertNull(assertion.comment)
   }
 
+}
+
+/**
+ * Verifies, through the real [PyCodeInsightTestCase.test] pipeline, that [PyCodeInsightTestCase]'s
+ * `computeAssertions` correctly renders and matches assertions against real highlighting and real
+ * type inference (as opposed to the parser/inliner unit tests above, which fabricate their own data).
+ */
+@Subsystems.CodeInsight
+@Layers.Functional
+class PyCodeInsightTestCaseComputeAssertionsTest : PyCodeInsightTestCase() {
+
   @Test
-  fun `inliner replaces comment assertion content`() {
-    val original = """
-      value = call()
-      #       └ TYPE old
-    """.trimIndent()
+  fun `WARNING inline matching message passes`() = test("""
+    i: int = "" # WARNING Expected type 'int', got 'Literal[""]' instead
+    """)
 
-    val expectedAssertions = parseAssertions(original)
-    val actualAssertions = listOf(expectedAssertions.single().withContent("new"))
-    val actualText = PyTestAssertionInliner.generateActualText(original, expectedAssertions, actualAssertions)
-
-    Assertions.assertEquals(
-      """
-      value = call()
-      #       └ TYPE new
-      """.trimIndent(),
-      actualText
-    )
+  @Test
+  fun `WARNING inline wrong message fails`() {
+    Assertions.assertThrows(AssertionError::class.java) {
+      test("""
+        i: int = "" # WARNING Wrong warning message
+        """)
+    }
   }
 
   @Test
-  fun `inliner replaces inline and comment assertions on the same code line`() {
-    val original = """
-      x = foo() # WARNING old-inline
-      #    └ TYPE old-comment
-    """.trimIndent()
-
-    val expectedAssertions = parseAssertions(original)
-    val inlineExpected = expectedAssertions.single { it.isInlineAssertion() }
-    val commentExpected = expectedAssertions.single { !it.isInlineAssertion() }
-    val actualAssertions = listOf(
-      inlineExpected.withContent("new-inline"),
-      commentExpected.withContent("new-comment"),
-    )
-
-    val actualText = PyTestAssertionInliner.generateActualText(original, expectedAssertions, actualAssertions)
-
-    Assertions.assertEquals(
-      """
-      x = foo() # WARNING new-inline
-      #    └ TYPE new-comment
-      """.trimIndent(),
-      actualText
-    )
+  fun `WARNING inline missing warning fails`() {
+    Assertions.assertThrows(AssertionError::class.java) {
+      test("""
+        x = 1 # WARNING No warning message
+        """)
+    }
   }
 
   @Test
-  fun `inliner matches ISSUES expectation with severity assertions`() {
-    val original = """
-      x = 1 # ISSUES *
-    """.trimIndent()
+  fun `WARNING inline FIXME placeholder without actual warning passes`() = test("""
+    x = 1 # WARNING FIXME some future warning
+    """)
 
-    val expectedAssertions = parseAssertions(original)
-    val actualAssertions = listOf(expectedAssertions.single().copy(type = HighlightSeverity.WARNING.name, content = "found warning"))
-    val actualText = PyTestAssertionInliner.generateActualText(original, expectedAssertions, actualAssertions)
-
-    Assertions.assertEquals(
-      """
-      x = 1 # WARNING found warning
-      """.trimIndent(),
-      actualText
-    )
+  @Test
+  fun `WARNING inline FIXME wrong expectation fails`() {
+    Assertions.assertThrows(AssertionError::class.java) {
+      test("""
+        i: int = "" # WARNING Wrong warning message FIXME
+        """)
+    }
   }
 
   @Test
-  fun `empty actual result is matched`() {
-    val code = """
-      a = 1 + ""
-      #       └ WARNING message1
-      a = 1
-      #   ^ WARNING message2
-      """.trimIndent()
-    val actualOutput = """
-      a = 1 + ""
-      #       └ WARNING message1
-      a = 1
-      """.trimIndent()
+  fun `ISSUES inline wildcard matching issue passes`() = test("""
+    i: int = "" # ISSUES *
+    """)
 
-    val expectedAssertions = parseAssertions(code)
-    val actualAssertions = listOf(expectedAssertions.first())
-    val actualText = PyTestAssertionInliner.generateActualText(code, expectedAssertions, actualAssertions)
+  @Test
+  fun `ISSUES inline wildcard matching rest issue passes 1`() = test("""
+    x: int = "s" + 1 # ISSUES * # Covers issue "No overload of '__add__' matches the arguments. Argument types: (Literal[1]). Expected one of: (value: LiteralString), (value: str)"
+    #        ^^^^^^^ WARNING Expected type 'int', got 'UnsafeUnion[LiteralString, str] | int' instead
+    """)
 
-    Assertions.assertEquals(actualOutput, actualText)
+  @Test
+  fun `ISSUES inline wildcard matching rest issue passes 2`() = test("""
+    x: int = "s" + 1 # ISSUES * # Covers issue "Expected type 'int', got 'UnsafeUnion[LiteralString, str] | int' instead"
+    #              └ WARNING No overload of '__add__' matches the arguments. Argument types: (Literal[1]). Expected one of: (value: LiteralString), (value: str)
+    """)
+
+  @Test
+  fun `ISSUES inline wildcard without issue fails`() {
+    Assertions.assertThrows(AssertionError::class.java) {
+      test("""
+        i: int = 2 # ISSUES *
+        """)
+    }
   }
 
   @Test
-  fun `inline assertion with FIXME is preserved when actual value matches pre-FIXME expected`() {
-    val original = """
-      i: int = 0 # WARNING FIXME Some future fix
-    """.trimIndent()
+  fun `WARNING comment-marker FIXME placeholder without actual warning passes`() = test("""
+    x = 1
+    #   └ WARNING FIXME some future warning
+    """)
 
-    val expectedAssertions = parseAssertions(original)
-    val actualAssertions = emptyList<PyTestAssertion>()
-    val actualText = PyTestAssertionInliner.generateActualText(original, expectedAssertions, actualAssertions)
-
-    Assertions.assertEquals(original, actualText, "FIXME clause must remain at its original position in the generated text.")
+  @Test
+  fun `WARNING comment-marker FIXME wrong expectation fails`() {
+    Assertions.assertThrows(AssertionError::class.java) {
+      test("""
+        x = 1
+        #   └ WARNING No warning message FIXME some future warning
+        """)
+    }
   }
+
+  @Test
+  fun `TYPE inline matching type passes`() = test("""
+    s = "" # TYPE Literal[""]
+    """)
+
+  @Test
+  fun `TYPE comment-marker matching type passes`() = test("""
+    n = 1
+    #   └ TYPE Literal[1]
+    """)
+
+  @Test
+  fun `TYPE inline wrong type fails`() {
+    Assertions.assertThrows(AssertionError::class.java) {
+      test("""
+        n = 1 # TYPE str
+        """)
+    }
+  }
+
+  @Test
+  fun `TYPE inline FIXME current and future type passes`() = test("""
+    n = 1 # TYPE Literal[1] FIXME str
+    """)
 }
 
 /**
@@ -1526,12 +1739,14 @@ class PyCodeInsightTestCaseAssertionParserAndInlinerTest {
  *  2. A re-initialized per-test state (open editors closed, temp dir wiped, [testCallCount] reset).
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyCodeInsightTestCaseFixtureReuseTest : PyCodeInsightTestCase() {
 
   companion object {
     private var fixtureFromFirstTest: CodeInsightTestFixture? = null
-    private var projectFromFirstTest: com.intellij.openapi.project.Project? = null
-    private var tempDirFromFirstTest: com.intellij.testFramework.fixtures.TempDirTestFixture? = null
+    private var projectFromFirstTest: Project? = null
+    private var tempDirFromFirstTest: TempDirTestFixture? = null
   }
 
   @Test

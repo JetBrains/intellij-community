@@ -341,7 +341,7 @@ error
 .*
 """, RegexOption.COMMENTS)
 
-private fun executeImpl(builder: EelExecApi.ExecuteProcessOptions): Process {
+private suspend fun executeImpl(builder: EelExecApi.ExecuteProcessOptions): Process = withContext(Dispatchers.IO) {
   val pty = builder.run {
     require(interactionOptions == null || ptyOrStdErrSettings == null)
     interactionOptions ?: (ptyOrStdErrSettings as EelExecApi.InteractionOptions?)
@@ -353,7 +353,7 @@ private fun executeImpl(builder: EelExecApi.ExecuteProcessOptions): Process {
     environment.putAll(builder.env)
     val platform = Platform.current()
     val escapedCommandLine = CommandLineUtil.toCommandLine(builder.exe, builder.args, platform)
-    return when (val p = pty) {
+    when (val p = pty) {
       is EelExecApi.Pty -> {
         if (platform == Platform.UNIX && "TERM" !in environment) {
           environment.getOrPut("TERM") { "xterm" }

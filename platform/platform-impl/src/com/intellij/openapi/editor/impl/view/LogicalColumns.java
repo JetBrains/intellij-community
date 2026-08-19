@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.openapi.editor.ex.DocumentSnapshot;
+import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentInternalUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,12 +24,12 @@ final class LogicalColumns {
     columnCache = columnData;
   }
 
-  static LogicalColumns create(@NotNull DocumentSnapshot document, int tabSize, int line) {
+  static LogicalColumns create(@NotNull DocumentText document, int tabSize, int line) {
     int start = document.lineStartOffset(line);
     int end = document.lineEndOffset(line);
     int cacheSize = (end - start) / CACHE_FREQUENCY;
     int[] cache = ArrayUtil.newIntArray(cacheSize);
-    CharSequence text = document.charSequence();
+    CharSequence text = document.cachedChars();
     int column = 0;
     boolean hasTabsOrSurrogates = false;
     for (int i = start; i < end; i++) {
@@ -62,7 +62,7 @@ final class LogicalColumns {
     return columnCache == null;
   }
 
-  int offsetToLogicalColumn(@NotNull DocumentSnapshot document, int tabSize, int line, int offset) {
+  int offsetToLogicalColumn(@NotNull DocumentText document, int tabSize, int line, int offset) {
     offset = Math.min(offset, document.lineEndOffset(line));
     int lineStartOffset = document.lineStartOffset(line);
     int relOffset = offset - lineStartOffset;
@@ -73,7 +73,7 @@ final class LogicalColumns {
     int startOffset = lineStartOffset + cacheIndex * CACHE_FREQUENCY;
     int startColumn = cacheIndex == 0 ? 0 : columnCache[cacheIndex - 1];
     return DocumentInternalUtil.calcLogicalColumn(
-      document.charSequence(),
+      document.cachedChars(),
       startOffset,
       startColumn,
       offset,
@@ -81,7 +81,7 @@ final class LogicalColumns {
     );
   }
 
-  int logicalColumnToOffset(@NotNull DocumentSnapshot document, int tabSize, int line, int column) {
+  int logicalColumnToOffset(@NotNull DocumentText document, int tabSize, int line, int column) {
     int lineStartOffset = document.lineStartOffset(line);
     int lineEndOffset = document.lineEndOffset(line);
     if (columnCache == null) {
@@ -98,7 +98,7 @@ final class LogicalColumns {
     int startOffset = lineStartOffset + (- pos - 1) * CACHE_FREQUENCY;
     int cachedColumn = pos == -1 ? 0 : columnCache[- pos - 2];
     return DocumentInternalUtil.calcLogicalOffset(
-      document.charSequence(),
+      document.cachedChars(),
       column,
       cachedColumn,
       startOffset,

@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.Splittable
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.SquareStripeButton
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -46,15 +47,17 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
   private var myCurrentScale = 0f
 
   init {
-    myComponent.addMouseListener(object : PopupHandler() {
-      override fun invokePopup(component: Component, x: Int, y: Int) {
-        val action = ActionManager.getInstance().getAction("ToolWindowShowNamesAction")!!
-        val group = object : ActionGroup() {
-          override fun getChildren(e: AnActionEvent?) = arrayOf(action)
+    if (!ToolWindowExtension.exists) {
+      myComponent.addMouseListener(object : PopupHandler() {
+        override fun invokePopup(component: Component, x: Int, y: Int) {
+          val action = ActionManager.getInstance().getAction("ToolWindowShowNamesAction")!!
+          val group = object : ActionGroup() {
+            override fun getChildren(e: AnActionEvent?) = arrayOf(action)
+          }
+          showPopup(group, component, x, y)
         }
-        showPopup(group, component, x, y)
-      }
-    })
+      })
+    }
   }
 
   fun createLayout(): BorderLayout {

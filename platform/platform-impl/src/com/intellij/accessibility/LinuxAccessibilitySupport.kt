@@ -119,13 +119,13 @@ object LinuxAccessibilitySupport {
    * or to leave the temporary runtime ATK Wrapper activation state.
    */
   suspend fun applyRequestedChanges(): Boolean {
-    if (screenReaderSupportRequested && !isSupportScreenReadersOverridden()) {
-      serviceAsync<GeneralSettings>().isSupportScreenReaders = true
-    }
-
     val vmOptionsUpdated = linuxAccessibilitySupportRequested &&
                            !atkWrapperEnabledInConfig &&
                            updateAtkWrapperVmOption(shouldEnableAtkWrapper = true)
+
+    if (screenReaderSupportRequested && !isSupportScreenReadersOverridden()) {
+      serviceAsync<GeneralSettings>().isSupportScreenReaders = true
+    }
 
     val restartRequired = atkWrapperActivatedInCurrentSession || vmOptionsUpdated
     if (restartRequired) {
@@ -140,20 +140,47 @@ object LinuxAccessibilitySupport {
     updateAtkWrapperVmOption(shouldEnableAtkWrapper = isScreenReaderSupportEnabled)
   }
 
+  /**
+   * Updates the `javax.accessibility.assistive_technologies` VM option in the user's .vmoptions file
+   * (see [VMOptions.getUserOptionsFile]). By contract, the product ships no such option in
+   * `bin/<product>64.vmoptions`, so the user's file is the only .vmoptions file that can declare it, and the value
+   * read here always comes from the same file the value is written to.
+   *
+   * That VM option is not the only way the Java ATK Wrapper can be turned on: it may also be declared in
+   * `~/.accessibility.properties` or `<jre>/conf/accessibility.properties`. The IDE never writes those files, so
+   * [ATK_WRAPPER] normally does not appear there unless it was set up outside the IDE. The JVM prefers the
+   * system property over both files; see the priority list in [ScreenReader.isEnabled].
+   *
+   * Turning the wrapper off deletes the option instead of writing an empty value on purpose. An empty value wins
+   * over both properties files, so it would also switch off everything else declared there - technologies the IDE
+   * neither knows about nor put there. Deleting the option keeps such a deliberate setup working, at the price of
+   * the JVM falling back to it: when a properties file declares [ATK_WRAPPER], the wrapper stays enabled until the
+   * user removes it there as well.
+   *
+   * Known limitation: the value written here is computed from the .vmoptions files and from the arguments of the
+   * running JVM only. What the properties files declare is invisible to that computation, so it is not carried over
+   * - turning the wrapper on writes an option that overrides those files for this IDE.
+   *
+   * @return true when the user's .vmoptions file was changed, so the IDE has to be restarted to apply it
+   */
   private fun updateAtkWrapperVmOption(shouldEnableAtkWrapper: Boolean): Boolean {
     if (!SystemInfoRt.isLinux || !VMOptions.canWriteOptions()) {
       return false
     }
 
-    val currentOptionValue = VMOptions.readOption(ASSISTIVE_TECHNOLOGIES_VM_OPTION_PREFIX, false)
-    val fallbackOptionValue = VMOptions.readOption(ASSISTIVE_TECHNOLOGIES_VM_OPTION_PREFIX, true)
-    val newOptionValue = computeUpdatedAssistiveTechnologiesOptionValue(
-      currentOptionValue = currentOptionValue,
-      fallbackOptionValue = fallbackOptionValue,
+    val configuredOptionValue = VMOptions.readOption(ASSISTIVE_TECHNOLOGIES_VM_OPTION_PREFIX, false)
+    val runtimeOptionValue = VMOptions.readOption(ASSISTIVE_TECHNOLOGIES_VM_OPTION_PREFIX, true)
+    // optionValue is the option in the .vmoptions files, or the arguments of the running JVM when the files say
+    // nothing about it. See the known limitation above for what is not part of it.
+    val newOptionValue = computeAssistiveTechnologiesOptionValue(
+      optionValue = configuredOptionValue ?: runtimeOptionValue,
       shouldEnableAtkWrapper = shouldEnableAtkWrapper,
     )
 
-    return newOptionValue != currentOptionValue && runCatching {
+    return newOptionValue != configuredOptionValue && runCatching {
+      // Only the user's .vmoptions file is rewritten here, and a null value deletes the option from it.
+      // The properties files are left as they are; see the KDoc above for why the option is deleted
+      // rather than set to an empty value, and what the JVM falls back to afterward.
       VMOptions.setProperty(ASSISTIVE_TECHNOLOGIES_PROPERTY, newOptionValue)
     }.onFailure {
       LOG.warn("Failed to update custom VM options for Java ATK Wrapper support. " +
@@ -165,30 +192,30 @@ object LinuxAccessibilitySupport {
     return isGnomeScreenReaderSettingEnabled() || isOrcaProcessRunning()
   }
 
-  private fun computeUpdatedAssistiveTechnologiesOptionValue(
-    currentOptionValue: String?,
-    fallbackOptionValue: String?,
+  /**
+   * Adds [ATK_WRAPPER] to a comma-separated `javax.accessibility.assistive_technologies` value, or removes it.
+   *
+   * @param optionValue the value the option currently has, or null when it is not set
+   * @param shouldEnableAtkWrapper whether the Java ATK Wrapper has to be present in the resulting value
+   *
+   * @return the comma-separated value to write into the option, or null when no assistive technologies are left,
+   *   in which case the caller removes the option from the .vmoptions file
+   */
+  private fun computeAssistiveTechnologiesOptionValue(
+    optionValue: String?,
     shouldEnableAtkWrapper: Boolean,
   ): String? {
-    val fallbackAssistiveTechnologies = parseAssistiveTechnologiesOptionValue(fallbackOptionValue)
-
-    val updatedAssistiveTechnologies = parseAssistiveTechnologiesOptionValue(currentOptionValue ?: fallbackOptionValue)
+    val assistiveTechnologies = parseAssistiveTechnologiesOptionValue(optionValue)
     if (shouldEnableAtkWrapper) {
-      updatedAssistiveTechnologies.add(ATK_WRAPPER)
+      assistiveTechnologies.add(ATK_WRAPPER)
     }
     else {
-      updatedAssistiveTechnologies.remove(ATK_WRAPPER)
+      assistiveTechnologies.remove(ATK_WRAPPER)
     }
 
-    if (currentOptionValue == null && updatedAssistiveTechnologies == fallbackAssistiveTechnologies) {
-      return null
-    }
-
-    return when {
-      updatedAssistiveTechnologies.isNotEmpty() -> updatedAssistiveTechnologies.joinToString(",")
-      fallbackOptionValue != null -> ""
-      else -> null
-    }
+    return assistiveTechnologies
+      .takeIf { it.isNotEmpty() }
+      ?.joinToString(",")
   }
 
   private fun isLinuxScreenMagnifierEnabled(): Boolean {
@@ -196,7 +223,8 @@ object LinuxAccessibilitySupport {
   }
 
   /**
-   * `javax.accessibility.assistive_technologies` is comma-delimited list (https://docs.oracle.com/en/java/javase/21/access/accessibility-properties.html)
+   * `javax.accessibility.assistive_technologies` is a comma-delimited list
+   * (https://docs.oracle.com/en/java/javase/21/access/accessibility-properties.html)
    */
   private fun parseAssistiveTechnologiesOptionValue(optionValue: String?): LinkedHashSet<String> {
     return optionValue

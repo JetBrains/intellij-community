@@ -141,7 +141,7 @@ public final class JVMFlags {
     return isSet(Opcodes.ACC_ANNOTATION);
   }
 
-  boolean isEnum() {
+  public boolean isEnum() {
     return isSet(Opcodes.ACC_ENUM);
   }
 

@@ -64,6 +64,7 @@ jvm_library(
 exports_files(
     [
         "intellij.maven.server.m36.impl.iml",
+        "resources/META-INF/plexus/components.xml",
     ],
     visibility = ["//visibility:public"],
 )

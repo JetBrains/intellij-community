@@ -1,6 +1,8 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.hash4j"/>
     <module name="intellij.libraries.plexus.utils"/>
     <module name="intellij.platform.jps.build"/>
   </dependencies>

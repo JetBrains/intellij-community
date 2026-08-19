@@ -52,6 +52,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   private boolean myTrackPerTestCoverage = false;
   @ApiStatus.Internal
   protected @NonNls String myCoverageFilePath;
+  private @NonNls String myCoverageFilePathOverride;
   private CoverageSuite myCurrentCoverageSuite;
 
   /**
@@ -184,10 +185,18 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   }
 
   public @NonNls @Nullable String getCoverageFilePath() {
+    if (myCoverageFilePathOverride != null) {
+      return myCoverageFilePathOverride;
+    }
     if (myCoverageFilePath == null) {
       myCoverageFilePath = createCoverageFile();
     }
     return myCoverageFilePath;
+  }
+
+  @ApiStatus.Internal
+  public void setCoverageFilePathOverride(@NonNls @Nullable String coverageFilePath) {
+    myCoverageFilePathOverride = coverageFilePath;
   }
 
   @Override
@@ -210,6 +219,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     final String runnerId = element.getAttributeValue(COVERAGE_RUNNER);
     if (runnerId != null) {
       myRunnerId = runnerId;
+      myCachedRunner = null;
     }
   }
 

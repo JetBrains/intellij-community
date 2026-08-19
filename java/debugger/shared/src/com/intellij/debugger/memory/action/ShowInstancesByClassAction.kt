@@ -34,7 +34,7 @@ class ShowInstancesByClassAction : XDebuggerTreeSplitActionBase() {
   override fun perform(node: XValueNodeImpl, nodeName: String, e: AnActionEvent) {
     val xValue = node.valueContainer
     val session = DebuggerUIUtil.getSessionProxy(e) ?: return
-    session.coroutineScope.launch {
+    e.coroutineScope.launch {
       XDebugManagerProxy.getInstance().withId(xValue, session) { xValueId ->
         JavaDebuggerLuxActionsApi.getInstance().showInstancesDialog(xValueId)
       }

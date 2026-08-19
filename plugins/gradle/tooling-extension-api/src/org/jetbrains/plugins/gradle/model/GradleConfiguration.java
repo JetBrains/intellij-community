@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
@@ -30,4 +30,11 @@ public interface GradleConfiguration extends Serializable {
    */
   @Nullable
   Boolean getCanBeDeclared();
+
+  /**
+   * @return names of the configurations this configuration directly extends from, without transitive ones.
+   * A dependency declared in an extended configuration is also present in this configuration.
+   * @see <a href="https://docs.gradle.org/current/kotlin-dsl/gradle/org.gradle.api.artifacts/-configuration/extends-from.html">Gradle Documentation</a>
+   */
+  @NotNull List<String> getExtendsFrom();
 }

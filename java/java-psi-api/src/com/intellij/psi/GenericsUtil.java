@@ -357,16 +357,21 @@ public final class GenericsUtil {
         PsiManager manager = wildcardType.getManager();
         if (bound != null) {
 
+          PsiElement context = wildcardType.getPsiContext();
           if (wildcardType.isSuper() && bound instanceof PsiIntersectionType) {
-            return PsiWildcardType.createUnbounded(manager);
+            return PsiWildcardType.createUnbounded(manager, context);
           }
 
           final PsiType acceptedBound = bound.accept(this);
           if (acceptedBound instanceof PsiWildcardType) {
-            if (((PsiWildcardType)acceptedBound).isExtends() != wildcardType.isExtends()) return PsiWildcardType.createUnbounded(manager);
+            if (((PsiWildcardType)acceptedBound).isExtends() != wildcardType.isExtends()) {
+              return PsiWildcardType.createUnbounded(manager, context);
+            }
             return acceptedBound;
           }
-          if (wildcardType.isExtends() && acceptedBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return PsiWildcardType.createUnbounded(manager);
+          if (wildcardType.isExtends() && acceptedBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+            return PsiWildcardType.createUnbounded(manager, context);
+          }
           if (acceptedBound.equals(bound)) return wildcardType;
           return wildcardType.isExtends()
                  ? PsiWildcardType.createExtends(manager, acceptedBound)

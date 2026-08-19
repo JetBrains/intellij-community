@@ -18,7 +18,7 @@ interface AttachedEntityBuilder : WorkspaceEntityBuilder<AttachedEntity> {
 }
 
 internal object AttachedEntityType : EntityType<AttachedEntity, AttachedEntityBuilder>() {
-  override val entityClass: Class<AttachedEntity> get() = AttachedEntity::class.java
+  override val entityImplClass: Class<*> get() = AttachedEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = AttachedEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,

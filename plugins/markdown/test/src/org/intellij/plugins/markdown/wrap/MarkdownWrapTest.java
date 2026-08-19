@@ -63,6 +63,11 @@ public class MarkdownWrapTest extends BasePlatformTestCase {
     doTest("a b c");
   }
 
+  /** Fence content is literal, so a `#` at the start of a fenced line is not a header and the line is wrappable. */
+  public void testWrapInCodeFenceWithHash() {
+    doTest("a b c");
+  }
+
   public void testWrapInCodeFenceInQuotes() {
     doTest("a b c d e f");
   }
@@ -75,12 +80,25 @@ public class MarkdownWrapTest extends BasePlatformTestCase {
     doTest("synchronization");
   }
 
+  public void testWrapInSetextHeader() {
+    doTest("synchronization");
+  }
+
 
   public void testWrapInTable() {
     doTest("synchronization");
   }
 
+  /** A `|` outside of a table does not make the line a table row, so wrapping is still allowed. */
+  public void testWrapWithPipeInText() {
+    doTest("a b c");
+  }
+
   public void testWrapDoesNotBreakLink() {
+    doTest("a");
+  }
+
+  public void testWrapDoesNotBreakBareUrl() {
     doTest("a");
   }
 

@@ -106,6 +106,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.testRunner.iml",
+        "resources/intellij.platform.testRunner.xml",
     ],
     visibility = ["//visibility:public"],
 )

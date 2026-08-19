@@ -51,7 +51,7 @@ public final class NativeFileType implements INativeFileType {
   }
 
   @Override
-  public boolean openFileInAssociatedApplication(Project project, @NotNull VirtualFile file) {
+  public boolean openFileInAssociatedApplication(@NotNull Project project, @NotNull VirtualFile file) {
     return openAssociatedApplication(file);
   }
 

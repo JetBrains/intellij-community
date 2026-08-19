@@ -5,11 +5,12 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.toolWindow.ResizeStripeManager
-import com.intellij.toolWindow.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 
-internal class ToolWindowShowNamesAction : DumbAwareToggleAction() {
+internal class ToolWindowShowNamesAction : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
   init {
     templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
   }
@@ -26,6 +27,6 @@ internal class ToolWindowShowNamesAction : DumbAwareToggleAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
 
-    e.presentation.isEnabledAndVisible = ToolWindowExtension.getInstance() == null
+    e.presentation.isEnabledAndVisible = !ToolWindowExtension.exists
   }
 }

@@ -1,6 +1,7 @@
 from typing import Any, ClassVar
 
 from django.db import models
+from django.db.models.expressions import Combinable
 from django.http.request import HttpRequest
 
 SITE_CACHE: Any
@@ -13,8 +14,8 @@ class SiteManager(models.Manager[Site]):
 class Site(models.Model):
     objects: ClassVar[SiteManager]
 
-    domain = models.CharField(max_length=100)
-    name = models.CharField(max_length=50)
+    domain: models.CharField[str | int | Combinable, str]
+    name: models.CharField[str | int | Combinable, str]
     def natural_key(self) -> tuple[str]: ...
 
 def clear_site_cache(sender: type[Site], **kwargs: Any) -> None: ...

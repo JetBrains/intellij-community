@@ -27,7 +27,7 @@ public final class WindowRoundedCornersManager {
 
   public static void configure(@NotNull DialogWrapper dialog) {
     if (isAvailable()) {
-      if ((OS.CURRENT == OS.macOS && StartupUiUtil.INSTANCE.isDarkTheme()) || OS.CURRENT == OS.Windows) {
+      if ((OS.CURRENT == OS.macOS && StartupUiUtil.INSTANCE.isDarkTheme()) || OS.CURRENT == OS.Windows || StartupUiUtil.isWaylandToolkit()) {
         setRoundedCorners(dialog.getWindow(), JBUI.CurrentTheme.Popup.borderColor(true));
         dialog.getRootPane().setBorder(PopupBorder.Factory.createEmpty());
       }
@@ -62,7 +62,7 @@ public final class WindowRoundedCornersManager {
   }
 
   public static void setRoundedCorners(@NotNull Window window, @Nullable Object params) {
-    if (OS.CURRENT == OS.macOS) {
+    if (OS.CURRENT == OS.macOS || StartupUiUtil.isWaylandToolkit()) {
       if (params == null) {
         params = Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat());
       }
@@ -87,24 +87,24 @@ public final class WindowRoundedCornersManager {
         return;
       }
     }
-    else if (OS.CURRENT == OS.Windows || StartupUiUtil.isWaylandToolkit()) {
+    else if (OS.CURRENT == OS.Windows) {
       if (params == null) {
-        params = defaultCornerRadiusString();
+        params = "full";
       }
       else if (params instanceof PopupCornerType cornerType) {
         if (cornerType == PopupCornerType.None) {
           return;
         }
-        params = cornerType == PopupCornerType.RoundedTooltip ? "small" : defaultCornerRadiusString();
+        params = cornerType == PopupCornerType.RoundedTooltip ? "small" : "full";
       }
       else if (params instanceof Color) {
-        params = new Object[]{defaultCornerRadiusString(), params};
+        params = new Object[]{"full", params};
       }
       else if (params instanceof Object[] values) {
         if (values.length != 2 || !(values[0] instanceof PopupCornerType cornerType) || !(values[1] instanceof Color)) {
           return;
         }
-        params = new Object[]{cornerType == PopupCornerType.RoundedTooltip ? "small" : defaultCornerRadiusString(), values[1]};
+        params = new Object[]{cornerType == PopupCornerType.RoundedTooltip ? "small" : "full", values[1]};
       }
       else if (!(params instanceof String)) {
         return;
@@ -115,10 +115,6 @@ public final class WindowRoundedCornersManager {
     if (!AppMode.isRemoteDevHost()) {
       JBR.getRoundedCornersManager().setRoundedCorners(window, params);
     }
-  }
-
-  private static @NotNull String defaultCornerRadiusString() {
-    return StartupUiUtil.isWaylandToolkit() ? "small" : "full";
   }
 
   @ApiStatus.Internal

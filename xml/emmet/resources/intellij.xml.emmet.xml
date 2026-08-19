@@ -2,8 +2,11 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.xerces"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.xml.ui.common"/>
   </dependencies>
   <!-- endregion -->
 

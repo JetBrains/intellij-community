@@ -45,7 +45,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.Icon
 import kotlin.time.Duration.Companion.milliseconds
@@ -132,9 +131,12 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
 
   suspend fun emitRecentFiles(searchRequest: RecentFilesBackendRequest.FetchFiles) {
     LOG.debug("Switcher emit recent files: $searchRequest")
+    EditorHistoryManager.preloadHistory(project)
+
     val targetFlow = chooseTargetFlow(searchRequest.filesKind)
 
     targetFlow.emit(BackendRecentFilesEvent.AllItemsRemoved())
+
     val freshRecentFiles = collectRecentFiles(searchRequest)
     if (freshRecentFiles != null) {
       targetFlow.emit(freshRecentFiles)
@@ -302,8 +304,6 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
 
 private data class OrderChangeEvent(val changeKind: FileChangeKind, val files: List<VirtualFile>)
 
-
-@ApiStatus.Internal
 internal sealed interface BackendRecentFilesEvent {
   class ItemsUpdated(val batch: List<BackendRecentFilePresentation>, val putOnTop: Boolean) : BackendRecentFilesEvent
   class ItemsAdded(val batch: List<BackendRecentFilePresentation>) : BackendRecentFilesEvent
@@ -322,7 +322,6 @@ internal class BackendRecentFilePresentation(
   val virtualFile: VirtualFile,
 )
 
-@ApiStatus.Internal
 internal fun BackendRecentFilesEvent.toRpcModel(): RecentFilesEvent = when (this) {
   is BackendRecentFilesEvent.ItemsUpdated -> RecentFilesEvent.ItemsUpdated(batch.map { it.toRpcModel() }, putOnTop)
   is BackendRecentFilesEvent.ItemsAdded -> RecentFilesEvent.ItemsAdded(batch.map { it.toRpcModel() })

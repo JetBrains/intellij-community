@@ -13,6 +13,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "//plugins/kotlin/base/indices",
     ],
 )
@@ -33,13 +34,12 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/ide-core:ide-core_test_lib",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core",

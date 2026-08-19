@@ -1,0 +1,74 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.indexing.impl.backend` start
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.indexing.impl.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/fastutil",
+        "//platform/kernel/rpc.backend",
+        "//platform/kernel/backend",
+        "//platform/platform-impl/rpc",
+        "//platform/backend",
+        "//platform/refactoring",
+        "//platform/indexing-api:indexing",
+        "//platform/indexing-impl",
+        "//platform/core-api:core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//platform/lang-impl",
+    ],
+)
+
+jvm_library(
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.indexing.impl.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+        "//platform/kernel/backend:backend_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/backend:backend_test_lib",
+        "//platform/refactoring:refactoring_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/indexing-impl:indexing-impl_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.indexing.impl.backend` end
+
+### auto-generated section `iml intellij.platform.indexing.impl.backend` start
+exports_files(
+    [
+        "intellij.platform.indexing.impl.backend.iml",
+        "resources/intellij.platform.indexing.impl.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.indexing.impl.backend` end

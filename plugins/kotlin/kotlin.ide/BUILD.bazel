@@ -31,7 +31,7 @@ jvm_library(
         "//platform/core-impl",
         "//platform/analysis-api:analysis",
         "//platform/lang-impl",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//plugins/kotlin/base/project-structure",
         "//plugins/kotlin/base/resources:kotlin-base-resources",
         "//libraries/jsoup",
@@ -86,6 +86,7 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//plugins/kotlin/base/project-structure:project-structure_test_lib",
         "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
         "//libraries/jsoup:jsoup_test_lib",
@@ -119,6 +120,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.ide.iml",
+        "resources/intellij.kotlin.ide.xml",
     ],
     visibility = ["//visibility:public"],
 )

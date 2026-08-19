@@ -19,7 +19,8 @@ import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
-import org.jetbrains.intellij.build.downloadFileToCacheLocation
+import org.jetbrains.intellij.build.ResolvedDownload
+import org.jetbrains.intellij.build.resolveFileForReading
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.FileVisitResult
@@ -91,35 +92,38 @@ class BundledRuntimeImpl(
   override suspend fun extract(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String): Path {
     val isMusl = os == OsFamily.LINUX && libc == LinuxLibcImpl.MUSL
     val effectivePrefix = if (libc == LinuxLibcImpl.MUSL) JetBrainsRuntimeDistribution.VANILLA.artifactPrefix else prefix
-    val targetDir = paths.communityHomeDir.resolve("build/download/${effectivePrefix}${build}-${os.jbrArchiveSuffix}-${if (isMusl) "musl-" else ""}$arch")
+    val targetDir = BuildDependenciesDownloader.getDownloadCacheDirectory(paths.communityHomeDirRoot)
+      .resolve("${effectivePrefix}${build}-${os.jbrArchiveSuffix}-${if (isMusl) "musl-" else ""}$arch")
     val jbrDir = targetDir.resolve("jbr")
 
-    val archive = findArchive(os, arch, libc, effectivePrefix)
+    val archive = resolveArchive(os, arch, libc, effectivePrefix)
     BuildDependenciesDownloader.extractFile(
-      archive, jbrDir,
-      paths.communityHomeDirRoot,
-      BuildDependenciesExtractOptions.STRIP_ROOT,
+      archiveFile = archive.file,
+      target = jbrDir,
+      communityRoot = paths.communityHomeDirRoot,
+      sha256 = archive.sha256,
+      options = arrayOf(BuildDependenciesExtractOptions.STRIP_ROOT),
     )
     fixPermissions(jbrDir, os == OsFamily.WINDOWS)
 
     val releaseFile = if (os == OsFamily.MACOS) jbrDir.resolve("Contents/Home/release") else jbrDir.resolve("release")
 
     check(Files.exists(releaseFile)) {
-      "Unable to find release file $releaseFile after extracting JBR at $archive"
+      "Unable to find release file $releaseFile after extracting JBR at ${archive.file}"
     }
 
     return targetDir
   }
 
   override suspend fun extractTo(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, destinationDir: Path) {
-    doExtract(findArchive(os, arch, libc, prefix), destinationDir, os)
+    doExtract(resolveArchive(os, arch, libc, prefix).file, destinationDir, os)
   }
 
   override fun downloadUrlFor(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String): String =
     "https://cache-redirector.jetbrains.com/intellij-jbr/${archiveName(os, arch, libc, prefix)}"
 
-  override suspend fun findArchive(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String): Path =
-    downloadFileToCacheLocation(downloadUrlFor(os, arch, libc, prefix), paths.communityHomeDirRoot)
+  override suspend fun resolveArchive(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String): ResolvedDownload =
+    resolveFileForReading(downloadUrlFor(os, arch, libc, prefix), paths.communityHomeDirRoot)
 
   /**
    * Update this method together with:

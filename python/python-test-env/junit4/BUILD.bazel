@@ -12,7 +12,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//python/python-test-env/core",
         "@lib//:kotlin-stdlib",
     ],
@@ -38,7 +38,8 @@ jvm_library(
     runtime_deps = [":junit4"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//python/python-test-env/core",

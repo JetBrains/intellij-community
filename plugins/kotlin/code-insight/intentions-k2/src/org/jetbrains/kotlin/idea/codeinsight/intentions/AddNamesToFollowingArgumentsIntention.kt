@@ -54,7 +54,8 @@ class AddNamesToFollowingArgumentsIntention :
         return true
     }
 
-    override fun KaSession.prepareContext(element: KtValueArgument): Context? =
+    context(session: KaSession)
+    override fun prepareContext(element: KtValueArgument): Context? =
         element.parents.match(KtValueArgumentList::class, last = KtCallElement::class)
             ?.let { call -> associateArgumentNamesStartingAt(call, element) }
             ?.let(::Context)

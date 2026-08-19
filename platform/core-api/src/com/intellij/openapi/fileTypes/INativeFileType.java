@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * Should be used for files which need custom opening logic, e.g. which should be opened in an external application.
  */
 public interface INativeFileType extends FileType {
-  boolean openFileInAssociatedApplication(Project project, @NotNull VirtualFile file);
+  boolean openFileInAssociatedApplication(@NotNull Project project, @NotNull VirtualFile file);
 
   boolean useNativeIcon();
 }

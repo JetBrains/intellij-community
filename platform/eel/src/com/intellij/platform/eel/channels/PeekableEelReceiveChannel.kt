@@ -6,6 +6,7 @@ import com.intellij.platform.eel.ReadResult.EOF
 import com.intellij.platform.eel.ReadResult.NOT_EOF
 import com.intellij.platform.eel.ThrowsChecked
 import org.jetbrains.annotations.ApiStatus
+import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 
@@ -119,8 +120,29 @@ fun EelReceiveChannel.peekable(): PeekableEelReceiveChannel =
  */
 @ThrowsChecked(EelReceiveChannelException::class)
 @ApiStatus.Experimental
-suspend fun PeekableEelReceiveChannel.readUntil(untilByte: Byte, dataConsumer: suspend (ByteBuffer, last: Boolean) -> Unit): Boolean {
-  val buffer = ByteBuffer.allocate(4096)
+suspend fun PeekableEelReceiveChannel.readUntil(
+  untilByte: Byte,
+  dataConsumer: suspend (ByteBuffer, last: Boolean) -> Unit,
+): Boolean {
+  val bufferSize = 4096
+  return readUntil(untilByte, bufferSize, dataConsumer)
+}
+
+/**
+ * Please read the documentation for the other overload of [readUntil].
+ *
+ * And please vote for:
+ * * KT-86011 KDoc: No tag for inlining documentation from another declaration
+ * * KT-15984 Kdoc doesn't support specifying a particular overloaded function or variable in a link
+ */
+@ThrowsChecked(EelReceiveChannelException::class)
+@ApiStatus.Experimental
+suspend fun PeekableEelReceiveChannel.readUntil(
+  untilByte: Byte,
+  bufferSize: Int,
+  dataConsumer: suspend (ByteBuffer, Boolean) -> Unit,
+): Boolean {
+  val buffer = ByteBuffer.allocate(bufferSize)
 
   mainLoop@ while (true) {
     buffer.clear()
@@ -153,17 +175,38 @@ suspend fun PeekableEelReceiveChannel.readUntil(untilByte: Byte, dataConsumer: s
  * The line is read up to and including the next `\n`; a trailing `\r` (i.e. a `\r\n` sequence) is stripped. The line
  * terminator is not included in the result, and the data following it remains available for subsequent reads.
  *
+ * That pushback is what this is for -- reading a handshake or a header and leaving the rest of the stream to
+ * someone else. To read a channel to its end, use [com.intellij.platform.eel.provider.utils.lines], which reads
+ * ahead, but is faster.
+ *
  * @return the decoded line, or `null` if the end of the stream was reached and no data was read.
  */
 @ThrowsChecked(EelReceiveChannelException::class)
 @ApiStatus.Experimental
 suspend fun PeekableEelReceiveChannel.readLine(charset: Charset): String? {
-  val line = StringBuilder()
-  val newlineReached = readUntil('\n'.code.toByte()) { buffer, last ->
+  return readLine(charset, 4096)
+}
+
+/**
+ * Please read the documentation for the other overload of [readLine].
+ *
+ * And please vote for:
+ * * KT-86011 KDoc: No tag for inlining documentation from another declaration
+ * * KT-15984 Kdoc doesn't support specifying a particular overloaded function or variable in a link
+ */
+@ThrowsChecked(EelReceiveChannelException::class)
+@ApiStatus.Experimental
+suspend fun PeekableEelReceiveChannel.readLine(
+  charset: Charset,
+  bufferSize: Int,
+): String? {
+  val line = ByteArrayOutputStream()
+  val newlineReached = readUntil('\n'.code.toByte(), bufferSize) { buffer, last ->
     if (last && buffer.hasRemaining() && buffer.get(buffer.limit() - 1) == '\r'.code.toByte()) {
       buffer.limit(buffer.limit() - 1)
     }
-    line.append(charset.decode(buffer))
+    line.write(buffer.array(), buffer.position(), buffer.remaining())
   }
-  return if (newlineReached || line.isNotEmpty()) line.toString() else null
+  @Suppress("BlockingMethodInNonBlockingContext")  // False positive.
+  return if (newlineReached || line.size() != 0) line.toString(charset.name()) else null
 }

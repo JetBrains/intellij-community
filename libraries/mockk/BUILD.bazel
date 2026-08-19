@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.mockk.iml",
+        "resources/intellij.libraries.mockk.xml",
     ],
     visibility = ["//visibility:public"],
 )

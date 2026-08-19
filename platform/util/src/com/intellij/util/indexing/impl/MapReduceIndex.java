@@ -2,9 +2,11 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
@@ -24,9 +26,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIfPossible;
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 //MAYBE RC: MapReduceIndex vs MapReduceIndexBase is a bit odd naming/semantics, because MapReduceIndexBase is an abstract
 //          implementation of UpdatableIndex, but significant part of UpdatableIndex methods are implemented in MapReduceIndex
@@ -367,7 +372,40 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   }
 
   protected @NotNull Map<Key, Value> mapByIndexer(int inputId, @NotNull Input content) {
-    return myIndexer.map(content);
+    Map<Key, Value> map = myIndexer.map(content);
+    checkMapImplIsLegit(map);
+    return map;
+  }
+
+  private static final ConcurrentMap<IndexId<?,?>, ThrottledLogger> THROTTLED_LOGS_BY_INDEX_ID = new ConcurrentHashMap<>();
+  private void checkMapImplIsLegit(Map<Key, Value> map) {
+    //Indexing code assumes Map returned by Indexers has 'default' map semantics:
+    // `.get()` have no side effects -- i.e., it doesn't modify the map.
+    // `map.get(nonExistingKey) == null`
+    // (See DataIndexer.map() contract)
+    // If this is not true, some indexing logic will break: e.g. MapInputDataDiffBuilder uses `newMap.get()==null`
+    // to identify removed keys -- but it is not the only place.
+    // Here we check most obvious violation of that rule: FactoryMap
+    boolean inTests = IndexDebugProperties.IS_UNIT_TEST_MODE;
+    boolean suspiciousMapImplementation = (map instanceof FactoryMap);
+    //MAYBE RC: instead of checking 'is FactoryMap' => directly check `.get(new Object())==null` (in unitTests)?
+    //          The check is a bit risky, though, since strongly-typed map impls could throw ClassCastException.
+    if (suspiciousMapImplementation) {
+      Class<?> indexerClass = myIndexer.getClass();
+      ClassLoader classLoader = indexerClass.getClassLoader();
+      String message = indexerClass + "[" + indexId() + "] returns FactoryMap" +
+                       (classLoader == null ? "" : "; loaded by " + classLoader) +
+                       ": do not use Map with non-canonical .get() semantics in Indexers!";
+      if (inTests) {
+        throw new IllegalStateException(message);
+      }
+      else {
+        THROTTLED_LOGS_BY_INDEX_ID.computeIfAbsent(
+          indexId(),
+          __ -> new ThrottledLogger(LOG, MINUTES.toMillis(1))
+        ).error(message);
+      }
+    }
   }
 
   public abstract void checkCanceled();

@@ -18,7 +18,7 @@ interface UnknownFieldEntityBuilder : WorkspaceEntityBuilder<UnknownFieldEntity>
 }
 
 internal object UnknownFieldEntityType : EntityType<UnknownFieldEntity, UnknownFieldEntityBuilder>() {
-  override val entityClass: Class<UnknownFieldEntity> get() = UnknownFieldEntity::class.java
+  override val entityImplClass: Class<*> get() = UnknownFieldEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = UnknownFieldEntityImpl.Builder::class.java
   operator fun invoke(
     data: Date,

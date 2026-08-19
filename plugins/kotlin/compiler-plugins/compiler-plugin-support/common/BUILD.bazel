@@ -20,7 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common",
         "//platform/core-api:core",
         "//platform/lang-core",
@@ -46,6 +46,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-compilerPlugins-support",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/lang-core:lang-core_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
@@ -63,6 +64,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.support.iml",
+        "resources/intellij.kotlin.compilerPlugins.support.xml",
     ],
     visibility = ["//visibility:public"],
 )

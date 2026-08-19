@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.snakeyaml.engine.iml",
+        "resources/intellij.libraries.snakeyaml.engine.xml",
     ],
     visibility = ["//visibility:public"],
 )

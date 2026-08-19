@@ -53,5 +53,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.protobuf" />
     <orderEntry type="module" module-name="intellij.platform.buildData" />
+    <orderEntry type="module" module-name="intellij.platform.devIdeConfig" />
   </component>
 </module>

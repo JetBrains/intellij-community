@@ -55,6 +55,7 @@ jvm_library(
 exports_files(
     [
         "intellij.python.terminal.frontend.iml",
+        "resources/intellij.python.terminal.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )

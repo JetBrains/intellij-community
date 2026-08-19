@@ -16,6 +16,7 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.isNullable
@@ -311,15 +313,18 @@ private class ReceiverToParameterVisitor(
         if (expression is KtOperationReferenceExpression) return
 
         // Try to resolve the call
-        val resolvedCall = with(session) { 
+        val resolvedCall = context(session) {
             expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() 
         } ?: return
         val dispatchReceiver: KaReceiverValue? = resolvedCall.partiallyAppliedSymbol.dispatchReceiver
         val extensionReceiver = resolvedCall.partiallyAppliedSymbol.extensionReceiver
 
         // If the call is on the lambda's receiver, replace it with a call on the parameter
-        if (with(session) { isReceiverFromFunctionLiteral(dispatchReceiver, functionLiteral) } || 
-            with(session) { isReceiverFromFunctionLiteral(extensionReceiver, functionLiteral) }) {
+        if (context(session) {
+                isReceiverFromFunctionLiteral(dispatchReceiver, functionLiteral) ||
+                        isReceiverFromFunctionLiteral(extensionReceiver, functionLiteral)
+            }
+        ) {
             val parent = expression.parent
             if (parent is KtCallExpression && expression == parent.calleeExpression) {
                 // Handle method calls: this.foo() -> paramName.foo()
@@ -489,13 +494,13 @@ private class ParameterToReceiverVisitor(
             return
         } else {
             // Handle implicit receiver references that need to be qualified
-            val resolvedCall = with(session) { 
+            val resolvedCall = context(session) {
                 expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
             } ?: return
             val dispatchReceiver = resolvedCall.partiallyAppliedSymbol.dispatchReceiver
 
             // Skip if this is the receiver from the lambda we're converting (e.g., 'with' to 'run')
-            if (with(session) { isReceiverFromFunctionLiteral(dispatchReceiver, functionLiteral) }) return
+            if (context(session) { isReceiverFromFunctionLiteral(dispatchReceiver, functionLiteral) }) return
 
             // Only handle implicit receivers
             if (dispatchReceiver !is KaImplicitReceiverValue) return
@@ -503,7 +508,7 @@ private class ParameterToReceiverVisitor(
             val symbol = dispatchReceiver.type.symbol
             if (symbol !is KaDeclarationSymbol) return
 
-            val implicitReceiverValue = with(session) { 
+            val implicitReceiverValue = context(session) {
                 expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.dispatchReceiver as? KaImplicitReceiverValue 
             } ?: return
 
@@ -534,7 +539,7 @@ private class ParameterToReceiverVisitor(
         return when {
             // For companion objects, use ContainingClass.CompanionName
             (symbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT -> {
-                val containingClass = with(session) { symbol.containingSymbol } as KaClassifierSymbol
+                val containingClass = context(session) { symbol.containingSymbol } as KaClassifierSymbol
                 val containingClassName = containingClass.name?.render() ?: ""
                 val companionName = symbol.name?.render() ?: ""
                 "$containingClassName.$companionName"
@@ -560,7 +565,7 @@ private class ParameterToReceiverVisitor(
 
     override fun visitThisExpression(expression: KtThisExpression) {
         // Handle 'this' expressions that need to be qualified
-        val implicitReceiverValue = with(session) { 
+        val implicitReceiverValue = context(session) {
             expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.dispatchReceiver as? KaImplicitReceiverValue
         }
 

@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException
@@ -36,7 +37,7 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
     // Increase the group's versions locally
     // and not increase the versions in all StatisticsEventLoggerProvider
     // in case of any changes in the groups
-    eventLoggerProvider.version + 4,
+    eventLoggerProvider.version + 7,
     eventLoggerProvider.recorderId
   )
   override fun getGroup(): EventLogGroup = GROUP
@@ -82,6 +83,10 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
                                                                                fileSizeBytes, eventsCount
   )
 
+  private val backlogSnapshot: EventId3<Int, Long, Long> = GROUP.registerEvent("logs.backlog.snapshot",
+                                                                               pendingFilesCountField, pendingTotalBytesField, oldestPendingFileWaitMsField
+  )
+
   private val dictionaryListLoadFailed = GROUP.registerEvent(
     "dictionary.list.load.failed",
     stageMetadataLoadFailedField, errorMetadataLoadFailedField, codeMetadataLoadFailedField
@@ -99,6 +104,11 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
   private val dictionaryUpdateFailedEvent = GROUP.registerEvent(
     "dictionary.update.failed",
     stageMetadataUpdateFailedField, errorMetadataUpdateFailedField, codeMetadataUpdateFailedField
+  )
+
+  private val fileDeletedEvent = GROUP.registerVarargEvent(
+    "logs.file.deleted",
+    deletedFileCauseField, deletedFileAgeMsField, deletedFileQueuedMsField, deletedFileSizeBytesField, deletedFileBuildTypeField
   )
 
   fun logMetadataLoaded(version: String?) = metadataLoadedEvent.log(version)
@@ -162,6 +172,26 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
 
   fun logFileMetricsCalculated(fileSizeBytes: Long, eventsCount: Int,) {
     fileMetricsCalculated.log(fileSizeBytes, eventsCount)
+  }
+
+  fun logBacklogSnapshot(pendingFilesCount: Int, pendingTotalBytes: Long, oldestPendingFileWaitMs: Long) {
+    backlogSnapshot.log(pendingFilesCount, pendingTotalBytes, oldestPendingFileWaitMs)
+  }
+
+  fun logFileDeleted(
+    cause: FileDeletionCause,
+    ageMs: Long,
+    queuedMs: Long,
+    sizeBytes: Long,
+    buildType: EventLogBuildType,
+  ) {
+    fileDeletedEvent.log(
+      deletedFileCauseField.with(cause),
+      deletedFileAgeMsField.with(ageMs),
+      deletedFileQueuedMsField.with(queuedMs),
+      deletedFileSizeBytesField.with(sizeBytes),
+      deletedFileBuildTypeField.with(buildType),
+    )
   }
 
   fun logDictionaryListLoadFailed(error: EventLogMetadataUpdateError) {
@@ -244,6 +274,14 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
     private val failedDeletingFilesCount = EventFields.Int("failed_deleting_files_count", "The number of log files which were failed to delete")
     private val fileSizeBytes = EventFields.Long("file_size_bytes", "File size in bytes")
     private val eventsCount = EventFields.Int("events_count", "Number of events in the file")
+    private val pendingFilesCountField = EventFields.Int("pending_files_count", "Number of log files waiting to be sent")
+    private val pendingTotalBytesField = EventFields.Long("pending_total_bytes", "Total size on disk of the pending log files, in bytes")
+    private val oldestPendingFileWaitMsField = EventFields.Long("oldest_pending_file_wait_ms", "How long the longest-waiting pending file has been idle: now minus its last-modified time, in milliseconds")
 
+    private val deletedFileCauseField = EventFields.Enum<FileDeletionCause>("deleted_file_cause", "Why the file was deleted: aged out, storage size cap exceeded, disk almost full, or rejected by the server on send (HTTP 400 / failed validation).")
+    private val deletedFileAgeMsField = EventFields.Long("deleted_file_age_ms", "Age of the data in the deleted file: now minus the timestamp of its oldest event, in milliseconds (-1 if unknown)")
+    private val deletedFileQueuedMsField = EventFields.Long("deleted_file_queued_ms", "How long the deleted file waited since its last write before being deleted: now minus last modified time, in milliseconds")
+    private val deletedFileSizeBytesField = EventFields.Long("deleted_file_size_bytes", "Size of the deleted file in bytes")
+    private val deletedFileBuildTypeField = EventFields.Enum<EventLogBuildType>("deleted_file_build_type", "Build type (EAP, RELEASE, etc.)")
   }
 }

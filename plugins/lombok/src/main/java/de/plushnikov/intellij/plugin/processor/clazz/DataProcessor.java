@@ -157,4 +157,14 @@ public final class DataProcessor extends AbstractClassProcessor {
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     return LombokPsiElementUsage.READ_WRITE;
   }
+
+  @Override
+  public boolean contributesGetter(@NotNull PsiField psiField) {
+    return ContributorHelper.contributesGetter(this, psiField);
+  }
+
+  @Override
+  public boolean contributesSetter(@NotNull PsiField psiField) {
+    return ContributorHelper.contributesSetter(this, psiField);
+  }
 }

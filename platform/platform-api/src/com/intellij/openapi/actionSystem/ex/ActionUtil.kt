@@ -89,6 +89,45 @@ object ActionUtil {
   val TOOLTIP_TEXT: Key<@NlsContexts.Tooltip String> = Key.create(JComponent.TOOL_TIP_TEXT_KEY)
 
   /**
+   * A stable [java.awt.Component.getName] for every component built from this action.
+   *
+   * An action's component is not the action's to keep: a toolbar discards and rebuilds its `ActionButton`s
+   * whenever an update forces a rebuild, and the action is handed no reference to either the old one or the
+   * new one. So a name set on the button from outside survives until the next update and no longer, which is
+   * exactly long enough to look reliable and not long enough to be. Setting it here instead re-applies it to
+   * every replacement.
+   *
+   * Honoured by [com.intellij.openapi.actionSystem.impl.ActionButton] and by the custom components an
+   * `ActionToolbar` builds — not by menus, whose items carry no name. It is read once, when the component is
+   * constructed; nothing re-reads it afterwards, and nothing clears a name already set.
+   *
+   * This is the identity a UI test should address a control by. The alternatives are all properties of
+   * something else: a localized text moves with the locale and is rarely unique, an icon is shared across
+   * unrelated buttons, an accessible name may be a value the test is *asserting*, and a position in the
+   * component tree is a layout detail. This name is assigned by the code that owns the control, and the
+   * remote driver's `@name` attribute reads it directly.
+   *
+   * `action.templatePresentation.putClientProperty(ActionUtil.COMPONENT_NAME, "my-plugin.my-control")`
+   *
+   * Set it on the **template** presentation. An ordinary presentation is honoured too, but it is not a durable
+   * place for this: [Presentation.copyFrom] reconciles the two client-property maps and drops any key the
+   * source lacks, so an update that copies from another action's presentation — a split button adopting its
+   * selected action's, for one — silently clears it, and the next rebuilt component comes up unnamed. Read it
+   * through [getComponentName], which falls back to the template for that reason.
+   */
+  // Qualified: `Presentation` stores client properties under `key.toString()` in one flat namespace, so a
+  // bare "COMPONENT_NAME" would collide with any same-named key of another type and fail as a ClassCastException.
+  @ApiStatus.Internal
+  @JvmField
+  val COMPONENT_NAME: Key<@NlsSafe String> = Key.create("ActionUtil.componentName")
+
+  /** The [COMPONENT_NAME] in force for [action], preferring [presentation] and falling back to its template. */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun getComponentName(action: AnAction, presentation: Presentation): String? =
+    presentation.getClientProperty(COMPONENT_NAME) ?: action.templatePresentation.getClientProperty(COMPONENT_NAME)
+
+  /**
    * By default, a "performable" non-empty popup action group menu item still shows a submenu.
    * Use this key to disable the submenu and avoid children expansion on update as follows:
    *

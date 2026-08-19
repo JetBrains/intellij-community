@@ -11,10 +11,50 @@
     <module name="intellij.java.ui"/>
     <module name="intellij.java.xml.dom.impl"/>
     <module name="intellij.json.backend"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.kotlinx.serialization.protobuf"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.libraries.protobuf"/>
+    <module name="intellij.libraries.snakeyaml"/>
+    <module name="intellij.libraries.stream"/>
     <module name="intellij.libraries.xerces"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.builtInServer"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.jps.build"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.markdown.utils"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.testRunner"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.properties.backend"/>
     <module name="intellij.properties.backend.psi"/>
     <module name="intellij.spellchecker"/>
@@ -230,6 +270,12 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlExtensionRegistrationInspection"
                      key="inspection.plugin.xml.extension.registration.display.name"/>
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="false" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlReferencesModuleReachabilityInspection"
+                     key="inspection.plugin.xml.references.module.reachability.display.name"/>
 
     <localInspection language="JVM" shortName="ComponentNotRegistered"
                      projectType="INTELLIJ_PLUGIN"

@@ -61,6 +61,7 @@ jvm_library(
 exports_files(
     [
         "intellij.searchEverywhereMl.ranking.vcs.iml",
+        "resources/intellij.searchEverywhereMl.ranking.vcs.xml",
     ],
     visibility = ["//visibility:public"],
 )

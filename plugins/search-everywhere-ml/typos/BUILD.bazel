@@ -91,6 +91,7 @@ jvm_library(
 exports_files(
     [
         "intellij.searchEverywhereMl.typos.iml",
+        "resources/intellij.searchEverywhereMl.typos.xml",
     ],
     visibility = ["//visibility:public"],
 )

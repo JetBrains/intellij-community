@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.rhino.iml",
+        "resources/intellij.libraries.rhino.xml",
     ],
     visibility = ["//visibility:public"],
 )

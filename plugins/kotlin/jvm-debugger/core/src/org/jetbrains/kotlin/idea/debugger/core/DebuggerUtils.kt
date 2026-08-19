@@ -24,6 +24,7 @@ import com.sun.jdi.Location
 import com.sun.jdi.ReferenceType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -277,7 +278,7 @@ object DebuggerUtils {
 
         return runDumbAnalyze(callExpression, fallback = false) f@ {
             val call = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return@f false
-            val parameter = call.argumentMapping[argumentExpression]?.symbol ?: return@f false
+            val parameter = call.valueArgumentMapping[argumentExpression]?.symbol ?: return@f false
             return@f parameter.isCrossinline
         }
     }

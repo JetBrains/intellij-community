@@ -12,12 +12,13 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.JavaModuleType
+import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -27,9 +28,11 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
@@ -68,14 +71,23 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.impl.JpsJavaDependencyExtensionRole
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
+import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.receiverType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.ALL
@@ -337,15 +349,11 @@ class BuildersGeneratorTest {
     tempProject: Project,
     moduleName: String,
   ): Pair<Module, Path> {
-    var genSrcDirName: Path? = null
     val ultimateProject: JpsProject = loadIntelliJProject(PathManager.getHomeDir())
-
-    val libraries = mutableSetOf<JpsLibrary>()
+    val jpsModule = ultimateProject.findModuleByName(moduleName)!!
 
     val newEelModule: Module = edtWriteAction {
       val projectModel = ModuleManager.getInstance(tempProject).getModifiableModel()
-
-      val jpsModuleQueue = mutableListOf(ultimateProject.findModuleByName(moduleName)!!)
 
       val jdkName = "jbr-25"
       val projectJdkTable = ProjectJdkTable.getInstance(tempProject)
@@ -353,66 +361,103 @@ class BuildersGeneratorTest {
       projectJdkTable.addJdk(projectJdk)
       ProjectRootManager.getInstance(tempProject).setProjectSdkName(jdkName, JavaSdk.getInstance().name)
 
-      // TODO Dependencies don't work well. Kotlin can't resolve types from them.
-      run {
-        var i = 0
-        while (i < jpsModuleQueue.size) {
-          val jpsModule = jpsModuleQueue[i]
-          for (dependencyElement in jpsModule.dependenciesList.dependencies) {
-            when (dependencyElement) {
-              is JpsModuleDependency -> jpsModuleQueue.add(dependencyElement.module!!)
-              is JpsLibraryDependency -> libraries.add(dependencyElement.library!!)
-            }
-          }
-          ++i
-        }
-      }
-
-      val platformLibs = libraries.map { jpsLibrary ->
-        val tempProjectLibrary = LibraryTablesRegistrar.getInstance().getLibraryTable(tempProject).createLibrary(jpsLibrary.name)
-        val libModel = tempProjectLibrary.modifiableModel
-        for (root in jpsLibrary.getRoots(JpsOrderRootType.COMPILED)) {
-          libModel.addRoot(root.url, OrderRootType.CLASSES)
-        }
-        libModel.commit()
-        tempProjectLibrary
-      }
-
-      while (true) {
-        val jpsModule = jpsModuleQueue.removeLastOrNull() ?: break
-        val module = projectModel.newModule(Path.of(tempProject.basePath!!).resolve(".idea/${jpsModule.name}.iml"), JavaModuleType.getModuleType().id)
-
-        val rootModel = module.rootManager.modifiableModel
-
-        rootModel.sdk = projectJdk
-        rootModel.addLibraryEntries(platformLibs, DependencyScope.COMPILE, false)
-
-        for (sourceRoot in jpsModule.sourceRoots) {
-          when (val rootType = sourceRoot.rootType) {
-            is JavaSourceRootType -> {
-              if (!rootType.isForTests) {
-                val properties = sourceRoot.properties as JavaSourceRootProperties
-                if (properties.isForGeneratedSources) {
-                  check(genSrcDirName == null) { "Multiple gen src dirs: $genSrcDirName, ${sourceRoot.path}" }
-                  genSrcDirName = sourceRoot.path
-                }
-                rootModel.addContentEntry(sourceRoot.url).addSourceFolder(sourceRoot.url, false)
-              }
-            }
-          }
-        }
-        rootModel.commit()
-      }
+      createModuleMirrorImpl(
+        tempProject = tempProject,
+        projectJdk = projectJdk,
+        projectModel = projectModel,
+        jpsModule = jpsModule,
+        alreadyMirroredModules = hashMapOf(),
+        alreadyMirroredLibraries = hashMapOf(),
+      )
 
       projectModel.commit()
 
       tempProject.modules.first { it.name == moduleName }
     }
 
-    check(genSrcDirName != null) { "No gen src dir found" }
-
     tempProject.stateStore.save(forceSavingAllSettings = true)
+
+    val genSrcDirName = jpsModule.sourceRoots
+      .filter {
+        val rootType = it.rootType
+        rootType is JavaSourceRootType && !rootType.isForTests
+      }
+      .filter {
+        val properties = it.properties as JavaSourceRootProperties
+        properties.isForGeneratedSources
+      }
+      .single()
+      .path
+
     return Pair(newEelModule, genSrcDirName)
+  }
+
+  private fun createModuleMirrorImpl(
+    tempProject: Project,
+    projectJdk: Sdk,
+    projectModel: ModifiableModuleModel,
+    jpsModule: JpsModule,
+    alreadyMirroredModules: MutableMap<JpsModule, Module>,
+    alreadyMirroredLibraries: MutableMap<JpsLibrary, Library>,
+  ): Module {
+    // Not sure if it's safe to call `computeIfAbsent` recursively.
+    alreadyMirroredModules[jpsModule]?.let {
+      return it
+    }
+
+    val module = projectModel.newModule(
+      Path.of(tempProject.basePath!!).resolve(".idea/${jpsModule.name}.iml"),
+      JavaModuleType.getModuleType().id
+    )
+    val rootModel = module.rootManager.modifiableModel
+    rootModel.sdk = projectJdk
+    for (sourceRoot in jpsModule.sourceRoots) {
+      when (val rootType = sourceRoot.rootType) {
+        is JavaSourceRootType -> {
+          if (!rootType.isForTests) {
+            val sourceFolder = rootModel.addContentEntry(sourceRoot.url).addSourceFolder(sourceRoot.url, false)
+            val properties = sourceRoot.asTyped().properties as JavaSourceRootProperties
+            sourceFolder.packagePrefix = properties.packagePrefix
+          }
+        }
+      }
+    }
+
+    for (dependencyElement in jpsModule.dependenciesList.dependencies) {
+      when (dependencyElement) {
+        is JpsModuleDependency -> {
+          val depModule = createModuleMirrorImpl(
+            tempProject = tempProject,
+            projectJdk = projectJdk,
+            projectModel = projectModel,
+            jpsModule = dependencyElement.module!!,
+            alreadyMirroredModules = alreadyMirroredModules,
+            alreadyMirroredLibraries = alreadyMirroredLibraries,
+          )
+
+          val exported = dependencyElement.container.getChild(JpsJavaDependencyExtensionRole.INSTANCE).isExported
+          rootModel.addModuleEntries(listOf(depModule), DependencyScope.COMPILE, exported)
+        }
+
+        is JpsLibraryDependency -> {
+          val library = alreadyMirroredLibraries.computeIfAbsent(dependencyElement.library!!) { jpsLibrary ->
+            val tempProjectLibrary = LibraryTablesRegistrar.getInstance().getLibraryTable(tempProject).createLibrary(jpsLibrary.name)
+            val libModel = tempProjectLibrary.modifiableModel
+            for (root in jpsLibrary.getRoots(JpsOrderRootType.COMPILED)) {
+              libModel.addRoot(root.url, OrderRootType.CLASSES)
+            }
+            libModel.commit()
+            tempProjectLibrary
+          }
+          val libraryOrderEntry = rootModel.addLibraryEntry(library)
+
+          libraryOrderEntry.isExported = dependencyElement.container.getChild(JpsJavaDependencyExtensionRole.INSTANCE).isExported
+        }
+      }
+    }
+
+    rootModel.commit()
+    return module
   }
 }
 
@@ -528,6 +573,8 @@ private fun findBuilders(psiFile: PsiFile, methods: MutableList<BuilderRequest>)
             org[.]jetbrains[.]annotations[.]ApiStatus[.](Internal|Experimental|Obsolete|ScheduledForRemoval)
             |
             kotlin[.]Deprecated
+            |
+            com[.]intellij[.]platform[.]util[.]annotations[.]VisibleToClasses
             )
           """.trimIndent(), RegexOption.COMMENTS)
 
@@ -1026,7 +1073,10 @@ private fun PsiElement.getImportableTypes(): Collection<String> {
     override fun visitElement(element: PsiElement) {
       if (element is KtTypeReference) {
         val clsName = analyze(element) {
-          val maybeNestedClass = element.type.takeIf { !it.isPrimitive && !it.isAnyType && !it.isNothingType }?.expandedSymbol?.classId
+          val maybeNestedClass = element.type.takeIf {
+            val classId = it.classId
+            classId !in KaStandardTypeClassIds.PRIMITIVES && classId != KaStandardTypeClassIds.ANY && classId != KaStandardTypeClassIds.NOTHING
+          }?.expandedSymbol?.classId
           val rootClass = generateSequence(maybeNestedClass) { it.outerClassId }.lastOrNull()
           rootClass?.asFqNameString()
         }

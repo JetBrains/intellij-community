@@ -1,14 +1,35 @@
 from .compilers.C.errors import (
     CompileError as CompileError,
-    Error as _Error,
     LibError as LibError,
     LinkError as LinkError,
     PreprocessError as PreprocessError,
-    UnknownFileType as _UnknownFileType,
 )
+from .compilers.errors import Error as _Error, UnknownFileType as _UnknownFileType
 
 CCompilerError = _Error
 UnknownFileError = _UnknownFileType
+
+__all__ = [
+    "CCompilerError",
+    "CompileError",
+    "DistutilsArgError",
+    "DistutilsByteCompileError",
+    "DistutilsClassError",
+    "DistutilsError",
+    "DistutilsExecError",
+    "DistutilsFileError",
+    "DistutilsGetoptError",
+    "DistutilsInternalError",
+    "DistutilsModuleError",
+    "DistutilsOptionError",
+    "DistutilsPlatformError",
+    "DistutilsSetupError",
+    "DistutilsTemplateError",
+    "LibError",
+    "LinkError",
+    "PreprocessError",
+    "UnknownFileError",
+]
 
 class DistutilsError(Exception): ...
 class DistutilsModuleError(DistutilsError): ...

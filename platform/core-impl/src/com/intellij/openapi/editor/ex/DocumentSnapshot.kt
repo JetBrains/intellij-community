@@ -1,143 +1,80 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex
 
-import com.intellij.openapi.editor.impl.modTree.ModificationTree
-import com.intellij.openapi.util.TextRange
-import com.intellij.util.text.ImmutableCharSequence
+import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 
 /**
- * Immutable self-consistent snapshot of document content (text + metadata).
+ * Immutable self-consistent snapshot of the whole document state.
  *
- * Metadata: [modStamp], [modSequence], [isLineModified].
- * The rest -- text.
+ * A snapshot owns the document [text] and the state derived from it that has to stay consistent with the
+ * text across every change -- the sputniks. A document core publishes a new snapshot atomically, so a reader
+ * observes the text and everything derived from it from the same document version.
  *
- * Metadata is used to track the "timeline" of the text.
+ * A `with*` method or [applyOp] returns `this` when it changes nothing, and callers depend on that: a no-op update leaves
+ * the core's snapshot field pointing at the same instance, and caches keyed by snapshot identity, such as the
+ * frozen document of [DocumentCore.frozen], keep hitting. [withMetadata] is the exception -- when the
+ * characters survive it yields the newest snapshot, which is the other one rather than `this`.
+ *
+ * @see DocumentCore.snapshot
+ * @see DocumentSputnik
  */
 @ApiStatus.Internal
 interface DocumentSnapshot {
 
   /**
-   * @see DocumentEx.getImmutableCharSequence
+   * Returns the text of this snapshot
    */
   @Contract(pure = true)
-  fun text(): ImmutableCharSequence
+  fun text(): DocumentText
 
   /**
-   * Same characters as [text], but returns an already-cached [String] (faster `charAt`) when available.
-   * Unlike [string], never forces [String] materialization.
+   * Returns the modification-tracking state of this snapshot
    */
   @Contract(pure = true)
-  fun charSequence(): CharSequence
+  fun modState(): DocumentModState
 
   /**
-   * @see DocumentEx.getText
-   */
-  @Contract(pure = true)
-  fun string(range: TextRange): String
-
-  /**
-   * Pure in visible effects, but discouraged: materializing a [String] copies the whole text (O(n)).
-   * Prefer [text] or [charSequence] when a [CharSequence] is enough.
+   * Returns the sputnik associated with [key], or `null` if there is none.
    *
-   * @see DocumentEx.getText
+   * @see DocumentSputnik
    */
   @Contract(pure = true)
-  fun string(): String
+  fun <S : DocumentSputnik> sputnik(key: Key<S>): S?
 
   /**
-   * @see DocumentEx.getTextLength
-   */
-  @Contract(pure = true)
-  fun textLength(): Int
-
-  /**
-   * Part of the document metadata tracking text timeline
+   * Returns this snapshot with [op] applied: text and mod state reflect [op], and sputniks are rebuilt to
+   * stay consistent with it.
    *
-   * @see DocumentEx.getModificationStamp
+   * @see DocumentSputnik.applyOp
    */
   @Contract(pure = true)
-  fun modStamp(): Long
+  fun applyOp(op: DocumentOp): DocumentSnapshot
 
   /**
-   * Part of the document metadata tracking text timeline.
-   * Always increases from snapshot to snapshot if text is changed.
+   * Returns this snapshot with [ops] applied in order via repeated [applyOp] calls. One logical change can
+   * lower to several ops, so sputniks may be rebuilt more than once; see [DocumentSputnik.applyOp].
+   */
+  @Contract(pure = true)
+  fun applyOps(ops: List<DocumentOp>): DocumentSnapshot {
+    var newSnapshot = this
+    for (op in ops) {
+      newSnapshot = newSnapshot.applyOp(op)
+    }
+    return newSnapshot
+  }
+
+  /**
+   * Returns [metadata] if it still has this snapshot's text, otherwise returns this snapshot unchanged
+   * and drops [metadata] entirely.
    *
-   * @see DocumentEx.getModificationSequence
-   */
-  @Contract(pure = true)
-  fun modSequence(): Int
-
-  /**
-   * @see DocumentEx.getLineCount
-   */
-  @Contract(pure = true)
-  fun lineCount(): Int
-
-  /**
-   * @see DocumentEx.getLineNumber
-   */
-  @Contract(pure = true)
-  fun lineNumber(offset: Int): Int
-
-  /**
-   * @see DocumentEx.getLineStartOffset
-   */
-  @Contract(pure = true)
-  fun lineStartOffset(line: Int): Int
-
-  /**
-   * @see DocumentEx.getLineEndOffset
-   */
-  @Contract(pure = true)
-  fun lineEndOffset(line: Int): Int
-
-  /**
-   * @see DocumentEx.getLineSeparatorLength
-   */
-  @Contract(pure = true)
-  fun lineSeparatorLength(line: Int): Int
-
-  /**
-   * Part of the document metadata tracking text timeline
-   *
-   * @see DocumentEx.isLineModified
-   */
-  @Contract(pure = true)
-  fun isLineModified(line: Int): Boolean
-
-  /**
-   * @see DocumentEx.createLineIterator
-   */
-  @Contract(pure = true)
-  fun lineIterator(): LineIterator
-
-  @Contract(pure = true)
-  fun modTree(): ModificationTree
-
-  @Contract(pure = true)
-  fun dumpState(): String
-
-  /**
-   * Returns snapshot with specified `newModStamp`.
-   *
-   * @param incrementModSeq whether [modSequence] should be incremented
-   */
-  @Contract(pure = true)
-  fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentSnapshot
-
-  /**
-   * Returns snapshot with cleared specified line flags.
-   *
-   * @param endLine is exclusive. Two special values `0` and `Int.MAX_VALUE` ignoring range checks
-   */
-  @Contract(pure = true)
-  fun withClearedLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray): DocumentSnapshot
-
-  /**
-   * Returns snapshot with the same text and metadata from the other snapshot.
-   * This method is used to preserve the semantics of metadata being a tracker of text timeline
+   * This is how a document mutator reconciles the snapshot a change was computed against with whatever
+   * snapshot is current at publish time: a metadata-only update that raced the change -- a modification
+   * stamp set from another thread, say -- shares this snapshot's text, so [metadata] survives and is taken
+   * as a whole, sputniks included. But if [metadata]'s text has already moved on to some other change, it
+   * is talking about a text this snapshot no longer has, so it is discarded wholesale -- stamp, sequence,
+   * and sputniks alike -- rather than mixed with this snapshot's own.
    *
    * @param metadata latest version of the document
    */
@@ -145,22 +82,8 @@ interface DocumentSnapshot {
   fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot
 
   /**
-   * Returns snapshot with specified text and metadata.
-   * [newWholeText] should be consistent with the rest parameters:
-   * `newWholeText == snapshot.text.replace(startOffset, endOffset, newFragment)`.
-   *
-   * In the current implementation it is hard to remove "redundant" [newWholeText]
-   * because [DocumentEx.moveText] precomputes it
+   * Returns a human-readable dump of the snapshot state, used for diagnostics only
    */
   @Contract(pure = true)
-  fun withText(
-    newWholeText: ImmutableCharSequence,
-    startOffset: Int,
-    endOffset: Int,
-    newFragment: CharSequence,
-    newModStamp: Long,
-    wholeTextReplaced: Boolean,
-    clearLineFlags: Boolean,
-    clearModTree: Boolean,
-  ): DocumentSnapshot
+  fun dumpState(): String
 }

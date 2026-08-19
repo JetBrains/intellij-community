@@ -116,7 +116,10 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
   @Override
   public DisplayPriority getPriority() {
     List<Language> primaryIdeLanguages = IdeLanguageCustomization.getInstance().getPrimaryIdeLanguages();
-    return primaryIdeLanguages.contains(getLanguage()) ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
+    Language language = getLanguage();
+    return language != null && primaryIdeLanguages.contains(language)
+           ? DisplayPriority.KEY_LANGUAGE_SETTINGS
+           : DisplayPriority.LANGUAGE_SETTINGS;
   }
 
   /**

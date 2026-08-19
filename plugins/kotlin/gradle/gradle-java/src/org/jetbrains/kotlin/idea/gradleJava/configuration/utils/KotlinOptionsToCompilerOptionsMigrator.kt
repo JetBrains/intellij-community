@@ -55,10 +55,6 @@ fun getReplacementForOldKotlinOptionIfNeeded(binaryExpression: KtBinaryExpressio
     val (optionName, prefixWithCompilerOptions) = getOptionName(leftPartOfBinaryExpression)
         ?: return null
 
-    if (rightPartOfBinaryExpression is KtBinaryExpression && !optionName.contains("freeCompilerArgs")) {
-        return getReplacementOnlyOfKotlinOptionsIfNeeded(binaryExpression)
-    }
-
     val (optionValue, valueContainsMultipleValues) = getOptionValue(rightPartOfBinaryExpression, optionName) ?: return null
 
     val operationToken = binaryExpression.operationToken
@@ -81,23 +77,19 @@ fun getReplacementForOldKotlinOptionIfNeeded(binaryExpression: KtBinaryExpressio
 private fun getOptionValue(expression: KtExpression, optionName: String): Pair<String, Boolean>? {
     val optionValue: String
     val valueContainsMultipleValues: Boolean
-    if (expression is KtBinaryExpression) {
+    if (expression is KtBinaryExpression && optionName == "freeCompilerArgs") {
         if (expression.operationToken != KtTokens.PLUS) {
             return null
         }
-        if (optionName == "freeCompilerArgs") {
-            val leftPart = expression.left ?: return null
-            val rightPart = expression.right ?: return null
-            // The right-hand side of a `+` chain may be a string literal (KtStringTemplateExpression),
-            // a qualified reference (e.g. `project.compilerArgs`), a `listOf(...)` call, or any other
-            // expression. We collect their representations via PSI and later splice them into the generated replacement.
-            val optionValues = getOptionsFromFreeCompilerArgsExpression(leftPart, mutableSetOf(rightPart.text))
-                ?: return null
-            optionValue = StringUtil.join(optionValues.reversed(), ", ")
-            valueContainsMultipleValues = true
-        } else {
-            return null
-        }
+        val leftPart = expression.left ?: return null
+        val rightPart = expression.right ?: return null
+        // The right-hand side of a `+` chain may be a string literal (KtStringTemplateExpression),
+        // a qualified reference (e.g. `project.compilerArgs`), a `listOf(...)` call, or any other
+        // expression. We collect their representations via PSI and later splice them into the generated replacement.
+        val optionValues = getOptionsFromFreeCompilerArgsExpression(leftPart, mutableSetOf(rightPart.text))
+            ?: return null
+        optionValue = StringUtil.join(optionValues.reversed(), ", ")
+        valueContainsMultipleValues = true
     } else {
         optionValue = expression.text
         valueContainsMultipleValues = false

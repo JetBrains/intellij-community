@@ -1,0 +1,44 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ide.index.id.skip.java.sources.in.libs" defaultValue="false"
+                 description="IdIndex skips .java-files in libraries (index .class-files instead)" restartRequired="true"/>
+    <registryKey key="use.jdk.vendor.in.suggested.jdk.name" defaultValue="true" description="Include Vendor name in suggested SDK names"/>
+    <registryKey key="java.additional.external.annotations.root.url" defaultValue=""
+                 description="URL of a zip file or a directory containing additional external annotations which will be applied to all modules and libraries"/>
+    <registryKey key="jdk.configure.existing" defaultValue="false" description="Attempt to add an existing SDK to the SDK table."/>
+    <registryKey key="java.telescope.usages.single.threaded" defaultValue="true"
+                 description="Make Java usage inlays computation single-threaded"/>
+    <registryKey key="java.override.methods.enable.sort.by.overriding.action" defaultValue="false"
+                 description="Enables button in Override Methods dialog to sort methods by the percentage of subclasses that override"/>
+    <registryKey key="injections.java.fragment.editor.new" defaultValue="true" restartRequired="false"
+                 description="Using new optimised JavaInjectedFileChangesHandler when editing code injected to Java in the fragment editor"/>
+    <registryKey key="ide.goto.symbol.include.overrides.on.qualified.patterns" defaultValue="true"
+                 description="Disable deduplication of methods from the same hierarchy if a qualified pattern is used in Goto Symbol"/>
+    <registryKey key="introduce.variable.prefer.statements" defaultValue="false"
+                 description="If true, select the line at caret if there is no selection on the introduced variable; when false expressions chooser would be shown"/>
+    <registryKey key="add.past.participle.to.suggested.names" defaultValue="true"
+                 description="Past participle variants suggested when introducing variables"/>
+    <registryKey key="ide.structural.navigation.visit.fields" defaultValue="false"
+                 description="Whether fields should be stopped at when navigating to the nex/previous structural member by Alt+Down/Up."/>
+    <registryKey key="java.completion.argument.live.template" defaultValue="false"
+                 description="When completing a method call, start a live template with all arguments"/>
+    <registryKey key="java.completion.argument.live.template.completion" defaultValue="false"
+                 description="If java.completion.argument.live.template is enabled, show completion for method arguments immediately"/>
+    <registryKey key="java.completion.show.constructors" defaultValue="false"
+                 description="Show separate constructors when completing constructor call, instead of a single class name"/>
+    <registryKey key="java.javadoc.use.templates" defaultValue="true"
+                 description="Use code templates to generate JavaDoc stubs"/>
+    <registryKey key="java.completion.methods.use.tags"
+                 defaultValue="true"
+                 description="Use additional tags for methods for completion"/>
+    <registryKey key="ide.java.completion.suggest.static.after.instance"
+                 defaultValue="false"
+                 description="Suggest static methods/fields after instance qualifier in Java completion"/>
+    <registryKey key="java.create.compact.source.file.separately"
+                 defaultValue="true"
+                 description="Show 'Create java compact file' separately from all other classes"/>
+    <registryKey key="java.import.with.write.action" defaultValue="false" description="Whether to use WriteAction for import optimization"/>
+    <registryKey defaultValue="false" description="Enable postfix mod completion" key="postfix.template.mod.completion.enabled"/>
+  </extensions>
+</idea-plugin>

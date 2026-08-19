@@ -19,7 +19,7 @@ interface OoParentEntityBuilder : WorkspaceEntityBuilder<OoParentEntity> {
 }
 
 internal object OoParentEntityType : EntityType<OoParentEntity, OoParentEntityBuilder>() {
-  override val entityClass: Class<OoParentEntity> get() = OoParentEntity::class.java
+  override val entityImplClass: Class<*> get() = OoParentEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = OoParentEntityImpl.Builder::class.java
   operator fun invoke(
     parentProperty: String,

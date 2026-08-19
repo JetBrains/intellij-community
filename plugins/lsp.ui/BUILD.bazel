@@ -75,6 +75,7 @@ jvm_library(
 exports_files(
     [
         "intellij.lsp.ui.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

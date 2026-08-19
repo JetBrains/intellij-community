@@ -20,14 +20,11 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiField
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,15 +32,15 @@ import kotlinx.coroutines.withContext
 class ToggleFieldBreakpointAction : AnAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
-    project.service<ToggleFieldBreakpointActionService>().cs.launch {
+    e.coroutineScope.launch {
       val place = getPlace(e) ?: return@launch
       withContext(Dispatchers.EDT) {
-        toggleFieldBreakpoint(project, place, e)
+        toggleFieldBreakpoint(project, place)
       }
     }
   }
 
-  private fun toggleFieldBreakpoint(project: Project, place: SourcePosition, e: AnActionEvent) {
+  private fun toggleFieldBreakpoint(project: Project, place: SourcePosition) {
     val document = place.getFile().getViewProvider().getDocument() ?: return
     val debuggerManager = DebuggerManagerEx.getInstanceEx(project)
     val manager = debuggerManager.getBreakpointManager()
@@ -51,9 +48,7 @@ class ToggleFieldBreakpointAction : AnAction(), ActionRemoteBehaviorSpecificatio
     val breakpoint = if (offset >= 0) manager.findBreakpoint(document, offset, FieldBreakpoint.CATEGORY) else null
 
     if (breakpoint == null) {
-      val fieldBreakpoint = manager.addFieldBreakpoint(document, offset) ?: return
-      val editor = e.getData(CommonDataKeys.EDITOR) ?: return
-      manager.editBreakpoint(fieldBreakpoint, editor)
+      manager.addFieldBreakpoint(document, offset)
     }
     else {
       manager.removeBreakpoint(breakpoint)
@@ -133,6 +128,3 @@ private suspend fun getSourcePositionAsync(
 ): SourcePosition? = withDebugContext(debuggerContext) {
   getSourcePosition(descriptor, debuggerContext.project, debuggerContext)
 }
-
-@Service(Service.Level.PROJECT)
-private class ToggleFieldBreakpointActionService(val cs: CoroutineScope)

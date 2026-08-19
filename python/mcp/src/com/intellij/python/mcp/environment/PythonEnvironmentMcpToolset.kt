@@ -13,26 +13,23 @@ import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.python.hatch.impl.sdk.HatchSdkFlavor
-import com.intellij.python.pyproject.model.api.ModuleCreateInfo
-import com.intellij.python.pyproject.model.api.autoConfigureSdkIfNeeded
-import com.intellij.python.pyproject.model.api.getModuleInfo
+import com.intellij.python.pyproject.model.api.ModuleSdkState
+import com.intellij.python.pyproject.model.api.SdkConfigurationResult
+import com.intellij.python.pyproject.model.api.SdkForModuleConfigInstruction
+import com.intellij.python.pyproject.model.api.configureSdkIfNeeded
+import com.intellij.python.pyproject.model.api.getModuleSdkState
+import com.intellij.python.pyproject.model.api.getPyProjectManager
 import com.jetbrains.python.sdk.PythonEnvironment
-import com.jetbrains.python.sdk.configurePythonSdk
+import com.jetbrains.python.sdk.PythonInterpreter
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
-import com.jetbrains.python.sdk.configuration.createSdk
 import com.jetbrains.python.sdk.findPythonSdk
-import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkFlavor
-import com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavor
-import com.jetbrains.python.sdk.pySdkAdditionalData
+import com.jetbrains.python.sdk.getVersion
 import com.jetbrains.python.sdk.pythonInterpreterAsync
-import com.jetbrains.python.sdk.uv.UvSdkFlavor
-import com.jetbrains.python.sdk.withSdkConfigurationLock
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.serialization.Serializable
+import kotlin.io.path.pathString
 
 const val GET_PYTHON_ENVIRONMENT_TOOL: String = "get_python_environment"
 const val CONFIGURE_PYTHON_INTERPRETER_TOOL: String = "configure_python_interpreter"
@@ -69,7 +66,7 @@ class PythonEnvironmentMcpToolset : McpToolset {
     val sdk = module.findPythonSdk() ?: return GetPythonEnvironmentResult(
       noInterpreterConfigured = buildNoInterpreterMessage(module, filePath)
     )
-    return buildResult(sdk, filePath)
+    return buildResult(sdk.pythonInterpreterAsync(), filePath)
   }
 
   private suspend fun buildNoInterpreterMessage(module: Module, filePath: String): String {
@@ -86,20 +83,26 @@ class PythonEnvironmentMcpToolset : McpToolset {
    * PyCharm has no usable suggestion at all (and no tool to name).
    */
   private suspend fun describeInterpreterSetupHint(module: Module): String? =
-    when (val moduleInfo = module.getModuleInfo()) {
-      is ModuleCreateInfo.CreateSdkInfoWrapper -> when (val createSdkInfo = moduleInfo.createSdkInfo) {
-        is CreateSdkInfo.ExistingEnv ->
-          "PyCharm can attach the existing virtual environment detected for this module — $CONFIGURE_PYTHON_INTERPRETER_SUFFIX"
-        is CreateSdkInfo.WillCreateEnv ->
-          "PyCharm can create a new ${moduleInfo.toolId.id} environment — $CONFIGURE_PYTHON_INTERPRETER_SUFFIX"
-        is CreateSdkInfo.WillInstallTool ->
-          "PyCharm expects this project to use ${createSdkInfo.toolToInstall}, but ${createSdkInfo.toolToInstall} is not installed."
+    when (val moduleInfo = module.getModuleSdkState()) {
+      is ModuleSdkState.HasSdk -> null
+      is ModuleSdkState.NoSdk -> when (val r = moduleInfo.sdkConfigInstruction) {
+        is SdkForModuleConfigInstruction.CreateSdkInfoWrapper -> {
+          when (val createSdkInfo = r.createSdkInfoWithTool.createSdkInfo) {
+            is CreateSdkInfo.ExistingEnv ->
+              "PyCharm can attach the existing virtual environment detected for this module — $CONFIGURE_PYTHON_INTERPRETER_SUFFIX"
+            is CreateSdkInfo.WillCreateEnv ->
+              "PyCharm can create a new ${r.toolId.id} environment — $CONFIGURE_PYTHON_INTERPRETER_SUFFIX"
+            is CreateSdkInfo.WillInstallTool ->
+              "PyCharm expects this project to use ${createSdkInfo.toolToInstall}, but ${createSdkInfo.toolToInstall} is not installed."
+          }
+        }
+        is SdkForModuleConfigInstruction.SameAs -> {
+          if (r.parentModule.findPythonSdk() != null)
+            "PyCharm can inherit the interpreter from parent module '${r.parentModule.name}' — $CONFIGURE_PYTHON_INTERPRETER_SUFFIX"
+          else null
+        }
+        null -> null
       }
-      is ModuleCreateInfo.SameAs ->
-        if (moduleInfo.parentModule.findPythonSdk() != null)
-          "PyCharm can inherit the interpreter from parent module '${moduleInfo.parentModule.name}' — $CONFIGURE_PYTHON_INTERPRETER_SUFFIX"
-        else null
-      null -> null
     }
 
   @McpTool(name = CONFIGURE_PYTHON_INTERPRETER_TOOL)
@@ -119,58 +122,32 @@ class PythonEnvironmentMcpToolset : McpToolset {
   ): GetPythonEnvironmentResult {
     val project = currentCoroutineContext().project
     val module = resolveModule(project, filePath)
-
-    module.autoConfigureSdkIfNeeded()?.let { result ->
-      val sdk = result.getOr { failure ->
-        throw McpExpectedError("Failed to configure Python interpreter for '$filePath': ${failure.error.message}")
+    val pythonInterpreter = when (val r = module.configureSdkIfNeeded()) {
+      null -> throw McpExpectedError(
+        "PyCharm has no interpreter suggestion for '$filePath'. " +
+        "Create a virtual environment manually (e.g. 'python -m venv .venv' or 'uv venv' if uv is installed) " +
+        "and re-call configure_python_interpreter to attach it.")
+      is SdkConfigurationResult.Configured -> r.sdk
+      is SdkConfigurationResult.NotConfigured -> {
+        throw McpExpectedError("Failed to configure Python interpreter for '$filePath': ${r.reason.message}")
       }
-      return buildResult(sdk, filePath)
-    }
-
-    val sdk = withSdkConfigurationLock(project) {
-      module.findPythonSdk()?.let { return@withSdkConfigurationLock it }
-
-      val moduleInfo = module.getModuleInfo()
-                       ?: throw McpExpectedError(
-                         "PyCharm has no interpreter suggestion for '$filePath'. " +
-                         "Create a virtual environment manually (e.g. 'python -m venv .venv' or 'uv venv' if uv is installed) " +
-                         "and re-call configure_python_interpreter to attach it.")
-
-      val createSdkInfo = when (moduleInfo) {
-        is ModuleCreateInfo.CreateSdkInfoWrapper -> moduleInfo.createSdkInfo
-        is ModuleCreateInfo.SameAs -> {
-          val parentSdk = moduleInfo.parentModule.findPythonSdk()
-          if (parentSdk != null) {
-            configurePythonSdk(project, module, parentSdk)
-            return@withSdkConfigurationLock parentSdk
-          }
-          throw McpExpectedError(
-            "'$filePath' is in a module that inherits its interpreter from '${moduleInfo.parentModule.name}', " +
-            "which is not yet configured. Configure the parent module first by calling configure_python_interpreter " +
-            "on a file inside '${moduleInfo.parentModule.name}'.")
-        }
+      is SdkConfigurationResult.ParentHasNoSdk -> {
+        val parentModuleName = r.parentModule.name
+        throw McpExpectedError(
+          "'$filePath' is in a module that inherits its interpreter from '$parentModuleName', " +
+          "which is not yet configured. Configure the parent module first by calling configure_python_interpreter " +
+          "on a file inside '$parentModuleName'.")
       }
-
-      when (createSdkInfo) {
-        is CreateSdkInfo.ExistingEnv, is CreateSdkInfo.WillCreateEnv -> {
-          val newSdk = createSdkInfo.createSdk(module).getOr { failure ->
-            throw McpExpectedError("Failed to configure Python interpreter for '$filePath': ${failure.error.message}")
-          }
-          configurePythonSdk(project, module, newSdk)
-          newSdk
-        }
-        is CreateSdkInfo.WillInstallTool -> {
-          val tool = createSdkInfo.toolToInstall
-          throw McpExpectedError(
-            "PyCharm needs to install '$tool' before it can configure an interpreter for '$filePath'. " +
-            "This MCP tool does not install env-management tools. Install '$tool' manually " +
-            "(e.g. 'brew install $tool', 'pipx install $tool', or 'pip install --user $tool') " +
-            "and then re-call configure_python_interpreter.")
-        }
+      is SdkConfigurationResult.ToolNotInstalled -> {
+        val tool = r.tool.toolToInstall
+        throw McpExpectedError(
+          "PyCharm needs to install '${r.tool.toolToInstall}' before it can configure an interpreter for '$filePath'. " +
+          "This MCP tool does not install env-management tools. Install '$tool' manually " +
+          "(e.g. 'brew install $tool', 'pipx install $tool', or 'pip install --user $tool') " +
+          "and then re-call configure_python_interpreter.")
       }
-    }
-
-    return buildResult(sdk, filePath)
+    }.pythonInterpreterAsync()
+    return buildResult(pythonInterpreter, filePath)
   }
 
   private suspend fun resolveModule(project: Project, filePath: String): Module {
@@ -182,59 +159,36 @@ class PythonEnvironmentMcpToolset : McpToolset {
     } ?: throw McpExpectedError("File is not part of any module: $filePath")
   }
 
-  private suspend fun buildResult(sdk: Sdk, filePath: String): GetPythonEnvironmentResult {
-    val interpreter = sdk.pythonInterpreterAsync()
+  private suspend fun buildResult(interpreter: PythonInterpreter, filePath: String): GetPythonEnvironmentResult {
     val env = interpreter.pythonEnvironment
+              ?: throw McpExpectedError("$filePath is broken")
 
     val environmentType = when (env) {
       is PythonEnvironment.Venv -> "venv"
       is PythonEnvironment.Conda -> "conda"
       is PythonEnvironment.SystemPython -> "system"
-      null -> "unknown"
     }
-
-    val executablePath = env?.pythonBinaryPath?.toString() ?: sdk.homePath
-                         ?: throw McpExpectedError("Cannot determine Python executable path for: $filePath")
 
     val environmentPath = when (env) {
-      is PythonEnvironment.Venv -> env.pythonHomePath.toString()
-      is PythonEnvironment.Conda -> env.pythonHomePath.toString()
-      else -> null
+      is PythonEnvironment.Conda, is PythonEnvironment.Venv -> env.pythonHomePath
+      is PythonEnvironment.SystemPython -> null
     }
 
-    val packageManager = detectPackageManager(sdk, env)
+
+    val packageManager = interpreter.getPyProjectManager().id.id
 
     return GetPythonEnvironmentResult(
-      pythonVersion = sdk.versionString ?: "unknown",
+      pythonVersion = interpreter.getVersion().successOrNull?.toString()?.let { "Python $it" } ?: "unknown",
       environmentType = environmentType,
-      executablePath = executablePath,
-      environmentPath = environmentPath,
+      executablePath = env.pythonBinaryPath.pathString,
+      environmentPath = environmentPath?.pathString,
       packageManager = packageManager,
     )
   }
 
-  /**
-   * Picks the package manager that matches PyCharm's view of the SDK first (via the SDK additional data,
-   * which is how PyCharm distinguishes poetry/hatch/uv envs from a plain venv on disk), then falls back to
-   * inspecting the detected [PythonEnvironment] for SDKs not registered with one of those additional-data types.
-   */
-  private fun detectPackageManager(sdk: Sdk, env: PythonEnvironment?): String =
-    // TODO: Still not nice, but at least it will detect remote interpreters properly
-    when (sdk.pySdkAdditionalData.flavor) {
-        PyPoetrySdkFlavor -> "poetry"
-        HatchSdkFlavor -> "hatch"
-        PyPipEnvSdkFlavor -> "pipenv"
-        UvSdkFlavor -> "uv"
-        else -> when (env) {
-          is PythonEnvironment.Conda -> "conda"
-          is PythonEnvironment.Venv -> if (env.config.containsKey("uv")) "uv" else "pip"
-          is PythonEnvironment.SystemPython, null -> "unknown"
-        }
-    }
-
   @Serializable
   data class GetPythonEnvironmentResult(
-    @property:McpDescription("Interpreter version string, e.g. 'Python 3.11.4'; null when no interpreter is configured")
+    @property:McpDescription("Interpreter version, e.g. '3.11.4'; null when no interpreter is configured")
     val pythonVersion: String? = null,
     @property:McpDescription("'venv', 'conda', 'system', or 'unknown'; null when no interpreter is configured")
     val environmentType: String? = null,

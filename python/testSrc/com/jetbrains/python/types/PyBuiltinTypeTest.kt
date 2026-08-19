@@ -26,40 +26,59 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
     fun `open default mode`() = test("""
       expr = open('foo')
       # └ TYPE TextIOWrapper[_WrappedBuffer]
-      """)
+      """.trimIndent())
 
     @Test
     fun `open text mode`() = test("""
       expr = open('foo', 'r')
       # └ TYPE TextIOWrapper[_WrappedBuffer]
-      """)
+      """.trimIndent())
 
     @Test
     fun `open binary mode`() = test("""
       expr = open('foo', 'rb')
       #└ TYPE BufferedReader[_BufferedReaderStream]
-      """)
+      """.trimIndent())
 
     @Test
     fun `io open default mode`() = test("""
       import io
       expr = io.open('foo')
       # └ TYPE TextIOWrapper[_WrappedBuffer]
-      """)
+      """.trimIndent())
 
     @Test
     fun `io open text mode`() = test("""
       import io
       expr = io.open('foo', 'r')
       #└ TYPE TextIOWrapper[_WrappedBuffer]
-      """)
+      """.trimIndent())
 
     @Test
     fun `io open binary mode`() = test("""
       import io
       expr = io.open('foo', 'rb')
       #└ TYPE BufferedReader[_BufferedReaderStream]
-      """)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-7757"])
+    fun `open read 2k`() = test("""
+      def f(s):
+          '''
+          :type s: str
+          '''
+          pass
+
+      def g(s):
+          '''
+          :type s: int
+          '''
+
+      f(open('foo').read()) # pass
+      g(open('foo').read())
+      # ^^^^^^^^^^^^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -69,7 +88,8 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
     fun `input result`() = test("""
       expr = input()
       #└ TYPE str
-      """)
+      """.trimIndent())
+
   }
 
   @Nested
@@ -78,20 +98,20 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
     fun `min result`() = test("""
       expr = min(1, 2, 3)
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `max result`() = test("""
       expr = max(1, 2, 3)
       # └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-21692"])
     fun `sum result`() = test("""
       expr = sum([1, 2, 3])
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-20757"])
@@ -103,7 +123,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
               return None
       expr = get_value([])
       #└ TYPE SupportsDunderLT[Any] | SupportsDunderGT[Any] | None
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -113,42 +133,42 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
     fun `round of int without ndigits`() = test("""
       expr = round(1)
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-13750"])
     fun `round of int with ndigits`() = test("""
       expr = round(1, 1)
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-13750"])
     fun `round of float without ndigits`() = test("""
       expr = round(1.1)
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-13750"])
     fun `round of float with ndigits`() = test("""
       expr = round(1.1, 1)
       #└ TYPE float | int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-13750"])
     fun `round of bool without ndigits`() = test("""
       expr = round(True)
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-13750"])
     fun `round of bool with ndigits`() = test("""
       expr = round(True, 1)
       #└ TYPE int
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -158,7 +178,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
     fun `float fromhex`() = test("""
       expr = float.fromhex("0.5")
       #└ TYPE float
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -168,33 +188,47 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
     fun `bytes literal`() = test("""
       expr = b'foo'
       #└ TYPE bytes
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-29665"])
     fun `raw bytes literal rb`() = test("""
       expr = rb'raw bytes'
       #└ TYPE bytes
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-29665"])
     fun `raw bytes literal br`() = test("""
       expr = br'raw bytes'
       #└ TYPE bytes
-      """)
+      """.trimIndent())
 
     @Test
     fun `f-string literal type`() = test("""
       expr = f'foo'
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     fun `list literal of class object`() = test("""
       expr = [float]
       #└ TYPE list[type[float]]
-      """)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-10095"])
+    fun `string starts with`() = test("""
+      'foo'.startswith('bar')
+      'foo'.startswith(('bar', 'baz'))
+      'foo'.startswith(2)
+      #                └ WARNING Expected type 'str | tuple[str, ...]', got 'Literal[2]' instead
+
+      u'foo'.startswith(u'bar')
+      u'foo'.startswith((u'bar', u'baz'))
+      u'foo'.startswith(2)
+      #                 └ WARNING Expected type 'str | tuple[str, ...]', got 'Literal[2]' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -204,8 +238,21 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       from collections import defaultdict
       expr = defaultdict(dict)
       #└ TYPE defaultdict[Unknown, dict]
-      """,
-    )
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-19884"])
+    fun `abs set and mutable set`() = test("""
+      def f(xs, ys):
+          '''
+          :type xs: collections.Set[int]
+          :type ys: collections.MutableSet[int]
+          '''
+          pass
+
+      items = {4, 5}
+      f({1, 2, 3}, items)
+      """.trimIndent())
   }
 
   @Nested
@@ -216,7 +263,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       d = {}
       expr = d.get("abc", None)
       #└ TYPE Unknown | None
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-82818"])
@@ -224,7 +271,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       d = {}
       expr = d.pop("abc", None)
       #└ TYPE Unknown
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-83704"])
@@ -232,7 +279,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       d: dict[str, int] = {"abc": 0, "1": 1}
       expr = d.pop("abc", None)
       #└ TYPE int | None
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-83704"])
@@ -241,7 +288,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       d: dict[str, Any] = {"abc": "s", "1": 1}
       expr = d.pop("abc", None)
       #└ TYPE Any
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -250,7 +297,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
     fun `type from method call comment`() = test("""
       expr = ''.capitalize()
       #└ TYPE LiteralString
-      """)
+      """.trimIndent())
 
     @Test
     fun `rest param type`() = test("""
@@ -258,7 +305,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
         ''':param integer limit: maximum number of stack frames to show'''
         expr = limit
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-3849"])
@@ -268,7 +315,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
         ''':param :class:`Foo` limit: maximum number of stack frames to show'''
         expr = limit
       #   └ TYPE Foo
-      """)
+      """.trimIndent())
 
     @Test
     fun `rest ivar type`() = test("""
@@ -277,7 +324,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           ''':type var: str'''
           expr = var
       #   └ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-6584"])
@@ -290,7 +337,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       expr = C.foo
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-6584"])
@@ -303,7 +350,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       expr = C().foo
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-6584"])
@@ -318,7 +365,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       def f(x):
           expr = C(x).foo
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-8953"])
@@ -330,7 +377,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
               '''
               expr = self
       #       └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-7322"])
@@ -343,7 +390,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           '''
           expr = point
       #   └ TYPE Point
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-4813"])
@@ -360,7 +407,33 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           def test(self, param):
               expr = param
       #       └ TYPE int
-      """)
+      """.trimIndent())
+
+    @Test
+    fun simple() = test("""
+      def f1(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10=10, p11='11'):
+          '''
+          :type p1: integer
+          :type p2: integer
+          :type p3: float
+          :type p4: float
+          :type p5: int
+          :type p6: integer
+          :type p7: integer
+          :type p8: int
+          :type p9: int
+          :type p10: int
+          :type p11: string
+          '''
+          return p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + p10 + int(p11)
+
+      def test():
+          p7 = int('7')
+          f1(1, '2', 3.0, 4, 5, int('6'), p7, p8=-8, p9='foo', p10='foo')
+      #         │                                    │         ^^^^^^^^^ WARNING Expected type 'int', got 'Literal["foo"]' instead
+      #         │                                    ^^^^^^^^ WARNING Expected type 'int', got 'Literal["foo"]' instead
+      #         ^^^ WARNING Expected type 'int', got 'Literal["2"]' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -372,7 +445,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           ''''''
           expr = param
       #   └ TYPE Unknown
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-24923"])
@@ -382,7 +455,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           def __init__(self, param):
               expr = param
       #       └ TYPE Unknown
-      """)
+      """.trimIndent())
 
     @Test
     fun `no type in google docstring param annotation`() = test("""
@@ -393,7 +466,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           '''    
           expr = x
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-16987"])
@@ -405,7 +478,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           '''    
           expr = x
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-16987"])
@@ -419,7 +492,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           '''
           expr = x
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-17010"])
@@ -431,7 +504,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           '''
       expr = func()
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-17010"])
@@ -443,7 +516,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           '''
           expr = x
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `async function return type in docstring`() = test("""
@@ -454,7 +527,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           pass
       expr = f()
       #└ TYPE CoroutineType[Unknown, Unknown, int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-27518"])
@@ -471,7 +544,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           pass
       expr = f()
       #└ TYPE CoroutineType[Unknown, Unknown, int]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -484,7 +557,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE MyClass
       
       class MyClass: ...
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -497,7 +570,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           return 0
       expr = example.__doc__
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     // For a class object, __class__ points to its metaclass, not an attribute defined on C itself.
     // Here C is an instance of type[C], so C.__class__ has type type[C].
@@ -507,7 +580,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           pass
       expr = C.__class__
       #└ TYPE type[C]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -516,43 +589,43 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
     fun `binary expr int`() = test("""
       expr = 1 + 2
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `binary expr str`() = test("""
       expr = '1' + '2'
       #└ TYPE LiteralString
-      """)
+      """.trimIndent())
 
     @Test
     fun `binary expr str format`() = test("""
       expr = '%s' % ('a')
       #└ TYPE LiteralString
-      """)
+      """.trimIndent())
 
     @Test
     fun `binary expr list`() = test("""
       expr = [1] + [2]
       #└ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `unary expr type`() = test("""
       expr = -1
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `logical and expression`() = test("""
       expr = 'foo' and 2
       #└ TYPE Literal["foo", 2]
-      """)
+      """.trimIndent())
 
     @Test
     fun `logical not expression`() = test("""
       expr = not 'hello'
       #└ TYPE bool
-      """)
+      """.trimIndent())
 
     @Test
     fun `bitwise or operator overload`() = test("""
@@ -561,7 +634,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       expr = A() | A()
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `bitwise or operator overload returning union of metaclass`() = test("""
@@ -574,7 +647,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       expr = Foo | None
       #└ TYPE UnionType | Self
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71748"])
@@ -583,15 +656,17 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       class A:
         def __eq__(self, other: Any) -> int: ...
+      #                                 ^^^ WARNING Return type of method 'A.__eq__()' does not match return type the base method in class 'object'
       
       class B:
         def __eq__(self, other: Any) -> str: ...
+      #                                 ^^^ WARNING Return type of method 'B.__eq__()' does not match return type the base method in class 'object'
       
       a = A()
       b = B()
       expr = a == b
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71748"])
@@ -600,15 +675,17 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       class A:
         def __ne__(self, other: Any) -> int: ...
+      #                                 ^^^ WARNING Return type of method 'A.__ne__()' does not match return type the base method in class 'object'
       
       class B:
         def __ne__(self, other: Any) -> str: ...
+      #                                 ^^^ WARNING Return type of method 'B.__ne__()' does not match return type the base method in class 'object'
       
       a = A()
       b = B()
       expr = a != b
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -621,7 +698,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       expr = A() + B()
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -634,7 +711,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       expr = E() + F()
       #└ TYPE bool
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -647,7 +724,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       expr = D1() / D2()
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -661,7 +738,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       x: A | B = A()
       expr = x + 1
       #└ TYPE float | int | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -671,7 +748,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       expr = A() - 1
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -684,7 +761,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       expr = A() * B()
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -697,7 +774,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       expr = A() + B()
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -710,7 +787,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       expr = A() * B()
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -726,7 +803,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       expr = Sub() + Right()
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -739,7 +816,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       expr = A() + B()
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -755,7 +832,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       expr = A() + B()
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -775,7 +852,154 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       x: B1 | B2 = B1()
       expr = A() + x
       #└ TYPE str
-      """)
+      """.trimIndent())
+
+    @Test
+    fun `builtin numeric`() = test("""
+      def test():
+          abs(False)
+          int(10)
+          long(False)
+      #   ^^^^ ERROR Unresolved reference 'long'
+          float(False)
+          complex(False)
+          divmod(False, False)
+          divmod('foo', u'bar')
+      #         ^^^^^^^^^^^^^^^ WARNING No overload of 'divmod' matches the arguments. Argument types: (Literal["foo"], Literal["bar"]). Expected one of: (x: SupportsDivMod[_T_contra, _T_co], y: str), (x: str, y: SupportsRDivMod[str, _T_co])
+          pow(False, True)
+          round(False, 'foo')
+      #        ^^^^^^^^^^^^^^ WARNING No overload of 'round' matches the arguments. Argument types: (Literal[False], Literal["foo"]). Expected one of: (number: _SupportsRound1[int], ndigits: None), (number: _SupportsRound2[int], ndigits: SupportsIndex)
+      """.trimIndent())
+
+    @Test
+    fun `comparison operators`() = test("""
+      def test():
+          def f(x):
+              '''
+              :type x: str
+              '''
+              pass
+          class C(object):
+              def __gt__(self, other):
+                  return []
+          o = object()
+          c = C()
+          f(1 < 2)
+      #     ^^^^^ WARNING Expected type 'str', got 'bool' instead
+          f(o == o)
+      #     ^^^^^^ WARNING Expected type 'str', got 'bool' instead
+          f(o >= o)
+          f('foo' > 'bar')
+      #     ^^^^^^^^^^^^^ WARNING Expected type 'str', got 'bool' instead
+          f(c < 1)
+      #     └ WARNING Expected type 'int', got 'C' instead
+      #     ^^^^^ WARNING Expected type 'str', got 'bool' instead
+          f(c > 1)
+      #     ^^^^^ WARNING Expected type 'str', got 'list[Unknown]' instead
+          f(c == 1)
+      #     ^^^^^^ WARNING Expected type 'str', got 'bool' instead
+          f(c in [1, 2, 3])
+      #     ^^^^^^^^^^^^^^ WARNING Expected type 'str', got 'bool' instead
+      """.trimIndent())
+
+    @Test
+    fun `right operators`() = test("""
+      class C(object):
+          pass
+
+      def test_right_operators():
+          o = C()
+          xs = [ o * [], ]
+      #          └ WARNING Expected type 'SupportsIndex', got 'C' instead
+      """.trimIndent())
+
+    @Test
+    fun `string integer`() = test("""
+      def test():
+          print('foo' + 'bar')
+          print(2 + 3)
+          print('foo' + 3)
+      #                 └ WARNING No overload of '__add__' matches the arguments. Argument types: (Literal[3]). Expected one of: (value: LiteralString), (value: str)
+          print(3 + 'foo')
+      #             ^^^^^ WARNING Expected type 'int', got 'Literal["foo"]' instead
+          print(3 + 3.14)
+          print('foo' + 'bar' * 3)
+          print('foo' + 3 * 'bar')
+          print('foo' + 2 * 3)
+      #                 ^^^^^ WARNING No overload of '__add__' matches the arguments. Argument types: (int). Expected one of: (value: LiteralString), (value: str)
+      """.trimIndent())
+
+    @Test
+    fun `comparison operators for numeric types`() = test("""
+      def f(x):
+          print(x < 0, x <= 0, x > 0, x >= 0, x != 0)
+          print(x.foo)
+
+      print(f(True))
+      #       ^^^^ WARNING Type 'Literal[True]' doesn't have expected attribute 'foo'
+      print(f(0))
+      #       └ WARNING Type 'Literal[0]' doesn't have expected attribute 'foo'
+      print(f(3.14))
+      #       ^^^^ WARNING Type 'float' doesn't have expected attribute 'foo'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-23367"])
+    fun `comparing float and int`() = test("""
+      result = 0 > 0.0
+      result2 = 0 < 0.0
+
+      result3 = 0.0 > 0
+      result4 = 0.0 < 0
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-9662"])
+    fun `binary expression with unknown operand`() = test("""
+      from typing import Any
+
+      def f(x: Any) -> str:
+          return x * 2
+
+      def f(x: Any) -> str:
+          return 2 * x
+
+      def f(x) -> str:
+          return x * 2
+
+      def f(x) -> str:
+          return 2 * x
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-32205"])
+    fun `right shift operator accepts matching argument`() = test("""
+      class Bin:
+          def __rshift__(self, other: int):
+              pass
+
+      Bin() >> 1
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-13394"])
+    fun `contains arguments`() = test("""
+      class C(object):
+          def __contains__(self, item):
+              '''
+              :type item: int
+              '''
+              return False
+
+      def test():
+          c = C()
+          i = 10
+          s = 'string'
+          c in i
+          i in c
+          s in c
+      #   └ WARNING Expected type 'int', got 'Literal["string"]' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -790,7 +1014,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       m += 1
       expr = m
       #└ TYPE MutableContainer
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -805,7 +1029,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       m += 1
       expr = m
       #└ TYPE MutableContainer
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -818,7 +1042,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       d += 1
       expr = d
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -831,7 +1055,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       a += 4
       expr = a
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -847,7 +1071,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       n += RightOperand()
       expr = n
       #└ TYPE float | int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -862,7 +1086,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       ia += 5
       expr = ia
       #└ TYPE float | int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -871,7 +1095,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       x += 1
       expr = x
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -881,7 +1105,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       #^^^^^^^ WARNING Expected type 'int' for augmented assignment, got 'float | int' from operation instead
       expr = y
       #└ TYPE float | int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -890,7 +1114,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       lst += [3, 4]
       expr = lst
       #└ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -899,7 +1123,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       s += " world"
       expr = s
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -912,7 +1136,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       ml += [1, 2, 3]
       expr = ml
       #└ TYPE MyList[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -926,13 +1150,12 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           acc += i
       expr = acc
       #└ TYPE Accumulator
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
-    fun `augmented assignment type changes in loop`() = test(
-      TestOptions(enableWeakWarnings = false),
-      """
+    @TestCaseOptions(enableWeakWarnings = false)
+    fun `augmented assignment type changes in loop`() = test("""
       class Counter:
           def __add__(self, other: int) -> int:
               return 0
@@ -944,7 +1167,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
               break
       expr = c
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -957,7 +1180,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       sub -= 1
       expr = sub
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -970,7 +1193,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       mul *= 3
       expr = mul
       #└ TYPE float | int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -983,7 +1206,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       div /= 2
       expr = div
       #└ TYPE complex | float | int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -1000,7 +1223,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       b += 1
       expr = b
       #└ TYPE Base
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -1013,7 +1236,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       bad += 1
       expr = bad
       #└ TYPE None
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -1028,13 +1251,12 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       p += 1
       expr = p
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
-    fun `augmented assignment union iadd and add`() = test(
-      TestOptions(enableWeakWarnings = false),
-      """
+    @TestCaseOptions(enableWeakWarnings = false)
+    fun `augmented assignment union iadd and add`() = test("""
       class P:
           def __iadd__(self, other: int) -> P: ...
 
@@ -1046,7 +1268,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       #^^^^^ WARNING Expected type 'P | Q' for augmented assignment, got 'P | str' from operation instead
       expr = u
       #└ TYPE P | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -1062,13 +1284,12 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       #^^^^^ WARNING Expected type 'A | B' for augmented assignment, got 'str | bool' from operation instead
       expr = x
       #└ TYPE str | bool
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
-    fun `augmented assignment union sub operator`() = test(
-      TestOptions(enableWeakWarnings = false),
-      """
+    @TestCaseOptions(enableWeakWarnings = false)
+    fun `augmented assignment union sub operator`() = test("""
       class A:
           def __isub__(self, other: int) -> int: ...
 
@@ -1080,7 +1301,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       #^^^^^ WARNING Expected type 'A | B' for augmented assignment, got 'int | str' from operation instead
       expr = x
       #└ TYPE int | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -1098,7 +1319,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       #^^^^^ WARNING Expected type 'A | B' for augmented assignment, got 'str | bool' from operation instead
       expr = x
       #└ TYPE str | bool
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -1118,18 +1339,45 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       x += Operand()
       expr = x
       #└ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-80622"])
+    fun `augmented assignment radd defined but iadd missing on target`() = test("""
+      class A: pass
+      class B:
+          def __radd__(self, other: A) -> str: ...
+
+      a = A()
+      a += B()
+
+      b = B()
+      b += A() # WARNING Class 'B' does not define '__iadd__', so the '+=' operator cannot be used on its instances
       """)
+
+    @Test
+    @TestFor(issues = ["PY-80622"])
+    fun `augmented assignment iadd not defined on class`() = test("""
+      class A: pass
+
+      a = A()
+      a += a # WARNING Class 'A' does not define '__iadd__', so the '+=' operator cannot be used on its instances
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-6925"])
+    fun `assigned operator`() = test("""
+      def f(x):
+          return x
+
+      class C(object):
+          __div__, __rdiv__ = f(0)
+
+      c = C()
+      print(c / 2)
+      #     └ WARNING Expected type 'int', got 'C' instead
+      """.trimIndent())
   }
-
-  @Test
-  @TestFor(issues = ["PY-32205"])
-  fun `right shift operator accepts matching argument`() = test("""
-    class Bin:
-        def __rshift__(self, other: int):
-            pass
-
-    Bin() >> 1
-    """)
 
   @Test
   @TestFor(issues = ["PY-7757"])
@@ -1142,5 +1390,5 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
 
     f(open('foo').read())
     g(open('foo').read()) # WARNING Expected type 'int', got 'str' instead
-    """)
+    """.trimIndent())
 }

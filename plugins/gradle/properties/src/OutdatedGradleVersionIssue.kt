@@ -41,7 +41,7 @@ class OutdatedGradleVersionIssue(
       latestVersion.version
     ))
 
-    addGradleVersionQuickFix(projectPath, latestVersion)
+    addGradleWrapperVersionQuickFix(projectPath, latestVersion)
 
     setNavigatable(::gradleWrapperPropertiesNavigatable)
   }

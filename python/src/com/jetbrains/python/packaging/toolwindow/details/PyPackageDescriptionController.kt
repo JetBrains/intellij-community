@@ -103,7 +103,11 @@ internal class PyPackageDescriptionController(
 
   private val installActionButton = JBOptionButton(null, emptyArray())
 
-  private val installAction = wrapAction(message("action.PyInstallPackage.text"), message("progress.text.installing")) {
+  private val installAction = wrapAction(
+    message("action.PyInstallPackage.text"),
+    message("progress.text.installing"),
+    installKey = { selectedPackage.get()?.name?.let { PyPackagingToolWindowService.packageKey(it) } },
+  ) {
     val details = selectedPackageDetails.get() ?: return@wrapAction
     val version = versionSelector.text.takeIf { it != latestText }
     val specification = details.toPackageSpecification(version) ?: return@wrapAction
@@ -119,6 +123,14 @@ internal class PyPackageDescriptionController(
   private var versionSelectorMouseListener: MouseAdapter? = null
 
   private val progressEnabledProperty = AtomicBooleanProperty(false)
+
+  /**
+   * Mirrors the shared active-installations set ([PyPackagingToolWindowService]) for the currently
+   * selected package, so an install started elsewhere (tree link, install dialog) also disables the
+   * install button and version selector here (PY-91529). Recomputed from an install-state listener
+   * and whenever the selection changes.
+   */
+  private val sharedInstallingProperty = AtomicBooleanProperty(false)
 
   private val progressIndicatorComponent = JPanel()
 
@@ -199,7 +211,7 @@ internal class PyPackageDescriptionController(
         versionSelector.text = it
       }
       val comboBox = cell(versionSelector)
-      comboBox.enabledIf(isManagement.and(progressEnabledProperty.not())).gap(RightGap.SMALL)
+      comboBox.enabledIf(isManagement.and(progressEnabledProperty.not()).and(sharedInstallingProperty.not())).gap(RightGap.SMALL)
       // Editable installs (``pip install -e .``) are managed from outside the package list — the
       // user edits the source directory directly, and there is no upstream version to switch to.
       // Surfacing the dropdown for them would imply a fake "latest" version is selectable.
@@ -221,6 +233,7 @@ internal class PyPackageDescriptionController(
       installActionButton.action = installAction
       installActionButton.options = emptyArray()
       cell(installActionButton).visibleIf(selectedPackage.transform { it is InstallablePackage }.and(isManagement).and(progressEnabledProperty.not()))
+        .enabledIf(sharedInstallingProperty.not())
         .gap(RightGap.SMALL)
 
       button(message("action.PyDeletePackage.text")) {
@@ -235,7 +248,7 @@ internal class PyPackageDescriptionController(
 
   private val component = PyPackagesUiComponents.borderPanel {
     add(PyPackagesUiComponents.borderPanel {
-      border = SideBorder(JBColor.GRAY, SideBorder.BOTTOM)
+      border = SideBorder(JBColor.border(), SideBorder.BOTTOM)
       leftPanel.border = BorderFactory.createEmptyBorder(0, 10, 0, 0)
       rightPanel.border = BorderFactory.createEmptyBorder(0, 0, 0, 10)
 
@@ -311,21 +324,32 @@ internal class PyPackageDescriptionController(
     if (selectedPackage.get() !is InstalledPackage)
       return
 
-    wrapInvokeOp(message("progress.text.installing")) {
+    wrapInvokeOp(
+      message("progress.text.installing"),
+      installKey = selectedPackage.get()?.name?.let { PyPackagingToolWindowService.packageKey(it) },
+    ) {
       updatePackageVersion(selectedValue)
     }
   }
 
   private fun calculateVersionText() = (selectedPackage.get() as? InstalledPackage)?.currentVersion?.presentableText ?: latestText
 
-  private fun wrapAction(@Nls text: String, @Nls progressText: String, actionPerformed: suspend () -> Unit): Action = object : AbstractAction(text) {
+  private fun wrapAction(@Nls text: String, @Nls progressText: String, installKey: (() -> String?)? = null, actionPerformed: suspend () -> Unit): Action = object : AbstractAction(text) {
     override fun actionPerformed(e: ActionEvent) {
-      wrapInvokeOp(progressText, actionPerformed)
+      wrapInvokeOp(progressText, installKey?.invoke(), actionPerformed)
     }
   }
 
-  private fun wrapInvokeOp(@Nls progressText: String, actionPerformed: suspend () -> Unit) {
+  /**
+   * [installKey] — when non-null, records the operation in the shared active-installations map for
+   * its whole duration (PY-91529) so the tree link and the install dialog also reflect it. Left
+   * null for non-install ops (e.g. uninstall).
+   */
+  private fun wrapInvokeOp(@Nls progressText: String, installKey: String? = null, actionPerformed: suspend () -> Unit) {
     progressEnabledProperty.set(true)
+    // Capture the SDK now so mark/unmark target the same interpreter even if the selection changes.
+    val installSdk = service.currentSdk
+    if (installKey != null && installSdk != null) service.markInstalling(installSdk, installKey)
     val progressIndicator = OneLineProgressIndicator(true, true)
     progressIndicator.text = progressText
     progressIndicatorComponent.removeAll()
@@ -339,6 +363,7 @@ internal class PyPackageDescriptionController(
       finally {
         withContext(Dispatchers.EDT) {
           progressEnabledProperty.set(false)
+          if (installKey != null && installSdk != null) service.unmarkInstalling(installSdk, installKey)
           selectedPackage.set(null)
           onActionCompleted?.invoke()
         }
@@ -349,6 +374,19 @@ internal class PyPackageDescriptionController(
     progressIndicator.setCancelRunnable {
       job.cancel()
     }
+  }
+
+  init {
+    // Keep [sharedInstallingProperty] in sync with the shared active-installations map: an install
+    // started from the tree or dialog, or a selection change, must re-evaluate the button state.
+    service.addInstallStateListener(this) { recomputeSharedInstalling() }
+    selectedPackage.afterChange { recomputeSharedInstalling() }
+  }
+
+  private fun recomputeSharedInstalling() {
+    val name = selectedPackage.get()?.name
+    val sdk = service.currentSdk
+    sharedInstallingProperty.set(name != null && sdk != null && service.isPackageInstalling(sdk, name))
   }
 
   override fun dispose() {

@@ -1,1 +1,1 @@
-Simple _<selection>test</selection>_ text
+Simple *<selection>test</selection>* text

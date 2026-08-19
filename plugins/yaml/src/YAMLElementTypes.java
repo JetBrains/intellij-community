@@ -4,6 +4,8 @@ package org.jetbrains.yaml;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.TokenSet;
 
+import static org.jetbrains.yaml.YamlFileElementTypeKt.YAML_FILE;
+
 public interface YAMLElementTypes {
   YAMLElementType DOCUMENT = new YAMLElementType("Document ---");
 
@@ -77,7 +79,7 @@ public interface YAMLElementTypes {
   );
 
   TokenSet TOP_LEVEL = TokenSet.create(
-    YAMLParserDefinition.FILE,
+    YAML_FILE,
     DOCUMENT
   );
 

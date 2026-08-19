@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.replaceVarWithVal
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinKtDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
@@ -42,12 +43,12 @@ internal class CanBeValInspection : KotlinKtDiagnosticBasedInspectionBase<KtDecl
         return ApplicabilityRange.single(element) { (it as? KtValVarKeywordOwner)?.valOrVarKeyword }
     }
 
-    override fun KaSession.prepareContextByDiagnostic(
+    context(session: KaSession)
+    override fun prepareContextByDiagnostic(
         element: KtDeclaration,
         diagnostic: KaFirDiagnostic.CanBeVal
-    ): Unit? {
-        return if (element is KtValVarKeywordOwner) Unit else null
-    }
+    ): Unit? =
+        (element is KtValVarKeywordOwner).asUnit
 
     override fun createQuickFix(
         element: KtDeclaration,

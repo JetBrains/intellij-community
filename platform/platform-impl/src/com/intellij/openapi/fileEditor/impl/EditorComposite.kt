@@ -278,6 +278,8 @@ open class EditorComposite internal constructor(
     val fileEditorWithProviders = model.fileEditorAndProviderList
     fileEditorWithProviders.assignEditorProperties()
 
+    EditorHistoryManager.preloadHistory(project)
+
     // TODO comment this and log a warning or log something
     if (fileEditorWithProviders.isEmpty()) {
       withContext(Dispatchers.EDT) {
@@ -379,7 +381,9 @@ open class EditorComposite internal constructor(
         EditorHistoryManager.getInstance(project).getState(file, provider)
       }
       else {
-        state.providers.get(provider.editorTypeId)?.let { provider.readState(it, project, file) }
+        state.providers.get(provider.editorTypeId)
+          ?.let { provider.readState(it, project, lazyOf(file)) }
+          ?.takeIf { it !== FileEditorState.NO_STATE }
       }
     }
     return states
@@ -558,10 +562,10 @@ open class EditorComposite internal constructor(
     return if (state != null) {
       state.providers.get(provider.editorTypeId)?.let {
         computeOrLogException(
-          lambda = { provider.readState(it, project, file) },
+          lambda = { provider.readState(it, project, lazyOf(file)) },
           errorMessage = { "failed to read editor state" },
         )
-      }
+      }?.takeIf { it !== FileEditorState.NO_STATE }
     }
     else {
       // We have to try to get state from the history only in case of the editor is not opened.
@@ -964,7 +968,7 @@ open class EditorComposite internal constructor(
     }
     return with(FileIdAdapter.getInstance()) {
       FileEntry(
-        url = file.url,
+        url = getUrl(file),
         id = getId(file),
         selectedProvider = (selectedEditorWithProvider.value ?: fileEditorWithProviderList.first()).provider.editorTypeId,
         isPreview = isPreview,
@@ -983,8 +987,8 @@ open class EditorComposite internal constructor(
   internal fun writeCurrentStateAsHistoryEntry(project: Project): Element {
     val selectedEditorWithProvider = selectedEditorWithProvider.value
     val element = Element(TAG)
-    element.setAttribute(FILE_ATTRIBUTE, file.url)
     with(FileIdAdapter.getInstance()) {
+      element.setAttribute(FILE_ATTRIBUTE, getUrl(file))
       getId(file)?.let { element.setAttribute(FILE_ID_ATTRIBUTE, it.toString()) }
       getManagingFsCreationTimestamp(file).let { element.setAttribute(MANAGING_FS_ATTRIBUTE, it.toString()) }
       getProtocol(file)?.let { element.setAttribute(PROTOCOL_ATTRIBUTE, it) }
@@ -1252,17 +1256,20 @@ internal fun focusEditorOnComposite(
   val currentSelectedComposite = currentWindow?.selectedComposite
   // while the editor was loading, the user switched to another editor - don't steal focus
   if (currentSelectedComposite === composite || forceFocus) {
-    val preferredFocusedComponent = composite.preferredFocusedComponent
-    if (preferredFocusedComponent == null) {
-      LOG.warn("Cannot focus editor (splitters=$splitters, composite=$composite, reason=preferredFocusedComponent is null)")
+    // Ignore the last focused component of the composite tracked by FocusWatcher;
+    // prefer focusing on the editor component instead.
+    // Otherwise, the focus may get trapped in a subcomponent, such as the Find / Replace text field.
+    val focusComponent = composite.selectedEditor?.preferredFocusedComponent ?: composite.focusComponent
+    if (focusComponent == null) {
+      LOG.warn("Cannot focus editor (splitters=$splitters, composite=$composite, reason=focusComponent is null)")
       return false
     }
     else {
       if (toFront) {
-        IdeFocusManager.getGlobalInstance().requestFocusInProject(preferredFocusedComponent, composite.project)
+        IdeFocusManager.getGlobalInstance().requestFocusInProject(focusComponent, composite.project)
       }
       else {
-        preferredFocusedComponent.requestFocusInWindow()
+        focusComponent.requestFocusInWindow()
       }
 
       return true

@@ -32,6 +32,9 @@ jvm_library(
 exports_files(
     [
         "intellij.keymap.visualAssist.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/keymaps/Visual Assist OSX.xml",
+        "resources/keymaps/Visual Assist.xml",
     ],
     visibility = ["//visibility:public"],
 )

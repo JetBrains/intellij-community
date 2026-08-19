@@ -58,6 +58,7 @@ jvm_library(
 exports_files(
     [
         "intellij.terminal.cloud.iml",
+        "resources/intellij.terminal.cloud.xml",
     ],
     visibility = ["//visibility:public"],
 )

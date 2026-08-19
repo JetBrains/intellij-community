@@ -78,13 +78,8 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
           if (propClass == null) continue;
           if (propClass.isEnum()) {
             final String enumClassName = ClassUtil.getJVMClassName(propClass);
-            final ClassLoader loader = LoaderFactory.getInstance(myModule.getProject()).getLoader(myModule);
-            try {
-              property = new LwIntroEnumProperty(name, loader.loadClass(enumClassName));
-            }
-            catch (ClassNotFoundException e) {
-              continue;
-            }
+            if (enumClassName == null) continue;
+            property = new LwIntroEnumProperty(name, enumClassName);
           }
           else {
             PsiClass componentClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(Component.class.getName(), scope);

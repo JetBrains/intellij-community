@@ -3,7 +3,7 @@ package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.platform.buildScripts.licenses.LibraryLicense
 import org.assertj.core.api.SoftAssertions
-import org.jetbrains.intellij.build.impl.getLibraryFilename
+import org.jetbrains.intellij.build.impl.getLibraryFileName
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -19,7 +19,7 @@ fun reportMissingLicenses(collector: SoftAssertions, project: JpsProject, licens
       !nonPublicModules.contains(it.name)
       && !it.name.contains("guiTests")
       && it.name != "intellij.platform.util.immutableKeyValueStore.benchmark"
-      && it.name != "intellij.libraries.mockito"
+      && !it.name.startsWith("intellij.libraries.")
       && !it.name.contains("integrationTests", ignoreCase = true)
       && !it.name.startsWith("intellij.codeowners")
       && !it.name.startsWith("toolbox.")
@@ -41,7 +41,7 @@ fun reportMissingLicenses(collector: SoftAssertions, project: JpsProject, licens
   val librariesWithLicenses = licenses.flatMapTo(HashSet()) { it.getLibraryNames() }
 
   for ((jpsLibrary, jpsModule) in libraries) {
-    val libraryName = getLibraryFilename(jpsLibrary)
+    val libraryName = getLibraryFileName(jpsLibrary)
     if (librariesWithLicenses.contains(libraryName)) {
       continue
     }

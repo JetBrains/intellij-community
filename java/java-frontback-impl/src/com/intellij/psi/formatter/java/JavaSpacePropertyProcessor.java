@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Block;
@@ -788,9 +788,12 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
         SourceTreeToPsiMap.treeToPsiNotNull(myChild1),
         SourceTreeToPsiMap.treeToPsiNotNull(myChild2)
       ) + 1;
+      // the import layout table fully determines the number of blank lines between two imports,
+      // so extra ones are kept only while KEEP_BLANK_LINES_BETWEEN_IMPORTS is on
+      int keepBlankLines = myJavaSettings.KEEP_BLANK_LINES_BETWEEN_IMPORTS ? mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS : 0;
       myResult = Spacing.createSpacing(0, 0, emptyLines,
                                        mySettings.KEEP_LINE_BREAKS,
-                                       mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+                                       keepBlankLines);
     }
   }
 

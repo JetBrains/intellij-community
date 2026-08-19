@@ -8,9 +8,15 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Migration marker for editor-internal `DocumentListener` that should handle elf events.
  *
- * `DocumentListener` annotated with this marker will be notified of elf events:
+ * `DocumentListener` annotated with this marker is notified of elf events through
+ * its regular callbacks:
  * - beforeElfDocumentChange -> beforeDocumentChange
  * - elfDocumentChanged -> documentChanged
+ * - bulkElfUpdateStarting -> bulkUpdateStarting
+ * - bulkElfUpdateFinished -> bulkUpdateFinished
+ *
+ * The routing is active only while `ElfFeatureFlag` is enabled; with the flag
+ * disabled an annotated listener receives no elf events.
  *
  * This annotation should be removed once all candidates can properly opt in by implementing methods from `ElfDocumentListener`.
  *

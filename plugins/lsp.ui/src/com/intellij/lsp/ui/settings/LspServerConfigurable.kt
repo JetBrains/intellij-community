@@ -7,20 +7,21 @@ import com.intellij.lsp.ui.settings.LspServerConfiguration.CommunicationMode
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBRadioButton
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.COLUMNS_LARGE
-import com.intellij.ui.dsl.builder.COLUMNS_SHORT
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bind
-import com.intellij.ui.dsl.builder.bindIntText
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.rows
-import com.intellij.ui.dsl.builder.selected
+import com.intellij.util.net.NetUtils
+import org.jetbrains.annotations.VisibleForTesting
+import java.io.IOException
 
 internal class LspServerConfigurable(
   private val configuration: LspServerConfiguration,
@@ -43,12 +44,14 @@ internal class LspServerConfigurable(
       separator()
 
       group(LspUiBundle.message("lsp.settings.server.configuration.section")) {
+        lateinit var stdioRadioButton: Cell<JBRadioButton>
         lateinit var socketRadioButton: Cell<JBRadioButton>
+        lateinit var argumentsField: Cell<JBTextField>
 
         buttonsGroup {
           row(LspUiBundle.message("lsp.settings.server.mode")) {
             @Suppress("DialogTitleCapitalization")
-            radioButton(LspUiBundle.message("lsp.settings.server.mode.stdio"), CommunicationMode.STDIO)
+            stdioRadioButton = radioButton(LspUiBundle.message("lsp.settings.server.mode.stdio"), CommunicationMode.STDIO)
             @Suppress("DialogTitleCapitalization")
             socketRadioButton = radioButton(LspUiBundle.message("lsp.settings.server.mode.socket"), CommunicationMode.SOCKET)
           }
@@ -57,13 +60,6 @@ internal class LspServerConfigurable(
             getter = configuration::communicationMode,
             setter = { configuration.communicationMode = it }
           )
-
-        row(LspUiBundle.message("lsp.settings.server.port")) {
-          intTextField(0..65535)
-            .bindIntText(configuration::socketPort)
-            .columns(COLUMNS_SHORT)
-        }
-          .visibleIf(socketRadioButton.selected)
 
         row(LspUiBundle.message("lsp.settings.server.executable")) {
           textFieldWithBrowseButton(LspUiBundle.message("lsp.settings.server.executable.browse"))
@@ -75,13 +71,34 @@ internal class LspServerConfigurable(
         }
 
         row(LspUiBundle.message("lsp.settings.server.arguments")) {
-          textField()
+          argumentsField = textField()
             .bindText(configuration::arguments)
             .comment(LspUiBundle.message("lsp.settings.server.arguments.comment"))
             .align(AlignX.FILL)
             .resizableColumn()
           panel {}
         }
+
+        // action listeners (unlike item listeners) fire only on user interaction,
+        // so programmatic selection during reset() doesn't rewrite stored arguments
+        stdioRadioButton.component.addActionListener {
+          argumentsField.component.text = replaceCommunicationModeArgument(argumentsField.component.text, STDIO_ARGUMENT)
+        }
+        socketRadioButton.component.addActionListener {
+          val port = parseSocketPortArgument(argumentsField.component.text)?.takeIf { it in 1..65535 }
+                     ?: configuration.socketPort.takeIf { it in 1..65535 }
+                     ?: try {
+                       NetUtils.findAvailableSocketPort()
+                     }
+                     catch (_: IOException) {
+                       0
+                     }
+          argumentsField.component.text = replaceCommunicationModeArgument(argumentsField.component.text, "$SOCKET_ARGUMENT=$port")
+        }
+      }
+
+      onApply {
+        configuration.socketPort = parseSocketPortArgument(configuration.arguments) ?: 0
       }
 
       group(LspUiBundle.message("lsp.settings.server.files.association.group")) {
@@ -128,4 +145,38 @@ internal class LspServerConfigurable(
   }
 
   override fun getDisplayName(): String = configuration.name.ifEmpty { LspUiBundle.message("lsp.settings.default.name") }
+}
+
+private const val STDIO_ARGUMENT = "--stdio"
+private const val SOCKET_ARGUMENT = "--socket"
+private val MODE_ARGUMENT_REGEX = Regex("--stdio|--socket(=\\S*)?")
+
+@VisibleForTesting
+internal fun parseSocketPortArgument(arguments: String): Int? {
+  return arguments.split(' ')
+    .firstNotNullOfOrNull { token ->
+      if (token.startsWith("$SOCKET_ARGUMENT=")) token.substringAfter('=').toIntOrNull() else null
+    }
+}
+
+@VisibleForTesting
+internal fun replaceCommunicationModeArgument(arguments: String, newArgument: String): String {
+  val tokens = arguments.split(' ').filter { it.isNotBlank() }
+  val result = ArrayList<String>(tokens.size + 1)
+  var replaced = false
+  for (token in tokens) {
+    if (MODE_ARGUMENT_REGEX.matches(token)) {
+      if (!replaced) {
+        result.add(newArgument)
+        replaced = true
+      }
+    }
+    else {
+      result.add(token)
+    }
+  }
+  if (!replaced) {
+    result.add(newArgument)
+  }
+  return result.joinToString(" ")
 }

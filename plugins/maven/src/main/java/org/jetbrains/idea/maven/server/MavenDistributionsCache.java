@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -191,11 +192,12 @@ public final class MavenDistributionsCache {
   public static @NotNull LocalMavenDistribution resolveEmbeddedMavenHome() {
     PluginDescriptor mavenPlugin = PluginManager.getPluginByClass(MavenDistributionsCache.class);
 
-    if (PluginManagerCore.isRunningFromSources()) { // running from sources
+    if (PluginManagerCore.isRunningFromSources()) { // JPS module outputs only - no assembled plugin layout to read from
       Path mavenPath = mySourcePath.getValue();
       return new LocalMavenDistribution(mavenPath, BundledMaven3.INSTANCE.getTitle());
     }
-    else if (mavenPlugin != null) { // running with production classloading. Use maven3 folder inside maven plugin layout
+    // an installed IDE *and* a dev build: both ship `lib/maven3` inside the maven plugin layout
+    else if (mavenPlugin != null) {
       Path pathToBundledMaven = mavenPlugin.getPluginPath().resolve("lib").resolve("maven3");
       return new LocalMavenDistribution(pathToBundledMaven, BundledMaven3.INSTANCE.getTitle());
     }
@@ -208,6 +210,9 @@ public final class MavenDistributionsCache {
 
   private static Path getSourceMavenPath() {
     BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return BundledMavenDownloader.INSTANCE.downloadMavenDistributionSync(communityRoot, true);
+    }
     return BundledMavenDownloader.INSTANCE.downloadMavenDistributionSync(communityRoot);
   }
 

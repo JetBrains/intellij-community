@@ -1,0 +1,2 @@
+package ppp;
+public class A { public static <T, U> T pick(T t) { return t; } }  // arity 1 -> 2; erasure (Object)Object unchanged

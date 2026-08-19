@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.awaitility.jar
+  modules:
+  - name: intellij.libraries.awaitility
+    libraries:
+      awaitility:
+      - name: $MAVEN_REPOSITORY$/org/awaitility/awaitility/4/awaitility-4.jar
+      - name: $MAVEN_REPOSITORY$/org/hamcrest/hamcrest/2/hamcrest-2.jar

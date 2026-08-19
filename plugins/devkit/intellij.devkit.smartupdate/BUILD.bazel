@@ -59,6 +59,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.smartupdate.iml",
+        "resources/intellij.devkit.smartupdate.xml",
     ],
     visibility = ["//visibility:public"],
 )

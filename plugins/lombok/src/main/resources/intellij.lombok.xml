@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <resource-bundle>messages.LombokBundle</resource-bundle>
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
@@ -14,8 +14,24 @@
     <module name="intellij.java.impl.refactorings"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.lombok.generated"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.structureView"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
 
@@ -37,6 +53,7 @@
     <propertyAccessorDetector implementation="de.plushnikov.intellij.plugin.extension.LombokPropertyAccessorDetector"/>
 
     <lang.java.javaErrorFilter implementation="de.plushnikov.intellij.plugin.extension.LombokHighlightErrorFilter"/>
+    <lang.inspectionSuppressor language="JAVA" implementationClass="de.plushnikov.intellij.plugin.extension.LombokJavadocInspectionSuppressor"/>
 
     <lang.inferredAnnotationProvider implementation="de.plushnikov.intellij.plugin.extension.LombokInferredAnnotationProvider"/>
 

@@ -38,9 +38,13 @@ import static com.intellij.util.SystemProperties.getIntProperty;
  *   <li>If we get another event we set indexed state to outdated.</li>
  * </ul>
  *
- * Since IndexingStamp contains only indexes modification count for each file, it can become outdated if a file was changed but the {@link Timestamps}
- * for the given file was not updated or not flushed on disk before IDE was terminated. In such case {@link IndexingFlag} can be used
- * to determine that a file needs to be reindexed as {@link IndexingFlag} contains file modification count when it was last indexed.
+ * IndexingStamp contains only _indexes_ modification count for each file, it doesn't keep _file_ modification stamp.
+ * It means it can become outdated if a file was changed but the {@link Timestamps} for the given file was not updated, or not
+ * flushed on disk before IDE was terminated.
+ * In such cases {@link IndexingFlag} is used to determine that a file needs to be re-indexed: {@link IndexingFlag} contains
+ * file modification count when it was last indexed.
+ * So actual state (freshness) of the given fileId data in indexes is defined by both {@link IndexingStamp} and {@link IndexingFlag},
+ * _together_.
  */
 @Internal
 public final class IndexingStamp {

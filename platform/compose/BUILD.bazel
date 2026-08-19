@@ -47,7 +47,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//platform/analysis-api:analysis",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/compose-runtime-desktop",
         "//libraries/skiko",
@@ -88,6 +88,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/analysis-api:analysis_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
         "//libraries/skiko:skiko_test_lib",
@@ -105,6 +106,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.compose.iml",
+        "resources/intellij.platform.compose.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -179,7 +181,8 @@ jvm_library(
         "//platform/ide-core",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/compose-runtime-desktop",

@@ -102,6 +102,7 @@ jvm_library(
 exports_files(
     [
         "intellij.javaFX.community.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

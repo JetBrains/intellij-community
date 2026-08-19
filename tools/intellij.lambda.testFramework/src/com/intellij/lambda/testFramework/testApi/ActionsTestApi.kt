@@ -14,12 +14,15 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.remoteDev.tests.LambdaIdeContext
 import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import java.awt.Component
 import kotlin.time.Duration
@@ -148,6 +151,27 @@ suspend fun callGoToImplementation(latency: Duration = defaultTestLatency) {
 context(lambdaIdeContext: LambdaIdeContext)
 suspend fun callGoToDeclaration(latency: Duration = defaultTestLatency) {
   callActionByShortcut(IdeActions.ACTION_GOTO_DECLARATION, latency = latency)
+}
+
+/**
+ * Invoke Go to Declaration via the action system rather than a keyboard shortcut:
+ * `callGoToDeclaration()` presses the shortcut, which asserts a non-headless IDE, but the
+ * test IDE with lambda runs basically headless.
+ * Action execution must happen on the EDT.
+ */
+context(lambdaIdeContext: LambdaIdeContext)
+suspend fun callGoToDeclarationDirectly(
+  dataContext: DataContext,
+  waitUntilActionIsEnabledTimeout: Duration = 10.seconds,
+) {
+  withContext(Dispatchers.EDT) {
+    executeAction(
+      actionId = IdeActions.ACTION_GOTO_DECLARATION,
+      dataContext = dataContext,
+      waitUntilActionIsEnabledTimeout = waitUntilActionIsEnabledTimeout,
+    )
+  }
+
 }
 
 context(lambdaIdeContext: LambdaIdeContext)

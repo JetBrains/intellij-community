@@ -1,11 +1,19 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.python.community"/>
+    <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
-    <module name="intellij.python.sdk"/>
-    <module name="intellij.python.community.common"/>
+    <module name="intellij.python.sdk.backend"/>
+    <module name="intellij.python.sdk.common"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <python.community.common.toolToIconMapper implementation="com.intellij.python.venv.PyReqToolIdToIconMapper"/>
@@ -13,5 +21,6 @@
 
   <extensions defaultExtensionNs="Pythonid">
     <pythonSdkFlavor implementation="com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor"/>
+    <evoEnvironmentProvider implementation="com.intellij.python.venv.evolution.VenvEvoEnvironmentProvider"/>
   </extensions>
 </idea-plugin>

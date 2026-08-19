@@ -61,6 +61,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.onboarding.promoter.iml",
+        "resources/intellij.kotlin.onboarding.promoter.xml",
     ],
     visibility = ["//visibility:public"],
 )

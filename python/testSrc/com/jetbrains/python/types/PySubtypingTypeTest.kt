@@ -31,7 +31,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           x2: str = 'bar'
           x3: int = 0
           x4: str = 1 # WARNING Expected type 'str', got 'Literal[1]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-24832"])
@@ -75,7 +75,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           def inner():
               nonlocal v
               v = "abb" # WARNING Expected type 'int', got 'Literal["abb"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-24832"])
@@ -85,7 +85,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           x = 'foo' # WARNING Expected type 'int', got 'Literal["foo"]' instead
           y: str
           y = 'bar'
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-24832"])
@@ -114,7 +114,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       #       ^^^^^^^^^^^^^^ WARNING Cannot assign to class variable 'class_var' via instance
               C.class_var = 1
               C.class_var = 'bar' # WARNING Expected type 'int', got 'Literal["bar"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `no type mismatch in assignment without type annotation`() = test("""
@@ -123,7 +123,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           x = 'foo'  # OK
           y = 'bar'
           y = 1  # OK
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -140,7 +140,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
         a = A()
         a += "a" # WARNING Expected type 'int', got 'Literal["a"]' instead
-        """)
+        """.trimIndent())
     }
 
     @Test
@@ -153,7 +153,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       a = A()
       a += "a" # WARNING Expected type 'int', got 'Literal["a"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `augmented assignment via __radd__`() = test("""
@@ -164,7 +164,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       a = A()
       a += B()
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-6426"])
@@ -174,7 +174,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       a: A = A()
       a += 1 # WARNING Expected type 'A' for augmented assignment, got 'str' from operation instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-6426"])
@@ -185,7 +185,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       a: A = A()
       a.i += 1
       a.i += "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-6426"])
@@ -196,7 +196,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       a: A = A()
       a.a += 1
       a.a += "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -217,7 +217,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       t.member = "str"
       t.member = 123 # WARNING Expected type 'str' (from '__set__'), got 'Literal[123]' instead
       t.member = list # WARNING Expected type 'str' (from '__set__'), got 'type[list]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76399"])
@@ -234,7 +234,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       t.member = "str"
       t.member = 123 # WARNING Expected type 'str' (from '__set__'), got 'Literal[123]' instead
       t.member = list # WARNING Expected type 'str' (from '__set__'), got 'type[list]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76399"])
@@ -253,13 +253,14 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       t.member = 42
       t.member = 43 # WARNING Expected type 'Literal[42]' (from '__set__'), got 'Literal[43]' instead
       t.member = "42" # WARNING Expected type 'Literal[42]' (from '__set__'), got 'Literal["42"]' instead
-      """)
+      """.trimIndent())
   }
 
   @Nested
   inner class ParameterDefaults {
 
     @Test
+    @TestFor(issues = ["PY-80837"])
     fun `parameter default value type`() = test("""
       from typing import Literal
 
@@ -269,20 +270,75 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           c: Literal[True] = True,
           d: Literal[True] = False # WARNING Expected type 'Literal[True]', got 'Literal[False]' instead
       ): ...
-      """)
+      """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-87730"])
     fun `ellipsis default argument in method`() = test("""
       class A:
           def f(self, a: str = ...): # WARNING Expected type 'str', got 'EllipsisType' instead
               pass
-      """)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88661"])
+    fun `unannotated overriding parameter default value type`() = test("""
+      class A:
+          def f(self, x: int): ...
+
+      class Good(A):
+          def f(self, x = 1): ...
+
+      class Bad(A):
+          def f(self, x = "bad"): ... # WARNING Expected type 'int', got 'Literal["bad"]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88661"])
+    fun `unannotated overriding parameter - own annotation takes precedence`() = test("""
+      class A:
+          def f(self, x: int): ...
+
+      class B(A):
+          def f(self, x: str = "ok"): ...
+      #        ^^^^^^^^^^^^^^^^^^^^^ WARNING Signature of method 'B.f()' does not match signature of the base method in class 'A'
+          
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88661"])
+    fun `unannotated overriding parameter without inherited annotation`() = test("""
+      class A:
+          def f(self, x): ...
+
+      class B(A):
+          def f(self, x = "ok"): ...
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88661"])
+    fun `unannotated overriding parameter - ellipsis default value`() = test("""
+      class A:
+          def f(self, x: int): ...
+
+      class B(A):
+          def f(self, x = ...): ... # WARNING Expected type 'int', got 'EllipsisType' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88661"])
+    fun `unannotated overriding parameter outside of class`() = test("""
+      class A:
+          def f(self, x: int): ...
+
+      def f(x = "str"): ...
+      """.trimIndent())
 
     @Test
     fun `invalid default None`() = test("""
       def f(a: str = None): # WARNING Expected type 'str', got 'None' instead
           print(a)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-87997"])
@@ -306,7 +362,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       _ = SENTINEL
       _: object = SENTINEL
       _: int = SENTINEL # WARNING Expected type 'int', got 'SENTINEL' instead
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -317,41 +373,41 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
     fun `no subtype issue on creation expression in return`() = test("""
       def f() -> list[object]:
          return [1, 2]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89564"])
     fun `no subtype issue on creation expression as argument`() = test("""
       def f(a: list[object]): ...
       f([1, 2])
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89564"])
     fun `no subtype issue on creation expression assignment value`() = test("""
       x: list[object] = [1, 2]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89564"])
     fun `no subtype issue on creation expression parameter default`() = test("""
       def f(a: list[object] = [1, 2]) -> None:
           pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89564"])
     fun `no subtype issue on creation expression keyword only parameter default`() = test("""
       def f(*, a: list[object] = [1, 2]) -> None:
           pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89564"])
     fun `no subtype issue on nested creation expression parameter default`() = test("""
       def f(a: list[list[object]] = [[1, 2]]) -> None:
           pass
-      """)
+      """.trimIndent())
 
     @Test
     fun `tuple in generic explicit is valid`() = test("""
@@ -364,7 +420,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       _: list[tuple[Literal[1]]] = [(1,)]
       _: list[tuple[int]] = [(1,)]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -375,14 +431,14 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
     fun `var positional param assignment`() = test("""
       def f(*args: str, argv: tuple[str, ...]) -> None:
           args = argv
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86902"])
     fun `var keyword param assignment`() = test("""
       def f(args: dict[str, str], **kwargs: str) -> None:
           kwargs = args
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -398,10 +454,9 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       d_obj : D[object] = D[object]()
 
       d_int = d_obj # E
-      #│      ^^^^^ WARNING Expected type 'D[int]', got 'D[object]' instead
-      #^^^^ WARNING Redeclared 'd_int' defined above without usage
+      #       ^^^^^ WARNING Expected type 'D[int]', got 'D[object]' instead
       d_obj = d_int # ok
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76814"])
@@ -414,10 +469,9 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       d_obj : D[object] = D[object]()
 
       d_int = d_obj # E
-      #│      ^^^^^ WARNING Expected type 'E', got 'D[object]' instead
-      #^^^^ WARNING Redeclared 'd_int' defined above without usage
+      #       ^^^^^ WARNING Expected type 'E', got 'D[object]' instead
       d_obj = d_int # ok
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76814"])
@@ -429,11 +483,10 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       d_obj : D[object] = D[object]()
 
       d_int = d_obj # ok
-      #│      ^^^^^ WARNING Expected type 'D[int]', got 'D[object]' instead FIXME # PY-89564
-      #^^^^ WARNING Redeclared 'd_int' defined above without usage
+      #       ^^^^^ WARNING Expected type 'D[int]', got 'D[object]' instead FIXME # PY-89564
       d_obj = d_int # E
       #       ^^^^^ WARNING FIXME Expected type 'D[object]', got 'D[int]' instead # PY-89564
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76814"])
@@ -446,11 +499,10 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       d_obj : E = E()
 
       d_int = d_obj # ok
-      #│      ^^^^^ WARNING Expected type 'D[int]', got 'E' instead FIXME # PY-89564
-      #^^^^ WARNING Redeclared 'd_int' defined above without usage
+      #       ^^^^^ WARNING Expected type 'D[int]', got 'E' instead FIXME # PY-89564
       d_obj = d_int # E
       #       ^^^^^ WARNING Expected type 'E', got 'D[int]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76814"])
@@ -466,10 +518,9 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       b : B[int] = B[int]()
 
       a = b # Ok
-      #\ WARNING Redeclared 'a' defined above without usage
       b = a # E
       #   └ WARNING Expected type 'B[int]', got 'A[object]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76814"])
@@ -485,11 +536,10 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       b : B[object] = B[object]()
 
       a = b # E
-      #│  └ WARNING Expected type 'A[int]', got 'B[object]' instead
-      #\ WARNING Redeclared 'a' defined above without usage
+      #   └ WARNING Expected type 'A[int]', got 'B[object]' instead
       b = a # E
       #   └ WARNING Expected type 'B[object]', got 'A[int]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76814"])
@@ -499,17 +549,17 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       class B[S](A[S]): # S is invariant
           def set(self, s: S): ...
+      #          ^^^^^^^^^^^^ WARNING Signature of method 'B.set()' does not match signature of the base method in class 'A'
           def get(self) -> S: ...
 
       a : A[int] = A[int]()
       b : B[object] = B[object]()
 
       a = b # Ok
-      #│  └ WARNING Expected type 'A[int]', got 'B[object]' instead FIXME # PY-89564
-      #\ WARNING Redeclared 'a' defined above without usage
+      #   └ WARNING Expected type 'A[int]', got 'B[object]' instead FIXME # PY-89564
       b = a # E
       #   └ WARNING Expected type 'B[object]', got 'A[int]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76814"])
@@ -519,17 +569,17 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       class B[S](A[S]): # S is invariant
           def set(self, s: S): ...
+      #          ^^^^^^^^^^^^ WARNING Signature of method 'B.set()' does not match signature of the base method in class 'A'
           def get(self) -> S: ...
 
       a : A[object] = A[object]()
       b : B[int] = B[int]()
 
       a = b # E
-      #│  └ WARNING FIXME Expected type 'A[object]', got 'B[int]' instead # PY-89564
-      #\ WARNING Redeclared 'a' defined above without usage
+      #   └ WARNING FIXME Expected type 'A[object]', got 'B[int]' instead # PY-89564
       b = a # E
       #   └ WARNING Expected type 'B[int]', got 'A[object]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79221"])
@@ -539,7 +589,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       def f() -> list[object]:
          return data # expect error
       #         ^^^^ WARNING FIXME Expected type 'list[object]', got 'list[int]' instead # PY-89564
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79221"])
@@ -557,7 +607,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       def g(x: CoContra[None, None]):
           f(x)
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -565,9 +615,8 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-25989", "PY-84544"])
-    fun `type var widening`() = test(
-      TestOptions(assertRecursionPrevention = false),
-      """
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `type var widening`() = test("""
       from collections.abc import Iterable
       from typing import assert_type
 
@@ -589,7 +638,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
 
       _ = bar(1, "a") # WARNING Expected type 'int' (matched generic type 'T ≤: int'), got 'Literal["a"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-28130"])
@@ -598,7 +647,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       _: Callable[[int], object] = lambda expr: expr
       #                                         └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-28130"])
@@ -608,13 +657,12 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       a: Callable[[int], int]
       a = lambda expr: expr
       #                └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-28130"])
-    fun `lambda parameter uses assignment context split definition class`() = test(
-      TestOptions(assertRecursionPrevention = false),
-      """
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `lambda parameter uses assignment context split definition class`() = test("""
       from typing import Callable
 
       class C:
@@ -622,7 +670,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
         def __init__(self):
           self.attr = lambda expr: str(expr)
       #                      └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `parameter with default widening`() {
@@ -634,7 +682,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
         def f(param=x): ...
         expr = f
         #└ TYPE (param: int) -> None
-        """)
+        """.trimIndent())
     }
 
     @Test
@@ -642,7 +690,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       def f(param=1): ...
       expr = f
       #└ TYPE (param: int) -> None
-      """)
+      """.trimIndent())
 
     @Test
     fun `parameter with explicit literal default keeps literal`() = test("""
@@ -653,7 +701,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       def f(param: Literal[1] = x): ...
       expr = f
       #└ TYPE (param: Literal[1]) -> None
-      """)
+      """.trimIndent())
 
     @Test
     fun `parameter with enum default widens to enum`() = test("""
@@ -665,7 +713,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       def f(param=E.A): ...
       expr = f
       #└ TYPE (param: E) -> None
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-87997"])
@@ -676,7 +724,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           b = a
           expr = b
       #   └ TYPE int | SENTINEL
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-87997"])
@@ -687,7 +735,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           a = SENTINEL
           expr = a
       #   └ TYPE SENTINEL
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -733,7 +781,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           if v is not Color.B and v != Color.RED:
               g: Literal[Color.G] = v
               s: str = v # WARNING Expected type 'str', got 'Literal[Color.G]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79164"])
@@ -751,7 +799,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
             if status == "PENDING":
                 expects_pending_status(status)
-        """)
+        """.trimIndent())
     }
 
     @Test
@@ -781,7 +829,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
               expects_green(v)
           else:
               expects_red_or_blue(v)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79164"])
@@ -805,14 +853,14 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
               d: Literal[MyEnum.D] = v
       #          ^^^^^^^ ERROR Unresolved reference 'Literal'
               s: int = v # WARNING Expected type 'int', got 'Literal[MyEnum.D]' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `no warning if unreachable`() = test("""
       def foo() -> int:
           assert False
           return "42" # no warning here, because it is unreachable
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -831,8 +879,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       int_and_str = n # WARNING Expected type 'int & str', got 'int' instead
       int_and_str = s
-      #│            └ WARNING Expected type 'int & str', got 'str' instead
-      #^^^^^^^^^^ WARNING Redeclared 'int_and_str' defined above without usage
+      #             └ WARNING Expected type 'int & str', got 'str' instead
 
       int_or_str = int_and_str
       int_and_str = int_or_str # WARNING Expected type 'int & str', got 'int | str' instead
@@ -848,22 +895,20 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       #          └ WARNING Class 'type' does not define '__and__', so the '&' operator cannot be used on its instances
       a_and_b = A() # WARNING Expected type 'A & B', got 'A' instead
       a_and_b = B()
-      #│        ^^^ WARNING Expected type 'A & B', got 'B' instead
-      #^^^^^^ WARNING Redeclared 'a_and_b' defined above without usage
+      #         ^^^ WARNING Expected type 'A & B', got 'B' instead
       a_and_b = C()
-      #^^^^^^ WARNING Redeclared 'a_and_b' defined above without usage
 
       a: A = a_and_b
       b: B = a_and_b
       c: C = a_and_b # WARNING Expected type 'C', got 'A & B' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `intersection type parsing`() = test("""
       expr: int & str
       #│        └ WARNING Class 'type' does not define '__and__', so the '&' operator cannot be used on its instances
       #└ TYPE int & str
-      """)
+      """.trimIndent())
 
     @Test
     fun `intersection type with partially unresolved operand`() = test("""
@@ -871,7 +916,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       #│        │ ^^^^ ERROR Unresolved reference 'asdf'
       #│        └ WARNING Class 'type' does not define '__and__', so the '&' operator cannot be used on its instances
       #└ TYPE int & Unknown
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -890,7 +935,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       p1: pathlib.Path
       p2: os.PathLike[bytes] = p1 # WARNING Expected type 'PathLike[bytes]', got 'Path' instead
       p3: os.PathLike[str] = p1
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-20769"])
@@ -949,7 +994,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       PurePath(p)
 
       os.path.abspath(p)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-24287"])
@@ -959,7 +1004,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
 
       f(bytearray())
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-22769"])
@@ -968,13 +1013,13 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           path.replace("/", "\\")
       #                │    ^^^^ WARNING Expected type 'Buffer', got 'Literal["\"]' instead
       #                ^^^ WARNING Expected type 'Buffer', got 'Literal["/"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-18275"])
     fun `str format`() = test("""
       '{}'.format(0)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-10660"])
@@ -984,14 +1029,14 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       s = Struct('c')
       s.unpack(' ') # WARNING Expected type 'Buffer', got 'Literal[" "]' instead
       s.unpack(b' ')
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19796"])
     fun `ord`() = test("""
       ord(b'A')
       ord('A')
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-21350"])
@@ -1002,7 +1047,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       input(A())
       input(b"b")
       input(u"u")
-      """)
+      """.trimIndent())
 
     @Test
     fun `builtin operators and numerics`() = test("""
@@ -1021,7 +1066,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           divmod(b'foo', 'bar') # WARNING No overload of 'divmod' matches the arguments. Argument types: (bytes, Literal["bar"]). Expected one of: (x: SupportsDivMod[_T_contra, _T_co], y: str), (x: bytes, y: SupportsRDivMod[bytes, _T_co])
           pow(False, True)
           round(False, 'foo') # WARNING No overload of 'round' matches the arguments. Argument types: (Literal[False], Literal["foo"]). Expected one of: (number: _SupportsRound1[int], ndigits: None), (number: _SupportsRound2[int], ndigits: SupportsIndex)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-23289", "PY-23391", "PY-24194", "PY-24789"])
@@ -1062,7 +1107,19 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       print(bytes(a))
       print(abs(a))
       print(round(a))
-      """)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88298"])
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `str passed to super __new__ of str subclass`() = test("""
+      class StrIdentifier(str):
+          __slots__ = ()
+
+      class SiteSlug(StrIdentifier):
+          def __new__(cls, value):
+              return super().__new__(cls, str(value).lower()) # assert no issues here
+      """.trimIndent())
   }
 
   @Nested
@@ -1077,25 +1134,23 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       b: A = True
       c: Annotated[bool, 'Some constraint'] = 'str' # WARNING Expected type 'bool', got 'Literal["str"]' instead
       d: Annotated[str, 'Some constraint'] = 'str'
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-41847"])
-    fun `typing Annotated type from another file`() = test(
-      """
+    fun `typing Annotated type from another file`() = test("""
       from annotated import A
 
 
       a: A = 'str' # WARNING Expected type 'int', got 'Literal["str"]' instead
       a1: A = 42
-      """,
+      """.trimIndent(),
       "annotated.py" to """
         from typing import Annotated
 
 
         A = Annotated[int, "Some constraint"]
-        """,
-    )
+        """.trimIndent())
   }
 
   @Nested
@@ -1141,7 +1196,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       expects_myclass_descendant_or_none(MyClass()) # WARNING Expected type 'type[T2 ≤: MyClass] | None', got 'MyClass' instead
       expects_myclass_descendant_or_none(object) # WARNING Expected type 'type[T2 ≤: MyClass] | None', got 'type[object]' instead
       expects_myclass_descendant_or_none(object()) # WARNING Expected type 'type[T2 ≤: MyClass] | None', got 'object' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-42418"])
@@ -1197,7 +1252,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       def expects_typing_Tuple(xs: Tuple[str, int]):
           expects_builtin_tuple(xs)
           expects_builtin_tuple((42, 'a')) # WARNING Expected type 'tuple[str, int]', got 'tuple[Literal[42], Literal["a"]]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-42418"])
@@ -1226,7 +1281,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       def expects_generic_typing_Type(x: Type[T]):
           expects_generic_builtin_type(x)
           expects_generic_builtin_type(int) # WARNING Expected type 'type[T ≤: str]', got 'type[int]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-23053"])
@@ -1270,7 +1325,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       g2(str) # WARNING Expected type 'T ≤: str', got 'type[str]' instead
 
       xs = list([str])
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -1290,7 +1345,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           pass
 
       StrBox(42) # WARNING Expected type 'str', got 'Literal[42]' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `explicitly parameterized generic constructor call`() = test("""
@@ -1298,7 +1353,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           def __init__(self, v: T) -> None: ...
 
       A[int]("") # WARNING Expected type 'int', got 'Literal[""]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-28127", "PY-31424"])
@@ -1320,7 +1375,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       TypeVar("T", 0, 1, bound=2, covariant=3, contravariant=4)
       #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ERROR Bivariant type variables are not supported
       #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ERROR Constraints cannot be combined with bound=…
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-22513"])
@@ -1336,7 +1391,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
 
       generic_kwargs(a=1, b='foo')
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-22730"])
@@ -1353,7 +1408,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
 
       expects_int_subclass_or_none('foo') # WARNING Expected type 'T ≤: int | None', got 'Literal["foo"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-16855"])
@@ -1370,7 +1425,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
 
       calc('a', 0) # OK: 'unresolved' is treated as 'Any'
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-25994"])
@@ -1384,7 +1439,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           for e in []:
               values.setdefault(e, undefined)
       #                            ^^^^^^^^^ ERROR Unresolved reference 'undefined'
-      """)
+      """.trimIndent())
 
     @Test
     fun `chained comparisons generic matching`() = test("""
@@ -1402,7 +1457,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
 
       x = MyClass(1) < MyClass(2) < MyClass('foo') # WARNING Expected type 'MyClass[int]', got 'MyClass[str]' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `class inherits Generic to order type parameters`() = test("""
@@ -1422,12 +1477,11 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       #                    ^^^ WARNING Expected type 'Pair[int, str]', got 'EllipsisType' instead
       expr = xs.get()
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
-    fun `function return type checks`() = test(
-      TestOptions(assertRecursionPrevention = false),
-      """
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `function return type checks`() = test("""
       from typing import List, Optional, Union, Generator, Iterable
 
       def a(x: List[int]) -> List[str]:
@@ -1494,13 +1548,13 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       def t() -> Iterable[int]:
           yield 13
           return "str" # no warning here
-      """)
+      """.trimIndent())
 
     @Test
     fun `ellipsis in function with specified return type`() = test("""
       def bar() -> int:
           ...
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-25045"])
@@ -1513,11 +1567,10 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       bar = 0  # type: Union[int, float]
       foo(bar)
-      """)
+      """.trimIndent())
 
     @Test
-    fun `matching open function call types`() = test(
-      """
+    fun `matching open function call types`() = test("""
       from foo import calcT, calcB
 
       with open('1.txt') as file1:
@@ -1527,19 +1580,18 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       with open('1.txt', 'rb') as file2:
           calcT(file2) # WARNING Expected type 'TextIO', got 'BufferedReader[_BufferedReaderStream]' instead
           calcB(file2)
-      """,
+      """.trimIndent(),
       "foo.py" to """
         def calcT(a): pass
         def calcB(a): pass
-        """,
+        """.trimIndent(),
       "foo.pyi" to """
         from typing import BinaryIO, TextIO
 
 
         def calcT(a: TextIO) -> int: ...
         def calcB(a: BinaryIO) -> int: ...
-        """,
-    )
+        """.trimIndent())
 
     @Test
     fun `type var bound to LiteralString`() = test("""
@@ -1549,7 +1601,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           return s
       s: LiteralString
       y2 = literal_identity(s)
-      """)
+      """.trimIndent())
 
     @Test
     fun `flag name`() = test("""
@@ -1558,7 +1610,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       def test_int_flag(x: IntFlag) -> str | None:
           return x.name
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -1575,7 +1627,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           contents = f.read()
           f1(contents) # WARNING Expected type 'str', got 'bytes' instead
           f2(contents)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-72232"])
@@ -1585,7 +1637,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       with A() as a: # WARNING Expected type 'contextlib.AbstractContextManager', got 'A' instead
           pass
-      """)
+      """.trimIndent())
 
     @Test
     fun `cast result type`() = test("""
@@ -1594,7 +1646,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       def foo(x):
           expr = cast(str, x)
       #   └ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-82500"])
@@ -1602,7 +1654,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       xs: list[type[str]]
       expr: xs[0]
       #└ TYPE Unknown
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-82500"])
@@ -1614,7 +1666,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       expr: x + 1
       #│    ^^^^^ WARNING Invalid type annotation
       #└ TYPE Unknown
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -1632,7 +1684,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
          ...
 
       foo(is_int(1))
-      """)
+      """.trimIndent())
 
     @Test
     fun `TypeIs result assignable to int parameter`() = test("""
@@ -1646,7 +1698,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
          ...
 
       foo(is_int(1))
-      """)
+      """.trimIndent())
 
     @Test
     fun `TypeIs result not assignable to str parameter`() = test("""
@@ -1660,18 +1712,16 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
          ...
 
       foo(is_int(1)) # WARNING Expected type 'str', got 'TypeIs[int]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-20073"])
-    fun `map arguments in opposite order`() = test(
-      TestOptions(assertRecursionPrevention = false),
-      """
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `map arguments in opposite order`() = test("""
       map('foo', lambda c: 42)
       #   │      ^^^^^^^^^^^^ WARNING Expected type 'Iterable[_T1]', got '(c: Unknown) -> Literal[42]' instead
-      #   ^^^^^ WARNING Expected type '(_T1) -> Unknown' (matched generic type '(_T1) -> _S'), got 'Literal["foo"]' instead
-      """,
-    )
+      #   ^^^^^ WARNING Expected type '(_T1) -> _S', got 'Literal["foo"]' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -1682,7 +1732,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
     fun `assignment parens`() = test("""
       ((expr)) = 42
       #└ TYPE Literal[42]
-      """)
+      """.trimIndent())
 
     @Test
     fun `function assignment transitivity`() = test("""
@@ -1692,6 +1742,6 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       h = g
       expr = h()
       #└ TYPE Literal[1]
-      """)
+      """.trimIndent())
   }
 }

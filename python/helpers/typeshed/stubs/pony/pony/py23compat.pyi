@@ -6,6 +6,8 @@ PY39: bool
 PY310: bool
 PY311: bool
 PY312: bool
+PY313: bool
+PY314: bool
 unicode = str
 buffer = bytes
 int_types: tuple[type[int]]

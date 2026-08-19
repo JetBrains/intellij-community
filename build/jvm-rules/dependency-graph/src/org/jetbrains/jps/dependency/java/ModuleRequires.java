@@ -14,7 +14,7 @@ public final class ModuleRequires extends Proto implements DiffCapable<ModuleReq
   private final String myVersion;
 
   public ModuleRequires(JVMFlags flags, String name, String version) {
-    super(flags, "", name, Collections.emptyList());
+    super(flags, "", name, Collections.emptyList(), Collections.emptyList());
     myVersion = version == null? "" : version;
   }
 
@@ -67,8 +67,16 @@ public final class ModuleRequires extends Proto implements DiffCapable<ModuleReq
       return !Objects.equals(myPast.getVersion(), getVersion());
     }
 
+    public boolean isTransitivePropertyChanged() {
+      return myPast.getFlags().isTransitive() != getFlags().isTransitive();
+    }
+
     public boolean becameNonTransitive() {
       return myPast.getFlags().isTransitive() && !getFlags().isTransitive();
+    }
+
+    public boolean becameTransitive() {
+      return !myPast.getFlags().isTransitive() && getFlags().isTransitive();
     }
   }
 }

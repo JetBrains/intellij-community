@@ -1,3 +1,9 @@
+- name: lib/modules/intellij.libraries.jsr305.jar
+  contentModules:
+  - name: intellij.libraries.jsr305
+    libraries:
+      jsr305:
+      - name: $MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3/jsr305-3.jar
 - name: lib/modules/intellij.libraries.tuweni.toml.jar
   contentModules:
   - name: intellij.libraries.tuweni.toml
@@ -46,10 +52,6 @@
   - name: com.jetbrains.fus.reporting.ap.validation.all
     files:
     - name: $MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2/ap-validation-all-2.jar
-    reason: <- intellij.python.community.impl
-  - name: jsr305
-    files:
-    - name: $MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3/jsr305-3.jar
     reason: <- intellij.python.community.impl
   - name: libthrift
     files:
@@ -128,6 +130,9 @@
 - name: lib/modules/intellij.python.mcp.jar
   contentModules:
   - name: intellij.python.mcp
+- name: lib/modules/intellij.python.minimap.jar
+  contentModules:
+  - name: intellij.python.minimap
 - name: lib/modules/intellij.python.ml.features.jar
   projectLibraries:
   - name: jetbrains.mlapi.catboost
@@ -182,18 +187,24 @@
 - name: lib/modules/intellij.python.pytools.ui.jar
   contentModules:
   - name: intellij.python.pytools.ui
-- name: lib/modules/intellij.python.requirements.jar
+- name: lib/modules/intellij.python.requirements.backend.jar
   contentModules:
-  - name: intellij.python.requirements
+  - name: intellij.python.requirements.backend
+- name: lib/modules/intellij.python.requirements.common.jar
+  contentModules:
+  - name: intellij.python.requirements.common
 - name: lib/modules/intellij.python.ruff.jar
   contentModules:
   - name: intellij.python.ruff
-- name: lib/modules/intellij.python.sdk.jar
+- name: lib/modules/intellij.python.sdk.backend.jar
   contentModules:
-  - name: intellij.python.sdk
-- name: lib/modules/intellij.python.sdk.ui.jar
+  - name: intellij.python.sdk.backend
+- name: lib/modules/intellij.python.sdk.common.jar
   contentModules:
-  - name: intellij.python.sdk.ui
+  - name: intellij.python.sdk.common
+- name: lib/modules/intellij.python.sdk.frontend.jar
+  contentModules:
+  - name: intellij.python.sdk.frontend
 - name: lib/modules/intellij.python.sdkConfigurator.backend.jar
   contentModules:
   - name: intellij.python.sdkConfigurator.backend

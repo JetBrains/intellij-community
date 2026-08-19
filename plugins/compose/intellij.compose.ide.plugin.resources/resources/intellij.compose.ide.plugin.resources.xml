@@ -7,15 +7,44 @@
     <module name="intellij.compose.ide.plugin.gradleTooling.rt"/>
     <module name="intellij.compose.ide.plugin.shared"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.base.indices"/>
     <module name="intellij.kotlin.base.projectModel"/>
     <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.gradle.tooling.impl"/>
     <module name="intellij.kotlin.refactorings.base"/>
     <module name="intellij.kotlin.references"/>
+    <module name="intellij.libraries.icu4j"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.xml.impl"/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.xml.psi.impl"/>
     <module name="kotlin.gradle.gradle-java"/>
   </dependencies>
   <!-- endregion -->
@@ -83,6 +112,14 @@
     <xml.schemaProvider implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDrawableXmlSchemaProvider"/>
     <xml.elementDescriptorProvider
       implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDrawableXmlElementDescriptorProvider"/>
+    <localInspection implementationClass="com.intellij.compose.ide.plugin.resources.inspections.ComposeResourcesImageResourceInspection"
+                     language="kotlin"
+                     enabledByDefault="true"
+                     bundle="messages.ComposeIdeBundle"
+                     groupKey="compose.inspection.group.name"
+                     key="compose.inspection.image.resource.name"
+                     level="ERROR"
+                     shortName="ComposeResourcesImageResource"/>
   </extensions>
   <actions>
     <action id="compose.newVectorAsset"

@@ -13,7 +13,7 @@ import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvir
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.extensions.toPsi
-import com.jetbrains.python.packaging.PyRequirementParser
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
@@ -70,7 +70,7 @@ internal class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPack
 
     val specification = installRequest.specifications.single()
     return if (repositoryManager.hasPackageSnapshot(specification.name)) {
-      val version = specification.versionSpec?.version.orEmpty()
+      val version = specification.requirement.versionSpecs.firstOrNull()?.version.orEmpty()
       installedPackages = installedPackages?.plus(PythonPackage(specification.name, version, false))
       PyResult.success(Unit)
     }

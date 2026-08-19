@@ -22,7 +22,7 @@ jvm_library(
         # do not sort,
         "//platform/core-api:core",
         "//platform/util",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -41,6 +41,7 @@ jvm_library(
         ":testIntegration",
         "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testIntegration` end
@@ -49,6 +50,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.testIntegration.iml",
+        "resources/intellij.platform.testIntegration.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,13 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.completion.contributor
 
-import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
+import com.intellij.maven.completion.MAVEN_DEPENDENCY_COMPLETION
 import com.intellij.maven.completion.icon
-import com.intellij.psi.xml.XmlText
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionEvent
@@ -22,17 +21,6 @@ import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 
 
 class MavenDependenciesCompletionContributor : MavenCoordinateCompletionContributor("dependency") {
-
-  override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-    if (parameters.invocationCount == 0) {
-      val xmlText = parameters.position.parent as? XmlText
-      if (xmlText != null && trimDummy(xmlText.value).length < 3) {
-        // autocomplete only 3 or more chars
-        return
-      }
-    }
-    super.fillCompletionVariants(parameters, result)
-  }
 
   override suspend fun fill(service: DependencyCompletionService,
                             coordinates: MavenDomShortArtifactCoordinates,
@@ -61,6 +49,7 @@ class MavenDependenciesCompletionContributor : MavenCoordinateCompletionContribu
             it.putUserData(StrictOrderWeigher.ORDER_KEY, StrictOrderWeigherData(source, index++))
             it.putUserData(SUPPRESS_QUICK_DEFINITION, true)
             it.putUserData(SUPPRESS_QUICK_DOCUMENTATION, true)
+            it.putUserData(MAVEN_DEPENDENCY_COMPLETION, true)
           })
       )
     }

@@ -18,7 +18,7 @@ interface ParentWithNullsMultipleBuilder : WorkspaceEntityBuilder<ParentWithNull
 }
 
 internal object ParentWithNullsMultipleType : EntityType<ParentWithNullsMultiple, ParentWithNullsMultipleBuilder>() {
-  override val entityClass: Class<ParentWithNullsMultiple> get() = ParentWithNullsMultiple::class.java
+  override val entityImplClass: Class<*> get() = ParentWithNullsMultipleImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ParentWithNullsMultipleImpl.Builder::class.java
   operator fun invoke(
     parentData: String,

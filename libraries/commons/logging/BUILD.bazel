@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.commons.logging.iml",
+        "resources/intellij.libraries.commons.logging.xml",
     ],
     visibility = ["//visibility:public"],
 )

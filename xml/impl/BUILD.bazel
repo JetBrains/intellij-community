@@ -153,6 +153,8 @@ jvm_library(
 exports_files(
     [
         "intellij.xml.impl.iml",
+        "resources/com/intellij/xml/util/htmlreferencetable.xml",
+        "resources/intellij.xml.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

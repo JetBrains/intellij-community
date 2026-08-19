@@ -32,6 +32,8 @@ jvm_library(
 exports_files(
     [
         "intellij.keymap.visualStudio2022.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/keymaps/Visual Studio 2022.xml",
     ],
     visibility = ["//visibility:public"],
 )

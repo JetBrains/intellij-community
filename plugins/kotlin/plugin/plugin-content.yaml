@@ -85,6 +85,9 @@
 - name: lib/intellij.kotlin.ide.jar
   contentModules:
   - name: intellij.kotlin.ide
+- name: lib/intellij.kotlin.jsr223.jar
+  contentModules:
+  - name: intellij.kotlin.jsr223
 - name: lib/intellij.kotlin.jvm.debugger.base.util.jar
   contentModules:
   - name: intellij.kotlin.jvm.debugger.base.util
@@ -115,6 +118,48 @@
 - name: lib/intellij.kotlin.searching.base.jar
   contentModules:
   - name: intellij.kotlin.searching.base
+- name: lib/intellij.libraries.kotlinc.analysis.api.impl.base.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.analysis.api.impl.base
+    libraries:
+      kotlinc.analysis-api-impl-base:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2/analysis-api-impl-base-for-ide-2.jar
+- name: lib/intellij.libraries.kotlinc.analysis.api.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.analysis.api
+    libraries:
+      kotlinc.analysis-api:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-for-ide/2/analysis-api-for-ide-2.jar
+- name: lib/intellij.libraries.kotlinc.analysis.api.k2.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.analysis.api.k2
+    libraries:
+      kotlinc.analysis-api-k2:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2/analysis-api-k2-for-ide-2.jar
+- name: lib/intellij.libraries.kotlinc.analysis.api.platform.interface.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.analysis.api.platform.interface
+    libraries:
+      kotlinc.analysis-api-platform-interface:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2/analysis-api-platform-interface-for-ide-2.jar
+- name: lib/intellij.libraries.kotlinc.kotlin.compiler.common.jar
+  modules:
+  - name: intellij.libraries.kotlinc.kotlin.compiler.common
+    libraries:
+      kotlinc.kotlin-compiler-common:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2/kotlin-compiler-common-for-ide-2.jar
+- name: lib/intellij.libraries.kotlinc.low.level.api.fir.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.low.level.api.fir
+    libraries:
+      kotlinc.low-level-api-fir:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2/low-level-api-fir-for-ide-2.jar
+- name: lib/intellij.libraries.kotlinc.symbol.light.classes.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.symbol.light.classes
+    libraries:
+      kotlinc.symbol-light-classes:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2/symbol-light-classes-for-ide-2.jar
 - name: lib/javax-inject.jar
   library: javax-inject
   files:
@@ -134,18 +179,6 @@
   - name: kotlin-metadata
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2/kotlin-metadata-jvm-2.jar
-  - name: kotlinc.analysis-api
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-for-ide/2/analysis-api-for-ide-2.jar
-  - name: kotlinc.analysis-api-impl-base
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2/analysis-api-impl-base-for-ide-2.jar
-  - name: kotlinc.analysis-api-k2
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2/analysis-api-k2-for-ide-2.jar
-  - name: kotlinc.analysis-api-platform-interface
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2/analysis-api-platform-interface-for-ide-2.jar
   - name: kotlinc.kotlin-build-tools-api
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-api/2/kotlin-build-tools-api-2.jar
@@ -176,29 +209,13 @@
   - name: kotlinc.kotlin-scripting-jvm
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2/kotlin-scripting-jvm-2.jar
-  - name: kotlinc.low-level-api-fir
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2/low-level-api-fir-for-ide-2.jar
-  - name: kotlinc.symbol-light-classes
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2/symbol-light-classes-for-ide-2.jar
   modules:
-  - name: kotlin.plugin.common
-  - name: kotlin.plugin.k2
   - name: kotlin.scripting
-  - name: kotlin.jsr223
-  - name: kotlin-ultimate.common-native
-  - name: kotlin-ultimate.javascript.debugger
-  - name: kotlin-ultimate.javascript.nodeJs
-  - name: kotlin-ultimate.native-debugger
-  - name: kotlin-ultimate.ultimate-native
-  - name: kotlin-ultimate.wasm.debugger
-  - name: kotlin-ultimate.profiler
-  - name: kotlin-ultimate.ultimate-plugin
+  - name: intellij.kotlin.plugin
+  contentModules:
   - name: intellij.kotlin.duplicate.scope
   - name: intellij.debugger.jvm.advanced.kotlin
   - name: intellij.debugger.logpoints.kotlin
-  - name: kotlin.plugin
 - name: lib/kotlin.fir.frontend-independent.jar
   contentModules:
   - name: kotlin.fir.frontend-independent
@@ -222,11 +239,6 @@
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2/js-plain-objects-compiler-plugin-for-ide-2.jar
   reason: withProjectLibrary
-- name: lib/kotlinc.kotlin-compiler-common.jar
-  library: kotlinc.kotlin-compiler-common
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2/kotlin-compiler-common-for-ide-2.jar
-  reason: withProjectLibrary
 - name: lib/kotlinc.kotlin-compiler-fe10.jar
   library: kotlinc.kotlin-compiler-fe10
   files:
@@ -248,10 +260,11 @@
   - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2/kotlin-jps-common-for-ide-2.jar
   reason: withProjectLibrary
 - name: lib/kotlinc.kotlinx-serialization-compiler-plugin.jar
-  library: kotlinc.kotlinx-serialization-compiler-plugin
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2/kotlinx-serialization-compiler-plugin-for-ide-2.jar
-  reason: withProjectLibrary
+  modules:
+  - name: intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin
+    libraries:
+      kotlinc.kotlinx-serialization-compiler-plugin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2/kotlinx-serialization-compiler-plugin-for-ide-2.jar
 - name: lib/kotlinc.lombok-compiler-plugin.jar
   library: kotlinc.lombok-compiler-plugin
   files:
@@ -400,9 +413,6 @@
 - name: lib/modules/intellij.kotlin.completion.ml.jar
   contentModules:
   - name: intellij.kotlin.completion.ml
-    libraries:
-      completion-ranking-kotlin:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
 - name: lib/modules/intellij.kotlin.copyright.jar
   contentModules:
   - name: intellij.kotlin.copyright
@@ -553,6 +563,33 @@
 - name: lib/modules/intellij.kotlin.uast.jar
   contentModules:
   - name: intellij.kotlin.uast
+- name: lib/modules/intellij.kotlin.ultimate.common.native.jar
+  contentModules:
+  - name: intellij.kotlin.ultimate.common.native
+- name: lib/modules/intellij.kotlin.ultimate.javascript.debugger.jar
+  contentModules:
+  - name: intellij.kotlin.ultimate.javascript.debugger
+- name: lib/modules/intellij.kotlin.ultimate.javascript.nodeJs.jar
+  contentModules:
+  - name: intellij.kotlin.ultimate.javascript.nodeJs
+- name: lib/modules/intellij.kotlin.ultimate.native.debugger.jar
+  contentModules:
+  - name: intellij.kotlin.ultimate.native.debugger
+- name: lib/modules/intellij.kotlin.ultimate.native.jar
+  contentModules:
+  - name: intellij.kotlin.ultimate.native
+- name: lib/modules/intellij.kotlin.ultimate.profiler.jar
+  contentModules:
+  - name: intellij.kotlin.ultimate.profiler
+- name: lib/modules/intellij.kotlin.ultimate.wasm.debugger.jar
+  contentModules:
+  - name: intellij.kotlin.ultimate.wasm.debugger
+- name: lib/modules/intellij.libraries.completion.ranking.kotlin.jar
+  contentModules:
+  - name: intellij.libraries.completion.ranking.kotlin
+    libraries:
+      completion-ranking-kotlin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
 - name: lib/modules/intellij.libraries.kotlin.gradle.plugin.idea.jar
   contentModules:
   - name: intellij.libraries.kotlin.gradle.plugin.idea
@@ -571,6 +608,9 @@
     libraries:
       kotlin-tooling-core:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1/kotlin-tooling-core-1.jar
+- name: lib/modules/intellij.platform.commercial.verifier.jar
+  contentModules:
+  - name: intellij.platform.commercial.verifier
 - name: lib/modules/kotlin.base.injection.jar
   contentModules:
   - name: kotlin.base.injection

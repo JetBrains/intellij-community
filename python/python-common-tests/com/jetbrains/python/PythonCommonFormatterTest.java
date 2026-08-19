@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.intellij.formatting.WrapType;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -879,6 +880,27 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
     doTest();
   }
 
+  @TestFor(issues = "PY-11552")
+  public void testExcessBlankLinesInClassBody() {
+    doTest();
+  }
+
+  @TestFor(issues = "PY-33655")
+  public void testKeepBlankLinesInCode() {
+    getCommonCodeStyleSettings().KEEP_BLANK_LINES_IN_CODE = 2;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-22359")
+  public void testNoBlankLinesInsideFromImportParentheses() {
+    doTest();
+  }
+
+  @TestFor(issues = "PY-25434")
+  public void testSpacesAroundAsInImports() {
+    doTest();
+  }
+
   // PY-20633
   public void testFromImportParenthesesPlacement() {
     getPythonCodeStyleSettings().FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
@@ -1632,5 +1654,113 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
       getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_ARGUMENTS_LIST = true;
       doTest();
     });
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignments() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsBrokenByStatement() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsTrailingCommentKept() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsChainedFirstOnly() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsNestedScopesIndependent() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsDisabledRemovesExistingAlignment() {
+    // setting is off: reformatting already-aligned code must collapse the padding back to a single space
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsCommentDoesNotBreakGroup() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsMultilineLhsBreaksGroup() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsMultilineRhsContinuesGroup() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsIncompleteCode() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsIdempotent() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsMultipleAugmentedOperators() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsKeywordArgumentInValue() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsTupleUnpacking() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsSemicolonNotAligned() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsSubscriptTarget() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsAttributeTarget() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsSingleLineUnpack() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
   }
 }

@@ -29,7 +29,7 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io",
         "//platform/ide-core-impl",
         "//platform/ide-core",
-        "@lib//:jna",
+        "//libraries/jna",
         "//platform/projectModel-api:projectModel",
         "//libraries/grpc",
         "//platform/util:util-ui",
@@ -57,6 +57,7 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//libraries/grpc:grpc_test_lib",
         "//platform/util:util-ui_test_lib",
@@ -68,6 +69,7 @@ jvm_library(
 exports_files(
     [
         "intellij.execution.process.elevation.iml",
+        "resources/intellij.execution.process.elevation.xml",
     ],
     visibility = ["//visibility:public"],
 )

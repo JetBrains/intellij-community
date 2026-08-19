@@ -37,6 +37,8 @@ jvm_library(
 exports_files(
     [
         "intellij.testng.langInjection.iml",
+        "resources/intellij.testng.langInjection.xml",
+        "resources/javaInjections.xml",
     ],
     visibility = ["//visibility:public"],
 )

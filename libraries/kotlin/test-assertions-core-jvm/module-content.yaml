@@ -1,0 +1,10 @@
+- name: dist.all/lib/intellij.libraries.kotlinTestAssertionsCoreJvm.jar
+  modules:
+  - name: intellij.libraries.kotlinTestAssertionsCoreJvm
+    libraries:
+      kotlin-test-assertions-core-jvm:
+      - name: $MAVEN_REPOSITORY$/io/kotest/kotest-assertions-core-jvm/5/kotest-assertions-core-jvm-5.jar
+      - name: $MAVEN_REPOSITORY$/io/kotest/kotest-assertions-shared-jvm/5/kotest-assertions-shared-jvm-5.jar
+      - name: $MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1/opentest4j-1.jar
+      - name: $MAVEN_REPOSITORY$/io/kotest/kotest-common-jvm/5/kotest-common-jvm-5.jar
+      - name: $MAVEN_REPOSITORY$/io/kotest/kotest-assertions-api-jvm/5/kotest-assertions-api-jvm-5.jar

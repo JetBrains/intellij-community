@@ -3,15 +3,15 @@
 package org.jetbrains.kotlin.idea.k2.injection
 
 import com.intellij.patterns.StandardPatterns
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.injection.KotlinFunctionPatternBase
 import org.jetbrains.kotlin.idea.base.injection.KotlinReceiverPattern
@@ -33,12 +33,11 @@ internal object KotlinPatterns : StandardPatterns() {
     fun receiver() = KotlinReceiverPattern()
 }
 
-@OptIn(KaExperimentalApi::class, KaContextParameterApi::class)
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KaType.renderFullyQualifiedName() = render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
 
 // Methods in this class are used through reflection during pattern construction
-@Suppress("unused")
 internal class KotlinFunctionPattern : KotlinFunctionPatternBase() {
     override fun KtFunction.matchParameters(vararg parameterTypes: String): Boolean {
         analyze(this) {

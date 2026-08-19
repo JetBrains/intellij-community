@@ -5,6 +5,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColorHexUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ui.ComparableColor;
 import com.intellij.util.ui.JdkConstants;
@@ -167,10 +169,10 @@ public final class AttributesFlyweight {
   }
 
   static @NotNull AttributesFlyweight create(@NotNull Element element) throws InvalidDataException {
-    Color FOREGROUND = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "FOREGROUND"));
-    Color BACKGROUND = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "BACKGROUND"));
-    Color EFFECT_COLOR = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "EFFECT_COLOR"));
-    Color ERROR_STRIPE_COLOR = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "ERROR_STRIPE_COLOR"));
+    Color FOREGROUND = readColor(element, "FOREGROUND");
+    Color BACKGROUND = readColor(element, "BACKGROUND");
+    Color EFFECT_COLOR = readColor(element, "EFFECT_COLOR");
+    Color ERROR_STRIPE_COLOR = readColor(element, "ERROR_STRIPE_COLOR");
     int fontType = DefaultJDOMExternalizer.toInt(JDOMExternalizerUtil.readField(element, "FONT_TYPE", "0"));
     if (fontType < 0 || fontType > 3) {
       fontType = 0;
@@ -196,14 +198,54 @@ public final class AttributesFlyweight {
     return create(FOREGROUND, BACKGROUND, FONT_TYPE, EFFECT_COLOR, toEffectType(EFFECT_TYPE), Collections.emptyMap(), ERROR_STRIPE_COLOR);
   }
 
+  /**
+   * A hex string of that length denotes a color with an alpha channel: {@code RRGGBBAA}.
+   * Fully opaque colors are stored as an unpadded {@code RRGGBB} number, so they never reach that length.
+   */
+  private static final int RGBA_HEX_LENGTH = 8;
+
+  private static final @NonNls String TEXT_TRANSPARENCY_FEATURE_FLAG = "editor.text.attributes.transparency";
+
+  /**
+   * Whether the alpha channel of a text attribute color survives serialization (IJPL-223521).
+   * <p>
+   * Disabled by default, because enabling it costs more than it gives to a user who does not want transparency:
+   * <ul>
+   *   <li>an older IDE cannot parse {@code RRGGBBAA}. Color schemes are safe, they are read by
+   *   {@code TextAttributesReader}, but a severity or a T_O_D_O attribute saved with alpha fails to load there, which
+   *   affects settings sync and downgrades;</li>
+   *   <li>the color scheme settings then show every text attribute swatch as eight hex digits, opaque ones included;</li>
+   *   <li>a translucent background is composed against the editor canvas only, not against the selection or the caret
+   *   row underneath it.</li>
+   * </ul>
+   * Reading a color with alpha is not gated, so turning the key off does not make already saved data unreadable.
+   */
+  @ApiStatus.Internal
+  public static boolean isTransparencySupported() {
+    return Registry.is(TEXT_TRANSPARENCY_FEATURE_FLAG, false);
+  }
+
+  private static @Nullable Color readColor(@NotNull Element element, @NotNull @NonNls String fieldName) throws InvalidDataException {
+    String value = JDOMExternalizerUtil.readField(element, fieldName);
+    if (value != null && value.length() == RGBA_HEX_LENGTH) {
+      Color color = ColorHexUtil.fromHexOrNull(value);
+      if (color != null) {
+        return color;
+      }
+    }
+    return DefaultJDOMExternalizer.toColor(value);
+  }
+
   private static @Nullable Color readColor(@NotNull DataInput in) throws IOException {
     boolean colorExists = in.readBoolean();
     return colorExists ? new Color(readINT(in)) : null;
   }
 
-  private static void writeColor(@NotNull Element element, @NotNull String fieldName, Color color) {
+  private static void writeColor(@NotNull Element element, @NotNull String fieldName, Color color, boolean writeAlpha) {
     if (color != null) {
-      String string = Integer.toString(color.getRGB() & 0xFFFFFF, 16);
+      int rgb = color.getRGB() & 0xFFFFFF;
+      int alpha = color.getAlpha();
+      String string = writeAlpha && alpha != 0xFF ? String.format("%06x%02x", rgb, alpha) : Integer.toString(rgb, 16);
       JDOMExternalizerUtil.writeField(element, fieldName, string);
     }
   }
@@ -217,14 +259,15 @@ public final class AttributesFlyweight {
   }
 
   void writeExternal(@NotNull Element element) {
-    writeColor(element, "FOREGROUND", getForeground());
-    writeColor(element, "BACKGROUND", getBackground());
+    boolean writeAlpha = isTransparencySupported();
+    writeColor(element, "FOREGROUND", getForeground(), writeAlpha);
+    writeColor(element, "BACKGROUND", getBackground(), writeAlpha);
     int fontType = getFontType();
     if (fontType != 0) {
       JDOMExternalizerUtil.writeField(element, "FONT_TYPE", String.valueOf(fontType));
     }
-    writeColor(element, "EFFECT_COLOR", getEffectColor());
-    writeColor(element, "ERROR_STRIPE_COLOR", getErrorStripeColor());
+    writeColor(element, "EFFECT_COLOR", getEffectColor(), writeAlpha);
+    writeColor(element, "ERROR_STRIPE_COLOR", getErrorStripeColor(), writeAlpha);
     int effectType = fromEffectType(getEffectType());
     if (effectType != 0) {
       JDOMExternalizerUtil.writeField(element, "EFFECT_TYPE", String.valueOf(effectType));

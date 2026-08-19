@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.impl
 
+import org.jetbrains.annotations.ApiStatus
+
 internal fun createEntityId(arrayId: Int, clazz: Int): EntityId {
   return createPackedEntityId(arrayId, clazz)
 }
@@ -47,3 +49,7 @@ internal fun EntityId.copy(arrayId: Int = this.arrayId, clazz: Int = this.clazz)
   return createEntityId(arrayId, clazz)
 }
 
+@ApiStatus.Internal
+public fun entityIdEquals(entity: WorkspaceEntityBase, anotherEntity: ModifiableWorkspaceEntityBase<*, *>) : Boolean {
+  return entity.id == anotherEntity.id
+}

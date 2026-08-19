@@ -7,14 +7,19 @@
   <vendor>JetBrains</vendor>
 
   <dependencies>
-    <plugin id="org.intellij.groovy"/>
+    <plugin id="com.intellij.groovy.scripting"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.groovy"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lang.impl"/>
     <!-- endregion -->
   </dependencies>
-
-  <content namespace="jetbrains">
-  </content>
+  <content namespace="jetbrains"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <liveTemplateMacro implementation="com.intellij.groovy.live.templates.GroovyScriptMacro"/>

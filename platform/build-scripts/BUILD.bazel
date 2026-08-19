@@ -1,6 +1,14 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+exports_files(
+    [
+        "tools/mac/scripts/makedmg.sh",
+        "tools/mac/scripts/makedmg.py",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `build intellij.platform.buildScripts` start
 create_kotlinc_options(
     name = "custom_build-scripts",
@@ -78,12 +86,13 @@ jvm_library(
         "//platform/util/jdom",
         "//libraries/jackson3/databind",
         "@lib//:json-schema-validator",
+        "@lib//:kaml",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/core",
         "//platform/util/zip",
         "//platform/runtime/product",
         "@lib//:okhttp",
-        "@lib//:zstd-jni",
+        "//libraries/zstd-jni",
         "//platform/util/rt-java8",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/kotlinx/coroutines/core",
@@ -188,6 +197,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//platform/util/zip:zip_test_lib",
         "//platform/runtime/product:product_test_lib",
+        "//libraries/zstd-jni:zstd-jni_test_lib",
         "//platform/util/rt-java8:rt-java8_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",

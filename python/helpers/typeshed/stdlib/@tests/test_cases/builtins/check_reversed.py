@@ -31,4 +31,18 @@ class MyLenAndGetItem(Generic[_T]):
 
 
 len_and_get_item: MyLenAndGetItem[int] = MyLenAndGetItem()
-assert_type(list(reversed(len_and_get_item)), "list[int]")
+assert_type(reversed(len_and_get_item), "reversed[int]")
+
+
+class UnTrue:
+    def __reversed__(self) -> UnFalse:
+        return UnFalse()
+
+
+class UnFalse:
+    def __reversed__(self) -> UnTrue:
+        return UnTrue()
+
+
+assert_type(reversed(UnTrue()), "UnFalse")
+assert_type(reversed(reversed(UnTrue())), "UnTrue")

@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "settingsSync-tests_test",
+    timeout = "short",
+    tags = ["community-aggregator"],
+    runtime_deps = [":settingsSync-tests_test_lib"],
+)
+### skip generation section `test intellij.settingsSync.tests`
+
 ### auto-generated section `build intellij.settingsSync` start
 jvm_library(
     name = "settingsSync",
@@ -80,6 +88,7 @@ jvm_library(
 exports_files(
     [
         "intellij.settingsSync.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -167,10 +176,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.settingsSync.tests` end
-
-### auto-generated section `test intellij.settingsSync.tests` start
-jps_test(
-    name = "settingsSync-tests_test",
-    runtime_deps = [":settingsSync-tests_test_lib"],
-)
-### auto-generated section `test intellij.settingsSync.tests` end

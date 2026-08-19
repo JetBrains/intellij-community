@@ -26,8 +26,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.types.isAnyType
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.codeinsight.utils.containsStarProjections
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
@@ -320,11 +320,11 @@ object K2CreateClassFromUsageBuilder {
 
     context (_: KaSession)
     private fun isClassKindAccepted(expectedType: KaType?, containingDeclaration: PsiElement, classKind: ClassKind): Boolean {
-        if (expectedType == null || expectedType.isAnyType) {
+        if (expectedType == null || expectedType.classId == KaStandardTypeClassIds.ANY) {
             return true
         }
 
-        val canHaveSubtypes = isInheritable(expectedType) || !(expectedType.containsStarProjections()) || expectedType.isUnitType
+        val canHaveSubtypes = isInheritable(expectedType) || !(expectedType.containsStarProjections()) || expectedType.classId == KaStandardTypeClassIds.UNIT
         val isEnum = expectedType is KaClassType && expectedType.isEnum()
 
         if (!(canHaveSubtypes || isEnum) || expectedType is KaTypeParameterType) return false

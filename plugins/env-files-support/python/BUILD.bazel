@@ -58,6 +58,7 @@ jvm_library(
 exports_files(
     [
         "intellij.dotenv.python.iml",
+        "resources/intellij.dotenv.python.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -12,9 +12,9 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiModifier
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -116,7 +116,8 @@ internal class KotlinMisorderedAssertEqualsArgumentsInspection :
         return arguments.size >= 2 && arguments.none { it.isNamed() }
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Context? {
         val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val functionSymbol = call.symbol
         val methodName = functionSymbol.assertMethodNameOrNull() ?: return null

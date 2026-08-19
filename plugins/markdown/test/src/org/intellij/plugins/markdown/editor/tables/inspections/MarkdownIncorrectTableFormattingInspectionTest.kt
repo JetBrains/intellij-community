@@ -4,6 +4,8 @@ package org.intellij.plugins.markdown.editor.tables.inspections
 import com.intellij.markdown.backend.inspections.MarkdownIncorrectTableFormattingInspection
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.tables.withTableStyle
+import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -71,9 +73,51 @@ class MarkdownIncorrectTableFormattingInspectionTest: LightPlatformCodeInsightFi
     doTest(expected)
   }
 
+  @Test
+  fun `no inspection on correctly formatted compact table`() {
+    withTableStyle(project, TableStyle.COMPACT) {
+      doTest(
+        """
+        | Character | Meaning |
+        | --- | --- |
+        | Y | Yes |
+        | N | No |
+        """.trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun `no inspection on correctly formatted tight table`() {
+    withTableStyle(project, TableStyle.TIGHT) {
+      doTest(
+        """
+        |Character|Meaning|
+        |---|---|
+        |Y|Yes|
+        |N|No|
+        """.trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun `no inspection on correctly formatted tight table with spaces in content`() {
+    withTableStyle(project, TableStyle.TIGHT) {
+      doTest(
+        """
+        |hello world|other value|
+        |---|---|
+        |value here|another value|
+        """.trimIndent()
+      )
+    }
+  }
+
   private fun doTest(expected: String) {
     myFixture.configureByText("some.md", expected)
     myFixture.enableInspections(MarkdownIncorrectTableFormattingInspection())
     myFixture.checkHighlighting()
   }
+
 }

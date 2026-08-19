@@ -8,13 +8,20 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.psi.AbstractFileViewProvider
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -23,10 +30,10 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
+import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import com.intellij.testFramework.junit5.highlighting.fixture.awaitHighlighting
 import com.intellij.testFramework.junit5.highlighting.fixture.highlightingFixture
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.update.MergingUpdateQueue
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,19 +41,45 @@ import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 
 @TestApplication
 class DaemonCodeAnalyzerTest {
   private companion object {
     val project = projectFixture(openAfterCreation = true)
+    val project2 = projectFixture(openAfterCreation = true)
     val module = project.moduleFixture()
     val sourceRoot = module.sourceRootFixture()
     val file = sourceRoot.psiFileFixture("A.txt", "text")
+    val nonAwtFile = sourceRoot.virtualFileFixture("NonAwt.txt", "text")
   }
 
   private val localEditor = file.editorFixture()
 
   private val highlighting = localEditor.highlightingFixture()
+
+  @Test
+  fun `non-AWT document change does not acquire daemon read lock`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    project.get()
+    project2.get() // init two projects to trigger complex logic of project guessing
+    highlighting.get() // init listeners
+    val virtualFile = LightVirtualFile("test.txt", "text")
+    virtualFile.putUserData(AbstractFileViewProvider.FREE_THREADED, true)
+    val document = assertIs<DocumentImpl>(readAction { FileDocumentManager.getInstance().getDocument(virtualFile) })
+    assertFalse(document.isWriteThreadOnly)
+    DaemonCodeAnalyzer.getInstance(project.get())
+    runReadActionBlocking {
+      PsiDocumentManager.getInstance(project.get()).getPsiFile(document) // initialize viewprovider to avoid write action in listeners
+    }
+    withContext(Dispatchers.UiWithModelAccess) {
+      ApplicationManagerEx.getApplicationEx().withLocksSoftlyProhibited(
+        "Daemon document listener must not acquire locks for a non-AWT document change",
+        { throw it },
+      ) {
+        document.setText("txet")
+      }
+    }
+  }
 
   @Test
   fun `external annotator doAnnotate runs outside non-cancellable section`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {

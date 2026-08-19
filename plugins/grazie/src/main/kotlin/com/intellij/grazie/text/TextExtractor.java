@@ -174,6 +174,7 @@ public abstract class TextExtractor {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
       List<TextContent> contents = obtainContents(file != null ? file : psi.getContainingFile(), each);
+      contents.forEach(content -> content.putUserData(EXTRACTOR_SOURCE, psi));
       if (stamp.mayCacheNow() && !contents.isEmpty()) {
         StreamEx.of(contents)
           .groupingBy(TextContent::getCommonParent)
@@ -181,7 +182,6 @@ public abstract class TextExtractor {
       }
 
       if (!contents.isEmpty()) {
-        contents.forEach(content -> content.putUserData(EXTRACTOR_SOURCE, psi));
         return ContainerUtil.filter(
           contents,
           c -> Boolean.FALSE.equals(c.getUserData(IGNORED)) && allowedDomains.contains(c.getDomain()) && c.intersectsRange(psiRange)

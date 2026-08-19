@@ -1,0 +1,43 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.jetbrains.annotations` start
+jvm_library(
+    name = "annotations",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jetbrains.annotations",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jetbrains-annotations-jetbrains-annotations"],
+    runtime_deps = ["@lib//:libraries-jetbrains-annotations-jetbrains-annotations"],
+)
+
+jvm_library(
+    name = "annotations_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jetbrains.annotations",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jetbrains-annotations-jetbrains-annotations"],
+    runtime_deps = [":annotations"],
+)
+### auto-generated section `build intellij.libraries.jetbrains.annotations` end
+
+### auto-generated section `iml intellij.libraries.jetbrains.annotations` start
+exports_files(
+    [
+        "intellij.libraries.jetbrains.annotations.iml",
+        "resources/intellij.libraries.jetbrains.annotations.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.jetbrains.annotations` end

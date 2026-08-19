@@ -1,5 +1,13 @@
 <idea-plugin visibility="internal">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.kotlin.projectWizard.core"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <!-- endregion -->
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.snakeyaml"/>
+    <module name="intellij.platform.core"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

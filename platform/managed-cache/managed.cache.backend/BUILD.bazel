@@ -20,7 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/kernel/backend",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
@@ -32,6 +32,7 @@ jvm_library(
         "//platform/util/concurrency",
         "//platform/core-api:core",
         "//fleet/rhizomedb",
+        "//platform/kernel/rpc.backend",
     ],
 )
 
@@ -47,6 +48,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":managed.cache.backend",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/kernel/backend:backend_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
@@ -58,6 +60,7 @@ jvm_library(
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/core-api:core_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.managed.cache.backend` end
@@ -66,6 +69,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.managed.cache.backend.iml",
+        "resources/intellij.platform.managed.cache.backend.xml",
     ],
     visibility = ["//visibility:public"],
 )

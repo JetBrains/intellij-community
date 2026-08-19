@@ -6,7 +6,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
-import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -35,6 +34,7 @@ internal class JpsModuleToBazelTargetsOnly {
       val starlarkTest = mutableListOf<String>()
       val starlarkLibrary = mutableListOf<String>()
       val starlarkIml = mutableListOf<String>()
+      val starlarkPluginDistribution = mutableListOf<String>()
 
       for (arg in expandedArgs) {
         when {
@@ -54,6 +54,8 @@ internal class JpsModuleToBazelTargetsOnly {
             starlarkLibrary.add(arg.substringAfter("="))
           arg.startsWith("--starlark-iml=") ->
             starlarkIml.add(arg.substringAfter("="))
+          arg.startsWith("--starlark-plugin-distribution=") ->
+            starlarkPluginDistribution.add(arg.substringAfter("="))
           else -> error("Unknown argument: $arg")
         }
       }
@@ -61,8 +63,8 @@ internal class JpsModuleToBazelTargetsOnly {
       val outputFile = (requireNotNull(output) { "Missing required --output=<path> argument" })
         .absolute()
       check(manifest != null) { "Missing required --manifest=<path> argument" }
-      val hasStarlarkTargets = starlarkProduction.isNotEmpty() || starlarkTest.isNotEmpty() ||
-                               starlarkLibrary.isNotEmpty() || starlarkIml.isNotEmpty()
+      val hasStarlarkTargets = starlarkProduction.isNotEmpty() || starlarkTest.isNotEmpty() || starlarkLibrary.isNotEmpty() ||
+                               starlarkIml.isNotEmpty() || starlarkPluginDistribution.isNotEmpty()
       check(hasStarlarkTargets || noStarlarkTargets) {
         "Either --starlark-* targets or --no-starlark-targets must be provided"
       }
@@ -125,12 +127,7 @@ internal class JpsModuleToBazelTargetsOnly {
 
       try {
 
-        val project = JpsSerializationManager.getInstance().loadProject(
-          /* projectPath = */ projectDir,
-          /* externalConfigurationDirectory = */ null,
-          /* pathVariables = */ mapOf("MAVEN_REPOSITORY" to m2Repo.absolutePathString()),
-          /* loadUnloadedModules = */ true,
-        )
+        val project = loadJpsProject(projectDir, communityRoot, m2Repo.absolutePathString())
 
         val generator = BazelBuildFileGenerator(
           ultimateRoot = ultimateRoot,
@@ -182,6 +179,7 @@ internal class JpsModuleToBazelTargetsOnly {
         if (hasStarlarkTargets) {
           assertStarlarkParity(
             targets, starlarkProduction, starlarkTest, starlarkLibrary, starlarkIml,
+            starlarkPluginDistribution,
           )
         }
       }
@@ -214,6 +212,7 @@ internal class JpsModuleToBazelTargetsOnly {
       starlarkTest: List<String>,
       starlarkLibrary: List<String>,
       starlarkIml: List<String>,
+      starlarkPluginDistribution: List<String>,
     ) {
       val jsonProduction = targets.modules.values.flatMap { it.productionTargets }.sorted()
       val jsonTest = targets.modules.values.flatMap { it.testTargets }.sorted()
@@ -224,6 +223,12 @@ internal class JpsModuleToBazelTargetsOnly {
       assertTargetsEqual("test", starlarkTest.sorted(), jsonTest.sorted(), allowDuplicates = false)
       assertTargetsEqual("library", starlarkLibrary.sorted(), jsonLibrary.sorted().toList(), allowDuplicates = true)
       assertTargetsEqual("imlTargets", starlarkIml.sorted(), targets.imlTargets.sorted(), allowDuplicates = false)
+      assertTargetsEqual(
+        "pluginDistributionTargets",
+        starlarkPluginDistribution.sorted(),
+        targets.pluginDistributionTargets.values.map { it.target }.sorted(),
+        allowDuplicates = false,
+      )
     }
 
     private fun assertTargetsEqual(kind: String, starlarkTargets: List<String>, jsonTargets: List<String>, allowDuplicates: Boolean) {

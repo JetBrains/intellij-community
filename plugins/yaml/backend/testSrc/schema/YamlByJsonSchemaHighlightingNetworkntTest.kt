@@ -72,6 +72,118 @@ open class YamlByJsonSchemaHighlightingNetworkntTest : YamlByJsonSchemaHighlight
     doTest(schema, """prop: <warning descr="Schema validation: Value should be one of: 1, 2, 3, \"18\"">6</warning>""")
   }
 
+  // https://yaml.org/spec/1.2.2/#1032-tag-resolution
+  fun `test uppercase YAML boolean is preserved by networknt conversion`() {
+    val schema = """
+      {
+        "properties": {
+          "value": { "enum": [true] }
+        }
+      }
+    """.trimIndent()
+    doTest(schema, "value: TRUE")
+  }
+
+  // https://yaml.org/spec/1.2.2/#1032-tag-resolution
+  fun `test hexadecimal YAML integer is preserved by networknt conversion`() {
+    val schema = """
+      {
+        "properties": {
+          "value": { "enum": [16] }
+        }
+      }
+    """.trimIndent()
+    doTest(schema, "value: 0x10")
+  }
+
+  // https://yaml.org/spec/1.2.2/#1032-tag-resolution
+  fun `test signed hexadecimal YAML integer is preserved by networknt conversion`() {
+    val schema = """
+      {
+        "properties": {
+          "value": { "enum": [-16] }
+        }
+      }
+    """.trimIndent()
+    doTest(schema, "value: -0x10")
+  }
+
+  // https://yaml.org/spec/1.2.2/#1032-tag-resolution
+  fun `test binary YAML integer is preserved by networknt conversion`() {
+    val schema = """
+      {
+        "properties": {
+          "value": { "enum": [16] }
+        }
+      }
+    """.trimIndent()
+    doTest(schema, "value: 0b10000")
+  }
+
+  // https://yaml.org/spec/1.2.2/#1032-tag-resolution
+  fun `test underscored YAML integer is preserved by networknt conversion`() {
+    val schema = """
+      {
+        "properties": {
+          "value": { "enum": [1000] }
+        }
+      }
+    """.trimIndent()
+    doTest(schema, "value: 1_000")
+  }
+
+  // https://yaml.org/spec/1.2.2/#732-single-quoted-style
+  fun `test YAML single quoted apostrophe is preserved by networknt conversion`() {
+    val schema = """
+      {
+        "properties": {
+          "value": { "enum": ["it's"] }
+        }
+      }
+    """.trimIndent()
+    doTest(schema, "value: 'it''s'")
+  }
+
+  // https://yaml.org/spec/1.2.2/#81-block-scalar-styles
+  fun `test YAML block scalar remains string in networknt conversion`() {
+    val schema = """
+      {
+        "properties": {
+          "value": { "enum": ["1"] }
+        }
+      }
+    """.trimIndent()
+    doTest(schema, "value: |-\n  1")
+  }
+
+  // https://yaml.org/spec/1.2.2/#1032-tag-resolution
+  fun `test YAML infinity is not replaced with a finite number`() {
+    val schema = """
+      {
+        "properties": {
+          "value": { "enum": [0] }
+        }
+      }
+    """.trimIndent()
+    doTest(schema, "value: .inf")
+    doTest(schema, "value: -.inf")
+    doTest(schema, "value: !!float .inf")
+  }
+
+  // https://yaml.org/spec/1.2.2/#1032-tag-resolution
+  fun `test YAML NaN is not replaced with a finite number`() {
+    val schema = """
+      {
+        "properties": {
+          "value": { "enum": [0] }
+        }
+      }
+    """.trimIndent()
+    doTest(schema, "value: .nan")
+    doTest(schema, "value: +.nan")
+    doTest(schema, "value: !!float .nan")
+  }
+
   override fun testAllOfProperties() {
     // networknt is spec-correct: `additionalProperties:false` at the top level does NOT "see through"
     // allOf branches. Properties declared inside allOf branches are treated as additional (forbidden)

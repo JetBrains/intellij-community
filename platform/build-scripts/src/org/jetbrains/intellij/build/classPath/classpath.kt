@@ -7,6 +7,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -17,6 +18,7 @@ import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
+import org.jetbrains.intellij.build.impl.LIB_DIRECTORY
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.PRODUCT_DESCRIPTOR_META_PATH
 import org.jetbrains.intellij.build.impl.PlatformJarNames
@@ -30,8 +32,7 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntr
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOwnedFileEntry
-import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
-import org.jetbrains.intellij.build.io.readZipFile
+import org.jetbrains.intellij.build.io.readEntryFromZip
 import org.jetbrains.intellij.build.isWindows
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
@@ -89,9 +90,37 @@ fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFile
 
   val result = LinkedHashSet<Path>(classPath.size + 4)
   // add first - should be listed first
-  sequenceOf(PLATFORM_LOADER_JAR, UTIL_8_JAR, UTIL_JAR, PRODUCT_BACKEND_JAR).map(libDir::resolve).filterTo(result, classPath::contains)
+  CORE_CLASSPATH_LEADING_JARS.asSequence().map(libDir::resolve).filterTo(result, classPath::contains)
   // sorted to ensure stable performance results
   result.addAll(if (isWindows) classPath.sortedBy(Path::toString) else classPath.sorted())
+  return result
+}
+
+/** The `lib/` jars the core classpath lists before everything else, in this order. */
+private val CORE_CLASSPATH_LEADING_JARS: List<String> = listOf(PLATFORM_LOADER_JAR, UTIL_8_JAR, UTIL_JAR, PRODUCT_BACKEND_JAR)
+
+/**
+ * Applies the order of [generateClassPathByLayoutReport] to core-classpath entries that are already home-relative paths.
+ *
+ * The fragments of a split dev distribution each report the share of the classpath they packed, so ordering can only
+ * happen once they are all in - and by then the entries are the strings a component manifest carries rather than the
+ * `Path`s the layout produced. Same rule, same leading jars: a change to one of these two has to be made in the other.
+ */
+@ApiStatus.Internal
+fun orderCoreClasspathEntries(entries: Collection<String>): List<String> {
+  val leading = CORE_CLASSPATH_LEADING_JARS.map { "$LIB_DIRECTORY/$it" }
+  val remaining = entries.toMutableList()
+  val result = ArrayList<String>(entries.size)
+  for (jar in leading) {
+    if (remaining.remove(jar)) {
+      result.add(jar)
+    }
+  }
+  // Sorted as `Path`s, not as strings, to reproduce the order of a complete assembly - which sorts absolute paths, so
+  // for an entry outside the distribution the two can still disagree. That only costs the "stable performance results"
+  // the sort is there for, never correctness: the platform classloader gets the same set either way.
+  remaining.sortWith(if (isWindows) compareBy { it } else compareBy(Path::of))
+  result.addAll(remaining)
   return result
 }
 
@@ -102,15 +131,14 @@ fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFile
  */
 internal suspend fun generateCoreClasspathFromPlugins(
   platformLayout: PlatformLayout,
-  pluginEntities: List<PluginBuildDescriptor>,
+  pluginBuildResults: List<PluginBuildResult>,
   context: BuildContext,
 ): Set<Path> {
   val classPathResult = LinkedHashSet<Path>()
-  for (pluginEntity in pluginEntities) {
-    val pluginLayout = pluginEntity.layout
-    val cacheContainer = platformLayout.descriptorCacheContainer.forPlugin(pluginEntity.dir)
-    val classPathModules = getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(pluginLayout.mainModule, cacheContainer, context)
-    for (distributionEntry in pluginEntity.distribution) {
+  for (buildResult in pluginBuildResults) {
+    val cacheContainer = platformLayout.descriptorCacheContainer.forPlugin(buildResult.dir)
+    val classPathModules = getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(buildResult.mainModule, cacheContainer, context)
+    for (distributionEntry in buildResult.distribution) {
       if (distributionEntry is ModuleOwnedFileEntry && distributionEntry.owner?.moduleName in classPathModules) {
         classPathResult.add(distributionEntry.path)
       }
@@ -146,21 +174,40 @@ internal suspend fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
   return embeddedModules
 }
 
-/** Build-scripts internal; not part of the public build API. */
-@org.jetbrains.annotations.ApiStatus.Internal
-data class PluginBuildDescriptor(
+/** Describe a built plugin distribution */
+@ApiStatus.Internal
+data class PluginBuildResult(
+  /** Name of JPS module containing `plugin.xml` file */
+  @JvmField val mainModule: String,
+  /** Path to the directory where the plugin distribution is built */
   @JvmField val dir: Path,
   @JvmField val os: OsFamily?,
   @JvmField val arch: JvmArchitecture?,
-  @JvmField val layout: PluginLayout,
   @JvmField val distribution: Collection<DistributionFileEntry>,
 )
 
+/**
+ * Describes a built plugin distribution and includes the information about the original layout.
+ * Since plugins built by Bazel won't have [PluginLayout] instance, [PluginBuildResult] should be used instead where possible.
+ */
+@ApiStatus.Internal
+data class PluginBuildDescriptor(
+  @JvmField val layout: PluginLayout,
+  @JvmField val buildResult: PluginBuildResult,
+)
+
+/**
+ * Writes everything in `plugin-classpath.txt` that precedes the plugin count: the format version, the `jarOnly` flag
+ * and the product descriptor.
+ *
+ * The count is not written here because it is not always known to whoever knows the descriptor. A split dev assembly
+ * has the platform fragment produce this prefix while each plugin fragment produces only its own records, so the count
+ * is the sum the composer arrives at once every fragment is in - see `writePluginClassPathCount`.
+ */
 @Suppress("BlockingMethodInNonBlockingContext")
-internal suspend fun writePluginClassPathHeader(
+internal suspend fun writePluginClassPathPrefix(
   out: DataOutputStream,
   isJarOnly: Boolean,
-  pluginCount: Int,
   platformLayout: PlatformLayout,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
@@ -177,8 +224,10 @@ internal suspend fun writePluginClassPathHeader(
 
   out.writeInt(mainPluginDescriptorContent.size())
   out.write(mainPluginDescriptorContent.internalBuffer, 0, mainPluginDescriptorContent.size())
+}
 
-  // bundled plugin metadata
+/** Writes the bundled plugin count, which separates the prefix written by [writePluginClassPathPrefix] from the per-plugin records. */
+internal fun writePluginClassPathCount(out: DataOutputStream, pluginCount: Int) {
   out.writeShort(pluginCount)
 }
 
@@ -215,21 +264,22 @@ suspend fun createCachedProductDescriptor(
 
 @Suppress("BlockingMethodInNonBlockingContext")
 internal suspend fun generatePluginClassPath(
-  pluginEntries: List<PluginBuildDescriptor>,
+  pluginEntries: List<PluginBuildResult>,
   descriptorFileProvider: DescriptorCacheContainer,
   platformLayout: PlatformLayout,
+  layoutsOfPluginsToScramble: Map<String, PluginLayout>,
   context: BuildContext,
 ): ByteArray {
   val byteOut = ByteArrayOutputStream()
   val out = DataOutputStream(byteOut)
 
   val uniqueGuard = HashSet<Path>()
-  for (pluginAsset in pluginEntries) {
-    val pluginDir = pluginAsset.dir
+  for (plugin in pluginEntries) {
+    val pluginDir = plugin.dir
 
-    val files = ArrayList<Path>(pluginAsset.distribution.size)
+    val files = ArrayList<Path>(plugin.distribution.size)
     uniqueGuard.clear()
-    for (entry in pluginAsset.distribution) {
+    for (entry in plugin.distribution) {
       val relativeOutputFile = entry.relativeOutputFile
       if (relativeOutputFile != null && relativeOutputFile.contains('/')) {
         continue
@@ -256,10 +306,13 @@ internal suspend fun generatePluginClassPath(
     var pluginDescriptorContent = requireNotNull(pluginDescriptorContainer.getCachedFileData(PLUGIN_XML_RELATIVE_PATH)) {
       "Cannot find plugin descriptor file $PLUGIN_XML_RELATIVE_PATH in $pluginDir (descriptorFileProvider=$descriptorFileProvider"
     }
-    val pluginLayout = pluginAsset.layout
     val rootElement = JDOMUtil.load(pluginDescriptorContent)
 
-    if (!pluginLayout.pathsToScramble.isEmpty()) {
+    val pluginLayout = layoutsOfPluginsToScramble[plugin.mainModule]
+    if (pluginLayout != null) {
+      require(pluginLayout.pathsToScramble.isNotEmpty()) {
+        "Plugin layout for ${plugin.mainModule} does not contain any paths to scramble"
+      }
       val platformDescriptorContainer = descriptorFileProvider.forPlatform(platformLayout)
       val xIncludeResolver = XIncludeElementResolverImpl(
         searchPath = listOf(
@@ -287,23 +340,6 @@ internal suspend fun generatePluginClassPath(
 
   out.close()
   return byteOut.toByteArray()
-}
-
-private fun readPluginXml(file: Path): ByteArray? {
-  var result: ByteArray? = null
-  readZipFile(file) { name, dataProvider ->
-    if (name == PLUGIN_XML_RELATIVE_PATH) {
-      val byteBuffer = dataProvider()
-      val bytes = ByteArray(byteBuffer.remaining())
-      byteBuffer.get(bytes, 0, bytes.size)
-      result = bytes
-      ZipEntryProcessorResult.STOP
-    }
-    else {
-      ZipEntryProcessorResult.CONTINUE
-    }
-  }
-  return result
 }
 
 private fun writeEntry(out: DataOutputStream, files: Collection<Path>, pluginDir: Path, pluginDescriptorContent: ByteArray) {
@@ -340,7 +376,7 @@ internal fun generatePluginClassPathFromPrebuiltPluginFiles(pluginEntries: List<
 
 private fun reorderPluginClassPath(files: MutableList<Path>): ByteArray {
   for ((index, file) in files.withIndex()) {
-    val pluginDescriptorContent = readPluginXml(file)
+    val pluginDescriptorContent = readEntryFromZip(file, PLUGIN_XML_RELATIVE_PATH)
     if (pluginDescriptorContent != null) {
       files.add(0, files.removeAt(index))
       return pluginDescriptorContent

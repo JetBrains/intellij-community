@@ -8,8 +8,9 @@ import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaCompilationOptions
-import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
+import org.jetbrains.kotlin.analysis.api.compilation.KaCompilationOptions
+import org.jetbrains.kotlin.analysis.api.compilation.KaCompilationResult
+import org.jetbrains.kotlin.analysis.api.compilation.compile
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.Path
@@ -27,7 +28,8 @@ interface KotlinCompilerIdeAllowedErrorFilter : (KaDiagnostic) -> Boolean {
 
 @KaExperimentalApi
 @ApiStatus.Internal
-fun KaSession.compileToDirectory(file: KtFile, options: KaCompilationOptions, destination: Path): KaCompilationResult {
+context(session: KaSession)
+fun compileToDirectory(file: KtFile, options: KaCompilationOptions, destination: Path): KaCompilationResult {
     val result = compile(file, options)
     if (result is KaCompilationResult.Success) {
         for (outputFile in result.output) {
@@ -41,7 +43,8 @@ fun KaSession.compileToDirectory(file: KtFile, options: KaCompilationOptions, de
 
 @KaExperimentalApi
 @ApiStatus.Internal
-fun KaSession.compileToJar(file: KtFile, options: KaCompilationOptions, destination: Path): KaCompilationResult {
+context(session: KaSession)
+fun compileToJar(file: KtFile, options: KaCompilationOptions, destination: Path): KaCompilationResult {
     val result = compile(file, options)
     if (result is KaCompilationResult.Success) {
         destination.outputStream().buffered().use { os ->

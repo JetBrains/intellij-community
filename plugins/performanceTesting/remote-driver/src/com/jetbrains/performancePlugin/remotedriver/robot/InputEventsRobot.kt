@@ -100,8 +100,31 @@ internal class InputEventsRobot(
     pressedModifiers.remove(keyCode)
   }
 
+  /**
+   * Types one character as a keyboard does: pressed, typed, released.
+   *
+   * A `KEY_TYPED` on its own is not a keystroke, and a component is entitled to say so. The reworked
+   * terminal ignores a `KEY_TYPED` whose `KEY_PRESSED` it never saw (`TerminalEventDispatcher`), so a
+   * typed-only stream reached it as silence — the panel was focused, every character was posted, and
+   * nothing was ever echoed. Components that only read `KEY_TYPED`, such as Swing text fields, are
+   * unaffected: a plain letter's `KEY_PRESSED` inserts nothing on its own.
+   *
+   * The focus owner is resolved once and reused for all three events, so a focus change mid-character
+   * cannot deliver half a keystroke to one component and half to another.
+   */
   override fun type(character: Char) {
-    postInputEvent(KeyEvent(waitForFocusOwner(), KeyEvent.KEY_TYPED, System.currentTimeMillis(), currentModifiers(), KeyEvent.VK_UNDEFINED, character))
+    val focusOwner = waitForFocusOwner()
+    val keyCode = KeyEvent.getExtendedKeyCodeForChar(character.code)
+    if (keyCode == KeyEvent.VK_UNDEFINED) {
+      // No key produces this character on its own (composed input, most symbols outside the keyboard layout).
+      // The typed event is all a real keyboard would deliver here too.
+      postInputEvent(KeyEvent(focusOwner, KeyEvent.KEY_TYPED, System.currentTimeMillis(), currentModifiers(), KeyEvent.VK_UNDEFINED, character))
+      return
+    }
+    val modifiers = currentModifiers() or if (character.isUpperCase()) InputEvent.SHIFT_DOWN_MASK else 0
+    postInputEvent(KeyEvent(focusOwner, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), modifiers, keyCode, KeyEvent.CHAR_UNDEFINED))
+    postInputEvent(KeyEvent(focusOwner, KeyEvent.KEY_TYPED, System.currentTimeMillis(), modifiers, KeyEvent.VK_UNDEFINED, character))
+    postInputEvent(KeyEvent(focusOwner, KeyEvent.KEY_RELEASED, System.currentTimeMillis(), modifiers, keyCode, KeyEvent.CHAR_UNDEFINED))
   }
 
   override fun enterText(text: String) {
@@ -165,6 +188,14 @@ internal class InputEventsRobot(
 
     moveMouse(window, clickPoint)
 
+    // The clicks of one multi-click go out back to back, and the inter-event slowdown applies once, after
+    // the whole gesture. Pausing between them makes a double-click stop being one: `ClickListener` derives
+    // the count from the *timestamps* of consecutive presses rather than from `MouseEvent.getClickCount()`,
+    // and resets it to 1 as soon as they are further apart than `UIUtil.getMultiClickInterval()` — 500 ms by
+    // default, and whatever the desktop says otherwise. At the 400 ms this robot sets to let the UI keep up,
+    // a double-click arrived as two single clicks: the tree row selected, and
+    // `EditSourceOnDoubleClickHandler` never fired. `java.awt.Robot` never showed this because it delivers
+    // the two clicks milliseconds apart.
     for (i in 1..clickCount) {
       postInputEvent(MouseEvent(window, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), keyboardModifiers or buttonDownMask or buttonLegacyMask,
                                 clickPoint.x, clickPoint.y, i, awtBtn == MouseEvent.BUTTON3, awtBtn))
@@ -172,8 +203,8 @@ internal class InputEventsRobot(
                                 clickPoint.x, clickPoint.y, i, false, awtBtn))
       postInputEvent(MouseEvent(window, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), keyboardModifiers or buttonLegacyMask,
                                 clickPoint.x, clickPoint.y, i, false, awtBtn))
-      pauseBetweenEvents()
     }
+    pauseBetweenEvents()
   }
 
   private fun postKeyEvents(keyCode: Int, modifiers: Int = 0) {

@@ -23,14 +23,14 @@ public final class GrUnnecessaryFinalModifierInspectionTest extends LightGroovyT
 
   public void testVal() {
     doTest("<warning descr=\"Modifier 'final' is not necessary\">final</warning> val x = 1",
-           "val x = 1");
+           "var x = 1");
   }
 
   private void doTest(String before, String after) {
     myFixture.enableInspections(new GrUnnecessaryFinalModifierInspection());
     myFixture.configureByText("_.groovy", before);
     myFixture.checkHighlighting();
-    myFixture.launchAction(myFixture.findSingleIntention("Remove unnecessary 'final'"));
+    myFixture.launchAction(myFixture.findSingleIntention("Remove 'final' modifier"));
     myFixture.checkResult(after);
   }
 }

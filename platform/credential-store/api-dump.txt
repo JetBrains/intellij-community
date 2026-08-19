@@ -38,7 +38,9 @@ f:com.intellij.credentialStore.CredentialRequestResult
 - hashCode():I
 - f:isRemember():Z
 com.intellij.credentialStore.CredentialStore
+- ephemeral(java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
 - a:get(com.intellij.credentialStore.CredentialAttributes):com.intellij.credentialStore.Credentials
+- getAsync(com.intellij.credentialStore.CredentialAttributes,kotlin.coroutines.Continuation):java.lang.Object
 - getPassword(com.intellij.credentialStore.CredentialAttributes):java.lang.String
 - a:set(com.intellij.credentialStore.CredentialAttributes,com.intellij.credentialStore.Credentials):V
 - setPassword(com.intellij.credentialStore.CredentialAttributes,java.lang.String):V
@@ -53,7 +55,6 @@ f:com.intellij.credentialStore.CredentialStoreManager$Companion
 f:com.intellij.credentialStore.Credentials
 - <init>(java.lang.String):V
 - <init>(java.lang.String,com.intellij.credentialStore.OneTimeString):V
-- <init>(java.lang.String,com.intellij.credentialStore.OneTimeString,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.lang.String,java.lang.String):V
 - <init>(java.lang.String,B[]):V
 - <init>(java.lang.String,C[]):V

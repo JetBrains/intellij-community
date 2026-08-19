@@ -123,6 +123,14 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
   private fun Panel.generalSettings(): Row {
     return group {
       row {
+        checkBox(GrazieBundle.message("grazie.settings.auto.update.languages.label"))
+          .bindSelected(
+            getter = { GrazieConfig.get().autoUpdateLanguages },
+            setter = { GrazieConfig.update { state -> state.copy(autoUpdateLanguages = it) } }
+          )
+      }
+
+      row {
         checkBox(GrazieBundle.message("grazie.settings.auto.apply.fixes.label")).bindSelected(::autoFix)
       }
 
@@ -139,6 +147,17 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
         }
         updateAvailability()
         GrazieConfig.subscribe(disposable!!) { updateAvailability() }
+      }
+
+      separator()
+
+      row {
+        checkBox(GrazieBundle.message("grazie.settings.specification.analysis.checkbox"))
+          .comment(GrazieBundle.message("grazie.settings.specification.analysis.comment"))
+          .bindSelected(
+            getter = { GrazieConfig.get().specificationAnalysisEnabled },
+            setter = { GrazieConfig.update { state -> state.copy(specificationAnalysisEnabled = it) } }
+          )
       }
     }
   }

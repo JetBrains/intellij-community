@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.icons.AllIcons;
@@ -49,6 +49,7 @@ public abstract class ImportLayoutPanel extends JPanel {
   private final JBCheckBox myCbLayoutStaticImportsSeparately =
     new JBCheckBox(JavaFrontbackBundle.message("import.layout.static.imports.separately"));
   private final @Nullable JBCheckBox myCbLayoutOnDemandImportsFromSamePackageFirst;
+  private final @Nullable JBCheckBox myCbKeepBlankLinesBetweenImports;
   private final JBTable myImportLayoutTable;
 
   private final PackageEntryTable myImportLayoutList = new PackageEntryTable();
@@ -69,7 +70,13 @@ public abstract class ImportLayoutPanel extends JPanel {
     return myCbLayoutOnDemandImportsFromSamePackageFirst;
   }
 
-  public ImportLayoutPanel(boolean showLayoutOnDemandImportFromSamePackageFirstCheckbox, boolean supportModuleImport) {
+  public @Nullable JBCheckBox getCbKeepBlankLinesBetweenImports() {
+    return myCbKeepBlankLinesBetweenImports;
+  }
+
+  public ImportLayoutPanel(boolean showLayoutOnDemandImportFromSamePackageFirstCheckbox,
+                           boolean showKeepBlankLinesBetweenImportsCheckbox,
+                           boolean supportModuleImport) {
     super(new BorderLayout());
 
     myCbLayoutStaticImportsSeparately.addItemListener(e -> {
@@ -132,8 +139,14 @@ public abstract class ImportLayoutPanel extends JPanel {
       ? new JBCheckBox(JavaFrontbackBundle.message("import.layout.on.demand.import.from.same.package.first"))
       : null;
 
+    myCbKeepBlankLinesBetweenImports =
+      showKeepBlankLinesBetweenImportsCheckbox
+      ? new JBCheckBox(JavaFrontbackBundle.message("import.layout.keep.blank.lines.between.imports"))
+      : null;
+
     List<@Nullable JBCheckBox> additionalCheckBoxes = new ArrayList<>();
     additionalCheckBoxes.add(myCbLayoutOnDemandImportsFromSamePackageFirst);
+    additionalCheckBoxes.add(myCbKeepBlankLinesBetweenImports);
     final ImportLayoutPanelUI UI = new ImportLayoutPanelUI(myCbLayoutStaticImportsSeparately,
                                                            additionalCheckBoxes,
                                                            importLayoutPanel);

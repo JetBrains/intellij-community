@@ -1,0 +1,22 @@
+<html>
+<body>
+<p>Reports invalid definitions and usages of classes created with the <code>attrs</code> library
+  (<code>attr.s</code>/<code>attr.ib</code>).</p>
+<p>
+  Detected problems include hand-written methods that conflict with ones <code>attrs</code> would generate (such as
+  <code>__init__</code>, <code>__repr__</code>, or comparison methods), invalid
+  <code>@&lt;attribute&gt;.default</code> or <code>@&lt;attribute&gt;.validator</code> decorated methods, conflicting
+  <code>default</code>/<code>factory</code> arguments, and an incorrect <code>__attrs_post_init__</code> signature.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+import attr
+
+
+@attr.s
+class Point:
+    x = attr.ib()
+    y = attr.ib()
+</code></pre>
+</body>
+</html>

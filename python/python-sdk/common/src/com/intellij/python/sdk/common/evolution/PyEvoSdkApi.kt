@@ -1,0 +1,258 @@
+package com.intellij.python.sdk.common.evolution
+
+import com.intellij.ide.ui.icons.IconId
+import com.intellij.platform.project.ProjectId
+import com.intellij.platform.rpc.RemoteApiProviderService
+import fleet.rpc.RemoteApi
+import fleet.rpc.Rpc
+import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+
+/**
+ * Split-mode wire contract for the "Evo" Python interpreter widget
+ * (registry `python.evolution.widget`).
+ *
+ * All Python-SDK discovery is backend-only, so the frontend widget/popup obtain their display data
+ * through these read-only RPC calls and render it into UI; [selectInterpreter] is the single mutating
+ * call that actually switches the module interpreter.
+ *
+ * The interpreter model is the platform's [com.jetbrains.python.sdk.PythonInterpreter] /
+ * `PythonInterpreterPresentation` on the backend; on the wire it is flattened into [PyInterpreterDto]
+ * (display) plus a [PyInterpreterRef] (selection token). A module is referenced by [ProjectId] plus its
+ * module name (resolved on the backend).
+ *
+ * Every process the backend launches for the widget is grouped in the process/trace view under a root
+ * "Python Interpreter Widget" [com.jetbrains.python.TraceContext], with a per-tool child context nested under it.
+ * A fresh root is created for each popup tree the frontend builds: the frontend passes a [String] `traceId` for
+ * that build, and the backend keys the root scope on it, so a re-open served from the frontend cache reuses the
+ * tree (no new root), while a rebuilt tree gets a new root.
+ */
+@ApiStatus.Internal
+@Rpc
+interface PyEvoSdkApi : RemoteApi<Unit> {
+  /** The Eel interpreter currently configured for the module, as display-ready data (or `null` if none). */
+  suspend fun getCurrentInterpreter(projectId: ProjectId, moduleName: String): PyInterpreterDto?
+
+  /**
+   * The expandable nodes contributed by the backend `PyEvoEnvironmentProvider` extension point
+   * (venv/uv/poetry/conda/hatch/advanced/autoconfigure/…), filtered to the tools available on the
+   * module's Eel machine and shown collapsed in the popup. Each tool-availability probe runs in that tool's
+   * [com.jetbrains.python.TraceContext] under a transient "Python Interpreter Widget" root created for this call.
+   */
+  suspend fun listNodes(projectId: ProjectId, moduleName: String): List<EvoNodeDto>
+
+  /**
+   * Lazily loads the sections of the node with [nodeId] (from a backend provider) when it is expanded. Every
+   * command this runs executes in the [nodeId] tool's [com.jetbrains.python.TraceContext] under the widget root
+   * for [traceId] (the frontend's per-tree-build id, shared by all commands of one built popup tree).
+   *
+   * A `refreshable` tool's result is cached for 10 min; [forceRefresh] (from its reload icon) bypasses and refills
+   * that cache. Non-refreshable tools are never cached here (the frontend's short-lived popup-tree cache covers them).
+   */
+  suspend fun loadNode(projectId: ProjectId, moduleName: String, nodeId: String, traceId: String, forceRefresh: Boolean): EvoLoadResultDto
+
+  /**
+   * The interpreters already configured for / assignable to the module — the same list the classic interpreter
+   * widget shows. Rendered as a single "Associated environments" node; each is selectable by its SDK name, not
+   * managed per-tool.
+   */
+  suspend fun listAssociatedInterpreters(projectId: ProjectId, moduleName: String): List<PyInterpreterDto>
+
+  /**
+   * Switches the module interpreter to the environment identified by [ref]. [nodeId] is the tool node the row came
+   * from (`"uv"`, `"Poetry"`, `"Conda"`, `"Hatch"`, `"pip"`, `"associated"`), used to create a correctly-typed SDK:
+   * an already-configured SDK ([PyInterpreterRef.ExistingSdk]) is assigned as-is; a detected env
+   * ([PyInterpreterRef.DetectedPath]) or a not-yet-created env ([PyInterpreterRef.CreateEnv]) is created via that
+   * tool's own "select existing"/"create" logic (the same the v2 Add dialog runs) and then assigned.
+   */
+  suspend fun selectInterpreter(projectId: ProjectId, moduleName: String, ref: PyInterpreterRef, nodeId: String): EvoSelectResultDto
+
+  /**
+   * Resolves the interpreter version (`python --version`) for the environment at [homePath], on demand — the
+   * frontend calls this lazily as a row scrolls into view, so we never spawn a process per environment up front.
+   * The probe runs in the [nodeId] tool's [com.jetbrains.python.TraceContext] (the same context the tool's env
+   * listing used) under the "Python Interpreter Widget" root for [traceId], so it appears under that tool.
+   */
+  suspend fun resolveInterpreterVersion(projectId: ProjectId, moduleName: String, nodeId: String, homePath: String, traceId: String): String?
+
+  /**
+   * Opens the platform's "Add Python Interpreter" (v2) dialog for the module, preselecting the environment
+   * manager of the node the "add new environment" row belongs to ([nodeId], e.g. `Conda` → conda, `uv` → uv) so
+   * the user lands on the matching creator. On OK the created SDK is associated with the module and the widget
+   * refreshes on the resulting `rootsChanged`.
+   */
+  suspend fun addInterpreter(projectId: ProjectId, moduleName: String, nodeId: String): EvoSelectResultDto
+
+  /**
+   * Runs the backend ACTION identified by [actionId] within node [nodeId] (e.g. an "Advanced" add-interpreter or
+   * add-on-target action) — typically opening its dialog/wizard on the backend. When it creates an interpreter, the
+   * SDK is associated with the module and the widget refreshes on the resulting `rootsChanged`.
+   */
+  suspend fun performNodeAction(projectId: ProjectId, moduleName: String, nodeId: String, actionId: String): EvoSelectResultDto
+
+  /**
+   * A flow of the project's SDK-configuration lock state (`com.jetbrains.python.sdk.isSdkConfigurationInProgress`):
+   * `true` while any interpreter configuration (create/select) holds the lock. The widget shows a spinner and
+   * disables its popup while `true`, instead of the current interpreter and its actions.
+   */
+  suspend fun sdkConfigurationInProgress(projectId: ProjectId): Flow<Boolean>
+}
+
+@ApiStatus.Internal
+suspend fun PyEvoSdkApi(): PyEvoSdkApi = RemoteApiProviderService.resolve(remoteApiDescriptor<PyEvoSdkApi>())
+
+/**
+ * Frontend-facing wrappers that hide the RPC/`fleet.rpc` types behind plain DTO results, so the frontend
+ * module does not need to depend on `intellij.platform.rpc`.
+ */
+@ApiStatus.Internal
+suspend fun requestEvoCurrentInterpreter(projectId: ProjectId, moduleName: String): PyInterpreterDto? =
+  PyEvoSdkApi().getCurrentInterpreter(projectId, moduleName)
+
+@ApiStatus.Internal
+suspend fun requestEvoNodes(projectId: ProjectId, moduleName: String): List<EvoNodeDto> =
+  PyEvoSdkApi().listNodes(projectId, moduleName)
+
+@ApiStatus.Internal
+suspend fun requestEvoNode(projectId: ProjectId, moduleName: String, nodeId: String, traceId: String, forceRefresh: Boolean = false): EvoLoadResultDto =
+  PyEvoSdkApi().loadNode(projectId, moduleName, nodeId, traceId, forceRefresh)
+
+@ApiStatus.Internal
+suspend fun requestEvoAssociatedInterpreters(projectId: ProjectId, moduleName: String): List<PyInterpreterDto> =
+  PyEvoSdkApi().listAssociatedInterpreters(projectId, moduleName)
+
+@ApiStatus.Internal
+suspend fun requestEvoSelectInterpreter(projectId: ProjectId, moduleName: String, ref: PyInterpreterRef, nodeId: String): EvoSelectResultDto =
+  PyEvoSdkApi().selectInterpreter(projectId, moduleName, ref, nodeId)
+
+@ApiStatus.Internal
+suspend fun requestEvoResolveVersion(projectId: ProjectId, moduleName: String, nodeId: String, homePath: String, traceId: String): String? =
+  PyEvoSdkApi().resolveInterpreterVersion(projectId, moduleName, nodeId, homePath, traceId)
+
+@ApiStatus.Internal
+suspend fun requestEvoAddInterpreter(projectId: ProjectId, moduleName: String, nodeId: String): EvoSelectResultDto =
+  PyEvoSdkApi().addInterpreter(projectId, moduleName, nodeId)
+
+@ApiStatus.Internal
+suspend fun requestEvoPerformNodeAction(projectId: ProjectId, moduleName: String, nodeId: String, actionId: String): EvoSelectResultDto =
+  PyEvoSdkApi().performNodeAction(projectId, moduleName, nodeId, actionId)
+
+@ApiStatus.Internal
+suspend fun requestEvoSdkConfigurationInProgress(projectId: ProjectId): Flow<Boolean> =
+  PyEvoSdkApi().sdkConfigurationInProgress(projectId)
+
+/**
+ * Frontend-safe, serializable projection of a `PythonInterpreterPresentation` (an interpreter's display
+ * label/icon), plus the [ref] needed to select it. All fields are pre-computed on the backend so the
+ * frontend never resolves paths or spawns a process.
+ */
+@ApiStatus.Internal
+@Serializable
+data class PyInterpreterDto(
+  /** Compact label, e.g. `myenv [3.12.1]` (from `PythonInterpreterPresentation.shortName`). */
+  val title: @Nls String,
+  /** Tooltip / interpreter binary path (from `PythonInterpreterPresentation.description`). */
+  val description: @Nls String,
+  /** RPC-transferable icon; supplied by the backend via `Icon.rpcId()`. */
+  val icon: IconId,
+  /** Selection token for [PyEvoSdkApi.selectInterpreter]. */
+  val ref: PyInterpreterRef,
+  /**
+   * IDs of the package-manager actions applicable to this interpreter's package manager (e.g. uv → lock/sync,
+   * poetry → lock/update), resolved on the frontend via the action manager. Empty for interpreters with no
+   * tool-specific actions (plain pip) and for target interpreters.
+   */
+  val packageManagerActionIds: List<String> = emptyList(),
+)
+
+/** Opaque, serializable selector telling the backend which interpreter [PyEvoSdkApi.selectInterpreter] must apply. */
+@ApiStatus.Internal
+@Serializable
+sealed interface PyInterpreterRef {
+  /** An interpreter that is already a registered PyCharm SDK, identified by its unique SDK name. */
+  @Serializable
+  data class ExistingSdk(val sdkName: @NonNls String) : PyInterpreterRef
+
+  /** A detected environment that is not yet an SDK; the backend creates it from its home path on select. */
+  @Serializable
+  data class DetectedPath(val homePath: @NonNls String) : PyInterpreterRef
+
+  /**
+   * A declared-but-not-yet-materialized environment (poetry per-version row, hatch declared env): the backend
+   * creates it via the tool's create logic, then assigns it. [token] is tool-specific — poetry: the base/system
+   * Python path; hatch: the declared env name.
+   */
+  @Serializable
+  data class CreateEnv(val token: @NonNls String) : PyInterpreterRef
+}
+
+/** A collapsed expandable node in the popup's "select environment" section, contributed by a backend provider. */
+@ApiStatus.Internal
+@Serializable
+data class EvoNodeDto(
+  val id: String,
+  val label: @Nls String,
+  val icon: IconId,
+)
+
+/** One leaf row inside a loaded node. */
+@ApiStatus.Internal
+@Serializable
+data class EvoLeafDto(
+  val title: @Nls String,
+  val description: @Nls String? = null,
+  val secondaryText: @Nls String? = null,
+  val icon: IconId,
+  val kind: EvoLeafKind,
+  /** The interpreter this row selects, when [kind] is [EvoLeafKind.SELECT_ENV]. */
+  val ref: PyInterpreterRef? = null,
+  /**
+   * For an [EvoLeafKind.ACTION] row that runs a backend action (e.g. an "Advanced" add-interpreter/target action):
+   * an opaque id the backend maps back to that action in [PyEvoSdkApi.performNodeAction]. `null` → display-only row.
+   */
+  val actionId: String? = null,
+)
+
+@ApiStatus.Internal
+@Serializable
+enum class EvoLeafKind {
+  /** Selects an interpreter ([EvoLeafDto.ref] is set). */
+  SELECT_ENV,
+
+  /** A labeled, display-only action row (autoconfigure options, advanced add-interpreter actions, …). */
+  ACTION,
+}
+
+@ApiStatus.Internal
+@Serializable
+data class EvoSectionDto(
+  val label: @Nls String? = null,
+  val leaves: List<EvoLeafDto>,
+  /** When true, the frontend appends its localized "Add new environment" row to this section. */
+  val addNew: Boolean = false,
+)
+
+/** Result of [PyEvoSdkApi.loadNode]: sections on success, or a warning/critical error message. */
+@ApiStatus.Internal
+@Serializable
+sealed interface EvoLoadResultDto {
+  /**
+   * [refreshable] is set by the backend when this tool's last scan was slow (> 5 s): such tools are cached for 10 min
+   * and shown with an inline reload icon; fast tools stay uncached (covered by the frontend's short popup-tree cache).
+   */
+  @Serializable data class Ok(val sections: List<EvoSectionDto>, val refreshable: Boolean = false) : EvoLoadResultDto
+  @Serializable data class Warning(val message: @Nls String) : EvoLoadResultDto
+  @Serializable data class Error(val message: @Nls String) : EvoLoadResultDto
+}
+
+/** Result of [PyEvoSdkApi.selectInterpreter]. */
+@ApiStatus.Internal
+@Serializable
+sealed interface EvoSelectResultDto {
+  @Serializable data object Ok : EvoSelectResultDto
+  @Serializable data class Error(val message: @Nls String) : EvoSelectResultDto
+}

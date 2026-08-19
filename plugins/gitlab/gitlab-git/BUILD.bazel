@@ -89,6 +89,7 @@ jvm_library(
 exports_files(
     [
         "intellij.vcs.gitlab.git.iml",
+        "resources/intellij.vcs.gitlab.git.xml",
     ],
     visibility = ["//visibility:public"],
 )

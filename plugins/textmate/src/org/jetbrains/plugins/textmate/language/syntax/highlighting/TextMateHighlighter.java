@@ -39,7 +39,7 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+  public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType tokenType) {
     if (!(tokenType instanceof TextMateElementType)) return PLAIN_SYNTAX_HIGHLIGHTER.getTokenHighlights(tokenType);
     TextMateService service = TextMateService.getInstance();
     Map<CharSequence, TextMateTextAttributesAdapter> customHighlightingColors = service.getCustomHighlightingColors();

@@ -24,7 +24,8 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 internal object UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
+    context(session: KaSession)
+    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
         return when (diagnostic) {
             is KaFirDiagnostic.UnresolvedImport,
             is KaFirDiagnostic.UnresolvedReference,
@@ -43,7 +44,8 @@ internal object UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQui
         return (importContext.position as? KtSimpleNameExpression)?.mainReference?.resolvesByNames?.toSet().orEmpty()
     }
 
-    override fun KaSession.provideImportCandidates(
+    context(session: KaSession)
+    override fun provideImportCandidates(
         unresolvedName: Name,
         importContext: ImportContext,
         indexProvider: KtSymbolFromIndexProvider

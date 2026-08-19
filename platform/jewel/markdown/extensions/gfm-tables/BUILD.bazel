@@ -45,7 +45,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/jewel/markdown/core",
         "//platform/jewel/ui",
         "//platform/jewel/foundation",
@@ -69,6 +69,7 @@ jvm_library(
         # do not sort,
         ":gfm-tables",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/jewel/markdown/core:core_test_lib",
         "//platform/jewel/ui:ui_test_lib",
         "//platform/jewel/foundation:foundation_test_lib",
@@ -86,6 +87,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.jewel.markdown.extensions.gfmTables.iml",
+        "src/main/resources/intellij.platform.jewel.markdown.extensions.gfmTables.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -137,7 +139,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/jewel/markdown/core",
         "//platform/jewel/markdown/core:core_test_lib",
         "//platform/jewel/ui",

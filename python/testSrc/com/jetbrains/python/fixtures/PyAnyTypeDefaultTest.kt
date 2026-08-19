@@ -1,11 +1,15 @@
 package com.jetbrains.python.fixtures
 
 import com.intellij.openapi.util.registry.Registry
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 
 /**
  * Verifies the default-on / opt-out wiring for the `python.type.any` engine in [PyTestCase]:
  * it is enabled by default for every test, and [PyAnyTypeDisabled] opts a single test out.
  */
+@Subsystems.Typing
+@Layers.Functional
 class PyAnyTypeDefaultTest : PyTestCase() {
 
   fun testEnabledByDefault() {

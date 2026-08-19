@@ -78,15 +78,6 @@ bool_flag(
     build_setting_default = False,
 )
 
-# --@rules_jvm//:wasm-source-maps
-# Emit source maps from the Kotlin WasmJS link action. CI disables this,
-# matching the Gradle web build which passes -source-map=false on TeamCity.
-bool_flag(
-    name = "wasm-source-maps",
-    build_setting_default = True,
-    visibility = ["//visibility:public"],
-)
-
 # used by _jvm_builder_launcher attribute in jvm_library rule
 exports_files(
     ["rules/impl/MemoryLauncher.java"],
@@ -187,12 +178,6 @@ jvm_import(
 )
 
 jvm_import(
-    name = "forms_import",
-    jar = "@forms_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
     name = "h2-mvstore_import",
     jar = "@h2-mvstore_http//file",
     source_jar = "@h2-mvstore-sources_http//file",
@@ -223,12 +208,6 @@ jvm_import(
 jvm_import(
     name = "javax-annotation-api_import",
     jar = "@javax_annotation-api_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "jaxen_import",
-    jar = "@jaxen_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -295,6 +274,7 @@ jvm_import(
 jvm_import(
     name = "kotlin-stdlib_import",
     jar = "@kotlin-stdlib_http//file",
+    source_jar = "@kotlin-stdlib-sources_http//file",
     # Version must match `kotlin_compiler_version` in MODULE.bazel — verified at
     # analysis time by `:kotlin-stdlib_import_coords_check`.
     tags = ["maven_coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.4.10-RC2"],

@@ -2,23 +2,40 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.project.Project
+import com.intellij.python.requirements.PyPackageVersion
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 
-internal interface PythonRepositoryManager {
+@ApiStatus.Internal
+interface PythonRepositoryManager {
   val project: Project
-  val repositories: List<PyPackageRepository>
+
+  /**
+   * The raw list of repositories owned by this manager, including any the user has disabled in
+   * Settings. Implementations override this; consumers should normally use [repositories]
+   * (below) instead, which filters out disabled entries so search / package-existence checks
+   * automatically respect the user's opt-out. Only touch [allRepositories] directly when the
+   * UX genuinely needs to expose or manipulate disabled repositories (e.g. the repository
+   * settings editor).
+   */
+  val allRepositories: List<PyPackageRepository>
+
+  /**
+   * Every enabled repository from [allRepositories]. Filtered centrally so individual query
+   * paths (search, `hasPackageSnapshot`, …) can't forget to skip disabled entries — an easy
+   * mistake to make and the reason PY-91041 shipped in the first place.
+   */
+  val repositories: List<PyPackageRepository> get() = allRepositories.filter { it.enabled }
 
   /**
    * Built-in repositories that are always shown in the repository settings (e.g. PyPI, Conda).

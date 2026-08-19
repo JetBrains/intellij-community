@@ -1,5 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package org.jetbrains.kotlin.idea.core.script.k2.definitions
 
 import com.intellij.openapi.application.runReadActionBlocking
@@ -22,7 +21,6 @@ import org.jetbrains.kotlin.idea.core.script.shared.definition.ScriptDefinitionM
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
 import org.jetbrains.kotlin.utils.addIfNotNull
-import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
@@ -34,25 +32,30 @@ data class DefinitionTemplates(
 
 private const val MAIN_KTS = "org.jetbrains.kotlin.mainKts.MainKtsScript.classname"
 
-@Suppress("IO_FILE_USAGE")
 class DefinitionFromDependenciesProvider(val project: Project) : ScriptDefinitionsProvider {
-    override val id: String
-        get() = this::class.java.name
+    override val id: String = KotlinScriptDefinitionsProviderId.FROM_DEPENDENCIES.id
 
-    override fun getDefinitionClasses(): Iterable<String> {
+    override fun getDefinitionClasses(): List<String> = definitionClasses()
+
+    // markers are resolved through the index by ScriptTemplatesFromDependenciesCache, not by classpath scanning
+    override fun useDiscovery(): Boolean = false
+
+    fun definitionClasses(): List<String> {
         val explicitFqns = ScriptDefinitionSettingsStateComponent.getInstance(project).state.parsedClassNames
         return (explicitFqns + ScriptTemplatesFromDependenciesCache.getOrDiscover(project).fqns).distinct()
     }
 
-    override fun getDefinitionsClassPath(): Iterable<File> {
+    override fun getTemplateClasspath(): List<Path> {
         val settings = ScriptDefinitionSettingsStateComponent.getInstance(project).state
         val explicitClasspath = settings.parsedClasspath
         val discoveredClasspath = ScriptTemplatesFromDependenciesCache.getOrDiscover(project).classpath
         val autoResolvedClasspath = tryToGuessClasspath(settings.parsedClassNames)
-        return (explicitClasspath + discoveredClasspath + autoResolvedClasspath).distinct().map { File(it) }
+        return buildList {
+            addAll(explicitClasspath)
+            addAll(discoveredClasspath)
+            addAll(autoResolvedClasspath)
+        }.distinct().map { Path.of(it) }
     }
-
-    override fun useDiscovery(): Boolean = false
 
     private fun tryToGuessClasspath(fqns: List<String>): List<String> {
         if (fqns.isEmpty()) return emptyList()

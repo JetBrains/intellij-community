@@ -1,39 +1,90 @@
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
 
-_RESOLUTION_FACTS_VERSION = "resolution.v33"
+_RESOLUTION_FACTS_VERSION = "resolution.v35"
 
-_RESOLVER_VERSION = "0.0.24"
+_RESOLVER_VERSION = "0.0.25"
 _RESOLVER_BINARY_URL_PREFIX = (
     "https://cache-redirector.jetbrains.com/github.com/JetBrains/bazel-kmp-resolver/releases/download/%s" % _RESOLVER_VERSION
 )
 _RESOLVER_BINARIES = {
     "linux_arm64": struct(
         filename = "bazel-kmp-resolver-linux-arm64",
-        sha256 = "78cc54525374b3c8dcb2060b7d12252c7f089f5be63c2a4e7a5129472090d7f9",
+        sha256 = "9707b7da63db7dc952a7ba98ddb110e7cf8442eb5c709c60fc594fd7d1ff7cac",
     ),
     "linux_x64": struct(
         filename = "bazel-kmp-resolver-linux-x64",
-        sha256 = "d031ea9d684c4e7050707410e24339b7f436c6ff91bfb0d9a381f0f031d68040",
+        sha256 = "759ae7d675cd3aa091b73c269a1aaa1558ff9798c2f57dda9a6d3b8018001ef7",
     ),
     "macos_arm64": struct(
         filename = "bazel-kmp-resolver-macos-arm64",
-        sha256 = "5fa5ed9881f1720fe063735ac604f10ad0a250e765ec9f13a9de4b1e2ab13f40",
+        sha256 = "5cd0bbcfd162b0a853058f5566fabd13b472ec45047f582d303da3e1ce7c4028",
     ),
     "macos_x64": struct(
         filename = "bazel-kmp-resolver-macos-x64",
-        sha256 = "630b7470ca8b9febc72da3379b5687a93e30582252ab524163800a7bd9e4c6c8",
+        sha256 = "d24c155f02552cc936a338db34e0ed77dacb583c27606c1a5a22143013b4023f",
     ),
     "windows_x64": struct(
         filename = "bazel-kmp-resolver-windows-x64.exe",
-        sha256 = "6750cfcb5e7af311e932263d772b47009379b61e02ea0a4cc9972cbe7fe19d34",
+        sha256 = "89fa7bbc18356bee53ec5ee20a43c26642ccb4f6af2e78b94a9548df7cc2093e",
     ),
     "windows_arm64": struct(
         # TODO: GraalVM does not support ARM64 Windows yet, so use the x64 binary for now.
         filename = "bazel-kmp-resolver-windows-x64.exe",
-        sha256 = "6750cfcb5e7af311e932263d772b47009379b61e02ea0a4cc9972cbe7fe19d34",
+        sha256 = "89fa7bbc18356bee53ec5ee20a43c26642ccb4f6af2e78b94a9548df7cc2093e",
     ),
 }
+
+# Hermetic node/npm handed to the resolver so it can resolve the NPM dependencies declared by the
+# `package.json` embedded in klibs. The repositories are created by the `node` extension of
+# `rules_nodejs` (see `use_repo` in MODULE.bazel); npm is always run as `node npm-cli.js ...`
+# because the `npm`/`npm.cmd` wrapper scripts are not portably executable.
+_NODEJS_REPOSITORIES = {
+    "linux_arm64": struct(
+        repository = "nodejs_linux_arm64",
+        node = "bin/nodejs/bin/node",
+        npm_cli_js = "bin/nodejs/lib/node_modules/npm/bin/npm-cli.js",
+    ),
+    "linux_x64": struct(
+        repository = "nodejs_linux_amd64",
+        node = "bin/nodejs/bin/node",
+        npm_cli_js = "bin/nodejs/lib/node_modules/npm/bin/npm-cli.js",
+    ),
+    "macos_arm64": struct(
+        repository = "nodejs_darwin_arm64",
+        node = "bin/nodejs/bin/node",
+        npm_cli_js = "bin/nodejs/lib/node_modules/npm/bin/npm-cli.js",
+    ),
+    "macos_x64": struct(
+        repository = "nodejs_darwin_amd64",
+        node = "bin/nodejs/bin/node",
+        npm_cli_js = "bin/nodejs/lib/node_modules/npm/bin/npm-cli.js",
+    ),
+    "windows_x64": struct(
+        repository = "nodejs_windows_amd64",
+        node = "bin/nodejs/node.exe",
+        npm_cli_js = "bin/nodejs/node_modules/npm/bin/npm-cli.js",
+    ),
+    "windows_arm64": struct(
+        repository = "nodejs_windows_arm64",
+        node = "bin/nodejs/node.exe",
+        npm_cli_js = "bin/nodejs/node_modules/npm/bin/npm-cli.js",
+    ),
+}
+
+def _node_tooling(module_ctx):
+    host_key = _host_key(module_ctx)
+    nodejs = _NODEJS_REPOSITORIES.get(host_key)
+    if nodejs == None:
+        fail("No node/npm repository available for host %s (%s/%s)" % (
+            host_key,
+            module_ctx.os.name,
+            module_ctx.os.arch,
+        ))
+    return struct(
+        node = module_ctx.path(Label("@%s//:%s" % (nodejs.repository, nodejs.node))),
+        npm_cli_js = module_ctx.path(Label("@%s//:%s" % (nodejs.repository, nodejs.npm_cli_js))),
+    )
 
 # See https://github.com/JetBrains/bazel-kmp-resolver/tree/main/testResources for example of production JSONs that could be returned by the resolver
 _EMPTY_RESOLUTION_JSON = json.encode({
@@ -83,6 +134,10 @@ def _materialize_resolution(resolution):
             "source_jar": None if source_jar == None else _artifact_label(source_jar),
             "deps": _dependency_labels(library_id, variant, "dependencies", target_names, target_names_by_module),
             "exported_deps": _dependency_labels(library_id, variant, "exportedDependencies", target_names, target_names_by_module),
+            "npm_packages": {
+                package["name"]: "@%s//:package" % _npm_repository_name(package)
+                for package in variant.get("npmPackages", [])
+            },
         })
 
     return struct(
@@ -258,6 +313,31 @@ def _add_artifact(artifacts, artifact):
         return
     artifacts[artifact_key] = artifact
 
+def _collect_npm_packages(resolution):
+    packages = {}
+    libraries = _manifest_libraries(resolution)
+    for library_id in sorted(libraries.keys()):
+        library = libraries[library_id]
+        variant = _wasmjs_variant(library)
+        if variant == None:
+            continue
+
+        for package in variant.get("npmPackages", []):
+            package_key = json.encode([package["name"], package["version"]])
+            existing = packages.get(package_key)
+            if existing != None:
+                if existing["integrity"] != package["integrity"] or existing["url"] != package["url"]:
+                    fail("NPM package resolution collision for %s" % package_key)
+                continue
+            packages[package_key] = package
+    return packages
+
+def _npm_repository_name(package):
+    return "npm-%s-%s_http" % (
+        _repository_name_part(package["name"]),
+        _repository_name_part(package["version"]),
+    )
+
 def _artifact_repository_name(artifact):
     artifact_id = artifact["artifactId"]
     version = artifact["version"]
@@ -338,6 +418,20 @@ def _render_aliases_block(aliases):
     return "\n\n".join(blocks)
 
 def _render_wasmjs_import(target):
+    """
+    Renders `wasmjs_import` target from a `bazel-kmp-resolver` Bazel manifest entry.
+
+    Example:
+
+        wasmjs_import(
+          name = "org_jetbrains_kotlinx_kotlinx_datetime_wasm_js_0_7_1_0_6_x_compat",
+          klib = "@@community++kmp+org_jetbrains_kotlinx-kotlinx-datetime-wasm-js-0_7_1-0_6_x-compat_http//file:file",
+          source_jar = "@@community++kmp+org_jetbrains_kotlinx-kotlinx-datetime-wasm-js-0_7_1-0_6_x-compat-sources_http//file:file",
+          exported_deps = ["@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib", "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core"],
+          npm_packages = {"@js-joda/core": "@@community++kmp+npm-js-joda_core-3_2_0_http//:package"},
+        )
+    """
+
     lines = [
         "wasmjs_import(",
         "    name = %s," % _quote(target["name"]),
@@ -347,7 +441,21 @@ def _render_wasmjs_import(target):
         lines.append("    source_jar = %s," % _quote(target["source_jar"]))
     lines.extend(_render_label_list_attr("deps", target["deps"]))
     lines.extend(_render_label_list_attr("exported_deps", target["exported_deps"]))
+    lines.extend(_render_string_dict_attr("npm_packages", target["npm_packages"]))
     lines.append(")")
+    return lines
+
+def _render_string_dict_attr(name, values):
+    if not values:
+        return []
+    lines = [
+        "    %s = {" % name,
+    ]
+    for key in sorted(values.keys()):
+        lines.append("        %s: %s," % (_quote(key), _quote(values[key])))
+    lines.append(
+        "    },",
+    )
     return lines
 
 def _render_label_list_attr(name, values):
@@ -392,6 +500,7 @@ def _read_configure_tag(module_ctx):
         deps = [],
         repositories = [],
         substitutions = {},
+        npm_package_version_overrides = {},
     )
 
 def _resolve_with_facts(module_ctx, config):
@@ -446,12 +555,17 @@ def _resolve_fresh(module_ctx, config):
         executable = True,
     )
 
+    node_tooling = _node_tooling(module_ctx)
     resolution_path = "resolution.json"
     module_ctx.file(resolution_path, "")
     args = [
         module_ctx.path(resolver_binary.filename),
         "--output-manifest-file",
         module_ctx.path(resolution_path),
+        "--node-executable",
+        node_tooling.node,
+        "--npm-cli-js",
+        node_tooling.npm_cli_js,
     ]
     for dep in config.deps:
         args.extend(["--coordinate", dep])
@@ -462,6 +576,8 @@ def _resolve_fresh(module_ctx, config):
         _validate_maven_module_id(source_module_id)
         _maven_coordinate_parts(target_coordinate)
         args.extend(["--substitution", "%s=%s" % (source_module_id, target_coordinate)])
+    for package_name in sorted(config.npm_package_version_overrides.keys()):
+        args.extend(["--npm-package-version", "%s=%s" % (package_name, config.npm_package_version_overrides[package_name])])
 
     netrc = module_ctx.os.environ.get("NETRC", "")  # Read NETRC without taking into account as an input of the repository_rule, authentication does not matter in the reproducibility of the resolution
     repository_credentials = _repository_credentials(module_ctx, config.repositories, netrc)
@@ -525,6 +641,7 @@ def _resolution_fact_key(config):
         config.deps,
         config.repositories,
         _sorted_dict_items(config.substitutions),
+        _sorted_dict_items(config.npm_package_version_overrides),
     ])
 
 def _sorted_dict_items(values):
@@ -550,6 +667,26 @@ def _register_artifact_repositories(resolution):
             downloaded_file_path = _basename_from_url(urls[0]),
             integrity = artifact["integrity"],
             urls = urls,
+        )
+
+    packages = _collect_npm_packages(resolution)
+    for package_key in sorted(packages.keys()):
+        package = packages[package_key]
+        repo_name = _npm_repository_name(package)
+        if repo_name in used_names and used_names[repo_name] != package_key:
+            fail("Artifact repository name collision for '%s' and '%s': %s" % (
+                used_names[repo_name],
+                package_key,
+                repo_name,
+            ))
+        used_names[repo_name] = package_key
+        http_archive(
+            name = repo_name,
+            url = package["url"],
+            integrity = package["integrity"],
+            # npm tarballs place the package content under a `package/` root directory
+            strip_prefix = "package",
+            build_file = Label(":npm.BUILD.bazel"),
         )
 
 def _kmp_extension_impl(module_ctx):
@@ -591,6 +728,10 @@ kmp = module_extension(
             "substitutions": attr.string_dict(
                 doc = "Maven module substitutions, keyed by group:artifact and resolved to group:artifact:version.",
             ),
+            "npm_package_version_overrides": attr.string_dict(
+                doc = """Overrides of NPM package versions, keyed by package name.
+                Escape hatch to resolve manually the version conflicts between the NPM dependencies declared by different klibs.""",
+            ),
         }),
     },
     doc = """
@@ -603,7 +744,9 @@ kmp = module_extension(
       - WasmJS
 
       It generates a `kmp_deps` repository with:
-      - (WasmJS target) `wasmjs_import` rules (backed by `http_file` rules resolving source jars and klibs)
+      - (WasmJS target) `wasmjs_import` rules (backed by `http_file` rules resolving source jars and klibs), carrying
+        the NPM packages declared by the `package.json` embedded in their klib (backed by `http_archive` rules
+        resolving npm registry tarballs) in their `npm_packages`
       - `alias` rules to avoid specifying versions in user-space `BUILD.bazel` files
 
       Resolution against private repository will wire `NETRC` and Bazel authentication to allow the Kotlin Multiplatform resolver to query

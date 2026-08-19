@@ -1,0 +1,78 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.python.requirements.backend` start
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.requirements.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//python/python-requirements/common"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//python/python-requirements/common",
+        "//python/openapi:community",
+        "//platform/core-api:core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//libraries/stream",
+        "//platform/analysis-api:analysis",
+        "//platform/core-impl",
+        "//platform/util:util-ui",
+        "//platform/analysis-impl",
+    ],
+)
+
+jvm_library(
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.requirements.backend",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//python/python-requirements/common",
+        "//python/python-requirements/common:common_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//python/python-requirements/common:common_test_lib",
+        "//python/openapi:community_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util:util_test_lib",
+        "//libraries/stream:stream_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.requirements.backend` end
+
+### auto-generated section `iml intellij.python.requirements.backend` start
+exports_files(
+    [
+        "intellij.python.requirements.backend.iml",
+        "resources/intellij.python.requirements.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.requirements.backend` end

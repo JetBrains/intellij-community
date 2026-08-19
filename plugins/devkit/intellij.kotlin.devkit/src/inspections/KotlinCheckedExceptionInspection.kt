@@ -22,18 +22,23 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsInPlaceContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractInvocationKind
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.successfulConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
+import org.jetbrains.kotlin.analysis.api.types.receiverType
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -472,7 +477,7 @@ private fun KtLambdaExpression.executedInPlaceByCallable(): LambdaCheckResult {
 
   val parameterAnnotations: Collection<KtAnnotationEntry> = when (val calleeExpression = callExpression.calleeExpression) {
     is KtNameReferenceExpression -> analyze(calleeExpression) {
-      val signature = calleeExpression.resolveToCall()?.successfulFunctionCallOrNull()?.argumentMapping[this@executedInPlaceByCallable]
+      val signature = calleeExpression.resolveToCall()?.successfulFunctionCallOrNull()?.valueArgumentMapping[this@executedInPlaceByCallable]
       if (signature != null) {
         val symbol = signature.symbol
         symbol.returnType.annotations.mapNotNull { it.psi as? KtAnnotationEntry }

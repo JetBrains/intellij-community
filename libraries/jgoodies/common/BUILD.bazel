@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.jgoodies.common.iml",
+        "resources/intellij.libraries.jgoodies.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

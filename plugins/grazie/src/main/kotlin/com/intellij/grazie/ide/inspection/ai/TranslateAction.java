@@ -12,7 +12,7 @@ import com.intellij.grazie.GrazieBundle;
 import com.intellij.grazie.cloud.APIQueries;
 import com.intellij.grazie.cloud.GrazieCloudConnector;
 import com.intellij.grazie.cloud.PrematureEndException;
-import com.intellij.grazie.detection.LangDetector;
+import com.intellij.grazie.detection.BatchLangDetector;
 import com.intellij.grazie.ide.fus.GrazieFUSCounter;
 import com.intellij.grazie.ide.ui.PaddedListCellRenderer;
 import com.intellij.grazie.rule.SentenceTokenizer;
@@ -117,7 +117,7 @@ public class TranslateAction implements IntentionAction, CustomizableIntentionAc
     }
 
     List<Language> detected = StreamEx.of(toTranslate)
-      .map(pair -> LangDetector.INSTANCE.getLanguage(pair.contentFragment()))
+      .map(pair -> BatchLangDetector.INSTANCE.getLanguage(pair.content))
       .filter(Objects::nonNull)
       .distinct()
       .toList();

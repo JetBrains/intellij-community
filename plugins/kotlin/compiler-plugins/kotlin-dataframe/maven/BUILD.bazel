@@ -57,6 +57,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.dataframe.maven.iml",
+        "resources/intellij.kotlin.compilerPlugins.dataframe.maven.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -89,6 +89,11 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
                                    "KEEP_BLANK_LINES_IN_DECLARATIONS",
                                    "KEEP_BLANK_LINES_IN_CODE");
       consumer.renameStandardOption("BLANK_LINES_AFTER_IMPORTS", PySyntaxBundle.message("formatter.around.top.level.imports"));
+      consumer.renameStandardOption("BLANK_LINES_AROUND_CLASS", PySyntaxBundle.message("formatter.around.nested.classes"));
+      consumer.renameStandardOption("BLANK_LINES_AROUND_METHOD",
+                                    PySyntaxBundle.message("formatter.around.methods.and.nested.functions"));
+      consumer.renameStandardOption("KEEP_BLANK_LINES_IN_DECLARATIONS", PySyntaxBundle.message("formatter.keep.around.declarations"));
+      consumer.renameStandardOption("KEEP_BLANK_LINES_IN_CODE", PySyntaxBundle.message("formatter.keep.in.rest.of.code"));
 
       consumer.showCustomOption(PyCodeStyleSettings.class, "BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS",
                                 PySyntaxBundle.message("formatter.around.top.level.classes.and.function"), getInstance().BLANK_LINES);
@@ -113,6 +118,10 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
 
       consumer.renameStandardOption("METHOD_PARAMETERS_WRAP", PySyntaxBundle.message("formatter.function.declaration.parameters"));
       consumer.renameStandardOption("CALL_PARAMETERS_WRAP", PySyntaxBundle.message("formatter.function.call.arguments"));
+
+      consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_CONSECUTIVE_ASSIGNMENTS",
+                                PySyntaxBundle.message("formatter.align.consecutive.assignments"),
+                                ApplicationBundle.message("wrapping.assignment.statement"));
 
       consumer.showCustomOption(PyCodeStyleSettings.class,
                                 "USE_TRAILING_COMMA_IN_ARGUMENTS_LIST",
@@ -296,6 +305,10 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
             print(platform.processor())""";
   private static final String WRAP_SETTINGS_PREVIEW = """
     from module import foo, bar, baz, quux
+
+    short = 1
+    long_name = 2
+    counter += 1
 
     long_expression = component_one + component_two + component_three + component_four + component_five + component_six
 

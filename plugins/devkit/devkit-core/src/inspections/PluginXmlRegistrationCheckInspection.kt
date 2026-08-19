@@ -7,8 +7,13 @@ import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.options.OptPane.stringList
 import com.intellij.codeInspection.options.OptionController
+import com.intellij.openapi.module.Module
+import com.intellij.psi.PsiClass
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.xml.DomElement
+import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
 import com.intellij.util.xmlb.annotations.Property
@@ -36,11 +41,11 @@ internal class PluginXmlRegistrationCheckInspection : DevKitPluginXmlInspectionB
 
   var checkAllPossibleClasses: Boolean = false
 
-  private val myPluginModuleSetByModuleName = SynchronizedClearableLazy {
-    val result: MutableMap<String, PluginModuleSet> = HashMap()
-    for (modulesSet in pluginsModules) {
-      for (module in modulesSet.modules) {
-        result[module] = modulesSet
+  private val myPluginModuleSetsByModuleName = SynchronizedClearableLazy {
+    val result = HashMap<String, MutableSet<PluginModuleSet>>()
+    pluginsModules.forEach { modulesSet ->
+      modulesSet.modules.forEach { module ->
+        result.getOrPut(module) { HashSet() }.add(modulesSet)
       }
     }
     result
@@ -57,7 +62,7 @@ internal class PluginXmlRegistrationCheckInspection : DevKitPluginXmlInspectionB
                    set.modules = StreamEx.split(line, ",").toCollection { LinkedHashSet() }
                    set
                  }.into(pluginsModules)
-                 myPluginModuleSetByModuleName.drop()
+                 myPluginModuleSetsByModuleName.drop()
                })
   }
 
@@ -73,19 +78,26 @@ internal class PluginXmlRegistrationCheckInspection : DevKitPluginXmlInspectionB
 
   override fun readSettings(node: Element) {
     super.readSettings(node)
-    myPluginModuleSetByModuleName.drop();
+    myPluginModuleSetsByModuleName.drop()
+  }
+
+  fun areModulesInSamePluginSet(moduleName: String, otherModuleName: String): Boolean {
+    val setsByModuleName = myPluginModuleSetsByModuleName.value
+    val moduleSets = setsByModuleName[moduleName] ?: return false
+    val otherModuleSets = setsByModuleName[otherModuleName] ?: return false
+    return moduleSets.any(otherModuleSets::contains)
   }
 
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {
     if (element !is Extension &&
         element !is ExtensionPoint &&
         element !is Action &&
-        element !is Component) return;
+        element !is Component) return
 
     if (!isAllowed(holder)) return
 
     val registrationChecker =
-      ComponentModuleRegistrationChecker(myPluginModuleSetByModuleName, ignoreClasses, holder)
+      ComponentModuleRegistrationChecker(::isResolvableSamePluginRegistration, ignoreClasses, holder)
     if (!registrationChecker.isIdeaPlatformModule(element.module)) return
 
     if (checkAllPossibleClasses) {
@@ -108,11 +120,41 @@ internal class PluginXmlRegistrationCheckInspection : DevKitPluginXmlInspectionB
     }
   }
 
+  /**
+   * Modules of one plugin may register each other's classes only when the registration still resolves at runtime:
+   * a production registration reaches the class through the plugin's main classloader (the defining module is
+   * loaded by it, and the registering module is loaded by it or resolves through it as an optional content module),
+   * or through a `<dependencies><module>` entry visible in every runtime context of the registering descriptor
+   * ([effectiveDeclaredDependencyNames]); a test descriptor reaches the class through its test runtime scope.
+   */
+  private fun isResolvableSamePluginRegistration(
+    element: DomElement,
+    psiClass: PsiClass,
+    definingModule: Module,
+    elementModule: Module,
+  ): Boolean {
+    if (!areModulesInSamePluginSet(definingModule.name, elementModule.name)) return false
+    val classFile = PsiUtilCore.getVirtualFile(psiClass) ?: return true
+    val descriptorFile = DomUtil.getFile(element).virtualFile
+    if (isInProductionRoots(descriptorFile, elementModule.project)) {
+      if (!isInProductionRoots(classFile, elementModule.project)) return false
+      return isLoadedByMainPluginClassloader(definingModule) && seesMainPluginClassloader(elementModule) ||
+             declaresDependencyOnModule(element, definingModule)
+    }
+    return isInTestRoots(descriptorFile, elementModule.project) &&
+           GlobalSearchScope.moduleRuntimeScope(elementModule, true).contains(classFile)
+  }
+
+  private fun declaresDependencyOnModule(element: DomElement, module: Module): Boolean {
+    return module.name in effectiveDeclaredDependencyNames(DomUtil.getFile(element)).moduleNames
+  }
+
   @Tag("modules-set")
   class PluginModuleSet {
     @XCollection(elementName = "module", valueAttributeName = "name")
     @Property(surroundWithTag = false)
-    var modules = LinkedHashSet<String>();
+    var modules = LinkedHashSet<String>()
   }
 
 }
+

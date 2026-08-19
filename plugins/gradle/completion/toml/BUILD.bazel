@@ -70,6 +70,7 @@ jvm_library(
 exports_files(
     [
         "intellij.gradle.completion.toml.iml",
+        "resources/intellij.gradle.completion.toml.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -127,7 +128,8 @@ jvm_library(
         "//plugins/gradle/completion/toml:toml_test_lib",
         "//plugins/gradle",
         "//plugins/gradle:gradle_test_lib",
-        "@lib//:kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
@@ -148,8 +150,6 @@ jvm_library(
         "//plugins/groovy:groovy_test_lib",
         "//plugins/groovy:groovy-tests",
         "//plugins/groovy:groovy-tests_test_lib",
-        "//plugins/repository-search",
-        "//plugins/repository-search:repository-search_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/junit5-params",

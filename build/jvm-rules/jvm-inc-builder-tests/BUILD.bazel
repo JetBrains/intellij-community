@@ -72,6 +72,7 @@ kt_jvm_library(
         "//:asm-all_import",
         "//:junit4",
         "//:kotlin-metadata-jvm_import",
+        "//:protobuf-java_import",
         "//dependency-graph",
         "//jps-builders-6:build-javac-rt",
         "//jvm-inc-builder:jvm-inc-builder-lib",

@@ -21,7 +21,7 @@ jvm_library(
         # do not sort,
         "//platform/kernel/rpc",
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/kernel/shared:kernel",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
@@ -44,6 +44,7 @@ jvm_library(
         # do not sort,
         ":managed.cache",
         "//platform/kernel/rpc:rpc_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
@@ -58,6 +59,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.managed.cache.iml",
+        "resources/intellij.platform.managed.cache.xml",
     ],
     visibility = ["//visibility:public"],
 )

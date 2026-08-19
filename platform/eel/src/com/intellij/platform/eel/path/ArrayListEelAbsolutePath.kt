@@ -74,7 +74,7 @@ internal class ArrayListEelAbsolutePath private constructor(
       throw EelPathException(name, error)
   }
 
-  override fun toString(): String =
+  private val asString by lazy(LazyThreadSafetyMode.PUBLICATION) {
     when (_root) {
       Root.Unix -> parts.joinToString(separator = "/", prefix = "/")
 
@@ -86,6 +86,10 @@ internal class ArrayListEelAbsolutePath private constructor(
         }
       )
     }
+  }
+
+  override fun toString(): String =
+    asString
 
   override val invariantSeparatorsPathString: String
     get() = parts.joinToString(separator = "/", prefix = when (_root) {

@@ -62,7 +62,7 @@ abstract class XDebuggerActionBase protected constructor(private val myHideDisab
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    performDebuggerAction(e.project, e.dataContext) { performWithHandler(e) }
+    performDebuggerAction(e) { performWithHandler(e) }
   }
 
   protected fun performWithHandler(e: AnActionEvent): Boolean {

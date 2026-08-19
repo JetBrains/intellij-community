@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.stream.*;
 
 public class StaticCollectionInspection {
   // with warning
@@ -34,4 +35,27 @@ public class StaticCollectionInspection {
 
   private StaticCollectionInspection() {
   }
+}
+final class Example {
+  private static final Map<String, String> MAP_A = Map.of(
+    "C", "CEG",
+    "Dm", "DFA",
+    "Em", "EGB"
+  );
+  private static final Map<String, String> MAP_X;
+  private static final Map<String, String> MAP_B = MAP_X =
+    Stream.of("AAA", "BBB").collect(Collectors.toUnmodifiableMap(x -> x, x -> x));
+  private static final Map<String, String> MAP_C;
+  private static final Map<String, String> MAP_D;
+
+  static {
+    MAP_C = Map.of(
+      "C", "CEG",
+      "Dm", "DFA",
+      "Em", "EGB"
+    );
+    MAP_D = Stream.of("AAA", "BBB").collect(Collectors.toUnmodifiableMap(x -> x, x -> x));
+  }
+
+  private Example() { }
 }

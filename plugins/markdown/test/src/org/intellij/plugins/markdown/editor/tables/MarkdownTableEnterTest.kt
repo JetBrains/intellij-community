@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -81,6 +82,51 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
   }
 
   @Test
+  fun `test shift enter at the row end inside list item`() {
+    // language=Markdown
+    val before = "- item  \n\n  | none | none |\n  |------|------|\n  | some | some |<caret>"
+    // language=Markdown
+    val after = "- item  \n\n  | none | none |\n  |------|------|\n  | some | some |\n  |      |      |<caret>"
+    doTest(before, after, shift = true)
+  }
+
+  @Test
+  fun `test shift enter at the row end in compact table`() {
+    withTableStyle(project, TableStyle.COMPACT) {
+      val before = """
+      | a | b |
+      | --- | --- |
+      | some | some |<caret>
+      """.trimIndent()
+      val after = """
+      | a | b |
+      | --- | --- |
+      | some | some |
+      | | |<caret>
+      """.trimIndent()
+      doTest(before, after, shift = true)
+    }
+  }
+
+  @Test
+  fun `test shift enter at the row end in tight table`() {
+    withTableStyle(project, TableStyle.TIGHT) {
+      val before = """
+      |a|b|
+      |---|---|
+      |some|some|<caret>
+      """.trimIndent()
+      val after = """
+      |a|b|
+      |---|---|
+      |some|some|
+      |||<caret>
+      """.trimIndent()
+      doTest(before, after, shift = true)
+    }
+  }
+
+  @Test
   fun `test shift enter at the row end with CJK header`() {
     // language=Markdown
     val before = """
@@ -144,4 +190,5 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
     }
     checkResultByText(expected)
   }
+
 }

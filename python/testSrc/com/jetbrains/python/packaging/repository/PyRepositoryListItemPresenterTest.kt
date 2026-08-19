@@ -1,10 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.repository
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
+@Subsystems.Packaging
+@Layers.Functional
 internal class PyRepositoryListItemPresenterTest {
 
   @Test

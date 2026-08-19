@@ -1,0 +1,42 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.tasks.core.libraries.commonsDiscovery` start
+jvm_library(
+    name = "tasks-core-libraries-commonsDiscovery",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.tasks.core.libraries.commonsDiscovery",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:tasks-core-libraries-commons_discovery-commons-discovery"],
+    runtime_deps = ["@lib//:tasks-core-libraries-commons_discovery-commons-discovery"],
+)
+
+jvm_library(
+    name = "tasks-core-libraries-commonsDiscovery_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.tasks.core.libraries.commonsDiscovery",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:tasks-core-libraries-commons_discovery-commons-discovery"],
+    runtime_deps = [":tasks-core-libraries-commonsDiscovery"],
+)
+### auto-generated section `build intellij.tasks.core.libraries.commonsDiscovery` end
+
+### auto-generated section `iml intellij.tasks.core.libraries.commonsDiscovery` start
+exports_files(
+    [
+        "intellij.tasks.core.libraries.commonsDiscovery.iml",
+        "resources/intellij.tasks.core.libraries.commonsDiscovery.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.tasks.core.libraries.commonsDiscovery` end

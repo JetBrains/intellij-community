@@ -27,6 +27,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/refactoring",
         "//plugins/terminal",
+        "//plugins/terminal/emulator",
         "//platform/execution-impl",
         "//platform/util/coroutines",
         "//platform/editor-ui-ex:editor-ex",
@@ -85,6 +86,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/refactoring:refactoring_test_lib",
         "//plugins/terminal:terminal_test_lib",
+        "//plugins/terminal/emulator:emulator_test_lib",
         "//platform/execution-impl:execution-impl_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/editor-ui-ex:editor-ex_test_lib",
@@ -128,6 +130,7 @@ jvm_library(
 exports_files(
     [
         "intellij.terminal.frontend.iml",
+        "resources/intellij.terminal.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )

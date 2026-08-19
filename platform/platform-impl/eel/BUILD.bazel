@@ -27,7 +27,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/pty4j",
         "//platform/core-api:core",
@@ -46,6 +46,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/ide-core",
         "//platform/eel-nioFs-impl",
+        "//platform/util:util-ui",
     ],
 )
 
@@ -62,6 +63,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":ide-impl-wsl",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/pty4j:pty4j_test_lib",
         "//platform/core-api:core_test_lib",
         "//libraries/caffeine:caffeine_test_lib",
@@ -79,6 +81,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/eel-nioFs-impl:eel-nioFs-impl_test_lib",
+        "//platform/util:util-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.impl.wsl` end
@@ -87,6 +90,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.impl.wsl.iml",
+        "resources/intellij.platform.ide.impl.wsl.xml",
     ],
     visibility = ["//visibility:public"],
 )

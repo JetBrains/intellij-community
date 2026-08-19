@@ -13,7 +13,7 @@ def eppstein_matching(G: Graph[_Node], top_nodes: Iterable[Incomplete] | None = 
 @_dispatchable
 def to_vertex_cover(
     G: Graph[_Node], matching: Mapping[Incomplete, Incomplete], top_nodes: Iterable[Incomplete] | None = None
-): ...
+) -> set[Incomplete]: ...
 
 maximum_matching = hopcroft_karp_matching
 

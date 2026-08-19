@@ -44,6 +44,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.ktor.network.tls.iml",
+        "resources/intellij.libraries.ktor.network.tls.xml",
     ],
     visibility = ["//visibility:public"],
 )

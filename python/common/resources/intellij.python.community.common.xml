@@ -1,4 +1,14 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.rpc.topics"/>
+  </dependencies>
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.python.community.common.toolToIconMapper" dynamic="false"
                     interface="com.intellij.python.community.common.tools.spi.ToolIdToIconMapper"/>

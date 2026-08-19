@@ -20,7 +20,7 @@ jvm_library(
     runtime_deps = ["//platform/platform-frontend:frontend"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//fleet/kernel",
         "//platform/util",
@@ -43,6 +43,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":frontend",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//fleet/kernel:kernel_test_lib",
         "//platform/util:util_test_lib",
         "//platform/core-api:core_test_lib",
@@ -58,6 +59,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.editor.frontend.iml",
+        "resources/intellij.platform.editor.frontend.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -57,12 +57,15 @@ private fun parseLogFilter(args: Array<String>): Set<String>? {
 internal fun parseGeneratorOptions(args: Array<String>): GeneratorRunOptions {
   val jsonArg = args.firstOrNull { it.startsWith("--json") }
   val updateSuppressions = args.any { it == "--update-suppressions" }
+  // Report what would change and write nothing. The generate run rewrites whatever is out of sync anywhere in the
+  // repository, which is not what you want when you only meant to see one artifact's diff.
+  val check = args.any { it == "--check" }
   val validationFilter = parseValidationFilter(args)
   val logFilter = parseLogFilter(args)
 
   return GeneratorRunOptions(
     jsonFilter = jsonArg,
-    commitChanges = jsonArg == null && !updateSuppressions,
+    commitChanges = jsonArg == null && !updateSuppressions && !check,
     updateSuppressions = updateSuppressions,
     validationFilter = validationFilter,
     logFilter = logFilter,

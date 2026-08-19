@@ -56,6 +56,54 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHighlightedWithKey(highlights, "target.md", MarkdownHighlighterColors.LINK_DESTINATION)
   }
 
+  fun testCodeSpansKeepCodeSpanHighlightingInsideHeaders() {
+    myFixture.configureByText("test.md", "`Standalone`\n#### Header `Code`")
+    val highlights = myFixture.doHighlighting()
+
+    assertElementHighlightedWithKey(highlights, "Standalone", MarkdownHighlighterColors.CODE_SPAN)
+    assertElementHighlightedWithKey(highlights, "Code", MarkdownHighlighterColors.CODE_SPAN)
+    assertElementHighlightedWithKey(highlights, "Code", MarkdownHighlighterColors.HEADER_LEVEL_4, HighlightingState.NOT_HIGHLIGHTED)
+  }
+
+  fun testCodeSpansKeepCodeSpanHighlightingForProjectClassesInHeader() {
+    myFixture.addFileToProject("Z.java", "class Z {}")
+    myFixture.addFileToProject("X.java", "class X {}")
+
+    val text = "#### HEADER: `Z`/`X`"
+    myFixture.configureByText("test.md", text)
+    val highlights = myFixture.doHighlighting()
+
+    assertElementHighlightedWithKey(highlights, "Z", MarkdownHighlighterColors.CODE_SPAN)
+    assertElementHighlightedWithKey(highlights, "X", MarkdownHighlighterColors.CODE_SPAN)
+  }
+
+  fun testCodeSpansKeepCodeSpanHighlightingInDifferentContexts() {
+    val cases = listOf(
+      "# Header `Code`" to MarkdownHighlighterColors.HEADER_LEVEL_1,
+      "## Header `Code`" to MarkdownHighlighterColors.HEADER_LEVEL_2,
+      "### Header `Code`" to MarkdownHighlighterColors.HEADER_LEVEL_3,
+      "#### Header `Code`" to MarkdownHighlighterColors.HEADER_LEVEL_4,
+      "##### Header `Code`" to MarkdownHighlighterColors.HEADER_LEVEL_5,
+      "###### Header `Code`" to MarkdownHighlighterColors.HEADER_LEVEL_6,
+      "> Quote `Code`" to MarkdownHighlighterColors.BLOCK_QUOTE,
+      "- Item `Code`" to MarkdownHighlighterColors.LIST_ITEM,
+      "**Bold `Code`**" to MarkdownHighlighterColors.BOLD,
+      "*Italic `Code`*" to MarkdownHighlighterColors.ITALIC,
+      "`First` and `Code`" to MarkdownHighlighterColors.TEXT,
+      "[Link](target.md) and `Code`" to MarkdownHighlighterColors.TEXT,
+    )
+
+    for ((text, inheritedKey) in cases) {
+      myFixture.configureByText("test.md", text)
+      val highlights = myFixture.doHighlighting()
+
+      assertElementHighlightedWithKey(highlights, "Code", MarkdownHighlighterColors.CODE_SPAN)
+      if (inheritedKey != MarkdownHighlighterColors.TEXT) {
+        assertElementHighlightedWithKey(highlights, "Code", inheritedKey, HighlightingState.NOT_HIGHLIGHTED)
+      }
+    }
+  }
+
   fun testNestedContainersCreateUniquePerRangeTextAnnotations() {
     myFixture.configureByText("test.md", """
       # Header with **bold**

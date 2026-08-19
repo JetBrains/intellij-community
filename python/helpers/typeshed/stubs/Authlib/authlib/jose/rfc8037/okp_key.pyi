@@ -12,7 +12,7 @@ PRIVATE_KEYS_MAP: Final[dict[str, type]]
 class OKPKey(AsymmetricKey):
     kty: str
     REQUIRED_JSON_FIELDS: ClassVar[list[str]]
-    PUBLIC_KEY_FIELDS = REQUIRED_JSON_FIELDS
+    PUBLIC_KEY_FIELDS = REQUIRED_JSON_FIELDS  # pyrefly: ignore [unknown-name]
     PRIVATE_KEY_FIELDS: ClassVar[list[str]]
     PUBLIC_KEY_CLS: ClassVar[tuple[type, ...]]
     PRIVATE_KEY_CLS: ClassVar[tuple[type, ...]]

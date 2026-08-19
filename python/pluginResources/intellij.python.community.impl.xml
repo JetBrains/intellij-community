@@ -4,13 +4,78 @@
     <module name="intellij.platform.debugger.impl"/>
     <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.json"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.commons.lang3"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.http.client"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jackson.dataformat.yaml"/>
+    <module name="intellij.libraries.jackson.module.kotlin"/>
+    <module name="intellij.libraries.javax.annotation"/>
     <module name="intellij.libraries.jcef"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.jna"/>
+    <module name="intellij.libraries.jsoup"/>
+    <module name="intellij.libraries.jsr305"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.io"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.libraries.semver"/>
+    <module name="intellij.libraries.stream"/>
     <module name="intellij.libraries.xstream"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.credentialStore"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger.impl.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.internal"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ide.remote"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.macro"/>
+    <module name="intellij.platform.ml"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.remote.core"/>
+    <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.structureView"/>
+    <module name="intellij.platform.testIntegration"/>
+    <module name="intellij.platform.testIntegration.ui"/>
     <module name="intellij.platform.testRunner"/>
     <module name="intellij.platform.ui.jcef"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.welcomeScreen.impl"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.core.impl"/>
@@ -30,15 +95,17 @@
     <module name="intellij.python.pydev"/>
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools"/>
-    <module name="intellij.python.requirements"/>
-    <module name="intellij.python.sdk"/>
-    <module name="intellij.python.sdk.ui"/>
+    <module name="intellij.python.requirements.backend"/>
+    <module name="intellij.python.sdk.backend"/>
+    <module name="intellij.python.sdk.common"/>
     <module name="intellij.python.syntax"/>
     <module name="intellij.python.uv.backend"/>
     <module name="intellij.python.uv.common"/>
     <module name="intellij.python.venv"/>
+    <module name="intellij.regexp"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.toml.core"/>
+    <module name="intellij.xml.psi.impl"/>
     <module name="intellij.yaml"/>
   </dependencies>
   <!-- endregion -->
@@ -48,7 +115,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.jetbrains.python.errorProcessing.ErrorSink"
                         serviceImplementation="com.jetbrains.python.impl.ShowingMessageErrorSink"/>
-    <python.pytools.pyToolManagerProvider implementation="com.jetbrains.python.sdk.configuration.SystemPythonToolManagerProvider"/>
+    <python.pytools.genericPyToolManagerProvider implementation="com.jetbrains.python.sdk.configuration.SystemPythonToolManagerProvider"/>
     <statusBarWidgetFactory id="pythonDependencyFileWidget"
                             implementation="com.jetbrains.python.requirements.widget.PyDependenciesFileStatusBarWidgetFactory"
                             order="after pythonInterpreterWidget, before git, before hg, before Notifications"/>
@@ -63,25 +130,11 @@
                  key="python.show.modules.with.base.dir" restartRequired="true"/>
     <registryKey defaultValue="false" description="Master switch for the new Python formatter defaults (PY-85946). When off, the feature is fully disabled: classic formatting everywhere, no migration, no balloon." key="python.formatter.new.defaults.enabled" restartRequired="true"/>
     <registryKey defaultValue="false" description="Whether this installation uses the new Python formatter defaults (PY-85946). Set automatically per installation (on for new installs, off for upgrades until the user switches); requires the master switch python.formatter.new.defaults.enabled." key="python.formatter.new.defaults" restartRequired="true"/>
-    <fileType name="Requirements.txt"
-              implementationClass="com.jetbrains.python.requirements.RequirementsFileType"
-              fieldName="INSTANCE"
-              language="Requirements"
-              fileNamesCaseInsensitive="requirements.txt"/>
     <fileType name="PyTyped"
               implementationClass="com.jetbrains.python.codeInsight.typing.PyTypedFileType"
               fieldName="INSTANCE"
               fileNamesCaseInsensitive="py.typed"/>
     <fileTypeOverrider implementation="com.jetbrains.python.requirements.RequirementsFileTypeOverrider"/>
-    <lang.parserDefinition
-      language="Requirements"
-      implementationClass="com.jetbrains.python.requirements.RequirementsParserDefinition"/>
-    <lang.syntaxHighlighterFactory
-      language="Requirements"
-      implementationClass="com.jetbrains.python.requirements.RequirementsSyntaxHighlighterFactory"/>
-    <lang.commenter
-      language="Requirements"
-      implementationClass="com.jetbrains.python.requirements.RequirementsCommenter"/>
     <multiHostInjector implementation="com.jetbrains.python.requirements.injection.TomlRequirementsLanguageInjector"/>
     <multiHostInjector implementation="com.jetbrains.python.requirements.injection.CondaRequirementsLanguageInjector"/>
     <platform.backend.documentation.psiTargetProvider
@@ -131,6 +184,15 @@
                                           nameKey="INLAY.numeric.promotion"
                                           providerId="python.numeric.promotion.inlays"/>
 
+    <codeInsight.declarativeInlayProvider group="VALUES_GROUP"
+                                          bundle="messages.PyPsiBundle"
+                                          implementationClass="com.jetbrains.python.inlayHints.PyEnumAutoValueInlayHintsProvider"
+                                          isEnabledByDefault="true"
+                                          language="Python"
+                                          nameKey="INLAY.enum.auto.value"
+                                          descriptionKey="INLAY.enum.auto.value.description"
+                                          providerId="python.enum.auto.value.inlays"/>
+
     <codeInsight.declarativeInlayProvider group="PARAMETERS_GROUP"
                                           bundle="messages.PyPsiBundle"
                                           implementationClass="com.jetbrains.python.inlayHints.PyTestParametrizeInlayHintsProvider"
@@ -151,6 +213,10 @@
                             implementationClass="com.jetbrains.python.requirements.RequirementsPackageNameCompletionContributor"/>
     <completion.contributor language="Requirements"
                             implementationClass="com.jetbrains.python.requirements.RequirementsVersionCompletionContributor"/>
+    <completion.contributor language="Requirements"
+                            implementationClass="com.jetbrains.python.requirements.RequirementsEnvMarkerCompletionContributor"/>
+    <annotator language="Requirements"
+               implementationClass="com.jetbrains.python.requirements.RequirementsEnvMarkerAnnotator"/>
     <completion.contributor language="TOML"
                             implementationClass="com.jetbrains.python.poetry.PoetryDependencyPackageNameCompletionContributor"/>
     <completion.contributor language="TOML"
@@ -165,7 +231,6 @@
     <pluginSuggestionProvider implementation="com.jetbrains.python.suggestions.PythonDapPluginSuggestionProvider"/>
     <postStartupActivity implementation="com.jetbrains.python.poetry.PoetryPyProjectTomlPostStartupActivity"/>
     <postStartupActivity implementation="com.jetbrains.python.psi.resolve.PyPartialStubMarkersInvalidatorActivity"/>
-    <postStartupActivity implementation="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowDefaultAnchorMigration"/>
     <postStartupActivity implementation="com.jetbrains.python.debugger.PyDebuggerBackendToolWindowSetup"/>
 
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.psi.PyLangLevelVirtualFileCustomDataProvider"/>
@@ -197,7 +262,6 @@
     <projectSettings service="com.jetbrains.python.sdk.PyVirtualEnvVcsSettings"/>
   </extensions>
 
-
   <projectListeners>
     <listener class="com.jetbrains.python.packaging.PyDependencyCollectorListener"
               topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
@@ -226,7 +290,6 @@
                  description="Enable pyi stubs for Django (django-stubs package)"
                  key="django.enable.pyi.stubs"/>
     <iconMapper mappingFile="PythonIconMappings.json"/>
-    <minimapInteractionPolicy implementation="com.jetbrains.python.PyMinimapInteractionPolicy"/>
     <library.type implementation="com.jetbrains.python.library.PythonLibraryType"/>
     <renameHandler implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameHandler"/>
     <nameSuggestionProvider implementation="com.jetbrains.python.refactoring.PyNameSuggestionProvider"/>
@@ -784,7 +847,7 @@
     <notificationGroup id="Python source root detection" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="python.source.root.detection.confirm.notification.group"/>
 
-    <toolWindow id="Python Packages" anchor="right" secondary="true"
+    <toolWindow id="Python Packages" anchor="bottom" secondary="true"
                 icon="com.jetbrains.python.icons.PythonIcons.Python.PythonPackages"
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
     <toolWindowExtractorMode id="Python Packages" mode="mirror"/>
@@ -972,24 +1035,28 @@
 
   </extensionPoints>
 
+  <extensions defaultExtensionNs="com.intellij.platform">
+    <rpc.backend.remoteApiProvider implementation="com.jetbrains.python.sdk.evolution.PyEvoSdkApiProvider"/>
+  </extensions>
+
   <extensions defaultExtensionNs="Pythonid">
     <pyRunToolProvider implementation="com.jetbrains.python.sdk.uv.run.UvRunToolProvider"/>
     <pythonDebugBackendRunner implementation="com.jetbrains.python.debugger.PydevdDebugBackendRunner"/>
     <pyRunToolProvider implementation="com.jetbrains.python.hatch.run.HatchRunToolProvider"/>
 
-    <evoTreeElementProvider id="UvEvoProvider"
+    <evoEnvironmentProvider id="UvEvoProvider"
                             order="first"
-                            implementation="com.jetbrains.python.uv.sdk.evolution.UvSelectSdkProvider"/>
+                            implementation="com.jetbrains.python.uv.sdk.evolution.UvEvoEnvironmentProvider"/>
 
-    <evoTreeElementProvider id="PoetryEvoProvider"
-                            implementation="com.jetbrains.python.poetry.sdk.evolution.PoetrySelectSdkProvider"/>
+    <evoEnvironmentProvider id="PoetryEvoProvider"
+                            implementation="com.jetbrains.python.poetry.sdk.evolution.PoetryEvoEnvironmentProvider"/>
 
-    <evoTreeElementProvider id="CondaEvoProvider"
-                            implementation="com.jetbrains.python.conda.sdk.evolution.CondaSelectSdkProvider"/>
+    <evoEnvironmentProvider id="CondaEvoProvider"
+                            implementation="com.jetbrains.python.conda.sdk.evolution.CondaEvoEnvironmentProvider"/>
 
-    <evoTreeElementProvider id="AdvancedEvoProvider"
+    <evoEnvironmentProvider id="AdvancedEvoProvider"
                             order="before AutoconfigEvoProvider,last"
-                            implementation="com.jetbrains.python.sdk.evolution.AdvancedSelectSdkProvider"/>
+                            implementation="com.jetbrains.python.sdk.evolution.AdvancedEvoEnvironmentProvider"/>
 
     <pyReferenceCustomTargetChecker implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureTargetChecker"/>
 

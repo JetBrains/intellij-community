@@ -1,0 +1,4 @@
+@file:JvmName("Facade")
+@file:JvmMultifileClass
+
+fun util(): Int = 1

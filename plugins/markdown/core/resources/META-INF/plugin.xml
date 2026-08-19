@@ -8,7 +8,52 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.platform.structureView"/>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jackson.module.kotlin"/>
+    <module name="intellij.libraries.jsoup"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.markdown"/>
+    <module name="intellij.libraries.miglayout.swing"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.builtInServer"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.markdown.utils"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.rpc.lite"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
     <!-- endregion -->
   </dependencies>
 
@@ -30,6 +75,7 @@
     <module name="intellij.markdown.backend"/>
     <module name="intellij.markdown.java"/>
     <module name="intellij.markdown.fenceInjector.textMate"/>
+    <module name="intellij.markdown.projectView"/>
   </content>
 
   <description><![CDATA[
@@ -100,6 +146,7 @@
     <editorActionHandler action="EditorTab" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableTabHandler$Tab"/>
     <editorActionHandler action="EditorUnindentSelection" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableTabHandler$ShiftTab"/>
     <editorActionHandler action="EditorStartNewLine" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableShiftEnterHandler"/>
+    <editorActionHandler action="EditorStartNewLine" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListShiftEnterHandler"/>
     <editorActionHandler action="EditorDeleteToWordStart" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableReformatAfterActionHook"/>
     <editorActionHandler action="EditorDelete" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableDeleteHandler"/>
     <codeInsight.inlayProvider language="Markdown"
@@ -173,8 +220,6 @@
 
     <bidiRegionsSeparator language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownBidiRegionsSeparator"/>
 
-    <runLineMarkerContributor language="Markdown" implementationClass="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunLineMarkersProvider"/>
-
     <completion.contributor language="Markdown"
                             implementationClass="org.intellij.plugins.markdown.editor.MarkdownFenceLangCompletionContributor"/>
 
@@ -213,8 +258,6 @@
 
     <projectSettings service="org.intellij.plugins.markdown.settings.MarkdownSettings"/>
 
-    <lang.psiStructureViewFactory language="Markdown"
-                                  implementationClass="org.intellij.plugins.markdown.structureView.MarkdownStructureViewFactory"/>
     <stripTrailingSpacesFilterFactory implementation="org.intellij.plugins.markdown.editor.MarkdownStripTrailingSpacesFilterFactory"/>
     <httpRequestHandler implementation="org.intellij.plugins.markdown.ui.preview.PreviewStaticServer"/>
 
@@ -241,6 +284,7 @@
     <typedHandler implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListItemCreatingTypedHandlerDelegate"/>
 
     <lineIndentProvider implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListIndentProvider"/>
+    <formatting.injectedOptions implementation="org.intellij.plugins.markdown.lang.formatter.MarkdownInjectedFormattingOptionsProvider"/>
     <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListEnterHandlerDelegate"
                           order="before MarkdownEnterHandler"/> <!-- to be able to handle Enter inside indent -->
 
@@ -254,6 +298,8 @@
     <editorActionHandler action="EditorUnindentSelection"
                          implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler"/>
 
+    <joinLinesHandler implementation="org.intellij.plugins.markdown.editor.MarkdownJoinQuoteLinesHandler"/>
+
     <actionPromoter implementation="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoter"/>
     <customizableActionGroupProvider implementation="org.intellij.plugins.markdown.ui.floating.FloatingToolbarCustomizableGroupProvider"/>
 
@@ -262,17 +308,10 @@
     <lang.formatter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.formatter.MarkdownFormattingModelBuilder"/>
     <postFormatProcessor implementation="org.intellij.plugins.markdown.lang.formatter.BlockQuotePostFormatProcessor"/>
     <postFormatProcessor implementation="org.intellij.plugins.markdown.lang.formatter.TablePostFormatProcessor"/>
-    <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
 
     <lang.commenter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.MarkdownCommenter"/>
 
-    <codeInsight.lineMarkerProvider language="Markdown"
-                                    implementationClass="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceDownloadLineMarkerProvider"/>
-
     <focusModeProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownFocusModeProvider"/>
-
-    <codeInsight.lineMarkerProvider language="Markdown"
-                                    implementationClass="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidLineMarkerAdvertisementProvider"/>
 
     <intentionAction>
       <language>Markdown</language>
@@ -314,10 +353,6 @@
                  defaultValue="false"
                  description="Enables experimental support for inferring header level"/>
 
-    <registryKey key="markdown.validate.short.links"
-                 defaultValue="false"
-                 description="Enables validation for short style links by checking existing labeled link definitions in the current file."/>
-
     <registryKey key="markdown.experimental.show.frontmatter.in.preview"
                  defaultValue="false"
                  description="Enables displaying of front matter headers in the preview."/>
@@ -325,9 +360,6 @@
     <registryKey key="markdown.experimental.allow.external.requests"
                  defaultValue="true"
                  description="Enables requests for external resources from the preview (e.g. non-local images)."/>
-    <registryKey key="markdown.command.runner.use.file.directory"
-                 defaultValue="false"
-                 description="Use the markdown file's parent directory as the working directory when running commands. Defaults to project root."/>
     <registryKey key="markdown.backtick.reference.symbol.length"
                  defaultValue="10"
                  description="Minimal length of the backtick reference symbol"/>
@@ -581,11 +613,6 @@
     <action id="Markdown.Preview.ResetFontSize"
             class="org.intellij.plugins.markdown.ui.actions.ResetFontSizeAction"/>
 
-    <group id="Markdown.PreviewGroup">
-      <action id="Markdown.Preview.AdjustFontSize"
-              class="org.intellij.plugins.markdown.ui.actions.AdjustFontSizeAction"/>
-      <action id="Markdown.Preview.Find" class="org.intellij.plugins.markdown.ui.actions.FindInPreviewAction"
-              icon="AllIcons.Actions.Find" use-shortcut-of="Find"/>
-    </group>
+    <group id="Markdown.PreviewGroup"/>
   </actions>
 </idea-plugin>

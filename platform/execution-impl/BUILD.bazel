@@ -29,7 +29,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "//platform/kernel/rpc",
+        "//platform/kernel/rpc.lite",
         "@lib//:kotlin-stdlib",
         "//platform/analysis-api:analysis",
         "//platform/core-impl",
@@ -71,7 +71,7 @@ jvm_library(
         "//platform/util/jdom",
         "//platform/workspace/storage",
         "//libraries/kotlinx/coroutines/core",
-        "@lib//:jna",
+        "//libraries/jna",
         "//libraries/hash4j",
         "//platform/workspace/jps",
         "//platform/backend/workspace",
@@ -107,7 +107,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":execution-impl",
-        "//platform/kernel/rpc:rpc_test_lib",
+        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/core-api:core_test_lib",
@@ -150,6 +150,7 @@ jvm_library(
         "//platform/util/jdom:jdom_test_lib",
         "//platform/workspace/storage:storage_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//libraries/hash4j:hash4j_test_lib",
         "//platform/workspace/jps:jps_test_lib",
         "//platform/backend/workspace:workspace_test_lib",
@@ -178,6 +179,8 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.execution.impl.iml",
+        "resources/intellij.platform.execution.impl.actions.xml",
+        "resources/intellij.platform.execution.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

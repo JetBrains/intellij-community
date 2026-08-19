@@ -119,6 +119,13 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
    */
   private val editorMode = AtomicBoolean(false)
 
+  /**
+   * `true` once the value came from the user (a browse via [fieldAccessor] or typing), as opposed to an
+   * autodetected fill (which writes [text] directly and leaves [editorMode] untouched). Used to persist
+   * a tool executable path only when the user explicitly chose it.
+   */
+  val isUserEdited: Boolean get() = editorMode.load()
+
   private val validationAction = object : DumbAwareAction(AllIcons.Gutter.SuggestedRefactoringBulb) {
     fun doValidate() {
       if (!editorMode.load()) return
@@ -289,10 +296,10 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
   }
 }
 
-private fun <T, P : PathHolder, V : ValidatedPath<T, P>> Panel.installToolRow(
+private fun <T, P : PathHolder, V : ValidatedPath<T, P>> Panel.missingToolRow(
   fileSystem: FileSystem<*>,
   missingExecutableText: @Nls String,
-  installAction: ActionLink,
+  installAction: ActionLink?,
   validatedPathField: ValidatedPathField<T, P, V>,
 ): Row {
   val selectExecutableLink = if (fileSystem.isBrowsable && fileSystem.toolPathCanBePersisted) ActionLink(message("sdk.create.custom.select.executable.link")) {
@@ -302,7 +309,7 @@ private fun <T, P : PathHolder, V : ValidatedPath<T, P>> Panel.installToolRow(
 
   return row("") {
     validationTooltip(missingExecutableText,
-                      if (fileSystem.toolPathCanBePersisted) installAction else null,
+                      installAction,
                       selectExecutableLink,
                       validationType = ValidationType.WARNING,
                       inline = true)
@@ -331,11 +338,11 @@ internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePath
     canBeEdited = canBeEdited,
   )
 
-  if (missingExecutableText != null && installAction != null && !fileSystem.isReadOnly) {
-    installToolRow(
+  if (missingExecutableText != null) {
+    missingToolRow(
       fileSystem = fileSystem,
       missingExecutableText = missingExecutableText,
-      installAction = installAction,
+      installAction = if (canBeEdited) installAction else null,
       validatedPathField = validatedPathField
     ).visibleIf(pathValidator.backProperty.transform { it?.pathHolder == null }.and(pathValidator.isDirtyValue.not()))
   }

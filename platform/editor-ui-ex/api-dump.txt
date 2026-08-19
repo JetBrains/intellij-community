@@ -33,6 +33,7 @@ c:com.intellij.ide.todo.TodoConfiguration
 - getTodoPatterns():com.intellij.psi.search.TodoPattern[]
 - isMultiLine():Z
 - loadState(org.jdom.Element):V
+- noStateLoaded():V
 - resetToDefaultTodoPatterns():V
 - setMultiLine(Z):V
 - setTodoFilters(com.intellij.ide.todo.TodoFilter[]):V

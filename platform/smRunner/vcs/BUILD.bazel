@@ -83,6 +83,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.smRunner.vcs.iml",
+        "resources/intellij.platform.smRunner.vcs.xml",
     ],
     visibility = ["//visibility:public"],
 )

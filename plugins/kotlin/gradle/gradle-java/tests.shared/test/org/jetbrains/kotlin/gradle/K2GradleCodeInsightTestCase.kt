@@ -1,12 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle
 
+import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
 import com.intellij.testFramework.ExpectedHighlightingData
+import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
+import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
@@ -113,6 +117,7 @@ abstract class K2GradleCodeInsightTestCase : AbstractKotlinGradleCodeInsightBase
                 withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                     withKotlinJvmPlugin()
                     withPrefix { code("val customConf by configurations.creating {}") }
+                    withPrefix { code("configurations.register(\"customExtendingImplementation\") { extendsFrom(configurations.implementation.get()) }") }
                     withPrefix { code("val customSourceSet by sourceSets.creating {}") }
                 }
             }
@@ -152,4 +157,17 @@ abstract class K2GradleCodeInsightTestCase : AbstractKotlinGradleCodeInsightBase
                 )
             }
     }
+
+    fun disableBuiltInKotlinHighlighters() {
+        maskExtensions<HighlightVisitor>(
+            HighlightVisitor.EP_HIGHLIGHT_VISITOR,
+            emptyList(),
+            fixture.projectDisposable,
+            false,
+            fixture.getProject()
+        )
+    }
+
+    fun isMissingDeprecationAnnotationAddedToKotlinDsl(gradleVersion: GradleVersion) =
+        GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.7")
 }

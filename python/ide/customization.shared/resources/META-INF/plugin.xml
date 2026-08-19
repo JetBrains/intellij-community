@@ -5,6 +5,11 @@
   <id>intellij.pycharm.community.customization.shared</id>
   <vendor>JetBrains</vendor>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.ide.impl"/>
+  </dependencies>
+  <!-- endregion -->
   <content namespace="jetbrains">
     <module name="intellij.pycharm.community.ide.impl"/>
     <module name="intellij.pycharm.community.ide.implTraining"/>

@@ -11,13 +11,14 @@ import java.util.function.Supplier
 @NonNls
 private const val BUNDLE = "messages.ComposeProjectWizardBundle"
 
-object ComposeProjectWizardBundle : DynamicBundle(BUNDLE) {
+object ComposeProjectWizardBundle {
+    private val instance = DynamicBundle(ComposeProjectWizardBundle::class.java, BUNDLE)
     @Nls
     @JvmStatic
-    fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
+    fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = instance.getMessage(key, *params)
 
     @JvmStatic
     fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): Supplier<@Nls String> {
-        return getLazyMessage(key, *params)
+        return instance.getLazyMessage(key, *params)
     }
 }

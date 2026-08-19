@@ -6,12 +6,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
+import com.intellij.python.requirements.RequirementsFileType
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.management.PythonPackageManagerAction
 import com.jetbrains.python.packaging.management.getPythonPackageManager
 import com.jetbrains.python.packaging.pip.PipPythonPackageManager
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
-import com.jetbrains.python.requirements.RequirementsFileType
 import com.jetbrains.python.sdk.isReadOnly
 
 internal sealed class PipPackageManagerAction : PythonPackageManagerAction<PipPythonPackageManager, String>() {

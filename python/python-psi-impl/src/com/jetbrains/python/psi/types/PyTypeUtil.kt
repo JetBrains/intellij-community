@@ -36,6 +36,7 @@ import com.jetbrains.python.psi.PyUtil.isObjectClass
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyTypeProvider
 import com.jetbrains.python.psi.resolve.RatedResolveResult
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
 import com.jetbrains.python.psi.types.PyTypeChecker.collectTypeSubstitutions
@@ -387,8 +388,7 @@ object PyTypeUtil {
    */
   private fun PyType?.rebuildLike(members: List<PyType?>): PyType? =
     when (this) {
-      // TODO: use PyTopType when it is introduced PY-90942
-      is PyIntersectionType -> if (members.isEmpty()) PyAnyType.unknown else PyIntersectionType.intersection(members)
+      is PyIntersectionType -> PyIntersectionType.intersection(members)
       is PyUnsafeUnionType -> if (members.isEmpty()) PyNeverType.NEVER else PyUnsafeUnionType.unsafeUnion(members)
       else -> PyUnionType.unionOrNever(members)
     }
@@ -494,7 +494,6 @@ object PyTypeUtil {
   @ApiStatus.Internal
   fun mapCallableType(functionType: PyType?, mapper: (PyCallableType) -> PyCallableType?): PyType? {
     return when (functionType) {
-      is PyClassLikeType -> functionType
       is PyCallableType -> mapper(functionType)
       is PyOverloadType -> functionType.map { mapper(it) }
       else -> functionType
@@ -505,7 +504,6 @@ object PyTypeUtil {
   @JvmStatic
   fun getCallableItems(functionType: PyType?): List<PyCallableType> {
     return when (functionType) {
-      is PyClassLikeType -> listOf()
       is PyCallableType -> listOf(functionType)
       is PyOverloadType -> functionType.items
       else -> listOf()
@@ -533,8 +531,29 @@ object PyTypeUtil {
   ): PyType? {
     val memberType = getTypeOfMember(memberResolveResults, context)
     val specializedMemberType = specializeMemberType(classType, selfType, memberType, context)
+    // An annotated instance attribute holding a callable is not a descriptor, so it must not be bound to `self`.
+    if (!selfType.isDefinition() && isInstanceMember(memberResolveResults, context)) {
+      return specializedMemberType
+    }
     val memberOwner = getContainingClass(memberResolveResults)
     return bindFunction(selfType, specializedMemberType, memberOwner, context, errors)
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun isInstanceMember(
+    memberResolveResults: List<@JvmWildcard RatedResolveResult>,
+    context: TypeEvalContext,
+  ): Boolean {
+    val elements = memberResolveResults.mapNotNull { it.element }
+    val first = elements.firstOrNull() ?: return false
+    return ScopeUtil.getScopeOwner(first) !is PyClass ||
+           elements.any {
+             it is PyTargetExpression &&
+             (it.annotationValue != null || it.typeCommentAnnotation != null) &&
+             !PyTypingTypeProvider.isClassVar(it, context) &&
+             !(PyTypingTypeProvider.isFinal(it, context) && it.hasAssignedValue())
+           }
   }
 
   @ApiStatus.Internal
@@ -633,7 +652,7 @@ object PyTypeUtil {
   ): PyType? {
     return if (memberType.hasGenerics(context)) {
       val substitutions = collectTypeSubstitutions(classType, context)
-      substitutions.qualifierType = selfType
+      substitutions.selfType = selfType
       PyTypeChecker.substitute(memberType, substitutions, context)
     }
     else memberType
@@ -653,6 +672,8 @@ object PyTypeUtil {
     context: TypeEvalContext,
     errors: MutableList<ProblemMessage>?
   ): PyType? {
+    if (memberType is PyClassLikeType) return memberType
+
     val signatures = getCallableItems(memberType)
     if (signatures.isEmpty()) return memberType
 
@@ -721,7 +742,7 @@ object PyTypeUtil {
 
   @ApiStatus.Internal
   @JvmStatic
-  fun bindFunction(callableType: PyCallableType, selfType: PyType, context: TypeEvalContext): FunctionBindingResult? {
+  fun bindFunction(callableType: PyCallableType, selfType: PyInstantiableType<*>, context: TypeEvalContext): FunctionBindingResult? {
     if (callableType.getParametersType(context) == null) {
       // `typing.Callable[..., R]` - treat as `(*args, **kwargs)`.
       return FunctionBindingResult(callableType, PyAnyType.any)
@@ -730,7 +751,7 @@ object PyTypeUtil {
     if (firstParam != null && !firstParam.isPositionOnlySeparator && !firstParam.isKeywordOnlySeparator) {
       val firstParamType = firstParam.getArgumentType(context)
       val substitutions = GenericSubstitutions()
-      substitutions.qualifierType = selfType
+      substitutions.selfType = selfType
       if (firstParamType !is PySelfType) {
         if (!match(firstParamType, selfType, context, substitutions)) {
           return null

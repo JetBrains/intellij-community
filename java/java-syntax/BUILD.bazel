@@ -37,7 +37,7 @@ jvm_library(
         "//platform/syntax/syntax-api:syntax",
         "@lib//:kotlin-stdlib",
         "//platform/syntax/syntax-i18n:i18n",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util/base/multiplatform",
         "//platform/util/multiplatform",
         "//platform/syntax/syntax-util:util",
@@ -60,6 +60,7 @@ jvm_library(
         ":syntax",
         "//platform/syntax/syntax-api:syntax_test_lib",
         "//platform/syntax/syntax-i18n:i18n_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util/base/multiplatform:multiplatform_test_lib",
         "//platform/util/multiplatform:multiplatform_test_lib",
         "//platform/syntax/syntax-util:util_test_lib",
@@ -72,6 +73,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.syntax.iml",
+        "resources/intellij.java.syntax.xml",
     ],
     visibility = ["//visibility:public"],
 )

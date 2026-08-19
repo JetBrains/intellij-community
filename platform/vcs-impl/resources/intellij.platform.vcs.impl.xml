@@ -35,6 +35,7 @@
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
@@ -48,6 +49,7 @@
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.rpc.topics"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.coroutines"/>
@@ -104,6 +106,7 @@
       <language/>
       <className>com.intellij.openapi.vcs.intentions.SelectedBlockHistoryIntention</className>
     </intentionAction>
+    <vcs.fileStatusProvider implementation="com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider"/>
   </extensions>
 
   <projectListeners>

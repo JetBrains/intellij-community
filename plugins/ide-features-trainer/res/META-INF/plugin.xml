@@ -16,7 +16,39 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlinx.datetime"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger.impl.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.feedback"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.lvcs.impl"/>
+    <module name="intellij.platform.projectFrame"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.xml.psi"/>
     <!-- endregion -->
   </dependencies>
 
@@ -24,8 +56,6 @@
     <module name="intellij.vcs.git.featuresTrainer"/>
     <module name="intellij.featuresTrainer.onboarding"/>
     <module name="intellij.kotlin.onboarding.promoter"/>
-  </content>
-  <content>
     <module name="intellij.featuresTrainer.tips" loading="optional"/>
   </content>
   <content>

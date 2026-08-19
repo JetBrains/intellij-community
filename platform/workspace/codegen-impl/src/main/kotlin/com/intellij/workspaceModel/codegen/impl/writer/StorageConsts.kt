@@ -143,3 +143,4 @@ internal object StorageCollection {
 }
 
 internal const val symbolicIdFieldName = "symbolicId"
+internal const val entitySourceFieldName = "entitySource"

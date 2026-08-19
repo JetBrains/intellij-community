@@ -4,5 +4,8 @@
                     serviceImplementation="com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.rename.RenameUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.RefactoringUsageCollector"/>
+    <applicationService serviceImplementation="com.intellij.refactoring.RefactoringSettings"/>
+    <renameHandler implementation="com.intellij.refactoring.rename.FileDumbRenameHandler"/>
+    <testSourcesFilter implementation="com.intellij.openapi.roots.ProjectRootTestSourcesFilter"/>
   </extensions>
 </idea-plugin>

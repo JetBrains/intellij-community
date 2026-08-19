@@ -1,12 +1,14 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.eel.impl"/>
     <module name="intellij.platform.eel.nioFs.impl"/>
     <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.statistics"/>
@@ -19,6 +21,8 @@
     <eelEnvironmentInitializer implementation="com.intellij.platform.eel.tcp.TcpEelEnvironmentInitializer"/>
     <eelTcpPathParser implementation="com.intellij.platform.eel.tcp.raw.RawTcpPathParser"/>
     <eelMachineResolver implementation="com.intellij.platform.eel.tcp.raw.RawTcpMachineResolver"/>
+    <eelTcpPathParser implementation="com.intellij.platform.eel.tcp.LocalhostTcpEelPathParser"/>
+    <eelMachineResolver implementation="com.intellij.platform.eel.tcp.LocalhostTcpEelMachineResolver"/>
   </extensions>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.eelTcpPathParser" interface="com.intellij.platform.eel.tcp.TcpEelPathParser"

@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.NamedConfigurable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.lsp.api.LspClientManager
+import com.intellij.ui.EditorNotifications
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.IconUtil
 import javax.swing.tree.TreeNode
@@ -130,6 +131,7 @@ internal class LspServersConfigurable(private val project: Project) : MasterDeta
     settings.servers.addAll(newServers)
     if (!project.isDefault) {
       LspClientManager.getInstance(project).stopAndRestartClientsIfNeeded(ConfigurableLspIntegrationProvider::class.java)
+      EditorNotifications.getInstance(project).updateAllNotifications()
     }
   }
 

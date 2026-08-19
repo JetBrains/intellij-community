@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.codeInspection.InspectionManager
@@ -13,14 +13,12 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.tree.IElementType
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.GrModifierConstant
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 val VARIABLE_MODIFIERS: Set<@NlsSafe String> = setOf(GrModifier.DEF, GrModifier.FINAL)
 
@@ -47,24 +45,6 @@ internal fun checkModifierIsNotAllowed(modifierList: GrModifierList,
   val fix = GrRemoveModifierFix(modifier, GroovyBundle.message("remove.modifier", modifier))
   builder = registerLocalFix(builder, fix, modifierElement, message, ProblemHighlightType.ERROR, modifierElement.textRange)
   builder.create()
-}
-
-internal fun checkTupleVariableIsNotAllowed(variableDeclaration: GrVariableDeclaration,
-                                            holder: AnnotationHolder,
-                                            @InspectionMessage errorMessage: String,
-                                            allowedTokens: Set<IElementType>) {
-  if (!variableDeclaration.isTuple) return
-  val list = variableDeclaration.modifierList
-
-  val last = PsiUtil.skipWhitespacesAndComments(list.getLastChild(), false)
-  if (last != null) {
-    val type = last.getNode().getElementType()
-    if (type !in allowedTokens) {
-      holder.newAnnotation(HighlightSeverity.ERROR, errorMessage).range(list).create()
-    }
-  } else {
-    holder.newAnnotation(HighlightSeverity.ERROR, errorMessage).range(list).create()
-  }
 }
 
 internal fun registerLocalFix(annotationBuilder: AnnotationBuilder,

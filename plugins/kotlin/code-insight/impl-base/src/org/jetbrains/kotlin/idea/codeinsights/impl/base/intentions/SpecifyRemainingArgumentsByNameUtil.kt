@@ -12,21 +12,24 @@ import com.intellij.psi.util.parentsOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidate
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
+import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.useSiteModule
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.useSiteModule
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.hasCommonSubtypeWith
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.analysis.api.symbols.contextParameters
-import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.formatter.KotlinCommonCodeStyleSettings
@@ -144,7 +147,8 @@ object SpecifyRemainingArgumentsByNameUtil {
     /**
      * Returns false if [valueArgumentMapping] contains arguments whose type conflicts with the type of the parameter.
      */
-    private fun KaSession.isValidArgumentMapping(valueArgumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>): Boolean {
+    context(session: KaSession)
+    private fun isValidArgumentMapping(valueArgumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>): Boolean {
         return valueArgumentMapping.all {
             val expressionType = it.key.expressionType ?: return@all false
             it.value.returnType.hasCommonSubtypeWith(expressionType)
@@ -152,7 +156,6 @@ object SpecifyRemainingArgumentsByNameUtil {
     }
 
     @ApiStatus.Internal
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun contextSuggestedNames(
         candidateCall: KaFunctionCall<*>,
@@ -279,7 +282,8 @@ object SpecifyRemainingArgumentsByNameUtil {
      * overload with the fewest required (not default) value parameters.
      */
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.getRemainingArgumentsData(allCalls: List<KaCallCandidate>, existingArgumentsCount: Int): RemainingArgumentsData? {
+    context(session: KaSession)
+    private fun getRemainingArgumentsData(allCalls: List<KaCallCandidate>, existingArgumentsCount: Int): RemainingArgumentsData? {
         val allFunctionCalls = allCalls.map { info ->
             // If any of the calls cannot be resolved, we do not want to continue
             info.candidate as? KaFunctionCall<*> ?: return null
@@ -296,7 +300,8 @@ object SpecifyRemainingArgumentsByNameUtil {
      * Calculates the [RemainingArgumentsData] for the [element].
      */
     @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
-    fun KaSession.findRemainingNamedArguments(element: KtValueArgumentList): RemainingArgumentsData? {
+    context(session: KaSession)
+    fun findRemainingNamedArguments(element: KtValueArgumentList): RemainingArgumentsData? {
         val functionCall = element.parent as? KtCallExpression ?: return null
         val resolvedCall = functionCall.resolveCall()
         val existingArgumentsCount = functionCall.valueArguments.size

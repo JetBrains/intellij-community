@@ -30,11 +30,16 @@ import com.jetbrains.python.packaging.packageRequirements.TreeParser
 import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pyproject.PY_PROJECT_TOML_DEPENDENCY_GROUPS
 import com.intellij.python.pyproject.PyProjectToml
 import com.jetbrains.python.poetry.POETRY_LOCK
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
+import com.intellij.python.pytools.resolveExecutable
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -50,7 +55,7 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
   override val installedPackagesIncludeTransitive: Boolean = true
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
   override val cliSpecs: List<PythonManagerCliSpec> = listOf(
-    PythonManagerCliSpec("poetry", ::getPoetryExecutable)
+    PythonManagerCliSpec("poetry", { PoetryPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path })
   )
   override val treeProvider = CachedDependencyTreeProvider {
     runPoetryWithSdk(sdk, "show", "--tree").getOrNull()
@@ -245,7 +250,10 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
   }
 
   private fun PythonRepositoryPackageSpecification.getPackageWithVersionInPoetryFormat(): String {
-    return versionSpec?.let { "$name@${it.presentableText}" } ?: name
+    // Render the full PEP-440 specifier set (poetry accepts comma-separated constraints after '@');
+    // rendering only the first spec silently drops the upper bound (PY-91457).
+    val constraint = requirement.versionSpecs.joinToString(",") { it.presentableText }
+    return if (constraint.isEmpty()) name else "$name@$constraint"
   }
 
   override suspend fun getPackageTree(): PackageStructureNode {
@@ -276,15 +284,26 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
 }
 
 /**
- * Returns Poetry dependency group names from `[tool.poetry.group.<name>.dependencies]` sections.
- * Always includes "main" as the first entry (representing `[tool.poetry.dependencies]`).
+ * Returns Poetry dependency group names. Merges every group source Poetry itself recognises
+ * (Poetry 2.x accepts PEP 621 / PEP 735 alongside the legacy Poetry layout):
+ *  - "main" — implicit `[tool.poetry.dependencies]` / `[project].dependencies` group;
+ *  - "dev" — legacy `[tool.poetry.dev-dependencies]` shortcut (Poetry <2.0), still installable via
+ *    `poetry install --with dev`;
+ *  - `[tool.poetry.group.<name>.dependencies]` — Poetry-native group layout;
+ *  - `[dependency-groups]` keys — PEP 735 layout;
+ *  - `[project.optional-dependencies]` keys — PEP 621 extras, installable with `poetry install --extras`.
+ *
+ * Order: "main" first, then legacy dev, Poetry-native groups, PEP 735 groups, PEP 621 extras.
+ * Duplicates de-duplicated so a group declared in multiple spots surfaces once.
  */
 @ApiStatus.Internal
 private fun PyProjectToml.getPoetryGroupNames(): List<String> {
-  val toolTable = toml.getTable("tool") ?: return PyProjectToml.DEFAULT_GROUP_NAMES
-  val poetryTable = toolTable.getTable("poetry") ?: return PyProjectToml.DEFAULT_GROUP_NAMES
-  val groupTable = poetryTable.getTable("group") ?: return PyProjectToml.DEFAULT_GROUP_NAMES
-  return PyProjectToml.DEFAULT_GROUP_NAMES + groupTable.keySet().toList()
+  val poetryTable = toml.getTable("tool")?.getTable("poetry")
+  val legacyDev = listOfNotNull("dev".takeIf { poetryTable?.getTable("dev-dependencies") != null })
+  val poetryGroups = poetryTable?.getTable("group")?.keySet().orEmpty()
+  val pep735Groups = toml.getTable(PY_PROJECT_TOML_DEPENDENCY_GROUPS)?.keySet().orEmpty()
+  val pep621Extras = project.dependencies.optional.keys
+  return (PyProjectToml.DEFAULT_GROUP_NAMES + legacyDev + poetryGroups + pep735Groups + pep621Extras).distinct()
 }
 
 private class PoetryWorkspaceSupport(private val project: Project, private val sdk: Sdk) : PythonWorkspaceSupport {

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public enum ExternalSystemEventType {
-  STARTED, FINISHED, SEND, ERROR;
+  STARTED, FINISHED, SEND, ERROR, FILE_DELETED;
 
   static @Nullable ExternalSystemEventType parse(@NotNull String event) {
     for (ExternalSystemEventType type : values()) {

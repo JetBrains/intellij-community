@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
 import com.intellij.openapi.vfs.impl.SymlinksCapableFileSystem;
-import com.intellij.openapi.vfs.impl.local.windows.WindowsBufferedDirectoryIterator;
 import com.intellij.openapi.vfs.impl.local.windows.WindowsBufferedDirectoryStream;
 import com.intellij.openapi.vfs.newvfs.FileNavigator;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -30,6 +29,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PlatformNioHelper;
 import com.intellij.util.system.OS;
@@ -43,24 +43,17 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 
-import static com.intellij.openapi.vfs.impl.local.LocalFileSystemEelUtil.listWithAttributesUsingEel;
 import static com.intellij.openapi.vfs.impl.local.LocalFileSystemEelUtil.readAttributesUsingEel;
 import static com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl.createCreateEvent;
-import static com.intellij.util.containers.CollectionFactory.createFilePathMap;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -104,20 +97,7 @@ public class LocalFileSystemImpl
   private final DiskQueryRelay<VirtualFile, Object> myContentGetter = new DiskQueryRelay<>(file -> readContent(file));
   private final DiskQueryRelay<VirtualFile, FileAttributes> myAttributeGetter = new DiskQueryRelay<>(file -> readAttributes(file));
   private final DiskQueryRelay<Pair<VirtualFile, @Nullable Set<String>>, Map<String, FileAttributes>> myChildrenAttrGetter =
-    new DiskQueryRelay<>(pair -> {
-      if (!pair.first.isDirectory()) {
-        return Collections.emptyMap();
-      }
-      Path path;
-      try {
-        path = Path.of(toIoPath(pair.first));
-      }
-      catch (InvalidPathException e) {
-        throw new RuntimeException(e);//TODO RC: why to wrap in RuntimeException?
-      }
-      return listWithAttributesUsingEel(path, pair.second);
-    });
-
+    new DiskQueryRelay<>(pair -> listWithAttributesImpl(pair.first, pair.second));
 
   protected LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
@@ -458,32 +438,40 @@ public class LocalFileSystemImpl
 
   @Override
   public @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir, @Nullable Set<String> childrenNames) {
-    if (!dir.isDirectory()) {
-      return Collections.emptyMap();
-    }
-    return myChildrenAttrGetter.accessDiskWithCheckCanceled(new Pair<>(dir, childrenNames));
+    return dir.isDirectory() ? myChildrenAttrGetter.accessDiskWithCheckCanceled(new Pair<>(dir, childrenNames)) : Map.of();
   }
 
-  protected static Map<String, FileAttributes> listWithAttributesImpl(@NotNull Path dir, @Nullable Set<String> filter) {
+  private static Map<String, FileAttributes> listWithAttributesImpl(VirtualFile dir, @Nullable Set<String> filter) {
     try {
-      var expectedSize = (filter == null) ? 10 : filter.size();
-      //We must return a 'normal' (=case-sensitive) map from this method, see BatchingFileSystem.listWithAttributes() contract:
-      Map<String, FileAttributes> childrenWithAttributes = createFilePathMap(expectedSize, /*caseSensitive: */true);
-
-      PlatformNioHelper.visitDirectory(dir, filter, (file, ioAttributesHolder) -> {
-        try {
-          var attributes = amendAttributes(file, FileAttributes.fromNio(file, ioAttributesHolder.get()));
-          childrenWithAttributes.put(file.getFileName().toString(), attributes);
-        }
-        catch (Exception e) { LOG.debug(e); }
-        return true;
-      });
-
-      return childrenWithAttributes;
+      var path = Path.of(toIoPath(dir));
+      var paths = LocalFileSystemEelUtil.getAttributeListingPaths(path);
+      if (paths.getFirst() != null) {
+        return listWithAttributesLocal(paths.getFirst(), filter);
+      }
+      else if (paths.getSecond() != null) {
+        return LocalFileSystemEelUtil.listWithAttributesUsingEel(paths.getSecond(), filter);
+      }
     }
     catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
     catch (IOException | RuntimeException e) { LOG.warn(e); }
     return Map.of();
+  }
+
+  private static Map<String, FileAttributes> listWithAttributesLocal(@NotNull Path dir, @Nullable Set<String> filter) throws IOException {
+    var expectedSize = filter != null ? filter.size() : 10;
+    // we must return a 'normal' (=case-sensitive) map from this method (see the [BatchingFileSystem#listWithAttributes] contract)
+    var childrenWithAttributes = CollectionFactory.<FileAttributes>createFilePathMap(expectedSize, /*caseSensitive: */true);
+
+    PlatformNioHelper.visitDirectory(dir, filter, (file, ioAttributesHolder) -> {
+      try {
+        var attributes = amendAttributes(file, FileAttributes.fromNio(file, ioAttributesHolder.get()));
+        childrenWithAttributes.put(file.getFileName().toString(), attributes);
+      }
+      catch (Exception e) { LOG.debug(e); }
+      return true;
+    });
+
+    return childrenWithAttributes;
   }
 
   private static Object readContent(VirtualFile file) {

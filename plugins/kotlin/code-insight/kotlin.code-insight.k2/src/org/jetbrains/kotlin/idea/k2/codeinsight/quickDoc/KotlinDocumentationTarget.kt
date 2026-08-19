@@ -21,9 +21,8 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.getExpectsForActual
-import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -40,9 +39,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.getExpectsForActual
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -279,7 +280,7 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
             val symbol = referenceExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol as? KaNamedSymbol
             val name = symbol?.name?.asString()
             if (name != null && symbol is KaDeclarationSymbol) {
-                renderEnumSpecialSymbol(contextOf<KaSession>(), symbol, name, element, quickNavigation)
+                renderEnumSpecialSymbol(symbol, name, element, quickNavigation)
                 return
             }
         }
@@ -300,7 +301,6 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
 
                     if (callableSymbol is KaDeclarationSymbol) {
                         renderEnumSpecialSymbol(
-                            contextOf<KaSession>(),
                             callableSymbol,
                             callableSymbol.name?.asString() ?: memberName, // it has to be a Kotlin name rather java-visible name
                             element,
@@ -315,32 +315,30 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
     renderKotlinDeclaration(element, quickNavigation)
 }
 
+context(session: KaSession)
 private fun StringBuilder.renderEnumSpecialSymbol(
-    session: KaSession,
     symbol: KaDeclarationSymbol,
     name: String,
     element: KtClass,
     quickNavigation: Boolean
 ) {
-    with(session) {
-        val containingClass = symbol.containingDeclaration as? KaClassSymbol
-        val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedSymbol }
-        val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
-            val navigationElement = superClass.psi?.navigationElement
-            if (navigationElement is KtElement && navigationElement.containingKtFile.isCompiled || navigationElement is PsiCompiledElement) {
-                null //no need to search documentation in decompiled code
-            } else {
-                navigationElement?.findDescendantOfType<KDoc> { doc ->
-                    doc.getChildrenOfType<KDocSection>().any { it.findTagByName(name) != null }
-                }
+    val containingClass = symbol.containingDeclaration as? KaClassSymbol
+    val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedSymbol }
+    val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
+        val navigationElement = superClass.psi?.navigationElement
+        if (navigationElement is KtElement && navigationElement.containingKtFile.isCompiled || navigationElement is PsiCompiledElement) {
+            null //no need to search documentation in decompiled code
+        } else {
+            navigationElement?.findDescendantOfType<KDoc> { doc ->
+                doc.getChildrenOfType<KDocSection>().any { it.findTagByName(name) != null }
             }
         }
+    }
 
-        renderKotlinSymbol(symbol, element, false, false) {
-            if (!quickNavigation && kdoc != null) {
-                description {
-                    renderKDoc(kdoc.getDefaultSection())
-                }
+    renderKotlinSymbol(symbol, element, false, false) {
+        if (!quickNavigation && kdoc != null) {
+            description {
+                renderKDoc(kdoc.getDefaultSection())
             }
         }
     }

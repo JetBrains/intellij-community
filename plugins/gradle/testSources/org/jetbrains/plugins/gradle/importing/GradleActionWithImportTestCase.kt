@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
+import com.intellij.build.BuildView
+import com.intellij.platform.testFramework.assertion.BuildViewNodeAssertion
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.util.ThrowableRunnable
@@ -11,6 +12,7 @@ import org.jetbrains.plugins.gradle.importing.syncAction.GradleProjectResolverTe
 abstract class GradleActionWithImportTestCase : GradleProjectResolverTestCase() {
 
   private lateinit var buildViewTestFixture: BuildViewTestFixture
+  val syncView: BuildView get() = buildViewTestFixture.syncView
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -24,11 +26,7 @@ abstract class GradleActionWithImportTestCase : GradleProjectResolverTestCase() 
     ThrowableRunnable { super.tearDown() }
   ).run()
 
-  fun SimpleTreeAssertion.Node<Nothing?>.assertNodeWithDeprecatedGradleWarning() {
+  fun BuildViewNodeAssertion.assertNodeWithDeprecatedGradleWarning() {
     assertNodeWithDeprecatedGradleWarning(currentGradleVersion)
-  }
-
-  fun assertSyncViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
-    buildViewTestFixture.assertSyncViewTree(assert)
   }
 }

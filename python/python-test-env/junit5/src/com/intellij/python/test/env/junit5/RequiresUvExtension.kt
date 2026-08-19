@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.test.env.junit5
 
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.pytools.setCustomExecutablePath
+import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.test.env.core.LATEST_PYTHON_VERSION
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.uv.UvPyEnvironment
@@ -48,7 +50,7 @@ class RequiresUvExtension : BeforeAllCallback, BeforeEachCallback {
       createUvEnvironment(context).unwrap()
     }, UvPyEnvironment::class.java)
     
-    PropertiesComponent.getInstance().setValue("PyCharm.Uv.Path", uvEnv.uvExecutable.pathString)
+    UvPyTool.getInstance().setCustomExecutablePath(localEel.descriptor, uvEnv.uvExecutable)
 
     LOG.info("Uv configured at: ${uvEnv.uvExecutable.pathString}")
   }

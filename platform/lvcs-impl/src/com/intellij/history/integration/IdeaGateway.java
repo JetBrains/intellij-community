@@ -94,10 +94,10 @@ public class IdeaGateway {
     boolean underAnyProject = false;
     for (ProjectFileIndex projectFileIndex : versionedFilterData.myProjectFileIndices) {
       boolean isProjectRelated = projectFileIndex.isInProjectOrExcluded(f) || projectFileIndex.isUnderIgnored(f);
-      // isIsContent returns true when the file or directory is under the content root of the project,
+      // isInProject returns true when the file or directory is under a content or library root of the project,
       // AND is not excluded or ignored
-      if (isProjectRelated && projectFileIndex.isInContent(f)) {
-        // File is under the content root and isn't ignored/excluded. Track it in LVCS.
+      if (isProjectRelated && projectFileIndex.isInProject(f)) {
+        // File is under a content or library root and isn't ignored/excluded. Track it in LVCS.
         return true;
       }
       underAnyProject |= isProjectRelated;

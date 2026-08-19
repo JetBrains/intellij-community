@@ -9,10 +9,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.dataflow.implicitReceiverSmartCasts
+import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -91,7 +97,8 @@ internal class VerboseNullabilityAndEmptinessInspection :
                 (isEqualNull && operationToken == KtTokens.OROR)         // a == null || a.isEmpty()
     }
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Context? {
         val nullCheckExpression = findNullCheckExpression(element)
         val nullCheck = getNullCheck(nullCheckExpression) ?: return null
 
@@ -197,7 +204,8 @@ internal class VerboseNullabilityAndEmptinessInspection :
      * Validates that the function call receiver is suitable for null-or-empty checks.
      * Returns false for nullable types or primitive arrays where isNullOrEmpty wouldn't be appropriate.
      */
-    private fun KaSession.checkTargetFunctionReceiver(expression: KtCallExpression): Boolean {
+    context(session: KaSession)
+    private fun checkTargetFunctionReceiver(expression: KtCallExpression): Boolean {
         val call = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
         val type = call.dispatchReceiver?.type ?: call.extensionReceiver?.type ?: return false
 
@@ -466,7 +474,8 @@ private fun KtExpression.parenthesize(): KtExpression {
  * Resolves a target chunk to its underlying symbol for semantic comparison.
  * Returns null for 'this' expressions to rely on PSI-only comparison.
  */
-private fun KaSession.resolve(chunk: TargetChunk): Any? {
+context(session: KaSession)
+private fun resolve(chunk: TargetChunk): Any? {
     return when (chunk.expression) {
         is KtThisExpression -> {
             // We don't rely on symbol resolution for 'this' because comparator treats THIS vs THIS as equal.
@@ -544,7 +553,8 @@ private fun hasNullCheckFor(expression: KtExpression?): Boolean {
  * Checks various sources of smart cast info including explicit smart casts and contextual smart casting.
  */
 @OptIn(KaNonPublicApi::class)
-private fun KaSession.hasSmartCast(chunk: TargetChunk): Boolean {
+context(session: KaSession)
+private fun hasSmartCast(chunk: TargetChunk): Boolean {
     return when (val expression = chunk.expression) {
         is KtThisExpression -> {
             expression.smartCastInfo != null ||
@@ -575,7 +585,8 @@ private fun KaSession.hasSmartCast(chunk: TargetChunk): Boolean {
 /**
  * Resolves a call expression to its underlying function symbol.
  */
-private fun KaSession.resolveToFunctionSymbol(expression: KtCallExpression): KaFunctionSymbol? {
+context(session: KaSession)
+private fun resolveToFunctionSymbol(expression: KtCallExpression): KaFunctionSymbol? {
     val call = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
     return call.symbol
 }

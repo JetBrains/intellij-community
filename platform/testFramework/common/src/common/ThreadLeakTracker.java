@@ -110,6 +110,10 @@ public final class ThreadLeakTracker {
       JVMResponsivenessMonitor.MONITOR_THREAD_NAME,
       "Keep-Alive-SocketCleaner", // Thread[Keep-Alive-SocketCleaner,8,InnocuousThreadGroup], JBR-11
       "Keep-Alive-Timer",
+      // com.intellij.remoteDev.tests.LambdaTestsConstants#protocolName - the rd wire to a lambda-framework IDE.
+      // That IDE is shared by every test class of a launch, so its sender and receiver outlive any one of them;
+      // the first class to run would otherwise report them as its own leak. Same case as "FrontendToBackend".
+      "LambdaTestProtocol",
       "LocalEventBusServerThread", // com.intellij.tools.ide.starter.bus.shared.server.LocalEventBusServer
       "main",
       "Monitor Ctrl-Break",
@@ -128,6 +132,8 @@ public final class ThreadLeakTracker {
       "rd throttler", // daemon thread created by com.jetbrains.rd.util.AdditionalApiKt.getTimer
       "Reference Handler",
       "Rider.Backend", // ignore process + io threads because backend follows application lifecycle and can be started during the test
+      "Rider.LightweightBackend", // same as Rider.Backend, but for the lightweight backend process
+      "RiderStub", // same as Rider.Backend, but for the single-file backend host, whose command line has no "Rider.Backend" in it
       "RMI GC Daemon",
       "RMI TCP ",
       "Save classpath indexes for file loader",

@@ -22,8 +22,9 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/asm",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//uast/uast-common:uast",
         "//platform/core-api:core",
         "//platform/core-impl",
@@ -51,6 +52,9 @@ jvm_library(
         # do not sort,
         ":kotlin-uast-base",
         "//libraries/asm:asm_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//uast/uast-common:uast_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
@@ -69,6 +73,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.uast.base.iml",
+        "resources/intellij.kotlin.uast.base.xml",
     ],
     visibility = ["//visibility:public"],
 )

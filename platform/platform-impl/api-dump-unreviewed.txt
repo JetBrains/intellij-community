@@ -691,7 +691,6 @@ f:com.intellij.ide.IdeEventQueue
 - f:executeInProductionModeEvenThoughWeAreInTests(java.lang.Runnable):V
 - f:flushNativeEventQueue():V
 - f:getPostedEventCount():J
-- f:getPostedSystemEventCount():J
 - f:getReturnedEventCount():J
 - f:isInputMethodEnabled():Z
 - f:pumpEventsForHierarchy(java.awt.Component,java.util.concurrent.Future,java.util.function.Consumer):V
@@ -3712,7 +3711,6 @@ a:com.intellij.openapi.fileEditor.TextEditorWithPreviewProvider
 - p:createSplitEditor(com.intellij.openapi.fileEditor.TextEditor,com.intellij.openapi.fileEditor.FileEditor):com.intellij.openapi.fileEditor.FileEditor
 - getEditorTypeId():java.lang.String
 - getPolicy():com.intellij.openapi.fileEditor.FileEditorPolicy
-- readState(org.jdom.Element,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditorState
 - writeState(com.intellij.openapi.fileEditor.FileEditorState,com.intellij.openapi.project.Project,org.jdom.Element):V
 a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - sf:Companion:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx$Companion
@@ -5475,8 +5473,6 @@ f:com.intellij.platform.PlatformProjectOpenProcessor$Companion
 - f:isNewProject(com.intellij.openapi.project.Project):Z
 - f:isOpenedByPlatformProcessor(com.intellij.openapi.project.Project):Z
 - f:isTempProject(com.intellij.openapi.project.Project):Z
-- f:openProjectAsync(java.nio.file.Path,com.intellij.ide.impl.OpenProjectTask,kotlin.coroutines.Continuation):java.lang.Object
-- bs:openProjectAsync$default(com.intellij.platform.PlatformProjectOpenProcessor$Companion,java.nio.file.Path,com.intellij.ide.impl.OpenProjectTask,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 e:com.intellij.platform.PlatformProjectOpenProcessor$Option
 - sf:FORCE_NEW_FRAME:com.intellij.platform.PlatformProjectOpenProcessor$Option
 - sf:TEMP_PROJECT:com.intellij.platform.PlatformProjectOpenProcessor$Option

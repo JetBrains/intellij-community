@@ -8,10 +8,12 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.util.application
+import org.jetbrains.annotations.VisibleForTesting
 
 @State(name = "IdeaDecompilerSettings", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)])
 @Service(Service.Level.APP)
-internal class IdeaDecompilerSettings : PersistentStateComponent<IdeaDecompilerSettings.State?> {
+@VisibleForTesting
+class IdeaDecompilerSettings : PersistentStateComponent<IdeaDecompilerSettings.State?> {
   private var state = State()
 
   companion object {

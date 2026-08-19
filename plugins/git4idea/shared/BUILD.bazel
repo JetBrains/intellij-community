@@ -93,6 +93,7 @@ jvm_library(
 exports_files(
     [
         "intellij.vcs.git.shared.iml",
+        "resources/intellij.vcs.git.shared.xml",
     ],
     visibility = ["//visibility:public"],
 )

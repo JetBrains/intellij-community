@@ -5,11 +5,14 @@ package org.jetbrains.kotlin.j2k.copyPaste
 import com.intellij.openapi.application.readAction
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -17,8 +20,8 @@ import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
+import org.jetbrains.kotlin.j2k.KotlinJ2kBundle
 import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.nj2k.KotlinJ2KK2Bundle
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationContainer
@@ -43,7 +46,7 @@ data class JavaContextDeclarationStubs(
  */
 object JavaContextDeclarationRenderer {
     fun render(contextElement: KtElement): JavaContextDeclarationStubs {
-        return runWithModalProgressBlocking(contextElement.project, KotlinJ2KK2Bundle.message("copy.text.rendering.declaration.stubs")) {
+        return runWithModalProgressBlocking(contextElement.project, KotlinJ2kBundle.message("copy.text.rendering.declaration.stubs")) {
             readAction {
                 analyze(contextElement) {
                     val localDeclarations = getLocalDeclarations(contextElement)
@@ -56,7 +59,8 @@ object JavaContextDeclarationRenderer {
         }
     }
 
-    private fun KaSession.getLocalDeclarations(contextElement: KtElement): List<KaDeclarationSymbol> {
+    context(session: KaSession)
+    private fun getLocalDeclarations(contextElement: KtElement): List<KaDeclarationSymbol> {
         val containerFunction = contextElement.getParentOfType<KtFunction>(strict = false) ?: return emptyList()
         val localDeclarations = containerFunction.bodyExpression
             ?.blockExpressionsOrSingle()
@@ -65,7 +69,8 @@ object JavaContextDeclarationRenderer {
         return localDeclarations.map { it.symbol }.toList()
     }
 
-    private fun KaSession.getMemberDeclarations(contextElement: KtElement): List<KaDeclarationSymbol> {
+    context(session: KaSession)
+    private fun getMemberDeclarations(contextElement: KtElement): List<KaDeclarationSymbol> {
         val allMembers = contextElement.parentsWithSelf.flatMap { declaration ->
             when (declaration) {
                 is KtClass -> declaration.classSymbol?.declaredMemberScope?.declarations
@@ -81,11 +86,12 @@ object JavaContextDeclarationRenderer {
         return filteredMembers.toList()
     }
 
-    private fun KaSession.render(declarations: List<KaDeclarationSymbol>): String {
+    context(session: KaSession)
+    private fun render(declarations: List<KaDeclarationSymbol>): String {
         val renderer = Renderer()
         return buildString {
             for (declaration in declarations) {
-                val renderedDeclaration = renderer.render(declaration, session = this@render)
+                val renderedDeclaration = renderer.render(declaration)
                 append(renderedDeclaration)
                 appendLine()
             }
@@ -96,14 +102,16 @@ object JavaContextDeclarationRenderer {
 private class Renderer {
     private val builder = StringBuilder()
 
-    fun render(declaration: KaDeclarationSymbol, session: KaSession): String {
-        with(session) { renderDeclaration(declaration) }
+    context(session: KaSession)
+    fun render(declaration: KaDeclarationSymbol): String {
+        renderDeclaration(declaration)
         val result = builder.toString()
         builder.clear()
         return result
     }
 
-    private fun KaSession.renderDeclaration(declaration: KaDeclarationSymbol) {
+    context(session: KaSession)
+    private fun renderDeclaration(declaration: KaDeclarationSymbol) {
         when (declaration) {
             is KaVariableSymbol -> {
                 renderType(declaration.returnType)
@@ -133,7 +141,8 @@ private class Renderer {
         }
     }
 
-    private fun KaSession.renderType(type: KaType?) {
+    context(session: KaSession)
+    private fun renderType(type: KaType?) {
         val fqName = type?.symbol?.getFqNameIfPackageOrNonLocal()
         if (fqName != null) {
             renderFqName(fqName.toUnsafe())

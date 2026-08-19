@@ -1,11 +1,33 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.frontback.psi.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
     <module name="intellij.java.syntax"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.syntax.psi"/>
+    <module name="intellij.platform.threadDumpParser"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.xml.parser"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
@@ -53,7 +75,7 @@
     <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.editorActions.JavadocLineStartHandler"/>
     <editorActionHandler action="EditorLineStartWithSelection" implementationClass="com.intellij.codeInsight.editorActions.JavadocLineStartWithSelectionHandler"/>
 
-    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterInTextBlockHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterInTextBlockHandler" id="JavaEnterInTextBlockHandler"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterAfterUnmatchedBraceHandler"
                           order="before afterUnmatchedBrace" id="JavaEnterAfterUnmatchedBraceHandler"/>
 
@@ -108,12 +130,14 @@
     <declarationRangeHandler key="com.intellij.psi.PsiMethod"
                              implementationClass="com.intellij.codeInsight.hint.MethodDeclarationRangeHandler"/>
 
-    <codeInsight.completion.command.factory language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory" />
+    <codeInsight.completion.command.suffixProvider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionSupport" />
 
     <completion.frontendFriendlyInsertHandler target="com.intellij.codeInsight.completion.FrontendFriendlyOverridableSpaceInsertHandler"/>
 
     <registryKey key="java.folding.split.frontend.backend" defaultValue="false"
                  description="Split Java code folding between frontend (syntax-based) and backend (resolve-based) builders"/>
     <applicationSettings service="com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl"/>
+
+    <colorSettingsPage implementation="com.intellij.java.frontend.codeInsight.highlighting.JavaColorSettingsPage"/>
   </extensions>
 </idea-plugin>

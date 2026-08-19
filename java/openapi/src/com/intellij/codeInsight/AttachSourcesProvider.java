@@ -1,12 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.platform.workspace.jps.entities.LibraryEntity;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
@@ -21,6 +23,11 @@ import java.util.List;
  * @see com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider
  */
 public interface AttachSourcesProvider {
+
+  @ApiStatus.Internal
+  ExtensionPointName<AttachSourcesProvider> EXTENSION_POINT_NAME =
+    new ExtensionPointName<>("com.intellij.attachSourcesProvider");
+
 
   /**
    * @deprecated Use {@link #getLibrariesActions(Collection, PsiFile)}

@@ -10,6 +10,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
@@ -39,7 +40,7 @@ internal class WelcomeScreenProjectSupportImpl : WelcomeScreenProjectSupport {
   }
 
   override suspend fun openProject(path: Path): Project {
-    return PlatformProjectOpenProcessor.openProjectAsync(path)
+    return PlatformProjectOpenProcessor.openProjectAsync(path, createOptionsToOpenDotIdeaOrCreateNewIfNotExists(path, null))
            ?: throw IllegalStateException("Cannot open project at $path (not expected that user can cancel welcome-project loading)")
   }
 }

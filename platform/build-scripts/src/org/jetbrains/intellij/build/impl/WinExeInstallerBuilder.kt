@@ -48,10 +48,12 @@ internal suspend fun buildNsisInstaller(
   val uninstallerFileName = "Uninstall-${context.applicationInfo.productCode}-${arch.dirName}.exe"
   Span.current().setAttribute(installerFileName, installerFileName)
 
+  val useBigNsis = context.options.useNsisBigInstaller ?: customizer.useBigNsisInstaller
+
   withContext(Dispatchers.IO) {
     val box = context.paths.tempDir.resolve("winInstaller${suffix}")
 
-    val (nsisDir, nsisBin) = prepareNsis(context, box)
+    val (nsisDir, nsisBin) = prepareNsis(context, box, useBigNsis)
 
     val nsiConfDir = box.resolve("nsi-conf")
     Files.createDirectories(nsiConfDir)
@@ -146,10 +148,12 @@ internal suspend fun buildNsisInstaller(
   return installerFile
 }
 
-private suspend fun prepareNsis(context: BuildContext, tempDir: Path): Pair<Path, Path> {
+private suspend fun prepareNsis(context: BuildContext, tempDir: Path, useBig: Boolean): Pair<Path, Path> {
   val nsisDir = context.options.useLocalNSIS?.let { Path.of(it) } ?: run {
-    val nsisVersion = context.dependenciesProperties.property("nsisBuild")
-    val nsisUrl = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/org/jetbrains/intellij/deps/nsis/NSIS-${nsisVersion}.zip"
+    // NSISBI ships the same layout as stock NSIS, so only the name and version differ.
+    val artifact = if (useBig) "NSISBI" else "NSIS"
+    val nsisVersion = context.dependenciesProperties.property(if (useBig) "nsisbiBuild" else "nsisBuild")
+    val nsisUrl = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/org/jetbrains/intellij/deps/${artifact.lowercase()}/${artifact}-${nsisVersion}.zip"
     val nsisZip = downloadFileToCacheLocation(nsisUrl, context.paths.communityHomeDirRoot)
     Decompressor.Zip(nsisZip).withZipExtensions().extract(tempDir)
     val nsisDir = tempDir.resolve("NSIS")

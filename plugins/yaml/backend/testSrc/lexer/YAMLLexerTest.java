@@ -6,11 +6,12 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.testFramework.LexerTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.yaml.YAMLParserDefinition;
 
 public class YAMLLexerTest extends LexerTestCase {
   @Override
   protected @NotNull Lexer createLexer() {
-    return new YAMLFlexLexer();
+    return YAMLParserDefinition.createLexer();
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.java.facet;
 
 import com.intellij.facet.Facet;
@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.internal.PySdkNamesKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,9 +20,9 @@ import javax.swing.Icon;
 import java.util.List;
 
 @ApiStatus.Internal
-public final class JavaPythonFacetType extends FacetType<JavaPythonFacet, JavaPythonFacetConfiguration> {
+final class JavaPythonFacetType extends FacetType<JavaPythonFacet, JavaPythonFacetConfiguration> {
 
-  private static final @NonNls String ID = "Python";
+  private static final @NonNls String ID = PySdkNamesKt.PYTHON_FACET_ID;
 
   public static JavaPythonFacetType getInstance() {
     return findInstance(JavaPythonFacetType.class);

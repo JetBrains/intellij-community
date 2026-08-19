@@ -10,17 +10,16 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.internal.addPyProject.AddPyProjectAction
 import com.intellij.python.pyproject.model.internal.addPyProject.ConvertToPyProjectAction
 import com.intellij.python.pyproject.model.internal.addPyProject.PyProjectPresenter
 import com.intellij.python.pyproject.model.internal.addPyProject.projectCreationPresenter
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.pythonSdk
@@ -46,7 +45,7 @@ abstract class AddPyProjectPresenterTestBase protected constructor(
   private val sdkFixture by pySdkFixture()
   private val pathFixture = tempPathFixture()
   private val projectFixture = projectFixture(pathFixture)
-  private val module by projectFixture.moduleFixture(pathFixture, addPathToSourceRoot = true, moduleTypeId = PyNames.MODULE)
+  private val module by projectFixture.pyModuleFixture(pathFixture, addPathToSourceRoot = true)
 
   /**
    * There are two modes: with [projectName] ([AddPyProjectAction] is used) and when [projectName] is `null` -> [ConvertToPyProjectAction]

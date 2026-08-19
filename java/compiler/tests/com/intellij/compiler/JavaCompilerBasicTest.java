@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
 import org.jetbrains.jps.javac.JpsJavacFileManager;
-import org.jetbrains.jps.javac.JpsJavacFileProvider;
 import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.jps.javac.ZipFileObject;
 
@@ -78,7 +77,7 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
       }
     }, Locale.US, null);
 
-    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList(), (JpsJavacFileProvider)null)) {
+    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList())) {
       fileManager.setLocation(StandardLocation.CLASS_PATH, Collections.singleton(jarFile));
       fileManager.setLocation(StandardLocation.SOURCE_PATH, Collections.emptyList());
 
@@ -112,7 +111,7 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
       }
     }, Locale.US, null);
 
-    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList(), (JpsJavacFileProvider)null)) {
+    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList())) {
       fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(outputRoot));
 
       final Iterable<JavaFileObject> files = fileManager.list(StandardLocation.CLASS_OUTPUT, "ppp", Set.of(JavaFileObject.Kind.CLASS, JavaFileObject.Kind.OTHER), false);
@@ -147,7 +146,7 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
       }
     }, Locale.US, null);
     
-    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList(), (JpsJavacFileProvider)null)) {
+    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList())) {
       fileManager.setLocation(StandardLocation.CLASS_PATH, Collections.singleton(jarFile));
       fileManager.setLocation(StandardLocation.SOURCE_PATH, Collections.emptyList());
 
@@ -200,7 +199,7 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
       }
     }, Locale.US, null);
 
-    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList(), (JpsJavacFileProvider)null)) {
+    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList())) {
       fileManager.setLocation(StandardLocation.SOURCE_PATH, Collections.emptyList());
       fileManager.handleOption("--patch-module", Arrays.asList("java.desktop=" + srcRoot.getPath()).iterator());
 

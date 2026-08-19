@@ -13,7 +13,6 @@ import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CustomAssetDescriptor
@@ -43,16 +42,17 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   private val mainJarNameWithoutExtension: String = convertModuleNameToFileName(mainModule)
   private var mainJarName = "$mainJarNameWithoutExtension.jar"
 
-  /** module name to name of the library */
+  /** module name to file names of that module's own libraries which must not be packed */
   @JvmField
-  internal val excludedLibraries: MutableMap<String?, MutableList<String>> = HashMap()
+  internal val excludedModuleLibraries: MutableMap<String, MutableList<String>> = HashMap()
+
+  /** names of project libraries which must not be packed into this plugin */
+  @JvmField
+  internal val excludedProjectLibraries: MutableSet<String> = LinkedHashSet()
 
   internal fun excludeProjectLibrary(libraryName: String) {
-    excludedLibraries.computeIfAbsent(null) { ArrayList() }.add(libraryName)
+    excludedProjectLibraries.add(libraryName)
   }
-
-  @TestOnly
-  fun isLibraryExcluded(name: String): Boolean = excludedLibraries.get(null)?.contains(name) == true
 
   var directoryName: String = mainJarNameWithoutExtension
     private set
@@ -147,6 +147,12 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
     private set
 
+  private val resourceGeneratorProjectLibraries = LinkedHashSet<String>()
+
+  /** Project-library inputs read by opaque [resourceGenerators], which cannot be inferred from packaged output. */
+  @Internal
+  fun getResourceGeneratorProjectLibraries(): Set<String> = resourceGeneratorProjectLibraries
+
   internal var customAssets: PersistentList<CustomAssetDescriptor> = persistentListOf()
     private set
 
@@ -189,10 +195,8 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.bundledPluginModules],
      * [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.pluginModulesToPublish] list.
      *
-     * Note that project-level libraries on which the plugin modules depend are automatically put in the 'IDE_HOME/lib' directory
-     * for all IDEs that are compatible with the plugin.
-     * If this isn't desired (e.g., a library is used in a single plugin only or isn't bundled with IDEs to reduce the distribution size),
-     * you may invoke [PluginLayoutSpec.withProjectLibrary] to include such a library to the plugin distribution.
+     * Note that a project-level library on which a plugin module depends is not packed implicitly - it must be provided
+     * by the platform or by a library module (`intellij.libraries.*`) declared in the plugin content, otherwise the build fails.
      *
      * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
      */
@@ -248,8 +252,8 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
 
     /**
-     * Project-level library is included in the plugin by default, if not yet included in the platform.
      * Direct main module dependencies in the same module group are included automatically.
+     * Project-level libraries are not - see the note in [plugin].
      */
     fun pluginAuto(moduleNames: List<String>): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first(), auto = true)
@@ -306,7 +310,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     val bundlingRestrictions: PluginBundlingRestrictions.Builder = PluginBundlingRestrictions.Builder()
 
     fun excludeModuleLibrary(libraryName: String, moduleName: String) {
-      layout.excludedLibraries.computeIfAbsent(moduleName) { ArrayList() }.add(libraryName)
+      layout.excludedModuleLibraries.computeIfAbsent(moduleName) { ArrayList() }.add(libraryName)
     }
 
     fun excludeProjectLibrary(libraryName: String) {
@@ -322,6 +326,11 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
 
     fun withGeneratedResources(generator: ResourceGenerator) {
+      withGeneratedResources(inputProjectLibraries = emptyList(), generator = generator)
+    }
+
+    fun withGeneratedResources(inputProjectLibraries: Collection<String>, generator: ResourceGenerator) {
+      layout.resourceGeneratorProjectLibraries.addAll(inputProjectLibraries)
       layout.resourceGenerators += generator
     }
 

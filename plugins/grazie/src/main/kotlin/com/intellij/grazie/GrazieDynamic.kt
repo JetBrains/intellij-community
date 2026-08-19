@@ -26,7 +26,7 @@ import java.util.regex.Pattern
 
 @ApiStatus.Internal
 object GrazieDynamic : DynamicPluginListener {
-  private val hunspellPattern = Pattern.compile("hunspell-([a-z]{2,3})-${GraziePlugin.Hunspell.version}")
+  private val hunspellPattern = Pattern.compile("hunspell-([a-z]{2,3})-[0-9a-f]{32}")
   private val langToolPattern = Pattern.compile("([a-z]{2,3})-${GraziePlugin.LanguageTool.version}.jar")
 
   private val myDynClassLoaders by lazy {
@@ -55,6 +55,12 @@ object GrazieDynamic : DynamicPluginListener {
       val lang = extractLang(path)
       if (lang == null) {
         oldFiles.add(path)
+        continue
+      }
+      if (hunspellPattern.matcher(path.fileName.toString()).matches()) {
+        if (path.fileName.toString() != lang.hunspellRemote?.storageName) {
+          oldFiles.add(path)
+        }
         continue
       }
       val descriptors = lang.remoteDescriptors.map { dynamicFolder.resolve(it.storageName) }

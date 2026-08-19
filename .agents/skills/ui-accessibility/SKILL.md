@@ -1,6 +1,6 @@
 ---
 name: ui-accessibility
-description: Review IntelliJ UI accessibility for keyboard, focus, labels, contrast, scaling, and screen readers.
+description: Review IntelliJ UI accessibility for keyboard, focus, and labels.
 ---
 
 # IntelliJ UI Accessibility
@@ -30,7 +30,7 @@ Accessible context details are relevant only for Swing-based UI, including Kotli
 - For custom components from scratch, check similar Swing components for which `AccessibleAction`, `AccessibleText`, `AccessibleSelection`, `AccessibleValue`, or other `Accessible*` interfaces they implement before choosing interfaces manually.
 - Screen readers automatically announce accessible property changes of the focused component. Use `AccessibleAnnouncerUtil.announce()` for the most important changes outside the focused component or changes that do not fit existing property-change support.
 - Check `AccessibleAnnouncerUtil.isAnnouncingAvailable()` when code depends on announcement support.
-- Use `ScreenReader.isActive()` only for behavior that should change specifically for screen reader users.
+- Use `ScreenReader.isActive()` only for the rare behavior that must differ for screen reader users. By default, the UI should behave the same for all users.
 
 ## Other UI Stacks
 
@@ -41,7 +41,13 @@ Accessible context details are relevant only for Swing-based UI, including Kotli
 Check the UI before finishing code changes:
 
 - Keyboard-only operation works, focus order is predictable, and focus does not get trapped. Only interactive components are keyboard-focusable, and they can be activated with Space or Enter when focused.
-- Dialogs cycle predictably with `Tab` and `Shift+Tab`; `Escape` closes dialogs/popups or moves focus back from a tool window to the editor when that is the expected exit path.
+- `Tab` moves focus to the next focusable component and `Shift+Tab` moves it to the previous one. This applies for every focusable surface: dialogs, popups, tool windows, and embedded panels.
+- Focus stops follow the visual layout order.
+- Every focus stop shows a focus indicator that is not clipped or overlapped.
+- `Escape` closes dialogs and popups. From a tool window it returns focus to the editor when that is the expected exit path.
+- Treat anything that redefines traversal as a prompt to verify the cycle. Look for: `focusTraversalKeysEnabled = false`; a `Tab`/`Shift+Tab` key binding or a component that consumes the key; a custom `FocusTraversalPolicy`.
+- When you find one, walk the cycle and confirm three things: every interactive control is reachable, the order matches the layout, and focus escapes both forward and backward.
+- If `Tab` currently does something other than move focus, the recommended fix is to move that behavior to a non-traversal key and leave `Tab` and `Shift+Tab` for traversal. Keep a `Tab` override only where it is a platform convention users already expect, such as `Tab` completing inside an open completion popup, and scope it to that state alone.
 - Non-interactive labels and panels are not focusable unless critical important information would otherwise be unavailable to screen reader users; gate that behavior with `ScreenReader.isActive()`.
 - New popups, modal dialogs, and dynamic content either receive focus or have a keyboard path to reach them. Do not move focus unexpectedly while users interact with lists or dropdowns.
 - Container components such as lists, trees, tables, support the arrow-key navigation between items.
@@ -55,4 +61,5 @@ Check the UI before finishing code changes:
 - Walk the UI using only the keyboard.
 - Test with a supported screen reader when practical: NVDA or JAWS on Windows, VoiceOver on macOS.
 - Use UI Inspector to examine accessible names, descriptions, roles, and states. Enable "Show Accessibility Issues" to investigate suspected issues or validate custom UI behavior; it is not normally required for routine verification.
+- When keyboard traversal is in scope, list the focus stops in `Tab` order and compare that order against the visual layout. Note any key that overrides traversal and what it does instead.
 - In code reviews or final notes, explicitly state what accessibility paths were checked and what remains manual.

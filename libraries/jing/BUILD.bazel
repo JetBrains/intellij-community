@@ -1,0 +1,50 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.jing` start
+jvm_library(
+    name = "jing",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jing",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jing-jing"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-jing-jing",
+        "//libraries/isorelax",
+    ],
+)
+
+jvm_library(
+    name = "jing_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jing",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jing-jing"],
+    runtime_deps = [
+        # do not sort,
+        ":jing",
+        "//libraries/isorelax:isorelax_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.jing` end
+
+### auto-generated section `iml intellij.libraries.jing` start
+exports_files(
+    [
+        "intellij.libraries.jing.iml",
+        "resources/intellij.libraries.jing.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.jing` end

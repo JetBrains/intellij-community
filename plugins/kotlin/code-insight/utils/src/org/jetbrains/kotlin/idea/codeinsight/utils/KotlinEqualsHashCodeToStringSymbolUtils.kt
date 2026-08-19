@@ -3,18 +3,9 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.allSupertypes
-import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
-import org.jetbrains.kotlin.analysis.api.types.defaultType
-import org.jetbrains.kotlin.analysis.api.types.isAnyType
-import org.jetbrains.kotlin.analysis.api.types.isIntType
-import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.components.isStringType
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
-import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -23,8 +14,15 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.allSupertypes
+import org.jetbrains.kotlin.analysis.api.types.defaultType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.name.Name
@@ -35,15 +33,17 @@ import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-@OptIn(KaContextParameterApi::class)
 object KotlinEqualsHashCodeToStringSymbolUtils {
-    fun KaSession.findEqualsMethodForClass(classSymbol: KaClassSymbol, searchInSuper: Boolean = true): KaCallableSymbol? =
+    context(session: KaSession)
+    fun findEqualsMethodForClass(classSymbol: KaClassSymbol, searchInSuper: Boolean = true): KaCallableSymbol? =
         findMethodForClass(classSymbol, OperatorNameConventions.EQUALS, searchInSuper) { matchesEqualsMethodSignature(it) }
 
-    fun KaSession.findHashCodeMethodForClass(classSymbol: KaClassSymbol, searchInSuper: Boolean = true): KaCallableSymbol? =
+    context(session: KaSession)
+    fun findHashCodeMethodForClass(classSymbol: KaClassSymbol, searchInSuper: Boolean = true): KaCallableSymbol? =
         findMethodForClass(classSymbol, OperatorNameConventions.HASH_CODE, searchInSuper) { matchesHashCodeMethodSignature(it) }
 
-    fun KaSession.findToStringMethodForClass(classSymbol: KaClassSymbol, searchInSuper: Boolean = true): KaCallableSymbol? =
+    context(session: KaSession)
+    fun findToStringMethodForClass(classSymbol: KaClassSymbol, searchInSuper: Boolean = true): KaCallableSymbol? =
         findMethodForClass(classSymbol, OperatorNameConventions.TO_STRING, searchInSuper) { matchesToStringMethodSignature(it) }
 
     context(_: KaSession)
@@ -146,7 +146,7 @@ object KotlinEqualsHashCodeToStringSymbolUtils {
     private fun findExplicitSuperclassOrAny(classSymbol: KaClassSymbol): KaClassSymbol? {
         val supertypes = classSymbol.superTypes
         return supertypes.map { it.symbol }.filterIsInstance<KaClassSymbol>().singleOrNull { it.classKind == KaClassKind.CLASS }
-            ?: supertypes.first().allSupertypes.singleOrNull { it.isAnyType }?.symbol as? KaClassSymbol
+            ?: supertypes.first().allSupertypes.singleOrNull { it.classId == KaStandardTypeClassIds.ANY }?.symbol as? KaClassSymbol
     }
 
     context(_: KaSession)
@@ -173,7 +173,7 @@ object KotlinEqualsHashCodeToStringSymbolUtils {
         if (function.typeParameters.isNotEmpty()) return false
         if (function.valueParameters.isNotEmpty()) return false
         val returnType = function.returnType
-        return returnType.isIntType && !returnType.isMarkedNullable
+        return returnType.classId == KaStandardTypeClassIds.INT && !returnType.isMarkedNullable
     }
 
     context(_: KaSession)
@@ -183,6 +183,6 @@ object KotlinEqualsHashCodeToStringSymbolUtils {
         if (function.typeParameters.isNotEmpty()) return false
         if (function.valueParameters.isNotEmpty()) return false
         val returnType = function.returnType
-        return returnType.isStringType && !returnType.isMarkedNullable
+        return returnType.classId == KaStandardTypeClassIds.STRING && !returnType.isMarkedNullable
     }
 }

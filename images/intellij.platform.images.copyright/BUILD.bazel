@@ -54,6 +54,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.images.copyright.iml",
+        "resources/intellij.platform.images.copyright.xml",
     ],
     visibility = ["//visibility:public"],
 )

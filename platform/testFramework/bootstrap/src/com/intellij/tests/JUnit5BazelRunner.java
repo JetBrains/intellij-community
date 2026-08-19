@@ -226,6 +226,11 @@ public final class JUnit5BazelRunner {
 
         // org/jetbrains/intellij/build/dependencies/BuildDependenciesCommunityRoot.kt -> ctor
         Files.writeString(ideaHome.resolve("intellij.idea.community.main.iml"), "");
+
+        // the real home may be a read-only mount inside bazel's sandbox
+        Path userHome = tempDir.resolve("userHome");
+        Files.createDirectories(userHome);
+        System.setProperty("user.home", userHome.toString());
       }
       else {
         // Traditional arts: idea.home is set to monorepo checkout root

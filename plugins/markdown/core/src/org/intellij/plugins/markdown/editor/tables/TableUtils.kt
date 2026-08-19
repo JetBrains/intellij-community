@@ -14,6 +14,7 @@ import com.intellij.psi.util.startOffset
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
+import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
 import org.intellij.plugins.markdown.lang.isMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
@@ -139,6 +140,10 @@ object TableUtils {
 
   fun MarkdownTable.getColumnAlignment(columnIndex: Int): MarkdownTableSeparatorRow.CellAlignment {
     return separatorRow?.getCellAlignment(columnIndex)!!
+  }
+
+  fun getTableStyle(file: PsiFile): TableStyle {
+    return CodeStyle.getCustomSettings(file, MarkdownCustomCodeStyleSettings::class.java).tableStyle
   }
 
   val MarkdownTableCell.firstNonWhitespaceOffset

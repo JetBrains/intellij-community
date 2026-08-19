@@ -1,21 +1,6 @@
 {
   "inspections": [
     {
-      "id": "MismatchedStringCase",
-      "cweIds": [
-        597
-      ],
-      "codeQualityCategory": "Reliability"
-    },
-    {
-      "id": "ObjectsEqualsCanBeSimplified",
-      "codeQualityCategory": "Code Style"
-    },
-    {
-      "id": "JavacQuirks",
-      "codeQualityCategory": "Performance"
-    },
-    {
       "id": "ReplacePrintlnWithLogging",
       "codeQualityCategory": "Code Style"
     },

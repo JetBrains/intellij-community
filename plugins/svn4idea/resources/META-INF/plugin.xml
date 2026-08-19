@@ -15,7 +15,33 @@
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.http.client"/>
+    <module name="intellij.libraries.ini4j"/>
     <module name="intellij.libraries.javax.activation"/>
+    <module name="intellij.libraries.oro.matcher"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.credentialStore"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.diff.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.externalProcessAuthHelper"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lvcs"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.diff"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.impl.shared"/>

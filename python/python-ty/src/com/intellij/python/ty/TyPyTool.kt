@@ -9,7 +9,7 @@ import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.isActiveOn
 import com.intellij.python.pytools.lsp.PyLspTool
-import com.intellij.python.pytools.configuration.ConfigurablePyTool
+import com.intellij.python.pytools.ExternalPyTool
 import com.intellij.python.pytools.ui.pyLspToolFeaturesSummary
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
@@ -20,7 +20,7 @@ import javax.swing.Icon
  * written in Rust by Astral (currently in preview).
  */
 @ApiStatus.Internal
-class TyPyTool : PyLspTool<TyConfiguration>(), ConfigurablePyTool {
+class TyPyTool : PyLspTool<TyConfiguration>(), ExternalPyTool {
   override val presentableName: String = "ty"
   override val description: String get() = TyBundle.message("ty.tool.description")
   override val packageName: PyPackageName = PyPackageName.from("ty")

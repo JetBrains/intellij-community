@@ -148,19 +148,60 @@ print("true" if callable(is_gil_enabled) and not is_gil_enabled() else "false")
   printf '}'
 }
 
+emit_environment_probe() {
+  possible_venv_home=$1
+  [ -d "$possible_venv_home" ] || return 0
+
+  environment_python="${possible_venv_home%/}/bin/python"
+  if environment_probe=$(run_python_probe "$environment_python"); then
+    if [ "$first_environment" -eq 0 ]; then
+      printf ','
+    fi
+    first_environment=0
+    printf '{"path":'
+    json_string "$environment_python"
+    printf ',"python":%s}' "$environment_probe"
+  fi
+}
+
+canonical_directory() {
+  (cd "$1" 2>/dev/null && pwd -P 2>/dev/null) || true
+}
+
+emit_environment_probes_in_directory() {
+  directory_to_probe=$1
+  [ -d "$directory_to_probe" ] || return 0
+
+  # Include regular and hidden direct children. Globbing is enabled only for these controlled suffixes.
+  set +f
+  for possible_venv_home in "$directory_to_probe"/*; do
+    emit_environment_probe "$possible_venv_home"
+  done
+  for possible_venv_home in "$directory_to_probe"/.*; do
+    case "${possible_venv_home##*/}" in
+      .|..) continue ;;
+    esac
+    emit_environment_probe "$possible_venv_home"
+  done
+  set -f
+}
+
 # argv protocol:
 #   --python <path-or-empty>
+#   --detect-environments <directory-or-empty>
 #   repeated <tool-name> <search-path-count> <search-path>...
 # A search path is one of:
 #   absolute <directory>
 #   env <variable> <component-count> <component>...
 #   home <component-count> <component>...
-# stdout is one JSON object containing shell, home, python, and found tools. Exit 2 means malformed argv.
+# stdout is one JSON object containing shell, home, python, environments, and found tools. Exit 2 means malformed argv.
 # python is null when not requested, minimal isExecutable=false on failure, and a full object on success.
-[ "$#" -ge 2 ] || exit 2
+[ "$#" -ge 4 ] || exit 2
 [ "$1" = "--python" ] || exit 2
 PYTHON_PATH=$2
-shift 2
+[ "$3" = "--detect-environments" ] || exit 2
+DETECT_ENVIRONMENTS_DIRECTORY=$4
+shift 4
 
 USER_NAME=$(whoami 2>/dev/null || true)
 PASSWD_HOME=
@@ -188,6 +229,21 @@ elif python_probe=$(run_python_probe "$PYTHON_PATH"); then
 else
   printf '{"isExecutable":false}'
 fi
+printf ',"environments":['
+
+first_environment=1
+if [ -n "$DETECT_ENVIRONMENTS_DIRECTORY" ]; then
+  REQUESTED_WORKING_DIRECTORY=$DETECT_ENVIRONMENTS_DIRECTORY
+  REQUESTED_WORKING_DIRECTORY_CANONICAL=$(canonical_directory "$REQUESTED_WORKING_DIRECTORY")
+  TARGET_WORKING_DIRECTORY=$(pwd -P 2>/dev/null || true)
+  if [ -n "$REQUESTED_WORKING_DIRECTORY_CANONICAL" ]; then
+    emit_environment_probes_in_directory "$REQUESTED_WORKING_DIRECTORY"
+  fi
+  if [ -n "$TARGET_WORKING_DIRECTORY" ] && [ "$TARGET_WORKING_DIRECTORY" != "$REQUESTED_WORKING_DIRECTORY_CANONICAL" ]; then
+    emit_environment_probes_in_directory "$TARGET_WORKING_DIRECTORY"
+  fi
+fi
+printf ']'
 printf ',"tools":{'
 
 first_tool=1

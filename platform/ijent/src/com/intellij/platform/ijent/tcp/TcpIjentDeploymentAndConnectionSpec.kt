@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.tcp
 
 import java.net.InetAddress
@@ -10,8 +10,14 @@ import java.net.InetAddress
  *                       **NB: there's a possibility to use bare TCP to connect to the remote host. If it's not needed it could be omitted just to the port**
  * @param deployingInfo The host:port pair or just host that is used to launch the IJent process. The host is the listening address. If the port is not specified,
  *                       a random port will be chosen.
+ * @param tlsCertificates The certificates that protect the socket with mutual TLS. There's no default value: every deployment must state
+ *                        explicitly whether the socket is authenticated or is left plaintext and available to everyone on the target machine.
  */
-data class TcpIjentDeploymentAndConnectionSpec(val connectionInfo: TcpDeployInfo.FixedPort, val deployingInfo: TcpDeployInfo)
+data class TcpIjentDeploymentAndConnectionSpec(
+  val connectionInfo: TcpDeployInfo.FixedPort,
+  val deployingInfo: TcpDeployInfo,
+  val tlsCertificates: MutualTlsCertificates?,
+)
 
 sealed interface TcpDeployInfo {
   val host: String

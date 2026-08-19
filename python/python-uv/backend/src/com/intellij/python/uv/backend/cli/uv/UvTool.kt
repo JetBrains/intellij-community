@@ -5,6 +5,7 @@ import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.mapResult
 import java.nio.file.Path
 
 /**
@@ -98,9 +99,12 @@ class UvTool(runtime: PyToolRuntime) : UvCommand("tool", runtime) {
   suspend fun uninstall(): PyResult<Unit> = TODO()
 
   /**
-   * Ensure that the tool executable directory is on the PATH
+   * `uv tool update-shell` — ensure the tool executable directory (`uv tool dir --bin`) is on the `PATH`,
+   * updating the user's shell profile (Unix) or user `PATH` (Windows) if needed. Idempotent: a no-op when
+   * the directory is already present. uv prints nothing of interest, so the stdout is discarded.
    */
-  suspend fun updateShell(): PyResult<Unit> = TODO()
+  suspend fun updateShell(): PyResult<Unit> =
+    executeAndHandleErrors("update-shell", transformer = ZeroCodeStdoutTransformer).mapResult { Result.success(Unit) }
 
   /**
    * `uv tool dir` — the directory uv stores tools in, or (with [bin] = true) the directory their

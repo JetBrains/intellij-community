@@ -9,6 +9,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -63,7 +64,8 @@ internal class WhenWithOnlyElseInspection
 
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean = element.entries.singleOrNull()?.isElse == true
 
-    override fun KaSession.prepareContext(element: KtWhenExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtWhenExpression): Context? {
         val singleEntry = element.entries.singleOrNull() ?: return null
         val elseExpression = singleEntry.takeIf { it.isElse }?.expression ?: return null
         val isWhenUsedAsExpression = element.isUsedAsExpression

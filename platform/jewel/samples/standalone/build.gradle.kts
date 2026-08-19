@@ -15,6 +15,7 @@ dependencies {
     implementation(projects.markdown.extensions.autolink)
     implementation(projects.markdown.extensions.gfmAlerts)
     implementation(projects.markdown.extensions.gfmStrikethrough)
+    implementation(projects.markdown.extensions.frontMatter)
     implementation(projects.markdown.extensions.gfmTables)
     implementation(projects.markdown.extensions.images)
     implementation(projects.markdown.intUiStandaloneStyling)
@@ -69,5 +70,6 @@ tasks {
             javaLauncher = project.javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(jdkLevel) }
             setExecutable(javaLauncher.map { it.executablePath.asFile.absolutePath }.get())
         }
+        jvmArgs("-Dcompose.interop.blending=true")
     }
 }

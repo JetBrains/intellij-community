@@ -19,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//json/backend",
         "//platform/core-api:core",
         "//platform/util/multiplatform",
@@ -41,6 +41,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":regexp",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//json/backend:backend_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/util/multiplatform:multiplatform_test_lib",
@@ -55,6 +56,7 @@ jvm_library(
 exports_files(
     [
         "intellij.json.backend.regexp.iml",
+        "resources/intellij.json.backend.regexp.xml",
     ],
     visibility = ["//visibility:public"],
 )

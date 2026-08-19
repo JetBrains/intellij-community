@@ -43,16 +43,16 @@ class PyExternalToolsConfigurable(private val project: Project) : BoundSearchabl
   )
 
   /** Initialized once in [createPanel]; every method that touches it is invoked while the UI is live. */
-  private lateinit var toolsTable: PyExternalToolsTable
+  private lateinit var toolsList: PyExternalToolsList
 
-  /** Wired in as [PyToolManagementController.onStateChanged]; refresh the table on EDT. The hint footer rebinds via [PyToolManagementController.uvAvailable]. */
+  /** Wired in as [PyToolManagementController.onStateChanged]; refresh the rows on EDT. The hint footer rebinds via [PyToolManagementController.uvAvailable]. */
   private fun onUvStateChanged() {
-    toolsTable.fireAllRowsChanged()
+    toolsList.fireAllRowsChanged()
   }
 
-  /** Wired in as [PyToolManagementController.refreshRow]; delegate to the table. */
+  /** Wired in as [PyToolManagementController.refreshRow]; delegate to the list. */
   private fun refreshRow(item: ToolRow) {
-    toolsTable.refreshRow(item)
+    toolsList.refreshRow(item)
   }
 
   /**
@@ -62,33 +62,36 @@ class PyExternalToolsConfigurable(private val project: Project) : BoundSearchabl
   override fun enableSearch(option: String?): Runnable? {
     // The Settings framework may call this from the searchable-options index builder before the
     // page is visible, i.e. before [createPanel] has run; bail out cleanly in that case.
-    if (!::toolsTable.isInitialized) return null
+    if (!::toolsList.isInitialized) return null
     // Settings calls this on every search-text change, including the transition back to an empty
     // query when the user clears the field. Return a Runnable for empty/no-match input so we can
     // drop the spotlight border in lock-step with the search field, instead of leaving it
     // lingering until the user clicks.
     if (option.isNullOrBlank()) {
-      return Runnable { toolsTable.clearSelection() }
+      return Runnable { toolsList.clearSelection() }
     }
-    val match = toolsTable.findMatchingRowIndex(option)
+    val match = toolsList.findMatchingRowIndex(option)
     if (match < 0) {
-      return Runnable { toolsTable.clearSelection() }
+      return Runnable { toolsList.clearSelection() }
     }
-    return Runnable { toolsTable.selectForSearchHit(match) }
+    return Runnable { toolsList.selectForSearchHit(match) }
   }
 
-  /** Give focus to the table when the page opens so the very first cell click starts editing. */
-  override fun getPreferredFocusedComponent(): JComponent = toolsTable.view
+  /** Give focus to the list when the page opens. */
+  override fun getPreferredFocusedComponent(): JComponent = toolsList.view
 
   override fun createPanel(): DialogPanel {
-    toolsTable = PyExternalToolsTable(project, uv)
+    toolsList = PyExternalToolsList(project, uv)
 
-    val scrollPane = JBScrollPane(toolsTable.view).apply {
+    val scrollPane = JBScrollPane(toolsList.view).apply {
       border = JBUI.Borders.empty()
       viewportBorder = JBUI.Borders.empty()
+      // Put the "Tool" / "Lookup" caption in the scroll pane's column-header area so it shares the
+      // viewport's exact width and origin — the caption columns then line up with the row columns
+      // regardless of whether a vertical scrollbar is present.
+      setColumnHeaderView(buildHeaderBar())
     }
     val framedTable = BorderLayoutPanel()
-      .addToTop(buildHeaderBar(toolsTable.view))
       .addToCenter(scrollPane)
       .apply { border = IdeBorderFactory.createBorder(SideBorder.ALL) }
 
@@ -108,8 +111,12 @@ class PyExternalToolsConfigurable(private val project: Project) : BoundSearchabl
 
       row {
         icon(AllIcons.General.Warning).gap(RightGap.SMALL)
-        label(message("settings.external.tools.uv.hint.not.installed")).resizableColumn()
-        button(message("settings.external.tools.uv.hint.install.button")) { uv.installUv() }
+        text(
+          text = message("settings.external.tools.uv.hint.not.installed"),
+          action = HyperlinkEventAction { event ->
+            if (event.description == "installUv") uv.installUv()
+          },
+        )
       }.visibleIf(uv.uvAvailable.transform { it == false })
     }
 
@@ -123,7 +130,7 @@ class PyExternalToolsConfigurable(private val project: Project) : BoundSearchabl
     ) {
       supervisorScope {
         uv.onShown(this@supervisorScope)
-        toolsTable.onShown(this@supervisorScope)
+        toolsList.onShown(this@supervisorScope)
         awaitCancellation()
       }
     }
@@ -131,14 +138,14 @@ class PyExternalToolsConfigurable(private val project: Project) : BoundSearchabl
     return resultPanel
   }
 
-  override fun isModified(): Boolean = toolsTable.isModified()
+  override fun isModified(): Boolean = toolsList.isModified()
 
-  override fun apply(): Unit = toolsTable.apply()
+  override fun apply(): Unit = toolsList.apply()
 
-  override fun reset(): Unit = toolsTable.reset()
+  override fun reset(): Unit = toolsList.reset()
 
   override fun disposeUIResources() {
-    toolsTable.disposeUIResources()
+    toolsList.disposeUIResources()
     super.disposeUIResources()
   }
 

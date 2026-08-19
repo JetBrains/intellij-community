@@ -38,5 +38,7 @@
     <orderEntry type="module" module-name="intellij.java.ui" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.uast.ide" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.regexp" scope="RUNTIME" />
   </component>
 </module>

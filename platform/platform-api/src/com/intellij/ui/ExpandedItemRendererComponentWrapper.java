@@ -13,6 +13,7 @@ import javax.swing.border.Border;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -39,7 +40,14 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
         }
         Insets i = parent.getInsets();
         Dimension pref = rendererComponent.getPreferredSize();
-        rendererComponent.setBounds(i.left, i.top, Math.max(pref.width, size.width - i.left - i.right), size.height - i.top - i.bottom);
+        int width = Math.max(pref.width, size.width - i.left - i.right);
+        if (!GraphicsEnvironment.isHeadless()) {
+          // The popup starts `size.width` px into the renderer and never leaves one screen. Which screen that is isn't
+          // computed here; all screens together is an upper bound, and too small a bound would truncate the popup.
+          int lastPaintedX = size.width + ScreenUtil.getAllScreensRectangle().width;
+          width = Math.min(width, lastPaintedX);
+        }
+        rendererComponent.setBounds(i.left, i.top, width, size.height - i.top - i.bottom);
       }
     });
   }

@@ -130,6 +130,7 @@ private open class FrontendXBreakpointType(
   override val enabledIcon: Icon = dto.icons.enabledIcon.icon()
   override val disabledIcon: Icon = dto.icons.disabledIcon.icon()
   override val suspendNoneIcon: Icon = dto.icons.suspendNoneIcon.icon()
+  override val suspendNoneDisabledIcon: Icon = dto.icons.suspendNoneDisabledIcon.icon()
   override val mutedEnabledIcon: Icon = dto.icons.mutedEnabledIcon.icon()
   override val mutedDisabledIcon: Icon = dto.icons.mutedDisabledIcon.icon()
   override val pendingIcon: Icon? = dto.icons.pendingIcon?.icon()
@@ -189,8 +190,8 @@ private open class FrontendXBreakpointType(
   }
 
   override suspend fun addBreakpoint(project: Project): XBreakpointProxy? {
-    val breakpointDto = XBreakpointTypeApi.getInstance().addBreakpointThroughLux(project.projectId(), dto.id).await() ?: return null
-    return XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).awaitBreakpointCreation(breakpointDto.id)
+    val breakpointId = XBreakpointTypeApi.getInstance().addBreakpointThroughLux(project.projectId(), dto.id).await() ?: return null
+    return XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).awaitBreakpointCreation(breakpointId)
   }
 
   override fun equals(other: Any?): Boolean {

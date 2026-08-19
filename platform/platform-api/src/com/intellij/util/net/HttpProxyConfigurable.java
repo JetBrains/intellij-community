@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.ide.IdeBundle;
@@ -20,9 +20,9 @@ public class HttpProxyConfigurable extends ConfigurableBase<ConfigurableUi<Proxy
   public HttpProxyConfigurable() {
     super("http.proxy", IdeBundle.message("http.proxy.configurable"), "http.proxy");
 
-    this.proxySettings = ProxySettings.getInstance();
-    this.credentialStore = ProxyCredentialStore.getInstance();
-    this.disabledProxyAuthPromptsManager = DisabledProxyAuthPromptsManager.getInstance();
+    proxySettings = ProxySettings.getInstance();
+    credentialStore = ProxyCredentialStore.getInstance();
+    disabledProxyAuthPromptsManager = DisabledProxyAuthPromptsManager.getInstance();
   }
 
   @Override

@@ -15,7 +15,7 @@ import java.util.stream.Stream
  * `version[/model]` entries) for CI; defaults to [MAVEN_VERSIONS] otherwise.
  */
 object MavenTestVersions {
-  const val MAVEN_4_VERSION: String = "4.0.0-rc-5"
+  const val MAVEN_4_VERSION: String = "4.0.0-rc-6"
 
   val MAVEN_VERSIONS: Array<String> = arrayOf(
     "bundled",

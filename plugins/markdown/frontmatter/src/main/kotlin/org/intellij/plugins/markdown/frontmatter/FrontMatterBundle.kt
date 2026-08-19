@@ -7,14 +7,15 @@ import java.util.function.Supplier
 
 private const val BUNDLE = "messages.FrontMatterBundle"
 
-internal object FrontMatterBundle: DynamicBundle(BUNDLE) {
+internal object FrontMatterBundle {
+  private val instance = DynamicBundle(FrontMatterBundle::class.java, BUNDLE)
   @JvmStatic
   fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): @Nls String {
-    return getMessage(key, *params)
+    return instance.getMessage(key, *params)
   }
 
   @JvmStatic
   fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): Supplier<@Nls String> {
-    return getLazyMessage(key, *params)
+    return instance.getLazyMessage(key, *params)
   }
 }

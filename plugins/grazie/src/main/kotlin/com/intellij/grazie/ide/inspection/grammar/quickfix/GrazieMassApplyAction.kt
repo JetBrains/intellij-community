@@ -14,6 +14,7 @@ import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.TextRange
@@ -22,7 +23,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiFile
 import javax.swing.Icon
 
-class GrazieMassApplyAction : IntentionAndQuickFixAction(), Iconable, CustomizableIntentionAction {
+class GrazieMassApplyAction : IntentionAndQuickFixAction(), Iconable, CustomizableIntentionAction, DumbAware {
   override fun getName(): @IntentionName String = GrazieBundle.message("grazie.mass.apply.action.text")
 
   override fun getFamilyName(): @IntentionFamilyName String = name

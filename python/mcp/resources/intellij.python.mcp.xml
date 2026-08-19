@@ -1,16 +1,19 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.mcpserver"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.community.impl.poetry.backend"/>
     <module name="intellij.python.hatch"/>
     <module name="intellij.python.pyproject"/>
-    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.uv.backend"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <mcpServer.mcpToolset implementation="com.intellij.python.mcp.environment.PythonEnvironmentMcpToolset"/>

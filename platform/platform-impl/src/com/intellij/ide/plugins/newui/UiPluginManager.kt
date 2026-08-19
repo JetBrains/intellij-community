@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
+import com.intellij.ide.plugins.marketplace.ResetPluginsStateResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -20,6 +21,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import fleet.rpc.client.RpcClientDisconnectedException
@@ -72,7 +74,12 @@ class UiPluginManager {
     return getController().loadPluginReviews(pluginId, page)
   }
 
-  fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null, callback: (Map<PluginId, Boolean>) -> Unit = {}) {
+  fun resetSession(
+    sessionId: String,
+    removeSession: Boolean,
+    parentComponent: JComponent? = null,
+    callback: (ResetPluginsStateResult) -> Unit = {},
+  ) {
     launchRpcTask {
       callback(getController().resetSession(sessionId, removeSession, parentComponent))
     }
@@ -261,6 +268,22 @@ class UiPluginManager {
         // Fire-and-forget UI requests can race with remote frontend/backend disconnect.
       }
     }
+  }
+
+  suspend fun getPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId? {
+    return getController().getPluginUpdateSourceId(sessionId, pluginId)
+  }
+
+  suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
+    getController().setPendingPluginUpdateSourceInSession(sessionId, pluginId, pluginUpdateSource)
+  }
+
+  suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?){
+    getController().persistPluginUpdateSource(sessionId, pluginId, pluginUpdateSource)
+  }
+
+  suspend fun isPluginUpdateSourceVisibleInUI(): Boolean {
+    return getController().isPluginUpdateSourceVisibleInUI()
   }
 
   companion object {

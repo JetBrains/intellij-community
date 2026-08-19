@@ -61,6 +61,7 @@ jvm_library(
 exports_files(
     [
         "intellij.featuresTrainer.onboarding.iml",
+        "resources/intellij.featuresTrainer.onboarding.xml",
     ],
     visibility = ["//visibility:public"],
 )

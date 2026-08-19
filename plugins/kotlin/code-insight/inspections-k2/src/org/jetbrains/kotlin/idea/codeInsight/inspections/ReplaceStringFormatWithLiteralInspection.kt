@@ -10,17 +10,18 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceStringFormatWithLiteralInspection.Context
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForExpression
-import org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceStringFormatWithLiteralInspection.Context
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -56,7 +57,8 @@ internal class ReplaceStringFormatWithLiteralInspection : KotlinApplicableInspec
         return true
     }
 
-    override fun KaSession.prepareContext(element: KtExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtExpression): Context? {
         val callExpression = getApplicableCallExpression(element) ?: return null
         val resolvedExpression = element.resolveExpression() ?: return null
         val fqName = resolvedExpression.importableFqName?.asString() ?: return null

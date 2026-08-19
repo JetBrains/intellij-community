@@ -91,7 +91,7 @@ open class ApplicationRule : TestRule {
  *   @Rule stressTestRule = new StressTestRule();
  * }
  * ```
- * For JUnit5, use [com.intellij.testFramework.junit5.impl.StressTestApplicationExtension] extension instead.
+ * For JUnit5, use the `com.intellij.testFramework.junit5.StressTestApplication` annotation instead.
  *
  * @param forceIsStressTest if specified, all tests are run with this flag regardless of their name.
  *        E.g.:
@@ -447,10 +447,11 @@ fun createProjectAndUseInLoadComponentStateMode(
   task: (Project) -> Unit,
 ) {
   val file = tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = true)
-  val project = ProjectManagerEx.getInstanceEx().openProject(file, createTestOpenProjectOptions().copy(
+  val options = createTestOpenProjectOptions()
+  val project = ProjectManagerEx.getInstanceEx().openProject(file, options.copy(
     isNewProject = true,
     useDefaultProjectAsTemplate = useDefaultProjectSettings,
-    beforeInit = { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) }
+    beforeInitTasks = options.beforeInitTasks + { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) }
   ))!!
   project.useProject {
     project.runInLoadComponentStateMode {
@@ -497,11 +498,7 @@ suspend fun createOrLoadProject(
     isNewProject = projectCreator == null,
   )
   if (loadComponentState) {
-    val oldBeforeInit = options.beforeInit
-    options = options.copy(beforeInit = {
-      oldBeforeInit?.invoke(it)
-      it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true)
-    })
+    options = options.copy(beforeInitTasks = options.beforeInitTasks + { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) })
   }
   createOrLoadProject(tempDirManager, options, projectCreator, directoryBased, task = task)
 }
@@ -550,8 +547,8 @@ private suspend fun createOrLoadProject(projectPath: Path, loadComponentState: B
 }
 
 suspend fun loadProject(projectPath: Path, beforeInit: (Project) -> Unit = {}, task: suspend (Project) -> Unit) {
-  val options = createTestOpenProjectOptions().copy(
-    beforeInit = {
+  var options = createTestOpenProjectOptions()
+  options = options.copy(beforeInitTasks = options.beforeInitTasks +  {
       it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true)
       beforeInit(it)
     }
@@ -585,10 +582,11 @@ suspend fun loadProjectAndCheckResults(
     return if (projectFileName == null) projectDir else projectDir.resolve(projectFileName)
   }
   val directoryBased = projectPaths.all { Files.isDirectory(it) }
-  val options = createTestOpenProjectOptions(beforeOpen = beforeOpen).copy(
+  var options = createTestOpenProjectOptions(beforeOpen = beforeOpen)
+  options = options.copy(
     useDefaultProjectAsTemplate = false,
     isNewProject = false,
-    beforeInit = { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) }
+    beforeInitTasks = options.beforeInitTasks + { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) }
   )
   createOrLoadProject(tempDirectory, options, projectCreator, directoryBased, loadComponentState = true, task = checkProject)
 }

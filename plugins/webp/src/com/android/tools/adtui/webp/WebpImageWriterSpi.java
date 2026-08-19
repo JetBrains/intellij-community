@@ -47,9 +47,9 @@ public final class WebpImageWriterSpi extends ImageWriterSpi {
   WebpImageWriterSpi() {
     vendorName = WebpMetadata.WEBP_VENDOR;
     version = WebpNativeLibHelper.getEncoderVersion();
-    suffixes = WebpMetadata.Companion.getWEBP_SUFFIXES();
-    names = WebpMetadata.Companion.getWEBP_FORMAT_NAMES();
-    MIMETypes = WebpMetadata.Companion.getWEBP_MIME_TYPES();
+    suffixes = WebpMetadata.WEBP_SUFFIXES;
+    names = WebpMetadata.WEBP_FORMAT_NAMES;
+    MIMETypes = WebpMetadata.WEBP_MIME_TYPES;
     pluginClassName = WebpWriter.class.getName();
     outputTypes = new Class<?>[]{ImageOutputStream.class};
   }

@@ -31,7 +31,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
-import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.siyeh.ig.psiutils.TypeUtils
@@ -44,7 +43,7 @@ import org.jetbrains.idea.devkit.dom.processing.collectClassesRegisteredInExtens
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
 internal class ComponentModuleRegistrationChecker(
-  private val moduleToModuleSet: SynchronizedClearableLazy<MutableMap<String, PluginXmlRegistrationCheckInspection.PluginModuleSet>>,
+  private val isResolvableSamePluginRegistration: (element: DomElement, psiClass: PsiClass, definingModule: Module, elementModule: Module) -> Boolean,
   private val ignoredClasses: MutableList<String>,
   private val annotationHolder: DomElementAnnotationHolder,
 ) {
@@ -152,9 +151,7 @@ internal class ComponentModuleRegistrationChecker(
     val isCoveredByDependencies = declaredDependencies.contains(definingModule.name)
     if (isCoveredByDependencies) return
 
-    val definingPlugin = moduleToModuleSet.value[definingModule.name]
-    val elementPlugin = moduleToModuleSet.value[elementModule.name]
-    if (definingPlugin != null && definingPlugin === elementPlugin) return
+    if (isResolvableSamePluginRegistration(element, psiClass, definingModule, elementModule)) return
 
     annotationHolder.createProblem(element, ProblemHighlightType.ERROR,
                                    DevKitBundle.message("inspections.plugin.xml.ComponentModuleRegistrationChecker.element.registered.wrong.module",
@@ -173,9 +170,7 @@ internal class ComponentModuleRegistrationChecker(
     val elementModule = element.module
     if (elementModule == null || definingModule == elementModule) return false
 
-    val definingPlugin = moduleToModuleSet.value[definingModule.name]
-    val elementPlugin = moduleToModuleSet.value[elementModule.name]
-    if (definingPlugin != null && definingPlugin === elementPlugin) return false
+    if (isResolvableSamePluginRegistration(element, psiClass, definingModule, elementModule)) return false
 
     var pluginXmlModule = definingModule
     var modulePluginXmlFile = findModulePluginXmlFile(pluginXmlModule)

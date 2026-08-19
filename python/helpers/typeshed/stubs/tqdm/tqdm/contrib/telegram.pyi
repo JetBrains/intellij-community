@@ -1,6 +1,7 @@
 from _typeshed import Incomplete, SupportsWrite
 from collections.abc import Iterable, Mapping
-from typing import NoReturn, TypeVar, overload
+from typing import TypeVar, overload
+from typing_extensions import Never
 
 from ..auto import tqdm as tqdm_auto
 from .utils_worker import MonoWorker
@@ -60,7 +61,7 @@ class tqdm_telegram(tqdm_auto[_T]):
     ) -> None: ...
     @overload
     def __init__(
-        self: tqdm_telegram[NoReturn],
+        self: tqdm_telegram[Never],
         iterable: None = None,
         desc: str | None = ...,
         total: float | None = ...,

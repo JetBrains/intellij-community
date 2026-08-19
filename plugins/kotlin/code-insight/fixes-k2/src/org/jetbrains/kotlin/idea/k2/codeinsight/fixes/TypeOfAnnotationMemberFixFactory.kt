@@ -3,6 +3,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.arrayElementType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.TypeOfAnnotationMemberFix
 import org.jetbrains.kotlin.psi.KtTypeReference
@@ -13,7 +17,7 @@ internal object TypeOfAnnotationMemberFixFactory {
     val typeReference = diagnostic.psi as? KtTypeReference ?: return@ModCommandBased emptyList()
 
     val arrayElementType = typeReference.type.arrayElementType ?: return@ModCommandBased emptyList()
-    if (!arrayElementType.isPrimitive) return@ModCommandBased emptyList()
+    if (arrayElementType.classId !in KaStandardTypeClassIds.PRIMITIVES) return@ModCommandBased emptyList()
 
     val classId = (arrayElementType as KaClassType).classId
     val fixedArrayTypeText = "${classId.shortClassName}Array"

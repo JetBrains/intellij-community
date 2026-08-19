@@ -13,6 +13,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EDT;
+import kotlin.coroutines.CoroutineContext;
+import kotlin.jvm.functions.Function2;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +23,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**
@@ -32,9 +35,12 @@ import java.util.stream.Collectors;
  * @see #assertSlowOperationsAreAllowed()
  */
 public final class SlowOperations {
+
   private static final class Holder {
     private static final Logger LOG = Logger.getInstance(SlowOperations.class);
   }
+
+  private static final Set<String> REPORTED_NON_CANCELLABLE_EXECUTIONS = ConcurrentHashMap.newKeySet();
 
   /**
    * Set this property to force slow ops check
@@ -45,9 +51,11 @@ public final class SlowOperations {
   private static final Set<String> ourKnownIssues = ConcurrentHashMap.newKeySet();
 
   private static final String ERROR_EDT =
-    "Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.";
+    "The slow operation may freeze UI: it runs on EDT, blocks user input and nothing is repainted. " +
+    "See SlowOperations.assertSlowOperationsAreAllowed Javadoc.";
   private static final String ERROR_RA =
-    "Non-cancelable slow operations are prohibited inside read action. See SlowOperations.assertNonCancelableSlowOperationsAreAllowed javadoc.";
+    "The slow operation may freeze UI: it performs a non-cancellable operation under read action and blocks user input. " +
+    "See SlowOperations.assertNonCancelableSlowOperationsAreAllowed Javadoc.";
 
   /** Do not use. For Action System only */
   @ApiStatus.Internal
@@ -128,25 +136,65 @@ public final class SlowOperations {
     logError(ERROR_EDT);
   }
 
-  /**
-   * I/O and native calls in addition to being slow operations must not be called inside read-action (RA)
-   * as such RAs cannot be promptly canceled on an incoming write-action (WA).
-   *
-   * @see #assertSlowOperationsAreAllowed()
-   */
+  /// I/O and native calls in addition to being slow operations may not be called inside read-action (RA)
+  /// as such RAs cannot be promptly canceled on an incoming write-action (WA).
+  ///
+  /// HOW-TO fix an error from this method:
+  ///
+  ///   - You are on the pooled thread under [`ReadAction`][com.intellij.openapi.application.ReadAction]:
+  ///       - Synchronous (you need to return an execution result or derived information to the caller) - get rid of the ReadAction or synchronicity.
+  ///         Move execution part out of the code executed under ReadAction, or make your execution asynchronous - execute on
+  ///         [`other thread`][com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress] and invoke a callback.
+  ///       - Non-synchronous (you don't need to return something) - execute on another thread. E.g. using [com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress]
+  ///
+  ///   - You are on EDT:
+  ///       - Outside of [`WriteAction`][com.intellij.openapi.application.WriteAction]:
+  ///           - Synchronous (you need to return an execution result or derived information to the caller) - execute under
+  ///             [`modal progress`][com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking].
+  ///           - Non-synchronous (you don't need to return something) - execute on the pooled thread. E.g. using [com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress]
+  ///       - Under [`WriteAction`][com.intellij.openapi.application.WriteAction]
+  ///           - Synchronous (you need to return an execution result or derived information to the caller) - get rid of the WriteAction or synchronicity.
+  ///             Move execution part out of the code executed under WriteAction, or make your execution asynchronous - execute on
+  ///             [`other thread`][com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress] and invoke a callback.
+  ///           - Non-synchronous (you don't need to return something) - execute async on the pooled thread. E.g. using [com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress]
+  ///
+  /// Common solutions include:
+  ///   - [com.intellij.openapi.vfs.DiskQueryRelay] to simulate cancellable IO from read action
+  ///   - [com.intellij.openapi.progress.util.ProgressIndicatorUtils#awaitWithCheckCanceled(Future)] to wait for Future interruptibly
+  ///   - [com.intellij.openapi.progress.util.UtilKt#runWithCheckCanceled(CoroutineContext , Function2)] to run suspend computation as a detached activity
+  ///   - [com.intellij.codeInsight.daemon.DaemonCodeAnalyzer#restart(Object)] to restart highlighting in files after heavy computation is finished
+  ///   - [com.intellij.lang.annotation.ExternalAnnotator] to perform highlighting with an external process
+  ///
+  /// @see #assertSlowOperationsAreAllowed()
   public static void assertNonCancelableSlowOperationsAreAllowed() {
-    if (isAlwaysAllowed()) {
+    if (isAlwaysAllowed() || isSlowNonCancellableOperationAllowed()) {
       return;
     }
+
+    String message = null;
+
     if (EDT.isCurrentThreadEdt()) {
-      if (isSlowOperationAllowed()) {
-        return;
-      }
-      logError(ERROR_EDT);
+      message = ERROR_EDT;
     }
     else if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-      logError(ERROR_RA);
+      message = ERROR_RA;
     }
+
+    if (message != null && REPORTED_NON_CANCELLABLE_EXECUTIONS.add(ExceptionUtil.currentStackTrace())) {
+      logError(message);
+    }
+  }
+
+  private static boolean isSlowNonCancellableOperationAllowed() {
+    Application application = ApplicationManager.getApplication();
+    if (application == null || application.isHeadlessEnvironment()) return true;
+
+    // not allowed in WA compared to regular slow operations
+    if (!Registry.is("ide.slow.operations.assertion", true)) {
+      return true;
+    }
+
+    return false;
   }
 
   private static boolean isSlowOperationAllowed() {

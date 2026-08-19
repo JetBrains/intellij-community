@@ -1,0 +1,3 @@
+class V {
+    operator fun plus(o: V): Int = 1
+}

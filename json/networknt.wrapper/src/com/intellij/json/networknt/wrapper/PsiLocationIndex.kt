@@ -212,7 +212,8 @@ class PsiLocationIndex private constructor(
   /**
    * Add a PSI element to the suppressed set after the index is built. Test-only seam for
    * exercising [NetworkntErrorMapper]'s suppression filter without needing a language-specific
-   * adapter that returns `shouldCheckAsValue == false` (only JS adapters do today).
+   * adapter that returns `shouldCheckAsValue == false` (e.g. JS reference expressions, YAML
+   * `.inf`/`.nan`).
    */
   @TestOnly
   fun markSuppressedForTest(psi: PsiElement) {

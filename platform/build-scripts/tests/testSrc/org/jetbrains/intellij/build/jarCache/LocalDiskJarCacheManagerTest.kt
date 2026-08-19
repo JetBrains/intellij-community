@@ -20,6 +20,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.ZipEntry
@@ -910,7 +911,7 @@ internal class LocalDiskJarCacheManagerTest {
   }
 
   @Test
-  fun `cache hit copies payload to target when cache is not target`() {
+  fun `cache hit materializes payload into target when cache is not target`() {
     runBlocking {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
@@ -984,6 +985,60 @@ internal class LocalDiskJarCacheManagerTest {
   }
 
   @Test
+  fun `cache miss copies payload into target`() {
+    runBlocking {
+      val cacheDir = tempDir.resolve("cache")
+      val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
+      val produceCalls = AtomicInteger()
+      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = false)
+
+      val target = tempDir.resolve("out/first.jar")
+      val result = manager.computeIfAbsent(
+        sources = createSources(),
+        targetFile = target,
+        nativeFiles = null,
+        span = Span.getInvalid(),
+        producer = builder,
+      )
+
+      assertThat(result).isEqualTo(target)
+      assertThat(produceCalls.get()).isEqualTo(1)
+      assertTargetOwnsItsBytes(target = target, payloadFile = findSingleEntryPaths(cacheDir).payloadFile)
+    }
+  }
+
+  @Test
+  fun `cache hit copies payload into target`() {
+    runBlocking {
+      val cacheDir = tempDir.resolve("cache")
+      val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
+      val produceCalls = AtomicInteger()
+      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = false)
+      val sources = createSources()
+
+      manager.computeIfAbsent(
+        sources = sources,
+        targetFile = tempDir.resolve("out/first.jar"),
+        nativeFiles = null,
+        span = Span.getInvalid(),
+        producer = builder,
+      )
+      val hitTarget = tempDir.resolve("out2/first.jar")
+      val hitResult = manager.computeIfAbsent(
+        sources = sources,
+        targetFile = hitTarget,
+        nativeFiles = null,
+        span = Span.getInvalid(),
+        producer = builder,
+      )
+
+      assertThat(hitResult).isEqualTo(hitTarget)
+      assertThat(produceCalls.get()).isEqualTo(1)
+      assertTargetOwnsItsBytes(target = hitTarget, payloadFile = findSingleEntryPaths(cacheDir).payloadFile)
+    }
+  }
+
+  @Test
   fun `cache file name includes target file name`() {
     runBlocking {
       val cacheDir = tempDir.resolve("cache")
@@ -1043,6 +1098,26 @@ internal class LocalDiskJarCacheManagerTest {
       metadataTouchInterval = metadataTouchInterval,
     )
   }
+
+  /**
+   * The invariant the jar cache owes a layout: the materialized target is a file of its own, never the cache payload
+   * under another name. On Unix a file key is `(device, inode)`, exactly what `stat -f '%i'` compares - a copy-on-write
+   * clone has its own, a hardlink would not. Reading the content is the portable half of the check: it runs everywhere,
+   * including filesystems that report no file key at all.
+   */
+  private fun assertTargetOwnsItsBytes(target: Path, payloadFile: Path) {
+    assertThat(Files.readString(target)).isEqualTo("payload")
+    val targetKey = fileKey(target)
+    val payloadKey = fileKey(payloadFile)
+    if (targetKey != null && payloadKey != null) {
+      assertThat(targetKey).isNotEqualTo(payloadKey)
+    }
+
+    Files.writeString(target, "patched")
+    assertThat(Files.readString(payloadFile)).isEqualTo("payload")
+  }
+
+  private fun fileKey(file: Path): Any? = Files.readAttributes(file, BasicFileAttributes::class.java).fileKey()
 
   private fun createSources(): List<Source> {
     return listOf(InMemoryContentSource("a.txt", "hello".encodeToByteArray()))

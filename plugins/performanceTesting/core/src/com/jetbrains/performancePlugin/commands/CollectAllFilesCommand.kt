@@ -2,13 +2,13 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.psi.search.FilenameIndex.getAllFilesByExt
 import com.intellij.psi.search.GlobalSearchScope
+import com.jetbrains.performancePlugin.LogDirHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
@@ -39,7 +39,7 @@ class CollectAllFilesCommand(text: String, line: Int) : PlaybackCommandCoroutine
     }
     val extensions = parameters[0].split(",")
     val fromSources = parameters[1].toBooleanStrict()
-    val collectedFiles: File = (PathManager.getLogDir() / "collected-files.txt").toFile()
+    val collectedFiles: File = (LogDirHandler.currentLogDir() / "collected-files.txt").toFile()
     if (!collectedFiles.exists())
       withContext(Dispatchers.IO) {
         collectedFiles.createNewFile()

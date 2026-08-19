@@ -64,6 +64,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 final class PainterHelper implements Painter.Listener {
   private static final Logger LOG = Logger.getInstance(PainterHelper.class);
@@ -203,7 +204,7 @@ final class PainterHelper implements Painter.Listener {
     MyImagePainter.ourImageCache.clear();
   }
 
-  static AbstractPainter newImagePainter(@NotNull Image image,
+  static AbstractPainter newImagePainter(@NotNull Supplier<? extends Image> imageProvider,
                                          @NotNull IdeBackgroundUtil.Fill fillType,
                                          @NotNull IdeBackgroundUtil.Anchor anchor,
                                          float alpha,
@@ -216,7 +217,7 @@ final class PainterHelper implements Painter.Listener {
 
       @Override
       public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
-        executePaint(g, component, image, fillType, anchor, alpha, insets);
+        executePaint(g, component, imageProvider.get(), fillType, anchor, alpha, insets);
       }
     };
   }
@@ -278,8 +279,10 @@ final class PainterHelper implements Painter.Listener {
         return;
       }
       // performance: pre-compute scaled image or tiles
-      @Nullable
       GraphicsConfiguration cfg = g.getDeviceConfiguration();
+      if (cfg == null) {
+        cfg = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+      }
       Cached cached = cachedMap.get(cfg);
       VolatileImage scaled = cached == null ? null : cached.image;
       Rectangle src0 = new Rectangle();
@@ -408,7 +411,7 @@ final class PainterHelper implements Painter.Listener {
       }
     }
 
-    private static @Nullable VolatileImage validateImage(@Nullable GraphicsConfiguration cfg, @Nullable VolatileImage image) {
+    private static @Nullable VolatileImage validateImage(@NotNull GraphicsConfiguration cfg, @Nullable VolatileImage image) {
       if (image == null) return null;
       boolean lost1 = image.contentsLost();
       int validated = image.validate(cfg);
@@ -421,15 +424,13 @@ final class PainterHelper implements Painter.Listener {
       return image;
     }
 
-    private static @NotNull VolatileImage createImage(@Nullable GraphicsConfiguration cfg, int w, int h) {
-      GraphicsConfiguration safe = cfg != null ? cfg : GraphicsEnvironment.getLocalGraphicsEnvironment()
-        .getDefaultScreenDevice().getDefaultConfiguration();
+    private static @NotNull VolatileImage createImage(@NotNull GraphicsConfiguration cfg, int w, int h) {
       VolatileImage image;
       try {
-        image = safe.createCompatibleVolatileImage(w, h, new ImageCapabilities(true), Transparency.TRANSLUCENT);
+        image = cfg.createCompatibleVolatileImage(w, h, new ImageCapabilities(true), Transparency.TRANSLUCENT);
       }
       catch (Exception e) {
-        image = safe.createCompatibleVolatileImage(w, h, Transparency.TRANSLUCENT);
+        image = cfg.createCompatibleVolatileImage(w, h, Transparency.TRANSLUCENT);
       }
       // validate first time (it's always RESTORED & cleared)
       image.validate(cfg);

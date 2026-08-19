@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterable
 from enum import Enum
-from typing import Any
+from typing import Any, Self
 
 from django.db.migrations.graph import MigrationGraph
 from django.db.migrations.migration import Migration
@@ -9,7 +9,6 @@ from django.db.migrations.questioner import MigrationQuestioner
 from django.db.migrations.state import ProjectState
 from django.db.models.fields import Field
 from django.utils.functional import cached_property
-from typing_extensions import Self
 
 class OperationDependency(tuple[str, str, str | None, OperationDependency.Type]):
     class Type(Enum):
@@ -48,7 +47,7 @@ class MigrationAutodetector:
     def deep_deconstruct(self, obj: Any) -> Any: ...
     def only_relation_agnostic_fields(
         self, fields: dict[str, Field[Any, Any]]
-    ) -> list[tuple[str, list[Any], dict[str, Callable | int | str]]]: ...
+    ) -> list[tuple[str, list[Any], dict[str, Callable[..., Any] | int | str]]]: ...
     def check_dependency(self, operation: Operation, dependency: tuple[str, str, str | None, bool | str]) -> bool: ...
     def add_operation(
         self,

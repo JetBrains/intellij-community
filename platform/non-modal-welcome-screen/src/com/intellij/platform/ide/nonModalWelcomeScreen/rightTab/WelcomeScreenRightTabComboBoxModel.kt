@@ -1,5 +1,6 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.LafManager
@@ -16,6 +17,7 @@ import com.intellij.openapi.keymap.impl.ui.KeymapSchemeManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenProjectScopeHolder
+import com.intellij.ui.JBColor
 import kotlinx.coroutines.launch
 
 internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
@@ -38,7 +40,7 @@ internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
     }
   }
 
-  class KeymapModel() : WelcomeScreenRightTabComboBoxModel<Keymap>() {
+  class KeymapModel : WelcomeScreenRightTabComboBoxModel<Keymap>() {
     override val items: List<Keymap> = getKeymaps()
 
     override var currentItem: Keymap
@@ -72,7 +74,11 @@ internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
       get() = KeymapManager.getInstance() as KeymapManagerImpl
   }
 
-  class ThemeModel() : WelcomeScreenRightTabComboBoxModel<LafReference>() {
+  class ThemeModel : WelcomeScreenRightTabComboBoxModel<LafReference>() {
+    internal companion object {
+      fun getIcon() = if (JBColor.isBright()) AllIcons.MeetNewUi.LightTheme else AllIcons.MeetNewUi.DarkTheme
+    }
+
     override val items: List<LafReference>
       get() = getThemes()
 

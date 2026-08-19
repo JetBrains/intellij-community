@@ -9,10 +9,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.cloneDialog.VcsCloneDialog
@@ -34,10 +32,6 @@ internal open class GetFromVersionControlAction : DumbAwareAction() {
         presentation.icon = AllIcons.Welcome.FromVCSTab
         presentation.selectedIcon = AllIcons.Welcome.FromVCSTabSelected
         presentation.text = ActionsBundle.message("Vcs.VcsClone.Tabbed.Welcome.text")
-        if (Registry.`is`("jetbrainsd.new.connection.flow.enabled", false)) {
-          presentation.putClientProperty(WelcomeScreenActionsUtil.TEXT_BUTTON_ICON, AllIcons.Vcs.Branch)
-          presentation.text = VcsBundle.message("clone.dialog.clone.button")
-        }
       }
       else {
         presentation.icon = AllIcons.Vcs.Branch

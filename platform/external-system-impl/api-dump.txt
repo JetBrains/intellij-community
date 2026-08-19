@@ -1141,6 +1141,8 @@ com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl
 - reset(com.intellij.openapi.project.Project):V
 - a:showUi(Z):V
 - a:validate(java.lang.Object):Z
+f:com.intellij.openapi.externalSystem.util.ExternalSystemTrustUtilKt
+- sf:naturalJoinSystemIds(java.util.Collection):java.lang.String
 f:com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil
 - sf:INSETS:I
 - s:disposeUi(java.lang.Object):V

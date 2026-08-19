@@ -34,7 +34,6 @@ project.multiplatformAndroidApp.unitTest
     name: MultiplatformAndroidApp_commonTest
     type: Gradle
     tasks: [:multiplatformAndroidApp:cleanTestDebugUnitTest, :multiplatformAndroidApp:testDebugUnitTest, --tests, "MultiplatformAndroidApp_commonTest"]
-    scriptParameters:
     isDebugAllEnabled: false
     isRunAsTest: true
 
@@ -42,7 +41,6 @@ project.multiplatformAndroidApp.unitTest
     name: MultiplatformAndroidApp_commonTest.sayHello
     type: Gradle
     tasks: [:multiplatformAndroidApp:cleanTestDebugUnitTest, :multiplatformAndroidApp:testDebugUnitTest, --tests, "MultiplatformAndroidApp_commonTest.sayHello"]
-    scriptParameters:
     isDebugAllEnabled: false
     isRunAsTest: true
 
@@ -50,7 +48,6 @@ project.multiplatformAndroidApp.unitTest
     name: MultiplatformAndroidApp_test
     type: Gradle
     tasks: [:multiplatformAndroidApp:cleanTestDebugUnitTest, :multiplatformAndroidApp:testDebugUnitTest, --tests, "MultiplatformAndroidApp_test"]
-    scriptParameters:
     isDebugAllEnabled: false
     isRunAsTest: true
 
@@ -58,7 +55,6 @@ project.multiplatformAndroidApp.unitTest
     name: MultiplatformAndroidApp_test.sayHello
     type: Gradle
     tasks: [:multiplatformAndroidApp:cleanTestDebugUnitTest, :multiplatformAndroidApp:testDebugUnitTest, --tests, "MultiplatformAndroidApp_test.sayHello"]
-    scriptParameters:
     isDebugAllEnabled: false
     isRunAsTest: true
 
@@ -98,7 +94,6 @@ project.multiplatformAndroidJvmIosLibrary2.commonTest
     name: MultiplatformAndroidJvmIosLibrary2_commonTest
     type: Gradle
     tasks: [:multiplatformAndroidJvmIosLibrary2:cleanTestDebugUnitTest, :multiplatformAndroidJvmIosLibrary2:testDebugUnitTest, --tests, "MultiplatformAndroidJvmIosLibrary2_commonTest"]
-    scriptParameters:
     isDebugAllEnabled: false
     isRunAsTest: true
 
@@ -106,7 +101,6 @@ project.multiplatformAndroidJvmIosLibrary2.commonTest
     name: MultiplatformAndroidJvmIosLibrary2_commonTest.sayHello
     type: Gradle
     tasks: [:multiplatformAndroidJvmIosLibrary2:cleanTestDebugUnitTest, :multiplatformAndroidJvmIosLibrary2:testDebugUnitTest, --tests, "MultiplatformAndroidJvmIosLibrary2_commonTest.sayHello"]
-    scriptParameters:
     isDebugAllEnabled: false
     isRunAsTest: true
 
@@ -118,7 +112,6 @@ project.multiplatformAndroidJvmIosLibrary2.jvmTest
     name: MultiplatformAndroidJvmIosLibrary2_jvmTest
     type: Gradle
     tasks: [:multiplatformAndroidJvmIosLibrary2:cleanJvmTest, :multiplatformAndroidJvmIosLibrary2:jvmTest, --tests, "MultiplatformAndroidJvmIosLibrary2_jvmTest"]
-    scriptParameters:
     isDebugAllEnabled: false
     isRunAsTest: true
 
@@ -126,7 +119,6 @@ project.multiplatformAndroidJvmIosLibrary2.jvmTest
     name: MultiplatformAndroidJvmIosLibrary2_jvmTest.sayHello
     type: Gradle
     tasks: [:multiplatformAndroidJvmIosLibrary2:cleanJvmTest, :multiplatformAndroidJvmIosLibrary2:jvmTest, --tests, "MultiplatformAndroidJvmIosLibrary2_jvmTest.sayHello"]
-    scriptParameters:
     isDebugAllEnabled: false
     isRunAsTest: true
 
@@ -142,7 +134,6 @@ project.multiplatformAndroidJvmIosLibrary2.unitTest
     name: MultiplatformAndroidJvmIosLibrary2_test
     type: Gradle
     tasks: [:multiplatformAndroidJvmIosLibrary2:cleanTestDebugUnitTest, :multiplatformAndroidJvmIosLibrary2:testDebugUnitTest, --tests, "MultiplatformAndroidJvmIosLibrary2_test"]
-    scriptParameters:
     isDebugAllEnabled: false
     isRunAsTest: true
 
@@ -150,7 +141,6 @@ project.multiplatformAndroidJvmIosLibrary2.unitTest
     name: MultiplatformAndroidJvmIosLibrary2_test.sayHello
     type: Gradle
     tasks: [:multiplatformAndroidJvmIosLibrary2:cleanTestDebugUnitTest, :multiplatformAndroidJvmIosLibrary2:testDebugUnitTest, --tests, "MultiplatformAndroidJvmIosLibrary2_test.sayHello"]
-    scriptParameters:
     isDebugAllEnabled: false
     isRunAsTest: true
 

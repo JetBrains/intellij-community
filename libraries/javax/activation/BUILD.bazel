@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.javax.activation.iml",
+        "resources/intellij.libraries.javax.activation.xml",
     ],
     visibility = ["//visibility:public"],
 )

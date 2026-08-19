@@ -85,12 +85,15 @@ public sealed interface ModCommand
     List<ModCommand> commands = new ArrayList<>(unpack());
     List<ModCommand> nextCommands = next.unpack();
 
-    // Sorting consecutive ModUpdateFileTextCommands by file URL
+    // Sorting consecutive ModUpdateFileText commands by file URL
     boolean canSort = true;
     for (ModCommand nextCommand : nextCommands) {
-      canSort &= nextCommand instanceof ModUpdateFileText || nextCommand instanceof ModNothing;
       commands.add(nextCommand);
-      if (!canSort || !(nextCommand instanceof ModUpdateFileText nextUpdate)) continue;
+
+      if (!canSort || !(nextCommand instanceof ModUpdateFileText nextUpdate)) {
+        canSort = false;
+        continue;
+      }
 
       for (int i = commands.size() - 2; i >= 0; i--) {
         if (!(commands.get(i) instanceof ModUpdateFileText curUpdate)) break;

@@ -14,6 +14,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.ui.sanitizeLineSeparators
 import org.jetbrains.plugins.terminal.fus.BatchLatencyReporter
@@ -35,7 +36,8 @@ import java.awt.event.KeyEvent
 import java.nio.charset.StandardCharsets
 import kotlin.time.TimeMark
 
-internal class TerminalInput(
+@ApiStatus.Internal
+class TerminalInput(
   private val terminalSessionDeferred: Deferred<TerminalSession>,
   private val sessionModel: TerminalSessionModel,
   startupFusInfo: TerminalStartupFusInfo?,

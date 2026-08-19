@@ -7,12 +7,17 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.community.common.tools.ToolId
-import com.intellij.python.hatch.HatchConfiguration
+import com.intellij.python.hatch.HATCH_TOML
+import com.intellij.python.hatch.HatchExecutableNotFoundHatchError
+import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.HatchVirtualEnvironment
+import com.intellij.python.pytools.resolveExecutable
+import com.jetbrains.python.Result
 import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.cli.HatchEnvironment
 import com.intellij.python.hatch.getHatchService
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
@@ -35,6 +40,8 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
   }
 
   override val toolId: ToolId = HATCH_TOOL_ID
+
+  override val potentialDependencyFiles: Set<String> = setOf(PY_PROJECT_TOML, HATCH_TOML)
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
@@ -78,9 +85,8 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
     msg = PyBundle.message("sdk.set.up.hatch.environment")
   ) {
     val fileSystem = localEel.toFileSystem()
-    val hatchExecutablePath = HatchConfiguration.getOrDetectHatchExecutablePath(fileSystem).getOr {
-      return@runWithModalBlockingOrInBackground it
-    }
+    val hatchExecutablePath = HatchPyTool.getInstance().resolveExecutable(fileSystem)
+                              ?: return@runWithModalBlockingOrInBackground Result.failure(HatchExecutableNotFoundHatchError(null))
     val hatchService = module.getHatchService(fileSystem, hatchExecutablePath.path).getOr { return@runWithModalBlockingOrInBackground it }
 
     val environment = if (envExists) {

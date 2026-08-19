@@ -3,12 +3,14 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.substring
 
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.isPure
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isSimplifiableTo
-import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.isPure
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -26,19 +28,22 @@ abstract class ReplaceSubstringInspection: KotlinApplicableInspectionBase.Simple
     ): KtVisitor<*, *> = dotQualifiedExpressionVisitor {
         visitTargetElement(it, holder, isOnTheFly)
     }
-    protected fun KaSession.resolvesToMethod(element: KtDotQualifiedExpression, fqMethodName: String): Boolean {
+    context(session: KaSession)
+    protected fun resolvesToMethod(element: KtDotQualifiedExpression, fqMethodName: String): Boolean {
         val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
         val callableId = resolvedCall.symbol.callableId?.asSingleFqName()
         return callableId?.asString() == fqMethodName
     }
 
-    protected fun KaSession.isFirstArgumentZero(element: KtDotQualifiedExpression): Boolean {
+    context(session: KaSession)
+    protected fun isFirstArgumentZero(element: KtDotQualifiedExpression): Boolean {
         val firstArg = element.callExpression?.valueArguments?.getOrNull(0)?.getArgumentExpression() ?: return false
         val constantValue = firstArg.evaluate() ?: return false
         return constantValue.value == 0
     }
 
-    protected fun KaSession.isIndexOfCall(expression: KtExpression?, expectedReceiver: KtExpression): Boolean {
+    context(session: KaSession)
+    protected fun isIndexOfCall(expression: KtExpression?, expectedReceiver: KtExpression): Boolean {
         return expression is KtDotQualifiedExpression
                && resolvesToMethod(expression, "kotlin.text.indexOf")
                && expression.receiverExpression.isSimplifiableTo(expectedReceiver)
@@ -83,7 +88,8 @@ abstract class ReplaceSubstringInspection: KotlinApplicableInspectionBase.Simple
         return selector.getReferencedName() == "length"
     }
 
-    protected fun KaSession.prepareContextBase(element: KtDotQualifiedExpression): Boolean {
+    context(session: KaSession)
+    protected fun prepareContextBase(element: KtDotQualifiedExpression): Boolean {
         if (!resolvesToMethod(element, "kotlin.text.substring")) return false
         if (!element.receiverExpression.isPure()) return false
         return true

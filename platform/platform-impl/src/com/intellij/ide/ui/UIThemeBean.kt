@@ -103,6 +103,13 @@ fun readThemeBeanForTest(
   )
 }
 
+@VisibleForTesting
+fun resolveThemeColorsForTest(@Language("json") data: String, warn: (String, Throwable?) -> Unit): Map<String, Color> {
+  val bean = readTheme(JsonFactory().createParser(ObjectReadContext.empty(), data), warn)
+  initializeNamedColors(bean, warn)
+  return bean.colorMap.map
+}
+
 internal fun readTheme(parser: JsonParser, warn: (String, Throwable?) -> Unit): UIThemeBean {
   check(parser.nextToken() == JsonToken.START_OBJECT)
   val bean = UIThemeBean()

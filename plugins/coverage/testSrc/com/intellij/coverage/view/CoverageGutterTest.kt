@@ -112,7 +112,8 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
     waitSuiteProcessing {
       manager.selectSubCoverage(suite, listOf("foo.bar.BarTest,testMethod3"))
     }
-    assertGutterHighlightLines("foo.bar.BarClass", mapOf(5 to LineCoverage.FULL, 9 to LineCoverage.NONE, 13 to LineCoverage.NONE))
+    assertGutterHighlightLines("foo.bar.BarClass",
+                               mapOf(3 to LineCoverage.FULL, 5 to LineCoverage.FULL, 9 to LineCoverage.NONE, 13 to LineCoverage.NONE))
     assertGutterHighlightLines("foo.bar.UncoveredClass", mapOf())
     assertGutterHighlightLines("foo.FooClass", mapOf())
 
@@ -121,14 +122,14 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
     }
     assertGutterHighlightLines("foo.bar.BarClass", mapOf())
     assertGutterHighlightLines("foo.bar.UncoveredClass", mapOf())
-    assertGutterHighlightLines("foo.FooClass", mapOf(5 to LineCoverage.FULL, 9 to LineCoverage.NONE))
+    assertGutterHighlightLines("foo.FooClass", mapOf(3 to LineCoverage.FULL, 5 to LineCoverage.FULL, 9 to LineCoverage.NONE))
 
     waitSuiteProcessing {
       manager.selectSubCoverage(suite, listOf("foo.FooTest,testMethod2"))
     }
     assertGutterHighlightLines("foo.bar.BarClass", mapOf())
     assertGutterHighlightLines("foo.bar.UncoveredClass", mapOf())
-    assertGutterHighlightLines("foo.FooClass", mapOf(5 to LineCoverage.NONE, 9 to LineCoverage.FULL))
+    assertGutterHighlightLines("foo.FooClass", mapOf(3 to LineCoverage.FULL, 5 to LineCoverage.NONE, 9 to LineCoverage.FULL))
 
     closeSuite(suite)
     assertNoCoverage()
@@ -141,10 +142,12 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
   }
 
   private suspend fun assertCoveredFiles() {
-    assertGutterHighlightLines("foo.bar.BarClass", mapOf(5 to LineCoverage.FULL, 9 to LineCoverage.NONE, 13 to LineCoverage.NONE))
+    assertGutterHighlightLines("foo.bar.BarClass",
+                               mapOf(3 to LineCoverage.FULL, 5 to LineCoverage.FULL, 9 to LineCoverage.NONE, 13 to LineCoverage.NONE))
     assertGutterHighlightLines("foo.bar.UncoveredClass",
-                               mapOf(5 to LineCoverage.NONE, 8 to LineCoverage.NONE, 11 to LineCoverage.NONE, 14 to LineCoverage.NONE))
-    assertGutterHighlightLines("foo.FooClass", mapOf(5 to LineCoverage.FULL, 9 to LineCoverage.PARTIAL))
+                               mapOf(3 to LineCoverage.NONE, 5 to LineCoverage.NONE, 8 to LineCoverage.NONE,
+                                     11 to LineCoverage.NONE, 14 to LineCoverage.NONE))
+    assertGutterHighlightLines("foo.FooClass", mapOf(3 to LineCoverage.FULL, 5 to LineCoverage.FULL, 9 to LineCoverage.PARTIAL))
   }
 
   private suspend fun openFiles() {

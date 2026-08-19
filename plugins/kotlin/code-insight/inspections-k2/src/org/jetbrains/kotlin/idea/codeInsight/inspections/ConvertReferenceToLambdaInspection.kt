@@ -7,7 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.expectedType
+import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.StandardNames.KOTLIN_REFLECT_FQ_NAME
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -35,7 +35,8 @@ internal class ConvertReferenceToLambdaInspection : KotlinApplicableInspectionBa
     override fun getApplicableRanges(element: KtCallableReferenceExpression): List<TextRange> =
         listOf(TextRange(0, element.textLength))
 
-    override fun KaSession.prepareContext(element: KtCallableReferenceExpression): String? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallableReferenceExpression): String? {
         if (skip(element)) return null
         return ConvertReferenceToLambdaUtil.prepareLambdaExpressionText(element)
     }

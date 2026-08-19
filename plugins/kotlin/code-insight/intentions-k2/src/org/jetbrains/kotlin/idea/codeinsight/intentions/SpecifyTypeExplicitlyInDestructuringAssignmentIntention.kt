@@ -8,7 +8,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -20,7 +22,6 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.Variance
-import kotlin.collections.iterator
 
 internal class SpecifyTypeExplicitlyInDestructuringAssignmentIntention :
     KotlinApplicableModCommandAction<KtDestructuringDeclaration, SpecifyTypeExplicitlyInDestructuringAssignmentIntention.Context>(
@@ -44,7 +45,8 @@ internal class SpecifyTypeExplicitlyInDestructuringAssignmentIntention :
     }
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtDestructuringDeclaration): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDestructuringDeclaration): Context? {
         val entries = element.entriesWithoutExplicitTypes()
         val factory = KtPsiFactory(element.project)
         val entriesAndTypeReferences = mutableMapOf<KtDestructuringDeclarationEntry, KtTypeReference>()

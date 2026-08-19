@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
 import com.intellij.psi.util.ReadActionCachedValue
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
@@ -32,7 +33,8 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 
 internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
+    context(session: KaSession)
+    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
         return when (diagnostic) {
             is KaFirDiagnostic.TooManyArguments,
             is KaFirDiagnostic.NoValueForParameter,
@@ -65,7 +67,8 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
         return (importContext.position as? KtSimpleNameExpression)?.mainReference?.resolvesByNames?.toSet().orEmpty()
     }
 
-    override fun KaSession.provideImportCandidates(
+    context(session: KaSession)
+    override fun provideImportCandidates(
         unresolvedName: Name,
         importContext: ImportContext,
         indexProvider: KtSymbolFromIndexProvider

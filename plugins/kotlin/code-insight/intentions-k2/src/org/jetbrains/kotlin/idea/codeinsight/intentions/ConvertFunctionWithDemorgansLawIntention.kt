@@ -8,13 +8,19 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertFunctionWithDemorgansLawIntention.ConvertFunctionWithDemorgansLawContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.invertSelectorFunction
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.canBeInverted
@@ -24,7 +30,6 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.isCallingAnyOf
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
 import org.jetbrains.kotlin.idea.codeinsight.utils.plus
-import org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertFunctionWithDemorgansLawIntention.ConvertFunctionWithDemorgansLawContext
 import org.jetbrains.kotlin.idea.refactoring.appendCallOrQualifiedExpression
 import org.jetbrains.kotlin.idea.refactoring.singleLambdaArgumentExpression
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
@@ -47,7 +52,6 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal sealed class ConvertFunctionWithDemorgansLawIntention(
     conversions: List<Conversion>,
@@ -72,11 +76,13 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
         return Presentation.of(KotlinBundle.message("replace.0.with.1", fromFunctionName, toFunctionName))
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): ConvertFunctionWithDemorgansLawContext? {
+    @OptIn(KaExperimentalApi::class)
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): ConvertFunctionWithDemorgansLawContext? {
         val (fromFunctionName, _, _, negatePredicate) = conversions[element.calleeExpression?.text] ?: return null
         val fqNames = functions[fromFunctionName] ?: return null
         val targetFunctionName =
-            element.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.importableFqName ?: return null
+            element.resolveSymbol()?.importableFqName ?: return null
         if (targetFunctionName !in fqNames) return null
 
         val lambda = element.singleLambdaArgumentExpression() ?: return null
@@ -85,7 +91,7 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
 
         val functionPredicate = when (lastStatement) {
             is KtReturnExpression -> {
-                val targetSymbol = lastStatement.targetSymbol
+                val targetSymbol = lastStatement.resolveSymbol()
                 val lambdaSymbol = lambda.functionLiteral.symbol
                 if (targetSymbol == lambdaSymbol) lastStatement.returnedExpression else null
             }
@@ -93,7 +99,7 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
             else -> lastStatement
         } ?: return null
 
-        if (functionPredicate.expressionType?.isBooleanType != true) return null
+        if (functionPredicate.expressionType?.classId != KaStandardTypeClassIds.BOOLEAN) return null
 
         val callOrQualified = element.getQualifiedExpressionForSelectorOrThis()
         val skippedParenthesisUp = callOrQualified.parents.dropWhile { it is KtParenthesizedExpression }.firstOrNull()
@@ -113,7 +119,7 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
     private fun negate(baseExpression: KtExpression): List<KtExpression>? {
         fun negateOperand(operand: KtExpression): KtExpression {
             return (operand as? KtQualifiedExpression)?.invertSelectorFunction()
-                ?: operand.negate(reformat = false) { analyze(it) { it.expressionType?.isBooleanType == true }}
+                ?: operand.negate(reformat = false) { analyze(it) { it.expressionType?.classId == KaStandardTypeClassIds.BOOLEAN }}
         }
 
         return when (baseExpression) {
@@ -149,7 +155,7 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
         val (_, toFunctionName, negateCall, negatePredicate) = conversions[element.calleeExpression?.text] ?: return
         val lambda = element.singleLambdaArgumentExpression() ?: return
         val lastStatement = lambda.bodyExpression?.statements?.lastOrNull() ?: return
-        val returnExpression = lastStatement.safeAs<KtReturnExpression>()
+        val returnExpression = lastStatement as? KtReturnExpression
         val predicate = returnExpression?.returnedExpression ?: lastStatement
 
         val psiFactory = KtPsiFactory(element.project)
@@ -198,7 +204,7 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
     }
 
     private fun PsiElement.asExclPrefixExpression(): KtPrefixExpression? {
-        return safeAs<KtPrefixExpression>()?.takeIf { it.operationToken == KtTokens.EXCL && it.baseExpression != null }
+        return (this as? KtPrefixExpression)?.takeIf { it.operationToken == KtTokens.EXCL && it.baseExpression != null }
     }
 
     private fun KtPsiFactory.createLabelQualifier(labelName: String): KtContainerNode {

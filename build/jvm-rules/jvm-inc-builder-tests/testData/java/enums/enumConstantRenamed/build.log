@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  E.class
+End of files
+Compiling files:
+  java/enums/enumConstantRenamed/a/E.java
+End of files
+Cleaning output files:
+  Reader.class
+  Switcher$1.class
+  Switcher.class
+End of files
+Compiling files:
+  java/enums/enumConstantRenamed/a/Reader.java
+  java/enums/enumConstantRenamed/a/Switcher.java
+End of files
+------------------------------------------
+Exit code: ERROR

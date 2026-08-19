@@ -22,6 +22,14 @@ interface ProxyCredentialStore {
   fun getCredentials(host: String, port: Int): Credentials?
 
   /**
+   * Retrieves known credentials for the given proxy configuration.
+   */
+  fun getCredentials(configuration: ProxyConfiguration): Credentials? = when (configuration) {
+    is ProxyConfiguration.StaticProxyConfiguration -> getCredentials(configuration.host, configuration.port)
+    else -> null
+  }
+
+  /**
    * Stores credentials for the proxy located at the specified host and port.
    * @param credentials `null` to clear the associated credentials from the persistence
    * @param remember whether to persist the credentials to be reused in future sessions. Has no effect if [credentials] is `null`
@@ -29,7 +37,7 @@ interface ProxyCredentialStore {
   fun setCredentials(host: String, port: Int, credentials: Credentials?, remember: Boolean)
 
   /**
-   * @return true if credentials for specified proxy location exist and are remembered (not session-only).
+   * @return `true` if credentials for the specified proxy exist and are remembered (not session-only).
    */
   fun areCredentialsRemembered(host: String, port: Int): Boolean
 
@@ -44,6 +52,7 @@ interface ProxyCredentialStore {
   fun clearAllCredentials()
 }
 
+@Deprecated("Pointless; use `ProxyCredentialStore.getCredentials` directly")
 fun interface ProxyCredentialProvider {
   /**
    * Retrieves known credentials for the proxy located at the specified host and port
@@ -51,6 +60,6 @@ fun interface ProxyCredentialProvider {
   fun getCredentials(host: String, port: Int): Credentials?
 }
 
-fun ProxyCredentialStore.asProxyCredentialProvider(): ProxyCredentialProvider {
-  return this as? ProxyCredentialProvider ?: ProxyCredentialProvider(this::getCredentials)
-}
+@Deprecated("Pointless; use `ProxyCredentialStore.getCredentials` directly", level = DeprecationLevel.ERROR)
+@Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
+fun ProxyCredentialStore.asProxyCredentialProvider(): ProxyCredentialProvider = ProxyCredentialProvider(this::getCredentials)

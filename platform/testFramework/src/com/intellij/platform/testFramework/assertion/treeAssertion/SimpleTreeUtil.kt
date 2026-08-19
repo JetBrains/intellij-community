@@ -1,26 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.assertion.treeAssertion
 
+import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion.NodeMatcher
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import java.util.StringJoiner
 
-fun <T> SimpleTree<T>.deepCopyTree(): SimpleMutableTree<T> {
-  val queue = ArrayDeque<Pair<SimpleTree.Node<T>, SimpleMutableTree.Node<T>>>()
-  val tree = SimpleTreeImpl<T>()
-  for (root in roots) {
-    val mutableRoot = SimpleTreeImpl.Node(root.name, root.value)
-    tree.roots.add(mutableRoot)
-    queue.add(root to mutableRoot)
-  }
-  while (queue.isNotEmpty()) {
-    val (node, mutableNode) = queue.removeFirst()
-    for (child in node.children) {
-      val mutableChild = SimpleTreeImpl.Node(child.name, child.value)
-      mutableNode.children.add(mutableChild)
-      queue.add(child to mutableChild)
-    }
-  }
-  return tree
-}
+fun <T> SimpleTree<T>.toMutableTree(): SimpleMutableTree<T> =
+  mapTree { SimpleTreeImpl.Node(it.name, it.value) }
 
 fun <T> SimpleTree<T>.getTreeString(): String {
   val result = StringJoiner("\n")
@@ -102,7 +89,7 @@ fun <T, R> SimpleTree<T>.mapTreeValues(transform: (SimpleTree.Node<T>) -> R): Si
   return mapTree { SimpleTreeImpl.Node(it.name, transform(it)) }
 }
 
-private fun <T, R> SimpleTree<T>.mapTree(transform: (SimpleTree.Node<T>) -> SimpleMutableTree.Node<R>): SimpleMutableTree<R> {
+fun <T, R> SimpleTree<T>.mapTree(transform: (SimpleTree.Node<T>) -> SimpleMutableTree.Node<R>): SimpleMutableTree<R> {
   val tree = SimpleTreeImpl<R>()
   val queue = ArrayDeque<Pair<SimpleTree.Node<T>, SimpleMutableTree.Node<R>>>()
   for (oldRootNode in roots) {
@@ -120,3 +107,33 @@ private fun <T, R> SimpleTree<T>.mapTree(transform: (SimpleTree.Node<T>) -> Simp
   }
   return tree
 }
+
+fun <T> SimpleTree<T>.node(name: String): SimpleTree.Node<T> =
+  node(NodeMatcher.name(name))
+
+fun <T> SimpleTree<T>.node(regex: Regex): SimpleTree.Node<T> =
+  node(NodeMatcher.regex(regex))
+
+fun <T> SimpleTree<T>.node(matcher: NodeMatcher<T>): SimpleTree.Node<T> {
+  val matchedNodes = allNodes().filter { matcher.matches(it) }.toList()
+  assertTrue(matchedNodes.isNotEmpty()) { "Cannot find node by NodeMatcher: $matcher" }
+  assertEquals(1, matchedNodes.size) {
+    "Cannot identify node by NodeMatcher: $matcher\n" +
+    " matchedNodes.names=${matchedNodes.map { it.name }}\n" +
+    " matchedNodes=$matchedNodes"
+  }
+  return matchedNodes.single()
+}
+
+fun <T> SimpleTree<T>.allNodes(): Sequence<SimpleTree.Node<T>> =
+  Sequence {
+    object : Iterator<SimpleTree.Node<T>> {
+      val stack = ArrayDeque(roots)
+      override fun hasNext() = stack.isNotEmpty()
+      override fun next(): SimpleTree.Node<T> {
+        val node = stack.removeLast()
+        stack.addAll(node.children)
+        return node
+      }
+    }
+  }

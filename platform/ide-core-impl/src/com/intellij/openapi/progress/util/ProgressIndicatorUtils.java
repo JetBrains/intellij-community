@@ -51,8 +51,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @author gregsh
  */
 public final class ProgressIndicatorUtils {
-  private static final Logger LOG = Logger.getInstance(ProgressIndicatorUtils.class);
-
 
   /**
    * @deprecated It does not make much sense to cancel a BG task,

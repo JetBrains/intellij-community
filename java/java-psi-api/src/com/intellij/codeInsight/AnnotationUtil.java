@@ -286,6 +286,40 @@ public class AnnotationUtil {
     return result == null ? null : result.annotation;
   }
 
+  /**
+   * Copies an annotation to another target.
+   * 
+   * @param annotation annotation to copy
+   * @param target target owner to attach the copied annotation
+   * @return the copied annotation
+   */
+  public static @Nullable PsiAnnotation copyAnnotation(@NotNull PsiAnnotation annotation, @NotNull PsiModifierListOwner target) {
+    String qualifiedName = annotation.getQualifiedName();
+    if (qualifiedName != null) {
+      if (JavaPsiFacade.getInstance(annotation.getProject()).findClass(qualifiedName, target.getResolveScope()) == null) {
+        return null;
+      }
+
+      PsiModifierList modifierList = target.getModifierList();
+      PsiType usedType = null;
+      if(target instanceof PsiVariable){
+        usedType = ((PsiVariable)target).getType();
+      }
+      else if (target instanceof PsiMethod) {
+        usedType = ((PsiMethod)target).getReturnType();
+      }
+      // type annotations are part of target's type and should not to be copied explicitly to avoid duplication
+      if (modifierList != null &&
+          (!AnnotationTargetUtil.isStrictlyTypeUseAnnotation(modifierList, annotation) ||
+           (usedType != null && !usedType.hasAnnotation(qualifiedName))) &&
+          !modifierList.hasAnnotation(qualifiedName)) {
+        return modifierList.addAnnotation(qualifiedName);
+      }
+    }
+
+    return null;
+  }
+
   static final class AnnotationAndOwner {
     final @NotNull PsiModifierListOwner owner;
     final @NotNull PsiAnnotation annotation;

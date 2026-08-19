@@ -32,12 +32,13 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
         "//plugins/kotlin/references",
         "//platform/statistics",
         "//platform/projectModel-api:projectModel",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//java/java-psi-api:psi",
         "//platform/analysis-api:analysis",
         "//platform/util:util-ui",
@@ -77,6 +78,7 @@ jvm_library(
         "//plugins/kotlin/base/indices",
         "//platform/code-style-api:codeStyle",
         "//platform/forms_rt:java-guiForms-rt",
+        "//platform/util/progress",
     ],
 )
 
@@ -93,9 +95,13 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-j2k",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
         "//plugins/kotlin/references:references_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//java/java-psi-api:psi_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util:util-ui_test_lib",
@@ -135,6 +141,7 @@ jvm_library(
         "//plugins/kotlin/base/indices:indices_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
+        "//platform/util/progress:progress_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.j2k` end
@@ -143,6 +150,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.j2k.iml",
+        "resources/intellij.kotlin.j2k.xml",
     ],
     visibility = ["//visibility:public"],
 )

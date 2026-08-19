@@ -161,7 +161,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18726
   public void testFunctionTypeCommentBadCallableParameter1() {
-    doTest("Unknown",
+    doTest("(...) -> int",
            """
              from typing import Callable, Tuple
              
@@ -331,21 +331,6 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
-  @TestFor(issues = "PY-89012")
-  public void testPydanticFieldInsideAnnotatedConstructorSignature() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTestExpressionUnderCaret("(*, A: str | None, B: str | None) -> MyModel", """
-          from typing import Annotated
-          from pydantic import BaseModel, Field
-
-          class MyModel(BaseModel):
-              a: str | None = Field(default=None, alias="A")
-              b: Annotated[str | None, Field(default=None, alias="B")]
-
-          MyMo<caret>del()
-          """);
-  }
-
   // PY-87012
   public void testLegacyTypeAliasesWithQuotedUnionTypesPreservedInStubs() {
     doMultiFileStubAwareTest("list[int | str]", """
@@ -440,15 +425,6 @@ public class PyTypingTest extends PyTestCase {
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
     final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
     final TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
-    assertType("Failed in code analysis context", expectedType, expr, codeAnalysis);
-    assertType("Failed in user initiated context", expectedType, expr, userInitiated);
-  }
-
-  private void doTestExpressionUnderCaret(@NotNull String expectedType, @NotNull String text) {
-    myFixture.configureByText(PythonFileType.INSTANCE, text);
-    PyExpression expr = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PyExpression.class);
-    TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
-    TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
     assertType("Failed in code analysis context", expectedType, expr, codeAnalysis);
     assertType("Failed in user initiated context", expectedType, expr, userInitiated);
   }

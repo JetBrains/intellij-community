@@ -4,6 +4,9 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
+import com.intellij.platform.testFramework.assertion.consoleText
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -47,7 +50,8 @@ class GradleSyncOutputFailureTest(
   private val projectFixture = gradleFixture.projectFixture(testRootFixture, numProjectSyncs = 0)
   private val project by projectFixture
 
-  private val buildView by buildViewFixture(projectFixture)
+  private val buildViewFixture by buildViewFixture(projectFixture)
+  private val syncView get() = buildViewFixture.syncView
 
   @BeforeEach
   fun setUp(@TestDisposable disposable: Disposable) {
@@ -73,7 +77,7 @@ class GradleSyncOutputFailureTest(
 
     gradle.linkProject(project, projectRoot)
 
-    buildView.assertSyncViewTree {
+    assertBuildViewTree(syncView) {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
       }
@@ -99,7 +103,7 @@ class GradleSyncOutputFailureTest(
 
     gradle.linkProject(project, projectRoot)
 
-    buildView.assertSyncViewTree {
+    assertBuildViewTree(syncView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
         when {
@@ -116,6 +120,9 @@ class GradleSyncOutputFailureTest(
               }
             }
           }
+        }
+        if (GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.7")) {
+          assertNode("Task initialization failure")
         }
       }
     }
@@ -135,7 +142,7 @@ class GradleSyncOutputFailureTest(
 
     gradle.linkProject(project, projectRoot)
 
-    buildView.assertSyncViewTree {
+    assertBuildViewTree(syncView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
         assertNode("build.gradle.kts") {
@@ -161,7 +168,7 @@ class GradleSyncOutputFailureTest(
 
     gradle.linkProject(project, projectRoot)
 
-    buildView.assertSyncViewTree {
+    assertBuildViewTree(syncView) {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
         assertNode("Could Not Resolve abc:abc:123 for project:main")
@@ -185,14 +192,14 @@ class GradleSyncOutputFailureTest(
 
     gradle.linkProject(project, projectRoot)
 
-    buildView.assertSyncViewTree {
+    assertBuildViewTree(syncView) {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
         assertNode("root project 'project': Test import errors")
       }
     }
-    buildView.assertSyncViewNode("root project 'project': Test import errors") {
-      assertThat(it).startsWith("""
+    assertBuildViewNode(syncView, "root project 'project': Test import errors") {
+      assertThat(it.consoleText).startsWith("""
         |Unable to import Test model
         |
         |java.lang.RuntimeException: Boom! '"{}}${'\n'}${'\t'}

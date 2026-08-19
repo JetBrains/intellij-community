@@ -5,12 +5,10 @@ import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.ex.DocumentCore
 import com.intellij.openapi.editor.ex.DocumentEventDispatcher
 import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.ex.DocumentMagicCore
 import com.intellij.openapi.editor.ex.DocumentMutator
-import com.intellij.openapi.editor.ex.DocumentRangeMarkerTree
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
-import com.intellij.openapi.editor.ex.DocumentMagicCore
-import com.intellij.util.ui.EDT
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.concurrent.Volatile
 
@@ -36,19 +34,19 @@ import kotlin.concurrent.Volatile
  * @see DocumentMagicCore
  */
 internal class DocumentMagicCoreImpl private constructor(
-  @Volatile private var snapshot: SnapshotSnapshot, // mutable via SNAPSHOT_UPDATER
+  /** mutable via [SNAPSHOT_UPDATER] */
+  @Volatile private var snapshot: SnapshotSnapshot,
   private val settingsElf: DocumentSettings,
   private val settingsReal: DocumentSettings,
 ): DocumentMagicCore {
-  private val dispatcher = DocumentMagicEventDispatcherImpl()
-  private val tree = DocumentRangeMarkerTreeImpl(dispatcher)
-  private val mutatorElf = DocumentElfMutatorImpl()
-  private val mutatorReal = DocumentRealMutatorImpl()
-  private val sync = ElfRealSyncImpl()
-  private val liveElf = LiveElf()
-  private val liveReal = LiveReal()
-  private val viewElf = DocumentElfCore()
-  private val viewReal = DocumentRealCore()
+  private val dispatcher: DocumentMagicEventDispatcher = DocumentMagicEventDispatcherImpl()
+  private val mutatorElf: DocumentElfMutator = DocumentElfMutatorImpl()
+  private val mutatorReal: DocumentRealMutator = DocumentRealMutatorImpl()
+  private val sync: ElfRealSync = ElfRealSyncImpl()
+  private val liveElf: LiveElf = LiveElf()
+  private val liveReal: LiveReal = LiveReal()
+  private val viewElf: DocumentCore = DocumentElfCore()
+  private val viewReal: DocumentCore = DocumentRealCore()
   @Volatile private var frozenElf: FrozenDocument? = null
   @Volatile private var frozenReal: FrozenDocument? = null
 
@@ -56,10 +54,10 @@ internal class DocumentMagicCoreImpl private constructor(
     val snapshot = this.snapshot
     if (!snapshot.isDirty) {
       // it is a performance optimization for frequent path in hot method,
-      // in most cases snapshot is clean, no need to call "expensive" isElfViewActive
+      // in most cases snapshot is clean, no need to call "expensive" isInElfScope
       return snapshot.real
     }
-    return if (isElfViewActive()) {
+    return if (Elf.getElf().isInElfScope()) {
       snapshot.elf
     } else {
       snapshot.real
@@ -67,19 +65,15 @@ internal class DocumentMagicCoreImpl private constructor(
   }
 
   override fun live(): CharSequence {
-    return if (isElfViewActive()) {
+    return if (Elf.getElf().isInElfScope()) {
       liveElf
     } else {
       liveReal
     }
   }
 
-  override fun tree(): DocumentRangeMarkerTree {
-    return tree
-  }
-
   override fun dispatcher(): DocumentEventDispatcher {
-    return if (isElfViewActive()) {
+    return if (Elf.getElf().isInElfScope()) {
       dispatcher.elf()
     } else {
       dispatcher.real()
@@ -87,7 +81,7 @@ internal class DocumentMagicCoreImpl private constructor(
   }
 
   override fun mutator(): DocumentMutator {
-    return if (isElfViewActive()) {
+    return if (Elf.getElf().isInElfScope()) {
       mutatorElf
     } else {
       mutatorReal
@@ -99,7 +93,7 @@ internal class DocumentMagicCoreImpl private constructor(
   }
 
   override fun frozen(): FrozenDocument {
-    return if (isElfViewActive()) {
+    return if (Elf.getElf().isInElfScope()) {
       getFrozenElf()
     } else {
       getFrozenReal()
@@ -156,14 +150,6 @@ internal class DocumentMagicCoreImpl private constructor(
     }
   }
 
-  /**
-   * This check is thread local, otherwise elf snapshot leaks to all background threads
-   */
-  private fun isElfViewActive(): Boolean {
-    return Elf.getElf().isInElfScope() ||
-           (dispatcher.isFiringElfTextChangeOutsideElfScope() && EDT.isCurrentThreadEdt())
-  }
-
   private inner class ElfRealSyncImpl : ElfRealSync(mutatorElf, mutatorReal) {
     override fun getSnapshotSnapshot(): SnapshotSnapshot {
       return this@DocumentMagicCoreImpl.snapshot
@@ -182,10 +168,6 @@ internal class DocumentMagicCoreImpl private constructor(
 
     override fun live(): CharSequence {
       return this@DocumentMagicCoreImpl.liveElf
-    }
-
-    override fun tree(): DocumentRangeMarkerTree {
-      return this@DocumentMagicCoreImpl.tree
     }
 
     override fun dispatcher(): DocumentEventDispatcher {
@@ -214,10 +196,6 @@ internal class DocumentMagicCoreImpl private constructor(
       return this@DocumentMagicCoreImpl.liveReal
     }
 
-    override fun tree(): DocumentRangeMarkerTree {
-      return this@DocumentMagicCoreImpl.tree
-    }
-
     override fun dispatcher(): DocumentEventDispatcher {
       return this@DocumentMagicCoreImpl.dispatcher.real()
     }
@@ -237,39 +215,39 @@ internal class DocumentMagicCoreImpl private constructor(
 
   private inner class LiveElf : CharSequence {
     override val length: Int
-      get() = this@DocumentMagicCoreImpl.snapshot.elf.textLength()
+      get() = this@DocumentMagicCoreImpl.snapshot.elf.text().length()
 
     override fun get(index: Int): Char {
-      return this@DocumentMagicCoreImpl.snapshot.elf.text()[index]
+      return this@DocumentMagicCoreImpl.snapshot.elf.text().chars()[index]
     }
 
     override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-      return this@DocumentMagicCoreImpl.snapshot.elf.text().subSequence(startIndex, endIndex)
+      return this@DocumentMagicCoreImpl.snapshot.elf.text().chars().subSequence(startIndex, endIndex)
     }
 
     override fun toString(): String {
-      return this@DocumentMagicCoreImpl.snapshot.elf.string()
+      return this@DocumentMagicCoreImpl.snapshot.elf.text().string()
     }
   }
 
   private inner class LiveReal : CharSequence {
     override val length: Int
-      get() = this@DocumentMagicCoreImpl.snapshot.real.textLength()
+      get() = this@DocumentMagicCoreImpl.snapshot.real.text().length()
 
     override fun get(index: Int): Char {
-      return this@DocumentMagicCoreImpl.snapshot.real.text()[index]
+      return this@DocumentMagicCoreImpl.snapshot.real.text().chars()[index]
     }
 
     override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-      return this@DocumentMagicCoreImpl.snapshot.real.text().subSequence(startIndex, endIndex)
+      return this@DocumentMagicCoreImpl.snapshot.real.text().chars().subSequence(startIndex, endIndex)
     }
 
     override fun toString(): String {
-      return this@DocumentMagicCoreImpl.snapshot.real.string()
+      return this@DocumentMagicCoreImpl.snapshot.real.text().string()
     }
   }
 
-  private inner class DocumentRealMutatorImpl : DocumentRealMutator(settingsReal, dispatcher, tree) {
+  private inner class DocumentRealMutatorImpl : DocumentRealMutator(settingsReal, dispatcher) {
     override fun getSnapshot(): DocumentSnapshot {
       return this@DocumentMagicCoreImpl.snapshot.real
     }
@@ -291,7 +269,7 @@ internal class DocumentMagicCoreImpl private constructor(
     }
   }
 
-  private inner class DocumentElfMutatorImpl : DocumentElfMutator(settingsElf, dispatcher, tree) {
+  private inner class DocumentElfMutatorImpl : DocumentElfMutator(settingsElf, dispatcher) {
     override fun getSnapshot(): DocumentSnapshot {
       return this@DocumentMagicCoreImpl.snapshot.elf
     }
@@ -320,7 +298,7 @@ internal class DocumentMagicCoreImpl private constructor(
     fun createCore(chars: CharSequence, acceptSlashR: Boolean, forUseInNonAWTThread: Boolean): DocumentCore {
       val settingsReal = DocumentSettingsImpl(!forUseInNonAWTThread, acceptSlashR, chars)
       val settingsElf = DocumentElfSettingsImpl(settingsReal)
-      val snapshot = SnapshotSnapshot.newClean(DocumentSnapshotImpl(chars))
+      val snapshot = SnapshotSnapshot.newClean(DocumentSnapshotImpl(DocumentTextImpl(chars)))
       return DocumentMagicCoreImpl(snapshot, settingsElf, settingsReal)
     }
 

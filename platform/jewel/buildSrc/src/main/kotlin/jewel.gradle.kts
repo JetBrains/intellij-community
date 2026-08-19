@@ -68,6 +68,7 @@ kotlin {
             optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
             optIn("org.jetbrains.jewel.foundation.ExperimentalJewelApi")
             optIn("org.jetbrains.jewel.foundation.InternalJewelApi")
+            optIn("androidx.compose.runtime.tooling.ComposeToolingApi")
         }
     }
 }

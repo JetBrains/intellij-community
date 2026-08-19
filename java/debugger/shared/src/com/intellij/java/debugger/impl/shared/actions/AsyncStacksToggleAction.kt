@@ -5,13 +5,9 @@ import com.intellij.java.debugger.impl.shared.SharedJavaDebuggerSession
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionApi
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareToggleAction
-import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 class AsyncStacksToggleAction : DumbAwareToggleAction(), SplitDebuggerAction {
@@ -22,7 +18,7 @@ class AsyncStacksToggleAction : DumbAwareToggleAction(), SplitDebuggerAction {
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     getJavaSession(e)?.isAsyncStacksEnabled = state
     DebuggerUIUtil.getSessionProxy(e)?.apply {
-      AsyncStackTraceActionCoroutineScope.getInstance(project).cs.launch {
+      e.coroutineScope.launch {
         JavaDebuggerSessionApi.getInstance().setAsyncStacksEnabled(id, state)
       }
       if (isSuspended) {
@@ -42,12 +38,3 @@ class AsyncStacksToggleAction : DumbAwareToggleAction(), SplitDebuggerAction {
 }
 
 private fun getJavaSession(e: AnActionEvent) = SharedJavaDebuggerSession.findSession(e)
-
-@Suppress("OPT_IN_USAGE")
-@Service(Service.Level.PROJECT)
-internal class AsyncStackTraceActionCoroutineScope(val cs: CoroutineScope) {
-
-  companion object {
-    fun getInstance(project: Project): AsyncStackTraceActionCoroutineScope = project.service()
-  }
-}

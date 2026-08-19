@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
@@ -21,6 +22,7 @@ import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.Badge
 import com.intellij.ui.components.JBList
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManagerEvent
@@ -116,6 +118,8 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
         popupMenu.component.show(comp, x, y)
       }
     })
+
+    ActionManager.getInstance().getAction("Git.WorkingTrees.Open").registerCustomShortcutSet(CommonShortcuts.ENTER, list)
 
     return list
   }
@@ -280,7 +284,7 @@ internal class GitWorkingTreesContentPreloader(val project: Project) : ChangesVi
       isCloseable = true
       displayName = GitBundle.message("toolwindow.working.trees.tab.name")
       if (GitWorkingTreesNewBadgeUtil.shouldShowBadgeNew()) {
-        icon = AllIcons.General.New_badge
+        icon = Badge.new
         putUserData(ToolWindow.SHOW_CONTENT_ICON, true)
         putUserData(ToolWindowContentUi.NOT_SELECTED_TAB_ICON_TRANSPARENT, false)
         putUserData(Content.TAB_LABEL_ORIENTATION_KEY, ComponentOrientation.RIGHT_TO_LEFT)

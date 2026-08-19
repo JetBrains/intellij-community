@@ -6,9 +6,12 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -60,7 +63,8 @@ internal class ConvertLongToDurationInspection :
         }
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Unit? {
         val function = element.resolveToCall()?.successfulFunctionCallOrNull()?.symbol ?: return null
         val callableId = function.callableId ?: return null
         if (callableId !in supportedCoroutineFunctions) return null
@@ -68,9 +72,10 @@ internal class ConvertLongToDurationInspection :
         return Unit
     }
 
-    private fun KaSession.isLongFirstParameter(function: KaFunctionSymbol): Boolean {
+    context(session: KaSession)
+    private fun isLongFirstParameter(function: KaFunctionSymbol): Boolean {
         val firstParam = function.valueParameters.firstOrNull() ?: return false
-        return firstParam.returnType.isLongType
+        return firstParam.returnType.classId == KaStandardTypeClassIds.LONG
     }
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean {

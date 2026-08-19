@@ -62,6 +62,10 @@ import java.util.regex.Matcher;
 public final class JavaSuppressionUtil {
   private static final String GENERATED_ANNOTATION_NAME = "javax.annotation.Generated";
   private static final String JDK9_GENERATED_ANNOTATION_NAME = "javax.annotation.processing.Generated";
+  private static final String JAKARTA_GENERATED_ANNOTATION_NAME = "jakarta.annotation.Generated";
+
+  private static final Set<String> GENERATED_RELATED_ANNOTATIONS =
+    Set.of(GENERATED_ANNOTATION_NAME, JDK9_GENERATED_ANNOTATION_NAME, JAKARTA_GENERATED_ANNOTATION_NAME);
 
   public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
 
@@ -139,7 +143,7 @@ public final class JavaSuppressionUtil {
       if (directory != null) {
         PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
         if (aPackage != null) {
-          return AnnotationUtil.findAnnotation(aPackage, GENERATED_ANNOTATION_NAME, JDK9_GENERATED_ANNOTATION_NAME);
+          return AnnotationUtil.findAnnotation(aPackage, GENERATED_RELATED_ANNOTATIONS, false);
         }
       }
     }
@@ -147,7 +151,6 @@ public final class JavaSuppressionUtil {
     return null;
   }
 
-  private static final Set<String> GENERATED_RELATED_ANNOTATIONS = Set.of(GENERATED_ANNOTATION_NAME, JDK9_GENERATED_ANNOTATION_NAME);
   private static PsiElement getAnnotationMemberSuppressedIn(@NotNull PsiModifierListOwner owner, @NotNull String inspectionToolID) {
     PsiModifierList modifierList = owner.getModifierList();
     Collection<String> suppressedIds = getInspectionIdsSuppressedInAnnotation(modifierList);

@@ -79,6 +79,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.threading.iml",
+        "resources/intellij.devkit.threading.xml",
     ],
     visibility = ["//visibility:public"],
 )

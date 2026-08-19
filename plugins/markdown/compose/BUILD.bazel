@@ -62,6 +62,7 @@ jvm_library(
 exports_files(
     [
         "intellij.markdown.compose.preview.iml",
+        "src/main/resources/intellij.markdown.compose.preview.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -33,7 +33,6 @@ import kotlin.script.experimental.api.SourceCode
 
 private class AllScriptsDependencies(
     val classes: Set<VirtualFile>,
-    val sources: Set<VirtualFile>,
     val allClasses: List<VirtualFile>,
     val allSources: List<VirtualFile>,
 )
@@ -68,7 +67,7 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
             val allClasses = classes.toList() + sdkClasses
             val allSources = sources.toList() + sdkSources
 
-            AllScriptsDependencies(classes, sources, allClasses, allSources)
+            AllScriptsDependencies(classes, allClasses, allSources)
         }
 
     override fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile> = allScriptsDependencies.classes

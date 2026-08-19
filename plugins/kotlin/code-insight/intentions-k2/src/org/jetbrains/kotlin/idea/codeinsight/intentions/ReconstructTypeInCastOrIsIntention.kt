@@ -8,9 +8,11 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -51,7 +53,8 @@ internal class ReconstructTypeInCastOrIsIntention :
     }
 
     @org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-    override fun KaSession.prepareContext(element: KtTypeReference): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtTypeReference): Context? {
         val type = element.type.takeUnless { it is KaErrorType || it.expandedSymbol?.typeParameters?.isEmpty() == true } ?: return null
         return Context(
             fqName = type.render(position = Variance.IN_VARIANCE),

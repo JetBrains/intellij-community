@@ -888,7 +888,6 @@ e:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:GotoTarget:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:GotoTypeDeclaration:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:GroovyMarkers:com.intellij.openapi.project.DumbModeBlockedFunctionality
-- sf:Gwt:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:Intentions:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:JfrStackFrames:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:Jpa:com.intellij.openapi.project.DumbModeBlockedFunctionality

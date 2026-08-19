@@ -13,7 +13,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.platform.structureView.impl.ShowStructurePopupRequest
-import com.intellij.platform.structureView.impl.StructureViewScopeHolder
 import com.intellij.platform.structureView.impl.dto.StructureViewDtoId
 import com.intellij.util.application
 import fleet.rpc.client.durable
@@ -44,10 +43,10 @@ fun showFileStructurePopup(
     return
   }
 
-  StructureViewScopeHolder.getInstance(project).cs.launch {
-    val structureTreeService = application.service<BackendStructureTreeService>()
+  val structureTreeService = BackendStructureTreeService.getInstance(project)
+  structureTreeService.cs.launch {
     val modelId = StructureViewDtoId(nextBackendModelId.getAndDecrement())
-    val modelDto = structureTreeService.createStructureViewModel(modelId, project, fileEditor, callback)
+    val modelDto = structureTreeService.createStructureViewModel(modelId, fileEditor, callback)
     if (modelDto == null) return@launch
 
     val receipt = Channel<Unit>(capacity = 1)
@@ -62,7 +61,7 @@ fun showFileStructurePopup(
           receipt
         )
         durable {
-          structureTreeService.emitShowPopupRequest(request)
+          application.service<BackendInitiatedStructurePopupService>().emitShowPopupRequest(request)
         }
       }
       catch (t: Throwable) {

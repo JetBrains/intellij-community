@@ -1,6 +1,12 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `build intellij.java.tests` start
 jvm_library(
     name = "tests",
@@ -373,7 +379,8 @@ jvm_library(
         "//java/java-psi-impl:psi-impl_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
-        "@lib//:jet_check",
+        "//libraries/jetcheck",
+        "//libraries/jetcheck:jetcheck_test_lib",
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//java/testFramework/backend",

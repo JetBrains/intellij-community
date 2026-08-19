@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.xtext.xbase.iml",
+        "resources/intellij.libraries.xtext.xbase.xml",
     ],
     visibility = ["//visibility:public"],
 )

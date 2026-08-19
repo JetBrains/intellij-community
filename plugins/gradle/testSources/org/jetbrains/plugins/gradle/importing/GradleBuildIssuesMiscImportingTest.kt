@@ -1,6 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
+import com.intellij.platform.testFramework.assertion.consoleText
+import com.intellij.platform.testFramework.assertion.isNodeSelected
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
@@ -18,6 +22,7 @@ import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildScriptName
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.file
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.initProject
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
@@ -38,7 +43,8 @@ class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersio
   private val projectFixture = gradleFixture.projectFixture(testRootFixture, numProjectSyncs = 0)
   private val project by projectFixture
 
-  private val buildView by buildViewFixture(projectFixture)
+  private val buildViewFixture by buildViewFixture(projectFixture)
+  private val syncView get() = buildViewFixture.syncView
 
   @ParameterizedTest
   @EnumSource(GradleDsl::class, names = ["GROOVY"])
@@ -72,7 +78,7 @@ class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersio
     gradle.linkProject(project, projectRoot)
 
     assertAnyOf({
-      buildView.assertSyncViewTree {
+      assertBuildViewTree(syncView) {
         assertNode("failed") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode("build.gradle") {
@@ -81,7 +87,7 @@ class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersio
         }
       }
     }, {
-      buildView.assertSyncViewTree {
+      assertBuildViewTree(syncView) {
         assertNode("failed") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode("(Java heap space|GC overhead limit exceeded)".toRegex())
@@ -89,8 +95,9 @@ class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersio
       }
     })
 
-    buildView.assertSyncViewSelectedNode("(Java heap space|GC overhead limit exceeded)".toRegex()) { text ->
-      assertThat(text).matches("""
+    assertBuildViewNode(syncView, "(Java heap space|GC overhead limit exceeded)".toRegex()) {
+      assertTrue(it.isNodeSelected)
+      assertThat(it.consoleText).matches("""
         |(\* Where:
         |Build file '${Regex.escape(buildScriptPath.toString())}' line: \d
         |

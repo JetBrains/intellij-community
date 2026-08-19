@@ -1,0 +1,25 @@
+[project]
+name = "workspace-root"
+version = "0.1.0"
+requires-python = ">=3.13, <3.14"
+dependencies = ["core", "app-a", "app-b"]
+
+[tool.uv]
+package = false
+environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
+
+[tool.uv.sources]
+core = { workspace = true }
+app-a = { workspace = true }
+app-b = { workspace = true }
+
+[tool.uv.workspace]
+members = ["packages/*", "projects/*"]
+
+[[tool.uv.index]]
+name = "nvidia"
+url = "https://pypi.nvidia.com"
+explicit = true
+
+[dependency-groups]
+dev = ["ruff"]

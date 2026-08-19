@@ -3232,7 +3232,7 @@
     {
       "name": "Minimap",
       "scope": "app",
-      "pluginId": "com.intellij",
+      "pluginId": "com.intellij.minimap",
       "classFqn": "com.intellij.ide.minimap.settings.MinimapSettings",
       "storage": "Minimap.xml",
       "properties": [

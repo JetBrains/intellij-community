@@ -3,10 +3,20 @@ package com.jetbrains.python.requirements
 
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.impl.FileTypeOverrider
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.requirements.RequirementsFileType
 
 internal class RequirementsFileTypeOverrider : FileTypeOverrider {
   override fun getOverriddenFileType(file: VirtualFile): FileType? {
-    return if (file.isRequirementsTxtFile()) RequirementsFileType.INSTANCE else null
+    return if (isRequirementsFile(file)) RequirementsFileType.INSTANCE else null
   }
+}
+
+private fun isRequirementsFile(file: VirtualFile): Boolean {
+  val sequence = file.nameSequence
+  val ext = FileUtilRt.getExtension(sequence)
+  if (ext != "txt" && ext != "in") return false
+  val path = file.path
+  return path.contains("/requirements/") || sequence.contains("requirements")
 }

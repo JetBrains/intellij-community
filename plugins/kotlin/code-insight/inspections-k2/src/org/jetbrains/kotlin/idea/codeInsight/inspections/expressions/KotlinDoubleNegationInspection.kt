@@ -6,6 +6,9 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -37,10 +40,9 @@ internal class KotlinDoubleNegationInspection : KotlinApplicableInspectionBase.S
         element.operationToken == KtTokens.EXCL
                 && (element.parentThroughParenthesis as? KtPrefixExpression)?.operationToken == KtTokens.EXCL
 
-    override fun KaSession.prepareContext(element: KtPrefixExpression): Unit? =
-        element.expressionType
-            ?.isBooleanType
-            ?.asUnit
+    context(session: KaSession)
+    override fun prepareContext(element: KtPrefixExpression): Unit? =
+        (element.expressionType?.classId == KaStandardTypeClassIds.BOOLEAN).asUnit
 
     override fun createQuickFix(
         element: KtPrefixExpression,
@@ -55,7 +57,7 @@ internal class KotlinDoubleNegationInspection : KotlinApplicableInspectionBase.S
             element: KtPrefixExpression,
             updater: ModPsiUpdater,
         ) {
-            element.baseExpression?.let { element.parentThroughParenthesis.replace(it) }
+            element.baseExpression?.let { element.parentThroughParenthesis?.replace(it) }
         }
 
     }

@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.mantis;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
@@ -19,8 +18,7 @@ import com.intellij.tasks.mantis.model.MantisConnectPortType;
 import com.intellij.tasks.mantis.model.ProjectData;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.proxy.JavaProxyProperty;
+import com.intellij.util.net.ProxyUtils;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.axis.AxisFault;
@@ -29,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.net.URL;
+import java.net.URI;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -237,22 +235,9 @@ public class MantisRepository extends BaseRepositoryImpl {
 
   private @NotNull MantisConnectPortType createSoap() throws Exception {
     if (isUseProxy()) {
-      for (Pair<String, String> pair : HttpConfigurable.getInstance().getJvmProperties(false, null)) {
-        String key = pair.first, value = pair.second;
-        // Axis uses another names for username and password properties
-        // see http://axis.apache.org/axis/java/client-side-axis.html for complete list
-        if (key.equals(JavaProxyProperty.HTTP_USERNAME)) {
-          AxisProperties.setProperty("http.proxyUser", value);
-        }
-        else if (key.equals(JavaProxyProperty.HTTP_PASSWORD)) {
-          AxisProperties.setProperty("http.proxyPassword", value);
-        }
-        else {
-          AxisProperties.setProperty(key, value);
-        }
-      }
+      ProxyUtils.getCurrentSettingsAsJvmProperties().forEach(AxisProperties::setProperty);
     }
-    return new MantisConnectLocator().getMantisConnectPort(new URL(getUrl() + SOAP_API_LOCATION));
+    return new MantisConnectLocator().getMantisConnectPort(new URI(getUrl() + SOAP_API_LOCATION).toURL());
   }
 
   private @Nullable IssueData fetchIssueById(@NotNull MantisConnectPortType soap, @NotNull String id) throws Exception {

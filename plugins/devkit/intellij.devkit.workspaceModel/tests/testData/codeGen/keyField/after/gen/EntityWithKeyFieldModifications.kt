@@ -16,9 +16,8 @@ override var entitySource: EntitySource
 var keyField: String
 var notKeyField: String
 }
-
 internal object EntityWithKeyFieldType : EntityType<EntityWithKeyField, EntityWithKeyFieldBuilder>(){
-override val entityClass: Class<EntityWithKeyField> get() = EntityWithKeyField::class.java
+override val entityImplClass: Class<*> get() = EntityWithKeyFieldImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = EntityWithKeyFieldImpl.Builder::class.java
 operator fun invoke(
 keyField: String,
@@ -34,12 +33,10 @@ init?.invoke(builder)
 return builder
 }
 }
-
 fun MutableEntityStorage.modifyEntityWithKeyField(
 entity: EntityWithKeyField,
 modification: EntityWithKeyFieldBuilder.() -> Unit,
 ): EntityWithKeyField = modifyEntity(EntityWithKeyFieldBuilder::class.java, entity, modification)
-
 @JvmOverloads
 @JvmName("createEntityWithKeyField")
 fun EntityWithKeyField(

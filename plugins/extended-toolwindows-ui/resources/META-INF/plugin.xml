@@ -1,18 +1,22 @@
+<!--suppress AllContentModulesOptionalLoadingRule (intentional, see the note above the content tag)-->
 <idea-plugin require-restart="true">
-  <name>Extended ToolWindows UI</name>
+  <name>Extended Tool Windows UI</name>
   <id>com.intellij.extendedToolWindowsUi</id>
   <vendor>JetBrains</vendor>
+  <category>UI</category>
 
-  <dependencies>
-    <module name="intellij.platform.monolith"/>
-  </dependencies>
-  <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
+  <content namespace="jetbrains">
+    <module name="intellij.extendedToolWindowsUi.frontend"/>
+    <module name="intellij.extendedToolWindowsUi.backend"/>
+  </content>
 
   <description><![CDATA[
-        Provides toolwindows features, like tool window layout, vertical toolwindow labels, etc.
-    ]]></description>
+    Extends the New UI tool window layout with additional options:
 
-  <extensions defaultExtensionNs="com.intellij">
-    <toolWindowExtension implementation="com.intellij.extendedToolWindowsUi.ToolWindowExtensionImpl"/>
-  </extensions>
+    <ul>
+      <li><b>Horizontal top and bottom stripes</b> — place tool window buttons in a horizontal row along the top or bottom edge instead of the vertical side bars.</li>
+      <li><b>Top-left and top-right placement</b> — anchor tool windows to the upper corners, next to the existing left, right, and bottom anchors.</li>
+      <li><b>Tool window names in the sidebars</b> — show names next to the icons, rendered vertically so they cost no extra editor width.</li>
+    </ul>
+  ]]></description>
 </idea-plugin>

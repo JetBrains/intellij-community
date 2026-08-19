@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProjectWizard
 
 import com.intellij.openapi.GitRepositoryInitializer
@@ -25,9 +25,9 @@ import kotlinx.coroutines.withContext
  * Settings each Python project has: [sdkCreator] and [createGitRepository]
  */
 class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
-  lateinit var sdkCreator: PySdkCreator
+ internal lateinit var sdkCreator: PySdkCreator
 
-  suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile, supportsNotEmptyModuleStructure: Boolean = false): PyResult<Pair<Sdk, InterpreterStatisticsInfo>> = coroutineScope {
+ internal suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile, supportsNotEmptyModuleStructure: Boolean = false): PyResult<Pair<Sdk, InterpreterStatisticsInfo>> = coroutineScope {
     val project = module.project
     if (createGitRepository) {
       launch(TraceContext(PyBundle.message("trace.context.generating.git")) + Dispatchers.IO) {

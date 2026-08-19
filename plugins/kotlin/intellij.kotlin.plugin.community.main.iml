@@ -5,14 +5,13 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.plugin" exported="" />
-    <orderEntry type="module" module-name="kotlin.plugin.common" exported="" />
-    <orderEntry type="module" module-name="kotlin.plugin.k2" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.plugin" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.navigation" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" exported="" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.psi" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.kdoc" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectModel" exported="" />
@@ -128,18 +127,18 @@
     <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.jvm" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.lombok.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.lombok.maven" exported="" />
-    <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-ir" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-common" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-jvm" level="project" />
-    <orderEntry type="library" exported="" name="kotlinc.analysis-api-platform-interface" level="project" />
-    <orderEntry type="library" exported="" name="kotlinc.analysis-api" level="project" />
-    <orderEntry type="library" exported="" name="kotlinc.analysis-api-impl-base" level="project" />
-    <orderEntry type="library" exported="" name="kotlinc.analysis-api-k2" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" exported="" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" exported="" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.impl.base" exported="" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.k2" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-fir" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.allopen-compiler-plugin" level="project" />
-    <orderEntry type="library" exported="" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.noarg-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.sam-with-receiver-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.assignment-compiler-plugin" level="project" />
@@ -165,7 +164,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.formatter.minimal" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.ide" exported="" />
-    <orderEntry type="module" module-name="kotlin.jsr223" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.jsr223" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.internal" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.scripting" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" exported="" />

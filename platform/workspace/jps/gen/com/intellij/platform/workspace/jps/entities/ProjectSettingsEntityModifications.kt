@@ -17,7 +17,7 @@ interface ProjectSettingsEntityBuilder : WorkspaceEntityBuilder<ProjectSettingsE
 }
 
 internal object ProjectSettingsEntityType : EntityType<ProjectSettingsEntity, ProjectSettingsEntityBuilder>() {
-  override val entityClass: Class<ProjectSettingsEntity> get() = ProjectSettingsEntity::class.java
+  override val entityImplClass: Class<*> get() = ProjectSettingsEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ProjectSettingsEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

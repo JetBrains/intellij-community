@@ -817,7 +817,7 @@ extension properties — never sent to the LLM:
 - [`McpToolDescriptor.presentableDescription`](src/com/intellij/mcpserver/McpToolDescriptor.kt) = `displayDescription(toolName)` or the agent-facing `description`.
 
 These are what [`ShowMcpToolsAction`](src/com/intellij/mcpserver/actions/ShowMcpToolsAction.kt)
-and [`McpToolFilterConfigurable`](src/com/intellij/mcpserver/settings/McpToolFilterConfigurable.kt)
+and [`McpToolFilterConfigurable`](mcpserver.frontend/src/settings/McpToolFilterConfigurable.kt)
 render (tree labels, the per-tool description pane, the search index, group headers), and what
 [`McpToolsMarkdownExporter`](src/com/intellij/mcpserver/McpToolsMarkdownExporter.kt) exports.
 
@@ -946,7 +946,7 @@ suspend fun search_text(
 
 Look at [`Constants.MAX_LINES_COUNT_VALUE`](src/com/intellij/mcpserver/toolsets/Constants.kt) and
 `MAX_RESULTS_UPPER_BOUND` in [`SearchToolset.kt:65`](src/com/intellij/mcpserver/toolsets/general/SearchToolset.kt) for typical caps. Use the
-streaming accumulator in [`util/OutputCollector.kt`](src/com/intellij/mcpserver/util/OutputCollector.kt) when you need to trim in the middle
+streaming accumulator in [`util/OutputCollector.kt`](mcpserver.toolsets/src/util/OutputCollector.kt) when you need to trim in the middle
 of growing output.
 
 ### 15.3 Side-effect tracking
@@ -979,7 +979,7 @@ val result = ProjectTaskManager.getInstance(project).run(context, task).await()
 ```
 
 From [`AnalysisToolset.kt:139`](src/com/intellij/mcpserver/toolsets/general/AnalysisToolset.kt) and [
-`AnalysisToolset.kt:254-258`](src/com/intellij/mcpserver/toolsets/general/AnalysisToolset.kt).
+`AnalysisToolset.kt:254-258`](mcpserver.toolsets/src/general/AnalysisToolset.kt).
 
 ---
 

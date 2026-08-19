@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
+import org.intellij.plugins.markdown.dto.MarkdownLinkNavigationData
 import org.intellij.plugins.markdown.lang.isMarkdownType
 import org.intellij.plugins.markdown.service.MarkdownLinkOpenerRemoteApi
 import org.intellij.plugins.markdown.settings.DocumentLinksSafeState
@@ -49,7 +50,12 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
 
   override fun openLink(currentProject: Project?, link: String, containingFile: VirtualFile?) {
     coroutineScope.launch {
-      val data = MarkdownLinkOpenerRemoteApi.Companion.getInstance().fetchLinkNavigationData(link, containingFile?.rpcId())
+      val remoteApi = MarkdownLinkOpenerRemoteApi.tryGetInstance()
+      val data = when {
+        remoteApi != null -> remoteApi.fetchLinkNavigationData(link, containingFile?.rpcId())
+        else -> MarkdownLinkNavigationData(link, null, null, null)
+      }
+
       val uri = createUri(data.uri) ?: return@launch
       if (uri.scheme != "file") {
         // An unresolved local file path must not fall through to the external browser.
@@ -210,7 +216,8 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
       return link.startsWith("/") ||
              link.startsWith("./") ||
              link.startsWith("../") ||
-             link.startsWith("~/")
+             link.startsWith("~/") ||
+             (link.startsWith(".") && link.getOrNull(1)?.isLetter() == true)
     }
 
     private fun isLocalHost(hostName: String?): Boolean {

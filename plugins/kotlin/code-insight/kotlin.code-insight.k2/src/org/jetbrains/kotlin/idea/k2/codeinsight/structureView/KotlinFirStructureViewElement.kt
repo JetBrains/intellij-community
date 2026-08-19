@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
@@ -115,7 +116,7 @@ class KotlinFirStructureViewElement(
         return result
     }
 
-    private fun <T> createSymbolAndThen(modifier: KaSession.(KaSymbol) -> T): T? {
+    private fun <T> createSymbolAndThen(modifier: context(KaSession)(KaSymbol) -> T): T? {
         val element = element
         return when {
             !element.isValid -> null
@@ -124,7 +125,7 @@ class KotlinFirStructureViewElement(
             else -> runReadAction {
                 if (!DumbService.isDumb(element.getProject())) {
                     analyze(element) {
-                        modifier.invoke(contextOf<KaSession>(), element.symbol)
+                        modifier.invoke(useSiteSession, element.symbol)
                     }
                 } else {
                     null

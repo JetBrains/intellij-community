@@ -7,20 +7,24 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.successfulConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceGuardClauseWithFunctionCallInspection.KotlinFunction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConstantConditionIfUtils.replaceWithBranch
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceGuardClauseWithFunctionCallInspection.KotlinFunction
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -84,13 +88,15 @@ internal class ReplaceGuardClauseWithFunctionCallInspection :
     override fun getApplicableRanges(element: KtIfExpression): List<TextRange> =
         ApplicabilityRanges.ifKeyword(element)
 
-    override fun KaSession.prepareContext(element: KtIfExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtIfExpression): Context? {
         val call = element.getCallExpression() ?: return null
         val kotlinFunction = element.getKotlinFunction(call) ?: return null
         val calleeText = call.calleeExpression?.text ?: return null
         val valueArguments = call.valueArguments
         val argumentType = valueArguments.firstOrNull()?.getArgumentExpression()?.expressionType
-        if (argumentType?.isStringType == false) return null
+        val argumentTypeClassId = argumentType?.classId
+        if (argumentTypeClassId != null && argumentTypeClassId != KaStandardTypeClassIds.STRING) return null
         if (element.isUsedAsExpression) return null
 
         val fqName = call.resolveToCall()

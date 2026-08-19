@@ -45,6 +45,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.util.commonsLangV2Shim.iml",
+        "resources/intellij.platform.util.commonsLangV2Shim.xml",
     ],
     visibility = ["//visibility:public"],
 )

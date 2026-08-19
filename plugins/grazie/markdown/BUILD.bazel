@@ -85,6 +85,7 @@ jvm_library(
 exports_files(
     [
         "intellij.grazie.markdown.iml",
+        "src/main/resources/intellij.grazie.markdown.xml",
     ],
     visibility = ["//visibility:public"],
 )

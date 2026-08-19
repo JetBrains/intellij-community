@@ -230,7 +230,7 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
     expectedText: String,
     expectedCursorOffset: TerminalOffset,
   ) {
-    val conditionMet = awaitOutputModelState(3.seconds) { model ->
+    val conditionMet = awaitOutputModelState(3.seconds, waitAdditionally = true) { model ->
       val text = model.getText(model.startOffset, model.endOffset).toString()
       expectedText == text && model.cursorOffset == expectedCursorOffset
     }

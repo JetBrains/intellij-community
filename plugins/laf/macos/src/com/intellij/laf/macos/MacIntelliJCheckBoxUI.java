@@ -3,8 +3,8 @@ package com.intellij.laf.macos;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
+import com.intellij.ui.DrawUtil;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.MacUIUtil;
 
 import javax.swing.AbstractButton;
 import javax.swing.Icon;
@@ -13,7 +13,6 @@ import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
@@ -52,9 +51,7 @@ public final class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
           iconRect.x + JBUIScale.scale(4.5f), iconRect.y + JBUIScale.scale(4.5f), JBUIScale.scale(13), JBUIScale.scale(13), JBUIScale.scale(5),
           JBUIScale.scale(5)), false);
 
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                            MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+        DrawUtil.setupRenderingHints(g2);
         g2.fill(outline);
       }
     }

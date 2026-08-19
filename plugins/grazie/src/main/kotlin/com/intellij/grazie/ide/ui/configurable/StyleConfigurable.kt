@@ -34,6 +34,8 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.getParentOfType
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.DocumentAdapter
@@ -275,7 +277,12 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
   }
 
   private fun loadLanguages(): Set<Lang>? {
-    val langs = GrazieConfig.get().availableLanguages
+    val langs = runWithModalProgressBlocking(
+      ModalTaskOwner.guess(),
+      GrazieBundle.message("grazie.settings.grammar.tabs.rules.loading.message"),
+    ) {
+      GrazieConfig.get().availableLanguages
+    }
     if (langComboModel.items == langs) return null
     langComboModel.removeAll()
     langComboModel.add(langs.toList())

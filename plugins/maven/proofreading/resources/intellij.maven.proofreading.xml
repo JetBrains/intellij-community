@@ -3,6 +3,8 @@
   <dependencies>
     <plugin id="tanvd.grazi"/>
     <module name="intellij.grazie.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.xml.psi"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij.grazie">

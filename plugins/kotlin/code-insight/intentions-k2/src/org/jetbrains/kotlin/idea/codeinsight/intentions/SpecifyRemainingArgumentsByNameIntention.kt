@@ -41,7 +41,8 @@ internal abstract class SpecifyRemainingArgumentsByNameIntention :
         }
     }
 
-    override fun KaSession.prepareContext(element: KtElement): RemainingArgumentsData? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtElement): RemainingArgumentsData? {
         val argumentList = element.getValueArgumentList() ?: return null
         return findRemainingNamedArguments(argumentList)?.takeIf { isAvailableFor(element, it) }
     }

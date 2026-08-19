@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -54,7 +56,8 @@ internal class ReplaceWithImportAliasInspection :
     }
 
     @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtNameReferenceExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtNameReferenceExpression): Context? {
         val name = element.getIdentifier()?.text ?: return null
         val ktFile = element.containingKtFile
         if (!ktFile.hasImportAlias()) return null

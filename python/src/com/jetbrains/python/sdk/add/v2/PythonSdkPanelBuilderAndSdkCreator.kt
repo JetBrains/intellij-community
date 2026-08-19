@@ -193,7 +193,8 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
   override suspend fun createPythonModuleStructure(module: Module): PyResult<Unit> {
     return when (selectedMode.get()) {
       CUSTOM -> custom.currentSdkManager.createPythonModuleStructure(module)
-      else -> Result.success(Unit)
+      PROJECT_UV -> uvSection.getUvCreator().createPythonModuleStructure(module)
+      PROJECT_VENV, BASE_CONDA -> Result.success(Unit)
     }
   }
 

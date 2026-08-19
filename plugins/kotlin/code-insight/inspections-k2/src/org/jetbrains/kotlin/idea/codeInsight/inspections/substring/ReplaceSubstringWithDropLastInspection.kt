@@ -23,7 +23,8 @@ internal class ReplaceSubstringWithDropLastInspection : ReplaceSubstringInspecti
         return isAccessedOnSameReceiver(secondArg, element.receiverExpression)
     }
 
-    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         if (!prepareContextBase(element)) return null
         return Unit
     }

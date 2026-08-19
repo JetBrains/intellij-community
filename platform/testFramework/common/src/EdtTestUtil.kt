@@ -63,15 +63,39 @@ fun runInEdtAndWait(writeIntent: Boolean, runnable: () -> Unit) {
  */
 @RequiresEdt
 fun dispatchAllEventsInIdeEventQueue() {
+  doDispatchAllEventsInIdeEventQueue(null)
+}
+
+/**
+ * Dispatches pending events until the IDE event queue is observed empty or the absolute [deadlineNs] (nanoseconds) is reached.
+ * Use this overload when the caller must retain control of its own timeout while events keep replenishing the queue.
+ * @return false if deadlineNs is breached while not all available events were dispatched
+ */
+@RequiresEdt
+fun dispatchAllEventsInIdeEventQueue(deadlineNs: Long): Boolean {
+  return doDispatchAllEventsInIdeEventQueue(deadlineNs)
+}
+
+/**
+ * Keeps write-intent release and event-drain mechanics shared by bounded and unbounded dispatch
+ * @return false if deadlineNs is breached while not all available  events were dispatched
+ */
+private fun doDispatchAllEventsInIdeEventQueue(deadlineNs: Long?): Boolean {
   ThreadingAssertions.assertEventDispatchThread()
 
+  var timedOut = false
   releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
     while (true) {
+      if(deadlineNs != null && System.nanoTime() >= deadlineNs){
+        timedOut = true
+        break
+      }
       if (dispatchNextEventIfAny() == null) {
         break
       }
     }
   }
+  return !timedOut
 }
 
 /**

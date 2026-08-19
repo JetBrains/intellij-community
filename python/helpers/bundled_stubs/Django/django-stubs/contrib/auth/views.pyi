@@ -18,8 +18,8 @@ class RedirectURLMixin:
     redirect_field_name: str
     success_url_allowed_hosts: set[str]
     def get_success_url(self) -> str: ...
-    def get_redirect_url(self) -> str: ...
-    def get_success_url_allowed_hosts(self) -> set[str]: ...
+    def get_redirect_url(self, request: HttpRequest | None = None) -> str: ...
+    def get_success_url_allowed_hosts(self, request: HttpRequest | None = None) -> set[str]: ...
     def get_default_redirect_url(self) -> str: ...
 
 class LoginView(RedirectURLMixin, FormView[_AuthForm]):
@@ -29,7 +29,7 @@ class LoginView(RedirectURLMixin, FormView[_AuthForm]):
     redirect_authenticated_user: bool
     extra_context: Mapping[str, Any] | None
 
-class LogoutView(RedirectURLMixin, TemplateView):
+class LogoutView(RedirectURLMixin, TemplateView[HttpResponse]):
     next_page: str | None
     redirect_field_name: str
     extra_context: Mapping[str, Any] | None
@@ -61,8 +61,8 @@ INTERNAL_RESET_SESSION_TOKEN: str
 class PasswordResetDoneView(PasswordContextMixin, TemplateView):
     title: _StrOrPromise
 
-class PasswordResetConfirmView(PasswordContextMixin, FormView[SetPasswordForm]):
-    form_class: type[SetPasswordForm]
+class PasswordResetConfirmView(PasswordContextMixin, FormView[SetPasswordForm[_User]]):
+    form_class: type[SetPasswordForm[_User]]
     post_reset_login: bool
     post_reset_login_backend: str | None
     reset_url_token: str

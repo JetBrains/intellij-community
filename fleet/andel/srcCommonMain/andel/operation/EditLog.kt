@@ -111,10 +111,10 @@ class EditLog(
     operations.nth(timestampToOffset(timestamp))
 
   /** The producer-supplied stable id of the operation at [timestamp]; survives rebase replays. */
-  fun idAtTimestamp(timestamp: Long): Result<UID> = timestampToOffsetSafe(timestamp).map { ids.nth(it) }
+  fun idAtTimestamp(timestamp: Long): Result<UID> = operationOffsetSafe(timestamp).map { ids.nth(it) }
 
   /** The identity of the operation instance at [timestamp]; regenerated on every append (see the class KDoc). */
-  fun identityAtTimestamp(timestamp: Long): Result<Any> = timestampToOffsetSafe(timestamp).map { identities.nth(it) }
+  fun identityAtTimestamp(timestamp: Long): Result<Any> = operationOffsetSafe(timestamp).map { identities.nth(it) }
 
   fun append(id: UID, operation: Operation): EditLog {
     if (!operation.isEmpty && !operations.isEmpty() && !operations.last().isEmpty) {
@@ -172,13 +172,30 @@ class EditLog(
 
   private fun timestampToOffsetSafe(timestamp: Long, opCount: Long = operations.size()): Result<Long> {
     if (timestamp > this.timestamp) {
-      throw IllegalArgumentException("Can't asOf into the future: this.timestamp=${this.timestamp}, timestamp=$timestamp")
+      return Result.failure(
+        IllegalArgumentException("Can't asOf into the future: this.timestamp=${this.timestamp}, timestamp=$timestamp")
+      )
     }
     val newSize = opCount - (this.timestamp - timestamp)
     if (newSize < 0) {
       return Result.failure(IllegalArgumentException("asOf too far in the past: opCount=$opCount, end up at offset $newSize"))
     }
     return Result.success(newSize)
+  }
+
+  /**
+   * The offset of the operation *at* [timestamp]. Unlike [timestampToOffsetSafe], which yields an exclusive slice bound and
+   * so accepts the log's own timestamp, this rejects it: that timestamp is the insertion point above the last operation, not
+   * an operation.
+   */
+  private fun operationOffsetSafe(timestamp: Long): Result<Long> {
+    val opCount = operations.size()
+    return timestampToOffsetSafe(timestamp, opCount).mapCatching { offset ->
+      require(offset < opCount) {
+        "no operation at timestamp $timestamp: the log ends at timestamp ${this.timestamp}"
+      }
+      offset
+    }
   }
 }
 

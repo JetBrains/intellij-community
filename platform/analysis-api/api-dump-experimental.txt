@@ -14,15 +14,13 @@
 a:com.intellij.codeInsight.completion.CompletionService
 - *p:getVariantsFromGroupContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.util.Consumer):V
 *:com.intellij.codeInsight.completion.command.CommandCompletionFactory
+- com.intellij.codeInsight.completion.command.CommandCompletionSuffixProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - adjustCaret(com.intellij.psi.PsiFile,I):java.lang.Integer
 - commandProviders(com.intellij.openapi.project.Project,com.intellij.lang.Language):java.util.List
 - createFile(com.intellij.psi.PsiFile,java.lang.String):com.intellij.psi.PsiFile
-- filterSuffix():java.lang.Character
 - isApplicable(com.intellij.psi.PsiFile,I):Z
 - isApplicableForHost(com.intellij.psi.PsiFile,I):Z
-- suffix():C
-- supportFiltersWithDoublePrefix():Z
 *f:com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z,Z):V
 - f:component1():com.intellij.openapi.project.Project
@@ -47,6 +45,10 @@ a:com.intellij.codeInsight.completion.CompletionService
 - hashCode():I
 - f:isInjected():Z
 - f:isReadOnly():Z
+*:com.intellij.codeInsight.completion.command.CommandCompletionSuffixProvider
+- filterSuffix():java.lang.Character
+- suffix():C
+- supportFiltersWithDoublePrefix():Z
 *:com.intellij.codeInsight.completion.command.CommandProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - a:getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
@@ -463,6 +465,9 @@ c:com.intellij.openapi.fileEditor.OpenFileDescriptor
 - com.intellij.openapi.fileEditor.FileEditorNavigatable
 - java.lang.Comparable
 - *:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext,I):V
+f:com.intellij.openapi.vfs.VfsUtil
+- com.intellij.openapi.vfs.VfsUtilCore
+- *s:findFileByUrlIfCached(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 *f:com.intellij.openapi.vfs.newvfs.AttributeInputStream
 - java.io.DataInputStream
 - readEnumeratedString():java.lang.String

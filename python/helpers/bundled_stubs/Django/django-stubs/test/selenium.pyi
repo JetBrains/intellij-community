@@ -1,10 +1,11 @@
 from collections.abc import Callable, Sequence
 from contextlib import AbstractContextManager
 from types import TracebackType
-from typing import Any, TypeAlias
+from typing import Any, Self, TypeAlias
 
+from _typeshed import Self as MetaclassSelf  # noqa: TID251
 from django.test import LiveServerTestCase
-from typing_extensions import Self, TypeVar
+from typing_extensions import TypeVar
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 
@@ -17,7 +18,9 @@ class SeleniumTestCaseBase(type):
     external_host: str | None = None
     browser: Any
     headless: bool = False
-    def __new__(cls, name: str, bases: tuple[type, ...], attrs: dict[str, Any]) -> SeleniumTestCaseBase: ...
+    def __new__(
+        cls: type[MetaclassSelf], name: str, bases: tuple[type, ...], attrs: dict[str, Any]
+    ) -> MetaclassSelf: ...
     @classmethod
     def import_webdriver(cls, browser: Any) -> type[_WebDriver]: ...
     @classmethod

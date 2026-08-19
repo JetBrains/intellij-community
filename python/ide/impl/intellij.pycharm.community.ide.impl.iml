@@ -58,7 +58,8 @@
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.python.sdk" />
+    <orderEntry type="module" module-name="intellij.python.sdk.backend" />
+    <orderEntry type="module" module-name="intellij.python.sdk.common" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.featuresTrainer" />
     <orderEntry type="module" module-name="intellij.python.featuresTrainer" scope="RUNTIME" />
@@ -68,14 +69,14 @@
     <orderEntry type="module" module-name="intellij.platform.whatsNew" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.experiment" />
-    <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jna" />
     <orderEntry type="module" module-name="intellij.python.community.services.systemPython" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.python.community.services.shared" />
     <orderEntry type="module" module-name="intellij.python.community.impl.pipenv" />
     <orderEntry type="module" module-name="intellij.python.venv" />
-    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.python.pyproject" />
     <orderEntry type="module" module-name="intellij.python.hatch" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
@@ -87,7 +88,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.python.community.execService" />
-    <orderEntry type="module" module-name="intellij.python.sdk.ui" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry.common" />
     <orderEntry type="module" module-name="intellij.python.uv.common" />
     <orderEntry type="module" module-name="intellij.python.community.execService.python" />

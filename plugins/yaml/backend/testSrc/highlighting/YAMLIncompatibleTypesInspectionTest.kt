@@ -160,6 +160,44 @@ class YAMLIncompatibleTypesInspectionTest : BasePlatformTestCase() {
     myFixture.testHighlighting()
   }
 
+  fun testNonDecimalIntegersAndExplicitIntTag() {
+    // All values below are integers: decimal, comma-grouped, sexagesimal, octal and hexadecimal forms,
+    // both untagged and with an explicit !!int tag. None of them should be reported as a type mismatch.
+    myFixture.configureByText("test.yaml", """
+      - a: 0
+      - a: -0
+      - a: 1,234
+      - a: -1,234
+      - a: 3:25:45
+      - a: -3:25:45
+      - a: 0123
+      - a: -0123
+      - a: 0x1
+      - a: -0x1
+      - a: !!int 0
+      - a: !!int -0
+      - a: !!int 1,234
+      - a: !!int -1,234
+      - a: !!int 3:25:45
+      - a: !!int -3:25:45
+      - a: !!int 0123
+      - a: !!int -0123
+      - a: !!int 0x1
+      - a: !!int -0x1
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
+  fun testExplicitIntTagForcesNumberAmongStrings() {
+    myFixture.configureByText("test.yaml", """
+      - a: hello
+      - a: world
+      - a: foo
+      - a: <warning descr="The type of value is 'number' while other values use type 'string'">!!int hello</warning>
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
   fun testWrapWithDoubleQuotes() {
     myFixture.configureByText("test.yaml", """
       prop:

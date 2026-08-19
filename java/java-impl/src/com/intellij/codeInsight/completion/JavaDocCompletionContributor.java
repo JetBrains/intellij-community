@@ -44,7 +44,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaDocTokenType;
@@ -454,6 +453,7 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
     PrefixMatcher matcher = result.getPrefixMatcher();
     int prefixStart = parameters.getOffset() - matcher.getPrefix().length() - position.getTextRange().getStartOffset();
     String text = position.getText();
+    LinkFormat linkFormat = linkFormatFor(position);
     if (prefixStart > 0 && text.charAt(prefixStart - 1) == '#') {
       int classNameStart = findClassNameStart(text, prefixStart - 1);
       String mockCommentPrefix = "/** {@link ";
@@ -462,11 +462,13 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
       PsiJavaReference ref = (PsiJavaReference)mockComment.findReferenceAt(mockCommentPrefix.length() + prefixStart - classNameStart);
       assert ref != null : mockText;
       for (LookupElement element : completeJavadocReference(ref.getElement(), ref)) {
-        result.addElement(LookupElementDecorator.withInsertHandler(element, wrapIntoLinkTag((context, _) -> element.handleInsert(context))));
+        result.addElement(
+          LookupElementDecorator.withInsertHandler(element, wrapIntoLinkTag((context, _) -> element.handleInsert(context), linkFormat)));
       }
     }
     else if (!matcher.getPrefix().isEmpty()) {
-      InsertHandler<JavaPsiClassReferenceElement> handler = wrapIntoLinkTag(JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER);
+      InsertHandler<JavaPsiClassReferenceElement> handler =
+        wrapIntoLinkTag(JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER, linkFormat);
       AllClassesGetter.processJavaClasses(parameters, matcher, parameters.getInvocationCount() == 1, psiClass ->
         result.addElement(AllClassesGetter.createLookupItem(psiClass, handler)));
     }
@@ -484,25 +486,36 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
     return c == '.' || Character.isJavaIdentifierPart(c);
   }
 
-  private static @NotNull <T extends LookupElement> InsertHandler<T> wrapIntoLinkTag(InsertHandler<T> delegate) {
+  /// The delimiters a completed javadoc reference has to be wrapped into: `prefix + reference + suffix`.
+  private record LinkFormat(@NotNull String prefix, @NotNull String suffix) {
+  }
+
+  /// Returns the link syntax the comment enclosing `element` supports: a `[reference]` reference link
+  /// in Markdown comments (see JEP 467), the `{@link reference}` inline tag in traditional ones.
+  private static @NotNull LinkFormat linkFormatFor(@NotNull PsiElement element) {
+    PsiDocComment comment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class, false);
+    return comment != null && comment.isMarkdownComment() ? new LinkFormat("[", "]") : new LinkFormat("{@link ", "}");
+  }
+
+  private static @NotNull <T extends LookupElement> InsertHandler<T> wrapIntoLinkTag(InsertHandler<T> delegate, LinkFormat format) {
     return (context, item) -> {
       Document document = context.getDocument();
 
-      String link = "{@link ";
+      String link = format.prefix();
       int startOffset = context.getStartOffset();
       int qualifierStart = document.getCharsSequence().charAt(startOffset - 1) == '#'
                             ? findClassNameStart(document.getCharsSequence(), startOffset - 1)
                             : startOffset;
 
       document.insertString(qualifierStart, link);
-      document.insertString(context.getTailOffset(), "}");
-      context.setTailOffset(context.getTailOffset() - 1);
+      document.insertString(context.getTailOffset(), format.suffix());
+      context.setTailOffset(context.getTailOffset() - format.suffix().length());
       context.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, startOffset + link.length());
 
       context.commitDocument();
       delegate.handleInsert(context, item);
       if (item.getObject() instanceof PsiField) {
-        context.getEditor().getCaretModel().moveToOffset(context.getTailOffset() + 1);
+        context.getEditor().getCaretModel().moveToOffset(context.getTailOffset() + format.suffix().length());
       }
     };
   }
@@ -565,7 +578,7 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
     for (JavadocTagInfo info : infos) {
       String tagName = info.getName();
       if (tagName.equals(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;
-      if (isInline != info.isInline() && !(PsiUtil.getLanguageLevel(comment).isAtLeast(LanguageLevel.JDK_16) && tagName.equals("return")))
+      if (isInline != info.isInline() && !(PsiUtil.isAvailable(JavaFeature.JAVADOC_INLINE_RETURN_TAG, comment) && tagName.equals("return")))
         continue;
       if (addSpecialTags(ret, comment, tagName)) {
         ret.add(tagName);

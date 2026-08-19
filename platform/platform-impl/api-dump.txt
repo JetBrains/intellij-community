@@ -738,6 +738,8 @@ c:com.intellij.ide.actions.OpenFileAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
 - p:doOpenFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.ide.actions.OpenFileAction$Companion
+- f:openFileAsync(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 c:com.intellij.ide.actions.OpenProjectFileChooserDescriptor
 - com.intellij.openapi.fileChooser.FileChooserDescriptor
 - <init>(Z):V
@@ -3138,6 +3140,7 @@ f:com.intellij.openapi.fileEditor.TextEditorWithPreview$MyFileEditorState
 a:com.intellij.openapi.fileEditor.TextEditorWithPreviewProvider
 - com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - <init>(com.intellij.openapi.fileEditor.FileEditorProvider):V
+- readState(org.jdom.Element,com.intellij.openapi.project.Project,kotlin.Lazy):com.intellij.openapi.fileEditor.FileEditorState
 a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - com.intellij.openapi.fileEditor.FileEditorManager
 - canOpenFile(com.intellij.openapi.vfs.VirtualFile):Z
@@ -3216,6 +3219,7 @@ f:com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 - f:removeFile(com.intellij.openapi.vfs.VirtualFile):V
 f:com.intellij.openapi.fileEditor.impl.EditorHistoryManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.fileEditor.impl.EditorHistoryManager
+- f:getInstanceAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.fileEditor.impl.EditorTabbedContainer
 - f:getComponent():javax.swing.JComponent
 - f:getSelectedIndex():I
@@ -3323,6 +3327,7 @@ c:com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 - sf:getInstance():com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 - getTextEditor(com.intellij.openapi.editor.Editor):com.intellij.openapi.fileEditor.TextEditor
 - sf:isTextFile(com.intellij.openapi.vfs.VirtualFile):Z
+- readState(org.jdom.Element,com.intellij.openapi.project.Project,kotlin.Lazy):com.intellij.openapi.fileEditor.FileEditorState
 f:com.intellij.openapi.fileEditor.impl.text.TextEditorProvider$Companion
 - f:getInstance():com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 - f:isTextFile(com.intellij.openapi.vfs.VirtualFile):Z
@@ -4844,6 +4849,7 @@ f:com.intellij.ui.GotItTooltip
 - f:withPosition(com.intellij.openapi.ui.popup.Balloon$Position):com.intellij.ui.GotItTooltip
 - f:withShortcut(com.intellij.openapi.actionSystem.Shortcut):com.intellij.ui.GotItTooltip
 - f:withShowCount(I):com.intellij.ui.GotItTooltip
+- f:withStepText(java.lang.String):com.intellij.ui.GotItTooltip
 - f:withTimeout(I):com.intellij.ui.GotItTooltip
 a:com.intellij.ui.GroupedComboBoxRenderer
 - com.intellij.ui.GroupedElementsRenderer
@@ -5286,42 +5292,6 @@ f:com.intellij.ui.colorpicker.LightCalloutPopup
 f:com.intellij.ui.colorpicker.MaterialGraphicalColorPipetteProvider
 - com.intellij.ui.colorpicker.ColorPipetteProvider
 - <init>():V
-f:com.intellij.ui.components.Badge
-- javax.swing.Icon
-- sf:Companion:com.intellij.ui.components.Badge$Companion
-- sf:alpha:javax.swing.Icon
-- sf:alphaDisabled:javax.swing.Icon
-- sf:beta:javax.swing.Icon
-- sf:betaDisabled:javax.swing.Icon
-- sf:free:javax.swing.Icon
-- sf:freeDisabled:javax.swing.Icon
-- sf:new:javax.swing.Icon
-- sf:newDisabled:javax.swing.Icon
-- sf:trial:javax.swing.Icon
-- sf:trialDisabled:javax.swing.Icon
-- <init>(java.lang.String,com.intellij.ui.components.Badge$ColorType):V
-- b:<init>(java.lang.String,com.intellij.ui.components.Badge$ColorType,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:getColorType():com.intellij.ui.components.Badge$ColorType
-- f:getEnabled():Z
-- getIconHeight():I
-- getIconWidth():I
-- f:getText():java.lang.String
-- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
-- f:setColorType(com.intellij.ui.components.Badge$ColorType):V
-- f:setEnabled(Z):V
-- f:setText(java.lang.String):V
-e:com.intellij.ui.components.Badge$ColorType
-- java.lang.Enum
-- sf:BLUE:com.intellij.ui.components.Badge$ColorType
-- sf:BLUE_SECONDARY:com.intellij.ui.components.Badge$ColorType
-- sf:GRAY_SECONDARY:com.intellij.ui.components.Badge$ColorType
-- sf:GREEN:com.intellij.ui.components.Badge$ColorType
-- sf:GREEN_SECONDARY:com.intellij.ui.components.Badge$ColorType
-- sf:PURPLE_SECONDARY:com.intellij.ui.components.Badge$ColorType
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.ui.components.Badge$ColorType
-- s:values():com.intellij.ui.components.Badge$ColorType[]
-f:com.intellij.ui.components.Badge$Companion
 c:com.intellij.ui.components.BasicOptionButtonUI
 - com.intellij.ui.components.OptionButtonUI
 c:com.intellij.ui.components.BasicOptionButtonUI$ArrowButton

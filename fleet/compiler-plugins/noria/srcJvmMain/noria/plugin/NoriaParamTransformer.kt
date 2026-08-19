@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.ir.declarations.copyAttributes
 import org.jetbrains.kotlin.ir.expressions.IrAnnotation
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrConst
-import org.jetbrains.kotlin.ir.expressions.IrConstKind
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrFunctionReference
 import org.jetbrains.kotlin.ir.expressions.IrLocalDelegatedPropertyReference
@@ -301,11 +300,10 @@ class NoriaParamTransformer(
     }
   }
 
-  private fun irConst(value: String): IrConst = IrConstImpl(
+  private fun irConst(value: String): IrConst = IrConstImpl.string(
     UNDEFINED_OFFSET,
     UNDEFINED_OFFSET,
     context.irBuiltIns.stringType,
-    IrConstKind.String,
     value
   )
 

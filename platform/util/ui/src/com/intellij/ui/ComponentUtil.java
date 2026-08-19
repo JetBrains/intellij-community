@@ -182,8 +182,7 @@ public final class ComponentUtil {
    * @return a viewport for the given component or {@code null} if none
    */
   public static @Nullable JViewport getViewport(@Nullable Component component) {
-    Container parent = component == null ? null : SwingUtilities.getUnwrappedParent(component);
-    return parent instanceof JViewport ? (JViewport)parent : null;
+    return getStrictParentOfType(JViewport.class, component);
   }
 
   public static @NotNull <T extends JComponent> java.util.List<T> findComponentsOfType(@Nullable JComponent parent, @NotNull Class<? extends T> cls) {

@@ -26,6 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 public final class JvmClassTestUtil {
   private static final String ANNOTATION1_NAME = "annotation1";
   private static final String ANNOTATION2_NAME = "annotation2";
+  private static final String TYPE_ANNOTATION1_NAME = "typeAnnotation1";
+  private static final String TYPE_ANNOTATION2_NAME = "typeAnnotation2";
   private static final int JVM_FLAGS_VALUE = 1234;
 
   private static final ParamAnnotation PARAM_ANNOTATION1 = new ParamAnnotation(23, new TypeRepr.ClassType("jvmName1"), Long.valueOf(42));
@@ -61,16 +63,21 @@ public final class JvmClassTestUtil {
     ElementAnnotation annotation2 = new ElementAnnotation(new TypeRepr.ClassType(ANNOTATION2_NAME), Long.valueOf(ANNOTATION2_NAME.hashCode()));
     Iterable<ElementAnnotation> annotations = Arrays.asList(annotation1, annotation2);
 
+    // deliberately distinct from 'annotations', so that the round-trip would catch the two collections being swapped or mixed
+    ElementAnnotation typeAnnotation1 = new ElementAnnotation(new TypeRepr.ClassType(TYPE_ANNOTATION1_NAME), Long.valueOf(TYPE_ANNOTATION1_NAME.hashCode()));
+    ElementAnnotation typeAnnotation2 = new ElementAnnotation(new TypeRepr.ClassType(TYPE_ANNOTATION2_NAME), Long.valueOf(TYPE_ANNOTATION2_NAME.hashCode()));
+    Iterable<ElementAnnotation> typeAnnotations = Arrays.asList(typeAnnotation1, typeAnnotation2);
+
     JVMFlags jvmFlags = new JVMFlags(JVM_FLAGS_VALUE);
 
-    JvmField firstJvmField = new JvmField(jvmFlags, SIGNATURE, NAME, DESCRIPTOR, annotations, FIRST_JVM_FIELD_VALUE);
-    JvmField secondJvmField = new JvmField(jvmFlags, SIGNATURE2, NAME2, DESCRIPTOR2, annotations, SECOND_JVM_FIELD_VALUE);
+    JvmField firstJvmField = new JvmField(jvmFlags, SIGNATURE, NAME, DESCRIPTOR, annotations, typeAnnotations, FIRST_JVM_FIELD_VALUE);
+    JvmField secondJvmField = new JvmField(jvmFlags, SIGNATURE2, NAME2, DESCRIPTOR2, annotations, typeAnnotations, SECOND_JVM_FIELD_VALUE);
     Iterable<JvmField> fields = Arrays.asList(firstJvmField, secondJvmField);
 
     Set<ParamAnnotation> paramAnnotations = new HashSet<>(Arrays.asList(PARAM_ANNOTATION1, PARAM_ANNOTATION2));
 
-    JvmMethod jvmMethod1 = new JvmMethod(jvmFlags, SIGNATURE, NAME, DESCRIPTOR, annotations, paramAnnotations, List.of(EXCEPTION1, EXCEPTION2), FIRST_JVM_METHOD_VALUE);
-    JvmMethod jvmMethod2 = new JvmMethod(jvmFlags, SIGNATURE2, NAME2, DESCRIPTOR2, annotations, paramAnnotations, List.of(EXCEPTION3, EXCEPTION4), SECOND_JVM_METHOD_VALUE);
+    JvmMethod jvmMethod1 = new JvmMethod(jvmFlags, SIGNATURE, NAME, DESCRIPTOR, annotations, paramAnnotations, typeAnnotations, List.of(EXCEPTION1, EXCEPTION2), FIRST_JVM_METHOD_VALUE);
+    JvmMethod jvmMethod2 = new JvmMethod(jvmFlags, SIGNATURE2, NAME2, DESCRIPTOR2, annotations, paramAnnotations, typeAnnotations, List.of(EXCEPTION3, EXCEPTION4), SECOND_JVM_METHOD_VALUE);
     Iterable<JvmMethod> methods = List.of(jvmMethod1, jvmMethod2);
 
     Iterable<ElementAnnotation> classAnnotations =
@@ -86,6 +93,7 @@ public final class JvmClassTestUtil {
                         fields,
                         methods,
                         classAnnotations,
+                        typeAnnotations,
                         annotationTargets, null,
                         usages, Collections.emptyList());
   }
@@ -96,6 +104,7 @@ public final class JvmClassTestUtil {
     assertIterableEquals(jvmClass1.getInterfaces(), jvmClass2.getInterfaces());
     checkJvmFields(jvmClass1.getFields(), jvmClass2.getFields());
     checkJvmMethodsEquals(jvmClass1.getMethods(), jvmClass2.getMethods());
+    assertIterableEquals(jvmClass1.getTypeAnnotations(), jvmClass2.getTypeAnnotations());
     assertIterableEquals(jvmClass1.getAnnotationTargets(), jvmClass2.getAnnotationTargets());
     assertEquals(jvmClass1.getRetentionPolicy(), jvmClass2.getRetentionPolicy());
   }
@@ -109,6 +118,7 @@ public final class JvmClassTestUtil {
       assertEquals(jvmField.getName(), jvmField2.getName());
       assertEquals(jvmField.getType(), jvmField2.getType());
       assertIterableEquals(jvmField.getAnnotations(), jvmField2.getAnnotations());
+      assertIterableEquals(jvmField.getTypeAnnotations(), jvmField2.getTypeAnnotations());
       assertEquals(jvmField.getValue(), jvmField2.getValue());
     }
   }
@@ -125,6 +135,7 @@ public final class JvmClassTestUtil {
       assertEquals(jvmMethod1.getValue(), jvmMethod2.getValue());
       assertIterableEquals(jvmMethod1.getArgTypes(), jvmMethod2.getArgTypes());
       assertIterableEquals(jvmMethod1.getParamAnnotations(), jvmMethod2.getParamAnnotations());
+      assertIterableEquals(jvmMethod1.getTypeAnnotations(), jvmMethod2.getTypeAnnotations());
       assertIterableEquals(jvmMethod1.getExceptions(), jvmMethod2.getExceptions());
       assertEquals(jvmMethod1.getDescriptor(), jvmMethod2.getDescriptor());
     }

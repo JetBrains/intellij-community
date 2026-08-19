@@ -13,6 +13,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndE
 import com.intellij.util.application
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
+import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 
 private val mermaidPluginId = PluginId.getId("com.intellij.mermaid")
@@ -37,7 +38,8 @@ private fun markShown() {
   PropertiesComponent.getInstance().setValue(NOTIFICATION_SHOWN, "-1")
 }
 
-internal fun isMermaidPluginInstalled(): Boolean {
+@ApiStatus.Internal
+fun isMermaidPluginInstalled(): Boolean {
   return PluginManager.isPluginInstalled(mermaidPluginId)
 }
 
@@ -65,7 +67,8 @@ internal fun advertiseMermaidPlugin(project: Project) {
   }
 }
 
-internal fun installMermaidPlugin(project: Project?, onSuccess: () -> Unit = {}) {
+@ApiStatus.Internal
+fun installMermaidPlugin(project: Project?, onSuccess: () -> Unit = {}) {
   installAndEnable(project, setOf(mermaidPluginId), true, onSuccess = onSuccess)
 }
 

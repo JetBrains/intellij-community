@@ -26,14 +26,17 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KaCompilationOptionsBuilder
-import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
-import org.jetbrains.kotlin.analysis.api.components.KaCompilationTarget
-import org.jetbrains.kotlin.analysis.api.components.KaCompiledFile
-import org.jetbrains.kotlin.analysis.api.components.isClassFile
+import org.jetbrains.kotlin.analysis.api.compilation.KaCompilationOptions
+import org.jetbrains.kotlin.analysis.api.compilation.KaCompilationOptionsBuilder
+import org.jetbrains.kotlin.analysis.api.compilation.KaCompilationResult
+import org.jetbrains.kotlin.analysis.api.compilation.KaCompilationTarget
+import org.jetbrains.kotlin.analysis.api.compilation.KaCompiledFile
+import org.jetbrains.kotlin.analysis.api.compilation.compile
+import org.jetbrains.kotlin.analysis.api.compilation.createCompilationOptions
+import org.jetbrains.kotlin.analysis.api.compilation.isClassFile
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaJvmTarget
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
@@ -386,13 +389,14 @@ class KotlinBytecodeToolWindow(
 
         @KaExperimentalApi
         @ApiStatus.Internal
-        fun KaSession.compileSingleFile(
+        context(session: KaSession)
+        fun compileSingleFile(
             ktFile: KtFile,
             configurator: KaCompilationOptionsBuilder.() -> Unit = {}
         ): Pair<KaCompilationResult, ClassFileOrigins>? {
             val classFileOrigins = mutableMapOf<String, MutableSet<PsiFile>>()
 
-            val options = createCompilationOptions {
+            val options: KaCompilationOptions = createCompilationOptions {
                 target(KaCompilationTarget.JVM)
                 allowedErrorFilter(KotlinCompilerIdeAllowedErrorFilter.getInstance())
 

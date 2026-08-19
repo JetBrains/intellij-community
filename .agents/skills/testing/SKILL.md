@@ -1,6 +1,6 @@
 ---
 name: testing
-description: Run or troubleshoot IntelliJ `tests.cmd` tests, discovery, and runner options.
+description: Run or troubleshoot IntelliJ `tests.cmd` tests and discovery.
 ---
 
 # Testing Guide for IntelliJ IDEA

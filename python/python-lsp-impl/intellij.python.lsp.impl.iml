@@ -18,7 +18,7 @@
     <orderEntry type="module" module-name="intellij.platform.lsp" />
     <orderEntry type="module" module-name="intellij.python.pytools" />
     <orderEntry type="module" module-name="intellij.python.community.impl" />
-    <orderEntry type="module" module-name="intellij.python.sdk" />
+    <orderEntry type="module" module-name="intellij.python.sdk.backend" />
     <orderEntry type="module" module-name="intellij.python.lsp.core" />
     <orderEntry type="module" module-name="intellij.python.ruff" />
     <orderEntry type="module" module-name="intellij.python.pyright" />

@@ -2,6 +2,7 @@
 package com.intellij.util.ref;
 
 import com.intellij.ReviseWhenPortedToJDK;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ReflectionUtil;
@@ -128,13 +129,33 @@ public final class DebugReflectionUtil {
                                         @NotNull Class<V> lookFor,
                                         @NotNull Predicate<Object> shouldExamineValue,
                                         @NotNull PairProcessor<? super V, ? super BackLink<?>> leakProcessor) {
-    return walkObjects(maxDepth, Integer.MAX_VALUE, startRoots, lookFor, shouldExamineValue, leakProcessor);
+    return walkObjects(maxDepth, startRoots, lookFor, shouldExamineValue, Predicates.alwaysTrue(), leakProcessor);
   }
+
+  public static <V> boolean walkObjects(int maxDepth,
+                                        @NotNull Map<Object, String> startRoots,
+                                        @NotNull Class<V> lookFor,
+                                        @NotNull Predicate<Object> shouldExamineValue,
+                                        @NotNull Predicate<Field> shouldExamineField,
+                                        @NotNull PairProcessor<? super V, ? super BackLink<?>> leakProcessor) {
+    return walkObjects(maxDepth, Integer.MAX_VALUE, startRoots, lookFor, shouldExamineValue, shouldExamineField, leakProcessor);
+  }
+
   public static <V> boolean walkObjects(int maxDepth,
                                         int maxQueueSize,
                                         @NotNull Map<Object, String> startRoots,
                                         @NotNull Class<V> lookFor,
                                         @NotNull Predicate<Object> shouldExamineValue,
+                                        @NotNull PairProcessor<? super V, ? super BackLink<?>> leakProcessor) {
+    return walkObjects(maxDepth, maxQueueSize, startRoots, lookFor, shouldExamineValue, Predicates.alwaysTrue(), leakProcessor);
+  }
+
+  public static <V> boolean walkObjects(int maxDepth,
+                                        int maxQueueSize,
+                                        @NotNull Map<Object, String> startRoots,
+                                        @NotNull Class<V> lookFor,
+                                        @NotNull Predicate<Object> shouldExamineValue,
+                                        @NotNull Predicate<Field> shouldExamineField,
                                         @NotNull PairProcessor<? super V, ? super BackLink<?>> leakProcessor) {
     IntSet visited = new IntOpenHashSet(1000);
     Deque<BackLink<?>> toVisit = new ArrayDeque<>(1000);
@@ -168,7 +189,7 @@ public final class DebugReflectionUtil {
       }
 
       if (visited.add(System.identityHashCode(value))) {
-        queueStronglyReferencedValues(toVisit, maxQueueSize, value, backLink, shouldExamineValue);
+        queueStronglyReferencedValues(toVisit, maxQueueSize, value, backLink, shouldExamineValue, shouldExamineField);
       }
     }
   }
@@ -177,7 +198,8 @@ public final class DebugReflectionUtil {
                                                     int maxQueueSize,
                                                     @NotNull Object root,
                                                     @NotNull BackLink<?> backLink,
-                                                    @NotNull Predicate<Object> shouldExamineValue) {
+                                                    @NotNull Predicate<Object> shouldExamineValue,
+                                                    @NotNull Predicate<Field> shouldExamineField) {
     Class<?> rootClass = root.getClass();
     if (root instanceof Map) {
       RefValueHashMapUtil.expungeStaleEntries((Map<?, ?>)root);
@@ -186,6 +208,9 @@ public final class DebugReflectionUtil {
       String fieldName = field.getName();
       // do not follow weak/soft refs
       if (root instanceof Reference && ("referent".equals(fieldName) || "discovered".equals(fieldName))) {
+        continue;
+      }
+      if (!shouldExamineField.test(field)) {
         continue;
       }
 
@@ -215,6 +240,7 @@ public final class DebugReflectionUtil {
     if (root instanceof Class && isLoaded(((Class<?>)root).getClassLoader(), ((Class<?>)root).getName())) {
       for (Field field : getAllFields((Class<?>)root)) {
         if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
+        if (!shouldExamineField.test(field)) continue;
         try {
           Object value = field.get(null);
           queue(value, field, -1, backLink, queue, maxQueueSize, shouldExamineValue);

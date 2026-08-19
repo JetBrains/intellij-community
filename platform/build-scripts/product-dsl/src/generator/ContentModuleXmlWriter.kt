@@ -4,8 +4,6 @@
 package org.jetbrains.intellij.build.productLayout.generator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
-import com.intellij.platform.pluginGraph.ContentSourceKind
-import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
 import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlan
 import org.jetbrains.intellij.build.productLayout.model.error.ErrorCategory
@@ -37,7 +35,7 @@ internal object ContentModuleXmlWriter : PipelineNode {
     }
 
     val results = plans.map { plan ->
-      writeContentModuleXml(plan, model.generatedArtifactWritePolicy, model.pluginGraph)
+      writeContentModuleXml(plan, model.generatedArtifactWritePolicy)
     }
 
     ctx.publish(Slots.CONTENT_MODULE, ContentModuleOutput(files = results))
@@ -47,7 +45,6 @@ internal object ContentModuleXmlWriter : PipelineNode {
 private fun writeContentModuleXml(
   plan: ContentModuleDependencyPlan,
   policy: FileUpdateStrategy,
-  pluginGraph: PluginGraph,
 ): DependencyFileResult {
   if (plan.suppressibleError?.category == ErrorCategory.NON_STANDARD_DESCRIPTOR_ROOT) {
     return DependencyFileResult(
@@ -58,7 +55,7 @@ private fun writeContentModuleXml(
       testDependencies = emptyList(),
       existingXmlModuleDependencies = emptySet(),
       writtenPluginDependencies = emptyList(),
-      allJpsPluginDependencies = emptySet(),
+      requiredPluginDependencies = emptySet(),
       suppressionUsages = emptyList(),
     )
   }
@@ -71,13 +68,7 @@ private fun writeContentModuleXml(
     preserveExistingPlugin = { pluginName -> plan.preserveExistingPluginDependencies.contains(PluginId(pluginName)) },
     allowInsideSectionRegion = false,
   ) ?: plan.descriptorContent
-  val updatedContent = if (needsQualifiedExtensionPointNames(plan.contentModuleName, pluginGraph)) {
-    qualifyModuleSetExtensionPoints(dependencyUpdatedContent)
-  }
-  else {
-    dependencyUpdatedContent
-  }
-  val status = policy.writeIfChanged(plan.descriptorPath, plan.descriptorContent, updatedContent)
+  val status = policy.writeIfChanged(plan.descriptorPath, plan.descriptorContent, dependencyUpdatedContent)
 
   return DependencyFileResult(
     contentModuleName = plan.contentModuleName,
@@ -87,30 +78,8 @@ private fun writeContentModuleXml(
     testDependencies = plan.testDependencies,
     existingXmlModuleDependencies = plan.existingXmlModuleDependencies,
     writtenPluginDependencies = plan.writtenPluginDependencies,
-    allJpsPluginDependencies = plan.allJpsPluginDependencies,
+    requiredPluginDependencies = plan.requiredPluginDependencies,
     suppressionUsages = plan.suppressionUsages,
   )
 }
 
-private fun needsQualifiedExtensionPointNames(contentModuleName: ContentModuleName, pluginGraph: PluginGraph): Boolean {
-  return pluginGraph.query {
-    val contentModule = contentModule(contentModuleName) ?: return@query false
-    var hasModuleSetWrapperSource = false
-    contentModule.contentProductionSources { source ->
-      if (source.kind == ContentSourceKind.PLUGIN && source.plugin().isModuleSetWrapper) {
-        hasModuleSetWrapperSource = true
-      }
-    }
-    hasModuleSetWrapperSource
-  }
-}
-
-private val EXTENSION_POINT_NAME_PATTERN = Regex("""(<extensionPoint\b[^>]*?)\bname="([^"]+)"""")
-
-internal fun qualifyModuleSetExtensionPoints(content: String, namespace: String = "com.intellij"): String {
-  return EXTENSION_POINT_NAME_PATTERN.replace(content) { match ->
-    val pointName = match.groupValues[2]
-    val qualifiedName = if (pointName.startsWith("$namespace.")) pointName else "$namespace.$pointName"
-    "${match.groupValues[1]}qualifiedName=\"$qualifiedName\""
-  }
-}

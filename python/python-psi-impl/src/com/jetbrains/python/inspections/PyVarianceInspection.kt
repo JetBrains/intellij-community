@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.PyPsiBundle
@@ -23,17 +24,15 @@ import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.types.PyExpectedVarianceJudgment
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment
 import com.jetbrains.python.psi.types.PyTypeChecker
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.BIVARIANT
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.CONTRAVARIANT
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.COVARIANT
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.INFER_VARIANCE
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.INVARIANT
+import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeVarType
+import com.jetbrains.python.psi.types.PyVariance
+import com.jetbrains.python.psi.types.PyVariance.BIVARIANT
+import com.jetbrains.python.psi.types.PyVariance.CONTRAVARIANT
+import com.jetbrains.python.psi.types.PyVariance.COVARIANT
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 
@@ -134,29 +133,41 @@ class PyVarianceInspection : PyInspection() {
 
 
   private fun onPyTypeValTypeUsedInAnnotation(holder: ProblemsHolder, node: PyReferenceExpression, context: TypeEvalContext) {
+    val typeParameterType = PyInferredVarianceJudgment.findTypeVariable(node, context) ?: return
+    if (!isOpenTypeParameter(node, typeParameterType)) return
     val isInProtocol = node.parentOfType<PyClass>()?.isProtocol(context) ?: false
     val subscriptionExpression = node.parentOfType<PySubscriptionExpression>()
     val isInProtocolHeader = subscriptionExpression?.parent is PyArgumentList && subscriptionExpression.parent?.parent is PyClass
     if (isInProtocol && isInProtocolHeader) {
-      checkProtocol(holder, node, context)
+      checkProtocol(holder, node, typeParameterType, context)
     }
     else {
-      checkClass(holder, node, context)
+      checkClass(holder, node, typeParameterType, context)
     }
   }
 
-  private fun checkProtocol(holder: ProblemsHolder, node: PyReferenceExpression, context: TypeEvalContext) {
+  private fun checkProtocol(
+    holder: ProblemsHolder,
+    node: PyReferenceExpression,
+    typeParameterType: PyTypeParameterType,
+    context: TypeEvalContext,
+  ) {
     val varianceExpected = PyInferredVarianceJudgment.getInferredVariance(node, context) ?: return
-    val varianceActual = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(node, context) ?: return
+    val varianceActual = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(typeParameterType, context)
 
     val isInProtocolSubscriptionExpr = isInProtocolSubscriptionExpr(node)
     if (isInProtocolSubscriptionExpr) {
-      val varianceExpected = if (varianceExpected == BIVARIANT) COVARIANT else varianceExpected
       if (varianceExpected != varianceActual) {
-        val physicalNode = PyUtil.getFragmentContext(node) ?: return
-        val msg = PyPsiBundle.message("INSP.variance.checker.protocols.keep.effective.variance",
-                                      varianceExpected.name.lowercase(), varianceActual.name.lowercase())
-        holder.registerProblem(physicalNode, msg)
+        if (varianceExpected == BIVARIANT && varianceActual == COVARIANT) {
+          // skip since conformance tests expect BIVARIANT to be COVARIANT
+        }
+        else {
+          val varianceExpected = if (varianceExpected == BIVARIANT) COVARIANT else varianceExpected
+          val physicalNode = PyUtil.getFragmentContext(node) ?: return
+          val msg = PyPsiBundle.message("INSP.variance.checker.protocols.keep.effective.variance",
+                                        varianceExpected.name.lowercase(), varianceActual.name.lowercase())
+          holder.registerProblem(physicalNode, msg)
+        }
       }
     }
     else checkIncompatibleVariance(varianceActual, varianceExpected, holder, node)
@@ -172,47 +183,44 @@ class PyVarianceInspection : PyInspection() {
     return indexTupleExpression === nodeTupleParent
   }
 
-  private fun checkClass(holder: ProblemsHolder, node: PyReferenceExpression, context: TypeEvalContext) {
-    val varianceExpected = PyExpectedVarianceJudgment.getExpectedVariance(node, context) ?: return
+  private fun checkClass(
+    holder: ProblemsHolder,
+    node: PyReferenceExpression,
+    typeParameterType: PyTypeParameterType,
+    context: TypeEvalContext,
+  ) {
+    val varianceExpected = PyExpectedVarianceJudgment.getExpectedVariance(node, context).toPyVariance() ?: return
     if (varianceExpected == BIVARIANT) return
-    val varianceInferred = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(node, context) ?: return
+    val varianceInferred = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(typeParameterType, context)
 
     checkIncompatibleVariance(varianceInferred, varianceExpected, holder, node)
   }
 
+  private fun isOpenTypeParameter(node: PyReferenceExpression, typeParameterType: PyTypeParameterType): Boolean {
+    val scopeOwner = typeParameterType.scopeOwner
+    if (scopeOwner !is PyClass) return false // type parameter is invariant
+    val containingOwnersCount = generateSequence<PsiElement>(node) { PyUtil.getFragmentContextAwareParent(it) }
+      .takeWhile { it != scopeOwner }
+    val containingClassesCount = containingOwnersCount.count { it is PyClass }
+    val containingFunctionsCount = containingOwnersCount.count { it is PyFunction }
+    if (containingClassesCount > 0 || containingFunctionsCount > 1) {
+      // type parameter is captured already
+      return false
+    }
+    return true
+  }
+
   private fun checkIncompatibleVariance(
-    varianceInferred: Variance,
-    varianceExpected: Variance,
+    varianceInferred: PyVariance,
+    varianceExpected: PyVariance,
     holder: ProblemsHolder,
     node: PyReferenceExpression,
   ) {
-    if (varianceIsCompatible(varianceExpected, varianceInferred)) return
+    if (varianceExpected.isCompatibleWithActual(varianceInferred)) return
 
     val physicalNode = PyUtil.getFragmentContext(node) ?: return
     val msg = PyPsiBundle.message("INSP.variance.checker.incompatible",
                                   varianceExpected.name.lowercase(), varianceInferred.name.lowercase())
     holder.registerProblem(physicalNode, msg)
-  }
-}
-
-/**
- * Returns true iff declared/actual variance is compatible with the required/expected variance.
- *
- * Compatibility rules (typical for variance checking):
- * - INFER_VARIANCE is treated as "unknown / don't care" and is compatible with anything.
- * - INVARIANT can be used in both co- and contravariant positions (but not vice versa).
- * - COVARIANT is only compatible with a covariant position.
- * - CONTRAVARIANT is only compatible with a contravariant position.
- */
-fun varianceIsCompatible(expected: Variance?, actual: Variance?): Boolean {
-  val expected = expected ?: INVARIANT
-  val actual = actual ?: INVARIANT
-  if (actual == INFER_VARIANCE || expected == INFER_VARIANCE) return true
-
-  return when (expected) {
-    COVARIANT -> actual == COVARIANT || actual == INVARIANT
-    CONTRAVARIANT -> actual == CONTRAVARIANT || actual == INVARIANT
-    INVARIANT -> actual == INVARIANT
-    BIVARIANT -> true
   }
 }

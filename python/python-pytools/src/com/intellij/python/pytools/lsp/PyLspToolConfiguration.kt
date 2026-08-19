@@ -3,7 +3,6 @@ package com.intellij.python.pytools.lsp
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.python.pytools.PyToolsState
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.util.xmlb.XmlSerializerUtil
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -35,8 +34,6 @@ interface PyLspToolSettings {
   var inlayHints: Boolean?
   var documentation: Boolean?
   @Deprecated("replaced with PyToolState", ReplaceWith("PyTool.executeOn()"))
-  var executableDiscoveryMode: ExecutableDiscoveryMode
-  @Deprecated("replaced with PyToolState", ReplaceWith("PyTool.executeOn()"))
   var pathToExecutable: String
   @Deprecated("replaced with PyToolState", ReplaceWith("PyTool.executeOn()"))
   var sdkName: String
@@ -58,8 +55,6 @@ abstract class PyLspToolConfiguration<State : PyLspToolConfiguration<State>> : P
   /** `null` means: not supported */
   override var documentation: Boolean? = null
   @Deprecated("replaced with PyToolState")
-  override var executableDiscoveryMode: ExecutableDiscoveryMode = ExecutableDiscoveryMode.INTERPRETER
-  @Deprecated("replaced with PyToolState")
   override var pathToExecutable: String = ""
   @Deprecated("replaced with PyToolState")
   override var sdkName: String = DEFAULT_ENVIRONMENT
@@ -71,19 +66,17 @@ abstract class PyLspToolConfiguration<State : PyLspToolConfiguration<State>> : P
   override fun loadState(state: State): Unit = XmlSerializerUtil.copyBean(state, this as State)
 
   /**
-   * Reads the pre-[PyToolsState] enable / discovery-mode / custom-path settings into a [PyToolsState.ToolEntry]
-   * and clears them from this configuration, so [PyToolsState]'s one-time migration is one-way: re-running it
-   * can never resurrect the old values. Feature flags (inspections, completions, ...) are left untouched.
+   * Reads the pre-[PyToolsState] `enabled` flag into a [PyToolsState.ToolEntry] and clears the legacy
+   * enable / path fields from this configuration, so [PyToolsState]'s one-time migration
+   * is one-way: re-running it can never resurrect the old values. The legacy custom path is dropped, not
+   * migrated — custom paths now live per Eel machine in `PyCustomExecutablePaths`, and importing a stale
+   * per-project value here could clobber one the user already set. Feature flags (inspections,
+   * completions, ...) are left untouched.
    */
   @Suppress("DEPRECATION")
   fun migrateToPyToolState(): PyToolsState.ToolEntry {
-    val entry = PyToolsState.ToolEntry(
-      enabled = enabled,
-      discoveryMode = executableDiscoveryMode,
-      customToolBinaryPath = executablePath,
-    )
+    val entry = PyToolsState.ToolEntry(enabled = enabled)
     enabled = false
-    executableDiscoveryMode = ExecutableDiscoveryMode.INTERPRETER
     pathToExecutable = ""
     return entry
   }

@@ -46,6 +46,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.kotlinx.coroutines.guava.iml",
+        "resources/intellij.libraries.kotlinx.coroutines.guava.xml",
     ],
     visibility = ["//visibility:public"],
 )

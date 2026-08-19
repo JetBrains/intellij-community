@@ -6,7 +6,6 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.BreakpointStepMethodFilter;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -26,9 +25,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -39,8 +35,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy;
-import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.psi.PsiField;
 import com.intellij.util.CoroutineScopeKt;
 import com.intellij.util.EventDispatcher;
@@ -60,7 +54,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
@@ -163,22 +156,6 @@ public class BreakpointManager {
 
   private XBreakpointManager getXBreakpointManager() {
     return XDebuggerManager.getInstance(myProject).getBreakpointManager();
-  }
-
-  public void editBreakpoint(final Breakpoint breakpoint, final Editor editor) {
-    DebuggerInvocationUtil.invokeLaterAnyModality(myProject, () -> {
-      XBreakpoint xBreakpoint = breakpoint.myXBreakpoint;
-      var breakpointProxy = XDebuggerEntityConverter.asProxy(xBreakpoint);
-      if (breakpointProxy instanceof XLineBreakpointProxy lineBreakpointProxy) {
-        RangeHighlighter highlighter = lineBreakpointProxy.getHighlighter();
-        if (highlighter != null) {
-          GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
-          if (renderer != null) {
-            EditBreakpointAction.HANDLER.editBreakpoint(myProject, editor, lineBreakpointProxy, renderer);
-          }
-        }
-      }
-    });
   }
 
   public void setBreakpointDefaults(Key<? extends Breakpoint> category, BreakpointDefaults defaults) {

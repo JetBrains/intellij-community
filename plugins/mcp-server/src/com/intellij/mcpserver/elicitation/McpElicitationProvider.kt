@@ -3,6 +3,7 @@ package com.intellij.mcpserver.elicitation
 import com.intellij.lang.Language
 import com.intellij.mcpserver.projectOrNull
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import io.modelcontextprotocol.kotlin.sdk.server.ServerSession
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.serialization.DeserializationStrategy
@@ -50,18 +51,20 @@ suspend inline fun <reified T> McpElicitationProvider.requestElicitation(
   requestElicitation(buildElicitationForm(block), serializer<T>())
 
 /**
- * Built-in [McpElicitationProvider] for CLI sessions: sends a real MCP `elicitation/create`
- * request to the client over the current session's [ServerSession] (read from the coroutine
- * context via [McpSessionElement]), maps the [ElicitationForm] to the SDK's `RequestedSchema`,
- * and decodes the `ElicitResult` into a typed [ElicitationResult].
+ * Base for providers that answer elicitation over the MCP transport: sends a real `elicitation/create`
+ * request to the client over the current session's [ServerSession] (read from the coroutine context via
+ * [McpSessionElement]), maps the [ElicitationForm] to the SDK's `RequestedSchema`, and decodes the
+ * `ElicitResult` into a typed [ElicitationResult].
  *
- * Returns `null` when there is no current session or the client did not advertise the
- * elicitation capability. In-IDE agents (AI chat, ACP, qodana, embedded) have no elicitation
- * UI yet, so this provider is applicable only for [McpElicitationKind.CLI].
+ * Returns `null` when there is no current session or the client did not advertise the elicitation
+ * capability, so the caller can fall back.
+ *
+ * Subclasses differ only in [isApplicable] and in the [renderer] that encodes the message body.
  */
-class McpElicitationCliProvider : McpElicitationProvider {
+abstract class McpTransportElicitationProvider : McpElicitationProvider {
 
-  override fun isApplicable(kind: McpElicitationKind): Boolean = kind == McpElicitationKind.CLI
+  /** Encoding of the message body, chosen for what this provider's clients can render. */
+  protected abstract val renderer: ElicitationFormRenderer
 
   override suspend fun <T> requestElicitation(
     form: ElicitationForm,
@@ -70,13 +73,23 @@ class McpElicitationCliProvider : McpElicitationProvider {
     val session = currentCoroutineContext()[McpSessionElement]?.session ?: return null
     // checking client capabilities (it's not related to CLI/no-CLI checks)
     if (session.clientCapabilities?.elicitation == null) return null
-    // Render the parts to ANSI. Code highlighting and styling are safe only in the read-only message.
-    val message = renderToAnsi(form.messageParts, currentCoroutineContext().projectOrNull)
+    // Code highlighting and styling are safe only in the read-only message.
+    val message = renderer.render(form.messageParts, currentProjectOrNull())
     return session
       .createElicitation(message, form.toRequestedSchema())
       .toElicitationResult(deserializer)
   }
 }
+
+/**
+ * The project a highlighting [ElicitationFormRenderer] may want, or `null`.
+ *
+ * [projectOrNull] throws when several projects are open and the call named none. That must not abort a
+ * consent prompt: the project is optional to every renderer here, so an unresolved one degrades to
+ * unhighlighted code rather than a failed tool call.
+ */
+private suspend fun currentProjectOrNull(): Project? =
+  runCatching { currentCoroutineContext().projectOrNull }.getOrNull()
 
 /**
  * An elicitation request: ordered [messageParts] shown to the user plus the [fields] to fill in.
@@ -91,18 +104,20 @@ data class ElicitationForm internal constructor(
 /**
  * One segment of an [ElicitationForm] message. The provider renders the parts in order and joins them
  * with no separator (line breaks live inside [Text]). Each session kind renders its own way (the CLI
- * provider emits ANSI). Not serialized.
+ * provider emits Markdown or ANSI, depending on the client). Not serialized.
  */
 sealed interface ElicitationMessagePart {
+  val text: String
+
   /** Plain text, shown as is. Put newlines here. */
-  data class Text(val text: String) : ElicitationMessagePart
+  data class Text(override val text: String) : ElicitationMessagePart
 
   /** Source code, syntax-highlighted for [language]. */
-  data class Code(val text: String, val language: Language) : ElicitationMessagePart
+  data class Code(override val text: String, val language: Language) : ElicitationMessagePart
 
   /** Styled text: font [styles] and an optional [color]. */
   data class Styled(
-    val text: String,
+    override val text: String,
     val styles: Set<FontStyle> = emptySet(),
     val color: TextColor? = null,
   ) : ElicitationMessagePart

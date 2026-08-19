@@ -1,14 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.ui.icon
 
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.decodeToImageBitmap
 import androidx.compose.ui.unit.Density
 import com.intellij.platform.icons.ImageResourceLocation
 import com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher
 import com.intellij.platform.icons.impl.patchers.SvgPatchOperation
+import com.intellij.platform.icons.impl.patchers.strokeSvgPatcher
 import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
-import com.intellij.platform.icons.patchers.svgPatcher
 import com.intellij.platform.icons.rendering.ImageModifiers
 import com.intellij.platform.icons.rendering.ImageResource
 import com.intellij.platform.icons.rendering.ImageResourceProvider
@@ -54,52 +53,18 @@ private fun patchSvg(modifiers: ImageModifiers?, inputStream: InputStream): Byte
     val document = builder.parse(inputStream)
 
     val knownModifiers = modifiers as? DefaultImageModifiers
-    val patcher =
-        knownModifiers
-            ?.stroke
-            ?.let { stroke ->
-                svgPatcher {
-                    for (color in backgroundPalette) {
-                        replaceIfMatches("fill", color.toIconsColor().toHex(), "transparent")
-                    }
-                    for (color in strokeColors) {
-                        replaceIfMatches("fill", color.toIconsColor().toHex(), stroke.toHex())
-                    }
-                }
-            }
-            ?.combineWith(modifiers.svgPatcher)
+    // The palette substitution lives in the platform, so this frontend and the Swing one cannot drift into stroking
+    // the same icon differently.
+    val strokePatcher = knownModifiers?.stroke?.let { strokeSvgPatcher(it) }
+    // Same order as the Swing frontend: the icon's own patcher first, the stroke substitution after it. The elvis
+    // keeps a stroke-only icon patched, since `svgPatcher` is null whenever an icon carries no explicit patcher.
+    val patcher = modifiers?.svgPatcher?.combineWith(strokePatcher) ?: strokePatcher
     (patcher as? DefaultSvgPatcher)?.patch(document.documentElement)
     return document.writeToString().toByteArray()
 }
 
-private val backgroundPalette =
-    listOf(
-        Color(0xFFEBECF0),
-        Color(0xFFE7EFFD),
-        Color(0xFFDFF2E0),
-        Color(0xFFF2FCF3),
-        Color(0xFFFFE8E8),
-        Color(0xFFFFF5F5),
-        Color(0xFFFFF8E3),
-        Color(0xFFFFF4EB),
-        Color(0xFFEEE0FF),
-    )
-
-private val strokeColors =
-    listOf(
-        Color(0xFF000000),
-        Color(0xFFFFFFFF),
-        Color(0xFF818594),
-        Color(0xFF6C707E),
-        Color(0xFF3574F0),
-        Color(0xFF5FB865),
-        Color(0xFFE35252),
-        Color(0xFFEB7171),
-        Color(0xFFE3AE4D),
-        Color(0xFFFCC75B),
-        Color(0xFFF28C35),
-        Color(0xFF955AE0),
-    )
+/** The attribute's value, or `null` when the element does not carry it — DOM reports both as an empty string. */
+private fun Element.attributeOrNull(name: String): String? = if (hasAttribute(name)) getAttribute(name) else null
 
 @Suppress("NestedBlockDepth", "UnsafeCallOnNullableType")
 private fun DefaultSvgPatcher.patch(element: Element) {
@@ -111,20 +76,23 @@ private fun DefaultSvgPatcher.patch(element: Element) {
                 }
             }
             SvgPatchOperation.Operation.Replace -> {
-                if (operation.conditional) {
-                    val matches =
-                        element.getAttribute(operation.attributeName).equals(operation.expectedValue, ignoreCase = true)
-                    if (matches == !operation.negatedCondition) {
-                        element.setAttribute(operation.attributeName, operation.value!!)
-                    }
-                } else if (element.hasAttribute(operation.attributeName)) {
+                // Replace never creates an attribute, conditionally or not: an element that does not carry the
+                // attribute inherits it, and adding one here would override that inheritance. Add exists for that.
+                if (
+                    element.hasAttribute(operation.attributeName) &&
+                        (!operation.conditional ||
+                            operation.matches(element.attributeOrNull(operation.attributeName)) !=
+                                operation.negatedCondition)
+                ) {
                     element.setAttribute(operation.attributeName, operation.value!!)
                 }
             }
             SvgPatchOperation.Operation.Remove -> {
                 if (operation.conditional) {
-                    val matches = element.getAttribute(operation.attributeName) == operation.expectedValue
-                    if (matches == !operation.negatedCondition) {
+                    if (
+                        operation.matches(element.attributeOrNull(operation.attributeName)) !=
+                            operation.negatedCondition
+                    ) {
                         element.removeAttribute(operation.attributeName)
                     }
                 } else {

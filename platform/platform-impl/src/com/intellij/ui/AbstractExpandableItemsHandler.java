@@ -476,6 +476,11 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     int width = Math.min(screen.width + screen.x - location.x - borderSize, cellMaxX - visMaxX);
     int height = cellBounds.height;
 
+    // The popup never leaves this screen, so anything laid out past the screen's right edge is measured and shaped but
+    // never painted - megabytes of text for a huge cell value, on every paint.
+    int cellScreenX = location.x + cellBounds.x - visMaxX; // the cell's left edge, often scrolled off to the left
+    cellBounds.width = Math.min(cellBounds.width, screen.x + screen.width - cellScreenX);
+
     int cellY = 0;
     if (arc > 0 && selectablePanel != null) {
       renderer.setBounds(cellBounds);

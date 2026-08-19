@@ -5,7 +5,6 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
@@ -41,6 +40,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -89,6 +89,14 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
         // editor.setHighlighter also sets text, but we set it here to avoid executing related work in EDT
         // (the document text is compared, so, double work is not performed)
         highlighter.setText(effectiveDocument.immutableCharSequence)
+        if (effectiveDocument.immutableCharSequence.isNotEmpty()) {
+          asyncLoader.coroutineScope.launch {
+            // preload the syntax highlighter in BGT because it's expensive
+            // - to classload all highlighters and
+            // - enumerate and handle all extensions (see e.g. [com.intellij.ide.highlighter.XmlFileHighlighter.EMBEDDED_HIGHLIGHTERS])
+            highlighter.createIterator(0).textAttributes
+          }
+        }
         highlighter
       }
 
@@ -164,27 +172,32 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     }
   }
 
-  override fun readState(element: Element, project: Project, file: VirtualFile): FileEditorState {
+  override fun readState(element: Element, project: Project, file: Lazy<VirtualFile?>): FileEditorState {
     val state = super<TextEditorProvider>.readState(element, project, file) as TextEditorState
     val foldingElement = element.getChild(FOLDING_ELEMENT)
-    if (foldingElement == null) {
-      return state
-    }
-    val document = ReadAction.computeBlocking<Document, RuntimeException> {
-      if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(file)) {
-        //otherwise we will decompile files and cause performance issues
-        FileDocumentManager.getInstance().getCachedDocument(file)
+    if (foldingElement == null) return state
+
+    // This code is called from loadState() of EditorHistoryManager init
+    // never use read action here, it leads to deadlocks
+    // delay folding state computation till they are needed
+
+    return state.withLazyFoldingState {
+      val vFile = file.value ?: return@withLazyFoldingState null
+
+      val document = if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(vFile)) {
+        // otherwise we will decompile files and cause performance issues
+        FileDocumentManager.getInstance().getCachedDocument(vFile)
       }
       else {
-        FileDocumentManager.getInstance().getDocument(file)
+        FileDocumentManager.getInstance().getDocument(vFile)
       }
-    }
-    return if (document != null) {
-      val foldingState = CodeFoldingManager.getInstance(project).readFoldingState(foldingElement, document)
-      state.withFoldingState(foldingState)
-    }
-    else {
-      state
+
+      if (document != null) {
+        CodeFoldingManager.getInstance(project).readFoldingState(foldingElement, document)
+      }
+      else {
+        null
+      }
     }
   }
 

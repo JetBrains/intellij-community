@@ -39,7 +39,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jna" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jna" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.download.pgp.verifier" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.bouncy.castle.pgp" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />

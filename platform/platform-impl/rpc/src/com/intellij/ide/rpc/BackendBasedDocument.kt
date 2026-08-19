@@ -36,11 +36,14 @@ fun Document.bindToBackend(
   service<BackendBasedDocumentCoroutineScopeProvider>().cs.launch(Dispatchers.EDT) {
     val builder = BackendDocumentBindBuilder().apply(builder)
     val backendDocumentIdProvider = builder.backendDocumentIdProvider
-    if (backendDocumentIdProvider != null) {
+    val documentBound = if (backendDocumentIdProvider != null) {
       bindToBackend(backendDocumentIdProvider, builder.onBindingDispose)
     }
+    else {
+      true
+    }
 
-    if (builder.bindEditors) {
+    if (documentBound && builder.bindEditors) {
       // mark the document, so future editors will be bind
       bindEditorsToBackend()
       // bind current editors (since they might be created during backends' documents initialization)
@@ -88,7 +91,7 @@ private fun Document.bindCurrentEditors() {
 private suspend fun Document.bindToBackend(
   backendDocumentIdProvider: suspend (FrontendDocumentId) -> BackendDocumentId?,
   onBindingDispose: (() -> Unit)?,
-) {
+): Boolean {
   val frontendDocument = this
   val frontendDocumentId = FrontendDocumentId(UID.random())
   val registry = FrontendDocumentIdRegistry.EP_NAME.extensionList.firstOrNull()
@@ -106,6 +109,7 @@ private suspend fun Document.bindToBackend(
       registry?.unregisterFrontendDocumentId(frontendDocumentId)
     }
   }
+  return backendDocumentId != null
 }
 
 @ApiStatus.Internal

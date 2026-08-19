@@ -4,6 +4,7 @@ package com.intellij.util.concurrency;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -247,6 +248,18 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
    */
   public static @NotNull Runnable captureContextCancellationForRunnableThatDoesNotOutliveContextScope(@NotNull Runnable r) {
     return Propagation.capturePropagationContext(r, true);
+  }
+
+  /**
+   * Same as {@link #captureContextCancellationForRunnableThatDoesNotOutliveContextScope}, but for the callers which cannot
+   * guarantee that the returned runnable is always executed.
+   *
+   * @return the wrapped runnable, and a cleanup action which the caller must run if, and only if, it discards the wrapped
+   * runnable without executing it. Without the cleanup, the captured child job hangs around forever and prevents completion
+   * of its parent.
+   */
+  public static @NotNull Pair<Runnable, Runnable> captureContextCancellationForDiscardableRunnable(@NotNull Runnable r) {
+    return Propagation.capturePropagationContextWithCleanup(r);
   }
 
   public static <T> @NotNull FutureTask<T> capturePropagationAndCancellationContext(@NotNull Callable<T> callable) {

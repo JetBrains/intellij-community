@@ -8,8 +8,11 @@ from enum import Enum, Flag
 from typing import Literal, Never, assert_type
 
 # > From the perspective of the type system, most enum classes are equivalent
-# > to the union of the literal members within that enum. Type checkers may
-# > therefore expand an enum type
+# > to the union of the literal members within that enum. [...] Because of the
+# > equivalency between an enum class and the union of literal members within
+# > that enum, the two types may be used interchangeably. Type checkers may
+# > therefore expand an enum type (that does not derive from enum.Flag) into a
+# > union of literal values during type narrowing and exhaustion detection
 
 
 class Color(Enum):
@@ -35,8 +38,8 @@ def print_color2(c: Color):
             assert_type(c, Never)  # E?
 
 
-# > This rule does not apply to classes that derive from enum. Flag because
-# > these enums allow flags to be combined in arbitrary ways.
+# > (This rule does not apply to classes that derive from enum.Flag because
+# > these enums allow flags to be combined in arbitrary ways.)
 
 
 class CustomFlags(Flag):
@@ -64,7 +67,7 @@ def test2(f: CustomFlags):
 
 
 # > A type checker should treat a complete union of all literal members as
-# > compatible with the enum type.
+# > equivalent to the enum type.
 
 
 class Answer(Enum):
@@ -76,3 +79,8 @@ def test3(val: object) -> list[Answer]:
     assert val is Answer.Yes or val is Answer.No
     x = [val]
     return x
+
+
+def test4(a: Answer) -> None:
+    x: Literal[Answer.Yes, Answer.No] = a
+    assert_type(a, Literal[Answer.Yes, Answer.No])

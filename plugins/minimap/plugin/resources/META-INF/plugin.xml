@@ -1,0 +1,24 @@
+<idea-plugin allow-bundled-update="true">
+  <id>com.intellij.minimap</id>
+  <name>Minimap</name>
+  <vendor>JetBrains</vendor>
+  <category>Other Tools</category>
+
+  <description><![CDATA[
+    <p>Adds an editor <b>Minimap</b>: a zoomed-out overview of the whole file rendered next to the editor.</p>
+    <ul>
+      <li>Bird's-eye overview of the current file with the visible viewport highlighted.</li>
+      <li>Click or drag on the minimap to navigate and scroll the editor instantly.</li>
+      <li>Overlays for selection, carets, folded regions, breakpoints, and diagnostics.</li>
+    </ul>
+  ]]></description>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+
+  <!--suppress AllContentModulesOptionalLoadingRule -->
+  <content namespace="jetbrains">
+    <module name="intellij.minimap.core"/>
+  </content>
+</idea-plugin>

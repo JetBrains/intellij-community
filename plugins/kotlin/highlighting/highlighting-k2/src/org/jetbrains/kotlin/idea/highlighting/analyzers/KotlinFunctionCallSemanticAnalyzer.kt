@@ -7,7 +7,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -47,7 +48,7 @@ internal open class KotlinFunctionCallSemanticAnalyzer(holder: HighlightInfoHold
     private fun expressionHighlightType(expression: KtBinaryExpression): HighlightInfoType? {
         context(session) {
             val call = expression.resolveToCall()?.successfulCallOrNull<KaCall>() ?: return null
-            if (call is KaSimpleFunctionCall && (call.symbol as? KaNamedFunctionSymbol)?.isOperator == true) return null
+            if (call is KaFunctionCall<*> && (call.symbol as? KaNamedFunctionSymbol)?.isOperator == true) return null
             val highlightInfoType = getDefaultHighlightInfoTypeForCall(call)
             return highlightInfoType
         }
@@ -65,13 +66,13 @@ internal open class KotlinFunctionCallSemanticAnalyzer(holder: HighlightInfoHold
     }
 
     private fun getDefaultHighlightInfoTypeForCall(call: KaCall): HighlightInfoType? {
-        if (call !is KaSimpleFunctionCall) return null
+        if (call !is KaFunctionCall<*>) return null
         val type = when (val function = call.symbol) {
             is KaConstructorSymbol -> KotlinHighlightInfoTypeSemanticNames.CONSTRUCTOR_CALL
             is KaAnonymousFunctionSymbol -> null
             is KaNamedFunctionSymbol -> when {
                 function.isSuspend -> KotlinHighlightInfoTypeSemanticNames.SUSPEND_FUNCTION_CALL
-                call.isImplicitInvoke -> if (function.isBuiltinFunctionInvoke) {
+                call is KaImplicitInvokeCall -> if (function.isBuiltinFunctionInvoke) {
                     KotlinHighlightInfoTypeSemanticNames.VARIABLE_AS_FUNCTION_CALL
                 } else {
                     KotlinHighlightInfoTypeSemanticNames.VARIABLE_AS_FUNCTION_LIKE_CALL
@@ -98,9 +99,7 @@ internal open class KotlinFunctionCallSemanticAnalyzer(holder: HighlightInfoHold
                 KotlinCallHighlighterExtension.EP_NAME.extensionList.firstNotNullOfOrNull {
                     with(it) {
                         // keep with as KotlinCallHighlighterExtension API should be stable
-                        with(session) {
-                            highlightCall(expression, call)
-                        }
+                        highlightCall(expression, call)
                     }
                 }
             return highlightInfoType

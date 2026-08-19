@@ -30,6 +30,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.provider.EelPathDescriptorKt;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.psi.PsiDirectory;
@@ -47,6 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -444,10 +447,25 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   public boolean isAlwaysShowPlus() {
     final VirtualFile file = getVirtualFile();
     if (file == null || !file.isValid()) return false;
-    VirtualFile[] children = asCacheAvoiding(file).getChildren();
-    if (ArrayUtil.isEmpty(children)) return false;
-    if (ContainerUtil.exists(children, child -> !child.isDirectory())) return true;
-    ViewSettings settings = getSettings();
-    return settings == null || !settings.isFlattenPackages();
+
+    final boolean mayLoadChildren;
+    if (Registry.is("ide.project.view.skip.loading.children.for.remote.directories", true)) {
+      Path nioPath = file.getFileSystem().getNioPath(file);
+      mayLoadChildren = nioPath == null || LocalEelDescriptor.INSTANCE.equals(EelPathDescriptorKt.getEelDescriptor(nioPath));
+    }
+    else {
+      mayLoadChildren = true;
+    }
+
+    if (mayLoadChildren) {
+      VirtualFile[] children = asCacheAvoiding(file).getChildren();
+      if (ArrayUtil.isEmpty(children)) return false;
+      if (ContainerUtil.exists(children, child -> !child.isDirectory())) return true;
+      ViewSettings settings = getSettings();
+      return settings == null || !settings.isFlattenPackages();
+    }
+    else {
+      return true;
+    }
   }
 }

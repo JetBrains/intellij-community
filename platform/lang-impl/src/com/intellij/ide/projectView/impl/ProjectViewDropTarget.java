@@ -189,6 +189,8 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     boolean isDropRedundant(@NotNull TreePath source, @NotNull TreePath target);
 
+    boolean isDropRedundant(@NotNull PsiElement source, @NotNull PsiElement target);
+
     void doDrop(TreePath @NotNull [] sources, @NotNull TreePath target);
 
     void doDrop(@NotNull DropContext context);
@@ -240,8 +242,12 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
       return null;
     }
 
-    private PsiElement @NotNull [] getDataContextPsiElements() {
-      return BaseRefactoringAction.getPsiElementArray(DataManager.getInstance().getDataContext(myTree));
+    protected PsiElement @NotNull [] getDataContextPsiElements() {
+      return getDataContextPsiElements(DataManager.getInstance().getDataContext(myTree));
+    }
+
+    protected PsiElement @NotNull [] getDataContextPsiElements(@NotNull DataContext dataContext) {
+      return BaseRefactoringAction.getPsiElementArray(dataContext);
     }
   }
 
@@ -292,7 +298,8 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
         node.drop(sources, DataManager.getInstance().getDataContext(myTree));
       }
       else {
-        ReadAction.nonBlocking(() -> getDropContext(getNonDataContextPsiElements(sources), target))
+        DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
+        ReadAction.nonBlocking(() -> getDropContext(getDataContextPsiElements(dataContext), target))
           .finishOnUiThread(ModalityState.defaultModalityState(), context -> doDrop(context, false))
           .submit(AppExecutorUtil.getAppExecutorService());
       }
@@ -337,6 +344,11 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
     @Override
     public boolean isDropRedundant(@NotNull TreePath source, @NotNull TreePath target) {
       return target.equals(source.getParentPath()) || MoveHandler.isMoveRedundant(getPsiElement(source), getPsiElement(target));
+    }
+
+    @Override
+    public boolean isDropRedundant(@NotNull PsiElement source, @NotNull PsiElement target) {
+      return target == source.getParent() || MoveHandler.isMoveRedundant(source, target);
     }
 
     @Override
@@ -414,6 +426,11 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     @Override
     public boolean isDropRedundant(@NotNull TreePath source, @NotNull TreePath target) {
+      return false;
+    }
+
+    @Override
+    public boolean isDropRedundant(@NotNull PsiElement source, @NotNull PsiElement target) {
       return false;
     }
 

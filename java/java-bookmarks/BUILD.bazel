@@ -64,6 +64,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.bookmarks.iml",
+        "resources/intellij.java.bookmarks.xml",
     ],
     visibility = ["//visibility:public"],
 )

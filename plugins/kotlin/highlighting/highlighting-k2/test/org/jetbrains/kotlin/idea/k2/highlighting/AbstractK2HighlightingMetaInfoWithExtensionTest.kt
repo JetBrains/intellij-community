@@ -18,7 +18,8 @@ object KotlinCallHighlighterExtensionForTest : KotlinCallHighlighterExtension {
         EXTENSION("MyExtension"),
     }
 
-    override fun KaSession.highlightCall(elementToHighlight: PsiElement, call: KaCall): HighlightInfoType? {
+    context(session: KaSession)
+    override fun highlightCall(elementToHighlight: PsiElement, call: KaCall): HighlightInfoType? {
         if (call !is KaCallableMemberCall<*, *>) return null
         val annotations = call.partiallyAppliedSymbol.symbol.annotations +
                 (call.partiallyAppliedSymbol.dispatchReceiver?.type?.annotations ?: emptyList())

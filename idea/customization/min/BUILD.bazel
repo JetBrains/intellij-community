@@ -32,6 +32,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.customization.min.iml",
+        "resources/intellij.platform.customization.min.xml",
     ],
     visibility = ["//visibility:public"],
 )

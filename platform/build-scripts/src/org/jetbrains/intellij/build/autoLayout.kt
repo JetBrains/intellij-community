@@ -102,7 +102,7 @@ internal suspend fun computeModuleSourcesByContent(
       item = ModuleItem(
         moduleName = moduleName,
         relativeOutputFile = relativeOutputFile,
-        reason = "<- ${pluginLayout.mainModule} (plugin content)",
+        reason = generateInclusionReasonForContentModule(pluginLayout.mainModule),
       ),
       layout = pluginLayout,
       searchableOptionSet = searchableOptionSet,
@@ -110,6 +110,8 @@ internal suspend fun computeModuleSourcesByContent(
   }
   descriptorCacheWriter.apply()
 }
+
+internal fun generateInclusionReasonForContentModule(pluginMainModule: String): String = "<- $pluginMainModule (plugin content)"
 
 private suspend fun computeOutputJarPath(
   moduleName: String,

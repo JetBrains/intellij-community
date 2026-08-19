@@ -19,7 +19,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
         "//platform/lang-api:lang",
         "//platform/platform-impl:ide-impl",
@@ -54,6 +53,7 @@ jvm_library(
 exports_files(
     [
         "intellij.webp.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

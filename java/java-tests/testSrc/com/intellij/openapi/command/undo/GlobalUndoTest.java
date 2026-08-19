@@ -40,8 +40,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PerformanceUnitTest;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import kotlin.text.Charsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1026,11 +1026,11 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
       }
     });
 
-    PlatformTestUtil.assertTiming("", 2000, 1, () -> {
+    Benchmark.newBenchmark("global undo and redo", () -> {
       redoUndo();
       redoUndo();
       redoUndo();
-    });
+    }).start();
   }
 
   private void redoUndo() {

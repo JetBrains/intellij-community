@@ -27,6 +27,7 @@ import org.jdom.CDATA
 import org.jdom.Element
 import org.jdom.Namespace
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.DescriptorSearchPass
 import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.ModuleOutputProvider
@@ -42,6 +43,7 @@ import org.jetbrains.intellij.build.impl.contentModuleNameToDescriptorFileName
 import org.jetbrains.intellij.build.impl.toLoadPath
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
+import org.jetbrains.intellij.build.readDescriptor
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import java.nio.file.Path
 
@@ -134,8 +136,18 @@ fun deprecatedResolveDescriptorForEmbeddedProduct(
       loadXmlFromEmbeddedProductSpec(productModulesContentSpec, context)
     }
     else {
-      val file = context.findFileInModuleSources(clientModuleName, relativePath) ?: error("File not found: $relativePath in module $clientModuleName")
-      JDOMUtil.load(file)
+      // Sources first, then the module's own output: a build assembling from Bazel outputs has no checkout to read
+      // sources from, and the descriptor it wants is the one that module compiled into its jar.
+      val file = context.findFileInModuleSources(clientModuleName, relativePath)
+      if (file == null) {
+        val module = context.outputProvider.findRequiredModule(clientModuleName)
+        val content = findUnprocessedDescriptorContent(module = module, path = relativePath, outputProvider = context.outputProvider)
+                      ?: error("File not found: $relativePath in module $clientModuleName sources or output")
+        JDOMUtil.load(content)
+      }
+      else {
+        JDOMUtil.load(file)
+      }
     }
     val pluginLayout = PluginLayout.pluginAuto(clientModuleName) {}
     val descriptorContainer = platformLayout.descriptorCacheContainer.forPlugin(getEmbeddedProductTempPluginDir(context, clientModuleName))
@@ -375,37 +387,66 @@ internal class XIncludeElementResolverImpl(
 
     val loadPath = toLoadPath(relativePath)
 
-    for (searchPath in searchPath) {
-      val descriptorCache = searchPath.descriptorCache
-      descriptorCache.getCachedFileData(loadPath)?.let {
-        return JDOMUtil.load(it)
-      }
-
-      val outputProvider = context.outputProvider
-      for (module in searchPath.modules) {
-        findUnprocessedDescriptorContent(
-          outputProvider.findRequiredModule(module),
-          loadPath,
-          outputProvider,
-        )?.let { data ->
-          descriptorCache.putIfAbsent(loadPath, data)
-          return JDOMUtil.load(data)
+    // The whole search runs in the checkout first and only then in module output. A scope here can name every module
+    // of the platform layout, and in `MODULE_OUTPUT` a *miss* still resolves that module's Bazel output - which is
+    // what declares it as an input of a dev-distribution fragment. See `DescriptorSearchPass`.
+    for (pass in DescriptorSearchPass.entries) {
+      for (searchPath in searchPath) {
+        val descriptorCache = searchPath.descriptorCache
+        descriptorCache.getCachedFileData(loadPath)?.let {
+          return JDOMUtil.load(it)
         }
-      }
 
-      val searchInDependencies = searchPath.searchInDependencies
-      // search in module deps only if we cannot find in modules
-      if (searchInDependencies != DescriptorSearchScope.SearchMode.WITHOUT_DEPENDENCIES) {
-        val processedModules = HashSet(searchPath.modules)
+        val outputProvider = context.outputProvider
         for (module in searchPath.modules) {
-          findFileInModuleDependencies(
+          readDescriptor(
             module = outputProvider.findRequiredModule(module),
-            relativePath = loadPath,
+            path = loadPath,
             outputProvider = outputProvider,
-            processedModules = processedModules,
-            recursiveModuleExclude = if (searchInDependencies == DescriptorSearchScope.SearchMode.PLUGIN_COLLECTOR) "intellij.platform." else null,
+            pass = pass,
           )?.let { data ->
             descriptorCache.putIfAbsent(loadPath, data)
+            return JDOMUtil.load(data)
+          }
+        }
+
+        val searchInDependencies = searchPath.searchInDependencies
+        // search in module deps only if we cannot find in modules
+        if (searchInDependencies != DescriptorSearchScope.SearchMode.WITHOUT_DEPENDENCIES) {
+          // Fresh per pass: a set shared with the sources pass would make the output pass skip every module it visited.
+          val processedModules = HashSet(searchPath.modules)
+          for (module in searchPath.modules) {
+            findFileInModuleDependencies(
+              module = outputProvider.findRequiredModule(module),
+              relativePath = loadPath,
+              outputProvider = outputProvider,
+              processedModules = processedModules,
+              pass = pass,
+              recursiveModuleExclude = if (searchInDependencies == DescriptorSearchScope.SearchMode.PLUGIN_COLLECTOR) "intellij.platform." else null,
+            )?.let { data ->
+              descriptorCache.putIfAbsent(loadPath, data)
+              return JDOMUtil.load(data)
+            }
+          }
+        }
+      }
+      if (pass == DescriptorSearchPass.PRODUCTION_SOURCES && searchPath.isNotEmpty()) {
+        // Generated module-set descriptors may be materialized under the module that owns the generated source,
+        // while an xi:include still names the product module whose output used to receive a copy. Search the complete
+        // source model before falling back to any compiled jar. This is the same deterministic last-resort scope the
+        // generated dev-distribution plan validates, and it keeps ordinary module byte changes out of unrelated
+        // fragment keys.
+        val outputProvider = context.outputProvider
+        val alreadySearched = searchPath.flatMapTo(HashSet(), DescriptorSearchScope::modules)
+        for (module in outputProvider.getAllModules().sortedBy { it.name }) {
+          if (!alreadySearched.add(module.name)) continue
+          readDescriptor(
+            module = module,
+            path = loadPath,
+            outputProvider = outputProvider,
+            pass = DescriptorSearchPass.PRODUCTION_SOURCES,
+          )?.let { data ->
+            searchPath.first().descriptorCache.putIfAbsent(loadPath, data)
             return JDOMUtil.load(data)
           }
         }
@@ -554,10 +595,14 @@ private suspend fun findFileInModuleDependencies(
   relativePath: String,
   outputProvider: ModuleOutputProvider,
   processedModules: MutableSet<String>,
+  pass: DescriptorSearchPass,
   recursiveModuleExclude: String? = null,
 ): ByteArray? {
-  findFileInModuleLibraryDependencies(module, relativePath, outputProvider)?.let {
-    return it
+  // A library has no source root, so it can only answer the output pass - and asking it resolves its jars.
+  if (pass == DescriptorSearchPass.MODULE_OUTPUT) {
+    findFileInModuleLibraryDependencies(module, relativePath, outputProvider)?.let {
+      return it
+    }
   }
 
   return findFileInModuleDependenciesRecursive(
@@ -565,6 +610,7 @@ private suspend fun findFileInModuleDependencies(
     relativePath = relativePath,
     provider = outputProvider,
     processedModules = processedModules,
+    pass = pass,
     recursiveModuleExclude = recursiveModuleExclude,
   )
 }
@@ -574,6 +620,7 @@ private suspend fun findFileInModuleDependenciesRecursive(
   relativePath: String,
   provider: ModuleOutputProvider,
   processedModules: MutableSet<String>,
+  pass: DescriptorSearchPass,
   recursiveModuleExclude: String? = null,
 ): ByteArray? {
   for (dependency in module.dependenciesList.dependencies) {
@@ -587,7 +634,7 @@ private suspend fun findFileInModuleDependenciesRecursive(
     }
 
     val dependentModule = provider.findRequiredModule(moduleName)
-    findUnprocessedDescriptorContent(module = dependentModule, path = relativePath, outputProvider = provider)?.let {
+    readDescriptor(module = dependentModule, path = relativePath, outputProvider = provider, pass = pass)?.let {
       return it
     }
 
@@ -598,6 +645,7 @@ private suspend fun findFileInModuleDependenciesRecursive(
         relativePath = relativePath,
         provider = provider,
         processedModules = processedModules,
+        pass = pass,
         recursiveModuleExclude = recursiveModuleExclude,
       )?.let {
         return it

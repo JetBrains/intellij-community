@@ -40,7 +40,8 @@ internal class ConvertToMultiDollarStringIntention :
         simplifyDollarEntries(replaced)
     }
 
-    override fun KaSession.prepareContext(element: KtStringTemplateExpression): MultiDollarConversionInfo? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtStringTemplateExpression): MultiDollarConversionInfo? {
         return prepareMultiDollarConversionInfo(element, useFallbackPrefix = true)
     }
 }

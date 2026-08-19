@@ -10,6 +10,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.navigation.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -28,6 +29,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/ide-core:ide-core_test_lib",
     ],
     deps = [
@@ -40,8 +42,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//xml/xml-psi-api:psi",
         "//xml/xml-psi-api:psi_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "@lib//:kotlin-stdlib",
         "//java/openapi:java",
         "//java/openapi:java_test_lib",
@@ -69,9 +69,12 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//platform/ide-core",
         "@lib//:kotlinc-kotlin-compiler-tests",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/kotlin/base/project-structure",

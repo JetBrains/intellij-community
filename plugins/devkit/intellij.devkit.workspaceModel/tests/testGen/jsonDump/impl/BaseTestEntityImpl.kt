@@ -15,7 +15,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -27,9 +26,7 @@ import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceL
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
@@ -37,14 +34,12 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : BaseTestEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId =
       ConnectionId.create(BaseTestEntity::class.java, ChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     internal val SINGLECHILD_CONNECTION_ID: ConnectionId =
       ConnectionId.create(BaseTestEntity::class.java, SingleChild::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     private val connections = listOf<ConnectionId>(CHILDREN_CONNECTION_ID, SINGLECHILD_CONNECTION_ID)
-
   }
 
   override val symbolicId: TestSymbolicId = super.symbolicId
@@ -55,8 +50,9 @@ internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : 
       return dataSource.name
     }
   override val children: List<ChildEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(CHILDREN_CONNECTION_ID, this) as? Sequence<ChildEntity>)?.toList()
-            ?: error("Children children not found for BaseTestEntity")
+            ?: error("Children list children not found for BaseTestEntity")
   override val singleChild: SingleChild?
     get() = snapshot.instrumentation.getOneChild(SINGLECHILD_CONNECTION_ID, this) as? SingleChild
   override val listOfAbstract: List<AbstractClass>
@@ -74,7 +70,6 @@ internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : 
       readField("stringSet")
       return dataSource.stringSet
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -85,33 +80,11 @@ internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : 
     return connections
   }
 
-
   internal class Builder(result: BaseTestEntityData?) : ModifiableWorkspaceEntityBase<BaseTestEntity, BaseTestEntityData>(result),
                                                         BaseTestEntityBuilder {
     internal constructor() : this(BaseTestEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity BaseTestEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -171,14 +144,12 @@ internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : 
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var name: String
       get() = getEntityData().name
@@ -187,86 +158,19 @@ internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : 
         getEntityData(true).name = value
         changedProperty.add("name")
       }
-
-    // List of non-abstract referenced types
-    var _children: List<ChildEntity>? = emptyList()
     override var children: List<ChildEntityBuilder>
-      get() {
-// Getter of the list of non-abstract referenced types
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
-            .toList() as List<ChildEntityBuilder>) + (this.entityLinks[EntityLink(true,
-                                                                                  CHILDREN_CONNECTION_ID)] as? List<ChildEntityBuilder>
-                                                      ?: emptyList())
-        }
-        else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ChildEntityBuilder> ?: emptyList()
-        }
-      }
+      @Suppress("UNCHECKED_CAST")
+      get() = getChildren(CHILDREN_CONNECTION_ID) as List<ChildEntityBuilder>
       set(value) {
-// Setter of the list of non-abstract referenced types
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null) {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
-// Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
-              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-            }
-          }
-          _diff.instrumentation.replaceChildren(CHILDREN_CONNECTION_ID, this, value)
-        }
-        else {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-              item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
-            }
-// else you're attaching a new entity to an existing entity that is not modifiable
-          }
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
-        }
+        changeChildren(value, CHILDREN_CONNECTION_ID)
         changedProperty.add("children")
       }
-
     override var singleChild: SingleChildBuilder?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(SINGLECHILD_CONNECTION_ID, this) as? SingleChildBuilder)
-          ?: (this.entityLinks[EntityLink(true, SINGLECHILD_CONNECTION_ID)] as? SingleChildBuilder)
-        }
-        else {
-          (this.entityLinks[EntityLink(true, SINGLECHILD_CONNECTION_ID)] as? SingleChildBuilder)
-        }
-      }
+      get() = getChild(SINGLECHILD_CONNECTION_ID) as? SingleChildBuilder?
       set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, SINGLECHILD_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.instrumentation.replaceChildren(SINGLECHILD_CONNECTION_ID, this, listOfNotNull(value))
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, SINGLECHILD_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
-          this.entityLinks[EntityLink(true, SINGLECHILD_CONNECTION_ID)] = value
-        }
+        changeChild(value, SINGLECHILD_CONNECTION_ID)
         changedProperty.add("singleChild")
       }
-
     private val listOfAbstractUpdater: (value: List<AbstractClass>) -> Unit = { value ->
 
       changedProperty.add("listOfAbstract")
@@ -333,7 +237,6 @@ internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : 
 
     override fun getEntityClass(): Class<BaseTestEntity> = BaseTestEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -342,29 +245,12 @@ internal class BaseTestEntityData : WorkspaceEntityData<BaseTestEntity>() {
   lateinit var listOfAbstract: MutableList<AbstractClass>
   lateinit var stringList: MutableList<String>
   lateinit var stringSet: MutableSet<String>
-
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isListOfAbstractInitialized(): Boolean = ::listOfAbstract.isInitialized
   internal fun isStringListInitialized(): Boolean = ::stringList.isInitialized
   internal fun isStringSetInitialized(): Boolean = ::stringSet.isInitialized
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<BaseTestEntity> {
-    val modifiable = BaseTestEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): BaseTestEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = BaseTestEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): BaseTestEntity = BaseTestEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<BaseTestEntity, *> = BaseTestEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.devkit.workspaceModel.jsonDump.BaseTestEntity") as EntityMetadata
   }

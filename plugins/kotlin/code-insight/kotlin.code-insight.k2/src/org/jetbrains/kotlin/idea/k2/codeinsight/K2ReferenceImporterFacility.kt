@@ -63,7 +63,6 @@ class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
                 return emptySequence()
             }
 
-            contextOf<KaSession>()
             val diagnostics = expression
                 .directDiagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
                 .filter { it.severity == KaSeverity.ERROR && expression.textRange in it.psi.textRange }
@@ -73,7 +72,7 @@ class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
             val importFixes = buildList {
                 for (diagnostic in diagnostics) {
                     val importQuickFixesForDiagnostic = with(quickFixService) {
-                        contextOf<KaSession>().getImportQuickFixesFor(diagnostic)
+                        getImportQuickFixesFor(diagnostic)
                     }
                     for (importFix in importQuickFixesForDiagnostic) {
                         val element = importFix.element

@@ -889,15 +889,25 @@ open class FileEditorManagerImpl(
    * @return true if all the checks were successfully passed and the file can be closed
    */
   private fun canCloseFile(file: VirtualFile): Boolean {
-    return canCloseFiles(listOf(file))
+    return canCloseAllFiles(listOf(file))
   }
 
-  private fun canCloseFiles(files: Collection<VirtualFile>): Boolean {
-    if (files.isEmpty()) {
-      return true
+  private fun canCloseAllFiles(files: Collection<VirtualFile>): Boolean {
+    return files.isEmpty() || filterClosableFiles(files).size == files.size
+  }
+
+  private fun filterClosableFiles(files: Collection<VirtualFile>): List<VirtualFile> {
+    val filesToClose = files.toMutableList()
+
+    for (check in VirtualFilePreCloseCheck.EP_NAME.extensionsIfPointIsRegistered) {
+      filesToClose.retainAll(check.filterFilesToClose(filesToClose).toHashSet())
+
+      if (filesToClose.isEmpty()) {
+        break
+      }
     }
-    val checks = VirtualFilePreCloseCheck.EP_NAME.extensionsIfPointIsRegistered
-    return checks.all { it.canCloseFiles(files) }
+
+    return filesToClose
   }
 
   @RequiresEdt
@@ -905,6 +915,11 @@ open class FileEditorManagerImpl(
     return closeFile(window = window, composite = window.getComposite(file) ?: return false, runChecks = true)
   }
 
+  /**
+   * Closes the requested files that pass pre-close checks.
+   *
+   * @return `true` if every requested file was closed, or was already closed
+   */
   @RequiresEdt
   override fun closeFilesWithChecks(filesWithWindows: List<Pair<EditorComposite, EditorWindow>>): Boolean {
     val filesToClose = filesWithWindows.filter { it.second.getComposite(it.first.file) != null }
@@ -912,13 +927,19 @@ open class FileEditorManagerImpl(
       return true
     }
     val filesToCheck = filesToClose.mapTo(LinkedHashSet()) { it.first.file }
-    if (!canCloseFiles(filesToCheck)) {
+    val closableFiles = filterClosableFiles(filesToCheck)
+    if (closableFiles.isEmpty()) {
       return false
     }
+    val closableFilesSet = closableFiles.toHashSet()
 
     openFileSetModificationCount.increment()
     WriteIntentReadAction.run {
       for (fileWithWindow in filesToClose) {
+        if (fileWithWindow.first.file !in closableFilesSet) {
+          continue
+        }
+
         val window = fileWithWindow.second
         val currentComposite = window.getComposite(fileWithWindow.first.file)
         if (currentComposite != null) {
@@ -926,7 +947,10 @@ open class FileEditorManagerImpl(
         }
       }
     }
-    return true
+
+    // Some requested files may have been rejected by a pre-close check.
+    // Return true only if all requested files were approved for closing.
+    return closableFiles.size == filesToCheck.size
   }
 
   @RequiresEdt
@@ -1077,6 +1101,8 @@ open class FileEditorManagerImpl(
   }
 
   override suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
+    EditorHistoryManager.preloadHistory(project)
+
     if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.openFileAsync(
         file = file,
@@ -1444,8 +1470,8 @@ open class FileEditorManagerImpl(
     else if (fileEntry != null) {
       for (editorWithProvider in composite.allEditorsWithProviders) {
         val state = fileEntry.providers.get(editorWithProvider.provider.editorTypeId)
-          ?.let { editorWithProvider.provider.readState(it, project, file) }
-        if (state != null && state != FileEditorState.INSTANCE) {
+          ?.let { editorWithProvider.provider.readState(it, project, lazyOf(file)) }
+        if (state != null && state !== FileEditorState.INSTANCE && state !== FileEditorState.NO_STATE) {
           restoreEditorState(
             fileEditorWithProvider = editorWithProvider,
             state = state,
@@ -1973,6 +1999,8 @@ open class FileEditorManagerImpl(
     newEditorWithProvider: FileEditorWithProvider?,
     publisher: FileEditorManagerListener,
   ) {
+    EditorHistoryManager.preloadHistory(project) // make sure we preload it out of EDT
+
     oldEditorWithProvider?.fileEditor?.deselectNotify()
     val newEditor = newEditorWithProvider?.fileEditor
     if (newEditor != null) {

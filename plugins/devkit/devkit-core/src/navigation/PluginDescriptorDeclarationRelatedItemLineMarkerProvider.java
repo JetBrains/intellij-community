@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.PerformanceAssertions;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -83,7 +84,10 @@ final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider extends Dev
 
     // only extensions are not indexed via IdeaPluginRegistrationIndex
     if (!IdeaPluginRegistrationIndex.isRegisteredClass(psiClass, candidatesScope)) {
-      List<ExtensionCandidate> epTargets = ExtensionLocatorKt.locateExtensionsByPsiClass(psiClass);
+      List<ExtensionCandidate> epTargets;
+      try (var ignored = PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911")) {
+        epTargets = ExtensionLocatorKt.locateExtensionsByPsiClass(psiClass);
+      }
       if (!epTargets.isEmpty()) {
         result.add(LineMarkerInfoHelper.createExtensionLineMarkerInfo(epTargets, identifier));
       }

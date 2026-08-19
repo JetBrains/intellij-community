@@ -10,13 +10,11 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestActionEvent
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 class JavaToKotlinActionTest : KotlinLightCodeInsightFixtureTestCase() {
-
-    
-
     private val actionManager: ActionManager
         get() = ActionManager.getInstance()
 
@@ -148,17 +146,8 @@ class JavaToKotlinActionTest : KotlinLightCodeInsightFixtureTestCase() {
             myFixture.file.virtualFile.parent.createChildDirectory(this, "emptyPkg")
         }
         try {
-            val standaloneAction = actionManager.getAction("ConvertJavaToKotlin")
-                ?: throw AssertionError("ConvertJavaToKotlin action should be registered")
-
-            val dataContext = SimpleDataContext.builder()
-                .add(CommonDataKeys.PROJECT, project)
-                .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, arrayOf(emptyDir))
-                .add(DataKey.create<Module>("module"), myFixture.module)
-                .build()
-
-            val event = TestActionEvent.createTestEvent(dataContext)
-            standaloneAction.update(event)
+            val event = createActionEventForFiles(emptyDir)
+            standaloneAction().update(event)
 
             assertFalse(
                 "Action should not be visible for an empty package directory",
@@ -167,6 +156,46 @@ class JavaToKotlinActionTest : KotlinLightCodeInsightFixtureTestCase() {
         } finally {
             WriteAction.runAndWait<Exception> { emptyDir.delete(this) }
         }
+    }
+
+    fun testActionHiddenForPackageWithoutJavaFiles() {
+        val kotlinFile = myFixture.addFileToProject("kotlinOnlyPkg/subPkg/Foo.kt", "class Foo")
+        val packageDir = kotlinFile.virtualFile.parent.parent
+
+        val event = createActionEventForFiles(packageDir)
+        standaloneAction().update(event)
+
+        assertFalse(
+            "Action should not be visible for a package whose subpackages contain no Java files",
+            event.presentation.isEnabledAndVisible
+        )
+    }
+
+    fun testActionVisibleForPackageWithJavaFileInSubpackage() {
+        val javaFile = myFixture.addFileToProject("javaPkg/subPkg/Foo.java", "public class Foo {}")
+        val packageDir = javaFile.virtualFile.parent.parent
+
+        val event = createActionEventForFiles(packageDir)
+        standaloneAction().update(event)
+
+        assertTrue(
+            "Action should be visible for a package with a Java file in a subpackage",
+            event.presentation.isEnabledAndVisible
+        )
+    }
+
+    private fun standaloneAction(): AnAction =
+        actionManager.getAction("ConvertJavaToKotlin")
+            ?: throw AssertionError("ConvertJavaToKotlin action should be registered")
+
+    private fun createActionEventForFiles(vararg files: VirtualFile): AnActionEvent {
+        val dataContext = SimpleDataContext.builder()
+            .add(CommonDataKeys.PROJECT, project)
+            .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, arrayOf(*files))
+            .add(DataKey.create<Module>("module"), myFixture.module)
+            .build()
+
+        return TestActionEvent.createTestEvent(dataContext)
     }
 
     private fun createActionEvent(): AnActionEvent {

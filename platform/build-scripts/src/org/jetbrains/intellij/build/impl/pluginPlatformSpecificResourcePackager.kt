@@ -103,17 +103,26 @@ internal suspend fun handleCustomPlatformSpecificAssets(
           is UnpackedZipSource -> {
             val dir = extractFileToCacheLocation(archiveFile = source.file, communityRoot = context.paths.communityHomeDirRoot)
             val dirPrefix = dir.toString().length + 1
-            copyDir(
-              sourceDir = dir,
-              targetDir = rootDir,
-              fileFilter = source.filter?.let { filter ->
-                {
-                  filter(it.invariantSeparatorsPathString.substring(dirPrefix))
-                }
-              },
-            )
+            val filter = source.filter
+            if (filter == null) {
+              copyDir(sourceDir = dir, targetDir = rootDir, overwrite = true)
+            }
+            else {
+              copyDir(
+                sourceDir = dir,
+                targetDir = rootDir,
+                fileFilter = { filter(it.invariantSeparatorsPathString.substring(dirPrefix)) },
+              )
+            }
 
-            distEntries.add(CustomAssetEntry(path = source.file, hash = lazySource.precomputedHash, relativeOutputFile = customAsset.relativePath))
+            distEntries.add(
+              CustomAssetEntry(
+                path = source.file,
+                hash = lazySource.precomputedHash,
+                relativeOutputFile = customAsset.relativePath,
+                distributionPath = rootDir,
+              )
+            )
           }
 
           is CustomAssetShimSource -> {
@@ -124,7 +133,7 @@ internal suspend fun handleCustomPlatformSpecificAssets(
 
           is FileSource -> {
             val targetFile = rootDir.resolve(source.relativePath)
-            copyFile(source.file, targetFile)
+            copyFile(file = source.file, target = targetFile, overwrite = true)
             distEntries.add(
               CustomAssetEntry(
                 path = targetFile,

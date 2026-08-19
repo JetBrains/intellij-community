@@ -71,21 +71,20 @@ internal suspend fun buildSearchableOptions(
 ): SearchableOptionSetDescriptor? {
   return context.executeStep(spanBuilder("building searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP) { span ->
     val targetDirectory = context.paths.searchableOptionDir
-    // bundled maven is also downloaded during traverseUI execution in an external process,
-    // making it fragile to call more than one traverseUI at the same time (in the reproducibility test, for example),
-    // so it's pre-downloaded with proper synchronization
+    // Resolve bundled Maven inputs before traverseUI starts an external process. Under Bazel these are
+    // read directly from declared runfiles; other builds retain their normal download-cache behavior.
     withContext(Dispatchers.IO) {
-      launch(CoroutineName("download maven4 libs")) {
-        BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
+      launch(CoroutineName("resolve maven4 libs")) {
+        BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot)
       }
-      launch(CoroutineName("download maven3 libs")) {
-        BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
+      launch(CoroutineName("resolve maven3 libs")) {
+        BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot)
       }
       launch(CoroutineName("download maven distribution")) {
         BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
       }
-      launch(CoroutineName("download maven telemetry dependencies")) {
-        BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+      launch(CoroutineName("resolve maven telemetry dependencies")) {
+        BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
       }
     }
 

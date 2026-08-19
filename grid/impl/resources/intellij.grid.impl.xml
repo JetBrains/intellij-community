@@ -20,6 +20,7 @@
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.indexing"/>
@@ -62,6 +63,8 @@
                  description="Factor for cache size for rendered table cells"/>
     <registryKey key="database.grid.show.chart.tab" defaultValue="true" restartRequired="false"
                  description="Adds 'Show Chart' action to DG tables in editor, inlay and services."/>
+    <registryKey key="database.grid.column.pinning" defaultValue="false" restartRequired="false"
+                 description="Enables pinning data editor columns to the left (DBE-26267, work in progress)."/>
     <uiDataRule implementation="com.intellij.database.run.ui.TableResultPanelUIDataRule"
                 id="TableResultPanelDataRule" order="before BasicUiDataRule, before ServiceViewProvidersDataRule"/>
     <uiDataRule implementation="com.intellij.database.run.ui.InnerEditorsTableResultPanelUIDataRule"
@@ -197,6 +200,11 @@
       <action id="Console.TableResult.RenameColumn" class="com.intellij.database.run.actions.RenameColumnAction"/>
       <action id="TableResult.SelectColumn" class="com.intellij.database.actions.SelectColumnAction"
               use-shortcut-of="EditorSelectWord"/>
+      <separator/>
+      <action id="Console.TableResult.PinColumns" icon="AllIcons.General.Pin" class="com.intellij.database.run.actions.PinColumnsAction"/>
+      <action id="Console.TableResult.UnpinColumns" class="com.intellij.database.run.actions.UnpinColumnsAction"/>
+      <action id="Console.TableResult.PinColumnsUpToHere" icon="AllIcons.General.Pin" class="com.intellij.database.run.actions.PinColumnsUpToHereAction"/>
+      <action id="Console.TableResult.UnpinAllColumns" class="com.intellij.database.run.actions.UnpinAllColumnsAction"/>
       <separator/>
       <action id="Console.TableResult.HideColumn" class="com.intellij.database.run.actions.HideColumnAction"/>
       <action id="Console.TableResult.HideOtherColumns" class="com.intellij.database.run.actions.HideOtherColumnsAction"/>

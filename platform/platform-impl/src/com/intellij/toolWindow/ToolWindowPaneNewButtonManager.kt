@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.DevicePoint
 import java.awt.BorderLayout
@@ -23,6 +24,10 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
 
   internal val left = ToolWindowLeftToolbar(paneId, isPrimary)
   internal val right = ToolWindowRightToolbar(paneId, isPrimary)
+
+  internal val top: ToolWindowToolbar?
+  internal val bottom: ToolWindowToolbar?
+
   private var showButtons = true
   private var isStripesOverlaid = false
 
@@ -32,8 +37,13 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
     get() = true
 
   init {
-    left.addVisibleButtonsListener { updateToolStripesVisibility() }
-    right.addVisibleButtonsListener { updateToolStripesVisibility() }
+    val extension = ToolWindowExtension.getInstance()
+    top = extension?.createTopToolWindowToolbar(paneId, isPrimary)
+    bottom = extension?.createBottomToolWindowToolbar(paneId, isPrimary)
+
+    allToolbars().forEach {
+      it.addVisibleButtonsListener { updateToolStripesVisibility() }
+    }
   }
 
   override fun setupToolWindowPane(pane: JComponent) {
@@ -41,6 +51,8 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
     left.bottomStripe.bottomAnchorDropAreaComponent = pane
     right.topStripe.bottomAnchorDropAreaComponent = pane
     right.bottomStripe.bottomAnchorDropAreaComponent = pane
+    top?.topStripe?.bottomAnchorDropAreaComponent = pane
+    bottom?.topStripe?.bottomAnchorDropAreaComponent = pane
   }
 
   override fun wrapWithControls(pane: ToolWindowPane): JComponent {
@@ -49,6 +61,8 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
       add(pane, BorderLayout.CENTER)
       add(left, BorderLayout.WEST)
       add(right, BorderLayout.EAST)
+      top?.let { add(it, BorderLayout.NORTH) }
+      bottom?.let { add(it, BorderLayout.SOUTH) }
       InternalUICustomization.getInstance()?.configureToolWindowPane(this, this@ToolWindowPaneNewButtonManager)
     }
   }
@@ -60,18 +74,29 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
   }
 
   internal fun updateToolStripesVisibility(): Boolean {
-    val oldSquareVisible = left.isVisible && right.isVisible
     val visible = this.showButtons || this.isStripesOverlaid
     val isLeftVisible = visible && left.hasVisibleButtons()
     val isRightVisible = visible && right.hasVisibleButtons()
+    var result = left.isVisible != isLeftVisible || right.isVisible != isRightVisible
     left.isVisible = isLeftVisible
     right.isVisible = isRightVisible
     left.updateNamedState()
     right.updateNamedState()
-    visibleToolbarsListeners.forEach { it(isLeftVisible, isRightVisible) }
-    return oldSquareVisible != visible
-  }
 
+    top?.let {
+      val newVisible = visible && it.hasVisibleButtons()
+      result = result || it.isVisible != newVisible
+      it.isVisible = newVisible
+    }
+    bottom?.let {
+      val newVisible = visible && it.hasVisibleButtons()
+      result = result || it.isVisible != newVisible
+      it.isVisible = newVisible
+    }
+
+    visibleToolbarsListeners.forEach { it(isLeftVisible, isRightVisible) }
+    return result
+  }
   internal fun addVisibleToolbarsListener(listener: (Boolean, Boolean) -> Unit) {
     visibleToolbarsListeners.add(listener)
   }
@@ -99,6 +124,11 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
   override fun getBottomHeight(): Int = 0
 
   override fun getStripeFor(anchor: ToolWindowAnchor, isSplit: Boolean?): AbstractDroppableStripe {
+    val horizontalToolbar = getHorizontalToolbar(anchor)
+    if (horizontalToolbar != null) {
+      return horizontalToolbar.getStripeFor(anchor)
+    }
+
     return when (anchor) {
       ToolWindowAnchor.LEFT -> left.getStripeFor(anchor)
       ToolWindowAnchor.BOTTOM -> isSplit?.let { if (it) right.getStripeFor(anchor) else left.getStripeFor(anchor) }
@@ -114,7 +144,10 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
       preferred
     }
     else {
-      left.getStripeFor(screenPoint) ?: right.getStripeFor(screenPoint)
+      bottom?.getStripeFor(screenPoint)
+      ?: top?.getStripeFor(screenPoint)
+      ?: left.getStripeFor(screenPoint)
+      ?: right.getStripeFor(screenPoint)
     }
   }
 
@@ -125,11 +158,19 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
   }
 
   override fun getStripeHeight(anchor: ToolWindowAnchor): Int {
-    // New UI only shows stripes on the LEFT + RIGHT. There is no TOP, and while BOTTOM is used, it is shown on the left, so has no height
+    val horizontalToolbar = getHorizontalToolbar(anchor)
+    if (horizontalToolbar != null && horizontalToolbar.isVisible && horizontalToolbar.isShowing) {
+      return horizontalToolbar.height
+    }
+    // New UI without ToolWindowExtension only shows stripes on the LEFT + RIGHT. There is no TOP, and while BOTTOM is used, it is shown on the left, so has no height
     return 0
   }
 
   fun getSquareStripeFor(anchor: ToolWindowAnchor): ToolWindowToolbar {
+    val horizontalToolbar = getHorizontalToolbar(anchor)
+    if (horizontalToolbar != null) {
+      return horizontalToolbar
+    }
     return when (anchor) {
       ToolWindowAnchor.TOP, ToolWindowAnchor.RIGHT -> right
       ToolWindowAnchor.BOTTOM, ToolWindowAnchor.LEFT -> left
@@ -151,40 +192,61 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
   }
 
   override fun startDrag() {
-    if (right.isVisible) {
-      right.startDrag()
-    }
-    if (left.isVisible) {
-      left.startDrag()
+    allToolbars().forEach {
+      if (it.isVisible) {
+        it.startDrag()
+      }
     }
   }
 
   override fun stopDrag() {
-    if (right.isVisible) {
-      right.stopDrag()
-    }
-    if (left.isVisible) {
-      left.stopDrag()
+    allToolbars().forEach {
+      if (it.isVisible) {
+        it.stopDrag()
+      }
     }
   }
 
   override fun reset() {
-    left.reset()
-    right.reset()
+    allToolbars().forEach {
+      it.reset()
+    }
   }
 
   fun refreshUi() {
-    left.repaint()
-    right.repaint()
+    allToolbars().forEach {
+      it.repaint()
+    }
   }
 
-  private fun findToolbar(anchor: ToolWindowAnchor, isSplit: Boolean) =
-    when (anchor) {
+  private fun findToolbar(anchor: ToolWindowAnchor, isSplit: Boolean): ToolWindowToolbar {
+    val horizontalToolbar = getHorizontalToolbar(anchor)
+    if (horizontalToolbar != null) {
+      return horizontalToolbar
+    }
+
+    return when (anchor) {
       ToolWindowAnchor.LEFT -> left
       ToolWindowAnchor.BOTTOM -> if (isSplit) right else left
       ToolWindowAnchor.RIGHT -> right
       else -> left
     }
+  }
+
+  private fun getHorizontalToolbar(anchor: ToolWindowAnchor): ToolWindowToolbar? {
+    if (ToolWindowExtension.exists) {
+      return when (anchor) {
+        ToolWindowAnchor.TOP -> top
+        ToolWindowAnchor.BOTTOM -> bottom
+        else -> null
+      }
+    }
+    return null
+  }
+
+  private fun allToolbars(): List<ToolWindowToolbar> {
+    return listOfNotNull(left, right, top, bottom)
+  }
 
   override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager {
     val manager = createStripeButton(toolWindow)
@@ -226,5 +288,6 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
     }
   }
 
-  override fun hasButtons(): Boolean = left.hasButtons() || right.hasButtons()
+  override fun hasButtons(): Boolean =
+    allToolbars().any { it.hasButtons() }
 }

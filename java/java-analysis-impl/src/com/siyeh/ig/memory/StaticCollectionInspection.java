@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2026 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,8 @@ package com.siyeh.ig.memory;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -41,15 +38,13 @@ public final class StaticCollectionInspection extends BaseInspection {
 
   @Override
   public @NotNull String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "static.collection.problem.descriptor");
+    return InspectionGadgetsBundle.message("static.collection.problem.descriptor");
   }
 
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("m_ignoreWeakCollections", InspectionGadgetsBundle.message(
-        "static.collection.ignore.option")));
+      checkbox("m_ignoreWeakCollections", InspectionGadgetsBundle.message("static.collection.ignore.option")));
   }
 
   @Override
@@ -72,11 +67,7 @@ public final class StaticCollectionInspection extends BaseInspection {
         return;
       }
 
-      // Ignore final fields initialized with immutable, fixed-size collections
-      if (field.hasModifierProperty(PsiModifier.FINAL) &&
-          PsiUtil.skipParenthesizedExprDown(field.getInitializer()) instanceof PsiMethodCallExpression call &&
-          call.resolveMethod() instanceof PsiMethod method &&
-          Mutability.getMutability(method).isUnmodifiable()){
+      if (field.hasModifierProperty(PsiModifier.FINAL) && Mutability.getMutability(field).isUnmodifiable()) {
         return;
       }
       registerFieldError(field);

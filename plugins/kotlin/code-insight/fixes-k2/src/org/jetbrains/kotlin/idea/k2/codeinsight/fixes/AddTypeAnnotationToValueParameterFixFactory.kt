@@ -6,10 +6,16 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.arrayElementType
+import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -33,7 +39,8 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
             )
         }
 
-    private fun KaSession.getTypeName(element: KtParameter, defaultValue: KtExpression): String? {
+    context(session: KaSession)
+    private fun getTypeName(element: KtParameter, defaultValue: KtExpression): String? {
         val type = defaultValue.expressionType ?: return null
 
         if (type.isArrayOrPrimitiveArray) {
@@ -42,7 +49,7 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
                 return getTypeName(elementType)
             } else if (defaultValue is KtCollectionLiteralExpression) {
                 val elementType = type.arrayElementType
-                if (elementType?.isPrimitive == true) {
+                if (elementType?.classId in KaStandardTypeClassIds.PRIMITIVES) {
                     val classId = (elementType as KaClassType).classId
                     val arrayTypeName = "${classId.shortClassName}Array"
                     return arrayTypeName
@@ -53,7 +60,8 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.getTypeName(type: KaType): String {
+    context(session: KaSession)
+    private fun getTypeName(type: KaType): String {
         val typeName = type.render(
             KaTypeRendererForSource.WITH_SHORT_NAMES,
             Variance.IN_VARIANCE,

@@ -9,7 +9,6 @@ import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTom
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Test
 
 @PyDefaultTestApplication
@@ -17,10 +16,10 @@ import org.junit.jupiter.api.Test
 @TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/PY-89861-uv-workspave-tool.uv.sources-only-in-root")
 internal class UvWorkspaceSourcesOnlyInRootTest {
   companion object {
-    private val tempDirFixture = tempPathFixture()
-    private val projectFixture = projectFixture(pathFixture = tempDirFixture)
+    private val projectFixture = projectFixture()
   }
-  private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
 
   /**
    * PY-89861: The root `8840337-uv-workspave` declares `myorg-core` in `[tool.uv.sources]`
@@ -33,7 +32,10 @@ internal class UvWorkspaceSourcesOnlyInRootTest {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule("8840337-uv-workspave", contentRoot = ".", sourceRoots = listOf(".")),
-      ExpectedModule("myorg-frontend", contentRoot = "apps" / "frontend", deps = listOf("myorg-core"), sourceRoots = listOf("apps" / "frontend" / "src")),
+      ExpectedModule("myorg-frontend",
+                     contentRoot = "apps" / "frontend",
+                     deps = listOf("myorg-core"),
+                     sourceRoots = listOf("apps" / "frontend" / "src")),
       ExpectedModule("myorg-core", contentRoot = "libs" / "core", sourceRoots = listOf("libs" / "core" / "src")),
     )
   }

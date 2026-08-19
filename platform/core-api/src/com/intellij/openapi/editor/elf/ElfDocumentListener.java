@@ -21,6 +21,11 @@ import org.jetbrains.annotations.Nullable;
  * implementations must not rely on callbacks, including {@link #elfDocumentChanged(DocumentEvent, DocumentEvent)}, being protected by
  * read or write access, even if a particular callback path currently happens to run with write access. They also must not
  * try to acquire the global read-write lock from these callbacks.
+ * <p>
+ * Consistency with {@link Elf#isInElfScope()}: when the snapshot pair is clean (elf and real are the same, the callback
+ * is part of a shared update of both views), {@code isInElfScope()} is {@code false}; when the pair is dirty or about to
+ * become dirty (elf and real diverge, the callback delivers an elf-view change), {@code isInElfScope()} is {@code true}.
+ * Callbacks fire on EDT, and either way host document reads observe text consistent with the event.
  *
  * @see com.intellij.openapi.editor.event.DocumentListener
  * @see BulkAwareElfDocumentListener

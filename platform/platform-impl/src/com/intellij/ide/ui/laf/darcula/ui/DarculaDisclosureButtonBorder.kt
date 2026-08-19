@@ -3,16 +3,15 @@ package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.ui.DrawUtil
 import com.intellij.ui.components.DisclosureButton
 import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.MacUIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Insets
 import java.awt.Rectangle
-import java.awt.RenderingHints
 import javax.swing.border.Border
 import javax.swing.plaf.UIResource
 
@@ -27,9 +26,7 @@ class DarculaDisclosureButtonBorder : Border, UIResource {
     val g2 = g.create() as Graphics2D
 
     try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                          if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+      DrawUtil.setupRenderingHints(g2)
 
       val r = Rectangle(x, y, width, height)
       JBInsets.removeFrom(r, getBorderInsets(c))

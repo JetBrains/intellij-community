@@ -5,10 +5,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.assertIteratedContent
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.testFramework.junit5.TestApplication
@@ -17,10 +19,12 @@ import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.workspaceModel.update
 import com.intellij.util.ThreeState
+import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.util.indexing.testEntities.IndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.util.indexing.testEntities.NonIndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking
@@ -124,6 +128,57 @@ class NonIndexableFileSetTest {
       assertTrue(projectFileIndex.isInProjectOrExcluded(file))
       assertTrue(fileIndex.isIndexable(root))
     }
+  }
+
+  @Test
+  fun `process indexable content under a non-indexable root`() = runBlocking {
+    val indexableFile = baseNonProjectDir.newVirtualFile("root/indexable/a.txt")
+    val indexableRoot = indexableFile.parent
+    val nonIndexableFile = baseNonProjectDir.newVirtualFile("root/non-indexable.txt")
+
+    val workspaceModel = projectModel.project.serviceAsync<WorkspaceModel>()
+    workspaceModel.update {
+      val urlManager = workspaceModel.getVirtualFileUrlManager()
+      it.addEntity(NonIndexableTestEntity(customContentFileSetRoot.toVirtualFileUrl(urlManager), NonPersistentEntitySource))
+      it.addEntity(IndexingTestEntity(listOf(indexableRoot.toVirtualFileUrl(urlManager)), emptyList(), NonPersistentEntitySource))
+    }
+
+    assertEquals(setOf(indexableRoot, indexableFile), processIndexableContentUnderDirectory(customContentFileSetRoot))
+    readAction {
+      assertFalse(fileIndex.isIndexable(nonIndexableFile))
+    }
+  }
+
+  @Test
+  fun `process indexable content skips non-indexable content`() = runBlocking {
+    val indexableFile = baseNonProjectDir.newVirtualFile("root/indexable/a.txt")
+    val nonIndexableFile = baseNonProjectDir.newVirtualFile("root/non-indexable/a.txt")
+    val indexableRoot = indexableFile.parent
+    val nonIndexableRoot = nonIndexableFile.parent
+
+    val workspaceModel = projectModel.project.serviceAsync<WorkspaceModel>()
+    workspaceModel.update {
+      val urlManager = workspaceModel.getVirtualFileUrlManager()
+      it.addEntity(NonIndexableTestEntity(nonIndexableRoot.toVirtualFileUrl(urlManager), NonPersistentEntitySource))
+      it.addEntity(IndexingTestEntity(listOf(indexableRoot.toVirtualFileUrl(urlManager)), emptyList(), NonPersistentEntitySource))
+    }
+
+    assertEquals(setOf(indexableRoot, indexableFile), processIndexableContentUnderDirectory(customContentFileSetRoot))
+    readAction {
+      assertFalse(fileIndex.isIndexable(nonIndexableFile))
+    }
+  }
+
+  private fun processIndexableContentUnderDirectory(root: VirtualFile): Set<VirtualFile> {
+    val files = mutableSetOf<VirtualFile>()
+    val processor = ContentIteratorEx { file ->
+      files.add(file)
+      TreeNodeProcessingResult.CONTINUE
+    }
+    val processed = WorkspaceFileIndexEx.getInstance(projectModel.project)
+      .processIndexableContentUnderDirectory(root, processor, VirtualFileFilter.ALL) { true }
+    assertTrue(processed)
+    return files
   }
 
   @Test

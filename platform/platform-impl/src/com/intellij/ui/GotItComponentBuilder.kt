@@ -200,11 +200,11 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   }
 
   /**
-   * Add optional step number on the left of the header or description.
-   * The step will be rendered with one zero predecessor if step number is lower than 10.
-   * For example: 01, 02, 10, 12.
+   * Add an optional step number on the left of the header or description.
+   * The step will be rendered with one zero predecessor if the step number is lower than 10.
+   * For example, 01, 02, 10, 12.
    * The step number should be in the range [1, 99].
-   * Is not compatible with icon.
+   * Is not compatible with [withIcon].
    */
   fun withStepNumber(step: Int): GotItComponentBuilder {
     if (icon != null) {
@@ -218,15 +218,20 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   }
 
   /**
-   * Add optional step number on the left of the header or description.
-   * Is not compatible with icon.
+   * Add an optional step text on the left of the header or description.
+   * Is not compatible with [withIcon].
    */
-  fun withStepNumber(text: @NlsSafe String): GotItComponentBuilder {
+  fun withStepText(text: @NlsSafe String): GotItComponentBuilder {
     if (icon != null) {
       throw IllegalStateException("Icon and step number can not be showed both at once. Choose one of them.")
     }
     this.stepText = text
     return this
+  }
+
+  @Deprecated("Use withStepText instead", ReplaceWith("withStepText(text)"))
+  fun withStepNumber(text: @NlsSafe String): GotItComponentBuilder {
+    return withStepText(text)
   }
 
   /**

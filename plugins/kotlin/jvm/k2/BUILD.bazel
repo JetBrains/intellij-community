@@ -59,8 +59,8 @@ jvm_library(
         "//plugins/kotlin/base/code-insight",
         "//java/java-psi-impl:psi-impl",
         "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
         "//plugins/kotlin/base/scripting/scripting.shared",
         "//platform/util/jdom",
         "//platform/statistics",
@@ -69,12 +69,13 @@ jvm_library(
         "//plugins/kotlin/base/scripting/scripting.scratch.definition",
         "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "@lib//:kotlinc-kotlin-scripting-jvm",
         "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
         "//plugins/kotlin/base/statistics",
         "//platform/util/progress",
         "//platform/util",
+        "//plugins/kotlin/scripting",
     ],
 )
 
@@ -121,16 +122,20 @@ jvm_library(
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
         "//java/java-psi-impl:psi-impl_test_lib",
         "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
         "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//plugins/kotlin/base/scripting/scripting.scratch.definition:scripting.scratch.definition_test_lib",
         "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight_test_lib",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
         "//plugins/kotlin/base/statistics:statistics_test_lib",
         "//platform/util/progress:progress_test_lib",
         "//platform/util:util_test_lib",
+        "//plugins/kotlin/scripting:scripting_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jvm` end
@@ -139,6 +144,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.jvm.iml",
+        "resources/intellij.kotlin.jvm.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -155,8 +161,9 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
     ],
 )
 
@@ -176,15 +183,15 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-jvm-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/ide-core:ide-core_test_lib",
     ],
     deps = [
         # do not sort,
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinc-kotlin-compiler-tests",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test",

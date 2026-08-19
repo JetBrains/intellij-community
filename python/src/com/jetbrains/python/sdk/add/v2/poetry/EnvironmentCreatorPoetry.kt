@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2.poetry
 
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SerializablePersistentStateComponent
@@ -16,7 +15,6 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
-import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.intellij.python.pytools.PyTool
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
@@ -38,7 +36,7 @@ import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState.Error
 import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState.Invisible
 import com.jetbrains.python.sdk.add.v2.getBasePath
 import com.jetbrains.python.sdk.add.v2.getOrInstallBasePython
-import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
+import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
 import com.jetbrains.python.sdk.poetry.configurePoetryEnvironment
 import com.jetbrains.python.sdk.poetry.createNewPoetrySdk
 import com.jetbrains.python.statistics.InterpreterType
@@ -62,7 +60,7 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
   override val toolValidator: ToolValidator<P> = model.poetryViewModel.toolValidator
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.poetryViewModel.poetryExecutable
   override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
-    savePathForEelOnly(pathHolder) { path -> PropertiesComponent.getInstance().poetryPath = path.toString() }
+    model.fileSystem.persistCustomToolPath(pathHolder, pyTool)
   }
 
   private val isInProjectEnvFlow = MutableStateFlow(service<PoetryConfigService>().state.isInProjectEnv)

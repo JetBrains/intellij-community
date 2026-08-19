@@ -6,25 +6,22 @@ import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.core.TaskSymbol;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.openapi.progress.util.ProgressIndicatorUtilsCore.awaitWithCheckCanceled;
 
 /**
  * @author Mikhail Golubev
@@ -85,42 +82,19 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
       oldFuture.cancel(true);
     }
 
-    try {
-      List<Task> tasks;
-      while (true) {
-        try {
-          tasks = future.get(10, TimeUnit.MILLISECONDS);
-          break;
-        }
-        catch (TimeoutException ignore) {
-        }
-      }
-      myFutureReference.compareAndSet(future, null);
+    List<Task> tasks = awaitWithCheckCanceled(future, cancelled);
 
-      // Exclude *all* cached and local issues, not only those returned by TaskSearchSupport.getLocalAndCachedTasks().
-      // Previously used approach might lead to the following strange behavior. Local task excluded by getLocalAndCachedTasks()
-      // as "locally closed" (i.e. having no associated change list) was indeed *included* in popup because it
-      // was contained in server response (as not remotely closed). Moreover on next request with pagination when the
-      // same issues was not returned again by server it was *excluded* from popup (thus subsequent update reduced total
-      // number of items shown).
-      tasks = new ArrayList<>(tasks);
-      tasks.removeAll(allCachedAndLocalTasks);
-      return processTasks(tasks, consumer, cancelled);
-    }
-    catch (InterruptedException interrupted) {
-      Thread.interrupted();
-    }
-    catch (CancellationException e) {
-      LOG.debug("Task cancelled");
-    }
-    catch (ExecutionException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof ProcessCanceledException) {
-        LOG.debug("Task cancelled via progress indicator");
-      }
-      ExceptionUtil.rethrow(cause);
-    }
-    return false;
+    myFutureReference.compareAndSet(future, null);
+
+    // Exclude *all* cached and local issues, not only those returned by TaskSearchSupport.getLocalAndCachedTasks().
+    // Previously used approach might lead to the following strange behavior. Local task excluded by getLocalAndCachedTasks()
+    // as "locally closed" (i.e. having no associated change list) was indeed *included* in popup because it
+    // was contained in server response (as not remotely closed). Moreover, on next request with pagination when the
+    // same issues was not returned again by server it was *excluded* from popup (thus subsequent update reduced total
+    // number of items shown).
+    tasks = new ArrayList<>(tasks);
+    tasks.removeAll(allCachedAndLocalTasks);
+    return processTasks(tasks, consumer, cancelled);
   }
 
   /**

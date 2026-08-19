@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="github.stephenc.monte.screen.recorder" type="repository">
+        <properties maven-id="com.github.stephenc.monte:monte-screen-recorder:0.7.7.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/stephenc/monte/monte-screen-recorder/0.7.7.0/monte-screen-recorder-0.7.7.0.jar">
+              <sha256sum>91b98aeb78b6198c39babacee37ef29df6f2083e4f6ea7f35ea4f27b8a8410bc</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/stephenc/monte/monte-screen-recorder/0.7.7.0/monte-screen-recorder-0.7.7.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/stephenc/monte/monte-screen-recorder/0.7.7.0/monte-screen-recorder-0.7.7.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/stephenc/monte/monte-screen-recorder/0.7.7.0/monte-screen-recorder-0.7.7.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

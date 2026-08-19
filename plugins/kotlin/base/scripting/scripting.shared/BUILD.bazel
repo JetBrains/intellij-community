@@ -19,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-script-runtime",
         "@lib//:kotlinc-kotlin-scripting-common",
         "//platform/projectModel-api:projectModel",
@@ -49,7 +49,6 @@ jvm_library(
         "//platform/external-system-impl:externalSystem-impl",
         "//platform/external-system-api:externalSystem",
         "//platform/execution",
-        "//platform/statistics",
     ],
 )
 
@@ -65,6 +64,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":scripting.shared",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
@@ -88,7 +88,6 @@ jvm_library(
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//platform/external-system-api:externalSystem_test_lib",
         "//platform/execution:execution_test_lib",
-        "//platform/statistics:statistics_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.scripting.shared` end
@@ -97,6 +96,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.base.scripting.shared.iml",
+        "resources/intellij.kotlin.base.scripting.shared.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -8,6 +8,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,24 +42,40 @@ public class OnOffButton extends JToggleButton {
   private @NotNull Insets myIpad = JBUI.insets(3);
 
   public OnOffButton() {
-    setBorder(null);
+    setBorder(JBUI.Borders.empty());
     setOpaque(false);
   }
 
+  /**
+   * This method is no longer supported for the Islands themes
+   */
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public @NlsContexts.Button String getOnText() {
     return myOnText;
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * This method is no longer supported for the Islands themes
+   */
+  @Deprecated(forRemoval = true)
   public void setOnText(@NlsContexts.Button String onText) {
     myOnText = onText;
   }
 
+  /**
+   * This method is no longer supported for the Islands themes
+   */
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public @NlsContexts.Button String getOffText() {
     return myOffText;
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * This method is no longer supported for the Islands themes
+   */
+  @Deprecated(forRemoval = true)
   public void setOffText(@NlsContexts.Button String offText) {
     myOffText = offText;
   }

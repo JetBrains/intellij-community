@@ -59,15 +59,49 @@ object GitRemoteBranchesUtil {
   /**
    * Checks if the current HEAD is tracking a branch on remote
    */
+  @Deprecated("Use the suspending alternative",
+              replaceWith = ReplaceWith("testRemoteBranchCheckedOut(repository, remote, branchName)"))
+  @RequiresBackgroundThread
   fun isRemoteBranchCheckedOut(repository: GitRepository, remote: HostedGitRepositoryRemote, branchName: String): Boolean {
     val existingRemote = findRemote(repository, remote) ?: return false
     return isRemoteBranchCheckedOut(repository, GitStandardRemoteBranch(existingRemote, branchName))
   }
 
+  /**
+   * Checks if the current HEAD is tracking a branch on remote
+   */
+  suspend fun testRemoteBranchCheckedOut(repository: GitRepository, remote: HostedGitRepositoryRemote, branchName: String): Boolean {
+    val existingRemote = findRemote(repository, remote) ?: return false
+    return testRemoteBranchCheckedOut(repository, GitStandardRemoteBranch(existingRemote, branchName))
+  }
+
+  @Deprecated("Use the suspending alternative",
+              replaceWith = ReplaceWith("testRemoteBranchCheckedOut(repository, branch)"))
+  @RequiresBackgroundThread
   fun isRemoteBranchCheckedOut(repository: GitRepository, branch: GitRemoteBranch): Boolean {
     return when (branch) {
       is GitSpecialRefRemoteBranch -> {
         val hash = Git.getInstance().resolveReference(repository, branch.nameForLocalOperations)?.asString()
+        repository.currentRevision == hash
+      }
+      else -> {
+        val localBranch = findLocalBranchTrackingRemote(repository, branch) ?: return false
+        repository.currentBranchName == localBranch.name
+      }
+    }
+  }
+
+  /**
+   * Checks if the current HEAD is either tracking remote [branch] or has the same hash
+   */
+  suspend fun testRemoteBranchCheckedOut(repository: GitRepository, branch: GitRemoteBranch): Boolean {
+    return when (branch) {
+      is GitSpecialRefRemoteBranch -> {
+        val hash = withContext(Dispatchers.IO) {
+          coroutineToIndicator {
+            Git.getInstance().resolveReference(repository, branch.nameForLocalOperations)?.asString()
+          }
+        }
         repository.currentRevision == hash
       }
       else -> {
@@ -133,8 +167,13 @@ object GitRemoteBranchesUtil {
       }
       if (!fetchOk) return@withBackgroundProgress
 
-      // Reuse the local branch already tracking the remote one, so the worktree doesn't fail to create a duplicate branch.
-      val ref: GitBranch = findLocalBranchTrackingRemote(repository, branch) ?: branch
+      // Reuse a local branch that already tracks the remote one, or shares the name a regular checkout would have
+      // assigned it (tracking may be missing depending on the user's `branch.autoSetupMerge` setting), so the
+      // worktree doesn't fail trying to create a branch that already exists.
+      val existingLocalBranch = findLocalBranchTrackingRemote(repository, branch)
+                                 ?: repository.branches.findLocalBranch(branch.nameForRemoteOperations)
+                                   ?.takeUnless { hasTrackingConflicts(mapOf(repository to it), branch.name) }
+      val ref: GitBranch = existingLocalBranch ?: branch
       GitCreateWorkingTreeService.getInstance()
         .createOrOpenWorktreeForBranch(repository, ref, parentDir, worktreeName, place, onProjectOpened)
     }

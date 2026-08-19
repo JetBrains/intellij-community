@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.project.projectId
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.asRef
@@ -314,8 +313,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       val dataContextId = readAction { initEvent.dataContext.rpcId() }
       val availableRemoteProviders = when {
         project == null -> null
-        !service<RemoteApiProviderService>().isServiceOperational() -> null
-        else -> SeRemoteApi.getInstance().getAvailableProviderIds(project.projectId(), session, dataContextId)
+        else -> SeRemoteApi.tryGetInstance()?.getAvailableProviderIds(project.projectId(), session, dataContextId)
       }
       if (availableRemoteProviders == null) return@initAsync null
 

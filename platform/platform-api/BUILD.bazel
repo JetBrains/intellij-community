@@ -42,7 +42,7 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/editor-ui-api:editor-ui",
         "//platform/util/progress",
-        "@lib//:jna",
+        "//libraries/jna",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//platform/util/jdom",
@@ -97,6 +97,7 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/util/progress:progress_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//platform/util-ex:util-ex_test_lib",
@@ -127,6 +128,9 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.iml",
+        "resources/PlatformProductivityFeatures.xml",
+        "resources/intellij.platform.ide.actions.xml",
+        "resources/intellij.platform.ide.xml",
     ],
     visibility = ["//visibility:public"],
 )

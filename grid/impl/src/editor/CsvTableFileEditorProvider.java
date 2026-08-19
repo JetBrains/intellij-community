@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Lazy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +66,7 @@ public final class CsvTableFileEditorProvider extends WeighedFileEditorProvider 
   }
 
   @Override
-  public @NotNull FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull Lazy<@Nullable VirtualFile> file) {
     FileEditorState state = null;
     try {
       state = XmlSerializer.deserialize(sourceElement, CsvFormatResolver.State.class);

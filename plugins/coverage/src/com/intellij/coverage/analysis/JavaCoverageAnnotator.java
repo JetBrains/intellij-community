@@ -4,10 +4,8 @@ package com.intellij.coverage.analysis;
 import com.intellij.coverage.BaseCoverageAnnotator;
 import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.CoverageLogger;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.coverage.JavaCoverageEngineExtension;
-import com.intellij.coverage.JavaCoverageSuite;
 import com.intellij.coverage.view.CoverageClassStructure;
 import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.openapi.Disposable;
@@ -18,14 +16,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -43,10 +35,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disposable.Default {
   private final Map<String, PackageAnnotator.PackageCoverageInfo> myPackageCoverageInfos = new HashMap<>();
   private final Map<String, PackageAnnotator.PackageCoverageInfo> myFlattenPackageCoverageInfos = new HashMap<>();
-  private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myDirCoverageInfos =
-    new HashMap<>();
+  private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myDirCoverageInfos = new HashMap<>();
   private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new ConcurrentHashMap<>();
-  private final Map<PsiElement, PackageAnnotator.SummaryCoverageInfo> myExtensionCoverageInfos = new WeakHashMap<>();
+  private final Map<String, VirtualFile> myClassSourceFiles = new ConcurrentHashMap<>();
   protected CoverageClassStructure myStructure;
 
   public JavaCoverageAnnotator(final Project project) {
@@ -104,7 +95,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     myFlattenPackageCoverageInfos.clear();
     myDirCoverageInfos.clear();
     myClassCoverageInfos.clear();
-    myExtensionCoverageInfos.clear();
+    myClassSourceFiles.clear();
     if (myStructure != null) {
       Disposer.dispose(myStructure);
     }
@@ -135,28 +126,23 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     }
 
     @Override
-    public void addClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
+    public void addClass(String classQualifiedName,
+                         PackageAnnotator.ClassCoverageInfo classCoverageInfo,
+                         @Nullable VirtualFile sourceFile) {
       myAnnotator.myClassCoverageInfos.put(classQualifiedName, classCoverageInfo);
+      if (sourceFile != null) {
+        myAnnotator.myClassSourceFiles.put(classQualifiedName, sourceFile);
+      }
     }
   }
 
   @Override
   protected Runnable createRenewRequest(final @NotNull CoverageSuitesBundle suite, final @NotNull CoverageDataManager dataManager) {
-    final Project project = getProject();
+    return JavaCoverageRenewRequestKt.createJavaCoverageRenewRequest(this, getProject(), suite, dataManager);
+  }
 
-    return () -> {
-      long timeMs = TimeoutUtil.measureExecutionTime(() -> {
-        collectSummaryInfo(suite, project);
-        myStructure = new CoverageClassStructure(project, this, suite);
-        Disposer.register(this, myStructure);
-        dataManager.triggerPresentationUpdate();
-      });
-
-      int annotatedClasses = myClassCoverageInfos.size();
-      ProjectData data = suite.getCoverageData();
-      int loadedClasses = data == null ? 0 : data.getClassesNumber();
-      CoverageLogger.logReportBuilding(project, timeMs, annotatedClasses, loadedClasses);
-    };
+  void updateStructure(@NotNull CoverageClassStructure structure) {
+    myStructure = structure;
   }
 
   public static @Nullable @Nls String getCoverageInformationString(PackageAnnotator.SummaryCoverageInfo info, boolean subCoverageActive) {
@@ -283,34 +269,12 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     return myClassCoverageInfos;
   }
 
-  protected void collectSummaryInfo(@NotNull CoverageSuitesBundle suite, Project project) {
-    var collector = new JavaCoverageInfoCollector(this);
-    if (shouldSkipUnloadedClassesAnalysis(suite)) {
-      JavaCoverageReportEnumerator.collectSummaryInReport(suite, project, collector);
-    }
-    else {
-      new JavaCoverageClassesAnnotator(suite, project, collector).visitSuite();
-    }
+  public final Map<String, PackageAnnotator.PackageCoverageInfo> getPackagesCoverage() {
+    return myPackageCoverageInfos;
   }
 
-  private static boolean shouldSkipUnloadedClassesAnalysis(CoverageSuitesBundle bundle) {
-    return ContainerUtil.and(bundle.getSuites(), suite -> suite instanceof JavaCoverageSuite javaSuite && javaSuite.isSkipUnloadedClassesAnalysis());
+  public final @Nullable VirtualFile getClassSourceFile(@NotNull String classFQName) {
+    return myClassSourceFiles.get(classFQName);
   }
 
-  public final @Nullable PackageAnnotator.SummaryCoverageInfo getExtensionCoverageInfo(@Nullable PsiNamedElement value) {
-    if (value == null) return null;
-    PackageAnnotator.SummaryCoverageInfo cachedInfo = myExtensionCoverageInfos.get(value);
-    if (cachedInfo != null) {
-      return cachedInfo;
-    }
-
-    return JavaCoverageEngineExtension.EP_NAME.computeSafeIfAny(extension -> {
-      PackageAnnotator.SummaryCoverageInfo info = extension.getSummaryCoverageInfo(this, value);
-      if (info != null) {
-        myExtensionCoverageInfos.put(value, info);
-        return info;
-      }
-      return null;
-    });
-  }
 }

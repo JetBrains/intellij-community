@@ -51,7 +51,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   private Module myModuleContext = null;
   private boolean myHasModuleMacro;
   protected final Map<String, String> myMacrosMap = new HashMap<>();
-  private final @Nullable Project myProject;
+  protected final @Nullable Project myProject;
 
   /**
    * @deprecated Use {@link #CommonProgramParametersPanel(boolean init, Project project)} instead, pass {@code null} only for a default project
@@ -105,7 +105,9 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     // for backward compatibility: com.microsoft.tooling.msservices.intellij.azure:3.0.11
     myWorkingDirectoryField = new TextFieldWithBrowseButton();
 
-    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(ExecutionBundle.message("select.working.directory.message"));
+    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(ExecutionBundle.message("select.working.directory.message"))
+      .withEnvironmentRestricted(true);
     myWorkingDirectoryField.addBrowseFolderListener(myProject, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     myWorkingDirectoryComponent = LabeledComponent.create(myWorkingDirectoryField, ExecutionBundle.message("run.configuration.working.directory.label"));
 

@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -84,7 +85,8 @@ internal class SuspiciousJavaClassCallableReferenceInspection :
         return element.callableReference.getReferencedNameAsName() == JvmStandardClassIds.Callables.JavaClass.callableName
     }
 
-    override fun KaSession.prepareContext(element: KtCallableReferenceExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallableReferenceExpression): Context? {
         val resolvedCall = element.resolveToCall()?.singleVariableAccessCall() ?: return null
 
         if (resolvedCall.symbol.callableId != JvmStandardClassIds.Callables.JavaClass) return null
@@ -175,4 +177,3 @@ private fun KtExpression.splitIntoQualifiersIfQualified(): List<KtExpression> {
         .map { (it as? KtQualifiedExpression)?.selectorExpression ?: it }
         .toList()
 }
-

@@ -1,0 +1,8 @@
+- [ ] a
+    - <caret>x
+  - [ ] aa
+  - [x] ab
+    - aba
+    - abb
+  - [ ] ac
+- [ ] b

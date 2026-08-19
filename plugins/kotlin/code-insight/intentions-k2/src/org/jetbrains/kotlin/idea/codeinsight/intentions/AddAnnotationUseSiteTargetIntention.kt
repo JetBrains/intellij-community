@@ -14,7 +14,8 @@ internal class AddAnnotationUseSiteTargetIntention :
     AddAnnotationUseSiteTargetModCommandAction(),
     ContextProvider<KtAnnotationEntry, List<AnnotationUseSiteTarget>> {
 
-    override fun KaSession.prepareContext(element: KtAnnotationEntry): List<AnnotationUseSiteTarget> =
+    context(session: KaSession)
+    override fun prepareContext(element: KtAnnotationEntry): List<AnnotationUseSiteTarget> =
         element.getApplicableUseSiteTargets()
 
     override fun getAnnotationTargets(

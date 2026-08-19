@@ -1,10 +1,15 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="com.intellij.completion.ml.ranking"/>
     <module name="intellij.gradle.java"/>
+    <plugin id="com.intellij.completion.ml.ranking"/>
     <module name="intellij.gradle.java.groovy"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
   </dependencies>
   <!-- endregion -->
 

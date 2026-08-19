@@ -69,6 +69,7 @@ jvm_library(
 exports_files(
     [
         "intellij.toml.core.iml",
+        "src/main/resources/intellij.toml.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

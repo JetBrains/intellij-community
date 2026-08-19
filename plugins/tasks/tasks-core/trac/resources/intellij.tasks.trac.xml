@@ -1,6 +1,12 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.xml.rpc"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.util.ui"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <tasks.repositoryType implementation="com.intellij.tasks.trac.TracRepositoryType"/>

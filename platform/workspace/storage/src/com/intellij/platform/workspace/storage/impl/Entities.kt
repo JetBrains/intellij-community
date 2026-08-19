@@ -8,9 +8,12 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.trace.ReadTrace
@@ -18,8 +21,9 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.ReflectionUtil
 import org.jetbrains.annotations.ApiStatus
 
+@WorkspaceEntityInternalApi
 public abstract class WorkspaceEntityBase(private var currentEntityData: WorkspaceEntityData<out WorkspaceEntity>? = null) : WorkspaceEntity {
-  public var id: EntityId = invalidEntityId
+  internal var id: EntityId = invalidEntityId
 
   public lateinit var snapshot: EntityStorage
   internal var onRead: ((ReadTrace) -> Unit)? = null
@@ -118,9 +122,11 @@ public data class EntityLink(
 internal val EntityLink.remote: EntityLink
   get() = EntityLink(!this.isThisFieldChild, connectionId)
 
+@WorkspaceEntityInternalApi
 public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEntityData<T>>(protected var currentEntityData: E?) : WorkspaceEntity.Builder<T> {
-  public var id: EntityId = invalidEntityId
+  internal var id: EntityId = invalidEntityId
   public abstract fun connectionIdList(): List<ConnectionId>
+
   /**
    * In case any of two referred entities is not added to diff, the reference between entities will be stored in this field
    */
@@ -133,6 +139,115 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
   public val changedProperty: MutableSet<String> = mutableSetOf()
 
   public fun getEntityInterface(): Class<out WorkspaceEntity> = id.clazz.findWorkspaceEntity()
+
+  protected fun getParent(connectionId: ConnectionId): WorkspaceEntityBuilder<*>? {
+    return (diff as? MutableEntityStorageInstrumentation)?.getParentBuilder(connectionId, this)
+           ?: (this.entityLinks[EntityLink(false, connectionId)] as? WorkspaceEntityBuilder<*>)
+  }
+
+  protected fun getChild(connectionId: ConnectionId): WorkspaceEntityBuilder<*>? {
+    return (diff as? MutableEntityStorageInstrumentation)?.getOneChildBuilder(connectionId, this)
+           ?: (this.entityLinks[EntityLink(true, connectionId)] as? WorkspaceEntityBuilder<*>)
+  }
+  
+  protected fun getChildren(connectionId: ConnectionId): List<WorkspaceEntityBuilder<*>> {
+    @Suppress("UNCHECKED_CAST")
+    val fromEntityLinks = this.entityLinks[EntityLink(true, connectionId)] as? List<WorkspaceEntityBuilder<*>> ?: emptyList()
+    val thisDiff = diff
+    if (thisDiff == null) return fromEntityLinks
+    val fromDiff = (thisDiff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(connectionId, this).toList()
+    return fromDiff + fromEntityLinks
+  }
+
+  // TODO: clean up
+  protected fun changeParent(parent: WorkspaceEntityBuilder<*>?, connectionId: ConnectionId) {
+    checkModificationAllowed()
+    val thisDiff = diff
+    if (parent == null) {
+      if (thisDiff != null) {
+        thisDiff.instrumentation.addChild(connectionId, parent, this)
+      } else {
+        this.entityLinks[EntityLink(false, connectionId)] = parent
+      }
+      return
+    }
+    parent as ModifiableWorkspaceEntityBase<*, *>?
+    if (thisDiff == null) {
+      parent.entityLinks[EntityLink(true, connectionId)] = this
+      this.entityLinks[EntityLink(false, connectionId)] = parent
+      return
+    }
+    if (parent.diff == null) {
+      parent.entityLinks[EntityLink(true, connectionId)] = this
+      thisDiff.addEntity(parent) // sets value.diff to thisDiff
+    }
+    thisDiff.instrumentation.addChild(connectionId, parent, this)
+  }
+
+  protected fun changeParentOfMany(value: WorkspaceEntityBuilder<*>?, connectionId: ConnectionId) {
+    checkModificationAllowed()
+    val thisDiff = diff
+    if (value == null) {
+      if (thisDiff != null) {
+        thisDiff.instrumentation.addChild(connectionId, value, this)
+      } else {
+        this.entityLinks[EntityLink(false, connectionId)] = value
+      }
+      return
+    }
+    value as ModifiableWorkspaceEntityBase<*, *>
+    if (thisDiff == null) {
+      val data = (value.entityLinks[EntityLink(true, connectionId)] as? List<Any?> ?: emptyList()) + this
+      value.entityLinks[EntityLink(true, connectionId)] = data
+      this.entityLinks[EntityLink(false, connectionId)] = value
+      return
+    }
+    if (value.diff == null) {
+      val data = (value.entityLinks[EntityLink(true, connectionId)] as? List<Any?> ?: emptyList()) + this
+      value.entityLinks[EntityLink(true, connectionId)] = data
+      thisDiff.addEntity(value) // sets value.diff to thisDiff
+    }
+    thisDiff.instrumentation.addChild(connectionId, value, this)
+  }
+
+  protected open fun updateSymbolicId(parent: WorkspaceEntityBuilder<*>, connectionId: ConnectionId) {}
+
+  protected fun changeChild(child: WorkspaceEntityBuilder<*>?, connectionId: ConnectionId) {
+    checkModificationAllowed()
+    child as ModifiableWorkspaceEntityBase<*, *>?
+    child?.updateSymbolicId(this, connectionId)
+    val thisDiff = diff
+    if (thisDiff == null || child?.diff == null) {
+      child?.entityLinks[EntityLink(false, connectionId)] = this
+      child?.let { thisDiff?.addEntity(it) } // value.diff becomes thisDiff
+    }
+    if (thisDiff != null) {
+      thisDiff.instrumentation.replaceChildren(connectionId, this, listOfNotNull(child))
+    }
+    else {
+      this.entityLinks[EntityLink(true, connectionId)] = child
+    }
+  }
+
+  protected fun changeChildren(children: List<WorkspaceEntityBuilder<*>>, connectionId: ConnectionId) {
+    checkModificationAllowed()
+    @Suppress("UNCHECKED_CAST")
+    children as List<ModifiableWorkspaceEntityBase<*, *>>
+    val thisDiff = this.diff
+    for (child in children) {
+      child.updateSymbolicId(this, connectionId)
+      if (thisDiff == null || child.diff == null) {
+        child.entityLinks[EntityLink(false, connectionId)] = this
+        thisDiff?.addEntity(child)
+      }
+    }
+    if (thisDiff != null) {
+      thisDiff.instrumentation.replaceChildren(connectionId, this, children)
+    }
+    else {
+      entityLinks[EntityLink(true, connectionId)] = children
+    }
+  }
 
   public fun updateChildToParentReferences(parents: Set<WorkspaceEntity>?) {
     if (diff == null) return
@@ -453,9 +568,31 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
 
   public abstract fun getEntityClass(): Class<T>
 
-  public open fun applyToBuilder(builder: MutableEntityStorage) {
-    throw NotImplementedError()
+  public abstract fun checkInitialization(): Unit
+
+  internal fun applyToBuilder(builder: MutableEntityStorage) {
+    if (this.diff != null) {
+      if (existsInBuilder(builder)) {
+        this.diff = builder
+        return
+      }
+      else {
+        error("Entity ${getEntityClass().simpleName} is already created in a different builder")
+      }
+    }
+    this.diff = builder
+    addToBuilder()
+    this.id = getEntityData().createEntityId()
+    // After adding entity data to the builder, we need to unbind it and move the control over entity data to the builder.
+    // Builder may switch to snapshot at any moment and lock entity data to modification.
+    this.currentEntityData = null
+    index()
+    // Process linked entities that are connected without a builder
+    processLinkedEntities(builder)
+    checkInitialization()
   }
+
+  protected open fun index() {}
 
   public open fun afterModification() { }
 
@@ -600,11 +737,34 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
 
   public fun isEntitySourceInitialized(): Boolean = ::entitySource.isInitialized
 
-  public fun createEntityId(): EntityId = createEntityId(id, getEntityInterface().toClassId())
+  internal fun createEntityId(): EntityId = createEntityId(id, getEntityInterface().toClassId())
+  
+  public fun <T : WorkspaceEntityData<E>> createAndSetEntityId(modifiableEntity: ModifiableWorkspaceEntityBase<E, T>) {
+    val newId = createEntityId()
+    modifiableEntity.id = newId
+  }
 
-  public abstract fun createEntity(snapshot: EntityStorageInstrumentation): E
+  protected abstract fun newInstance(): E
+  
+  public fun createEntity(snapshot: EntityStorageInstrumentation): E {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
+      val entity = newInstance()
+      entity as WorkspaceEntityBase
+      entity.snapshot = snapshot
+      entity.id = entityId
+      entity
+    }
+  }
 
-  public abstract fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<E>
+  protected abstract fun newBuilderInstance():  ModifiableWorkspaceEntityBase<E, *>
+
+  internal fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<E> {
+    val modifiable = newBuilderInstance()
+    modifiable.diff = diff
+    modifiable.id = createEntityId()
+    return modifiable
+  }
 
   public abstract fun getEntityInterface(): Class<out WorkspaceEntity>
 

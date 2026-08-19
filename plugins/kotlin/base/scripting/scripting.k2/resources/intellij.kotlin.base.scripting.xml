@@ -16,6 +16,29 @@
     <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.codeInsight.utils"/>
     <module name="intellij.kotlin.preferences"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
   <applicationListeners>
@@ -46,6 +69,9 @@
                        key="notification.group.kotlin.script"/>
 
     <problemHighlightFilter implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.ScriptProblemHighlightFilter"/>
+
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.core.script.k2.statistics.KotlinScriptingUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.core.script.k2.statistics.KotlinScriptingLifecycleCollector"/>
 
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptHighlightingVisitor"/>
 
@@ -105,6 +131,12 @@
 
   <extensionPoints>
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kotlinScriptFilter"
+            interface="org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptProcessingFilter"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptEntityProvider"
             interface="org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider"
             area="IDEA_PROJECT"
@@ -116,18 +148,14 @@
             implementation="org.jetbrains.kotlin.idea.core.script.k2.structureView.KotlinScriptStructureViewFactoryExtension"
             order="first"/>
 
-    <scriptDefinitionsSource
-            implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.MainKtsScriptDefinitionSource"/>
+    <scriptDefinitionsProvider
+            implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.MainKtsScriptDefinitionsProvider"/>
 
     <scriptAfterRunCallbackProvider
             implementation="org.jetbrains.kotlin.idea.core.script.k2.MainKtsAfterRunCallbackProvider"/>
 
     <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.ModuleScriptAdditionalIdeaDependenciesProvider"/>
 
-    <scriptDefinitionsSource
-            id="StandardScriptDefinitionContributor"
-            order="last"
-            implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.BundledScriptDefinitionSource"/>
     <scriptDefinitionsProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.DefinitionFromDependenciesProvider"/>
   </extensions>
 

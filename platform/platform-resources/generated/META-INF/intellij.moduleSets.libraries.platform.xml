@@ -27,6 +27,7 @@
 
     <!-- region direct modules -->
     <module name="intellij.libraries.java.compatibility" loading="embedded"/>
+    <module name="intellij.libraries.jetbrains.annotations" loading="embedded"/>
     <module name="intellij.libraries.kotlin.reflect" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.io" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.cbor" loading="embedded"/>
@@ -72,6 +73,7 @@
     <module name="intellij.libraries.jaxen" loading="embedded"/>
     <module name="intellij.libraries.jbr" loading="embedded"/>
     <module name="intellij.libraries.jcip" loading="embedded"/>
+    <module name="intellij.libraries.jna" loading="embedded"/>
     <module name="intellij.libraries.jsoup" loading="embedded"/>
     <module name="intellij.libraries.jsonpath" loading="embedded"/>
     <module name="intellij.libraries.jsvg" loading="embedded"/>
@@ -88,6 +90,7 @@
     <module name="intellij.libraries.netty.handler.proxy" loading="embedded"/>
     <module name="intellij.libraries.oro.matcher" loading="embedded"/>
     <module name="intellij.libraries.protobuf" loading="embedded"/>
+    <module name="intellij.libraries.protobuf.kotlin" loading="embedded"/>
     <module name="intellij.libraries.proxy.vole" loading="embedded"/>
     <module name="intellij.libraries.rhino" loading="embedded"/>
     <module name="intellij.libraries.semver" loading="embedded"/>

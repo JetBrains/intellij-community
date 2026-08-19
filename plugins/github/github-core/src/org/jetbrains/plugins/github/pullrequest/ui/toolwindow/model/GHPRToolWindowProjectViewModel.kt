@@ -115,6 +115,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
     if (requestFocus) {
       activate()
     }
+    reloadOpenedPullRequestDetails(id)
     tabsHelper.showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
       if (requestFocus) {
         requestFocus()
@@ -125,10 +126,20 @@ class GHPRToolWindowProjectViewModel internal constructor(
 
   override fun viewPullRequest(id: GHPRIdentifier, commitOid: String) {
     activate()
+    reloadOpenedPullRequestDetails(id)
     tabsHelper.showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
       selectCommit(commitOid)
     }
     GHPRStatisticsCollector.logDetailsOpened(project)
+  }
+
+  private fun reloadOpenedPullRequestDetails(id: GHPRIdentifier) {
+    val detailsData = dataContext.dataProviderRepository.findDataProvider(id)?.detailsData ?: return
+    if (detailsData.loadedDetails == null) return
+    cs.launch {
+      detailsData.signalDetailsNeedReload()
+      detailsData.signalMergeabilityNeedsReload()
+    }
   }
 
   override fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean) {

@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "maven-tests_test",
+    timeout = "short",
+    tags = ["community-aggregator"],
+    runtime_deps = [":maven-tests_test_lib"],
+)
+### skip generation section `test intellij.maven.tests`
+
 ### auto-generated section `build intellij.maven.tests` start
 jvm_library(
     name = "maven-tests",
@@ -14,7 +22,6 @@ jvm_library(
         # do not sort,
         "//platform/vcs-api:vcs",
         "//platform/util/progress",
-        "//plugins/repository-search/common",
     ],
 )
 
@@ -91,8 +98,6 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "//platform/workspace/storage",
         "//platform/workspace/storage:storage_test_lib",
-        "//plugins/repository-search",
-        "//plugins/repository-search:repository-search_test_lib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
         "//platform/external-system-api/dependency-updater",
@@ -177,6 +182,8 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//plugins/repository-search/common",
         "//plugins/repository-search/common:common_test_lib",
+        "//plugins/repository-search/completion",
+        "//plugins/repository-search/completion:completion_test_lib",
         "//plugins/maven/completion",
         "//plugins/maven/completion:completion_test_lib",
         "//plugins/maven/jps/ide",
@@ -206,13 +213,6 @@ exports_files(
 )
 ### auto-generated section `iml intellij.maven.tests` end
 
-### auto-generated section `test intellij.maven.tests` start
-jps_test(
-    name = "maven-tests_test",
-    runtime_deps = [":maven-tests_test_lib"],
-)
-### auto-generated section `test intellij.maven.tests` end
-
 ### auto-generated section `build intellij.maven.tests.main` start
 jvm_library(
     name = "maven-tests-main",
@@ -232,24 +232,16 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.maven.tests.main",
-    resource_strip_prefix = "testResources",
-    resources = glob(
-        ["testResources/**/*"],
-    ),
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
         ":maven-tests-main",
         "//platform/bootstrap/coroutine",
         "//platform/bootstrap/coroutine:coroutine_test_lib",
-        "//aether-dependency-resolver:java-aetherDependencyResolver-tests",
-        "//aether-dependency-resolver:java-aetherDependencyResolver-tests_test_lib",
-        "//java/idea-ui:ui-tests",
-        "//java/idea-ui:ui-tests_test_lib",
-        "//plugins/maven-server-api/test:maven-server-tests",
-        "//plugins/maven-server-api/test:maven-server-tests_test_lib",
         "//plugins/maven/src/test:maven-tests",
         "//plugins/maven/src/test:maven-tests_test_lib",
+        "//plugins/maven/src/integrationTest:maven-integration-tests",
+        "//plugins/maven/src/integrationTest:maven-integration-tests_test_lib",
         "//plugins/maven/groovy:groovy-tests",
         "//plugins/maven/groovy:groovy-tests_test_lib",
     ],

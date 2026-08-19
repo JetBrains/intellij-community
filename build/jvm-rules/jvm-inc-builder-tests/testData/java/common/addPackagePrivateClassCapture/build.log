@@ -1,0 +1,12 @@
+================ Step #1 =================
+Compiling files:
+  java/common/addPackagePrivateClassCapture/a/ppp/Util.java
+End of files
+Cleaning output files:
+  ppp/Use.class
+End of files
+Compiling files:
+  java/common/addPackagePrivateClassCapture/a/ppp/Use.java
+End of files
+------------------------------------------
+Exit code: ERROR

@@ -2,6 +2,7 @@
 package fleet.util
 
 import fleet.reporting.shared.tracing.span
+import java.security.MessageDigest
 import java.security.SecureRandom
 
 private const val SECRET_SIZE: Int = 256
@@ -39,6 +40,10 @@ class Secret(private val secret: ByteArray) {
 
   fun toBase64String(): String {
     return UrlSafeBase64WithOptionalPadding.encode(secret)
+  }
+
+  fun matches(other: Secret): Boolean {
+    return MessageDigest.isEqual(secret, other.secret)
   }
 
   override fun toString(): String {

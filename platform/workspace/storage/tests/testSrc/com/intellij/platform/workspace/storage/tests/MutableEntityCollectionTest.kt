@@ -4,7 +4,7 @@ package com.intellij.platform.workspace.storage.tests
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.testEntities.entities.ListVFUEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ListVFUEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
@@ -27,7 +27,7 @@ class MutableEntityCollectionTest {
 
   @BeforeEach
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManagerImpl()
+    virtualFileManager = ConcurrentVirtualFileUrlManager()
   }
 
   @Test

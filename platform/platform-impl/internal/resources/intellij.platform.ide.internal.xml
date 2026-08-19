@@ -6,6 +6,7 @@
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.hash4j"/>
     <module name="intellij.libraries.jbr"/>
+    <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
@@ -20,8 +21,10 @@
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide.bootstrap"/>
     <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.ide.updateChecker"/>
@@ -33,7 +36,6 @@
     <module name="intellij.platform.projectFrame"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
-    <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.statistics.uploader"/>
     <module name="intellij.platform.util.coroutines"/>
@@ -140,7 +142,6 @@
     </action>
 
     <group id="Internal.Ex" internal="true">
-      <action id="ShowRegisteredRemoteApis" internal="true" class="com.intellij.internal.rpc.ShowRegisteredRemoteApisAction"/>
       <action id="ShowEdtUtilizationChart" internal="true" class="com.intellij.internal.ShowEdtUtilizationChartAction"/>
       <action id="ClearIDEStatistics"
               class="com.intellij.internal.ClearIDEStatisticsAction"
@@ -221,7 +222,7 @@
       <group id="Internal.UI.KotlinUiDsl" popup="true">
         <action id="GridLayoutTestAction" internal="true" class="com.intellij.internal.ui.gridLayoutTestAction.GridLayoutTestAction"/>
       </group>
-      <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction"/>
+      <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.componentPanelTestAction.ComponentPanelTestAction"/>
       <action id="WrapLayoutTestAction" internal="true" class="com.intellij.internal.ui.WrapLayoutTestAction"/>
       <action id="UIFreeze" internal="true" class="com.intellij.internal.UIFreezeAction"/>
       <action id="PooledFreeze" internal="true" class="com.intellij.internal.PooledFreezeAction"/>

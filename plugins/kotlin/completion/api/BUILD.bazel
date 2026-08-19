@@ -37,8 +37,8 @@ jvm_library(
         "//platform/projectModel-impl",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:jetbrains-annotations",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/jetbrains/annotations",
         "//platform/util",
         "//platform/lang-impl",
         "//plugins/kotlin/base/kotlin.base.serialization",
@@ -64,6 +64,8 @@ jvm_library(
         "//platform/projectModel-impl:projectModel-impl_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util:util_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
         "//plugins/kotlin/base/kotlin.base.serialization:kotlin.base.serialization_test_lib",
@@ -75,6 +77,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.completion.api.iml",
+        "resources/intellij.kotlin.completion.api.xml",
     ],
     visibility = ["//visibility:public"],
 )

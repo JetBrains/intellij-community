@@ -10,11 +10,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
+import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.dependency.pluginGraph
 import org.jetbrains.intellij.build.productLayout.dependency.runValidationRule
 import org.jetbrains.intellij.build.productLayout.dependency.testGenerationModel
 import org.jetbrains.intellij.build.productLayout.graph.PluginGraphBuilder
 import org.jetbrains.intellij.build.productLayout.model.error.PluginDescriptorIdConflictError
+import org.jetbrains.intellij.build.productLayout.productModules
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
@@ -74,6 +76,59 @@ class PluginDescriptorIdConflictValidatorTest {
   }
 
   @Test
+  fun `reports conflicts with plugins bundled only via additionalBundledPluginTargetNames`(): Unit = runBlocking(Dispatchers.Default) {
+    // 'extra.plugin' is not bundled by the product - it reaches the run only through the test plugin's
+    // additionalBundledPluginTargetNames, mirroring '-Dadditional.modules=' of the intellij.yaml runner.
+    val graph = pluginGraph {
+      product("IDEA") {
+        bundlesTestPlugin("test.plugin")
+      }
+      plugin("extra.plugin") {
+        pluginId("com.example.extra")
+        content("intellij.libraries.objenesis")
+      }
+      testPlugin("test.plugin") {
+        pluginId("intellij.python.pro.rust.tests.plugin")
+        content("intellij.libraries.objenesis")
+      }
+    }
+
+    val model = testGenerationModel(graph, dslTestPluginsByProduct = testPluginSpecsWithExtraBundle())
+    val errors = runValidationRule(PluginDescriptorIdConflictValidator, model)
+
+    val conflictErrors = errors.filterIsInstance<PluginDescriptorIdConflictError>()
+    assertThat(conflictErrors).hasSize(1)
+
+    val owners = conflictErrors.single().duplicates[PluginId("intellij.libraries.objenesis")]
+    assertThat(owners).isNotNull
+    assertThat(owners!!.map { it.pluginName.value }).containsExactlyInAnyOrder("extra.plugin", "test.plugin")
+  }
+
+  @Test
+  fun `ignores modules the test plugin declares without a namespace`(): Unit = runBlocking(Dispatchers.Default) {
+    // A namespace-less content module is registered in the plugin's implicit namespace, so its runtime id differs
+    // from the jetbrains-namespace one and the two never clash.
+    val graph = pluginGraph {
+      product("IDEA") {
+        bundlesTestPlugin("test.plugin")
+      }
+      plugin("extra.plugin") {
+        pluginId("com.example.extra")
+        content("intellij.libraries.objenesis")
+      }
+      testPlugin("test.plugin") {
+        pluginId("intellij.python.pro.rust.tests.plugin")
+        content("intellij.libraries.objenesis", namespace = null)
+      }
+    }
+
+    val model = testGenerationModel(graph, dslTestPluginsByProduct = testPluginSpecsWithExtraBundle())
+    val errors = runValidationRule(PluginDescriptorIdConflictValidator, model)
+
+    assertThat(errors).isEmpty()
+  }
+
+  @Test
   fun `ignores bundled alias nodes when checking descriptor id conflicts`(): Unit = runBlocking(Dispatchers.Default) {
     val builder = PluginGraphBuilder()
     val prodPlugin = TargetName("prod.plugin")
@@ -108,4 +163,19 @@ class PluginDescriptorIdConflictValidatorTest {
 
     assertThat(errors).isEmpty()
   }
+}
+
+/** Declares 'extra.plugin' as a plugin that 'test.plugin' pulls into the run without the product bundling it. */
+private fun testPluginSpecsWithExtraBundle(): Map<String, List<TestPluginSpec>> {
+  return mapOf(
+    "IDEA" to listOf(
+      TestPluginSpec(
+        pluginId = PluginId("intellij.python.pro.rust.tests.plugin"),
+        name = "Test Plugin",
+        pluginXmlPath = "test-plugin/META-INF/plugin.xml",
+        spec = productModules {},
+        additionalBundledPluginTargetNames = listOf(TargetName("extra.plugin")),
+      )
+    )
+  )
 }

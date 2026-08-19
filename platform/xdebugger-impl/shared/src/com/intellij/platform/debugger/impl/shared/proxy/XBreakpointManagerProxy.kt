@@ -6,8 +6,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.shared.InlineBreakpointsCache
-import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
+import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import org.jetbrains.annotations.ApiStatus
@@ -63,7 +64,7 @@ data class XLineBreakpointInstallationInfo(
     val placement: XLineBreakpointVerticalPlacement,
     val isTemporary: Boolean,
     val isLogging: Boolean,
-    val logExpression: String?,
+    val logExpression: XExpression?,
     private val canRemove: Boolean,
 ) {
   fun canRemoveBreakpoint(): Boolean = canRemove && !isTemporary

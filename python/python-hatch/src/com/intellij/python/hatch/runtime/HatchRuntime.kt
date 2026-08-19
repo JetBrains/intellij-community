@@ -3,9 +3,11 @@ package com.intellij.python.hatch.runtime
 
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.UploadConfig
-import com.intellij.python.hatch.HatchConfiguration
+import com.intellij.python.hatch.HatchExecutableNotFoundHatchError
+import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.WorkingDirectoryNotFoundHatchError
 import com.intellij.python.hatch.cli.HatchCli
+import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
@@ -24,7 +26,8 @@ suspend fun <P : PathHolder> createHatchRuntime(
   uploadBeforeExecution: UploadConfig? = null,
 ): Result<PyToolRuntime, PyError> {
   val actualHatchExecutable = hatchExecutablePath
-                              ?: HatchConfiguration.getOrDetectHatchExecutablePath(fileSystem).getOr { return it }
+                              ?: HatchPyTool.getInstance().resolveExecutable(fileSystem)
+                              ?: return Result.failure(HatchExecutableNotFoundHatchError(null))
   if (workingDirectoryPath?.isDirectory() != true) {
     return Result.failure(WorkingDirectoryNotFoundHatchError(workingDirectoryPath))
   }

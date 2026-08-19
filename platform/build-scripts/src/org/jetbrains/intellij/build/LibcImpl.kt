@@ -1,17 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 
 interface LibcImpl {
   companion object {
-
-    fun current(osFamily: OsFamily): LibcImpl {
-      return when (osFamily) {
-        OsFamily.MACOS -> MacLibcImpl.DEFAULT
-        OsFamily.WINDOWS -> WindowsLibcImpl.DEFAULT
-        OsFamily.LINUX -> LinuxLibcImpl.GLIBC
-      }
+    fun current(osFamily: OsFamily): LibcImpl = when (osFamily) {
+      OsFamily.MACOS -> MacLibcImpl.DEFAULT
+      OsFamily.WINDOWS -> WindowsLibcImpl.DEFAULT
+      OsFamily.LINUX -> LinuxLibcImpl.GLIBC
     }
   }
 }

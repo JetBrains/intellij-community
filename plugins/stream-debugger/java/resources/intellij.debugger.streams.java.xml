@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.debugger.streams.core"/>
     <module name="intellij.debugger.streams.java.rt"/>
+    <module name="intellij.debugger.streams.java.rt.gatherers"/>
     <module name="intellij.java"/>
     <module name="intellij.java.backend"/>
     <module name="intellij.java.debugger"/>
@@ -12,11 +13,27 @@
     <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.asm"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger.impl.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="org.jetbrains.platform.debugger.streams">
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.StandardLibrarySupportProvider"/>
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.StreamExLibrarySupportProvider"/>
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.JBIterableSupportProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="debugger.streams.use.breakpoint.based.tracing" defaultValue="true" description="Use new breakpoint based engine for stream tracing" />
   </extensions>
 </idea-plugin>

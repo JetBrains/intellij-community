@@ -23,7 +23,7 @@ jvm_library(
         "//plugins/xpath",
         "//xml/xml-psi-impl:psi-impl",
         "//xml/xml-parser:parser",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//xml/xml-psi-api:psi",
         "//libraries/jaxen",
         "//platform/core-api:core",
@@ -48,6 +48,7 @@ jvm_library(
         "//plugins/xpath:xpath_test_lib",
         "//xml/xml-psi-impl:psi-impl_test_lib",
         "//xml/xml-parser:parser_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//xml/xml-psi-api:psi_test_lib",
         "//libraries/jaxen:jaxen_test_lib",
         "//platform/core-api:core_test_lib",
@@ -61,6 +62,7 @@ jvm_library(
 exports_files(
     [
         "intellij.xml.langInjection.xpath.iml",
+        "resources/intellij.xml.langInjection.xpath.xml",
     ],
     visibility = ["//visibility:public"],
 )

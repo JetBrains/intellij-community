@@ -11,6 +11,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
@@ -91,20 +92,22 @@ internal class CoverageDataSuitesManager(private val project: Project) : Persist
 
   override fun loadState(element: Element) {
     for (suiteElement in element.getChildren(SUITE)) {
-      val coverageRunner = BaseCoverageSuite.readRunnerAttribute(suiteElement) ?: continue // skip unknown runners
-
-      val suite = CoverageEngine.EP_NAME.extensionList.asSequence()
-                    .filter { coverageRunner.acceptsCoverageEngine(it) }
-                    .firstNotNullOfOrNull { it.createEmptyCoverageSuite(coverageRunner) } ?: continue
-      if (suite is BaseCoverageSuite) {
-        suite.project = project
-      }
-
       try {
+        val coverageRunner = BaseCoverageSuite.readRunnerAttribute(suiteElement) ?: continue // skip unknown runners
+
+        val suite = CoverageEngine.EP_NAME.extensionList.asSequence()
+                      .filter { coverageRunner.acceptsCoverageEngine(it) }
+                      .firstNotNullOfOrNull { it.createEmptyCoverageSuite(coverageRunner) } ?: continue
+        if (suite is BaseCoverageSuite) {
+          suite.project = project
+        }
+
         suite.readExternal(suiteElement)
         suites.add(suite)
       }
-      catch (e: NumberFormatException) { // try next suite
+      catch (e: Exception) {
+        rethrowControlFlowException(e)
+        LOG.warn("Cannot load coverage suite", e)
       }
     }
   }

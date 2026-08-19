@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.KeyboardShortcut
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
@@ -24,19 +23,16 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.action.SendShortcutToTerminalAction
 import com.intellij.terminal.frontend.view.TerminalAllowedActionsProvider
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalEscapeBehaviorChangeNotification
-import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.awt.AWTEvent
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelListener
 import javax.swing.KeyStroke
 
@@ -62,7 +58,7 @@ private class TerminalEventDispatcher(
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val eventsHandler: TerminalKeyEventsHandler,
   private val parentDisposable: Disposable,
-) : IdeEventQueue.EventDispatcher {
+) : IdeEventQueue.NonLockedEventDispatcher {
   private val sendShortcutAction = SendShortcutToTerminalAction(eventsHandler)
   private var myRegistered = false
   private var allowedActions: List<AnAction> = emptyList()
@@ -109,6 +105,11 @@ private class TerminalEventDispatcher(
         eventsHandler.handleKeyEvent(e)
       }
       else {
+        // One key typed event, not every one: it pairs with the one key pressed event that was handled
+        // elsewhere, and the next key typed event has a key pressed event of its own. With a physical
+        // keyboard the following key released event cleared this anyway; a synthetic stream of key typed
+        // events alone (the remote driver's input-events robot) used to be swallowed whole.
+        ignoreNextKeyTypedEvent = false
         LOG.trace { "Key event skipped (key typed ignored): ${e.original}" }
       }
     }
@@ -234,6 +235,7 @@ private class TerminalEventDispatcher(
       "TW.Unsplit",
       "TW.MoveToNextSplitter",
       "TW.MoveToPreviousSplitter",
+      "MoveToolWindowTabToEditorAction",
       // non-essential terminal actions
       "TerminalIncreaseFontSize",
       "TerminalDecreaseFontSize",
@@ -281,14 +283,30 @@ private class TerminalKeyListener(
 
   private fun handleEvent(e: KeyEvent) {
     if (settings.overrideIdeShortcuts()) return // handled by the dispatcher
-    WriteIntentReadAction.run {
-      eventsHandler.handleKeyEvent(TimedKeyEvent(e))
-      e.consume()
-    }
+    eventsHandler.handleKeyEvent(TimedKeyEvent(e))
+    e.consume()
   }
 }
 
-internal fun setupKeyEventsHandling(
+/**
+ * The [IdeEventQueue.EventDispatcher] [setupKeyEventsHandling] installs, in the state it is in right after
+ * registration — including the pending "ignore the next key typed event".
+ *
+ * Exposed for tests only, and as the platform interface rather than the class: the behaviour worth pinning
+ * from outside is which key events reach the terminal, not how the dispatcher is wired to the editor.
+ */
+@ApiStatus.Internal
+@VisibleForTesting
+fun createTerminalKeyEventDispatcherForTests(
+  editor: EditorEx,
+  settings: JBTerminalSystemSettingsProviderBase,
+  eventsHandler: TerminalKeyEventsHandler,
+  disposable: Disposable,
+): IdeEventQueue.EventDispatcher = TerminalEventDispatcher(editor, settings, eventsHandler, disposable)
+
+@ApiStatus.Internal
+@VisibleForTesting
+fun setupKeyEventsHandling(
   editor: EditorEx,
   settings: JBTerminalSystemSettingsProviderBase,
   eventsHandler: TerminalKeyEventsHandler,
@@ -318,52 +336,44 @@ internal fun setupKeyEventsHandling(
 @VisibleForTesting
 fun setupMouseEventsHandling(
   editor: EditorEx,
-  sessionModel: TerminalSessionModel,
-  settings: JBTerminalSystemSettingsProviderBase,
   eventsHandler: TerminalMouseEventsHandler,
   disposable: Disposable,
 ) {
-  fun isRemoteMouseAction(e: MouseEvent): Boolean {
-    return sessionModel.terminalState.value.mouseMode != MouseMode.MOUSE_REPORTING_NONE && !e.isShiftDown
-  }
-
   // TODO: I suspect that Y positions should be screen-start based (without history).
   //  But it is not clear how to track the screen start. Need to investigate.
   editor.addEditorMouseListener(object : EditorMouseListener {
     override fun mousePressed(event: EditorMouseEvent) {
-      if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
-        val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
-        eventsHandler.mousePressed(cell.column, cell.line, event.mouseEvent)
-      }
+      // Editor moves the caret to the position of the mouse press on its own,
+      // but we need to do it additionally to support the case when the user holds Shift.
+      // To make text selection start from the mouse position even if Shift is held.
+      editor.caretModel.removeSecondaryCarets()
+      editor.caretModel.moveToOffset(event.offset)
+
+      val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
+      eventsHandler.onMouseEvent(cell.column, cell.line, event.mouseEvent)
     }
 
     override fun mouseReleased(event: EditorMouseEvent) {
-      if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
-        val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
-        eventsHandler.mouseReleased(cell.column, cell.line, event.mouseEvent)
-      }
+      val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
+      eventsHandler.onMouseEvent(cell.column, cell.line, event.mouseEvent)
     }
   }, disposable)
 
   editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
     override fun mouseMoved(event: EditorMouseEvent) {
-      if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
-        val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
-        eventsHandler.mouseMoved(cell.column, cell.line, event.mouseEvent)
-      }
+      val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
+      eventsHandler.onMouseEvent(cell.column, cell.line, event.mouseEvent)
     }
 
     override fun mouseDragged(event: EditorMouseEvent) {
-      if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
-        val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
-        eventsHandler.mouseDragged(cell.column, cell.line, event.mouseEvent)
-      }
+      val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
+      eventsHandler.onMouseEvent(cell.column, cell.line, event.mouseEvent)
     }
   }, disposable)
 
   val mouseWheelListener = MouseWheelListener { event ->
     val cell = editor.mousePointToGridCell(event.point, editor.xyToVisualPosition(event.point).line)
-    eventsHandler.mouseWheelMoved(cell.column, cell.line, event)
+    eventsHandler.onMouseEvent(cell.column, cell.line, event)
   }
   editor.scrollPane.addMouseWheelListener(mouseWheelListener)
   Disposer.register(disposable, Disposable {

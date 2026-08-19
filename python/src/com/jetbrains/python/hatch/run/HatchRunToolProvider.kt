@@ -1,12 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hatch.run
 
-import com.intellij.python.hatch.HatchConfiguration
+import com.intellij.python.hatch.HatchExecutableNotFoundHatchError
+import com.intellij.python.hatch.HatchPyTool
+import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.hatch.impl.sdk.HatchSdkFlavor
 import com.intellij.python.hatch.impl.sdk.HatchSdkFlavorData
 import com.intellij.python.hatch.runtime.HatchConstants
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.run.features.PyRunToolData
 import com.jetbrains.python.run.features.PyRunToolId
 import com.jetbrains.python.run.features.PyRunToolParameters
@@ -21,7 +22,8 @@ internal class HatchRunToolProvider : PySdkRunToolProvider<HatchSdkFlavorData, H
     flavorData: HatchSdkFlavorData,
     fileSystem: FileSystem<P>,
   ): PyRunToolParameters {
-    val hatchPath = HatchConfiguration.getOrDetectHatchExecutablePath(fileSystem).getOrThrow()
+    val hatchPath = HatchPyTool.getInstance().resolveExecutable(fileSystem)
+                    ?: throw AssertionError(HatchExecutableNotFoundHatchError(null))
     val env = mutableMapOf<String, String>()
     flavorData.hatchEnvironmentName?.let {
       env += HatchConstants.AppEnvVars.ENV to it

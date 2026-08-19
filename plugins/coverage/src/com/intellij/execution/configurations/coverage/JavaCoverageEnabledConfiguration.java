@@ -4,7 +4,6 @@ package com.intellij.execution.configurations.coverage;
 import com.intellij.coverage.CoverageLogger;
 import com.intellij.coverage.CoverageRunner;
 import com.intellij.coverage.CoverageSuite;
-import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.coverage.JavaCoverageEngine;
 import com.intellij.coverage.JavaCoverageRunner;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -46,7 +45,7 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
 
 
   public JavaCoverageEnabledConfiguration(RunConfigurationBase configuration) {
-    super(configuration, Objects.requireNonNull(CoverageRunner.getInstance(IDEACoverageRunner.class)));
+    super(configuration, Objects.requireNonNull(CoverageRunner.getInstance(JavaCoverageRunner.DEFAULT_RUNNER_CLASS)));
   }
 
   public void downloadReport(@NotNull TargetEnvironment environment, @NotNull ProgressIndicator indicator) throws IOException {
@@ -173,8 +172,8 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
     // runner
     final CoverageRunner coverageRunner = getCoverageRunner();
     if (coverageRunner != null) {
-      IDEACoverageRunner ideaRunner = CoverageRunner.EP_NAME.findExtension(IDEACoverageRunner.class);
-      if (ideaRunner != null && coverageRunner.getId().equals(ideaRunner.getId())) {
+      CoverageRunner defaultRunner = CoverageRunner.EP_NAME.findExtension(JavaCoverageRunner.DEFAULT_RUNNER_CLASS);
+      if (defaultRunner != null && coverageRunner.getId().equals(defaultRunner.getId())) {
         element.removeAttribute(COVERAGE_RUNNER);
       }
     }

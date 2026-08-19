@@ -1,6 +1,5 @@
 package com.intellij.driver.sdk.ui.components.common.editor
 
-import com.intellij.driver.sdk.ui.center
 import com.intellij.driver.sdk.ui.components.common.EditorTabsUiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.hasFocus
@@ -65,7 +64,7 @@ class EditorTabsGeometryWrapper(val editorTabsUiComponent: EditorTabsUiComponent
    * |   |   |   |   |   |   |   |   |
    * .___.___.___.___.___.___.___.___.
    * |   |   |   |   |   |   |   |   |
-   * C___G___.___.___O___.___.___H___D
+   * C___G___.___.___.___.___.___H___D
    * |   |   |   |   |   |   |   |   |
    * .___.___.___.___.___.___.___.___.
    * |   |   |   |   |   |   |   |   |
@@ -82,8 +81,6 @@ class EditorTabsGeometryWrapper(val editorTabsUiComponent: EditorTabsUiComponent
    * C - left border center point
    * D - right border center point
    *
-   * O - component center point
-   *
    * E - top area center point
    * F - bottom area center point
    * G - left area center point
@@ -92,17 +89,15 @@ class EditorTabsGeometryWrapper(val editorTabsUiComponent: EditorTabsUiComponent
    * All these dots are represented in the corresponding variable below, according to their position on the rectangle.
    *
    */
-  val centerPoint: Point get() = editorTabsUiComponent.center
+  val topBorderCenterPoint: Point get() = Point(editorTabsComponent.width / 2, 0)
+  val bottomBorderCenterPoint: Point get() = Point(editorTabsComponent.width / 2, editorTabsComponent.height)
+  val leftBorderCenterPoint: Point get() = Point(0, editorTabsComponent.height / 2)
+  val rightBorderCenterPoint: Point get() = Point(editorTabsComponent.width, editorTabsComponent.height / 2)
 
-  val topBorderCenterPoint: Point get() = Point(centerPoint.x, centerPoint.y - editorTabsComponent.height / 2)
-  val bottomBorderCenterPoint: Point get() = Point(centerPoint.x, centerPoint.y + editorTabsComponent.height / 2)
-  val leftBorderCenterPoint: Point get() = Point(centerPoint.x - editorTabsComponent.width / 2, centerPoint.y)
-  val rightBorderCenterPoint: Point get() = Point(centerPoint.x + editorTabsComponent.width / 2, centerPoint.y)
-
-  val topAreaCenterPoint: Point get() = Point(centerPoint.x, centerPoint.y - (3 * editorTabsComponent.height / 8))
-  val bottomAreaCenterPoint: Point get() = Point(centerPoint.x, centerPoint.y + (3 * editorTabsComponent.height / 8))
-  val leftAreaCenterPoint: Point get() = Point(centerPoint.x - (3 * editorTabsComponent.width / 8), centerPoint.y)
-  val rightAreaCenterPoint: Point get() = Point(centerPoint.x + (3 * editorTabsComponent.width / 8), centerPoint.y)
+  val topAreaCenterPoint: Point get() = Point(editorTabsComponent.width / 2, editorTabsComponent.height / 8)
+  val bottomAreaCenterPoint: Point get() = Point(editorTabsComponent.width / 2, 7 * editorTabsComponent.height / 8)
+  val leftAreaCenterPoint: Point get() = Point(editorTabsComponent.width / 8, editorTabsComponent.height / 2)
+  val rightAreaCenterPoint: Point get() = Point(7 * editorTabsComponent.width / 8, editorTabsComponent.height / 2)
 
   enum class EditorOrientation {
     HORIZONTAL, VERTICAL

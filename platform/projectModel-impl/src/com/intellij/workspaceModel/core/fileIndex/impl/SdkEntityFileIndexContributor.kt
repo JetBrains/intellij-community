@@ -22,7 +22,7 @@ fun EntityStorage.isProjectSdk(entity: SdkEntity): Boolean {
   return setting?.projectSdk == entity.symbolicId
 }
 
-class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, PlatformInternalWorkspaceFileIndexContributor {
+class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity> {
 
   override val entityClass: Class<SdkEntity>
     get() = SdkEntity::class.java
@@ -77,6 +77,6 @@ class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, 
  * without making the root participate in JVM package resolution.
  */
 @ApiStatus.Internal
-interface SdkFileSetData : WorkspaceFileSetData {
+interface SdkFileSetData : SkipAddingToWatchedRootsData {
   val sdkId: SdkId
 }

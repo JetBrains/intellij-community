@@ -149,6 +149,8 @@ jvm_library(
 exports_files(
     [
         "intellij.javaFX.iml",
+        "resources/intellij.javaFX.xml",
+        "resources/org/jetbrains/plugins/javaFX/refactoring/migration/JavaFx8__9.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -216,6 +218,7 @@ jvm_library(
 exports_files(
     [
         "intellij.javaFX.properties.iml",
+        "properties/resources/intellij.javaFX.properties.xml",
     ],
     visibility = ["//visibility:public"],
 )

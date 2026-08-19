@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -124,7 +125,8 @@ internal class ConvertLambdaToReferenceIntention :
     ): Boolean = element is KtLambdaArgument
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtLambdaExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtLambdaExpression): Context? {
         val singleStatement = element.singleStatementOrNull() ?: return null
         when (singleStatement) {
             is KtCallExpression -> {

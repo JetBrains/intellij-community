@@ -19,7 +19,8 @@ suspend fun Project.isWelcomeExperienceProject(): Boolean {
   return ProjectFrameCapabilitiesService.getInstance().has(this, ProjectFrameCapability.WELCOME_EXPERIENCE)
 }
 
-internal fun Project.isWelcomeExperienceProjectSync(): Boolean {
+@Internal
+fun Project.isWelcomeExperienceProjectSync(): Boolean {
   @Suppress("DEPRECATION")
   return ProjectFrameCapabilitiesService.getInstanceSync().has(this, ProjectFrameCapability.WELCOME_EXPERIENCE)
 }

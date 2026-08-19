@@ -61,6 +61,8 @@ jvm_library(
 exports_files(
     [
         "intellij.java.indexing.iml",
+        "resources/META-INF/JavaIndexingApi.xml",
+        "resources/intellij.java.indexing.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -55,6 +55,7 @@ jvm_library(
 exports_files(
     [
         "intellij.codeowners.monorepo.resolver.iml",
+        "resources/intellij.codeowners.monorepo.resolver.xml",
     ],
     visibility = ["//visibility:public"],
 )

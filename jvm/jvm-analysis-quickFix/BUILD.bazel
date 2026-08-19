@@ -59,6 +59,7 @@ jvm_library(
 exports_files(
     [
         "intellij.jvm.analysis.quickFix.iml",
+        "resources/intellij.jvm.analysis.quickFix.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -52,7 +52,11 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
       moduleRepository.computeModuleClasspath(RuntimeModuleId.legacyJpsModule("intellij.platform.runtime.loader")).map { it.pathString }
     }
     else {
-      Files.readAllLines(coreClassPathFile)
+      // entries are relative to the IDE home dir, unless they point outside of it
+      Files.readAllLines(coreClassPathFile).map { line ->
+        val path = Path.of(line)
+        (if (path.isAbsolute) path else installationDirectory.resolve(path)).pathString
+      }
     }
   }
 
@@ -207,6 +211,11 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
     // usually is only needed to save agent's space
     @OptIn(ExperimentalPathApi::class)
     fun cleanUpCachedInstallationDirectories(filter: (IdeInfo) -> Boolean = { true }) {
+      if (!DevBuildServerRunner.instance.ownsInstallationDirectory) {
+        // The cached directory is a build artifact this test only borrowed - see `DevBuildServerRunner.ownsInstallationDirectory`.
+        logOutput("Keeping ${cachedInstallationDirectories.size} installation directories: they are not this test run's to delete")
+        return
+      }
       cachedInstallationDirectories.filter { filter(it.key.ideInfo) }.forEach {
         logOutput("Cleaning up cached installation directory: ${it.value}")
         it.value.deleteRecursively()

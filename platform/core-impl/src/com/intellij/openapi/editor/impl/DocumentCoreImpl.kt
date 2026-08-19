@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.ex.DocumentCore
 import com.intellij.openapi.editor.ex.DocumentEventDispatcher
 import com.intellij.openapi.editor.ex.DocumentMutator
-import com.intellij.openapi.editor.ex.DocumentRangeMarkerTree
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
@@ -15,10 +14,10 @@ import kotlin.concurrent.Volatile
  * Default implementation of [DocumentImpl]
  */
 internal class DocumentCoreImpl private constructor(
-  @Volatile private var snapshot: DocumentSnapshot, // mutable via SNAPSHOT_UPDATER
+  /** mutable via [SNAPSHOT_UPDATER] */
+  @Volatile private var snapshot: DocumentSnapshot,
   private val settings: DocumentSettings,
   private val dispatcher: DocumentEventDispatcherImpl,
-  private val tree: DocumentRangeMarkerTree,
 ) : DocumentCore {
   private val live: CharSequence = LiveCharSequence()
   private val mutator: DocumentMutator = MutatorImpl()
@@ -30,10 +29,6 @@ internal class DocumentCoreImpl private constructor(
 
   override fun live(): CharSequence {
     return live
-  }
-
-  override fun tree(): DocumentRangeMarkerTree {
-    return tree
   }
 
   override fun dispatcher(): DocumentEventDispatcher {
@@ -68,22 +63,22 @@ internal class DocumentCoreImpl private constructor(
 
   private inner class LiveCharSequence : CharSequence {
     override val length: Int
-      get() = this@DocumentCoreImpl.snapshot.textLength()
+      get() = this@DocumentCoreImpl.snapshot.text().length()
 
     override fun get(index: Int): Char {
-      return this@DocumentCoreImpl.snapshot.text()[index]
+      return this@DocumentCoreImpl.snapshot.text().chars()[index]
     }
 
     override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-      return this@DocumentCoreImpl.snapshot.text().subSequence(startIndex, endIndex)
+      return this@DocumentCoreImpl.snapshot.text().chars().subSequence(startIndex, endIndex)
     }
 
     override fun toString(): String {
-      return this@DocumentCoreImpl.snapshot.string()
+      return this@DocumentCoreImpl.snapshot.text().string()
     }
   }
 
-  private inner class MutatorImpl : DocumentMutatorImpl(settings, dispatcher, tree) {
+  private inner class MutatorImpl : DocumentMutatorImpl(settings, dispatcher) {
     override fun getSnapshot(): DocumentSnapshot {
       return this@DocumentCoreImpl.snapshot
     }
@@ -98,9 +93,8 @@ internal class DocumentCoreImpl private constructor(
     fun createCore(chars: CharSequence, acceptSlashR: Boolean, forUseInNonAWTThread: Boolean): DocumentCore {
       val settings = DocumentSettingsImpl(!forUseInNonAWTThread, acceptSlashR, chars)
       val dispatcher = DocumentEventDispatcherImpl(settings)
-      val tree = DocumentRangeMarkerTreeImpl(dispatcher)
-      val snapshot = DocumentSnapshotImpl(chars)
-      return DocumentCoreImpl(snapshot, settings, dispatcher, tree)
+      val snapshot = DocumentSnapshotImpl(DocumentTextImpl(chars))
+      return DocumentCoreImpl(snapshot, settings, dispatcher)
     }
 
     /**

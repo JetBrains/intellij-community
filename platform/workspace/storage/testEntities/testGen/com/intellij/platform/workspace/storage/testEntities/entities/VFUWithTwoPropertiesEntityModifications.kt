@@ -20,7 +20,7 @@ interface VFUWithTwoPropertiesEntityBuilder : WorkspaceEntityBuilder<VFUWithTwoP
 }
 
 internal object VFUWithTwoPropertiesEntityType : EntityType<VFUWithTwoPropertiesEntity, VFUWithTwoPropertiesEntityBuilder>() {
-  override val entityClass: Class<VFUWithTwoPropertiesEntity> get() = VFUWithTwoPropertiesEntity::class.java
+  override val entityImplClass: Class<*> get() = VFUWithTwoPropertiesEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = VFUWithTwoPropertiesEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,

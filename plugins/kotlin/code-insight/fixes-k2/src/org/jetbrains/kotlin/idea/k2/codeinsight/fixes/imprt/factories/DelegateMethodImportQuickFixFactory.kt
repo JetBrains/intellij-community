@@ -14,7 +14,8 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal object DelegateMethodImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
+    context(session: KaSession)
+    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
         return when (diagnostic) {
             is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable,
             is KaFirDiagnostic.DelegateSpecialFunctionMissing -> {
@@ -46,7 +47,8 @@ internal object DelegateMethodImportQuickFixFactory : AbstractImportQuickFixFact
         )
     }
 
-    override fun KaSession.provideImportCandidates(
+    context(session: KaSession)
+    override fun provideImportCandidates(
         unresolvedName: Name,
         importContext: ImportContext,
         indexProvider: KtSymbolFromIndexProvider

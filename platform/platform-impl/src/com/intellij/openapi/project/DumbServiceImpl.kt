@@ -273,12 +273,14 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   override suspend fun <T> runInDumbMode(debugReason: @NonNls String, block: suspend () -> T): T {
     LOG.info("[$project]: running dumb task without visible indicator: $debugReason")
 
+    val originException = Throwable()
+
     var counterIncremented = false
     suspend fun incrementCounter() {
       // we need correct modality
       // Because we need to avoid additional dispatch. UNDISPATCHED coroutine is not a solution, because
       // multiple UNDISPATCHED coroutines in the same (EDT) thread ends up in some strange state (as revealed by unit tests)
-      incrementDumbCounterBlocking(trace = Throwable())
+      incrementDumbCounterBlocking(trace = originException)
       counterIncremented = true
     }
 
@@ -287,7 +289,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
         incrementCounter()
       }
       else if (Registry.`is`("ide.dumb.service.use.background.write.action")) {
-        incrementDumbCounterSuspending(Throwable()) {
+        incrementDumbCounterSuspending(originException) {
           counterIncremented = true
         }
       }
@@ -334,6 +336,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   @RequiresEdt
   private fun incrementDumbCounterBlocking(trace: Throwable) {
     if (tryIncrementStateCounter()) {
+      dumbModeStartTrace = trace
       // If already dumb - just increment the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
       // Otherwise, increment the counter under write action because this will change dumb state
       val enteredDumb = application.runWriteAction(Computable(::doIncrementStateCounter))
@@ -351,7 +354,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
       // The forced `invokeLater` will ensure that published requests for exit will be executed before new requests for enter.
       // This works given that `invokeLater` is fair, which is true.
       application.invokeLater {
-        proceedWithPublishingOfIncrementEvents(enteredDumb, trace)
+        proceedWithPublishingOfIncrementEvents(enteredDumb)
       }
     }
 
@@ -374,13 +377,14 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
         }
         enterDumbMode
       }) {
+        dumbModeStartTrace = trace
         // If already dumb - just increment the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
         // Otherwise, increment the counter under write action because this will change dumb state
         val enteredDumb = doIncrementStateCounter()
         onCounterIncremented()
         if (enteredDumb) {
           application.invokeLater {
-            proceedWithPublishingOfIncrementEvents(true, trace)
+            proceedWithPublishingOfIncrementEvents(true)
           }
         }
       }
@@ -388,13 +392,12 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     LOG.assertTrue(state.value.isDumb, "Should be dumb")
   }
 
-  private fun proceedWithPublishingOfIncrementEvents(enteredDumb: Boolean, trace: Throwable) {
+  private fun proceedWithPublishingOfIncrementEvents(enteredDumb: Boolean) {
     if (enteredDumb) {
       LOG.info("enter dumb mode [${project.name}]")
       if (LOG.isDebugEnabled) {
-        LOG.debug("dumb mode [${project.name}] trace", trace)
+        LOG.debug("dumb mode [${project.name}] trace", dumbModeStartTrace)
       }
-      dumbModeStartTrace = trace
       try {
         publishDumbModeChangedEvent(DumbModeEventListenerState.ENTERED)
       } catch (t: Throwable) {

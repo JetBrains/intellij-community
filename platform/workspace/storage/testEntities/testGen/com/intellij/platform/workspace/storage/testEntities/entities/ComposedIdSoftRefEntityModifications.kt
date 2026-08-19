@@ -18,7 +18,7 @@ interface ComposedIdSoftRefEntityBuilder : WorkspaceEntityBuilder<ComposedIdSoft
 }
 
 internal object ComposedIdSoftRefEntityType : EntityType<ComposedIdSoftRefEntity, ComposedIdSoftRefEntityBuilder>() {
-  override val entityClass: Class<ComposedIdSoftRefEntity> get() = ComposedIdSoftRefEntity::class.java
+  override val entityImplClass: Class<*> get() = ComposedIdSoftRefEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ComposedIdSoftRefEntityImpl.Builder::class.java
   operator fun invoke(
     myName: String,

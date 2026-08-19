@@ -5,6 +5,8 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.BaseProjectDirectories
+import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -46,21 +48,38 @@ val Project.projectDirectory: Path
  * When [throwWhenOutside] is true the method throws an McpExpectedException if the path is outside the project directory.
  */
 fun Project.resolveInProject(pathInProject: String, throwWhenOutside: Boolean = true): Path {
-  return resolveInProject(pathInProject = pathInProject, projectDirectory = projectDirectory, throwWhenOutside = throwWhenOutside)
-}
-
-/**
- * Resolves a relative path against the directory.
- *
- * When [throwWhenOutside] is true the method throws an McpExpectedException if the path is outside the project directory.
- */
-fun resolveInProject(pathInProject: String, projectDirectory: Path, throwWhenOutside: Boolean = true): Path {
   val filePath = projectDirectory.resolve(pathInProject).normalize()
-  if (throwWhenOutside && !filePath.startsWith(projectDirectory)) {
+  if (throwWhenOutside && !isInProjectDirectories(filePath)) {
     mcpFail("Specified path '$filePath' points to the location outside of the project directory")
   }
   return filePath
 }
+
+/**
+ * Whether [path] is inside one of the project's base directories.
+ */
+fun Project.isInProjectDirectories(path: Path): Boolean {
+  logger.assertTrue(path.isAbsolute, "Expected an absolute path, got '$path'")
+  return projectDirectories().any { path.startsWith(it) }
+}
+
+/**
+ * The directories a file may live in and still belong to the project: the project directory itself plus every root
+ * [BaseProjectDirectories] reports.
+ */
+fun Project.projectDirectories(): List<Path> =
+  (listOf(projectDirectory) + getBaseDirectories().mapNotNull { it.toNioPathOrNull() }).distinct()
+
+/**
+ * Relativizes [path] against this directory, falling back to the absolute path when the two share no root.
+ */
+fun Path.relativizeIfPossible(path: Path): String =
+  try {
+    relativize(path).toString()
+  }
+  catch (_: IllegalArgumentException) {
+    path.toString()
+  }
 
 fun Project.getPathForMcp(): String? {
   return basePath
@@ -206,18 +225,6 @@ private fun resolveArchiveEntryFile(archiveEntryPath: String): VirtualFile? {
 fun looksLikeVfsUrl(filePath: String): Boolean {
   val schemeSeparator = filePath.indexOf("://")
   return schemeSeparator > 0 && filePath.substring(0, schemeSeparator).all { it.isLetterOrDigit() || it == '+' || it == '-' || it == '.' }
-}
-
-// TODO: this must be unified with resolveInProject and made more flexible to support multiple source roots, also MCP client roots and so on
-internal fun isUnderProjectDirectory(project: Project, virtualFile: VirtualFile): Boolean {
-  val filePath = virtualFile.toNioPathOrNull()
-                 ?: try {
-                   Path.of(virtualFile.path)
-                 }
-                 catch (_: Throwable) {
-                   return false
-                 }
-  return filePath.normalize().startsWith(project.projectDirectory)
 }
 
 enum class RenderStyle {

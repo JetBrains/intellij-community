@@ -52,7 +52,7 @@ jvm_library(
         "//libraries/guava",
         "//platform/projectModel-api:projectModel",
         "//libraries/jsoup",
-        "//python/python-sdk:sdk",
+        "//python/python-sdk/backend",
         "//platform/util/jdom",
         "//platform/util:util-ui",
         "//platform/platform-impl:ide-impl",
@@ -102,7 +102,7 @@ jvm_library(
         "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
         "//libraries/jsoup:jsoup_test_lib",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
@@ -127,6 +127,7 @@ jvm_library(
 exports_files(
     [
         "intellij.restructuredtext.python.iml",
+        "resources/intellij.restructuredtext.python.xml",
     ],
     visibility = ["//visibility:public"],
 )

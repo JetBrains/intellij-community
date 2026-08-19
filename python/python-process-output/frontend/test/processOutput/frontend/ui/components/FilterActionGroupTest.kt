@@ -17,6 +17,9 @@ import androidx.compose.ui.test.onSiblings
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.unit.dp
+import com.intellij.python.processOutput.frontend.Filter
+import com.intellij.python.processOutput.frontend.FilterActionGroupState
+import com.intellij.python.processOutput.frontend.FilterItem
 import com.intellij.python.processOutput.frontend.ProcessOutputTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -160,7 +163,7 @@ internal class FilterActionGroupTest : ProcessOutputTest() {
         state.active.addAll(selectedItems)
         scaffoldTestContent {
             Box(modifier = Modifier.size(256.dp).padding(16.dp)) {
-                FilterActionGroup(
+                ComposeFilterActionGroup(
                     tooltipText = DEFAULT_TOOLTIP_TEXT,
                     state = state,
                     onFilterItemToggled = onFilterItemToggled,
@@ -169,7 +172,7 @@ internal class FilterActionGroupTest : ProcessOutputTest() {
                 )
             }
         }
-        return state;
+        return state
     }
 }
 
@@ -191,4 +194,3 @@ private object TestTags {
 }
 
 private const val DEFAULT_TOOLTIP_TEXT = "filter action tooltip text"
-

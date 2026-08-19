@@ -2,6 +2,7 @@
 package com.intellij.openapi.project
 
 import com.intellij.ide.CommandLineProcessor
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.FolderOpeningMode.AS_FOLDER
 import com.intellij.ide.impl.ProjectUtil.FolderOpeningMode.AS_PROJECT
@@ -20,6 +21,7 @@ import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.TemporaryDirectoryExtension
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.checkDefaultProjectAsTemplate
@@ -31,6 +33,8 @@ import com.intellij.workspaceModel.ide.toPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junitpioneer.jupiter.cartesian.ArgumentSets
 import org.junitpioneer.jupiter.cartesian.CartesianTest
@@ -330,6 +334,46 @@ internal class OpenProjectTest {
     val projectDir = tempDir.newPath("project")
     projectDir.createDirectories()
     openWithOpenerAndAssertProjectState(opener, projectDir, opener.defaultProjectTemplateShouldBeAppliedOverride ?: true)
+  }
+
+  @Test
+  @Timeout(30)
+  fun `openOrImport without options keeps open-or-create behavior for clean directory`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val projectDir = tempDir.newPath("project")
+    projectDir.createDirectories()
+
+    checkDefaultProjectAsTemplate { checkDefaultProjectAsTemplateTask ->
+      val project = ProjectUtil.openOrImportAsync(projectDir)
+      assertThat(project).isNotNull()
+      project!!.useProject { openedProject ->
+        assertThatProjectContainsModules(openedProject, listOf(projectDir))
+        assertThatProjectContainsRootEntities(openedProject, listOf(projectDir))
+        checkDefaultProjectAsTemplateTask(openedProject, true)
+      }
+    }
+  }
+
+  @Test
+  @Timeout(30)
+  // There are existing clients in external plugins which invoke explicit `ProjectUtil.openOrImport(path, OpenProjectTask())`
+  // instead of implicit `ProjectUtil.openOrImport(path)`. Their expectation is that project is opened or imported as .idea project.
+  // Moreover, we have a lot of internal call sites doing exactly the same. Thus, we don't break common sense of how the API should work,
+  // and cover this behavior with tests.
+  // Should the default project be used in this scenario or not is a question. Probably, not using the default project does not break
+  // too many things. As the default project by itself is a difficult concept for comprehension, I prefer that we use it as few as possible.
+  fun `openOrImport with explicit empty task keeps open-or-create behavior for clean directory`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val projectDir = tempDir.newPath("project")
+    projectDir.createDirectories()
+
+    checkDefaultProjectAsTemplate { checkDefaultProjectAsTemplateTask ->
+      val project = ProjectUtil.openOrImportAsync(projectDir, OpenProjectTask())
+      assertThat(project).isNotNull()
+      project!!.useProject { openedProject ->
+        assertThatProjectContainsModules(openedProject, listOf(projectDir))
+        assertThatProjectContainsRootEntities(openedProject, listOf(projectDir))
+        checkDefaultProjectAsTemplateTask(openedProject, false)
+      }
+    }
   }
 
   @CartesianTest

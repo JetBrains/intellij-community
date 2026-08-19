@@ -4,7 +4,6 @@ package com.intellij.python.junit5Tests.unit.pytools
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.python.pytools.icons.PythonPyToolsIcons
 import com.intellij.configurationStore.serialize
 import com.jetbrains.python.packaging.PyPackageName
@@ -14,48 +13,34 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import java.nio.file.Path
 
 /**
- * Regression for `IllegalAccessException: module java.base does not open java.nio.file`
- * thrown from `KotlinAwareBeanBinding.resolveInstantiator` when XMLB treats
- * `ToolEntry.customToolBinaryPath: Path?` as a nested bean field.
+ * Serialization guards for [PyToolsState.State] / [PyToolsState.ToolEntry].
  *
- * The `Path?` is serialized through `PathConverter` wired via
- * `@OptionTag(converter = ...)` so XMLB never reflects into `java.nio.file.Path`.
- * The on-disk tag name is preserved as `customPathToExecutable` for compatibility.
+ * [PyToolsState.ToolEntry] used to carry `discoveryMode` and a `customPathToExecutable` path; both were
+ * removed once discovery became fixed and custom paths moved to the per-Eel `PyCustomExecutablePaths`.
+ * XMLB skips `<option>`s that no longer map to a field, so old on-disk configs must keep loading.
  */
 internal class PyToolsStateSerializationTest {
   @Test
-  fun `round-trips State containing a ToolEntry with a non-blank custom path`() {
-    val original = PyToolsState.State(
-      tools = mutableMapOf(
-        "ruff" to PyToolsState.ToolEntry(
-          enabled = true,
-          discoveryMode = ExecutableDiscoveryMode.PATH,
-          customToolBinaryPath = Path.of("/usr/local/bin/ruff"),
-        ),
-      ),
+  fun `ignores removed legacy options (discoveryMode, customPathToExecutable) from old configs`() {
+    // An old pyLspTools.xml has per-tool discoveryMode + customPathToExecutable options that no longer
+    // exist on ToolEntry. XMLB must skip unknown options rather than throw, so the config still loads.
+    val current = JDOMUtil.writeElement(
+      XmlSerializer.serialize(
+        PyToolsState.State(tools = mutableMapOf("ruff" to PyToolsState.ToolEntry(enabled = true)))
+      )
     )
-
-    val element = XmlSerializer.serialize(original)
-    val restored = XmlSerializer.deserialize(element, PyToolsState.State::class.java)
-
-    assertEquals(original, restored)
-    assertEquals(Path.of("/usr/local/bin/ruff"), restored.tools["ruff"]!!.customToolBinaryPath)
-  }
-
-  @Test
-  fun `on-disk tag name is customPathToExecutable for back-compat`() {
-    val state = PyToolsState.State(
-      tools = mutableMapOf(
-        "ruff" to PyToolsState.ToolEntry(customToolBinaryPath = Path.of("/usr/local/bin/ruff")),
-      ),
+    val legacy = current.replace(
+      """<option name="enabled" value="true" />""",
+      """<option name="enabled" value="true" />""" +
+      """<option name="discoveryMode" value="PATH" />""" +
+      """<option name="customPathToExecutable" value="/usr/local/bin/ruff" />""",
     )
+    assertTrue(legacy.contains("discoveryMode"), "test setup: legacy options must be injected; got: $current")
 
-    val xml = JDOMUtil.writeElement(XmlSerializer.serialize(state))
-
-    assertTrue(xml.contains("customPathToExecutable"), "tag name must stay as customPathToExecutable; got: $xml")
+    val restored = XmlSerializer.deserialize(JDOMUtil.load(legacy), PyToolsState.State::class.java)
+    assertEquals(true, restored.tools["ruff"]?.enabled)
   }
 
   @Test
@@ -85,7 +70,7 @@ internal class PyToolsStateSerializationTest {
     assertNull(serialize(state), "a default state must serialize to nothing (no storage file)")
 
     // Change a setting -> the entry is persisted -> the file is written and holds the settings.
-    state.persist(tool, PyToolsState.ToolEntry(enabled = true, discoveryMode = ExecutableDiscoveryMode.PATH))
+    state.persist(tool, PyToolsState.ToolEntry(enabled = true))
     val element = serialize(state)
     assertNotNull(element, "a tool that differs from defaults must produce storage content")
     val xml = JDOMUtil.writeElement(element!!)

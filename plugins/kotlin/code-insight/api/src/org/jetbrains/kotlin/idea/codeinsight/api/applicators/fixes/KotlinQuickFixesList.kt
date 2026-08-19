@@ -14,16 +14,19 @@ import kotlin.reflect.KClass
 class KotlinQuickFixesList @ForKtQuickFixesListBuilder constructor(
     private val quickFixes: Map<KClass<out KaDiagnosticWithPsi<*>>, List<KotlinQuickFixFactory<*>>>
 ) {
-    fun KaSession.canProduceQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): Boolean =
+    context(session: KaSession)
+    fun canProduceQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): Boolean =
         quickFixes[diagnostic.diagnosticClass]?.isNotEmpty() == true
 
-    fun KaSession.getQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> {
+    context(session: KaSession)
+    fun getQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> {
         val fixes = getQuickFixesWithCatchingFor(diagnostic)
         return fixes
             .mapTo(mutableListOf()) { it.getOrThrow() }
     }
 
-    fun KaSession.getQuickFixesWithCatchingFor(diagnostic: KaDiagnosticWithPsi<*>): Sequence<Result<IntentionAction>> {
+    context(session: KaSession)
+    fun getQuickFixesWithCatchingFor(diagnostic: KaDiagnosticWithPsi<*>): Sequence<Result<IntentionAction>> {
         val factories = quickFixes[diagnostic.diagnosticClass]
             ?: return emptySequence()
 

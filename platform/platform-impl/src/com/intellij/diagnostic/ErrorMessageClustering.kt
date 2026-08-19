@@ -38,24 +38,10 @@ internal class ErrorMessageClustering(private val coroutineScope: CoroutineScope
 
   private suspend fun createCluster(messages: List<AbstractMessage>): ErrorMessageCluster {
     val first = messages.first()
-    val pluginId = analyzeCause(first)
+    val pluginId = PluginUtil.getInstance().findPluginId(first.throwable)
     val plugin = createPluginInfo(pluginId)
     val submitter = DefaultIdeaErrorLogger.findSubmitterByPluginInfo(first.throwable, plugin)
     return ErrorMessageCluster(messages, pluginId, plugin, submitter)
-  }
-
-  internal fun analyzeCause(first: AbstractMessage): PluginId? {
-    val t = first.throwable
-    if (t.isInstance<Freeze>()) {
-      if (t is RemoteSerializedThrowable) {
-        // todo freeze is from backend, cannot analyze in frontend, infer it from exception
-        return PluginUtil.getInstance().findPluginId(t)
-      }
-
-      return IdeaFreezeReporter.analyzeFreeze(first)
-    }
-
-    return PluginUtil.getInstance().findPluginId(t)
   }
 
   internal suspend fun createPluginInfo(pluginId: PluginId?): ProblematicPluginInfo? {

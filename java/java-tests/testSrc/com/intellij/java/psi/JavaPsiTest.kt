@@ -309,8 +309,9 @@ class JavaPsiTest : LightJavaCodeInsightFixtureTestCase() {
 """
     )
 
-    val comment = PsiTreeUtil.findChildOfType(docComment, PsiSnippetDocTag::class.java)
-    val valueElement = comment!!.valueElement!!
+    val snippetDocTag = PsiTreeUtil.findChildOfType(docComment, PsiSnippetDocTag::class.java)!!
+    assertSame(docComment, snippetDocTag.containingComment)
+    val valueElement = snippetDocTag.valueElement!!
     val attributes = valueElement.attributeList.attributes
 
     assert(listOf("attr1", "attr2") == attributes.map { it.name })

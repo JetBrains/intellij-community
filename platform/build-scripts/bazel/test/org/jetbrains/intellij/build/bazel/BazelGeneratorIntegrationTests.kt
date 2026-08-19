@@ -54,6 +54,8 @@ class BazelGeneratorIntegrationTests {
 
   @Test fun compileExcludes() = doTest("compile-excludes")
 
+  @Test fun ijPluginTarget() = doTest("ij-plugin-target")
+
   private fun doTest(
     testName: String,
     runWithoutUltimateRoot: Boolean = true,

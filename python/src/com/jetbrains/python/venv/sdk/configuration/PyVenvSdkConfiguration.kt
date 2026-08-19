@@ -11,8 +11,11 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.packaging.setupPy.SetupPyHelpers
+import com.jetbrains.python.packaging.setupPy.SetupPyHelpers.SETUP_PY
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
@@ -32,6 +35,7 @@ import kotlin.io.path.name
 
 internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
   override val toolId: ToolId = VENV_TOOL_ID
+  override val potentialDependencyFiles: Set<String> = setOf(PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT.fileName.toString(), SETUP_PY)
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(

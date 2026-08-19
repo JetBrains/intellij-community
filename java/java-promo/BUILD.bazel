@@ -71,6 +71,8 @@ jvm_library(
 exports_files(
     [
         "intellij.java.promo.iml",
+        "resources/META-INF/community-integration.xml",
+        "resources/intellij.java.promo.xml",
     ],
     visibility = ["//visibility:public"],
 )

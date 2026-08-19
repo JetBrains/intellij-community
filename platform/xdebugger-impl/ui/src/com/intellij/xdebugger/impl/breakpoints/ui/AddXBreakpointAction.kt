@@ -5,13 +5,10 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,7 +28,7 @@ internal class AddXBreakpointAction(
 
   override fun actionPerformed(e: AnActionEvent) {
     saveCurrentItem()
-    project.service<AddXBreakpointActionCoroutineScope>().cs.launch {
+    e.coroutineScope.launch {
       val breakpoint = myType.addBreakpoint(project)
       if (breakpoint != null) {
         withContext(Dispatchers.EDT) {
@@ -45,6 +42,3 @@ internal class AddXBreakpointAction(
     return ActionUpdateThread.EDT
   }
 }
-
-@Service(Service.Level.PROJECT)
-private class AddXBreakpointActionCoroutineScope(val cs: CoroutineScope)

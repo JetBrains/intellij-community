@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAlert
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAtPath
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeBlock
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
@@ -44,6 +45,7 @@ object MarkdownPsiFactory {
       MarkdownElementTypes.BLOCK_QUOTE -> MarkdownBlockQuote(node)
       MarkdownElementTypes.SHORT_REFERENCE_LINK -> MarkdownShortReferenceLink(node)
       MarkdownElementTypes.TEST_LINK -> MarkdownTestLink(node)
+      MarkdownElementTypes.AT_PATH -> MarkdownAtPath(node)
       MarkdownElementTypes.LINK_DEFINITION -> MarkdownLinkDefinition(node)
       MarkdownElementTypes.LINK_DESTINATION -> MarkdownLinkDestination(node)
       MarkdownElementTypes.LINK_LABEL -> MarkdownLinkLabel(node)

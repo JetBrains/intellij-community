@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentSnapshot;
+import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.ElfCandidate;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
@@ -33,7 +33,7 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
 
   LogicalPositionCache(@NotNull Document document, @NotNull Runnable throwEditorDisposed) {
     this.snapshot = new LogicalLines(
-      DocumentInternalUtil.getDocumentSnapshot(document),
+      DocumentInternalUtil.getDocumentText(document),
       ExtensionsKt.persistentListOf(),
       -1
     );
@@ -43,7 +43,7 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
 
   @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
     LogicalLines snapshot = getSnapshot();
-    int textLength = snapshot.document.textLength();
+    int textLength = snapshot.document.length();
     if (offset <= 0 || textLength == 0) {
       return new LogicalPosition(0, 0);
     }
@@ -65,7 +65,7 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
   int logicalPositionToOffset(@NotNull LogicalPosition pos) {
     LogicalLines snapshot = getSnapshot();
     if (pos.line >= snapshot.document.lineCount()) {
-      return snapshot.document.textLength();
+      return snapshot.document.length();
     }
     return getSnapshotWithLine(snapshot, pos.line).logicalColumnToOffset(pos.line, pos.column);
   }
@@ -92,8 +92,8 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
     LogicalLines snapshot = getSnapshot();
-    DocumentSnapshot oldDocument = snapshot.document;
-    DocumentSnapshot newDocument = DocumentInternalUtil.getDocumentSnapshot(event.getDocument());
+    DocumentText oldDocument = snapshot.document;
+    DocumentText newDocument = DocumentInternalUtil.getDocumentText(event.getDocument());
     int oldEndLine = getAdjustedLineNumber(oldDocument, event.getOffset() + event.getOldLength());
     int newEndLine = getAdjustedLineNumber(newDocument, event.getOffset() + event.getNewLength());
     int startLine = newDocument.lineNumber(event.getOffset());
@@ -147,8 +147,8 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
     return newSnapshot;
   }
 
-  private static int getAdjustedLineNumber(@NotNull DocumentSnapshot document, int offset) {
-    return document.textLength() == 0 ? -1 : document.lineNumber(offset);
+  private static int getAdjustedLineNumber(@NotNull DocumentText document, int offset) {
+    return document.length() == 0 ? -1 : document.lineNumber(offset);
   }
 
   // text for which offset<->logicalColumn conversion is trivial

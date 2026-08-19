@@ -1,0 +1,5 @@
+package ppp;
+
+public class JavaUtil {
+  public static int f = 2;
+}

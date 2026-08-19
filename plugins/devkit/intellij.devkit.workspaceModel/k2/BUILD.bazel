@@ -35,6 +35,8 @@ jvm_library(
         "//java/java-indexing-api:indexing",
         "//platform/workspace/storage",
         "@lib//:kotlin-stdlib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:workspace-model-codegen",
         "//platform/core-impl",
         "//java/openapi:java",
@@ -64,8 +66,8 @@ jvm_library(
         "//plugins/kotlin/base/project-structure:project-structure_test_lib",
         "//java/java-indexing-api:indexing_test_lib",
         "//platform/workspace/storage:storage_test_lib",
-        "@lib//:kotlinc-analysis-api-provided",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//java/openapi:java_test_lib",
         "//java/java-psi-api:psi_test_lib",
@@ -78,8 +80,6 @@ jvm_library(
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/kotlin/tests-common:common-tests",
         "//plugins/kotlin/tests-common:common-tests_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//plugins/kotlin/base/testFramework",
@@ -95,6 +95,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.workspaceModel.k2.iml",
+        "resources/intellij.devkit.workspaceModel.k2.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -119,7 +120,13 @@ jvm_library(
     ),
     module_name = "intellij.devkit.workspaceModel.k2.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/junit5"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/junit5",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin:kotlin-plugin-community-main",
+    ],
 )
 
 jvm_library(
@@ -139,7 +146,11 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_devkit-workspaceModel-k2-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":devkit-workspaceModel-k2-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":devkit-workspaceModel-k2-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "//libraries/junit5",
@@ -159,8 +170,10 @@ jvm_library(
         "//platform/workspace/storage",
         "//platform/workspace/storage:storage_test_lib",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-analysis-api-provided",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:workspace-model-codegen",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
@@ -176,8 +189,6 @@ jvm_library(
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/kotlin/tests-common:common-tests",
         "//plugins/kotlin/tests-common:common-tests_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//plugins/kotlin/base/testFramework",

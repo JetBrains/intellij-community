@@ -1,16 +1,26 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.python.community"/>
-    <module name="intellij.python.processOutput.common"/>
-    <module name="intellij.python.requirements"/>
-    <module name="intellij.python.sdk"/>
-    <module name="intellij.yaml"/>
-    <!-- endregion -->
     <module name="intellij.json.backend"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jackson.dataformat.yaml"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.io"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.community.impl.installer"/>
+    <module name="intellij.python.processOutput.common"/>
+    <module name="intellij.python.pytools"/>
+    <module name="intellij.python.requirements.backend"/>
+    <module name="intellij.python.sdk.backend"/>
+    <module name="intellij.yaml"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <python.processOutput.common.processOutputIconMapping implementation="com.intellij.python.community.impl.conda.CondaIconMapping"/>
+    <python.pytools.pyTool implementation="com.intellij.python.community.impl.conda.CondaPyTool"/>
     <!-- Claim environment.yml/environment.yaml as YAML files belonging to the Python plugin so that the
          plugin advertiser doesn't promote unrelated third-party plugins for these conda env files (PY-89976). -->
     <fileType name="YAML" fileNames="environment.yml;environment.yaml"/>

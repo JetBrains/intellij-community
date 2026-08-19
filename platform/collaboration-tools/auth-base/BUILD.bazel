@@ -57,6 +57,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.collaborationTools.auth.base.iml",
+        "resources/intellij.platform.collaborationTools.auth.base.xml",
     ],
     visibility = ["//visibility:public"],
 )

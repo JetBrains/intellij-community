@@ -192,6 +192,21 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     return container instanceof KmClass? ((KmClass)container).getCompanionObject() : null;
   }
 
+  public boolean isValueClass() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container instanceof KmClass && Attributes.isValue((KmClass)container);
+  }
+
+  public @Nullable KmType getValueClassUnderlyingType() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container instanceof KmClass? ((KmClass)container).getInlineClassUnderlyingType() : null;
+  }
+
+  public boolean isFunInterface() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container instanceof KmClass && Attributes.isFunInterface((KmClass)container);
+  }
+
   public Visibility getContainerVisibility() {
     KmDeclarationContainer container = getDeclarationContainer();
     return container instanceof KmClass? Attributes.getVisibility((KmClass)container) : Visibility.PUBLIC;
@@ -266,7 +281,8 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     @Override
     public boolean unchanged() {
       return
-        !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged() && !typeParametersVarianceChanged() && !containerVisibilityChanged() && !containerModalityChanged() && 
+        !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged() && !typeParametersVarianceChanged() && !containerVisibilityChanged() && !containerModalityChanged() &&
+        !supertypesChanged() && !valueClassAttributesChanged() && !funInterfaceFlagChanged() &&
         sealedSubclasses().unchanged() && functions().unchanged() && properties().unchanged() && constructors().unchanged() && typeAliases().unchanged()/*&& !dataChanged()*/;
     }
 
@@ -306,6 +322,24 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
       return !Iterators.equals(myPast.getTypeParameters(), getTypeParameters(), (p1, p2) -> p1.getVariance() == p2.getVariance());
     }
 
+    public boolean supertypesChanged() {
+      // structural compare incl. type arguments and their nullability: 'C : I<String>' -> 'C : I<String?>' changes
+      // Kotlin subtyping and inherited-member substitution while the erased JVM hierarchy stays identical
+      return !Iterators.equals(myPast.getSupertypes(), getSupertypes(), Objects::equals);
+    }
+
+    public boolean valueClassAttributesChanged() {
+      // class <-> value class, or the underlying type of a value class changed: every signature mentioning
+      // the type re-erases/re-mangles in DEPENDENT class files, not only in the class' own members
+      return myPast.isValueClass() != isValueClass() || !Objects.equals(myPast.getValueClassUnderlyingType(), getValueClassUnderlyingType());
+    }
+
+    public boolean funInterfaceFlagChanged() {
+      // the 'fun' modifier exists only in metadata: toggling it changes SAM-conversion permission
+      // for Kotlin lambda sites while the JVM interface stays byte-identical
+      return myPast.isFunInterface() != isFunInterface();
+    }
+
     public Specifier<String, ?> sealedSubclasses() {
       return mySealedSubclassesDiff.get();
     }
@@ -330,19 +364,47 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
   public static final class KmFunctionsDiff implements Difference {
     private final KmFunction past;
     private final KmFunction now;
+    private final Supplier<? extends Specifier<String, ?>> myParameterNamesDiff;
 
     public KmFunctionsDiff(KmFunction past, KmFunction now) {
       this.past = past;
       this.now = now;
+      myParameterNamesDiff = Utils.lazyValue(() -> Difference.diff(Iterators.map(past.getValueParameters(), KmValueParameter::getName), Iterators.map(now.getValueParameters(), KmValueParameter::getName)));
     }
 
     @Override
     public boolean unchanged() {
-      return !becameNullable() && !argsBecameNotNull() && !visibilityChanged() && !receiverParameterChanged() && !hasDefaultDeclarationChanges() && !parameterArgumentsChanged();
+      return !becameNullable() && !argsBecameNotNull() && !visibilityChanged() && !receiverParameterChanged() && !hasDefaultDeclarationChanges() && !parameterArgumentsChanged()
+        && !returnTypeArgumentsChanged() && !conventionModifiersChanged() && parameterNames().unchanged() && !contractPresenceChanged();
     }
 
     public boolean becameNullable() {
       return !Attributes.isNullable(past.getReturnType()) && Attributes.isNullable(now.getReturnType());
+    }
+
+    public boolean returnTypeArgumentsChanged() {
+      // type arguments of the return type are invisible in the erased descriptor, and their nullability is absent
+      // from the generic Signature attribute too: 'List<String>' -> 'List<String?>' re-types every caller
+      return !Iterators.equals(past.getReturnType().getArguments(), now.getReturnType().getArguments());
+    }
+
+    public boolean conventionModifiersChanged() {
+      // 'operator' and 'infix' exist only in metadata: toggling them changes applicability of convention
+      // call forms (a[i], a + b, a foo b) while the JVM method stays byte-identical
+      return Attributes.isOperator(past) != Attributes.isOperator(now) || Attributes.isInfix(past) != Attributes.isInfix(now);
+    }
+
+    public Specifier<String, ?> parameterNames() {
+      // parameter names live only in metadata; a RENAME breaks named-argument call sites. Compared as SETS:
+      // a pure permutation of same-named parameters keeps every named argument bound to the same parameter,
+      // and the positional/destructuring shifts it causes are semantic-only — recompilation cannot converge them
+      return myParameterNamesDiff.get();
+    }
+
+    public boolean contractPresenceChanged() {
+      // contracts drive smart casts and initialization analysis at call sites; KmContract defines
+      // no structural equality, so only presence transitions are tracked
+      return (past.getContract() == null) != (now.getContract() == null);
     }
 
     public boolean visibilityChanged() {
@@ -376,12 +438,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean hasDefaultDeclarationChanges() {
-      int before = Iterators.count(Iterators.filter(past.getValueParameters(), Attributes::getDeclaresDefaultValue));
-      int after = Iterators.count(Iterators.filter(now.getValueParameters(), Attributes::getDeclaresDefaultValue));
-      if (before == 0) {
-        return after > 0; // there were no default declarations, but some parameters now define default values
-      }
-      return after < before; // default definitions may still exist, but some parameters do not define default values anymore
+      return KotlinMeta.hasDefaultDeclarationChanges(past.getValueParameters(), now.getValueParameters());
     }
 
     public boolean parameterArgumentsChanged() {
@@ -405,9 +462,8 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !visibilityChanged() && !underlyingTypeChanged();
+      return !visibilityChanged() && !expandedTypeChanged() && !annotationsChanged();
     }
-
 
     public boolean visibilityChanged() {
       return Attributes.getVisibility(past) != Attributes.getVisibility(now);
@@ -417,23 +473,30 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
       return KotlinMeta.accessRestricted(Attributes.getVisibility(now), Attributes.getVisibility(past));
     }
 
-    public boolean underlyingTypeChanged() {
-      return !Objects.equals(past.getUnderlyingType(), now.getUnderlyingType());
+    public boolean expandedTypeChanged() {
+      return !Objects.equals(past.getExpandedType(), now.getExpandedType());
+    }
+
+    public boolean annotationsChanged() {
+      // alias annotations exist only in metadata (e.g. @Deprecated with level ERROR makes every use site an error)
+      return !Objects.equals(past.getAnnotations(), now.getAnnotations());
     }
   }
 
   public static final class KmConstructorsDiff implements Difference {
     private final KmConstructor past;
     private final KmConstructor now;
+    private final Supplier<? extends Specifier<String, ?>> myParameterNamesDiff;
 
     public KmConstructorsDiff(KmConstructor past, KmConstructor now) {
       this.past = past;
       this.now = now;
+      myParameterNamesDiff = Utils.lazyValue(() -> Difference.diff(Iterators.map(past.getValueParameters(), KmValueParameter::getName), Iterators.map(now.getValueParameters(), KmValueParameter::getName)));
     }
 
     @Override
     public boolean unchanged() {
-      return !argsBecameNotNull() && !visibilityChanged() && !hasDefaultDeclarationChanges();
+      return !argsBecameNotNull() && !visibilityChanged() && !hasDefaultDeclarationChanges() && parameterNames().unchanged();
     }
 
     public boolean visibilityChanged() {
@@ -442,6 +505,17 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     public boolean accessRestricted() {
       return KotlinMeta.accessRestricted(Attributes.getVisibility(now), Attributes.getVisibility(past));
+    }
+
+    public boolean accessExpanded() {
+      return KotlinMeta.accessRestricted(Attributes.getVisibility(past), Attributes.getVisibility(now));
+    }
+
+    public Specifier<String, ?> parameterNames() {
+      // parameter names live only in metadata; a RENAME breaks named-argument call sites. Compared as SETS:
+      // a pure permutation of same-named parameters keeps every named argument bound to the same parameter,
+      // and the positional/destructuring shifts it causes are semantic-only — recompilation cannot converge them
+      return myParameterNamesDiff.get();
     }
 
     public boolean argsBecameNotNull() {
@@ -461,12 +535,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean hasDefaultDeclarationChanges() {
-      int before = Iterators.count(Iterators.filter(past.getValueParameters(), Attributes::getDeclaresDefaultValue));
-      int after = Iterators.count(Iterators.filter(now.getValueParameters(), Attributes::getDeclaresDefaultValue));
-      if (before == 0) {
-        return after > 0; // there were no default declarations, but some parameters now define default values
-      }
-      return after < before; // default definitions still exist, but some parameters do not define default values anymore
+      return KotlinMeta.hasDefaultDeclarationChanges(past.getValueParameters(), now.getValueParameters());
     }
 
     private static Iterable<KmType> getParameterTypes(KmConstructor f) {
@@ -490,6 +559,12 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     public boolean typeChanged() {
       return !Objects.equals(past.getReturnType(), now.getReturnType());
+    }
+
+    public boolean typeArgumentsChanged() {
+      // type arguments of the property type are invisible in the erased accessor descriptors, and their nullability
+      // is absent from the generic Signature attribute too: 'List<String>' -> 'List<String?>' re-types readers and writers
+      return !Iterators.equals(past.getReturnType().getArguments(), now.getReturnType().getArguments());
     }
 
     public boolean becameNullable() {
@@ -541,6 +616,17 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
       KmPropertyAccessorAttributes setter = prop.getSetter();
       return setter != null && Attributes.isNotDefault(setter);
     }
+  }
+
+  private static boolean hasDefaultDeclarationChanges(List<KmValueParameter> pastParams, List<KmValueParameter> nowParams) {
+    // a parameter that STOPS declaring a default breaks call sites omitting it — compared per position, which also
+    // covers a default MOVING between parameters with the total count unchanged (members pair by JVM signature, so
+    // arity is stable). The 0 -> N transition changes the member's callable forms and is reported as well.
+    // Adding MORE defaults while some already exist only widens applicability and affects nothing by itself.
+    if (Iterators.find(pastParams, Attributes::getDeclaresDefaultValue) == null) {
+      return Iterators.find(nowParams, Attributes::getDeclaresDefaultValue) != null;
+    }
+    return !Iterators.equals(pastParams, nowParams, (p1, p2) -> !Attributes.getDeclaresDefaultValue(p1) || Attributes.getDeclaresDefaultValue(p2));
   }
 
   public static boolean accessRestricted(Visibility now, Visibility past) {

@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.plugin.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
@@ -22,7 +22,7 @@
     <orderEntry type="module" module-name="intellij.gradle.completion.toml" />
     <orderEntry type="module" module-name="intellij.gradle.completion.kotlin" />
     <orderEntry type="module" module-name="intellij.gradle" />
-    <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.test.junit" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
@@ -37,7 +37,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.repository.search" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" scope="TEST" />

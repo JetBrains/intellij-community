@@ -50,9 +50,10 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
     @NlsSafe var reason = reader.readLine() ?: return false
     val parentId: Any
     if (reason.startsWith("Execution failed for task '")) {
-      parentId = reason.substringAfter("Execution failed for task '").substringBefore("'.")
+      val taskName = reason.substringAfter("Execution failed for task '").substringBefore("'.")
         .substringBefore("' (registered in build file")
         .substringBefore("' (registered by plugin class")
+      parentId = GradleOutputDispatcherFactory.TaskNameId(taskName)
     }
     else {
       parentId = reader.parentEventId

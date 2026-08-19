@@ -366,6 +366,11 @@ public interface Application extends ComponentManager {
 
   /**
    * Checks if the write access is currently allowed.
+   * <p>
+   * A nested read action (see {@link #runReadAction}) started from inside a write action does
+   * <b>not</b> revoke write access: this method keeps returning {@code true} for its duration, since the
+   * Write lock remains held by the current thread. This method reflects Write lock ownership, not whether
+   * the innermost requested action is a read action.
    *
    * @return {@code true} if the write access is currently allowed, {@code false} otherwise.
    * @see #assertWriteAccessAllowed()

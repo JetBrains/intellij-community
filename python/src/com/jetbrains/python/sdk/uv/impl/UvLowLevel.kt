@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.RuntimeJsonMappingException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.pyproject.PyDependencyGroup
+import com.intellij.python.pyproject.PyDependencyGroupKind
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.ExecErrorReason
@@ -17,8 +19,6 @@ import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.intellij.python.pyproject.PyDependencyGroupKind
-import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.pip.PipParseUtils
@@ -72,8 +72,9 @@ private class UvLowLevelImpl<P : PathHolder>(
       venvArgs.add("--clear")
     }
     addPythonArg(venvArgs)
-    uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray())
-      .getOr { return it }
+    uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray()).onFailure {
+      uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray(), "--force").getOr { return it }
+    }.getOr { return it }
 
     val resolvedVenvPath = venvPath?.let { fileSystem.resolvePythonBinary(it) }
     if (resolvedVenvPath != null) {
@@ -163,7 +164,7 @@ private class UvLowLevelImpl<P : PathHolder>(
   }
 
   override suspend fun listProjectStructureTree(): PyResult<String> {
-    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--frozen", "--no-dedupe")
+    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--frozen", "--no-dedupe", "--all-groups")
       .getOr { return it }
 
     return PyExecResult.success(out)
@@ -289,7 +290,7 @@ private class UvLowLevelImpl<P : PathHolder>(
   }
 
   fun PythonPackageInstallRequest.formatPackageName(): Array<String> = when (this) {
-    is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> specifications.map { it.nameWithVersionsSpec }.toTypedArray()
+    is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> specifications.map { it.nameWithVersionSpecs }.toTypedArray()
     is PythonPackageInstallRequest.ByLocation -> arrayOf(location.toString())
   }
 
@@ -305,15 +306,18 @@ private class UvLowLevelImpl<P : PathHolder>(
 
     val result = mutableListOf<Array<String>>()
     if (pypiSpecs.isNotEmpty()) {
-      result.add((options + pypiSpecs.map { it.nameWithVersionsSpec }).toTypedArray())
+      result.add((options + pypiSpecs.map { it.nameWithVersionSpecs }).toTypedArray())
     }
 
     nonPypi
       .groupBy { it.repository.urlForInstallation?.toString() }
       .forEach { (url, specs) ->
         if (url == null || specs.isEmpty()) return@forEach
-        val names = specs.map { it.nameWithVersionsSpec }
-        result.add((options + listOf("--index-url", url) + names).toTypedArray())
+        result.add(buildList {
+          addAll(options)
+          addAll(listOf("--index-url", url))
+          specs.mapTo(this) { it.nameWithVersionSpecs }
+        }.toTypedArray())
       }
 
     return result

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WslPath
@@ -10,7 +10,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -227,16 +227,14 @@ class JdkUpdateNotification(
     }
 
     try {
-      withContext(Dispatchers.EDT) {
-        edtWriteAction {
-          jdk.sdkModificator.apply {
-            removeAllRoots()
-            homePath = newJdkHome.invariantSeparatorsPathString
-            versionString = newItem.versionString
-          }.commitChanges()
+      backgroundWriteAction {
+        jdk.sdkModificator.apply {
+          removeAllRoots()
+          homePath = newJdkHome.invariantSeparatorsPathString
+          versionString = newItem.versionString
+        }.commitChanges()
 
-          (jdk.sdkType as? SdkType)?.setupSdkPaths(jdk)
-        }
+        (jdk.sdkType as? SdkType)?.setupSdkPaths(jdk)
       }
       reachTerminalState()
     }

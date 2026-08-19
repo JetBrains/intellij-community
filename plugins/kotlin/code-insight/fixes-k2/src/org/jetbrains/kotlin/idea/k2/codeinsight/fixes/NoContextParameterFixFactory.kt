@@ -5,7 +5,10 @@ import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeImplicitArgumentValue
+import org.jetbrains.kotlin.analysis.api.components.compositeScope
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -50,26 +53,41 @@ internal object NoContextParameterFixFactory {
 
         buildList {
             val surroundingCall = findSurroundingContextCall(expression)
-            val candidates = findValueCandidates(expression, surroundingCall, requiredType)
+            val alreadyContainsType = surroundingCall != null &&
+                    innerContextScopeAlreadyContainsType(expression, surroundingCall, requiredType)
+
+            val innerCandidates = if (alreadyContainsType) emptySet() else findValueCandidates(expression, expression, requiredType)
+
             if (surroundingCall != null) {
-                if (!candidates.isEmpty()) {
-                    candidates.forEach { candidateName ->
-                        add(
-                            AddContextParameterToExistingContextFix(
-                                surroundingCall,
-                                candidateName,
-                                requiredTypeText,
-                                requiredTypeFqNameText
-                            )
+                val outerCandidates = if (alreadyContainsType) emptySet() else findValueCandidates(expression, surroundingCall, requiredType)
+
+                val nestedOnlyCandidates = innerCandidates - outerCandidates
+
+                outerCandidates.forEach { candidateName ->
+                    add(
+                        AddContextParameterToExistingContextFix(
+                            surroundingCall,
+                            candidateName,
+                            requiredTypeText,
+                            requiredTypeFqNameText
                         )
+                    )
+                }
+
+                if (nestedOnlyCandidates.isNotEmpty()) {
+                    val wrapper = contextWrapperFor(expression)
+                    nestedOnlyCandidates.forEach { candidateName ->
+                        add(SurroundCallWithContextFix(expression, wrapper, candidateName, requiredTypeText, requiredTypeFqNameText))
                     }
-                } else {
+                }
+
+                if (outerCandidates.isEmpty() && nestedOnlyCandidates.isEmpty()) {
                     add(AddContextParameterToExistingContextFix(surroundingCall, null, requiredTypeText, requiredTypeFqNameText))
                 }
             } else {
                 val wrapper = contextWrapperFor(expression)
-                if (!candidates.isEmpty()) {
-                    candidates.forEach { candidateName ->
+                if (innerCandidates.isNotEmpty()) {
+                    innerCandidates.forEach { candidateName ->
                         add(SurroundCallWithContextFix(expression, wrapper, candidateName, requiredTypeText, requiredTypeFqNameText))
                     }
                 } else {
@@ -103,7 +121,8 @@ internal object NoContextParameterFixFactory {
             SurroundCallWithContextFix.Wrapper.WITH
         }
 
-    private fun KaSession.findSurroundingContextCall(element: KtElement): KtCallExpression? {
+    context(session: KaSession)
+    private fun findSurroundingContextCall(element: KtElement): KtCallExpression? {
         val parentCall = element.getStrictParentOfType<KtLambdaArgument>()?.parent as? KtCallExpression ?: return null
         val calleeName = (parentCall.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
         if (calleeName != CONTEXT_FQ_NAME.shortName().asString()) return null
@@ -111,18 +130,22 @@ internal object NoContextParameterFixFactory {
         return if (resolvedFqName == null || resolvedFqName == CONTEXT_FQ_NAME) parentCall else null
     }
 
-    private fun KaSession.findValueCandidates(
+    /**
+     * Collects names of in-scope values whose type satisfies [requiredType].
+     *
+     * [scopeAnchor] seeds the `KaScopeContext` — pass the use-site to include locals declared
+     * inside a surrounding lambda, or the surrounding call to see only what's visible *outside*
+     * that lambda. [useSite] is only used to filter out symbols from other files (imports pollute).
+     */
+    context(session: KaSession)
+    private fun findValueCandidates(
         useSite: KtElement,
-        surroundingContextCall: KtCallExpression?,
+        scopeAnchor: KtElement,
         requiredType: KaType,
     ): Set<String> {
-        if (surroundingContextCall != null &&
-            innerContextScopeAlreadyContainsType(useSite, surroundingContextCall, requiredType)
-        ) return emptySet()
-
-        val scopeContext = useSite.containingKtFile.scopeContext(useSite)
+        val scopeContext = scopeAnchor.containingKtFile.scopeContext(scopeAnchor)
         return buildSet {
-            // Named callables visible at the use site: local vals/vars, parameters,
+            // Named callables visible at the anchor: local vals/vars, parameters,
             // properties of enclosing classes, top-level declarations. Checking inside file, imports pollute candidates.
             scopeContext.compositeScope().callables.forEach { sym ->
                 if (sym !is KaVariableSymbol) return@forEach
@@ -143,8 +166,8 @@ internal object NoContextParameterFixFactory {
         }
     }
 
-
-    private fun KaSession.innerContextScopeAlreadyContainsType(
+    context(session: KaSession)
+    private fun innerContextScopeAlreadyContainsType(
         useSite: KtElement,
         surroundingContextCall: KtCallExpression,
         requiredType: KaType,

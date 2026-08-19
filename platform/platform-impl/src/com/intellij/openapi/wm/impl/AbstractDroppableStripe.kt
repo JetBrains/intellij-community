@@ -3,8 +3,10 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.toolWindow.ResizeStripeManager
+import com.intellij.openapi.wm.impl.SquareStripeButtonLook.Companion.getIconPadding
+import com.intellij.toolWindow.MoreSquareStripeButton
 import com.intellij.toolWindow.StripeButtonManager
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.drag.DragButton
@@ -52,14 +54,14 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     const val DROP_DISTANCE_SENSITIVITY: Int = 200
 
     @VisibleForTesting
-    fun createButtonLayoutComparator(isNewUi: Boolean, anchor: ToolWindowAnchor): Comparator<StripeButtonManager> {
+    fun createButtonLayoutComparator(isNewUi: Boolean, anchor: ToolWindowAnchor, isHorizontal: Boolean = false): Comparator<StripeButtonManager> {
       return Comparator { o1, o2 ->
         // side buttons in the end
         if (o1.windowDescriptor.isSplit != o2.windowDescriptor.isSplit) {
           if (o1.windowDescriptor.isSplit) 1 else -1
         }
-        else if (isNewUi && anchor == ToolWindowAnchor.BOTTOM) {
-          // left bottom for new ui has a reverse order because user checks buttons in this location from bottom to top,
+        else if (isNewUi && anchor == ToolWindowAnchor.BOTTOM && !isHorizontal) {
+          // left bottom for new ui in vertical stripes has a reverse order because user checks buttons in this location from bottom to top,
           // also because new buttons without a predefined order should not change the existing button location
           getOrderForComparator(o2) - getOrderForComparator(o1)
         }
@@ -93,7 +95,22 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
   abstract val anchor: ToolWindowAnchor
   open val split: Boolean = false
 
-  private val stripeButtonManagerComparator by lazy(LazyThreadSafetyMode.NONE) { createButtonLayoutComparator(isNewStripes, anchor) }
+  /**
+   * When true, split (side) buttons are grouped behind a [StripeButtonSeparator]. Only the New-UI vertical LEFT/RIGHT stripes
+   * do this, and only when no [ToolWindowExtension] is present; with the extension every stripe uses the Classic gap instead
+   * (non-split at the start, split flush to the far end, no separator).
+   */
+  private val useStripeButtonSeparator: Boolean
+    get() = isNewStripes && (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) && !ToolWindowExtension.exists
+
+  /**
+   * When true, split buttons are pushed to the far end of the stripe with a Classic-style gap. This holds for Classic UI and
+   * for NewUI stripe with [ToolWindowExtension]
+   */
+  protected val useSplitGap: Boolean
+    get() = !isNewStripes || ToolWindowExtension.exists
+
+  private val stripeButtonManagerComparator by lazy(LazyThreadSafetyMode.NONE) { createButtonLayoutComparator(isNewStripes, anchor, isHorizontal()) }
 
   private var separatorTopSide = false
   private val separator = StripeButtonSeparator().also {
@@ -146,11 +163,23 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
   @JvmField
   protected var computedPreferredSize: Dimension? = null
 
+  // Used only with [ToolWindowExtension] in LEFT/RIGHT stripes
+  internal var moreButton: MoreSquareStripeButton? = null
+    set(value) {
+      if (field === value) return
+      field?.let { remove(it) }
+      field = value
+      value?.let { add(it) }
+      computedPreferredSize = null
+      revalidate()
+    }
+
   fun reset() {
     lastLayoutData = null
     computedPreferredSize = null
     buttons.clear()
     removeAll()
+    moreButton?.let { add(it) }
     revalidate()
   }
 
@@ -179,16 +208,19 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
       // treated as vertical, and are not full height. Coerce the drop point to be within the stripe's bounds' major axis. Take into account
       // hidden and empty stripes. (And remember that height is the number of pixels, so 0 <= y < h)
       if (isNewStripes) {
-        it.y = if (height > 0) it.y.coerceIn(0, height - 1) else max(it.y, 0)
+        // For horizontal (TOP/BOTTOM) bars the major axis is X, so coerce X instead.
+        if (isHorizontal()) {
+          it.x = if (width > 0) it.x.coerceIn(0, width - 1) else max(it.x, 0)
+        }
+        else {
+          it.y = if (height > 0) it.y.coerceIn(0, height - 1) else max(it.y, 0)
+        }
       }
     }
     dropRectangle = if (isNewStripes) Rectangle(dropPoint, button.getComponent().preferredSize) else Rectangle(dropPoint, buttonImage.size)
 
     revalidate()
     repaint()
-  }
-
-  open fun stickDropPoint(point: Point) {
   }
 
   override fun getPreferredSize(): Dimension? {
@@ -216,10 +248,10 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     isFinishingDrop = true
     dragButton?.toolWindow?.let {
       var order = lastLayoutData.dragInsertPosition
-      if (isNewStripes && anchor == ToolWindowAnchor.BOTTOM) {
+      if (isNewStripes && anchor == ToolWindowAnchor.BOTTOM && !ToolWindowExtension.exists) {
         order++
       }
-      val isSplit = if (isNewStripes) lastLayoutData.isSplit else lastLayoutData.dragToSide
+      val isSplit = if (useSplitGap) lastLayoutData.dragToSide else lastLayoutData.isSplit
       manager.setSideToolAndAnchor(it.id, paneId, anchor, order, isSplit)
     }
     manager.invokeLater { resetDrop() }
@@ -255,9 +287,9 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     }
 
     val dragButton = dragButton
-    val p = dropRectangle.location.also { SwingUtilities.convertPointToScreen(it, this) }
+    dropRectangle.location.also { SwingUtilities.convertPointToScreen(it, this) }
     val processDrop = dragButton != null && !noDrop
-    if (!isNewStripes && dragButton != null) {
+    if ((!isNewStripes || ToolWindowExtension.exists) && dragButton != null) {
       data.shouldSwapCoordinates = anchor.isHorizontal != dragButton.toolWindow.anchor.isHorizontal
     }
     data.fitSize = toFitWith ?: JBUI.emptySize()
@@ -291,6 +323,10 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
       gap = max(gap, 0)
     }
 
+    val visibleMoreButton = moreButton?.takeIf { it.isVisible }
+    val moreButtonHeight = if (visibleMoreButton != null && toFitWith != null) visibleMoreButton.preferredSize.height else 0
+    var visibleMoreButtonProcessed = false
+
     var sidesStarted = false
     val buttonsToLayOut = getButtonsToLayOut(processDrop)
     var addSize = separatorTopSide
@@ -312,17 +348,26 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
       val insertOrder = windowInfo.order
       val isSplit = windowInfo.isSplit
 
-      if (!sidesStarted && isSplit && !isNewStripes) {
+      if (!sidesStarted && isSplit && useSplitGap) {
+        // Compute the drop target first, only then lay out the More button below it
+        val nonSplitEnd = data.eachY
         if (processDrop && !data.dragTargetChosen) {
           tryDroppingOnGap(data, gap, insertOrder)
         }
+        if (visibleMoreButton != null && !visibleMoreButtonProcessed) {
+          val moreY = if (data.dragTargetChosen && !data.dragToSide) data.eachY else nonSplitEnd
+          layoutMoreButton(data, visibleMoreButton, setBounds, moreY)
+          visibleMoreButtonProcessed = true
+        }
+        // The More button already consumed moreButtonHeight of the gap, so advance by the remaining (visual) gap only.
+        val layoutGap = max(0, gap - moreButtonHeight)
         if (data.horizontal) {
-          data.eachX += gap
-          data.size.width += gap
+          data.eachX += layoutGap
+          data.size.width += layoutGap
         }
         else {
-          data.eachY += gap
-          data.size.height += gap
+          data.eachY += layoutGap
+          data.size.height += layoutGap
         }
         sidesStarted = true
       }
@@ -358,8 +403,25 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
       layoutButton(data, b.asDragButton(), setBounds, shouldSwapCoordinates = false)
     }
 
+    // No split buttons were encountered. Compute the drop target first (eachY still at the end of the non-split group, before
+    // the More button) so a drop over the More button is highlighted above it, then place the More button below.
+    val nonSplitEnd = data.eachY
     if (!sidesStarted && processDrop && !data.dragTargetChosen) {
       tryDroppingOnGap(data, gap, -1)
+    }
+
+    if (visibleMoreButton != null && !visibleMoreButtonProcessed) {
+      // Same as in the split-gap block: below the reserved slot for a non-split drop, otherwise at the non-split end.
+      val moreY = if (data.dragTargetChosen && !data.dragToSide) data.eachY else nonSplitEnd
+      layoutMoreButton(data, visibleMoreButton, setBounds, moreY)
+    }
+
+    // With a ToolWindowExtension the More button is a child of the stripe, and the preferred size doesn't take the More button into account
+    if (ToolWindowExtension.exists && visibleMoreButton != null && buttonsToLayOut.isEmpty()) {
+      visibleMoreButton.preferredSize.let {
+        data.size.width = it.width
+        data.size.height = it.height
+      }
     }
 
     dragButton?.getComponent()?.let {
@@ -443,6 +505,14 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     }
   }
 
+  private fun layoutMoreButton(data: LayoutData, button: MoreSquareStripeButton, setBounds: Boolean, y: Int) {
+    val size = button.preferredSize
+    if (setBounds) {
+      button.setBounds(data.eachX, y, data.fitSize.width, size.height)
+    }
+    data.eachY += size.height
+  }
+
   protected open fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) {
     val nonSideDistance = max(0, if (data.horizontal) dropRectangle.x - data.eachX else dropRectangle.y - data.eachY)
     val sideDistance = if (data.horizontal) data.eachX + gap - dropRectangle.x else data.eachY + gap - dropRectangle.y
@@ -465,13 +535,14 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     drawRectangle.x = data.eachX
     drawRectangle.y = data.eachY
     if (isNewStripes) {
-      dragButton?.asDragButton()?.let { layoutButton(data, it, setBounds = false, shouldSwapCoordinates = false) }
+      dragButton?.asDragButton()?.let { layoutButton(data, it, setBounds = false, shouldSwapCoordinates = data.shouldSwapCoordinates) }
     }
     else {
       dragButtonImage?.let { layoutButton(data, it, setBounds = false, shouldSwapCoordinates = data.shouldSwapCoordinates) }
     }
 
     if (data.horizontal) {
+      // Classic UI or NewUI with ToolWindowExtension
       drawRectangle.width = data.eachX - drawRectangle.x
       drawRectangle.height = data.fitSize.height
       if (data.dragToSide) {
@@ -504,7 +575,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
 
     val tools = ArrayList<StripeButtonManager>(buttons.size)
 
-    if (isNewStripes && (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT)) {
+    if (useStripeButtonSeparator) {
       if (separator.parent == null) {
         add(separator)
       }
@@ -564,7 +635,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
       if (!rectangle.isEmpty) {
         var round: Int? = null
         if (isNewStripes) {
-          JBInsets.removeFrom(rectangle, JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding(isOnTheLeftStripe(), ResizeStripeManager.isShowNames()))
+          JBInsets.removeFrom(rectangle, getIconPadding(this))
           round = JBUI.CurrentTheme.Toolbar.stripeButtonArc(UISettings.getInstance().compactMode).get()
         }
         g.color = if (isNewStripes) JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_DROP_BACKGROUND else JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND

@@ -67,6 +67,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.markdown.utils.iml",
+        "resources/intellij.platform.markdown.utils.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -8,7 +8,6 @@ project.commonTest
     name: CommonTest_usagesKt.use
     type: Gradle
     tasks: [:cleanJvmTest, :jvmTest, --tests, "kmmApplication.CommonTest_usagesKt.use"]
-    scriptParameters:
     isDebugAllEnabled: false
     isRunAsTest: true
 
@@ -32,7 +31,6 @@ project.jvmTest
     name: JvmTest_usagesKt.use
     type: Gradle
     tasks: [:cleanJvmTest, :jvmTest, --tests, "kmmApplication.JvmTest_usagesKt.use"]
-    scriptParameters:
     isDebugAllEnabled: false
     isRunAsTest: true
 

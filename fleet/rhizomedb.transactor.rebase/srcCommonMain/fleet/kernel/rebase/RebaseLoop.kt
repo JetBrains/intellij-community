@@ -46,6 +46,7 @@ import fleet.kernel.Transactor
 import fleet.kernel.applyWorkspaceSnapshot
 import fleet.kernel.change
 import fleet.kernel.rebase.RebaseLogger.logger
+import fleet.kernel.shouldFailFast
 import fleet.kernel.transactor
 import fleet.kernel.uidAttribute
 import fleet.reporting.shared.tracing.span
@@ -66,6 +67,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -76,6 +78,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consume
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.produceIn
 import kotlinx.coroutines.launch
@@ -86,7 +89,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlin.concurrent.atomics.AtomicReference
 
 suspend fun withRebaseLoop(
-  remoteKernel: RemoteKernel,
+  remoteKernel: Deferred<RemoteKernel>,
   instructionSet: InstructionSet,
   reconnectWhenBroken: Boolean,
   body: suspend CoroutineScope.() -> Unit,
@@ -96,7 +99,7 @@ suspend fun withRebaseLoop(
     launch {
       val rebaseLoop: suspend CoroutineScope.() -> Unit = {
         durable {
-          remoteKernelConnection(ready, remoteKernel, instructionSet)
+          remoteKernelConnection(ready, remoteKernel = remoteKernel, instructionSet)
         }
       }
       if (reconnectWhenBroken) {
@@ -158,6 +161,7 @@ internal object RebaseLogger {
 
 private suspend fun offering(transactor: Transactor, offersChan: ReceiveChannel<RebaseLoopState>) {
   var delayedEffectsAndNovelty = EffectsAndNovelty.empty()
+  val failFast = currentCoroutineContext().shouldFailFast
   offersChan.consumeAsFlow()
     .conflateReduce { rebaseLoopState, rebaseLoopState2 ->
       rebaseLoopState2.copy(
@@ -240,7 +244,7 @@ private suspend fun offering(transactor: Transactor, offersChan: ReceiveChannel<
               // run effects:
               runEffects(delayedEffectsAndNovelty.effects)
 
-              runOfferContributors(effectiveCumulativeNovelty)
+              runOfferContributors(effectiveCumulativeNovelty, failFast = failFast)
 
               // set new speculative novelty from offer:
               remoteKernelConnectionEntity[RemoteKernelConnectionEntity.SpeculationDataAttr] = SpeculationData(
@@ -254,7 +258,8 @@ private suspend fun offering(transactor: Transactor, offersChan: ReceiveChannel<
                   clock.tick(origin)
                 } ?: clock
               }
-              remoteKernelConnectionEntity[RemoteKernelConnectionEntity.ClientClockAttr] = remoteKernelConnectionEntity.clientClock.copy(vectorClock = newClock)
+              remoteKernelConnectionEntity[RemoteKernelConnectionEntity.ClientClockAttr] =
+                remoteKernelConnectionEntity.clientClock.copy(vectorClock = newClock)
 
               // drop accumulated effects and novelty:
               delayedEffectsAndNovelty = EffectsAndNovelty.empty()
@@ -269,7 +274,12 @@ private suspend fun offering(transactor: Transactor, offersChan: ReceiveChannel<
         throw c
       }
       catch (x: Throwable) {
-        logger.error(x, "offer failed $state")
+        if (failFast) {
+          throw RuntimeException("offer failed $state", x)
+        }
+        else {
+          logger.error(x, "offer failed $state")
+        }
       }
     }
 }
@@ -287,14 +297,19 @@ private fun ChangeScope.runEffects(list: List<Effect>) {
   }
 }
 
-internal fun ChangeScope.runOfferContributors(effectiveCumulativeNovelty: Novelty) {
+internal fun ChangeScope.runOfferContributors(effectiveCumulativeNovelty: Novelty, failFast: Boolean) {
   if (effectiveCumulativeNovelty.isNotEmpty()) {
     offerContributors().forEach { c: OfferContributor ->
       try {
         with(c) { contribute(effectiveCumulativeNovelty) }
       }
       catch (e: Throwable) {
-        logger.error(e, "offer contributor $c failed")
+        if (failFast) {
+          throw RuntimeException("offer contributor $c failed", e)
+        }
+        else {
+          logger.error(e, "offer contributor $c failed")
+        }
       }
     }
   }
@@ -428,7 +443,7 @@ private suspend fun <T> subscribe(transactor: Transactor, clientId: UID, body: S
 
 private suspend fun remoteKernelConnection(
   connected: CompletableDeferred<Unit>,
-  remoteKernel: RemoteKernel,
+  remoteKernel: Deferred<RemoteKernel>,
   instructionSet: InstructionSet,
 ) {
   spannedScope("remoteKernelConnection") {
@@ -438,7 +453,7 @@ private suspend fun remoteKernelConnection(
     subscribe(transactor, clientId) { dbSnapshot, changesReceiver ->
       connected.complete(Unit)
       val subscription = spannedScope("RemoteKernel.subscribe") {
-        durable { withoutCausality { remoteKernel.subscribeWithChunkedSnapshot(clientId) } }
+        durable { withoutCausality { remoteKernel.await().subscribeWithChunkedSnapshot(clientId) } }
       }
       val snapshot = spannedScope("fetch snapshot") {
         DurableSnapshot(
@@ -464,7 +479,7 @@ private suspend fun remoteKernelConnection(
           val workspaceBroadcastReceiver = this
           val (frontendTxsSender, frontendTxsReceiver) = channels<Transaction>()
           try {
-            withoutCausality { remoteKernel.transact(frontendTxsReceiver) }
+            withoutCausality { remoteKernel.await().transact(frontendTxsReceiver) }
             logger.trace { "[$transactor] launching rebase loop" }
             val initialRebaseState = run {
               val baseClock = VectorClock(subscription.vectorClock.toPersistentHashMap())

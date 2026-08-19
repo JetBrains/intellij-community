@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine
 
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidator
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionNameSuggester
@@ -16,7 +18,7 @@ object KotlinNameSuggester : IExtractionNameSuggester<KaType> {
         validator: KotlinNameValidator,
         defaultName: String?,
     ): List<String> = analyze(container) {
-        if (kotlinType.isUnitType) emptyList()
+        if (kotlinType.classId == KaStandardTypeClassIds.UNIT) emptyList()
         else KotlinNameSuggester()
             .suggestTypeNames(kotlinType)
             .map { KotlinNameSuggester.suggestNameByName(it, validator) }

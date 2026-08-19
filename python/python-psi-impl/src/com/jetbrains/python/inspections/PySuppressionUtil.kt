@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyStatement
+import com.jetbrains.python.psi.PyStatementList
 import java.util.regex.Pattern
 
 /**
@@ -33,10 +34,16 @@ internal object PySuppressionUtil {
    * Returns `true` if [element] is covered by a `# noinspection <suppressId>` comment placed above its
    * enclosing statement, function, or class.
    */
-  fun isSuppressed(element: PsiElement, suppressId: String): Boolean =
-    isSuppressedForParent(element, PyStatement::class.java, suppressId) ||
-    isSuppressedForParent(element, PyFunction::class.java, suppressId) ||
-    isSuppressedForParent(element, PyClass::class.java, suppressId)
+  fun isSuppressed(element: PsiElement, suppressId: String): Boolean {
+    // For a statement list, check if the suppression comment is placed inside it,
+    // before the first statement (e.g., in an else or match-case block body).
+    if (element is PyStatementList && isSuppressedStatementListBody(element, suppressId)) {
+      return true
+    }
+    return isSuppressedForParent(element, PyStatement::class.java, suppressId) ||
+      isSuppressedForParent(element, PyFunction::class.java, suppressId) ||
+      isSuppressedForParent(element, PyClass::class.java, suppressId)
+  }
 
   /**
    * `true` for inspections that fully manage their own suppression UI (currently only `PyTypeChecker`, via
@@ -60,6 +67,12 @@ internal object PySuppressionUtil {
       .replace(Regex("([A-Z]+)([A-Z][a-z])"), "$1-$2")
       .replace(Regex("([a-z0-9])([A-Z])"), "$1-$2")
       .lowercase()
+  }
+
+  private fun isSuppressedStatementListBody(list: PyStatementList, suppressId: String): Boolean {
+    val firstStatement = list.getStatements().firstOrNull() ?: return false
+    val comment = PsiTreeUtil.skipWhitespacesBackward(firstStatement) as? PsiComment ?: return false
+    return isSuppressedInComment(comment.text.removePrefix("#").trim(), suppressId)
   }
 
   private fun isSuppressedForParent(element: PsiElement, parentClass: Class<out PyElement>, suppressId: String): Boolean {

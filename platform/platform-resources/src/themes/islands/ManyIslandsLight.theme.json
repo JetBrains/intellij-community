@@ -289,9 +289,17 @@
     "inlay-bg": "transparent-black-20",
     "inlay-border": "transparent-black-50",
 
-    "toggle-off-bg": "gray-160",
-    "toggle-button-bg": "gray-120",
-    "toggle-border": "gray-120",
+    "toggle-on-bg": "accent-brand-bg",
+    "toggle-off-bg": "transparent-black-40",
+    "toggle-on-disabled-bg": "control-bg-disabled",
+    "toggle-off-disabled-bg": "control-bg-disabled",
+    "toggle-on-disabled-border": "control-border-disabled",
+    "toggle-off-disabled-border": "control-border-disabled",
+    "toggle-focus-border": "control-brand-border",
+    "toggle-on-notch": "white",
+    "toggle-off-notch": "icon-over-accent",
+    "toggle-on-disabled-notch": "icon-disabled",
+    "toggle-off-disabled-notch": "icon-disabled",
 
     "editor-floating-toolbar-bg": "layer-0-bg",
     "popup-completion-match-text": "blue-70",
@@ -300,6 +308,7 @@
     "tree-indent-guide-border": "tool-window-border",
 
     "icon-default-stroke": "gray-80",
+    "icon-disabled": "gray-120",
     "icon-over-accent": "white",
     "icon-green-stroke": "green-80",
 
@@ -1099,12 +1108,17 @@
     },
 
     "ToggleButton": {
-      "onBackground": "control-success-bg",
-      "onForeground": "text-over-accent",
+      "onBackground": "toggle-on-bg",
       "offBackground": "toggle-off-bg",
-      "offForeground": "text-secondary",
-      "buttonColor": "toggle-button-bg",
-      "borderColor": "toggle-border"
+      "onDisabledBackground": "toggle-on-disabled-bg",
+      "onDisabledBorderColor": "toggle-on-disabled-border",
+      "offDisabledBackground": "toggle-off-disabled-bg",
+      "offDisabledBorderColor": "toggle-off-disabled-border",
+      "focusBorderColor": "toggle-focus-border",
+      "onNotchColor": "toggle-on-notch",
+      "offNotchColor": "toggle-off-notch",
+      "onDisabledNotchColor": "toggle-on-disabled-notch",
+      "offDisabledNotchColor": "toggle-off-disabled-notch"
     },
 
     "ToolWindow": {
@@ -1184,6 +1198,7 @@
     "Window.undecorated.border" : "1,1,1,1,#5A5D6B",
 
     "OnePixelDivider.background": "dialog-border",
+    "OnOffButtonUI": "com.intellij.ide.ui.laf.darcula.ui.IslandsOnOffButtonUI",
 
     "TitlePane": {
       "background": "dialog-bg",

@@ -1,8 +1,8 @@
 package com.intellij.lambda.testFramework.utils
 
-import com.intellij.ide.starter.driver.driver.remoteDev.RemDevDriverRunner
 import com.intellij.ide.starter.driver.driver.remoteDev.RemoteDevBackgroundRun
 import com.intellij.ide.starter.driver.engine.LocalDriverRunner
+import com.intellij.ide.starter.driver.engine.selectedDriverRunner
 import com.intellij.ide.starter.ide.IDERemDevTestContext
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.onRemDevContext
@@ -33,6 +33,8 @@ import com.jetbrains.rd.framework.SocketWire
 import com.jetbrains.rd.util.lifetime.EternalLifetime
 import com.jetbrains.rd.util.threading.SynchronousScheduler
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.exists
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -51,7 +53,7 @@ internal fun IDETestContext.runIdeWithLambda(
   }
 
   val driverRunner = LocalDriverRunner()
-  val monolithRdSession = setUpRdTestSession(MONOLITH)
+  val monolithRdSession = setUpLambdaTestSession(MONOLITH)
   val backgroundRun = driverRunner.runIdeWithDriver(this,
                                                     determineDefaultCommandLineArguments(),
                                                     emptyList(),
@@ -62,7 +64,7 @@ internal fun IDETestContext.runIdeWithLambda(
                                                     expectedExitCode,
                                                     collectNativeThreads = collectNativeThreads,
                                                     configure = configure)
-  monolithRdSession.awaitSessionReady()
+  monolithRdSession.awaitLambdaSessionReady()
   return IdeWithLambda(backgroundRun, monolithRdSession, null)
 }
 
@@ -74,11 +76,12 @@ internal fun IDERemDevTestContext.runIdeWithLambda(
   collectNativeThreads: Boolean = false,
   configure: IDERunContext.() -> Unit = {},
 ): IdeWithLambda {
-  val driverRunner = RemDevDriverRunner()
+  // the split-mode runner, unless a launch mode was selected through the DriverRunner binding - same choice runIdeWithDriver makes
+  val driverRunner = selectedDriverRunner()
   LambdaTestPluginHolder.additionalPluginDirNames(OnlyFrontend, All)
     .forEach { addCustomFrontendPlugin(it) }
-  val backendRdSession = setUpRdTestSession(BACKEND)
-  val frontendRdSession = frontendIDEContext.setUpRdTestSession(FRONTEND)
+  val backendRdSession = setUpLambdaTestSession(BACKEND)
+  val frontendRdSession = frontendIDEContext.setUpLambdaTestSession(FRONTEND)
 
   val backgroundRun = driverRunner.runIdeWithDriver(this,
                                                     determineDefaultCommandLineArguments(),
@@ -92,7 +95,7 @@ internal fun IDERemDevTestContext.runIdeWithLambda(
                                                     pauseOnIndexing = null,
                                                     configure = configure)
   listOf(backendRdSession, frontendRdSession)
-    .forEach { it.awaitSessionReady(if (this.frontendIDEContext.ide.vmOptions.hasHeadlessMode()) 15.seconds else 30.seconds) }
+    .forEach { it.awaitLambdaSessionReady(if (this.frontendIDEContext.ide.vmOptions.hasHeadlessMode()) 15.seconds else 30.seconds) }
   return IdeWithLambda(backgroundRun,
                        rdSession = frontendRdSession,
                        backendIdeWithLambda = if (backgroundRun is RemoteDevBackgroundRun)
@@ -102,7 +105,7 @@ internal fun IDERemDevTestContext.runIdeWithLambda(
     if (testCase.projectInfo != NoProject) {
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking {
-        it.runInFrontend("Wait for the project") {
+        it.runInFrontend("Wait for the project", globalTestScope = true) {
           waitForProject(if (!ApplicationManager.getApplication().isHeadlessEnvironment) 30.seconds else 20.seconds)
         }
       }
@@ -110,7 +113,15 @@ internal fun IDERemDevTestContext.runIdeWithLambda(
   }
 }
 
-private fun LambdaRdTestSession.awaitSessionReady(timeout: Duration = 20.seconds) {
+/**
+ * Waits until the IDE has connected back to the session's wire and published itself as ready.
+ *
+ * Worth failing here rather than on the first lambda: a session that never became ready means the IDE did not
+ * read the port or did not load the lambda test plugin, and that reads far better at the launch than as an
+ * unexplained timeout inside whatever in-IDE call happened to be first.
+ */
+@ApiStatus.Internal
+fun LambdaRdTestSession.awaitLambdaSessionReady(timeout: Duration = 20.seconds) {
   val timeStarted = System.currentTimeMillis()
   while (ready.value != true && timeStarted + timeout.inWholeMilliseconds > System.currentTimeMillis()) {
     Thread.sleep(500)
@@ -120,9 +131,33 @@ private fun LambdaRdTestSession.awaitSessionReady(timeout: Duration = 20.seconds
   }
 }
 
-private fun IDETestContext.setUpRdTestSession(lambdaRdIdeType: LambdaRdIdeType): LambdaRdTestSession {
+/**
+ * Opens the in-IDE lambda channel for a launch that has not happened yet.
+ *
+ * Call order is part of the contract: the wire's port reaches the IDE only as `LAMBDA_TESTING_PORT` in this
+ * context's VM options, which are read once at startup, so the session has to exist **before** the launch.
+ * Setting a context up again for a later run is safe - `VMOptions.addSystemProperty` replaces an existing
+ * `-Dkey=` line instead of appending a second one, so the new port supersedes the old one rather than leaving
+ * the IDE to pick whichever it reads first.
+ *
+ * One session per *run*, never one per context: the protocol lifetime is nested under [EternalLifetime] and
+ * terminated by this context's [IdeAfterLaunchEvent] through a one-shot subscription, so the session that
+ * served a run is dead as soon as that run's IDE is. A relaunch needs a fresh one.
+ *
+ * The caller owns the [IdeWithLambda] built around the returned session, because only the caller knows which
+ * run it launched. [runIdeWithLambda] is one such caller; a host that starts the IDE through IDE Starter
+ * itself is the other, and goes through this function rather than around it so there is one channel setup.
+ */
+private val sessionsSetUp = AtomicInteger()
+
+@ApiStatus.Internal
+fun IDETestContext.setUpLambdaTestSession(lambdaRdIdeType: LambdaRdIdeType): LambdaRdTestSession {
   val testProtocolLifetimeDef = EternalLifetime.createNested()
-  val eventSubscriber = "testProtocolLifetimeDef-${lambdaRdIdeType.name}"
+  // Unique per session, not per IDE type: `LocalEventsFlow.subscribe` drops a duplicate key with an info log,
+  // so a key shared with a subscription that is still live would leave this session's protocol lifetime
+  // unterminated - and with it its `SocketWire.Server`. That is reachable as soon as two hosts open sessions of
+  // the same type in one JVM.
+  val eventSubscriber = "testProtocolLifetimeDef-${lambdaRdIdeType.name}-${sessionsSetUp.incrementAndGet()}"
   EventsBus.subscribe(eventSubscriber) { event: IdeAfterLaunchEvent ->
     if (event.runContext.testContext === this) {
       testProtocolLifetimeDef.terminate()

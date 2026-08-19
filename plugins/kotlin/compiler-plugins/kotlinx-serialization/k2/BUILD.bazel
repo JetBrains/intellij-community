@@ -27,11 +27,11 @@ jvm_library(
     deps = [
         # do not sort,
         "//plugins/kotlin/code-insight/api",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-k2",
-        "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin",
         "@lib//:kotlinc-kotlin-compiler-fir-provided",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/frontend-independent",
@@ -63,6 +63,10 @@ jvm_library(
         # do not sort,
         ":kotlin-compilerPlugins-serialization",
         "//plugins/kotlin/code-insight/api:api_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
+        "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin_test_lib",
         "@lib//:kotlinc-kotlin-compiler-fir-provided",
         "//plugins/kotlin/base/util:util_test_lib",
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
@@ -85,6 +89,7 @@ jvm_library(
 exports_files(
     [
         "intellij.kotlin.compilerPlugins.serialization.iml",
+        "resources/intellij.kotlin.compilerPlugins.serialization.xml",
     ],
     visibility = ["//visibility:public"],
 )

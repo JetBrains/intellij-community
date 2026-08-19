@@ -1,11 +1,15 @@
 <idea-plugin>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
     <module name="intellij.yaml"/>
     <module name="intellij.yaml.backend"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <yaml.tagRecogniser implementation="org.jetbrains.plugins.gitlab.yaml.GitlabYamlTagRecogniser"/>

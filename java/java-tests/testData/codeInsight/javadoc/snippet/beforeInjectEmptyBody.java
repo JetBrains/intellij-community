@@ -1,4 +1,4 @@
-// "JShellLanguage" "true"
+// "" "true"
 
 /**
  * {@snippet :<caret>}

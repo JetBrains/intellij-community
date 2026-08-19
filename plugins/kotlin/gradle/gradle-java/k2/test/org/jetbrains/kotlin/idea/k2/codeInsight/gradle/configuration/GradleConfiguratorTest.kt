@@ -264,6 +264,119 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
 
     @Test
     @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesInAllprojectsKts() {
+        // project (Kotlin DSL): allprojects { repositories { mavenCentral() } }
+        // └── app (Kotlin DSL): inherits repositories from project
+        // Both modules are covered by allprojects, so the configurator does not add repositories blocks.
+        doTest("2.3.20", listOf("project", "project.app")) { files ->
+            val subModules = listOf("app")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesNestedInAllprojectsKts() {
+        // Repositories nested in buildscript configure plugin resolution, not project dependencies.
+        // Both projects still need a top-level dependency repositories block.
+        doTest("2.3.20", listOf("project", "project.app")) { files ->
+            val subModules = listOf("app")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesInSubprojectsKts() {
+        // project (Kotlin DSL): subprojects { repositories { mavenCentral() } }
+        // └── app (Kotlin DSL): inherits repositories from project
+        // The root project is not covered by subprojects, so the configurator adds its own repositories block.
+        doTest("2.3.20", listOf("project", "project.app")) { files ->
+            val subModules = listOf("app")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesInAllprojectsGroovy() {
+        // project (Groovy): allprojects { repositories { mavenCentral() } }
+        // └── app (Groovy): inherits repositories from project
+        // Both modules are covered by allprojects, so the configurator does not add repositories blocks.
+        doTest("2.3.20", listOf("project", "project.app")) { files ->
+            val subModules = listOf("app")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesInSubprojectsGroovy() {
+        // project (Groovy): subprojects { repositories { mavenCentral() } }
+        // └── app (Groovy): inherits repositories from project
+        // The root project is not covered by subprojects, so the configurator adds its own repositories block.
+        doTest("2.3.20", listOf("project", "project.app")) { files ->
+            val subModules = listOf("app")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesInSubprojectsDeepMixed() {
+        // project (Groovy): subprojects { repositories { mavenCentral() } }
+        // └── app (Kotlin DSL, projectDir = modules/app): inherits repositories from project
+        //     └── feature (Groovy, projectDir = components/feature): inherits repositories from project
+        // The Gradle hierarchy is deliberately different from the physical directory hierarchy.
+        // The root project does not inherit from subprojects, so the configurator adds its own repositories block.
+        doTest("2.3.20", listOf("project", "project.app", "project.app.feature")) { files ->
+            val subModules = listOf("modules/app", "components/feature")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesInIntermediateSubprojects() {
+        // project (Groovy): no repositories configuration
+        // └── app (Groovy): subprojects { repositories { mavenCentral() } }
+        //     └── feature (Groovy): inherits repositories from app
+        // Only `feature` inherits repositories, and it inherits them from the intermediate `app`, not from the root.
+        // Detecting this requires walking the whole Gradle hierarchy, so `project` and `app` get their own
+        // repositories block while `feature` does not.
+        doTest("2.3.20", listOf("project", "project.app", "project.app.feature")) { files ->
+            val subModules = listOf("app", "app/feature")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesInAllprojectsAndIntermediateSubprojects() {
+        // project (Groovy): allprojects { repositories { mavenCentral() } }
+        // └── app (Groovy): inherits repositories from project and also configures them for its subprojects
+        //     └── feature (Groovy): inherits repositories from both project and app
+        // Every project already has an effective repository, so no top-level repositories blocks are added.
+        doTest("2.3.20", listOf("project", "project.app", "project.app.feature")) { files ->
+            val subModules = listOf("app", "app/feature")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesNestedInAllprojectsGroovy() {
+        // Repositories nested in buildscript configure buildscript dependencies,
+        // not project dependencies. Both projects still need a top-level
+        // dependency repositories block.
+        doTest("2.3.20", listOf("project", "project.app")) { files ->
+            val subModules = listOf("app")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
     fun testConfigureRootModuleInJvmProjectGroovy() {
         doTest("2.3.0", listOf("project")) { files ->
             val subModules = listOf("app")

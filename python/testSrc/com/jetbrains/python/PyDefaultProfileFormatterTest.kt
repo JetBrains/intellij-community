@@ -8,11 +8,12 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import com.intellij.testFramework.junit5.RunMethodInEdt
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.formatter.PyClassicStyleGuide
 import com.jetbrains.python.formatter.PyCodeStylePropertyAccessor
 import com.jetbrains.python.formatter.PyCodeStyleSettings
@@ -35,13 +36,15 @@ import org.junit.jupiter.api.Test
  * round-trip.
  */
 @TestApplication
-internal class PyDefaultProfileFormatterTest {
+@Subsystems.Formatter
+@Layers.Functional
+class PyDefaultProfileFormatterTest {
   companion object {
     private val tempDir = tempPathFixture()
     private val project = projectFixture(tempDir, openAfterCreation = true)
 
     @Suppress("unused")
-    private val module = project.moduleFixture(tempDir, addPathToSourceRoot = true)
+    private val module = project.pyModuleFixture(tempDir, addPathToSourceRoot = true)
   }
 
   private val codeInsightFixture by codeInsightFixture(project, tempDir)

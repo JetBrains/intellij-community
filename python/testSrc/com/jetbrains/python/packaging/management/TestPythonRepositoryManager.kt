@@ -4,7 +4,7 @@ package com.jetbrains.python.packaging.management
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.packaging.PyPackageVersion
+import com.intellij.python.requirements.PyPackageVersion
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.cache.impl.InMemorySearchPage
@@ -45,7 +45,7 @@ internal class TestPythonRepositoryManager(
     return this
   }
 
-  override val repositories: List<PyPackageRepository>
+  override val allRepositories: List<PyPackageRepository>
     get() = listOf(TestPackageRepository(packageNames))
 
   override suspend fun getPackageDetails(packageName: String, repository: PyPackageRepository?): PyResult<PythonPackageDetails> {

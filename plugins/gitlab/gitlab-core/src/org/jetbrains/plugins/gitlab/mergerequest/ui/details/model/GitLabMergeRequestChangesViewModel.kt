@@ -56,7 +56,14 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   private val delegate = CodeReviewChangesViewModelDelegate.create(cs, changesContainer.filterNotNull()) { changesContainer, changeList ->
     changesContainer as GitLabChangesContainer
 
-    GitLabMergeRequestChangeListViewModelImpl(project, this, mergeRequest, changesContainer.changes, changeList)
+    val parsedChanges = changesContainer.changes
+    // a single-commit merge request has no separate cumulative diff, so its only change list is the cumulative one
+    if (changeList.commitSha == null || parsedChanges.commits.size == 1) {
+      GitLabMergeRequestCumulativeChangeListViewModelImpl(project, this, mergeRequest, parsedChanges, changeList)
+    }
+    else {
+      GitLabMergeRequestCommitChangeListViewModelImpl(project, this, mergeRequest, parsedChanges, changeList)
+    }
   }
 
   override val reviewCommits: SharedFlow<List<GitLabCommitViewModel>> =
@@ -73,7 +80,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
     index.takeIf { it >= 0 }?.let { commits[it] }
   }.modelFlow(cs, LOG)
 
-  override val changeListVm: StateFlow<ComputedResult<GitLabMergeRequestChangeListViewModelImpl>> = delegate.changeListVm
+  override val changeListVm: StateFlow<ComputedResult<GitLabMergeRequestChangeListViewModelBase>> = delegate.changeListVm
 
   override fun selectCommit(index: Int) {
     delegate.selectCommit(index)?.selectChange(null)

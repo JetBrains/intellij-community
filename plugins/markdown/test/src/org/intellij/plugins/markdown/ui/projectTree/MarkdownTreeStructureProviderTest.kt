@@ -33,7 +33,6 @@ class MarkdownTreeStructureProviderTest {
       settings.isFileGroupingEnabled = true
       val provider = MarkdownTreeStructureProvider(project)
       Benchmark.newBenchmark("Modify via MarkdownTreeStructureProvider") { provider.modify(children.first(), children, null) }
-        .setup { PsiManager.getInstance(project).dropPsiCaches() }
         .runAsStressTest()
         .start()
     } finally {

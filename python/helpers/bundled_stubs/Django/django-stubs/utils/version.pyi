@@ -2,13 +2,12 @@ from typing import TypeAlias
 
 PYPY: bool
 
-PY38: bool
-PY39: bool
 PY310: bool
 PY311: bool
 PY312: bool
 PY313: bool
 PY314: bool
+PY315: bool
 
 _VT: TypeAlias = tuple[int, int, int, str, int]
 

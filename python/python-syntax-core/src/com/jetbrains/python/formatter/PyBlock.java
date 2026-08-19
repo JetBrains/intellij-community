@@ -79,6 +79,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -149,6 +150,7 @@ public class PyBlock implements ASTBlock {
 
   // Shared among multiple children sub-blocks
   private Alignment myChildAlignment = null;
+  private Map<ASTNode, Alignment> myAssignmentColumnAlignments = null;
   private Alignment myDictAlignment = null;
   private Wrap myDictWrapping = null;
   private Wrap myListWrapping = null;
@@ -530,6 +532,17 @@ public class PyBlock implements ASTBlock {
       }
     }
 
+    if (settings.ALIGN_CONSECUTIVE_ASSIGNMENTS &&
+        (childType == PyTokenTypes.EQ || PyTokenTypes.AUG_ASSIGN_OPERATIONS.contains(childType)) &&
+        (parentType == PyElementTypes.ASSIGNMENT_STATEMENT || parentType == PyElementTypes.AUG_ASSIGNMENT_STATEMENT) &&
+        myParent != null &&
+        child == findAssignmentOperator(myNode)) {
+      Alignment assignmentAlignment = myParent.getAssignmentColumnAlignment(myNode);
+      if (assignmentAlignment != null) {
+        childAlignment = assignmentAlignment;
+      }
+    }
+
     if (parentType == PyElementTypes.WITH_STATEMENT && isInsideWithStatementParentheses(myNode, child)) {
       if (needListAlignment(child)) {
         childAlignment = getAlignmentForChildren();
@@ -828,6 +841,87 @@ public class PyBlock implements ASTBlock {
     }
     final PsiElement lastChild = PsiTreeUtil.getDeepestLast(prev);
     return lastChild.getParent() instanceof PyAstStatementList;
+  }
+
+  private static boolean startsOwnLine(@NotNull ASTNode node) {
+    return findPrevNonSpaceNode(node) == null || hasLineBreaksBeforeInSameParent(node, 1);
+  }
+
+  // The operator must sit on the first line of the statement; a multi-line left-hand side breaks alignment.
+  private static boolean operatorOnFirstLine(@NotNull ASTNode statement, @NotNull ASTNode operator) {
+    for (ASTNode child = statement.getFirstChildNode(); child != null && child != operator; child = child.getTreeNext()) {
+      if (child.textContains('\n')) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean isAlignableAssignmentStatement(@NotNull ASTNode node) {
+    final IElementType type = node.getElementType();
+    return type == PyElementTypes.ASSIGNMENT_STATEMENT || type == PyElementTypes.AUG_ASSIGNMENT_STATEMENT;
+  }
+
+  private static @Nullable ASTNode findAssignmentOperator(@NotNull ASTNode statement) {
+    ASTNode last = null;
+    for (ASTNode child = statement.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      final IElementType type = child.getElementType();
+      if (type == PyTokenTypes.EQ || PyTokenTypes.AUG_ASSIGN_OPERATIONS.contains(type)) {
+        last = child;
+      }
+    }
+    return last;
+  }
+
+  private @Nullable Alignment getAssignmentColumnAlignment(@NotNull ASTNode statement) {
+    if (myAssignmentColumnAlignments == null) {
+      myAssignmentColumnAlignments = computeAssignmentColumnAlignments();
+    }
+    return myAssignmentColumnAlignments.get(statement);
+  }
+
+  private @NotNull Map<ASTNode, Alignment> computeAssignmentColumnAlignments() {
+    final Map<ASTNode, Alignment> result = new HashMap<>();
+    final List<ASTNode> run = new ArrayList<>();
+    for (ASTNode child = myNode.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      if (isWhitespace(child)) {
+        continue;
+      }
+      // Comments (trailing or standalone) don't break a run.
+      if (child.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+        continue;
+      }
+      final ASTNode operator = isAlignableAssignmentStatement(child) ? findAssignmentOperator(child) : null;
+      if (operator != null) {
+        // A statement sharing a line with a previous one (e.g. after a semicolon), or whose left-hand
+        // side spans multiple lines so the operator isn't on the statement's first line, must not join a column.
+        if (!startsOwnLine(child) || !operatorOnFirstLine(child, operator)) {
+          flushAssignmentRun(run, result);
+        }
+        else {
+          // A blank line before the statement starts a new run.
+          if (!run.isEmpty() && hasLineBreaksBeforeInSameParent(child, 2)) {
+            flushAssignmentRun(run, result);
+          }
+          run.add(child);
+        }
+      }
+      else {
+        flushAssignmentRun(run, result);
+      }
+    }
+    flushAssignmentRun(run, result);
+    return result;
+  }
+
+  private static void flushAssignmentRun(@NotNull List<ASTNode> run, @NotNull Map<ASTNode, Alignment> result) {
+    if (run.size() >= 2) {
+      final Alignment alignment = Alignment.createAlignment(true, Alignment.Anchor.RIGHT);
+      for (ASTNode statement : run) {
+        result.put(statement, alignment);
+      }
+    }
+    run.clear();
   }
 
   private boolean needListAlignment(@NotNull ASTNode child) {

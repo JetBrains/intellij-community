@@ -612,7 +612,9 @@ f:com.intellij.platform.eel.channels.EelSendChannelKt
 - receive(java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.eel.channels.PeekableEelReceiveChannelKt
 - *sf:peekable(com.intellij.platform.eel.channels.EelReceiveChannel):com.intellij.platform.eel.channels.PeekableEelReceiveChannel
+- *sf:readLine(com.intellij.platform.eel.channels.PeekableEelReceiveChannel,java.nio.charset.Charset,I,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:readLine(com.intellij.platform.eel.channels.PeekableEelReceiveChannel,java.nio.charset.Charset,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:readUntil(com.intellij.platform.eel.channels.PeekableEelReceiveChannel,B,I,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:readUntil(com.intellij.platform.eel.channels.PeekableEelReceiveChannel,B,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.platform.eel.eelProxyKtHelpers
 - sf:INSTANCE:com.intellij.platform.eel.eelProxyKtHelpers

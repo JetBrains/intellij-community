@@ -3,7 +3,10 @@
   <dependencies>
     <module name="intellij.gradle.toolingExtension"/>
     <module name="intellij.gradle.toolingExtension.impl"/>
+    <module name="intellij.libraries.gradle"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.jspecify"/>
+    <module name="intellij.libraries.kryo5"/>
   </dependencies>
   <!-- endregion -->
 

@@ -50,6 +50,7 @@ import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.Icon
 import javax.swing.SwingConstants
+import kotlin.time.TimeSource
 
 internal class MarketplacePluginsTabSearchResultPanel(
   coroutineScope: CoroutineScope,
@@ -176,8 +177,12 @@ internal class MarketplacePluginsTabSearchResultPanel(
         updateSearchPanel(result, result.getModels())
       }
       else {
+        val requestStart = TimeSource.Monotonic.markNow()
         PluginModelAsyncOperationsExecutor
           .performMarketplaceSearch(parser.urlQuery).let { searchResult ->
+            tracker.measure(PluginManagerUiMetric.SEARCH_MARKETPLACE_REQUEST, requestStart)
+            if (searchResult.error != null) tracker.logEvent(PluginManagerUiEvent.SEARCH_MARKETPLACE_ERROR)
+            if (searchResult.pluginModels.isEmpty()) tracker.logEvent(PluginManagerUiEvent.SEARCH_MARKETPLACE_EMPTY)
             applySearchResult(
               result, searchResult, customRepositoriesMap,
               parser, searchIndex

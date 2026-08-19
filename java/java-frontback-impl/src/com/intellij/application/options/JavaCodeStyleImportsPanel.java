@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.java.frontback.impl.JavaFrontbackBundle;
@@ -70,6 +70,9 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     if(cbDeleteUnusedModuleImports!=null) javaSettings.setDeleteUnusedModuleImports(cbDeleteUnusedModuleImports.isSelected());
     javaSettings.setDoNotImportInner(getInnerClassesNames());
     javaSettings.setLayoutOnDemandImportFromSamePackageFirst(myImportLayoutPanel.isLayoutOnDemandImportsFromSamePackageFirst());
+
+    JBCheckBox cbKeepBlankLinesBetweenImports = myImportLayoutPanel.getCbKeepBlankLinesBetweenImports();
+    if (cbKeepBlankLinesBetweenImports != null) javaSettings.setKeepBlankLinesBetweenImports(cbKeepBlankLinesBetweenImports.isSelected());
   }
 
   @Override
@@ -89,6 +92,9 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
 
     JBCheckBox cbLayoutOnDemandImportsFromSamePackageFirst = myImportLayoutPanel.getCbLayoutOnDemandImportsFromSamePackageFirst();
     if (cbLayoutOnDemandImportsFromSamePackageFirst != null) cbLayoutOnDemandImportsFromSamePackageFirst.setSelected(javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
+
+    JBCheckBox cbKeepBlankLinesBetweenImports = myImportLayoutPanel.getCbKeepBlankLinesBetweenImports();
+    if (cbKeepBlankLinesBetweenImports != null) cbKeepBlankLinesBetweenImports.setSelected(javaSettings.isKeepBlankLinesBetweenImports());
   }
 
   @Override
@@ -106,6 +112,9 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
 
     JBCheckBox cbLayoutOnDemandImportsFromSamePackageFirst = myImportLayoutPanel.getCbLayoutOnDemandImportsFromSamePackageFirst();
     if (cbLayoutOnDemandImportsFromSamePackageFirst != null) isModified |= isModified(cbLayoutOnDemandImportsFromSamePackageFirst, javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
+
+    JBCheckBox cbKeepBlankLinesBetweenImports = myImportLayoutPanel.getCbKeepBlankLinesBetweenImports();
+    if (cbKeepBlankLinesBetweenImports != null) isModified |= isModified(cbKeepBlankLinesBetweenImports, javaSettings.isKeepBlankLinesBetweenImports());
     return isModified;
   }
 
@@ -134,6 +143,11 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
 
   @Override
   protected boolean isShowLayoutOnDemandImportFromSamePackageFirstCheckbox() {
+    return true;
+  }
+
+  @Override
+  protected boolean isShowKeepBlankLinesBetweenImportsCheckbox() {
     return true;
   }
 

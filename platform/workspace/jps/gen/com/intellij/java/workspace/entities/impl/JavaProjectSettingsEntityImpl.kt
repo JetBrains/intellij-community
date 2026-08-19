@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -18,9 +17,7 @@ import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -30,14 +27,12 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class JavaProjectSettingsEntityImpl(private val dataSource: JavaProjectSettingsEntityData) : JavaProjectSettingsEntity,
                                                                                                       WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PROJECTSETTINGS_CONNECTION_ID: ConnectionId = ConnectionId.create(ProjectSettingsEntity::class.java,
                                                                                    JavaProjectSettingsEntity::class.java,
                                                                                    ConnectionId.ConnectionType.ONE_TO_ONE,
                                                                                    false)
     private val connections = listOf<ConnectionId>(PROJECTSETTINGS_CONNECTION_ID)
-
   }
 
   override val projectSettings: ProjectSettingsEntity
@@ -58,7 +53,6 @@ internal class JavaProjectSettingsEntityImpl(private val dataSource: JavaProject
       readField("languageLevelDefault")
       return dataSource.languageLevelDefault
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -69,34 +63,11 @@ internal class JavaProjectSettingsEntityImpl(private val dataSource: JavaProject
     return connections
   }
 
-
   internal class Builder(result: JavaProjectSettingsEntityData?) :
     ModifiableWorkspaceEntityBase<JavaProjectSettingsEntity, JavaProjectSettingsEntityData>(result), JavaProjectSettingsEntity.Builder {
     internal constructor() : this(JavaProjectSettingsEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity JavaProjectSettingsEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-      index(this, "compilerOutput", this.compilerOutput)
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -127,6 +98,9 @@ internal class JavaProjectSettingsEntityImpl(private val dataSource: JavaProject
       updateChildToParentReferences(parents)
     }
 
+    override fun index() {
+      index(this, "compilerOutput", this.compilerOutput)
+    }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -134,45 +108,14 @@ internal class JavaProjectSettingsEntityImpl(private val dataSource: JavaProject
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var projectSettings: ProjectSettingsEntityBuilder
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PROJECTSETTINGS_CONNECTION_ID,
-                                                                           this) as? ProjectSettingsEntityBuilder)
-          ?: (this.entityLinks[EntityLink(false, PROJECTSETTINGS_CONNECTION_ID)] as? ProjectSettingsEntityBuilder)
-          ?: error("projectSettings is null for JavaProjectSettingsEntity")
-        }
-        else {
-          (this.entityLinks[EntityLink(false, PROJECTSETTINGS_CONNECTION_ID)] as? ProjectSettingsEntityBuilder)
-          ?: error("projectSettings is null for JavaProjectSettingsEntity")
-        }
-      }
+      get() = getParent(PROJECTSETTINGS_CONNECTION_ID) as? ProjectSettingsEntityBuilder
+              ?: error("projectSettings is null for JavaProjectSettingsEntity")
       set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, PROJECTSETTINGS_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.instrumentation.addChild(PROJECTSETTINGS_CONNECTION_ID, value, this)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, PROJECTSETTINGS_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
-          this.entityLinks[EntityLink(false, PROJECTSETTINGS_CONNECTION_ID)] = value
-        }
+        changeParent(value, PROJECTSETTINGS_CONNECTION_ID)
         changedProperty.add("projectSettings")
       }
-
     override var compilerOutput: VirtualFileUrl?
       get() = getEntityData().compilerOutput
       set(value) {
@@ -199,7 +142,6 @@ internal class JavaProjectSettingsEntityImpl(private val dataSource: JavaProject
 
     override fun getEntityClass(): Class<JavaProjectSettingsEntity> = JavaProjectSettingsEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -207,24 +149,9 @@ internal class JavaProjectSettingsEntityData : WorkspaceEntityData<JavaProjectSe
   var compilerOutput: VirtualFileUrl? = null
   var languageLevelId: String? = null
   var languageLevelDefault: Boolean? = null
-
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<JavaProjectSettingsEntity> {
-    val modifiable = JavaProjectSettingsEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): JavaProjectSettingsEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = JavaProjectSettingsEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
+  override fun newInstance(): JavaProjectSettingsEntity = JavaProjectSettingsEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<JavaProjectSettingsEntity, *> =
+    JavaProjectSettingsEntityImpl.Builder(null)
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.java.workspace.entities.JavaProjectSettingsEntity") as EntityMetadata

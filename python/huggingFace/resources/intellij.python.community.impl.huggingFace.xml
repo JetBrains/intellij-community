@@ -2,10 +2,27 @@
 
   <resource-bundle>messages.PyHuggingFaceBundle</resource-bundle>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.json.backend"/>
+    <module name="intellij.libraries.gradle"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jackson.module.kotlin"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.markdown.utils"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.python.community.impl"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <annotator language="Python" implementationClass="com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceEntityNameAnnotator"/>
     <psi.referenceContributor implementation="com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceIdentifierReferenceContributor"

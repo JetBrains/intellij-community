@@ -30,7 +30,7 @@ jvm_library(
         "@community//build:build-javac-rt",
         "//platform/util",
         "//platform/util/base",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -56,6 +56,7 @@ jvm_library(
         "@community//build:build-javac-rt_test_lib",
         "//platform/util:util_test_lib",
         "//platform/util/base:base_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.jps` end

@@ -2,8 +2,9 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractFunctionDescriptorModifier
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptor
 import org.jetbrains.kotlin.idea.util.findAnnotation
@@ -30,7 +31,7 @@ private class MyComposeExtractFunctionDescriptorModifier : ExtractFunctionDescri
         val lambdaExpression = getLambdaExpression() ?: return false
         analyze(callExpression) {
             val call = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return false
-            val parameterTypeForLambda = call.argumentMapping[lambdaExpression]?.returnType ?: return false
+            val parameterTypeForLambda = call.valueArgumentMapping[lambdaExpression]?.returnType ?: return false
             return parameterTypeForLambda.annotations.classIds.any { it == MY_COMPOSABLE_CLASS_ID }
         }
     }

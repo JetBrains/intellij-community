@@ -15,10 +15,10 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.utils.removeUnnecessaryParentheses
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.codeinsight.utils.collectReferencesInFile
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInitializedByLazy
+import org.jetbrains.kotlin.idea.codeinsight.utils.removeUnnecessaryParentheses
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.getOutermostParenthesizedExpressionOrThis
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.propertyVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
-import kotlin.sequences.last
 
 /**
  * Finds non-delegated properties that are initialized with a value of type `kotlin.Lazy<...>`.
@@ -68,7 +67,8 @@ internal class LazyWithoutDelegationInspection :
     override fun getApplicableRanges(element: KtProperty): List<TextRange> = ApplicabilityRange.single(element) { it.equalsToken }
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtProperty): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtProperty): Context? {
         if (!element.isInitializedByLazy()) return null
         if (element.hasJvmFieldAnnotation()) return null
         val lazyValueAccessors = collectLazyValueAccessors(element) ?: return null

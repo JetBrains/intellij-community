@@ -6,11 +6,16 @@ import org.jetbrains.idea.devkit.inspections.CancellationExceptionHandlingChecke
 import org.jetbrains.idea.devkit.kotlin.util.getContext
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -64,7 +69,8 @@ internal class KtCancellationExceptionHandlingChecker : CancellationExceptionHan
     return null
   }
 
-  private fun KaSession.throwsCe(symbol: KaCallableSymbol): Boolean {
+  context(session: KaSession)
+  private fun throwsCe(symbol: KaCallableSymbol): Boolean {
     val exceptionClasses = symbol.annotations.firstOrNull { it.classId == throwsClassId }
                              ?.arguments?.firstOrNull { it.name.asString() == "exceptionClasses" }
                              ?.expression as? KaAnnotationValue.ArrayValue ?: return false
@@ -74,7 +80,8 @@ internal class KtCancellationExceptionHandlingChecker : CancellationExceptionHan
   }
 
   @OptIn(KaExperimentalApi::class)
-  private fun KaSession.buildCancellationExceptionType(): KaType =
+  context(session: KaSession)
+  private fun buildCancellationExceptionType(): KaType =
     typeCreator.classType(cancellationExceptionClassId)
 
 }

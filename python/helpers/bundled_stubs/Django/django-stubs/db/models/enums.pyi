@@ -1,29 +1,19 @@
 import enum
 import sys
+from enum import EnumType, IntEnum, StrEnum
+from enum import property as enum_property
 from typing import Any, Literal, overload, type_check_only
 
 from _typeshed import ConvertibleToInt
+from _typeshed import Self as MetaclassSelf  # noqa: TID251
 from django.utils.functional import _StrOrPromise
-from typing_extensions import TypeVar, override
-
-if sys.version_info >= (3, 11):
-    from enum import EnumType, IntEnum, StrEnum
-    from enum import property as enum_property
-else:
-    from enum import EnumMeta as EnumType
-    from types import DynamicClassAttribute as enum_property
-
-    class ReprEnum(enum.Enum): ...  # type: ignore[misc]
-    class IntEnum(int, ReprEnum): ...  # type: ignore[misc]
-    class StrEnum(str, ReprEnum): ...  # type: ignore[misc]
-
-_Self = TypeVar("_Self", bound=ChoicesType)
+from typing_extensions import override
 
 class ChoicesType(EnumType):
     __empty__: _StrOrPromise
     def __new__(
-        metacls: type[_Self], classname: str, bases: tuple[type, ...], classdict: enum._EnumDict, **kwds: Any
-    ) -> _Self: ...
+        metacls: type[MetaclassSelf], classname: str, bases: tuple[type, ...], classdict: enum._EnumDict, **kwds: Any
+    ) -> MetaclassSelf: ...
     @property
     def names(self) -> list[str]: ...
     @property
@@ -60,6 +50,7 @@ class _IntegerChoicesType(ChoicesType):
 # all the arguments of `int.__new__`/`str.__new__` (e.g. `base`, `encoding`).
 # They are omitted on purpose to avoid having convoluted stubs for these enums:
 class IntegerChoices(Choices, IntEnum, metaclass=_IntegerChoicesType):  # type: ignore[misc]
+    _value_: int
     @overload
     def __init__(self, x: ConvertibleToInt) -> None: ...
     @overload
@@ -79,6 +70,7 @@ class _TextChoicesType(ChoicesType):
     def values(self) -> list[str]: ...
 
 class TextChoices(Choices, StrEnum, metaclass=_TextChoicesType):  # type: ignore[misc]
+    _value_: str
     @overload
     def __init__(self, object: str) -> None: ...
     @overload

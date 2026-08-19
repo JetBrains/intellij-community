@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.asm.tools.iml",
+        "resources/intellij.libraries.asm.tools.xml",
     ],
     visibility = ["//visibility:public"],
 )

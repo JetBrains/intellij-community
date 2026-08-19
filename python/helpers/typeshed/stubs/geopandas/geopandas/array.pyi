@@ -1,8 +1,8 @@
 import builtins
 from _typeshed import Incomplete, Unused
 from collections.abc import Callable, Collection
-from typing import Any, ClassVar, Final, Literal, NoReturn, SupportsIndex, TypeAlias, TypeVar, overload
-from typing_extensions import Self, deprecated
+from typing import Any, ClassVar, Final, Literal, SupportsIndex, TypeAlias, TypeVar, overload
+from typing_extensions import Never, Self, deprecated
 
 import numpy as np
 import pandas as pd
@@ -245,8 +245,8 @@ class GeometryArray(ExtensionArray):
     @property
     def nbytes(self) -> int: ...
     def shift(self, periods: int = 1, fill_value: Geometry | None = None) -> GeometryArray: ...  # type: ignore[override]
-    def argmin(self, skipna: bool = True) -> NoReturn: ...
-    def argmax(self, skipna: bool = True) -> NoReturn: ...
+    def argmin(self, skipna: bool = True) -> Never: ...
+    def argmax(self, skipna: bool = True) -> Never: ...
     def __array__(self, dtype: DTypeLike | None = None, copy: bool | None = None) -> _Array1D[np.object_]: ...
     def __eq__(self, other: object) -> _Array1D[np.bool_]: ...  # type: ignore[override]
     def __ne__(self, other: object) -> _Array1D[np.bool_]: ...  # type: ignore[override]

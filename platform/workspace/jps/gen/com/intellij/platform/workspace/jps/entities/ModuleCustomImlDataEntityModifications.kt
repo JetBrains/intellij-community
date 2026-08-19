@@ -21,7 +21,7 @@ interface ModuleCustomImlDataEntityBuilder : WorkspaceEntityBuilder<ModuleCustom
 }
 
 internal object ModuleCustomImlDataEntityType : EntityType<ModuleCustomImlDataEntity, ModuleCustomImlDataEntityBuilder>() {
-  override val entityClass: Class<ModuleCustomImlDataEntity> get() = ModuleCustomImlDataEntity::class.java
+  override val entityImplClass: Class<*> get() = ModuleCustomImlDataEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ModuleCustomImlDataEntityImpl.Builder::class.java
   operator fun invoke(
     customModuleOptions: Map<String, String>,

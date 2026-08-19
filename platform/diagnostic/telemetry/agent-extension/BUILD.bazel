@@ -36,7 +36,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//libraries/opentelemetry",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/opentelemetry-exporter-otlp-common",
         "//libraries/jackson3/jackson:libraries-jackson3",
         "//libraries/jackson3/databind",
@@ -58,6 +58,7 @@ jvm_library(
         # do not sort,
         ":diagnostic-telemetry-agent-extension",
         "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/opentelemetry-exporter-otlp-common:opentelemetry-exporter-otlp-common_test_lib",
@@ -74,6 +75,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.diagnostic.telemetry.agent.extension.iml",
+        "resources/intellij.platform.diagnostic.telemetry.agent.extension.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -111,7 +113,8 @@ jvm_library(
         # do not sort,
         "//libraries/opentelemetry",
         "//libraries/opentelemetry:opentelemetry_test_lib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/opentelemetry-exporter-otlp-common",

@@ -3,8 +3,11 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ConvertClassToKClassFix
 import org.jetbrains.kotlin.name.ClassId
@@ -30,7 +33,8 @@ internal object ConvertClassToKClassFixFactories {
         listOfNotNull(createFixIfAvailable(diagnostic.expression, diagnostic.expectedType))
     }
 
-    private fun KaSession.createFixIfAvailable(element: PsiElement?, expectedType: KaType): ConvertClassToKClassFix? {
+    context(session: KaSession)
+    private fun createFixIfAvailable(element: PsiElement?, expectedType: KaType): ConvertClassToKClassFix? {
         val dotQualifiedExpression = element as? KtDotQualifiedExpression ?: return null
         if (!isKClass(expectedType)) return null
 
@@ -49,5 +53,7 @@ internal object ConvertClassToKClassFixFactories {
     }
 }
 
-internal fun KaSession.isKClass(type: KaType): Boolean = type.isClassType(StandardClassIds.KClass)
-internal fun KaSession.isJavaClass(type: KaType): Boolean = type.isClassType(ClassId.fromString("java/lang/Class"))
+context(session: KaSession)
+internal fun isKClass(type: KaType): Boolean = type.classId == StandardClassIds.KClass
+context(session: KaSession)
+internal fun isJavaClass(type: KaType): Boolean = type.classId == ClassId.fromString("java/lang/Class")

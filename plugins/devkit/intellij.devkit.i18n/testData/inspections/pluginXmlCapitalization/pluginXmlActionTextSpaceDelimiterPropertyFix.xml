@@ -1,0 +1,9 @@
+<idea-plugin>
+
+  <resource-bundle>ActionTextSpaceDelimiterFixBundle</resource-bundle>
+
+  <actions>
+  <<warning descr="String '=lower case' is not properly capitalized. It should have title capitalization">action<caret></warning> id="BundleActionSpaceDelimiter"/>
+  </actions>
+
+</idea-plugin>

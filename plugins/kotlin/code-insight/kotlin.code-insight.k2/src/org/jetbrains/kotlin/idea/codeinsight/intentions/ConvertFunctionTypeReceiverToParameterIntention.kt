@@ -367,7 +367,7 @@ fun KaReceiverValue?.getReceiverTargetSymbol(): KaSymbol? {
                 is KtReferenceExpression -> expression
                 else -> null
             }
-            return (target as? KtDeclaration)?.symbol
+            (target as? KtDeclaration)?.symbol
         }
 
         is KaImplicitReceiverValue -> this.symbol

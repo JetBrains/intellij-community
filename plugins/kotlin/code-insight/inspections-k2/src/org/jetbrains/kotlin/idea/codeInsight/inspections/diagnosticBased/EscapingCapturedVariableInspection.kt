@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -20,7 +21,8 @@ import org.jetbrains.kotlin.psi.simpleNameExpressionVisitor
 internal class EscapingCapturedVariableInspection : KotlinApplicableInspectionBase<KtSimpleNameExpression, String>() {
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtSimpleNameExpression): String? =
+    context(session: KaSession)
+    override fun prepareContext(element: KtSimpleNameExpression): String? =
         element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
             .firstNotNullOfOrNull { it as? KaFirDiagnostic.EscapingCapturedVariable }
             ?.variable?.name?.asString()

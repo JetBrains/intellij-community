@@ -21,6 +21,7 @@ import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.JspPsiUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
@@ -54,6 +55,7 @@ import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.formatter.java.ImportHelperBase;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
+import com.intellij.psi.impl.source.PsiImportListImpl;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
@@ -199,7 +201,17 @@ public final class ImportHelper extends ImportHelperBase {
       PsiImportList newImportList = dummyFile.getImportList();
       keepCommentsAndAttachStatistics(oldList, newImportList);
       assert newImportList != null : dummyFile.getText();
-      if (oldList.isReplaceEquivalent(newImportList)) return null;
+      // when the layout fully determines the blank lines, the old list must match the new one literally,
+      // otherwise extra blank lines would survive; comments should be preserved, so use reformatting.
+      // The text comparison makes sense only for a real Java import list: other implementations (e.g. JSP)
+      // are computed from foreign PSI and have no text of their own, so only isReplaceEquivalent() fits them
+      boolean layoutWins = oldList instanceof PsiImportListImpl &&
+                           !mySettings.KEEP_BLANK_LINES_BETWEEN_IMPORTS &&
+                           PsiTreeUtil.getChildOfType(oldList, PsiComment.class) == null;
+      if (oldList.isReplaceEquivalent(newImportList) &&
+          (!layoutWins || oldList.textMatches(newImportList))) {
+        return null;
+      }
       return newImportList;
     }
     catch (IncorrectOperationException e) {

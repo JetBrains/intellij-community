@@ -14,7 +14,6 @@ import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil;
-import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
@@ -123,9 +122,9 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -605,8 +604,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       return false;
     }
     assertFileFromMyProject(psiFile.getProject(), psiFile);
-    PsiFile originalFile = psiFile.getOriginalFile();
-    VirtualFile virtualFile = originalFile.getVirtualFile();
+    VirtualFile virtualFile = psiFile.getOriginalFile().getVirtualFile();
     if (virtualFile != null && myDisabledHighlightingFiles.contains(virtualFile)) {
       return false;
     }
@@ -1002,6 +1000,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     for (HighlightInfo info : relevantInfos) {
       LazyQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(info, project, document);
     }
+  }
+
+  @ApiStatus.Internal
+  public static boolean assertHighlightingPassNotRunning() {
+    return PassExecutorService.assertHighlightingPassNotRunning();
   }
 
   static final class HighlightByOffsetProcessor implements Processor<HighlightInfo> {
@@ -1403,12 +1406,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       LOG.trace("submitInBackground: " + virtualFile + "; viewProvider.hashCode()={"+psiFile.getViewProvider().hashCode()+"}");
     }
     try {
+      CodeInsightContext[] context = new CodeInsightContext[1];
       ProgressManager.getInstance().executeProcessUnderProgress(Context.current().wrap(() -> {
         HighlightingPass[] passes = ReadAction.computeBlocking(() -> {
-          CodeInsightContext context = fileEditor instanceof TextEditor te ?
-                                       EditorContextManager.getEditorContext(te.getEditor(), myProject) :
-                                       CodeInsightContextManager.getInstance(myProject).getCodeInsightContext(psiFile.getViewProvider());
-          PsiFile renewedPsiFile = TextEditorBackgroundHighlighter.renewFile(myProject, document, context);
+          context[0] = CodeInsightContextUtil.getCodeInsightContext(psiFile);
+          PsiFile renewedPsiFile = TextEditorBackgroundHighlighter.renewFile(myProject, document, context[0]);
           if (renewedPsiFile == null) {
             return HighlightingPass.EMPTY_ARRAY;
           }
@@ -1474,7 +1476,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         }
         // synchronize on TextEditorHighlightingPassRegistrarImpl instance to avoid concurrent modification of TextEditorHighlightingPassRegistrarImpl.nextAvailableId
         synchronized (TextEditorHighlightingPassRegistrar.getInstance(myProject)) {
-          myPassExecutorService.submitPasses(document, virtualFile, psiFile, fileEditor, passes, progress);
+          myPassExecutorService.submitPasses(document, context[0], virtualFile, psiFile, fileEditor, passes, progress);
         }
         //clearObsoleteRangeHighlightersManagedToSneakInAllTheSame(document, myProject);
         ProgressManager.checkCanceled();
@@ -1663,31 +1665,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     // Project should be active in a headless case (see FL-25764)
     return editorWindow == null;
-  }
-
-  /**
-   * This API is made {@code Internal} intentionally as it could lead to unpredictable highlighting performance behavior.
-   *
-   * @param flag if {@code true}: enables code insight passes serialization:
-   *             Injected fragments {@link InjectedGeneralHighlightingPass} highlighting and Inspections run after
-   *             completion of Syntax analysis {@link GeneralHighlightingPass}.
-   *             if {@code false} (default behavior) code insight passes are running in parallel
-   * @deprecated do not use, because it could slow down highlighting
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  public void serializeCodeInsightPasses(boolean flag) {
-    ThreadingAssertions.assertEventDispatchThread();
-    setUpdateByTimerEnabled(false);
-    try {
-      cancelAllUpdateProgresses(false, "serializeCodeInsightPasses");
-      TextEditorHighlightingPassRegistrarImpl registrar =
-        (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject);
-      registrar.serializeCodeInsightPasses(flag);
-    }
-    finally {
-      setUpdateByTimerEnabled(true);
-    }
   }
 
   // tell the next restarted highlighting that it should start in the "full mode" and run all inspections/external annotators/etc

@@ -4,8 +4,10 @@ import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.elements.JButtonUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
 import com.intellij.driver.sdk.ui.components.elements.accessibleList
 import com.intellij.driver.sdk.ui.components.elements.button
+import com.intellij.driver.sdk.ui.components.elements.tree
 import com.intellij.driver.sdk.ui.shouldBe
 import com.intellij.driver.sdk.ui.ui
 
@@ -33,6 +35,7 @@ open class DebugToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) 
   val stepIntoButton: JButtonUiComponent get() = button { byAccessibleName("Step Into") }
   val jbRunnerTabs: UiComponent get() = x { byType("com.intellij.execution.ui.layout.impl.JBRunnerTabs") }
   val debugTabWindow: UiComponent get() = x { byType("com.intellij.openapi.wm.impl.ToolWindowImpl") }
+  val variableTree: JTreeUiComponent = tree("//div[@class='XDebuggerTree']")
 
   fun selectOptionFromEvaluationToolTip(optionToSelect: String, fullMatch: Boolean = false) {
     driver.ui.accessibleList { byClass("LookupList") }

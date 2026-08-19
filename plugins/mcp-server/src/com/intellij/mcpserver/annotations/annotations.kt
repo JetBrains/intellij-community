@@ -17,6 +17,11 @@ annotation class McpTool(
    * Optional human-readable title for the tool. If empty, a null value will be passed to protocol.
    */
   val title: String = "",
+
+  /**
+   * Whether the optional project-path selector is included in the tool input schema.
+   */
+  val includeProjectPath: Boolean = true,
 )
 
 enum class McpToolHintValue {

@@ -11,7 +11,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "//plugins/kotlin/plugin/common",
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/pluginTests:kotlin-base-plugin-tests",
         "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-platform",
@@ -119,9 +119,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":tests",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
-        "//plugins/kotlin/plugin/common:common_test_lib",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/kotlin/base/pluginTests:kotlin-base-plugin-tests_test_lib",
         "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-platform_test_lib",

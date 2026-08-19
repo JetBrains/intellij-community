@@ -19,6 +19,7 @@ import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.ClassNotPreparedException
 import com.sun.jdi.ClassType
 import com.sun.jdi.ReferenceType
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.codegen.AsmUtil

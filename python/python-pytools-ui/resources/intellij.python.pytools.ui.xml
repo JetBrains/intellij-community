@@ -1,16 +1,26 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.community.services.systemPython"/>
+    <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools"/>
-    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.uv.backend"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <projectConfigurable parentId="python.tools.group.settings"
                          id="python.external.tools.group.settings"
@@ -19,5 +29,12 @@
                          instance="com.intellij.python.pytools.ui.configuration.PyExternalToolsConfigurable"/>
     <search.optionContributor
         implementation="com.intellij.python.pytools.ui.PyExternalToolsSearchableOptionContributor"/>
+    <projectConfigurable parentId="python.tools.group.settings"
+                         id="python.package.managers.group.settings"
+                         bundle="messages.PyToolsUiBundle"
+                         key="settings.package.managers.title"
+                         instance="com.intellij.python.pytools.ui.packagemanagers.PyPackageManagersConfigurable"/>
+    <search.optionContributor
+        implementation="com.intellij.python.pytools.ui.packagemanagers.PyPackageManagersSearchableOptionContributor"/>
   </extensions>
 </idea-plugin>

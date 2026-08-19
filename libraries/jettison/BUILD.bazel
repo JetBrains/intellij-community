@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.jettison.iml",
+        "resources/intellij.libraries.jettison.xml",
     ],
     visibility = ["//visibility:public"],
 )

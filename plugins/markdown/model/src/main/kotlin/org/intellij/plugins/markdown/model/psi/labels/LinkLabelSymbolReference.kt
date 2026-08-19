@@ -18,11 +18,8 @@ internal class LinkLabelSymbolReference(
   private val text: String,
 ): MarkdownPsiSymbolReferenceBase(element, rangeInElement), PsiCompletableReference {
   override fun resolveReference(): Collection<Symbol> {
-    val file = element.containingFile
-    val declarations = file.collectLinkLabels().asSequence().filter { it.isDeclaration }
-    val matchingDeclarations = declarations.filter { it.labelText == text }
-    val symbols = matchingDeclarations.mapNotNull { LinkLabelSymbol.createPointer(it).dereference() }
-    return symbols.toList()
+    val declaration = declarationsByLabel(element.containingFile)[normalizeLabel(text)] ?: return emptyList()
+    return listOfNotNull(LinkLabelSymbol.createPointer(declaration).dereference())
   }
 
   override fun getCompletionVariants(): Collection<LookupElement> {
@@ -32,6 +29,16 @@ internal class LinkLabelSymbolReference(
   }
 
   companion object {
+    private fun declarationsByLabel(file: PsiFile): Map<String, MarkdownLinkLabel> {
+      val declarations = LinkedHashMap<String, MarkdownLinkLabel>()
+      for (label in file.collectLinkLabels()) {
+        if (label.isDeclaration) {
+          declarations.putIfAbsent(normalizeLabel(label.labelText), label)
+        }
+      }
+      return declarations
+    }
+
     private fun PsiFile.collectLinkLabels(): List<MarkdownLinkLabel> {
       val elements = arrayListOf<MarkdownLinkLabel>()
       val visitor = object: MarkdownRecursiveElementVisitor() {
@@ -45,5 +52,9 @@ internal class LinkLabelSymbolReference(
       accept(visitor)
       return elements
     }
+
+    private fun normalizeLabel(label: String): String = SPACES_REGEX.replace(label, " ").lowercase()
+
+    private val SPACES_REGEX = Regex("\\s+")
   }
 }

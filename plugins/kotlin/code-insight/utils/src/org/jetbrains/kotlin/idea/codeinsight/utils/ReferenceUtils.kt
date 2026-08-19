@@ -24,5 +24,5 @@ fun isUnaryOperatorOnIntLiteralReference(reference: KtReference): Boolean {
     val unwrappedBaseExpression = prefixExpression.baseExpression?.unwrapParenthesesLabelsAndAnnotations() ?: return false
 
     return unwrappedBaseExpression is KtConstantExpression &&
-            unwrappedBaseExpression.elementType == KtNodeTypes.INTEGER_CONSTANT
+            unwrappedBaseExpression.iElementType == KtNodeTypes.INTEGER_CONSTANT
 }

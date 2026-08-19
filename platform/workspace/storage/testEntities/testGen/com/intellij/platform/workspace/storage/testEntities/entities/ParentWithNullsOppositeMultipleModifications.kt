@@ -19,7 +19,7 @@ interface ParentWithNullsOppositeMultipleBuilder : WorkspaceEntityBuilder<Parent
 
 internal object ParentWithNullsOppositeMultipleType :
   EntityType<ParentWithNullsOppositeMultiple, ParentWithNullsOppositeMultipleBuilder>() {
-  override val entityClass: Class<ParentWithNullsOppositeMultiple> get() = ParentWithNullsOppositeMultiple::class.java
+  override val entityImplClass: Class<*> get() = ParentWithNullsOppositeMultipleImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ParentWithNullsOppositeMultipleImpl.Builder::class.java
   operator fun invoke(
     parentData: String,
@@ -41,7 +41,6 @@ fun MutableEntityStorage.modifyParentWithNullsOppositeMultiple(
 
 var ParentWithNullsOppositeMultipleBuilder.children: List<ChildWithNullsOppositeMultipleBuilder>
   by WorkspaceEntity.extensionBuilder(ChildWithNullsOppositeMultiple::class.java)
-
 
 @JvmOverloads
 @JvmName("createParentWithNullsOppositeMultiple")

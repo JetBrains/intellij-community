@@ -3,19 +3,17 @@ package org.jetbrains.jewel.intui.standalone.window.macos
 
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.awt.ComposeWindow
 import com.sun.jna.Callback
 import com.sun.jna.Pointer
-import java.awt.Component
 import java.awt.Window
-import java.lang.reflect.InvocationTargetException
 import javax.swing.SwingUtilities
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.intui.standalone.styling.default
 import org.jetbrains.jewel.intui.standalone.styling.macOs
-import org.jetbrains.jewel.intui.standalone.window.UnsafeAccessing
-import org.jetbrains.jewel.intui.standalone.window.accessible
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 import org.jetbrains.skiko.hostOs
@@ -53,75 +51,26 @@ public interface MacPlatformServices {
     public fun onPreferencesChanged(action: () -> Unit)
 }
 
-/**
- * Default [MacPlatformServices] implementation that uses JNA to invoke native macOS (Objective-C) APIs.
- *
- * Requires `--add-opens` access to internal JDK and AWT packages; these are granted by [UnsafeAccessing] during `init`.
- */
+/** Default [MacPlatformServices] implementation that uses JNA to invoke native macOS (Objective-C) APIs. */
 @ApiStatus.Internal
 @InternalJewelApi
 public object MacPlatformServicesDefaultImpl : MacPlatformServices {
     private val logger = JewelLogger.getInstance(MacPlatformServicesDefaultImpl::class.java.simpleName)
     private var nativeCallbackReference: Callback? = null // Keep a strong reference here to prevent GC
 
-    init {
-        try {
-            UnsafeAccessing.assignAccessibility(
-                UnsafeAccessing.desktopModule,
-                listOf("sun.awt", "sun.lwawt", "sun.lwawt.macosx"),
-            )
-        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-            logger.warn("Assign access for jdk.desktop failed.", e)
-        }
-    }
-
-    internal fun getWindowFromJavaWindow(w: Window?): ID {
-        if (w == null) {
-            return ID.NIL
-        }
-        try {
-            val cPlatformWindow = getPlatformWindow(w)
-            if (cPlatformWindow != null) {
-                val ptr = cPlatformWindow.javaClass.superclass.getDeclaredField("ptr")
-                ptr.setAccessible(true)
-                return ID(ptr.getLong(cPlatformWindow))
-            }
-        } catch (e: IllegalAccessException) {
-            logger.warn("Fail to get cPlatformWindow from awt window.", e)
-        } catch (e: NoSuchFieldException) {
-            logger.warn("Fail to get cPlatformWindow from awt window.", e)
-        }
-        return ID.NIL
-    }
-
     /**
-     * Returns the native `cPlatformWindow` backing the given AWT [Window] via reflection, or `null` if it cannot be
-     * retrieved.
+     * Returns the native `NSWindow*` backing the given AWT [Window], or [ID.NIL] if [w] isn't a [ComposeWindow] or the
+     * native surface hasn't been realized yet.
+     *
+     * Uses [ComposeWindow.windowHandle], Compose's own supported accessor, instead of reflecting into JDK-internal
+     * `sun.awt`/`sun.lwawt.macosx` classes (see JEWEL-1388).
      */
-    public fun getPlatformWindow(w: Window): Any? {
-        try {
-            val awtAccessor = Class.forName("sun.awt.AWTAccessor")
-            val componentAccessor = awtAccessor.getMethod("getComponentAccessor").invoke(null)
-            val getPeer = componentAccessor.javaClass.getMethod("getPeer", Component::class.java).accessible()
-            val peer = getPeer.invoke(componentAccessor, w)
-            if (peer != null) {
-                val cWindowPeerClass: Class<*> = peer.javaClass
-                val getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow")
-                val cPlatformWindow = getPlatformWindowMethod.invoke(peer)
-                if (cPlatformWindow != null) {
-                    return cPlatformWindow
-                }
-            }
-        } catch (e: NoSuchMethodException) {
-            logger.warn("Fail to get cPlatformWindow from awt window.", e)
-        } catch (e: IllegalAccessException) {
-            logger.warn("Fail to get cPlatformWindow from awt window.", e)
-        } catch (e: InvocationTargetException) {
-            logger.warn("Fail to get cPlatformWindow from awt window.", e)
-        } catch (e: ClassNotFoundException) {
-            logger.warn("Fail to get cPlatformWindow from awt window.", e)
-        }
-        return null
+    @VisibleForTesting
+    @ApiStatus.Internal
+    @InternalJewelApi
+    public fun getWindowFromJavaWindow(w: Window?): ID {
+        val handle = (w as? ComposeWindow)?.windowHandle ?: 0L
+        return if (handle == 0L) ID.NIL else ID(handle)
     }
 
     public override fun updateColors(w: Window) {

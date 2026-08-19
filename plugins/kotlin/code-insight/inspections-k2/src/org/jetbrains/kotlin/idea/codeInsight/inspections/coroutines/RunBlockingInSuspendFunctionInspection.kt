@@ -15,8 +15,10 @@ import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.resources.BUNDLE
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -83,7 +85,8 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
         return element.getCallNameExpression()?.text == RUN_BLOCKING_FUNCTION_NAME
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Context? {
         // Check if we're in a suspend context (either suspend function or suspend lambda)
         if (!isInSuspendContext(element)) return null
 
@@ -106,7 +109,7 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
             else -> return null
         }
 
-        val function = element.resolveToFunctionSymbol(this) ?: return null
+        val function = element.resolveToFunctionSymbol() ?: return null
         if (!isRunBlocking(function)) return null
 
         val labelReferenceExpressions = functionLiteral.findRelatedLabelReferences().map { it.createSmartPointer() }
@@ -171,7 +174,8 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
     }
 }
 
-private fun KaSession.isRunBlocking(function: KaNamedFunctionSymbol): Boolean {
+context(session: KaSession)
+private fun isRunBlocking(function: KaNamedFunctionSymbol): Boolean {
     if (function.importableFqName != RUN_BLOCKING_FQ_NAME) return false
 
     if (function.valueParameters.size != 2) return false
@@ -194,14 +198,15 @@ private fun KaSession.isRunBlocking(function: KaNamedFunctionSymbol): Boolean {
 }
 
 
-private fun KtCallExpression.resolveToFunctionSymbol(analysisSession: KaSession): KaNamedFunctionSymbol? = with(analysisSession) {
+context(session: KaSession)
+private fun KtCallExpression.resolveToFunctionSymbol(): KaNamedFunctionSymbol? =
     calleeExpression?.mainReference?.resolveToSymbol() as? KaNamedFunctionSymbol
-}
 
 /**
  * Checks if the given element is in a suspend context (either in a suspend function or in a suspend lambda).
  */
-private fun KaSession.isInSuspendContext(element: KtExpression): Boolean {
+context(session: KaSession)
+private fun isInSuspendContext(element: KtExpression): Boolean {
     for (parent in element.parents(withSelf = false)) {
         when (parent) {
             is KtFunctionLiteral -> {

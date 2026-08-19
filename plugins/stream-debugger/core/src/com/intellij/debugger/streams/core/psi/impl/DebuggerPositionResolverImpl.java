@@ -3,6 +3,7 @@ package com.intellij.debugger.streams.core.psi.impl;
 
 import com.intellij.debugger.streams.core.psi.DebuggerPositionResolver;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -22,10 +23,18 @@ public final class DebuggerPositionResolverImpl implements DebuggerPositionResol
 
     if (position == null) return null;
 
+    return getNearestElementToBreakpoint(session.getProject(), position);
+  }
+
+  /**
+   * Returns the PSI element at {@code position}. Use this overload when the position is already known,
+   * ex. the position of the frame the program paused in, which does not follow the frame selected in the UI.
+   */
+  public @Nullable PsiElement getNearestElementToBreakpoint(@NotNull Project project, @NotNull XSourcePosition position) {
     int offset = position.getOffset();
     final VirtualFile file = position.getFile();
     if (file.isValid() && 0 <= offset && offset < file.getLength()) {
-      @Nullable PsiFile psiFile = PsiManager.getInstance(session.getProject()).findFile(file);
+      @Nullable PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (logger.isDebugEnabled())
         logger.debug("Psi file: ", (psiFile != null ? psiFile.getName() : null));
 

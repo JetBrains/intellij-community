@@ -9,11 +9,12 @@ import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 internal class TerminalTypeAheadSession(
   private val project: Project,
   private val outputModel: MutableTerminalOutputModel,
+  initialCursorPosition: TerminalLogicalPosition = outputModel.getCursorPosition(),
 ) {
   private val predictions: ArrayDeque<TerminalTypeAheadPrediction> = ArrayDeque()
 
   /** Matches a real cursor position initially, but can differ when tentative mode is active. */
-  var cursorPosition: TerminalLogicalPosition = outputModel.getCursorPosition()
+  var cursorPosition: TerminalLogicalPosition = initialCursorPosition
     private set
 
   val firstPredictionLine: Long

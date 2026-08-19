@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build
@@ -22,6 +22,8 @@ import org.jetbrains.intellij.build.impl.patchOsSpecificPluginXml
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFile
+import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.CommunityKotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -29,7 +31,6 @@ import org.jetbrains.intellij.build.telemetry.use
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import java.util.Locale
 
 object CommunityRepositoryModules {
@@ -49,16 +50,19 @@ object CommunityRepositoryModules {
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
     },
     plugin("intellij.webp") { spec ->
-      spec.withPlatformBin(OsFamily.WINDOWS, JvmArchitecture.x64, WindowsLibcImpl.DEFAULT, "plugins/webp/lib/libwebp/win", "lib/libwebp/win")
-      spec.withPlatformBin(OsFamily.MACOS, JvmArchitecture.x64, MacLibcImpl.DEFAULT, "plugins/webp/lib/libwebp/mac", "lib/libwebp/mac")
-      spec.withPlatformBin(OsFamily.MACOS, JvmArchitecture.aarch64, MacLibcImpl.DEFAULT, "plugins/webp/lib/libwebp/mac", "lib/libwebp/mac")
-      spec.withPlatformBin(OsFamily.LINUX, JvmArchitecture.x64, LinuxLibcImpl.GLIBC, "plugins/webp/lib/libwebp/linux", "lib/libwebp/linux")
+      for ((os, arch, libc) in SUPPORTED_DISTRIBUTIONS) {
+        spec.withGeneratedPlatformResources(os, arch, libc, allowInDevMode = true) { targetDir, context ->
+          copyFileToDir(NativeBinaryDownloader.getLibWebp(context, os, arch), targetDir.resolve("lib/libwebp/${os.dirName}/${arch.dirName}"))
+        }
+      }
     },
     plugin("intellij.webp") { spec ->
       spec.bundlingRestrictions.marketplace = true
-      spec.withResource("lib/libwebp/linux", "lib/libwebp/linux")
-      spec.withResource("lib/libwebp/mac", "lib/libwebp/mac")
-      spec.withResource("lib/libwebp/win", "lib/libwebp/win")
+      spec.withGeneratedResources { targetDir, context ->
+        for ((os, arch, _) in SUPPORTED_DISTRIBUTIONS) {
+          copyFileToDir(NativeBinaryDownloader.getLibWebp(context, os, arch), targetDir.resolve("lib/libwebp/${os.dirName}/${arch.dirName}"))
+        }
+      }
     },
     pluginAuto("intellij.platform.ui.webview") { spec ->
       spec.withResource("lib/webview-native/win", "lib/webview-native/win")
@@ -84,6 +88,12 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.tasks.compatibility")
       spec.withModule("intellij.tasks.java")
     },
+    // The relative paths below (`lib/maven3`, `lib/intellij.maven.server3`, ...) are a runtime contract, not an
+    // internal packaging detail: the Maven plugin reads them back at runtime through
+    // `MavenClasspathBuilder.addMavenServerLibraries` and `MavenDistributionsCache.resolveEmbeddedMavenHome`.
+    // This layout is produced identically for a release build and a dev build (resource generators run in both -
+    // only `BuildOptions.skipCustomResourceGenerators`, used by build tests, suppresses them), which is why the
+    // runtime has no dev-build-specific branch. Renaming a path here breaks the IDE, not just the distribution.
     plugin("intellij.maven.plugin") { spec ->
 
       spec.doNotCopyModuleLibrariesAutomatically(
@@ -102,7 +112,7 @@ object CommunityRepositoryModules {
         val targetLib = targetDir.resolve("lib")
 
         val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
-        copyDir(mavenDist, targetLib.resolve("maven3"))
+        copyDir(sourceDir = mavenDist, targetDir = targetLib.resolve("maven3"), overwrite = true)
       }
 
       with("intellij.maven.server3") {
@@ -113,10 +123,10 @@ object CommunityRepositoryModules {
 
         spec.withGeneratedResources { targetDir, context ->
           val targetLib = targetDir.resolve("lib")
-          val maven3Libs = BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
-          copyDir(maven3Libs, targetLib.resolve(this))
-          val mavenTelemetryDependencies = BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-          copyDir(mavenTelemetryDependencies, targetLib.resolve(this))
+          val maven3Libs = BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot)
+          copyMavenLibraries(maven3Libs, targetLib.resolve(this))
+          val mavenTelemetryDependencies = BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+          copyMavenLibraries(mavenTelemetryDependencies, targetLib.resolve(this))
         }
       }
 
@@ -131,10 +141,10 @@ object CommunityRepositoryModules {
 
         spec.withGeneratedResources { targetDir, context ->
           val targetLib = targetDir.resolve("lib")
-          val maven4Libs = BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
-          copyDir(maven4Libs, targetLib.resolve(this))
-          val mavenTelemetryDependencies = BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-          copyDir(mavenTelemetryDependencies, targetLib.resolve(this))
+          val maven4Libs = BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot)
+          copyMavenLibraries(maven4Libs, targetLib.resolve(this))
+          val mavenTelemetryDependencies = BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+          copyMavenLibraries(mavenTelemetryDependencies, targetLib.resolve(this))
         }
       }
 
@@ -179,12 +189,10 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.gradle.toolingExtension.impl", "gradle-tooling-extension-impl.jar")
       spec.withModule("intellij.libraries.groovy", "groovy.jar")
       spec.withModule("intellij.libraries.groovy.ant", "groovy-ant.jar")
-      spec.withProjectLibrary("Gradle", LibraryPackMode.STANDALONE_SEPARATE)
       spec.withProjectLibrary("Ant", "ant", LibraryPackMode.STANDALONE_SEPARATE)
     },
     pluginAuto(listOf("intellij.gradle.java.plugin", "intellij.gradle.java", "intellij.gradle.jps")) {
       it.excludeProjectLibrary("Ant")
-      it.excludeProjectLibrary("Gradle")
     },
     pluginAuto("intellij.junit") { spec ->
       spec.withModule("intellij.junit.rt", "junit-rt.jar")
@@ -206,7 +214,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.eclipse.common", "eclipse-common.jar")
     },
     plugin("intellij.java.coverage") { spec ->
-      spec.withModule("intellij.java.coverage.rt")
       // explicitly pack JaCoCo as a separate JAR
       spec.withModuleLibrary(libraryName = "JaCoCo", moduleName = "intellij.java.coverage", relativeOutputPath = "jacoco.jar")
     },
@@ -219,6 +226,14 @@ object CommunityRepositoryModules {
     pluginAuto("intellij.terminal") { spec ->
       spec.withModule("intellij.terminal.completion")
       spec.withResource("resources/shell-integrations", "shell-integrations")
+      // bundle the libghostty-vt native library
+      for ((os, arch, libc) in SUPPORTED_DISTRIBUTIONS) {
+        val dirName = os.osName.lowercase() + "-" + arch.archName.lowercase()
+        // `allowInDevMode = true`: load libghostty-vt when running from a dev build
+        spec.withGeneratedPlatformResources(os, arch, libc, allowInDevMode = true) { targetDir, context ->
+          copyFileToDir(NativeBinaryDownloader.getLibGhosttyVt(context, os, arch), targetDir.resolve("libghostty-vt/$dirName"))
+        }
+      }
     },
     pluginAuto(listOf("intellij.textmate.plugin")) { spec ->
       spec.withResourceFromModule("intellij.textmate", "lib/bundles", "lib/bundles")
@@ -242,9 +257,6 @@ object CommunityRepositoryModules {
     pluginAuto(listOf("intellij.vcs.gitlab")),
     pluginAuto(listOf("intellij.compilation.charts")) { spec ->
       spec.withModule("intellij.compilation.charts.jps")
-    },
-    plugin("intellij.repository.search") { spec ->
-      spec.withProjectLibrary("package-search-api-client")
     },
     pluginAuto("intellij.java.jshell") { spec ->
       spec.withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
@@ -329,21 +341,22 @@ object CommunityRepositoryModules {
     }
   }
 
+  /**
+   * The JCEF archive the [jcefPlugin] resource generator downloads. Public so tests that
+   * pre-provision the build-dependencies download cache can pin the same URL.
+   */
+  fun jcefDownloadUrl(os: OsFamily, arch: JvmArchitecture, build: String): String {
+    val archSuffix = when (arch) {
+      JvmArchitecture.x64 -> "x64"
+      JvmArchitecture.aarch64 -> "aarch64"
+    }
+    return "https://cache-redirector.jetbrains.com/intellij-jbr/jcef-${os.jbrArchiveSuffix}-${archSuffix}-${build}.tar.gz"
+  }
+
   fun jcefPlugin(os: OsFamily, arch: JvmArchitecture): PluginLayout {
     return plugin("intellij.jcef.plugin") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(os)
       spec.bundlingRestrictions.supportedArch = persistentListOf(arch)
-
-      fun archSuffix(arch: JvmArchitecture): String = when (arch) {
-        JvmArchitecture.x64 -> "x64"
-        JvmArchitecture.aarch64 -> "aarch64"
-      }
-
-      fun jcefArchiveName(os: OsFamily, arch: JvmArchitecture, build: String): String =
-        "jcef-${os.jbrArchiveSuffix}-${archSuffix(arch)}-${build}.tar.gz"
-
-      fun downloadUrlFor(os: OsFamily, arch: JvmArchitecture, build: String): String =
-        "https://cache-redirector.jetbrains.com/intellij-jbr/${jcefArchiveName(os, arch, build)}"
 
       patchOsSpecificPluginXml(spec, os, arch)
 
@@ -358,16 +371,17 @@ object CommunityRepositoryModules {
         val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
         val jcefBuildNumber = properties.property("jcefBuild")
 
-        val archivePath = downloadFileToCacheLocation(downloadUrlFor(os, arch, jcefBuildNumber), communityRoot)
-        val subDir = targetDir.resolve("jcef-tmp") // to not clean up root plugin directory on BuildDependenciesDownloader.extractFile
-        Files.createDirectories(subDir)
-
-        BuildDependenciesDownloader.extractFile(archivePath, subDir, communityRoot, BuildDependenciesExtractOptions.STRIP_ROOT)
+        // extracted into the content-keyed cache rather than straight into the layout: a dev run directory is wiped
+        // on every launch (`IdeBuilder`), so an extraction that lands in it is an extraction repeated every launch
+        val extracted = resolveAndExtractToCacheLocation(
+          url = jcefDownloadUrl(os, arch, jcefBuildNumber),
+          communityRoot = communityRoot,
+          BuildDependenciesExtractOptions.STRIP_ROOT,
+        )
 
         // Unix ZIP does not have root `jcef` directory
-        val jcefOutputDir = if (Files.exists(subDir.resolve("jcef"))) subDir.resolve("jcef") else subDir
-        Files.move(jcefOutputDir, targetDir.resolve("jcef"), StandardCopyOption.REPLACE_EXISTING)
-        Files.deleteIfExists(subDir)
+        val jcefOutputDir = extracted.resolve("jcef").takeIf { Files.exists(it) } ?: extracted
+        copyDir(sourceDir = jcefOutputDir, targetDir = targetDir.resolve("jcef"), overwrite = true)
       }
 
       spec.enableSymlinksAndExecutableResources()
@@ -386,12 +400,56 @@ object CommunityRepositoryModules {
       .toList().toTypedArray()
   }
 
-  val supportedFfmpegPresets: PersistentList<SupportedDistribution> = persistentListOf(
+  private val supportedFfmpegPresets: PersistentList<SupportedDistribution> = persistentListOf(
     SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64, MacLibcImpl.DEFAULT),
     SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64, MacLibcImpl.DEFAULT),
     SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64, WindowsLibcImpl.DEFAULT),
     SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64, LinuxLibcImpl.GLIBC),
   )
+
+  /**
+   * Packs the ffmpeg and javacpp libraries of the `intellij.libraries.ffmpeg` wrapper module, keeping only the natives
+   * that match this layout's [os] and [arch]. Pass `null` for both to get every platform, as the cross-platform
+   * distribution does.
+   *
+   * The libraries live in that wrapper module, registered as private plugin content in
+   * `android-plugin/descriptor/resources/META-INF/plugin.xml`. `ModuleLibraryData` and `PluginLayout.excludedModuleLibraries`
+   * are keyed by `(moduleName, libraryName)`, so naming the wrapper here - and keeping every `relativeOutputPath` -
+   * leaves the distribution byte-identical to when the libraries still sat on `intellij.android.streaming`.
+   *
+   * The `relativeOutputPath` arguments are load-bearing: without them the wrapper would merge all ten jars into one
+   * archive, which loses the per-platform filtering below and changes the javacpp native-extraction cache path (it is
+   * keyed on the containing jar's name). One wrapper holds all ten because per-platform content modules are impossible
+   * - content registration is static XML - so the exclusion below is what does the filtering.
+   *
+   * Shared with Rider's Android plugin layout (`createRiderAndroidPluginLayout`): both distributions must agree, and
+   * keeping this in one place is what stops them drifting apart.
+   */
+  fun PluginLayout.PluginLayoutSpec.withFfmpegWrapper(os: OsFamily?, arch: JvmArchitecture?) {
+    val ffmpegVersion = "6.0-1.5.9"
+    val javacppVersion = "1.5.9"
+    val wrapperModuleName = "intellij.libraries.ffmpeg"
+
+    withModuleLibrary("ffmpeg", wrapperModuleName, "ffmpeg-$ffmpegVersion.jar")
+    withModuleLibrary("ffmpeg-javacpp", wrapperModuleName, "javacpp-$javacppVersion.jar")
+
+    // include only the platform-dependent binaries matching this layout's (os, arch);
+    // exclude the rest so the wrapper module's other platform libraries don't leak in.
+    for ((supportedOs, supportedArch, _) in supportedFfmpegPresets) {
+      val osName = supportedOs.osName.lowercase(Locale.ROOT)
+      val ffmpegLibraryName = "ffmpeg-$osName-$supportedArch"
+      val javacppLibraryName = "javacpp-$osName-$supportedArch"
+
+      if (supportedOs == os && supportedArch == arch || os == null && arch == null) {
+        withModuleLibrary(ffmpegLibraryName, wrapperModuleName, "${ffmpegLibraryName}-$ffmpegVersion.jar")
+        withModuleLibrary(javacppLibraryName, wrapperModuleName, "${javacppLibraryName}-$javacppVersion.jar")
+      }
+      else {
+        excludeModuleLibrary(ffmpegLibraryName, wrapperModuleName)
+        excludeModuleLibrary(javacppLibraryName, wrapperModuleName)
+      }
+    }
+  }
 
   private fun createAndroidPluginLayout(
     mainModuleName: String,
@@ -423,8 +481,6 @@ object CommunityRepositoryModules {
       else {
         spec.bundlingRestrictions.includeInDistribution = PluginDistribution.CROSS_PLATFORM_DIST_ONLY
       }
-
-      spec.excludeProjectLibrary("Gradle")
 
       // modules:
       // adt-ui.jar
@@ -549,6 +605,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.screenshot-test.gradle", "android.jar")
       spec.withModule("intellij.android.sdkUpdates", "android.jar")
       spec.withModule("intellij.android.threading-checker", "android.jar")
+      spec.withModule("intellij.android.tracer", "android.jar")
       spec.withModule("intellij.android.transport", "android.jar")
       spec.withModule("intellij.android.newProjectWizard", "android.jar")
       spec.withModule("intellij.android.wear-pairing", "android.jar")
@@ -619,30 +676,7 @@ object CommunityRepositoryModules {
       //spec.withModuleLibrary("compose-desktop-ui", "intellij.android.adt.ui.compose", "")
       //spec.withModuleLibrary("skiko", "intellij.android.adt.ui.compose", "")
 
-      val ffmpegVersion = "6.0-1.5.9"
-      val javacppVersion = "1.5.9"
-      val streamingModuleName = "intellij.android.streaming"
-
-      // Add ffmpeg and javacpp
-      spec.withModuleLibrary("ffmpeg", streamingModuleName, "ffmpeg-$ffmpegVersion.jar")
-      spec.withModuleLibrary("ffmpeg-javacpp", streamingModuleName, "javacpp-$javacppVersion.jar")
-
-      // include only the platform-dependent binaries matching this layout's (os, arch);
-      // exclude the rest so the streaming module's RUNTIME deps on other platform libraries don't leak in.
-      for ((supportedOs, supportedArch, _) in supportedFfmpegPresets) {
-        val osName = supportedOs.osName.lowercase(Locale.ROOT)
-        val ffmpegLibraryName = "ffmpeg-$osName-$supportedArch"
-        val javacppLibraryName = "javacpp-$osName-$supportedArch"
-
-        if (supportedOs == os && supportedArch == arch || os == null && arch == null) {
-          spec.withModuleLibrary(ffmpegLibraryName, streamingModuleName, "${ffmpegLibraryName}-$ffmpegVersion.jar")
-          spec.withModuleLibrary(javacppLibraryName, streamingModuleName, "${javacppLibraryName}-$javacppVersion.jar")
-        }
-        else {
-          spec.excludeModuleLibrary(ffmpegLibraryName, streamingModuleName)
-          spec.excludeModuleLibrary(javacppLibraryName, streamingModuleName)
-        }
-      }
+      spec.withFfmpegWrapper(os = os, arch = arch)
 
       spec.withModule("intellij.android.streaming")
 
@@ -760,6 +794,12 @@ object CommunityRepositoryModules {
       spec.withResource("groovy-psi/resources/conf", "lib")
       addition?.invoke(spec)
     }
+  }
+}
+
+private fun copyMavenLibraries(libraries: List<BundledMavenDownloader.MavenLibraryFile>, targetDir: Path) {
+  for ((fileName, source) in libraries) {
+    copyFile(file = source, target = targetDir.resolve(fileName), overwrite = true)
   }
 }
 

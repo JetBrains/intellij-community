@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.actions.generate.createMemberInfo
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
@@ -67,8 +69,8 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Inf
             val classSymbol = klass.symbol as? KaClassSymbol ?: return@analyzeInModalWindow null
             val properties = getPropertiesToUseInGeneratedMember(klass, searchInSuper = true)
 
-            val equalsMethodForClass = this.findEqualsMethodForClass(classSymbol)
-            val hashCodeMethodForClass = this.findHashCodeMethodForClass(classSymbol)
+            val equalsMethodForClass = findEqualsMethodForClass(classSymbol)
+            val hashCodeMethodForClass = findHashCodeMethodForClass(classSymbol)
 
             val preInfo = Info(
                 klass,

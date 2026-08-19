@@ -21,7 +21,7 @@ abstract class XJumpToSourceActionBase : XDebuggerTreeSplitActionBase() {
     val dialog = e.getData(XDebuggerEvaluationDialog.KEY)
 
     val session = DebuggerUIUtil.getSessionProxy(e) ?: return
-    session.coroutineScope.launch(Dispatchers.EDT) {
+    e.coroutineScope.launch(Dispatchers.EDT) {
       val navigated = XDebugManagerProxy.getInstance().withId(value, session) { xValueId ->
         navigateToSource(xValueId)
       }

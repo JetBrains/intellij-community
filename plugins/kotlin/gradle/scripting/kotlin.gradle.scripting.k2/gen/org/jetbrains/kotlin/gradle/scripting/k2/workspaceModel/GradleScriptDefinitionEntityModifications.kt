@@ -23,7 +23,7 @@ interface GradleScriptDefinitionEntityBuilder : WorkspaceEntityBuilder<GradleScr
 }
 
 internal object GradleScriptDefinitionEntityType : EntityType<GradleScriptDefinitionEntity, GradleScriptDefinitionEntityBuilder>() {
-    override val entityClass: Class<GradleScriptDefinitionEntity> get() = GradleScriptDefinitionEntity::class.java
+    override val entityImplClass: Class<*> get() = GradleScriptDefinitionEntityImpl::class.java
     override val entityImplBuilderClass: Class<*> get() = GradleScriptDefinitionEntityImpl.Builder::class.java
     operator fun invoke(
         definitionId: String,

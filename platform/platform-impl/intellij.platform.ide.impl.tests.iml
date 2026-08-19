@@ -41,7 +41,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jna" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jna" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.winp" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.swingx" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
@@ -97,7 +97,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.progress" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="zip-signer" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.classgraph" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.protobuf" scope="RUNTIME" />
@@ -136,7 +135,7 @@
     <orderEntry type="module" module-name="intellij.libraries.pty4j" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.settings" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.lz4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />

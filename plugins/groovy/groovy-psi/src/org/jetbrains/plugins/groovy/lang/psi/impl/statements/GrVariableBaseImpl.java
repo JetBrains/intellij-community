@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
@@ -180,9 +180,8 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
 
   @Override
   public @NotNull PsiElement getNameIdentifierGroovy() {
-    PsiElement ident = findChildByType(TokenSets.PROPERTY_NAMES);
-    assert ident != null : getText();
-    return ident;
+    PsiElement result = findChildByType(TokenSets.PROPERTY_NAMES);
+    return (result == null) ? findNotNullChildByType(TokenSets.GROOVY_KEYWORDS) : result;
   }
 
   @Override

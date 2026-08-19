@@ -22,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import org.jetbrains.annotations.ApiStatus
@@ -73,6 +74,7 @@ class SyntheticEntitySourceMarker : ProjectDataImportExtension {
 
   /** This is used for looking up entities without a symbolic ID. */
   private class WorkspaceEntityForLookup(entity: WorkspaceEntity) {
+    @OptIn(WorkspaceEntityInternalApi::class)
     val data = (entity as WorkspaceEntityBase).getData()
 
     override fun equals(other: Any?): Boolean {

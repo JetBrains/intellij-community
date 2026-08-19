@@ -950,12 +950,27 @@ class DumbServiceImplTest {
       subscribe(DumbService.DUMB_MODE, SampleDumbModeListener())
       subscribe(DumbModeListenerBackgroundable.TOPIC, SampleBackgroundableDumbModeListener())
     }
-    dumbService.queueTask(object : DumbModeTask() {
-      override fun performInDumbMode(indicator: ProgressIndicator) {}
-    })
-    dumbService.runInDumbMode("test", {})
-    listenerEnded.join()
-    listenerEnded2.join()
-    assertEquals(6, dumbModeListenerValidity.get())
+    //we want both queueTask and runInDumbMode to _share_ the same dumb-mode-cycle:
+    val dumbTaskStarted = Job(coroutineContext.job)
+    val releaseDumbTask = CountDownLatch(1)
+    try {
+      dumbService.queueTask(object : DumbModeTask() {
+        override fun performInDumbMode(indicator: ProgressIndicator) {
+          dumbTaskStarted.complete()
+          releaseDumbTask.awaitOrThrow(10/*sec*/, "Queued dumb task was not released")
+        }
+      })
+      dumbTaskStarted.join()  //ensure dumb-mode started
+      dumbService.runInDumbMode("test") {
+        releaseDumbTask.countDown()
+      }
+      listenerEnded.join()
+      listenerEnded2.join()
+      assertEquals("Both listener types should observe one shared dumb-mode cycle",
+                   6, dumbModeListenerValidity.get())
+    }
+    finally {
+      releaseDumbTask.countDown()
+    }
   }
 }

@@ -32,9 +32,9 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.changes.ChangesUtil
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.runAll
 import com.intellij.util.io.createDirectories
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
@@ -189,7 +189,7 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
   protected fun refreshCLM() {
     dirtyScopeManager.markEverythingDirty()
     clm.waitUntilRefreshed()
-    UIUtil.dispatchAllInvocationEvents() // ensure `fileStatusesChanged` events are fired
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue() // ensure `fileStatusesChanged` events are fired
   }
 
 

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.xmlbeans.jar
+  modules:
+  - name: intellij.libraries.xmlbeans
+    libraries:
+      XmlBeans:
+      - name: $MAVEN_REPOSITORY$/org/apache/xmlbeans/xmlbeans/5/xmlbeans-5.jar

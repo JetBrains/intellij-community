@@ -1,10 +1,8 @@
 from _typeshed import Incomplete
-from typing import NamedTuple
+from typing import Final, NamedTuple
 
 from kafka.coordinator.assignors.abstract import AbstractPartitionAssignor
-from kafka.protocol.struct import Struct
-
-log: Incomplete
+from kafka.protocol.consumer.metadata import ConsumerProtocolAssignment, ConsumerProtocolSubscription
 
 class ConsumerGenerationPair(NamedTuple):
     consumer: Incomplete
@@ -19,9 +17,6 @@ class StickyAssignorMemberMetadataV1(NamedTuple):
     subscription: Incomplete
     partitions: Incomplete
     generation: Incomplete
-
-class StickyAssignorUserDataV1(Struct):
-    SCHEMA: Incomplete
 
 class StickyAssignmentExecutor:
     members: Incomplete
@@ -42,18 +37,14 @@ class StickyAssignmentExecutor:
     def get_final_assignment(self, member_id): ...
 
 class StickyPartitionAssignor(AbstractPartitionAssignor):
-    DEFAULT_GENERATION_ID: int
+    DEFAULT_GENERATION_ID: Final = -1
     name: str
     version: int
-    member_assignment: Incomplete
-    generation = DEFAULT_GENERATION_ID
+    member_assignment: Incomplete | None
+    generation: int
+    def __init__(self) -> None: ...
+    def assign(self, cluster, members) -> dict[Incomplete, ConsumerProtocolAssignment]: ...
     @classmethod
-    def assign(cls, cluster, members): ...
-    @classmethod
-    def parse_member_metadata(cls, metadata): ...
-    @classmethod
-    def metadata(cls, topics): ...
-    @classmethod
-    def on_assignment(cls, assignment) -> None: ...
-    @classmethod
-    def on_generation_assignment(cls, generation) -> None: ...
+    def parse_member_metadata(cls, metadata) -> StickyAssignorMemberMetadataV1: ...
+    def metadata(self, topics) -> ConsumerProtocolSubscription: ...
+    def on_assignment(self, assignment, generation) -> None: ...

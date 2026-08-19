@@ -34,6 +34,7 @@ import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginGraph.containsEdge
 import com.intellij.platform.pluginGraph.contentLoadingMode
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 
 // region Test Plugin Detection
 
@@ -88,12 +89,45 @@ private fun matchesTestPluginNamePattern(pluginTarget: TargetName): Boolean {
 
 internal typealias AvailabilityPredicate = ResolutionQuery.(source: ContentSource, productName: String) -> Boolean
 
-internal fun GraphScope.createResolutionQuery(): ResolutionQuery = ResolutionQuery(this)
+/**
+ * Declared visibility of a content module, as parsed from its own descriptor.
+ *
+ * `null` means "no descriptor, nothing declared" and is treated permissively: such a module is resolvable from
+ * wherever the graph says it is declared, exactly as before visibility was taken into account.
+ */
+internal fun interface ModuleVisibilityLookup {
+  fun visibilityOf(module: ContentModuleName): ModuleVisibilityValue?
+
+  companion object {
+    /** Ignores visibility entirely. Used where the caller has no descriptor information at hand. */
+    @JvmField
+    val PERMISSIVE: ModuleVisibilityLookup = ModuleVisibilityLookup { null }
+  }
+}
+
+/**
+ * Who is asking for a module, and which of its dependencies are actually written in a descriptor.
+ *
+ * Only a declared `<dependencies><module name="..."/>` is resolved by the plugin system, so only such a dependency can
+ * hit a visibility error at runtime. Graph dependency edges also carry JPS-derived dependencies that the generator
+ * deliberately keeps out of the XML; those are never resolved, and filtering them by visibility would invent failures.
+ */
+internal class VisibilityScope(
+  val dependingPlugin: TargetName,
+  @JvmField val declaredDependencies: Set<ContentModuleName>,
+)
+
+internal fun GraphScope.createResolutionQuery(
+  visibilityLookup: ModuleVisibilityLookup = ModuleVisibilityLookup.PERMISSIVE,
+): ResolutionQuery = ResolutionQuery(this, visibilityLookup)
 
 /**
  * Graph-backed query helper for resolving module availability and structural rules.
  */
-internal class ResolutionQuery(private val scope: GraphScope) {
+internal class ResolutionQuery(
+  private val scope: GraphScope,
+  private val visibilityLookup: ModuleVisibilityLookup = ModuleVisibilityLookup.PERMISSIVE,
+) {
   internal data class SourceScan(
     val hasPluginSource: Boolean,
     val matchesPredicate: Boolean,
@@ -105,6 +139,7 @@ internal class ResolutionQuery(private val scope: GraphScope) {
     productName: String,
     trackPluginSource: Boolean = false,
     includeTestSources: Boolean = false,
+    visibilityScope: VisibilityScope? = null,
   ): SourceScan {
     val moduleNode = scope.contentModule(moduleName) ?: return SourceScan(hasPluginSource = false, matchesPredicate = false)
     var hasPluginSource = false
@@ -115,12 +150,33 @@ internal class ResolutionQuery(private val scope: GraphScope) {
       if (trackPluginSource && source.kind == ContentSourceKind.PLUGIN) {
         hasPluginSource = true
       }
-      if (!matchesPredicate && predicate(this@ResolutionQuery, source, productName)) {
+      if (!matchesPredicate &&
+          isVisibleFrom(moduleName, source, visibilityScope) &&
+          predicate(this@ResolutionQuery, source, productName)) {
         matchesPredicate = true
       }
     }
 
     return SourceScan(hasPluginSource = hasPluginSource, matchesPredicate = matchesPredicate)
+  }
+
+  /**
+   * A `private` content module is only reachable from the plugin that declares it, mirroring
+   * `ModuleVisibility.checkVisibilityAndReturnErrorMessage` at runtime. Without this check a
+   * production plugin that packages its own copy of a library wrapper (Groovy and `intellij.libraries.junit4`, say)
+   * silently satisfies every other plugin's dependency on that wrapper, and the missing declaration only surfaces when
+   * the IDE refuses to load the module.
+   *
+   * Module sets and product content are shared by construction, so only plugin sources are filtered.
+   */
+  private fun isVisibleFrom(moduleName: ContentModuleName, source: ContentSource, scope: VisibilityScope?): Boolean {
+    if (scope == null || source.kind != ContentSourceKind.PLUGIN || moduleName !in scope.declaredDependencies) {
+      return true
+    }
+    if (pluginName(source.plugin()) == scope.dependingPlugin) {
+      return true
+    }
+    return visibilityLookup.visibilityOf(moduleName) != ModuleVisibilityValue.PRIVATE
   }
 
   fun findUnresolvedDeps(
@@ -129,11 +185,12 @@ internal class ResolutionQuery(private val scope: GraphScope) {
     productName: String,
     allowedMissing: Set<ContentModuleName> = emptySet(),
     includeTestSources: Boolean = false,
+    visibilityScope: VisibilityScope? = null,
   ): Set<ContentModuleName> {
     val unresolved = HashSet<ContentModuleName>(deps.size)
     for (dep in deps) {
       if (dep in allowedMissing) continue
-      val scan = scanSources(dep, predicate, productName, includeTestSources = includeTestSources)
+      val scan = scanSources(dep, predicate, productName, includeTestSources = includeTestSources, visibilityScope = visibilityScope)
       if (!scan.matchesPredicate) {
         unresolved.add(dep)
       }

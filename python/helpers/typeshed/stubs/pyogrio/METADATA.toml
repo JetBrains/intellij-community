@@ -1,4 +1,5 @@
 version = "0.13.*"
-# Requires a version of numpy with a `py.typed` file
-dependencies = ["numpy>=1.20", "types-geopandas"]
 upstream-repository = "https://github.com/geopandas/pyogrio"
+# Requires a version of numpy with a `py.typed` file
+dependencies = ["numpy>=1.20"]
+optional-dependencies = ["types-geopandas"]

@@ -7,7 +7,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -64,7 +66,8 @@ internal class ConvertOptInMarkerToRequirementIntention :
         KotlinBundle.message("intention.family.name.convert.opt.in.marker.to.requirement")
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtValueArgument): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtValueArgument): Context? {
         val lit = element.getArgumentExpression() as? KtClassLiteralExpression ?: return null
 
         val parentAnnotation = element.parentOfType<KtAnnotationEntry>() ?: return null

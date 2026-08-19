@@ -3,30 +3,42 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
 
-@OptIn(KaExperimentalApi::class)
-internal fun KaSession.createReplacementForContextArgument(receiverValue: KaReceiverValue): String? {
+context(session: KaSession)
+internal fun createReplacementForContextArgument(receiverValue: KaReceiverValue): String? {
     return when (val symbol = (receiverValue.unwrapSmartCasts() as? KaImplicitReceiverValue)?.symbol) {
         is KaReceiverParameterSymbol -> symbol.containingSymbol?.name?.asString()?.let { "this@$it" } ?: "this"
 
@@ -50,18 +62,20 @@ internal fun KaSession.createReplacementForContextArgument(receiverValue: KaRece
     }
 }
 
-internal fun KaSession.createContextArgumentReplacementMapForVariableAccess(
+context(session: KaSession)
+internal fun createContextArgumentReplacementMapForVariableAccess(
     callElement: KtSimpleNameExpression
 ): Map<Int, SmartPsiElementPointer<KtExpression>>? =
     createContextArgumentReplacementMap<KaVariableAccessCall>(callElement)
 
-internal fun KaSession.createContextArgumentReplacementMapForFunctionCall(
+context(session: KaSession)
+internal fun createContextArgumentReplacementMapForFunctionCall(
     callElement: KtCallElement
 ): Map<Int, SmartPsiElementPointer<KtExpression>>? =
     createContextArgumentReplacementMap<KaFunctionCall<*>>(callElement)
 
-@OptIn(KaExperimentalApi::class)
-private inline fun <reified T : KaCallableMemberCall<*, *>> KaSession.createContextArgumentReplacementMap(
+context(session: KaSession)
+private inline fun <reified T : KaCallableMemberCall<*, *>> createContextArgumentReplacementMap(
     callElement: KtElement
 ): Map<Int, SmartPsiElementPointer<KtExpression>>? {
     val callInfo = callElement.resolveToCall()
@@ -93,4 +107,40 @@ internal fun createReplacementReceiverArgumentExpression(
             newReceiverInfo.wasContextParameter && newReceiverInfo.currentType.text != null
         }
         ?: psiFactory.createExpression("_")
+}
+
+internal fun collectContextParameterValues(
+    changeInfo: KotlinChangeInfoBase,
+    contextArgumentPointer: (KotlinParameterInfo) -> SmartPsiElementPointer<KtExpression>?,
+): List<String> =
+    changeInfo.newParameters.filter { it.isContextParameter && !it.wasContextParameter }.mapNotNull { parameter ->
+        val pointer = contextArgumentPointer(parameter) ?: return@mapNotNull parameter.defaultValueForCall?.text
+        val expression = pointer.element ?: return@mapNotNull null
+        when {
+            expression is KtThisExpression -> null
+            (expression.mainReference?.resolve() as? KtParameter)?.isContextParameter == true -> null
+            allowAnalysisFromWriteActionInEdt(expression) { isProvidedByEnclosingContext(expression) } -> null
+            else -> expression.text
+        }
+    }
+
+context(session: KaSession)
+internal fun isProvidedByEnclosingContext(expression: KtExpression): Boolean {
+    val contextNames = setOf("with", "context")
+    val contextFQNames = contextNames.map { FqName("kotlin.$it") }
+
+    val containingLambda = PsiTreeUtil.getParentOfType(expression, KtLambdaArgument::class.java, true, KtClassLikeDeclaration::class.java) ?: return false
+    val referencedDeclaration = expression.mainReference?.resolve() ?: return false
+    return generateSequence(containingLambda) {
+        PsiTreeUtil.getParentOfType(it, KtLambdaArgument::class.java, true, KtClassLikeDeclaration::class.java)
+    }.any { lambdaArgument ->
+        val call = lambdaArgument.parent as? KtCallExpression ?: return@any false
+        val text = call.calleeExpression?.text ?: return@any false
+        if (text !in contextNames) return@any false
+        val callableId = call.resolveToCall()?.successfulFunctionCallOrNull()?.signature?.callableId?.asSingleFqName()
+        if (callableId !in contextFQNames) return@any false
+        call.valueArguments.any {
+            it.getArgumentExpression()?.mainReference?.resolve() == referencedDeclaration
+        }
+    }
 }

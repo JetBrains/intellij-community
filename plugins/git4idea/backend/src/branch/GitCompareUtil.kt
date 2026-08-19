@@ -50,7 +50,7 @@ private fun IndexDataGetter.selectSourceCommits(targetCommit: VcsLogCommitStorag
     val hashesString = match.subSequence(suffixStart.length, match.length - 1) // -1 for the last ")"
     val hashesCandidates = hashesString.split(",", " ", ";")
     for (h in hashesCandidates) {
-      if (GitUtil.isHashString(h, false)) {
+      if (GitUtil.isPossibleHash(h)) {
         val hash = HashImpl.build(h)
         val index = logStorage.getCommitIndex(hash, root)
         if (sourceCandidatesExtended.contains(index)) {

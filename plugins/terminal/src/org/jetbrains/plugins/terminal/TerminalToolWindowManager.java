@@ -24,11 +24,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.TerminalTitle;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TerminalWidgetKt;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -49,6 +51,7 @@ import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.classic.ClassicTerminalTabCloseListener;
 import org.jetbrains.plugins.terminal.classic.ClassicTerminalTitleUpdatingKt;
+import org.jetbrains.plugins.terminal.classic.CustomTerminalRunnerProvider;
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 import org.jetbrains.plugins.terminal.util.TerminalCoroutineKt;
@@ -90,7 +93,15 @@ public final class TerminalToolWindowManager implements Disposable {
 
   public TerminalToolWindowManager(@NotNull Project project) {
     myProject = project;
-    myTerminalRunner = DefaultTerminalRunnerFactory.getInstance().create(project);
+    myTerminalRunner = createTerminalRunner(project);
+  }
+
+  private static @NotNull AbstractTerminalRunner<?> createTerminalRunner(@NotNull Project project) {
+    var customRunner = CustomTerminalRunnerProvider.createRunner(project);
+    if (customRunner != null) {
+      return customRunner;
+    }
+    return new LocalTerminalDirectRunner(project);
   }
 
   @Override
@@ -130,6 +141,7 @@ public final class TerminalToolWindowManager implements Disposable {
       return;
     }
     myToolWindow = toolWindow;
+    ClientProperty.put(toolWindow.getComponent(), ToolWindowContentUi.CLEANED_TOOL_WINDOW_CONTEXT_MENUS, Boolean.TRUE);
   }
 
   /** Restores tabs for Classic Terminal and New Terminal Gen1. */
@@ -306,7 +318,7 @@ public final class TerminalToolWindowManager implements Disposable {
             terminalRunner.getDefaultTabTitle(),
             TerminalOptionsProvider.getInstance().getTabName()
           );
-          String uniqueName = TerminalTitleUtils.createDefaultTabName(toolWindow, defaultName);
+          String uniqueName = TerminalTitleUtils.createDefaultTabName(myProject, toolWindow, defaultName);
           state.setDefaultTitle(uniqueName);
         }
         return Unit.INSTANCE;
@@ -435,6 +447,12 @@ public final class TerminalToolWindowManager implements Disposable {
       @Override
       public void gotoNextSplitTerminal(boolean forward) {
         var actionId = forward ? "TW.MoveToNextSplitter" : "TW.MoveToPreviousSplitter";
+        performAction(actionId);
+      }
+
+      @Override
+      public void moveToolWindowTabToEditor() {
+        var actionId = "MoveToolWindowTabToEditorAction";
         performAction(actionId);
       }
 

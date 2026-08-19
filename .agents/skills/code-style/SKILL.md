@@ -1,6 +1,6 @@
 ---
 name: code-style
-description: Apply IntelliJ Kotlin and Java code style when writing or reviewing code.
+description: Apply IntelliJ Kotlin and Java code style when writing or reviewing.
 ---
 
 # Code Style

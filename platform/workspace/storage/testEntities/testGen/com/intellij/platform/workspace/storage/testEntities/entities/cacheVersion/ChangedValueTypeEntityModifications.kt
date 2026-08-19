@@ -20,7 +20,7 @@ interface ChangedValueTypeEntityBuilder : WorkspaceEntityBuilder<ChangedValueTyp
 }
 
 internal object ChangedValueTypeEntityType : EntityType<ChangedValueTypeEntity, ChangedValueTypeEntityBuilder>() {
-  override val entityClass: Class<ChangedValueTypeEntity> get() = ChangedValueTypeEntity::class.java
+  override val entityImplClass: Class<*> get() = ChangedValueTypeEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ChangedValueTypeEntityImpl.Builder::class.java
   operator fun invoke(
     type: String,

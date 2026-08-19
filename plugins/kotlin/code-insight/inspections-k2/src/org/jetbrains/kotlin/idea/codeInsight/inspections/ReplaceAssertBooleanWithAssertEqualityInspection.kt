@@ -9,9 +9,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -29,7 +32,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.createExpressionByPattern
-import kotlin.collections.get
 
 internal class ReplaceAssertBooleanWithAssertEqualityInspection :
     KotlinApplicableInspectionBase.Simple<KtCallExpression, ReplaceAssertBooleanWithAssertEqualityInspection.Context>() {
@@ -46,10 +48,11 @@ internal class ReplaceAssertBooleanWithAssertEqualityInspection :
     }
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
-        element.extractAssertionInfo() != null
+        context(null) { element.extractAssertionInfo() != null }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
-        val assertionInfo = element.extractAssertionInfo(analysisSession = this) ?: return null
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Context? {
+        val assertionInfo = element.extractAssertionInfo() ?: return null
         val replacementAssertion = assertionMap[assertionInfo] ?: return null
 
         return Context(replacementAssertion)
@@ -120,7 +123,8 @@ private fun optimizeImports(file: KtFile) {
         ?.forEach { it.delete() }
 }
 
-private fun KtCallExpression.extractAssertionInfo(analysisSession: KaSession? = null): Pair<String, IElementType>? {
+context(session: KaSession?)
+private fun KtCallExpression.extractAssertionInfo(): Pair<String, IElementType>? {
     val assertionName = (calleeExpression as? KtNameReferenceExpression)?.getReferencedName() ?: return null
     if (assertionName !in assertions) return null
 
@@ -133,19 +137,17 @@ private fun KtCallExpression.extractAssertionInfo(analysisSession: KaSession? = 
     val operationToken = condition.operationToken
     if (operationToken != KtTokens.EQEQ && operationToken != KtTokens.EQEQEQ) return null
 
-    if (analysisSession == null) return assertionName to operationToken
+    if (session == null) return assertionName to operationToken
 
-    return with(analysisSession) {
-        val callableSymbol = resolveToCall()?.successfulFunctionCallOrNull()?.symbol as? KaCallableSymbol ?: return null
-        val containingPackage = callableSymbol.callableId?.packageName?.asString()
-        if (containingPackage != kotlinTestPackage) return null
+    val callableSymbol = resolveToCall()?.successfulFunctionCallOrNull()?.symbol as? KaCallableSymbol ?: return null
+    val containingPackage = callableSymbol.callableId?.packageName?.asString()
+    if (containingPackage != kotlinTestPackage) return null
 
-        val leftType = left.expressionType ?: return null
-        val rightType = right.expressionType ?: return null
-        if (!leftType.isSubtypeOf(rightType) && !rightType.isSubtypeOf(leftType)) return null
+    val leftType = left.expressionType ?: return null
+    val rightType = right.expressionType ?: return null
+    if (!leftType.isSubtypeOf(rightType) && !rightType.isSubtypeOf(leftType)) return null
 
-        assertionName to operationToken
-    }
+    return assertionName to operationToken
 }
 
 private const val kotlinTestPackage: String = "kotlin.test"

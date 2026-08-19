@@ -11,6 +11,14 @@
     <module name="intellij.kotlin.completion.impl"/>
     <module name="intellij.kotlin.highlighting.minimal"/>
     <module name="intellij.kotlin.references"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
   </dependencies>
   <!-- endregion -->
 <extensions defaultExtensionNs="com.intellij">

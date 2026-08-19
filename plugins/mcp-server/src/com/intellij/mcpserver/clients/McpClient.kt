@@ -243,7 +243,7 @@ abstract class McpClient(
   private fun expectedPromotionPort(): Int {
     getForcedMcpServerPortOrNull()?.let { return it }
     return runCatching { McpServerService.getInstance().port }
-      .getOrElse { McpServerSettings.getInstance().state.mcpServerPort }
+      .getOrElse { McpServerSettings.getInstance().mcpServerPort }
   }
 
   private fun hasSimilarPort(port: Int, expectedPort: Int): Boolean = abs(port - expectedPort) <= PROMOTION_PORT_TOLERANCE

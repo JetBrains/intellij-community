@@ -11,12 +11,14 @@ import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
+import com.intellij.ide.plugins.marketplace.ResetPluginsStateResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
@@ -75,7 +77,7 @@ interface UiPluginManagerController {
   suspend fun loadErrors(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, CheckErrorsResult>
   suspend fun isModified(): Boolean
 
-  suspend fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null): Map<PluginId, Boolean>
+  suspend fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null): ResetPluginsStateResult
   suspend fun isPluginEnabled(pluginId: PluginId): Boolean
   suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginUiModel>
   suspend fun loadDescriptorById(pluginId: PluginId): PluginUiModel?
@@ -83,6 +85,11 @@ interface UiPluginManagerController {
   suspend fun isRestartRequired(sessionId: String): Boolean
 
   suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean)
+
+  suspend fun getPluginUpdateSourceId(sessionId: String, pluginId: PluginId): PluginUpdateSourceId?
+  suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?)
+  suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?)
+  suspend fun isPluginUpdateSourceVisibleInUI(): Boolean
 
   companion object {
     val EP_NAME: ExtensionPointName<UiPluginManagerController> = ExtensionPointName<UiPluginManagerController>("com.intellij.uiPluginManagerController")

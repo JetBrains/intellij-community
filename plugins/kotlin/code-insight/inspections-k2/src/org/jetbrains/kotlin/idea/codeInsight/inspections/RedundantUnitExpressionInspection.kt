@@ -26,7 +26,8 @@ class RedundantUnitExpressionInspection : KotlinApplicableInspectionBase.Simple<
     override fun isApplicableByPsi(element: KtReferenceExpression): Boolean =
         element.isUnitLiteral()
 
-    override fun KaSession.prepareContext(element: KtReferenceExpression): Unit? =
+    context(session: KaSession)
+    override fun prepareContext(element: KtReferenceExpression): Unit? =
         isRedundantUnit(element).asUnit
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid = referenceExpressionVisitor {

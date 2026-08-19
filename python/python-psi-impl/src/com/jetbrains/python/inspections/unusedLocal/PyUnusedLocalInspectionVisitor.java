@@ -361,7 +361,8 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     if (scopeAnchor != null) {
       final ScopeOwner declOwner = ScopeUtil.getDeclarationScopeOwner(scopeAnchor, name);
       if (declOwner != null && declOwner != owner) {
-        readsFromInstruction.addAll(ScopeUtil.getElementsOfAccessType(name, declOwner, ReadWriteInstruction.ACCESS.WRITE));
+        ScopeUtil.getElementsOfAccessType(name, declOwner, ReadWriteInstruction.ACCESS.WRITE)
+          .iterator().forEachRemaining(readsFromInstruction::add);
       }
       // Type params are not present in CFG
       else if (owner instanceof PyTypeParameterListOwner typeParameterListOwner &&

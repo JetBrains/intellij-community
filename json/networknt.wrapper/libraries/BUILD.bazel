@@ -1,0 +1,56 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.json.networknt.wrapper.libraries.jsonSchemaValidator` start
+jvm_library(
+    name = "json-networknt-wrapper-libraries-jsonSchemaValidator",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.json.networknt.wrapper.libraries.jsonSchemaValidator",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:json-networknt-wrapper-libraries-json_schema_validator-json-schema-validator-jetbrains"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:json-networknt-wrapper-libraries-json_schema_validator-json-schema-validator-jetbrains",
+        "//libraries/jackson3/jackson:libraries-jackson3",
+        "//libraries/jackson3/databind",
+        "//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml",
+        "//libraries/joni",
+    ],
+)
+
+jvm_library(
+    name = "json-networknt-wrapper-libraries-jsonSchemaValidator_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.json.networknt.wrapper.libraries.jsonSchemaValidator",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:json-networknt-wrapper-libraries-json_schema_validator-json-schema-validator-jetbrains"],
+    runtime_deps = [
+        # do not sort,
+        ":json-networknt-wrapper-libraries-jsonSchemaValidator",
+        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+        "//libraries/jackson3/databind:databind_test_lib",
+        "//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml_test_lib",
+        "//libraries/joni:joni_test_lib",
+    ],
+)
+### auto-generated section `build intellij.json.networknt.wrapper.libraries.jsonSchemaValidator` end
+
+### auto-generated section `iml intellij.json.networknt.wrapper.libraries.jsonSchemaValidator` start
+exports_files(
+    [
+        "intellij.json.networknt.wrapper.libraries.jsonSchemaValidator.iml",
+        "resources/intellij.json.networknt.wrapper.libraries.jsonSchemaValidator.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.json.networknt.wrapper.libraries.jsonSchemaValidator` end

@@ -17,7 +17,7 @@ interface SubsetEnumEntityBuilder : WorkspaceEntityBuilder<SubsetEnumEntity> {
 }
 
 internal object SubsetEnumEntityType : EntityType<SubsetEnumEntity, SubsetEnumEntityBuilder>() {
-  override val entityClass: Class<SubsetEnumEntity> get() = SubsetEnumEntity::class.java
+  override val entityImplClass: Class<*> get() = SubsetEnumEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SubsetEnumEntityImpl.Builder::class.java
   operator fun invoke(
     someEnum: SubsetEnumEnum,

@@ -59,6 +59,8 @@ import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabDockContainer
+import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabSupportUtil
 import com.intellij.toolWindow.FocusTask
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowEventSource
@@ -287,6 +289,9 @@ private val LOG = logger<ToolWindowManagerImpl>()
 
     val decorator = InternalDecoratorImpl(this, contentUi!!, decoratorChild)
     this.decorator = decorator
+    if (ToolWindowEditorTabSupportUtil.hasSupport(id)) {
+      ToolWindowEditorTabDockContainer.install(toolWindowManager.project, id, decorator)
+    }
 
     decorator.applyWindowInfo(windowInfo)
     decorator.addComponentListener(object : ComponentAdapter() {
@@ -791,12 +796,14 @@ private val LOG = logger<ToolWindowManagerImpl>()
     ToolWindowContentUi.toggleContentPopup(contentUi!!, contentManager.value)
   }
 
-  fun createPopupGroup(skipHideAction: Boolean = false): ActionGroup {
+  fun createPopupGroup(isGearPopup: Boolean = false): ActionGroup {
     return object : ActionGroupWrapper(GearActionGroup()) {
       override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         val result = mutableListOf<AnAction>()
         result.addAll(super.getChildren(e))
-        if (!skipHideAction) {
+        val hideActionIsInGearPopup = ClientProperty.isTrue(getComponentIfInitialized(),
+                                                            ToolWindowContentUi.CLEANED_TOOL_WINDOW_CONTEXT_MENUS)
+        if (isGearPopup == hideActionIsInGearPopup) {
           result.add(Separator.getInstance())
           result.add(HideAction())
         }
@@ -857,7 +864,6 @@ private val LOG = logger<ToolWindowManagerImpl>()
         }
         group.addSeparator()
       }
-      group.addAction(ActionManager.getInstance().getAction("MoveToolWindowTabToEditorAction"))
       group.add(ActionManager.getInstance().getAction(SpeedSearchAction.ID))
       group.addSeparator()
       contentManager.valueIfInitialized?.let {

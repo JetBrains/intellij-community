@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
-import com.intellij.openapi.editor.elf.ElfFeatureFlag;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.DocumentCore;
@@ -17,11 +16,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.beans.PropertyChangeListener;
 import java.util.List;
@@ -39,6 +40,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
    * Actual document implementation hidden behind an interface
    */
   private final DocumentCore impl;
+  private final RangeMarkerStorageImpl rangeMarkers;
+  private final GuardedBlocks guardedBlocks;
 
   /**
    * Document reference used for communication with the outside world: document listeners, EPs, CommandProcessor, etc.
@@ -74,11 +77,9 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   public DocumentImpl(@NotNull CharSequence chars, boolean acceptSlashR, boolean forUseInNonAWTThread) {
-    this(
-      (forUseInNonAWTThread || !ElfFeatureFlag.isEnabled())
-      ? DocumentCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread)
-      : DocumentMagicCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread)
-    );
+    this(forUseInNonAWTThread
+         ? DocumentCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread)
+         : DocumentMagicCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread));
   }
 
   private DocumentImpl(@NotNull DocumentCore impl) {
@@ -93,11 +94,13 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   public DocumentImpl(@NotNull DocumentCore impl, @Nullable DocumentImpl hostDocument) {
     this.impl = impl;
     this.hostDocument = hostDocument;
+    rangeMarkers = new RangeMarkerStorageImpl(impl.dispatcher());
+    guardedBlocks = new GuardedBlocksImpl(rangeMarkers);
   }
 
   @Override
   public @NotNull CharSequence getImmutableCharSequence() {
-    return impl.snapshot().text();
+    return impl.snapshot().text().chars();
   }
 
   @Override
@@ -107,47 +110,47 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public @NotNull String getText() {
-    return impl.snapshot().string();
+    return impl.snapshot().text().string();
   }
 
   @Override
   public @NotNull String getText(@NotNull TextRange range) {
-    return impl.snapshot().string(range);
+    return impl.snapshot().text().string(range);
   }
 
   @Override
   public int getTextLength() {
-    return impl.snapshot().textLength();
+    return impl.snapshot().text().length();
   }
 
   @Override
   public int getLineCount() {
-    return impl.snapshot().lineCount();
+    return impl.snapshot().text().lineCount();
   }
 
   @Override
   public int getLineNumber(int offset) {
-    return impl.snapshot().lineNumber(offset);
+    return impl.snapshot().text().lineNumber(offset);
   }
 
   @Override
   public int getLineStartOffset(int line) {
-    return impl.snapshot().lineStartOffset(line);
+    return impl.snapshot().text().lineStartOffset(line);
   }
 
   @Override
   public int getLineEndOffset(int line) {
-    return impl.snapshot().lineEndOffset(line);
+    return impl.snapshot().text().lineEndOffset(line);
   }
 
   @Override
   public int getLineSeparatorLength(int line) {
-    return impl.snapshot().lineSeparatorLength(line);
+    return impl.snapshot().text().lineSeparatorLength(line);
   }
 
   @Override
   public @NotNull LineIterator createLineIterator() {
-    return impl.snapshot().lineIterator();
+    return impl.snapshot().text().lineIterator();
   }
 
   @Override
@@ -187,12 +190,12 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public int getModificationSequence() {
-    return impl.snapshot().modSequence();
+    return impl.snapshot().modState().sequence();
   }
 
   @Override
   public long getModificationStamp() {
-    return impl.snapshot().modStamp();
+    return impl.snapshot().modState().stamp();
   }
 
   @Override
@@ -202,7 +205,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public boolean isLineModified(int line) {
-    return impl.snapshot().isLineModified(line);
+    return impl.snapshot().modState().isLineModified(line);
   }
 
   @Override
@@ -212,24 +215,22 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
-    return impl.tree().createRangeMarker(hostDocument(), startOffset, endOffset, surviveOnExternalChange);
+    return rangeMarkers.createRangeMarker(hostDocument(), startOffset, endOffset, surviveOnExternalChange);
   }
 
   @Override
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
-    return impl.tree().removeRangeMarker(rangeMarker);
+    return rangeMarkers.removeRangeMarker(rangeMarker);
   }
 
   @Override
-  public void registerRangeMarker(
-    @NotNull RangeMarkerEx rangeMarker,
-    int start,
-    int end,
-    boolean greedyToLeft,
-    boolean greedyToRight,
-    int layer
-  ) {
-    impl.tree().registerRangeMarker(rangeMarker, start, end, greedyToLeft, greedyToRight, layer);
+  public void registerRangeMarker(@NotNull RangeMarkerEx rangeMarker,
+                                  int start,
+                                  int end,
+                                  boolean greedyToLeft,
+                                  boolean greedyToRight,
+                                  int layer) {
+    rangeMarkers.registerRangeMarker(rangeMarker, start, end, greedyToLeft, greedyToRight, layer);
   }
 
   @Override
@@ -239,7 +240,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
-    return impl.tree().processRangeMarkersOverlappingWith(start, end, processor);
+    return rangeMarkers.processRangeMarkersOverlappingWith(start, end, processor);
   }
 
   @Override
@@ -296,27 +297,27 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public @NotNull RangeMarker createGuardedBlock(int startOffset, int endOffset) {
-    return impl.tree().createGuardedBlock(hostDocument(), startOffset, endOffset);
+    return guardedBlocks.createGuardedBlock(hostDocument(), startOffset, endOffset);
   }
 
   @Override
   public void removeGuardedBlock(@NotNull RangeMarker block) {
-    impl.tree().removeGuardedBlock(block);
+    guardedBlocks.removeGuardedBlock(block);
   }
 
   @Override
-  public @NotNull List<RangeMarker> getGuardedBlocks() {
-    return impl.tree().getGuardedBlocks();
+  public @NotNull @UnmodifiableView List<RangeMarker> getGuardedBlocks() {
+    return guardedBlocks.getGuardedBlocks();
   }
 
   @Override
   public @Nullable RangeMarker getOffsetGuard(int offset) {
-    return impl.tree().getOffsetGuard(offset);
+    return guardedBlocks.getOffsetGuard(offset);
   }
 
   @Override
   public @Nullable RangeMarker getRangeGuard(int start, int end) {
-    return impl.tree().getRangeGuard(start, end);
+    return guardedBlocks.getRangeGuard(start, end);
   }
 
   @Override
@@ -386,11 +387,16 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @ApiStatus.Internal
   public void documentCreatedFrom(@NotNull VirtualFile f, int tabSize) {
-    impl.tree().restoreRangeMarkersFromFile(f, hostDocument(), tabSize);
+    rangeMarkers.restoreRangeMarkersFromFile(f, hostDocument(), tabSize);
   }
 
   @ApiStatus.Internal
-  public void replaceString(int startOffset, int endOffset, int moveOffset, @NotNull CharSequence s, long newModificationStamp, boolean wholeTextReplaced) {
+  public void replaceString(int startOffset,
+                            int endOffset,
+                            int moveOffset,
+                            @NotNull CharSequence s,
+                            long newModificationStamp,
+                            boolean wholeTextReplaced) {
     impl.mutator().replaceString(hostDocument(), startOffset, endOffset, moveOffset, s, newModificationStamp, wholeTextReplaced);
   }
 
@@ -435,7 +441,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @ApiStatus.Internal
   public @NotNull FrozenDocument freeze() {
-    return (FrozenDocument) impl.frozen();
+    return (FrozenDocument)impl.frozen();
   }
 
   @ApiStatus.Internal
@@ -458,23 +464,24 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   @TestOnly
   @ApiStatus.Internal
   public int getRangeMarkersSize() {
-    return impl.tree().getRangeMarkersSize();
+    return rangeMarkers.getRangeMarkersSize();
   }
 
   @TestOnly
   @ApiStatus.Internal
   public int getRangeMarkersNodeSize() {
-    return impl.tree().getRangeMarkersNodeSize();
+    return rangeMarkers.getRangeMarkersNodeSize();
   }
 
   private @NotNull DocumentImpl hostDocument() {
-    return hostDocument != null ? hostDocument : this;
+    return ObjectUtils.notNull(hostDocument, this);
   }
 
   @Override
   public String toString() {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(hostDocument());
-    return "DocumentImpl[" + (virtualFile == null ? null : virtualFile.getName()) +
+    return "DocumentImpl[" +
+           (virtualFile == null ? null : virtualFile.getName()) +
            (isInEventsHandling() ? ",inEventHandling" : "") +
            (!isWriteThreadOnly() ? ",nonWriteThreadOnly" : "") +
            (acceptsSlashR() ? ",acceptSlashR" : "") +

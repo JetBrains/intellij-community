@@ -4,8 +4,9 @@ package com.jetbrains.python.hatch.packaging
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.hatch.HatchConfiguration
+import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.HatchService
+import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.Result
@@ -27,7 +28,7 @@ internal class HatchPackageManager(
   hatchServiceDeferred: Deferred<PyResult<HatchService<*>>>,
 ) : PipPythonPackageManager(project, sdk) {
   override val cliSpecs: List<PythonManagerCliSpec> = listOf(
-    PythonManagerCliSpec("hatch", { HatchConfiguration.getOrDetectHatchExecutablePath(localEel.toFileSystem()).successOrNull?.path }),
+    PythonManagerCliSpec("hatch", { HatchPyTool.getInstance().resolveExecutable(localEel.toFileSystem())?.path }),
     PythonManagerCliSpec("pip", { sdk.homePath?.let { Path.of(it) } }, runAsModule = true),
   )
 

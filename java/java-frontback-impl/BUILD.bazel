@@ -112,6 +112,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.frontback.impl.iml",
+        "resource/intellij.java.frontback.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

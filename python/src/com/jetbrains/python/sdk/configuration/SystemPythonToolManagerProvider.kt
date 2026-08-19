@@ -7,19 +7,18 @@ import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.pytools.InstalledInfo
 import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.PyToolManager
-import com.intellij.python.pytools.PyToolManagerProvider
-import com.intellij.python.pytools.configuration.ConfigurablePyTool
+import com.intellij.python.pytools.GenericPyToolManager
+import com.intellij.python.pytools.GenericPyToolManagerProvider
+import com.intellij.python.pytools.PackagePyToolManager
 import com.intellij.python.pytools.getToolVersion
-import com.jetbrains.python.Result
+import com.intellij.python.requirements.PyPackageVersionNormalizer
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
-import com.jetbrains.python.packaging.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
+import com.intellij.python.pytools.detectExecutableInPath
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.toFileSystem
-import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.installExecutableViaPythonScript
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,13 +26,13 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
- * Terminal [PyToolManagerProvider] fallback: yields a manager that pip-installs into the first system
+ * Terminal [GenericPyToolManagerProvider] fallback: yields a manager that pip-installs into the first system
  * Python of the target environment. Registered last, so it is used only when no higher-priority
  * provider (e.g. uv) can operate there.
  */
 @ApiStatus.Internal
-class SystemPythonToolManagerProvider : PyToolManagerProvider {
-  override suspend fun forEel(eel: EelApi): PyToolManager? {
+class SystemPythonToolManagerProvider : GenericPyToolManagerProvider {
+  override suspend fun forEel(eel: EelApi): GenericPyToolManager? {
     val systemPython = SystemPythonService().findSystemPythons(eelApi = eel).firstOrNull() ?: return null
     return SystemPythonToolManager(eel.toFileSystem(), systemPython)
   }
@@ -43,12 +42,12 @@ class SystemPythonToolManagerProvider : PyToolManagerProvider {
 private class SystemPythonToolManager(
   private val fileSystem: FileSystem<PathHolder.Eel>,
   private val systemPython: SystemPython,
-) : PyToolManager {
+) : GenericPyToolManager {
   override suspend fun install(tool: PyTool): PyResult<Path> {
-    installExecutableViaPythonScript(systemPython.asExecutablePython.binary, "-n", tool.packageName.name).getOr { return it }
-    val executable = fileSystem.detectTool(tool.packageName.name)
-                     ?: return PyResult.localizedError(PySdkBundle.message("cannot.find.executable", tool.packageName.name, fileSystem.userReadableName))
-    return Result.success(executable.path)
+    // The pip helper drops the launcher into a per-user scripts directory that is frequently not on PATH
+    // (e.g. %APPDATA%\Python\Scripts on Windows), so trust the path it reports rather than re-detecting the
+    // tool on PATH, which would spuriously fail with "cannot find executable" (PY-91493).
+    return installExecutableViaPythonScript(systemPython.asExecutablePython.binary, "-n", tool.packageName.name)
   }
 
   /** The pip helper always installs the latest release, so an upgrade is just a fresh install. */
@@ -60,9 +59,11 @@ private class SystemPythonToolManager(
    * back to the installed one (i.e. reported as up to date).
    */
   override suspend fun list(): Map<PyTool, InstalledInfo> {
-    return PyTool.EP_NAME.extensionList.filter { it is ConfigurablePyTool }.mapNotNull { tool ->
+    return PyTool.EP_NAME.extensionList.filter { it.manager is PackagePyToolManager }.mapNotNull { tool ->
       val name = tool.packageName.name
-      val executable = fileSystem.detectTool(name) ?: return@mapNotNull null
+      // Resolve on PATH and in the per-user scripts dirs the pip helper installs into (e.g.
+      // %APPDATA%\Python\Scripts on Windows), which are frequently not on PATH (PY-91493).
+      val executable = detectExecutableInPath(fileSystem, name) ?: return@mapNotNull null
       val installed = BinOnEel(executable.path).getToolVersion(name).getOrNull()?.value ?: return@mapNotNull null
       val latest = latestPyPiVersion(name) ?: installed
       tool to InstalledInfo(path = executable.path, installedVersion = installed, latestVersion = latest)

@@ -19,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/kotlinx/coroutines/core",
         "@lib//:kotlin-stdlib",
         "//platform/util/base",
@@ -29,7 +29,7 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/util/multiplatform",
         "//platform/core-api:core",
-        "@lib//:jna",
+        "//libraries/jna",
         "//libraries/pty4j",
         "//platform/ide-core",
         "//platform/eel",
@@ -53,6 +53,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":eel-impl",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/util/base:base_test_lib",
         "//platform/extensions:extensions_test_lib",
@@ -61,6 +62,7 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util/multiplatform:multiplatform_test_lib",
         "//platform/core-api:core_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//libraries/pty4j:pty4j_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/eel:eel_test_lib",
@@ -77,6 +79,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.eel.impl.iml",
+        "resources/intellij.platform.eel.impl.xml",
     ],
     visibility = ["//visibility:public"],
 )

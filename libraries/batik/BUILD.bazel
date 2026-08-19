@@ -47,6 +47,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.batik.iml",
+        "resources/intellij.libraries.batik.xml",
     ],
     visibility = ["//visibility:public"],
 )

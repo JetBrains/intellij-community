@@ -54,6 +54,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.rt.iml",
+        "resources/intellij.java.rt.xml",
     ],
     visibility = ["//visibility:public"],
 )

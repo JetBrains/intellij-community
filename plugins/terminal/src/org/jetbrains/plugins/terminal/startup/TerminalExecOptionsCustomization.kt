@@ -1,13 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.startup
 
- import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.project.Project
-import com.intellij.platform.project.projectId
-import com.intellij.platform.rpc.RemoteApiProviderService
-import org.jetbrains.plugins.terminal.ShellStartupOptions
+ import com.intellij.openapi.diagnostic.logger
+ import com.intellij.openapi.progress.runBlockingMaybeCancellable
+ import com.intellij.openapi.project.Project
+ import com.intellij.platform.project.projectId
+ import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
+ import org.jetbrains.plugins.terminal.ShellStartupOptions
 
 /**
  * Applies the terminal customizers to [options] and returns the updated options.
@@ -17,7 +16,7 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions
  * are expected to be present on the backend and access backend project model.
  */
 internal fun applyExecOptionsCustomizers(project: Project, options: ShellStartupOptions): ShellStartupOptions {
-  if (!service<RemoteApiProviderService>().isServiceOperational()) {
+  if (!LiteRemoteApiProviderService.isConnected()) {
     logger<TerminalExecOptionsCustomizationRemoteApi>().info("Skipping backend-side options customization. The service is not available.")
     return options
   }

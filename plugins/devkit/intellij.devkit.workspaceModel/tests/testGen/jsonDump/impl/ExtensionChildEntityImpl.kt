@@ -11,7 +11,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -21,9 +20,7 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -33,12 +30,10 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEntityData) : ExtensionChildEntity,
                                                                                             WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PARENT_CONNECTION_ID: ConnectionId =
       ConnectionId.create(BaseTestEntity::class.java, ExtensionChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     private val connections = listOf<ConnectionId>(PARENT_CONNECTION_ID)
-
   }
 
   override val extensionChildName: String
@@ -54,7 +49,6 @@ internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEn
       readField("listOfUrls")
       return dataSource.listOfUrls
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -65,34 +59,11 @@ internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEn
     return connections
   }
 
-
   internal class Builder(result: ExtensionChildEntityData?) :
     ModifiableWorkspaceEntityBase<ExtensionChildEntity, ExtensionChildEntityData>(result), ExtensionChildEntityBuilder {
     internal constructor() : this(ExtensionChildEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity ExtensionChildEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-      index(this, "listOfUrls", this.listOfUrls)
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -135,6 +106,9 @@ internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEn
       updateChildToParentReferences(parents)
     }
 
+    override fun index() {
+      index(this, "listOfUrls", this.listOfUrls)
+    }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -142,7 +116,6 @@ internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEn
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var extensionChildName: String
       get() = getEntityData().extensionChildName
@@ -152,45 +125,11 @@ internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEn
         changedProperty.add("extensionChildName")
       }
     override var parent: BaseTestEntityBuilder
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID, this) as? BaseTestEntityBuilder)
-          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? BaseTestEntityBuilder)
-          ?: error("parent is null for ExtensionChildEntity")
-        }
-        else {
-          (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? BaseTestEntityBuilder)
-          ?: error("parent is null for ExtensionChildEntity")
-        }
-      }
+      get() = getParent(PARENT_CONNECTION_ID) as? BaseTestEntityBuilder ?: error("parent is null for ExtensionChildEntity")
       set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-// Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.instrumentation.addChild(PARENT_CONNECTION_ID, value, this)
-        }
-        else {
-// Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
-          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] = value
-        }
+        changeParentOfMany(value, PARENT_CONNECTION_ID)
         changedProperty.add("parent")
       }
-
     private val listOfUrlsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
       if (_diff != null) index(this, "listOfUrls", value)
@@ -216,34 +155,16 @@ internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEn
 
     override fun getEntityClass(): Class<ExtensionChildEntity> = ExtensionChildEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ExtensionChildEntityData : WorkspaceEntityData<ExtensionChildEntity>() {
   lateinit var extensionChildName: String
   lateinit var listOfUrls: MutableList<VirtualFileUrl>
-
   internal fun isExtensionChildNameInitialized(): Boolean = ::extensionChildName.isInitialized
   internal fun isListOfUrlsInitialized(): Boolean = ::listOfUrls.isInitialized
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ExtensionChildEntity> {
-    val modifiable = ExtensionChildEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): ExtensionChildEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = ExtensionChildEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): ExtensionChildEntity = ExtensionChildEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<ExtensionChildEntity, *> = ExtensionChildEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.devkit.workspaceModel.jsonDump.ExtensionChildEntity") as EntityMetadata
   }

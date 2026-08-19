@@ -17,7 +17,10 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.Ref
-import com.intellij.platform.testFramework.assertion.BuildViewAssertions
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
+import com.intellij.platform.testFramework.assertion.BuildViewNodeAssertion
+import com.intellij.platform.testFramework.assertion.consoleText
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PlatformTestUtil.dispatchAllEventsInIdeEventQueue
 import com.intellij.testFramework.runInEdtAndWait
@@ -28,7 +31,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider
 import org.junit.Assert
-import org.junit.jupiter.api.Assertions
 import org.junit.runners.Parameterized
 import java.util.concurrent.TimeUnit
 import javax.swing.tree.DefaultMutableTreeNode
@@ -174,14 +176,12 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
   }
 
 
-  fun BuildView.assertExecutionTree(expected: String): BuildView = apply {
-    BuildViewAssertions.assertBuildViewTreeText(this) {
-      Assertions.assertEquals(expected.trim(), it.trim())
-    }
+  fun BuildView.assertExecutionTree(assert: BuildViewNodeAssertion.() -> Unit): BuildView = apply {
+    assertBuildViewTree(this, assert)
   }
 
   fun BuildView.assertExecutionTreeNode(nodeText: String, assert: (String) -> Unit): BuildView = apply {
-    BuildViewAssertions.assertBuildViewNodeConsoleText(this, nodeText, assert)
+    assertBuildViewNode(this, nodeText) { assert(it.consoleText) }
   }
 
   companion object {

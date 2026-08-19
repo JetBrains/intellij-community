@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.AbstractToolbarCombo
+import com.intellij.openapi.wm.impl.TOOLBAR_SPLIT_BUTTON_SEPARATOR_WIDTH as SEPARATOR_WIDTH
 import com.intellij.openapi.wm.impl.ToolbarSplitButton
 import com.intellij.ui.ClickListener
 import com.intellij.ui.hover.HoverListener
@@ -35,8 +36,6 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import kotlin.math.max
-
-private const val SEPARATOR_WIDTH = 1
 
 private const val DEAD_ZONE = 0
 private const val ACTION_ZONE = 1
@@ -263,21 +262,7 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
     }
   }
 
-  private fun getZones(button: ToolbarSplitButton): Pair<Rectangle, Rectangle> {
-    val insets = button.insets
-    val separatorMargin = button.separatorMargin
-    val rightPartMargin = button.rightPartMargin
-
-    val zoneHeight = button.height - insets.top - insets.bottom
-    val expandZoneStart = button.width - insets.right - rightPartMargin.right - AllIcons.General.ChevronDown.iconWidth - rightPartMargin.left
-    val expandRect = Rectangle(expandZoneStart, insets.top,
-                               AllIcons.General.ChevronDown.iconWidth + rightPartMargin.left + rightPartMargin.right, zoneHeight)
-
-    val actionZoneWidth = button.width - expandRect.width - separatorMargin.right - SEPARATOR_WIDTH - separatorMargin.left - insets.left - insets.right
-    val actionRect = Rectangle(insets.left, insets.top, actionZoneWidth, zoneHeight)
-
-    return Pair(actionRect, expandRect)
-  }
+  private fun getZones(button: ToolbarSplitButton): Pair<Rectangle, Rectangle> = button.zones()
 
   private fun getZoneType(button: ToolbarSplitButton, point: Point): Int {
     val (action, expand) = getZones(button)

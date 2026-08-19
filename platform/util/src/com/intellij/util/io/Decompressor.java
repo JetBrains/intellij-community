@@ -281,8 +281,8 @@ public abstract class Decompressor {
 
     /**
      * <p>Make absolute symbolic links relative from the extraction directory.</p>
-     * For example, when archive contains link to {@code /opt/foo} and archive is extracted to
-     * {@code /foo/bar} then the resulting link will be {@code /foo/bar/opt/foo}
+     * For example, when an archive contains a link to {@code /opt/foo} and archive is extracted to {@code /foo/bar},
+     * then the resulting link will be {@code /foo/bar/opt/foo}.
      */
     RELATIVIZE_ABSOLUTE
   }
@@ -353,7 +353,10 @@ public abstract class Decompressor {
   }
 
   public final void extract(@NotNull Path outputDir) throws IOException {
-    boolean isWindows = ArchiveBackend.Companion.isWindows$intellij_platform_util(outputDir);
+    boolean isWindows = ArchiveBackend.isOnWindows(outputDir);
+
+    Path realOutputDir = NioFiles.createDirectories(outputDir).toRealPath();
+
     openStream();
     try {
       Deque<Path> extractedPaths = new ArrayDeque<>();
@@ -370,7 +373,7 @@ public abstract class Decompressor {
 
         proceedToNext = true; // will be set to false if EH returns RETRY
         try {
-          Path processedEntry = processEntry(outputDir, entry, isWindows);
+          Path processedEntry = processEntry(outputDir, realOutputDir, entry, isWindows);
           if (processedEntry != null) {
             extractedPaths.push(processedEntry);
           }
@@ -408,13 +411,24 @@ public abstract class Decompressor {
   }
 
   // returns a path of the extracted entity
-  private @Nullable Path processEntry(Path outputDir, Entry entry, boolean isWindows) throws IOException {
+  private @Nullable Path processEntry(Path outputDir, Path realOutputDir, Entry entry, boolean isWindows) throws IOException {
     if (myPathPrefix != null) {
       entry = mapPathPrefix(entry, myPathPrefix);
       if (entry == null) return null;
     }
 
     Path outputFile = entryFile(outputDir, entry.name);
+
+    if (myEscapingSymlinkPolicy != EscapingSymlinkPolicy.ALLOW) {
+      Path existingPath = outputFile;
+      while (!Files.exists(existingPath, LinkOption.NOFOLLOW_LINKS)) {
+        existingPath = existingPath.getParent();
+      }
+      if (!existingPath.toRealPath().startsWith(realOutputDir)) {
+        throw new IOException("Invalid entry (path points outside the output directory): " + entry.name);
+      }
+    }
+
     switch (entry.type) {
       case DIR: {
         NioFiles.createDirectories(outputFile);
@@ -487,7 +501,7 @@ public abstract class Decompressor {
       if (relativeTarget != null) {
         Path outputTarget = outputDir.resolve(relativeTarget);
         if (!outputTarget.normalize().startsWith(outputDir.normalize())) {
-          throw new IOException("Invalid symlink (points outside of output directory): " + entryName + " -> " + linkTarget);
+          throw new IOException("Invalid symlink (points outside the output directory): " + entryName + " -> " + linkTarget);
         }
         return outputTarget;
       }
@@ -499,7 +513,7 @@ public abstract class Decompressor {
     }
     Path linkTargetNormalized = outputFile.getParent().resolve(outputTarget).normalize();
     if (!linkTargetNormalized.startsWith(outputDir.normalize())) {
-      throw new IOException("Invalid symlink (points outside of output directory): " + entryName + " -> " + linkTarget);
+      throw new IOException("Invalid symlink (points outside the output directory): " + entryName + " -> " + linkTarget);
     }
     return outputTarget;
   }

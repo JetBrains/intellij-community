@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.guava.iml",
+        "resources/intellij.libraries.guava.xml",
     ],
     visibility = ["//visibility:public"],
 )

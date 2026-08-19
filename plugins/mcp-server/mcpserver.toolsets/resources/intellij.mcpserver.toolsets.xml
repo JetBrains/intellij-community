@@ -1,0 +1,46 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.io"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.mcpserver"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.mcpserver.toolsets.general.SymbolSearchEngine" open="true"/>
+    <mcpServer.projectDependenciesProvider implementation="com.intellij.mcpserver.toolsets.general.JpsDependenciesProvider" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.ExecutionToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.AnalysisToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FileToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FormattingToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.ReadToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.PatchToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.SearchToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.CodeInsightToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.RefactoringToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.DiagnosticsToolset" />
+  </extensions>
+</idea-plugin>

@@ -82,7 +82,7 @@ fun convertGlobToRegEx(globString: String, ranges: MutableList<IntArray>, result
           }
           else {
             result.append("\\{")
-            convertGlobToRegEx(choice, ranges, result)
+            convertGlobToRegEx(choice, ranges, result, pathSeparator)
             result.append("\\}")
           }
           i = -j + 1

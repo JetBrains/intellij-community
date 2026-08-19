@@ -403,6 +403,7 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
     additionalErrorMessage: String = "",
 ) {
     val highlightingMode = InTextDirectivesUtils.isDirectiveDefined(mainFileText, "// HIGHLIGHTING")
+    val restrictToUseScope = InTextDirectivesUtils.isDirectiveDefined(mainFileText, "// RESTRICT_TO_USE_SCOPE")
 
     var log: String? = null
     val logList = LinkedHashSet<String>()
@@ -418,7 +419,7 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
         val searchSuperDeclaration =
             InTextDirectivesUtils.findLinesWithPrefixesRemoved(mainFileText, "$CHECK_SUPER_METHODS_YES_NO_DIALOG:").firstOrNull() != "no"
 
-        findUsages(caretElement, options, highlightingMode, project, searchSuperDeclaration, testType)
+        findUsages(caretElement, options, highlightingMode, project, searchSuperDeclaration, testType, restrictToUseScope)
     } finally {
         ExpressionsOfTypeProcessor.testLog = null
         if (logList.size > 0) {
@@ -522,6 +523,7 @@ fun findUsages(
     project: Project,
     searchSuperDeclaration: Boolean = true,
     testType: AbstractFindUsagesTest.Companion.FindUsageTestType = AbstractFindUsagesTest.Companion.FindUsageTestType.DEFAULT,
+    restrictToUseScope: Boolean = false,
 ): Collection<UsageInfo> {
     try {
         val handler: FindUsagesHandler = if (targetElement is PsiMember)
@@ -548,7 +550,7 @@ fun findUsages(
             }
         }
 
-        options.searchScope = GlobalSearchScope.allScope(project)
+        options.searchScope = if (restrictToUseScope) targetElement.useScope else GlobalSearchScope.allScope(project)
 
         val processor = CommonProcessors.CollectProcessor<UsageInfo>()
         for (psiElement in handler.primaryElements + handler.secondaryElements) {

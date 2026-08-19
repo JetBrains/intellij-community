@@ -54,7 +54,7 @@ public final class AnnotationHolderImpl extends SmartList<@NotNull Annotation> i
   public AnnotationHolderImpl(@NotNull AnnotationSession session, boolean batchMode) {
     myAnnotationSession = session;
     myBatchMode = batchMode;
-    myAnnotator = (Annotator)(element, holder) -> {};
+    myAnnotator = (Annotator)(_, _) -> {};
   }
 
   @ApiStatus.Internal

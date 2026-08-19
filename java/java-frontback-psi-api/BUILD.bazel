@@ -53,6 +53,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.frontback.psi.iml",
+        "resources/intellij.java.frontback.psi.xml",
     ],
     visibility = ["//visibility:public"],
 )

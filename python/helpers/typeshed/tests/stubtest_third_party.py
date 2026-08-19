@@ -13,7 +13,7 @@ from pathlib import Path
 from shutil import rmtree
 from textwrap import dedent
 from time import time
-from typing import NoReturn
+from typing_extensions import Never
 
 from ts_utils.metadata import NoSuchStubError, get_recursive_requirements, read_metadata
 from ts_utils.mypy import mypy_configuration_from_distribution, temporary_mypy_config_file
@@ -149,7 +149,7 @@ def run_stubtest(dist: Path, *, verbose: bool = False, ci_platforms_only: bool =
                 subprocess.run(stubtest_cmd, env=stubtest_env, check=True, capture_output=True)
             except subprocess.CalledProcessError as e:
                 print_time(time() - t)
-                print_error("fail")
+                print_error(f"failed with exit code {e.returncode}")
 
                 print_divider()
                 print("Commands run:")
@@ -392,7 +392,7 @@ def print_command_output(e: subprocess.CalledProcessError | subprocess.Completed
     print(e.stderr.decode(), end="")
 
 
-def main() -> NoReturn:
+def main() -> Never:
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", action="store_true", help="verbose output")
     parser.add_argument("--num-shards", type=int, default=1)

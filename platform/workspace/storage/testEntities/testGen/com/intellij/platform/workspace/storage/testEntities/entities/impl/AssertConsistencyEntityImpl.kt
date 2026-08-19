@@ -7,14 +7,12 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.AssertConsistencyEntity
@@ -26,18 +24,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.AssertConsi
 internal class AssertConsistencyEntityImpl(private val dataSource: AssertConsistencyEntityData) : AssertConsistencyEntity,
                                                                                                   WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val passCheck: Boolean
     get() {
       readField("passCheck")
       return dataSource.passCheck
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -45,36 +36,14 @@ internal class AssertConsistencyEntityImpl(private val dataSource: AssertConsist
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: AssertConsistencyEntityData?) :
     ModifiableWorkspaceEntityBase<AssertConsistencyEntity, AssertConsistencyEntityData>(result), AssertConsistencyEntityBuilder {
     internal constructor() : this(AssertConsistencyEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity AssertConsistencyEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -82,7 +51,7 @@ internal class AssertConsistencyEntityImpl(private val dataSource: AssertConsist
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -93,14 +62,12 @@ internal class AssertConsistencyEntityImpl(private val dataSource: AssertConsist
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var passCheck: Boolean
       get() = getEntityData().passCheck
@@ -112,31 +79,13 @@ internal class AssertConsistencyEntityImpl(private val dataSource: AssertConsist
 
     override fun getEntityClass(): Class<AssertConsistencyEntity> = AssertConsistencyEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>() {
   var passCheck: Boolean = false
-
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<AssertConsistencyEntity> {
-    val modifiable = AssertConsistencyEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): AssertConsistencyEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = AssertConsistencyEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): AssertConsistencyEntity = AssertConsistencyEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<AssertConsistencyEntity, *> = AssertConsistencyEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.AssertConsistencyEntity") as EntityMetadata
   }

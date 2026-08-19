@@ -14,9 +14,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
   override fun initializeMetadata() {
     val primitiveTypeIntNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Int")
     val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
-
     var typeMetadata: StorageTypeMetadata
-
     typeMetadata =
       FinalClassMetadata.ClassMetadata(fqName = "com.intellij.java.configurationStore.SampleDummyParentCustomModuleEntitySource",
                                        properties = listOf(OwnPropertyMetadata(isComputable = false,
@@ -235,7 +233,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                        supertypes = listOf("com.intellij.platform.workspace.jps.CustomModuleEntitySource",
                                                            "com.intellij.platform.workspace.storage.DummyParentEntitySource",
                                                            "com.intellij.platform.workspace.storage.EntitySource"))
-
     addMetadata(typeMetadata)
   }
 

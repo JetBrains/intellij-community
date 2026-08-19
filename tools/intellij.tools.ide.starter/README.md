@@ -67,7 +67,7 @@ The default implementation
 is [ErrorReporterToCI](https://github.com/JetBrains/intellij-ide-starter/blob/8c19f61989510def61e864515014d6e0df358342/intellij.tools.ide.starter/src/com/intellij/ide/starter/report/ErrorReporterToCI.kt#L15).
 
 If you want to customize head of the error message you can do that via your own implementation
-of [FailureDetailsOnCi](https://github.com/JetBrains/intellij-ide-starter/blob/8c19f61989510def61e864515014d6e0df358342/intellij.tools.ide.starter/src/com/intellij/ide/starter/report/FailureDetailsOnCI.kt#L10),
+of [DetailsOnCi](https://github.com/JetBrains/intellij-ide-starter/blob/8c19f61989510def61e864515014d6e0df358342/intellij.tools.ide.starter/src/com/intellij/ide/starter/report/DetailsOnCI.kt#L10),
 which is also registered via DI.
 
 ### Debugging the test

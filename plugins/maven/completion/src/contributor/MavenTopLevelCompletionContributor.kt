@@ -9,6 +9,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
+import com.intellij.maven.completion.MAVEN_DEPENDENCY_COMPLETION
 import com.intellij.maven.completion.contributor.insert.MavenTopLevelDependencyInsertionHandler
 import com.intellij.maven.completion.getCompletionContext
 import com.intellij.maven.completion.icon
@@ -47,6 +48,7 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
 
     result.stopHere()
     result.restartCompletionWhenNothingMatches()
+    result.restartCompletionOnAnyPrefixChange()
 
     val request = DependencyCompletionRequest(searchString, parameters.getCompletionContext())
     val resultSet = result.withPrefixMatcher(DependencyCompletionFuzzyMatcher(searchString))
@@ -64,6 +66,7 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
           lookupElement.putUserData(StrictOrderWeigher.ORDER_KEY, StrictOrderWeigherData(item.source, index++))
           lookupElement.putUserData(SUPPRESS_QUICK_DEFINITION, true)
           lookupElement.putUserData(SUPPRESS_QUICK_DOCUMENTATION, true)
+          lookupElement.putUserData(MAVEN_DEPENDENCY_COMPLETION, true)
           resultSet.addElement(MLRankingIgnorable.wrap(lookupElement))
         }
     }

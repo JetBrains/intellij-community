@@ -13,6 +13,9 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -84,7 +87,8 @@ class ConvertArgumentToSetInspection : KotlinApplicableInspectionBase<KtExpressi
         }
     }
 
-    override fun KaSession.prepareContext(element: KtExpression): List<KtExpression>? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtExpression): List<KtExpression>? {
         return when (element) {
             is KtCallExpression -> getConvertibleArguments(element)
             is KtBinaryExpression -> getConvertibleArguments(element)
@@ -93,7 +97,8 @@ class ConvertArgumentToSetInspection : KotlinApplicableInspectionBase<KtExpressi
     }
 }
 
-private fun KaSession.getConvertibleArguments(element: KtExpression): List<KtExpression> {
+context(session: KaSession)
+private fun getConvertibleArguments(element: KtExpression): List<KtExpression> {
     return when (element) {
         is KtCallExpression -> getConvertibleCallArguments(element)
         is KtBinaryExpression -> getConvertibleBinaryArguments(element)
@@ -101,7 +106,8 @@ private fun KaSession.getConvertibleArguments(element: KtExpression): List<KtExp
     }
 }
 
-private fun KaSession.getConvertibleCallArguments(element: KtCallExpression): List<KtExpression> {
+context(session: KaSession)
+private fun getConvertibleCallArguments(element: KtCallExpression): List<KtExpression> {
     val receiverExpression = element.getQualifiedExpressionForSelector()?.receiverExpression ?: return emptyList()
     val receiverType = receiverExpression.expressionType ?: return emptyList()
     val calleeExpression = element.calleeExpression as? KtNameReferenceExpression ?: return emptyList()
@@ -125,7 +131,8 @@ private fun KaSession.getConvertibleCallArguments(element: KtCallExpression): Li
     }
 }
 
-private fun KaSession.getConvertibleBinaryArguments(element: KtBinaryExpression): List<KtExpression> {
+context(session: KaSession)
+private fun getConvertibleBinaryArguments(element: KtBinaryExpression): List<KtExpression> {
     val argument = element.right ?: return emptyList()
     val receiver = element.left ?: return emptyList()
     val receiverType = receiver.expressionType ?: return emptyList()
@@ -153,7 +160,8 @@ private fun KaSession.getConvertibleBinaryArguments(element: KtBinaryExpression)
  * rather than [Set], even though the underlying expressions are sets.
  * This function checks if the [argument]'s type is actually a set in that case.
  */
-private fun KaSession.couldBeSetHiddenByElvis(argument: KtExpression): Boolean {
+context(session: KaSession)
+private fun couldBeSetHiddenByElvis(argument: KtExpression): Boolean {
     val argumentNoParens = argument.safeDeparenthesize()
     if (argumentNoParens !is KtBinaryExpression || argumentNoParens.operationToken != KtTokens.ELVIS) return false
     val left = argumentNoParens.left ?: return true
@@ -164,7 +172,8 @@ private fun KaSession.couldBeSetHiddenByElvis(argument: KtExpression): Boolean {
             (rightSymbol.classId == StandardClassIds.Set || couldBeSetHiddenByElvis(right))
 }
 
-private fun KaSession.canConvertArgument(argument: KtExpression): Boolean {
+context(session: KaSession)
+private fun canConvertArgument(argument: KtExpression): Boolean {
     val argumentType = argument.expressionType ?: return false
 
     // Functions that we are dealing with don't work with nullable types
@@ -191,7 +200,8 @@ private fun KaSession.canConvertArgument(argument: KtExpression): Boolean {
  *
  * @param element the element to check
  */
-private fun KaSession.isLikeConstantExpressionListOf(element: KtExpression): Boolean {
+context(session: KaSession)
+private fun isLikeConstantExpressionListOf(element: KtExpression): Boolean {
     return when (element) {
         is KtNameReferenceExpression -> { // Try to resolve the name and check if it is declared with a constant `listOf`-like function
             val candidate = element.mainReference.resolve()

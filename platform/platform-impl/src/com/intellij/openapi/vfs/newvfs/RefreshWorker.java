@@ -39,7 +39,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl;
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerEx;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
@@ -685,7 +685,7 @@ final class RefreshWorker {
     for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
       ReadAction.runBlocking(() -> {
         var workspaceFileIndex = WorkspaceFileIndexEx.getInstance(openProject);
-        var vfuManager = (VirtualFileUrlManagerImpl)WorkspaceModel.getInstance(openProject).getVirtualFileUrlManager();
+        var vfuManager = (VirtualFileUrlManagerEx)WorkspaceModel.getInstance(openProject).getVirtualFileUrlManager();
         vfuManager.processChildrenRecursively(url, child -> {
           if (workspaceFileIndex.isUrlIndexableRecursiveFileSetRoot(child.getUrl())) {
             roots.add(VirtualFileUrlManagerUtil.toPath(child));

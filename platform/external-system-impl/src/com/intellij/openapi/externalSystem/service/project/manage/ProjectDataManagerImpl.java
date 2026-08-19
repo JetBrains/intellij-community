@@ -194,12 +194,12 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
                      postImportTasks, onSuccessImportTasks, onFailureImportTasks);
       }
 
-      ProjectDataImportExtension.EP_NAME.forEachExtensionSafe(listener -> listener.finalizeImportData(projectData, modelsProvider));
       ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "postImportTasks", span -> {
         for (Runnable postImportTask : postImportTasks) {
           postImportTask.run();
         }
       });
+      ProjectDataImportExtension.EP_NAME.forEachExtensionSafe(listener -> listener.finalizeImportData(projectData, modelsProvider));
 
       commit(modelsProvider, project, true, "Imported data", activityId, projectSystemId);
       if (indicator != null) {

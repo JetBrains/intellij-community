@@ -17,6 +17,7 @@ import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.platform.project.ProjectId
@@ -220,5 +221,21 @@ class BackendPluginManagerApi : PluginManagerApi {
 
   override suspend fun isPluginEnabled(pluginId: PluginId): Boolean {
     return DefaultUiPluginManagerController.isPluginEnabled(pluginId)
+  }
+
+  override suspend fun getPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId? {
+    return DefaultUiPluginManagerController.getPluginUpdateSourceId(sessionId, pluginId)
+  }
+
+  override suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
+    DefaultUiPluginManagerController.setPendingPluginUpdateSourceInSession(sessionId, pluginId, pluginUpdateSource)
+  }
+
+  override suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
+    DefaultUiPluginManagerController.persistPluginUpdateSource(sessionId, pluginId, pluginUpdateSource)
+  }
+
+  override suspend fun isPluginUpdateSourceVisibleInUI(): Boolean {
+    return DefaultUiPluginManagerController.isPluginUpdateSourceVisibleInUI()
   }
 }

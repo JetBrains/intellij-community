@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -73,7 +74,8 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
         return element.hasValOrVar()
     }
 
-    override fun KaSession.prepareContext(element: KtParameter): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtParameter): Context? {
         val parameterType = element.symbol.returnType
         if (!parameterType.isArrayOrPrimitiveArray) return null
         val containingClass = element.containingClass() ?: return null

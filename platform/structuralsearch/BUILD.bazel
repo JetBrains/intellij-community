@@ -106,6 +106,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.structuralSearch.iml",
+        "resources/intellij.platform.structuralSearch.xml",
     ],
     visibility = ["//visibility:public"],
 )

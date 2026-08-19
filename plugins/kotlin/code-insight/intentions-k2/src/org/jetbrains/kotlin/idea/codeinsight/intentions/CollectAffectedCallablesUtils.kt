@@ -19,7 +19,8 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 @ApiStatus.Internal
 object CollectAffectedCallablesUtils {
 
-    fun KaSession.getAffectedCallables(callableSymbol: KaCallableSymbol): Collection<PsiElement> {
+    context(session: KaSession)
+    fun getAffectedCallables(callableSymbol: KaCallableSymbol): Collection<PsiElement> {
         val symbolsForChange = callableSymbol.allOverriddenSymbolsWithSelf.filter { isOverride(it) }
         val results = hashSetOf<PsiElement>()
         for (symbol in symbolsForChange) {
@@ -29,7 +30,8 @@ object CollectAffectedCallablesUtils {
         return results
     }
 
-    private fun KaSession.collectAffectedCallables(
+    context(session: KaSession)
+    private fun collectAffectedCallables(
         declaration: PsiElement,
         results: MutableCollection<PsiElement>,
     ) {

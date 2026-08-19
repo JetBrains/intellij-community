@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.openapi.application.ModalityState
@@ -87,15 +88,26 @@ private suspend fun prepareStartupOptions(
     .workingDirectory(processOptions.workingDirectory)
     .envVariables(processOptions.envVariables)
     .processType(processOptions.processType)
+    .emulatorType(processOptions.emulatorType)
 
   return if (calculateSizeFromComponent) {
-    withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
-      TerminalUiUtils.getComponentSizeInitializedFuture(terminal.component).await()
-      val termSize = terminal.gridSize?.let { TermSize(it.columns, it.rows) }
-      baseOptions.initialTermSize(termSize).build()
-    }
+    baseOptions.initialTermSize(terminal.awaitLaidOutTermSize()).build()
   }
   else {
     baseOptions.initialTermSize(TermSize(80, 20)).build()
+  }
+}
+
+/**
+ * Waits until the view's component has been laid out and returns the grid size it actually has.
+ *
+ * Starting a process with a guessed size makes a full-screen TUI paint its first frame at the wrong width and
+ * reflow on the following resize, so every path that can wait for the UI should take the size from here instead.
+ * Returns null when the grid size is still unknown; the caller then falls back to a default and logs it.
+ */
+internal suspend fun TerminalView.awaitLaidOutTermSize(): TermSize? {
+  return withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
+    TerminalUiUtils.getComponentSizeInitializedFuture(component).await()
+    gridSize?.let { TermSize(it.columns, it.rows) }
   }
 }

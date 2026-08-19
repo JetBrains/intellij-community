@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -28,6 +29,12 @@ public class RegistryTest {
   private static final String INTEGER_KEY = "editor.mouseSelectionStateResetDeadZone";
   private static final String INT_KEY_REQUIRE_RESTART = "editor.caret.width";
 
+  @Before
+  public void setUp() {
+    // Bazel sharding can run RegistryTest methods before anything else loads registry state.
+    Registry.Companion.loadState(null, null);
+  }
+
   @After
   public void tearDown(){
     Registry.Companion.setValueChangeListener(null);
@@ -42,7 +49,7 @@ public class RegistryTest {
 
   @Test
   public void booleanValueFalse() {
-    RegistryValue handle = Registry.get("ide.tree.experimental.layout.cache");
+    RegistryValue handle = Registry.get("ide.tree.showBusyIndicator");
     try {
       assertThat(handle.asString()).isEqualTo("true");
       assertThat(handle.asBoolean()).isTrue();

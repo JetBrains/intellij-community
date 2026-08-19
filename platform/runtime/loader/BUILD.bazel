@@ -16,7 +16,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/runtime/repository",
         "//platform/boot",
         "//platform/util-class-loader:util-classLoader",
@@ -36,6 +36,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":loader",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/runtime/repository:repository_test_lib",
         "//platform/boot:boot_test_lib",
         "//platform/util-class-loader:util-classLoader_test_lib",

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.kotlin.compiler.common.jar
+  modules:
+  - name: intellij.libraries.kotlinc.kotlin.compiler.common
+    libraries:
+      kotlinc.kotlin-compiler-common:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2/kotlin-compiler-common-for-ide-2.jar

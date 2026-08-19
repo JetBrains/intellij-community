@@ -13,7 +13,9 @@ import com.intellij.debugger.streams.core.wrapper.StreamChainBuilder
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XSourcePosition
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -60,6 +62,25 @@ interface LibrarySupportProvider {
       getDebuggerCommandLauncher(session)
     )
   }
+
+
+  /**
+   * Filters [chains] leaving only those that can still be correctly traced,
+   * i.e. the chains whose first operator has not started executing yet.
+   *
+   * @param position is where the program paused.
+   * @param contextElement is the PSI element at that position,
+   * already resolved for chain detection and passed in to avoid resolving it again.
+   *
+   * The default keeps every chain. JVM-specific providers override to drop already-(partially-)executed chains
+   * using the bytecode position of the pause point, as well as pause points from which tracing is impossible at all.
+   */
+  suspend fun filterTraceableStreams(
+    session: XDebugSession,
+    chains: List<StreamChain>,
+    position: XSourcePosition,
+    contextElement: PsiElement,
+  ): List<StreamChain> = chains
 
   companion object {
     val EP_NAME: ExtensionPointName<LibrarySupportProvider> = create("org.jetbrains.platform.debugger.streams.librarySupport")

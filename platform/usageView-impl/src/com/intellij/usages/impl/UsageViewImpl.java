@@ -2361,7 +2361,7 @@ public class UsageViewImpl implements UsageViewEx {
           if (action != null) {
             if (myNeedUpdateButtons) {
               Boolean isDumbAware = (Boolean)action.getValue(DUMB_AWARE_KEY);
-              button.setEnabled(!isSearchInProgress && action.isEnabled() && (!isDumb || isDumbAware));
+              button.setEnabled(!isSearchInProgress && action.isEnabled() && (!isDumb || Boolean.TRUE.equals(isDumbAware)));
             }
             Object name = action.getValue(Action.NAME);
             if (name instanceof String string) {

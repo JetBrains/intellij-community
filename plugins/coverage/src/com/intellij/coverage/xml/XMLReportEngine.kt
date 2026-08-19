@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.xml
 
+import com.intellij.coverage.CoverageAnnotator
 import com.intellij.coverage.CoverageEditorAnnotator
 import com.intellij.coverage.CoverageEngine
 import com.intellij.coverage.CoverageFileProvider
@@ -16,6 +17,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.Nls
 
 class XMLReportEngine : CoverageEngine() {
   override fun createCoverageSuite(name: String, project: Project, runner: CoverageRunner, fileProvider: CoverageFileProvider, timestamp: Long): CoverageSuite? {
@@ -32,7 +34,7 @@ class XMLReportEngine : CoverageEngine() {
     return XMLReportSuite(this)
   }
 
-  override fun coverageEditorHighlightingApplicableTo(psiFile: PsiFile) = psiFile is PsiClassOwner
+  override fun coverageEditorHighlightingApplicableTo(psiFile: PsiFile): Boolean = psiFile is PsiClassOwner
   override fun acceptedByFilters(psiFile: PsiFile, suite: CoverageSuitesBundle): Boolean {
     val (packageName, fileName) = psiFile.packageAndFileName() ?: return false
     for (xmlSuite in suite.suites) {
@@ -42,18 +44,21 @@ class XMLReportEngine : CoverageEngine() {
     return false
   }
 
-  override fun createCoverageViewExtension(project: Project,
-                                           suiteBundle: CoverageSuitesBundle?) =
-    object : JavaCoverageViewExtension(getCoverageAnnotator(project), project, suiteBundle) {
+  override fun createCoverageViewExtension(
+    project: Project,
+    suiteBundle: CoverageSuitesBundle,
+  ): JavaCoverageViewExtension {
+    return object : JavaCoverageViewExtension(suiteBundle.getAnnotator(project) as XMLReportAnnotator, project, suiteBundle) {
       override fun isBranchInfoAvailable(coverageRunner: CoverageRunner?, branchCoverage: Boolean) = true
     }
+  }
 
   override fun createSrcFileAnnotator(file: PsiFile?, editor: Editor?): CoverageEditorAnnotator = XMLReportEditorAnnotator(file, editor)
-  override fun isApplicableTo(conf: RunConfigurationBase<*>) = false
-  override fun getPresentableText() = JavaCoverageBundle.message("coverage.xml.report.title")
-  override fun getCoverageAnnotator(project: Project) = XMLReportAnnotator.getInstance(project)
-  override fun getQualifiedNames(sourceFile: PsiFile) = error("Should not be called")
-  override fun createCoverageEnabledConfiguration(conf: RunConfigurationBase<*>) = error("Should not be called")
+  override fun isApplicableTo(conf: RunConfigurationBase<*>): Boolean = false
+  override fun getPresentableText(): @Nls String = JavaCoverageBundle.message("coverage.xml.report.title")
+  override fun getCoverageAnnotator(project: Project): CoverageAnnotator = XMLReportAnnotator.getInstance(project)
+  override fun getQualifiedNames(sourceFile: PsiFile): Nothing = error("Should not be called")
+  override fun createCoverageEnabledConfiguration(conf: RunConfigurationBase<*>): Nothing = error("Should not be called")
 }
 
 internal fun PsiFile.packageAndFileName(): Pair<String, String>? {

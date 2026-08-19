@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
@@ -35,7 +35,7 @@ public final class DocumentAfterCommitListener {
       public void beforeDocumentChange(@NotNull DocumentEvent event) {
         if (project.isDisposed()) return;
         Document document = event.getDocument();
-        PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
+        PsiDocumentManagerEx documentManager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(project);
         if (documentManager.getSynchronizer().isInSynchronization(document)) {
           return;
         }

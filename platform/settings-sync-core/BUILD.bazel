@@ -154,6 +154,7 @@ jvm_library(
 exports_files(
     [
         "intellij.settingsSync.core.iml",
+        "resources/intellij.settingsSync.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

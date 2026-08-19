@@ -74,6 +74,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.macro.iml",
+        "resources/intellij.platform.macro.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -15,12 +15,17 @@
  */
 package com.intellij.psi.javadoc;
 
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiJavaDocumentedElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents a JavaDoc comment.
@@ -61,5 +66,20 @@ public interface PsiDocComment extends PsiDocCommentBase {
   /** Finds whether the start of the comment uses markdown notation */
   default boolean isMarkdownComment() {
     return false;
+  }
+
+  /// @return inline tags of the name found in the comment
+  static @NotNull List<PsiInlineDocTag> findInlineTagByName(@NotNull PsiDocComment docComment, @NotNull String tagName) {
+    List<PsiInlineDocTag> tags = new ArrayList<>(2);
+    PsiElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitInlineDocTag(@NotNull PsiInlineDocTag tag) {
+        if (tag.getName().equals(tagName)) {
+          tags.add(tag);
+        }
+      }
+    };
+    docComment.accept(visitor);
+    return tags;
   }
 }

@@ -1,12 +1,18 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="com.intellij.modules.kotlin.k2"/>
+    <plugin id="com.intellij.modules.kotlin"/>
     <module name="intellij.devkit.workspaceModel"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.indices"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.indexing"/>
   </dependencies>
   <!-- endregion -->
 

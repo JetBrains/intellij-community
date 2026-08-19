@@ -90,8 +90,9 @@ object ScopeUtil {
     name: String,
     scopeOwner: ScopeOwner,
     type: ReadWriteInstruction.ACCESS,
-  ): List<PsiElement> =
+  ): Sequence<PsiElement> =
     getControlFlow(scopeOwner).instructions
+      .asSequence()
       .filterIsInstance<ReadWriteInstruction>()
       .filter { name == it.name && type == it.access }
       .mapNotNull { it.element }

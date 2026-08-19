@@ -40,6 +40,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.assertj.core.iml",
+        "resources/intellij.libraries.assertj.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

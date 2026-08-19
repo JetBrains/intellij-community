@@ -105,6 +105,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.polySymbols.iml",
+        "resources/intellij.platform.polySymbols.xml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -223,6 +224,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.polySymbols.testFramework.iml",
+        "testFrameworkResources/intellij.platform.polySymbols.testFramework.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -10,7 +10,8 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -36,7 +37,8 @@ internal class ReplaceWithOrdinaryAssignmentIntention : KotlinApplicableModComma
     override fun getApplicableRanges(element: KtBinaryExpression): List<TextRange> =
         ApplicabilityRange.single(element) { it.operationReference }
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? = isApplicableTo(element).asUnit
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Unit? = isApplicableTo(element).asUnit
 
     @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     private fun isApplicableTo(element: KtBinaryExpression): Boolean {

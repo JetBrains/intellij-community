@@ -3,6 +3,10 @@ package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import org.jetbrains.intellij.build.dependencies.TerminalLibGhosttyVtDownloader
+import org.jetbrains.intellij.build.dependencies.archiveCacheKey
+import org.jetbrains.intellij.build.dependencies.extractToCacheLocation
+import org.jetbrains.intellij.build.impl.BazelBuildInputs
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import kotlin.io.path.exists
@@ -14,16 +18,18 @@ object NativeBinaryDownloader {
   private const val GROUP_ID = "org.jetbrains.intellij.deps"
   private const val LAUNCHER_ID = "launcher"
   private const val RESTARTER_ID = "restarter"
+  private const val LIBWEBP_ID = "libwebp"
   private const val PACKAGING = "tar.gz"
   private const val LICENSE_FILE_NAME = "xplat-launcher-third-party-licenses.html"
 
   /**
-   * Attempts to locate a local debug build of cross-platform launcher when in the development mode
+   * Attempts to locate a local debug build of the launcher when in the development mode
    * and [org.jetbrains.intellij.build.BuildOptions.useLocalLauncher] is set to `true`.
    *
    * Otherwise, downloads and unpacks the launcher tarball.
    *
-   * Returns a tuple of paths `(executable, license, extra-file?)` for the given platform (e.g., a console executable for Windows).
+   * Returns a tuple of paths `(executable, license, extra-file?)` for the given platform.
+   * The `extra-file` is specific to the platform – e.g., a Windows console executable.
    */
   suspend fun getLauncher(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Triple<Path, Path, Path?> {
     if (context.options.isInDevelopmentMode && context.options.useLocalLauncher) {
@@ -42,6 +48,10 @@ object NativeBinaryDownloader {
   }
 
   private fun findLocalLauncher(context: BuildContext, os: OsFamily): Triple<Path, Path, Path?>? {
+    // Explicit Bazel inputs are the complete readable universe of a cacheable assembly. Even if a future project-model
+    // tree happens to contain a local launcher, it is neither declared as a binary input nor writable for a license stub.
+    if (BazelBuildInputs.isConfigured) return null
+
     val targetDir = context.paths.communityHomeDirRoot.communityRoot.resolve("native/XPlatLauncher/target/debug")
     if (targetDir.isDirectory()) {
       val executableFile = targetDir.resolve(os.binaryName("xplat-launcher"))
@@ -66,13 +76,40 @@ object NativeBinaryDownloader {
     return findFile(archiveFile, unpackedDir, binName(os, arch, "restarter"))
   }
 
+  /**
+   * Downloads and unpacks the WebP tarball and returns a path to a library for the given platform.
+   */
+  suspend fun getLibWebp(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path {
+    val (archiveFile, unpackedDir) = downloadAndUnpack(context, "libwebpVersion", LIBWEBP_ID)
+    return findFile(archiveFile, unpackedDir, libName(os, arch, "webp_jni"))
+  }
+
+  /**
+   * Downloads and unpacks the libghostty-vt archive and returns a path to a library for the given platform.
+   */
+  fun getLibGhosttyVt(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path {
+    val unpackedDir = TerminalLibGhosttyVtDownloader.getOrDownloadLibRoot(context.paths.communityHomeDirRoot)
+    // match `LibGhosttyVtLocator.libraryPath` with lowercase directory names
+    val relativePath = "${os.osName.lowercase()}-${arch.archName.lowercase()}/${os.libraryName("ghostty-vt")}"
+    val file = unpackedDir.resolve(relativePath)
+    check(file.isRegularFile()) {
+      "Library '${relativePath}' not found in '${unpackedDir}'"
+    }
+    return file
+  }
+
   private suspend fun downloadAndUnpack(context: BuildContext, propertyName: String, artifactId: String): Pair<Path, Path> {
     val communityRoot = context.paths.communityHomeDirRoot
     val version = context.dependenciesProperties.property(propertyName)
     val uri = BuildDependenciesDownloader.getUriForMavenArtifact(INTELLIJ_DEPENDENCIES_URL, GROUP_ID, artifactId, version, PACKAGING)
-    val archiveFile = downloadFileToCacheLocation(uri.toString(), communityRoot)
-    val unpackedDir = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot, archiveFile)
-    return archiveFile to unpackedDir
+    val resolved = resolveFileForReading(uri.toString(), communityRoot)
+    val unpackedDir = extractToCacheLocation(
+      archiveFile = resolved.file,
+      communityRoot = communityRoot,
+      cacheKey = archiveCacheKey(archiveFile = resolved.file, sha256 = resolved.sha256),
+      options = emptyArray(),
+    )
+    return resolved.file to unpackedDir
   }
 
   private fun binName(os: OsFamily, arch: JvmArchitecture, baseName: String): String = "${os.osName}-${arch.archName}/${os.binaryName(baseName)}"

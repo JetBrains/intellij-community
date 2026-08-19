@@ -3,10 +3,10 @@ package com.intellij.laf.win10;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
+import com.intellij.ui.DrawUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
 
@@ -24,7 +24,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -83,9 +82,7 @@ public final class WinIntelliJButtonUI extends DarculaButtonUI {
 
         JBInsets.removeFrom(r, JBUI.insets(2));
 
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                            MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+        DrawUtil.setupRenderingHints(g2);
 
         if (!b.isEnabled()) {
           g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, DISABLED_ALPHA_LEVEL));

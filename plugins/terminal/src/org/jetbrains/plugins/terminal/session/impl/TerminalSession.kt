@@ -6,6 +6,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 
 @ApiStatus.Internal
 interface TerminalSession {
@@ -57,4 +60,18 @@ interface TerminalSession {
    * Can be accessed from any thread.
    */
   val isClosed: Boolean
+
+  /**
+   * Encodes the given mouse event into bytes that can be sent to the terminal process.
+   *
+   * [x] and [y] are terminal grid coordinates of the event, zero-based relative to the terminal screen start.
+   * Returns encoded bytes, or `null` when the event should not be forwarded to the terminal.
+   */
+  fun processMouseEvent(
+    e: MouseEvent,
+    x: Int,
+    y: Int,
+  ): ByteArray?
+
+  fun processKeyEvent(e: KeyEvent): KeyEventProcessingResultDto
 }

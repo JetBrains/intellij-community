@@ -1867,14 +1867,24 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             runTest("testData/intentions/operatorToFunction/arrayAccessOneIndex.kt");
         }
 
+        @TestMetadata("arrayAccessWIthAssignment_caretOnEquals.kt")
+        public void testArrayAccessWIthAssignment_caretOnEquals() throws Exception {
+            runTest("testData/intentions/operatorToFunction/arrayAccessWIthAssignment_caretOnEquals.kt");
+        }
+
+        @TestMetadata("arrayAccessWIthAssignment_caretOnValue.kt")
+        public void testArrayAccessWIthAssignment_caretOnValue() throws Exception {
+            runTest("testData/intentions/operatorToFunction/arrayAccessWIthAssignment_caretOnValue.kt");
+        }
+
+        @TestMetadata("arrayAccessWithAssignment_caretOnAccess.kt")
+        public void testArrayAccessWithAssignment_caretOnAccess() throws Exception {
+            runTest("testData/intentions/operatorToFunction/arrayAccessWithAssignment_caretOnAccess.kt");
+        }
+
         @TestMetadata("arrayAssignmentMultipleIndex.kt")
         public void testArrayAssignmentMultipleIndex() throws Exception {
             runTest("testData/intentions/operatorToFunction/arrayAssignmentMultipleIndex.kt");
-        }
-
-        @TestMetadata("assignment.kt")
-        public void testAssignment() throws Exception {
-            runTest("testData/intentions/operatorToFunction/assignment.kt");
         }
 
         @TestMetadata("binarayNotEqNullable.kt")

@@ -21,7 +21,7 @@ interface JavaSourceRootPropertiesEntityBuilder : WorkspaceEntityBuilder<JavaSou
 }
 
 internal object JavaSourceRootPropertiesEntityType : EntityType<JavaSourceRootPropertiesEntity, JavaSourceRootPropertiesEntityBuilder>() {
-  override val entityClass: Class<JavaSourceRootPropertiesEntity> get() = JavaSourceRootPropertiesEntity::class.java
+  override val entityImplClass: Class<*> get() = JavaSourceRootPropertiesEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = JavaSourceRootPropertiesEntityImpl.Builder::class.java
   operator fun invoke(
     generated: Boolean,

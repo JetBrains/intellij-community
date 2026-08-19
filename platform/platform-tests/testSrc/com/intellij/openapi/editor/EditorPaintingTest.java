@@ -119,6 +119,16 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResult();
   }
 
+  /** An inline inlay reads exactly where the hint does, so the line goes to the inlay and the hint is not painted at all. */
+  public void testInlineInlaySuppressesPlaceholder() throws Exception {
+    initText("");
+    EditorEx editor = (EditorEx)getEditor();
+    editor.setPlaceholder("placeholder");
+    editor.setShowPlaceholderWhenFocused(true);
+    editor.getInlayModel().addInlineElement(0, new MyInlayRenderer());
+    checkResult();
+  }
+
   public void testMultilineBorderWithInlays() throws Exception {
     initText("abc\ndef");
     getEditor().getInlayModel().addInlineElement(1, new MyInlayRenderer());

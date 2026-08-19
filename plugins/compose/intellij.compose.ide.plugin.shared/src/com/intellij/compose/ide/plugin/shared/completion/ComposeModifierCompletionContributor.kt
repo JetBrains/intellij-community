@@ -34,7 +34,9 @@ import com.intellij.psi.util.contextOfType
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.visibility.createUseSiteVisibilityChecker
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -174,6 +176,7 @@ fun consumerCompletionResultFromRemainingContributor(
  * In the meantime, this method checks whether the containing class/object of the function is
  * visible from the completion position. If not, then it will be filtered out from results.
  */
+@OptIn(KaExperimentalApi::class)
 private fun KtFunction.isVisibleFromCompletionPosition(completionPosition: PsiElement): Boolean {
   // This is Compose, we should always be completing in a KtFile. If not, let's just assume things
   // are visible so as not to muck with
@@ -184,11 +187,12 @@ private fun KtFunction.isVisibleFromCompletionPosition(completionPosition: PsiEl
   analyze(elementToAnalyze) {
     val symbolWithVisibility = elementToAnalyze.symbol
 
-    @OptIn(KaExperimentalApi::class)
-    return isVisible(
-      symbolWithVisibility,
+    val useSiteVisibilityChecker = createUseSiteVisibilityChecker(
       useSiteFile = ktFile.symbol,
       position = completionPosition,
-    )
+      receiverExpression = null)
+
+    return useSiteVisibilityChecker
+      .isVisible(symbolWithVisibility)
   }
 }

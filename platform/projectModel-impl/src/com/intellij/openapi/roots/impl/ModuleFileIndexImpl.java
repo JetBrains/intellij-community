@@ -6,10 +6,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ContentIteratorEx;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.vfs.DeduplicatingVirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.platform.workspace.storage.EntityPointer;
@@ -17,6 +19,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.TreeNodeProcessingResult;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
@@ -56,47 +59,87 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
   @Override
   public boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
-    Pair<Collection<VirtualFile>, Collection<VirtualFile>> rootsPair = ReadAction.nonBlocking(() -> {
-      Project project = myModule.getProject();
-      if (project.isDisposed()) return null;
-      WorkspaceFileIndexEx index = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
-      Collection<VirtualFile> recursiveRoots = new HashSet<>();
-      Collection<VirtualFile> nonRecursiveRoots = new SmartList<>();
-      index.visitFileSets(new WorkspaceFileSetVisitor() {
-        private int visitedCount = 0;
-
-        @Override
-        public void visitIncludedRoot(@NotNull WorkspaceFileSet fileSet,
-                                      @NotNull EntityPointer<? extends @NotNull WorkspaceEntity> entityPointer) {
-          visitedCount++;
-          if (visitedCount % 100 == 0) {
-            ProgressManager.checkCanceled();
-          }
-          if (!(fileSet instanceof WorkspaceFileSetWithCustomData<?>) || !isInContent((WorkspaceFileSetWithCustomData<?>)fileSet)) {
-            return;
-          }
-          VirtualFile root = fileSet.getRoot();
-          if (fileSet instanceof WorkspaceFileSetImpl && !((WorkspaceFileSetImpl)fileSet).getRecursive()) {
-            nonRecursiveRoots.add(fileSet.getRoot());
-          }
-          else {
-            recursiveRoots.add(root);
-          }
-        }
-      });
-      Collection<VirtualFile> filteredRecursiveRoots = ContainerUtil.filter(recursiveRoots, root -> !isNestedRootOfModuleContent(root));
-      return new Pair<>(filteredRecursiveRoots, nonRecursiveRoots);
-    }).executeSynchronously();
+    Pair<Collection<VirtualFile>, Collection<VirtualFile>> rootsPair = ReadAction.nonBlocking(
+      () -> collectContentRoots(true)
+    ).executeSynchronously();
     if (rootsPair == null) return false; // project is disposed
     return iterateProvidedRootsOfContent(processor, filter, rootsPair.getFirst(), rootsPair.getSecond());
   }
 
-  private boolean isNestedRootOfModuleContent(@NotNull VirtualFile root) {
+  @Override
+  public boolean iterateIndexableContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
+    Pair<Collection<VirtualFile>, Collection<VirtualFile>> rootsPair = ReadAction.nonBlocking(
+      () -> collectContentRoots(false)
+    ).executeSynchronously();
+    if (rootsPair == null) return false; // project is disposed
+
+    VirtualFileFilter deduplicatingFilter = new DeduplicatingVirtualFileFilter(filter);
+    ContentIteratorEx processorEx = toContentIteratorEx(processor);
+    for (VirtualFile root : rootsPair.getFirst()) {
+      if (!myWorkspaceFileIndex.processIndexableContentUnderDirectory(
+        root, processorEx, deduplicatingFilter, fileSet -> !isScopeDisposed() && isInContent(fileSet))
+      ) {
+        return false;
+      }
+    }
+    for (VirtualFile root : rootsPair.getSecond()) {
+      if (deduplicatingFilter.accept(root) && processorEx.processFileEx(root) == TreeNodeProcessingResult.STOP) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static @NotNull ContentIteratorEx toContentIteratorEx(@NotNull ContentIterator processor) {
+    if (processor instanceof ContentIteratorEx) {
+      return (ContentIteratorEx)processor;
+    }
+    return fileOrDir -> processor.processFile(fileOrDir) ? TreeNodeProcessingResult.CONTINUE : TreeNodeProcessingResult.STOP;
+  }
+
+  private @Nullable Pair<Collection<VirtualFile>, Collection<VirtualFile>> collectContentRoots(boolean includeNonIndexable) {
+    Project project = myModule.getProject();
+    if (project.isDisposed()) return null;
+    WorkspaceFileIndexEx index = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
+    Collection<VirtualFile> recursiveRoots = new HashSet<>();
+    Collection<VirtualFile> nonRecursiveRoots = new SmartList<>();
+    index.visitFileSets(new WorkspaceFileSetVisitor() {
+      private int visitedCount = 0;
+
+      @Override
+      public void visitIncludedRoot(@NotNull WorkspaceFileSet fileSet,
+                                    @NotNull EntityPointer<? extends @NotNull WorkspaceEntity> entityPointer) {
+        visitedCount++;
+        if (visitedCount % 100 == 0) {
+          ProgressManager.checkCanceled();
+        }
+        if (!(fileSet instanceof WorkspaceFileSetWithCustomData<?>) ||
+            !isInContent((WorkspaceFileSetWithCustomData<?>)fileSet) ||
+            (!includeNonIndexable && !fileSet.getKind().isIndexable())) {
+          return;
+        }
+        VirtualFile root = fileSet.getRoot();
+        if (fileSet instanceof WorkspaceFileSetImpl && !((WorkspaceFileSetImpl)fileSet).getRecursive()) {
+          if (fileSet.getKind().isIndexable()) {
+            nonRecursiveRoots.add(fileSet.getRoot());
+          }
+        }
+        else {
+          recursiveRoots.add(root);
+        }
+      }
+    });
+    Collection<VirtualFile> filteredRecursiveRoots = ContainerUtil.filter(recursiveRoots, root -> !isNestedRootOfModuleContent(root, includeNonIndexable));
+    return new Pair<>(filteredRecursiveRoots, nonRecursiveRoots);
+  }
+
+
+  private boolean isNestedRootOfModuleContent(@NotNull VirtualFile root, boolean includeNonIndexable) {
     VirtualFile parent = root.getParent();
     if (parent == null) {
       return false;
     }
-    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(parent, false, true, true, false, false, false, false);
+    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(parent, false, true, includeNonIndexable, false, false, false, false);
     return fileInfo.findFileSet(this::hasRecursiveRootFromModuleContent) != null;
   }
 

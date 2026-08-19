@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
@@ -17,6 +18,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
@@ -31,6 +35,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -44,6 +49,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.Color;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -336,12 +343,10 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     if (provider == null) {
       return false;
     }
-    PostfixTemplateEditor editor = provider.createEditor(selectedTemplate);
-    if (editor != null) {
-      Disposer.dispose(editor);
-      return true;
+    if (getLanguageId(provider) == null) {
+      return false;
     }
-    return false;
+    return true;
   }
 
   public void duplicateSelectedTemplate() {
@@ -350,13 +355,16 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     if (lastPathComponent instanceof PostfixTemplateCheckedTreeNode) {
       PostfixTemplate template = ((PostfixTemplateCheckedTreeNode)lastPathComponent).getTemplate();
       PostfixTemplateProvider provider = ((PostfixTemplateCheckedTreeNode)lastPathComponent).getTemplateProvider();
-      String languageId = getProvidersToLanguages().get(provider);
+      String languageId = getLanguageId(provider);
       if (isEditable(template) && languageId != null) {
         PostfixTemplate templateToEdit = template instanceof PostfixChangedBuiltinTemplate
                                          ? ((PostfixChangedBuiltinTemplate)template).getDelegate()
                                          : template;
         PostfixTemplateEditor editor = provider.createEditor(templateToEdit);
-        if (editor == null) return;
+        if (editor == null) {
+          showCannotDuplicateTemplateBalloon();
+          return;
+        }
 
         String providerName = StringUtil.notNullize(provider.getPresentableName());
         PostfixEditTemplateDialog dialog = new PostfixEditTemplateDialog(this, editor, providerName, templateToEdit);
@@ -371,6 +379,19 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
         }
       }
     }
+  }
+
+  private void showCannotDuplicateTemplateBalloon() {
+    BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
+      .createHtmlTextBalloonBuilder(CodeInsightBundle.message("message.postfix.template.cannot.be.duplicated"), MessageType.INFO, null);
+    balloonBuilder.setFadeoutTime(2500);
+    Balloon balloon = balloonBuilder.createBalloon();
+    TreePath selectionPath = getSelectionPath();
+    Rectangle pathBounds = selectionPath == null ? null : getPathBounds(selectionPath);
+    RelativePoint point = pathBounds == null
+                          ? RelativePoint.getCenterOf(this)
+                          : new RelativePoint(this, new Point(pathBounds.x + pathBounds.width / 2, pathBounds.y + pathBounds.height));
+    balloon.show(point, Balloon.Position.below);
   }
 
   public boolean canRemoveSelectedTemplates() {
@@ -409,6 +430,15 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
 
   private static boolean isEditable(@Nullable PostfixTemplate template) {
     return template != null && template.isEditable() && template.getKey().startsWith(".");
+  }
+
+  private static @Nullable String getLanguageId(@NotNull PostfixTemplateProvider provider) {
+    for (Map.Entry<PostfixTemplateProvider, String> entry : getProvidersToLanguages().entrySet()) {
+      if (provider.getId().equals(entry.getKey().getId())) {
+        return entry.getValue();
+      }
+    }
+    return null;
   }
 
   private @NotNull DefaultMutableTreeNode findOrCreateLanguageNode(String languageId) {

@@ -3,7 +3,6 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.TargetDebuggerConnection;
 import com.intellij.execution.TargetDebuggerConnectionUtil;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -18,8 +17,6 @@ import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
-import com.intellij.execution.wsl.WslPath;
-import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -36,10 +33,11 @@ import java.util.Objects;
 
 public abstract class JavaCommandLineState extends CommandLineState implements JavaCommandLine, TargetEnvironmentAwareRunProfileState, RemoteConnectionCreator {
   private static final Logger LOG = Logger.getInstance(JavaCommandLineState.class);
+
   private JavaParameters myParams;
   private TargetEnvironmentRequest myTargetEnvironmentRequest;
   private TargetedCommandLineBuilder myCommandLine;
-  private volatile @Nullable TargetDebuggerConnection myTargetDebuggerConnection;
+  private volatile @Nullable RemoteConnection myTargetDebuggerConnection;
 
   protected JavaCommandLineState(@NotNull ExecutionEnvironment environment) {
     super(environment);
@@ -113,24 +111,6 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     return null;
   }
 
-  @ApiStatus.Obsolete
-  public static WslTargetEnvironmentConfiguration checkCreateWslConfiguration(@Nullable Sdk jdk) {
-    if (jdk == null) {
-      return null;
-    }
-    VirtualFile virtualFile = jdk.getHomeDirectory();
-    if (virtualFile == null) {
-      return null;
-    }
-    WslPath wslPath = WslPath.parseWindowsUncPath(virtualFile.getPath());
-    if (wslPath != null) {
-      WslTargetEnvironmentConfiguration config = new WslTargetEnvironmentConfiguration(wslPath.getDistribution());
-      addJavaLangConfig(config, wslPath.getLinuxPath(), jdk);
-      return config;
-    }
-    return null;
-  }
-
   private static void addJavaLangConfig(TargetEnvironmentConfiguration config, String javaHomePath, Sdk jdk) {
     JavaLanguageRuntimeConfiguration javaConfig = new JavaLanguageRuntimeConfiguration();
     javaConfig.setHomePath(javaHomePath);
@@ -148,40 +128,25 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   @Override
   public void prepareTargetEnvironmentRequest(
     @NotNull TargetEnvironmentRequest request,
-    @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException {
+    @NotNull TargetProgressIndicator targetProgressIndicator
+  ) throws ExecutionException {
     targetProgressIndicator.addSystemLine(ExecutionBundle.message("progress.text.prepare.target.requirements"));
 
     myTargetEnvironmentRequest = request;
-
-    TargetDebuggerConnection targetDebuggerConnection =
-      shouldPrepareDebuggerConnection() ? TargetDebuggerConnectionUtil.prepareDebuggerConnection(this, request) : null;
-    myTargetDebuggerConnection = targetDebuggerConnection;
-
+    myTargetDebuggerConnection = shouldPrepareDebuggerConnection()
+                           ? TargetDebuggerConnectionUtil.prepareDebuggerConnection(this, request)
+                           : null;
     myCommandLine = createTargetedCommandLine(myTargetEnvironmentRequest);
-
-    if (targetDebuggerConnection != null) {
-      Objects.requireNonNull(request).getTargetPortBindings().add(targetDebuggerConnection.getDebuggerPortRequest());
-    }
   }
 
   @Override
   public void handleCreatedTargetEnvironment(@NotNull TargetEnvironment environment,
                                              @NotNull TargetProgressIndicator targetProgressIndicator) {
-    TargetDebuggerConnection targetDebuggerConnection = myTargetDebuggerConnection;
-    if (targetDebuggerConnection != null) {
-      targetDebuggerConnection.resolveRemoteConnection(environment);
-    }
   }
 
   @Override
   public @Nullable RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
-    TargetDebuggerConnection targetDebuggerConnection = myTargetDebuggerConnection;
-    if (targetDebuggerConnection != null) {
-      return targetDebuggerConnection.getResolvedRemoteConnection();
-    }
-    else {
-      return null;
-    }
+    return myTargetDebuggerConnection;
   }
 
   @Override

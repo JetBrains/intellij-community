@@ -14,8 +14,9 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -68,7 +69,8 @@ internal class ConvertEnumToSealedClassIntention : KotlinApplicableModCommandAct
         return listOf(TextRange(enumKeyword.startOffset, nameIdentifier.endOffset).relativeTo(element))
     }
 
-    override fun KaSession.prepareContext(element: KtClass): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtClass): Context? {
         val enumClassName = element.name ?: return null
         if (enumClassName.isEmpty()) return null
 

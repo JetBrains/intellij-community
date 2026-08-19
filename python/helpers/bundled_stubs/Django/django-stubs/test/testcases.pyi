@@ -3,8 +3,9 @@ import unittest
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import AbstractContextManager
 from types import TracebackType
-from typing import Any, Literal, overload
+from typing import Any, Literal, Self, overload
 
+from _typeshed import Unused
 from django.core.exceptions import ImproperlyConfigured
 from django.core.handlers.wsgi import WSGIHandler
 from django.core.servers.basehttp import ThreadedWSGIServer, WSGIRequestHandler
@@ -21,7 +22,7 @@ from django.test.client import AsyncClient, Client
 from django.test.html import Element
 from django.test.utils import CaptureQueriesContext, ContextList
 from django.utils.functional import _StrOrPromise, classproperty
-from typing_extensions import Self, override
+from typing_extensions import override
 
 def to_list(value: Any) -> list[Any]: ...
 def assert_and_parse_html(self: Any, html: str, user_msg: str, msg: str) -> Element: ...
@@ -55,7 +56,7 @@ class _DatabaseFailure:
     wrapped: Any
     message: str
     def __init__(self, wrapped: Any, message: str) -> None: ...
-    def __call__(self) -> None: ...
+    def __call__(self, *args: Unused, **kwargs: Unused) -> None: ...
 
 class SimpleTestCase(unittest.TestCase):
     client_class: type[Client]
@@ -110,7 +111,7 @@ class SimpleTestCase(unittest.TestCase):
     ) -> None: ...
     def assertFormSetError(
         self,
-        formset: BaseFormSet,
+        formset: BaseFormSet[Any],
         form_index: int | None,
         field: str | None,
         errors: list[str] | str,
@@ -167,7 +168,7 @@ class TransactionTestCase(SimpleTestCase):
     serialized_rollback: bool
     def assertQuerySetEqual(
         self,
-        qs: Iterator[Any] | list[Model] | QuerySet | RawQuerySet,
+        qs: Iterator[Any] | list[Model] | QuerySet[Any] | RawQuerySet[Any],
         values: Iterable[Any],
         transform: Callable[[Model], Any] | type[str] | None = None,
         ordered: bool = True,

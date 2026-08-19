@@ -31,9 +31,8 @@ enum class ModuleLoadingRule(val required: Boolean) {
 
   /**
    * Module is used by other modules of the plugin and doesn't provide user-visible functionality itself. 
-   * The module is loaded if and only if other `required` or `optional` module which depend on it is loaded.
+   * The module is loaded if and only if another loaded plugin module depends on it.
    * Classes from the module content descriptor will be loaded by a separate classloader.
-   * This *isn't implemented yet* and currently treated the same way as [OPTIONAL] (see IJPL-242789).
    */
   ON_DEMAND(required = false);
 }

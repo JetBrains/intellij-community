@@ -15,10 +15,6 @@ abstract class BrowserLauncher {
 
   abstract fun open(url: String)
 
-  @Deprecated(message = "Use browse(Path) instead", level = DeprecationLevel.ERROR)
-  @Suppress("IO_FILE_USAGE", "DeprecatedCallableAddReplaceWith")
-  open fun browse(file: java.io.File): Unit = browse(file.toPath())
-
   abstract fun browse(file: Path)
 
   fun browse(uri: URI): Unit = browse(uri.toString(), browser = null)

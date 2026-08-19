@@ -36,6 +36,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.kotlinx.serialization.core.iml",
+        "resources/intellij.libraries.kotlinx.serialization.core.xml",
     ],
     visibility = ["//visibility:public"],
 )

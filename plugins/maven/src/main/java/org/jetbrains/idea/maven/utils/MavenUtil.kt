@@ -14,8 +14,12 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ArchivedCompilationContextUtil
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PathManager.getSystemDir
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.Service
@@ -39,29 +43,60 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.JavaSdkType
+import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
+import com.intellij.openapi.projectRoots.JdkUtil
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.DiskQueryRelay
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
-import com.intellij.platform.eel.provider.*
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.psi.PsiManager
 import com.intellij.serviceContainer.AlreadyDisposedException
-import com.intellij.util.*
+import com.intellij.util.ArrayUtil
+import com.intellij.util.DisposeAwareRunnable
+import com.intellij.util.ExceptionUtil
+import com.intellij.util.FileContentUtilCore
+import com.intellij.util.Function
+import com.intellij.util.NullableFunction
+import com.intellij.util.PathUtil
+import com.intellij.util.SmartList
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
@@ -81,12 +116,30 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.model.MavenConstants
-import org.jetbrains.idea.maven.model.MavenConstants.*
+import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XMLNS
+import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XMLNS_HTTPS
+import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenProjectProblem
-import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.server.*
+import org.jetbrains.idea.maven.project.BundledMaven3
+import org.jetbrains.idea.maven.project.MavenGeneralSettings
+import org.jetbrains.idea.maven.project.MavenHomeType
+import org.jetbrains.idea.maven.project.MavenInSpecificPath
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectModelReadHelper
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
+import org.jetbrains.idea.maven.project.MavenWrapper
+import org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType
+import org.jetbrains.idea.maven.project.resolveMavenHomeType
+import org.jetbrains.idea.maven.project.staticOrBundled
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.server.MavenServerConnector
+import org.jetbrains.idea.maven.server.MavenServerEmbedder
+import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.MavenServerManager.Companion.getInstance
+import org.jetbrains.idea.maven.server.MavenServerUtil
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil.readPluginInfo
 import org.jetbrains.idea.maven.utils.MavenEelUtil.resolveLocalRepositoryBlocking
 import org.jetbrains.idea.maven.utils.MavenEelUtil.resolveM2Dir
@@ -94,7 +147,12 @@ import org.jetbrains.idea.maven.utils.MavenEelUtil.resolveUserSettingsPathBlocki
 import org.xml.sax.SAXException
 import org.xml.sax.SAXParseException
 import org.xml.sax.helpers.DefaultHandler
-import java.io.*
+import java.io.BufferedReader
+import java.io.File
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.io.Reader
 import java.net.URI
 import java.net.URL
 import java.nio.charset.StandardCharsets
@@ -102,7 +160,9 @@ import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.Locale
+import java.util.Optional
+import java.util.Properties
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
@@ -420,10 +480,10 @@ object MavenUtil {
 
   fun <T, U> mapToList(map: Map<T?, U?>): List<Pair<T?, U?>?> {
     return ContainerUtil.map<Map.Entry<T?, U?>?, Pair<T?, U?>?>(map.entries,
-                                                                               Function { tuEntry: Map.Entry<T?, U?>? ->
-                                                                                 Pair.create<T?, U?>(
-                                                                                   tuEntry!!.key, tuEntry.value)
-                                                                               })
+                                                                Function { tuEntry: Map.Entry<T?, U?>? ->
+                                                                  Pair.create<T?, U?>(
+                                                                    tuEntry!!.key, tuEntry.value)
+                                                                })
   }
 
   @JvmStatic
@@ -1931,10 +1991,6 @@ object MavenUtil {
   }
 
   @JvmStatic
-  val mavenPluginParentFile: Path
-    get() = Paths.get(PathManager.getCommunityHomePath(), "plugins", "maven")
-
-  @JvmStatic
   @ApiStatus.Internal
   fun isMavenUnitTestModeEnabled(): Boolean {
     if (shouldRunTasksAsynchronouslyInTests()) {
@@ -2033,6 +2089,19 @@ object MavenUtil {
     }
   }
 
+  /**
+   * `true` only when the Maven plugin's classes come from JPS module outputs - unit tests, and run configurations
+   * *without* the `dev build` suffix. In that mode there is no assembled plugin layout, so the Maven server classpath
+   * has to be stitched together from module outputs and downloaded libraries.
+   *
+   * A **dev build is not included here**, by design: its plugin layout is the production layout, and its launcher pins
+   * `idea.home.path` to the assembled run directory (`DevMainImpl.buildDevMain`, `IdeFromCodeInstaller.getTestVmOptions`),
+   * so [PluginManagerCore.isRunningFromSources] already answers `false` there. Dev builds therefore take the same
+   * production code path as an installed IDE - do not add dev-build-specific branches or layout probes.
+   *
+   * @see PluginManagerCore.isRunningFromSources
+   * @see com.intellij.idea.AppMode.isRunningFromDevBuild
+   */
   @JvmStatic
   fun isRunningFromSources(): Boolean = PluginManagerCore.isRunningFromSources()
 

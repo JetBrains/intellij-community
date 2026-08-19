@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -13,51 +12,20 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup.RangeFilterResult.GO_INSIDE
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup.RangeFilterResult.PROCESS
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup.RangeFilterResult.SKIP
-import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.mapToIndex
 
 class InspectionLikeProcessingGroup(
-    private val runSingleTime: Boolean = false,
     private val processings: List<InspectionLikeProcessing>
 ) : FileBasedPostProcessing() {
-    constructor(vararg processings: InspectionLikeProcessing) : this(runSingleTime = false, processings.toList())
+    constructor(vararg processings: InspectionLikeProcessing) : this(processings.toList())
 
     private val processingsToPriorityMap: Map<InspectionLikeProcessing, Int> =
         processings.mapToIndex()
 
     fun priority(processing: InspectionLikeProcessing): Int =
         processingsToPriorityMap.getValue(processing)
-
-    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: ConverterContext) {
-        do {
-            var modificationStamp: Long? = runReadAction { file.modificationStamp }
-            val elementToActions = runReadAction {
-                collectAvailableActions(file, converterContext, rangeMarker)
-            }
-
-            for ((processing, pointer, _) in elementToActions) {
-                val element = runReadAction { pointer.element }
-                if (element == null) {
-                    modificationStamp = null
-                    continue
-                }
-
-                val needRun = runReadAction {
-                    element.isValid && processing.isApplicableToElement(element, converterContext.converter.settings)
-                }
-
-                if (needRun) runUndoTransparentActionInEdt(inWriteAction = processing.writeActionNeeded) {
-                    processing.applyToElement(element)
-                } else {
-                    modificationStamp = null
-                }
-            }
-
-            if (runSingleTime) break
-        } while (modificationStamp != runReadAction { file.modificationStamp } && elementToActions.isNotEmpty())
-    }
 
     override fun computeApplier(
         file: KtFile,
@@ -140,8 +108,6 @@ abstract class InspectionLikeProcessing {
     // Running it in outer write action may lead to UI freezes,
     // so we let those post-processings handle write actions by themselves.
     open val writeActionNeeded = true
-
-    val processingOptions: PostProcessingOptions = PostProcessingOptions.DEFAULT
 }
 
 abstract class InspectionLikeProcessingForElement<E : PsiElement>(private val classTag: Class<E>) : InspectionLikeProcessing() {

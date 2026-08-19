@@ -451,7 +451,7 @@ private fun CoroutineScope.loadThirdPartyBundledPluginDescriptors(loadingContext
 suspend fun loadDescriptors(
   zipPoolDeferred: Deferred<ZipEntryResolverPool>,
   mainClassLoaderDeferred: Deferred<ClassLoader>?,
-): Pair<PluginDescriptorLoadingContext, PluginsDiscoveryResult> {
+): PluginsDiscoveryResult {
   val isUnitTestMode = PluginManagerCore.isUnitTestMode
   val isRunningFromSources = PluginManagerCore.isRunningFromSources()
   val isInDevServerMode = AppMode.isRunningFromDevBuild()
@@ -460,7 +460,7 @@ suspend fun loadDescriptors(
     isMissingSubDescriptorIgnored = true,
     checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
   )
-  val discoveredPlugins = loadingContext.use {
+  return loadingContext.use {
     loadDescriptors(
       loadingContext = loadingContext,
       isUnitTestMode = isUnitTestMode,
@@ -470,7 +470,6 @@ suspend fun loadDescriptors(
       mainClassLoaderDeferred = mainClassLoaderDeferred,
     )
   }
-  return loadingContext to discoveredPlugins
 }
 
 internal fun CoroutineScope.scheduleLoading(
@@ -483,9 +482,8 @@ internal fun CoroutineScope.scheduleLoading(
     loadDescriptors(zipPoolDeferred, mainClassLoaderDeferred)
   }
   val pluginSetDeferred = async {
-    val (loadingContext, discoveredPlugins) = resultDeferred.await()
+    val discoveredPlugins = resultDeferred.await()
     val pluginsState = PluginManagerCore.initializeAndSetPlugins(
-      descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),
       initContext = initContext,
       discoveredPlugins = discoveredPlugins,
     )
@@ -589,7 +587,10 @@ private suspend fun loadDescriptors(
     val pluginsFromPropertyDeferred = loadDescriptorsFromProperty(loadingContext, zipPool)
     pluginsDeferred.await() + listOfNotNull(thirdPartyBundledPluginsDeferred.await(), pluginsFromPropertyDeferred.await())
   }
-  return PluginsDiscoveryResult.build(discoveredPlugins)
+  return PluginsDiscoveryResult.build(
+    discoveredPluginLists = discoveredPlugins,
+    descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),
+  )
 }
 
 internal fun CoroutineScope.loadPluginDescriptorsForPathBasedLoader(
@@ -1193,7 +1194,10 @@ fun loadDescriptorsFromOtherIde(
     loadingContext.close()
     pool.close()
   }
-  return PluginsDiscoveryResult.build(discoveredPlugins)
+  return PluginsDiscoveryResult.build(
+    discoveredPluginLists = discoveredPlugins,
+    descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),
+  )
 }
 
 suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false): DiscoveredPluginsList {
@@ -1432,7 +1436,7 @@ private fun loadPluginDependencyDescriptors(
       dependency.setSubDescriptor(subDescriptor)
     }
     finally {
-      visitedFiles.removeLast()
+      visitedFiles.removeAt(visitedFiles.lastIndex)
     }
   }
 }

@@ -11,13 +11,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.KaApplicableCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -26,8 +25,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.deprecation
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider.isArraySetCall
@@ -131,7 +132,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         context.setCurrentParameter(currentArgumentIndex)
 
         val callInfos = createCallInfos(argumentList, currentArgumentIndex)
-        for (index in 0 until min (context.objectsToView.size, callInfos.size)) {
+        for (index in 0 until min(context.objectsToView.size, callInfos.size)) {
             // Number of candidates somehow changed while UI is shown, which should NOT be possible. Bail out to be safe.
             context.objectsToView[index] = callInfos[index]
         }
@@ -180,7 +181,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.createCallInfo(
+    context(session: KaSession)
+    private fun createCallInfo(
         callCandidateInfo: KaCallCandidateInfo,
         callElement: KtElement,
         currentArgumentIndex: Int,
@@ -519,12 +521,13 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         val supportsTrailingCommas: Boolean,
     ) {
         internal fun appendValueParameter(
-            parameterIndex: Int,
+            parameterIndex: Int?,
             shouldHighlight: Boolean = false,
             isNamed: Boolean = false,
             markUsedUnusedParameterBorder: Boolean = false,
             parameterInfoState: ParameterInfoState,
         ) {
+            if (parameterIndex == null) return
             val surroundInBrackets = isNamed || parameterInfoState.namedMode
             val parameterText = buildString {
                 if (surroundInBrackets) append("[")
@@ -588,26 +591,30 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             val parameterInfoState = ParameterInfoState()
 
             if (valueArguments.isNotEmpty()) {
-                for (valueArgument in valueArguments) {
+                for ((argumentPosition, valueArgument) in valueArguments.withIndex()) {
                     val argumentExpression = valueArgument.getArgumentExpression()
+                    var parameterIndex: Int?
+                    var onMapped: (_: Int) -> Unit
                     if (argumentExpression in contextArgumentToParameterIndexMap) {
-                        processArgument(
-                            currentArgumentIndex,
-                            contextArgumentToParameterIndexMap[argumentExpression],
-                            parameterInfoState,
-                        ) { absoluteParameterIndex ->
-                            parameterInfoState.usedContextParameterIndices += absoluteParameterIndex
+                        parameterIndex = contextArgumentToParameterIndexMap[argumentExpression]
+                        onMapped = { index ->
+                            parameterInfoState.usedContextParameterIndices += index
                             parameterInfoState.argumentIndex++
                         }
+
                     } else {
                         if (valueArgument == firstArgumentInNamedMode) {
                             parameterInfoState.namedMode = true
                         }
-                        processArgument(
-                            currentArgumentIndex,
-                            valueArgumentToParameterIndexMap[argumentExpression],
-                            parameterInfoState,
-                        ) { parameterIndex ->
+                        parameterIndex = valueArgumentToParameterIndexMap[argumentExpression]
+                            ?: argumentPosition.takeIf {
+                                argumentExpression == null &&
+                                        !parameterInfoState.namedMode &&
+                                        argumentPosition == valueArguments.lastIndex &&
+                                        currentArgumentIndex == arguments.size &&
+                                        it < valueParameterTextList.size
+                            }
+                        onMapped = { _ ->
                             appendValueParameter(
                                 parameterIndex,
                                 shouldHighlight = parameterIndex == highlightParameterIndex,
@@ -616,6 +623,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                             )
                         }
                     }
+                    processArgument(currentArgumentIndex, parameterIndex, parameterInfoState, onMapped)
                 }
 
                 appendValueParameters(parameterInfoState)
@@ -666,7 +674,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 if (parameterIndex in parameterInfoState.usedParameterIndices) continue
                 appendValueParameter(
                     parameterIndex,
-                    shouldHighlight = !parameterInfoState.namedMode && !parameterInfoState.wasParameterHighlighted,
+                    shouldHighlight = parameterIndex == highlightParameterIndex ||
+                            (highlightParameterIndex == null && !parameterInfoState.namedMode && !parameterInfoState.wasParameterHighlighted),
                     markUsedUnusedParameterBorder = parameterInfoState.namedMode && !parameterInfoState.wasParameterHighlighted,
                     parameterInfoState = parameterInfoState
                 )

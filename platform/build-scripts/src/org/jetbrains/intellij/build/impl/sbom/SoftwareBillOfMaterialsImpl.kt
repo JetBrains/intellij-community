@@ -34,7 +34,7 @@ import org.jetbrains.intellij.build.impl.Checksums
 import org.jetbrains.intellij.build.impl.DistributionForOsTaskResult
 import org.jetbrains.intellij.build.impl.Docker
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
-import org.jetbrains.intellij.build.impl.getLibraryFilename
+import org.jetbrains.intellij.build.impl.getLibraryFileName
 import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
 import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
@@ -272,7 +272,7 @@ class SoftwareBillOfMaterialsImpl(
    * then should be replaced with [addRuntimeDocumentRef]
    */
   private suspend fun SpdxDocument.runtimePackage(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl): SpdxPackage {
-    val checksums = Checksums.compute(context.bundledRuntime.findArchive(os = os, arch = arch, libc = libc))
+    val checksums = Checksums.compute(context.bundledRuntime.resolveArchive(os = os, arch = arch, libc = libc).file)
     val version = context.bundledRuntime.build
     val runtimeArchivePackage = spdxPackageForFile(
       this,
@@ -504,7 +504,7 @@ class SoftwareBillOfMaterialsImpl(
       }.distinctBy {
         it.mavenDescriptor?.mavenId ?: it.name
       }.toList().mapConcurrent { library ->
-        val libraryName = getLibraryFilename(library)
+        val libraryName = getLibraryFileName(library)
         withContext(CoroutineName("maven library $libraryName")) {
           val libraryEntry = librariesBundledInDistributions.get(libraryName)
           val libraryFile = libraryEntry?.libraryFile ?: return@withContext null

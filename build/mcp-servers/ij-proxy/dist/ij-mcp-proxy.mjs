@@ -22398,7 +22398,8 @@ var BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([
   "container_list_dir",
   "execute_terminal_command",
   "execute_tool",
-  "skill_search"
+  "skill_search",
+  "build_project"
 ]), EXTRA_REPLACED_TOOL_NAMES = [
   "get_file_problems"
 ], RENAME_TOOL_DESCRIPTION = "Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use text replacement for renames.", READ_ONLY_TOOL_ANNOTATIONS = { readOnlyHint: !0, openWorldHint: !1 };
@@ -22688,7 +22689,7 @@ class UpstreamConnection {
       }
     });
   }
-  static _LONG_TIMEOUT_TOOLS = /* @__PURE__ */ new Set(["build_project", "lint_files", "reformat_file", "open_file_in_editor", "container_exec"]);
+  static _LONG_TIMEOUT_TOOLS = /* @__PURE__ */ new Set(["lint_files", "reformat_file", "open_file_in_editor", "container_exec"]);
   _resolveTimeoutMs(toolName) {
     let ctx = requestContext.getStore();
     if (ctx?.clientTimeoutMs !== void 0)

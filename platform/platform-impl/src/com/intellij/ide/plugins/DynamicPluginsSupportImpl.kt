@@ -77,12 +77,8 @@ internal class DynamicPluginsSupportImpl(
     return rwLock.withLock {
       withContext(Dispatchers.Default) {
         if (LOG.isDebugEnabled) {
-          LOG.debug("validating dynamic reconfiguration to $targetState (disabled plugins may appear as unresolved)")
-          PluginInitializationDiagnosticUtils.logExclusionTree(
-            LOG,
-            targetState.resolvedPluginSet,
-            emptyMap() // FIXME IJPL-246161 may cause "id is not resolved" messages instead of "is marked disabled"
-          )
+          LOG.debug("validating dynamic reconfiguration to $targetState")
+          PluginInitializationDiagnosticUtils.logExclusionTree(LOG, targetState.resolvedPluginSet)
         }
         reportSequentialProgress { reporter ->
           val target = targetState.resolvedPluginSet
@@ -102,12 +98,8 @@ internal class DynamicPluginsSupportImpl(
         reportSequentialProgress { reporter ->
           val current = getCurrentlyLoadedPluginSet()
           val target = targetState.resolvedPluginSet
-          LOG.info("performing dynamic reconfiguration to $targetState (disabled plugins may appear as unresolved)")
-          PluginInitializationDiagnosticUtils.logExclusionTree(
-            LOG,
-            target,
-            emptyMap() // FIXME IJPL-246161 may cause "id is not resolved" messages instead of "is marked disabled"
-          )
+          LOG.info("performing dynamic reconfiguration to $targetState")
+          PluginInitializationDiagnosticUtils.logExclusionTree(LOG, target)
           val sequence = buildTransitionSequence(current, target).also {
             LOG.info(it.getExplanationLogMessage())
           }
@@ -185,7 +177,8 @@ internal class DynamicPluginsSupportImpl(
     sequence: TransitionSequence,
     reporter: SequentialProgressReporter,
   ): List<DynamicReconfigurationIsNotPossibleReason> {
-    if (skipDynamicPluginReconfigurationValidation) {
+    val validationConfig = getDynamicPluginsValidationConfig()
+    if (validationConfig.skipDynamicPluginReconfigurationValidation) {
       return emptyList()
     }
 
@@ -199,13 +192,16 @@ internal class DynamicPluginsSupportImpl(
         }
       }
       try {
-        reporter.computeValidationIssues(sequence)
+        context(validationConfig) {
+          reporter.computeValidationIssues(sequence)
+        }
       }
       catch (_: DynamicPluginsValidators.AbortDynamicPluginIssuesComputation) { }
       return@indeterminateStep issues.values.toList()
     }
   }
 
+  context(_: DynamicPluginsValidationConfig)
   private fun IssueReporter.computeValidationIssues(sequence: TransitionSequence) {
     val elementsModel = MutableAppElementsModel()
     for (group in sequence.currentState.runtimeModuleGroupGraph.sortedGroups) {
@@ -216,17 +212,12 @@ internal class DynamicPluginsSupportImpl(
       when (step.action) {
         RuntimeModuleGroupAction.UNLOAD -> {
           validateProductRulesPermitUnloading(step.runtimeModuleGroup)
-          validateGroupCanBeUnloaded(
-            step.runtimeModuleGroup,
-            elementsModel,
-            allowDynamicServiceOverrides,
-            allowUnloadingWhenRunFromSources
-          )
+          validateGroupCanBeUnloaded(step.runtimeModuleGroup, elementsModel)
           elementsModel.unregister(step.runtimeModuleGroup, this)
         }
         RuntimeModuleGroupAction.LOAD -> {
           validateProductRulesPermitLoading(step.runtimeModuleGroup)
-          validateGroupCanBeLoaded(step.runtimeModuleGroup, elementsModel, allowDynamicServiceOverrides)
+          validateGroupCanBeLoaded(step.runtimeModuleGroup, elementsModel)
           elementsModel.register(step.runtimeModuleGroup, this)
         }
       }
@@ -390,14 +381,16 @@ internal class DynamicPluginsSupportImpl(
     return PluginManagerCore.getPluginSet().resolvedPluginSet
   }
 
-  private val allowDynamicServiceOverrides: Boolean
-    get() = Registry.`is`("ide.plugins.allow.dynamic.services.overrides", false)
-
-  private val allowUnloadingWhenRunFromSources: Boolean
-    get() = Registry.`is`("ide.plugins.allow.unload.from.sources", false)
-
-  private val skipDynamicPluginReconfigurationValidation: Boolean
-    get() = SystemProperties.getBooleanProperty("idea.plugins.skip.dynamic.plugin.reconfiguration.validation", false)
+  private fun getDynamicPluginsValidationConfig(): DynamicPluginsValidationConfig {
+    return DynamicPluginsValidationConfig(
+      skipDynamicPluginReconfigurationValidation =
+        SystemProperties.getBooleanProperty("idea.plugins.skip.dynamic.plugin.reconfiguration.validation", false),
+      allowServiceOverridesUnloading = Registry.`is`("ide.plugins.allow.dynamic.services.overrides", false),
+      allowUnloadingWhenRunFromSources = Registry.`is`("ide.plugins.allow.unload.from.sources", false),
+      allowNonDynamicExtensionPointsWithExtensionsInTheSameRuntimeModuleGroup =
+        Registry.`is`("ide.plugins.allow.load.non.dynamic.extension.points.with.extensions.in.the.same.module", false)
+    )
+  }
 
   private fun buildTransitionSequence(current: ResolvedPluginSet, target: ResolvedPluginSet): TransitionSequence {
     val currentGraph = current.runtimeModuleGroupGraph
@@ -692,7 +685,9 @@ internal class DynamicPluginsSupportImpl(
       }
     }
 
-    (ActionManager.getInstance() as ActionManagerImpl).registerActions(descriptors)
+    application.service<TransferredWriteActionService>().runOnEdtWithTransferredWriteActionAndWait { // FIXME topic listeners expect EDT IJPL-252536
+      (ActionManager.getInstance() as ActionManagerImpl).registerActions(descriptors)
+    }
   }
 
   private fun createDisposeTreePredicate(pluginDescriptor: IdeaPluginDescriptorImpl): Predicate<Disposable>? {

@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -62,7 +63,8 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         }
     }
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): String? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): String? {
         val left = element.left
         val right = element.right
 
@@ -78,7 +80,7 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         if (!rightDeclaration.isVar) return null
         if (rightDeclaration is KtProperty) {
             if (rightDeclaration.isOverridable()) return null
-            if (rightDeclaration.accessors.any { !it.symbol.isDefault }) return null
+            if (rightDeclaration.accessors.any { it.symbol.isNotDefault }) return null
         }
 
         if (left.receiverSymbol() != right.receiverSymbol()) return null

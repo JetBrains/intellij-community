@@ -1,12 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.configuration;
 
-import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.RunConfigurationConfigurableAdapter;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.application.ApplicationConfiguration;
+import com.intellij.execution.application.ClassEditorField;
 import com.intellij.execution.configurations.JavaCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
@@ -24,14 +25,15 @@ import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestInClassConfigurationProducer;
 import com.intellij.execution.junit.TestPackage;
-import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.junit2.configuration.JUnitConfigurationModel;
+import com.intellij.execution.junit2.configuration.JUnitSettingsEditor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.execution.ui.ModuleClasspathCombo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -50,7 +52,6 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -72,22 +73,25 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.ant.execution.SegmentedOutputStream;
+import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.rt.junit.JUnitStarter;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JComponent;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -162,21 +166,23 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
 
     Module module1 = getModule1();
     Module module2 = getModule2();
-    JUnitConfigurable editor = new JUnitConfigurable(myProject);
+    JUnitConfiguration configuration = createConfiguration(findTestA(module2));
+    JUnitSettingsEditor editor = new JUnitSettingsEditor(configuration);
     try {
-      JUnitConfiguration configuration = createConfiguration(findTestA(module2));
-      editor.getComponent(); // To get all the watchers installed.
-      Configurable configurable = new RunConfigurationConfigurableAdapter(editor, configuration);
-      ModuleDescriptionsComboBox comboBox = editor.getModulesComponent();
+      JComponent root = editor.getComponent(); // To get all the watchers installed.
+      initRunnerAndConfigurationFragments(editor, configuration);
+      Configurable configurable = new RunConfigurationConfigurableAdapter<>(editor, configuration);
+      ModuleClasspathCombo comboBox = findIn(root, ModuleClasspathCombo.class);
       configurable.reset();
+      flushEditorAsync();
       assertFalse(configurable.isModified());
       assertEquals(module2.getName(), comboBox.getSelectedModuleName());
       assertEquals(ModuleManager.getInstance(myProject).getModules().length + 1, comboBox.getModel().getSize()); //no module
       comboBox.setSelectedModule(module1);
       assertTrue(configurable.isModified());
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      flushEditorAsync();
       configurable.apply();
+      flushEditorAsync();
       assertFalse(configurable.isModified());
       assertEquals(Collections.singleton(module1), ContainerUtil.newHashSet(configuration.getModules()));
     }
@@ -204,7 +210,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
       assertEquals("[-ea, -Didea.test.cyclic.buffer.size=1048576, -Didea.test.graceful.shutdown.timeout.seconds=400]", parameters.getVMParametersList().toString());
       final SegmentedOutputStream notifications = new SegmentedOutputStream(System.out);
       assertTrue(JUnitStarter.checkVersion(parameters.getProgramParametersList().getArray(),
-                                           new PrintStream(notifications)));
+                                           new PrintStream(notifications, false, StandardCharsets.UTF_8)));
       assertTrue(parameters.getProgramParametersList().getList().contains(testA.getQualifiedName()));
       assertEquals(JUnitStarter.class.getName(), parameters.getMainClass());
       assertEquals(myJdk.getHomeDirectory().getPresentableUrl(), parameters.getJdkPath());
@@ -231,7 +237,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
                                lines);
   }
 
-  public void testPatternConfigurationWith() throws ExecutionException, IOException {
+  public void testPatternConfigurationWith() throws ExecutionException {
 
     VirtualFile module1Content = findFile("moduleWithBothVersions");
     createModuleWithJUnit5(module1Content);
@@ -306,7 +312,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
     String filePath = ContainerUtil.find(parameters.getProgramParametersList().getArray(),
                                          value -> StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@")).substring(1);
     List<String> lines = FileUtilRt.loadLines(new File(filePath));
-    lines.remove(0);
+    lines.removeFirst();
     assertThat(lines).containsAll(
       //category, filters, classNames...
       List.of("", "pattern.TestA", "abstractPattern.TestB", "abstractPattern.TestC", psiClass.getQualifiedName(),
@@ -328,7 +334,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
     String filePath = ContainerUtil.find(parameters.getProgramParametersList().getArray(),
                                          value -> StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@")).substring(1);
     List<String> lines = FileUtilRt.loadLines(new File(filePath));
-    lines.remove(0);
+    lines.removeFirst();
     assertThat(lines).containsExactlyInAnyOrder(
       //category, filters, classNames...
       "", "", "pattern.TestA,test1");
@@ -345,7 +351,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
     String filePath = ContainerUtil.find(parameters.getProgramParametersList().getArray(),
                                          value -> StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@")).substring(1);
     List<String> lines = FileUtilRt.loadLines(new File(filePath));
-    lines.remove(0);
+    lines.removeFirst();
     assertThat(lines).containsExactlyInAnyOrder(
       //category, filters, classNames...
       "", "", "abstractPattern.TestB,test1", "abstractPattern.TestC,test1");
@@ -359,11 +365,8 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
     configuration.getPersistentData().setScope(TestSearchScope.WHOLE_PROJECT);
     assertEmpty(configuration.getModules());
     checkCanRun(configuration);
-    configuration.getPersistentData().PACKAGE_NAME = "noTests";
-//    checkCantRun(configuration, "No tests found in the package '");
-
     configuration.getPersistentData().PACKAGE_NAME = "com.abcent";
-    checkCantRun(configuration, "Package 'com.abcent' does not exist");
+    assertThat(cantRunReason(configuration)).startsWith("Package 'com.abcent' does not exist");
   }
 
   public void testAllInPackageForCommonAncestorModule() throws IOException, ExecutionException {
@@ -510,32 +513,87 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
 
     PsiClass testA = findTestA(getModule2());
     JUnitConfiguration configuration = createConfiguration(testA);
-    JUnitConfigurable editor = new JUnitConfigurable(myProject);
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    JUnitSettingsEditor editor = new JUnitSettingsEditor(configuration);
     try {
-      Configurable configurable = new RunConfigurationConfigurableAdapter(editor, configuration);
+      JComponent root = editor.getComponent();
+      initRunnerAndConfigurationFragments(editor, configuration);
+      Configurable configurable = new RunConfigurationConfigurableAdapter<>(editor, configuration);
+      // The fragment editor applies the class name through the ClassEditorField branch of
+      // JUnitConfigurationModel#applyTo, unlike the old tabbed editor which resolved the class itself.
+      ClassEditorField component = findIn(root, ClassEditorField.class);
       configurable.reset();
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-      final EditorTextFieldWithBrowseButton component =
-        ((LabeledComponent<EditorTextFieldWithBrowseButton>)editor.getTestLocation(JUnitConfigurationModel.CLASS)).getComponent();
+      flushEditorAsync();
       assertEquals(testA.getQualifiedName(), component.getText());
       PsiClass otherTest = findClass(getModule2(), "test2.Test2");
       component.setText(otherTest.getQualifiedName());
       configurable.apply();
+      flushEditorAsync();
       assertEquals(otherTest.getName(), configuration.getName());
       String specialName = "My name";
       configuration.setName(specialName);
       configuration.setNameChangedByUser(true);
       configurable.reset();
+      flushEditorAsync();
       component.setText(testA.getQualifiedName());
       configurable.apply();
+      flushEditorAsync();
       assertEquals(specialName, configuration.getName());
     }
     finally {
       Disposer.dispose(editor);
     }
+  }
+
+  /**
+   * {@code fork_mode} and {@code repeat_mode} are read back from the run configuration XML without validation
+   * ({@link JUnitConfiguration#readExternal}), and {@link com.intellij.execution.ui.VariantTagFragment} hands the
+   * stored value - not one of the offered variants - to its variant name provider. An unrecognized value must
+   * therefore not break the whole editor, and must not survive a trip through the dialog either: the fragment
+   * writes back whatever it holds, so the editor clamps the stored value to one it can actually offer.
+   */
+  public void testUnknownForkAndRepeatModeAreNormalizedByEditor() throws ConfigurationException {
+    if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
+
+    JUnitConfiguration configuration = createConfiguration(findTestA(getModule2()));
+    configuration.setForkMode("bogusForkMode");
+    configuration.setRepeatMode("Bogus Repeat Mode");
+    JUnitSettingsEditor editor = new JUnitSettingsEditor(configuration);
+    try {
+      editor.getComponent();
+      initRunnerAndConfigurationFragments(editor, configuration);
+      Configurable configurable = new RunConfigurationConfigurableAdapter<>(editor, configuration);
+      configurable.reset();
+      flushEditorAsync();
+      configurable.apply();
+      flushEditorAsync();
+      assertEquals(JUnitConfiguration.FORK_NONE, configuration.getForkMode());
+      assertEquals(RepeatCount.ONCE, configuration.getRepeatMode());
+    }
+    finally {
+      Disposer.dispose(editor);
+    }
+  }
+
+  public void testUnknownForkAndRepeatModeNamesAreNotRejected() {
+    assertNotNull(JUnitConfigurationModel.getForkModeName("bogusForkMode"));
+    assertNotNull(JUnitConfigurationModel.getRepeatModeName("Bogus Repeat Mode"));
+    // the known values keep their localized presentation
+    assertEquals(JUnitBundle.message("junit.configuration.fork.mode.method"),
+                 JUnitConfigurationModel.getForkModeName(JUnitConfiguration.FORK_METHOD));
+    assertEquals(JUnitBundle.message("junit.configuration.repeat.mode.n.times"),
+                 JUnitConfigurationModel.getRepeatModeName(RepeatCount.N));
+  }
+
+  public void testUnknownForkAndRepeatModesAreClampedToDefaults() {
+    assertEquals(JUnitConfiguration.FORK_NONE, JUnitConfigurationModel.normalizeForkMode("bogusForkMode"));
+    assertEquals(JUnitConfiguration.FORK_NONE, JUnitConfigurationModel.normalizeForkMode(null));
+    // FORK_REPEAT is a run-time translation of method/class and is never persisted
+    assertEquals(JUnitConfiguration.FORK_NONE, JUnitConfigurationModel.normalizeForkMode(JUnitConfiguration.FORK_REPEAT));
+    assertEquals(RepeatCount.ONCE, JUnitConfigurationModel.normalizeRepeatMode("Bogus Repeat Mode"));
+    assertEquals(RepeatCount.ONCE, JUnitConfigurationModel.normalizeRepeatMode(null));
+    // the persistable values are kept as-is
+    assertEquals(JUnitConfiguration.FORK_KLASS, JUnitConfigurationModel.normalizeForkMode(JUnitConfiguration.FORK_KLASS));
+    assertEquals(RepeatCount.UNLIMITED, JUnitConfigurationModel.normalizeRepeatMode(RepeatCount.UNLIMITED));
   }
 
   public void testRunThirdPartyApplication() throws ExecutionException {
@@ -589,9 +647,40 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
     String filePath = ContainerUtil.find(parameters.getProgramParametersList().getArray(),
                                          value -> StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@")).substring(1);
     List<String> lines = FileUtilRt.loadLines(new File(filePath));
-    lines.remove(0);
+    lines.removeFirst();
 
     assertThat(lines).contains("TestApplication");
+  }
+
+  /**
+   * The "Before launch" and per-executor fragments are {@link com.intellij.execution.ui.RunConfigurationEditorFragment}s,
+   * which are only handed their {@link RunnerAndConfigurationSettingsImpl} through the
+   * {@link com.intellij.execution.ui.RunnerAndConfigurationAwareSettingsEditor} path that the Run/Debug Configurations
+   * dialog uses. Without it their {@code isInitiallyVisible} throws on the first reset.
+   */
+  private void initRunnerAndConfigurationFragments(JUnitSettingsEditor editor, JUnitConfiguration configuration) {
+    editor.resetEditorFrom(new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), configuration, false));
+    flushEditorAsync();
+  }
+
+  /**
+   * Drains the non-blocking read actions the fragment editor submits (test kind model reload, fragment validation)
+   * together with their EDT continuations. Skipping this lets a late continuation fire an event mid-test,
+   * or outlive the test and surface as a read action on a disposed project.
+   */
+  private static void flushEditorAsync() {
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+  }
+
+  /**
+   * {@link com.intellij.execution.ui.FragmentedSettingsEditor#getFragments()} is not accessible from here, but every
+   * fragment's component is added to the panel regardless of whether the fragment is currently selected.
+   */
+  private static <T extends JComponent> T findIn(JComponent root, Class<T> cls) {
+    T component = UIUtil.findComponentOfType(root, cls);
+    assertNotNull(cls.getSimpleName() + " not found in " + JUnitSettingsEditor.class.getSimpleName(), component);
+    return component;
   }
 
   private void assignJdk(Module module) {
@@ -673,7 +762,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
       configuration.checkConfiguration();
     }
     catch (RuntimeConfigurationError e) {
-      fail("cannot run: " + e.getMessage());
+      fail("cannot run: " + e.getLocalizedMessage());
     }
     catch (RuntimeConfigurationException e) {
       //ignore
@@ -681,25 +770,17 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
     return ((JavaCommandLine)state).getJavaParameters();
   }
 
-  private void checkCantRun(RunConfiguration configuration, String reasonBeginning) throws ExecutionException {
-    //MockRunRequest request = new MockRunRequest(myProject);
-    //CantRunException rejectReason;
-    //try {
-    //  configuration.runRequested(request);
-    //  rejectReason = request.myRejectReason;
-    //}
-    //catch (CantRunException e) {
-    //  rejectReason = e;
-    //}
-    //if (rejectReason == null) fail("Should not run");
-    //rejectReason.getMessage().startsWith(reasonBeginning);
-
+  /**
+   * Fails the test if the configuration can be run.
+   *
+   * @return the message explaining why it cannot, reported either by validation or while building the command line
+   */
+  private String cantRunReason(RunConfiguration configuration) throws ExecutionException {
     try {
       configuration.checkConfiguration();
     }
     catch (RuntimeConfigurationException e) {
-      assertThat(e.getLocalizedMessage()).startsWith(reasonBeginning);
-      return;
+      return e.getLocalizedMessage();
     }
 
     RunProfileState state = configuration.getState(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironmentBuilder(myProject, DefaultRunExecutor.getRunExecutorInstance()).runProfile(configuration).build());
@@ -709,11 +790,11 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
       ((JavaCommandLine)state).getJavaParameters();
     }
     catch (Throwable e) {
-      assertTrue(e.getLocalizedMessage().startsWith(reasonBeginning));
-      return;
+      return e.getLocalizedMessage();
     }
 
     fail("Should not run");
+    return null;
   }
 
   private static String setCompilerOutput(Module module, String path, boolean testOutput) {
@@ -753,9 +834,9 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
     String filePath = ContainerUtil.find(parameters.getProgramParametersList().getArray(),
                                          value -> StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@")).substring(1);
     List<String> lines = FileUtilRt.loadLines(new File(filePath));
-    assertEquals(psiPackage.getQualifiedName(), lines.get(0));
+    assertEquals(psiPackage.getQualifiedName(), lines.getFirst());
     //lines.remove(0);
-    lines.remove(0);
+    lines.removeFirst();
     return lines;
   }
 

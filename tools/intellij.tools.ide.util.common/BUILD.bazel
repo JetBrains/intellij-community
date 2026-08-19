@@ -53,6 +53,7 @@ jvm_library(
 exports_files(
     [
         "intellij.tools.ide.util.common.iml",
+        "resources/intellij.tools.ide.util.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

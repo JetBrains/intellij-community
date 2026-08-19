@@ -11,6 +11,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
@@ -23,6 +24,7 @@ import javax.swing.JComponent;
 import java.awt.Component;
 import java.io.IOException;
 import java.net.Proxy;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Path;
@@ -95,19 +97,11 @@ public class IdeUiService {
     return null;
   }
 
-  public String getProxyLogin() {
+  public @Nullable Pair<String, String> getProxyCredentials() {
     return null;
   }
 
-  public String getPlainProxyPassword() {
-    return null;
-  }
-
-  public boolean isProxyAuth() {
-    return false;
-  }
-
-  public List<Proxy> getProxyList(URL url) {
+  public @NotNull List<Proxy> getProxyList(URI uri) {
     return new ArrayList<>();
   }
 

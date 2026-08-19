@@ -29,11 +29,13 @@ class _StateParameters(NamedTuple):
     T2_tilde_in: Incomplete
 
 @_dispatchable
-def vf2pp_isomorphism(G1: Graph[_Node], G2: Graph[_Node], node_label: str | None = None, default_label: float | None = None): ...
+def vf2pp_isomorphism(
+    G1: Graph[_Node], G2: Graph[_Node], node_label: str | None = None, default_label: float | None = None
+) -> dict[Incomplete, Incomplete] | None: ...
 @_dispatchable
 def vf2pp_is_isomorphic(
     G1: Graph[_Node], G2: Graph[_Node], node_label: str | None = None, default_label: float | None = None
-): ...
+) -> bool: ...
 @_dispatchable
 def vf2pp_all_isomorphisms(
     G1: Graph[_Node], G2: Graph[_Node], node_label: str | None = None, default_label: float | None = None

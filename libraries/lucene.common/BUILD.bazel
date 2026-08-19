@@ -47,6 +47,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.lucene.common.iml",
+        "resources/intellij.libraries.lucene.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

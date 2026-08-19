@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -18,9 +17,7 @@ import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -31,14 +28,12 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class CustomSourceRootPropertiesEntityImpl(private val dataSource: CustomSourceRootPropertiesEntityData) :
   CustomSourceRootPropertiesEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
                                                                               CustomSourceRootPropertiesEntity::class.java,
                                                                               ConnectionId.ConnectionType.ONE_TO_ONE,
                                                                               false)
     private val connections = listOf<ConnectionId>(SOURCEROOT_CONNECTION_ID)
-
   }
 
   override val propertiesXmlTag: String
@@ -49,7 +44,6 @@ internal class CustomSourceRootPropertiesEntityImpl(private val dataSource: Cust
   override val sourceRoot: SourceRootEntity
     get() = snapshot.instrumentation.getParent(SOURCEROOT_CONNECTION_ID, this) as? SourceRootEntity
             ?: error("Parent sourceRoot not found for CustomSourceRootPropertiesEntity")
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -60,34 +54,12 @@ internal class CustomSourceRootPropertiesEntityImpl(private val dataSource: Cust
     return connections
   }
 
-
   internal class Builder(result: CustomSourceRootPropertiesEntityData?) :
     ModifiableWorkspaceEntityBase<CustomSourceRootPropertiesEntity, CustomSourceRootPropertiesEntityData>(result),
     CustomSourceRootPropertiesEntity.Builder {
     internal constructor() : this(CustomSourceRootPropertiesEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity CustomSourceRootPropertiesEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -119,14 +91,12 @@ internal class CustomSourceRootPropertiesEntityImpl(private val dataSource: Cust
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var propertiesXmlTag: String
       get() = getEntityData().propertiesXmlTag
@@ -136,68 +106,24 @@ internal class CustomSourceRootPropertiesEntityImpl(private val dataSource: Cust
         changedProperty.add("propertiesXmlTag")
       }
     override var sourceRoot: SourceRootEntityBuilder
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(SOURCEROOT_CONNECTION_ID, this) as? SourceRootEntityBuilder)
-          ?: (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] as? SourceRootEntityBuilder)
-          ?: error("sourceRoot is null for CustomSourceRootPropertiesEntity")
-        }
-        else {
-          (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] as? SourceRootEntityBuilder)
-          ?: error("sourceRoot is null for CustomSourceRootPropertiesEntity")
-        }
-      }
+      get() = getParent(SOURCEROOT_CONNECTION_ID) as? SourceRootEntityBuilder
+              ?: error("sourceRoot is null for CustomSourceRootPropertiesEntity")
       set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.instrumentation.addChild(SOURCEROOT_CONNECTION_ID, value, this)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
-          this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] = value
-        }
+        changeParent(value, SOURCEROOT_CONNECTION_ID)
         changedProperty.add("sourceRoot")
       }
 
     override fun getEntityClass(): Class<CustomSourceRootPropertiesEntity> = CustomSourceRootPropertiesEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRootPropertiesEntity>() {
   lateinit var propertiesXmlTag: String
-
   internal fun isPropertiesXmlTagInitialized(): Boolean = ::propertiesXmlTag.isInitialized
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<CustomSourceRootPropertiesEntity> {
-    val modifiable = CustomSourceRootPropertiesEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): CustomSourceRootPropertiesEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = CustomSourceRootPropertiesEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
+  override fun newInstance(): CustomSourceRootPropertiesEntity = CustomSourceRootPropertiesEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<CustomSourceRootPropertiesEntity, *> =
+    CustomSourceRootPropertiesEntityImpl.Builder(null)
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity") as EntityMetadata

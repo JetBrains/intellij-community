@@ -16,7 +16,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util/base/multiplatform",
         "//platform/editor-ui-api:editor-ui",
     ],
@@ -34,6 +34,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":recentProjects",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util/base/multiplatform:multiplatform_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
     ],

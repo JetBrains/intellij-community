@@ -55,8 +55,6 @@
       "plugins/llm/chat/src/com/intellij/ml/llm/core/chat/ui/chat/context/popup/promotion/PopupPromotableFeature.kt",
       "plugins/llm/chat/src/com/intellij/ml/llm/core/chat/ui/chat/input/AIAssistantInput.kt",
       "plugins/llm/chat/src/com/intellij/ml/llm/tasks/AITaskEventHistoryStorage.kt",
-      "plugins/llm/codeGeneration/src/com/intellij/ml/llm/codeGeneration/lightAgent/LightAgent.kt",
-      "plugins/llm/codeGeneration/src/com/intellij/ml/llm/codeGeneration/lightAgent/context/FindTextUtils2.kt",
       "plugins/llm/codeGeneration/src/com/intellij/ml/llm/codeGeneration/multifile/core/part/LlmPatchMessagePartFactory.kt",
       "plugins/llm/core/src/com/intellij/ml/llm/core/chat/ui/chat/input/chatModeSelector/AIAssistantNewChatModeService.kt",
       "plugins/llm/core/src/com/intellij/ml/llm/core/models/LlmProfileService.kt",

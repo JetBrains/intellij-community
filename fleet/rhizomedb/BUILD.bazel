@@ -60,7 +60,7 @@ jvm_library(
         "//fleet/radixTrie",
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinx-collections-immutable",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlinx-serialization-core",
         "@lib//:kotlinx-serialization-json",
         "//fleet/fastutil",
@@ -84,6 +84,7 @@ jvm_library(
         "//fleet/util/core:core_test_lib",
         "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
         "//fleet/radixTrie:radixTrie_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//fleet/fastutil:fastutil_test_lib",
         "//fleet/openmap:openmap_test_lib",
     ],
@@ -94,6 +95,7 @@ jvm_library(
 exports_files(
     [
         "fleet.rhizomedb.iml",
+        "resources/fleet.rhizomedb.xml",
     ],
     visibility = ["//visibility:public"],
 )

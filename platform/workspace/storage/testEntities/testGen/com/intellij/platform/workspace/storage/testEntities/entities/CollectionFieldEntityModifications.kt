@@ -20,7 +20,7 @@ interface CollectionFieldEntityBuilder : WorkspaceEntityBuilder<CollectionFieldE
 }
 
 internal object CollectionFieldEntityType : EntityType<CollectionFieldEntity, CollectionFieldEntityBuilder>() {
-  override val entityClass: Class<CollectionFieldEntity> get() = CollectionFieldEntity::class.java
+  override val entityImplClass: Class<*> get() = CollectionFieldEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = CollectionFieldEntityImpl.Builder::class.java
   operator fun invoke(
     versions: Set<Int>,

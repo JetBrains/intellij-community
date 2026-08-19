@@ -5,8 +5,8 @@ import com.intellij.ide.IconProvider
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.python.requirements.RequirementsFileType
 import com.jetbrains.python.icons.PythonIcons
-import com.jetbrains.python.requirements.RequirementsFileType
 import com.jetbrains.python.sdk.pythonSdk
 import javax.swing.Icon
 

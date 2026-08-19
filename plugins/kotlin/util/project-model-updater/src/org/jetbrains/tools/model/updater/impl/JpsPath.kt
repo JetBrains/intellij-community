@@ -6,6 +6,8 @@ sealed class JpsPath(private val root: String) {
         override val relativePath: String = if (isCommunity || path.startsWith("..")) path else "community/$path"
     }
 
+    class ModuleDir(override val relativePath: String) : JpsPath($$"$MODULE_DIR$")
+
     class MavenRepository(mavenId: MavenId, classifier: String? = null) : JpsPath($$"$MAVEN_REPOSITORY$") {
         override val relativePath: String = mavenId.toJarPath(classifier)
     }

@@ -13,4 +13,15 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.remote.pathMappingProvider" interface="com.intellij.remote.PathMappingProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.remote.targetAwarePathMappingProvider" interface="com.intellij.remote.TargetAwarePathMappingProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.remote.credentialsLanguageContribution"
+                    interface="com.intellij.remote.ext.CredentialsLanguageContribution" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.sshCredentialProvider" interface="com.intellij.remote.SshCredentialProvider" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.remote.ext.CredentialsManager"
+                        serviceImplementation="com.intellij.remote.ext.CredentialsManagerImpl"/>
+  </extensions>
 </idea-plugin>

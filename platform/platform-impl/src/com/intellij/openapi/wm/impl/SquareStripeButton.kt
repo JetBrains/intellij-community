@@ -25,9 +25,11 @@ import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
 import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.toolWindow.ToolWindowEventSource
-import com.intellij.toolWindow.ToolWindowExtension
 import com.intellij.toolWindow.ToolWindowLeftToolbar
+import com.intellij.toolWindow.ToolWindowRightToolbar
 import com.intellij.toolWindow.ToolWindowToolbar
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowHorizontalToolbar
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.MouseDragHelper
@@ -40,8 +42,6 @@ import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
@@ -63,7 +63,7 @@ abstract class AbstractSquareStripeButton(
   action: AnAction, presentation: Presentation,
   minimumSize: Supplier<Dimension>? = null
 ) :
-  ActionButton(action, presentation, ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, minimumSize ?: Supplier { getStripeToolbarButtonSize() }) {
+  ActionButton(action, presentation, ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, minimumSize ?: Supplier { getStripeToolbarButtonSize(false) }) {
 
   protected fun doInit(popupBuilder: () -> ActionGroup) {
     setLook(SquareStripeButtonLook(this))
@@ -74,22 +74,8 @@ abstract class AbstractSquareStripeButton(
     })
   }
 
-  fun paintDraggingButton(g: Graphics, isLeft: Boolean) {
-    val areaSize = size.also {
-      JBInsets.removeFrom(it, insets)
-      JBInsets.removeFrom(it, SquareStripeButtonLook.getIconPadding(isLeft))
-    }
-
-    val color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
-    val rect = Rectangle(areaSize)
-    buttonLook.paintLookBackground(g, rect, color)
-    icon.let {
-      val x = (areaSize.width - it.iconWidth) / 2
-      val y = (areaSize.height - it.iconHeight) / 2
-      buttonLook.paintIcon(g, this, it, x, y)
-    }
-
-    buttonLook.paintLookBorder(g, rect, color)
+  fun paintDraggingButton(g: Graphics, toolbarAnchor: ToolWindowAnchorEnum) {
+    (buttonLook as SquareStripeButtonLook).paintDraggingButton(g, toolbarAnchor)
   }
 }
 
@@ -106,7 +92,7 @@ class SquareStripeButton(val toolWindow: ToolWindowImpl) :
   init {
     doInit { createPopupGroup(toolWindow) }
     MouseDragHelper.setComponentDraggable(this, true)
-    setLook(SquareStripeButtonLook(this))
+    setLook(createSquareStripeButtonLook())
   }
 
   override fun paintButtonLook(g: Graphics) {
@@ -156,12 +142,17 @@ class SquareStripeButton(val toolWindow: ToolWindowImpl) :
   override fun checkSkipPressForEvent(e: MouseEvent): Boolean = e.button != MouseEvent.BUTTON1
 
   private fun getAlignment(anchor: ToolWindowAnchor, splitMode: Boolean): HelpTooltip.Alignment {
-    return when (anchor) {
-      ToolWindowAnchor.RIGHT -> HelpTooltip.Alignment.LEFT
-      ToolWindowAnchor.TOP -> HelpTooltip.Alignment.LEFT
-      ToolWindowAnchor.LEFT -> HelpTooltip.Alignment.RIGHT
-      ToolWindowAnchor.BOTTOM -> if (splitMode) HelpTooltip.Alignment.LEFT else HelpTooltip.Alignment.RIGHT
-      else -> HelpTooltip.Alignment.RIGHT
+    return when (anchor.toEnum()) {
+      ToolWindowAnchorEnum.RIGHT -> HelpTooltip.Alignment.LEFT
+      ToolWindowAnchorEnum.LEFT -> HelpTooltip.Alignment.RIGHT
+      ToolWindowAnchorEnum.TOP -> HelpTooltip.Alignment.BOTTOM // Only with the ToolWindowExtension
+      ToolWindowAnchorEnum.BOTTOM,
+        -> {
+        if (ToolWindowExtension.exists) HelpTooltip.Alignment.TOP
+        else {
+          if (splitMode) HelpTooltip.Alignment.LEFT else HelpTooltip.Alignment.RIGHT
+        }
+      }
     }
   }
 
@@ -261,7 +252,7 @@ private class SquareStripeButtonLookHorizontalText(button: SquareStripeButton): 
     val texts = getStripeSplitText()
     val insets = button.insets
     val textPadding = if (UISettings.getInstance().compactMode) 4 else 6
-    val textOffset = JBUI.CurrentTheme.Toolbar.stripeToolbarTextOffset(button.isOnTheLeftStripe())
+    val textOffset = getTextOffset(button)
     val x = insets.left + JBUI.scale(textPadding + textOffset)
     var y = iconPosition.y + iconLabelGap
     val totalWidth = button.width - insets.left - insets.right - JBUI.scale(textPadding * 2)
@@ -357,10 +348,9 @@ internal fun getStripeToolbarButtonIconSize(): Int {
   return JBUIScale.scale(extension.getStripeIconUnscaledSize())
 }
 
-internal fun getStripeToolbarButtonSize(): Dimension {
-  val extension = ToolWindowExtension.getInstance() ?: return JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize()
-  val size = extension.getStripeButtonUnscaledSize()
-  return JBDimension(size, size)
+internal fun getStripeToolbarButtonSize(moreButton: Boolean): Dimension {
+  val extension = ToolWindowExtension.getInstance()
+  return if (extension == null) JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() else extension.getButtonMinSize(moreButton)
 }
 
 private fun scaleIcon(icon: ScalableIcon): Icon {
@@ -430,11 +420,26 @@ private class SquareAnActionButton(private val window: ToolWindowImpl)
   }
 }
 
-internal fun Component.isOnTheLeftStripe(): Boolean {
+internal fun Component.getToolbarAnchor(): ToolWindowAnchorEnum? {
   val stripe = ComponentUtil.getParentOfType(ToolWindowToolbar::class.java, this)
-  return stripe is ToolWindowLeftToolbar
+
+  return when (stripe) {
+    is ToolWindowLeftToolbar -> ToolWindowAnchorEnum.LEFT
+    is ToolWindowRightToolbar -> ToolWindowAnchorEnum.RIGHT
+    is ToolWindowHorizontalToolbar -> {
+      when (stripe.anchor) {
+        ToolWindowAnchor.TOP -> ToolWindowAnchorEnum.TOP
+        ToolWindowAnchor.BOTTOM -> ToolWindowAnchorEnum.BOTTOM
+        else -> null
+      }
+    }
+    else -> null
+  }
 }
 
+/**
+ * A helper enum to avoid dead code in when/if constructions
+ */
 @ApiStatus.Internal
 enum class ToolWindowAnchorEnum {
   TOP,
@@ -444,13 +449,17 @@ enum class ToolWindowAnchorEnum {
 }
 
 @ApiStatus.Internal
-fun ToolWindowImpl.getAnchorEnum(): ToolWindowAnchorEnum {
-  when (anchor) {
-    ToolWindowAnchor.LEFT -> return ToolWindowAnchorEnum.LEFT
-    ToolWindowAnchor.RIGHT -> return ToolWindowAnchorEnum.RIGHT
-    ToolWindowAnchor.TOP -> return ToolWindowAnchorEnum.TOP
-    ToolWindowAnchor.BOTTOM -> return ToolWindowAnchorEnum.BOTTOM
-  }
+fun ToolWindowAnchorEnum.isHorizontal(): Boolean {
+  return this == ToolWindowAnchorEnum.TOP || this == ToolWindowAnchorEnum.BOTTOM
+}
 
-  throw IllegalStateException("Unknown anchor: $anchor")
+@ApiStatus.Internal
+fun ToolWindowAnchor.toEnum(): ToolWindowAnchorEnum {
+  return when (this) {
+    ToolWindowAnchor.LEFT -> ToolWindowAnchorEnum.LEFT
+    ToolWindowAnchor.RIGHT -> ToolWindowAnchorEnum.RIGHT
+    ToolWindowAnchor.TOP -> ToolWindowAnchorEnum.TOP
+    ToolWindowAnchor.BOTTOM -> ToolWindowAnchorEnum.BOTTOM
+    else -> throw IllegalStateException("Unknown anchor: $this")
+  }
 }

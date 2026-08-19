@@ -3,6 +3,7 @@ package fleet.util.async
 
 import fleet.util.channels.channels
 import fleet.util.channels.use
+import kotlin.jvm.JvmInline
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -22,9 +23,11 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.produceIn
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.transformWhile
@@ -33,7 +36,6 @@ import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withTimeout
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.nanoseconds
 
 fun <T, U> StateFlow<T>.view(f: (T) -> U): StateFlow<U> {
   val self = this
@@ -146,10 +148,10 @@ private fun <T> Flow<ChunkedEvent<T>>.chunkWithTimerTickOrDone(): Flow<List<T>> 
   result: -----A-----BC-----DEF---Gx
 
  */
-fun <T> Flow<T>.chunkedByTimeout(timeoutMillis: Long): Flow<List<T>> {
+fun <T> Flow<T>.chunkedByTimeout(timeout: Duration): Flow<List<T>> {
   val timer = flow<ChunkedEvent<T>> {
     do {
-      delay(timeoutMillis)
+      delay(timeout)
       emit(ChunkedEvent.Tick())
     }
     while (true)
@@ -179,10 +181,10 @@ fun <T, R> Iterable<Flow<T>>.combineReduce(r: R, f: suspend (R, T) -> R): Flow<R
 /**
  * Collects the underlying flow with timeout. It does not matter if collection is finished "organically" or with an error.
  */
-fun <T> Flow<T>.withTimeout(timeoutMillis: Long): Flow<T> {
+fun <T> Flow<T>.withTimeout(timeout: Duration): Flow<T> {
   val that = this
   return flow {
-    withTimeout(timeoutMillis) {
+    withTimeout(timeout) {
       emitAll(that)
     }
   }
@@ -218,17 +220,32 @@ fun <T> Flow<T>.consumeToChannelIn(scope: CoroutineScope): ReceiveChannel<T> {
   return rcv
 }
 
-fun <T> Flow<T>.throttleLatest(timeout: Duration): Flow<T> =
-  throttleLatest(timeout.toDelayMillis())
-
-fun <T> Flow<T>.throttleLatest(delayMillis: Long): Flow<T> = this
+fun <T> Flow<T>.throttleLatest(delay: Duration): Flow<T> = this
   .conflate()
   .transform {
     emit(it)
-    delay(delayMillis)
+    delay(delay)
   }
 
-private fun Duration.toDelayMillis(): Long = when (isPositive()) {
-  true -> plus(999_999L.nanoseconds).inWholeMilliseconds
-  false -> 0L
+fun <ValueType> Flow<ValueType>.onFirst(block: suspend (ValueType) -> Unit): Flow<ValueType> {
+  var isExecuted = false
+  return onEach { value ->
+    if (!isExecuted) {
+      block(value)
+      isExecuted = true
+    }
+  }
+}
+
+@JvmInline
+private value class ValueWrapper<ValueType>(val value: ValueType)
+
+fun <ValueType> Flow<ValueType>.onLast(block: suspend (ValueType) -> Unit): Flow<ValueType> {
+  return flow {
+    val events = onEach(this@flow::emit)
+    val last = events.map(::ValueWrapper).lastOrNull()
+    if (last != null) {
+      block(last.value)
+    }
+  }
 }

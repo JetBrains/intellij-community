@@ -1,9 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.structureView
 
-import com.intellij.platform.structureView.impl.StructurePopupTestExt
 import com.intellij.ide.util.InheritedMembersNodeProvider
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.structureView.impl.StructurePopupTestExt
+import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -29,7 +30,7 @@ abstract class AbstractKotlinFileStructureTest : KotlinFileStructureTestBase() {
         val fileText = FileUtil.loadFile(File(testDataDirectory, fileName()), true)
 
         val withInherited = InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_INHERITED")
-        setTreeActionState(nodeProvider().name, withInherited)
+        PlatformTestUtil.waitForPromise(setTreeActionState(nodeProvider().name, withInherited))
     }
 
     protected abstract fun nodeProvider(): InheritedMembersNodeProvider<*>

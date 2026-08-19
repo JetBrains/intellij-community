@@ -8,6 +8,22 @@
     <module name="intellij.java.ui"/>
     <module name="intellij.kotlin.base.compilerConfiguration"/>
     <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.updateChecker"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.statistics"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
@@ -24,9 +40,6 @@
 
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider"
-                        serviceImplementation="org.jetbrains.kotlin.idea.fir.plugin.K2KotlinPluginModeProvider"/>
-
     <cachesInvalidator implementation="org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyFileOutputProducerCacheInvalidator"/>
     <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinAnalyzerVersionAboutPopupDescriptionProvider"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>

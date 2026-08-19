@@ -21,6 +21,7 @@ internal class CodeAnnotator {
             with(highlighter.highlightingLexer) {
                 start(code)
 
+                var tokenType = tokenType
                 while (tokenType != null) {
                     val attributes: TextAttributes? = run {
                         val attrKey = highlighter.getTokenHighlights(tokenType).lastOrNull() ?: return@run null
@@ -28,6 +29,7 @@ internal class CodeAnnotator {
                     }
                     withTextAttributes(attributes) { append(tokenText) }
                     advance()
+                    tokenType = this.tokenType
                 }
             }
         }

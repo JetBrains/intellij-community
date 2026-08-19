@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  Cb.class
+  DeclKt.class
+  META-INF/kotlin_pureKotlin_functionTypeParamBecameSam-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/functionTypeParamBecameSam/a/decl.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_functionTypeParamBecameSam-a.kotlin_module
+  UseKt$u$1.class
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/functionTypeParamBecameSam/a/use.kt
+End of files
+------------------------------------------
+Exit code: OK

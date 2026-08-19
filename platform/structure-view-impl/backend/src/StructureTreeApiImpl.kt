@@ -13,7 +13,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.smartTree.Filter
 import com.intellij.ide.util.treeView.smartTree.NodeProvider
 import com.intellij.ide.util.treeView.smartTree.ProvidingTreeModel
-import com.intellij.ide.util.treeView.smartTree.TreeElementWrapper
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.lang.LangBundle
@@ -26,9 +25,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProject
+import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.rpc.backend.RemoteApiProvider
-import com.intellij.platform.structureView.backend.BackendStructureTreeService.Companion.processStateToGetSelectedValue
+import com.intellij.platform.structureView.backend.BackendStructureTreeService.Companion.processStateToGetSelectedKey
 import com.intellij.platform.structureView.backend.BackendStructureTreeService.Companion.visit
 import com.intellij.platform.structureView.backend.BackendStructureTreeService.StructureViewEvent
 import com.intellij.platform.structureView.impl.DelegatingNodeProvider
@@ -37,7 +36,6 @@ import com.intellij.platform.structureView.impl.StructureTreeApi
 import com.intellij.platform.structureView.impl.dto.StructureViewDtoId
 import com.intellij.platform.structureView.impl.dto.StructureViewModelDto
 import com.intellij.util.application
-import com.intellij.util.ui.tree.TreeUtil
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -52,36 +50,39 @@ import kotlin.collections.plus
 
 internal class StructureTreeApiImpl : StructureTreeApi {
   override suspend fun getShowPopupRequestFlow(): Flow<ShowStructurePopupRequest> {
-    return getStructureTreeService().getShowPopupRequestFlow()
+    return application.service<BackendInitiatedStructurePopupService>().getShowPopupRequestFlow()
   }
 
   override suspend fun createStructureViewModel(
+    projectId: ProjectId,
     id: StructureViewDtoId,
     fileEditorId: FileEditorId,
     fileId: VirtualFileId,
-    projectId: ProjectId,
   ): StructureViewModelDto? {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull() ?: return null
     val file = fileId.virtualFile()
     if (file == null) {
       return null
     }
     val fileEditor = fileEditorId.fileEditor() ?: FileEditorManager.getInstance(project).getSelectedEditor(file) ?: return null
 
-    return getStructureTreeService().createStructureViewModel(id, project, fileEditor, null)
+    return BackendStructureTreeService.getInstance(project).createStructureViewModel(id, fileEditor, null)
   }
 
-  override suspend fun structureViewModelDisposed(id: StructureViewDtoId) {
-    getStructureTreeService().disposeStructureViewModel(id)
+  override suspend fun structureViewModelDisposed(projectId: ProjectId, id: StructureViewDtoId) {
+    val project = projectId.findProjectOrNull() ?: return
+    BackendStructureTreeService.getInstance(project).disposeStructureViewModel(id)
   }
 
   override suspend fun setTreeActionState(
+    projectId: ProjectId,
     id: StructureViewDtoId,
     actionName: String,
     isEnabled: Boolean,
     autoClicked: Boolean,
   ) {
-    getStructureTreeService().getStructureViewEntry(id)?.let { entry ->
+    val project = projectId.findProjectOrNull() ?: return
+    BackendStructureTreeService.getInstance(project).getStructureViewEntry(id)?.let { entry ->
       entry.structureTreeModel.invoker.invoke {
         val nodeProviders = (entry.treeModel as? ProvidingTreeModel)?.nodeProviders?.filterIsInstance<FileStructureNodeProvider<*>>() ?: emptyList()
         val actions = nodeProviders + entry.treeModel.sorters + entry.treeModel.filters
@@ -90,7 +91,7 @@ internal class StructureTreeApiImpl : StructureTreeApi {
           return@invoke
         }
 
-        logFileStructureCheckboxClick(entry.fileEditor, entry.project, action)
+        logFileStructureCheckboxClick(entry.fileEditor, project, action)
 
         // Store autoclicked state in the action owner, persist user-initiated changes
         if (autoClicked) {
@@ -113,8 +114,9 @@ internal class StructureTreeApiImpl : StructureTreeApi {
   }
 
   @TestOnly
-  override suspend fun getNewSelection(id: StructureViewDtoId): Int? {
-    val entry = getStructureTreeService().getStructureViewEntry(id) ?: return null
+  override suspend fun getNewSelection(projectId: ProjectId, id: StructureViewDtoId): Int? {
+    val project = projectId.findProjectOrNull() ?: return null
+    val entry = BackendStructureTreeService.getInstance(project).getStructureViewEntry(id) ?: return null
 
     val selection = entry.structureTreeModel.invoker.compute {
       val (currentEditorElement, editorOffset) = entry.treeModel.currentEditorElement to ((entry.fileEditor as? TextEditor)?.getEditor()
@@ -127,18 +129,19 @@ internal class StructureTreeApiImpl : StructureTreeApi {
       }
 
 
-      val selectedValue = processStateToGetSelectedValue(state, entry, currentEditorElement)
-      entry.nodeToId[selectedValue]
+      val selectedKey = processStateToGetSelectedKey(state, entry, currentEditorElement)
+      entry.nodeToId[selectedKey]
     }.asDeferred().await()
 
 
     return selection
   }
 
-  override suspend fun navigateToElement(id: StructureViewDtoId, elementId: Int): Boolean {
-    val entry = getStructureTreeService().getStructureViewEntry(id) ?: return false
+  override suspend fun navigateToElement(projectId: ProjectId, id: StructureViewDtoId, elementId: Int): Boolean {
+    val project = projectId.findProjectOrNull() ?: return false
+    val entry = BackendStructureTreeService.getInstance(project).getStructureViewEntry(id) ?: return false
 
-    val elementValue = entry.nodeToId.entries.find { it.value == elementId }?.key ?: return false
+    val elementKey = entry.nodeToId.entries.find { it.value == elementId }?.key ?: return false
 
     val (targetElement, treeNode) = entry.structureTreeModel.invoker.compute {
       var targetElement: StructureViewTreeElement? = null
@@ -146,9 +149,9 @@ internal class StructureTreeApiImpl : StructureTreeApi {
 
       val root = entry.structureTreeModel.root ?: return@compute null to null
       visit(root, entry.structureTreeModel, TreePath(root)) {
-        val wrapper = TreeUtil.getUserObject(it.lastPathComponent) as? TreeElementWrapper
+        val wrapper = BackendStructureTreeService.unwrapTreeElementWrapper(it.lastPathComponent)
         val element = wrapper?.getValue() as? StructureViewTreeElement
-        return@visit if (element?.value == elementValue) {
+        return@visit if (element?.nodeKey(wrapper) == elementKey) {
           targetElement = element
           treeNode = wrapper
           true
@@ -167,21 +170,17 @@ internal class StructureTreeApiImpl : StructureTreeApi {
     return withContext(Dispatchers.EDT) {
       var succeeded = false
       WriteIntentReadAction.run {
-        CommandProcessor.getInstance().executeCommand(entry.project, {
+        CommandProcessor.getInstance().executeCommand(project, {
           if (targetElement.canNavigateToSource()) {
             targetElement.navigate(true)
             treeNode?.let { entry.navigationCallback?.invoke(it) }
             succeeded = true
           }
-          IdeDocumentHistory.getInstance(entry.project).includeCurrentCommandAsNavigation()
+          IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
         }, LangBundle.message("command.name.navigate"), null)
       }
       succeeded
     }
-  }
-
-  private fun getStructureTreeService(): BackendStructureTreeService {
-    return application.service<BackendStructureTreeService>()
   }
 
   companion object {

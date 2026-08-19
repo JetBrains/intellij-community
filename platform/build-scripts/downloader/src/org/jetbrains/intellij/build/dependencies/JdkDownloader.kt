@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.dependencies
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.build.downloadFileToCacheLocation
+import org.jetbrains.intellij.build.resolveAndExtractToCacheLocation
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
@@ -70,8 +70,7 @@ object JdkDownloader {
   ): Path {
     val effectiveVariation = if (isMusl) null else variation
     val jdkUrl = getUrl(communityRoot = communityRoot, os = os, arch = arch, isMusl = isMusl, jdkBuildNumber = jdkBuildNumber, variation = effectiveVariation)
-    val jdkArchive = downloadFileToCacheLocation(url = jdkUrl, communityRoot = communityRoot)
-    val jdkExtracted = extractFileToCacheLocation(communityRoot = communityRoot, archiveFile = jdkArchive, stripRoot = true)
+    val jdkExtracted = resolveAndExtractToCacheLocation(jdkUrl, communityRoot, BuildDependenciesExtractOptions.STRIP_ROOT)
     val jdkHome = if (os == OS.MACOSX) jdkExtracted.resolve("Contents").resolve("Home") else jdkExtracted
     infoLog("JPS-bootstrap JDK (jdkHome=$jdkHome, executable=${getJavaExecutable(jdkHome)})")
     return jdkHome

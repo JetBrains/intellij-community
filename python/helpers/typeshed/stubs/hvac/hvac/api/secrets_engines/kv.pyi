@@ -1,5 +1,7 @@
 import logging
+from typing import Any
 
+from hvac.adapters import Adapter
 from hvac.api.secrets_engines import KvV1, KvV2
 from hvac.api.vault_api_base import VaultApiBase
 
@@ -7,7 +9,7 @@ logger: logging.Logger
 
 class Kv(VaultApiBase):
     allowed_kv_versions: list[str]
-    def __init__(self, adapter, default_kv_version: str = "2") -> None: ...
+    def __init__(self, adapter: Adapter[Any], default_kv_version: str = "2") -> None: ...
     @property
     def v1(self) -> KvV1: ...
     @property

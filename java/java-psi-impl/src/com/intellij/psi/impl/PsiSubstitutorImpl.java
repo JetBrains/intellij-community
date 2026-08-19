@@ -150,6 +150,36 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
     return mySubstitutionMap.hashCode();
   }
 
+  /**
+   * A captured wildcard reports the nullability of the wildcard alone, which is not enough to instantiate a
+   * type-variable usage: the same {@code ? extends @Nullable Lib} is nullable when captured for
+   * {@code T extends @Nullable Object} but unspecified when captured for
+   * {@code T extends @NullnessUnspecified Object}. Both instantiate the same {@code @NullnessUnspecified T}, and only
+   * the second one may stay unspecified (everything in a {@code @NullMarked} scope):
+   * <pre>{@code
+   * interface Lib {}
+   * interface NullableBounded<T extends @Nullable Object> { T get(); }
+   * interface UnspecBounded<T extends @NullnessUnspecified Object> { T get(); }
+   *
+   * abstract <T extends @Nullable Object> @NullnessUnspecified T unspec(T input);
+   *
+   * Object nullableBound(NullableBounded<? extends @Nullable Lib> x) {
+   *   return unspec(x.get()); // T is a nullable capture, so the return type is nullable: a nullness mismatch
+   * }
+   *
+   * Object unspecBound(UnspecBounded<? extends @Nullable Lib> x) {
+   *   return unspec(x.get()); // T is an unspecified capture, so the return type is unspecified: no mismatch
+   * }
+   * }</pre>
+   * Without capture conversion both would look nullable, which is why the plain {@link PsiType#getNullability()} is
+   * not enough here. See the CaptureConvertedUnspecToObject/CaptureConvertedUnspecToOther JSpecify samples.
+   */
+  static @NotNull TypeNullability instantiationNullability(@NotNull PsiType substituted) {
+    return substituted instanceof PsiCapturedWildcardType
+           ? ((PsiCapturedWildcardType)substituted).getCaptureConvertedNullability()
+           : substituted.getNullability();
+  }
+
   private PsiType rawTypeForTypeParameter(@NotNull PsiTypeParameter typeParameter) {
     final PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
     if (extendsTypes.length > 0) {
@@ -186,8 +216,10 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
         assert newBound.isValid() : newBound.getClass() + "; " + bound.isValid();
         if (newBound instanceof PsiWildcardType) {
           final PsiType newBoundBound = ((PsiWildcardType)newBound).getBound();
-          return !((PsiWildcardType)newBound).isBounded() ? PsiWildcardType.createUnbounded(wildcardType.getManager())
-                                                          : rebound(wildcardType, newBoundBound);
+          // '? extends T' with 'T <- ?' is the substituted '?', so it keeps the place that one was written at
+          return !((PsiWildcardType)newBound).isBounded()
+                 ? PsiWildcardType.createUnbounded(wildcardType.getManager(), ((PsiWildcardType)newBound).getPsiContext())
+                 : rebound(wildcardType, newBoundBound);
         }
 
         return newBound == PsiTypes.nullType() ? newBound : rebound(wildcardType, newBound);
@@ -200,7 +232,7 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
 
       if (type.isExtends()) {
         if (newBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-          return PsiWildcardType.createUnbounded(type.getManager())
+          return PsiWildcardType.createUnbounded(type.getManager(), type.getPsiContext())
             .withNullability(newBound.getNullability());
         }
         return PsiWildcardType.createExtends(type.getManager(), newBound);
@@ -225,9 +257,8 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
           return result;
         }
         TypeNullability origNullability = classType.getNullability();
-        return origNullability.equals(TypeNullability.UNKNOWN)
-                   ? result
-                   : result.withNullability(origNullability.instantiatedWith(result.getNullability()));
+
+        return result.withNullability(origNullability.instantiatedWith(instantiationNullability(result)));
       }
       PsiSubstitutor resultSubstitutor = processClass(aClass, resolveResult.getSubstitutor());
       return new PsiImmediateClassType(aClass, resultSubstitutor, classType.getLanguageLevel(),

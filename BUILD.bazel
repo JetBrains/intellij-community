@@ -1,4 +1,5 @@
 load("@aspect_rules_lint//format:defs.bzl", "format_multirun")
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -514,6 +515,13 @@ exports_files(
 ### auto-generated section `iml intellij.idea.community.main.android` end
 
 ### auto-generated section `build intellij.idea.community.main.tests` start
+create_kotlinc_options(
+    name = "custom_main-tests",
+    opt_in = ["kotlin.ExperimentalStdlibApi"],
+    plugin_options = ["plugin:androidx.compose.compiler.plugins.kotlin:featureFlag=-PausableComposition"],
+    x_context_parameters = True,
+)
+
 jvm_library(
     name = "main-tests",
     srcs = glob(
@@ -528,14 +536,34 @@ jvm_library(
     name = "main-tests_test_lib",
     testonly = True,
     srcs = glob(
-        [],
+        [
+            "tests/main/testSrc/**/*.kt",
+            "tests/main/testSrc/**/*.java",
+            "tests/main/testSrc/**/*.form",
+        ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_main-tests",
     module_name = "intellij.idea.community.main.tests",
+    resource_strip_prefix = "tests/main/testData",
+    resources = glob(
+        ["tests/main/testData/**/*"],
+    ),
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
         ":main-tests",
+        "//platform/non-modal-welcome-screen:non-modal-welcome-screen_test_lib",
+        "//platform/platform-impl/concurrency:ide-concurrency-tests_test_lib",
+        "//platform/non-modal-welcome-screen:ide-nonModalWelcomeScreen-tests_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/bootstrap/coroutine",
+        "//platform/bootstrap/coroutine:coroutine_test_lib",
+        "@lib//:kotlin-stdlib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
         "//:main",
         "//:main_test_lib",
         "//java/java-tests:tests",
@@ -550,8 +578,14 @@ jvm_library(
         "//plugins/kotlin/onboarding-gradle:onboarding-gradle-tests_test_lib",
         "//plugins/svn4idea:vcs-svn-tests",
         "//plugins/svn4idea:vcs-svn-tests_test_lib",
-        "//plugins/tasks/tasks-tests:tests",
-        "//plugins/tasks/tasks-tests:tests_test_lib",
+        "//plugins/tasks/tests/base:tasks-tests",
+        "//plugins/tasks/tests/base:tasks-tests_test_lib",
+        "//plugins/tasks/tests/integration",
+        "//plugins/tasks/tests/integration:integration_test_lib",
+        "//plugins/tasks/tests/live",
+        "//plugins/tasks/tests/live:live_test_lib",
+        "//plugins/tasks/tests/vcs",
+        "//plugins/tasks/tests/vcs:vcs_test_lib",
         "//xml/dom-tests",
         "//xml/dom-tests:dom-tests_test_lib",
         "//plugins/IntelliLang/tests",
@@ -604,6 +638,8 @@ jvm_library(
         "//plugins/junit5_rt_tests:junit-v5-rt-tests_test_lib",
         "//plugins/properties/tests",
         "//plugins/properties/tests:tests_test_lib",
+        "//plugins/properties/property-tests:propertyBased-tests",
+        "//plugins/properties/property-tests:propertyBased-tests_test_lib",
         "//platform/execution-impl:execution-tests",
         "//platform/execution-impl:execution-tests_test_lib",
         "//plugins/commander",
@@ -618,6 +654,8 @@ jvm_library(
         "//plugins/toml/tests:tests_test_lib",
         "//plugins/maven/src/test:maven-tests",
         "//plugins/maven/src/test:maven-tests_test_lib",
+        "//plugins/maven/src/integrationTest:maven-integration-tests",
+        "//plugins/maven/src/integrationTest:maven-integration-tests_test_lib",
         "//plugins/gradle/java:java-tests",
         "//plugins/gradle/java:java-tests_test_lib",
         "//plugins/gradle/completion/toml:gradle-completion-toml-tests",
@@ -628,8 +666,8 @@ jvm_library(
         "//platform/remote-servers/target-integration-tests:remoteServers-targetsIntegrationTests_test_lib",
         "//python:python-commonTests",
         "//python:python-commonTests_test_lib",
-        "//python/python-sdk:sdk",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend",
+        "//python/python-sdk/backend:backend_test_lib",
         "//plugins/restructuredtext",
         "//plugins/restructuredtext:restructuredtext_test_lib",
         "//plugins/markdown/test:tests",
@@ -667,7 +705,6 @@ jvm_library(
         "//plugins/ui-designer/jps-plugin/tests",
         "//plugins/ui-designer/jps-plugin/tests:tests_test_lib",
         "//platform/non-modal-welcome-screen",
-        "//platform/non-modal-welcome-screen:non-modal-welcome-screen_test_lib",
         "//platform/util/coroutines:coroutines-tests",
         "//platform/util/coroutines:coroutines-tests_test_lib",
         "//platform/util/progress:progress-tests",
@@ -720,6 +757,8 @@ jvm_library(
         "//python/services/system-python:python-community-services-systemPython-tests_test_lib",
         "//python/python-pyproject:pyproject-tests",
         "//python/python-pyproject:pyproject-tests_test_lib",
+        "//python/python-requirements/tests",
+        "//python/python-requirements/tests:tests_test_lib",
         "//python/python-pytools/tests",
         "//python/python-pytools/tests:tests_test_lib",
         "//python/mcp:mcp-tests",
@@ -772,8 +811,6 @@ jvm_library(
         "//plugins/maven/groovy:groovy_test_lib",
         "//plugins/maven/proofreading",
         "//plugins/maven/proofreading:proofreading_test_lib",
-        "//platform/acp/tests",
-        "//platform/acp/tests:tests_test_lib",
         "//platform/core-nio-fs:core-nio-fs-tests",
         "//platform/core-nio-fs:core-nio-fs-tests_test_lib",
         "//platform/diagnostic/telemetry/agent-extension:diagnostic-telemetry-agent-extension",
@@ -919,9 +956,7 @@ jvm_library(
         "//platform/external-process-auth-helper:externalProcessAuthHelper-tests",
         "//platform/external-process-auth-helper:externalProcessAuthHelper-tests_test_lib",
         "//platform/platform-impl/concurrency:ide-concurrency-tests",
-        "//platform/platform-impl/concurrency:ide-concurrency-tests_test_lib",
         "//platform/non-modal-welcome-screen:ide-nonModalWelcomeScreen-tests",
-        "//platform/non-modal-welcome-screen:ide-nonModalWelcomeScreen-tests_test_lib",
         "//platform/build-scripts/usages:buildScripts-usages-tests",
         "//platform/build-scripts/usages:buildScripts-usages-tests_test_lib",
         "//platform/ijent:ijent-tests",
@@ -940,6 +975,8 @@ jvm_library(
         "//platform/jewel/markdown/core:jewel-markdown-core-tests_test_lib",
         "//platform/jewel/markdown/extensions/autolink:jewel-markdown-extensions-autolink-tests",
         "//platform/jewel/markdown/extensions/autolink:jewel-markdown-extensions-autolink-tests_test_lib",
+        "//platform/jewel/markdown/extensions/front-matter:jewel-markdown-extensions-frontMatter-tests",
+        "//platform/jewel/markdown/extensions/front-matter:jewel-markdown-extensions-frontMatter-tests_test_lib",
         "//platform/jewel/markdown/extensions/gfm-alerts:jewel-markdown-extensions-gfmAlerts-tests",
         "//platform/jewel/markdown/extensions/gfm-alerts:jewel-markdown-extensions-gfmAlerts-tests_test_lib",
         "//platform/jewel/markdown/extensions/gfm-tables:jewel-markdown-extensions-gfmTables-tests",
@@ -1006,8 +1043,8 @@ jvm_library(
         "//python/services/shared:python-community-services-shared-tests_test_lib",
         "//python/python-process-output/frontend:python-processOutput-frontend-tests",
         "//python/python-process-output/frontend:python-processOutput-frontend-tests_test_lib",
-        "//python/python-sdk:sdk-tests",
-        "//python/python-sdk:sdk-tests_test_lib",
+        "//python/python-sdk/tests",
+        "//python/python-sdk/tests:tests_test_lib",
         "//plugins/remote-control:remoteControl-tests",
         "//plugins/remote-control:remoteControl-tests_test_lib",
         "//platform/remoteDev-util:remoteDev-util-tests",
@@ -1034,6 +1071,8 @@ jvm_library(
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark-tests_test_lib",
         "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector-tests",
         "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector-tests_test_lib",
+        "//tools/intellij.tools.ide.metrics.statistics:ide-metrics-statistics-tests",
+        "//tools/intellij.tools.ide.metrics.statistics:ide-metrics-statistics-tests_test_lib",
         "//plugins/performanceTesting/event-bus:tools-ide-starter-bus-tests",
         "//plugins/performanceTesting/event-bus:tools-ide-starter-bus-tests_test_lib",
         "//plugins/git-features-trainer:vcs-git-featuresTrainer-tests",
@@ -1054,6 +1093,8 @@ jvm_library(
         "//plugins/yaml:yaml-tests_test_lib",
         "//plugins/kotlin/gradle/gradle-java:kotlin-gradle-gradle-java-tests",
         "//plugins/kotlin/gradle/gradle-java:kotlin-gradle-gradle-java-tests_test_lib",
+        "//platform/remote-driver/client:driver-client-tests",
+        "//platform/remote-driver/client:driver-client-tests_test_lib",
         "//platform/execution-process-mediator/client:execution-process-mediator-client-tests",
         "//platform/execution-process-mediator/client:execution-process-mediator-client-tests_test_lib",
         "//platform/execution-process-mediator/common:execution-process-mediator-common-tests",
@@ -1096,6 +1137,10 @@ jvm_library(
         "//plugins/groovy:groovy-tests-main_test_lib",
         "//platform/exploratory-tests:exploratory-tests-main",
         "//platform/exploratory-tests:exploratory-tests-main_test_lib",
+        "//java/java-property-tests:propertyBased-tests",
+        "//java/java-property-tests:propertyBased-tests_test_lib",
+        "//plugins/groovy/property-tests:propertyBased-tests",
+        "//plugins/groovy/property-tests:propertyBased-tests_test_lib",
         "//plugins/search-everywhere-ml:searchEverywhereMl-tests",
         "//plugins/search-everywhere-ml:searchEverywhereMl-tests_test_lib",
         "//platform/lsp-impl/tests",
@@ -1112,6 +1157,8 @@ jvm_library(
         "//plugins/mcp-server/mcpserver.terminal/tests:tests_test_lib",
         "//plugins/mcp-server/mcpserver.terminal.frontend/tests",
         "//plugins/mcp-server/mcpserver.terminal.frontend/tests:tests_test_lib",
+        "//platform/testFramework/extensions:testExtensions",
+        "//platform/testFramework/extensions:testExtensions_test_lib",
     ],
 )
 ### auto-generated section `build intellij.idea.community.main.tests` end
@@ -1124,3 +1171,10 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.idea.community.main.tests` end
+
+### auto-generated section `test intellij.idea.community.main.tests` start
+jps_test(
+    name = "main-tests_test",
+    runtime_deps = [":main-tests_test_lib"],
+)
+### auto-generated section `test intellij.idea.community.main.tests` end

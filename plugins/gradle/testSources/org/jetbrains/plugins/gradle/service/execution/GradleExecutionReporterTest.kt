@@ -57,7 +57,7 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
 
   private val projectFixture = gradleFixture.projectFixture(projectRootFixture, numProjectSyncs = 0)
 
-  private val issueChecker by extensionPointFixture(GradleIssueChecker.EP_NAME, ::TestFailureIssueChecker)
+  private val issueChecker by extensionPointFixture(GradleIssueChecker.EP_NAME, createExtension = ::TestFailureIssueChecker)
 
   private val reporterFixture by testFixture {
     initialized(GradleExecutionReporterFixture(

@@ -17,9 +17,9 @@ import com.intellij.refactoring.rename.api.RenameTarget
 import org.intellij.plugins.markdown.MarkdownIcons
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDefinition
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownShortReferenceLink
 import org.intellij.plugins.markdown.model.psi.MarkdownSymbolWithUsages
 import org.intellij.plugins.markdown.model.psi.withLocationIn
+import org.intellij.plugins.markdown.util.isFootnoteLabelText
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -50,7 +50,7 @@ data class LinkLabelSymbol(
     get() = UsageHandler.createEmptyUsageHandler(text)
 
   override val searchText: String
-    get() = text
+    get() = text.trimStart().split(SEARCH_WORD_SEPARATOR, limit = 2).firstOrNull().orEmpty()
 
   override fun presentation(): TargetPresentation {
     val builder = TargetPresentation.builder(text).icon(MarkdownIcons.EditorActions.Link)
@@ -58,6 +58,8 @@ data class LinkLabelSymbol(
   }
 
   companion object {
+    private val SEARCH_WORD_SEPARATOR = Regex("\\s+")
+
     fun createPointer(label: MarkdownLinkLabel): Pointer<LinkLabelSymbol> {
       val absoluteRange = label.labelTextRange.shiftRight(label.startOffset)
       return createPointer(label.containingFile, absoluteRange, label.labelText)
@@ -70,9 +72,6 @@ data class LinkLabelSymbol(
     }
 
     val MarkdownLinkLabel.isDeclaration: Boolean
-      get() = parentOfType<MarkdownLinkDefinition>() != null
-
-    val MarkdownLinkLabel.isShortLink: Boolean
-      get() = parentOfType<MarkdownShortReferenceLink>() != null
+      get() = parentOfType<MarkdownLinkDefinition>() != null && !isFootnoteLabelText(text)
   }
 }

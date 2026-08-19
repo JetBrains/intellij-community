@@ -50,9 +50,19 @@ import kotlin.io.path.invariantSeparatorsPathString
 
 internal const val VERSION_OPTION: String = "version"
 
-internal const val PROJECT_CONFIG_DIR: String = $$"$PROJECT_CONFIG_DIR$"
+@ApiStatus.Internal
+const val PROJECT_CONFIG_DIR: String = $$"$PROJECT_CONFIG_DIR$"
 
 private const val CONFIG_WORKSPACE_DIR = "workspace"
+
+@ApiStatus.Internal
+const val WORKSPACE_XML_FILE_NAME: String = "workspace.xml"
+
+@ApiStatus.Internal
+const val MISC_XML_FILE_NAME: String = "misc.xml"
+
+@ApiStatus.Internal
+const val CACHE_STATE_XML_FILE_NAME: String = "cache-state.xml"
 
 @ApiStatus.Internal
 open class ProjectStoreImpl(final override val project: Project) : ComponentStoreWithExtraComponents(), IProjectStore {
@@ -142,8 +152,8 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       // PROJECT_CONFIG_DIR must be the first macro
       val dotIdea = storeDescriptor.dotIdea!!
       macros.add(Macro(PROJECT_CONFIG_DIR, dotIdea))
-      macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, machineWorkspacePath ?: dotIdea.resolve("workspace.xml")))
-      macros.add(Macro(StoragePathMacros.PROJECT_FILE, dotIdea.resolve("misc.xml")))
+      macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, machineWorkspacePath ?: dotIdea.resolve(WORKSPACE_XML_FILE_NAME)))
+      macros.add(Macro(StoragePathMacros.PROJECT_FILE, dotIdea.resolve(MISC_XML_FILE_NAME)))
 
       if (isUnitTestMode) {
         // load state only if there are existing files
@@ -166,7 +176,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     val presentableUrl = if (storeDescriptor.dotIdea == null) file else storeDescriptor.projectIdentityFile
 
     val cacheFileName = getProjectCacheFileName(presentableUrl = presentableUrl.invariantSeparatorsPathString, projectName = "")
-    macros.add(Macro(StoragePathMacros.CACHE_FILE, projectsDataDir.resolve(cacheFileName).resolve("cache-state.xml")))
+    macros.add(Macro(StoragePathMacros.CACHE_FILE, projectsDataDir.resolve(cacheFileName).resolve(CACHE_STATE_XML_FILE_NAME)))
 
     storageManager.setMacros(macros)
 
@@ -209,7 +219,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
           defaultProject = defaultProject,
           element = element,
           storagePathResolver = { StoragePathMacros.PROJECT_FILE },  // doesn't matter; any path will be resolved as projectFilePath (see `fileResolver`)
-          fileResolver = { if (it == "workspace.xml") workspacePath else iprFile },
+          fileResolver = { if (it == WORKSPACE_XML_FILE_NAME) workspacePath else iprFile },
         )
       }
     }.getOrLogException(LOG)

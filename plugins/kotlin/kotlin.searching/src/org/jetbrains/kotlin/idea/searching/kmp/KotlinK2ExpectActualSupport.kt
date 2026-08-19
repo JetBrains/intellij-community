@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.searching.kmp
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.getExpectsForActual
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.search.ExpectActualSupport
 import org.jetbrains.kotlin.psi.KtCallableDeclaration

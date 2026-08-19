@@ -40,6 +40,18 @@ fun runAllCatching(vararg actions: () -> Unit): Throwable? {
 }
 
 @TestOnly
+suspend fun runAllSuspend(vararg actions: suspend () -> Unit) {
+  runAllCatchingSuspend(*actions)?.let {
+    throw it
+  }
+}
+
+@TestOnly
+suspend fun runAllCatchingSuspend(vararg actions: suspend () -> Unit): Throwable? {
+  return actions.asSequence().runAllCatchingSuspend()
+}
+
+@TestOnly
 fun <X> runAllCatching(items: Collection<X>, action: (X) -> Unit): Throwable? {
   return items.asSequence().map {
     {
@@ -55,24 +67,39 @@ fun Sequence<() -> Unit>.runAllCatching(): Throwable? {
     try {
       action()
     }
-    catch (e: CompoundRuntimeException) {
-      if (exception == null) {
-        exception = e
-      }
-      else {
-        e.exceptions.forEach(exception::addSuppressed)
-      }
-    }
     catch (e: Throwable) {
-      if (exception == null) {
-        exception = e
-      }
-      else {
-        exception.addSuppressed(e)
-      }
+      exception = exception.collectRunAllException(e)
     }
   }
   return exception
+}
+
+@TestOnly
+suspend fun Sequence<suspend () -> Unit>.runAllCatchingSuspend(): Throwable? {
+  var exception: Throwable? = null
+  for (action in this) {
+    try {
+      action()
+    }
+    catch (e: Throwable) {
+      exception = exception.collectRunAllException(e)
+    }
+  }
+  return exception
+}
+
+private fun Throwable?.collectRunAllException(e: Throwable): Throwable {
+  if (this == null) {
+    return e
+  }
+
+  if (e is CompoundRuntimeException) {
+    e.exceptions.forEach(this::addSuppressed)
+  }
+  else {
+    addSuppressed(e)
+  }
+  return this
 }
 
 fun List<Throwable>.reduceAndThrow() {

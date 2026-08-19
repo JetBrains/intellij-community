@@ -140,7 +140,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     if ((PyTypeChecker.isUnknown(qualifierType, myContext.getTypeEvalContext()) ||
          (qualifierType instanceof PyStructuralType && ((PyStructuralType)qualifierType).isInferredFromUsages())) &&
         myContext.allowImplicits() && PyCallExpressionHelper.canQualifyAnImplicitName(qualifier)) {
-      PyResolveUtil.addImplicitResolveResults(referencedName, ret, myElement);
+      PyResolveUtil.addImplicitResolveResults(referencedName, ret, getElement());
     }
 
     // special case of __doc__
@@ -208,7 +208,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     if (qualifier == null) {
       return EMPTY_ARRAY;
     }
-    final PyQualifiedExpression element = CompletionUtilCoreImpl.getOriginalOrSelf(myElement);
+    final PyQualifiedExpression element = CompletionUtilCoreImpl.getOriginalOrSelf(getElement());
 
     PyType qualifierType = TypeEvalContext.codeCompletion(element.getProject(), element.getContainingFile()).getType(qualifier);
     ProcessingContext ctx = new ProcessingContext();
@@ -423,7 +423,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
   }
 
   protected @NotNull PyQualifiedReference copyWithResolveContext(PyResolveContext context) {
-    return new PyQualifiedReference(myElement, context);
+    return new PyQualifiedReference(getElement(), context);
   }
 
   private boolean isResolvedToResult(PsiElement element, PsiElement resolveResult) {

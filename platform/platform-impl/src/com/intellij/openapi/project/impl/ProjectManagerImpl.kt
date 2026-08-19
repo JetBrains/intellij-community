@@ -14,6 +14,7 @@ import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
@@ -104,6 +105,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PROJECT_NEWLY_CREATED
 import com.intellij.platform.PROJECT_NEWLY_OPENED
 import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.attachSafe
 import com.intellij.platform.attachToProjectAsync
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
@@ -1101,7 +1103,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return null
     }
 
-    if (options.runConfigurators && (options.isNewProject || project.serviceAsync<ModuleManager>().modules.isEmpty())
+    if (options.runConfigurators == true && (options.isNewProject || project.serviceAsync<ModuleManager>().modules.isEmpty())
         || isLoadedFromCacheButHasNoModules(project)
     ) {
       val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
@@ -1126,8 +1128,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     val isValidProject = ProjectUtil.isValidProjectPath(projectDir)
     val processor = ProjectAttachProcessor.getProcessor(projectToClose, projectDir, options.project)
-    if (processor != null &&
-        (!isValidProject || serviceAsync<GeneralSettings>().confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
+    if (!isValidProject || serviceAsync<GeneralSettings>().confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK) {
       while (true) {
         val result = tryToOpen(projectToClose, processor, options, projectDir)
         if (result != null) {
@@ -1182,7 +1183,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   private suspend fun tryToOpen(
     projectToClose: Project,
-    processor: ProjectAttachProcessor,
+    processor: ProjectAttachProcessor?,
     options: OpenProjectTask,
     projectDir: Path,
   ): Boolean? {
@@ -1196,9 +1197,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         }
       }
       GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH -> {
-        processor.beforeAttach(options.project)
-        if (attachToProjectAsync(projectToClose, projectDir, processor, options.callback, options.beforeOpen)) {
-          return true
+        LOG.assertTrue(processor != null, "Processor must not be null to be able to attach project to the same window")
+        if (processor != null) {
+          processor.beforeAttach(options.project)
+          return checkTrustedState(projectDir) && attachSafe(processor, projectToClose, projectDir, options.callback, options.beforeOpen)
         }
         else {
           // cannot attach, retry
@@ -1267,6 +1269,8 @@ private fun handleListenerError(e: Throwable, listener: ProjectManagerListener) 
 }
 
 private fun fireProjectClosing(project: Project) {
+  MessagePool.clearErrors() // clear all collected exceptions, just in case they hold any project references
+
   LOG.debug("enter: fireProjectClosing()")
   try {
     closePublisher.projectClosing(project)

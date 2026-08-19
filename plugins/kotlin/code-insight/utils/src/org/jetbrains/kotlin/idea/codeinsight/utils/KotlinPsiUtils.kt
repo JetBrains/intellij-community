@@ -434,7 +434,6 @@ fun KtCallExpression.isCallingAnyOf(vararg fqNames: FqName): Boolean {
 
     val fqName = resolveToCall()
         ?.singleFunctionCallOrNull()
-        ?.partiallyAppliedSymbol
         ?.symbol
         ?.callableId
         ?.asSingleFqName()

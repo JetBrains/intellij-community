@@ -1,8 +1,9 @@
 import datetime
+import json
 from collections.abc import Callable, Collection, Iterable, Iterator, Sequence
 from decimal import Decimal
 from re import Pattern
-from typing import Any, ClassVar, Protocol, TypeAlias, type_check_only
+from typing import Any, ClassVar, Protocol, Self, TypeAlias, type_check_only
 from uuid import UUID
 
 from django.core.files import File
@@ -14,7 +15,7 @@ from django.forms.widgets import Widget
 from django.utils.choices import CallableChoiceIterator, _ChoicesCallable, _ChoicesInput
 from django.utils.datastructures import _PropertyDescriptor
 from django.utils.functional import _StrOrPromise
-from typing_extensions import Self, override
+from typing_extensions import override
 
 # Problem: attribute `widget` is always of type `Widget` after field instantiation.
 # However, on class level it can be set to `Type[Widget]` too.
@@ -104,7 +105,7 @@ class IntegerField(Field):
     max_value: int | Callable[[], int] | None
     min_value: int | Callable[[], int] | None
     step_size: int | Callable[[], int] | None
-    re_decimal: Any
+    re_decimal: Pattern[str]
     def __init__(
         self,
         *,
@@ -185,11 +186,11 @@ class DecimalField(IntegerField):
     def widget_attrs(self, widget: Widget) -> dict[str, Any]: ...
 
 class BaseTemporalField(Field):
-    input_formats: Any
+    input_formats: Collection[str] | DateTimeFormatsIterator | None
     def __init__(
         self,
         *,
-        input_formats: Any | None = None,
+        input_formats: Collection[str] | DateTimeFormatsIterator | None = None,
         required: bool = ...,
         widget: Widget | type[Widget] | None = ...,
         label: _StrOrPromise | None = ...,
@@ -209,14 +210,14 @@ class BaseTemporalField(Field):
 class DateField(BaseTemporalField):
     widget: _ClassLevelWidgetT
     @override
-    def to_python(self, value: None | str | datetime.datetime | datetime.date) -> datetime.date | None: ...
+    def to_python(self, value: str | datetime.datetime | datetime.date | None) -> datetime.date | None: ...
     @override
     def strptime(self, value: str, format: str) -> datetime.date: ...
 
 class TimeField(BaseTemporalField):
     widget: _ClassLevelWidgetT
     @override
-    def to_python(self, value: None | str | datetime.time) -> datetime.time | None: ...
+    def to_python(self, value: str | datetime.time | None) -> datetime.time | None: ...
     @override
     def strptime(self, value: str, format: str) -> datetime.time: ...
 
@@ -228,7 +229,7 @@ class DateTimeField(BaseTemporalField):
     @override
     def prepare_value(self, value: Any) -> Any: ...
     @override
-    def to_python(self, value: None | str | datetime.datetime | datetime.date) -> datetime.datetime | None: ...
+    def to_python(self, value: str | datetime.datetime | datetime.date | None) -> datetime.datetime | None: ...
     @override
     def strptime(self, value: str, format: str) -> datetime.datetime: ...
 
@@ -305,7 +306,7 @@ class FileField(Field):
         label_suffix: str | None = ...,
     ) -> None: ...
     @override
-    def to_python(self, data: File | None) -> File | None: ...
+    def to_python(self, data: File[Any] | None) -> File[Any] | None: ...
     @override
     def clean(self, data: Any, initial: Any | None = None) -> Any: ...
     @override
@@ -315,7 +316,7 @@ class FileField(Field):
 
 class ImageField(FileField):
     @override
-    def to_python(self, data: File | None) -> File | None: ...
+    def to_python(self, data: File[Any] | None) -> File[Any] | None: ...
     @override
     def widget_attrs(self, widget: Widget) -> dict[str, Any]: ...
 
@@ -535,6 +536,7 @@ class FilePathField(ChoiceField):
         disabled: bool = ...,
         label_suffix: str | None = ...,
     ) -> None: ...
+    def set_choices(self) -> None: ...
 
 class SplitDateTimeField(MultiValueField):
     widget: _ClassLevelWidgetT
@@ -618,9 +620,14 @@ class JSONString(str): ...
 class JSONField(CharField):
     default_error_messages: ClassVar[_ErrorMessagesDict]
     widget: _ClassLevelWidgetT
-    encoder: Any
-    decoder: Any
-    def __init__(self, encoder: Any | None = None, decoder: Any | None = None, **kwargs: Any) -> None: ...
+    encoder: type[json.JSONEncoder] | None
+    decoder: type[json.JSONDecoder] | None
+    def __init__(
+        self,
+        encoder: type[json.JSONEncoder] | None = None,
+        decoder: type[json.JSONDecoder] | None = None,
+        **kwargs: Any,
+    ) -> None: ...
     @override
     def to_python(self, value: Any) -> Any: ...
     @override

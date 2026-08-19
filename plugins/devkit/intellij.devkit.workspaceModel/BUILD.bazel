@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.devkit.workspaceModel` start
@@ -32,10 +32,10 @@ jvm_library(
     deps = [
         # do not sort,
         "//java/java-indexing-api:indexing",
-        "@lib//:kotlinc-analysis-api-provided",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/references",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "@lib//:workspace-model-codegen",
@@ -98,9 +98,9 @@ jvm_library(
         # do not sort,
         ":workspaceModel",
         "//java/java-indexing-api:indexing_test_lib",
-        "@lib//:kotlinc-analysis-api-provided",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//plugins/kotlin/references:references_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
@@ -153,6 +153,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.workspaceModel.iml",
+        "resources/intellij.devkit.workspaceModel.xml",
     ],
     visibility = ["//visibility:public"],
 )

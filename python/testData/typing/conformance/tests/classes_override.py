@@ -100,3 +100,51 @@ class ChildB(ParentB):
     @override
     def method1(self) -> None:  # OK
         pass
+
+
+# > When type checkers encounter a method decorated with @typing.override they
+# > should treat it as a type error unless that method is overriding a method or
+# > attribute in some ancestor class, and the type of the overriding method is
+# > assignable to the type of the overridden method.
+
+# ``__init__`` and ``__new__`` are normally exempt from override compatibility
+# checks, since constructors are not subject to the Liskov substitution
+# principle. However, when they are explicitly decorated with ``@override`` the
+# decorator's assignability check should still be honored.
+# See https://github.com/python/typing/issues/2222
+
+
+class ParentC:
+    def __init__(self, x: int) -> None: ...
+
+    def __new__(cls, x: int) -> "ParentC":
+        raise NotImplementedError
+
+
+class ChildC1(ParentC):
+    @override
+    def __init__(self, x: int) -> None: ...  # OK
+
+    @override
+    def __new__(cls, x: int) -> "ChildC1":  # OK
+        raise NotImplementedError
+
+
+class ChildC2(ParentC):
+    @override  # E[init]
+    def __init__(self, x: str) -> None: ...  # E[init]: not assignable to "ParentC.__init__"
+
+    @override  # E[new]
+    def __new__(cls, x: str) -> "ChildC2":  # E[new]: not assignable to "ParentC.__new__"
+        raise NotImplementedError
+
+
+# Without ``@override`` an incompatible constructor signature is allowed, since
+# ``__init__`` and ``__new__`` are exempt from the usual override checks.
+
+
+class ChildC3(ParentC):
+    def __init__(self, x: str) -> None: ...  # OK
+
+    def __new__(cls, x: str) -> "ChildC3":  # OK
+        raise NotImplementedError

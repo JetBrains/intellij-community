@@ -5,6 +5,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -32,7 +33,8 @@ internal class ConvertTrimIndentToTrimMarginIntention :
         return template.text.startsWith("\"\"\"") && template.isSurroundedByLineBreaksOrBlanks()
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Unit? {
         val callee = element.calleeExpression ?: return null
         val symbol = callee.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.symbol ?: return null
         return (symbol.callableId?.asSingleFqName() == FqName("kotlin.text.trimIndent")).asUnit

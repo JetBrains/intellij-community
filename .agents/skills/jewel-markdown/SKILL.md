@@ -1,6 +1,6 @@
 ---
 name: jewel-markdown
-description: Build or debug Jewel Markdown parsing, rendering, GFM, images, styling, and extensions.
+description: Build or debug Jewel Markdown parsing, rendering, and styling.
 ---
 
 # Jewel Markdown

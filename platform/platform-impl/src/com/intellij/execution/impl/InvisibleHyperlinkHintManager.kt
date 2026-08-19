@@ -125,7 +125,12 @@ internal class InvisibleHyperlinkHintManager(private val editor: Editor, parentD
            neighbourhood.contains(mousePoint.screenPoint)
   }
 
-  fun showHint(link: RangeHighlighterEx, e: EditorMouseEvent, action: () -> Unit) {
+  fun showHint(
+    link: RangeHighlighterEx,
+    e: EditorMouseEvent,
+    consumeOnHintOpen: Boolean = true,
+    action: () -> Unit,
+  ) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
@@ -145,7 +150,9 @@ internal class InvisibleHyperlinkHintManager(private val editor: Editor, parentD
           showHintImmediately(link, e, action)
         }
       }
-      e.consume()
+      if (consumeOnHintOpen) {
+        e.consume()
+      }
     }
   }
 

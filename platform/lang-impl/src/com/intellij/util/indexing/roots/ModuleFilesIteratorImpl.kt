@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.util.indexing.IndexingBundle
-import com.intellij.util.indexing.andIndexable
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
 import com.intellij.util.indexing.roots.origin.ModuleRootOriginImpl
 import com.intellij.util.indexing.unwrapCacheAvoiding
@@ -64,12 +63,8 @@ internal class ModuleFilesIteratorImpl(
 
     return if (recursive) {
       val processor = processorEx.unwrapCacheAvoiding()
-      val customFilter = VirtualFileFilter { file ->
-        val info = myWorkspaceFileIndex.getFileInfo(file, true, true, false, false, false ,false, false)
-        info.findFileSet { it.kind.isIndexable && (it.data as? ModuleRelatedRootData)?.module == module } != null
-      }.and(fileFilter) // run `fileFilter` second, so if it is deduplication filter, it won't be invoked on files outside module
-      val fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean = { fileSet -> !isScopeDisposed() && fileSet.kind.isContent }
-      myWorkspaceFileIndex.processContentUnderDirectory(root, processor, customFilter, fileSetFilter)
+      val fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean = { fileSet -> !isScopeDisposed() && isInContent(fileSet) }
+      myWorkspaceFileIndex.processIndexableContentUnderDirectory(root, processor, fileFilter, fileSetFilter)
     }
     else {
       val processorEx = processorEx.unwrapCacheAvoiding()
@@ -78,18 +73,6 @@ internal class ModuleFilesIteratorImpl(
       // 2. It causes performance degradation in Rider
       fileFilter.accept(root) && processorEx.processFileEx(root) != TreeNodeProcessingResult.STOP
     }
-  }
-
-  fun iterateContentUnderDirectory(
-    dir: VirtualFile,
-    processor: ContentIteratorEx,
-    customFilter: VirtualFileFilter,
-    myWorkspaceFileIndex: WorkspaceFileIndexEx,
-  ): Boolean {
-    val processor = processor.unwrapCacheAvoiding()
-    val customFilter = customFilter.andIndexable(myWorkspaceFileIndex)
-    val fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean = { fileSet -> !isScopeDisposed() && isInContent(fileSet) }
-    return myWorkspaceFileIndex.processContentUnderDirectory(dir, processor, customFilter, fileSetFilter)
   }
 
   private fun toContentIteratorEx(processor: ContentIterator): ContentIteratorEx {

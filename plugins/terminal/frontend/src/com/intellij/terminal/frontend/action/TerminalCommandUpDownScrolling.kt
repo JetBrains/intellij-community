@@ -6,12 +6,18 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ScrollingUtil
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
 internal abstract class TerminalCommandUpDownScrolling(private val up: Boolean) : TerminalPromotedDumbAwareAction() {
+  init {
+    templatePresentation.isRWLockRequired = Registry.`is`("actions.update.and.perform.arrow.actions.with.rw.lock")
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     //Copy logic from LookupActionHandler#executeUpOrDown for up/down scrolling in the terminal popup
     val lookup = LookupManager.getActiveLookup(e.terminalEditor) as LookupImpl?
@@ -32,7 +38,9 @@ internal abstract class TerminalCommandUpDownScrolling(private val up: Boolean) 
       ScrollingUtil.moveDown(lookup.list, 0)
     }
     lookup.markSelectionTouched()
-    lookup.refreshUi(false, true)
+    WriteIntentReadAction.run {
+      lookup.refreshUi(false, true)
+    }
   }
 
   override fun update(e: AnActionEvent) {

@@ -27,7 +27,6 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiPolyadicExpression;
@@ -257,21 +256,6 @@ public class MyTestInjector {
       }
 
       if (host instanceof PsiCommentImpl) {
-        String text = host.getText();
-        if (text.startsWith("/*--{") && text.endsWith("}--*/")) {
-          TextRange textRange = new TextRange(4, text.length()-4);
-          if (!(host.getParent() instanceof PsiMethod method)) return;
-          if (!method.hasModifierProperty(PsiModifier.NATIVE) || !method.hasModifierProperty(PsiModifier.PUBLIC)) return;
-          StringBuilder paramList = new StringBuilder();
-          for (PsiParameter parameter : method.getParameterList().getParameters()) {
-            if (!paramList.isEmpty()) paramList.append(",");
-            paramList.append(parameter.getName());
-          }
-          @NonNls String header = "function " + method.getName() + "("+paramList+") {";
-          Language gwt = Language.findLanguageByID("GWT JavaScript");
-          placesToInject.addPlace(gwt, textRange, header, "}");
-          return;
-        }
         PsiElement parent1 = host.getParent();
         if (parent1 instanceof PsiMethod && ((PsiMethod)parent1).getName().equals("xml")) {
           placesToInject.addPlace(XMLLanguage.INSTANCE, new TextRange(2, host.getTextLength() - 2), null, null);

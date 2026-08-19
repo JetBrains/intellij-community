@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
-import org.jetbrains.kotlin.analysis.api.components.createInheritanceTypeSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.visibility.isVisibleInClass
 import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol

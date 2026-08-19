@@ -19,7 +19,7 @@ interface ChildWithNullsBuilder : WorkspaceEntityBuilder<ChildWithNulls> {
 }
 
 internal object ChildWithNullsType : EntityType<ChildWithNulls, ChildWithNullsBuilder>() {
-  override val entityClass: Class<ChildWithNulls> get() = ChildWithNulls::class.java
+  override val entityImplClass: Class<*> get() = ChildWithNullsImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ChildWithNullsImpl.Builder::class.java
   operator fun invoke(
     childData: String,
@@ -42,7 +42,6 @@ fun MutableEntityStorage.modifyChildWithNulls(
 @Parent
 var ChildWithNullsBuilder.parentEntity: ParentWithNullsBuilder?
   by WorkspaceEntity.extensionBuilder(ParentWithNulls::class.java)
-
 
 @JvmOverloads
 @JvmName("createChildWithNulls")

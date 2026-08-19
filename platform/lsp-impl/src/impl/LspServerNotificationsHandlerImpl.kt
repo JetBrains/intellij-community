@@ -23,6 +23,8 @@ import com.intellij.platform.lsp.api.LspBundle
 import com.intellij.platform.lsp.api.LspServerNotificationsHandler
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.impl.features.LspFeaturesRefreshing
+import com.intellij.platform.lsp.impl.serviceView.LspClientConsole
+import com.intellij.platform.lsp.impl.serviceView.LspServiceViewSupport
 import com.intellij.platform.lsp.impl.util.LspWorkspaceEditApplier
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.platform.util.progress.reportRawProgress
@@ -325,6 +327,7 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
     if (project.isDisposed) return completedFuture(null)
 
     lspClient.logInfo("window/showMessageRequest: ${params.message}: ${params.actions?.joinToString { it.title }}")
+    serviceViewConsole()?.printShowMessage(params.type, "${params.message}: ${params.actions?.joinToString { it.title }}")
     return doNotify(params.message, getNotificationType(params), SHOW_MESSAGE_NOTIFICATION_GROUP, params.actions)
   }
 
@@ -332,6 +335,7 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
     if (project.isDisposed) return
 
     lspClient.logInfo("window/showMessage: ${params.message}")
+    serviceViewConsole()?.printShowMessage(params.type, params.message)
     doNotify(params.message, getNotificationType(params), SHOW_MESSAGE_NOTIFICATION_GROUP)
   }
 
@@ -339,6 +343,7 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
     if (project.isDisposed) return
 
     lspClient.logInfo("window/logMessage ${params.type}: ${params.message}")
+    serviceViewConsole()?.printLogMessage(params.type, params.message)
     if (params.type == MessageType.Error || params.type == MessageType.Warning) {
       doNotify(params.message, getNotificationType(params), LOG_ERRORS_WARNINGS_NOTIFICATION_GROUP)
     }
@@ -353,8 +358,11 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
 
     // no need to LOG.info() it additionally; LOG.debug() done in Lsp4jServerConnector.createMessageJsonHandler is enough.
     val message = if (params.verbose != null) "${params.message}\n${params.verbose}" else params.message
+    serviceViewConsole()?.printTrace(message)
     doNotify(message, NotificationType.INFORMATION, LOG_INFO_TRACE_NOTIFICATION_GROUP)
   }
+
+  private fun serviceViewConsole(): LspClientConsole? = LspServiceViewSupport.getInstance(project).getOrCreateConsole(lspClient)
 
   private fun getNotificationType(params: MessageParams): NotificationType = when (params.type) {
     MessageType.Error -> NotificationType.ERROR

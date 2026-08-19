@@ -13,8 +13,6 @@ import com.intellij.util.system.OS
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.nio.file.Path
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.div
 import kotlin.io.path.exists
@@ -23,12 +21,6 @@ import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.seconds
 
 const val beforeKillScreenshotName: String = "screenshotBeforeKill.jpg"
-
-fun formatArtifactName(artifactType: String, testName: String): String {
-  val testNameFormatted = testName.replace("/", "-").replace(" ", "")
-  val time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
-  return "$artifactType-$testNameFormatted-$time"
-}
 
 fun getThrowableText(t: Throwable): String {
   val writer = StringWriter()

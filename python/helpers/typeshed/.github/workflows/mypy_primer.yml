@@ -1,4 +1,4 @@
-name: Run mypy_primer
+name: mypy_primer
 
 on:
   # Only run on PR, since we diff against main

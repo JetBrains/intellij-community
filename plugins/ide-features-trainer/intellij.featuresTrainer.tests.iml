@@ -77,7 +77,7 @@
     <orderEntry type="module" module-name="intellij.platform.testRunner.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="mockito-kotlin" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.mockito.kotlin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.mockito" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" scope="TEST" />

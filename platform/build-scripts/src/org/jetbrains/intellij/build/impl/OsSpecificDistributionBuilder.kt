@@ -15,9 +15,12 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LibcImpl
+import org.jetbrains.intellij.build.NativeBinaryDownloader
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.executeStep
+import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -27,8 +30,34 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE
+import java.util.function.Predicate
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
+
+/** Replaces a native bin file and reports where it landed, for [OsSpecificDistributionBuilder.copyNativeBinFiles]. */
+internal fun copyNativeBinFileToDir(file: Path, binDir: Path): Path {
+  copyFileToDir(file, binDir, overwrite = true)
+  return binDir.resolve(file.fileName)
+}
+
+/** Replaces a native bin tree and reports the files it wrote, for [OsSpecificDistributionBuilder.copyNativeBinFiles]. */
+internal fun copyNativeBinDir(
+  sourceDir: Path,
+  binDir: Path,
+  dirFilter: Predicate<Path>? = null,
+  fileFilter: Predicate<Path>? = null,
+): List<Path> {
+  return copyDir(sourceDir, binDir, overwrite = true, dirFilter = dirFilter, fileFilter = fileFilter)
+}
+
+/**
+ * Copies the downloaded restart helper into [binDir] and returns where it landed, for the
+ * [OsSpecificDistributionBuilder.copyNativeBinFiles] implementations - the one part of that step which is the
+ * same for every OS.
+ */
+internal suspend fun copyRestarterToDir(binDir: Path, os: OsFamily, arch: JvmArchitecture, context: BuildContext): Path {
+  return copyNativeBinFileToDir(NativeBinaryDownloader.getRestarter(context, os, arch), binDir)
+}
 
 interface OsSpecificDistributionBuilder {
   companion object {
@@ -40,6 +69,23 @@ interface OsSpecificDistributionBuilder {
   val targetLibcImpl: LibcImpl
 
   suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture)
+
+  /**
+   * Copies into [binDir] the native files a distribution's `bin` directory needs for this OS and [arch] -
+   * the ones committed under `community/bin` and the downloaded restarter.
+   *
+   * Shared with the dev-mode assembly, which builds its own `bin` rather than going through
+   * [copyFilesForOsDistribution]: a dev IDE that lacks these silently loses everything the platform resolves
+   * through `PathManager.findBinFile`, starting with the native file watcher.
+   *
+   * Returns the files it wrote, because a caller that owns the directory's contents has to know what to keep:
+   * a dev assembly deletes whatever in `bin` it did not put there itself. A production caller ignores it and
+   * gets its permissions from [generateExecutableFilesPatterns] when the distribution is archived instead.
+   *
+   * The operation must be repeatable: [binDir] may contain files returned by an earlier invocation, and those files
+   * must be replaced with the current sources. It must not delete unrelated entries; the caller owns stale-file cleanup.
+   */
+  suspend fun copyNativeBinFiles(binDir: Path, arch: JvmArchitecture): List<Path>
 
   suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture)
 

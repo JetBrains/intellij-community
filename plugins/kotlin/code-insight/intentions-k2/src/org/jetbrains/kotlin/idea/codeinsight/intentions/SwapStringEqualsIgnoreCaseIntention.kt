@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -36,7 +37,8 @@ internal class SwapStringEqualsIgnoreCaseIntention :
         return callExpression.valueArguments.mapNotNull { it.getArgumentExpression() }.size == 2
     }
 
-    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         val callExpression = element.selectorExpression as? KtCallExpression ?: return null
         val resolvedFqName = callExpression.resolveToCall()
             ?.successfulFunctionCallOrNull()

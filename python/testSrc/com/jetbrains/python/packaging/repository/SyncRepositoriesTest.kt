@@ -2,6 +2,8 @@
 package com.jetbrains.python.packaging.repository
 
 import com.intellij.testFramework.junit5.TestApplication
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.packaging.PyPackageService
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -10,6 +12,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 @TestApplication
+@Subsystems.Packaging
+@Layers.Functional
 internal class SyncRepositoriesTest {
   private lateinit var packageService: PyPackageService
   private lateinit var repositories: MutableList<PyPackageRepository>

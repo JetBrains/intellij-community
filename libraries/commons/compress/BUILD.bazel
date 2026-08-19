@@ -44,6 +44,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.commons.compress.iml",
+        "resources/intellij.libraries.commons.compress.xml",
     ],
     visibility = ["//visibility:public"],
 )

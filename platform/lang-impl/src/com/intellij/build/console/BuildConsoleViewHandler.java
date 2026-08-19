@@ -10,6 +10,7 @@ import com.intellij.execution.actions.ClearConsoleAction;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewWithDelegateKt;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -139,11 +140,8 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
 
   @TestOnly
   public @NotNull ExecutionConsole getCurrentConsoleOrEmpty() {
-    var console = ObjectUtils.notNull(getCurrentConsole(),
-                                      () -> new ConsoleViewImpl(myProject, GlobalSearchScope.EMPTY_SCOPE, true, false));
-    if (console instanceof BuildConsoleView buildConsole) {
-      console = buildConsole.getConsoleView();
-    }
+    var currentConsole = ObjectUtils.doIfNotNull(getCurrentConsole(), it -> ConsoleViewWithDelegateKt.unwrapDelegate(it));
+    var console = ObjectUtils.notNull(currentConsole, () -> new ConsoleViewImpl(myProject, GlobalSearchScope.EMPTY_SCOPE, true, false));
     if (console instanceof ConsoleViewImpl consoleImpl) {
       consoleImpl.flushDeferredText();
     }
@@ -172,17 +170,21 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
     var nodeConsoleViewName = getNodeConsoleViewName(node);
     myNodeConsoleViewName.set(nodeConsoleViewName);
 
-    var console = myView.getView(nodeConsoleViewName);
-    if (console == null) {
-      var consoleImpl = new BuildTextConsoleView(myProject, true, myExecutionConsoleFilters);
-      console = new BuildConsoleViewImpl(myProject, consoleImpl);
-      myView.addView(console, nodeConsoleViewName);
-    }
+    var console = myView.getOrAddView(nodeConsoleViewName, this::createExecutionConsole);
     myView.showView(nodeConsoleViewName, false);
 
     showTextConsoleToolbarActions(console);
 
     myPanel.setVisible(true);
+  }
+
+  private @NotNull ExecutionConsole createExecutionConsole() {
+    return new BuildConsoleViewImpl(myProject, new BuildTextConsoleView(myProject, true, myExecutionConsoleFilters));
+  }
+
+  @TestOnly
+  public @NotNull ExecutionConsole resolveExecutionConsole(@NotNull ExecutionNode node) {
+    return myView.getOrAddView(getNodeConsoleViewName(node), this::createExecutionConsole);
   }
 
   public void maybeAddExecutionConsole(@NotNull ExecutionNode node, @NotNull BuildEventPresentationData presentationData) {
