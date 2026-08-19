@@ -41,7 +41,9 @@ import org.jetbrains.jewel.ui.component.rememberSpeedSearchState
 import org.jetbrains.jewel.ui.component.search.SpeedSearchableComboBox
 import org.junit.jupiter.api.Test
 
-// Note: these tests run intentionally Gradle-only until JEWEL-1390
+// Headful, and deliberately not a jps_test: the app under test must keep a standalone-only runtime closure,
+// with no IntelliJ Platform classes on the classpath. Runs in CI on any agent with a display:
+//   bazel test //platform/jewel/int-ui/int-ui-standalone-tests:jewel-intUi-standalone-spectre-tests
 class CustomPopupRendererSpectreTest {
     @Test
     fun `escape closes a hovered combo box`(): Unit = runSpectreTestWithCustomPopupRenderer {

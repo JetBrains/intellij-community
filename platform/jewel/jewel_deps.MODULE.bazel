@@ -20,3 +20,66 @@ http_file(
     sha256 = "3afe89a11120303c73c9bdda3d8fe558dd9070a6937d27819ddc04b275381245",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/gitlab/arturbosch/detekt/detekt-cli/1.23.8/detekt-cli-1.23.8-all.jar",
 )
+
+# Spectre (JEWEL-1390). Declared here rather than in `lib/MODULE.bazel` so it cannot reach the
+# IDE or a published artifact.
+http_file(
+    name = "jewel_deps_spectre_core",
+    downloaded_file_path = "spectre-core-0.5.0.jar",
+    sha256 = "1a81c7a259f38646673e8ddc75477f067f13615bc0bbe54454fd3d32b2980bd9",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-core/0.5.0/spectre-core-0.5.0.jar",
+)
+
+http_file(
+    name = "jewel_deps_spectre_testing",
+    downloaded_file_path = "spectre-testing-0.5.0.jar",
+    sha256 = "0856b8d2758ffb436910bde53cd35f947d9873ff37173787c796fc6a49f6ff94",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-testing/0.5.0/spectre-testing-0.5.0.jar",
+)
+
+# Compile dependency of spectre-testing; unused by the in-process lane, but must resolve.
+http_file(
+    name = "jewel_deps_spectre_agent",
+    downloaded_file_path = "spectre-agent-0.5.0.jar",
+    sha256 = "6a6e81b0986456ecb1bce0b79c31a2ece46e747666be284fe12cdc1cebb2fb3d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-agent/0.5.0/spectre-agent-0.5.0.jar",
+)
+
+# Runtime dependency of spectre-testing.
+http_file(
+    name = "jewel_deps_spectre_recording",
+    downloaded_file_path = "spectre-recording-0.5.0.jar",
+    sha256 = "ab44895f231546d0209924caa4f429f9a2fd700f499f9d1b34dcb92a39431f80",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-recording/0.5.0/spectre-recording-0.5.0.jar",
+)
+
+# Runtime dependency of spectre-core, not otherwise in the monorepo.
+http_file(
+    name = "jewel_deps_androidx_tracing_wire_desktop",
+    downloaded_file_path = "tracing-wire-desktop-2.0.0-alpha06.jar",
+    sha256 = "c6cb73c39f1179673686ca4dc56152844e0ace52087243cfef60fee261ec1934",
+    url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/tracing/tracing-wire-desktop/2.0.0-alpha06/tracing-wire-desktop-2.0.0-alpha06.jar",
+)
+
+# Runtime dependency of spectre-core.
+http_file(
+    name = "jewel_deps_kotlinx_coroutines_swing",
+    downloaded_file_path = "kotlinx-coroutines-swing-1.10.2.jar",
+    sha256 = "02bdb85f20ec08004429abf6887e8d0e40f3ab637d7462f817f0f8abbe7d1eb5",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.10.2/kotlinx-coroutines-swing-1.10.2.jar",
+)
+
+# Entry point of the headful lane. Version must match the JUnit Platform in `lib`.
+http_file(
+    name = "jewel_deps_junit_platform_console",
+    downloaded_file_path = "junit-platform-console-1.14.4.jar",
+    sha256 = "8fba295a9aaced613062b7a8486758b71418e1545a3775de8df9ed76cc062383",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-console/1.14.4/junit-platform-console-1.14.4.jar",
+)
+
+http_file(
+    name = "jewel_deps_junit_platform_reporting",
+    downloaded_file_path = "junit-platform-reporting-1.14.4.jar",
+    sha256 = "4a1d32f0f09d29f046ca51a81b8bfbc0f829392892672ea2e2cd530cd9c4b212",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-reporting/1.14.4/junit-platform-reporting-1.14.4.jar",
+)
