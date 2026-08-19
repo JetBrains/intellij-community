@@ -1,12 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.core.script.scratch
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.core.script.scratch.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.task.ProjectTaskManager
 import com.intellij.task.impl.ProjectTaskManagerImpl
-import org.jetbrains.kotlin.idea.core.script.scratch.actions.ScratchAction
-import org.jetbrains.kotlin.idea.core.script.scratch.actions.ScratchCompilationSupport
+import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchBundle
+import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchFile
 
 class RunKotlinScratchAction : ScratchAction(
     KotlinScratchBundle.messagePointer("scratch.run.button"), AllIcons.Actions.Execute

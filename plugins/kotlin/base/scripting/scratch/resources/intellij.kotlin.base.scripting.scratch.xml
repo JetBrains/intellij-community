@@ -58,15 +58,12 @@
 
     <fileEditorProvider id="KtsScratchFileEditorProvider"
                         implementation="org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchFileEditorProvider"/>
-
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.scratch.ScratchFileAutoRunner"
-                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchFileAutoRunner"/>
   </extensions>
 
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 
   <actions>
-    <action id="Kotlin.RunScratch" class="org.jetbrains.kotlin.idea.core.script.scratch.RunKotlinScratchAction" icon="AllIcons.Actions.Execute">
+    <action id="Kotlin.RunScratch" class="org.jetbrains.kotlin.idea.core.script.scratch.actions.RunKotlinScratchAction" icon="AllIcons.Actions.Execute">
       <keyboard-shortcut first-keystroke="control alt W" keymap="$default"/>
       <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
     </action>

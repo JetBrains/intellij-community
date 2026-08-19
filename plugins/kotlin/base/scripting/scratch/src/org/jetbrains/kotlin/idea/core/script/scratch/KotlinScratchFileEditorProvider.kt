@@ -2,16 +2,8 @@
 
 package org.jetbrains.kotlin.idea.core.script.scratch
 
-import com.intellij.icons.AllIcons
-import com.intellij.ide.ActivityTracker
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Document
@@ -20,7 +12,6 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
@@ -30,10 +21,7 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.core.script.scratch.output.ScratchOutputHandler
-import org.jetbrains.kotlin.idea.core.script.scratch.output.ScratchToolWindowHandlerKeeper
-import org.jetbrains.kotlin.idea.core.script.scratch.ui.ScratchFileEditorWithPreview
+import org.jetbrains.kotlin.idea.core.script.scratch.ui.KotlinScratchFileEditorWithPreview
 
 internal class KotlinScratchFileEditorProvider : AsyncFileEditorProvider, StructureViewFileEditorProvider {
     private val KTS_SCRATCH_EDITOR_PROVIDER: String = "KtsScratchFileEditorProvider"
@@ -78,131 +66,3 @@ internal class KotlinScratchFileEditorProvider : AsyncFileEditorProvider, Struct
     }
 }
 
-class KotlinScratchFileEditorWithPreview(
-    val kotlinScratchFile: KotlinScratchFile, sourceTextEditor: TextEditor, previewTextEditor: TextEditor
-) : ScratchFileEditorWithPreview(
-    kotlinScratchFile,
-    sourceTextEditor,
-    previewTextEditor,
-    initialLayout = if (kotlinScratchFile.options.isExplainEnabled) {
-        Layout.SHOW_EDITOR_AND_PREVIEW
-    } else {
-        Layout.SHOW_EDITOR
-    },
-) {
-
-    init {
-        kotlinScratchFile.executor.addOutputHandler(previewEditorScratchOutputHandler)
-    }
-
-    override fun dispose() {
-        kotlinScratchFile.executor.stop()
-        ScratchToolWindowHandlerKeeper.releaseOutputHandler(toolWindowHandler)
-        super.dispose()
-    }
-
-    override fun createToolbar(): ActionToolbar {
-        return KotlinScratchTopPanel(kotlinScratchFile).actionsToolbar
-    }
-
-    override fun createViewActionGroup(): ActionGroup = DefaultActionGroup(
-        MakeBeforeRunToggleAction(),
-        InteractiveModeToggleAction(),
-        ExplainCodeModeToggleAction(),
-    )
-
-    @TestOnly
-    fun getViewActionsForTesting(): List<com.intellij.openapi.actionSystem.AnAction> =
-        createViewActionGroup().getChildren(null).toList()
-
-    override fun requestOutputHandler(): ScratchOutputHandler = ScratchToolWindowHandlerKeeper.requestOutputHandler()
-
-    private inner class MakeBeforeRunToggleAction : ToggleAction() {
-        init {
-            templatePresentation.text = KotlinScratchBundle.message("scratch.toggle.make.before.run.text")
-            templatePresentation.description = KotlinScratchBundle.message("scratch.toggle.make.before.run.description")
-            templatePresentation.icon = AllIcons.Actions.Compile
-        }
-
-        override fun isSelected(e: AnActionEvent): Boolean {
-            return kotlinScratchFile.options.isMakeBeforeRun
-        }
-
-        override fun setSelected(e: AnActionEvent, state: Boolean) {
-            if (kotlinScratchFile.module == null || kotlinScratchFile.options.isInteractiveMode) return
-            kotlinScratchFile.saveOptions { copy(isMakeBeforeRun = state) }
-            ActivityTracker.getInstance().inc()
-        }
-
-        override fun update(e: AnActionEvent) {
-            super.update(e)
-            val selectedModule = kotlinScratchFile.module?.takeIf { !it.isDisposed }
-            val isInteractiveMode = kotlinScratchFile.options.isInteractiveMode
-            e.presentation.icon = AllIcons.Actions.Compile
-            e.presentation.isVisible = selectedModule != null
-            e.presentation.isEnabled = selectedModule != null && !isInteractiveMode
-            val disabledByInteractiveModeMessage = KotlinScratchBundle.message("scratch.toggle.make.before.run.interactive.disabled.description")
-            e.presentation.text = if (isInteractiveMode) disabledByInteractiveModeMessage else templatePresentation.text
-            e.presentation.description = when {
-                isInteractiveMode -> disabledByInteractiveModeMessage
-                selectedModule != null -> KotlinScratchBundle.message("scratch.toggle.make.before.run.module.description", selectedModule.name)
-                else -> KotlinScratchBundle.message("scratch.toggle.make.before.run.disabled.description")
-            }
-        }
-
-        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-    }
-
-    private inner class InteractiveModeToggleAction : ToggleAction() {
-        init {
-            templatePresentation.text = KotlinScratchBundle.message("scratch.toggle.interactive.mode.text")
-            templatePresentation.description = KotlinScratchBundle.message(
-                "scratch.toggle.interactive.mode.description",
-                ScratchFileAutoRunner.AUTO_RUN_DELAY_MS / 1000,
-            )
-            templatePresentation.icon = AllIcons.Actions.Lightning
-        }
-
-        override fun isSelected(e: AnActionEvent): Boolean {
-            return kotlinScratchFile.options.isInteractiveMode
-        }
-
-        override fun setSelected(e: AnActionEvent, state: Boolean) {
-            kotlinScratchFile.saveOptions { copy(isInteractiveMode = state) }
-            ActivityTracker.getInstance().inc()
-            if (state) {
-                (ScratchFileAutoRunner.getInstance(kotlinScratchFile.project) as? KotlinScratchFileAutoRunner)?.submitRun(kotlinScratchFile)
-            }
-        }
-
-        override fun update(e: AnActionEvent) {
-            super.update(e)
-            e.presentation.icon = AllIcons.Actions.Lightning
-        }
-
-        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-    }
-
-    private inner class ExplainCodeModeToggleAction : ToggleAction() {
-        init {
-            templatePresentation.text = KotlinScratchBundle.message("scratch.toggle.explain.mode.text")
-            templatePresentation.description = KotlinScratchBundle.message("scratch.toggle.explain.mode.description")
-            templatePresentation.icon = AllIcons.General.InspectionsEye
-        }
-
-        override fun isSelected(e: AnActionEvent): Boolean {
-            return kotlinScratchFile.options.isExplainEnabled
-        }
-
-        override fun setSelected(e: AnActionEvent, state: Boolean) {
-            setExplainModeEnabled(state)
-        }
-
-        override fun update(e: AnActionEvent) {
-            super.update(e)
-            e.presentation.icon = AllIcons.General.InspectionsEye
-        }
-
-        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-    }
-}

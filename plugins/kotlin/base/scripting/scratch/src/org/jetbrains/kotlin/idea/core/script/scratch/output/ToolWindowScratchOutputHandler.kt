@@ -2,15 +2,12 @@
 
 package org.jetbrains.kotlin.idea.core.script.scratch.output
 
-import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -18,11 +15,8 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.core.script.scratch.ScratchExpression
-import org.jetbrains.kotlin.idea.core.script.scratch.ScratchFile
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchFile
 
 /**
  * Implements logic of shared pointer for the toolWindow output handler.
@@ -58,37 +52,19 @@ object ScratchToolWindowHandlerKeeper {
 
 private class ToolWindowScratchOutputHandler(private val parentDisposable: Disposable) : ScratchOutputHandlerAdapter() {
 
-    override fun handle(file: ScratchFile, output: ScratchOutput) {
+    override fun handle(file: KotlinScratchFile, output: ScratchOutput) {
         printToConsole(file) {
             print(output.text, output.type.convert())
         }
     }
 
-    override fun handle(file: ScratchFile, expression: ScratchExpression, output: ScratchOutput) {
-        printToConsole(file) {
-            val psiFile = file.getPsiFile()
-            if (psiFile != null) {
-                printHyperlink(
-                    getLineInfo(psiFile, expression),
-                    OpenFileHyperlinkInfo(
-                        project,
-                        psiFile.virtualFile,
-                        expression.lineStart
-                    )
-                )
-                print(" ", ConsoleViewContentType.NORMAL_OUTPUT)
-            }
-            print(output.text, output.type.convert())
-        }
-    }
-
-    override fun error(file: ScratchFile, message: String) {
+    override fun error(file: KotlinScratchFile, message: String) {
         printToConsole(file) {
             print(message, ConsoleViewContentType.ERROR_OUTPUT)
         }
     }
 
-    private fun printToConsole(file: ScratchFile, print: ConsoleViewImpl.() -> Unit) {
+    private fun printToConsole(file: KotlinScratchFile, print: ConsoleViewImpl.() -> Unit) {
         invokeLater {
             val project = file.project.takeIf { !it.isDisposed } ?: return@invokeLater
 
@@ -114,7 +90,7 @@ private class ToolWindowScratchOutputHandler(private val parentDisposable: Dispo
         }
     }
 
-    override fun clear(file: ScratchFile) {
+    override fun clear(file: KotlinScratchFile) {
         invokeLater {
             val toolWindow = getToolWindow(file.project) ?: return@invokeLater
             val contents = toolWindow.contentManager.contents
@@ -144,7 +120,7 @@ private class ToolWindowScratchOutputHandler(private val parentDisposable: Dispo
         return toolWindowManager.getToolWindow(ScratchToolWindowFactory.ID)
     }
 
-    private fun createToolWindow(file: ScratchFile): ToolWindow {
+    private fun createToolWindow(file: KotlinScratchFile): ToolWindow {
         val project = file.project
         val toolWindowManager = ToolWindowManager.getInstance(project)
         toolWindowManager.registerToolWindow(ScratchToolWindowFactory.ID, true, ToolWindowAnchor.BOTTOM)
@@ -159,9 +135,6 @@ private class ToolWindowScratchOutputHandler(private val parentDisposable: Dispo
         return window
     }
 }
-
-fun getLineInfo(psiFile: PsiFile, expression: ScratchExpression): String =
-    "${psiFile.name}:${expression.lineStart + 1}"
 
 class ScratchToolWindowFactory : ToolWindowFactory {
     companion object {

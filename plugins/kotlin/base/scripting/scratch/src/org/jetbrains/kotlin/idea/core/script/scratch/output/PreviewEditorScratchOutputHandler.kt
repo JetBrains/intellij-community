@@ -14,8 +14,6 @@ import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
-import com.intellij.openapi.editor.FoldRegion
-import com.intellij.openapi.editor.FoldingModel
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -26,18 +24,14 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.text.StringUtil
 import java.awt.Graphics
 import java.awt.Rectangle
-import java.util.NavigableMap
-import java.util.TreeMap
 import javax.swing.Icon
 import kotlin.math.max
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchBundle
-import org.jetbrains.kotlin.idea.core.script.scratch.ScratchExpression
-import org.jetbrains.kotlin.idea.core.script.scratch.ScratchFile
+import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchFile
 
 /**
  * Output handler to print scratch output to separate window using [previewOutputBlocksManager].
@@ -52,42 +46,31 @@ class PreviewEditorScratchOutputHandler(
     private val parentDisposable: Disposable
 ) : ScratchOutputHandlerAdapter() {
 
-    override fun onStart(file: ScratchFile) {
+    override fun onStart(file: KotlinScratchFile) {
         toolwindowHandler.onStart(file)
         clearOutputManager()
     }
 
-    override fun handle(file: ScratchFile, expression: ScratchExpression, output: ScratchOutput) {
-        printToPreviewEditor(expression, output)
-    }
-
-    override fun handle(file: ScratchFile, output: ScratchOutput) {
+    override fun handle(file: KotlinScratchFile, output: ScratchOutput) {
         toolwindowHandler.handle(file, output)
     }
 
-    override fun handle(file: ScratchFile, explanations: List<ExplainInfo>, scope: CoroutineScope) {
+    override fun handle(file: KotlinScratchFile, explanations: List<ExplainInfo>, scope: CoroutineScope) {
         previewOutputBlocksManager.addOutput(explanations, scope)
     }
 
-    override fun error(file: ScratchFile, message: String) {
+    override fun error(file: KotlinScratchFile, message: String) {
         toolwindowHandler.error(file, message)
     }
 
-    override fun onFinish(file: ScratchFile) {
+    override fun onFinish(file: KotlinScratchFile) {
         toolwindowHandler.onFinish(file)
     }
 
-    override fun clear(file: ScratchFile) {
+    override fun clear(file: KotlinScratchFile) {
         toolwindowHandler.clear(file)
 
         clearOutputManager()
-    }
-
-    private fun printToPreviewEditor(expression: ScratchExpression, output: ScratchOutput) {
-        TransactionGuard.submitTransaction(parentDisposable, Runnable {
-            val targetCell = previewOutputBlocksManager.getBlock(expression) ?: previewOutputBlocksManager.addBlockToTheEnd(expression)
-            targetCell.addOutput(output)
-        })
     }
 
     private fun clearOutputManager() {
@@ -97,35 +80,14 @@ class PreviewEditorScratchOutputHandler(
     }
 }
 
-private val ScratchExpression.height: Int get() = lineEnd - lineStart + 1
-
-interface ScratchOutputBlock {
-    val sourceExpression: ScratchExpression
-    val lineStart: Int
-    val lineEnd: Int
-    fun addOutput(output: ScratchOutput)
-}
-
 class PreviewOutputBlocksManager(editor: Editor) {
     private val targetDocument: Document = editor.document
-    private val foldingModel: FoldingModel = editor.foldingModel
     private val inlayModel = editor.inlayModel
     private val markupModel: MarkupModel = editor.markupModel
     private val project: Project? = editor.project
 
-    private val blocks: NavigableMap<ScratchExpression, OutputBlock> = TreeMap(Comparator.comparingInt { it.lineStart })
     private val explainInlays: MutableList<Inlay<MultiLineInlayRenderer>> = mutableListOf()
     private val explainHighlighters: MutableList<RangeHighlighter> = mutableListOf()
-
-    fun computeSourceToPreviewAlignments(): List<Pair<Int, Int>> = blocks.values.map { it.sourceExpression.lineStart to it.lineStart }
-
-    fun getBlock(expression: ScratchExpression): ScratchOutputBlock? = blocks[expression]
-
-    fun addBlockToTheEnd(expression: ScratchExpression): ScratchOutputBlock = OutputBlock(expression).also {
-        if (blocks.putIfAbsent(expression, it) != null) {
-            error("There is already a cell for $expression!")
-        }
-    }
 
     fun addOutput(infos: List<ExplainInfo>, scope: CoroutineScope) {
         val project = project ?: return
@@ -237,7 +199,6 @@ class PreviewOutputBlocksManager(editor: Editor) {
         }
 
     fun clear() {
-        blocks.clear()
         explainInlays.forEach { Disposer.dispose(it) }
         explainInlays.clear()
         explainHighlighters.forEach { markupModel.removeHighlighter(it) }
@@ -248,85 +209,6 @@ class PreviewOutputBlocksManager(editor: Editor) {
             }
         }
     }
-
-    private inner class OutputBlock(override val sourceExpression: ScratchExpression) : ScratchOutputBlock {
-        private val outputs: MutableList<ScratchOutput> = mutableListOf()
-
-        override var lineStart: Int = computeCellLineStart(sourceExpression)
-            private set
-
-        override val lineEnd: Int get() = lineStart + countNewLines(outputs)
-
-        val height: Int get() = lineEnd - lineStart + 1
-        private var foldRegion: FoldRegion? = null
-
-        override fun addOutput(output: ScratchOutput) {
-            printAndSaveOutput(output)
-
-            blocks.lowerEntry(sourceExpression)?.value?.updateFolding()
-            blocks.tailMap(sourceExpression).values.forEach {
-                it.recalculatePosition()
-                it.updateFolding()
-            }
-        }
-
-        /**
-         * We want to make sure that changes in document happen in single edit, because if they are not,
-         * listeners may see inconsistent document, which may cause troubles if they will try to highlight it
-         * in some way. That's why it is important that [insertStringAtLine] does only one insert in the document,
-         * and [output] is inserted into the [outputs] before the edits, so [OutputBlock] can correctly see
-         * all its output expressions and highlight the whole block.
-         */
-        private fun printAndSaveOutput(output: ScratchOutput) {
-            val beforeAdding = lineEnd
-            val currentOutputStartLine = if (outputs.isEmpty()) lineStart else beforeAdding + 1
-
-            outputs.add(output)
-
-            runWriteAction {
-                executeCommand {
-                    targetDocument.insertStringAtLine(currentOutputStartLine, output.text)
-                }
-            }
-
-            markupModel.highlightLines(currentOutputStartLine, lineEnd, getAttributesForOutputType(output.type))
-        }
-
-        private fun recalculatePosition() {
-            lineStart = computeCellLineStart(sourceExpression)
-        }
-
-        private fun updateFolding() {
-            foldingModel.runBatchFoldingOperation {
-                foldRegion?.let(foldingModel::removeFoldRegion)
-
-                if (height <= sourceExpression.height) return@runBatchFoldingOperation
-
-                val firstFoldedLine = lineStart + (sourceExpression.height - 1)
-                val placeholderLine = "${targetDocument.getLineContent(firstFoldedLine)}..."
-
-                foldRegion = foldingModel.addFoldRegion(
-                    targetDocument.getLineStartOffset(firstFoldedLine),
-                    targetDocument.getLineEndOffset(lineEnd),
-                    placeholderLine
-                )
-
-                foldRegion?.isExpanded = false
-            }
-        }
-
-    }
-
-    private fun computeCellLineStart(scratchExpression: ScratchExpression): Int {
-        val previous = blocks.lowerEntry(scratchExpression)?.value ?: return scratchExpression.lineStart
-
-        val distanceBetweenSources = scratchExpression.lineStart - previous.sourceExpression.lineEnd
-        val differenceBetweenSourceAndOutputHeight = previous.sourceExpression.height - previous.height
-        val compensation = max(differenceBetweenSourceAndOutputHeight, 0)
-        return previous.lineEnd + compensation + distanceBetweenSources
-    }
-
-    fun getBlockAtLine(line: Int): ScratchOutputBlock? = blocks.values.find { line in it.lineStart..it.lineEnd }
 
     /**
      * Returns the full explain content for testing: each document line followed by its
@@ -353,11 +235,6 @@ class PreviewOutputBlocksManager(editor: Editor) {
         }
     }
 }
-
-private fun countNewLines(list: List<ScratchOutput>) = list.sumOf { StringUtil.countNewLines(it.text) } + max(list.size - 1, 0)
-
-private fun Document.getLineContent(lineNumber: Int) =
-    DiffUtil.getLinesContent(this, lineNumber, lineNumber + 1).toString()
 
 private fun Document.insertStringAtLine(lineNumber: Int, text: String) {
     val missingNewLines = lineNumber - (DiffUtil.getLineCount(this) - 1)

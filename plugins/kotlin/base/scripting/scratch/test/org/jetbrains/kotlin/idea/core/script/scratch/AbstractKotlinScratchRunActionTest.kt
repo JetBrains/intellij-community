@@ -24,8 +24,9 @@ import kotlin.io.path.readText
 import kotlinx.coroutines.job
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.core.script.scratch.actions.RunKotlinScratchAction
 import org.jetbrains.kotlin.idea.core.script.scratch.output.ScratchToolWindowFactory
-import org.jetbrains.kotlin.idea.core.script.scratch.ui.ScratchFileEditorWithPreview
+import org.jetbrains.kotlin.idea.core.script.scratch.ui.KotlinScratchFileEditorWithPreview
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.assertEqualsToFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -38,15 +39,14 @@ abstract class AbstractKotlinScratchRunActionTest : FileEditorManagerTestCase() 
 
     protected abstract val isExplainEnabled: Boolean
 
-    fun doScratchTest(unused: String) {
+    fun doScratchTest() {
         val fileName = getTestDataFileName(this::class.java, this.name) ?: error("scratch file not found")
         val editorWithPreview = configureScratchEditor(fileName)
-        val scratchFile = editorWithPreview.scratchFile as? KotlinScratchFile ?: error("scratch file not found")
 
         launchAction(RunKotlinScratchAction())
 
         PlatformTestUtil.waitWhileBusy {
-            scratchFile.executor.scope.coroutineContext.job.children.any { it.isActive }
+            editorWithPreview.kotlinScratchFile.executor.scope.coroutineContext.job.children.any { it.isActive }
         }
 
         UIUtil.dispatchAllInvocationEvents()
@@ -57,7 +57,7 @@ abstract class AbstractKotlinScratchRunActionTest : FileEditorManagerTestCase() 
 
         val actualOutput = consoleView.editor?.document?.text ?: error("failed to get output text")
         val expectedOutputFile = Path(testDataPath, fileName.replace(".kts", ".output"))
-        val scratchFilePath = editorWithPreview.scratchFile.virtualFile.path
+        val scratchFilePath = editorWithPreview.kotlinScratchFile.virtualFile.path
         assertEqualsToFile(expectedOutputFile, actualOutput) { output ->
             output.replace(scratchFilePath, fileName)
                 .replace(Regex("(Compilation failed: )(?:WARNING:[^\n]*\n|[ \t]*\n)+"), "$1")
@@ -73,7 +73,7 @@ abstract class AbstractKotlinScratchRunActionTest : FileEditorManagerTestCase() 
         }
     }
 
-    protected fun configureScratchEditor(fileName: String): ScratchFileEditorWithPreview {
+    protected fun configureScratchEditor(fileName: String): KotlinScratchFileEditorWithPreview {
         val text = Path(testDataPath, fileName).readText()
 
         val scratchVirtualFile = ScratchRootType.getInstance().createScratchFile(
@@ -117,12 +117,12 @@ abstract class AbstractKotlinScratchRunActionTest : FileEditorManagerTestCase() 
 
     companion object {
         fun configureOptions(
-            scratchFileEditor: ScratchFileEditorWithPreview,
+            scratchFileEditor: KotlinScratchFileEditorWithPreview,
             fileText: String,
             module: Module?,
             isExplainEnabled: Boolean,
         ) {
-            val scratchFile = scratchFileEditor.scratchFile.apply {
+            val scratchFile = scratchFileEditor.kotlinScratchFile.apply {
                 saveOptions { copy(isMakeBeforeRun = false) }
             }
 

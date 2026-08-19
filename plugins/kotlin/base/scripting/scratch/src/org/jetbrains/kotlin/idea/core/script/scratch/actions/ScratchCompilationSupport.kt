@@ -2,18 +2,18 @@
 
 package org.jetbrains.kotlin.idea.core.script.scratch.actions
 
-import org.jetbrains.kotlin.idea.core.script.scratch.ScratchExecutor
-import org.jetbrains.kotlin.idea.core.script.scratch.ScratchFile
+import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchExecutor
+import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchFile
 
 object ScratchCompilationSupport {
-    private data class FileExecutor(val file: ScratchFile, val executor: ScratchExecutor)
+    private data class FileExecutor(val file: KotlinScratchFile, val executor: KotlinScratchExecutor)
     @Volatile
     private var fileExecutor: FileExecutor? = null
 
-    fun isInProgress(file: ScratchFile): Boolean = fileExecutor?.file == file
+    fun isInProgress(file: KotlinScratchFile): Boolean = fileExecutor?.file == file
     fun isAnyInProgress(): Boolean = fileExecutor != null
 
-    fun start(file: ScratchFile, executor: ScratchExecutor) {
+    fun start(file: KotlinScratchFile, executor: KotlinScratchExecutor) {
         fileExecutor = FileExecutor(file, executor)
     }
 

@@ -7,8 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchBundle
 
-@ApiStatus.Internal
-class ClearScratchAction : ScratchAction(
+internal class ClearScratchAction : ScratchAction(
     KotlinScratchBundle.messagePointer("scratch.clear.button"),
     AllIcons.Actions.GC
 ) {

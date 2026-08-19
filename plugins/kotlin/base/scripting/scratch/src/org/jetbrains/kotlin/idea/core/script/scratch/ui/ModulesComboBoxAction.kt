@@ -19,10 +19,10 @@ import javax.swing.JComponent
 import org.jetbrains.kotlin.idea.base.projectStructure.hasProductionSource
 import org.jetbrains.kotlin.idea.base.projectStructure.hasTestSource
 import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchBundle
-import org.jetbrains.kotlin.idea.core.script.scratch.ScratchFile
+import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchFile
 import org.jetbrains.kotlin.idea.core.script.scratch.scratchToolbarLabel
 
-class ModulesComboBoxAction(private val scratchFile: ScratchFile, val moduleSelectedListener: (Module?) -> Unit) :
+class ModulesComboBoxAction(private val scratchFile: KotlinScratchFile) :
     LabeledComboBoxAction(KotlinScratchBundle.message("scratch.module.combobox")) {
     override fun createPopupActionGroup(button: JComponent, context: DataContext): DefaultActionGroup {
         val actionGroup = DefaultActionGroup()
@@ -69,7 +69,6 @@ class ModulesComboBoxAction(private val scratchFile: ScratchFile, val moduleSele
         override fun actionPerformed(e: AnActionEvent) {
             scratchFile.setModule(null)
             ActivityTracker.getInstance().inc()
-            moduleSelectedListener(null)
         }
     }
 
@@ -78,7 +77,6 @@ class ModulesComboBoxAction(private val scratchFile: ScratchFile, val moduleSele
         override fun actionPerformed(e: AnActionEvent) {
             scratchFile.setModule(module)
             ActivityTracker.getInstance().inc()
-            moduleSelectedListener(module)
         }
     }
 }

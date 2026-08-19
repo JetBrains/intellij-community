@@ -16,35 +16,35 @@ class KotlinScratchPlainTest : AbstractKotlinScratchRunActionTest() {
         get() = false
 
     @TestMetadata("destructuringDecls.kts")
-    fun testDestructuringDecls() = doScratchTest("testData/scratch/destructuringDecls.kts")
+    fun testDestructuringDecls() = doScratchTest()
 
     @TestMetadata("for.kts")
-    fun testFor() = doScratchTest("testData/scratch/for.kts")
+    fun testFor() = doScratchTest()
 
     @TestMetadata("generalCollections.kts")
-    fun testGeneralCollections() = doScratchTest("testData/scratch/generalCollections.kts")
+    fun testGeneralCollections() = doScratchTest()
 
     @TestMetadata("generics.kts")
-    fun testGenerics() = doScratchTest("testData/scratch/generics.kts")
+    fun testGenerics() = doScratchTest()
 
     @TestMetadata("hexFormat.kts")
-    fun testHexFormat() = doScratchTest("testData/scratch/hexFormat.kts")
+    fun testHexFormat() = doScratchTest()
 
     @TestMetadata("jdk17HexFormat.kts")
-    fun testJdk17HexFormat() = doScratchTest("testData/scratch/jdk17HexFormat.kts")
+    fun testJdk17HexFormat() = doScratchTest()
 
     @TestMetadata("klass.kts")
-    fun testKlass() = doScratchTest("testData/scratch/klass.kts")
+    fun testKlass() = doScratchTest()
 
     @TestMetadata("unresolved.kts")
-    fun testUnresolved() = doScratchTest("testData/scratch/unresolved.kts")
+    fun testUnresolved() = doScratchTest()
 
     @TestMetadata("var.kts")
-    fun testVar() = doScratchTest("testData/scratch/var.kts")
+    fun testVar() = doScratchTest()
 
     @TestMetadata("veryLongOutput.kts")
-    fun testVeryLongOutput() = doScratchTest("testData/scratch/veryLongOutput.kts")
+    fun testVeryLongOutput() = doScratchTest()
 
     @TestMetadata("when.kts")
-    fun testWhen() = doScratchTest("testData/scratch/when.kts")
+    fun testWhen() = doScratchTest()
 }

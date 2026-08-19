@@ -3,17 +3,15 @@
 package org.jetbrains.kotlin.idea.core.script.scratch.output
 
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.kotlin.idea.core.script.scratch.ScratchExpression
-import org.jetbrains.kotlin.idea.core.script.scratch.ScratchFile
+import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchFile
 
 interface ScratchOutputHandler {
-    fun onStart(file: ScratchFile)
-    fun handle(file: ScratchFile, expression: ScratchExpression, output: ScratchOutput)
-    fun handle(file: ScratchFile, output: ScratchOutput)
-    fun handle(file: ScratchFile, explanations: List<ExplainInfo>, scope: CoroutineScope)
-    fun error(file: ScratchFile, message: String)
-    fun onFinish(file: ScratchFile)
-    fun clear(file: ScratchFile)
+    fun onStart(file: KotlinScratchFile)
+    fun handle(file: KotlinScratchFile, output: ScratchOutput)
+    fun handle(file: KotlinScratchFile, explanations: List<ExplainInfo>, scope: CoroutineScope)
+    fun error(file: KotlinScratchFile, message: String)
+    fun onFinish(file: KotlinScratchFile)
+    fun clear(file: KotlinScratchFile)
 }
 
 data class ScratchOutput(val text: String, val type: ScratchOutputType)
@@ -33,11 +31,10 @@ class ExplainInfo(
 }
 
 open class ScratchOutputHandlerAdapter : ScratchOutputHandler {
-    override fun onStart(file: ScratchFile) {}
-    override fun handle(file: ScratchFile, expression: ScratchExpression, output: ScratchOutput) {}
-    override fun handle(file: ScratchFile, explanations: List<ExplainInfo>, scope: CoroutineScope) {}
-    override fun handle(file: ScratchFile, output: ScratchOutput) {}
-    override fun error(file: ScratchFile, message: String) {}
-    override fun onFinish(file: ScratchFile) {}
-    override fun clear(file: ScratchFile) {}
+    override fun onStart(file: KotlinScratchFile) {}
+    override fun handle(file: KotlinScratchFile, explanations: List<ExplainInfo>, scope: CoroutineScope) {}
+    override fun handle(file: KotlinScratchFile, output: ScratchOutput) {}
+    override fun error(file: KotlinScratchFile, message: String) {}
+    override fun onFinish(file: KotlinScratchFile) {}
+    override fun clear(file: KotlinScratchFile) {}
 }

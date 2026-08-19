@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.scratch.ui
 
+import com.intellij.ide.ActivityTracker
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -16,7 +17,7 @@ import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
 import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchBundle
-import org.jetbrains.kotlin.idea.core.script.scratch.ScratchFile
+import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchFile
 import org.jetbrains.kotlin.idea.core.script.scratch.defaultScratchJavaHome
 import org.jetbrains.kotlin.idea.core.script.scratch.scratchToolbarLabel
 
@@ -28,7 +29,7 @@ private val defaultJdk: Sdk?
         }
     }
 
-class JdksComboBoxAction(private val scratchFile: ScratchFile, private val jdkSelectedListener: (Sdk?) -> Unit) :
+class JdksComboBoxAction(private val scratchFile: KotlinScratchFile) :
     LabeledComboBoxAction(KotlinScratchBundle.message("scratch.jdk.combobox")) {
     override fun createPopupActionGroup(button: JComponent, context: DataContext): DefaultActionGroup {
         val actionGroup = DefaultActionGroup()
@@ -80,14 +81,14 @@ class JdksComboBoxAction(private val scratchFile: ScratchFile, private val jdkSe
     ) {
         override fun actionPerformed(e: AnActionEvent) {
             scratchFile.resetJdk()
-            jdkSelectedListener(jdk)
+            ActivityTracker.getInstance().inc()
         }
     }
 
     private inner class SelectJdkAction(private val jdk: Sdk) : DumbAwareAction(jdk.name, null, (jdk.sdkType as? SdkType)?.icon) {
         override fun actionPerformed(e: AnActionEvent) {
             scratchFile.selectJdk(jdk)
-            jdkSelectedListener(jdk)
+            ActivityTracker.getInstance().inc()
         }
     }
 }

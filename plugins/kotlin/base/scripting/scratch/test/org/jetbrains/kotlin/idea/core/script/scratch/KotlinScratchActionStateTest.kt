@@ -13,14 +13,14 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.TestDataProvider
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.core.script.scratch.actions.RunKotlinScratchAction
+import org.jetbrains.kotlin.idea.core.script.scratch.ui.KotlinScratchFileEditorWithPreview
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 class KotlinScratchActionStateTest : FileEditorManagerTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
-
-    
 
     fun testRunActionDisabledInInteractiveMode() {
         val editor = openScratchEditor()
@@ -68,10 +68,8 @@ class KotlinScratchActionStateTest : FileEditorManagerTestCase() {
         myFixture.openFileInEditor(vFile)
         IndexingTestUtil.waitUntilIndexesAreReady(project)
 
-        val editor = manager?.let { getScratchEditorForSelectedFile(it, vFile) }
+        return manager?.let { getScratchEditorForSelectedFile(it, vFile) }
             ?: error("Scratch editor not opened for $name")
-        return editor as? KotlinScratchFileEditorWithPreview
-            ?: error("Expected KotlinScratchFileEditorWithPreview, was ${editor::class.simpleName}")
     }
 
     private fun updateAndGetPresentation(action: AnAction): Presentation {

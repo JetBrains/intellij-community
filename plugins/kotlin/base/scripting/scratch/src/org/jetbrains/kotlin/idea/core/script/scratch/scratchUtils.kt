@@ -4,8 +4,6 @@ package org.jetbrains.kotlin.idea.core.script.scratch
 
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
-import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -13,7 +11,7 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.core.script.scratch.ui.ScratchFileEditorWithPreview
+import org.jetbrains.kotlin.idea.core.script.scratch.ui.KotlinScratchFileEditorWithPreview
 import org.jetbrains.kotlin.idea.core.script.scratch.ui.findScratchFileEditorWithPreview
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 
@@ -28,19 +26,9 @@ val VirtualFile.isKotlinScratch: Boolean
         ScratchFileService.getInstance().getRootType(this) is ScratchRootType
 
 @TestOnly
-fun getScratchEditorForSelectedFile(fileManager: FileEditorManager, virtualFile: VirtualFile): ScratchFileEditorWithPreview? {
+fun getScratchEditorForSelectedFile(fileManager: FileEditorManager, virtualFile: VirtualFile): KotlinScratchFileEditorWithPreview? {
     val editor = fileManager.getSelectedEditor(virtualFile) as? TextEditor ?: return null
     return editor.findScratchFileEditorWithPreview()
-}
-
-fun TextEditor.getScratchFile(): ScratchFile? {
-    return findScratchFileEditorWithPreview()?.scratchFile
-}
-
-fun ActionToolbar.updateToolbar() {
-    ApplicationManager.getApplication().invokeLater {
-        updateActionsAsync()
-    }
 }
 
 const val SCRATCH_TOOLBAR_MAX_LABEL_LENGTH: Int = 20

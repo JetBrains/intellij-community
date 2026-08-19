@@ -10,8 +10,8 @@ import com.intellij.openapi.fileEditor.TextEditor
 import java.util.function.Supplier
 import javax.swing.Icon
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.core.script.scratch.ScratchFile
-import org.jetbrains.kotlin.idea.core.script.scratch.ui.ScratchFileEditorWithPreview
+import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchFile
+import org.jetbrains.kotlin.idea.core.script.scratch.ui.KotlinScratchFileEditorWithPreview
 import org.jetbrains.kotlin.idea.core.script.scratch.ui.findScratchFileEditorWithPreview
 
 abstract class ScratchAction(@Nls message: Supplier<String>, icon: Icon) : AnAction(message, message, icon) {
@@ -22,10 +22,10 @@ abstract class ScratchAction(@Nls message: Supplier<String>, icon: Icon) : AnAct
         e.presentation.isVisible = e.currentScratchFile != null
     }
 
-    protected val AnActionEvent.currentScratchFile: ScratchFile?
-        get() = currentScratchEditor?.scratchFile
+    protected val AnActionEvent.currentScratchFile: KotlinScratchFile?
+        get() = currentScratchEditor?.kotlinScratchFile
 
-    protected val AnActionEvent.currentScratchEditor: ScratchFileEditorWithPreview?
+    protected val AnActionEvent.currentScratchEditor: KotlinScratchFileEditorWithPreview?
         get() {
             val textEditor = getData(PlatformCoreDataKeys.FILE_EDITOR) as? TextEditor
             return textEditor?.findScratchFileEditorWithPreview()

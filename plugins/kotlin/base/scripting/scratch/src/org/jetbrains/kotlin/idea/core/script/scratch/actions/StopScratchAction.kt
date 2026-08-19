@@ -7,8 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchBundle
 
-@ApiStatus.Internal
-class StopScratchAction : ScratchAction(
+internal class StopScratchAction : ScratchAction(
     KotlinScratchBundle.messagePointer("scratch.stop.button"),
     AllIcons.Actions.Suspend
 ) {

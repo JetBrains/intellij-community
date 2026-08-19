@@ -1,11 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.scratch
 
+import com.intellij.ide.ActivityTracker
 import com.intellij.execution.JavaParametersBuilder
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
@@ -18,12 +20,6 @@ import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.PathUtil
 import com.intellij.util.io.awaitExit
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.exists
-import kotlin.io.path.readLines
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,18 +37,44 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayoutMode
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayoutModeProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.downloadAtomically
+import org.jetbrains.kotlin.idea.core.script.scratch.actions.ScratchCompilationSupport
 import org.jetbrains.kotlin.idea.core.script.scratch.definition.KOTLIN_SCRATCH_EXPLAIN_FILE
 import org.jetbrains.kotlin.idea.core.script.scratch.definition.KotlinScratchExplainScript
 import org.jetbrains.kotlin.idea.core.script.scratch.definition.KotlinScratchPlainScript
 import org.jetbrains.kotlin.idea.core.script.scratch.output.ExplainInfo
 import org.jetbrains.kotlin.idea.core.script.scratch.output.ScratchOutput
+import org.jetbrains.kotlin.idea.core.script.scratch.output.ScratchOutputHandler
+import org.jetbrains.kotlin.idea.core.script.scratch.output.ScratchOutputHandlerAdapter
 import org.jetbrains.kotlin.idea.core.script.scratch.output.ScratchOutputType
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
+import kotlin.io.path.readLines
 
 private val log = Logger.getInstance(KotlinScratchExecutor::class.java)
 
-class KotlinScratchExecutor(override val scratchFile: KotlinScratchFile, val project: Project, val scope: CoroutineScope) :
-    ScratchExecutor(scratchFile) {
-    override fun execute() {
+class KotlinScratchExecutor(val scratchFile: KotlinScratchFile, val project: Project, val scope: CoroutineScope) {
+
+    private val handler: CompositeOutputHandler = CompositeOutputHandler()
+
+    init {
+        addOutputHandler(object : ScratchOutputHandlerAdapter() {
+            override fun onStart(file: KotlinScratchFile) {
+                ScratchCompilationSupport.start(file, this@KotlinScratchExecutor)
+                // execution state changes without user activity, so toolbar actions need a nudge
+                ActivityTracker.getInstance().inc()
+            }
+
+            override fun onFinish(file: KotlinScratchFile) {
+                ScratchCompilationSupport.stop()
+                ActivityTracker.getInstance().inc()
+            }
+        })
+    }
+
+    fun execute() {
         if (scratchFile.jdk == null) {
             handler.error(scratchFile, KotlinScratchBundle.message("scratch.no.jdk.selected"))
             return
@@ -249,8 +271,22 @@ class KotlinScratchExecutor(override val scratchFile: KotlinScratchFile, val pro
     private val VirtualFile.explainFilePath: Path
         get() = explainScratchesDirectory.resolve(this.name.replace(".kts", ".txt"))
 
-    override fun stop() {
+    fun stop() {
         handler.onFinish(scratchFile)
+    }
+
+    fun addOutputHandler(outputHandler: ScratchOutputHandler) {
+        handler.add(outputHandler)
+    }
+
+    fun errorOccurs(message: String, e: Throwable? = null, isFatal: Boolean = false) {
+        handler.error(scratchFile, message)
+
+        if (isFatal) {
+            handler.onFinish(scratchFile)
+        }
+
+        if (e != null && e !is ControlFlowException) LOG.error(e)
     }
 
     private fun unescapeExplainValue(value: String): String =
@@ -369,4 +405,36 @@ class KotlinScratchExecutor(override val scratchFile: KotlinScratchFile, val pro
         val compilerHome: Path,
         val distJar: Path?,
     )
+
+    private class CompositeOutputHandler : ScratchOutputHandler {
+        private val handlers = mutableSetOf<ScratchOutputHandler>()
+
+        fun add(handler: ScratchOutputHandler) {
+            handlers.add(handler)
+        }
+
+        override fun onStart(file: KotlinScratchFile) {
+            handlers.forEach { it.onStart(file) }
+        }
+
+        override fun handle(file: KotlinScratchFile, explanations: List<ExplainInfo>, scope: CoroutineScope) {
+            handlers.forEach { it.handle(file, explanations, scope) }
+        }
+
+        override fun handle(file: KotlinScratchFile, output: ScratchOutput) {
+            handlers.forEach { it.handle(file, output) }
+        }
+
+        override fun error(file: KotlinScratchFile, message: String) {
+            handlers.forEach { it.error(file, message) }
+        }
+
+        override fun onFinish(file: KotlinScratchFile) {
+            handlers.forEach { it.onFinish(file) }
+        }
+
+        override fun clear(file: KotlinScratchFile) {
+            handlers.forEach { it.clear(file) }
+        }
+    }
 }

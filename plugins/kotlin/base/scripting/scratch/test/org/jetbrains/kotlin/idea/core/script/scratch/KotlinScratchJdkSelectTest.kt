@@ -9,15 +9,27 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import org.jetbrains.kotlin.idea.core.script.v1.ScratchFileOptionsByFile
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 class KotlinScratchJdkSelectTest : LightJavaCodeInsightFixtureTestCase() {
+    private val testScope = CoroutineScope(SupervisorJob())
+
+    override fun tearDown() {
+        try {
+            testScope.cancel()
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
+    }
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
-
-    
 
     fun testModuleJdkOverridesSelectedJdkHome() {
         val scratchFile = createScratchFile()
@@ -81,22 +93,9 @@ class KotlinScratchJdkSelectTest : LightJavaCodeInsightFixtureTestCase() {
         }
     }
 
-    private fun createScratchFile(): ScratchFile {
-        // The file extension is intentionally non-`.kts` so opening it in the editor doesn't trip
-        // `KotlinScriptEditorListener` → `KotlinScriptService.scheduleLoading`, which races test
-        // teardown and produces `InvalidVirtualFileAccessException` noise. ScratchFile's options
-        // and module name are file-gist / file-attribute backed and don't care about the extension.
+    private fun createScratchFile(): KotlinScratchFile {
         val name = "KotlinScratchJdkSelectTest_${getTestName(false)}.txt"
         val vFile = myFixture.configureByText(name, "").virtualFile
-        return TestScratchFile(project, vFile)
-    }
-
-    /** Minimal in-test scratch file: persists module name without triggering K2's editor reload. */
-    private class TestScratchFile(project: Project, virtualFile: VirtualFile) : ScratchFile(project, virtualFile) {
-        override fun setModule(module: Module?) {
-            ScratchFileOptionsByFile.update(project, virtualFile) {
-                copy(selectedModule = module?.name)
-            }
-        }
+        return KotlinScratchFile(project, vFile, testScope)
     }
 }
