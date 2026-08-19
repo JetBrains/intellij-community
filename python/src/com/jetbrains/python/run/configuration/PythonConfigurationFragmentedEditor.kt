@@ -49,6 +49,15 @@ class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfigurati
     runWithConsole.actionHint = PyBundle.message("python.run.configuration.fragments.run.with.python.console.hint")
     fragments.add(runWithConsole)
 
+    val runAsScript = SettingsEditorFragment.createTag<PythonRunConfiguration>(
+      "py.run.as.script",
+      PyBundle.message("python.run.configuration.fragments.run.as.script"),
+      PyBundle.message("python.run.configuration.fragments.python.group"),
+      { it.asBareScriptConfiguration()?.inlineScriptTarget != null },
+      { config, value -> config.runAsScript = value })
+    runAsScript.actionHint = PyBundle.message("python.run.configuration.fragments.run.as.script.hint")
+    fragments.add(runAsScript)
+
     val emulateTerminal = SettingsEditorFragment.createTag<PythonRunConfiguration>(
       "py.emulate.terminal",
       PyBundle.message("python.run.configuration.fragments.emulate.terminal"),

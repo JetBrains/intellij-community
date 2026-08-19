@@ -102,8 +102,8 @@ import com.jetbrains.python.sdk.poetry.createPoetrySdk
 import com.jetbrains.python.sdk.pyInterpreterPresentation
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
-import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
+import com.jetbrains.python.sdk.uv.impl.validateAndCreateUvCli
 import com.jetbrains.python.hatch.sdk.createSdk
 import io.github.z4kn4fein.semver.Version
 import fleet.rpc.remoteApiDescriptor
@@ -627,7 +627,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     return when (nodeId) {
       "uv" -> {
         val uvExe = UvPyTool.getInstance().resolveExecutable(fileSystem) ?: return emptyList()
-        val cli = createUvCli(uvExe, fileSystem).getOrNull() ?: return emptyList()
+        val cli = validateAndCreateUvCli(uvExe, fileSystem).getOrNull() ?: return emptyList()
         // Same list as the v2 dialog: filtered by the project's requires-python, newest-first. The version token is the
         // full version so the create step can pin it.
         val versions = createUvLowLevel(pyProject.baseDir, cli, fileSystem, null)

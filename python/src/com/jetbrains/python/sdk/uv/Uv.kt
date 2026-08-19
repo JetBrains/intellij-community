@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
+import com.intellij.python.community.execService.Args
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -16,6 +17,12 @@ import java.nio.file.Path
 @ApiStatus.Internal
 internal interface UvCli<P : PathHolder> {
   suspend fun runUv(workingDir: Path, venvPath: P?, canChangeTomlOrLock: Boolean, vararg args: String): PyResult<String>
+
+  /**
+   * Runs uv with arguments that may name local files, so that a file reaches the machine uv runs on rather than being
+   * passed as a path that means nothing there.
+   */
+  suspend fun runUv(workingDir: Path, venvPath: P?, canChangeTomlOrLock: Boolean, args: Args): PyResult<String>
 }
 
 @ApiStatus.Internal
@@ -48,7 +55,23 @@ internal interface UvLowLevel<P : PathHolder> {
 
   suspend fun sync(): PyResult<String>
   suspend fun lock(): PyResult<String>
+
+  /**
+   * Materializes the PEP 723 environment of [scriptPath] and reports it, so that the script can then be run by that
+   * environment's interpreter. Fails when the script carries no metadata block or uv is too old to report the
+   * environment.
+   */
+  suspend fun syncScript(scriptPath: Path): PyResult<UvScriptEnvironment>
 }
+
+/**
+ * The environment uv maintains for a PEP 723 script. [pythonPath] is the interpreter to run the script with; uv
+ * chooses it from the script's `requires-python`, so it need not be the interpreter of the configured SDK.
+ *
+ * Both are paths on the machine uv ran on, kept as reported: parsing them locally would mangle a target path whose
+ * separators are not the host's.
+ */
+internal data class UvScriptEnvironment(val path: String, val pythonPath: String)
 
 @ApiStatus.Internal
 internal sealed class ScriptSyncCheckResult {

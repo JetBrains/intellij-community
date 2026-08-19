@@ -182,6 +182,17 @@ final class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   }
 
+  @ApiStatus.Internal
+  @Override
+  public @Nullable Boolean getRunAsScript() {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void setRunAsScript(@Nullable Boolean runAsScript) {
+  }
+
   @Override
   public String getModuleName() {
     Module module = getModule();

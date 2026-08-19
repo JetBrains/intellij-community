@@ -26,7 +26,7 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.TargetFileSystem
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pySdkAdditionalData
-import com.jetbrains.python.sdk.uv.impl.createUvCli
+import com.jetbrains.python.sdk.uv.impl.validateAndCreateUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.uv.backend.UvPyTool
@@ -70,7 +70,7 @@ internal sealed interface UvExecutionContext<P : PathHolder> {
     override val uvPath: PathHolder.Target?,
   ) : UvExecutionContext<PathHolder.Target>
 
-  suspend fun createUvCli(): PyResult<UvLowLevel<P>> = createUvCli(uvPath, fileSystem).mapSuccess { uvCli ->
+  suspend fun createUvCli(): PyResult<UvLowLevel<P>> = validateAndCreateUvCli(uvPath, fileSystem).mapSuccess { uvCli ->
     createUvLowLevel(workingDir, uvCli, fileSystem, venvPath)
   }
 }
@@ -167,7 +167,7 @@ internal suspend fun <P : PathHolder> setupNewUvSdkAndEnv(
   val shouldInitProject = !workingDir.resolve(PY_PROJECT_TOML).exists()
   val normalizedUvExecutablePath = fileSystem.normalizePathToRemote(uvExecutable)
 
-  val uv = createUvLowLevel(workingDir, createUvCli(normalizedUvExecutablePath, fileSystem).getOr { return it }, fileSystem, venvPath)
+  val uv = createUvLowLevel(workingDir, validateAndCreateUvCli(normalizedUvExecutablePath, fileSystem).getOr { return it }, fileSystem, venvPath)
   val pythonBinary = withProgressText(PyBundle.message("python.sdk.progress.uv.creating")) {
     uv.initializeEnvironment(shouldInitProject, version, clearExisting = overrideExistingEnv)
   }.getOr { return it }

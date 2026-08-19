@@ -14,6 +14,7 @@ import com.jetbrains.python.run.features.PyRunToolParameters
 import com.jetbrains.python.run.features.PySdkRunToolProvider
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import java.nio.file.Path
 
 internal class HatchRunToolProvider : PySdkRunToolProvider<HatchSdkFlavorData, HatchSdkFlavor>(HatchSdkFlavor::class.java) {
 
@@ -21,6 +22,7 @@ internal class HatchRunToolProvider : PySdkRunToolProvider<HatchSdkFlavorData, H
     sdkHome: String,
     flavorData: HatchSdkFlavorData,
     fileSystem: FileSystem<P>,
+    inlineScriptTarget: Path?,
   ): PyRunToolParameters {
     val hatchPath = HatchPyTool.getInstance().resolveExecutable(fileSystem)
                     ?: throw AssertionError(HatchExecutableNotFoundHatchError(null))

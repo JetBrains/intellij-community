@@ -56,7 +56,9 @@ import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedW
 public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRunConfiguration<T>> extends AbstractRunConfiguration
   implements AbstractPythonRunConfigurationParams, CommandLinePatcher, RunProfileWithCompileBeforeLaunchOption {
   private static final String RUN_TOOL = "RUN_TOOL";
+  private static final String RUN_AS_SCRIPT = "RUN_AS_SCRIPT";
   private @Nullable Boolean useRunTool = null;
+  private @Nullable Boolean runAsScript = null;
   private String myInterpreterOptions = "";
   private String myWorkingDirectory = "";
   private String mySdkHome = "";
@@ -299,6 +301,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     PythonRunConfigurationExtensionsManager.Companion.getInstance().readExternal(this, element);
     String runToolValue = JDOMExternalizerUtil.readField(element, RUN_TOOL);
     useRunTool = StringUtil.isEmpty(runToolValue) ? null : Boolean.parseBoolean(runToolValue);
+    String runAsScriptValue = JDOMExternalizerUtil.readField(element, RUN_AS_SCRIPT);
+    runAsScript = StringUtil.isEmpty(runAsScriptValue) ? null : Boolean.parseBoolean(runAsScriptValue);
   }
 
   protected void readEnvs(Element element) {
@@ -333,6 +337,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
     PathMappingSettings.writeExternal(element, getMappingSettings());
     JDOMExternalizerUtil.writeField(element, RUN_TOOL, useRunTool == null ? null : Boolean.toString(useRunTool));
+    JDOMExternalizerUtil.writeField(element, RUN_AS_SCRIPT, runAsScript == null ? null : Boolean.toString(runAsScript));
   }
 
   protected void writeEnvs(Element element) {
@@ -421,6 +426,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     target.setAddContentRoots(source.shouldAddContentRoots());
     target.setAddSourceRoots(source.shouldAddSourceRoots());
     target.setUseRunTool(source.getUseRunTool());
+    target.setRunAsScript(source.getRunAsScript());
     target.setDebugJustMyCode(source.shouldDebugJustMyCode());
   }
 
@@ -519,6 +525,27 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @Override
   public final void setUseRunTool(@Nullable Boolean useRunTool) {
     this.useRunTool = useRunTool;
+  }
+
+  /**
+   * This configuration seen as one that runs a single script file, or {@code null} when it runs something else: a
+   * module target or a test runner has no script to carry a PEP 723 metadata block.
+   */
+  @ApiStatus.Internal
+  public @Nullable PyBareScriptConfiguration asBareScriptConfiguration() {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public final @Nullable Boolean getRunAsScript() {
+    return runAsScript;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public final void setRunAsScript(@Nullable Boolean runAsScript) {
+    this.runAsScript = runAsScript;
   }
 
   @Override

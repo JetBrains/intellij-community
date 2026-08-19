@@ -21,6 +21,7 @@ import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.nio.file.Path
 
 /**
  * Feature flag for Python "Run with …" tool integration.
@@ -85,8 +86,12 @@ interface PyRunToolProvider {
   /**
    * Represents the parameters required to configure and run a Python tool.
    * This includes the path to the executable and a list of associated arguments.
+   *
+   * [inlineScriptTarget] is set only when the run should be treated as a PEP 723 script
+   * (see [com.jetbrains.python.run.PyBareScriptConfiguration]); a tool that has no notion of that ignores it and
+   * behaves as it does for any other run.
    */
-  suspend fun getRunToolParameters(sdk: Sdk): PyRunToolParameters
+  suspend fun getRunToolParameters(sdk: Sdk, inlineScriptTarget: Path?): PyRunToolParameters
 
   /**
    * Represents the initial state of the tool, determining whether it is enabled or not by default.
@@ -120,7 +125,7 @@ abstract class PySdkRunToolProvider<T : PyFlavorData, U : PythonSdkFlavor<T>>(
 ) : PyRunToolProvider {
   override fun isAvailable(sdk: Sdk): Boolean = flavorClass.isInstance(sdk.sdkFlavor)
 
-  override suspend fun getRunToolParameters(sdk: Sdk): PyRunToolParameters {
+  override suspend fun getRunToolParameters(sdk: Sdk, inlineScriptTarget: Path?): PyRunToolParameters {
     val additionalData = sdk.pySdkAdditionalData
     val fileSystem = when (additionalData) {
       is PyTargetAwareAdditionalData -> additionalData.targetEnvironmentConfiguration?.let {
@@ -131,12 +136,13 @@ abstract class PySdkRunToolProvider<T : PyFlavorData, U : PythonSdkFlavor<T>>(
 
     @Suppress("UNCHECKED_CAST") // Checked by isAvailable and the flavor's data contract
     val flavorAndData = additionalData.flavorAndData as PyFlavorAndData<T, U>
-    return getRunToolParameters(requireNotNull(sdk.homePath), flavorAndData.data, fileSystem)
+    return getRunToolParameters(requireNotNull(sdk.homePath), flavorAndData.data, fileSystem, inlineScriptTarget)
   }
 
   protected abstract suspend fun <P : PathHolder> getRunToolParameters(
     sdkHome: FullPathOnTarget,
     flavorData: T,
     fileSystem: FileSystem<P>,
+    inlineScriptTarget: Path?,
   ): PyRunToolParameters
 }

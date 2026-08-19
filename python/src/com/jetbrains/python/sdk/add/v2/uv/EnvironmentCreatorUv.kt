@@ -43,8 +43,8 @@ import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState
 import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
 import com.jetbrains.python.sdk.add.v2.validatablePathField
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
+import com.jetbrains.python.sdk.uv.impl.validateAndCreateUvCli
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -188,7 +188,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
               null
             }
 
-            val cli = createUvCli(executable.pathHolder, model.fileSystem).getOr { return@withContext emptyList() }
+            val cli = validateAndCreateUvCli(executable.pathHolder, model.fileSystem).getOr { return@withContext emptyList() }
             val cwd = Path.of("")
             val uvLowLevel = createUvLowLevel(cwd, cli, model.fileSystem, null)
             uvLowLevel.listSupportedPythonVersions(versionRequest)
