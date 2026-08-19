@@ -514,6 +514,11 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalAndNonPublicInspection"
                      key="inspection.extension.class.should.be.final.and.non.public.display.name"/>
+    <localInspection language="JVM" shortName="LightProjectDescriptorEqualsHashCode"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.LightProjectDescriptorEqualsHashCodeInspection"
+                     key="inspection.light.project.descriptor.equals.hashcode.display.name"/>
     <localInspection language="XML" applyToDialects="false" shortName="LightServiceMigrationXML"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
