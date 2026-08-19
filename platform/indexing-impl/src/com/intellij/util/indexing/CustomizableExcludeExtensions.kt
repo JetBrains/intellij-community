@@ -19,7 +19,7 @@ class CustomizableExcludeExtensions(private val excludingExtensionEP: ExtensionP
   private var excludingExtensions = createExcludeExtensionsLazyValue()
 
   private fun createExcludeExtensionsLazyValue(): Lazy<Map<FileType, List<IndexFilterExcludingExtension>>> = lazy(LazyThreadSafetyMode.PUBLICATION) {
-    //some app configurations (e.g. fleet, lsp) may skip Indexing.xml descriptor, and have their own configuration, without
+    //some app configurations (e.g. fleet, lsp) may skip the intellij.platform.indexing.xml descriptor, and have their own configuration, without
     // appropriate extensionPoint defined -- let's be safe and pretend as-if there are no extensions then:
     if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(excludingExtensionEP)) {
       excludingExtensionEP.extensionList.groupBy { it.getFileType() }
