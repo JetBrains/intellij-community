@@ -5,7 +5,6 @@ import com.intellij.diagnostic.Activity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
-import java.util.IdentityHashMap
 
 
 /**
@@ -19,7 +18,7 @@ fun PluginInitializationContext.computeTargetState(
   parentActivity: Activity?,
 ): PluginSet {
   var initStagesActivity = parentActivity?.startChild("select candidate subset")
-  val excludedFromCandidateSubset = IdentityHashMap<PluginMainDescriptor, DescriptorExclusionReason>()
+  val excludedFromCandidateSubset = LinkedHashMap<PluginMainDescriptor, DescriptorExclusionReason>()
   val candidateSubset = selectCandidateSubset(discoveryResult, excludedFromCandidateSubset)
 
   if (isStartupInit) {
