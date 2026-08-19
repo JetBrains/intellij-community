@@ -69,6 +69,8 @@ IntellijDevFragmentInfo = provider(
         "manifest": "The fragment manifest.",
         "plugin_classpath_part": "This fragment's plugin-classpath records, or None if it built no plugin.",
         "plugin_classpath_prefix": "The plugin-classpath prefix, or None if another fragment produces it.",
+        "inputs_manifest": "The label-to-path manifest of the fragment's declared Bazel inputs.",
+        "unused_inputs": "The declared inputs the assembly never resolved - declared minus these is what it used.",
     },
 )
 
@@ -256,6 +258,8 @@ def _fragment_impl(ctx):
             manifest = component_manifest,
             plugin_classpath_part = plugin_classpath_part,
             plugin_classpath_prefix = plugin_classpath_prefix,
+            inputs_manifest = bazel_inputs_manifest,
+            unused_inputs = unused_inputs,
         ),
     ]
 
