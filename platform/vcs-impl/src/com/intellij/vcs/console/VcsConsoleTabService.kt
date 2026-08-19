@@ -5,8 +5,7 @@ import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -17,6 +16,9 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
@@ -76,7 +78,10 @@ class MockVcsConsoleTabService : VcsConsoleTabService {
   }
 }
 
-internal class VcsConsoleTabServiceImpl(val project: Project) : VcsConsoleTabService, Disposable {
+internal class VcsConsoleTabServiceImpl(
+  private val project: Project,
+  private val cs: CoroutineScope,
+) : VcsConsoleTabService, Disposable {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): VcsConsoleTabService = project.service()
@@ -104,8 +109,8 @@ internal class VcsConsoleTabServiceImpl(val project: Project) : VcsConsoleTabSer
     line.print(consoleView)
     hadMessages = true
 
-    runInEdt(ModalityState.nonModal()) {
-      showConsoleTab(false, null)
+    cs.launch(Dispatchers.UiWithModelAccess) {
+      showConsoleTab(false)
     }
   }
 
@@ -128,7 +133,7 @@ internal class VcsConsoleTabServiceImpl(val project: Project) : VcsConsoleTabSer
   override fun hadMessages(): Boolean = hadMessages
 
   @RequiresEdt
-  private fun showConsoleTab(selectContent: Boolean, onShown: Runnable?) {
+  private fun showConsoleTab(selectContent: Boolean, onShown: Runnable? = null) {
     if (project.isDisposed || project.isDefault) return
 
     val contentTab = ChangesViewContentManager.getInstance(project).findContent(ChangesViewContentManager.CONSOLE)
