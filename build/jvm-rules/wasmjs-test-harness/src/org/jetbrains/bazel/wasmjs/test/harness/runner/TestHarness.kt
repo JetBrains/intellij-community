@@ -5,6 +5,7 @@ import kotlinx.coroutines.CancellationException
 import org.jetbrains.bazel.wasmjs.test.harness.ExitCodes
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
 import kotlin.time.ComparableTimeMark
 import kotlin.time.Duration
@@ -39,7 +40,7 @@ object TestHarness {
           entrypointModulePath = entrypointModulePath,
           configurationScriptPaths = configurationScriptPaths,
           npmPackageEntries = npmPackages.associateWith { specifier ->
-            resolveNpmEntry(specifier, staticContentDir.resolve("node_modules/$specifier/package.json").readText())
+            resolveNpmEntry(specifier, npmPackageJson(staticContentDir, specifier))
           },
           importRemaps = importRemaps,
           awaitedImports = awaitedImports,
@@ -73,4 +74,17 @@ object TestHarness {
       ExitCodes.INFRASTRUCTURE_FAILURE
     }
   }
+}
+
+/**
+ * The staged `package.json` of an npm package, the first thing the run reads out of the static
+ * root. Its absence means the root itself is wrong far more often than the package is, so it is
+ * named here rather than left to a bare `NoSuchFileException` from the read.
+ */
+private fun npmPackageJson(staticContentDir: Path, specifier: String): String {
+  val packageJson = staticContentDir.resolve("node_modules/$specifier/package.json")
+  require(packageJson.isRegularFile()) {
+    "npm package $specifier is not staged in the static content root: no $packageJson"
+  }
+  return packageJson.readText()
 }

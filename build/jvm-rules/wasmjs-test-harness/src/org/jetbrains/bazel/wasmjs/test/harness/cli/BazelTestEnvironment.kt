@@ -93,12 +93,23 @@ data class BazelTestEnvironment(
  * directory are taken as-is; anything else is treated as an rlocation path and resolved
  * through Bazel's runfiles library (which handles both the runfiles directory and the
  * manifest layouts).
+ *
+ * An rlocation path that resolves to nothing fails here. Carrying it on unresolved only defers the
+ * failure to whichever read touches it first, where it surfaces as a `NoSuchFileException` on a
+ * runfiles-root-relative path with nothing to say where that path came from.
  */
 internal fun resolveRunnerPath(raw: String, environment: BazelTestEnvironment): Path {
   val direct = Path(raw)
   return when {
     direct.isAbsolute -> direct
     direct.exists() -> direct.toAbsolutePath()
-    else -> environment.runfiles?.withSourceRepository("")?.rlocation(raw)?.let(::Path) ?: direct
+    else -> requireNotNull(environment.runfiles?.withSourceRepository("")?.rlocation(raw)?.let(::Path)) {
+      when (environment.runfiles) {
+        null -> "cannot resolve $raw: it is not a path on disk, and there is no runfiles context to resolve it in"
+        // Only files are runfiles: a directory that the rule never declared as an artifact of its
+        // own has no entry, and the manifest layout cannot resolve it the way a directory can.
+        else -> "cannot resolve the rlocation path $raw: no such entry in the runfiles of this test"
+      }
+    }
   }.normalize()
 }

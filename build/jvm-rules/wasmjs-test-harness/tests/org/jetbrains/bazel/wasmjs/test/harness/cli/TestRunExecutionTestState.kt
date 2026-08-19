@@ -47,7 +47,7 @@ class TestRunExecutionTestState {
       "--browser-binary=${fixtureDir.resolve("missing-headless-shell")}",
       "--browser-flagfile=$browserFlagfile",
       "--browser-profile-dir=${fixtureDir.resolve("browser-profile")}",
-      "--static-content-dir=static",
+      "--static-content-marker=${fixtureDir.resolve("static/.static-root")}",
       "--entrypoint=m-js/m.mjs",
     ), BazelTestEnvironment.from(emptyMap()))
 

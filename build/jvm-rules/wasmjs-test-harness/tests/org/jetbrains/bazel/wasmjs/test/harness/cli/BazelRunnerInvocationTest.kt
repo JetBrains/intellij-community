@@ -5,7 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.file.Files
-import kotlin.io.path.Path
+import kotlin.io.path.createDirectories
 import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -23,11 +23,16 @@ class BazelRunnerInvocationTest {
   }
   private val profileDir = fixtureDir.resolve("browser-profile")
 
+  // The static root is addressed through the marker file the rule writes at its top level, so the
+  // fixture carries one too.
+  private val staticRoot = fixtureDir.resolve("static").also { it.createDirectories() }
+  private val staticRootMarker = staticRoot.resolve(".static-root").also { it.writeText("") }
+
   private val minimalArguments = listOf(
     "--browser-binary=$browserBinary",
     "--browser-flagfile=$browserFlagfile",
     "--browser-profile-dir=$profileDir",
-    "--static-content-dir=static",
+    "--static-content-marker=$staticRootMarker",
     "--entrypoint=module-js/module.mjs",
   )
 
@@ -39,7 +44,7 @@ class BazelRunnerInvocationTest {
       listOf(browserBinary.toString(), "--headless", "--user-data-dir=$profileDir"),
       invocation.browserCommand,
     )
-    assertEquals(Path("static"), invocation.staticContentDir)
+    assertEquals(staticRoot, invocation.staticContentDir)
     assertEquals("module-js/module.mjs", invocation.entrypoint)
     assertEquals(30.seconds, invocation.browserSetupTimeout)
     assertEquals(3.seconds, invocation.testCompletionGracePeriod)

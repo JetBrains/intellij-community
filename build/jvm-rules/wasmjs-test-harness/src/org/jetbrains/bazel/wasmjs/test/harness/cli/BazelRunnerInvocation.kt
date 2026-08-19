@@ -31,6 +31,7 @@ internal data class BazelRunnerInvocation(
    * resolved (and created) `--browser-profile-dir`.
    */
   val browserCommand: List<String>,
+  /** The static web root: the directory holding the `--static-content-marker` file. */
   val staticContentDir: Path,
   val entrypoint: String,
   val configurationScripts: List<String>,
@@ -60,7 +61,7 @@ internal data class BazelRunnerInvocation(
       "--browser-binary",
       "--browser-flagfile",
       "--browser-profile-dir",
-      "--static-content-dir",
+      "--static-content-marker",
       "--entrypoint",
       "--configuration-script",
       "--npm-package",
@@ -90,7 +91,7 @@ internal data class BazelRunnerInvocation(
           browserProfileDir = valuesByOption.single("--browser-profile-dir"),
           environment = environment,
         ),
-        staticContentDir = resolveRunnerPath(valuesByOption.single("--static-content-dir"), environment),
+        staticContentDir = staticContentDir(valuesByOption.single("--static-content-marker"), environment),
         entrypoint = valuesByOption.single("--entrypoint"),
         configurationScripts = valuesByOption["--configuration-script"].orEmpty(),
         npmPackages = valuesByOption["--npm-package"].orEmpty(),
@@ -157,6 +158,17 @@ internal data class BazelRunnerInvocation(
     }
   }
 }
+
+/**
+ * The static web root, addressed through the marker file the rule writes at its top level rather
+ * than by its own path: the root is only a shared output prefix of the rule's symlinks, so it is
+ * not a runfile and a runfiles manifest — the only layout Bazel gives a test on Windows — has no
+ * entry to resolve it by. A file always has one, and its parent is the populated root either way.
+ */
+private fun staticContentDir(marker: String, environment: BazelTestEnvironment): Path =
+  requireNotNull(resolveRunnerPath(marker, environment).parent) {
+    "--static-content-marker has no parent directory to serve as the static root: $marker"
+  }
 
 /** Assembles [BazelRunnerInvocation.browserCommand] from the raw browser options. */
 private fun browserCommand(

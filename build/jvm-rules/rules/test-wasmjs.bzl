@@ -106,6 +106,7 @@ def _wasmjs_browser_test_impl(ctx):
     # module_name lands in the flagfile (`=`-split option values) and in the generated page.
     _validate_page_path(ctx, module_name)
 
+    static_root_marker = _static_root_marker(ctx, static_prefix)
     dist_link = _linked_module(ctx, static_prefix, module_name)
     config_links, config_paths = _configuration_scripts(ctx, static_prefix)
     testdata_links = _testdata(ctx, static_prefix, module_name)
@@ -131,7 +132,7 @@ def _wasmjs_browser_test_impl(ctx):
     flag_args.add("--browser-binary=%s" % _rlocation_path(ctx, ctx.file._browser_executable.short_path))
     flag_args.add("--browser-flagfile=%s" % _rlocation_path(ctx, browser_flagfile.short_path))
     flag_args.add("--browser-profile-dir=%s" % _BROWSER_PROFILE_DIR)
-    flag_args.add("--static-content-dir=%s" % _rlocation_path(ctx, dist_link.short_path.removesuffix("/%s-js" % module_name)))
+    flag_args.add("--static-content-marker=%s" % _rlocation_path(ctx, static_root_marker.short_path))
     flag_args.add("--entrypoint=%s-js/%s.mjs" % (module_name, module_name))
     flag_args.add_all(config_paths, format_each = "--configuration-script=%s")
     flag_args.add_all(npm_specifiers, format_each = "--npm-package=%s")
@@ -158,13 +159,23 @@ def _wasmjs_browser_test_impl(ctx):
 
     executable = _runner_executable(ctx)
     runfiles = ctx.runfiles(
-        files = [flagfile, browser_flagfile, dist_link] +
+        files = [flagfile, browser_flagfile, static_root_marker, dist_link] +
                 config_links + testdata_links + npm_links + runtime_links + browser_files,
     ).merge(ctx.attr._runner[DefaultInfo].default_runfiles).merge_all([
         target[DefaultInfo].default_runfiles
         for target in ctx.attr.test_data + ctx.attr.configuration_scripts + [ctx.attr._browser]
     ])
     return [DefaultInfo(executable = executable, runfiles = runfiles)]
+
+def _static_root_marker(ctx, static_prefix):
+    # The static root is only an output-path prefix shared by the symlinks below, never an artifact
+    # of its own, so it has no runfiles entry: a runfiles manifest lists files, and Bazel does not
+    # always materialize a runfiles directory to resolve a bare prefix against (on Windows it never
+    # does; `--noenable_runfiles` does the same anywhere). This empty marker gives the runner one
+    # real file to anchor on — its parent directory is the populated static root under both layouts.
+    marker = ctx.actions.declare_file("%s/%s" % (static_prefix, _STATIC_ROOT_MARKER))
+    ctx.actions.write(output = marker, content = "")
+    return marker
 
 def _linked_module(ctx, static_prefix, module_name):
     # The whole linker output is served verbatim: a single directory symlink.
@@ -191,7 +202,7 @@ def _testdata(ctx, static_prefix, module_name):
     if ctx.label.package == "":
         fail("wasmjs_test targets must not live in a repository root package (the testdata path convention is package-relative)")
     marker = ctx.label.package + "/"
-    reserved = ["index.html", "_config", "_runtime", "node_modules", "%s-js" % module_name, "%s.flagfile" % ctx.label.name, "%s.browser.flagfile" % ctx.label.name]
+    reserved = [_STATIC_ROOT_MARKER, "index.html", "_config", "_runtime", "node_modules", "%s-js" % module_name, "%s.flagfile" % ctx.label.name, "%s.browser.flagfile" % ctx.label.name]
     links = []
     for f in ctx.files.test_data:
         owner = f.owner
@@ -303,6 +314,10 @@ _PLAYWRIGHT_CHROMIUM_FLAGS = [
 
 # Relative: the runner resolves it under TEST_TMPDIR at test runtime.
 _BROWSER_PROFILE_DIR = "browser-profile"
+
+# The file the static root is anchored on, at its top level; see _static_root_marker. Never served:
+# the runner addresses the root through this file's parent, and requests go to the entries beside it.
+_STATIC_ROOT_MARKER = ".static-root"
 
 def _runner_executable(ctx):
     windows_constraint = ctx.attr._windows_constraint[platform_common.ConstraintValueInfo]

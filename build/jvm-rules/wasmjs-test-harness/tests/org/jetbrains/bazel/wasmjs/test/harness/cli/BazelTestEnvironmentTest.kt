@@ -3,10 +3,12 @@ package org.jetbrains.bazel.wasmjs.test.harness.cli
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.file.Files
-import kotlin.io.path.Path
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.seconds
 
 class BazelTestEnvironmentTest {
@@ -96,11 +98,12 @@ class BazelTestEnvironmentTest {
   }
 
   @Test
-  fun `a relative path resolving nowhere falls back to itself, normalized`() {
-    assertEquals(
-      Path("does/not/exist.txt"),
-      resolveRunnerPath("does/../does/not/exist.txt", BazelTestEnvironment.from(emptyMap())),
-    )
+  fun `a relative path resolving nowhere is rejected instead of carried on unresolved`() {
+    val error = assertThrows(IllegalArgumentException::class.java) {
+      resolveRunnerPath("does/../does/not/exist.txt", BazelTestEnvironment.from(emptyMap()))
+    }
+
+    assertTrue(error.message, error.message.orEmpty().contains("does/not/exist.txt"))
   }
 
   @Test
@@ -109,5 +112,31 @@ class BazelTestEnvironmentTest {
     val environment = BazelTestEnvironment.from(mapOf("RUNFILES_DIR" to runfilesDir.toString()))
 
     assertEquals(runfilesDir.resolve("repo/file.txt"), resolveRunnerPath("repo/file.txt", environment))
+  }
+
+  /**
+   * The layout a test gets on Windows, where Bazel materializes no runfiles directory. A manifest
+   * maps the files of the test one by one, so a directory that the rule never declared as an
+   * artifact of its own — the `<name>_static` root, a mere output prefix of the symlinks under it —
+   * has no entry to resolve, while the marker file the rule writes inside it does. Resolving the
+   * root by its own path is what failed on Windows while the runfiles-directory layout hid it.
+   */
+  @Test
+  fun `under a runfiles manifest a staged file resolves and the directory holding it does not`() {
+    val staticRoot = Files.createTempDirectory("manifest-runfiles").resolve("e2e_static")
+    val marker = staticRoot.resolve(".static-root").also { it.createParentDirectories().writeText("") }
+    val manifest = Files.createTempFile("runfiles", ".manifest").also { file ->
+      file.writeText("_main/e2e/e2e_static/.static-root $marker\n")
+    }
+    val environment = BazelTestEnvironment.from(mapOf(
+      "RUNFILES_MANIFEST_ONLY" to "1",
+      "RUNFILES_MANIFEST_FILE" to manifest.toString(),
+    ))
+
+    assertEquals(marker, resolveRunnerPath("_main/e2e/e2e_static/.static-root", environment))
+    assertEquals(staticRoot, resolveRunnerPath("_main/e2e/e2e_static/.static-root", environment).parent)
+    assertThrows(IllegalArgumentException::class.java) {
+      resolveRunnerPath("_main/e2e/e2e_static", environment)
+    }
   }
 }
