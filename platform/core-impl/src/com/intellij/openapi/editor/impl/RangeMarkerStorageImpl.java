@@ -32,7 +32,9 @@ public final class RangeMarkerStorageImpl implements RangeMarkerStorage {
     myPersistentRangeMarkers = new PersistentRangeMarkerTree(dispatcher);
     myDocument = document;
   }
-  private static boolean USE_PMARKER_IMPLEMENTATION = Registry.is("editor.range.marker.use.pmarker.internal");
+  private static class Holder {
+    private static boolean USE_PMARKER_IMPLEMENTATION = Registry.is("editor.range.marker.use.pmarker.internal");
+  }
   @Override
   public @NotNull RangeMarkerEx createRangeMarker(@NotNull DocumentEx hostDocument,
                                                   int startOffset,
@@ -41,7 +43,7 @@ public final class RangeMarkerStorageImpl implements RangeMarkerStorage {
     if (surviveOnExternalChange) {
       return new PersistentRangeMarker(hostDocument, startOffset, endOffset, true);
     }
-    if (USE_PMARKER_IMPLEMENTATION) {
+    if (Holder.USE_PMARKER_IMPLEMENTATION) {
       return SnapshotMarkerEngineImpl.INSTANCE.createRangeMarker(hostDocument, ((DocumentImpl)hostDocument).getCore().snapshot(), startOffset, endOffset, new MarkerSpec(false, false, false));
     }
     return new RangeMarkerImpl(hostDocument, startOffset, endOffset, true, false);
@@ -108,13 +110,13 @@ public final class RangeMarkerStorageImpl implements RangeMarkerStorage {
     return (rangeMarker instanceof PersistentRangeMarker) ? myPersistentRangeMarkers : myRangeMarkers;
   }
   public static <E extends Throwable> void usePMarkerImplementationIn(@NotNull ThrowableRunnable<E> runnable) throws E {
-    boolean old = USE_PMARKER_IMPLEMENTATION;
-    USE_PMARKER_IMPLEMENTATION = true;
+    boolean old = Holder.USE_PMARKER_IMPLEMENTATION;
+    Holder.USE_PMARKER_IMPLEMENTATION = true;
     try {
       runnable.run();
     }
     finally {
-      USE_PMARKER_IMPLEMENTATION = old;
+      Holder.USE_PMARKER_IMPLEMENTATION = old;
     }
   }
 }
