@@ -117,6 +117,14 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
       myExtension = fileRef ? null : "java";
       PsiFile file = getContainingFile().getOriginalFile();
       VirtualFile virtualFile = file.getVirtualFile();
+
+      if (virtualFile == null) {
+        PsiElement context = file.getContext();
+        if (context != null) {
+          virtualFile = context.getContainingFile().getVirtualFile();
+        }
+      }
+
       mySnippetRoot = virtualFile == null ? null : virtualFile.getParent().findChild(PsiSnippetAttribute.SNIPPETS_FOLDER);
     }
 
