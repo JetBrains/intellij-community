@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.containers.addIfNotNull
 import com.jetbrains.python.inspections.quickfix.PyRenameUnresolvedRefQuickFix
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenceQuickFixesImpl
 import com.jetbrains.python.inspections.unresolvedReference.getAddParameterQuickFix
@@ -36,31 +37,38 @@ internal fun customizePyreflyQuickFixes(
     val description = diagnostic.message
 
     if (code == UNKNOWN_NAME) {
-      val node = PsiTreeUtil.findElementOfClassAtRange(
-        file,
-        textRange.startOffset,
-        textRange.endOffset,
-        PyReferenceExpression::class.java
-      )
+      val node = PsiTreeUtil.findElementOfClassAtRange(file, textRange.startOffset, textRange.endOffset,
+                                                       PyReferenceExpression::class.java)
       if (node != null) {
         val fixes = buildList {
-          addAll(unresolvedNameFixes(node))
+          val referencedName = node.referencedName
+          if (referencedName != null && !node.isQualified) {
+            addIfNotNull(getTrueFalseQuickFix(referencedName))
+            addIfNotNull(getAddParameterQuickFix(referencedName, node))
+            add(PyRenameUnresolvedRefQuickFix())
+          }
           addAll(PyUnresolvedReferenceQuickFixesImpl.getAutoImportFixes(node, node.reference, node))
         }
         addFixes(node, description, fixes)
       }
     }
     else if (code == MISSING_IMPORT || code == MISSING_MODULE_ATTRIBUTE) {
-      val node = getImportedReference(file, textRange)
-      if (node != null) {
+      val importedReference = getImportedReference(file, textRange)
+      if (importedReference != null) {
+        val topmostQualifier = generateSequence(importedReference) { it.qualifier as? PyReferenceExpression }.last()
         val fixes = buildList {
-          addAll(unresolvedNameFixes(node))
-          node.referencedName?.let { referencedName ->
-            addAll(PyUnresolvedReferenceQuickFixesImpl.getInstallPackageQuickFixes(node, node.reference, referencedName))
+          add(PyRenameUnresolvedRefQuickFix())
+          if (code == MISSING_IMPORT) {
+            val referencedName = topmostQualifier.referencedName
+            if (referencedName != null) {
+              addAll(PyUnresolvedReferenceQuickFixesImpl.getInstallPackageQuickFixes(topmostQualifier,
+                                                                                     topmostQualifier.reference,
+                                                                                     referencedName))
+            }
           }
-          addAll(PyUnresolvedReferenceQuickFixesImpl.getImportStatementQuickFixes(node))
+          addAll(PyUnresolvedReferenceQuickFixesImpl.getImportStatementQuickFixes(topmostQualifier))
         }
-        addFixes(node, description, fixes)
+        addFixes(topmostQualifier, description, fixes)
       }
     }
 
@@ -80,17 +88,6 @@ private fun getImportedReference(file: PsiFile, textRange: TextRange): PyReferen
   return fromImport?.importSource
 }
 
-private fun unresolvedNameFixes(expr: PyReferenceExpression): List<LocalQuickFix> {
-  if (expr.isQualified) return emptyList()
-  val refName = expr.referencedName ?: return emptyList()
-
-  return listOfNotNull(
-    getTrueFalseQuickFix(refName),
-    getAddParameterQuickFix(refName, expr),
-    PyRenameUnresolvedRefQuickFix(),
-  )
-}
-
 private fun MutableList<IntentionAction>.addFixes(
   psiElement: PsiElement,
   description: @NlsSafe String,
@@ -99,11 +96,7 @@ private fun MutableList<IntentionAction>.addFixes(
   if (fixes.isEmpty()) return
 
   val descriptor = InspectionManager.getInstance(psiElement.project).createProblemDescriptor(
-    psiElement,
-    description,
-    true,
-    fixes.toTypedArray(),
-    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+    psiElement, description, true, fixes.toTypedArray(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING
   )
   fixes.mapTo(this) { QuickFixWrapper.wrap(descriptor, it) }
 }
