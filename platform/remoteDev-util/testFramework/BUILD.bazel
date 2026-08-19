@@ -107,6 +107,7 @@ jvm_library(
 exports_files(
     [
         "intellij.remoteDev.testFramework.iml",
+        "resources/intellij.remoteDev.testFramework.xml",
     ],
     visibility = ["//visibility:public"],
 )
