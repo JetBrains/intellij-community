@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Turns an agent telemetry group off from the server, without waiting for a release.
@@ -24,25 +25,55 @@ object AgentTelemetryKillSwitch {
 
   private val LOG = logger<AgentTelemetryKillSwitch>()
 
+  /** Recorders whose read failure has already been reported, so a permanent failure does not report once per event. */
+  private val reportedReadFailures = ConcurrentHashMap.newKeySet<String>()
+
   /**
-   * Whether [groupId], or [eventId] within it, may report. Fails open: an unavailable recorder or an unreadable
-   * option leaves reporting on, because losing telemetry to a lookup failure is worse than honouring a switch late.
+   * Whether [groupId], or [eventId] within it, may report.
+   *
+   * Fails closed: if the option cannot be read the group stays silent, because a switch that cannot be read cannot be
+   * honoured, and the reason to reach for this switch is that a group is doing damage. The read failure is reported as
+   * an error rather than swallowed at debug level — losing a group to it is a fault worth seeing — and reported once
+   * per recorder, so a permanently unavailable recorder does not raise one report per event.
+   *
+   * Unit test mode short-circuits to enabled before any recorder lookup: a test that collects these events has no
+   * recorder options to read, and a fail-closed answer there would silence every collector test.
    */
   @JvmOverloads
   fun isEnabled(groupId: String, recorderId: String, eventId: String? = null): Boolean {
-    val application = ApplicationManager.getApplication() ?: return true
-    if (application.isUnitTestMode) {
+    if (ApplicationManager.getApplication()?.isUnitTestMode == true) {
       return true
     }
-    val disabled = try {
+    return isEnabled(groupId, recorderId, eventId) {
       StatisticsEventLogProviderUtil.getEventLogProvider(recorderId).recorderOptionsProvider
         .getListOption(DISABLED_GROUPS_OPTION)
     }
+  }
+
+  /**
+   * The same decision with the option read supplied, so that the fail-closed rule is testable without a recorder:
+   * the entry point above short-circuits in unit test mode and never reaches its own read.
+   */
+  @VisibleForTesting
+  fun isEnabled(groupId: String, recorderId: String, eventId: String?, readDisabledEntries: () -> List<String>?): Boolean {
+    val disabled = try {
+      readDisabledEntries()
+    }
     catch (e: Exception) {
-      LOG.debug("Cannot read $DISABLED_GROUPS_OPTION for recorder $recorderId", e)
-      return true
+      reportReadFailure(recorderId, groupId, e)
+      return false
     }
     return isEnabled(disabled, groupId, eventId)
+  }
+
+  private fun reportReadFailure(recorderId: String, groupId: String, e: Exception) {
+    val message = "Cannot read $DISABLED_GROUPS_OPTION for recorder $recorderId, so $groupId stays silent"
+    if (reportedReadFailures.add(recorderId)) {
+      LOG.error(message, e)
+    }
+    else {
+      LOG.debug(message, e)
+    }
   }
 
   /** The decision itself, separated from reading the option so that it is testable without an application. */
