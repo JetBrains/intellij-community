@@ -68,6 +68,7 @@ const AIR_CONTAINER_CLIENT_TAG_PREFIX = 'air-container:'
 
 type ToolOutput = {
   content: Array<{type: 'text'; text: string}>
+  structuredContent?: Record<string, unknown>
   isError?: boolean
 }
 
@@ -949,7 +950,10 @@ function transformLintItems(items: SearchItem[], transformer?: ItemTransformer):
 }
 
 function createLintFilesToolOutput(result: LintFilesToolResult): ToolOutput {
-  return makeToolOutput(JSON.stringify(result.more === true ? {items: result.items, more: true} : {items: result.items}))
+  const structuredContent: Record<string, unknown> = result.more === true
+    ? {items: result.items, more: true}
+    : {items: result.items}
+  return makeJsonToolOutput(structuredContent)
 }
 
 function logSettledErrors(results: PromiseSettledResult<unknown>[]): void {
@@ -1033,6 +1037,18 @@ function makeToolOutput(text: unknown): ToolOutput {
         text: String(text)
       }
     ]
+  }
+}
+
+function makeJsonToolOutput(structuredContent: Record<string, unknown>): ToolOutput {
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify(structuredContent)
+      }
+    ],
+    structuredContent
   }
 }
 

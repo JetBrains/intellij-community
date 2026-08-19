@@ -23558,7 +23558,8 @@ function transformLintItems(items, transformer) {
   return transformer ? transformer(items) : items;
 }
 function createLintFilesToolOutput(result) {
-  return makeToolOutput(JSON.stringify(result.more === !0 ? { items: result.items, more: !0 } : { items: result.items }));
+  let structuredContent = result.more === !0 ? { items: result.items, more: !0 } : { items: result.items };
+  return makeJsonToolOutput(structuredContent);
 }
 function logSettledErrors(results) {
   for (let r of results)
@@ -23620,6 +23621,17 @@ function makeToolOutput(text) {
         text: String(text)
       }
     ]
+  };
+}
+function makeJsonToolOutput(structuredContent) {
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(structuredContent)
+      }
+    ],
+    structuredContent
   };
 }
 function makeToolError(text) {

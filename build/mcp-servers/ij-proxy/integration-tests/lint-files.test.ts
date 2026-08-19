@@ -4,11 +4,23 @@ import {deepStrictEqual, ok, strictEqual} from 'node:assert/strict'
 import {describe, it} from 'bun:test'
 import {buildUpstreamTool, SUITE_TIMEOUT_MS, withProxy} from '../test-utils'
 
-const nativeLintTool = buildUpstreamTool('lint_files', {
-  files: {type: 'array', items: {type: 'string'}},
-  min_severity: {type: 'string'},
-  timeout: {type: 'number'}
-}, ['files'])
+const lintOutputSchema = {
+  type: 'object',
+  properties: {
+    items: {type: 'array', items: {type: 'object'}},
+    more: {type: 'boolean'}
+  },
+  required: ['items']
+} as const
+
+const nativeLintTool = {
+  ...buildUpstreamTool('lint_files', {
+    files: {type: 'array', items: {type: 'string'}},
+    min_severity: {type: 'string'},
+    timeout: {type: 'number'}
+  }, ['files']),
+  outputSchema: lintOutputSchema
+}
 
 function nativeLintResponse(items: unknown[], more?: boolean) {
   const payload = more ? {items, more: true} : {items}
@@ -45,6 +57,31 @@ describe('ij MCP proxy lint_files', {timeout: SUITE_TIMEOUT_MS}, () => {
     })
 
     deepStrictEqual(calls, [{filePaths: ['src/Main.kt'], timeout: undefined}])
+  })
+
+  it('returns text and structured forms of the normalized result', async () => {
+    await withProxy({
+      tools: [nativeLintTool],
+      onToolCall({name}) {
+        strictEqual(name, 'lint_files')
+        return nativeLintResponse([{
+          filePath: 'src/Main.kt',
+          problems: []
+        }])
+      }
+    }, async ({proxyClient}) => {
+      const toolListResponse = await proxyClient.send('tools/list')
+      const advertisedTool = toolListResponse.result.tools.find((tool) => tool.name === 'lint_files')
+      deepStrictEqual(advertisedTool.outputSchema, lintOutputSchema)
+
+      const response = await proxyClient.send('tools/call', {
+        name: 'lint_files',
+        arguments: {files: ['src/Main.kt']}
+      })
+
+      const textPayload = JSON.parse(response.result.content[0].text)
+      deepStrictEqual(response.result.structuredContent, textPayload)
+    })
   })
 
   it('matches native items whose filePath uses a different separator than the request', async () => {
@@ -164,6 +201,7 @@ describe('ij MCP proxy lint_files', {timeout: SUITE_TIMEOUT_MS}, () => {
       const parsed = JSON.parse(response.result.content[0].text)
       strictEqual(parsed.more, true)
       deepStrictEqual(parsed.items.map((item) => item.filePath), requestedPaths.slice(0, 5))
+      deepStrictEqual(response.result.structuredContent, parsed)
     })
 
     deepStrictEqual(calls, [requestedPaths])
