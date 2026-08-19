@@ -7,6 +7,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pyproject.PY_PROJECT_TOML_DEPENDENCY_GROUPS
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.api.getPyProjectTomlFile
