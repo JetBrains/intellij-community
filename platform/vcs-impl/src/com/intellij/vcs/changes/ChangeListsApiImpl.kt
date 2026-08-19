@@ -2,6 +2,8 @@
 package com.intellij.vcs.changes
 
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vcs.changes.ChangeListAdapter
 import com.intellij.openapi.vcs.changes.ChangeListAvailabilityListener
 import com.intellij.openapi.vcs.changes.ChangeListListener
@@ -31,6 +33,16 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 internal class ChangeListsApiImpl : ChangeListsApi {
+  override suspend fun hasActiveVcss(projectId: ProjectId): Flow<Boolean> =
+    projectScopedCallbackFlow(projectId) { project, messageBusConnection ->
+      val projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project)
+      messageBusConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
+        trySend(projectLevelVcsManager.hasActiveVcss())
+      })
+
+      send(projectLevelVcsManager.hasActiveVcss())
+    }.buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST).distinctUntilChanged()
+
   override suspend fun areChangeListsEnabled(projectId: ProjectId): Flow<Boolean> =
     projectScopedCallbackFlow(projectId) { project, messageBusConnection ->
       messageBusConnection.subscribe(ChangeListAvailabilityListener.TOPIC, object : ChangeListAvailabilityListener {
