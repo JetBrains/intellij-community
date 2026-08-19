@@ -57,8 +57,6 @@ c:com.intellij.ide.impl.DataManagerImpl
 - saveInDataContext(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.util.Key,java.lang.Object):V
 f:com.intellij.ide.impl.DataManagerImpl$Companion
 - f:getDataProviderEx(java.lang.Object):com.intellij.openapi.actionSystem.DataProvider
-f:com.intellij.ide.impl.ProjectUtilCore
-- <init>():V
 f:com.intellij.ide.nls.NlsMessages
 - <init>():V
 - s:formatAndList(java.util.Collection):java.lang.String
