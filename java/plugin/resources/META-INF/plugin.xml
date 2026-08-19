@@ -80,8 +80,8 @@
 
     <module name="intellij.java.backend.split"/>
 
-    <module name="intellij.java.debugger.impl.shared" loading="embedded"/>
-    <module name="intellij.java.execution.impl.shared" loading="embedded"/>
+    <module name="intellij.java.debugger.impl.shared"/>
+    <module name="intellij.java.execution.impl.shared"/>
     <module name="intellij.java.structuralSearch"/>
     <module name="intellij.java.featuresTrainer"/>
     <module name="intellij.java.performancePlugin" loading="optional"/>
