@@ -205,6 +205,18 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
              : CANCEL;
   }
 
+  @Override
+  public @NotNull CheckoutInOtherWorktreeDecision showCheckoutBranchInOtherWorktreeDialog(@NotNull String branchName,
+                                                                                          @Nullable String worktreePath) {
+    Ref<CheckoutInOtherWorktreeDecision> decision = Ref.create(CheckoutInOtherWorktreeDecision.CANCEL);
+    ApplicationManager.getApplication().invokeAndWait(() -> decision.set(
+      GitCheckoutInOtherWorktreeDialogs.buildAndShow(
+        myProject, branchName, worktreePath,
+        GitBundle.message("branch.ui.handler.checkout.branch.in.other.worktree.checkout.anyway"),
+        GitCheckoutInOtherWorktreeDialogs.ButtonSet.PROCEED_OPEN_EXISTING_OR_CANCEL)));
+    return decision.get();
+  }
+
   private static @NotNull @NlsContexts.DialogTitle String unmergedFilesErrorTitle(@NotNull String operationName) {
     return GitBundle.message("branch.ui.handler.can.not.operation.name.because.of.unmerged.files", operationName);
   }

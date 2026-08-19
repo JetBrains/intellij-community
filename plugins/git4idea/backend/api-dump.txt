@@ -62,6 +62,17 @@ f:git4idea.branch.GitBranchIncomingOutgoingManager
 - s:getInstance(com.intellij.openapi.project.Project):git4idea.branch.GitBranchIncomingOutgoingManager
 f:git4idea.branch.GitBranchSyncStatus$Companion
 - f:calcForCurrentBranch(git4idea.repo.GitRepository):git4idea.branch.GitBranchSyncStatus
+git4idea.branch.GitBranchUiHandler
+- a:showCheckoutBranchInOtherWorktreeDialog(java.lang.String,java.lang.String):git4idea.branch.GitBranchUiHandler$CheckoutInOtherWorktreeDecision
+e:git4idea.branch.GitBranchUiHandler$CheckoutInOtherWorktreeDecision
+- java.lang.Enum
+- sf:CANCEL:git4idea.branch.GitBranchUiHandler$CheckoutInOtherWorktreeDecision
+- sf:CHECKOUT_ANYWAY:git4idea.branch.GitBranchUiHandler$CheckoutInOtherWorktreeDecision
+- sf:OPEN_EXISTING_WORKTREE:git4idea.branch.GitBranchUiHandler$CheckoutInOtherWorktreeDecision
+- s:valueOf(java.lang.String):git4idea.branch.GitBranchUiHandler$CheckoutInOtherWorktreeDecision
+- s:values():git4idea.branch.GitBranchUiHandler$CheckoutInOtherWorktreeDecision[]
+c:git4idea.branch.GitBranchUiHandlerImpl
+- showCheckoutBranchInOtherWorktreeDialog(java.lang.String,java.lang.String):git4idea.branch.GitBranchUiHandler$CheckoutInOtherWorktreeDecision
 f:git4idea.branch.GitBranchUtil
 - s:convertBranchesToNames(java.util.Collection):java.util.Collection
 - s:getBranchNameOrRev(git4idea.repo.GitRepository):java.lang.String

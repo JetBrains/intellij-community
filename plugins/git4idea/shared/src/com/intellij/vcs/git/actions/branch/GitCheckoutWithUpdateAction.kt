@@ -12,7 +12,6 @@ import com.intellij.vcs.git.actions.GitSingleRefActions
 import com.intellij.vcs.git.branch.popup.GitBranchesPopupKeys
 import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.rpc.GitOperationsApi
-import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
 import git4idea.GitStandardLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.i18n.GitBundle
@@ -83,11 +82,6 @@ class GitCheckoutWithUpdateAction : GitBranchActionToBeWrapped, DumbAwareAction(
         repositories.any { it.state.remoteBranches.isNotEmpty() }
 
       private fun isAlreadyCheckedOut(repositories: List<GitRepositoryModel>, branch: GitStandardLocalBranch): Boolean {
-        if (repositories.any {
-            GitWorkingTreesUtil.findCheckedOutWorkingTree(branch, it.state.workingTrees, true) != null
-          }) {
-          return true
-        }
         return repositories.all { it.state.isCurrentRef(branch) }
       }
 

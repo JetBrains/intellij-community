@@ -130,6 +130,17 @@ public abstract class GitBranchOperation {
   }
 
   /**
+   * Marks repositories as handled by an alternative action outside of this operation (e.g. the user chose to open
+   * an already existing worktree instead of checking out). They won't be handled again, but are not counted as
+   * either successful or skipped.
+   */
+  protected final void markHandledExternally(GitRepository... repositories) {
+    for (GitRepository repository : repositories) {
+      myRemainingRepositories.remove(repository);
+    }
+  }
+
+  /**
    * @return true if the operation has already succeeded in at least one of repositories.
    */
   protected final boolean wereSuccessful() {

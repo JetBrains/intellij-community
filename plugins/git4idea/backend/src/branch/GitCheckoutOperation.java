@@ -22,8 +22,10 @@ import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitActivity;
 import git4idea.GitProtectedBranchesKt;
+import git4idea.GitWorkingTree;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
+import git4idea.commands.GitBranchAlreadyCheckedOutInOtherWorktreeDetector;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
 import git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector;
@@ -37,12 +39,14 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitFreezingProcess;
 import git4idea.util.GitPreservingProcess;
+import git4idea.workingTrees.GitWorkingTreesService;
 import io.opentelemetry.api.trace.Tracer;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -85,6 +89,20 @@ class GitCheckoutOperation extends GitBranchOperation {
   private final boolean myReset;
   private final boolean myRefShouldBeValid;
   private final @Nullable String myNewBranch;
+
+  /**
+   * Repositories for which the user chose to open the already existing worktree instead of checking out.
+   * They are neither successful nor skipped, so they are tracked separately to avoid misreporting them.
+   */
+  private final @NotNull Collection<GitRepository> myOpenedInOtherWorktreeRepositories = new ArrayList<>();
+
+  private enum OtherWorktreeConflictOutcome { SUCCESS, OPENED_EXISTING_WORKTREE, FATAL_ERROR }
+
+  /**
+   * Outcome of {@link #runCheckoutAndHandleCommonFailures}: {@code UNHANDLED} means none of the three detectors
+   * common to every checkout attempt fired, leaving the caller to interpret its own attempt-specific detectors.
+   */
+  private enum CheckoutAttemptOutcome { SUCCESS, FATAL_ERROR, UNHANDLED }
 
   GitCheckoutOperation(@NotNull Project project,
                        @NotNull Git git,
@@ -153,47 +171,43 @@ class GitCheckoutOperation extends GitBranchOperation {
         GitSimpleEventDetector unknownPathspec = new GitSimpleEventDetector(GitSimpleEventDetector.Event.INVALID_REFERENCE);
         GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByCheckout =
           new GitUntrackedFilesOverwrittenByOperationDetector(root);
+        GitBranchAlreadyCheckedOutInOtherWorktreeDetector otherWorktreeDetector =
+          new GitBranchAlreadyCheckedOutInOtherWorktreeDetector();
 
         StructuredIdeActivity checkoutOperation = CHECKOUT_OPERATION.startedWithParent(myProject, activity);
         GitCommandResult result;
         try {
-          result = myGit.checkout(repository, myStartPointReference, myNewBranch, false, myDetach, myReset,
-                                  localChangesDetector, unmergedFiles, unknownPathspec, untrackedOverwrittenByCheckout);
+          result = myGit.checkout(repository, myStartPointReference, myNewBranch, false, myDetach, myReset, false,
+                                  localChangesDetector, unmergedFiles, unknownPathspec, untrackedOverwrittenByCheckout,
+                                  otherWorktreeDetector);
         }
         finally {
           checkoutOperation.finished();
         }
 
-        if (result.success()) {
-          StructuredIdeActivity vfsRefresh = VFS_REFRESH.startedWithParent(myProject, activity);
-          try {
-            updateAndRefreshChangedVfs(repository, startHash);
-          }
-          finally {
-            vfsRefresh.finished();
-          }
-          markSuccessful(repository);
-        }
-        else if (unmergedFiles.isDetected()) {
-          fatalUnmergedFilesError();
+        CheckoutAttemptOutcome outcome = runCheckoutAndHandleCommonFailures(
+          repository, result, localChangesDetector, unmergedFiles, untrackedOverwrittenByCheckout, activity, startHash);
+        if (outcome == CheckoutAttemptOutcome.FATAL_ERROR) {
           fatalErrorHappened = true;
         }
-        else if (localChangesDetector.isDetected()) {
-          boolean smartCheckoutSucceeded = smartCheckoutOrNotify(repository, localChangesDetector, activity);
-          if (!smartCheckoutSucceeded) {
+        else if (outcome == CheckoutAttemptOutcome.UNHANDLED) {
+          if (!myRefShouldBeValid && unknownPathspec.isDetected()) {
+            markSkip(repository);
+          }
+          else if (otherWorktreeDetector.isDetected()) {
+            OtherWorktreeConflictOutcome otherWorktreeOutcome =
+              checkoutIgnoringOtherWorktreeOrNotify(repository, result, otherWorktreeDetector, activity, startHash);
+            if (otherWorktreeOutcome == OtherWorktreeConflictOutcome.FATAL_ERROR) {
+              fatalErrorHappened = true;
+            }
+            else if (otherWorktreeOutcome == OtherWorktreeConflictOutcome.OPENED_EXISTING_WORKTREE) {
+              handleOpenedInOtherWorktree(repository);
+            }
+          }
+          else {
+            fatalError(getCommonErrorTitle(), result);
             fatalErrorHappened = true;
           }
-        }
-        else if (untrackedOverwrittenByCheckout.isDetected()) {
-          fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByCheckout.getRelativeFilePaths());
-          fatalErrorHappened = true;
-        }
-        else if (!myRefShouldBeValid && unknownPathspec.isDetected()) {
-          markSkip(repository);
-        }
-        else {
-          fatalError(getCommonErrorTitle(), result);
-          fatalErrorHappened = true;
         }
       }
     }
@@ -230,6 +244,14 @@ class GitCheckoutOperation extends GitBranchOperation {
         notifyBranchHasChanged(myStartPointReference);
         updateRecentBranch();
       }
+      else if (!myOpenedInOtherWorktreeRepositories.isEmpty()) {
+        // the user chose to open an already existing worktree instead of checking out for some repositories;
+        // other repositories may still have been skipped for an unrelated reason (invalid ref) and that must still be reported.
+        if (wereSkipped()) {
+          notifyError(GitBundle.message("checkout.operation.could.not.checkout.error", getRefPresentation(myStartPointReference)),
+                      revisionNotFound);
+        }
+      }
       else {
         LOG.assertTrue(!myRefShouldBeValid);
         notifyError(GitBundle.message("checkout.operation.could.not.checkout.error", getRefPresentation(myStartPointReference)),
@@ -237,6 +259,109 @@ class GitCheckoutOperation extends GitBranchOperation {
       }
     }
     return success;
+  }
+
+  /**
+   * Interprets a checkout attempt's result against the three detectors common to every checkout attempt (local
+   * changes, unmerged files, untracked files that would be overwritten) and applies the matching recovery (VFS
+   * refresh, smart checkout, fatal error dialogs). Returns {@link CheckoutAttemptOutcome#UNHANDLED} when none of
+   * these common cases apply, leaving the caller to interpret its own attempt-specific detectors.
+   */
+  private @NotNull CheckoutAttemptOutcome runCheckoutAndHandleCommonFailures(
+    @NotNull GitRepository repository,
+    @NotNull GitCommandResult result,
+    @NotNull GitLocalChangesWouldBeOverwrittenDetector localChangesDetector,
+    @NotNull GitSimpleEventDetector unmergedFiles,
+    @NotNull GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByCheckout,
+    @NotNull StructuredIdeActivity activity,
+    @Nullable Hash startHash) {
+    if (result.success()) {
+      StructuredIdeActivity vfsRefresh = VFS_REFRESH.startedWithParent(myProject, activity);
+      try {
+        updateAndRefreshChangedVfs(repository, startHash);
+      }
+      finally {
+        vfsRefresh.finished();
+      }
+      markSuccessful(repository);
+      return CheckoutAttemptOutcome.SUCCESS;
+    }
+    if (unmergedFiles.isDetected()) {
+      fatalUnmergedFilesError();
+      return CheckoutAttemptOutcome.FATAL_ERROR;
+    }
+    if (localChangesDetector.isDetected()) {
+      boolean smartCheckoutSucceeded = smartCheckoutOrNotify(repository, localChangesDetector, activity);
+      return smartCheckoutSucceeded ? CheckoutAttemptOutcome.SUCCESS : CheckoutAttemptOutcome.FATAL_ERROR;
+    }
+    if (untrackedOverwrittenByCheckout.isDetected()) {
+      fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByCheckout.getRelativeFilePaths());
+      return CheckoutAttemptOutcome.FATAL_ERROR;
+    }
+    return CheckoutAttemptOutcome.UNHANDLED;
+  }
+
+  /**
+   * Marks the repository as handled by opening its existing worktree instead of checking it out here, so it is
+   * removed from further processing without being counted as either successful or skipped.
+   */
+  private void handleOpenedInOtherWorktree(@NotNull GitRepository repository) {
+    myOpenedInOtherWorktreeRepositories.add(repository);
+    markHandledExternally(repository);
+  }
+
+  /**
+   * Handles the "branch is already checked out in another worktree" conflict: asks the user for confirmation and, if confirmed,
+   * retries the checkout with {@code --ignore-other-worktrees}. The retry keeps watching for local changes / unmerged / untracked
+   * files, same as the original checkout attempt, so a conflict discovered only on retry still goes through the usual recovery
+   * (smart checkout, fatal error dialogs) instead of falling straight to a generic error.
+   */
+  private @NotNull OtherWorktreeConflictOutcome checkoutIgnoringOtherWorktreeOrNotify(@NotNull GitRepository repository,
+                                                                                      @NotNull GitCommandResult failedResult,
+                                                                                      @NotNull GitBranchAlreadyCheckedOutInOtherWorktreeDetector detector,
+                                                                                      @NotNull StructuredIdeActivity activity,
+                                                                                      @Nullable Hash startHash) {
+    GitBranchUiHandler.CheckoutInOtherWorktreeDecision decision = showCheckoutInOtherWorktreeDialog(detector, myStartPointReference);
+    if (decision == GitBranchUiHandler.CheckoutInOtherWorktreeDecision.OPEN_EXISTING_WORKTREE) {
+      openExistingWorktree(detector.getMatch() != null ? detector.getMatch().getWorktreePath() : null);
+      return OtherWorktreeConflictOutcome.OPENED_EXISTING_WORKTREE;
+    }
+    if (decision != GitBranchUiHandler.CheckoutInOtherWorktreeDecision.CHECKOUT_ANYWAY) {
+      fatalError(getCommonErrorTitle(), failedResult);
+      return OtherWorktreeConflictOutcome.FATAL_ERROR;
+    }
+
+    VirtualFile root = repository.getRoot();
+    GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
+      new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT);
+    GitSimpleEventDetector unmergedFiles = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_CHECKOUT);
+    GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByCheckout =
+      new GitUntrackedFilesOverwrittenByOperationDetector(root);
+    GitCommandResult retryResult = myGit.checkout(repository, myStartPointReference, myNewBranch, false, myDetach, myReset, true,
+                                                  localChangesDetector, unmergedFiles, untrackedOverwrittenByCheckout);
+    CheckoutAttemptOutcome outcome = runCheckoutAndHandleCommonFailures(
+      repository, retryResult, localChangesDetector, unmergedFiles, untrackedOverwrittenByCheckout, activity, startHash);
+    if (outcome == CheckoutAttemptOutcome.SUCCESS) {
+      return OtherWorktreeConflictOutcome.SUCCESS;
+    }
+    if (outcome == CheckoutAttemptOutcome.FATAL_ERROR) {
+      return OtherWorktreeConflictOutcome.FATAL_ERROR;
+    }
+    fatalError(getCommonErrorTitle(), retryResult);
+    return OtherWorktreeConflictOutcome.FATAL_ERROR;
+  }
+
+  private @NotNull GitBranchUiHandler.CheckoutInOtherWorktreeDecision showCheckoutInOtherWorktreeDialog(
+    @NotNull GitBranchAlreadyCheckedOutInOtherWorktreeDetector detector, @NotNull String reference) {
+    GitBranchAlreadyCheckedOutInOtherWorktreeDetector.Match match = detector.getMatch();
+    String branchName = match != null ? match.getBranchName() : getRefPresentation(reference);
+    return myUiHandler.showCheckoutBranchInOtherWorktreeDialog(branchName, match != null ? match.getWorktreePath() : null);
+  }
+
+  private void openExistingWorktree(@Nullable String worktreePath) {
+    if (worktreePath == null) return;
+    GitWorkingTree tree = new GitWorkingTree(worktreePath, null, false, false, false, false, null);
+    GitWorkingTreesService.Companion.getInstance(myProject).openWorkingTreeProject(tree, null);
   }
 
   private boolean smartCheckoutOrNotify(@NotNull GitRepository repository,
@@ -256,10 +381,15 @@ class GitCheckoutOperation extends GitBranchOperation {
                                                                                    GitBundle.message("checkout.operation.force.checkout"));
     if (decision == SMART) {
       Hash startHash = getHead(repository);
+      Collection<GitRepository> openedInOtherWorktree = new ArrayList<>();
       boolean smartCheckedOutSuccessfully
-        = smartCheckout(allConflictingRepositories, myStartPointReference, myNewBranch, getIndicator(), activity);
+        = smartCheckout(allConflictingRepositories, myStartPointReference, myNewBranch, getIndicator(), activity, openedInOtherWorktree);
       if (smartCheckedOutSuccessfully) {
         for (GitRepository conflictingRepository : allConflictingRepositories) {
+          if (openedInOtherWorktree.contains(conflictingRepository)) {
+            handleOpenedInOtherWorktree(conflictingRepository);
+            continue;
+          }
           markSuccessful(conflictingRepository);
           StructuredIdeActivity vfsRefresh = VFS_REFRESH.startedWithParent(myProject, activity);
           updateAndRefreshChangedVfs(conflictingRepository, startHash);
@@ -276,12 +406,17 @@ class GitCheckoutOperation extends GitBranchOperation {
       Map<GitRepository, Collection<Change>> changesToRefresh = StreamEx.of(allConflictingRepositories).toMap(repo -> {
         return GitChangeUtils.getDiffWithWorkingTree(repo, myStartPointReference, false);
       });
-      boolean forceCheckoutSucceeded = checkoutOrNotify(allConflictingRepositories, myStartPointReference, myNewBranch, true, activity);
+      Collection<GitRepository> openedInOtherWorktree = new ArrayList<>();
+      boolean forceCheckoutSucceeded =
+        checkoutOrNotify(allConflictingRepositories, myStartPointReference, myNewBranch, true, activity, openedInOtherWorktree);
       if (forceCheckoutSucceeded) {
-        markSuccessful(allConflictingRepositories.toArray(new GitRepository[0]));
-        updateRepositories(allConflictingRepositories);
+        openedInOtherWorktree.forEach(this::handleOpenedInOtherWorktree);
+        List<GitRepository> checkedOutRepositories = new ArrayList<>(allConflictingRepositories);
+        checkedOutRepositories.removeAll(openedInOtherWorktree);
+        markSuccessful(checkedOutRepositories.toArray(new GitRepository[0]));
+        updateRepositories(checkedOutRepositories);
         StructuredIdeActivity vfsRefresh = VFS_REFRESH.startedWithParent(myProject, activity);
-        allConflictingRepositories.forEach(repo -> refreshVfs(repo.getRoot(), changesToRefresh.get(repo)));
+        checkedOutRepositories.forEach(repo -> refreshVfs(repo.getRoot(), changesToRefresh.get(repo)));
         vfsRefresh.finished();
       }
       return forceCheckoutSucceeded;
@@ -371,7 +506,8 @@ class GitCheckoutOperation extends GitBranchOperation {
                                 final @NotNull @NlsSafe String reference,
                                 final @Nullable String newBranch,
                                 @NotNull ProgressIndicator indicator,
-                                @NotNull StructuredIdeActivity activity) {
+                                @NotNull StructuredIdeActivity activity,
+                                @NotNull Collection<GitRepository> openedInOtherWorktreeOut) {
     AtomicBoolean result = new AtomicBoolean();
     GitSaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
     GitPreservingProcess preservingProcess =
@@ -382,23 +518,40 @@ class GitCheckoutOperation extends GitBranchOperation {
                                reference,
                                saveMethod,
                                indicator,
-                               () -> result.set(checkoutOrNotify(repositories, reference, newBranch, false, activity)));
+                               () -> result.set(checkoutOrNotify(repositories, reference, newBranch, false, activity, openedInOtherWorktreeOut)));
     preservingProcess.execute();
     return result.get();
   }
 
   /**
    * Checks out or shows an error message.
+   * Repositories for which the user chose to open the already existing worktree instead of checking out are added
+   * to {@code openedInOtherWorktreeOut}; they count neither as successful nor as failed, so callers should exclude
+   * them from post-success bookkeeping (marking successful, refreshing VFS, etc).
    */
   private boolean checkoutOrNotify(@NotNull List<? extends GitRepository> repositories,
                                    @NotNull String reference,
                                    @Nullable String newBranch,
                                    boolean force,
-                                   @NotNull StructuredIdeActivity activity) {
+                                   @NotNull StructuredIdeActivity activity,
+                                   @NotNull Collection<GitRepository> openedInOtherWorktreeOut) {
     GitCompoundResult compoundResult = new GitCompoundResult(myProject);
     StructuredIdeActivity checkoutOperation = CHECKOUT_OPERATION.startedWithParent(myProject, activity);
     for (GitRepository repository : repositories) {
-      compoundResult.append(repository, myGit.checkout(repository, reference, newBranch, force, myDetach, myReset));
+      GitBranchAlreadyCheckedOutInOtherWorktreeDetector otherWorktreeDetector = new GitBranchAlreadyCheckedOutInOtherWorktreeDetector();
+      GitCommandResult result = myGit.checkout(repository, reference, newBranch, force, myDetach, myReset, false, otherWorktreeDetector);
+      if (!result.success() && otherWorktreeDetector.isDetected()) {
+        GitBranchUiHandler.CheckoutInOtherWorktreeDecision decision = showCheckoutInOtherWorktreeDialog(otherWorktreeDetector, reference);
+        if (decision == GitBranchUiHandler.CheckoutInOtherWorktreeDecision.CHECKOUT_ANYWAY) {
+          result = myGit.checkout(repository, reference, newBranch, force, myDetach, myReset, true);
+        }
+        else if (decision == GitBranchUiHandler.CheckoutInOtherWorktreeDecision.OPEN_EXISTING_WORKTREE) {
+          openExistingWorktree(otherWorktreeDetector.getMatch() != null ? otherWorktreeDetector.getMatch().getWorktreePath() : null);
+          openedInOtherWorktreeOut.add(repository);
+          continue;
+        }
+      }
+      compoundResult.append(repository, result);
     }
     checkoutOperation.finished();
     if (compoundResult.totalSuccess()) {

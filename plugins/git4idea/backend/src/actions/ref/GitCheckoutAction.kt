@@ -18,7 +18,6 @@ class GitCheckoutAction
 
   override fun isEnabledForRef(ref: GitReference, repositories: List<GitRepository>): Boolean = when {
     ref !is GitBranch && ref !is GitTag -> false
-    isCurrentRefInAnyOtherWorkingTree(ref, repositories) -> false
     isCurrentRefInAnyRepo(ref, repositories) -> repositories.diverged()
     else -> true
   }
