@@ -22,6 +22,7 @@ import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
+import javax.swing.DefaultListSelectionModel
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
@@ -35,6 +36,7 @@ import javax.swing.event.TableColumnModelEvent
 import javax.swing.event.TableColumnModelListener
 import javax.swing.event.TableModelEvent
 import javax.swing.event.TableModelListener
+import javax.swing.table.TableColumnModel
 
 /**
  * Owns the secondary table used to render frozen columns and coordinates interactions that cross the boundary
@@ -51,6 +53,8 @@ internal class FrozenColumnsController(
   private var frozenModelSync: TableModelListener? = null
   private var originalCorner: Component? = null
   private var originalLowerCorner: Component? = null
+  private var lowerCornerComponent: JComponent? = null
+  private var gutterWrappers: GutterWrappers? = null
   private var mirroringSelection = false
   private var resizingFrozenColumn = false
   private var frozenResizeCursorShown = false
@@ -73,13 +77,21 @@ internal class FrozenColumnsController(
 
   fun isEditingInFrozenView(): Boolean = frozenView?.isEditing == true
 
-  fun adjustColumnMoveTarget(view: TableResultView, fromIndex: Int, targetIndex: Int): Int {
-    val frozen = frozenView
-    if (view !== primaryView || frozen == null || view.tableHeader.draggedColumn == null) return targetIndex
-    val frozenColumnCount = frozen.columnCount
-    if (frozenColumnCount !in (targetIndex + 1)..fromIndex) return targetIndex
-    return frozenColumnCount
+  /**
+   * Keeps a dragged column after the pinned ones, which sit here at zero width: dropping in front of them looks like a
+   * drop on the leftmost column but reorders the columns behind the strip. Pinned columns further along are crossed
+   * like any other, and reordering from code is left alone.
+   */
+  fun adjustColumnMoveTarget(view: TableResultView, targetIndex: Int): Int {
+    if (view !== primaryView || frozenView == null || view.tableHeader.draggedColumn == null) return targetIndex
+    val columns = view.columnModel
+    var firstUnpinned = 0
+    while (isPinnedPlaceholder(columns, firstUnpinned)) firstUnpinned++
+    return maxOf(targetIndex, firstUnpinned)
   }
+
+  private fun isPinnedPlaceholder(columns: TableColumnModel, index: Int): Boolean =
+    index in 0 until columns.columnCount && (columns.getColumn(index) as? TableResultViewColumn)?.isFrozenHidden == true
 
   fun installColumnResizeHandle() {
     val handle = object : MouseInputAdapter() {
@@ -159,12 +171,17 @@ internal class FrozenColumnsController(
     showRowNumbers(showRowNumbers)
   }
 
-  fun setFrozenColumnCount(count: Int) {
+  /**
+   * Shows [pinnedModelIndices] in the strip, in the order the main table has them. They keep their place there at
+   * width 0, so pinning never reorders anything: the order stays the user's own, and so does the persisted one.
+   */
+  fun setFrozenColumns(pinnedModelIndices: Collection<Int>) {
     val parent = findScrollPane() ?: return
     if ((primaryView.isEditing || isEditingInFrozenView()) && !primaryView.stopEditing()) primaryView.cancelEditing()
     restorePreviouslyFrozenColumns()
 
-    if (count <= 0 || primaryView.isTransposed || !TableResultPanel.isColumnPinningEnabled()) {
+    val pinned = pinnedModelIndices.toSet()
+    if (pinned.isEmpty() || primaryView.isTransposed || !TableResultPanel.isColumnPinningEnabled()) {
       removeFrozenView(parent)
       return
     }
@@ -176,13 +193,11 @@ internal class FrozenColumnsController(
 
     (frozen.columnModel as TableResultView.MyTableColumnModel).removeAllColumns()
     val mainColumns = primaryView.columnModel
-    val column2Model = primaryView.rawIndexConverter.column2Model()
-    for (viewIndex in 0 until minOf(count, mainColumns.columnCount)) {
-      val modelIndex = column2Model.applyAsInt(viewIndex)
-      if (modelIndex < 0) continue
+    for (viewIndex in 0 until mainColumns.columnCount) {
       val mainColumn = mainColumns.getColumn(viewIndex) as TableResultViewColumn
-      val frozenColumn = frozen.columnCache.getOrCreateColumn(modelIndex)
-      val width = maxOf(mainColumn.width, mainColumn.columnWidth)
+      if (mainColumn.modelIndex !in pinned) continue
+      val frozenColumn = frozen.columnCache.getOrCreateColumn(mainColumn.modelIndex)
+      val width = if (mainColumn.isWidthSetByUser) mainColumn.columnWidth else maxOf(mainColumn.width, mainColumn.columnWidth)
       frozenColumn.setFrozenColumnWidth(width, mainColumn.isWidthSetByUser)
       frozenColumn.width = width
       frozen.columnModel.addColumn(frozenColumn)
@@ -192,7 +207,6 @@ internal class FrozenColumnsController(
     primaryView.syncAppearanceToFrozenView(frozen)
     installFrozenRegion(parent)
     mirrorColumnSelection(primaryView.columnModel.selectionModel, frozen.columnModel.selectionModel, false)
-    frozen.model.fireTableDataChanged()
     frozen.updateSortKeysFromColumnAttributes()
     parent.revalidate()
     parent.repaint()
@@ -262,6 +276,10 @@ internal class FrozenColumnsController(
     frozenMoveColumnListener = null
     componentMouseListeners.forEach(frozen::removeMouseListener)
     frozenRowHeader = null
+    gutterWrappers = null
+    // JTable and TableExpandableItemsHandler both listen to the row selection model. Replacing the shared model lets
+    // each unregister from the primary view before the strip becomes otherwise unreachable.
+    frozen.selectionModel = DefaultListSelectionModel()
     Disposer.dispose(frozen)
   }
 
@@ -293,7 +311,10 @@ internal class FrozenColumnsController(
     val listener = object : TableColumnModelListener {
       override fun columnMoved(event: TableColumnModelEvent) {
         if (event.fromIndex == event.toIndex) return
-        resultPanel.runWithIgnoreSelectionChanges { primaryView.moveColumn(event.fromIndex, event.toIndex) }
+        val target = mainTargetForStripMove(frozen, event.toIndex) ?: return
+        val moved = primaryView.viewColumnOf(frozen.columnModel.getColumn(event.toIndex).modelIndex)
+        if (moved < 0 || moved == target) return
+        resultPanel.runWithIgnoreSelectionChanges { primaryView.moveColumn(moved, target) }
       }
 
       override fun columnAdded(event: TableColumnModelEvent) = Unit
@@ -303,6 +324,18 @@ internal class FrozenColumnsController(
     }
     frozenColumnOrderMirror = listener
     frozen.columnModel.addColumnModelListener(listener)
+  }
+
+  /** Where the column moved to [stripIndex] goes in the main table: next to the strip neighbour it ended up with. */
+  private fun mainTargetForStripMove(frozen: TableResultView, stripIndex: Int): Int? {
+    if (stripIndex < 0 || stripIndex >= frozen.columnCount) return null
+    val moved = primaryView.viewColumnOf(frozen.columnModel.getColumn(stripIndex).modelIndex)
+    if (moved < 0) return null
+    val left = if (stripIndex > 0) primaryView.viewColumnOf(frozen.columnModel.getColumn(stripIndex - 1).modelIndex) else -1
+    if (left >= 0) return if (moved < left) left else left + 1
+    val right = if (stripIndex + 1 < frozen.columnCount) primaryView.viewColumnOf(frozen.columnModel.getColumn(stripIndex + 1).modelIndex) else -1
+    if (right < 0) return null
+    return if (moved > right) right else right - 1
   }
 
   private fun installFrozenMoveColumnListener(frozen: TableResultView) {
@@ -317,38 +350,68 @@ internal class FrozenColumnsController(
   private fun installFrozenRegion(parent: TableScrollPane) {
     val frozen = frozenView ?: return
     val gutter = if (showRowNumbers && !primaryView.isTransposed) getFrozenRowHeader() else null
-    renderFrozenRegion(parent, frozen, gutter, originalCorner)
+    renderFrozenRegion(parent, frozen, gutter)
   }
 
-  private fun renderFrozenRegion(parent: TableScrollPane, frozen: TableResultView, gutter: GridRowHeader?, originalCorner: Component?) {
+  private fun renderFrozenRegion(parent: TableScrollPane, frozen: TableResultView, gutter: GridRowHeader?) {
     val orientation = parent.componentOrientation
     var rowHeader: JComponent = frozen
     var corner: JComponent = frozen.tableHeader
     if (gutter != null) {
-      val rowHeaderPanel = JPanel(BorderLayout())
-      rowHeaderPanel.add(gutter, BorderLayout.LINE_START)
-      rowHeaderPanel.add(frozen, BorderLayout.CENTER)
-      rowHeaderPanel.applyComponentOrientation(parent.componentOrientation)
-      rowHeader = rowHeaderPanel
-
-      val gutterCorner = object : JPanel(BorderLayout()) {
-        override fun getPreferredSize(): Dimension =
-          Dimension(gutter.preferredSize.width, frozen.tableHeader.preferredSize.height)
-      }
-      if (originalCorner != null) gutterCorner.add(originalCorner, BorderLayout.CENTER)
-      val cornerPanel = JPanel(BorderLayout())
-      cornerPanel.add(gutterCorner, BorderLayout.LINE_START)
-      cornerPanel.add(frozen.tableHeader, BorderLayout.CENTER)
-      cornerPanel.applyComponentOrientation(parent.componentOrientation)
-      corner = cornerPanel
+      val wrappers = gutterWrappers(gutter, frozen)
+      wrappers.rowHeader.applyComponentOrientation(orientation)
+      wrappers.corner.applyComponentOrientation(orientation)
+      rowHeader = wrappers.rowHeader
+      corner = wrappers.corner
     }
     // A JTableHeader is not a child of its table, so it never receives the orientation applied to the frozen view.
     frozen.tableHeader.applyComponentOrientation(orientation)
-    parent.setRowHeaderView(rowHeader)
-    parent.setCorner(ScrollPaneConstants.UPPER_LEADING_CORNER, corner)
+    // Each swap relayouts the scroll pane, and a rebuild for a second pinned column reuses the same components.
+    if (parent.rowHeader?.view !== rowHeader) parent.setRowHeaderView(rowHeader)
+    if (parent.getCorner(ScrollPaneConstants.UPPER_LEADING_CORNER) !== corner) {
+      parent.setCorner(ScrollPaneConstants.UPPER_LEADING_CORNER, corner)
+    }
     // Without a leading lower corner the horizontal scrollbar leaves a band under the strip painted in the scrollbar
     // background, which reads as extra empty space once a column is widened.
-    parent.setCorner(ScrollPaneConstants.LOWER_LEADING_CORNER, FrozenLowerCorner())
+    val lowerCorner = lowerCornerComponent ?: FrozenLowerCorner().also { lowerCornerComponent = it }
+    if (parent.getCorner(ScrollPaneConstants.LOWER_LEADING_CORNER) !== lowerCorner) {
+      parent.setCorner(ScrollPaneConstants.LOWER_LEADING_CORNER, lowerCorner)
+    }
+  }
+
+  /** The row-number gutter and the strip share the row header, and their headers share the corner. */
+  private class GutterWrappers(
+    val gutter: GridRowHeader,
+    val frozen: TableResultView,
+    val gutterCorner: JPanel,
+    val rowHeader: JPanel,
+    val corner: JPanel,
+  )
+
+  /** Built once per gutter and strip, so a rebuild for another pinned column does not replace the whole row header. */
+  private fun gutterWrappers(gutter: GridRowHeader, frozen: TableResultView): GutterWrappers {
+    val wrappers = gutterWrappers?.takeIf { it.gutter === gutter && it.frozen === frozen }
+                   ?: createGutterWrappers(gutter, frozen).also { gutterWrappers = it }
+    // Without the gutter the strip and its header go into the scroll pane itself, which takes them out of these panels.
+    pair(wrappers.rowHeader, gutter, frozen)
+    pair(wrappers.corner, wrappers.gutterCorner, frozen.tableHeader)
+    return wrappers
+  }
+
+  private fun createGutterWrappers(gutter: GridRowHeader, frozen: TableResultView): GutterWrappers {
+    val gutterCorner = object : JPanel(BorderLayout()) {
+      override fun getPreferredSize(): Dimension =
+        Dimension(gutter.preferredSize.width, frozen.tableHeader.preferredSize.height)
+    }
+    originalCorner?.let { gutterCorner.add(it, BorderLayout.CENTER) }
+    return GutterWrappers(gutter, frozen, gutterCorner, JPanel(BorderLayout()), JPanel(BorderLayout()))
+  }
+
+  private fun pair(panel: JPanel, lineStart: Component, center: Component) {
+    if (panel.componentCount == 2 && panel.getComponent(0) === lineStart && panel.getComponent(1) === center) return
+    panel.removeAll()
+    panel.add(lineStart, BorderLayout.LINE_START)
+    panel.add(center, BorderLayout.CENTER)
   }
 
   /**
@@ -372,29 +435,32 @@ internal class FrozenColumnsController(
     val frozen = frozenView ?: return
     if (mirroringSelection) return
     mirroringSelection = true
+    // Mirroring is derived, so it must not scroll: the autoscroller would follow the lead row of the selection.
     try {
-      // Map by model identity: a frozen-column reorder can reach one column model before the other.
-      val sourceView = if (toMain) frozen else primaryView
-      val targetView = if (toMain) primaryView else frozen
-      val modelToTarget = targetView.rawIndexConverter.column2View()
-      to.valueIsAdjusting = true
-      if (toMain) {
-        for (index in 0 until frozen.columnCount) {
-          val targetIndex = modelToTarget.applyAsInt(frozen.columnModel.getColumn(index).modelIndex)
-          if (targetIndex >= 0) to.removeSelectionInterval(targetIndex, targetIndex)
+      resultPanel.autoscrollLocker.runWithLock {
+        // Map by model identity: a frozen-column reorder can reach one column model before the other.
+        val sourceView = if (toMain) frozen else primaryView
+        val targetView = if (toMain) primaryView else frozen
+        val modelToTarget = targetView.rawIndexConverter.column2View()
+        to.valueIsAdjusting = true
+        if (toMain) {
+          for (index in 0 until frozen.columnCount) {
+            val targetIndex = modelToTarget.applyAsInt(frozen.columnModel.getColumn(index).modelIndex)
+            if (targetIndex >= 0) to.removeSelectionInterval(targetIndex, targetIndex)
+          }
         }
-      }
-      else to.clearSelection()
-      var index = from.minSelectionIndex
-      val lastSelected = minOf(from.maxSelectionIndex, sourceView.columnCount - 1)
-      while (index in 0..lastSelected) {
-        if (from.isSelectedIndex(index)) {
-          val targetIndex = modelToTarget.applyAsInt(sourceView.columnModel.getColumn(index).modelIndex)
-          if (targetIndex >= 0) to.addSelectionInterval(targetIndex, targetIndex)
+        else to.clearSelection()
+        var index = from.minSelectionIndex
+        val lastSelected = minOf(from.maxSelectionIndex, sourceView.columnCount - 1)
+        while (index in 0..lastSelected) {
+          if (from.isSelectedIndex(index)) {
+            val targetIndex = modelToTarget.applyAsInt(sourceView.columnModel.getColumn(index).modelIndex)
+            if (targetIndex >= 0) to.addSelectionInterval(targetIndex, targetIndex)
+          }
+          index++
         }
-        index++
+        to.valueIsAdjusting = false
       }
-      to.valueIsAdjusting = false
     }
     finally {
       mirroringSelection = false
@@ -402,8 +468,12 @@ internal class FrozenColumnsController(
   }
 
   fun afterChangeSelection(view: TableResultView, columnIndex: Int, toggle: Boolean, extend: Boolean) {
-    if (view !== frozenView || toggle || extend || columnIndex < 0) return
-    primaryView.columnModel.selectionModel.setSelectionInterval(columnIndex, columnIndex)
+    val frozen = frozenView
+    if (view !== frozen || toggle || extend || columnIndex < 0 || columnIndex >= frozen.columnCount) return
+    // The strip holds a subset of the columns, so its index means nothing in the main table: go through the model.
+    val mainColumn = primaryView.viewColumnOf(frozen.columnModel.getColumn(columnIndex).modelIndex)
+    if (mainColumn < 0) return
+    primaryView.columnModel.selectionModel.setSelectionInterval(mainColumn, mainColumn)
   }
 
   fun processMouseEvent(view: TableResultView, event: MouseEvent, defaultProcessor: Runnable) {
@@ -475,7 +545,11 @@ internal class FrozenColumnsController(
     if (row < 0 || mainColumn < 0) return false
     if (extend) {
       val anchor = view.columnModel.selectionModel.anchorSelectionIndex
-      if (anchor >= 0) primaryView.columnModel.selectionModel.anchorSelectionIndex = anchor
+      // The anchor is a strip index; the primary view needs the same column, which sits elsewhere there.
+      if (anchor in 0 until view.columnCount) {
+        val mainAnchor = primaryView.viewColumnOf(view.columnModel.getColumn(anchor).modelIndex)
+        if (mainAnchor >= 0) primaryView.columnModel.selectionModel.anchorSelectionIndex = mainAnchor
+      }
     }
     primaryView.changeSelection(row, mainColumn, false, extend)
     primaryView.requestFocusInWindow()

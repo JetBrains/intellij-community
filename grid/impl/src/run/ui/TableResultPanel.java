@@ -134,6 +134,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -202,6 +203,7 @@ public class TableResultPanel extends UserDataHolderBase
   private final GridMainPanel myMainPanel;
   protected final LayeredPaneWithSizer myLayeredPane;
   private ResultView myResultView;
+  private boolean myDisposed;
 
   private final ActionGroup myPopupActionGroup;
   protected final ActionGroup myGutterPopupActions;
@@ -640,7 +642,6 @@ public class TableResultPanel extends UserDataHolderBase
       expectedToModel.put(initialPosition, modelIndex);
     }
     restoreInitialPinnedColumns();
-    applyPinnedFirstOrder(expectedToModel);
     myResultView.restoreColumnsOrder(expectedToModel);
     restoreColumnWidths();
     updateFrozenColumns();
@@ -664,30 +665,10 @@ public class TableResultPanel extends UserDataHolderBase
     myColumnPinModel = myColumnPinModel.pinAll(restoredIds);
   }
 
+  /** A hidden column is not in the view, so the strip shows the pinned ones that are currently there. */
   private void updateFrozenColumns() {
     if (!(myResultView instanceof TableResultView view)) return;
-    int count = 0;
-    if (isColumnPinningEnabled()) {
-      GridModel<GridRow, GridColumn> model = getDataModel(DATA_WITH_MUTATIONS);
-      for (ModelIndex<GridColumn> column : model.getColumnIndices().asIterable()) {
-        if (isColumnEnabled(column) && isColumnPinned(column)) count++;
-      }
-    }
-    view.setFrozenColumnCount(count);
-  }
-
-  /** Rewrites {@code expectedToModel} so pinned columns take the leading positions, keeping relative order. */
-  private void applyPinnedFirstOrder(@NotNull Map<Integer, ModelIndex<GridColumn>> expectedToModel) {
-    if (!isColumnPinningEnabled() || myColumnPinModel.isEmpty()) return;
-    List<Integer> displayOrder = new ArrayList<>();
-    for (ModelIndex<GridColumn> modelIndex : new TreeMap<>(expectedToModel).values()) {
-      displayOrder.add(modelIndex.value);
-    }
-    List<Integer> pinnedFirst = myColumnPinModel.order(displayOrder);
-    expectedToModel.clear();
-    for (int position = 0; position < pinnedFirst.size(); position++) {
-      expectedToModel.put(position, ModelIndex.forColumn(this, pinnedFirst.get(position)));
-    }
+    view.setFrozenColumns(isColumnPinningEnabled() ? myColumnPinModel.pinnedIds() : Set.of());
   }
 
   public static boolean isColumnPinningEnabled() {
@@ -737,20 +718,36 @@ public class TableResultPanel extends UserDataHolderBase
     myPinnedColumnNamesPendingRestore.clear();
     if (isEditing() && !stopEditing()) cancelEditing();
     myUserChangedPinState = true;
+    List<Integer> unpinned = new ArrayList<>(myColumnPinModel.pinnedIds());
+    unpinned.removeAll(updated.pinnedIds());
     myColumnPinModel = updated;
-    saveAndRestoreSelection(this, this::applyCurrentPinnedOrder);
+    saveAndRestoreSelection(this, this::updateFrozenColumns);
+    scrollUnpinnedColumnsIntoView(unpinned);
     myColumnModificationTracker.incModificationCount();
   }
 
-  private void applyCurrentPinnedOrder() {
-    List<Integer> displayOrder = visibleColumnsInDisplayOrder();
-    Map<Integer, ModelIndex<GridColumn>> expectedToModel = new LinkedHashMap<>();
-    List<Integer> pinnedFirst = isColumnPinningEnabled() ? myColumnPinModel.order(displayOrder) : displayOrder;
-    for (int position = 0; position < pinnedFirst.size(); position++) {
-      expectedToModel.put(position, ModelIndex.forColumn(this, pinnedFirst.get(position)));
-    }
-    myResultView.restoreColumnsOrder(expectedToModel);
-    updateFrozenColumns();
+  /**
+   * A column that stops being pinned has to be visible again: the scroll position restored around the rebuild
+   * describes the layout without it, so on its own it would leave the column off to the left.
+   */
+  private void scrollUnpinnedColumnsIntoView(@NotNull List<Integer> unpinnedIds) {
+    if (unpinnedIds.isEmpty() || !(myResultView instanceof TableResultView view)) return;
+    // saveAndRestoreSelection defers its scroll restore, so this has to run after it.
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myDisposed || myResultView != view) return;
+      IntUnaryOperator column2View = view.getRawIndexConverter().column2View();
+      int target = -1;
+      for (Integer columnId : unpinnedIds) {
+        int viewColumn = column2View.applyAsInt(columnId);
+        if (viewColumn >= 0 && (target < 0 || viewColumn < target)) target = viewColumn;
+      }
+      if (target < 0 || view.isTransposed()) return;
+      Rectangle visible = view.getVisibleRect();
+      Rectangle cell = view.getCellRect(Math.max(0, view.getSelectionModel().getLeadSelectionIndex()), target, true);
+      cell.y = visible.y; // only the columns come back, the rows stay where they are
+      cell.height = visible.height;
+      view.scrollRectToVisible(cell);
+    });
   }
 
   /**
@@ -766,7 +763,7 @@ public class TableResultPanel extends UserDataHolderBase
       }
       myColumnPinModel = new GridColumnPinModel().pinAll(pinned);
     }
-    applyCurrentPinnedOrder();
+    updateFrozenColumns();
   }
 
   private boolean removeFromPinModel(@NotNull ModelIndex<GridColumn> columnIdx) {
@@ -1490,6 +1487,7 @@ public class TableResultPanel extends UserDataHolderBase
 
   @Override
   public void dispose() {
+    myDisposed = true;
     if (myResultView != null) Disposer.dispose(myResultView);
     kotlinx.coroutines.CoroutineScopeKt.cancel(cs, null);
   }
@@ -1956,17 +1954,14 @@ public class TableResultPanel extends UserDataHolderBase
     myColumnAttributes.setEnabled(column, state);
     // Restore the frozen copy's width while the main column is still present; after removal its model-to-view
     // conversion no longer resolves and the cached main column would remain hidden at width zero.
-    if (pinStateChanged && myResultView instanceof TableResultView view) view.setFrozenColumnCount(0);
+    if (pinStateChanged && myResultView instanceof TableResultView view) view.setFrozenColumns(Set.of());
 
     GridSelection<GridRow, GridColumn> selection = getSelectionModel().store();
     ModelIndex<GridColumn> colIdx = ModelIndex.forColumn(this, column.getColumnNumber());
     storeOrRestoreSelection(colIdx, state, selection);
     myResultView.setColumnEnabled(colIdx, state);
-    if (pinStateChanged) {
+    if (pinStateChanged || hasPinnedColumns()) {
       updateFrozenColumns();
-    }
-    else if (state && hasPinnedColumns()) {
-      applyCurrentPinnedOrder();
     }
     fireContentChanged(null); // update structure view
     runWithIgnoreSelectionChanges(() -> {

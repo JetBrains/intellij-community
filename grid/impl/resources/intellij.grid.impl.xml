@@ -66,7 +66,7 @@
     <registryKey key="database.grid.show.chart.tab" defaultValue="true" restartRequired="false"
                  description="Adds 'Show Chart' action to DG tables in editor, inlay and services."/>
     <registryKey key="database.grid.column.pinning" defaultValue="false" restartRequired="false"
-                 description="Enables pinning data editor columns to the left (DBE-26267, work in progress)."/>
+                 description="Enables pinning columns in the data editor so they remain visible while other columns scroll horizontally."/>
     <uiDataRule implementation="com.intellij.database.run.ui.TableResultPanelUIDataRule"
                 id="TableResultPanelDataRule" order="before BasicUiDataRule, before ServiceViewProvidersDataRule"/>
     <uiDataRule implementation="com.intellij.database.run.ui.InnerEditorsTableResultPanelUIDataRule"
