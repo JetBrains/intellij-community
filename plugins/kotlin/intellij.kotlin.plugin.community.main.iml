@@ -83,7 +83,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.j2k" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.i18n" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm.shared" exported="" />
-    <orderEntry type="module" module-name="intellij.kotlin.jvm" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.scratch" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.base.util" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.core" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.coroutines" exported="" />

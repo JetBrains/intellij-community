@@ -318,6 +318,9 @@
 - name: lib/modules/intellij.kotlin.base.scripting.scratch.definition.jar
   contentModules:
   - name: intellij.kotlin.base.scripting.scratch.definition
+- name: lib/modules/intellij.kotlin.base.scripting.scratch.jar
+  contentModules:
+  - name: intellij.kotlin.base.scripting.scratch
 - name: lib/modules/intellij.kotlin.codeInsight.base.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.base
@@ -483,9 +486,6 @@
 - name: lib/modules/intellij.kotlin.jvm.decompiler.jar
   contentModules:
   - name: intellij.kotlin.jvm.decompiler
-- name: lib/modules/intellij.kotlin.jvm.jar
-  contentModules:
-  - name: intellij.kotlin.jvm
 - name: lib/modules/intellij.kotlin.lombok.jar
   contentModules:
   - name: intellij.kotlin.lombok

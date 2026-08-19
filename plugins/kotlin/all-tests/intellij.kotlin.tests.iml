@@ -89,7 +89,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.refactorings.rename.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.test.parcelize" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.util.test-generator-fir" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.jvm.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.scratch.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.core.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin.testFramework" scope="RUNTIME" />
