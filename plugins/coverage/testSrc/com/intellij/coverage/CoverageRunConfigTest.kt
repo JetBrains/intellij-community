@@ -7,9 +7,11 @@ import com.intellij.coverage.view.CoverageViewTreeStructure
 import com.intellij.coverage.view.JavaCoverageNode
 import com.intellij.execution.RunManager
 import com.intellij.execution.application.ApplicationConfiguration
+import com.intellij.execution.application.ApplicationConfigurationType
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration
+import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PluginPathManager
@@ -100,6 +102,40 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
     val restored = JavaCoverageEnabledConfiguration(runConfig)
     restored.readExternal(ideaElement)
     Assert.assertSame(ideaRunner, restored.coverageRunner)
+  }
+
+  @Test
+  fun `test coverage runner is resolved on demand`() {
+    CoverageDataManager.getInstance(project)
+    val runManager = RunManager.getInstance(project) as RunManagerImpl
+    val factory = ApplicationConfigurationType.getInstance().configurationFactories[0]
+    val template = runManager.getConfigurationTemplate(factory).configuration as RunConfigurationBase<*>
+    val configuration = ApplicationConfiguration("coverage runner removal", project)
+    runManager.addConfiguration(runManager.createConfiguration(configuration, factory))
+
+    val runner = TestCoverageRunner()
+    val runnerDisposable = Disposer.newDisposable(testRootDisposable)
+    CoverageRunner.EP_NAME.point.registerExtension(runner, runnerDisposable)
+    val templateCoverage = CoverageEnabledConfiguration.getOrCreate(template).apply { coverageRunner = runner }
+    val configurationCoverage = CoverageEnabledConfiguration.getOrCreate(configuration).apply { coverageRunner = runner }
+    Assert.assertSame(runner, templateCoverage.coverageRunner)
+    Assert.assertSame(runner, configurationCoverage.coverageRunner)
+    configurationCoverage.coverageRunner = null
+    Assert.assertNull(configurationCoverage.coverageRunner)
+    configurationCoverage.coverageRunner = runner
+
+    Disposer.dispose(runnerDisposable)
+
+    Assert.assertSame(templateCoverage, CoverageEnabledConfiguration.getOrNull(template))
+    Assert.assertNull(templateCoverage.coverageRunner)
+    Assert.assertNull(CoverageEnabledConfiguration.getOrNull(configuration))
+    Assert.assertNull(configurationCoverage.coverageRunner)
+    Assert.assertSame(template, runManager.getConfigurationTemplate(factory).configuration)
+
+    val reloadedRunner = TestCoverageRunner()
+    CoverageRunner.EP_NAME.point.registerExtension(reloadedRunner, testRootDisposable)
+    Assert.assertSame(reloadedRunner, templateCoverage.coverageRunner)
+    Assert.assertSame(reloadedRunner, configurationCoverage.coverageRunner)
   }
 
   @Test
@@ -316,5 +352,15 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
       coverageViewState.isHideFullyCovered = previousHideFullyCovered
       coverageViewState.isShowOnlyModified = previousShowOnlyModified
     }
+  }
+
+  private class TestCoverageRunner : CoverageRunner() {
+    override fun getPresentableName() = "Test"
+
+    override fun getId() = "test"
+
+    override fun getDataFileExtension() = "test"
+
+    override fun acceptsCoverageEngine(engine: CoverageEngine) = true
   }
 }

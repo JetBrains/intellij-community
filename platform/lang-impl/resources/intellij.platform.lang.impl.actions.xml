@@ -70,19 +70,6 @@
     <action id="QuickPreview" class="com.intellij.codeInsight.hint.actions.QuickPreviewAction">
       <keyboard-shortcut first-keystroke="SPACE" keymap="$default"/>
     </action>
-    <action id="ViewNavigationBar" class="com.intellij.ide.actions.navbar.ViewNavigationBarAction">
-      <override-text place="NavBar"/>
-    </action>
-    <group id="NavbarLocationGroup" popup="true" class="com.intellij.ide.actions.navbar.NavBarLocationGroup">
-      <action id="NavBarLocationTop" class="com.intellij.ide.actions.navbar.NavBarTopLocationAction"/>
-      <action id="NavBarLocationBottom" class="com.intellij.ide.actions.navbar.NavBarBottomLocationAction"/>
-      <action id="NavBarLocationHide" class="com.intellij.ide.actions.navbar.HideNavBarAction"/>
-      <separator/>
-      <action id="ShowMembersInNavigationBar" class="com.intellij.ide.actions.ShowNavigationBarMembersAction"/>
-    </group>
-    <action id="ViewMembersInNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarMembersAction">
-      <override-text place="NavBar"/>
-    </action>
     <action id="ViewImportPopups" class="com.intellij.openapi.editor.actions.ToggleShowImportPopupsAction"/>
     <!-- Go To -->
     <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction"/>

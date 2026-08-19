@@ -8,7 +8,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
-import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
@@ -101,9 +100,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
             }
           }
         }
-
-        //cleanup created templates
-        ((RunManagerImpl)runManager).reloadSchemes();
+        // RunManager reloads configuration templates after dynamic plugin unload.
       }
     }, this);
   }

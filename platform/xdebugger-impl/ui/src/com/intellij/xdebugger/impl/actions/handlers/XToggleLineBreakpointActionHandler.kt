@@ -89,7 +89,7 @@ class XToggleLineBreakpointActionHandler @JvmOverloads constructor(
     val futures = mutableListOf<CompletableFuture<*>>()
     for (position in ToggleLineBreakpointAction.getAllPositionsForBreakpoints(project, event.dataContext)) {
       if (processedLines.add(position.getLine())) {
-        val future = XBreakpointUIUtil.toggleLineBreakpointProxy(
+        val future = XBreakpointUIUtil.toggleLineBreakpointAsync(
           project, position, !isFromGutterClick, position.editor, isAltClick || myTemporary,
           !isFromGutterClick, canRemove, isLoggingBreakpoint, logExpression, placement
         ).thenAccept { breakpoint ->

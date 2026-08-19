@@ -20,6 +20,8 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [icons](icons/SKILL.md) | Create or review IntelliJ New UI SVG icons and theme variants. |
 | [ide-diagnostics-mcp](ide-diagnostics-mcp/SKILL.md) | Inspect a running IntelliJ IDE for freezes or blocked threads via MCP. |
 | [jewel-markdown](jewel-markdown/SKILL.md) | Build or debug Jewel Markdown parsing, rendering, and styling. |
+| [jewel-pr-preparer](jewel-pr-preparer/SKILL.md) | Prepare a Jewel pull request: validate the commit, run local CI checks, draft release notes, and create the PR. |
+| [jewel-release-helper](jewel-release-helper/SKILL.md) | Prepare a Jewel release: version bumps, checks, release notes, cherry-picks, artifact validation, and tagging. |
 | [jna](jna/SKILL.md) | Implement or debug JNA bindings and ABI layouts in Kotlin or Java. |
 | [kotlin-ui-dsl](kotlin-ui-dsl/SKILL.md) | Write IntelliJ dialogs and settings with Kotlin UI DSL v2 panels. |
 | [kotlin-ui-swing-component-architecture](kotlin-ui-swing-component-architecture/SKILL.md) | Design IntelliJ Swing UI components, state flow, and EDT work. |
@@ -40,3 +42,4 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [treehouse](treehouse/SKILL.md) | Safely acquire, inspect, and return leased Treehouse workspaces. |
 | [ui-accessibility](ui-accessibility/SKILL.md) | Review IntelliJ UI accessibility for keyboard, focus, and labels. |
 | [writing-tests](writing-tests/SKILL.md) | Write IntelliJ JUnit 5 tests with fixtures, lifecycle, and EDT. |
+| [youtrack-community](youtrack-community/SKILL.md) | Use this bundled CLI only in community checkouts; monorepo users must use the monorepo-only `youtrack` skill instead. |

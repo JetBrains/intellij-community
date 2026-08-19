@@ -3,8 +3,6 @@ package com.intellij.xdebugger.impl
 
 import com.intellij.ide.rpc.util.textRange
 import com.intellij.ide.ui.icons.icon
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -18,26 +16,20 @@ import com.intellij.platform.debugger.impl.rpc.XLineBreakpointMultipleVariantRes
 import com.intellij.platform.debugger.impl.rpc.XLineBreakpointVariantDto
 import com.intellij.platform.debugger.impl.rpc.XNoBreakpointPossibleResponse
 import com.intellij.platform.debugger.impl.rpc.XRemoveBreakpointResponse
-import com.intellij.platform.debugger.impl.rpc.toRpc as expressionToRpc
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUIUtil
 import com.intellij.xdebugger.impl.rpc.toRpc
-import fleet.util.channels.use
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.future.await
-import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
+import com.intellij.platform.debugger.impl.rpc.toRpc as expressionToRpc
 
-@ApiStatus.Internal
-interface FrontendXLineBreakpointVariant {
+internal interface FrontendXLineBreakpointVariant {
   val text: String
   val icon: Icon?
   val highlightRange: TextRange?
@@ -55,95 +47,56 @@ private suspend fun XLineBreakpointInstallationInfo.toRequest(hasBreakpoints: Bo
   hasBreakpoints,
 )
 
-internal class VariantChoiceData(
-  val variants: List<FrontendXLineBreakpointVariant>,
-  private val result: CompletableFuture<XLineBreakpointProxy?>,
-  private val selectionCallback: (Int) -> Unit,
-) {
-  fun select(variant: FrontendXLineBreakpointVariant) {
-    val index = variants.indexOf(variant)
-    selectionCallback(index)
-  }
-
-  fun cancel() {
-    result.cancel(false)
-  }
-
-  fun breakpointRemoved() {
-    result.complete(null)
-  }
-}
-
-internal fun computeBreakpointProxy(
+internal suspend fun computeBreakpointProxy(
   project: Project,
   editor: Editor?,
   info: XLineBreakpointInstallationInfo,
-  onVariantsChoice: (VariantChoiceData) -> Unit,
-): CompletableFuture<XLineBreakpointProxy?> {
-  // TODO: Replace with `coroutineScope.future` after IJPL-184112 is fixed
-  val result = CompletableFuture<XLineBreakpointProxy?>()
-  project.service<FrontendXLineBreakpointVariantService>().cs.launch {
-    try {
-      val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
-      breakpointManager.withLightBreakpointIfPossible(editor, info) {
-        val breakpointExists = XBreakpointUIUtil.findBreakpointsAtLine(project, info).isNotEmpty()
-        val response = XBreakpointTypeApi.getInstance()
-                         .toggleLineBreakpoint(project.projectId(), info.toRequest(breakpointExists))
-                       ?: throw kotlin.coroutines.cancellation.CancellationException()
-        when (response) {
-          is XRemoveBreakpointResponse -> {
-            val breakpoints = XBreakpointUIUtil.findBreakpointsAtLine(project, info)
-            if (breakpoints.isNotEmpty()) {
-              XBreakpointUIUtil.removeBreakpointIfPossible(info, *breakpoints.toTypedArray()).await()
-            }
-            result.complete(null)
-          }
-          is XLineBreakpointInstalledResponse -> {
-            result.complete(createBreakpoint(project, response.breakpointId))
-          }
-          is XLineBreakpointMultipleVariantResponse -> {
-            result.handle { _, _ ->
-              response.selectionCallback.close()
-            }
-            val variants = response.variants.map(::FrontendXLineBreakpointVariantImpl)
-            val choiceData = VariantChoiceData(variants, result) { i ->
-              responseWithVariantChoice(project, result, response.selectionCallback, i)
-            }
-            onVariantsChoice(choiceData)
-          }
-          XNoBreakpointPossibleResponse -> {
-            result.complete(null)
-          }
+  onVariantsChoice: suspend (List<FrontendXLineBreakpointVariant>) -> FrontendXLineBreakpointVariant?,
+): XLineBreakpointProxy? {
+  val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
+  return breakpointManager.withLightBreakpointIfPossible(editor, info) {
+    val breakpointExists = XBreakpointUIUtil.findBreakpointsAtLine(project, info).isNotEmpty()
+    when (val response = XBreakpointTypeApi.getInstance()
+      .toggleLineBreakpoint(project.projectId(), info.toRequest(breakpointExists))) {
+      is XRemoveBreakpointResponse -> {
+        val breakpoints = XBreakpointUIUtil.findBreakpointsAtLine(project, info)
+        if (breakpoints.isNotEmpty()) {
+          XBreakpointUIUtil.removeBreakpointIfPossible(info, *breakpoints.toTypedArray())
         }
-      }
-    }
-    catch (e: Throwable) {
-      result.completeExceptionally(e)
-    }
-  }
-  return result
-}
-
-private fun responseWithVariantChoice(
-  project: Project,
-  result: CompletableFuture<XLineBreakpointProxy?>,
-  selectionCallback: SendChannel<VariantSelectedResponse>,
-  selectedIndex: Int,
-) {
-  project.service<FrontendXLineBreakpointVariantService>().cs.launch {
-    result.compute {
-      val breakpointCallback = Channel<XBreakpointId>()
-      selectionCallback.use {
-        it.send(VariantSelectedResponse(selectedIndex, breakpointCallback))
-      }
-      try {
-        val breakpointId = breakpointCallback.receive()
-        createBreakpoint(project, breakpointId)
-      }
-      catch (_: ClosedReceiveChannelException) {
         null
       }
+      is XLineBreakpointInstalledResponse -> createBreakpoint(project, response.breakpointId)
+      is XLineBreakpointMultipleVariantResponse -> try {
+        val variants = response.variants.map(::FrontendXLineBreakpointVariantImpl)
+        val selected = onVariantsChoice(variants) ?: return@withLightBreakpointIfPossible null
+        val selectedIndex = variants.indexOf(selected)
+        responseWithVariantChoice(project, response.selectionCallback, selectedIndex)
+      }
+      finally {
+        response.selectionCallback.close()
+      }
+      XNoBreakpointPossibleResponse -> null
+      null -> throw CancellationException()
     }
+  }
+}
+
+private suspend fun responseWithVariantChoice(
+  project: Project,
+  selectionCallback: SendChannel<VariantSelectedResponse>,
+  selectedIndex: Int,
+): XLineBreakpointProxy? {
+  val breakpointCallback = Channel<XBreakpointId>()
+  selectionCallback.send(VariantSelectedResponse(selectedIndex, breakpointCallback))
+  return try {
+    val breakpointId = breakpointCallback.receive()
+    createBreakpoint(project, breakpointId)
+  }
+  catch (_: ClosedReceiveChannelException) {
+    null
+  }
+  finally {
+    breakpointCallback.cancel()
   }
 }
 
@@ -161,17 +114,4 @@ private class FrontendXLineBreakpointVariantImpl(private val dto: XLineBreakpoin
   override val highlightRange: TextRange? get() = dto.highlightRange?.textRange()
   override val priority: Int get() = dto.priority
   override val useAsInlineVariant: Boolean get() = dto.useAsInline
-}
-
-@Service(Service.Level.PROJECT)
-private class FrontendXLineBreakpointVariantService(val cs: CoroutineScope)
-
-private inline fun <T> CompletableFuture<T>.compute(block: () -> T) {
-  try {
-    val result = block()
-    complete(result)
-  }
-  catch (e: Throwable) {
-    completeExceptionally(e)
-  }
 }

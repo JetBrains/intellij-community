@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
 import com.intellij.openapi.application.ApplicationManager
@@ -339,7 +339,8 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
             elements: Array<out PsiElement>,
             targetContainer: PsiElement?,
             editor: Editor? = null,
-            moveCallBack: MoveCallback? = null
+            moveCallBack: MoveCallback? = null,
+            canShowUI: Boolean = true
         ): K2MoveModel? {
             val project = elements.firstOrNull()?.project ?: error("Elements not part of project")
 
@@ -353,11 +354,11 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
                 }
             }
 
-            if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, elements.toList(), true)) return null
+            if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, elements.toList(), canShowUI)) return null
 
             for (moveCheck in k2MoveModelChecks) {
                 if (!moveCheck.isMoveAllowed(elementsToMove, targetContainer)) {
-                    moveCheck.showErrorHint(project, editor)
+                    if (canShowUI) moveCheck.showErrorHint(project, editor)
                     return null
                 }
             }

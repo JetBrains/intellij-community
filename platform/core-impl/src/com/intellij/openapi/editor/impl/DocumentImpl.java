@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.DocumentCore;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.impl.marker.FileMarkerRoot;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -94,7 +95,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   public DocumentImpl(@NotNull DocumentCore impl, @Nullable DocumentImpl hostDocument) {
     this.impl = impl;
     this.hostDocument = hostDocument;
-    rangeMarkers = new RangeMarkerStorageImpl(impl.dispatcher());
+    rangeMarkers = new RangeMarkerStorageImpl(impl.dispatcher(), hostDocument());
     guardedBlocks = new GuardedBlocksImpl(rangeMarkers);
   }
 
@@ -387,6 +388,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @ApiStatus.Internal
   public void documentCreatedFrom(@NotNull VirtualFile f, int tabSize) {
+    FileMarkerRoot.restoreRangeMarkersFromFile(this, f);
     rangeMarkers.restoreRangeMarkersFromFile(f, hostDocument(), tabSize);
   }
 

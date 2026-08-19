@@ -6,6 +6,19 @@ import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.util.ArrayUtil
 
+internal data class DocumentMarkerEdit(
+  val startOffset: Int,
+  val endOffset: Int,
+  val newLength: Int,
+  val originStartOffset: Int,
+  val originEndOffset: Int,
+  val moveOffset: Int,
+)
+
+internal interface DocumentOpMarkerEdit {
+  val markerEdit: DocumentMarkerEdit?
+}
+
 internal open class SimpleTextPatch(
   private val startOffset: Int,
   private val endOffset: Int,
@@ -40,13 +53,13 @@ internal open class SimpleTextPatch(
     if (startOffset == endOffset) {
       return if (clearLineFlags) {
         newOps.createOps(
-          newOps.createInsertOp(startOffset, newFragment),
+          createInsertOp(newOps, patch, startOffset, newFragment),
           modStampOp,
           clearLineFlagsOp(),
         )
       } else {
         newOps.createOps(
-          newOps.createInsertOp(startOffset, newFragment),
+          createInsertOp(newOps, patch, startOffset, newFragment),
           modStampOp,
         )
       }
@@ -67,23 +80,64 @@ internal open class SimpleTextPatch(
     }
     return if (clearLineFlags) {
       newOps.createOps(
-        newOps.createDeleteOp(startOffset, endOffset - startOffset),
-        newOps.createInsertOp(startOffset, newFragment),
+        createDeferredDeleteOp(newOps, startOffset, endOffset - startOffset),
+        createInsertOp(newOps, patch, startOffset, newFragment),
         modStampOp,
         clearLineFlagsOp(),
       )
     } else {
       newOps.createOps(
-        newOps.createDeleteOp(startOffset, endOffset - startOffset),
-        newOps.createInsertOp(startOffset, newFragment),
+        createDeferredDeleteOp(newOps, startOffset, endOffset - startOffset),
+        createInsertOp(newOps, patch, startOffset, newFragment),
         modStampOp,
       )
     }
   }
 
+  private fun createInsertOp(
+    newOps: DocumentNewOps,
+    patch: DocumentTextPatch,
+    offset: Int,
+    fragment: CharSequence,
+  ): DocumentOp.Insert {
+    val op = newOps.createInsertOp(offset, fragment)
+    val markerEdit = DocumentMarkerEdit(
+      startOffset = patch.startOffset(),
+      endOffset = patch.endOffset(),
+      newLength = patch.newFragment().length,
+      originStartOffset = patch.originStartOffset(),
+      originEndOffset = patch.originEndOffset(),
+      moveOffset = patch.moveOffset(),
+    )
+    if (markerEdit.startOffset == offset &&
+        markerEdit.endOffset == offset &&
+        markerEdit.newLength == fragment.length &&
+        markerEdit.originStartOffset == offset &&
+        markerEdit.originEndOffset == offset &&
+        markerEdit.moveOffset == offset) {
+      return op
+    }
+    return PatchInsertOp(op, markerEdit)
+  }
+
+  private fun createDeferredDeleteOp(newOps: DocumentNewOps, offset: Int, length: Int): DocumentOp.Delete {
+    return PatchDeleteOp(newOps.createDeleteOp(offset, length))
+  }
+
   private fun clearLineFlagsOp(): DocumentOp.UnmodifiedLines {
     val newOps = DocumentNewOps.getInstance()
     return newOps.createUnmodifiedLinesOp(0, Int.MAX_VALUE, ArrayUtil.EMPTY_INT_ARRAY)
+  }
+
+  private class PatchInsertOp(
+    private val delegate: DocumentOp.Insert,
+    override val markerEdit: DocumentMarkerEdit,
+  ) : DocumentOp.Insert by delegate, DocumentOpMarkerEdit
+
+  private class PatchDeleteOp(
+    private val delegate: DocumentOp.Delete,
+  ) : DocumentOp.Delete by delegate, DocumentOpMarkerEdit {
+    override val markerEdit: DocumentMarkerEdit? = null
   }
 
   final override fun toString(): String {

@@ -88,10 +88,13 @@ import com.intellij.ui.scale.JBUIScale.getFontScale
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.scaleFontSize
 import com.intellij.ui.scale.JBUIScale.setUserScaleFactor
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.svg.setSelectionColorPatcherProvider
 import com.intellij.util.EventDispatcher
 import com.intellij.util.FontUtil
 import com.intellij.util.IJSwingUtilities
+import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SVGLoader.colorPatcherProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -823,6 +826,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       applyDensityOnUpdateUi(uiDefaults)
       applyAltColors(uiDefaults)
     }
+    
+    patchLoadingImageIcons(uiDefaults)
 
     // should be called last because this method modifies uiDefault values
     patchHiDPI(uiDefaults)
@@ -1315,6 +1320,15 @@ private fun getFont(yosemite: String, size: Int, style: Int): FontUIResource {
 
 private fun installLinuxFonts(defaults: UIDefaults) {
   defaults.put("MenuItem.acceleratorFont", defaults.get("MenuItem.font"))
+}
+
+private fun patchLoadingImageIcons(uiDefaults: UIDefaults) {
+  // See javax.swing.text.html.ImageView.
+  // The default Swing implementations use java.awt.MediaTracker, which can cause freezes.
+  // So we replace them with anything that "looks like a missing image."
+  val loadingImageIcon = IconUtil.scale(AllIcons.FileTypes.Image, ScaleContext.create(ScaleType.OBJ_SCALE.of(2.5)))
+  uiDefaults["html.pendingImage"] = loadingImageIcon
+  uiDefaults["html.missingImage"] = loadingImageIcon
 }
 
 private fun patchHiDPI(defaults: UIDefaults) {

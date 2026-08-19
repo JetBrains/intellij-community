@@ -1,5 +1,5 @@
 {
-  "skill_name": "managing-youtrack",
+  "skill_name": "youtrack-community",
   "notes": "Every mutating case is plan-only: expectations require a --dry-run or a preview, never a real write against the shared tracker.",
   "evals": [
     {

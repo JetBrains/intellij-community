@@ -6,49 +6,77 @@ import com.intellij.codeInsight.folding.impl.FoldingUtil
 import com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction
 import com.intellij.icons.AllIcons
 import com.intellij.lang.LanguageUtil
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.popup.PopupStep
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.LayeredIcon
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.DocumentUtil
 import com.intellij.util.SmartList
 import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
+import com.intellij.xdebugger.impl.FrontendXLineBreakpointVariant
 import com.intellij.xdebugger.impl.XSourcePositionImpl
+import com.intellij.xdebugger.impl.computeBreakpointProxy
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager
+import com.intellij.xdebugger.ui.DebuggerColors
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
+import javax.swing.JList
+import javax.swing.event.ListSelectionEvent
+import javax.swing.event.ListSelectionListener
+import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.min
 
 @ApiStatus.Internal
 object XBreakpointUIUtil {
+  private val LOG = Logger.getInstance(XBreakpointUIUtil::class.java)
+  private val SHOW_BREAKPOINT_AD = Ref<Boolean?>(true)
+
   @JvmStatic
   @JvmOverloads
   fun findSelectedBreakpoint(
@@ -102,9 +130,7 @@ object XBreakpointUIUtil {
    * - unfolds folded block on the line
    * - if folded, checks if line breakpoints could be toggled inside folded text
    */
-  @JvmOverloads
-  @JvmStatic
-  fun toggleLineBreakpointProxy(
+  suspend fun toggleLineBreakpoint(
     project: Project,
     position: XSourcePosition,
     selectVariantByPositionColumn: Boolean,
@@ -115,45 +141,278 @@ object XBreakpointUIUtil {
     isLogging: Boolean = false,
     logExpression: String? = null,
     placement: XLineBreakpointVerticalPlacement = XLineBreakpointVerticalPlacement.ON_LINE,
-  ): CompletableFuture<XLineBreakpointProxy?> {
-    // TODO: Replace with `coroutineScope.future` after IJPL-184112 is fixed
-    val future = CompletableFuture<XLineBreakpointProxy?>()
-    project.service<XBreakpointUtilProjectCoroutineScope>().cs.launch(Dispatchers.EDT) {
-      try {
-        val (typeWinner, lineWinner) = getAvailableLineBreakpointInfoProxy(project,
-                                                                           position,
-                                                                           selectVariantByPositionColumn,
-                                                                           editor,
-                                                                           placement)
-        if (typeWinner.isEmpty()) {
-          fileLogger().warn("Cannot find appropriate type for line breakpoint at $position: ${position.file.url} ${position.line}")
-          future.completeExceptionally(RuntimeException("Cannot find appropriate type"))
-          return@launch
-        }
-        val lineStart = position.line
-        val winPosition = if (lineStart == lineWinner) position else XSourcePositionImpl.create(position.file, lineWinner)
-        val logExpressionObject = XExpressionImpl.fromTextAndLanguage(logExpression, LanguageUtil.getFileLanguage(position.file))
-        val breakpointInfo =
-          XLineBreakpointInstallationInfo(typeWinner, winPosition, placement, temporary, isLogging, logExpressionObject, canRemove)
-        val res = XBreakpointInstallUtils.toggleAndReturnLineBreakpointProxy(project, editor, breakpointInfo, selectVariantByPositionColumn)
-        if (lineStart != lineWinner) {
-          val offset = editor.document.getLineStartOffset(lineWinner)
-          ExpandRegionAction.expandRegionAtOffset(editor, offset)
-          if (moveCaret) {
-            editor.caretModel.moveToOffset(offset)
+  ): XLineBreakpointProxy? = withContext(Dispatchers.EDT) {
+    val (typeWinner, lineWinner) = getAvailableLineBreakpointInfo(project,
+                                                                  position,
+                                                                  selectVariantByPositionColumn,
+                                                                  editor,
+                                                                  placement)
+    if (typeWinner.isEmpty()) {
+      fileLogger().warn("Cannot find appropriate type for line breakpoint at $position: ${position.file.url} ${position.line}")
+      throw RuntimeException("Cannot find appropriate type")
+    }
+    val lineStart = position.line
+    val winPosition = if (lineStart == lineWinner) position else XSourcePositionImpl.create(position.file, lineWinner)
+    if (lineStart != lineWinner) {
+      val offset = editor.document.getLineStartOffset(lineWinner)
+      ExpandRegionAction.expandRegionAtOffset(editor, offset)
+      if (moveCaret) {
+        editor.caretModel.moveToOffset(offset)
+      }
+    }
+    val logExpressionObject = XExpressionImpl.fromTextAndLanguage(logExpression, LanguageUtil.getFileLanguage(position.file))
+    val breakpointInfo = XLineBreakpointInstallationInfo(typeWinner, winPosition, placement, temporary, isLogging,
+                                                         logExpressionObject, canRemove)
+    toggleLineBreakpoint(project, editor, breakpointInfo, selectVariantByPositionColumn)
+  }
+
+  @JvmOverloads
+  @JvmStatic
+  fun toggleLineBreakpointAsync(
+    project: Project,
+    position: XSourcePosition,
+    selectVariantByPositionColumn: Boolean,
+    editor: Editor,
+    temporary: Boolean,
+    moveCaret: Boolean,
+    canRemove: Boolean,
+    isLogging: Boolean = false,
+    logExpression: String? = null,
+    placement: XLineBreakpointVerticalPlacement = XLineBreakpointVerticalPlacement.ON_LINE,
+  ): CompletableFuture<XLineBreakpointProxy?> = project.computeInProjectScope {
+    toggleLineBreakpoint(project, position, selectVariantByPositionColumn, editor, temporary, moveCaret, canRemove, isLogging,
+                         logExpression, placement)
+  }
+
+  @JvmStatic
+  fun toggleLineBreakpointAsync(
+    project: Project,
+    editor: Editor?,
+    breakpointInfo: XLineBreakpointInstallationInfo,
+    selectVariantByPositionColumn: Boolean,
+  ): CompletableFuture<XLineBreakpointProxy?> = project.computeInProjectScope {
+    toggleLineBreakpoint(project, editor, breakpointInfo, selectVariantByPositionColumn)
+  }
+
+  private suspend fun toggleLineBreakpoint(
+    project: Project,
+    editor: Editor?,
+    breakpointInfo: XLineBreakpointInstallationInfo,
+    selectVariantByPositionColumn: Boolean,
+  ): XLineBreakpointProxy? {
+    return if (XDebuggerUtil.areInlineBreakpointsEnabled(breakpointInfo.position.file)) {
+      processInlineBreakpoints(project, editor, breakpointInfo, selectVariantByPositionColumn)
+    }
+    else {
+      selectBreakpointVariantWithPopup(project, breakpointInfo, editor)
+    }
+  }
+
+  private suspend fun selectBreakpointVariantWithPopup(
+    project: Project,
+    breakpointInfo: XLineBreakpointInstallationInfo,
+    editor: Editor?,
+  ): XLineBreakpointProxy? {
+    val file = breakpointInfo.position.file
+    val line = breakpointInfo.position.line
+    val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
+
+    for (type in breakpointInfo.types) {
+      val breakpoint = breakpointManager.findBreakpointAtLine(type, file, line, breakpointInfo.placement)
+      if (breakpoint != null) {
+        removeBreakpointIfPossible(breakpointInfo, breakpoint)
+        return null
+      }
+    }
+    return computeBreakpointProxy(project, editor, breakpointInfo) { variants ->
+      assert(variants.isNotEmpty())
+      withContext(Dispatchers.EDT) {
+        for (type in breakpointInfo.types) {
+          if (breakpointManager.findBreakpointAtLine(type, file, line, breakpointInfo.placement) != null) {
+            return@withContext null
           }
         }
-        future.complete(res.await())
+        val relativePoint = if (editor != null) DebuggerUIUtil.getPositionForPopup(editor, line) else null
+        if (variants.size > 1 && relativePoint != null && editor != null) {
+          val choice = CompletableDeferred<FrontendXLineBreakpointVariant>()
+          showBreakpointSelectionPopup(project, breakpointInfo.position, editor, variants, choice, relativePoint)
+          choice.await()
+        }
+        else {
+          variants.first()
+        }
       }
-      catch (e: Throwable) {
-        future.completeExceptionally(e)
+    }
+  }
+
+  private fun showBreakpointSelectionPopup(
+    project: Project,
+    position: XSourcePosition,
+    editor: Editor,
+    variants: List<FrontendXLineBreakpointVariant>,
+    choice: CompletableDeferred<FrontendXLineBreakpointVariant>,
+    relativePoint: RelativePoint,
+  ) {
+    val line = position.line
+
+    class MySelectionListener : ListSelectionListener {
+      var highlighter: RangeHighlighter? = null
+
+      override fun valueChanged(e: ListSelectionEvent) {
+        if (!e.valueIsAdjusting) {
+          updateHighlighter((e.source as JList<*>).selectedValue)
+        }
+      }
+
+      fun initialSet(value: Any?) {
+        if (highlighter == null) {
+          updateHighlighter(value)
+        }
+      }
+
+      fun updateHighlighter(value: Any?) {
+        clearHighlighter()
+        if (value is FrontendXLineBreakpointVariant) {
+          val lineRange = DocumentUtil.getLineTextRange(editor.document, line)
+          val range = value.highlightRange ?: lineRange
+          if (!range.isEmpty && range.intersectsStrict(lineRange)) {
+            highlighter = editor.markupModel.addRangeHighlighter(
+              DebuggerColors.BREAKPOINT_ATTRIBUTES, range.startOffset, range.endOffset,
+              DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER,
+              HighlighterTargetArea.EXACT_RANGE
+            )
+          }
+        }
+      }
+
+      fun clearHighlighter() {
+        highlighter?.dispose()
       }
     }
 
-    return future
+    val defaultIndex = getIndexOfBestMatchingInlineVariant(position.offset, variants)
+    val selectionListener = MySelectionListener()
+    val step = object :
+      BaseListPopupStep<FrontendXLineBreakpointVariant>(XDebuggerBundle.message("popup.title.set.breakpoint"), variants) {
+      override fun getTextFor(value: FrontendXLineBreakpointVariant): String {
+        @Suppress("HardCodedStringLiteral")
+        return value.text
+      }
+
+      override fun getIconFor(value: FrontendXLineBreakpointVariant): Icon? = value.icon
+
+      override fun canceled() {
+        selectionListener.clearHighlighter()
+        choice.cancel()
+      }
+
+      override fun onChosen(selectedValue: FrontendXLineBreakpointVariant, finalChoice: Boolean): PopupStep<*>? {
+        selectionListener.clearHighlighter()
+        choice.complete(selectedValue)
+        return FINAL_CHOICE
+      }
+
+      override fun getDefaultOptionIndex(): Int = defaultIndex
+    }
+    val popup = object : ListPopupImpl(project, step) {
+      override fun afterShow() {
+        super.afterShow()
+        selectionListener.initialSet(list.selectedValue)
+      }
+    }
+    DebuggerUIUtil.registerExtraHandleShortcuts(popup, SHOW_BREAKPOINT_AD, IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)
+    popup.addListSelectionListener(selectionListener)
+    popup.show(relativePoint)
   }
 
-  private suspend fun getAvailableLineBreakpointInfoProxy(
+  private suspend fun processInlineBreakpoints(
+    project: Project,
+    editor: Editor?,
+    breakpointInfo: XLineBreakpointInstallationInfo,
+    selectVariantByPositionColumn: Boolean,
+  ): XLineBreakpointProxy? {
+    return computeBreakpointProxy(project, editor, breakpointInfo) { variants ->
+      val variants = variants.filter { it.useAsInlineVariant }
+      if (variants.isEmpty()) {
+        LOG.error("Unexpected empty variants")
+        return@computeBreakpointProxy null
+      }
+
+      val breakpoints = findBreakpointsAtLine(project, breakpointInfo)
+      if (selectVariantByPositionColumn) {
+        val breakpointOrVariant = getBestMatchingBreakpoint(
+          breakpointInfo.position.offset,
+          (breakpoints.asSequence() + variants.asSequence()).iterator()
+        ) { item ->
+          if (item is XLineBreakpointProxy) rangeOrNull(item.getHighlightRange())
+          else (item as FrontendXLineBreakpointVariant).highlightRange
+        }
+
+        if (breakpointOrVariant is XLineBreakpointProxy) {
+          removeBreakpointIfPossible(breakpointInfo, breakpointOrVariant)
+          null
+        }
+        else {
+          breakpointOrVariant as FrontendXLineBreakpointVariant
+        }
+      }
+      else {
+        if (breakpoints.isNotEmpty()) {
+          removeBreakpointIfPossible(breakpointInfo, *breakpoints.toTypedArray())
+          null
+        }
+        else {
+          variants.maxBy { it.priority }
+        }
+      }
+    }
+  }
+
+  private fun getIndexOfBestMatchingInlineVariant(caretOffset: Int, variants: List<FrontendXLineBreakpointVariant>): Int {
+    assert(variants.isNotEmpty())
+    var bestRange: TextRange? = null
+    var bestIndex = -1
+    for (i in variants.indices) {
+      val range = variants[i].highlightRange
+      if (range != null && range.contains(caretOffset) && (bestRange == null || bestRange.length > range.length)) {
+        bestRange = range
+        bestIndex = i
+      }
+    }
+    return if (bestIndex == -1) 0 else bestIndex
+  }
+
+  private fun <T> getBestMatchingBreakpoint(
+    caretOffset: Int,
+    breakpoints: Iterator<T>,
+    rangeProvider: (T) -> TextRange?,
+  ): T {
+    var bestBreakpoint: T? = null
+    var bestDistance = Int.MAX_VALUE
+    var bestRangeLength = Int.MAX_VALUE
+    while (breakpoints.hasNext()) {
+      val breakpoint = breakpoints.next()
+      val range = rangeProvider(breakpoint)
+      val rangeLength = range?.length ?: Int.MAX_VALUE
+      val distance = when {
+        range == null -> 0
+        range.containsOffset(caretOffset) -> 0
+        else -> min(abs(range.startOffset - caretOffset), abs(range.endOffset - caretOffset))
+      }
+      if (bestBreakpoint == null || distance < bestDistance || (distance == bestDistance && rangeLength < bestRangeLength)) {
+        bestBreakpoint = breakpoint
+        bestDistance = distance
+        bestRangeLength = rangeLength
+      }
+    }
+    return checkNotNull(bestBreakpoint)
+  }
+
+  private fun rangeOrNull(range: XLineBreakpointHighlighterRange?): TextRange? {
+    return (range as? XLineBreakpointHighlighterRange.Available)?.range
+  }
+
+  private suspend fun getAvailableLineBreakpointInfo(
     project: Project,
     position: XSourcePosition,
     selectTypeByPositionColumn: Boolean,
@@ -233,8 +492,7 @@ object XBreakpointUIUtil {
     return Pair.create(typeWinner, lineWinner)
   }
 
-  @JvmStatic
-  fun findBreakpointsAtLine(
+  internal fun findBreakpointsAtLine(
     project: Project,
     breakpointInfo: XLineBreakpointInstallationInfo,
   ): List<XLineBreakpointProxy> {
@@ -246,16 +504,15 @@ object XBreakpointUIUtil {
       .toList()
   }
 
-  @JvmStatic
-  fun <T : XBreakpointProxy> removeBreakpointIfPossible(
+  internal suspend fun <T : XBreakpointProxy> removeBreakpointIfPossible(
     info: XLineBreakpointInstallationInfo,
     vararg breakpoints: T,
-  ): CompletableFuture<Void?> {
+  ) {
     if (!info.canRemoveBreakpoint()) {
-      return CompletableFuture.completedFuture(null)
+      return
     }
 
-    return removeBreakpointsWithConfirmation(*breakpoints)
+    removeBreakpointsWithConfirmation(*breakpoints).await()
   }
 
   /**
@@ -390,3 +647,21 @@ object XBreakpointUIUtil {
 
 @Service(Service.Level.PROJECT)
 private class XBreakpointUtilProjectCoroutineScope(val cs: CoroutineScope)
+
+// TODO: Replace with `coroutineScope.future` after IJPL-184112 is fixed.
+private fun <T> Project.computeInProjectScope(action: suspend () -> T): CompletableFuture<T> {
+  val result = CompletableFuture<T>()
+  service<XBreakpointUtilProjectCoroutineScope>().cs.launch(start = CoroutineStart.ATOMIC) {
+    try {
+      result.complete(action())
+    }
+    catch (e: CancellationException) {
+      result.completeExceptionally(e)
+      throw e
+    }
+    catch (e: Throwable) {
+      result.completeExceptionally(e)
+    }
+  }
+  return result
+}

@@ -57,6 +57,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.isDirectory
@@ -71,10 +72,17 @@ class EelLocalExecPosixApi(
     generatedBuilder: EelExecApi.ExecuteProcessOptions,
   ): EelPosixProcess {
     val process = executeImpl(generatedBuilder)
-    val r = if (process is PtyProcess)
-      LocalEelPosixProcess.create(process, process::setWinSize, platform)
-    else
-      LocalEelPosixProcess.create(process, null, platform)
+    // `create` suspends, so cancellation here would leave a running process that no caller can kill.
+    val r = try {
+      if (process is PtyProcess)
+        LocalEelPosixProcess.create(process, process::setWinSize, platform)
+      else
+        LocalEelPosixProcess.create(process, null, platform)
+    }
+    catch (e: Throwable) {
+      destroyUndeliveredProcess(process, e)
+      throw e
+    }
     generatedBuilder.bindProcessToScopeIfSet(r)
     return r
   }
@@ -250,10 +258,17 @@ class EelLocalExecWindowsApi : EelExecWindowsApi, LocalEelExecApi {
   ): EelWindowsProcess {
     val process = executeImpl(generatedBuilder)
     val commandLineForDebug = generatedBuilder.commandLineForDebug
-    val r = if (process is PtyProcess)
-      LocalEelWindowsProcess.create(process, process::setWinSize, commandLineForDebug)
-    else
-      LocalEelWindowsProcess.create(process, null, commandLineForDebug)
+    // `create` suspends, so cancellation here would leave a running process that no caller can kill.
+    val r = try {
+      if (process is PtyProcess)
+        LocalEelWindowsProcess.create(process, process::setWinSize, commandLineForDebug)
+      else
+        LocalEelWindowsProcess.create(process, null, commandLineForDebug)
+    }
+    catch (e: Throwable) {
+      destroyUndeliveredProcess(process, e)
+      throw e
+    }
     generatedBuilder.bindProcessToScopeIfSet(r)
     return r
   }
@@ -341,7 +356,39 @@ error
 .*
 """, RegexOption.COMMENTS)
 
-private suspend fun executeImpl(builder: EelExecApi.ExecuteProcessOptions): Process = withContext(Dispatchers.IO) {
+/**
+ * The OS process exists as soon as [ProcessBuilder.start] returns, but the caller can only kill it once it receives the handle.
+ * Cancellation in between makes `withContext` discard the result, and a process nobody holds a handle to can never be killed,
+ * so destroy it here instead of leaking it.
+ */
+private suspend fun executeImpl(builder: EelExecApi.ExecuteProcessOptions): Process {
+  val startedProcess = AtomicReference<Process?>()
+  try {
+    return startProcessImpl(builder, startedProcess::set)
+  }
+  catch (e: Throwable) {
+    startedProcess.get()?.let { process -> destroyUndeliveredProcess(process, e) }
+    throw e
+  }
+}
+
+/**
+ * Destroys a process whose handle is not going to reach the caller. A failure to destroy it must not replace
+ * [propagatedError], which is the reason the handle is dropped in the first place.
+ */
+private fun destroyUndeliveredProcess(process: Process, propagatedError: Throwable) {
+  try {
+    process.destroyForcibly()
+  }
+  catch (destroyError: Throwable) {
+    propagatedError.addSuppressed(destroyError)
+  }
+}
+
+private suspend fun startProcessImpl(
+  builder: EelExecApi.ExecuteProcessOptions,
+  onStarted: (Process) -> Unit,
+): Process = withContext(Dispatchers.IO) {
   val pty = builder.run {
     require(interactionOptions == null || ptyOrStdErrSettings == null)
     interactionOptions ?: (ptyOrStdErrSettings as EelExecApi.InteractionOptions?)
@@ -353,7 +400,7 @@ private suspend fun executeImpl(builder: EelExecApi.ExecuteProcessOptions): Proc
     environment.putAll(builder.env)
     val platform = Platform.current()
     val escapedCommandLine = CommandLineUtil.toCommandLine(builder.exe, builder.args, platform)
-    when (val p = pty) {
+    val process = when (val p = pty) {
       is EelExecApi.Pty -> {
         if (platform == Platform.UNIX && "TERM" !in environment) {
           environment.getOrPut("TERM") { "xterm" }
@@ -388,6 +435,8 @@ private suspend fun executeImpl(builder: EelExecApi.ExecuteProcessOptions): Proc
         }.start()
       }
     }
+    onStarted(process)
+    process
   }
   catch (e: IOException) {
     val errorCode = errorPattern.find(e.message ?: e.toString())?.let { result ->

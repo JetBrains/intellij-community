@@ -11,6 +11,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.messages.Topic;
+import kotlinx.coroutines.CompletableDeferred;
+import kotlinx.coroutines.CompletableDeferredKt;
 import org.cef.CefApp;
 import org.cef.CefSettings;
 import org.jetbrains.annotations.ApiStatus;
@@ -46,6 +48,7 @@ public final class JBCefHealthMonitor {
   private static final JBCefHealthMonitor ourInstance = new JBCefHealthMonitor();
 
   private final @NotNull AtomicReference<Status> myStatus = new AtomicReference<>(Status.UNKNOWN);
+  private final CompletableDeferred<Boolean> myInitialHealthCheck = CompletableDeferredKt.CompletableDeferred(null);
   private @Nullable JBCefApp.JcefStarter myJcefStarter = null;
   private @Nullable InternalJcefTest myInternalJcefTest = null;
   private boolean myTrackGPUCrashes = false;
@@ -81,36 +84,44 @@ public final class JBCefHealthMonitor {
         if (myStatus.get() == Status.UNPRIVILEGED_USER_NS_DISABLED) {
           JBCefNotifications.showAppArmorNotification();
         }
+        myInitialHealthCheck.complete(false);
         return;
       }
 
       onHealthCheckCompleted.run();
+      myInitialHealthCheck.complete(true);
     });
   }
 
   void performStartupTestAsync(boolean isRemoteEnabled) {
-    myStatus.set(Status.OK);
-    myGPUCrashCounter = 0;
+    myInitialHealthCheck.invokeOnCompletion(throwable -> {
+      Status status = getStatus();
+      if (status != Status.UNPRIVILEGED_USER_NS_DISABLED && status != Status.RUN_UNDER_SUPER_USER) {
+        myStatus.set(Status.OK);
+        myGPUCrashCounter = 0;
 
-    if (!isRemoteEnabled)
-      return;
+        if (isRemoteEnabled) {
+          myInternalJcefTest = new InternalJcefTest();
+          myInternalJcefTest.setOnFailed(errText -> {
+            if (myJcefStarter != null)
+              myJcefStarter.onInternalJcefTestFailed();
 
-    myInternalJcefTest = new InternalJcefTest();
-    myInternalJcefTest.setOnFailed(errText -> {
-      if (myJcefStarter != null)
-        myJcefStarter.onInternalJcefTestFailed();
+            JBCefNotifications.showInternalJcefTestFailed(errText, myJcefStarter, myGPUCrashCounter, myCefServerCrashCounter);
 
-      JBCefNotifications.showInternalJcefTestFailed(errText, myJcefStarter, myGPUCrashCounter, myCefServerCrashCounter);
-
-      if (myStatus.compareAndSet(Status.OK, Status.STARTUP_TEST_FAILED)) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(JBCefHealthCheckTopic.TOPIC).onHealthHealthStatusChanged(getStatus());
+            if (myStatus.compareAndSet(Status.OK, Status.STARTUP_TEST_FAILED)) {
+              ApplicationManager.getApplication().getMessageBus().syncPublisher(JBCefHealthCheckTopic.TOPIC)
+                .onHealthHealthStatusChanged(getStatus());
+            }
+          });
+          myInternalJcefTest.setOnSuccess(() -> {
+            if (myJcefStarter != null)
+              myJcefStarter.onInternalJcefTestOk();
+          });
+          myInternalJcefTest.start();
+        }
       }
+      return null;
     });
-    myInternalJcefTest.setOnSuccess(()-> {
-      if (myJcefStarter != null)
-        myJcefStarter.onInternalJcefTestOk();
-    });
-    myInternalJcefTest.start();
   }
 
   void onGpuProcessFailed() {
