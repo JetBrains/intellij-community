@@ -7,10 +7,13 @@ import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.PCDId1
 import com.intellij.platform.workspace.storage.testEntities.entities.PCDIdChild
+import com.intellij.platform.workspace.storage.testEntities.entities.PCDIdExtension
 import com.intellij.platform.workspace.storage.testEntities.entities.PcdChildEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.PcdChildReferencer
+import com.intellij.platform.workspace.storage.testEntities.entities.PcdExtensionChild
 import com.intellij.platform.workspace.storage.testEntities.entities.PcdParent1Entity
 import com.intellij.platform.workspace.storage.testEntities.entities.PcdParent2Entity
+import com.intellij.platform.workspace.storage.testEntities.entities.extensionChildren
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyPcdParent1Entity
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyPcdParent2Entity
 import com.intellij.platform.workspace.storage.toBuilder
@@ -148,5 +151,50 @@ class EntityWithDependentSymbolicIdsTest {
     val newChildId = PCDIdChild(false, PCDId1(newName), parent2Id)
     assertEquals(newChildId, newReferencer.relatedChildEntity)
     Assertions.assertNotNull(newReferencer.relatedChildEntity.resolve(snapshot2))
+  }
+
+  @Test
+  fun `extension children with dependent symbolic id`() {
+    val initialName = "parent"
+    val changedName = "Blaine the Mono"
+    val oneF = 1f
+    val twoF = 2f
+
+    val parent1 = builder addEntity PcdParent1Entity(initialName, 1, MySource) {
+      extensionChildren = listOf(PcdExtensionChild(oneF, MySource))
+    }
+    val child2 = builder addEntity PcdExtensionChild(twoF, MySource) ext@{
+      builder.modifyPcdParent1Entity(parent1) par@{
+        this@ext.parent = this@par
+      }
+    }
+    val parentId1 = PCDId1(initialName)
+    val firstChildId1 = PCDIdExtension(oneF, parentId1)
+    val secondChildId1 = PCDIdExtension(twoF, parentId1)
+    val nonExistentChildId = PCDIdExtension(3f, parentId1)
+    val snapshot1 = builder.toSnapshot()
+    val parentInSnapshot = snapshot1.entities(PcdParent1Entity::class.java).single()
+    assertEquals(2, parentInSnapshot.extensionChildren.size)
+    assertEquals(parent1, parentId1.resolve(snapshot1))
+    Assertions.assertNotNull(firstChildId1.resolve(snapshot1))
+    assertEquals(child2, secondChildId1.resolve(snapshot1))
+    Assertions.assertNull(nonExistentChildId.resolve(snapshot1))
+
+    val newBuilder = snapshot1.toBuilder()
+    val parent2 = newBuilder.modifyPcdParent1Entity(parentInSnapshot) {
+      this.name = changedName
+    }
+    val snapshot2 = newBuilder.toSnapshot()
+
+    val parentId2 = PCDId1(changedName)
+    val firstChildId2 = PCDIdExtension(oneF, parentId2)
+    val secondChildId2 = PCDIdExtension(twoF, parentId2)
+    assertEquals(parent2, parentId2.resolve(snapshot2))
+    Assertions.assertNull(parentId1.resolve(snapshot2))
+    Assertions.assertNotNull(firstChildId2.resolve(snapshot2))
+    Assertions.assertNull(firstChildId1.resolve(snapshot2))
+    Assertions.assertNotNull(secondChildId2.resolve(snapshot2))
+    Assertions.assertNull(secondChildId1.resolve(snapshot2))
+    Assertions.assertNull(nonExistentChildId.resolve(snapshot2))
   }
 }

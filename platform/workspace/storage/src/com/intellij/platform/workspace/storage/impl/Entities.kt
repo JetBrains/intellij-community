@@ -278,128 +278,38 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
     }
   }
 
-  public fun updateReferenceToEntity(entityClass: Class<out WorkspaceEntity>, isThisFieldChild: Boolean, entities: List<WorkspaceEntity.Builder<*>?>) {
+  public fun updateReferenceToEntity(
+    entityClass: Class<out WorkspaceEntity>,
+    isThisFieldChild: Boolean,
+    entities: List<WorkspaceEntity.Builder<*>?>,
+  ) {
     val foundConnectionId = findConnectionId(entityClass, entities)
     if (foundConnectionId == null) return
 
-    // If the diff is empty, we should link entities using the internal map
-    // If it's not, we should add entity to store and update indexes
-    val myDiff = diff
-    if (myDiff != null) {
-      //if (foundConnectionId.parentClass == getEntityClass().toClassId()) {
-      if (isThisFieldChild) {
-        // Branch for case `this` entity is a parent
-        if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY || foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
-          // One - to - many connection
-          for (item in entities) {
-            if (item != null && item is ModifiableWorkspaceEntityBase<*, *> && item.diff == null) {
-              @Suppress("KotlinConstantConditions")
-              item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] =  this
-              myDiff.addEntity(item as ModifiableWorkspaceEntityBase<T, *>)
-            }
-          }
-          if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
-            myDiff.instrumentation.replaceChildren(foundConnectionId, this, entities.filterNotNull())
-          } else {
-            myDiff.instrumentation.replaceChildren(foundConnectionId, this, entities.filterNotNull())
-          }
-        } else {
-          // One - to -one connection
-          val item = entities.single()
-          if (item != null && item is ModifiableWorkspaceEntityBase<*, *> && item.diff == null) {
-            @Suppress("KotlinConstantConditions")
-            item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
-            myDiff.addEntity(item as ModifiableWorkspaceEntityBase<T, *>)
-          }
-          if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE) {
-            myDiff.instrumentation.replaceChildren(foundConnectionId, this, listOfNotNull(item))
-          } else {
-            myDiff.instrumentation.replaceChildren(foundConnectionId, this, listOfNotNull(item))
-          }
-        }
+    if (isThisFieldChild) {
+      // Branch for case `this` entity is a parent
+      if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY || foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
+        // One-to-many connection
+        val children = entities.filterNotNull()
+        changeChildren(children, foundConnectionId)
       }
       else {
-        // Branch for case `this` entity is a child
-        if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY || foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
-          // One - to - many connection
-          val item = entities.single()
-          if (item != null && item is ModifiableWorkspaceEntityBase<*, *> && item.diff == null) {
-            @Suppress("KotlinConstantConditions", "UNCHECKED_CAST")
-            item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = (item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] as? List<Any> ?: emptyList()) + this
-            myDiff.addEntity(item as ModifiableWorkspaceEntityBase<T, *>)
-          }
-          if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
-            myDiff.instrumentation.addChild(foundConnectionId, item, this)
-          }
-          else {
-            myDiff.instrumentation.addChild(foundConnectionId, item, this)
-          }
-        }
-        else {
-          // One - to -one connection
-          val item = entities.single()
-          if (item != null && item is ModifiableWorkspaceEntityBase<*, *> && item.diff == null) {
-            @Suppress("KotlinConstantConditions")
-            item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
-            myDiff.addEntity(item as ModifiableWorkspaceEntityBase<T, *>)
-          }
-          if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE) {
-            myDiff.instrumentation.addChild(foundConnectionId, item, this)
-          }
-          else {
-            myDiff.instrumentation.addChild(foundConnectionId, item, this)
-          }
-        }
+        // One-to-one connection
+        val child = entities.single()
+        changeChild(child, foundConnectionId)
       }
     }
     else {
-      //if (foundConnectionId.parentClass == getEntityClass().toClassId()) {
-      if (isThisFieldChild) {
-        // Branch for case `this` entity is a parent
-        if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY || foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
-          // One - to - many connection
-          @Suppress("KotlinConstantConditions")
-          this.entityLinks[EntityLink(isThisFieldChild, foundConnectionId)] = entities
-          for (item in entities) {
-            if (item != null && item is ModifiableWorkspaceEntityBase<*, *>) {
-              @Suppress("KotlinConstantConditions")
-              item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
-            }
-          }
-        } else {
-          // One - to -one connection
-          val item = entities.single()
-          @Suppress("KotlinConstantConditions")
-          this.entityLinks[EntityLink(isThisFieldChild, foundConnectionId)] = item
-          if (item != null && item is ModifiableWorkspaceEntityBase<*, *>) {
-            @Suppress("KotlinConstantConditions")
-            item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
-          }
-        }
+      val parent = entities.single()
+      parent?.let { updateSymbolicId(it, foundConnectionId) }
+      // Branch for case `this` entity is a child
+      if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY || foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
+        // One-to-many connection
+       changeParentOfMany(parent, foundConnectionId)
       }
       else {
-        // Branch for case `this` entity is a child
-        if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY || foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
-          // One - to - many connection
-          val item = entities.single()
-
-          @Suppress("KotlinConstantConditions")
-          this.entityLinks[EntityLink(isThisFieldChild, foundConnectionId)] = item
-          if (item != null && item is ModifiableWorkspaceEntityBase<*, *>) {
-            @Suppress("KotlinConstantConditions", "UNCHECKED_CAST")
-            item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = (item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] as? List<Any> ?: emptyList()) + this
-          }
-        } else {
-          // One - to -one connection
-          val item = entities.single()
-
-          @Suppress("KotlinConstantConditions")
-          this.entityLinks[EntityLink(isThisFieldChild, foundConnectionId)] = item
-          if (item != null && item is ModifiableWorkspaceEntityBase<*, *>) {
-            @Suppress("KotlinConstantConditions")
-            item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
-          }
-        }
+        // One-to-one connection
+        changeParent(parent, foundConnectionId)
       }
     }
   }

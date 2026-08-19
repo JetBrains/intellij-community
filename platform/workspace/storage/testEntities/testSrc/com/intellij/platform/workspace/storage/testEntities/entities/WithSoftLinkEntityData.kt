@@ -107,6 +107,11 @@ data class PCDIdChild(private val data: Boolean, private val id1: PCDId1, privat
     get() = "PCD3 / $data / ${id1.presentableName} / ${id2.presentableName}"
 }
 
+data class PCDIdExtension(private val data: Float, private val parentId: PCDId1) : SymbolicEntityId<PcdExtensionChild> {
+  override val presentableName: String
+    get() = "PCD3 / $data / ${parentId.presentableName}"
+}
+
 // -------------------------------------------- CMPLX Entites --------------------------------------------
 interface PcdParent1Entity : WorkspaceEntityWithSymbolicId {
   val name: String
@@ -140,3 +145,16 @@ interface PcdChildReferencer : WorkspaceEntity {
   val data: String
   val relatedChildEntity: PCDIdChild
 }
+
+interface PcdExtensionChild : WorkspaceEntityWithSymbolicId {
+  val data: Float
+
+  @Parent
+  val parent: PcdParent1Entity
+
+  override val symbolicId: PCDIdExtension
+    get() = PCDIdExtension(data, parent.symbolicId)
+}
+
+val PcdParent1Entity.extensionChildren: List<PcdExtensionChild>
+  by WorkspaceEntity.extension()
