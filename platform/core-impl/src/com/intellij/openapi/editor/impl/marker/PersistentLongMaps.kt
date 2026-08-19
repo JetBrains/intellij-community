@@ -4,9 +4,9 @@ package com.intellij.openapi.editor.impl.marker
 /**
  * Minimal persistent map contract used by persistent tree
  *
- * Values are non-null; `null` means that the key is absent. All implementations support the complete signed [Long]
- * key range. The vector implementations map positive and negative keys into separate dense index spaces, so ordinary
- * monotonically allocated positive marker IDs retain shallow lookup paths.
+ * Values are non-null; `null` means that the key is absent. All implementations support non-negative [Long] keys and
+ * reject negative keys. The vector implementations use keys as dense indexes, so ordinary monotonically allocated
+ * marker IDs retain shallow lookup paths.
  *
  * Change the default in [empty] to switch the implementation used by existing `PersistentLongMap.empty()` call sites.
  */
@@ -44,6 +44,11 @@ internal enum class PersistentLongMapImplementation {
   PAGED_VECTOR_256
 }
 
+private fun requireNonNegativeKey(key: Long): Long {
+  require(key >= 0) { "key must be non-negative" }
+  return key
+}
+
 /**
  * Fixed-height 16-way radix trie consuming four key bits per level.
  *
@@ -54,6 +59,7 @@ internal class PersistentLongMap16<V : Any> private constructor(private val root
   constructor() : this(null)
 
   override operator fun get(key: Long): V? {
+    requireNonNegativeKey(key)
     var branch = root ?: return null
 
     for (depth in 0 until LEVELS) {
@@ -68,10 +74,13 @@ internal class PersistentLongMap16<V : Any> private constructor(private val root
     return null
   }
 
-  override fun put(key: Long, value: V): PersistentLongMap16<V> =
-    PersistentLongMap16(put(root, key, value, 0))
+  override fun put(key: Long, value: V): PersistentLongMap16<V> {
+    requireNonNegativeKey(key)
+    return PersistentLongMap16(put(root, key, value, 0))
+  }
 
   override fun remove(key: Long): PersistentLongMap16<V> {
+    requireNonNegativeKey(key)
     val result = remove(root, key, 0)
     return if (!result.removed) this else PersistentLongMap16(result.branch)
   }
@@ -133,47 +142,29 @@ internal class PersistentLongMap16<V : Any> private constructor(private val root
 /**
  * Persistent 32-way indexed vector.
  *
- * A positive key `k` is stored at index `k`. A negative key `k` is stored in a separate root at index `-(k + 1)`, so
- * `-1` maps to index `0` and [Long.MIN_VALUE] maps to [Long.MAX_VALUE]. For 50,000 positive marker IDs, lookups traverse
- * four array levels.
+ * A key `k` is stored at index `k`. For 50,000 marker IDs, lookups traverse four array levels.
  */
 internal class PersistentVector32<V : Any> private constructor(
-  private val positiveRoot: Node?,
-  private val positiveShift: Int,
-  private val negativeRoot: Node?,
-  private val negativeShift: Int
+  private val root: Node?,
+  private val shift: Int
 ) : PersistentLongMap<V> {
-  constructor() : this(null, 0, null, 0)
+  constructor() : this(null, 0)
 
   override operator fun get(key: Long): V? {
-    val index = denseIndex(key)
-    return if (key >= 0) get(positiveRoot, positiveShift, index) else get(negativeRoot, negativeShift, index)
+    val index = requireNonNegativeKey(key)
+    return get(root, shift, index)
   }
 
   override fun put(key: Long, value: V): PersistentVector32<V> {
-    val index = denseIndex(key)
-    return if (key >= 0) {
-      val updated = put(positiveRoot, positiveShift, index, value)
-      PersistentVector32(updated.root, updated.shift, negativeRoot, negativeShift)
-    }
-    else {
-      val updated = put(negativeRoot, negativeShift, index, value)
-      PersistentVector32(positiveRoot, positiveShift, updated.root, updated.shift)
-    }
+    val index = requireNonNegativeKey(key)
+    val updated = put(root, shift, index, value)
+    return PersistentVector32(updated.root, updated.shift)
   }
 
   override fun remove(key: Long): PersistentVector32<V> {
-    val index = denseIndex(key)
-    return if (key >= 0) {
-      val updated = remove(positiveRoot, positiveShift, index)
-      if (!updated.removed) this
-      else PersistentVector32(updated.root, updated.shift, negativeRoot, negativeShift)
-    }
-    else {
-      val updated = remove(negativeRoot, negativeShift, index)
-      if (!updated.removed) this
-      else PersistentVector32(positiveRoot, positiveShift, updated.root, updated.shift)
-    }
+    val index = requireNonNegativeKey(key)
+    val updated = remove(root, shift, index)
+    return if (!updated.removed) this else PersistentVector32(updated.root, updated.shift)
   }
 
   private class Node(val slots: Array<Any?>)
@@ -188,8 +179,6 @@ internal class PersistentVector32<V : Any> private constructor(
     private const val BITS = 5
     private const val WIDTH = 1 shl BITS
     private const val MASK = WIDTH - 1
-
-    private fun denseIndex(key: Long): Long = if (key >= 0) key else -(key + 1)
 
     private fun requiredShift(index: Long): Int {
       if (index == 0L) return 0
@@ -298,46 +287,30 @@ internal class PersistentVector32<V : Any> private constructor(
 /**
  * Persistent 64-way indexed vector.
  *
- * It uses the same signed-key mapping as [PersistentVector32], but consumes six index bits per level. For 50,000
- * positive marker IDs, lookups traverse three array levels. Updates copy larger arrays than [PersistentVector32].
+ * It consumes six index bits per level. For 50,000 marker IDs, lookups traverse three array levels. Updates copy
+ * larger arrays than [PersistentVector32].
  */
 internal class PersistentVector64<V : Any> private constructor(
-  private val positiveRoot: Node?,
-  private val positiveShift: Int,
-  private val negativeRoot: Node?,
-  private val negativeShift: Int
+  private val root: Node?,
+  private val shift: Int
 ) : PersistentLongMap<V> {
-  constructor() : this(null, 0, null, 0)
+  constructor() : this(null, 0)
 
   override operator fun get(key: Long): V? {
-    val index = denseIndex(key)
-    return if (key >= 0) get(positiveRoot, positiveShift, index) else get(negativeRoot, negativeShift, index)
+    val index = requireNonNegativeKey(key)
+    return get(root, shift, index)
   }
 
   override fun put(key: Long, value: V): PersistentVector64<V> {
-    val index = denseIndex(key)
-    return if (key >= 0) {
-      val updated = put(positiveRoot, positiveShift, index, value)
-      PersistentVector64(updated.root, updated.shift, negativeRoot, negativeShift)
-    }
-    else {
-      val updated = put(negativeRoot, negativeShift, index, value)
-      PersistentVector64(positiveRoot, positiveShift, updated.root, updated.shift)
-    }
+    val index = requireNonNegativeKey(key)
+    val updated = put(root, shift, index, value)
+    return PersistentVector64(updated.root, updated.shift)
   }
 
   override fun remove(key: Long): PersistentVector64<V> {
-    val index = denseIndex(key)
-    return if (key >= 0) {
-      val updated = remove(positiveRoot, positiveShift, index)
-      if (!updated.removed) this
-      else PersistentVector64(updated.root, updated.shift, negativeRoot, negativeShift)
-    }
-    else {
-      val updated = remove(negativeRoot, negativeShift, index)
-      if (!updated.removed) this
-      else PersistentVector64(positiveRoot, positiveShift, updated.root, updated.shift)
-    }
+    val index = requireNonNegativeKey(key)
+    val updated = remove(root, shift, index)
+    return if (!updated.removed) this else PersistentVector64(updated.root, updated.shift)
   }
 
   private class Node(val slots: Array<Any?>)
@@ -352,8 +325,6 @@ internal class PersistentVector64<V : Any> private constructor(
     private const val BITS = 6
     private const val WIDTH = 1 shl BITS
     private const val MASK = WIDTH - 1
-
-    private fun denseIndex(key: Long): Long = if (key >= 0) key else -(key + 1)
 
     private fun requiredShift(index: Long): Int {
       if (index == 0L) return 0
@@ -463,7 +434,7 @@ internal class PersistentVector64<V : Any> private constructor(
  * Persistent vector of 128-element pages.
  *
  * A lookup performs a shallow [PersistentVector32] page-table lookup followed by one array access. An update copies one
- * 128-element page and the page-table path. The page table supports all signed [Long] page keys.
+ * 128-element page and the page-table path.
  */
 internal class PersistentPagedVector128<V : Any> private constructor(
   private val pages: PersistentVector32<Page<V>>
@@ -471,15 +442,15 @@ internal class PersistentPagedVector128<V : Any> private constructor(
   constructor() : this(PersistentVector32())
 
   override operator fun get(key: Long): V? {
-    val index = denseIndex(key)
-    val page = pages[pageKey(key, index)] ?: return null
+    val index = requireNonNegativeKey(key)
+    val page = pages[index ushr PAGE_BITS] ?: return null
     @Suppress("UNCHECKED_CAST")
     return page.values[(index and PAGE_MASK.toLong()).toInt()] as V?
   }
 
   override fun put(key: Long, value: V): PersistentPagedVector128<V> {
-    val index = denseIndex(key)
-    val pageKey = pageKey(key, index)
+    val index = requireNonNegativeKey(key)
+    val pageKey = index ushr PAGE_BITS
     val slot = (index and PAGE_MASK.toLong()).toInt()
     val oldPage = pages[pageKey]
     val values = oldPage?.values?.copyOf() ?: arrayOfNulls(PAGE_SIZE)
@@ -489,8 +460,8 @@ internal class PersistentPagedVector128<V : Any> private constructor(
   }
 
   override fun remove(key: Long): PersistentPagedVector128<V> {
-    val index = denseIndex(key)
-    val pageKey = pageKey(key, index)
+    val index = requireNonNegativeKey(key)
+    val pageKey = index ushr PAGE_BITS
     val slot = (index and PAGE_MASK.toLong()).toInt()
     val oldPage = pages[pageKey] ?: return this
     if (oldPage.values[slot] == null) return this
@@ -508,13 +479,6 @@ internal class PersistentPagedVector128<V : Any> private constructor(
     private const val PAGE_BITS = 7
     private const val PAGE_SIZE = 1 shl PAGE_BITS
     private const val PAGE_MASK = PAGE_SIZE - 1
-
-    private fun denseIndex(key: Long): Long = if (key >= 0) key else -(key + 1)
-
-    private fun pageKey(key: Long, index: Long): Long {
-      val pageIndex = index ushr PAGE_BITS
-      return if (key >= 0) pageIndex else -(pageIndex + 1)
-    }
   }
 }
 
@@ -530,15 +494,15 @@ internal class PersistentPagedVector256<V : Any> private constructor(
   constructor() : this(PersistentVector32())
 
   override operator fun get(key: Long): V? {
-    val index = denseIndex(key)
-    val page = pages[pageKey(key, index)] ?: return null
+    val index = requireNonNegativeKey(key)
+    val page = pages[index ushr PAGE_BITS] ?: return null
     @Suppress("UNCHECKED_CAST")
     return page.values[(index and PAGE_MASK.toLong()).toInt()] as V?
   }
 
   override fun put(key: Long, value: V): PersistentPagedVector256<V> {
-    val index = denseIndex(key)
-    val pageKey = pageKey(key, index)
+    val index = requireNonNegativeKey(key)
+    val pageKey = index ushr PAGE_BITS
     val slot = (index and PAGE_MASK.toLong()).toInt()
     val oldPage = pages[pageKey]
     val values = oldPage?.values?.copyOf() ?: arrayOfNulls(PAGE_SIZE)
@@ -548,8 +512,8 @@ internal class PersistentPagedVector256<V : Any> private constructor(
   }
 
   override fun remove(key: Long): PersistentPagedVector256<V> {
-    val index = denseIndex(key)
-    val pageKey = pageKey(key, index)
+    val index = requireNonNegativeKey(key)
+    val pageKey = index ushr PAGE_BITS
     val slot = (index and PAGE_MASK.toLong()).toInt()
     val oldPage = pages[pageKey] ?: return this
     if (oldPage.values[slot] == null) return this
@@ -567,12 +531,5 @@ internal class PersistentPagedVector256<V : Any> private constructor(
     private const val PAGE_BITS = 8
     private const val PAGE_SIZE = 1 shl PAGE_BITS
     private const val PAGE_MASK = PAGE_SIZE - 1
-
-    private fun denseIndex(key: Long): Long = if (key >= 0) key else -(key + 1)
-
-    private fun pageKey(key: Long, index: Long): Long {
-      val pageIndex = index ushr PAGE_BITS
-      return if (key >= 0) pageIndex else -(pageIndex + 1)
-    }
   }
 }

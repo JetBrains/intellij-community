@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
@@ -35,7 +36,7 @@ internal class PersistentLongMapTest {
 
   @ParameterizedTest
   @EnumSource(PersistentLongMapImplementation::class)
-  fun `put supports the full signed key range and preserves previous versions`(implementation: PersistentLongMapImplementation) {
+  fun `put supports non-negative keys and preserves previous versions`(implementation: PersistentLongMapImplementation) {
     var map: PersistentLongMap<String> = PersistentLongMap.empty<String>(implementation)
     val versions = mutableListOf<PersistentLongMap<String>>(map)
 
@@ -57,13 +58,25 @@ internal class PersistentLongMapTest {
   fun `put replaces a value only in the new version`(implementation: PersistentLongMapImplementation) {
     val original = PersistentLongMap.empty<String>(implementation)
       .put(42, "old")
-      .put(-42, "untouched")
+      .put(84, "untouched")
     val updated = original.put(42, "new")
 
     assertEquals("old", original[42])
-    assertEquals("untouched", original[-42])
+    assertEquals("untouched", original[84])
     assertEquals("new", updated[42])
-    assertEquals("untouched", updated[-42])
+    assertEquals("untouched", updated[84])
+  }
+
+  @ParameterizedTest
+  @EnumSource(PersistentLongMapImplementation::class)
+  fun `operations reject negative keys`(implementation: PersistentLongMapImplementation) {
+    val map = PersistentLongMap.empty<String>(implementation)
+
+    for (key in longArrayOf(-1, Long.MIN_VALUE)) {
+      assertThrows(IllegalArgumentException::class.java) { map[key] }
+      assertThrows(IllegalArgumentException::class.java) { map.put(key, "value") }
+      assertThrows(IllegalArgumentException::class.java) { map.remove(key) }
+    }
   }
 
   @ParameterizedTest
@@ -105,7 +118,7 @@ internal class PersistentLongMapTest {
   @EnumSource(PersistentLongMapImplementation::class)
   fun `random updates agree with a mutable map`(implementation: PersistentLongMapImplementation) {
     val random = Random(0x5EED + implementation.ordinal)
-    val randomKeys = LongArray(128) { random.nextLong() }
+    val randomKeys = LongArray(128) { random.nextLong().ushr(1) }
     val keys = KEYS + randomKeys
     val expected = mutableMapOf<Long, Int>()
     var actual = PersistentLongMap.empty<Int>(implementation)
@@ -136,24 +149,6 @@ internal class PersistentLongMapTest {
 
   companion object {
     private val KEYS = longArrayOf(
-      Long.MIN_VALUE,
-      Long.MIN_VALUE + 1,
-      -4097,
-      -4096,
-      -1025,
-      -1024,
-      -257,
-      -256,
-      -129,
-      -128,
-      -65,
-      -64,
-      -33,
-      -32,
-      -17,
-      -16,
-      -2,
-      -1,
       0,
       1,
       15,
