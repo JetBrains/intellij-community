@@ -40,6 +40,10 @@ class GradlePanelToolWindowUi(data: ComponentData) : UiComponent(data) {
     driver.invokeAction("ExternalSystem.RefreshAllProjects")
   }
 
+  fun analyzeDependencies() {
+    driver.invokeAction("Gradle.ToolbarDependencyAnalyzer", component = component)
+  }
+
   fun IdeaFrameUI.runTask(task: String) {
     driver.invokeAction("Gradle.ExecuteTask")
     popup().waitFound().textField { byClass("SearchField")}.text = task
