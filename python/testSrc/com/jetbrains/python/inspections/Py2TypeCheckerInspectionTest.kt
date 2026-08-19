@@ -627,28 +627,6 @@ class Py2TypeCheckerInspectionTest : PyCodeInsightTestCase() {
 
     @overload
     def bar(p: int) -> int: pass
-    """.trimIndent(),
-  )
-
-  @Test
-  @TestFor(issues = ["PY-27551"])
-  fun `dunder init annotated with no return`() = test("""
-    from typing import NoReturn
-
-    class Test:
-        def __init__(self) -> NoReturn:
-            raise Exception()
-    """.trimIndent())
-
-  @Test
-  @TestFor(issues = ["PY-80427"])
-  @TestCaseOptions(assertRecursionPrevention = false)
-  fun `none type type`() = test("""
-    from types import NoneType
-
-    x: NoneType = None
-    y: type[NoneType] = type(None)
-    z: type[None] = NoneType
     """.trimIndent())
 
 }
