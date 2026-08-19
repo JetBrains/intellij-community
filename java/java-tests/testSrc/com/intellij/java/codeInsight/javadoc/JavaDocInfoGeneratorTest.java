@@ -132,6 +132,7 @@ abstract class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testConstantFieldInitializer() { doTestField(); }
   public void testInitializerWithNew() { doTestField(); }
   public void testInitializerWithLiteral() { doTestField(); }
+  public void testInitializerWithMultiLineLiteral() { doTestField(); }
   public void testMethodExpressionWithLiteral() { doTestField(); }
   public void testInitializerWithReference() { doTestField(); }
   public void testAnnotations() { doTestField(); }
@@ -145,6 +146,7 @@ abstract class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testEscapingInLiteral() { doTestField(); }
   public void testCode() { useJava8(); doTestField(); }
   public void testPInsidePre() { doTestField(); }
+  public void testHtmlCodeBlocks() { doTestClass(); }
   public void testCommaInsideArgsList() { doTestField(); }
   public void testFieldInitializedWithLambda() { doTestField(); }
   public void testFieldInitializedWithArray() { doTestField(); }
