@@ -21,7 +21,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.TableView;
@@ -151,7 +150,6 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
     }.installOn(myTable);
   }
 
-
   private List<XBreakpoint> getSelectedBreakpoints() {
     return StreamEx.of(myTable.getSelection())
       .select(Breakpoint.class)
@@ -221,23 +219,22 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
         protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
           if (value instanceof OverheadProducer overheadProducer) {
             if (overheadProducer.isObsolete()) {
-              overrideAttributes(overheadProducer, STRIKEOUT_ATTRIBUTES);
+              applyPresentation(overheadProducer, STRIKEOUT_ATTRIBUTES);
             }
             else if (!overheadProducer.isEnabled()) {
-              overrideAttributes(overheadProducer, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+              applyPresentation(overheadProducer, SimpleTextAttributes.GRAYED_ATTRIBUTES);
             }
             else {
-              overheadProducer.customizeRenderer(this);
+              applyPresentation(overheadProducer, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
             }
           }
           setTransparentIconBackground(true);
         }
 
-        private void overrideAttributes(OverheadProducer overhead, SimpleTextAttributes attributes) {
-          SimpleColoredComponent component = new SimpleColoredComponent();
-          overhead.customizeRenderer(component);
-          component.iterator().forEachRemaining(f -> append(f, attributes));
-          setIcon(component.getIcon());
+        private void applyPresentation(OverheadProducer overhead, SimpleTextAttributes attributes) {
+          OverheadProducer.Presentation presentation = overhead.computePresentation();
+          append(presentation.text(), attributes);
+          setIcon(presentation.icon());
         }
       };
     }

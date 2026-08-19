@@ -12,7 +12,6 @@ import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.SimpleColoredComponent;
 import com.sun.jdi.Method;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
@@ -239,9 +238,10 @@ public class MethodReturnValueWatcher {
     }
 
     @Override
-    public void customizeRenderer(SimpleColoredComponent renderer) {
-      renderer.setIcon(AllIcons.Debugger.WatchLastReturnValue);
-      renderer.append(JavaDebuggerBundle.message("action.watches.method.return.value.enable"));
+    public @NotNull OverheadProducer.Presentation computePresentation() {
+      return new OverheadProducer.Presentation(
+        JavaDebuggerBundle.message("action.watches.method.return.value.enable"),
+        AllIcons.Debugger.WatchLastReturnValue);
     }
   }
 }
