@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.marker;
 
 import com.intellij.openapi.editor.ex.DocumentSnapshot;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.util.Processor;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -103,8 +104,8 @@ public class SnapshotMarkerEngineBenchmark {
    * reusable consumer, so it does not allocate a capturing lambda for every query. The returned checksum consumes
    * every reported marker ID and the total number of reported markers.</p>
    *
-   * <p>This benchmark targets the persistent interval index directly because the current {@link SnapshotMarkerEngine}
-   * interface does not expose spatial marker queries.</p>
+   * <p>This benchmark targets the persistent interval index directly to isolate tree reporting from marker-handle
+   * lookup and materialization.</p>
    */
   @Benchmark
   public long reportIntersecting2MQueries(IntersectionState state) {
@@ -116,6 +117,34 @@ public class SnapshotMarkerEngineBenchmark {
 
     for (int index = 0; index < INTERSECTION_CALLS; index++) {
       root.processRangeMarkersOverlappingWith(queryStarts[index], queryEnds[index], accumulator);
+    }
+
+    return accumulator.getChecksum() ^ accumulator.getCount();
+  }
+
+  /**
+   * Calls {@link SnapshotMarkerEngineImpl#processRangeMarkersOverlappingWith} 2,000,000 times.
+   *
+   * <p>This uses the same marker population and query workload as {@link #reportIntersecting2MQueries}, but creates
+   * and retains real marker handles and enumerates them through the engine. The timed path therefore includes the
+   * marker-reference lookup and weak-reference dereference for every reported marker.</p>
+   */
+  @Benchmark
+  public long enumerateIntersecting2MQueries(EngineIntersectionState state) {
+    DocumentSnapshot snapshot = state.snapshot;
+    int[] queryStarts = state.queryStarts;
+    int[] queryEnds = state.queryEnds;
+    RangeMarkerIdAccumulator accumulator = state.accumulator;
+    accumulator.reset();
+
+    for (int index = 0; index < INTERSECTION_CALLS; index++) {
+      SnapshotMarkerEngineImpl.INSTANCE.processRangeMarkersOverlappingWith(
+        snapshot,
+        queryStarts[index],
+        queryEnds[index],
+        0,
+        accumulator
+      );
     }
 
     return accumulator.getChecksum() ^ accumulator.getCount();
@@ -192,20 +221,43 @@ public class SnapshotMarkerEngineBenchmark {
 
       queryStarts = new int[INTERSECTION_CALLS];
       queryEnds = new int[INTERSECTION_CALLS];
-      int availableBases = MARKER_COUNT - markersPerQuery + 1;
-      int baseMarker = 0;
+      fillIntersectionQueries(markersPerQuery, queryStarts, queryEnds);
+    }
+  }
 
-      for (int index = 0; index < INTERSECTION_CALLS; index++) {
-        int firstMarkerStart = markerStart(baseMarker);
-        int lastMarkerStart = markerStart(baseMarker + markersPerQuery - 1);
-        queryStarts[index] = firstMarkerStart + QUERY_INSET;
-        queryEnds[index] = lastMarkerStart + QUERY_INSET + 1;
+  @State(Scope.Thread)
+  public static class EngineIntersectionState {
+    @Param({"1", "8"})
+    public int markersPerQuery = 1;
 
-        baseMarker += QUERY_STEP;
-        if (baseMarker >= availableBases) {
-          baseMarker %= availableBases;
-        }
+    DocumentImpl document;
+    DocumentSnapshot snapshot;
+    PMarker[] markers;
+    int[] queryStarts;
+    int[] queryEnds;
+    final RangeMarkerIdAccumulator accumulator = new RangeMarkerIdAccumulator();
+
+    /** Builds and retains the real 50,000-marker population once per parameter value and fork. */
+    @Setup(Level.Trial)
+    public void setUp() {
+      document = new DocumentImpl(BENCHMARK_TEXT);
+      snapshot = document.getCore().snapshot();
+      markers = new PMarker[MARKER_COUNT];
+
+      for (int index = 0; index < MARKER_COUNT; index++) {
+        int startOffset = markerStart(index);
+        markers[index] = SnapshotMarkerEngineImpl.INSTANCE.createRangeMarker(
+          document,
+          snapshot,
+          startOffset,
+          startOffset + MARKER_LENGTH,
+          NON_GREEDY_SPEC
+        );
       }
+
+      queryStarts = new int[INTERSECTION_CALLS];
+      queryEnds = new int[INTERSECTION_CALLS];
+      fillIntersectionQueries(markersPerQuery, queryStarts, queryEnds);
     }
   }
 
@@ -217,6 +269,32 @@ public class SnapshotMarkerEngineBenchmark {
     @Override
     public boolean process(PMarkerRoot.MarkerEntry entry) {
       checksum += entry.getMarkerId();
+      count++;
+      return true;
+    }
+
+    public long getChecksum() {
+      return checksum;
+    }
+
+    public long getCount() {
+      return count;
+    }
+
+    public void reset() {
+      checksum = 0L;
+      count = 0L;
+    }
+  }
+
+  /** Reusable callback used by the engine enumeration benchmark. */
+  public static final class RangeMarkerIdAccumulator implements Processor<RangeMarkerEx> {
+    private long checksum;
+    private long count;
+
+    @Override
+    public boolean process(RangeMarkerEx marker) {
+      checksum += marker.getId();
       count++;
       return true;
     }
@@ -276,6 +354,23 @@ public class SnapshotMarkerEngineBenchmark {
 
   private static int markerStart(int index) {
     return index * MARKER_STRIDE;
+  }
+
+  private static void fillIntersectionQueries(int markersPerQuery, int[] queryStarts, int[] queryEnds) {
+    int availableBases = MARKER_COUNT - markersPerQuery + 1;
+    int baseMarker = 0;
+
+    for (int index = 0; index < INTERSECTION_CALLS; index++) {
+      int firstMarkerStart = markerStart(baseMarker);
+      int lastMarkerStart = markerStart(baseMarker + markersPerQuery - 1);
+      queryStarts[index] = firstMarkerStart + QUERY_INSET;
+      queryEnds[index] = lastMarkerStart + QUERY_INSET + 1;
+
+      baseMarker += QUERY_STEP;
+      if (baseMarker >= availableBases) {
+        baseMarker %= availableBases;
+      }
+    }
   }
 
   /**
