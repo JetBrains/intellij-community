@@ -86,8 +86,7 @@ private fun walkFileSystemNoTomlContent(
       val dirName = directory.name
 
       // default name is popular enough to make a shortcut
-      if (dirName == VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME
-          || VirtualEnvReader().findPythonInPythonRoot(directory) != null) {
+      if (dirName == VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME || VirtualEnvReader().findPythonInPythonRoot(directory) != null) {
         // Venv: exclude and skip
         FileVisitResult.SKIP_SUBTREE
       }
@@ -165,12 +164,14 @@ private fun getToolSpecificDependencies(
       // PY-91089: use safeGet instead of TomlTable.getTable, which throws TomlInvalidTypeException
       // (not returns null) when the key holds a non-table value such as an array (the `[[tool.uv.sources]]`
       // double-bracket typo). An unhandled throw here aborts the whole model sync and hides every member.
-      is TomlDependencySpecification.PathDependency -> tomlTable.safeGet<TomlTable>(specification.tomlKey, unquotedDottedKey = true).successOrNull?.let {
+      is TomlDependencySpecification.PathDependency -> tomlTable.safeGet<TomlTable>(specification.tomlKey,
+                                                                                    unquotedDottedKey = true).successOrNull?.let {
         getToolSpecificDependenciesFromTomlTable(root, it)
       } ?: emptySet()
       is TomlDependencySpecification.Pep621Dependency -> getPep621Dependencies(root, tomlTable, specification.tomlKey).toSet()
       is TomlDependencySpecification.GroupPathDependency -> {
-        val groups = tomlTable.safeGet<TomlTable>(specification.tomlKeyToGroup, unquotedDottedKey = true).successOrNull ?: return@flatMap emptySet()
+        val groups =
+          tomlTable.safeGet<TomlTable>(specification.tomlKeyToGroup, unquotedDottedKey = true).successOrNull ?: return@flatMap emptySet()
         groups.keySet().flatMap { group ->
           groups.safeGet<TomlTable>("${group}.${specification.tomlKeyFromGroupToPath}", unquotedDottedKey = true).successOrNull?.let {
             getToolSpecificDependenciesFromTomlTable(root, it)
@@ -178,7 +179,8 @@ private fun getToolSpecificDependencies(
         }
       }
       is TomlDependencySpecification.GroupPep621Dependency -> {
-        val groups = tomlTable.safeGet<TomlTable>(specification.tomlKeyToGroup, unquotedDottedKey = true).successOrNull ?: return@flatMap emptySet()
+        val groups =
+          tomlTable.safeGet<TomlTable>(specification.tomlKeyToGroup, unquotedDottedKey = true).successOrNull ?: return@flatMap emptySet()
         groups.keySet().flatMap { group ->
           getPep621Dependencies(root, groups, "${group}.${specification.tomlKeyFromGroupToDependencies}")
         }
@@ -197,7 +199,9 @@ private fun getPep621Dependencies(root: Path, tomlTable: TomlTable, tomlKeyToDep
 private fun getToolSpecificDependenciesFromTomlTable(root: Path, tomlTable: TomlTable): Set<Directory> {
   return tomlTable.keySet().asSequence().mapNotNull {
     // PY-91089: safeGet instead of getString, which throws when `<dep>.path` holds a non-string value.
-    tomlTable.safeGet<String>("${it}.path", unquotedDottedKey = true).successOrNull?.let { depPathString -> parseDepFromPathString(root, depPathString) }
+    tomlTable.safeGet<String>("${it}.path", unquotedDottedKey = true).successOrNull?.let { depPathString ->
+      parseDepFromPathString(root, depPathString)
+    }
   }.toSet()
 }
 
@@ -223,6 +227,7 @@ private fun parsePep621Dependency(root: Path, depSpec: String): Path? {
 
 // e.g. "lib @ file:///home/user/projects/main/lib"
 private val PEP_621_PATH_DEPENDENCY = """([\w-]+) @ (.*)""".toRegex()
+
 // e.g. "{root:parent:uri}/lib"
 private val HATCH_ROOT_URI = """\{root((?::parent)*):uri}(/.*)?""".toRegex()
 
@@ -242,24 +247,22 @@ private fun Path.nthParent(count: Int): Path? {
   return current
 }
 
-private fun parseDepUri(depUri: String): Path? =
-  try {
-    URI(depUri).toPath()
-  }
-  catch (e: InvalidPathException) {
-    logger.info("Dep $depUri points to wrong path", e)
-    null
-  }
-  catch (e: URISyntaxException) {
-    logger.info("Dep $depUri can't be parsed", e)
-    null
-  }
+private fun parseDepUri(depUri: String): Path? = try {
+  URI(depUri).toPath()
+}
+catch (e: InvalidPathException) {
+  logger.info("Dep $depUri points to wrong path", e)
+  null
+}
+catch (e: URISyntaxException) {
+  logger.info("Dep $depUri can't be parsed", e)
+  null
+}
 
-private fun parseDepFromPathString(root: Path, depPathString: String): Path? =
-  try {
-    root.resolve(depPathString).normalize()
-  }
-  catch (e: InvalidPathException) {
-    logger.info("Dep $depPathString points to wrong path", e)
-    null
-  }
+private fun parseDepFromPathString(root: Path, depPathString: String): Path? = try {
+  root.resolve(depPathString).normalize()
+}
+catch (e: InvalidPathException) {
+  logger.info("Dep $depPathString points to wrong path", e)
+  null
+}

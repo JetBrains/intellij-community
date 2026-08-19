@@ -152,56 +152,31 @@ internal class PyProjectTomlTest {
   companion object {
     @JvmStatic
     fun parseTestCases(): List<Arguments> = listOf(
-      ParseTestCase(
-        "empty config results with no table and empty issues",
-        "",
-        null,
-        listOf()
-      ),
+      ParseTestCase("empty config results with no table and empty issues", "", null, listOf()),
 
 
-      ParseTestCase(
-        "empty version results in an issue",
-        """
+      ParseTestCase("empty version results in an issue", """
           [project]
           name = "some_name"
-        """.trimIndent(),
-        PyProjectTable(name = "some_name"),
-        listOf(MissingVersion)
-      ),
+        """.trimIndent(), PyProjectTable(name = "some_name"), listOf(MissingVersion)),
 
-      ParseTestCase(
-        "empty version doesn't result in an issue when it's present in dynamic",
-        """
+      ParseTestCase("empty version doesn't result in an issue when it's present in dynamic", """
           [project]
           name = "some_name"
           dynamic = ["version"]
-        """.trimIndent(),
-        PyProjectTable(name = "some_name", dynamic = listOf("version")),
-        listOf()
-      ),
+        """.trimIndent(), PyProjectTable(name = "some_name", dynamic = listOf("version")), listOf()),
 
-      ParseTestCase(
-        "version of wrong type results in an issue",
-        """
+      ParseTestCase("version of wrong type results in an issue", """
           [project]
           name = "name"
           version = 123
-        """.trimIndent(),
-        PyProjectTable(name = "name"),
-        listOf(SafeGetError(UnexpectedType("version", String::class, Long::class)))
-      ),
+        """.trimIndent(), PyProjectTable(name = "name"), listOf(SafeGetError(UnexpectedType("version", String::class, Long::class)))),
 
-      ParseTestCase(
-        "name and version resolve correctly when correctly specified",
-        """
+      ParseTestCase("name and version resolve correctly when correctly specified", """
           [project]
           name = "name"
           version = "123"
-        """.trimIndent(),
-        PyProjectTable(name = "name", version = "123"),
-        listOf()
-      ),
+        """.trimIndent(), PyProjectTable(name = "name", version = "123"), listOf()),
 
       *listOf(
         "requires-python" to String::class,
@@ -219,24 +194,20 @@ internal class PyProjectTomlTest {
         "gui-scripts" to TomlTable::class,
         "urls" to TomlTable::class,
       ).map {
-        ParseTestCase(
-          "${it.first} of wrong type results in an issue",
-          """
+        ParseTestCase("${it.first} of wrong type results in an issue",
+                      """
             [project]
             name = "name"
             version = "123"
             ${it.first} = 123
           """.trimIndent(),
-          PyProjectTable(name = "name", version = "123"),
-          listOf(SafeGetError(UnexpectedType(it.first, it.second, Long::class)))
-        )
+                      PyProjectTable(name = "name", version = "123"),
+                      listOf(SafeGetError(UnexpectedType(it.first, it.second, Long::class))))
       }.toTypedArray(),
 
       *listOf("authors", "maintainers").flatMap {
-        listOf(
-          ParseTestCase(
-            "contacts of wrong type in $it result in an issue",
-            """
+        listOf(ParseTestCase("contacts of wrong type in $it result in an issue",
+                             """
               [project]
               name = "name"
               version = "123"
@@ -244,15 +215,13 @@ internal class PyProjectTomlTest {
                 123,
               ]
             """.trimIndent(),
-            PyProjectTable(name = "name", version = "123"),
-            listOf(
-              SafeGetError(UnexpectedType("$it[0]", TomlTable::class, Long::class)),
-            )
-          ),
+                             PyProjectTable(name = "name", version = "123"),
+                             listOf(
+                               SafeGetError(UnexpectedType("$it[0]", TomlTable::class, Long::class)),
+                             )),
 
-          ParseTestCase(
-            "contacts without name and email in $it result in an issue",
-            """
+               ParseTestCase("contacts without name and email in $it result in an issue",
+                             """
               [project]
               name = "name"
               version = "123"
@@ -260,20 +229,19 @@ internal class PyProjectTomlTest {
                 {foo = 123, bar = "qwf"}
               ]
             """.trimIndent(),
-            PyProjectTable(
-              name = "name",
-              version = "123",
-              authors = if (it == "authors") listOf() else null,
-              maintainers = if (it == "maintainers") listOf() else null,
-            ),
-            listOf(
-              InvalidContact("$it[0]"),
-            )
-          ),
+                             PyProjectTable(
+                               name = "name",
+                               version = "123",
+                               authors = if (it == "authors") listOf() else null,
+                               maintainers = if (it == "maintainers") listOf() else null,
+                             ),
+                             listOf(
+                               InvalidContact("$it[0]"),
+                             )),
 
-          ParseTestCase(
-            "contacts with only a name in $it resolve",
-            """
+               ParseTestCase(
+                 "contacts with only a name in $it resolve",
+                 """
               [project]
               name = "name"
               version = "123"
@@ -282,21 +250,21 @@ internal class PyProjectTomlTest {
                 {name = "name2"}
               ]
             """.trimIndent(),
-            run {
-              val contacts = listOf(PyProjectContact(name = "name1", email = null), PyProjectContact(name = "name2", email = null))
-              PyProjectTable(
-                name = "name",
-                version = "123",
-                authors = if (it == "authors") contacts else null,
-                maintainers = if (it == "maintainers") contacts else null,
-              )
-            },
-            listOf(),
-          ),
+                 run {
+                   val contacts = listOf(PyProjectContact(name = "name1", email = null), PyProjectContact(name = "name2", email = null))
+                   PyProjectTable(
+                     name = "name",
+                     version = "123",
+                     authors = if (it == "authors") contacts else null,
+                     maintainers = if (it == "maintainers") contacts else null,
+                   )
+                 },
+                 listOf(),
+               ),
 
-          ParseTestCase(
-            "contacts with only an email in $it resolve",
-            """
+               ParseTestCase(
+                 "contacts with only an email in $it resolve",
+                 """
               [project]
               name = "name"
               version = "123"
@@ -305,21 +273,21 @@ internal class PyProjectTomlTest {
                 {email = "email2"}
               ]
             """.trimIndent(),
-            run {
-              val contacts = listOf(PyProjectContact(name = null, email = "email1"), PyProjectContact(name = null, email = "email2"))
-              PyProjectTable(
-                name = "name",
-                version = "123",
-                authors = if (it == "authors") contacts else null,
-                maintainers = if (it == "maintainers") contacts else null,
-              )
-            },
-            listOf(),
-          ),
+                 run {
+                   val contacts = listOf(PyProjectContact(name = null, email = "email1"), PyProjectContact(name = null, email = "email2"))
+                   PyProjectTable(
+                     name = "name",
+                     version = "123",
+                     authors = if (it == "authors") contacts else null,
+                     maintainers = if (it == "maintainers") contacts else null,
+                   )
+                 },
+                 listOf(),
+               ),
 
-          ParseTestCase(
-            "contacts with both name and email in $it resolve",
-            """
+               ParseTestCase(
+                 "contacts with both name and email in $it resolve",
+                 """
               [project]
               name = "name"
               version = "123"
@@ -328,51 +296,41 @@ internal class PyProjectTomlTest {
                 {name = "name2", email = "email2"}
               ]
             """.trimIndent(),
-            run {
-              val contacts = listOf(PyProjectContact(name = "name1", email = "email1"), PyProjectContact(name = "name2", email = "email2"))
-              PyProjectTable(
-                name = "name",
-                version = "123",
-                authors = if (it == "authors") contacts else null,
-                maintainers = if (it == "maintainers") contacts else null,
-              )
-            },
-            listOf(),
-          )
-        )
+                 run {
+                   val contacts =
+                     listOf(PyProjectContact(name = "name1", email = "email1"), PyProjectContact(name = "name2", email = "email2"))
+                   PyProjectTable(
+                     name = "name",
+                     version = "123",
+                     authors = if (it == "authors") contacts else null,
+                     maintainers = if (it == "maintainers") contacts else null,
+                   )
+                 },
+                 listOf(),
+               ))
       }.toTypedArray(),
 
       *listOf("license-files", "keywords", "classifiers", "dependencies").map {
-        ParseTestCase(
-          "elements in $it that are of the wrong type resolve in an issue",
-          """
+        ParseTestCase("elements in $it that are of the wrong type resolve in an issue",
+                      """
             [project]
             name = "name"
             version = "123"
             $it = [123]
           """.trimIndent(),
-          PyProjectTable(name = "name", version = "123"),
-          listOf(SafeGetError(UnexpectedType("$it[0]", String::class, Long::class)))
-        )
+                      PyProjectTable(name = "name", version = "123"),
+                      listOf(SafeGetError(UnexpectedType("$it[0]", String::class, Long::class))))
       }.toTypedArray(),
 
-      ParseTestCase(
-        "correctly defined dependencies resolve",
-        """
+      ParseTestCase("correctly defined dependencies resolve",
+                    """
           [project]
           name = "name"
           version = "123"
           dependencies = ["a", "b"]
         """.trimIndent(),
-        PyProjectTable(
-          name = "name",
-          version = "123",
-          dependencies = PyProjectDependencies(
-            project = listOf("a", "b")
-          )
-        ),
-        listOf()
-      ),
+                    PyProjectTable(name = "name", version = "123", dependencies = PyProjectDependencies(project = listOf("a", "b"))),
+                    listOf()),
 
       ParseTestCase(
         "dev with wrong type in dependency-groups results in an issue",
@@ -411,9 +369,8 @@ internal class PyProjectTomlTest {
         expectedDepGroups = mapOf("dev" to listOf("a", "b")),
       ),
 
-      ParseTestCase(
-        "optional dependency entries with wrong type result in an issue",
-        """
+      ParseTestCase("optional dependency entries with wrong type result in an issue",
+                    """
           [project]
           name = "name"
           version = "123"
@@ -422,19 +379,17 @@ internal class PyProjectTomlTest {
           a = 123
           b = [123]
         """.trimIndent(),
-        PyProjectTable(
-          name = "name",
-          version = "123",
-        ),
-        listOf(
-          SafeGetError(UnexpectedType("a", TomlArray::class, Long::class)),
-          SafeGetError(UnexpectedType("b[0]", String::class, Long::class)),
-        )
-      ),
+                    PyProjectTable(
+                      name = "name",
+                      version = "123",
+                    ),
+                    listOf(
+                      SafeGetError(UnexpectedType("a", TomlArray::class, Long::class)),
+                      SafeGetError(UnexpectedType("b[0]", String::class, Long::class)),
+                    )),
 
-      ParseTestCase(
-        "correctly defined optional dependencies resolve",
-        """
+      ParseTestCase("correctly defined optional dependencies resolve",
+                    """
           [project]
           name = "name"
           version = "123"
@@ -443,24 +398,16 @@ internal class PyProjectTomlTest {
           foo = ["a", "b"]
           bar = ["c", "d"]
         """.trimIndent(),
-        PyProjectTable(
-          name = "name",
-          version = "123",
-          dependencies = PyProjectDependencies(
-            optional = mapOf(
-              "foo" to listOf("a", "b"),
-              "bar" to listOf("c", "d")
-            )
-          )
-        ),
-        listOf()
-      ),
+                    PyProjectTable(name = "name",
+                                   version = "123",
+                                   dependencies = PyProjectDependencies(optional = mapOf("foo" to listOf("a", "b"),
+                                                                                         "bar" to listOf("c", "d")))),
+                    listOf()),
 
       *listOf("scripts", "gui-scripts", "urls").flatMap {
         listOf(
-          ParseTestCase(
-            "$it entries with wrong type result in an issue",
-            """
+          ParseTestCase("$it entries with wrong type result in an issue",
+                        """
               [project]
               name = "name"
               version = "123"
@@ -469,22 +416,19 @@ internal class PyProjectTomlTest {
               a = 123
               b = 123
             """.trimIndent(),
-            PyProjectTable(
-              name = "name",
-              version = "123",
-              scripts = if (it == "scripts") mapOf() else null,
-              guiScripts = if (it == "gui-scripts") mapOf() else null,
-              urls = if (it == "urls") mapOf() else null,
-            ),
-            listOf(
-              SafeGetError(UnexpectedType("a", String::class, Long::class)),
-              SafeGetError(UnexpectedType("b", String::class, Long::class)),
-            )
-          ),
+                        PyProjectTable(
+                          name = "name",
+                          version = "123",
+                          scripts = if (it == "scripts") mapOf() else null,
+                          guiScripts = if (it == "gui-scripts") mapOf() else null,
+                          urls = if (it == "urls") mapOf() else null,
+                        ),
+                        listOf(
+                          SafeGetError(UnexpectedType("a", String::class, Long::class)),
+                          SafeGetError(UnexpectedType("b", String::class, Long::class)),
+                        )),
 
-          ParseTestCase(
-            "correctly defined entries in $it resolve",
-            """
+          ParseTestCase("correctly defined entries in $it resolve", """
               [project]
               name = "name"
               version = "123"
@@ -492,19 +436,16 @@ internal class PyProjectTomlTest {
               [project.$it]
               a = "item1"
               b = "item2"
-            """.trimIndent(),
-            run {
-              val items = mapOf("a" to "item1", "b" to "item2")
-              PyProjectTable(
-                name = "name",
-                version = "123",
-                scripts = if (it == "scripts") items else null,
-                guiScripts = if (it == "gui-scripts") items else null,
-                urls = if (it == "urls") items else null,
-              )
-            },
-            listOf()
-          ),
+            """.trimIndent(), run {
+            val items = mapOf("a" to "item1", "b" to "item2")
+            PyProjectTable(
+              name = "name",
+              version = "123",
+              scripts = if (it == "scripts") items else null,
+              guiScripts = if (it == "gui-scripts") items else null,
+              urls = if (it == "urls") items else null,
+            )
+          }, listOf()),
         )
       }.toTypedArray(),
 

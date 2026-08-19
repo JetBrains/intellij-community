@@ -101,13 +101,9 @@ data class PyProjectToml internal constructor(
    * ```
    */
   fun <T : PyProjectToolFactory<U>, U> getTool(tool: T): U {
-    return tool.createTool(
-      mapOf(
-        *tool.tables.map {
-          it to toml.getTable(it)
-        }.toTypedArray()
-      )
-    )
+    return tool.createTool(mapOf(*tool.tables.map {
+      it to toml.getTable(it)
+    }.toTypedArray()))
   }
 
   /**
@@ -199,17 +195,11 @@ data class PyProjectToml internal constructor(
           }
         }
         is Result.Failure -> {
-          val table = projectTable
-            .safeGet<TomlTable>("readme")
-            .getOrIssue(issues)
+          val table = projectTable.safeGet<TomlTable>("readme").getOrIssue(issues)
 
-          val name = table
-            ?.safeGetRequired<String>("name")
-            ?.getOrIssue(issues)
+          val name = table?.safeGetRequired<String>("name")?.getOrIssue(issues)
 
-          val contentType = table
-            ?.safeGetRequired<String>("content-type")
-            ?.getOrIssue(issues)
+          val contentType = table?.safeGetRequired<String>("content-type")?.getOrIssue(issues)
 
           if (name != null && contentType != null) {
             PyProjectFile(name, contentType)
@@ -221,28 +211,19 @@ data class PyProjectToml internal constructor(
       }
 
       val projectDependencies = projectTable.safeGetArr<String>(PY_PROJECT_DEPENDENCIES).getOrIssue(issues) ?: listOf()
-      val depGroups = toml
-        .safeGet<TomlTable>(PY_PROJECT_TOML_DEPENDENCY_GROUPS)
-        .getOrIssue(issues)
+      val depGroups = toml.safeGet<TomlTable>(PY_PROJECT_TOML_DEPENDENCY_GROUPS).getOrIssue(issues)
 
       val depsFromGroups = depGroups?.keySet()?.associate { depGroupName ->
         // Can't filter by string because there might be (still unsupported) { include-group = "" } tables
         depGroupName to (depGroups.safeGetArr<Any>(depGroupName).getOrIssue(issues)?.filterIsInstance<String>() ?: emptyList())
       }
-      val optionalDependencies =
-        projectTable
-          .safeGet<TomlTable>(PY_PROJECT_OPTIONAL_DEPENDENCIES)
-          .getOrIssue(issues)
-          ?.let { table ->
-            mapOf(
-              *table.keySet().mapNotNull { key ->
-                table.safeGetArr<String>(key).getOrIssue(issues)?.let { value ->
-                  key to value
-                }
-              }.toTypedArray()
-            )
+      val optionalDependencies = projectTable.safeGet<TomlTable>(PY_PROJECT_OPTIONAL_DEPENDENCIES).getOrIssue(issues)?.let { table ->
+        mapOf(*table.keySet().mapNotNull { key ->
+          table.safeGetArr<String>(key).getOrIssue(issues)?.let { value ->
+            key to value
           }
-        ?: mapOf()
+        }.toTypedArray())
+      } ?: mapOf()
 
       val scripts = projectTable.parseMap("scripts", issues)
       val guiScripts = projectTable.parseMap("gui-scripts", issues)
@@ -281,8 +262,7 @@ data class PyProjectToml internal constructor(
      * Returns null if not found.
      */
     suspend fun findPyProjectTomlFile(module: Module): PyProjectTomlFile? {
-      return module.asPyProject()?.resolveFile(PY_PROJECT_TOML)
-        ?.let { LocalFileSystem.getInstance().findFileByNioFile(it) }
+      return module.asPyProject()?.resolveFile(PY_PROJECT_TOML)?.let { LocalFileSystem.getInstance().findFileByNioFile(it) }
         ?.let { PyProjectTomlFile(it) }
     }
 
@@ -310,13 +290,11 @@ data class PyProjectToml internal constructor(
 
     private fun TomlTable.parseMap(key: String, issues: MutableList<PyProjectIssue>): Map<String, String>? {
       val table = safeGet<TomlTable>(key).getOrIssue(issues) ?: return null
-      return mapOf(
-        *table.keySet().mapNotNull { key ->
-          table.safeGet<String>(key).getOrIssue(issues)?.let { value ->
-            key to value
-          }
-        }.toTypedArray()
-      )
+      return mapOf(*table.keySet().mapNotNull { key ->
+        table.safeGet<String>(key).getOrIssue(issues)?.let { value ->
+          key to value
+        }
+      }.toTypedArray())
     }
 
     private fun <T> Result<T, TomlTableSafeGetError>.getOrIssue(issues: MutableList<PyProjectIssue>, onNull: (() -> Unit)? = null) =
