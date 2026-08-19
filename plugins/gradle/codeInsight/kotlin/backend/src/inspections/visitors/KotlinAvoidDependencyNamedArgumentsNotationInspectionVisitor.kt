@@ -24,80 +24,81 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.plugins.gradle.util.GradleDependencyUtil.buildSingleStringDependencyNotation
 
 class KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
-    override fun visitCallExpression(expression: KtCallExpression) {
-        val dependencyType = findDependencyType(expression) ?: return
-        if (dependencyType != DependencyType.NAMED_ARGUMENTS) return
+  override fun visitCallExpression(expression: KtCallExpression) {
+    val dependencyType = findDependencyType(expression) ?: return
+    if (dependencyType != DependencyType.NAMED_ARGUMENTS) return
 
-        holder.problem(
-            expression,
-            GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor")
-        ).range(expression.valueArgumentList?.textRangeInParent ?: expression.textRangeInParent)
-            .maybeFix(createPotentialFix(expression))
-            .register()
-    }
+    holder.problem(
+      expression,
+      GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor")
+    ).range(expression.valueArgumentList?.textRangeInParent ?: expression.textRangeInParent)
+      .maybeFix(createPotentialFix(expression))
+      .register()
+  }
 
-    private fun createPotentialFix(callExpression: KtCallExpression): GradleDependencyNamedArgumentsFix? {
-        val argList = callExpression.valueArgumentList ?: return null
+  private fun createPotentialFix(callExpression: KtCallExpression): GradleDependencyNamedArgumentsFix? {
+    val argList = callExpression.valueArgumentList ?: return null
 
-        val group = argList.findNamedOrPositionalArgument("group", 0)?.text ?: return null
-        val name = argList.findNamedOrPositionalArgument("name", 1)?.text ?: return null
-        val version = argList.findNamedOrPositionalArgument("version", 2)?.text
-        val targetConfig = argList.findNamedOrPositionalArgument("configuration", 3)?.text
-        val classifier = argList.findNamedOrPositionalArgument("classifier", 4)?.text
-        val ext = argList.findNamedOrPositionalArgument("ext", 5)?.text
+    val group = argList.findNamedOrPositionalArgument("group", 0)?.text ?: return null
+    val name = argList.findNamedOrPositionalArgument("name", 1)?.text ?: return null
+    val version = argList.findNamedOrPositionalArgument("version", 2)?.text
+    val targetConfig = argList.findNamedOrPositionalArgument("configuration", 3)?.text
+    val classifier = argList.findNamedOrPositionalArgument("classifier", 4)?.text
+    val ext = argList.findNamedOrPositionalArgument("ext", 5)?.text
 
-        // check that all arguments are single-line expressions
-        if (group.contains('\n') || name.contains('\n') || version?.contains('\n') == true ||
-            classifier?.contains('\n') == true || ext?.contains('\n') == true
-        ) return null
+    // check that all arguments are single-line expressions
+    if (group.contains('\n') || name.contains('\n') || version?.contains('\n') == true ||
+        classifier?.contains('\n') == true || ext?.contains('\n') == true
+    ) return null
 
-        val concat = buildSingleStringDependencyNotation(group, name, version, classifier, ext) ?: return null
-        return GradleDependencyNamedArgumentsFix(concat, targetConfig)
-    }
+    val concat = buildSingleStringDependencyNotation(group, name, version, classifier, ext) ?: return null
+    return GradleDependencyNamedArgumentsFix(concat, targetConfig)
+  }
 }
 
 private class GradleDependencyNamedArgumentsFix(
-    private val concat: String,
-    private val targetConfig: String?
+  private val concat: String,
+  private val targetConfig: String?,
 ) : KotlinModCommandQuickFix<KtCallExpression>() {
 
-    override fun getName(): @IntentionName String {
-        return CommonQuickFixBundle.message("fix.simplify")
+  override fun getName(): @IntentionName String {
+    return CommonQuickFixBundle.message("fix.simplify")
+  }
+
+  override fun getFamilyName(): @IntentionFamilyName String {
+    return name
+  }
+
+  override fun applyFix(project: Project, element: KtCallExpression, updater: ModPsiUpdater) {
+    val argList = element.valueArgumentList!!
+    val factory = KtPsiFactory(project, true)
+    val concatExpr = factory.createExpression(concat) as KtBinaryExpression
+    val newArgument = analyze(concatExpr) {
+      buildStringTemplateForBinaryExpression(concatExpr)
     }
 
-    override fun getFamilyName(): @IntentionFamilyName String {
-        return name
+    if (targetConfig == null) {
+      replaceArguments(argList, factory, newArgument)
+      return
     }
 
-    override fun applyFix(project: Project, element: KtCallExpression, updater: ModPsiUpdater) {
-        val argList = element.valueArgumentList!!
-        val factory = KtPsiFactory(project, true)
-        val concatExpr = factory.createExpression(concat) as KtBinaryExpression
-        val newArgument = analyze(concatExpr) {
-            buildStringTemplateForBinaryExpression(concatExpr)
-        }
+    val configBlock = element.getBlock()
+    val targetConfigExpr = factory.createExpression("targetConfiguration = $targetConfig")
 
-        if (targetConfig == null) {
-            replaceArguments(argList, factory, newArgument)
-            return
-        }
-
-        val configBlock = element.getBlock()
-        val targetConfigExpr = factory.createExpression("targetConfiguration = $targetConfig")
-
-        if (configBlock != null) {
-            val addedTarget = configBlock.addAfter(targetConfigExpr, null)
-            configBlock.addAfter(factory.createNewLine(), addedTarget)
-            replaceArguments(argList, factory, newArgument)
-        } else {
-            val newElement = factory.createExpression("${element.calleeExpression!!.text}(${newArgument.text}) {}") as KtCallExpression
-            newElement.getBlock()!!.add(targetConfigExpr)
-            element.replace(newElement)
-        }
+    if (configBlock != null) {
+      val addedTarget = configBlock.addAfter(targetConfigExpr, null)
+      configBlock.addAfter(factory.createNewLine(), addedTarget)
+      replaceArguments(argList, factory, newArgument)
     }
-
-    private fun replaceArguments(argList: KtValueArgumentList, factory: KtPsiFactory, newArgument: KtStringTemplateExpression) {
-        argList.arguments.forEach { argList.removeArgument(it) }
-        argList.addArgument(factory.createArgument(newArgument))
+    else {
+      val newElement = factory.createExpression("${element.calleeExpression!!.text}(${newArgument.text}) {}") as KtCallExpression
+      newElement.getBlock()!!.add(targetConfigExpr)
+      element.replace(newElement)
     }
+  }
+
+  private fun replaceArguments(argList: KtValueArgumentList, factory: KtPsiFactory, newArgument: KtStringTemplateExpression) {
+    argList.arguments.forEach { argList.removeArgument(it) }
+    argList.addArgument(factory.createArgument(newArgument))
+  }
 }

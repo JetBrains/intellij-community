@@ -44,127 +44,129 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADL
  */
 internal class KotlinGradlePropertyMethodCallQuickFixRegistrar : KotlinQuickFixRegistrar() {
 
-    private val fixes = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerFactory(UNRESOLVED_REFERENCE_FACTORY)
-        registerFactory(UNRESOLVED_REFERENCE_WRONG_RECEIVER_FACTORY)
-    }
+  private val fixes = KtQuickFixesListBuilder.registerPsiQuickFix {
+    registerFactory(UNRESOLVED_REFERENCE_FACTORY)
+    registerFactory(UNRESOLVED_REFERENCE_WRONG_RECEIVER_FACTORY)
+  }
 
-    override val list: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(fixes)
+  override val list: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(fixes)
 }
 
 private val UNRESOLVED_REFERENCE_FACTORY =
-    KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnresolvedReference ->
-        listOfNotNull(createGradlePropertyMethodCallQuickFix(diagnostic.psi))
-    }
+  KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnresolvedReference ->
+    listOfNotNull(createGradlePropertyMethodCallQuickFix(diagnostic.psi))
+  }
 
 private val UNRESOLVED_REFERENCE_WRONG_RECEIVER_FACTORY =
-    KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnresolvedReferenceWrongReceiver ->
-        listOfNotNull(createGradlePropertyMethodCallQuickFix(diagnostic.psi))
-    }
+  KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnresolvedReferenceWrongReceiver ->
+    listOfNotNull(createGradlePropertyMethodCallQuickFix(diagnostic.psi))
+  }
 
 context(_: KaSession)
 private fun createGradlePropertyMethodCallQuickFix(psi: PsiElement): ModCommandAction? {
-    val qualifiedExpression = psi.gradlePropertyMethodCall()
-        ?: return null
+  val qualifiedExpression = psi.gradlePropertyMethodCall()
+                            ?: return null
 
-    if (!isGradleKotlinScript(qualifiedExpression.containingKtFile.alwaysVirtualFile)) {
-        return null
+  if (!isGradleKotlinScript(qualifiedExpression.containingKtFile.alwaysVirtualFile)) {
+    return null
+  }
+
+  val receiverType = qualifiedExpression.receiverExpression.expressionType ?: return null
+
+  val isGradleFilePropertyType = receiverType.isSubtypeOf(topLevelClassId(GRADLE_API_FILE_SYSTEM_LOCATION_PROPERTY))
+  val isGradleCollectionPropertyType =
+    receiverType.isSubtypeOf(topLevelClassId(GRADLE_API_PROVIDER_HAS_MULTIPLE_VALUES)) ||
+    receiverType.isSubtypeOf(topLevelClassId(GRADLE_API_PROVIDER_MAP_PROPERTY))
+  val isGradleProviderType = receiverType.isSubtypeOf(topLevelClassId(GRADLE_API_PROVIDER_PROVIDER))
+
+  return when {
+    isGradleFilePropertyType -> {
+      if (qualifiedExpression.hasFileCallableSelector()) {
+        UnwrapGradlePropertyMethodCallQuickFix(qualifiedExpression, GradlePropertyUnwrap.GET_AS_FILE)
+      }
+      else {
+        null
+      }
     }
 
-    val receiverType = qualifiedExpression.receiverExpression.expressionType ?: return null
+    isGradleCollectionPropertyType -> null
 
-    val isGradleFilePropertyType = receiverType.isSubtypeOf(topLevelClassId(GRADLE_API_FILE_SYSTEM_LOCATION_PROPERTY))
-    val isGradleCollectionPropertyType =
-        receiverType.isSubtypeOf(topLevelClassId(GRADLE_API_PROVIDER_HAS_MULTIPLE_VALUES)) ||
-        receiverType.isSubtypeOf(topLevelClassId(GRADLE_API_PROVIDER_MAP_PROPERTY))
-    val isGradleProviderType = receiverType.isSubtypeOf(topLevelClassId(GRADLE_API_PROVIDER_PROVIDER))
-
-    return when {
-        isGradleFilePropertyType -> {
-            if (qualifiedExpression.hasFileCallableSelector()) {
-                UnwrapGradlePropertyMethodCallQuickFix(qualifiedExpression, GradlePropertyUnwrap.GET_AS_FILE)
-            } else {
-                null
-            }
-        }
-
-        isGradleCollectionPropertyType -> null
-
-        isGradleProviderType -> {
-            UnwrapGradlePropertyMethodCallQuickFix(qualifiedExpression, GradlePropertyUnwrap.GET)
-        }
-
-        else -> null
+    isGradleProviderType -> {
+      UnwrapGradlePropertyMethodCallQuickFix(qualifiedExpression, GradlePropertyUnwrap.GET)
     }
+
+    else -> null
+  }
 }
 
 private class UnwrapGradlePropertyMethodCallQuickFix(
-    element: KtDotQualifiedExpression,
-    private val unwrap: GradlePropertyUnwrap,
+  element: KtDotQualifiedExpression,
+  private val unwrap: GradlePropertyUnwrap,
 ) : PsiUpdateModCommandAction<KtDotQualifiedExpression>(element), DumbAware {
 
-    override fun getFamilyName(): @IntentionFamilyName String =
-        GradleInspectionBundle.message(unwrap.familyNameKey)
+  override fun getFamilyName(): @IntentionFamilyName String =
+    GradleInspectionBundle.message(unwrap.familyNameKey)
 
-    override fun getPresentation(
-        context: ActionContext,
-        element: KtDotQualifiedExpression,
-    ): Presentation = Presentation.of(familyName).withPriority(PriorityAction.Priority.HIGH)
+  override fun getPresentation(
+    context: ActionContext,
+    element: KtDotQualifiedExpression,
+  ): Presentation = Presentation.of(familyName).withPriority(PriorityAction.Priority.HIGH)
 
-    override fun invoke(
-        actionContext: ActionContext,
-        element: KtDotQualifiedExpression,
-        updater: ModPsiUpdater,
-    ) {
-        val callExpression = element.selectorExpression as? KtCallExpression ?: return
-        val replacement = KtPsiFactory(actionContext.project).createExpressionByPattern(
-            unwrap.expressionPattern,
-            element.receiverExpression,
-            callExpression,
-        )
-        element.replace(replacement)
-    }
+  override fun invoke(
+    actionContext: ActionContext,
+    element: KtDotQualifiedExpression,
+    updater: ModPsiUpdater,
+  ) {
+    val callExpression = element.selectorExpression as? KtCallExpression ?: return
+    val replacement = KtPsiFactory(actionContext.project).createExpressionByPattern(
+      unwrap.expressionPattern,
+      element.receiverExpression,
+      callExpression,
+    )
+    element.replace(replacement)
+  }
 }
 
 private fun PsiElement.gradlePropertyMethodCall(): KtDotQualifiedExpression? {
-    val callExpression = when (this) {
-        is KtNameReferenceExpression -> parent as? KtCallExpression
-        is KtCallExpression -> this
-        is KtDotQualifiedExpression -> selectorExpression as? KtCallExpression
-        else -> parentOfType<KtCallExpression>(withSelf = true)
+  val callExpression =
+    when (this) {
+      is KtNameReferenceExpression -> parent as? KtCallExpression
+      is KtCallExpression -> this
+      is KtDotQualifiedExpression -> selectorExpression as? KtCallExpression
+      else -> parentOfType<KtCallExpression>(withSelf = true)
     } ?: return null
 
-    if (callExpression.calleeExpression !is KtNameReferenceExpression) return null
-    if (this is KtNameReferenceExpression && callExpression.calleeExpression != this) return null
+  if (callExpression.calleeExpression !is KtNameReferenceExpression) return null
+  if (this is KtNameReferenceExpression && callExpression.calleeExpression != this) return null
 
-    val qualifiedExpression = callExpression.parent as? KtDotQualifiedExpression ?: return null
-    if (qualifiedExpression.selectorExpression != callExpression) return null
+  val qualifiedExpression = callExpression.parent as? KtDotQualifiedExpression ?: return null
+  if (qualifiedExpression.selectorExpression != callExpression) return null
 
-    return qualifiedExpression
+  return qualifiedExpression
 }
 
 // Checks whether the unresolved selector would become callable after unwrapping the Gradle property to java.io.File.
 private fun KtDotQualifiedExpression.hasFileCallableSelector(): Boolean {
-    val calleeName = selectorCallName() ?: return false
-    val fileClass = JavaPsiFacade.getInstance(project).findClass(JAVA_IO_FILE_FQN, resolveScope)
-    if (fileClass?.findMethodsByName(calleeName, true)?.isNotEmpty() == true) return true
-    return hasKotlinIoFileExtensionFunction(calleeName)
+  val calleeName = selectorCallName() ?: return false
+  val fileClass = JavaPsiFacade.getInstance(project).findClass(JAVA_IO_FILE_FQN, resolveScope)
+  if (fileClass?.findMethodsByName(calleeName, true)?.isNotEmpty() == true) return true
+  return hasKotlinIoFileExtensionFunction(calleeName)
 }
 
 private fun KtDotQualifiedExpression.selectorCallName(): String? {
-    val callExpression = selectorExpression as? KtCallExpression ?: return null
-    return (callExpression.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
+  val callExpression = selectorExpression as? KtCallExpression ?: return null
+  return (callExpression.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
 }
 
 private fun KtDotQualifiedExpression.hasKotlinIoFileExtensionFunction(calleeName: String): Boolean {
-    // Gradle script context does not reliably expose kotlin.io File extensions through Kotlin extension indexes.
-    // Check the stdlib JVM facade instead; these functions are available to Kotlin as default imports.
-    val filesClass = JavaPsiFacade.getInstance(project)
-        .findClass(KOTLIN_IO_FILES_KT_FQN, GlobalSearchScope.allScope(project))
-        ?: return false
-    return filesClass.findMethodsByName(calleeName, true).any { method ->
-        method.parameterList.parameters.firstOrNull()?.type?.canonicalText == JAVA_IO_FILE_FQN
-    }
+  // Gradle script context does not reliably expose kotlin.io File extensions through Kotlin extension indexes.
+  // Check the stdlib JVM facade instead; these functions are available to Kotlin as default imports.
+  val filesClass = JavaPsiFacade.getInstance(project)
+                     .findClass(KOTLIN_IO_FILES_KT_FQN, GlobalSearchScope.allScope(project))
+                   ?: return false
+  return filesClass.findMethodsByName(calleeName, true).any { method ->
+    method.parameterList.parameters.firstOrNull()?.type?.canonicalText == JAVA_IO_FILE_FQN
+  }
 }
 
 private const val JAVA_IO_FILE_FQN = "java.io.File"
@@ -173,9 +175,9 @@ private const val KOTLIN_IO_FILES_KT_FQN = "kotlin.io.FilesKt"
 private fun topLevelClassId(fqn: String): ClassId = ClassId.topLevel(FqName(fqn))
 
 private enum class GradlePropertyUnwrap(
-    val familyNameKey: String,
-    val expressionPattern: String,
+  val familyNameKey: String,
+  val expressionPattern: String,
 ) {
-    GET("intention.name.gradle.property.method.call.unwrap", "$0.get().$1"),
-    GET_AS_FILE("intention.name.gradle.file.property.method.call.unwrap", "$0.get().asFile.$1"),
+  GET("intention.name.gradle.property.method.call.unwrap", "$0.get().$1"),
+  GET_AS_FILE("intention.name.gradle.file.property.method.call.unwrap", "$0.get().asFile.$1"),
 }

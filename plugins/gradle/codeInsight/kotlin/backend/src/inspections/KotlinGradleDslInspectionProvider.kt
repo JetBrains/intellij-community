@@ -18,119 +18,119 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
-    private fun isSuitableGradleKtsFile(file: PsiFile): Boolean =
-        file is KtFile && FileUtilRt.extensionEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
+  private fun isSuitableGradleKtsFile(file: PsiFile): Boolean =
+    file is KtFile && FileUtilRt.extensionEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
 
-    override fun getConfigurationAvoidanceInspectionVisitor(
-        holder: ProblemsHolder,
-        isOnTheFly: Boolean
-    ): PsiElementVisitor {
-        return PsiElementVisitor.EMPTY_VISITOR
+  override fun getConfigurationAvoidanceInspectionVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+  ): PsiElementVisitor {
+    return PsiElementVisitor.EMPTY_VISITOR
+  }
+
+  override fun getForeignDelegateInspectionVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+  ): PsiElementVisitor {
+    return PsiElementVisitor.EMPTY_VISITOR
+  }
+
+  override fun getIncorrectDependencyNotationArgumentInspectionVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+  ): PsiElementVisitor {
+    return PsiElementVisitor.EMPTY_VISITOR
+  }
+
+  override fun getDeprecatedConfigurationInspectionVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+  ): PsiElementVisitor {
+    return PsiElementVisitor.EMPTY_VISITOR
+  }
+
+  override fun getPluginDslStructureInspectionVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+  ): PsiElementVisitor {
+    return PsiElementVisitor.EMPTY_VISITOR
+  }
+
+  override fun isAvoidDependencyNamedArgumentsNotationInspectionAvailable(file: PsiFile): Boolean =
+    isSuitableGradleKtsFile(file)
+
+  override fun getAvoidDependencyNamedArgumentsNotationInspectionVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+  ): PsiElementVisitor {
+    return KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder)
+  }
+
+  override fun isRedundantKotlinStdLibInspectionAvailable(file: PsiFile): Boolean {
+    if (!isSuitableGradleKtsFile(file)) return false
+
+    val kotlinStdlibDefaultDependencyProp = gradlePropertiesStream(file).firstNotNullOfOrNull {
+      it.findPropertyByKey("kotlin.stdlib.default.dependency")?.value
     }
+    // the default value is "true"
+    return kotlinStdlibDefaultDependencyProp != "false"
+  }
 
-    override fun getForeignDelegateInspectionVisitor(
-        holder: ProblemsHolder,
-        isOnTheFly: Boolean
-    ): PsiElementVisitor {
-        return PsiElementVisitor.EMPTY_VISITOR
-    }
+  override fun getRedundantKotlinStdLibInspectionVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+  ): PsiElementVisitor {
+    return RedundantKotlinStdLibInspectionVisitor(holder)
+  }
 
-    override fun getIncorrectDependencyNotationArgumentInspectionVisitor(
-        holder: ProblemsHolder,
-        isOnTheFly: Boolean
-    ): PsiElementVisitor {
-        return PsiElementVisitor.EMPTY_VISITOR
-    }
+  override fun isAvoidApplyPluginMethodInspectionAvailable(file: PsiFile): Boolean =
+    isSuitableGradleKtsFile(file)
 
-    override fun getDeprecatedConfigurationInspectionVisitor(
-        holder: ProblemsHolder,
-        isOnTheFly: Boolean
-    ): PsiElementVisitor {
-        return PsiElementVisitor.EMPTY_VISITOR
-    }
+  override fun getAvoidApplyPluginMethodInspectionVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+  ): PsiElementVisitor {
+    return KotlinAvoidApplyPluginMethodInspectionVisitor(holder)
+  }
 
-    override fun getPluginDslStructureInspectionVisitor(
-        holder: ProblemsHolder,
-        isOnTheFly: Boolean
-    ): PsiElementVisitor {
-        return PsiElementVisitor.EMPTY_VISITOR
-    }
+  override fun isAvoidRepositoriesInBuildGradleInspectionAvailable(file: PsiFile): Boolean =
+    file is KtFile && FileUtilRt.fileNameEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_NAME)
 
-    override fun isAvoidDependencyNamedArgumentsNotationInspectionAvailable(file: PsiFile) : Boolean =
-        isSuitableGradleKtsFile(file)
+  override fun getAvoidRepositoriesInBuildGradleInspectionVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+  ): PsiElementVisitor {
+    if (!isOnTheFly) return PsiElementVisitor.EMPTY_VISITOR // probably better done interactively
+    return KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(holder)
+  }
 
-    override fun getAvoidDependencyNamedArgumentsNotationInspectionVisitor(
-        holder: ProblemsHolder,
-        isOnTheFly: Boolean
-    ): PsiElementVisitor {
-        return KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder)
-    }
+  override fun isAvoidDuplicateDependenciesInspectionAvailable(file: PsiFile): Boolean =
+    isSuitableGradleKtsFile(file)
 
-    override fun isRedundantKotlinStdLibInspectionAvailable(file: PsiFile): Boolean {
-        if (!isSuitableGradleKtsFile(file)) return false
+  override fun getAvoidDuplicateDependenciesInspectionVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+  ): PsiElementVisitor {
+    return KotlinAvoidDuplicateDependenciesInspectionVisitor(holder, isOnTheFly)
+  }
 
-        val kotlinStdlibDefaultDependencyProp = gradlePropertiesStream(file).firstNotNullOfOrNull {
-            it.findPropertyByKey("kotlin.stdlib.default.dependency")?.value
-        }
-        // the default value is "true"
-        return kotlinStdlibDefaultDependencyProp != "false"
-    }
+  override fun isTaskMissingDescriptionInspectionAvailable(file: PsiFile): Boolean =
+    isSuitableGradleKtsFile(file)
 
-    override fun getRedundantKotlinStdLibInspectionVisitor(
-        holder: ProblemsHolder,
-        isOnTheFly: Boolean
-    ): PsiElementVisitor {
-        return RedundantKotlinStdLibInspectionVisitor(holder)
-    }
+  override fun getTaskMissingDescriptionInspectionVisitor(
+    holder: ProblemsHolder,
+    onTheFly: Boolean,
+  ): PsiElementVisitor {
+    return KotlinTaskMissingDescriptionInspectionVisitor(holder)
+  }
 
-    override fun isAvoidApplyPluginMethodInspectionAvailable(file: PsiFile): Boolean =
-        isSuitableGradleKtsFile(file)
+  override fun isAvoidDuplicateRepositoriesInspectionAvailable(file: PsiFile): Boolean =
+    isSuitableGradleKtsFile(file)
 
-    override fun getAvoidApplyPluginMethodInspectionVisitor(
-        holder: ProblemsHolder,
-        isOnTheFly: Boolean
-    ): PsiElementVisitor {
-        return KotlinAvoidApplyPluginMethodInspectionVisitor(holder)
-    }
-
-    override fun isAvoidRepositoriesInBuildGradleInspectionAvailable(file: PsiFile): Boolean =
-        file is KtFile && FileUtilRt.fileNameEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_NAME)
-
-    override fun getAvoidRepositoriesInBuildGradleInspectionVisitor(
-        holder: ProblemsHolder,
-        isOnTheFly: Boolean
-    ): PsiElementVisitor {
-        if (!isOnTheFly) return PsiElementVisitor.EMPTY_VISITOR // probably better done interactively
-        return KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(holder)
-    }
-
-    override fun isAvoidDuplicateDependenciesInspectionAvailable(file: PsiFile): Boolean =
-        isSuitableGradleKtsFile(file)
-
-    override fun getAvoidDuplicateDependenciesInspectionVisitor(
-        holder: ProblemsHolder,
-        isOnTheFly: Boolean
-    ): PsiElementVisitor {
-        return KotlinAvoidDuplicateDependenciesInspectionVisitor(holder, isOnTheFly)
-    }
-
-    override fun isTaskMissingDescriptionInspectionAvailable(file: PsiFile): Boolean =
-        isSuitableGradleKtsFile(file)
-
-    override fun getTaskMissingDescriptionInspectionVisitor(
-        holder: ProblemsHolder,
-        onTheFly: Boolean
-    ): PsiElementVisitor {
-        return KotlinTaskMissingDescriptionInspectionVisitor(holder)
-    }
-
-    override fun isAvoidDuplicateRepositoriesInspectionAvailable(file: PsiFile): Boolean =
-        isSuitableGradleKtsFile(file)
-
-    override fun getAvoidDuplicateRepositoriesInspectionVisitor(
-        holder: ProblemsHolder,
-        isOnTheFly: Boolean
-    ): PsiElementVisitor {
-        return KotlinAvoidDuplicateRepositoriesInspectionVisitor(holder)
-    }
+  override fun getAvoidDuplicateRepositoriesInspectionVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+  ): PsiElementVisitor {
+    return KotlinAvoidDuplicateRepositoriesInspectionVisitor(holder)
+  }
 }

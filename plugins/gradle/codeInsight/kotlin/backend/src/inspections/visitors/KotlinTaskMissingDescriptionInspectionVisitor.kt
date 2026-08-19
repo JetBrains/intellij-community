@@ -35,138 +35,137 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADL
 private const val DESCRIPTION_PROPERTY = "description"
 
 class KotlinTaskMissingDescriptionInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
-    override fun visitCallExpression(expression: KtCallExpression) {
-        if (expression.calleeExpression?.text !in setOf("register", "create", "registering", "creating")) return
-        if (!expression.isTaskContainerReceiver()) return
+  override fun visitCallExpression(expression: KtCallExpression) {
+    if (expression.calleeExpression?.text !in setOf("register", "create", "registering", "creating")) return
+    if (!expression.isTaskContainerReceiver()) return
 
-        val blockExpression = expression.getBlock()
-        if (blockExpression != null) checkConfigBlockAndReport(expression, blockExpression)
-        else reportCallNoConfigBlock(expression)
+    val blockExpression = expression.getBlock()
+    if (blockExpression != null) checkConfigBlockAndReport(expression, blockExpression)
+    else reportCallNoConfigBlock(expression)
+  }
+
+  override fun visitReferenceExpression(expression: KtReferenceExpression) {
+    if (expression.text !in setOf("registering", "creating")) return
+    if (expression !is KtNameReferenceExpression || expression.parent is KtCallExpression) return
+    if (!expression.isTaskContainerReceiver()) return
+
+    reportReference(expression)
+  }
+
+  private fun KtExpression.isTaskContainerReceiver(): Boolean {
+    val containingClassSymbol = this.getReceiverClassId() ?: return false
+    return isInheritor(this, containingClassSymbol, GRADLE_API_TASK_CONTAINER_CLASS_ID)
+  }
+
+  private fun checkConfigBlockAndReport(callExpression: KtCallExpression, blockExpression: KtBlockExpression) {
+    if (blockExpression.hasDescriptionAssignment() || blockExpression.hasDescriptionSetter()) return
+
+    holder.problem(
+      callExpression,
+      GradleInspectionBundle.message("inspection.message.task.missing.description.descriptor")
+    ).range(callExpression.calleeExpression?.textRangeInParent ?: callExpression.textRangeInParent)
+      .fix(AddDescriptionFix())
+      .register()
+  }
+
+  private fun reportCallNoConfigBlock(callExpression: KtCallExpression) {
+    holder.problem(
+      callExpression,
+      GradleInspectionBundle.message("inspection.message.task.missing.description.descriptor")
+    ).range(callExpression.calleeExpression?.textRangeInParent ?: callExpression.textRangeInParent)
+      .fix(AddConfigBlockWithDescriptionFix())
+      .register()
+  }
+
+  private fun reportReference(nameReferenceExpression: KtNameReferenceExpression) {
+    holder.problem(
+      nameReferenceExpression,
+      GradleInspectionBundle.message("inspection.message.task.missing.description.descriptor")
+    ).fix(AddConfigBlockWithDescriptionFix())
+      .register()
+  }
+
+  private fun KtBlockExpression.hasDescriptionAssignment(): Boolean = this.descendantsOfType<KtBinaryExpression>()
+    .filter {
+      val propertyName = it.left?.text
+      propertyName == DESCRIPTION_PROPERTY
+    }
+    .filter { it.operationReference.node.findChildByType(BinaryOperationPrecedence.ASSIGNMENT.tokenSet) != null }
+    .any {
+      val receiverClassId = it.left!!.getReceiverClassId() ?: return@any false
+      isInheritor(it.left!!, receiverClassId, GRADLE_API_TASK_CLASS_ID)
     }
 
-    override fun visitReferenceExpression(expression: KtReferenceExpression) {
-        if (expression.text !in setOf("registering", "creating")) return
-        if (expression !is KtNameReferenceExpression || expression.parent is KtCallExpression) return
-        if (!expression.isTaskContainerReceiver()) return
-
-        reportReference(expression)
+  private fun KtBlockExpression.hasDescriptionSetter(): Boolean = this.descendantsOfType<KtCallExpression>()
+    .filter {
+      val callName = it.calleeExpression?.text
+      callName == DESCRIPTION_SETTER
+    }.any {
+      val receiverClassId = it.getReceiverClassId() ?: return@any false
+      isInheritor(it, receiverClassId, GRADLE_API_TASK_CLASS_ID)
     }
 
-    private fun KtExpression.isTaskContainerReceiver(): Boolean {
-        val containingClassSymbol = this.getReceiverClassId() ?: return false
-        return isInheritor(this, containingClassSymbol, GRADLE_API_TASK_CONTAINER_CLASS_ID)
-    }
+  private fun KtExpression.getReceiverClassId(): ClassId? = analyze(this) {
+    val resolvedCall = resolveToCall() ?: return null
+    val callPartiallyAppliedSymbol = resolvedCall.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol ?: return null
+    val type = callPartiallyAppliedSymbol.extensionReceiver?.type ?: callPartiallyAppliedSymbol.dispatchReceiver?.type
+    val unwrappedType = if (type is KaFlexibleType) type.lowerBound else type
 
-    private fun checkConfigBlockAndReport(callExpression: KtCallExpression, blockExpression: KtBlockExpression) {
-        if (blockExpression.hasDescriptionAssignment() || blockExpression.hasDescriptionSetter()) return
+    return unwrappedType?.symbol?.classId ?: callPartiallyAppliedSymbol.symbol.callableId?.classId
+  }
 
-        holder.problem(
-            callExpression,
-            GradleInspectionBundle.message("inspection.message.task.missing.description.descriptor")
-        ).range(callExpression.calleeExpression?.textRangeInParent ?: callExpression.textRangeInParent)
-            .fix(AddDescriptionFix())
-            .register()
-    }
-
-    private fun reportCallNoConfigBlock(callExpression: KtCallExpression) {
-        holder.problem(
-            callExpression,
-            GradleInspectionBundle.message("inspection.message.task.missing.description.descriptor")
-        ).range(callExpression.calleeExpression?.textRangeInParent ?: callExpression.textRangeInParent)
-            .fix(AddConfigBlockWithDescriptionFix())
-            .register()
-    }
-
-    private fun reportReference(nameReferenceExpression: KtNameReferenceExpression) {
-        holder.problem(
-            nameReferenceExpression,
-            GradleInspectionBundle.message("inspection.message.task.missing.description.descriptor")
-        ).fix(AddConfigBlockWithDescriptionFix())
-            .register()
-    }
-
-    private fun KtBlockExpression.hasDescriptionAssignment(): Boolean = this.descendantsOfType<KtBinaryExpression>()
-        .filter {
-            val propertyName = it.left?.text
-            propertyName == DESCRIPTION_PROPERTY
-        }
-        .filter { it.operationReference.node.findChildByType(BinaryOperationPrecedence.ASSIGNMENT.tokenSet) != null }
-        .any {
-            val receiverClassId = it.left!!.getReceiverClassId() ?: return@any false
-            isInheritor(it.left!!, receiverClassId, GRADLE_API_TASK_CLASS_ID)
-        }
-
-    private fun KtBlockExpression.hasDescriptionSetter(): Boolean = this.descendantsOfType<KtCallExpression>()
-        .filter {
-            val callName = it.calleeExpression?.text
-            callName == DESCRIPTION_SETTER
-        }.any {
-            val receiverClassId = it.getReceiverClassId() ?: return@any false
-            isInheritor(it, receiverClassId, GRADLE_API_TASK_CLASS_ID)
-        }
-
-    private fun KtExpression.getReceiverClassId(): ClassId? = analyze(this) {
-        val resolvedCall = resolveToCall() ?: return null
-        val callPartiallyAppliedSymbol = resolvedCall.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol ?: return null
-        val type = callPartiallyAppliedSymbol.extensionReceiver?.type
-            ?: callPartiallyAppliedSymbol.dispatchReceiver?.type
-        val unwrappedType = if (type is KaFlexibleType) type.lowerBound else type
-
-        return unwrappedType?.symbol?.classId ?: callPartiallyAppliedSymbol.symbol.callableId?.classId
-    }
-
-    companion object {
-        private const val DESCRIPTION_SETTER = "setDescription"
-        private val GRADLE_API_TASK_CLASS_ID = ClassId.fromString(GRADLE_API_TASK.replace('.', '/'))
-        private val GRADLE_API_TASK_CONTAINER_CLASS_ID = ClassId.fromString(GRADLE_API_TASK_CONTAINER.replace('.', '/'))
-    }
+  companion object {
+    private const val DESCRIPTION_SETTER = "setDescription"
+    private val GRADLE_API_TASK_CLASS_ID = ClassId.fromString(GRADLE_API_TASK.replace('.', '/'))
+    private val GRADLE_API_TASK_CONTAINER_CLASS_ID = ClassId.fromString(GRADLE_API_TASK_CONTAINER.replace('.', '/'))
+  }
 }
 
 private class AddDescriptionFix : KotlinModCommandQuickFix<KtCallExpression>() {
-    override fun getName(): String = familyName
-    override fun getFamilyName(): @IntentionFamilyName String = GradleInspectionBundle.message("intention.name.task.add.description")
+  override fun getName(): String = familyName
+  override fun getFamilyName(): @IntentionFamilyName String = GradleInspectionBundle.message("intention.name.task.add.description")
 
-    override fun applyFix(
-        project: Project,
-        element: KtCallExpression,
-        updater: ModPsiUpdater
-    ) {
-        val block = element.getBlock() ?: return
-        val psiFactory = KtPsiFactory(project, true)
+  override fun applyFix(
+    project: Project,
+    element: KtCallExpression,
+    updater: ModPsiUpdater,
+  ) {
+    val block = element.getBlock() ?: return
+    val psiFactory = KtPsiFactory(project, true)
 
-        val assignment = psiFactory.createExpression("$DESCRIPTION_PROPERTY = \"\"")
-        val emptyStringPos = block.addAfter(assignment, null)
-            .apply { block.addAfter(psiFactory.createNewLine(), this) }
-            .asSafely<KtBinaryExpression>()!!.right!!.textOffset
+    val assignment = psiFactory.createExpression("$DESCRIPTION_PROPERTY = \"\"")
+    val emptyStringPos = block.addAfter(assignment, null)
+      .apply { block.addAfter(psiFactory.createNewLine(), this) }
+      .asSafely<KtBinaryExpression>()!!.right!!.textOffset
 
-        updater.moveCaretTo(emptyStringPos + 1)
-    }
+    updater.moveCaretTo(emptyStringPos + 1)
+  }
 }
 
 private class AddConfigBlockWithDescriptionFix : KotlinModCommandQuickFix<KtElement>() {
-    override fun getName(): String = familyName
-    override fun getFamilyName(): @IntentionFamilyName String = GradleInspectionBundle.message("intention.name.task.add.description")
+  override fun getName(): String = familyName
+  override fun getFamilyName(): @IntentionFamilyName String = GradleInspectionBundle.message("intention.name.task.add.description")
 
-    override fun applyFix(
-        project: Project,
-        element: KtElement,
-        updater: ModPsiUpdater
-    ) {
-        val selectorName = element.text
-        val psiFactory = KtPsiFactory(project, true)
+  override fun applyFix(
+    project: Project,
+    element: KtElement,
+    updater: ModPsiUpdater,
+  ) {
+    val selectorName = element.text
+    val psiFactory = KtPsiFactory(project, true)
 
-        val replacement = psiFactory.createExpression(
-            """
-            $selectorName {
-                $DESCRIPTION_PROPERTY = ""
-            }
-            """.trimIndent()
-        ) as KtCallExpression
-        val replaced = element.replace(replacement) as KtCallExpression
-        val emptyStringPos = replaced.getBlock()!!.children.map {
-            it.asSafely<KtBinaryExpression>()!!.right!!
-        }.single().textOffset
+    val replacement = psiFactory.createExpression(
+      """
+      $selectorName {
+          $DESCRIPTION_PROPERTY = ""
+      }
+      """.trimIndent()
+    ) as KtCallExpression
+    val replaced = element.replace(replacement) as KtCallExpression
+    val emptyStringPos = replaced.getBlock()!!.children.map {
+      it.asSafely<KtBinaryExpression>()!!.right!!
+    }.single().textOffset
 
-        updater.moveCaretTo(emptyStringPos + 1)
-    }
+    updater.moveCaretTo(emptyStringPos + 1)
+  }
 }
