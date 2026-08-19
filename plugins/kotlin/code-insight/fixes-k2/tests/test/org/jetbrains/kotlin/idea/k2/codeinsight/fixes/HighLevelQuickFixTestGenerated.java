@@ -12400,6 +12400,59 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/removeDestructuringEntry")
+    public static class RemoveDestructuringEntry extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("dropLastEntry.kt")
+        public void testDropLastEntry() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeDestructuringEntry/dropLastEntry.kt");
+        }
+
+        @TestMetadata("dropMiddleEntry.kt")
+        public void testDropMiddleEntry() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeDestructuringEntry/dropMiddleEntry.kt");
+        }
+
+        @TestMetadata("lambdaNameBased.kt")
+        public void testLambdaNameBased() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeDestructuringEntry/lambdaNameBased.kt");
+        }
+
+        @TestMetadata("nameBasedDataClass.kt")
+        public void testNameBasedDataClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeDestructuringEntry/nameBasedDataClass.kt");
+        }
+
+        @TestMetadata("nameBasedDestructuring.kt")
+        public void testNameBasedDestructuring() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeDestructuringEntry/nameBasedDestructuring.kt");
+        }
+
+        @TestMetadata("pair.kt")
+        public void testPair() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeDestructuringEntry/pair.kt");
+        }
+
+        @TestMetadata("positionalBracketSyntax.kt")
+        public void testPositionalBracketSyntax() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeDestructuringEntry/positionalBracketSyntax.kt");
+        }
+
+        @TestMetadata("shortNameBased.kt")
+        public void testShortNameBased() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeDestructuringEntry/shortNameBased.kt");
+        }
+
+        @TestMetadata("singleEntryNameBased.kt")
+        public void testSingleEntryNameBased() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeDestructuringEntry/singleEntryNameBased.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/removeFinalUpperBound")
     public static class RemoveFinalUpperBound extends AbstractHighLevelQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {

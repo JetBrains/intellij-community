@@ -198,6 +198,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("singleNameBasedDestructuringEntry.kt")
+        public void testSingleNameBasedDestructuringEntry() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedVariable/singleNameBasedDestructuringEntry.kt");
+        }
+
+        @TestMetadata("singleShortFormNameBasedDestructuringEntry.kt")
+        public void testSingleShortFormNameBasedDestructuringEntry() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedVariable/singleShortFormNameBasedDestructuringEntry.kt");
+        }
+
         @TestMetadata("unusedVariableInDestructuringDeclaration.kt")
         public void testUnusedVariableInDestructuringDeclaration() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableInDestructuringDeclaration.kt");
