@@ -318,6 +318,7 @@ def _compose(ctx, fragment_targets):
         json.encode({
             "version": 1,
             "expectedFragments": ctx.attr.expect_fragments,
+            "additionalModules": ctx.attr.additional_modules,
             "components": [
                 {
                     "root": fragment.home.path,
@@ -371,6 +372,12 @@ intellij_dev_fragments_dist = rule(
         "fragments": attr.label_list(providers = [IntellijDevFragmentInfo], mandatory = True),
         "expect_fragments": attr.string_list(
             doc = "The fragment names this distribution is supposed to be made of, stated independently of `fragments` so that a fragment missing from that list fails composition instead of thinning the IDE.",
+        ),
+        "additional_modules": attr.string_list(
+            doc = "The plugin modules this distribution declares it contains, for `DevIdeConfig`. What the " +
+                  "distribution was configured with, not what any one fragment assembled: a module the product " +
+                  "bundles is packed by a shared plugin fragment, and a consumer asking for it can only find out " +
+                  "from here.",
         ),
     },
 )

@@ -39,6 +39,7 @@ fun main(args: Array<String>) {
     target = outputDir,
     pluginClasspathPrefix = spec.pluginClasspathPrefix?.let { Path.of(it).toAbsolutePath().normalize() },
     expectedFragments = spec.expectedFragments,
+    additionalModules = spec.additionalModules,
   )
   Files.writeString(outputDir.resolve("core-classpath.txt"), result.coreClassPath.joinToString(separator = "\n"))
   Files.writeString(outputDir.resolve("fingerprint.txt"), result.fingerprint)

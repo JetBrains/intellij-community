@@ -89,8 +89,9 @@ internal class PrebuiltDevDistRunner(private val configFile: Path) : DevBuildSer
       "  requested: ${requested.sorted()}\n" +
       "  in the distribution: ${declared.sorted()}\n" +
       "  config file: $configFile\n" +
-      "Add the missing modules to the `additional_modules` of the `intellij_dev_dist` target this test declares, or " +
-      "point the test at a distribution that has them."
+      "The list comes from the `additional_modules` of the distribution target this test declares - a module packed by " +
+      "a shared plugin fragment is declared there too - so add the missing ones to it, or point the test at a " +
+      "distribution that has them."
     }
 
     val extra = declared - requested

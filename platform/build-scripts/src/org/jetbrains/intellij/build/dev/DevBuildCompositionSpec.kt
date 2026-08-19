@@ -22,6 +22,14 @@ data class DevBuildCompositionComponent(
 data class DevBuildCompositionSpec(
   @JvmField val version: Int = DEV_BUILD_COMPOSITION_SPEC_VERSION,
   @JvmField val expectedFragments: List<String>,
+  /**
+   * The plugin modules the distribution declares it contains, for `DevIdeConfig`.
+   *
+   * Stated by the distribution rather than summed over [components] on purpose: a module the product bundles is packed
+   * by a plugin fragment several distributions share, and that fragment cannot know which of them asked for it. The
+   * composer checks this against what the components report, so the two cannot drift apart silently.
+   */
+  @JvmField val additionalModules: List<String> = emptyList(),
   @JvmField val components: List<DevBuildCompositionComponent>,
   @JvmField val pluginClasspathPrefix: String? = null,
 )

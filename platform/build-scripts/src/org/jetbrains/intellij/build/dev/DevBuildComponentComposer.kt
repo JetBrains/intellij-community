@@ -29,6 +29,13 @@ data class DevBuildComponent(
 data class ComposedDevBuild(
   @JvmField val platformPrefix: String,
   @JvmField val mainClass: String,
+  /**
+   * The plugin modules the distribution declares it contains, as its caller stated them.
+   *
+   * Not the sum of what the components assembled: a module the product bundles is packed by a plugin fragment that
+   * several distributions share, so no component's manifest names it, and a consumer that needs it would read the
+   * distribution as missing it. What the components assembled is checked against this, never substituted for it.
+   */
   @JvmField val additionalModules: List<String>,
   @JvmField val coreClassPath: List<String>,
   @JvmField val fingerprint: String,
@@ -41,6 +48,7 @@ data class ComposedDevBuild(
  * fragment would produce the wrong IDE, so missing, unexpected, and duplicate kinds are caught here instead.
  * [pluginClasspathPrefix] is the `plugin-classpath.txt` prefix one component was asked to produce; it is required as
  * soon as any component contributed plugins, since the file cannot be written without it.
+ * [additionalModules] is what the distribution declares it contains - see [ComposedDevBuild.additionalModules].
  */
 @ApiStatus.Internal
 fun composeDevBuildComponents(
@@ -48,6 +56,7 @@ fun composeDevBuildComponents(
   target: Path,
   pluginClasspathPrefix: Path? = null,
   expectedFragments: Collection<String> = emptyList(),
+  additionalModules: Collection<String> = emptyList(),
 ): ComposedDevBuild {
   require(components.isNotEmpty()) { "At least one dev-build component is required" }
   val first = components.first().manifest
@@ -115,21 +124,26 @@ fun composeDevBuildComponents(
 
   val pluginClasspathFile = composePluginClassPath(components = components, target = target, prefix = pluginClasspathPrefix)
 
-  val additionalModules = LinkedHashSet<String>()
-  for (manifest in components.map(DevBuildComponent::manifest)) {
-    additionalModules.addAll(manifest.additionalModules)
+  val declaredModules = LinkedHashSet(additionalModules)
+  val assembledModules = components.flatMapTo(LinkedHashSet()) { it.manifest.additionalModules }
+  check(declaredModules.containsAll(assembledModules)) {
+    "Dev-build components assembled plugin modules the distribution does not declare: " +
+    "${(assembledModules - declaredModules).sorted()}\n" +
+    "  declared: ${declaredModules.sorted()}\n" +
+    "  assembled: ${assembledModules.sorted()}"
   }
   val coreClassPath = orderCoreClasspathEntries(components.flatMap { it.manifest.coreClassPath })
   return ComposedDevBuild(
     platformPrefix = first.platformPrefix,
     mainClass = first.mainClass,
-    additionalModules = additionalModules.toList(),
+    additionalModules = declaredModules.toList(),
     // Ordering can only happen here: each component sorted the share of the classpath it packed, and the leading jars
     // are not necessarily in the same component as the rest.
     coreClassPath = coreClassPath,
     fingerprint = computeIdeFingerprintFromComponents(
       components = components.map { it.manifest },
       pluginClasspathFile = pluginClasspathFile,
+      additionalModules = declaredModules,
     ),
   )
 }

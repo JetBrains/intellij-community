@@ -105,14 +105,21 @@ fun readDevBuildComponentManifest(file: Path): DevBuildComponentManifest {
   return manifest
 }
 
+/**
+ * @param additionalModules what the distribution declares it contains, when a caller has that declaration; the
+ *                          components' own sum otherwise. It goes into the launch metadata, so a distribution whose
+ *                          declaration alone changed gets a new fingerprint and is not reused as the previous one.
+ */
 @ApiStatus.Internal
 fun computeIdeFingerprintFromComponents(
   components: Collection<DevBuildComponentManifest>,
   pluginClasspathFile: Path? = null,
+  additionalModules: Collection<String>? = null,
 ): String {
   require(components.isNotEmpty()) { "At least one dev-build component manifest is required" }
   val first = components.first()
-  val additionalModules = components.flatMapTo(LinkedHashSet(), DevBuildComponentManifest::additionalModules)
+  val declaredModules = additionalModules
+                        ?: components.flatMapTo(LinkedHashSet(), DevBuildComponentManifest::additionalModules)
   val coreClasspath = orderCoreClasspathEntries(components.flatMap(DevBuildComponentManifest::coreClassPath))
   val entries = components.flatMapTo(ArrayList()) { component ->
     component.entries.map { entry -> IdeFingerprintEntry(entry.relativePath, entry.type, entry.hash, entry.executable) }
@@ -126,7 +133,7 @@ fun computeIdeFingerprintFromComponents(
         os = first.os,
         arch = first.arch,
         mainClass = first.mainClass,
-        additionalModules = additionalModules,
+        additionalModules = declaredModules,
       ),
     )
   )

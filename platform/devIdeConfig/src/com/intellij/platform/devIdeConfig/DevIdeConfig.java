@@ -37,7 +37,12 @@ public final class DevIdeConfig {
   public static final String MAIN_CLASS_NAME_KEY = "main.class.name";
   /** The product the distribution was assembled as, as {@code -Didea.platform.prefix} names it. */
   public static final String PLATFORM_PREFIX_KEY = "platform.prefix";
-  /** The plugin modules built in on top of the product's own, comma-separated, as {@code -Dadditional.modules}. */
+  /**
+   * The plugin modules the distribution was assembled to contain, comma-separated, as {@code -Dadditional.modules}
+   * names them. A module the product also bundles is listed here too when the distribution was asked for it: this is
+   * the distribution's answer to "do you have what I need", and where the plugin was packed from is not the reader's
+   * business.
+   */
   public static final String ADDITIONAL_MODULES_KEY = "additional.modules";
 
   private DevIdeConfig() {
@@ -47,7 +52,8 @@ public final class DevIdeConfig {
    * @param homePath          the distribution, already resolved to an absolute path
    * @param platformPrefix    {@code null} for a config file written before this key existed, or by hand
    * @param additionalModules empty when the distribution declares none - which is not the same as "unknown", and is
-   *                          why a consumer asking for modules must fail against it rather than assume
+   *                          why a consumer asking for modules must fail against it rather than assume. See
+   *                          {@link #ADDITIONAL_MODULES_KEY} for what a distribution puts in it
    */
   public record Content(Path homePath, String mainClassName, String platformPrefix, List<String> additionalModules) {
   }
