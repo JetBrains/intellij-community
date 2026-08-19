@@ -4,21 +4,18 @@ package com.intellij.internal.statistic.eventLog.agents
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Value sets that AI Assistant and AIR both validate agent telemetry against.
- *
- * They live here because the two plugins report the same event ids but no module depends on both, so the only
- * alternative is copying them and letting the copies drift. The event schema those values belong to is fixed by
+ * Value sets that AI Assistant and AIR both validate agent telemetry against. They live here because no module depends
+ * on both plugins, so the alternative is two copies that drift. The schema itself is fixed by
  * `build/events/agent-telemetry-contract.json`.
  *
- * Changing any value here changes a published validation rule, so it needs a metadata review.
+ * Changing a value here changes a published validation rule, so it needs a metadata review.
  */
 @ApiStatus.Internal
 object AgentTelemetryFusValues {
   const val UNKNOWN: String = "unknown"
 
-  // The mode ids the agents each surface launches actually report. `brave`, `danger-full-access`, `full-access`,
-  // `manual` and `workspace-write` come from the agents AIR launches (junie, Codex, codex-acp, claude and Codex again);
-  // an id missing here collapses into UNKNOWN, which merges every unlisted permission level into one bucket.
+  // The mode ids the agents of both surfaces actually report. An id missing here collapses into UNKNOWN, which merges
+  // every unlisted permission level into one bucket.
   val allowedModes: List<String> = listOf(
     "accept-edits", "acceptEdits", "agent", "agent-full-access",
     "ask", "auto", "auto-approve", "autoEdit", "autopilot",
@@ -30,10 +27,8 @@ object AgentTelemetryFusValues {
   )
 
   /**
-   * `auto` and `off` are not levels but choices about levels: `auto` means the run pinned none and left the agent to
-   * decide, `off` that reasoning was switched off. They are listed because collapsing them into [UNKNOWN] would make
-   * "the user chose nothing" indistinguishable from "the surface could not tell", and `auto` is the default of every
-   * AIR launch, so that one value would otherwise be most of the column.
+   * `auto` and `off` are choices about levels rather than levels, and are listed because collapsing them into [UNKNOWN]
+   * would make "the user chose nothing" indistinguishable from "the surface could not tell".
    */
   val allowedReasoningLevels: List<String> = listOf(
     "auto", "off", "minimal", "low", "medium", "high", "xhigh", "max", "ultra", UNKNOWN,
@@ -69,10 +64,9 @@ object AgentTelemetryFusValues {
   // Matches exactly one separator between model components: `:`, `.`, `/`, `-`, or an ASCII space.
   private const val MODEL_SEPARATOR_PATTERN = """(?:[:./-]|\x20)"""
 
-  // BYOK and local models are listed alongside the hosted ones on purpose: a name that is not listed collapses into
-  // UNKNOWN, which silently merges every self-hosted setup into one bucket.
-  // This regex validates model identifiers. A model must start with a known name, provider, or alias. A compact
-  // version may immediately follow it (qwen3, gpt4o); all remaining known names, modifiers, and numbers need separators.
+  // BYOK and local models are listed alongside the hosted ones because an unlisted name collapses into UNKNOWN, which
+  // merges every self-hosted setup into one bucket. A model must start with a known name, provider or alias; a compact
+  // version may follow it directly (qwen3, gpt4o), and everything after that needs separators.
   val modelPattern: String = """(?xi)
       (?:
         $UNKNOWN

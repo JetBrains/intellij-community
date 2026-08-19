@@ -6,12 +6,9 @@ import com.intellij.mcpserver.statistics.McpCallerLaunchOrigin
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Whether the IDE launched the agent behind a session.
- *
- * `localAgentId` is set only when the IDE opens the session itself, for an agent it started, so its absence is the
- * signal that the caller is a client the IDE did not launch. That distinction is the whole point: an external client
- * is observed only through its MCP calls, and rows from it must not be averaged in with rows from sessions where a
- * full trajectory exists.
+ * Whether the IDE launched the agent behind a session. `localAgentId` is set only when the IDE opens the session itself,
+ * so its absence means a client the IDE did not launch — one observed through its MCP calls alone, which must not be
+ * averaged in with sessions that have a full trajectory.
  */
 @ApiStatus.Internal
 fun launchOriginOf(sessionOptions: McpServerService.McpSessionOptions?): McpCallerLaunchOrigin = when {
