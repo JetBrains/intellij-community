@@ -17,6 +17,10 @@ public class MarkdownFileTypeTest extends HeavyPlatformTestCase {
     doTest(".md");
   }
 
+  public void testMdcExtension() {
+    doTest(".mdc");
+  }
+
   private void doTest(@NotNull String extension) {
     VirtualFile virtualFile = getTempDir().createVirtualFile(extension);
     PsiFile psi = getPsiManager().findFile(virtualFile);

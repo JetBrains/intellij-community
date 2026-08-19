@@ -193,7 +193,7 @@
     <codeInsight.fillParagraph language="Markdown"
                                implementationClass="org.intellij.plugins.markdown.editor.MarkdownParagraphFillHandler"/>
 
-    <fileType name="Markdown" extensions="markdown;md" language="Markdown"
+    <fileType name="Markdown" extensions="markdown;md;mdc" language="Markdown"
               implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileType" fieldName="INSTANCE"/>
     <liveTemplateContext contextId="MARKDOWN" implementation="org.intellij.plugins.markdown.lang.MarkdownContextType"/>
     <lang.fileViewProviderFactory language="Markdown"
