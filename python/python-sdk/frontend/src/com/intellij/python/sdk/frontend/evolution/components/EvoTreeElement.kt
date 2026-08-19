@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsActions.ActionDescription
+import org.jetbrains.annotations.Nls
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
@@ -47,6 +48,21 @@ sealed class EvoTreeElement(
 }
 
 class EvoTreeLeafElement(val action: AnAction) : EvoTreeElement(action.templatePresentation)
+
+/**
+ * The uv/pip "add new environment" node: a normal expandable node whose submenu lists the Python [versions] — so the
+ * platform handles mouse and keyboard natively. It is marked so [EvoTreePopup] can reposition its submenu to the
+ * *left* of the parent (the platform opens submenus to the right). The row shows the auto-generated env folder name.
+ */
+class EvoTreeAddNewNode(
+  text: @Nls String,
+  icon: Icon,
+  versions: List<EvoTreeLeafElement>,
+) : EvoTreeNodeElement(text, icon) {
+  init {
+    sections.add(EvoTreeSection(elements = versions))
+  }
+}
 
 /**
  * Implemented by a leaf [AnAction] whose secondary detail (e.g. the interpreter version) is resolved lazily when

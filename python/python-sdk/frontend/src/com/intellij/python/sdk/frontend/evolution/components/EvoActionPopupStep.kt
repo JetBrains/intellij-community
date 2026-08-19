@@ -49,6 +49,9 @@ open class EvoActionPopupStep(
   /** The chosen leaf's action, queued to run once the popup has closed (see [getFinalRunnable]); null for a node. */
   private var finalRunnable: Runnable? = null
 
+  /** True when this step renders the "add new environment" node's submenu — the popup positions it to the left. */
+  val isAddNewSubmenu: Boolean get() = node is EvoTreeAddNewNode
+
   override fun onChosen(
     selectedValue: EvoTreeItem,
     finalChoice: Boolean
@@ -57,7 +60,8 @@ open class EvoActionPopupStep(
     if (!node.isEnabled) return PopupStep.FINAL_CHOICE
 
     return when (val element = selectedValue.element) {
-      // Only open a submenu for a loaded, non-empty node — an empty popup crashes Swing layout (AIOOBE 0).
+      // Only open a submenu for a loaded, non-empty node — an empty popup crashes Swing layout (AIOOBE 0). The
+      // "add new environment" node is handled here too; EvoTreePopup repositions its submenu to the left.
       is EvoTreeNodeElement ->
         if (element.isEnabled && element.hasContent()) EvoActionPopupStep(null, element, dataContext, scope) else null
       is EvoTreeLeafElement -> {
@@ -86,15 +90,10 @@ open class EvoActionPopupStep(
 
   override fun setEmptyText(emptyText: StatusText) {}
 
-  override fun getValues(): List<EvoTreeItem> {
-    val result = node.sections.flatMap { section ->
-      val items = section.elements.mapIndexed { index, element ->
-        EvoTreeItem(element, section.label?.takeIf { index == 0 })
-      }
-      items
+  override fun getValues(): List<EvoTreeItem> =
+    node.sections.flatMap { section ->
+      section.elements.mapIndexed { index, element -> EvoTreeItem(element, section.label?.takeIf { index == 0 }) }
     }
-    return result
-  }
 
   // set to true if we need actions '...' on disabled items too
   override fun isSelectable(value: EvoTreeItem?): Boolean = value != null && value.element.state == State.DONE && value.isEnabled

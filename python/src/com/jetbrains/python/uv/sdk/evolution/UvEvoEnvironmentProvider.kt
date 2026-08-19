@@ -22,5 +22,5 @@ internal class UvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
 
   // uv works with any virtualenv, so it shows all discovered environments.
   override suspend fun loadSections(pyProject: PyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto =
-    EvoLoadResultDto.Ok(discovered.toSectionsGroupedByParent(icon, addNew = true))
+    EvoLoadResultDto.Ok(discovered.toSectionsGroupedByParent(icon, addNew = true, baseDir = pyProject.baseDir))
 }

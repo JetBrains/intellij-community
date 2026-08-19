@@ -9,7 +9,6 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.PyExecutableCache
 import com.intellij.python.pytools.Version
 import com.intellij.python.pytools.performToolInstallation
 import com.intellij.ui.components.ActionLink
@@ -143,11 +142,8 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
   private fun installExecutable(errorSink: ErrorSink) {
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", pyTool.presentableName)) {
       val eel = model.projectPathFlows.projectPath.first()?.getEelDescriptor()?.toEelApi() ?: localEel
-      when (val r = pyTool.performToolInstallation(eel)) {
-        // Don't persist the installed path; just drop the detection cache so the next lookup finds it.
-        is Result.Success -> PyExecutableCache.getInstance().invalidate(eel.descriptor, pyTool)
-        is Result.Failure -> errorSink.emit(r.error)
-      }
+      // performToolInstallation drops the detection cache on success, so the next lookup finds the new binary.
+      (pyTool.performToolInstallation(eel) as? Result.Failure)?.let { errorSink.emit(it.error) }
     }
   }
 

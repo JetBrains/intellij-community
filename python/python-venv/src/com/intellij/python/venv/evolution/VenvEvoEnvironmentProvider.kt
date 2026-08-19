@@ -17,5 +17,5 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
   override val icon: Icon get() = PythonVenvIcons.VirtualEnv
 
   override suspend fun loadSections(pyProject: PyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto =
-    EvoLoadResultDto.Ok(discovered.filterNot { it.createdByUv }.toSectionsGroupedByParent(icon, addNew = true))
+    EvoLoadResultDto.Ok(discovered.filterNot { it.createdByUv }.toSectionsGroupedByParent(icon, addNew = true, baseDir = pyProject.baseDir))
 }

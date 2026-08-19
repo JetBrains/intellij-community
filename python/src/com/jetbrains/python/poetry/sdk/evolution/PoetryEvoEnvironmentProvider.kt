@@ -8,17 +8,22 @@ import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
+import com.intellij.python.sdk.backend.evolution.defaultVenvDir
 import com.intellij.python.sdk.backend.evolution.evoCreateEnvLeaf
 import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
 import com.intellij.python.sdk.backend.evolution.resolvePythonExecutable
-import com.intellij.python.sdk.backend.evolution.toSectionsGroupedByParent
+import com.intellij.python.sdk.backend.evolution.toLeaf
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.evolution.requiresPython
 import com.jetbrains.python.sdk.poetry.runPoetry
 import java.nio.file.Path
 import javax.swing.Icon
@@ -35,23 +40,34 @@ internal class PoetryEvoEnvironmentProvider : PyEvoEnvironmentProvider {
 
   override suspend fun loadSections(pyProject: PyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
     val projectDir = pyProject.baseDir
-    // Poetry's own environments (in-project + poetry cache), as full env-root paths.
-    val poetryEnvRoots: List<Path> = runPoetry(projectDir, "env", "list", "--full-path").getOrNull()
+    // Poetry's cache environments, as full env-root paths. Force `virtualenvs.in-project=false` (as the v2 dialog does)
+    // so poetry enumerates the cache envs even when an in-project `.venv` exists — otherwise it reports only `.venv`.
+    val poetryEnvRoots: List<Path> = runPoetry(projectDir, "env", "list", "--full-path", inProjectEnv = false).getOrNull()
       ?.lineSequence()
       ?.map { Path.of(it.removeSuffix("(Activated)").trim()) }
       ?.filter { it.name.isNotBlank() }
       ?.toList()
       ?: emptyList()
 
-    // (a) Found envs (from central discovery) that poetry recognizes as its own — usually the in-project one.
-    val poetryRootSet = poetryEnvRoots.toHashSet()
-    val ownFound = discovered.filter { it.venvRoot in poetryRootSet }
-    val foundSections = ownFound.toSectionsGroupedByParent(icon, addNew = false)
+    // (a) In-project: exactly the project's `.venv` (poetry's only in-project location — it can't be `.venv1` nor more
+    // than one). Show it if it exists, even if poetry didn't create it, and then hide "add new"; otherwise offer an
+    // "add new" that creates the in-project env with a chosen Python version (PyEvoSdkApiProvider: inProjectEnv).
+    val inProjectVenv = discovered.firstOrNull { it.venvRoot == defaultVenvDir(projectDir) }
+    val inProjectSection = EvoSectionDto(
+      label = PySdkBundle.message("evolution.poetry.in.project"),
+      leaves = listOfNotNull(inProjectVenv?.toLeaf(icon)),
+      addNew = inProjectVenv == null,
+      addNewFolderPath = projectDir.pathString,
+    )
 
-    // (b) One row per system-python major version: existing poetry env for that version → select it; else create a
-    // poetry env from that system Python on click ([evoCreateEnvLeaf] carries the base python as the token).
+    // (b) Poetry cache: one row per system-python major version — an existing cache env → select it (points straight at
+    // that env's python); otherwise create a poetry cache env from that system Python ([evoCreateEnvLeaf] carries the
+    // base python as the token, no folder → inProjectEnv=false). Shown regardless of an in-project `.venv`.
     val eelApi = fileSystem.eelDescriptor?.toEelApi() ?: localEel
+    // Only versions the project actually allows: filter by pyproject `requires-python` (+ the >=3.8 venv floor), like uv/pip.
+    val spec = PyVersionSpecifiers(requiresPython(projectDir) ?: "")
     val systemPythons = SystemPythonService().findSystemPythons(eelApi)
+      .filter { it.pythonInfo.languageLevel.isAtLeast(LanguageLevel.PYTHON38) && spec.isValid(it.pythonInfo.languageLevel) }
       .distinctBy { it.pythonInfo.languageLevel }
       .sortedByDescending { it.pythonInfo.languageLevel }
     val perVersionLeaves = systemPythons.map { sysPython ->
@@ -60,11 +76,10 @@ internal class PoetryEvoEnvironmentProvider : PyEvoEnvironmentProvider {
       if (existingBinary != null) evoEnvLeaf(title = versionStr, pythonBinary = existingBinary, icon = icon)
       else evoCreateEnvLeaf(title = versionStr, token = sysPython.pythonBinary.pathString, icon = icon)
     }
-    // Per-version rows belong to poetry's virtualenvs cache dir, not to the project folder — give them their own header.
     val virtualenvsPath = runPoetry(projectDir, "config", "virtualenvs.path").getOrNull()?.trim()?.takeIf { it.isNotBlank() }
       ?.let { FileUtil.getLocationRelativeToUserHome(it, false) }
-    val perVersionSection = if (perVersionLeaves.isEmpty()) null else EvoSectionDto(label = virtualenvsPath, leaves = perVersionLeaves)
+    val cacheSection = if (perVersionLeaves.isEmpty()) null else EvoSectionDto(label = virtualenvsPath, leaves = perVersionLeaves)
 
-    return EvoLoadResultDto.Ok(foundSections + listOfNotNull(perVersionSection))
+    return EvoLoadResultDto.Ok(listOf(inProjectSection) + listOfNotNull(cacheSection))
   }
 }

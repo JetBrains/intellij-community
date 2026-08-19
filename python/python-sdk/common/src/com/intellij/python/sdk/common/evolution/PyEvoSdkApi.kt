@@ -7,6 +7,7 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.flow.Flow
+import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -39,11 +40,19 @@ interface PyEvoSdkApi : RemoteApi<Unit> {
 
   /**
    * The expandable nodes contributed by the backend `PyEvoEnvironmentProvider` extension point
-   * (venv/uv/poetry/conda/hatch/advanced/autoconfigure/…), filtered to the tools available on the
-   * module's Eel machine and shown collapsed in the popup. Each tool-availability probe runs in that tool's
+   * (venv/uv/poetry/conda/hatch/advanced/…), filtered to the tools available on the module's Eel machine and shown
+   * collapsed in the popup. Each tool-availability probe runs in that tool's
    * [com.jetbrains.python.TraceContext] under a transient "Python Interpreter Widget" root created for this call.
    */
   suspend fun listNodes(projectId: ProjectId, moduleName: String): List<EvoNodeDto>
+
+  /**
+   * The "Shortcuts" rows shown (in place of the current-interpreter actions) when the module has no interpreter: the
+   * IDE's own setup suggestion for the module, computed by the same model-aware detector the "no interpreter
+   * configured" inspection uses. Each row is a [PyInterpreterRef.Autoconfigure] leaf whose selection runs that
+   * autoconfiguration. Empty when the module already has an interpreter or nothing can be suggested.
+   */
+  suspend fun listShortcuts(projectId: ProjectId, moduleName: String): List<EvoLeafDto>
 
   /**
    * Lazily loads the sections of the node with [nodeId] (from a backend provider) when it is expanded. Every
@@ -118,6 +127,10 @@ suspend fun requestEvoNodes(projectId: ProjectId, moduleName: String): List<EvoN
   PyEvoSdkApi().listNodes(projectId, moduleName)
 
 @ApiStatus.Internal
+suspend fun requestEvoShortcuts(projectId: ProjectId, moduleName: String): List<EvoLeafDto> =
+  PyEvoSdkApi().listShortcuts(projectId, moduleName)
+
+@ApiStatus.Internal
 suspend fun requestEvoNode(projectId: ProjectId, moduleName: String, nodeId: String, traceId: String, forceRefresh: Boolean = false): EvoLoadResultDto =
   PyEvoSdkApi().loadNode(projectId, moduleName, nodeId, traceId, forceRefresh)
 
@@ -182,12 +195,24 @@ sealed interface PyInterpreterRef {
   data class DetectedPath(val homePath: @NonNls String) : PyInterpreterRef
 
   /**
-   * A declared-but-not-yet-materialized environment (poetry per-version row, hatch declared env): the backend
-   * creates it via the tool's create logic, then assigns it. [token] is tool-specific — poetry: the base/system
-   * Python path; hatch: the declared env name.
+   * A declared-but-not-yet-materialized environment (poetry per-version row, hatch declared env, or an
+   * "add new" version pick for uv/pip): the backend creates it via the tool's create logic, then assigns it.
+   * [token] is tool-specific — poetry: the base/system Python path; hatch: the declared env name; uv: the
+   * chosen Python version (empty = uv's default); pip: the chosen system Python's binary path. [folder] (uv/pip
+   * only) is the env folder location (absolute path of the auto-generated first-free `.venv{X}` in the section's
+   * folder); when null the backend uses the first free `.venv`, `.venv1`, … under the module base dir.
    */
   @Serializable
-  data class CreateEnv(val token: @NonNls String) : PyInterpreterRef
+  data class CreateEnv(val token: @NonNls String, val folder: @NonNls String? = null) : PyInterpreterRef
+
+  /**
+   * Configure the module's interpreter using one of the IDE's setup options (the "Shortcuts" rows — the same options
+   * the "no interpreter configured" inspection ranks), identified by [toolId] (a `PyProjectSdkConfigurationExtension`
+   * tool id). The backend re-resolves that option for the module and applies it: it creates the env (or, when the
+   * option's tool isn't installed yet, installs the tool and then creates the env) under the SDK-configuration lock.
+   */
+  @Serializable
+  data class Autoconfigure(val toolId: @NonNls String) : PyInterpreterRef
 }
 
 /** A collapsed expandable node in the popup's "select environment" section, contributed by a backend provider. */
@@ -215,6 +240,13 @@ data class EvoLeafDto(
    * an opaque id the backend maps back to that action in [PyEvoSdkApi.performNodeAction]. `null` → display-only row.
    */
   val actionId: String? = null,
+  /**
+   * When set, this row is a Python-version picker (hatch's not-yet-created declared envs): the frontend renders it as a
+   * submenu of these versions instead of a plain row, and choosing one creates the env with that Python. The row's
+   * [ref] ([PyInterpreterRef.CreateEnv]) carries the tool-specific create token (hatch: the env name), and each
+   * option's token is the chosen base Python — passed back as [PyInterpreterRef.CreateEnv] `token`/`folder`.
+   */
+  val createVersions: List<EvoAddNewOptionDto>? = null,
 )
 
 @ApiStatus.Internal
@@ -232,8 +264,40 @@ enum class EvoLeafKind {
 data class EvoSectionDto(
   val label: @Nls String? = null,
   val leaves: List<EvoLeafDto>,
-  /** When true, the frontend appends its localized "Add new environment" row to this section. */
+  /** When true, the frontend appends its localized "Add new environment" row (opens the modal Add dialog). */
   val addNew: Boolean = false,
+  /**
+   * In-widget "add new environment" flow for uv/pip. When set, the frontend replaces the modal [addNew] row with a
+   * row that opens the add-new popup (location + version); when null it keeps the modal row.
+   */
+  val addNewEnv: EvoAddNewDto? = null,
+  /**
+   * Absolute path of the folder this section's environments live in (the group's containing folder, or the module
+   * base dir for the ungrouped section). The backend uses it to seed the add-new location per folder.
+   */
+  val addNewFolderPath: @NonNls String? = null,
+)
+
+/** The in-widget "add new environment" flow for a section: the auto-generated target and the Python versions. */
+@ApiStatus.Internal
+@Serializable
+data class EvoAddNewDto(
+  /** Auto-generated (non-editable) env folder name shown on the row, e.g. `.venv` — the first free one in the folder. */
+  val name: @NlsSafe String,
+  /** Absolute path of that folder, where the env is created (see [PyInterpreterRef.CreateEnv.folder]). */
+  val path: @NonNls String,
+  /** Version choices, best/default first (uv leads with its default; pip with the newest system Python). */
+  val options: List<EvoAddNewOptionDto>,
+)
+
+/** One selectable Python version for the in-widget "add new environment" flow. */
+@ApiStatus.Internal
+@Serializable
+data class EvoAddNewOptionDto(
+  /** Short version label, e.g. `3.13`; empty for uv's "default" (uv picks the version). */
+  val title: @NlsSafe String,
+  /** Tool-specific creation token passed back as [PyInterpreterRef.CreateEnv.token] (uv: version, empty = default; pip: python path). */
+  val token: @NonNls String,
 )
 
 /** Result of [PyEvoSdkApi.loadNode]: sections on success, or a warning/critical error message. */

@@ -1058,7 +1058,7 @@
                             implementation="com.jetbrains.python.conda.sdk.evolution.CondaEvoEnvironmentProvider"/>
 
     <evoEnvironmentProvider id="AdvancedEvoProvider"
-                            order="before AutoconfigEvoProvider,last"
+                            order="last"
                             implementation="com.jetbrains.python.sdk.evolution.AdvancedEvoEnvironmentProvider"/>
 
     <pyReferenceCustomTargetChecker implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureTargetChecker"/>

@@ -59,9 +59,6 @@
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.WinPythonSdkFlavor"/>
-    <evoEnvironmentProvider id="AutoconfigEvoProvider"
-                            implementation="com.intellij.python.sdk.backend.evolution.AutoconfigEvoEnvironmentProvider"
-                            order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

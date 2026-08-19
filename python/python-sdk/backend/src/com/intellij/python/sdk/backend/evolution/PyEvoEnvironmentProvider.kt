@@ -157,6 +157,28 @@ suspend fun discoverVenvs(
   found
 }
 
+/** Upper bound for the `.venv{X}` suffix search when auto-naming a new env folder; far beyond any realistic project. */
+private const val MAX_VENV_NAME_INDEX = 1000
+
+/**
+ * First free environment folder under [baseDir]: `.venv`, then `.venv1`, `.venv2`, … — the naming the widget's
+ * in-place "add new environment" uses. Falls back to `.venv{MAX+1}` only if every candidate up to the cap exists
+ * (pathological); env creation then surfaces any real conflict.
+ */
+@ApiStatus.Internal
+fun firstFreeVenvDir(baseDir: Path): Path {
+  val base = VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME
+  for (i in 0..MAX_VENV_NAME_INDEX) {
+    val candidate = baseDir.resolve(if (i == 0) base else "$base$i")
+    if (!candidate.exists()) return candidate
+  }
+  return baseDir.resolve("$base${MAX_VENV_NAME_INDEX + 1}")
+}
+
+/** The fixed `.venv` folder under [baseDir] — for tools (poetry) whose in-project env is always `.venv`, not `.venv{X}`. */
+@ApiStatus.Internal
+fun defaultVenvDir(baseDir: Path): Path = baseDir.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
+
 private fun parsePyvenvCfg(path: Path): Map<String, String> {
   if (!path.exists()) return emptyMap()
   return try {
@@ -196,18 +218,20 @@ fun DiscoveredVenv.toLeaf(icon: Icon): EvoLeafDto {
 
 /**
  * Groups discovered venvs by their containing folder into sections. When the list is empty and [addNew] is set,
- * emits a single "Add new environment" section so the node is never an empty popup.
+ * emits a single "Add new environment" section for [baseDir] so the node is never an empty popup. Each section carries
+ * its containing folder ([EvoSectionDto.addNewFolderPath]) so "add new" targets that folder, not always the base dir.
  */
 @ApiStatus.Internal
-fun List<DiscoveredVenv>.toSectionsGroupedByParent(icon: Icon, addNew: Boolean): List<EvoSectionDto> {
+fun List<DiscoveredVenv>.toSectionsGroupedByParent(icon: Icon, addNew: Boolean, baseDir: Path): List<EvoSectionDto> {
   if (isEmpty()) {
-    return if (addNew) listOf(EvoSectionDto(label = null, leaves = emptyList(), addNew = true)) else emptyList()
+    return if (addNew) listOf(EvoSectionDto(label = null, leaves = emptyList(), addNew = true, addNewFolderPath = baseDir.pathString)) else emptyList()
   }
   return groupBy { it.venvRoot?.parent }.map { (containingFolder, venvs) ->
     EvoSectionDto(
       label = containingFolder?.toDisplayPath(),
       leaves = venvs.map { it.toLeaf(icon) },
       addNew = addNew,
+      addNewFolderPath = (containingFolder ?: baseDir).pathString,
     )
   }
 }

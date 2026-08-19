@@ -15,11 +15,13 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.platform.project.projectId
+import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoNodeDto
 import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.requestEvoCurrentInterpreter
 import com.intellij.python.sdk.common.evolution.requestEvoNodes
+import com.intellij.python.sdk.common.evolution.requestEvoShortcuts
 import com.intellij.python.sdk.common.evolution.requestEvoAssociatedInterpreters
 import com.intellij.python.sdk.common.evolution.requestEvoSdkConfigurationInProgress
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
@@ -83,12 +85,14 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   isWriteableFileRequired = false,
   scope = scope,
 ) {
-  /** Current Eel interpreter (for display) + popup data (nodes, associated interpreters), fetched asynchronously over RPC. */
+  /** Current Eel interpreter (for display) + popup data (nodes, associated interpreters, shortcuts), fetched asynchronously over RPC. */
   private data class Cached(
     val moduleName: String,
     val current: PyInterpreterDto?,
     val nodes: List<EvoNodeDto>,
     val associated: List<PyInterpreterDto>,
+    /** "Shortcuts" rows (autoconfigure suggestions), fetched only when there is no current interpreter. */
+    val shortcuts: List<EvoLeafDto>,
   )
 
   @Volatile
@@ -176,16 +180,48 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
       val projectId = project.projectId()
       val interpreter = runCatching { requestEvoCurrentInterpreter(projectId, moduleName) }.getOrNull()
       val prev = cached?.takeIf { it.moduleName == moduleName }
-      cached = Cached(moduleName, interpreter, prev?.nodes.orEmpty(), prev?.associated.orEmpty())
+      cached = Cached(moduleName, interpreter, prev?.nodes.orEmpty(), prev?.associated.orEmpty(), prev?.shortcuts.orEmpty())
       popupTree = null
       update()
 
       val nodes = runCatching { requestEvoNodes(projectId, moduleName) }.getOrNull().orEmpty()
       val associated = runCatching { requestEvoAssociatedInterpreters(projectId, moduleName) }.getOrNull().orEmpty()
-      cached = Cached(moduleName, interpreter, nodes, associated)
+      // The "Shortcuts" autoconfigure suggestions are only shown (and only worth computing) when there is no interpreter.
+      val shortcuts = if (interpreter == null) runCatching { requestEvoShortcuts(projectId, moduleName) }.getOrNull().orEmpty() else emptyList()
+      cached = Cached(moduleName, interpreter, nodes, associated, shortcuts)
       popupTree = null
       loadingModule = null
       update()
+    }
+  }
+
+  /** Guards against stacking concurrent node re-probes (see [refreshNodes]). */
+  @Volatile
+  private var refreshingNodes: Boolean = false
+
+  /**
+   * Re-probes just the available tool nodes for [moduleName] (keeping the shown interpreter and the associated
+   * list), so a tool installed since the last scan appears without redoing the heavier current-interpreter and
+   * associated-SDK scans of a full [refresh]. If the node set actually changed, the built tree is dropped so the
+   * next open rebuilds from the fresh nodes. Skipped while a full refresh or another node re-probe is in flight.
+   */
+  private fun refreshNodes(moduleName: String) {
+    if (loadingModule == moduleName || refreshingNodes) return
+    refreshingNodes = true
+    scope.launch {
+      try {
+        val nodes = runCatching { requestEvoNodes(project.projectId(), moduleName) }.getOrNull().orEmpty()
+        val base = cached?.takeIf { it.moduleName == moduleName } ?: return@launch
+        // Compare by node ids (stable identity) — a newly available or removed tool changes this set; icon/label
+        // identity is irrelevant and IconId equality is not guaranteed across fetches.
+        if (base.nodes.map { it.id } == nodes.map { it.id }) return@launch
+        cached = base.copy(nodes = nodes)
+        popupTree = null
+        update()
+      }
+      finally {
+        refreshingNodes = false
+      }
     }
   }
 
@@ -205,11 +241,16 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   override fun createPopup(context: DataContext): ListPopup? {
     if (configuring) return null // no popup while a configuration is in progress
     val current = cached ?: return null
-    val factory = EvoPySdkSwitchPopupFactory(project, current.moduleName, current.current, current.nodes, current.associated, scope)
     // Reuse the tree only within the window measured from the last close, so a quick reopen after a mis-click
     // doesn't rescan; once it elapses (or the data changed) rebuild. The window restarts each time the popup closes.
-    val tree = popupTree?.takeIf { System.currentTimeMillis() - popupClosedAt < popupTreeTtlMs() }
-               ?: factory.buildTree().also { popupTree = it }
+    val reusable = popupTree?.takeIf { System.currentTimeMillis() - popupClosedAt < popupTreeTtlMs() }
+    // Outside the reuse window, also re-probe the available tools so one installed since the last scan (e.g. via
+    // Settings | Python | Tools) shows up — otherwise the node list would stay cached for the widget's whole life.
+    // The re-probe is async (takes effect from the next open) and availability is backed by PyExecutableCache, so a
+    // warm cache makes it near-instant; it only does real work after an install invalidated that cache.
+    if (reusable == null) refreshNodes(current.moduleName)
+    val factory = EvoPySdkSwitchPopupFactory(project, current.moduleName, current.current, current.nodes, current.associated, current.shortcuts, scope)
+    val tree = reusable ?: factory.buildTree().also { popupTree = it }
     return factory.createPopup(tree, context) { popupClosedAt = System.currentTimeMillis() }
   }
 

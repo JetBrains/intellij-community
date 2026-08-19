@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GroupHeaderSeparator
+import com.intellij.ui.ScreenUtil
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupImpl
@@ -203,6 +204,7 @@ open class EvoTreePopup private constructor(
 
   init {
     setMaxRowCount(maxRowCount)
+    // Submenus (tool nodes and the uv/pip "add new environment" version list) expand on hover.
     isShowSubmenuOnHover = true
   }
 
@@ -234,6 +236,20 @@ open class EvoTreePopup private constructor(
         list.cursor = if (hit) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
       }
     })
+
+    // This popup is the "add new environment" node's submenu → move it to the LEFT of its parent (platform opens right).
+    if (evoStep?.isAddNewSubmenu == true) repositionLeftOfParent()
+  }
+
+  /** Moves this submenu to the LEFT of its parent popup (the platform opens child popups on the right). */
+  private fun repositionLeftOfParent() {
+    val parentPopup = parent ?: return
+    val self = content
+    val parentContent = parentPopup.content
+    if (!self.isShowing || !parentContent.isShowing) return
+    val target = Rectangle(parentContent.locationOnScreen.x - self.width - JBUI.scale(2), self.locationOnScreen.y, self.width, self.height)
+    ScreenUtil.moveToFit(target, ScreenUtil.getScreenRectangle(parentContent.locationOnScreen), null)
+    setLocation(target.location)
   }
 
   // Don't let a click on the reload icon or the settings gear select/expand a row — the mouse listener handles them.

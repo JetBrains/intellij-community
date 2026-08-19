@@ -51,6 +51,21 @@ class AddNewEnvAction(
 }
 
 /**
+ * Creates (and assigns to the module) a uv/pip environment for the chosen version [token] in [folder] (the env folder
+ * name under the module base dir, editable in the widget), via [requestEvoSelectInterpreter] with a
+ * [PyInterpreterRef.CreateEnv]. The widget refreshes itself on the resulting `rootsChanged`. Used by the in-widget
+ * "add new environment" node's per-version children.
+ */
+internal fun createEvoEnv(project: Project, moduleName: String, nodeId: String, token: String, folder: String, scope: CoroutineScope) {
+  scope.launch {
+    when (val result = requestEvoSelectInterpreter(project.projectId(), moduleName, PyInterpreterRef.CreateEnv(token, folder), nodeId)) {
+      is EvoSelectResultDto.Ok -> Unit
+      is EvoSelectResultDto.Error -> LOG.warn("Evo: failed to create '$nodeId' environment for '$moduleName': ${result.message}")
+    }
+  }
+}
+
+/**
  * A runnable backend ACTION leaf (e.g. an "Advanced" add-interpreter / add-on-target action). Performing it runs
  * the backend action over RPC ([requestEvoPerformNodeAction]); the widget refreshes on the resulting `rootsChanged`.
  */
