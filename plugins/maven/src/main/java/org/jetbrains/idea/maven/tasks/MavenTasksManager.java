@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -208,40 +207,44 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
   }
 
   private boolean doExecute(boolean before, CompileContext context) {
-    List<MavenRunnerParameters> parametersList;
-    synchronized (myStateLock) {
-      var tasks = before ? myState.beforeCompileTasks : myState.afterCompileTasks;
+    Collection<MavenCompilerTask> tasks = getTasksFromContext(before, context);
 
-      if (context.isRebuild()) {
-        tasks = ContainerUtil.union(before ? myState.beforeRebuildTask : myState.afterRebuildTask, tasks);
+    var projectsManager = MavenProjectsManager.getInstance(myProject);
+    var affectedModules = ReadAction.compute(() -> Set.of(context.getCompileScope().getAffectedModules()));
+    var taskInfos = new ArrayList<MavenTaskInfo>();
+
+    for (var task : tasks) {
+      var file = LocalFileSystem.getInstance().findFileByPath(task.getProjectPath());
+      if (file == null) continue;
+      var mavenProject = projectsManager.findProject(file);
+      if (null == mavenProject) continue;
+      var module = ReadAction.compute(() -> projectsManager.findModule(mavenProject));
+      if (null == module) continue;
+      if (!affectedModules.contains(module)) continue;
+      var rootProject = projectsManager.findRootProject(mavenProject);
+      if (null == rootProject) {
+        rootProject = mavenProject;
       }
-
-      var projectsManager = MavenProjectsManager.getInstance(myProject);
-      var affectedModules = ReadAction.compute(() -> Set.of(context.getCompileScope().getAffectedModules()));
-      var taskInfos = new ArrayList<MavenTaskInfo>();
-
-      for (var task : tasks) {
-        var file = LocalFileSystem.getInstance().findFileByPath(task.getProjectPath());
-        if (file == null) continue;
-        var mavenProject = projectsManager.findProject(file);
-        if (null == mavenProject) continue;
-        var module = ReadAction.compute(() -> projectsManager.findModule(mavenProject));
-        if (null == module) continue;
-        if (!affectedModules.contains(module)) continue;
-        var rootProject = projectsManager.findRootProject(mavenProject);
-        if (null == rootProject) {
-          rootProject = mavenProject;
-        }
-        taskInfos.add(new MavenTaskInfo(task.getGoal(), file, mavenProject, rootProject));
-      }
-
-      var explicitProfiles = projectsManager.getExplicitProfiles();
-      parametersList = taskInfosToParametersList(taskInfos, explicitProfiles);
+      taskInfos.add(new MavenTaskInfo(task.getGoal(), file, mavenProject, rootProject));
     }
+
+    var explicitProfiles = projectsManager.getExplicitProfiles();
+    List<MavenRunnerParameters> parametersList = taskInfosToParametersList(taskInfos, explicitProfiles);
 
     if (parametersList.isEmpty()) return true;
 
     return doRunTask(context, parametersList);
+  }
+
+  private @NotNull Collection<MavenCompilerTask> getTasksFromContext(boolean before, CompileContext context) {
+    Collection<MavenCompilerTask> tasks;
+    synchronized (myStateLock) {
+      tasks = new HashSet<>(before ? myState.beforeCompileTasks : myState.afterCompileTasks);
+      if (context.isRebuild()) {
+        tasks.addAll(before ? myState.beforeRebuildTask : myState.afterRebuildTask);
+      }
+    }
+    return tasks;
   }
 
   private record MavenTaskInfo(@NotNull String goal,
