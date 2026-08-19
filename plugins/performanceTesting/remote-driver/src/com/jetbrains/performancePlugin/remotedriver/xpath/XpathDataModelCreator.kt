@@ -22,6 +22,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.function.Supplier
+import javax.accessibility.AccessibleBundle
 import javax.swing.JComponent
 import kotlin.math.absoluteValue
 
@@ -135,11 +136,7 @@ class XpathDataModelCreator(val onlyVisibleComponents: Boolean = true) {
         }
       }
 
-    val accessibleName = getAccessibleName(this)
-    if (accessibleName != null) {
-      element.setAttribute("accessiblename", accessibleName)
-      TextToKeyCache.findKey(accessibleName)?.apply { element.setAttribute("accessiblename.key", this) }
-    }
+    fillAccessibilityAttributes(element)
 
     val tooltipText = getTooltipText(this)
     if (tooltipText != null) {
@@ -173,6 +170,10 @@ class XpathDataModelCreator(val onlyVisibleComponents: Boolean = true) {
       }
     }
     if (isShowing) {
+      element.setAttribute("screenx", locationOnScreen.x.toString())
+      element.setAttribute("screeny", locationOnScreen.y.toString())
+      element.setAttribute("width", width.toString())
+      element.setAttribute("height", height.toString())
       element.addIcon(
         "show", 17,
         "show(${locationOnScreen.x}, ${locationOnScreen.y}, $width, $height)"
@@ -195,6 +196,51 @@ class XpathDataModelCreator(val onlyVisibleComponents: Boolean = true) {
     xpathEditor.appendChild(doc.createElement("label"))
     xpathEditor.setAttribute("class", "hidden")
     element.appendChild(xpathEditor)
+  }
+
+  private fun Component.fillAccessibilityAttributes(element: Element) {
+    val accessibleName = getAccessibleName(this)
+    if (accessibleName != null) {
+      element.setAttribute("accessiblename", accessibleName)
+      TextToKeyCache.findKey(accessibleName)?.apply { element.setAttribute("accessiblename.key", this) }
+    }
+
+    element.setAttribute("displayable", isDisplayable.toString())
+    element.setAttribute("showing", isShowing.toString())
+    element.setAttribute("enabled", isEnabled.toString())
+    element.setAttribute("focusable", isFocusable.toString())
+    element.setAttribute("focused", isFocusOwner.toString())
+    element.setAttribute("visible", isVisible.toString())
+
+    val context = runCatching { accessibleContext }.getOrNull() ?: return
+    runCatching { context.accessibleRole }.getOrNull()?.let { element.setAttribute("accessiblerole", it.stableName()) }
+    if (!hasBlockingModalTextSupplier()) {
+      runCatching { context.accessibleDescription }.getOrNull()?.removeInvalidXmlCharacters()?.let {
+        element.setAttribute("accessibledescription", it)
+      }
+    }
+
+    val states = runCatching { context.accessibleStateSet.toArray().map { it.stableName() } }.getOrDefault(emptyList())
+    if (states.isNotEmpty()) {
+      element.setAttribute("accessiblestates", states.sorted().joinToString(","))
+    }
+
+    runCatching {
+      context.accessibleAction?.let { action ->
+        val actions = (0 until action.accessibleActionCount).mapNotNull(action::getAccessibleActionDescription)
+        if (actions.isNotEmpty()) {
+          element.setAttribute("accessibleactions", actions.joinToString(" || "))
+        }
+      }
+    }
+
+    runCatching {
+      context.accessibleValue?.let { value ->
+        value.currentAccessibleValue?.let { element.setAttribute("accessiblevalue", it.toString()) }
+        value.minimumAccessibleValue?.let { element.setAttribute("accessiblevaluemin", it.toString()) }
+        value.maximumAccessibleValue?.let { element.setAttribute("accessiblevaluemax", it.toString()) }
+      }
+    }
   }
 
   private val textFieldsFilter: (String, String) -> Boolean = { name, value ->
@@ -236,6 +282,10 @@ class XpathDataModelCreator(val onlyVisibleComponents: Boolean = true) {
     "com.intellij.openapi.wm.impl.status.TextPanel\$WithIconAndArrows",
     "com.intellij.openapi.wm.impl.status.TextPanel"
   )
+
+  private fun Component.hasBlockingModalTextSupplier(): Boolean {
+    return this is JComponent && this::class.java.name in componentsWithBlockingModalTextSupplier
+  }
 
   @Suppress("UNUSED_PARAMETER")
   private fun getAccessibleName(component: Component): String? {
@@ -327,6 +377,10 @@ class XpathDataModelCreator(val onlyVisibleComponents: Boolean = true) {
     })
     return doc
   }
+}
+
+private fun AccessibleBundle.stableName(): String {
+  return toDisplayString(Locale.ENGLISH).lowercase(Locale.ENGLISH).replace(' ', '_')
 }
 
 fun Element.addIcon(iconName: String, size: Int, onClickFunction: String) {

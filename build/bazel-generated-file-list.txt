@@ -1845,6 +1845,7 @@ plugins/performanceTesting/rdct
 plugins/performanceTesting/remote-driver
 plugins/performanceTesting/remote-driver.compose
 plugins/performanceTesting/remote-driver.jcef
+plugins/performanceTesting/remote-driver/tests
 plugins/performanceTesting/scripts-ui
 plugins/performanceTesting/structureView
 plugins/performanceTesting/todo

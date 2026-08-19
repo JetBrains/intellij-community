@@ -12,12 +12,14 @@ class RemoteDriverDataModelExtension : XpathDataModelExtension {
 
   override fun postProcessElement(doc: Document, component: Component, element: Element, parentElement: Element) {
     val component = element.getUserData("component") as? Component ?: return
-    val ref = InvokerService.getInstance().putReference(component)
+    // The driver Invoker registers only under -Dcom.sun.management.jmxremote. The UI automation MCP
+    // snapshot runs without that flag and does not read these driver references, so skip them when absent.
+    val invokerService = InvokerService.getInstance()
+    if (!invokerService.isReady()) return
+    val ref = invokerService.putReference(component)
     element.setAttribute("refId", ref.id)
     element.setAttribute("hashCode", ref.identityHashCode.toString())
     element.setAttribute("asString", ref.asString())
-
-    val rdTarget = InvokerService.getInstance().rdTarget
-    element.setAttribute("rdTarget", rdTarget.toString())
+    element.setAttribute("rdTarget", invokerService.rdTarget.toString())
   }
 }
