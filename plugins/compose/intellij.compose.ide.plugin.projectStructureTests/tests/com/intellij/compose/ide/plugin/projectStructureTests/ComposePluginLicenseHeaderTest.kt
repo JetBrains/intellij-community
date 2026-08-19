@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.compose.ide.plugin.projectStuctureTests
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.compose.ide.plugin.projectStructureTests
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.project.loadIntelliJProject
