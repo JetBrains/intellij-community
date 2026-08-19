@@ -29,5 +29,5 @@ class GoPerformanceToolWindowUI(data: ComponentData) : ToolWindowUiComponent(dat
 
   val viewSettingsButton: UiComponent = x { and(byClass("ActionButton"), byAccessibleName("View Settings")) }
 
-  val sampleTypeSelectorLabel: UiComponent = x { and(byClass("JLabel"), byAccessibleName("Show:")) }
+  val sampleTypeSelectorLabel: UiComponent = x { byAccessibleName("Show:") }
 }
