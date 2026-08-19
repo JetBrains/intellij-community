@@ -9,14 +9,18 @@ import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.terminal.frontend.view.impl.TimedKeyEvent
 import com.intellij.terminal.tests.reworked.frontend.TerminalTypingLocksTest.Companion.ALLOWED_WRITE_INTENT
-import com.intellij.terminal.tests.reworked.util.Kind
+import com.intellij.terminal.tests.reworked.util.LockKind
 import com.intellij.terminal.tests.reworked.util.TerminalEdtLocksSpy
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.runInEdtAndWait
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -44,16 +48,17 @@ internal class TerminalTypingLocksTest : BasePlatformTestCase() {
     fixture.type("echo hello world")
     fixture.moveMouseOverOutput()
 
-    val writes = spy.hits(Kind.WRITE)
+    val writes = spy.lockUsages(LockKind.WRITE)
     assertThat(writes)
-      .describedAs("Write actions shouldn't be taken on the EDT while typing in the terminal:\n$writes")
+      .describedAs("Write actions shouldn't be taken on the EDT while typing in the terminal:\n" +
+                   writes.joinToString("\n\n"))
       .isEmpty()
 
-    val unexpectedWILs = spy.hits(Kind.WRITE_INTENT).filterNot { it.signature in ALLOWED_WRITE_INTENT }
+    val unexpectedWILs = spy.lockUsages(LockKind.WRITE_INTENT).filterNot { it.signature in ALLOWED_WRITE_INTENT }
     assertThat(unexpectedWILs)
       .describedAs("New write-intent lock sites on the EDT while typing. " +
                    "Add them to ALLOWED_WRITE_INTENT or avoid taking the lock:\n" +
-                   unexpectedWILs)
+                   unexpectedWILs.joinToString("\n\n"))
       .isEmpty()
   }
 
@@ -90,6 +95,15 @@ internal class TerminalTestFixture(private val manager: TerminalToolWindowTabsMa
 
   suspend fun awaitSessionStarted() {
     view.sessionDeferred.await()
+    view.shellIntegrationDeferred.await().outputStatus.first { it == TerminalOutputStatus.TypingCommand }
+
+    dispatchPendingEdtEvents()
+  }
+
+  private fun dispatchPendingEdtEvents() {
+    runInEdtAndWait {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    }
   }
 
   suspend fun type(text: String) {
@@ -97,6 +111,7 @@ internal class TerminalTestFixture(private val manager: TerminalToolWindowTabsMa
       typeChar(c)
     }
     awaitText(text)
+    dispatchPendingEdtEvents()
   }
 
   private fun typeChar(keyChar: Char) {
@@ -110,7 +125,12 @@ internal class TerminalTestFixture(private val manager: TerminalToolWindowTabsMa
   }
 
   private suspend fun awaitText(text: String) {
-    while (!editor.document.immutableCharSequence.contains(text)) {
+    fun hasText(): Boolean {
+      val outputModel = view.outputModels.active.value
+      return outputModel.getText(outputModel.startOffset, outputModel.endOffset).contains(text)
+    }
+
+    while (!hasText()) {
       delay(50.milliseconds)
     }
   }

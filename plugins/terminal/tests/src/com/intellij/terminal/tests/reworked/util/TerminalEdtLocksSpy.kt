@@ -10,29 +10,29 @@ import java.util.Collections
 
 internal class TerminalEdtLocksSpy(parentDisposable: Disposable) {
 
-  private val hits = Collections.synchronizedList(mutableListOf<Hit>())
   private val app = ApplicationManagerEx.getApplicationEx()
+  private val usages = Collections.synchronizedList(mutableListOf<LockUsage>())
 
   init {
     app.addWriteActionListener(object : WriteActionListener {
       override fun beforeWriteActionStart(action: Class<*>) {
-        record(Kind.WRITE)
+        record(LockKind.WRITE)
       }
     }, parentDisposable)
     app.addWriteIntentReadActionListener(object : WriteIntentReadActionListener {
       override fun beforeWriteIntentReadActionStart(action: Class<*>) {
-        record(Kind.WRITE_INTENT)
+        record(LockKind.WRITE_INTENT)
       }
     }, parentDisposable)
   }
 
-  private fun record(kind: Kind) {
+  private fun record(kind: LockKind) {
     if (!EDT.isCurrentThreadEdt()) return
 
     val stack = Throwable().stackTrace
     val signature = culprit(stack) ?: return
 
-    hits.add(Hit(kind, signature, stack.joinToString("\n") { "\tat $it" }))
+    usages.add(LockUsage(kind, signature, stack.joinToString("\n") { "\tat $it" }))
   }
 
   private fun culprit(stack: Array<StackTraceElement>): String? {
@@ -46,8 +46,8 @@ internal class TerminalEdtLocksSpy(parentDisposable: Disposable) {
            TERMINAL_TEST_PREFIXES.none { className.startsWith(it) }
   }
 
-  fun hits(kind: Kind): List<Hit> = synchronized(hits) {
-    hits.filter { it.kind == kind }
+  fun lockUsages(kind: LockKind): List<LockUsage> = synchronized(usages) {
+    usages.filter { it.kind == kind }
   }
 
   companion object {
@@ -60,10 +60,14 @@ internal class TerminalEdtLocksSpy(parentDisposable: Disposable) {
   }
 }
 
-internal enum class Kind { WRITE, WRITE_INTENT }
+internal enum class LockKind { WRITE, WRITE_INTENT }
 
-internal data class Hit(
-  val kind: Kind,
+internal data class LockUsage(
+  val kind: LockKind,
   val signature: String,
   val stack: String,
-)
+) {
+  override fun toString(): String {
+    return "$kind lock was taken by $signature. Stacktrace:\n$stack"
+  }
+}
