@@ -86,7 +86,6 @@ fun unregisterExtensionsForLiteProduct() {
     .unregisterExtensionsById(
       ToolWindowId.BOOKMARKS,
       "Dependencies",
-      "Problems View",
     )
 
   Configurable.APPLICATION_CONFIGURABLE.appPoint
