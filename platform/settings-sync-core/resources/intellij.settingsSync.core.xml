@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal" package="com.intellij.settingsSync.core">
+<idea-plugin visibility="public" package="com.intellij.settingsSync.core">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="Git4Idea"/>
