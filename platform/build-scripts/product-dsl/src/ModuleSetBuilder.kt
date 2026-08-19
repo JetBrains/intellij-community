@@ -202,7 +202,6 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
  * fun corePlatform() = moduleSet("core.platform", includeDependencies = true) {
  *   embeddedModule("intellij.platform.util.ex")  // inherits includeDependencies=true
  *   embeddedModule("intellij.platform.core")     // inherits includeDependencies=true
- *   embeddedModule("some.module", includeDependencies = false)  // explicit override
  * }
  * ```
  */

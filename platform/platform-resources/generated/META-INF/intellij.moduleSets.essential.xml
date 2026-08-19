@@ -164,6 +164,8 @@
     <module name="intellij.platform.editor.ui" loading="embedded"/>
     <module name="intellij.platform.projectModel" loading="embedded"/>
     <module name="intellij.platform.projectModel.impl" loading="embedded"/>
+    <module name="intellij.platform.instanceContainer" loading="embedded"/>
+    <module name="intellij.platform.serviceContainer" loading="embedded"/>
     <module name="intellij.platform.workspace.jps" loading="embedded"/>
     <module name="intellij.platform.analysis" loading="embedded"/>
     <module name="intellij.platform.analysis.impl" loading="embedded"/>

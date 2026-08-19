@@ -89,6 +89,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.serviceContainer.iml",
+        "resources/intellij.platform.serviceContainer.xml",
     ],
     visibility = ["//visibility:public"],
 )

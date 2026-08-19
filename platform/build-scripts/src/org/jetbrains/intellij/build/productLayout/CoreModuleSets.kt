@@ -284,6 +284,8 @@ object CoreModuleSets {
 
     embeddedModule("intellij.platform.projectModel")
     embeddedModule("intellij.platform.projectModel.impl")
+    embeddedModule("intellij.platform.instanceContainer")
+    embeddedModule("intellij.platform.serviceContainer")
     embeddedModule("intellij.platform.workspace.jps")
 
     // Analysis modules needed by core platform modules

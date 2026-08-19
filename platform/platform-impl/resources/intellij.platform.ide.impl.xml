@@ -74,6 +74,7 @@
     <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.instanceContainer"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
@@ -86,6 +87,7 @@
     <module name="intellij.platform.rd.community"/>
     <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.runtime.product"/>
+    <module name="intellij.platform.serviceContainer"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.syntax.psi"/>
     <module name="intellij.platform.util.coroutines"/>

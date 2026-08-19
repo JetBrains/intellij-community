@@ -22,6 +22,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.platform.instanceContainer",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -59,6 +63,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.instanceContainer.iml",
+        "resources/intellij.platform.instanceContainer.xml",
     ],
     visibility = ["//visibility:public"],
 )
