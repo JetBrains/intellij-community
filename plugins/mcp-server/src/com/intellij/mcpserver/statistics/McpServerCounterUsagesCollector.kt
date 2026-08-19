@@ -58,6 +58,27 @@ enum class McpCallerLaunchOrigin {
   UNKNOWN,
 }
 
+/**
+ * How the reported call arrived. Separate from [McpToolInvocationMode], which selects which tool list a session
+ * exposes: a router entry is not a tool list.
+ */
+enum class McpToolCallInvocationMode {
+  /** Called directly, with the router off for this session. */
+  DIRECT,
+
+  /** Called directly although the router is on: the client bypassed it. */
+  DIRECT_WITH_ROUTER_ENABLED,
+
+  /** Dispatched by the router. */
+  VIA_ROUTER,
+
+  /**
+   * The `execute_tool` call that carried a dispatch. Exclude it from per-tool counts and latencies: the tool the agent
+   * asked for is the [VIA_ROUTER] row, whose duration is nested inside this one.
+   */
+  ROUTER_ENTRY,
+}
+
 /** Why a command passed to `execute_tool` produced no tool call. */
 enum class McpDispatchRejectReason {
   /** The command dispatched to a tool; whether that tool then succeeded is `success`. */
@@ -95,11 +116,13 @@ internal fun McpToolCallResult.reportableResultSize(): Int =
   content.sumOf { part -> (part as? McpToolCallResultContent.Text)?.text?.length ?: 0 }
 
 object McpServerCounterUsagesCollector : CounterUsagesCollector() {
+  // v10: `invocation_mode` gained ROUTER_ENTRY and now reports DIRECT_WITH_ROUTER_ENABLED, so the router's own row is
+  // separable from the tool it dispatched to and a bypassed router is separable from an absent one.
   // v9: mcp.tool.call gained `toolset`, so usage can be read per toolset rather than per tool name only, and
   // `result_bytes` is now filled on both call paths instead of being registered and always empty.
   // v8: mcp.tool.call gained the caller, transport, invocation mode and payload-size dimensions, without which a
   // cost-per-tool analysis cannot separate one client or one dispatch path from another.
-  private val GROUP = EventLogGroup("mcpserver.events", 9)
+  private val GROUP = EventLogGroup("mcpserver.events", 10)
 
   private val TOOL_NAME = EventFields.StringValidatedByCustomRule<McpToolNameValidator>("tool_name")
   private val TOOLSET = EventFields.StringValidatedByCustomRule<McpToolsetNameValidator>(
@@ -141,9 +164,10 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
   )
   private val INVOCATION_MODE = EventFields.Enum(
     "invocation_mode",
-    McpToolInvocationMode::class.java,
-    "Whether the call arrived directly or was dispatched through the universal router. Before this field existed a " +
-    "dispatched call produced no row at all",
+    McpToolCallInvocationMode::class.java,
+    "How the call arrived: directly, dispatched by the universal router, or as the router entry that carried a " +
+    "dispatch. A routed call produces both a ROUTER_ENTRY row and a VIA_ROUTER row, so a per-tool count excludes " +
+    "ROUTER_ENTRY",
   )
   private val ARGUMENT_BYTES = EventFields.RoundedInt("argument_bytes", "Rounded size of the serialized arguments")
   private val RESULT_BYTES = EventFields.RoundedInt("result_bytes", "Rounded size of the serialized result")
@@ -234,7 +258,7 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
     descriptor: McpToolDescriptor,
     outcome: McpToolCallOutcome,
     durationMs: Long,
-    invocationMode: McpToolInvocationMode,
+    invocationMode: McpToolCallInvocationMode,
     launchOrigin: McpCallerLaunchOrigin,
     clientName: String?,
     transportType: TransportType?,

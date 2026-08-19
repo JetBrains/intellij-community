@@ -19,7 +19,7 @@ import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.stdio.IJ_MCP_ALLOWED_TOOLS
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
-import com.intellij.mcpserver.toolsets.general.UniversalToolset
+import com.intellij.mcpserver.toolsets.general.ROUTER_TOOL_NAME
 import com.intellij.mcpserver.toolwindow.TransportType
 import com.intellij.mcpserver.util.enableIfNotExplicitlyDisabled
 import com.intellij.notification.NotificationGroupManager
@@ -613,7 +613,7 @@ open class McpServerService(val cs: CoroutineScope) {
     val allTools = getAllMcpTools()
     val filterAdjusted = filter ?: McpToolFilter.AllowAll
 
-    val routerToolName = UniversalToolset::execute_tool.name
+    val routerToolName = ROUTER_TOOL_NAME
     if (!useFiltersFromEP) {
       return allTools.filter { tool ->
         val isRouterTool = tool.descriptor.name == routerToolName

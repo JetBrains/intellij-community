@@ -19,8 +19,10 @@ import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.mcpserver.statistics.reportableResultSize
+import com.intellij.mcpserver.statistics.McpToolCallInvocationMode
 import com.intellij.mcpserver.statistics.McpToolCallOutcome
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
+import com.intellij.mcpserver.toolsets.general.ROUTER_TOOL_NAME
 import com.intellij.mcpserver.toolwindow.McpDiagnosticService
 import com.intellij.mcpserver.toolwindow.TransportType
 import com.intellij.openapi.components.service
@@ -312,6 +314,17 @@ internal class McpSessionHandler(
     )
   }
 
+  /**
+   * How a call that reached this wrapper arrived. The router is itself a registered tool, so a routed call passes here
+   * once as `execute_tool` and once — from [com.intellij.mcpserver.toolsets.general.UniversalToolset] — as the tool it
+   * dispatched to; reporting both as DIRECT made one routed call look like two ordinary ones.
+   */
+  private fun callArrival(toolName: String): McpToolCallInvocationMode = when {
+    toolName == ROUTER_TOOL_NAME -> McpToolCallInvocationMode.ROUTER_ENTRY
+    invocationMode == McpSessionInvocationMode.VIA_ROUTER -> McpToolCallInvocationMode.DIRECT_WITH_ROUTER_ENABLED
+    else -> McpToolCallInvocationMode.DIRECT
+  }
+
   private fun mcpToolToRegisteredTool(mcpTool: McpTool, projectKnownUpfront: Boolean): RegisteredTool {
     val tool = mcpTool.toSdkTool(stripPropertyName = if (projectKnownUpfront) projectPathParameterName else null)
     return RegisteredTool(tool) { request ->
@@ -474,8 +487,7 @@ internal class McpSessionHandler(
                   descriptor = mcpTool.descriptor,
                   outcome = outcome,
                   durationMs = callMark.elapsedNow().inWholeMilliseconds,
-                  // A call that arrives here arrived as an MCP tool call. A dispatched one is reported by the router.
-                  invocationMode = McpToolInvocationMode.DIRECT,
+                  invocationMode = callArrival(mcpTool.descriptor.name),
                   launchOrigin = launchOriginOf(sessionOptions),
                   clientName = session.clientVersion?.name,
                   transportType = transportType,

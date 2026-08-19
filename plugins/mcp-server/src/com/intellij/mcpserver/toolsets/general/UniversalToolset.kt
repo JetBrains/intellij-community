@@ -4,7 +4,6 @@ package com.intellij.mcpserver.toolsets.general
 
 import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.McpServerBundle
-import com.intellij.mcpserver.McpToolInvocationMode
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
@@ -17,6 +16,7 @@ import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.mcpserver.statistics.reportableResultSize
 import com.intellij.mcpserver.launchOriginOf
 import com.intellij.mcpserver.statistics.McpDispatchRejectReason
+import com.intellij.mcpserver.statistics.McpToolCallInvocationMode
 import com.intellij.mcpserver.statistics.McpToolCallOutcome
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.logger
@@ -44,6 +44,9 @@ import com.intellij.mcpserver.McpTool as McpToolDef
 private const val FLAG_PREFIX = "--"
 
 private val LOG = fileLogger()
+
+/** The name of the router tool, for the places that have to recognise a call to it rather than to an ordinary tool. */
+internal val ROUTER_TOOL_NAME: String = UniversalToolset::execute_tool.name
 
 class UniversalToolset : McpToolset {
   override fun displayName(): String = McpServerBundle.message("toolset.display.name.universal")
@@ -176,11 +179,9 @@ class UniversalToolset : McpToolset {
   }
 
   /**
-   * Calls the dispatched tool and reports it as a tool call in its own right.
-   *
-   * The call goes straight to [McpToolDef.call], bypassing the wrapper in `McpSessionHandler` that reports
-   * `mcp.tool.call` — so before this reporting existed, a tool reached through the router produced a dispatch row
-   * and no call row, and per-tool usage silently excluded every routed call.
+   * Calls the dispatched tool and reports it as a tool call in its own right. The call goes straight to
+   * [McpToolDef.call], bypassing the wrapper in `McpSessionHandler` that reports `mcp.tool.call`, so without this a
+   * routed call produced a dispatch row and no call row.
    */
   private suspend fun invokeTool(tool: McpToolDef, jsonArgs: JsonObject): String {
     val callMark = TimeSource.Monotonic.markNow()
@@ -213,7 +214,7 @@ class UniversalToolset : McpToolset {
         descriptor = tool.descriptor,
         outcome = outcome,
         durationMs = callMark.elapsedNow().inWholeMilliseconds,
-        invocationMode = McpToolInvocationMode.VIA_ROUTER,
+        invocationMode = McpToolCallInvocationMode.VIA_ROUTER,
         launchOrigin = launchOriginOf(callInfo.mcpSessionOptions),
         clientName = callInfo.clientInfo.name,
         transportType = null,
