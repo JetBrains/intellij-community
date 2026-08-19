@@ -1328,9 +1328,9 @@ plugins/kotlin/base/project-model
 plugins/kotlin/base/project-structure
 plugins/kotlin/base/psi
 plugins/kotlin/base/resources
-plugins/kotlin/base/scripting/scratch
 plugins/kotlin/base/scripting/scripting.k2
 plugins/kotlin/base/scripting/scripting.main.kts
+plugins/kotlin/base/scripting/scripting.scratch
 plugins/kotlin/base/scripting/scripting.scratch.definition
 plugins/kotlin/base/scripting/scripting.shared
 plugins/kotlin/base/statistics

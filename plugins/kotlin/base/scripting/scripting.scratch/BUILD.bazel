@@ -4,13 +4,13 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.base.scripting.scratch` start
 create_kotlinc_options(
-    name = "custom_scratch",
+    name = "custom_scripting.scratch",
     opt_in = ["org.jetbrains.kotlin.K1Deprecation"],
     x_context_parameters = True,
 )
 
 jvm_library(
-    name = "scratch",
+    name = "scripting.scratch",
     srcs = glob(
         [
             "src/**/*.kt",
@@ -19,7 +19,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_scratch",
+    kotlinc_opts = ":custom_scripting.scratch",
     module_name = "intellij.kotlin.base.scripting.scratch",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -83,18 +83,18 @@ jvm_library(
 )
 
 jvm_library(
-    name = "scratch_test_lib",
+    name = "scripting.scratch_test_lib",
     testonly = True,
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_scratch",
+    kotlinc_opts = ":custom_scripting.scratch",
     module_name = "intellij.kotlin.base.scripting.scratch",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":scratch",
+        ":scripting.scratch",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/lang-core:lang-core_test_lib",
@@ -218,8 +218,8 @@ jvm_library(
         "//plugins/kotlin/jvm/shared:shared_test_lib",
         "//plugins/kotlin/base/scripting/scripting.shared",
         "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
-        "//plugins/kotlin/base/scripting/scratch",
-        "//plugins/kotlin/base/scripting/scratch:scratch_test_lib",
+        "//plugins/kotlin/base/scripting/scripting.scratch",
+        "//plugins/kotlin/base/scripting/scripting.scratch:scripting.scratch_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/projectModel-api:projectModel",

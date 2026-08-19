@@ -7,13 +7,13 @@ import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.runner.RunWith
 
-@TestRoot("base/scripting/scratch")
+@TestRoot("base/scripting/scripting.scratch")
 @TestDataPath($$"$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners::class)
 @TestMetadata("testData")
-class KotlinScratchExplainTest : AbstractKotlinScratchRunActionTest() {
+class KotlinScratchPlainTest : AbstractKotlinScratchRunActionTest() {
     override val isExplainEnabled: Boolean
-        get() = true
+        get() = false
 
     @TestMetadata("destructuringDecls.kts")
     fun testDestructuringDecls() = doScratchTest()
