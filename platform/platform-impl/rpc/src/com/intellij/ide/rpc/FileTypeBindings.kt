@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 // TODO: it is not ok to attach Document to fileType
 @ApiStatus.Internal
-internal fun Document.bindEditorsToBackend() {
+fun Document.bindEditorsToBackend() {
   this.putUserData(BIND_DOCUMENT_EDITORS, true)
 }
 
