@@ -37,13 +37,13 @@ fun Document.bindToBackend(
     val builder = BackendDocumentBindBuilder().apply(builder)
     val backendDocumentIdProvider = builder.backendDocumentIdProvider
     val documentBound = if (backendDocumentIdProvider != null) {
-      bindToBackend(backendDocumentIdProvider, builder.onBindingDispose)
+      bindToBackend(backendDocumentIdProvider, builder.onBindingDispose, builder.bindEditors)
     }
     else {
       true
     }
 
-    if (documentBound && builder.bindEditors) {
+    if (documentBound && builder.bindEditors && backendDocumentIdProvider == null) {
       // mark the document, so future editors will be bind
       bindEditorsToBackend()
       // bind current editors (since they might be created during backends' documents initialization)
@@ -91,11 +91,12 @@ private fun Document.bindCurrentEditors() {
 private suspend fun Document.bindToBackend(
   backendDocumentIdProvider: suspend (FrontendDocumentId) -> BackendDocumentId?,
   onBindingDispose: (() -> Unit)?,
+  bindEditors: Boolean,
 ): Boolean {
   val frontendDocument = this
   val frontendDocumentId = FrontendDocumentId(UID.random())
   val registry = FrontendDocumentIdRegistry.EP_NAME.extensionList.firstOrNull()
-  registry?.registerFrontendDocumentId(frontendDocumentId, frontendDocument, onBindingDispose)
+  registry?.registerFrontendDocumentId(frontendDocumentId, frontendDocument, onBindingDispose, bindEditors)
   var backendDocumentId: BackendDocumentId? = null
   try {
     backendDocumentId = backendDocumentIdProvider(frontendDocumentId)
@@ -168,7 +169,12 @@ interface FrontendDocumentIdRegistry {
 
   // TODO: should we deal with session here,
   //  so that it will be registered for session not not app level?
-  fun registerFrontendDocumentId(frontendDocumentId: FrontendDocumentId, frontendDocument: Document, onBindingDispose: (() -> Unit)?)
+  fun registerFrontendDocumentId(
+    frontendDocumentId: FrontendDocumentId,
+    frontendDocument: Document,
+    onBindingDispose: (() -> Unit)?,
+    bindEditors: Boolean,
+  )
 
   fun unregisterFrontendDocumentId(frontendDocumentId: FrontendDocumentId)
 }
