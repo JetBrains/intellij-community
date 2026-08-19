@@ -1,13 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.reworked.frontend
 
+import com.intellij.ide.IdeEventQueue
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
-import com.intellij.terminal.frontend.view.impl.TimedKeyEvent
+import com.intellij.terminal.frontend.view.impl.createTerminalKeyEventDispatcherForTests
 import com.intellij.terminal.tests.reworked.frontend.TerminalTypingLocksTest.Companion.ALLOWED_WRITE_INTENT
 import com.intellij.terminal.tests.reworked.util.LockKind
 import com.intellij.terminal.tests.reworked.util.TerminalEdtLocksSpy
@@ -19,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
@@ -30,7 +34,6 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TimeSource
 
 /**
  * Regression guard for the terminal hot path: typing (and a mouse move) must not acquire the write lock
@@ -69,7 +72,7 @@ internal class TerminalTypingLocksTest : BasePlatformTestCase() {
       ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask(id = TerminalToolWindowFactory.TOOL_WINDOW_ID))
 
       withTerminalToolWindowManager(project) { manager ->
-        TerminalTestFixture(manager).use { fixture ->
+        TerminalTestFixture(manager, testRootDisposable).use { fixture ->
           fixture.awaitSessionStarted()
           test(fixture)
         }
@@ -82,7 +85,12 @@ internal class TerminalTypingLocksTest : BasePlatformTestCase() {
   }
 }
 
-internal class TerminalTestFixture(private val manager: TerminalToolWindowTabsManager) : AutoCloseable {
+internal class TerminalTestFixture(
+  private val manager: TerminalToolWindowTabsManager,
+  parentDisposable: Disposable
+) : AutoCloseable {
+  private val fixtureDisposable = Disposer.newDisposable(parentDisposable)
+
   private val tab = manager.createTabBuilder()
     .requestFocus(false)
     .deferSessionStartUntilUiShown(false)
@@ -90,6 +98,18 @@ internal class TerminalTestFixture(private val manager: TerminalToolWindowTabsMa
 
   private val view: TerminalViewImpl = tab.view as TerminalViewImpl
   private val editor: EditorImpl = view.outputEditor
+
+  init {
+    IdeEventQueue.getInstance().addDispatcher(
+      createTerminalKeyEventDispatcherForTests(
+        editor = editor,
+        settings = JBTerminalSystemSettingsProvider(),
+        eventsHandler = view.outputEditorKeyEventsHandler,
+        disposable = fixtureDisposable,
+      ),
+      fixtureDisposable,
+    )
+  }
 
   init {
     editor.component.setSize(800, 600)
@@ -126,12 +146,18 @@ internal class TerminalTestFixture(private val manager: TerminalToolWindowTabsMa
 
   private fun typeChar(keyChar: Char) {
     val press = KeyEvent(editor.component, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0,
-                         KeyEvent.VK_UNDEFINED, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_STANDARD)
-    view.outputEditorKeyEventsHandler.keyPressed(TimedKeyEvent(press, TimeSource.Monotonic.markNow()))
+                         KeyEvent.getExtendedKeyCodeForChar(keyChar.code), KeyEvent.CHAR_UNDEFINED,
+                         KeyEvent.KEY_LOCATION_STANDARD)
+    IdeEventQueue.getInstance().dispatchEvent(press)
 
     val typed = KeyEvent(editor.component, KeyEvent.KEY_TYPED, System.currentTimeMillis(), 0,
                          KeyEvent.VK_UNDEFINED, keyChar, KeyEvent.KEY_LOCATION_UNKNOWN)
-    view.outputEditorKeyEventsHandler.keyTyped(TimedKeyEvent(typed, TimeSource.Monotonic.markNow()))
+    IdeEventQueue.getInstance().dispatchEvent(typed)
+
+    val release = KeyEvent(editor.component, KeyEvent.KEY_RELEASED, System.currentTimeMillis(), 0,
+                           KeyEvent.getExtendedKeyCodeForChar(keyChar.code), KeyEvent.CHAR_UNDEFINED,
+                           KeyEvent.KEY_LOCATION_STANDARD)
+    IdeEventQueue.getInstance().dispatchEvent(release)
   }
 
   private suspend fun awaitTextAndCursor(
@@ -158,6 +184,7 @@ internal class TerminalTestFixture(private val manager: TerminalToolWindowTabsMa
   }
 
   override fun close() {
+    Disposer.dispose(fixtureDisposable)
     manager.closeTab(tab)
   }
 }
