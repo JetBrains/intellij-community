@@ -360,12 +360,20 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    *
    * @param allowedMissingPluginIds Plugin IDs that are allowed to be missing for auto-added dependencies
    *   discovered from this module (DSL test plugins only).
+   * @param includeDependencies Pack transitive JPS runtime deps that are not placed elsewhere into this module's jar,
+   *   matching the packing of module sets declared with `includeDependencies = true`.
    */
-  fun embeddedModule(name: String, namespace: String? = PluginModuleId.DEFAULT_NAMESPACE, allowedMissingPluginIds: List<String> = emptyList()) {
+  fun embeddedModule(
+    name: String,
+    namespace: String? = PluginModuleId.DEFAULT_NAMESPACE,
+    allowedMissingPluginIds: List<String> = emptyList(),
+    includeDependencies: Boolean = false,
+  ) {
     additionalModules.add(
       ContentModule(
         moduleId = PluginModuleId(name, namespace),
         loading = ModuleLoadingRuleValue.EMBEDDED,
+        includeDependencies = includeDependencies,
         allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
       )
     )
