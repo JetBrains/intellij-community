@@ -20,6 +20,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
+import org.jetbrains.plugins.terminal.view.TerminalOffset
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -107,10 +109,18 @@ internal class TerminalTestFixture(private val manager: TerminalToolWindowTabsMa
   }
 
   suspend fun type(text: String) {
-    for (c in text) {
-      typeChar(c)
+    for (char in text) {
+      val outputModel = view.outputModels.active.value
+      val textBeforeCursor = outputModel.getText(outputModel.startOffset, outputModel.cursorOffset).toString()
+      val textAfterCursor = outputModel.getText(outputModel.cursorOffset, outputModel.endOffset).toString()
+      val expectedText = textBeforeCursor + char + textAfterCursor
+      val expectedCursor = outputModel.cursorOffset + 1L
+
+      typeChar(char)
+
+      awaitTextAndCursor(outputModel, expectedCursor, expectedText)
     }
-    awaitText(text)
+
     dispatchPendingEdtEvents()
   }
 
@@ -124,13 +134,17 @@ internal class TerminalTestFixture(private val manager: TerminalToolWindowTabsMa
     view.outputEditorKeyEventsHandler.keyTyped(TimedKeyEvent(typed, TimeSource.Monotonic.markNow()))
   }
 
-  private suspend fun awaitText(text: String) {
-    fun hasText(): Boolean {
-      val outputModel = view.outputModels.active.value
-      return outputModel.getText(outputModel.startOffset, outputModel.endOffset).contains(text)
+  private suspend fun awaitTextAndCursor(
+    outputModel: TerminalOutputModel,
+    expectedCursor: TerminalOffset,
+    expectedText: String
+  ) {
+    fun matchesTextAndCursor(): Boolean {
+      val actualText = outputModel.getText(outputModel.startOffset, outputModel.endOffset).toString()
+      return outputModel.cursorOffset == expectedCursor && actualText == expectedText
     }
 
-    while (!hasText()) {
+    while (!matchesTextAndCursor()) {
       delay(50.milliseconds)
     }
   }
@@ -140,7 +154,7 @@ internal class TerminalTestFixture(private val manager: TerminalToolWindowTabsMa
     val event = MouseEvent(editor.contentComponent, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 0,
                            point.x, point.y, 1, false)
 
-    editor.contentComponent.mouseMotionListeners.forEach { it.mouseMoved(event) }
+    editor.contentComponent.dispatchEvent(event)
   }
 
   override fun close() {
