@@ -1,11 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pipenv
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrNull
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -29,7 +30,7 @@ internal class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageM
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
 
   override val treeProvider: DependencyTreeProvider = CachedDependencyTreeProvider(
-    fetchOutput = { runPipEnvWithSdk(sdk, "graph", "--json").getOrNull() },
+    fetchOutput = { runPipEnvWithSdk(sdk, "graph", "--json").orLogException(thisLogger()) },
     parse = { json -> PipEnvParser.parsePipEnvGraph(json).map { it.toTreeNode() } },
   )
 

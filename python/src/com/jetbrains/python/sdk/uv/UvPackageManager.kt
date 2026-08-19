@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -28,6 +29,7 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.packaging.management.PythonManagerCliSpec
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -67,7 +69,7 @@ internal class UvPackageManager internal constructor(
     PythonManagerCliSpec("uv", { UvPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path })
   )
   override val treeProvider = CachedDependencyTreeProvider(fetchOutput = {
-    withUv { uv -> uv.listProjectStructureTree() }.getOrNull()
+    withUv { uv -> uv.listProjectStructureTree() }.orLogException(thisLogger())
   })
   override val dependenciesFilesRelativePaths: List<Path>
     get() = listOf(
