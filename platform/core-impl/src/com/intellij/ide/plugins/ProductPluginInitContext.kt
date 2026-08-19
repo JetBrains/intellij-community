@@ -81,7 +81,13 @@ class ProductPluginInitContext(
     get() = !PlatformUtils.isIntelliJ()
 
   override val checkEssentialPlugins: Boolean
-    get() = !PluginManagerCore.isUnitTestMode
+    get() {
+      // system property is needed in Analyzer TODO ideally it should not exist
+      if (System.getProperty("disable.essential.plugins.check") == "true") {
+        return false
+      }
+      return !PluginManagerCore.isUnitTestMode
+    }
 
   override val explicitPluginSubsetToLoad: Set<PluginId>? by lazy {
     System.getProperty("idea.load.plugins.id")
