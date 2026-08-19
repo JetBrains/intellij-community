@@ -371,12 +371,26 @@ object CommunityModuleSets {
   }
 
   /**
+   * Popular applied libraries, required for many plugins.
+   */
+  fun librariesIdeCommon(): ModuleSet = moduleSet("libraries.ide.common") {
+    module("intellij.libraries.javax.activation")
+    module("intellij.libraries.opencsv")
+    module("intellij.libraries.lucene.common")
+    module("intellij.libraries.jettison")
+    module("intellij.libraries.oshi.core")
+    module("intellij.libraries.xstream")
+    module("intellij.libraries.commons.text")
+  }
+
+  /**
    * IDE common modules (includes essential, compose, vcs, xml, duplicates).
    */
   fun ideCommon(): ModuleSet = moduleSet("ide.common") {
     // Include essential first (which includes coreLang from CoreModuleSets)
     moduleSet(essential())
     moduleSet(compose())
+    moduleSet(librariesIdeCommon())
 
     // Additional IDE-specific modules
     module("intellij.platform.lvcs.impl")

@@ -357,6 +357,16 @@
     <module name="intellij.platform.jewel.markdown.core"/>
     <!-- endregion -->
 
+    <!-- region nested: libraries.ide.common -->
+    <module name="intellij.libraries.javax.activation"/>
+    <module name="intellij.libraries.opencsv"/>
+    <module name="intellij.libraries.lucene.common"/>
+    <module name="intellij.libraries.jettison"/>
+    <module name="intellij.libraries.oshi.core"/>
+    <module name="intellij.libraries.xstream"/>
+    <module name="intellij.libraries.commons.text"/>
+    <!-- endregion -->
+
     <!-- region nested: vcs.shared -->
     <module name="intellij.platform.vcs.core" loading="embedded"/>
     <module name="intellij.platform.vcs.shared" loading="embedded"/>
