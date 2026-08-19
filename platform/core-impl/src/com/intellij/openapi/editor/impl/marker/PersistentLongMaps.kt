@@ -90,14 +90,14 @@ internal class PersistentLongMap16<V : Any> private constructor(private val root
   private data class Removal(val branch: Branch?, val removed: Boolean)
 
   companion object {
-    private const val BITS = 4
-    private const val WIDTH = 1 shl BITS
-    private const val MASK = WIDTH - 1
-    private const val LEVELS = Long.SIZE_BITS / BITS
+    private const val BITS: Int = 4
+    private const val WIDTH: Int = 1 shl BITS
+    private const val MASK: Long = (WIDTH - 1).toLong()
+    private const val LEVELS: Int = Long.SIZE_BITS / BITS
 
     private fun index(key: Long, depth: Int): Int {
       val shift = (LEVELS - depth - 1) * BITS
-      return ((key ushr shift) and MASK.toLong()).toInt()
+      return ((key ushr shift) and MASK).toInt()
     }
 
     private fun <V : Any> put(branch: Branch?, key: Long, value: V, depth: Int): Branch {
@@ -322,9 +322,9 @@ internal class PersistentVector64<V : Any> private constructor(
   private data class NodeRemoval(val node: Node?, val removed: Boolean)
 
   companion object {
-    private const val BITS = 6
-    private const val WIDTH = 1 shl BITS
-    private const val MASK = WIDTH - 1
+    private const val BITS: Int = 6
+    private const val WIDTH: Int = 1 shl BITS
+    private const val MASK:Long = (WIDTH - 1).toLong()
 
     private fun requiredShift(index: Long): Int {
       if (index == 0L) return 0
@@ -332,7 +332,7 @@ internal class PersistentVector64<V : Any> private constructor(
       return highestBit / BITS * BITS
     }
 
-    private fun slot(index: Long, shift: Int): Int = ((index ushr shift) and MASK.toLong()).toInt()
+    private fun slot(index: Long, shift: Int): Int = ((index ushr shift) and MASK).toInt()
 
     private fun <V : Any> get(root: Node?, shift: Int, index: Long): V? {
       var node = root ?: return null
@@ -445,13 +445,13 @@ internal class PersistentPagedVector128<V : Any> private constructor(
     val index = requireNonNegativeKey(key)
     val page = pages[index ushr PAGE_BITS] ?: return null
     @Suppress("UNCHECKED_CAST")
-    return page.values[(index and PAGE_MASK.toLong()).toInt()] as V?
+    return page.values[(index and PAGE_MASK).toInt()] as V?
   }
 
   override fun put(key: Long, value: V): PersistentPagedVector128<V> {
     val index = requireNonNegativeKey(key)
     val pageKey = index ushr PAGE_BITS
-    val slot = (index and PAGE_MASK.toLong()).toInt()
+    val slot = (index and PAGE_MASK).toInt()
     val oldPage = pages[pageKey]
     val values = oldPage?.values?.copyOf() ?: arrayOfNulls(PAGE_SIZE)
     val newSize = (oldPage?.size ?: 0) + if (values[slot] == null) 1 else 0
@@ -462,7 +462,7 @@ internal class PersistentPagedVector128<V : Any> private constructor(
   override fun remove(key: Long): PersistentPagedVector128<V> {
     val index = requireNonNegativeKey(key)
     val pageKey = index ushr PAGE_BITS
-    val slot = (index and PAGE_MASK.toLong()).toInt()
+    val slot = (index and PAGE_MASK).toInt()
     val oldPage = pages[pageKey] ?: return this
     if (oldPage.values[slot] == null) return this
 
@@ -476,9 +476,9 @@ internal class PersistentPagedVector128<V : Any> private constructor(
   private class Page<V : Any>(val values: Array<Any?>, val size: Int)
 
   companion object {
-    private const val PAGE_BITS = 7
-    private const val PAGE_SIZE = 1 shl PAGE_BITS
-    private const val PAGE_MASK = PAGE_SIZE - 1
+    private const val PAGE_BITS: Int = 7
+    private const val PAGE_SIZE: Int = 1 shl PAGE_BITS
+    private const val PAGE_MASK: Long = (PAGE_SIZE - 1).toLong()
   }
 }
 
@@ -497,13 +497,13 @@ internal class PersistentPagedVector256<V : Any> private constructor(
     val index = requireNonNegativeKey(key)
     val page = pages[index ushr PAGE_BITS] ?: return null
     @Suppress("UNCHECKED_CAST")
-    return page.values[(index and PAGE_MASK.toLong()).toInt()] as V?
+    return page.values[(index and PAGE_MASK).toInt()] as V?
   }
 
   override fun put(key: Long, value: V): PersistentPagedVector256<V> {
     val index = requireNonNegativeKey(key)
     val pageKey = index ushr PAGE_BITS
-    val slot = (index and PAGE_MASK.toLong()).toInt()
+    val slot = (index and PAGE_MASK).toInt()
     val oldPage = pages[pageKey]
     val values = oldPage?.values?.copyOf() ?: arrayOfNulls(PAGE_SIZE)
     val newSize = (oldPage?.size ?: 0) + if (values[slot] == null) 1 else 0
@@ -514,7 +514,7 @@ internal class PersistentPagedVector256<V : Any> private constructor(
   override fun remove(key: Long): PersistentPagedVector256<V> {
     val index = requireNonNegativeKey(key)
     val pageKey = index ushr PAGE_BITS
-    val slot = (index and PAGE_MASK.toLong()).toInt()
+    val slot = (index and PAGE_MASK).toInt()
     val oldPage = pages[pageKey] ?: return this
     if (oldPage.values[slot] == null) return this
 
@@ -528,8 +528,8 @@ internal class PersistentPagedVector256<V : Any> private constructor(
   private class Page<V : Any>(val values: Array<Any?>, val size: Int)
 
   companion object {
-    private const val PAGE_BITS = 8
-    private const val PAGE_SIZE = 1 shl PAGE_BITS
-    private const val PAGE_MASK = PAGE_SIZE - 1
+    private const val PAGE_BITS: Int = 8
+    private const val PAGE_SIZE: Int = 1 shl PAGE_BITS
+    private const val PAGE_MASK: Long = (PAGE_SIZE - 1).toLong()
   }
 }
