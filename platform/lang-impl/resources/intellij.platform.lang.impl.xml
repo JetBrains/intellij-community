@@ -550,6 +550,13 @@
                  description="Prevents Project View from loading directory children eagerly for directories in remote file systems."/>
     <registryKey key="project.structure.source.roots.editable.limit" defaultValue="20"
                  description="Maximum number of source roots under a content root to be editable"/>
+    <registryKey key="ide.scanning.cancellation.monitor" defaultValue="true"
+                 restartRequired="true"
+                 description="Detect scanning threads that keep a read action after a write action asked them to stop, report them and cancel them"/>
+    <registryKey key="ide.scanning.cancellation.monitor.grace.ms" defaultValue="10000"
+                 description="How long a scanning thread may keep a read action after a write action became pending, in ms"/>
+    <registryKey key="ide.scanning.cancellation.monitor.max.reports" defaultValue="10"
+                 description="Maximum number of scanning cancellation reports per session. Use '-1' to keep reporting."/>
     <applicationService serviceImplementation="com.intellij.codeInsight.template.TemplateGroupOrderProvider" open="true"/>
     <appStarter id="intentions" implementation="com.intellij.help.impl.IntentionDump" internal="true"/>
     <appStarter id="inspections" implementation="com.intellij.help.impl.InspectionDump" internal="true"/>
@@ -589,6 +596,7 @@
     <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
     <postStartupActivity implementation="com.intellij.ide.actions.EssentialHighlightingNotifier"/>
     <applicationActivity implementation="com.intellij.codeInsight.editorActions.TypedHandlerPreloader"/>
+    <postStartupActivity implementation="com.intellij.openapi.roots.impl.ScanningCancellationMonitorStarter"/>
     <search.projectOptionsTopHitProvider implementation="com.intellij.ui.tabs.FileColorsOptionsTopHitProvider"/>
     <jbProtocolCommand implementation="com.intellij.navigation.JBProtocolNavigateCommand"/>
     <intentionAction>

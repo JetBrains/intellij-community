@@ -97,13 +97,29 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // threads which are running under canceled indicator
   private static final Set<Thread> threadsUnderCanceledIndicator = new HashSet<>(); // guarded by threadsUnderIndicator
 
-  @TestOnly
+  /**
+   * Whether {@code thread} is known to run under a canceled indicator, which is what makes
+   * {@link ProgressManager#checkCanceled()} throw on it. Intended for diagnostics: a thread that runs under a canceled
+   * indicator without being in this set cannot observe its own cancellation.
+   */
   @ApiStatus.Internal
   public static boolean hasThreadUnderCanceledIndicator(@NotNull Thread thread) {
-   return threadsUnderCanceledIndicator.contains(thread);
+    synchronized (threadsUnderIndicator) {
+      return threadsUnderCanceledIndicator.contains(thread);
+    }
   }
 
   private static volatile @NotNull CheckCanceledBehavior ourCheckCanceledBehavior = CheckCanceledBehavior.NONE;
+
+  /**
+   * The name of the currently effective {@link CheckCanceledBehavior}, for diagnostics. It explains what
+   * {@link ProgressManager#checkCanceled()} does right now: with {@code NONE} or {@code ONLY_HOOKS} it does not consult
+   * the thread's progress indicator at all, so a canceled indicator cannot make it throw.
+   */
+  @ApiStatus.Internal
+  public static @NotNull String getCheckCanceledBehaviorName() {
+    return ourCheckCanceledBehavior.name();
+  }
 
   private enum CheckCanceledBehavior {
     /**

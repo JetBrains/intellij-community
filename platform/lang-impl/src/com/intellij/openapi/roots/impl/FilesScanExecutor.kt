@@ -81,6 +81,8 @@ object FilesScanExecutor {
                                                          consumer: (T) -> Boolean,
                                                          retryCanceled: Boolean): Boolean {
     val application = ApplicationManager.getApplication() as ApplicationEx
+    // resolved once per scan, not per item, so the per-item cost stays at one map write
+    val scanningWorkTracker = ScanningWorkTracker.getInstance()
     return processOnAllThreads(deque) { o ->
       if (application.isReadAccessAllowed) {
         return@processOnAllThreads consumer(o)
@@ -88,13 +90,23 @@ object FilesScanExecutor {
 
       var result = true
       val indicator = ProgressIndicatorProvider.getGlobalProgressIndicator()
-      if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
-          { result = consumer(o) },
-          indicator?.let { SensitiveProgressWrapper(it) }
-        )) {
+
+      // `wrapper` is what a pending write action cancels to abort this read action, so `ScanningCancellationMonitor`
+      // needs it to tell whether that cancellation happened and to repair it if it did not take effect
+      val wrapper = indicator?.let { SensitiveProgressWrapper(it) }
+
+      val action = Runnable {
+        scanningWorkTracker.trackReadAction(wrapper) {
+          result = consumer(o)
+        }
+      }
+
+      if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action, wrapper)) {
         throw if (retryCanceled) ProcessCanceledException() else StopWorker()
       }
-      result
+      else {
+        return@processOnAllThreads result
+      }
     }
   }
 
