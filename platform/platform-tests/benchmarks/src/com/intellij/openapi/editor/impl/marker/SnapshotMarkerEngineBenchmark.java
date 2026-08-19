@@ -127,7 +127,7 @@ public class SnapshotMarkerEngineBenchmark {
    *
    * <p>This uses the same marker population and query workload as {@link #reportIntersecting2MQueries}, but creates
    * and retains real marker handles and enumerates them through the engine. The timed path therefore includes the
-   * marker-reference lookup and weak-reference dereference for every reported marker.</p>
+   * embedded weak-reference dereference and marker-handle materialization for every reported marker.</p>
    */
   @Benchmark
   public long enumerateIntersecting2MQueries(EngineIntersectionState state) {

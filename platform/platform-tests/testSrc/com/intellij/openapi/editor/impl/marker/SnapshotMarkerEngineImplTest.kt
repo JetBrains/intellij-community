@@ -364,14 +364,12 @@ class SnapshotMarkerEngineImplTest {
       spec = nonGreedySpec()
     )
     val markerId = marker.id
-    assertTrue(SnapshotMarkerEngineImpl.hasMarkerReference(markerId))
 
     assertTrue(fixture.document.removeRangeMarker(marker))
 
     val resolution = marker.resolve(fixture.initialSnapshot) as PMarkerResolution.Invalid
     assertEquals("Marker is disposed", resolution.reason)
     assertFalse(marker.isValid)
-    assertFalse(SnapshotMarkerEngineImpl.hasMarkerReference(markerId))
     assertEquals(0, countOverlappingMarkers(fixture.initialSnapshot, startOffset = 0, endOffset = 6))
     assertFalse(fixture.document.removeRangeMarker(marker))
   }
@@ -455,7 +453,6 @@ class SnapshotMarkerEngineImplTest {
     assertNull(weakMarker.reference.get())
 
     assertEquals(0, countOverlappingMarkers(fixture.initialSnapshot, startOffset = 0, endOffset = 6))
-    assertFalse(SnapshotMarkerEngineImpl.hasMarkerReference(weakMarker.markerId))
     assertFalse(currentRootContains(fixture, weakMarker.markerId))
   }
 
@@ -481,12 +478,11 @@ class SnapshotMarkerEngineImplTest {
     assertNull(weakMarker.reference.get())
     countOverlappingMarkers(fixture.document.core.snapshot(), startOffset = 0, endOffset = 2)
 
-    assertFalse(SnapshotMarkerEngineImpl.hasMarkerReference(weakMarker.markerId))
     assertFalse(currentRootContains(fixture, weakMarker.markerId))
   }
 
   @Test
-  fun `marker registry does not retain document`() {
+  fun `marker reference does not retain document`() {
     val documentReference = createWeakDocumentWithMarker()
 
     GCUtil.tryGcSoftlyReachableObjects { documentReference.get() == null }

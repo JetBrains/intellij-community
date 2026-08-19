@@ -9,6 +9,7 @@ import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.Java11Shim
 import org.jetbrains.annotations.TestOnly
+import java.lang.ref.WeakReference
 
 /**
  * Immutable persistent marker root backed by an AVL tree keyed by `(startOffset, markerId)`.
@@ -48,6 +49,7 @@ class PMarkerRootImpl private constructor(
     endOffset: Int,
     spec: MarkerSpec,
     flavorFlags: Byte,
+    markerReference: WeakReference<SnapshotRangeMarkerImpl>?,
   ): PMarkerRoot {
     require(startOffset >= 0) { "startOffset must be non-negative" }
     require(endOffset >= startOffset) { "endOffset must not precede startOffset" }
@@ -58,7 +60,7 @@ class PMarkerRootImpl private constructor(
     editor.putValid(
       markerId,
       ValidNode(
-        MarkerEntry(markerId, startOffset, endOffset, spec, flavorFlags),
+        MarkerEntry(markerId, startOffset, endOffset, spec, flavorFlags, markerReference),
         parentId = NULL_NODE,
         leftId = NULL_NODE,
         rightId = NULL_NODE,
@@ -92,13 +94,30 @@ class PMarkerRootImpl private constructor(
     return PMarkerRootImpl(rootId, editor.states)
   }
 
+  override fun updateSpec(markerId: Long, spec: MarkerSpec): PMarkerRoot {
+    val state = states[markerId] as? ValidNode ?: return this
+    return PMarkerRootImpl(
+      rootId,
+      states.put(markerId, state.copy(entry = state.entry.copy(spec = spec))),
+    )
+  }
+
+  override fun markerReference(markerId: Long): WeakReference<SnapshotRangeMarkerImpl>? {
+    return when (val state = states[markerId]) {
+      null -> null
+      is AbsentNode -> state.markerReference
+      is InvalidNode -> state.markerReference
+      is ValidNode -> state.entry.markerReference
+    }
+  }
+
   override fun remove(markerId: Long): PMarkerRoot {
     return when (val state = states[markerId]) {
       null -> this
       is AbsentNode -> this
       is InvalidNode -> PMarkerRootImpl(
         rootId,
-        states.put(markerId, AbsentNode(state.startOffset, state.endOffset))
+        states.put(markerId, AbsentNode(state.startOffset, state.endOffset, state.markerReference))
       )
       is ValidNode -> {
         val offsetDelta = ancestorDelta(state, markerId)
@@ -107,7 +126,7 @@ class PMarkerRootImpl private constructor(
         val key = PositionKey(startOffset, markerId)
         val editor = Editor(states)
         val newRoot = removeByKey(editor, rootId, key)
-        editor.putAbsent(markerId, startOffset, endOffset)
+        editor.putAbsent(markerId, startOffset, endOffset, state.entry.markerReference)
         editor.setParent(newRoot, NULL_NODE)
         PMarkerRootImpl(newRoot, editor.states)
       }
@@ -286,11 +305,13 @@ class PMarkerRootImpl private constructor(
     val reason: String,
     val startOffset: Int,
     val endOffset: Int,
+    val markerReference: WeakReference<SnapshotRangeMarkerImpl>?,
   ) : StoredNode
 
   private data class AbsentNode(
     val startOffset: Int,
     val endOffset: Int,
+    val markerReference: WeakReference<SnapshotRangeMarkerImpl>?,
   ) : StoredNode
 
   private data class PositionKey(val startOffset: Int, val markerId: Long) : Comparable<PositionKey> {
@@ -329,12 +350,17 @@ class PMarkerRootImpl private constructor(
     fun putInvalid(entry: MarkerEntry, reason: String) {
       states = states.put(
         entry.markerId,
-        InvalidNode(reason, entry.startOffset, entry.endOffset)
+        InvalidNode(reason, entry.startOffset, entry.endOffset, entry.markerReference)
       )
     }
 
-    fun putAbsent(markerId: Long, startOffset: Int, endOffset: Int) {
-      states = states.put(markerId, AbsentNode(startOffset, endOffset))
+    fun putAbsent(
+      markerId: Long,
+      startOffset: Int,
+      endOffset: Int,
+      markerReference: WeakReference<SnapshotRangeMarkerImpl>?,
+    ) {
+      states = states.put(markerId, AbsentNode(startOffset, endOffset, markerReference))
     }
 
     fun remove(markerId: Long) {
@@ -434,12 +460,9 @@ class PMarkerRootImpl private constructor(
       editor.putValid(
         nodeId,
         node.copy(
-          entry = MarkerEntry(
-            nodeId,
+          entry = node.entry.copy(
             startOffset = node.entry.startOffset + delta,
             endOffset = node.entry.endOffset + delta,
-            spec = node.entry.spec,
-            flavorFlags = node.entry.flavorFlags,
           ),
           maximumEndOffset = node.maximumEndOffset + delta,
           lazyOffsetDelta = node.lazyOffsetDelta + delta

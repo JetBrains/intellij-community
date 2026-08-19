@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.marker
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
+import java.lang.ref.WeakReference
 import java.util.function.LongConsumer
 
 /**
@@ -54,6 +55,7 @@ interface PMarkerRoot {
    * specific implementation-defined exception.
    *
    * [flavorFlags] is the value obtained from the marker's `RangeMarkerEx.getFlavorFlags()` method at insertion time.
+   * [markerReference] is the weak handle reference owned by the snapshot marker engine; standalone roots may omit it.
    */
   fun insert(
     markerId: Long,
@@ -61,10 +63,11 @@ interface PMarkerRoot {
     endOffset: Int,
     spec: MarkerSpec,
     flavorFlags: Byte,
+    markerReference: WeakReference<SnapshotRangeMarkerImpl>? = null,
   ): PMarkerRoot
 
   fun insert(markerId: Long, startOffset: Int, endOffset: Int, spec: MarkerSpec): PMarkerRoot =
-    insert(markerId, startOffset, endOffset, spec, flavorFlags = 0)
+    insert(markerId, startOffset, endOffset, spec, flavorFlags = 0, markerReference = null)
 
   /**
    * Replaces the flavor flags of a valid marker, preserving its range and specification.
@@ -72,6 +75,20 @@ interface PMarkerRoot {
    * If [markerId] is absent or invalid, this method returns the receiver unchanged.
    */
   fun updateFlavor(markerId: Long, flavorFlags: Byte): PMarkerRoot
+
+  /**
+   * Replaces the specification of a valid marker, preserving its range, flavor flags, and handle reference.
+   *
+   * If [markerId] is absent or invalid, this method returns the receiver unchanged.
+   */
+  fun updateSpec(markerId: Long, spec: MarkerSpec): PMarkerRoot
+
+  /**
+   * Returns the weak handle reference retained by any state of [markerId].
+   *
+   * Standalone roots and roots that have never observed [markerId] return `null`.
+   */
+  fun markerReference(markerId: Long): WeakReference<SnapshotRangeMarkerImpl>?
 
   /**
    * Removes the marker's endpoint anchors and secondary-index entries, retaining an absent tombstone with its last
@@ -98,6 +115,7 @@ interface PMarkerRoot {
     val endOffset: Int,
     val spec: MarkerSpec,
     val flavorFlags: Byte,
+    val markerReference: WeakReference<SnapshotRangeMarkerImpl>? = null,
   )
 
   /**
