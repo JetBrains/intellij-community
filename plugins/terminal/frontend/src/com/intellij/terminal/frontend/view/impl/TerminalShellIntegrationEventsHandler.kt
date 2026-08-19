@@ -1,7 +1,7 @@
 package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.asDisposable
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -14,12 +14,14 @@ import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.session.guessShellName
 import org.jetbrains.plugins.terminal.session.impl.TerminalAliasesReceivedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCommandFinishedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCommandHistoryPathReceivedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCommandStartedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCompletionFinishedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalInitialStateEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalPromptFinishedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalPromptStartedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.toState
 import org.jetbrains.plugins.terminal.util.getNow
@@ -30,6 +32,7 @@ internal class TerminalShellIntegrationEventsHandler(
   private val outputModelController: TerminalOutputModelController,
   private val sessionModel: TerminalSessionModel,
   private val shellIntegrationDeferred: CompletableDeferred<TerminalShellIntegration>,
+  private val sessionDeferred: Deferred<TerminalSession>,
   private val startupOptionsDeferred: Deferred<TerminalStartupOptions>,
   private val coroutineScope: CoroutineScope,
 ) : TerminalOutputEventsHandler {
@@ -86,6 +89,9 @@ internal class TerminalShellIntegrationEventsHandler(
       is TerminalCompletionFinishedEvent -> {
         getIntegrationOrThrow().onCompletionFinished(event.result)
       }
+      is TerminalCommandHistoryPathReceivedEvent -> {
+        getIntegrationOrThrow().onCommandHistoryFilePathReceived(event.path)
+      }
       else -> {
         // do nothing
       }
@@ -93,10 +99,14 @@ internal class TerminalShellIntegrationEventsHandler(
   }
 
   private fun initShellIntegration() {
+    val startupOptions = startupOptionsDeferred.getNow() ?: error("Startup options are null but should be already initialized at this point")
+    val session = sessionDeferred.getNow() ?: error("Terminal session is null but should be already initialized at this point")
     val integration = TerminalShellIntegrationImpl(
       outputModelController.model,
       sessionModel,
-      coroutineScope.asDisposable()
+      coroutineScope.childScope("TerminalShellIntegration"),
+      session.eelDescriptor,
+      startupOptions.guessShellName(),
     )
     shellIntegrationDeferred.complete(integration)
   }

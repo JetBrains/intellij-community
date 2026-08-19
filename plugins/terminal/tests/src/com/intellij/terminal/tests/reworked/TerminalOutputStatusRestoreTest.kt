@@ -1,10 +1,16 @@
 package com.intellij.terminal.tests.reworked
 
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.RuleChain
+import com.intellij.util.cancelOnDispose
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.job
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
+import org.jetbrains.plugins.terminal.session.ShellName
 import org.jetbrains.plugins.terminal.session.impl.TerminalBlocksModelState
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockIdImpl
@@ -17,6 +23,9 @@ import org.junit.Test
 
 internal class TerminalOutputStatusRestoreTest {
   private val disposableRule = DisposableRule()
+  private val coroutineScope = CoroutineScope(SupervisorJob()).apply {
+    coroutineContext.job.cancelOnDispose(disposableRule.disposable)
+  }
 
   @Rule
   @JvmField
@@ -93,6 +102,6 @@ internal class TerminalOutputStatusRestoreTest {
   private fun createShellIntegration(): TerminalShellIntegrationImpl {
     val outputModel = TerminalTestUtil.createOutputModel()
     val sessionModel = TerminalSessionModelImpl()
-    return TerminalShellIntegrationImpl(outputModel, sessionModel, disposableRule.disposable)
+    return TerminalShellIntegrationImpl(outputModel, sessionModel, coroutineScope, LocalEelDescriptor, ShellName.of("unknown"))
   }
 }

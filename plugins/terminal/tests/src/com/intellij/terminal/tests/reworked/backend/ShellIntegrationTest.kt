@@ -27,6 +27,7 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.TerminalAliasesReceivedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCommandFinishedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCommandHistoryPathReceivedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCommandStartedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalInitialStateEvent
@@ -78,6 +79,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
+      TerminalCommandHistoryPathReceivedEvent::class,
       TerminalAliasesReceivedEvent::class,
       TerminalPromptStartedEvent::class,
       TerminalPromptFinishedEvent::class,
@@ -100,6 +102,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
+      TerminalCommandHistoryPathReceivedEvent::class,
       TerminalAliasesReceivedEvent::class,
       TerminalPromptStartedEvent::class,
       TerminalPromptFinishedEvent::class,
@@ -131,6 +134,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
+      TerminalCommandHistoryPathReceivedEvent::class,
       TerminalAliasesReceivedEvent::class,
       TerminalPromptStartedEvent::class,
       TerminalPromptFinishedEvent::class,
@@ -166,6 +170,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
+      TerminalCommandHistoryPathReceivedEvent::class,
       TerminalAliasesReceivedEvent::class,
       // Initialization
       TerminalPromptStartedEvent::class,
@@ -192,6 +197,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
+      TerminalCommandHistoryPathReceivedEvent::class,
       TerminalAliasesReceivedEvent::class,
       TerminalPromptStartedEvent::class,
       TerminalPromptFinishedEvent::class,

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.view.shellIntegration
 
 import com.intellij.openapi.Disposable
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 
@@ -41,6 +42,16 @@ interface TerminalShellIntegration {
    * Can be empty at the very start after shell integration is initialized, but aliases are not reported yet.
    */
   val commandAliases: Map<String, String>
+
+  /**
+   * Commands from the shell history file, followed by commands executed during the current session.
+   *
+   * Returns an empty list until history initialization completes. Commands received before initialization produces
+   * either the loaded file history or an empty fallback are not retained. After that, commands started in the current
+   * session are appended to the same history.
+   */
+  @RequiresEdt
+  fun commandHistory(): List<String>
 
   /**
    * Allows listening for command start and finish events.
