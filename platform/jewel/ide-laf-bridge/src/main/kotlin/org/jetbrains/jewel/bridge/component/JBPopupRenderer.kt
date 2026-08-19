@@ -71,6 +71,30 @@ internal object JBPopupRenderer : PopupRenderer {
         cornerSize: CornerSize,
         content: @Composable () -> Unit,
     ) {
+        Popup(
+            popupPositionProvider = popupPositionProvider,
+            properties = properties,
+            onDismissRequest = onDismissRequest,
+            onPreviewKeyEvent = onPreviewKeyEvent,
+            onKeyEvent = onKeyEvent,
+            cornerSize = cornerSize,
+            windowShape = null,
+            content = content,
+        )
+    }
+
+    @Composable
+    override fun Popup(
+        popupPositionProvider: PopupPositionProvider,
+        properties: PopupProperties,
+        onDismissRequest: (() -> Unit)?,
+        onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
+        onKeyEvent: ((KeyEvent) -> Boolean)?,
+        cornerSize: CornerSize,
+        windowShape: ((IntSize) -> java.awt.Shape)?,
+        content: @Composable () -> Unit,
+    ) {
+        // JBPopup does not expose native window shaping, so windowShape is ignored.
         JBPopup(
             popupPositionProvider = popupPositionProvider,
             onDismissRequest = onDismissRequest,

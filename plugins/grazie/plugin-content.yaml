@@ -99,6 +99,10 @@
       - name: $MAVEN_REPOSITORY$/org/json/json/20240205/json-20240205.jar
       ai.grazie.model.ner.jvm:
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0/model-ner-jvm-0.jar
+      cloud.jetbrains.sdk.ml.jbai.tree.api:
+      - name: $MAVEN_REPOSITORY$/cloud/jetbrains/sdk/ml/jbai-tree-api/2/jbai-tree-api-2.jar
+      cloud.jetbrains.sdk.ml.jbai.ner.api:
+      - name: $MAVEN_REPOSITORY$/cloud/jetbrains/sdk/ml/jbai-ner-api/0/jbai-ner-api-0.jar
 - name: lib/intellij.libraries.ai.grazie.spell.gec.engine.local.jar
   contentModules:
   - name: intellij.libraries.ai.grazie.spell.gec.engine.local

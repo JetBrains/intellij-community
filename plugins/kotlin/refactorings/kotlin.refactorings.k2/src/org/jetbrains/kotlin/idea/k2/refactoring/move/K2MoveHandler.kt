@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move
 
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -16,11 +15,10 @@ import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.MoveHandlerDelegate
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.canMove
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveDialog
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
 import org.jetbrains.kotlin.psi.KtConstructor
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import java.lang.Boolean.getBoolean
@@ -29,13 +27,7 @@ class K2MoveHandler : MoveHandlerDelegate() {
     override fun supportsLanguage(language: Language): Boolean = language == KotlinLanguage.INSTANCE
 
     override fun canMove(elements: Array<out PsiElement>, targetContainer: PsiElement?, reference: PsiReference?): Boolean {
-        if (elements.any { it !is KtElement && it !is PsiFile && it !is PsiClass && it !is PsiDirectory }) return false
-        if (elements.none { it is KtElement }) return false // only handle the refactoring if it includes Kotlin elements
-        (elements.firstOrNull()?.containingFile as? KtFile)?.let { if (!KotlinSupportAvailability.isSupported(it)) return false }
-
-        // We allow declarations to be moved into non-source roots here,
-        // but in this case they will be moved as files rather than individual declarations.
-        return true
+        return canMove(elements)
     }
 
     override fun tryToMove(

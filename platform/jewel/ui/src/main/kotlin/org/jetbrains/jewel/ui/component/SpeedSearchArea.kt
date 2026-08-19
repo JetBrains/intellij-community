@@ -126,7 +126,8 @@ public fun SpeedSearchArea(
  * @param textStyle The text style for the search input text.
  * @param searchMatchStyle The styling for highlighting matched text in search results.
  * @param interactionSource The interaction source for tracking focus state. If null, a new one will be created.
- * @param dismissOnLoseFocus Whether to automatically hide the search input when it loses focus. Defaults to true.
+ * @param dismissOnLoseFocus Whether focus loss or renderer-level outside dismissal hides the search input. Escape
+ *   behavior is defined by the content's [SpeedSearchScope.processKeyEvent] implementation. Defaults to true.
  * @param content The content to be displayed within the speed search area. Use [SpeedSearchScope] to access search
  *   state and process key events.
  */
@@ -171,7 +172,8 @@ public fun SpeedSearchArea(
  * @param textStyle The text style for the search input text.
  * @param searchMatchStyle The styling for highlighting matched text in search results.
  * @param interactionSource The interaction source for tracking focus state. If null, a new one will be created.
- * @param dismissOnLoseFocus Whether to automatically hide the search input when it loses focus. Defaults to true.
+ * @param dismissOnLoseFocus Whether focus loss or renderer-level outside dismissal hides the search input. Escape
+ *   behavior is defined by the content's [SpeedSearchScope.processKeyEvent] implementation. Defaults to true.
  * @param content The content to be displayed within the speed search area. Use [SpeedSearchScope] to access search
  *   state and process key events.
  */
@@ -204,9 +206,11 @@ public fun SpeedSearchArea(
 
         if (state.isVisible) {
             SpeedSearchInput(
+                speedSearchState = state,
                 state = state.textFieldState,
                 hasMatch = state.hasMatches,
                 position = state.position,
+                dismissOnLoseFocus = dismissOnLoseFocus,
                 styling = styling,
                 textStyle = textStyle,
                 textFieldStyle = textFieldStyle,
@@ -404,9 +408,11 @@ public fun ProvideSearchMatchState(
 
 @Composable
 private fun SpeedSearchInput(
+    speedSearchState: SpeedSearchState,
     state: TextFieldState,
     hasMatch: Boolean,
     position: Alignment.Vertical,
+    dismissOnLoseFocus: Boolean,
     styling: SpeedSearchStyle,
     textStyle: TextStyle,
     textFieldStyle: TextFieldStyle,
@@ -421,7 +427,10 @@ private fun SpeedSearchInput(
             }
         }
 
-    Popup(popupPositionProvider = rememberComponentRectPositionProvider(anchor, alignment)) {
+    Popup(
+        popupPositionProvider = rememberComponentRectPositionProvider(anchor, alignment),
+        onDismissRequest = if (dismissOnLoseFocus) ({ speedSearchState.hideSearch() }) else null,
+    ) {
         val focusRequester = remember { FocusRequester() }
 
         BasicTextField(

@@ -7,13 +7,19 @@ import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentSputnik
 import com.intellij.openapi.editor.ex.DocumentSputniks
 import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.impl.marker.PMarkerRoot
+import com.intellij.openapi.editor.impl.marker.PMarkerRootImpl
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.util.Key
+import java.util.concurrent.atomic.AtomicReference
 
 internal class DocumentSnapshotImpl private constructor(
   private val text: DocumentText,
   private val modState: DocumentModState,
   private val sputniks: DocumentSputniks,
 ) : DocumentSnapshot {
+
+  internal val markerRoot: AtomicReference<PMarkerRoot> = AtomicReference(PMarkerRootImpl.empty())
 
   constructor(text: DocumentText) : this(
     text = text,
@@ -54,12 +60,18 @@ internal class DocumentSnapshotImpl private constructor(
     } else {
       DocumentSnapshotImpl(newText, newModState, sputniks)
     }
-    if (sputniks === DocumentSputniksImpl.EMPTY && !canAffectSputniks) {
-      return newSnapshot
+    val after = if (sputniks === DocumentSputniksImpl.EMPTY && !canAffectSputniks) {
+      newSnapshot
     }
-    return sputniks.applyOp(oldSnapshot, newSnapshot, op) { newSputniks ->
-      DocumentSnapshotImpl(newText, newModState, newSputniks)
+    else {
+      sputniks.applyOp(oldSnapshot, newSnapshot, op) { newSputniks ->
+        DocumentSnapshotImpl(newText, newModState, newSputniks)
+      }
     }
+    if (after !== this) {
+      SnapshotMarkerEngineImpl.applyEdit(this, after, op)
+    }
+    return after
   }
 
   override fun dumpState(): String {

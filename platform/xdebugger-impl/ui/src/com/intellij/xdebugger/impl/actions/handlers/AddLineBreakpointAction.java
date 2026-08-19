@@ -33,8 +33,7 @@ import java.awt.Point;
 /**
  * @author Konstantin Bulenkov
  */
-@ApiStatus.Internal
-public class AddLineBreakpointAction extends DumbAwareAction implements SplitDebuggerAction {
+class AddLineBreakpointAction extends DumbAwareAction implements SplitDebuggerAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
@@ -47,7 +46,7 @@ public class AddLineBreakpointAction extends DumbAwareAction implements SplitDeb
     XExpression selectedExpression = selection == null
                                      ? null
                                      : XExpressionImpl.fromTextAndLanguage(selection, LanguageUtil.getFileLanguage(position.getFile()));
-    XBreakpointUIUtil.toggleLineBreakpointProxy(project, position, false, editor, false, false, true)
+    XBreakpointUIUtil.toggleLineBreakpointAsync(project, position, false, editor, false, false, true)
       .thenAccept(bp -> {
         if (bp != null && editBreakpointSettings(bp, selectedExpression)) {
           ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {

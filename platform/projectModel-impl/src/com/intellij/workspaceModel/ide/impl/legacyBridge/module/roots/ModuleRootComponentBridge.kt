@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.Disposable
@@ -24,7 +24,8 @@ import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntityIfNotDisposedLegacy
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.moduleEntityNotResolved
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
@@ -41,9 +42,14 @@ class ModuleRootComponentBridge(
 
   private val orderRootsCache = OrderRootsCacheBridge(currentModule.project, currentModule)
 
+  /**
+   * @throws com.intellij.serviceContainer.AlreadyDisposedException see [moduleEntityNotResolved]: a root model without an entity reports no
+   * content roots and no dependencies, which is indistinguishable from a module which really has none
+   */
   private val modelValue = VersionedCache<RootModelBridgeImpl> {
+    val storage = moduleBridge.entityStorage.current
     RootModelBridgeImpl(
-      moduleEntity = moduleBridge.findModuleEntity(moduleBridge.entityStorage.current),
+      moduleEntity = moduleBridge.findModuleEntityIfNotDisposedLegacy(storage),
       storage = moduleBridge.entityStorage,
       itemUpdater = null,
       // TODO

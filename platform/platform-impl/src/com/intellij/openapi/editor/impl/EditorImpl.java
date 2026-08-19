@@ -823,6 +823,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         case EditorState.verticalScrollBarOrientationPropertyName -> verticalScrollBarOrientationChanged(event);
         case EditorState.isStickySelectionPropertyName -> isStickySelectionChanged(event);
         case EditorState.myBorderPropertyName -> borderChanged();
+        case EditorState.myPlaceholderTextPropertyName,
+             EditorState.myPlaceholderAttributesPropertyName,
+             EditorState.myShowPlaceholderWhenFocusedPropertyName -> myEditorComponent.repaint();
       }
     }, myDisposable);
 

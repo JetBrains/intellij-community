@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal">
+<idea-plugin visibility="internal" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.aalto.xml"/>
@@ -15,6 +15,7 @@
     <module name="intellij.platform.util.diff"/>
   </dependencies>
   <!-- endregion -->
+  <xi:include href="/META-INF/CoreImpl.analyzer.xml"/>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.cachedValuesFactory" interface="com.intellij.util.CachedValuesFactory" area="IDEA_PROJECT" dynamic="false"/>
     <extensionPoint qualifiedName="com.intellij.persistentFsConnectionListener" interface="com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener" dynamic="false"/>
@@ -25,6 +26,24 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.TargetElementEvaluator"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.treeGenerator" interface="com.intellij.psi.impl.source.tree.TreeGenerator" dynamic="true"/>
+    <extensionPoint name="fileEditor.textPresentationTransformer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.vfs.transformer.TextPresentationTransformer"/>
+    </extensionPoint>
+
+    <extensionPoint name="fileEditor.fileSizeChecker"
+                    interface="com.intellij.openapi.vfs.limits.FileSizeLimit"
+                    dynamic="true"/>
+    <extensionPoint name="psi.batchReferenceProcessingSuppressor"
+                    interface="com.intellij.psi.impl.PsiFileEx$BatchReferenceProcessingSuppressor"
+                    dynamic="true"/>
+    <extensionPoint name="controlFlowProvider" interface="com.intellij.codeInsight.controlflow.ControlFlowProvider" dynamic="true"/>
+    <extensionPoint name="lang.tokenSeparatorGenerator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.TokenSeparatorGenerator"/>
+    </extensionPoint>
+    <extensionPoint name="documentWriteAccessGuard" interface="com.intellij.openapi.editor.impl.DocumentWriteAccessGuard" dynamic="true"/>
+    <extensionPoint name="diagnostic.freezeProfiler" interface="com.intellij.diagnostic.FreezeProfiler" dynamic="true"/>
+    <extensionPoint name="inlineCompletionLineRendererCustomization"
+                    interface="com.intellij.codeInsight.inline.completion.render.InlineCompletionInlayRenderer" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.psi.util.PsiVersioningService"
@@ -45,5 +64,17 @@
                         serviceImplementation="com.intellij.lang.DefaultASTFactoryImpl"/>
     <lang.parserDefinition language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextParserDefinition"/>
     <lang.ast.factory language="TEXT" implementationClass="com.intellij.psi.impl.source.tree.PlainTextASTFactory"/>
+    <projectService serviceInterface="com.intellij.psi.PsiManager"
+                    serviceImplementation="com.intellij.psi.impl.PsiManagerImpl" preload="true"/>
+    <projectService serviceInterface="com.intellij.psi.SmartPointerManager"
+                    serviceImplementation="com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl"/>
+    <projectService serviceInterface="com.intellij.psi.util.CachedValuesManager"
+                    serviceImplementation="com.intellij.util.CachedValuesManagerImpl"/>
+    <projectService serviceInterface="com.intellij.util.CachedValuesFactory"
+                    serviceImplementation="com.intellij.psi.impl.PsiCachedValuesFactory"/>
+    <applicationService serviceInterface="com.intellij.psi.stubs.StubElementRegistryService"
+                        serviceImplementation="com.intellij.psi.stubs.StubElementRegistryServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.source.tree.mvcc.PsiVersioningGarbageCollector"
+                        serviceImplementation="com.intellij.psi.impl.AsyncPsiVersioningGarbageCollector"/>
   </extensions>
 </idea-plugin>

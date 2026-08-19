@@ -40,6 +40,7 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
     <module name="intellij.platform.lvcs"/>
     <module name="intellij.platform.macro"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.testRunner"/>
     <module name="intellij.platform.util.ui"/>

@@ -70,6 +70,7 @@ class MergeConflictIterativeDataHolder(
         }
       }
     }
+    removedModels.forEach(Disposer::dispose)
   }
 
   suspend fun prepareModelIfSupported(file: VirtualFile, request: MergeRequest): MergeConflictModel? =

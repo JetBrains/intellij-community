@@ -284,6 +284,7 @@ object CoreModuleSets {
 
     embeddedModule("intellij.platform.projectModel")
     embeddedModule("intellij.platform.projectModel.impl")
+    embeddedModule("intellij.platform.workspace.jps")
 
     // Analysis modules needed by core platform modules
     embeddedModule("intellij.platform.analysis")
@@ -385,6 +386,8 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.experiment")
     embeddedModule("intellij.platform.project")
     embeddedModule("intellij.platform.ide.progress")
+    embeddedModule("intellij.platform.codeStyle.impl")
+    embeddedModule("intellij.platform.refactoring")
     embeddedModule("intellij.platform.ide.impl")
     // keeps marketplace-zip-signer out of the core classloader - loaded only when a plugin signature is verified
     module("intellij.platform.ide.pluginSignatureVerifier")

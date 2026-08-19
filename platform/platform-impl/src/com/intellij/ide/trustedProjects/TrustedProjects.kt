@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects
 
 import com.intellij.ide.impl.TrustedPaths
@@ -13,11 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 object TrustedProjects {
-
   @JvmStatic
-  fun isProjectTrusted(project: Project): Boolean {
-    return isProjectTrusted(TrustedProjectsLocator.locateProject(project))
-  }
+  fun isProjectTrusted(project: Project): Boolean = isProjectTrusted(TrustedProjectsLocator.locateProject(project))
 
   @JvmStatic
   fun setProjectTrusted(project: Project, isTrusted: Boolean) {
@@ -25,14 +22,10 @@ object TrustedProjects {
   }
 
   @ApiStatus.Internal
-  fun getProjectTrustedState(project: Project): ThreeState {
-    return getProjectTrustedState(TrustedProjectsLocator.locateProject(project))
-  }
+  fun getProjectTrustedState(project: Project): ThreeState = getProjectTrustedState(TrustedProjectsLocator.locateProject(project))
 
   @JvmStatic
-  fun isProjectTrusted(path: Path): Boolean {
-    return isProjectTrusted(path, project = null)
-  }
+  fun isProjectTrusted(path: Path): Boolean = isProjectTrusted(path, project = null)
 
   @JvmStatic
   fun setProjectTrusted(path: Path, isTrusted: Boolean) {
@@ -40,14 +33,10 @@ object TrustedProjects {
   }
 
   @ApiStatus.Internal
-  fun getProjectTrustedState(path: Path): ThreeState {
-    return getProjectTrustedState(path, project = null)
-  }
+  fun getProjectTrustedState(path: Path): ThreeState = getProjectTrustedState(path, project = null)
 
   @JvmStatic
-  fun isProjectTrusted(path: Path, project: Project?): Boolean {
-    return isProjectTrusted(TrustedProjectsLocator.locateProject(path, project))
-  }
+  fun isProjectTrusted(path: Path, project: Project?): Boolean = isProjectTrusted(TrustedProjectsLocator.locateProject(path, project))
 
   @JvmStatic
   fun setProjectTrusted(path: Path, project: Project?, isTrusted: Boolean) {
@@ -55,14 +44,10 @@ object TrustedProjects {
   }
 
   @ApiStatus.Internal
-  fun getProjectTrustedState(path: Path, project: Project?): ThreeState {
-    return getProjectTrustedState(TrustedProjectsLocator.locateProject(path, project))
-  }
+  fun getProjectTrustedState(path: Path, project: Project?): ThreeState = getProjectTrustedState(TrustedProjectsLocator.locateProject(path, project))
 
   @ApiStatus.Internal
-  fun isProjectTrusted(locatedProject: LocatedProject): Boolean {
-    return getProjectTrustedState(locatedProject) == ThreeState.YES
-  }
+  fun isProjectTrusted(locatedProject: LocatedProject): Boolean = getProjectTrustedState(locatedProject) == ThreeState.YES
 
   @ApiStatus.Internal
   fun getProjectTrustedState(locatedProject: LocatedProject): ThreeState {
@@ -101,20 +86,12 @@ object TrustedProjects {
    */
   @ApiStatus.Internal
   fun isTrustedCheckDisabled(): Boolean {
-    if (java.lang.Boolean.getBoolean("idea.trust.all.projects")) {
+    if (System.getProperty("idea.trust.all.projects").toBoolean()) {
       return true
     }
     val isHeadlessMode = application.isUnitTestMode || application.isHeadlessEnvironment
-    if (isHeadlessMode && System.getProperty("idea.trust.headless.disabled", "true").toBoolean()) {
-      return true
-    }
-    return false
+    return isHeadlessMode && System.getProperty("idea.trust.headless.disabled", "true").toBoolean()
   }
 
-  private fun isTrustedCheckDisabledForProduct(): Boolean {
-    if (java.lang.Boolean.getBoolean("idea.trust.disabled")) {
-      return true
-    }
-    return isTrustedCheckDisabled()
-  }
+  private fun isTrustedCheckDisabledForProduct(): Boolean = System.getProperty("idea.trust.disabled").toBoolean() || isTrustedCheckDisabled()
 }

@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal" package="com.intellij.settingsSync.core">
+<idea-plugin visibility="public" package="com.intellij.settingsSync.core">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="Git4Idea"/>
@@ -33,6 +33,7 @@
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.log"/>
     <module name="intellij.platform.vcs.log.impl"/>
+    <module name="intellij.platform.workspace.jps"/>
     <module name="intellij.vcs.git.backend"/>
   </dependencies>
   <!-- endregion -->

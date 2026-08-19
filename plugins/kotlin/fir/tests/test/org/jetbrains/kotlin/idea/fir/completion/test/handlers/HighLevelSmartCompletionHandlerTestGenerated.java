@@ -296,6 +296,21 @@ public abstract class HighLevelSmartCompletionHandlerTestGenerated extends Abstr
             runTest("../../completion/testData/handlers/smart/AnonymousObjectWhen.kt");
         }
 
+        @TestMetadata("ArrayAccessTrailingComma.kt")
+        public void testArrayAccessTrailingComma() throws Exception {
+            runTest("../../completion/testData/handlers/smart/ArrayAccessTrailingComma.kt");
+        }
+
+        @TestMetadata("ArrayAccessTrailingComma2.kt")
+        public void testArrayAccessTrailingComma2() throws Exception {
+            runTest("../../completion/testData/handlers/smart/ArrayAccessTrailingComma2.kt");
+        }
+
+        @TestMetadata("ArrayAccessTrailingComma3.kt")
+        public void testArrayAccessTrailingComma3() throws Exception {
+            runTest("../../completion/testData/handlers/smart/ArrayAccessTrailingComma3.kt");
+        }
+
         @TestMetadata("ArrayClassLiteral.kt")
         public void testArrayClassLiteral() throws Exception {
             runTest("../../completion/testData/handlers/smart/ArrayClassLiteral.kt");
@@ -574,6 +589,26 @@ public abstract class HighLevelSmartCompletionHandlerTestGenerated extends Abstr
         @TestMetadata("ForLoopRange2.kt")
         public void testForLoopRange2() throws Exception {
             runTest("../../completion/testData/handlers/smart/ForLoopRange2.kt");
+        }
+
+        @TestMetadata("FunParametersTrailingComma.kt")
+        public void testFunParametersTrailingComma() throws Exception {
+            runTest("../../completion/testData/handlers/smart/FunParametersTrailingComma.kt");
+        }
+
+        @TestMetadata("FunParametersTrailingCommaPositional.kt")
+        public void testFunParametersTrailingCommaPositional() throws Exception {
+            runTest("../../completion/testData/handlers/smart/FunParametersTrailingCommaPositional.kt");
+        }
+
+        @TestMetadata("FunParametersTrailingCommaWithComment.kt")
+        public void testFunParametersTrailingCommaWithComment() throws Exception {
+            runTest("../../completion/testData/handlers/smart/FunParametersTrailingCommaWithComment.kt");
+        }
+
+        @TestMetadata("FunParametersTrailingCommaWithComment3.kt")
+        public void testFunParametersTrailingCommaWithComment3() throws Exception {
+            runTest("../../completion/testData/handlers/smart/FunParametersTrailingCommaWithComment3.kt");
         }
 
         @TestMetadata("FunctionLiteralParamAlreadyExist.kt")

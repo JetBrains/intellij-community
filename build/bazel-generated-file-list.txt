@@ -365,6 +365,7 @@ jps/model-test-framework
 jps/standalone-builder
 json
 json/backend
+json/backend/performanceTests
 json/backend/regexp
 json/backend/tests
 json/networknt.wrapper
@@ -601,6 +602,7 @@ libraries/rd/framework
 libraries/rd/swing
 libraries/rd/text
 libraries/rhino
+libraries/schema-kenerator
 libraries/search-everywhere-find-all-model
 libraries/search-everywhere-find-ec-model
 libraries/semver

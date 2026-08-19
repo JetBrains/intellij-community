@@ -28,6 +28,7 @@ kmp_extension.configure(
         "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/firework/dev",
         "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/grazie-platform",
         "https://cache-redirector.jetbrains.com/repo.gradle.org/gradle/libs-releases",
+        "https://cache-redirector.jetbrains.com/jcp-github-mirror-public",
         "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/jcp-github",
         "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kt/bootstrap",
         "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kt/experimental",

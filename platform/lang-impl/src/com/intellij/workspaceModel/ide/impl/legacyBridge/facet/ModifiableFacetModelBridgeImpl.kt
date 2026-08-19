@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.intellij.facet.Facet
@@ -33,21 +33,25 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntityIfNotDisposedLegacy
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import org.jetbrains.annotations.TestOnly
 
-class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
-                                     private val diff: MutableEntityStorage,
-                                     private val moduleBridge: ModuleBridge,
-                                     private val facetManager: FacetManagerBridge)
-  : FacetModelBase(), ModifiableFacetModelBridge {
+class ModifiableFacetModelBridgeImpl(
+  private val initialStorage: EntityStorage,
+  private val diff: MutableEntityStorage,
+  private val moduleBridge: ModuleBridge,
+  private val facetManager: FacetManagerBridge,
+) : FacetModelBase(), ModifiableFacetModelBridge {
   private val listeners: MutableList<ModifiableFacetModel.Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
+  /**
+   * @throws com.intellij.serviceContainer.AlreadyDisposedException see [moduleEntityNotResolved]
+   */
   private val moduleEntity: ModuleEntity
-    get() = moduleBridge.findModuleEntity(diff) ?: error("Cannot find module entity for '$moduleBridge'")
+    get() = moduleBridge.findModuleEntityIfNotDisposedLegacy(diff)
 
   override fun addFacet(facet: Facet<*>) {
     addFacet(facet, null)
@@ -68,7 +72,8 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
     }
     if (facet is FacetBridge<*, *>) {
       facet.addToStorage(diff, moduleEntity, source)
-    } else {
+    }
+    else {
       val facetConfigurationXml = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
       val underlyingEntity = facet.underlyingFacet?.let { diff.facetMapping().getEntities(it).single() as FacetEntity }
       val facetTypeId = if (facet !is InvalidFacet) facet.type.stringId else facet.configuration.facetState.facetType
@@ -103,7 +108,8 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
     if (facet == null) return
     if (facet is FacetBridge<*, *>) {
       facet.removeFromStorage(diff)
-    } else {
+    }
+    else {
       val facetEntity = diff.facetMapping().getEntities(facet).singleOrNull() as? FacetEntity ?: return
       removeFacetEntityWithSubFacets(facetEntity)
     }
@@ -128,7 +134,8 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   override fun rename(facet: Facet<*>, newName: String) {
     if (facet is FacetBridge<*, *>) {
       facet.rename(diff, newName)
-    } else {
+    }
+    else {
       val entity = diff.facetMapping().getEntities(facet).single() as FacetEntity
       val newEntity = diff.modifyFacetEntity(entity) {
         this.name = newName
@@ -176,10 +183,10 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
       mutableFacetMapping(diff).addMapping(newEntity, facet)
     }
     val (facetBridges, commonFacets) = allFacets.partition { it is FacetBridge<*, *> }
-      facetBridges.forEach { facet ->
-        facet as FacetBridge<*, *>
-        facet.updateInStorage(diff)
-      }
+    facetBridges.forEach { facet ->
+      facet as FacetBridge<*, *>
+      facet.updateInStorage(diff)
+    }
     for (facet in commonFacets) {
       for (facetEntity in mapping.getEntities(facet)) {
         // Update external system of existing facets
@@ -199,8 +206,10 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
    * This method returns an updated entity source to have the same external source as [facetExternalSource]
    * It'll return null if no update is required
    */
-  private fun getUpdatedEntitySource(facetExternalSource: ProjectModelExternalSource?,
-                                     facetEntity: FacetEntity): EntitySource? {
+  private fun getUpdatedEntitySource(
+    facetExternalSource: ProjectModelExternalSource?,
+    facetEntity: FacetEntity,
+  ): EntitySource? {
     val entitySource = facetEntity.entitySource
     val newSource = if (facetExternalSource == null) {
       if (entitySource is JpsImportedEntitySource) {
@@ -247,7 +256,8 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
     if (entity == null) return false
     return if (entity is FacetEntity) {
       entity.symbolicId !in initialStorage
-    } else true
+    }
+    else true
   }
 
   override fun addListener(listener: ModifiableFacetModel.Listener, parentDisposable: Disposable) {

@@ -29,10 +29,10 @@ http_file(
 )
 
 http_file(
-    name = "ai_grazie-grazie-rule-engine-0_3_278_http",
-    downloaded_file_path = "grazie-rule-engine-0.3.278.jar",
-    sha256 = "f2f30f75b0959ec2a589e53be996fde84ce6cf842be98abbfbe3853fff4cca18",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.278/grazie-rule-engine-0.3.278.jar",
+    name = "ai_grazie-grazie-rule-engine-0_4_8_http",
+    downloaded_file_path = "grazie-rule-engine-0.4.8.jar",
+    sha256 = "4424b866ca4f4e4185fa49f8d01c86bfeec0e4f67424cd43ae89dbe42209d5a1",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.4.8/grazie-rule-engine-0.4.8.jar",
 )
 
 http_file(
@@ -43,10 +43,10 @@ http_file(
 )
 
 http_file(
-    name = "ai_grazie-grazie-rule-engine-0_3_278-sources_http",
-    downloaded_file_path = "grazie-rule-engine-0.3.278-sources.jar",
-    sha256 = "0595f65a92a62822e4e590d729392bc2bd2c4223836274ebdc509ed4f1696800",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.278/grazie-rule-engine-0.3.278-sources.jar",
+    name = "ai_grazie-grazie-rule-engine-0_4_8-sources_http",
+    downloaded_file_path = "grazie-rule-engine-0.4.8-sources.jar",
+    sha256 = "ca74e4092844e911811028d6f814708388e13d50f81515e63005aeeb4aa8f744",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.4.8/grazie-rule-engine-0.4.8-sources.jar",
 )
 
 http_file(
@@ -57,17 +57,17 @@ http_file(
 )
 
 http_file(
-    name = "ai_grazie-grazie-rules-llm-0_3_278_http",
-    downloaded_file_path = "grazie-rules-llm-0.3.278.jar",
-    sha256 = "822ffa1a82a8561dccd3297604c44dd8b1c43bd684ed80cbee7ded86d6a021c3",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.278/grazie-rules-llm-0.3.278.jar",
+    name = "ai_grazie-grazie-rules-llm-0_4_8_http",
+    downloaded_file_path = "grazie-rules-llm-0.4.8.jar",
+    sha256 = "d015676f20eed34ed02d455bccd8059c78102c4e5e13ec500e9f4b067f3d3f17",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.4.8/grazie-rules-llm-0.4.8.jar",
 )
 
 http_file(
-    name = "ai_grazie-grazie-rules-llm-0_3_278-sources_http",
-    downloaded_file_path = "grazie-rules-llm-0.3.278-sources.jar",
-    sha256 = "78f8caea0872727a3de623e8f6a069c7918c9bac80e4a00713dca6e4a53e06cf",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.278/grazie-rules-llm-0.3.278-sources.jar",
+    name = "ai_grazie-grazie-rules-llm-0_4_8-sources_http",
+    downloaded_file_path = "grazie-rules-llm-0.4.8-sources.jar",
+    sha256 = "1b15a2c1647263b14d8c081d6ad18af0e36b8ad94c3f89e5099a24af76c887d8",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.4.8/grazie-rules-llm-0.4.8-sources.jar",
 )
 
 http_file(
@@ -2766,6 +2766,34 @@ http_file(
 )
 
 http_file(
+    name = "cloud_jetbrains_sdk_ml-jbai-ner-api-0_2_0_http",
+    downloaded_file_path = "jbai-ner-api-0.2.0.jar",
+    sha256 = "417a88f8556aaea06feda768cf18ca420f49ec6499065c40874f893e7ab88216",
+    url = "https://cache-redirector.jetbrains.com/jcp-github-mirror-public/cloud/jetbrains/sdk/ml/jbai-ner-api/0.2.0/jbai-ner-api-0.2.0.jar",
+)
+
+http_file(
+    name = "cloud_jetbrains_sdk_ml-jbai-ner-api-0_2_0-sources_http",
+    downloaded_file_path = "jbai-ner-api-0.2.0-sources.jar",
+    sha256 = "a3df39d0abb9b1e4ef1ee19c4482b9db0ced37b04fc8fb7bc2b173eb08a39af8",
+    url = "https://cache-redirector.jetbrains.com/jcp-github-mirror-public/cloud/jetbrains/sdk/ml/jbai-ner-api/0.2.0/jbai-ner-api-0.2.0-sources.jar",
+)
+
+http_file(
+    name = "cloud_jetbrains_sdk_ml-jbai-tree-api-2_1_0_http",
+    downloaded_file_path = "jbai-tree-api-2.1.0.jar",
+    sha256 = "adba2a2580f4af64bc97e625b9e60fd0dc533482c97ea39ba8feffc4f77de265",
+    url = "https://cache-redirector.jetbrains.com/jcp-github-mirror-public/cloud/jetbrains/sdk/ml/jbai-tree-api/2.1.0/jbai-tree-api-2.1.0.jar",
+)
+
+http_file(
+    name = "cloud_jetbrains_sdk_ml-jbai-tree-api-2_1_0-sources_http",
+    downloaded_file_path = "jbai-tree-api-2.1.0-sources.jar",
+    sha256 = "7364a21cf2f921056cd39c65322a4d110d9f69f107f4ff9a2fef631a1f6c0285",
+    url = "https://cache-redirector.jetbrains.com/jcp-github-mirror-public/cloud/jetbrains/sdk/ml/jbai-tree-api/2.1.0/jbai-tree-api-2.1.0-sources.jar",
+)
+
+http_file(
     name = "com_carrotsearch-hppc-0_9_1_http",
     downloaded_file_path = "hppc-0.9.1.jar",
     sha256 = "d58706a2be60c972452550cdba79870bf481447c50eb718308e33a6ba45c65ec",
@@ -4646,48 +4674,6 @@ http_file(
     downloaded_file_path = "kotlin-logging-jvm-7.0.3-sources.jar",
     sha256 = "9e447b4e7765d7ad558422976b9b4d54b0f605185ede77214df6bb98e8bd82f8",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/oshai/kotlin-logging-jvm/7.0.3/kotlin-logging-jvm-7.0.3-sources.jar",
-)
-
-http_file(
-    name = "io_github_smiley4-schema-kenerator-core-2_2_0_http",
-    downloaded_file_path = "schema-kenerator-core-2.2.0.jar",
-    sha256 = "c1c197ed03acaf46773176a001836219b6299fe267dc4751c2c28ae98edfa0f3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-core/2.2.0/schema-kenerator-core-2.2.0.jar",
-)
-
-http_file(
-    name = "io_github_smiley4-schema-kenerator-core-2_2_0-sources_http",
-    downloaded_file_path = "schema-kenerator-core-2.2.0-sources.jar",
-    sha256 = "dfc5be80a3576567b8f7ecb5a080e53a7b725c6fa0b936c0ff9f93e5f53b842b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-core/2.2.0/schema-kenerator-core-2.2.0-sources.jar",
-)
-
-http_file(
-    name = "io_github_smiley4-schema-kenerator-jsonschema-2_2_0_http",
-    downloaded_file_path = "schema-kenerator-jsonschema-2.2.0.jar",
-    sha256 = "81981241b8df2eeee48efac05798e7beaa2b8d6bd5d610b3f5a4fea07b0eff6e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-jsonschema/2.2.0/schema-kenerator-jsonschema-2.2.0.jar",
-)
-
-http_file(
-    name = "io_github_smiley4-schema-kenerator-jsonschema-2_2_0-sources_http",
-    downloaded_file_path = "schema-kenerator-jsonschema-2.2.0-sources.jar",
-    sha256 = "20f78e3c29776a8700cf4403b79bd655f6d5294312f6b3283ee15f41a0ed7f2d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-jsonschema/2.2.0/schema-kenerator-jsonschema-2.2.0-sources.jar",
-)
-
-http_file(
-    name = "io_github_smiley4-schema-kenerator-serialization-2_2_0_http",
-    downloaded_file_path = "schema-kenerator-serialization-2.2.0.jar",
-    sha256 = "9c4a9713b2722b3b124210e89c3702c3e18c19156a3a06fa6bcef43a850299ca",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-serialization/2.2.0/schema-kenerator-serialization-2.2.0.jar",
-)
-
-http_file(
-    name = "io_github_smiley4-schema-kenerator-serialization-2_2_0-sources_http",
-    downloaded_file_path = "schema-kenerator-serialization-2.2.0-sources.jar",
-    sha256 = "9da2d37117e0be4aaf4fe7fb47c6aee1a2c0d8ca01b3ee3e56941f8293d882ac",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-serialization/2.2.0/schema-kenerator-serialization-2.2.0-sources.jar",
 )
 
 http_file(
@@ -11863,6 +11849,48 @@ http_file(
     downloaded_file_path = "rhino-runtime-1.7.15.1-sources.jar",
     sha256 = "902dc5c991f5c65bfdd39ad6d7c721a5608bab9d391edc05b7529b9848fb8b2b",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/mozilla/rhino-runtime/1.7.15.1/rhino-runtime-1.7.15.1-sources.jar",
+)
+
+http_file(
+    name = "io_github_smiley4-schema-kenerator-core-2_2_0_http",
+    downloaded_file_path = "schema-kenerator-core-2.2.0.jar",
+    sha256 = "c1c197ed03acaf46773176a001836219b6299fe267dc4751c2c28ae98edfa0f3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-core/2.2.0/schema-kenerator-core-2.2.0.jar",
+)
+
+http_file(
+    name = "io_github_smiley4-schema-kenerator-core-2_2_0-sources_http",
+    downloaded_file_path = "schema-kenerator-core-2.2.0-sources.jar",
+    sha256 = "dfc5be80a3576567b8f7ecb5a080e53a7b725c6fa0b936c0ff9f93e5f53b842b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-core/2.2.0/schema-kenerator-core-2.2.0-sources.jar",
+)
+
+http_file(
+    name = "io_github_smiley4-schema-kenerator-jsonschema-2_2_0_http",
+    downloaded_file_path = "schema-kenerator-jsonschema-2.2.0.jar",
+    sha256 = "81981241b8df2eeee48efac05798e7beaa2b8d6bd5d610b3f5a4fea07b0eff6e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-jsonschema/2.2.0/schema-kenerator-jsonschema-2.2.0.jar",
+)
+
+http_file(
+    name = "io_github_smiley4-schema-kenerator-jsonschema-2_2_0-sources_http",
+    downloaded_file_path = "schema-kenerator-jsonschema-2.2.0-sources.jar",
+    sha256 = "20f78e3c29776a8700cf4403b79bd655f6d5294312f6b3283ee15f41a0ed7f2d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-jsonschema/2.2.0/schema-kenerator-jsonschema-2.2.0-sources.jar",
+)
+
+http_file(
+    name = "io_github_smiley4-schema-kenerator-serialization-2_2_0_http",
+    downloaded_file_path = "schema-kenerator-serialization-2.2.0.jar",
+    sha256 = "9c4a9713b2722b3b124210e89c3702c3e18c19156a3a06fa6bcef43a850299ca",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-serialization/2.2.0/schema-kenerator-serialization-2.2.0.jar",
+)
+
+http_file(
+    name = "io_github_smiley4-schema-kenerator-serialization-2_2_0-sources_http",
+    downloaded_file_path = "schema-kenerator-serialization-2.2.0-sources.jar",
+    sha256 = "9da2d37117e0be4aaf4fe7fb47c6aee1a2c0d8ca01b3ee3e56941f8293d882ac",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/smiley4/schema-kenerator-serialization/2.2.0/schema-kenerator-serialization-2.2.0-sources.jar",
 )
 
 http_file(

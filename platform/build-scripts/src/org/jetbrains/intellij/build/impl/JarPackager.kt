@@ -108,7 +108,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "antlr4-runtime",
   "apache.avro",
   "assertj-swing",
-  "brotli.dec",
   "com.jetbrains.fus.reporting.ap.validation.all",
   "cucumber-core-1",
   "external-symbols",
@@ -119,9 +118,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "intellij-plugin-structure",
   // also used by `intellij.ml.llm.libraries.grazie`, which is a library module by intention, but not by name
   "io.github.oshai.kotlin.logging.jvm",
-  "io.github.smiley4.schema.kenerator.core",
-  "io.github.smiley4.schema.kenerator.jsonschema",
-  "io.github.smiley4.schema.kenerator.serialization",
   "io.modelcontextprotocol.kotlin.sdk",
   "io.qameta.allure.java.commons",
   "jerolba.carpet.record",

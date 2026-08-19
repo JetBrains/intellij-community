@@ -52,6 +52,7 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.json.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.json.performance.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.json.networknt.wrapper.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.tests" scope="TEST" />

@@ -55,6 +55,45 @@ import java.util.function.Supplier;
 /**
  * DOM-specific builder for {@link GutterIconRenderer}
  * and {@link com.intellij.codeInsight.daemon.LineMarkerInfo}.
+ *
+ * <p>This builder is frequently used to produce a {@link com.intellij.codeInsight.daemon.LineMarkerInfo},
+ * which the daemon caches per file and keeps far longer than a single highlighting pass. For that reason
+ * the targets must not be resolved eagerly when they are (or contain) PSI elements: an eagerly stored PSI
+ * target is pinned inside the cached marker and may become stale after edits/reparse (a PSI leak).
+ * When targets are PSI/DOM elements, prefer {@link #setTargets(NotNullLazyValue)} so they are recomputed
+ * on demand instead of being retained. See IDEA-198837 for the motivating fix.
+ *
+ * <p><strong>A lazy supplier must not capture PSI either.</strong> It runs after the pass that created the
+ * marker — usually when the gutter is clicked — so capturing the element the targets are derived from both
+ * defeats the point (the capture is what retains PSI) and dereferences an element that may be gone by then.
+ * Capture something that survives a reparse and re-derive inside the supplier, yielding no targets when it
+ * no longer resolves:
+ * <ul>
+ *   <li>PSI: a {@link SmartPsiElementPointer}. Note that for elements which are not backed
+ *       by an AST node — light elements such as the ones UAST returns from {@code getJavaPsi()} on
+ *       non-Java languages — a pointer degrades to a hard reference, so anchor the {@code sourcePsi} instead.</li>
+ *   <li>DOM: a {@link com.intellij.util.xml.DomAnchor}. A {@code DomElement} holds a hard reference to its
+ *       {@code XmlElement}, so it is never safe to capture. Re-check the type after retrieving it:
+ *       {@code retrieveDomElement()} casts unchecked, and a renamed tag may map to a different DOM element.</li>
+ *   <li>JAM: a JAM element holds its {@code PsiAnnotation} through {@code PsiElementRef.Real}, so it is a reference
+ *       that can be invalidated as well; anchor the annotation and look the JAM element up again.</li>
+ * </ul>
+ * See IDEA-392318 for what happens otherwise.
+ *
+ * <p><strong>What going lazy changes besides the retention.</strong> The targets are unknown while the marker is being
+ * built, so:
+ * <ul>
+ *   <li>the builder cannot tell whether there are any, so the icon always becomes a navigate action. Clicking one that
+ *       resolves to nothing shows the text given to {@link #setEmptyPopupText} — set it, or the click does nothing at
+ *       all;</li>
+ *   <li>the tooltip is no longer generated from the target names, so {@link #setTooltipText} is required;</li>
+ *   <li>the resolved collection is memoized inside the renderer, so laziness postpones the retention rather than
+ *       removing it: once something has asked for the targets, they are held until the next pass replaces the marker;</li>
+ *   <li>comparing two renderers resolves their targets ({@code NavigationGutterIconRenderer.equals}). For a gutter
+ *       installed through {@link #createGutterIcon(AnnotationHolder, PsiElement)} that happens inside the pass, because
+ *       {@code HighlightInfo.attributesEqual} compares gutter renderers — so an expensive computation stays expensive
+ *       there, and the memo above is populated straight away.</li>
+ * </ul>
  */
 public class NavigationGutterIconBuilder<T> {
   private static final @NonNls String PATTERN = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
@@ -109,21 +148,58 @@ public class NavigationGutterIconBuilder<T> {
     return new NavigationGutterIconBuilder<>(icon, converter, gotoRelatedItemProvider);
   }
 
+  /**
+   * Eager convenience overload: the target is stored as a constant value and retained by the builder.
+   * If the target is a PSI element and this builder produces a cached {@link com.intellij.codeInsight.daemon.LineMarkerInfo},
+   * prefer {@link #setTargets(NotNullLazyValue)} to avoid retaining stale PSI.
+   *
+   * @see #setTargets(NotNullLazyValue)
+   */
   public @NotNull NavigationGutterIconBuilder<T> setTarget(@Nullable T target) {
     return setTargets(ContainerUtil.createMaybeSingletonList(target));
   }
 
+  /**
+   * Eager convenience overload: the targets are stored as a constant value and retained by the builder.
+   * If the targets are PSI elements and this builder produces a cached {@link com.intellij.codeInsight.daemon.LineMarkerInfo},
+   * prefer {@link #setTargets(NotNullLazyValue)} to avoid retaining stale PSI.
+   *
+   * @see #setTargets(NotNullLazyValue)
+   */
   @SafeVarargs
   public final @NotNull NavigationGutterIconBuilder<T> setTargets(T @NotNull ... targets) {
     return setTargets(Arrays.asList(targets));
   }
 
+  /**
+   * Recommended overload for PSI/DOM targets: the collection is computed lazily and not retained by the
+   * builder, so the resulting {@link com.intellij.codeInsight.daemon.LineMarkerInfo} does not pin resolved
+   * PSI elements. Use this instead of {@link #setTargets(Collection)} whenever the targets are (or contain)
+   * PSI elements.
+   * <p>
+   * The supplier runs long after the pass that created the marker, so it must not capture the element the
+   * targets are derived from — see the class javadoc for what to capture instead. Capturing it would keep
+   * retaining PSI and would throw on a gutter click once that element is stale.
+   * <p>
+   * It also runs whenever the gutter happens to be used, which can be in dumb mode: handle
+   * {@link com.intellij.openapi.project.IndexNotReadyException} rather than letting it out.
+   * <p>
+   * See the class javadoc for what else changes once the targets are lazy — an always-clickable icon, no generated
+   * tooltip, and a memo that keeps the resolved targets afterwards.
+   */
   public @NotNull NavigationGutterIconBuilder<T> setTargets(final @NotNull NotNullLazyValue<Collection<? extends T>> targets) {
     myTargets = targets;
     myLazy = true;
     return this;
   }
 
+  /**
+   * Eagerly retains the given targets (wrapped in a constant {@link NotNullLazyValue}). Because a
+   * {@link com.intellij.codeInsight.daemon.LineMarkerInfo} produced via {@code createLineMarkerInfo} is
+   * cached by the daemon, passing already-resolved PSI elements here pins them and risks stale PSI after
+   * edits/reparse (a PSI leak). For PSI/DOM targets use {@link #setTargets(NotNullLazyValue)} instead so
+   * they are recomputed on demand. See IDEA-198837.
+   */
   public @NotNull NavigationGutterIconBuilder<T> setTargets(final @NotNull Collection<? extends T> targets) {
     if (ContainerUtil.containsIdentity(targets, null)) {
       throw new IllegalArgumentException("Must not pass collection with null target but got: " + targets);

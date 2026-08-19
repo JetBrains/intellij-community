@@ -40,22 +40,31 @@ import io.mockk.coEvery
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.hamcrest.CoreMatchers.anyOf
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import java.util.concurrent.LinkedBlockingQueue
+import kotlin.coroutines.CoroutineContext
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -328,6 +337,69 @@ class EelLocalExecApiTest {
     getShellFromPasswdRecords(records, 1000) shouldBe "/bin/bash"
     getShellFromPasswdRecords(records, 1001) shouldBe null
     getShellFromPasswdRecords(records, 12345) shouldBe null
+  }
+
+  /**
+   * The OS process exists before `spawnProcess` returns its handle, so cancellation in between must not leave a
+   * running process behind: no caller would hold a handle to kill it.
+   */
+  @Test
+  // the spawn scope is deliberately unparented: the test owns its dispatcher, its cancellation, and its draining
+  @Suppress("checkedExceptions", "SSBasedInspection")
+  fun `test cancelled spawn kills the process it could not hand over`(): Unit = timeoutRunBlocking(1.minutes) {
+    assumeTrue(SystemInfoRt.isUnix, "The test needs a long-running executable with a stable path")
+
+    // Continuations are queued instead of executed, so the resumption that carries the process handle back to the
+    // caller can be cancelled deterministically instead of being raced against.
+    val queuedContinuations = LinkedBlockingQueue<Runnable>()
+    val queueingDispatcher = object : CoroutineDispatcher() {
+      override fun dispatch(context: CoroutineContext, block: Runnable) {
+        queuedContinuations.put(block)
+      }
+    }
+    val spawnJob = Job()
+    val childrenBefore = ProcessHandle.current().children().map { it.pid() }.toList()
+    var spawned: List<ProcessHandle> = emptyList()
+    try {
+      CoroutineScope(queueingDispatcher + spawnJob).launch {
+        val process = localEel.exec.spawnProcess("/bin/sleep").args("300").eelIt()
+        // The handle did reach the caller, so killing it is the caller's job now.
+        withContext(NonCancellable) { process.kill() }
+      }
+
+      // The first continuation is the coroutine itself; it runs until the spawn switches to another dispatcher.
+      withTimeout(20.seconds) {
+        var started = false
+        while (!started) {
+          started = queuedContinuations.poll()?.also { it.run() } != null
+          if (!started) delay(10.milliseconds)
+        }
+      }
+      // Once the next continuation is queued, `Process.start` has returned, so the process exists and is untouched:
+      // its handle is on its way back to the caller and nothing has killed it yet.
+      withTimeout(20.seconds) {
+        while (queuedContinuations.isEmpty()) delay(10.milliseconds)
+      }
+      spawned = ProcessHandle.current().children().filter { it.pid() !in childrenBefore }.toList()
+      Assertions.assertFalse(spawned.isEmpty(), "The spawned process is not a child of this process")
+
+      spawnJob.cancel()
+
+      // Whoever ends up owning the process must kill it: the caller when the handle got through, EEL itself otherwise.
+      withTimeout(20.seconds) {
+        while (spawned.any { it.isAlive }) {
+          queuedContinuations.poll()?.run()
+          delay(10.milliseconds)
+        }
+      }
+    }
+    finally {
+      spawned.forEach { it.destroyForcibly() }
+      while (true) {
+        val continuation = queuedContinuations.poll() ?: break
+        runCatching { continuation.run() }
+      }
+    }
   }
 
   /**

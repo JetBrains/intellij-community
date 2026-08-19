@@ -418,16 +418,25 @@ private fun JPopupImpl(
                     }
                 }
                 is AWTKeyEvent -> {
-                    if (!dialog.isVisible) return@AWTEventListener
+                    val eventWindow = SwingUtilities.getWindowAncestor(event.component) ?: event.component as? Window
+                    // Focusable popups do not necessarily own native focus immediately (see the JEWEL-1276
+                    // focus-stealing workaround below), so their key events can arrive from the owner window.
+                    val ownsEvent = eventWindow == dialog || (currentProperties.focusable && eventWindow == window)
+                    if (event.isConsumed || !dialog.isVisible || !ownsEvent) return@AWTEventListener
 
                     val composeEvent = event.toComposeKeyEvent()
 
                     val consumed =
                         currentOnPreviewKeyEvent?.invoke(composeEvent) == true ||
                             currentOnKeyEvent?.invoke(composeEvent) == true
+                    val dismissRequest = currentOnDismissRequest
+                    val dismissed = !consumed && composeEvent.isDismissRequest() && dismissRequest != null
 
-                    if (!consumed && composeEvent.isDismissRequest()) {
-                        currentOnDismissRequest?.invoke()
+                    if (dismissed) {
+                        dismissRequest.invoke()
+                    }
+                    if (consumed || dismissed) {
+                        event.consume()
                     }
                 }
             }

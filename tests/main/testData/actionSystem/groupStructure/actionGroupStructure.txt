@@ -2552,9 +2552,7 @@
   CutCopyPasteGroup
   EditSource
   ChangesView.ApplyPatch.LangGroup
-  <separator>
-  ViewNavigationBar
-  ViewMembersInNavigationBar
+  OldUIViewNavigationBarGroup
   <separator>
   FindUsages
   FindInPath

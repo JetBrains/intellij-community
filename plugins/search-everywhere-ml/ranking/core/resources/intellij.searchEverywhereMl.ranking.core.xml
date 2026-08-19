@@ -7,6 +7,8 @@
     <module name="intellij.libraries.jackson"/>
     <module name="intellij.libraries.jackson.databind"/>
     <module name="intellij.libraries.jackson.module.kotlin"/>
+    <module name="intellij.libraries.search.everywhere.find.all.model"/>
+    <module name="intellij.libraries.search.everywhere.find.ec.model"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
@@ -22,12 +24,11 @@
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.ml.impl"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.searchEverywhere.frontend"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.util.ui"/>
-    <module name="intellij.libraries.search.everywhere.find.all.model"/>
-    <module name="intellij.libraries.search.everywhere.find.ec.model"/>
     <module name="intellij.searchEverywhereMl.ranking.ext"/>
   </dependencies>
   <!-- endregion -->

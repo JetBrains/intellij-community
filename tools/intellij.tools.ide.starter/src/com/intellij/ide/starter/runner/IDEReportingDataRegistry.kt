@@ -11,6 +11,8 @@ internal class IDEReportingDataRegistry(
 ) {
   private data class Registration(
     val testMethodId: String?,
+    /** The [CurrentTestPlan] generation this method was activated in, so "again" can mean "in this plan". */
+    val planGeneration: Int,
     val reportingData: IDEReportingData,
   )
 
@@ -30,16 +32,24 @@ internal class IDEReportingDataRegistry(
 
   /**
    * Returns the reporting data of the current test method. Re-registering the current method is idempotent, while returning to an
-   * earlier method is an invalid lifecycle transition.
+   * earlier method of the same test plan is an invalid lifecycle transition.
+   *
+   * Scoped to the plan rather than to this registry, because an IDE may outlive a test plan on purpose: a harness that keeps one warm
+   * IDE and runs plan after plan against it replays the same method ids, and that is a second run of the method rather than a return to
+   * it. Such a run registers reporting of its own — its own log directory, at the next execution index — so the two runs of one method
+   * do not write into each other's logs, which is what the transition guard exists to prevent in the first place.
    */
   fun register(actionToResetLogDir: (Path) -> Unit): IDEReportingData {
     synchronized(lock) {
       val currentTestMethod = CurrentTestMethod.get()
       val testMethodId = currentTestMethod?.id
+      val planGeneration = CurrentTestPlan.generation
 
-      registered.lastOrNull()?.takeIf { it.testMethodId == testMethodId }?.let { return it.reportingData }
+      registered.lastOrNull()
+        ?.takeIf { it.testMethodId == testMethodId && it.planGeneration == planGeneration }
+        ?.let { return it.reportingData }
 
-      registered.firstOrNull { it.testMethodId == testMethodId }?.let {
+      registered.firstOrNull { it.testMethodId == testMethodId && it.planGeneration == planGeneration }?.let {
         error("Test method '$testMethodId' was activated again after another test method")
       }
 
@@ -63,7 +73,7 @@ internal class IDEReportingDataRegistry(
         ?.takeUnless { it.artifactPath == reportingData.artifactPath }
         ?.let { reportArtifactsLink("Link to Logs and artifacts (IDE Startup)", it) }
       actionToResetLogDir.invoke(reportingData.logsDir)
-      registered.add(Registration(testMethodId, reportingData))
+      registered.add(Registration(testMethodId, planGeneration, reportingData))
       return reportingData
     }
   }

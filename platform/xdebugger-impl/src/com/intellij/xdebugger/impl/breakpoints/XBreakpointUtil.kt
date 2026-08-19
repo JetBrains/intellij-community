@@ -104,7 +104,7 @@ object XBreakpointUtil {
     moveCaret: Boolean,
     canRemove: Boolean,
   ): Promise<XLineBreakpoint<*>?> {
-    return XBreakpointUIUtil.toggleLineBreakpointProxy(project,
+    return XBreakpointUIUtil.toggleLineBreakpointAsync(project,
                                                        position,
                                                        selectVariantByPositionColumn,
                                                        editor,

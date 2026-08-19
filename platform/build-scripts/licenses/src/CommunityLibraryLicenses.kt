@@ -1467,6 +1467,8 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("ai.grazie.spell.gec.engine.local"),
     jetbrainsLibrary("ai.grazie.spell.hunspell.en"),
     jetbrainsLibrary("cloud-config-client"),
+    jetbrainsLibrary("cloud.jetbrains.sdk.ml.jbai.ner.api"),
+    jetbrainsLibrary("cloud.jetbrains.sdk.ml.jbai.tree.api"),
     jetbrainsLibrary("com.jetbrains.fus.reporting.ap.validation.all"),
     jetbrainsLibrary("com.jetbrains.fus.reporting.fus-api"),
     jetbrainsLibrary("completion-log-events"),

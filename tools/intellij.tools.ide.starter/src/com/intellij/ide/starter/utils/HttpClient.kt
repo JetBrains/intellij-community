@@ -2,6 +2,7 @@ package com.intellij.ide.starter.utils
 
 import com.intellij.ide.starter.utils.FileSystem.isFileUpToDate
 import com.intellij.tools.ide.util.common.NoRetryException
+import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.withRetry
 import kotlinx.coroutines.runBlocking
@@ -50,14 +51,20 @@ object HttpClient {
 
   /**
    * Downloading file from [url] to [outPath] with [retries].
-   * @return true - if successful, false - otherwise
+   *
+   * @return `true` if the file was downloaded, `false` if every attempt failed.
+   * @throws HttpNotFound if the server answered 404, or 403 for a `cache-redirector.jetbrains.com` url
+   * (those are expected to be public, so a 403 there means "not found") - not retried.
+   * @throws HttpForbidden if the server answered 403 for any other url - not retried.
+   * @throws kotlinx.coroutines.TimeoutCancellationException if [timeout] expires. Note that it can only be
+   * observed between attempts: the underlying request is blocking and is not interrupted by the timeout.
    */
-  fun download(url: String, outPath: Path, retries: Long = 3, timeout: Duration = 10.minutes) {
+  fun download(url: String, outPath: Path, retries: Long = 3, timeout: Duration = 10.minutes): Boolean {
     val encodeUrl = url.replace(" ", "%20")
     logOutput("Downloading $encodeUrl to $outPath")
 
     @Suppress("RAW_RUN_BLOCKING")
-    runBlocking {
+    return runBlocking {
       withTimeout(timeout = timeout) {
         withRetry(messageOnFailure = "Failure during downloading $encodeUrl to $outPath", retries = retries) {
           val request = HttpGet(encodeUrl)
@@ -82,7 +89,9 @@ object HttpClient {
                 processDownloadResponse(response, encodeUrl, url, outPath)
               }
             }
-        }
+
+          true
+        } ?: false
       }
     }
   }
@@ -127,6 +136,12 @@ object HttpClient {
         response.entity?.writeTo(stream)
       }
 
+      if (tempFile.fileSize() == 0L) {
+        // an empty body is almost certainly a failed download, but it is not reported as one to keep the existing
+        // behavior: callers that cannot use an empty file have to detect it themselves (see [isFileUpToDate])
+        logError("Downloaded an empty file from $originalUrl: HTTP $statusCode, Content-Length: ${response.entity?.contentLength}")
+      }
+
       // there could a parallel download to the same destination, handle it gracefully (both will succeed)
       tempFile.moveTo(outPath, overwrite = true)
     }
@@ -139,18 +154,19 @@ object HttpClient {
    * [url] - source to download
    * [targetFile] - output file
    * [retries] - how many times retry to download in case of failure
-   * @return true - if successful, false - otherwise
+   * @return `true` if [targetFile] is up to date afterwards (it already was, or the download succeeded),
+   * `false` if every download attempt failed.
    */
-  fun downloadIfMissing(url: String, targetFile: Path, retries: Long = 3, timeout: Duration = 10.minutes) {
+  fun downloadIfMissing(url: String, targetFile: Path, retries: Long = 3, timeout: Duration = 10.minutes): Boolean =
     getLock(targetFile).withLock {
       if (targetFile.isFileUpToDate()) {
         logOutput("File $targetFile was already downloaded. Size ${targetFile.fileSize().formatSize()}")
-        return
-      } else targetFile.deleteIfExists()
+        return@withLock true
+      }
+      targetFile.deleteIfExists()
 
-      return download(url, targetFile, retries, timeout)
+      download(url, targetFile, retries, timeout)
     }
-  }
 
   class HttpNotFound(message: String, cause: Throwable? = null) : NoRetryException(message, cause)
   class HttpForbidden(message: String, cause: Throwable? = null) : NoRetryException(message, cause)

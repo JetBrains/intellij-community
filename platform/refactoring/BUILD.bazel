@@ -89,8 +89,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.refactoring.iml",
-        "resources/META-INF/Refactoring.xml",
-        "resources/META-INF/RefactoringExtensionPoints.xml",
+        "resources/intellij.platform.refactoring.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -8,8 +8,9 @@
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.projectModel"/>
-    <module name="intellij.python.psi"/>
     <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.python.psi"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

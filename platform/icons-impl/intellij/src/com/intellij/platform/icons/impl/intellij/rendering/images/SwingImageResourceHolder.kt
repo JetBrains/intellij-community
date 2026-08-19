@@ -7,7 +7,6 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.platform.icons.impl.intellij.rendering.toAwtFilter
 import com.intellij.platform.icons.impl.intellij.rendering.toIJPatcher
 import com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher
-import com.intellij.platform.icons.impl.patchers.strokeSvgPatcher
 import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
 import com.intellij.platform.icons.rendering.Dimensions
 import com.intellij.platform.icons.rendering.ImageModifiers
@@ -26,15 +25,16 @@ internal fun ImageModifiers?.toLoadParameters(): LoadIconParameters {
     filters.add(colorFilter.toAwtFilter())
   }
   val knownModifiers = this as? DefaultImageModifiers
-  val strokePatcher = knownModifiers?.stroke?.let { strokeSvgPatcher(it) }
   val ijModifiers = this as? IntelliJImageModifiers
-  // The icon's own patcher runs first and the stroke substitution after it, so an icon that explicitly recolors a
-  // palette color keeps that color: the stroke operation no longer matches what the explicit one already replaced.
-  // The elvis is what keeps a stroke-only icon patched at all — `svgPatcher` is null whenever an icon carries no
-  // explicit patcher, and combining outwards from null would discard the stroke patcher entirely.
-  val combinedPatcher = this?.svgPatcher?.combineWith(strokePatcher) ?: strokePatcher
-  val colorPatcher = (combinedPatcher as? DefaultSvgPatcher)?.toIJPatcher(ijModifiers?.legacyPatcherProvider)
-  val isStroke = knownModifiers?.stroke != null
+  val stroke = knownModifiers?.stroke
+  // The stroke patch is combined per resolved path rather than here, because which patch an icon takes depends on
+  // whether the loader ends up resolving a hand-authored stroke variant for it.
+  val colorPatcher = toIJPatcher(
+    stroke = stroke,
+    patcher = this?.svgPatcher as? DefaultSvgPatcher,
+    rootPatcher = ijModifiers?.legacyPatcherProvider,
+  )
+  val isStroke = stroke != null
   return LoadIconParameters(
     filters = filters,
     // A stroked icon loads its light artwork even in a dark theme. The palette describes the light variants, so

@@ -10,20 +10,21 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.internal.workspaceBridge.pyProjectTomlEntity
 import com.intellij.workspaceModel.ide.legacyBridge.findModule
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
+import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntityIfNotDisposed
 import com.intellij.workspaceModel.ide.toPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-internal val Module.isPyProjectTomlBasedImpl: Boolean get() = findModuleEntity()?.pyProjectTomlEntity != null
+internal val Module.isPyProjectTomlBasedImpl: Boolean get() = findModuleEntityIfNotDisposed().pyProjectTomlEntity != null
 
 internal suspend fun Module.getPyProjectTomlFileImpl(): VirtualFile? = readAction {
-  val entity = findModuleEntity()?.pyProjectTomlEntity ?: return@readAction null
+  val entity = findModuleEntityIfNotDisposed().pyProjectTomlEntity ?: return@readAction null
   val dir = entity.dirWithToml.virtualFile ?: return@readAction null
   dir.findChild(PY_PROJECT_TOML)
 }
 
 internal suspend fun suggestSdkImpl(module: Module): SuggestedSdk? = withContext(Dispatchers.Default) {
-  val entity = module.findModuleEntity()?.pyProjectTomlEntity ?: return@withContext null
+  val entity = module.findModuleEntityIfNotDisposed().pyProjectTomlEntity ?: return@withContext null
   val storage = module.project.workspaceModel.currentSnapshot
   val moduleId = module.findModuleEntity(storage)?.symbolicId
   if (moduleId == null) {

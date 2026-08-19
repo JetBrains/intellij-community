@@ -3,5 +3,3 @@
   - name: intellij.platform.backend.workspace
   - name: intellij.platform.concurrency
   - name: intellij.platform.projectModel
-  - name: intellij.platform.workspace.jps
-  - name: intellij.platform.workspace.storage

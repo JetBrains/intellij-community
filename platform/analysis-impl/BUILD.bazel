@@ -130,7 +130,6 @@ exports_files(
     [
         "intellij.platform.analysis.impl.iml",
         "resources/META-INF/AnalysisImpl.analyzer.xml",
-        "resources/META-INF/AnalysisImpl.xml",
         "resources/intellij.platform.analysis.impl.xml",
     ],
     visibility = ["//visibility:public"],

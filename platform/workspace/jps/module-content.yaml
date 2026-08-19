@@ -1,0 +1,4 @@
+- name: dist.all/lib/intellij.platform.workspace.jps.jar
+  modules:
+  - name: intellij.platform.workspace.jps
+  - name: intellij.platform.workspace.storage

@@ -30,7 +30,7 @@ import kotlin.io.path.outputStream
  * This settings should be seen **as a 'hack'**, not a part of regular (release-level) IDE functionality. In a regular
  * operation it should be no 'custom layout' -- index storage layout is determined by available providers, sorted by
  * .priority (see [IndexStorageLayoutLocator]). Custom layout is a tool for the developers, to try out new/experimental
- * layouts, and to be able to manage those experimental layouts without alternating `Indexing.xml` or alike.
+ * layouts, and to be able to manage those experimental layouts without alternating `intellij.platform.indexing.xml` or alike.
  * Hence, this class should have as little usages as it possible across a codebase.
  */
 @Internal

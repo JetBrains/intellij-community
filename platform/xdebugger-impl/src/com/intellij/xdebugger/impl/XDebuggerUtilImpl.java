@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.debugger.impl.shared.DebuggerAsyncActionUtilsKt;
 import com.intellij.platform.debugger.impl.shared.XDebuggerUtilImplShared;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo;
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointManagerProxy;
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.pom.Navigatable;
@@ -52,14 +53,15 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueContainer;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointInstallUtils;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUIUtil;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
@@ -254,7 +256,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   /**
-   * Use {@link XBreakpointInstallUtils#toggleAndReturnLineBreakpointProxy} instead.
+   * Use {@link XBreakpointUIUtil#toggleLineBreakpointAsync} instead.
    */
   @ApiStatus.Obsolete
   public static @NotNull Promise<@Nullable XLineBreakpoint> toggleAndReturnLineBreakpoint(
@@ -269,9 +271,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     var proxyTypes = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).getLineBreakpointTypes().stream()
       .filter(type -> ContainerUtil.exists(types, t -> t.getId().equals(type.getId())))
       .toList();
-    var future = XBreakpointInstallUtils.toggleAndReturnLineBreakpointProxy(
-      project, proxyTypes, position, selectVariantByPositionColumn,
-      temporary, editor, canRemove, false, null);
+    var breakpointInfo = new XLineBreakpointInstallationInfo(
+      proxyTypes, position, XLineBreakpointVerticalPlacement.ON_LINE, temporary, false, null, canRemove);
+    var future = XBreakpointUIUtil.toggleLineBreakpointAsync(
+      project, editor, breakpointInfo, selectVariantByPositionColumn);
     return asPromise(future).then(b -> {
       if (b == null) return null;
       XBreakpoint<?> monolithBreakpoint = XDebuggerEntityConverter.getBreakpoint(b.getId());

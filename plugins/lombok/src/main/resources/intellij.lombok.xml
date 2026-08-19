@@ -30,6 +30,7 @@
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>

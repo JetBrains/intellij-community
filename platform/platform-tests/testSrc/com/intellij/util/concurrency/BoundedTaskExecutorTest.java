@@ -15,6 +15,7 @@ import com.intellij.util.ui.UIUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -494,5 +495,81 @@ public class BoundedTaskExecutorTest extends CatchLogErrorsInAllThreadsTestCase 
     assertTrue(executor.isShutdown());
     executor.shutdown();
     assertTrue(executor.isShutdown());
+  }
+
+  public void testConcurrentThreadsHaveDistinctIndicesInTheirNames() throws Exception {
+    int maxThreads = 3;
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getPoolName(), AppExecutorUtil.getAppExecutorService(), maxThreads);
+    CountDownLatch allStarted = new CountDownLatch(maxThreads);
+    CountDownLatch canFinish = new CountDownLatch(1);
+    Set<String> names = ConcurrentCollectionFactory.createConcurrentSet();
+    List<Future<?>> futures = new ArrayList<>();
+    try {
+      for (int i = 0; i < maxThreads; i++) {
+        futures.add(executor.submit(() -> {
+          names.add(Thread.currentThread().getName());
+          allStarted.countDown();
+          assertTrue(canFinish.await(100, TimeUnit.SECONDS));
+          return null;
+        }));
+      }
+      if (!allStarted.await(100, TimeUnit.SECONDS)) fail(ThreadDumper.dumpThreadsToString());
+    }
+    finally {
+      canFinish.countDown();
+    }
+    for (Future<?> future : futures) {
+      future.get();
+    }
+    executor.shutdownNow();
+
+    Set<String> expected = new HashSet<>();
+    for (int i = 0; i < maxThreads; i++) {
+      expected.add(getPoolName() + "-" + i);
+    }
+    assertEquals(expected, new HashSet<>(names));
+  }
+
+  public void testThreadNameIndicesAreReused() throws Exception {
+    int maxThreads = 3;
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getPoolName(), AppExecutorUtil.getAppExecutorService(), maxThreads);
+    Set<String> names = ConcurrentCollectionFactory.createConcurrentSet();
+    for (int i = 0; i < 200; i++) {
+      executor.submit(() -> names.add(Thread.currentThread().getName())).get();
+    }
+    executor.shutdownNow();
+
+    assertTrue(names.toString(), names.size() <= maxThreads);
+    for (String name : names) {
+      assertTrue(name, name.startsWith(getPoolName() + "-"));
+    }
+  }
+
+  public void testSingleThreadedExecutorUsesPoolNameAsIs() throws Exception {
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getPoolName(), AppExecutorUtil.getAppExecutorService(), 1);
+    Future<String> name = executor.submit(() -> Thread.currentThread().getName());
+    assertEquals(getPoolName(), name.get());
+    executor.shutdownNow();
+  }
+
+  public void testThreadNameIsRestoredAfterTheThreadStopsServingThePool() throws Exception {
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getPoolName(), AppExecutorUtil.getAppExecutorService(), 2);
+    Future<Thread> future = executor.submit(() -> Thread.currentThread());
+    Thread thread = future.get();
+    executor.shutdownNow();
+
+    long deadline = System.currentTimeMillis() + 100_000;
+    while (!thread.getName().startsWith(AppScheduledExecutorService.POOLED_THREAD_PREFIX)) {
+      if (System.currentTimeMillis() > deadline) {
+        fail("Thread name was not restored: '" + thread.getName() + "'");
+      }
+    }
+  }
+
+  public void testThreadNameIsIntactWhenChangeThreadNameIsFalse() throws Exception {
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getPoolName(), 3, false);
+    Future<String> name = executor.submit(() -> Thread.currentThread().getName());
+    assertTrue(name.get(), name.get().startsWith(AppScheduledExecutorService.POOLED_THREAD_PREFIX));
+    executor.shutdownNow();
   }
 }
