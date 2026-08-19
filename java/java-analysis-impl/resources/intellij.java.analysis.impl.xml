@@ -46,8 +46,6 @@
   </dependencies>
   <!-- endregion -->
 
-  <xi:include href="/META-INF/RegistryKeysAnalysisImpl.xml"/>
-
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.deadCode"
                     interface="com.intellij.codeInspection.reference.EntryPoint" dynamic="true"/>
