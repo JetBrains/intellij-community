@@ -278,13 +278,14 @@ internal class FrozenColumnsController(
 
   private fun restorePreviouslyFrozenColumns() {
     val frozenColumns = frozenView?.columnModel ?: return
-    val column2View = primaryView.rawIndexConverter.column2View()
     for (index in 0 until frozenColumns.columnCount) {
       val frozenColumn = frozenColumns.getColumn(index) as TableResultViewColumn
-      val mainViewIndex = column2View.applyAsInt(frozenColumn.modelIndex)
-      if (mainViewIndex < 0) continue
-      val mainColumn = primaryView.columnModel.getColumn(mainViewIndex) as TableResultViewColumn
-      restoreMainColumn(mainColumn, frozenColumn)
+      // Go by column, not by its place in the view: a column hidden meanwhile is not shown but still holds its width,
+      // and left at the zero width of the strip it would come back at the minimum one. A column dropped from the data
+      // has nothing left to restore.
+      val cache = primaryView.columnCache
+      if (!cache.hasCachedColumn(frozenColumn.modelIndex)) continue
+      restoreMainColumn(cache.getOrCreateColumn(frozenColumn.modelIndex), frozenColumn)
     }
   }
 

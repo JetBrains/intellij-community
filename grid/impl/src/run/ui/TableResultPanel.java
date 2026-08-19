@@ -753,6 +753,22 @@ public class TableResultPanel extends UserDataHolderBase
     updateFrozenColumns();
   }
 
+  /**
+   * Re-keys the pin state after a move in the data renumbered the columns and lays the pinned columns out again.
+   * {@code newToOld} maps a model index after the move to the one it had before.
+   */
+  public void restorePinnedColumnsAfterMoveInData(@NotNull IntUnaryOperator newToOld) {
+    if (!isColumnPinningEnabled()) return;
+    if (!myColumnPinModel.isEmpty()) {
+      List<Integer> pinned = new ArrayList<>();
+      for (ModelIndex<GridColumn> columnIdx : getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asIterable()) {
+        if (myColumnPinModel.isPinned(newToOld.applyAsInt(columnIdx.value))) pinned.add(columnIdx.value);
+      }
+      myColumnPinModel = new GridColumnPinModel().pinAll(pinned);
+    }
+    applyCurrentPinnedOrder();
+  }
+
   private boolean removeFromPinModel(@NotNull ModelIndex<GridColumn> columnIdx) {
     GridColumnPinModel updated = myColumnPinModel.onColumnHidden(columnIdx.value);
     if (updated.equals(myColumnPinModel)) return false;

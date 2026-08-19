@@ -4,6 +4,7 @@ import com.intellij.database.datagrid.DataGrid
 import com.intellij.database.datagrid.GridColumn
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.run.ui.DataAccessType
+import com.intellij.database.run.ui.TableResultPanel
 import kotlin.math.max
 import kotlin.math.min
 
@@ -15,9 +16,11 @@ class AdjustColumnsAfterMoveInData(
 ) : () -> Unit {
 
   private val originallyVisibleColumns = grid.visibleColumns.asIterable().toSet()
+  // A pinned column is kept at zero width here and carries its real width in the strip, so go through the column
+  // holding it rather than the one laid out in this table.
   private val columnWidths = originallyVisibleColumns
     .mapTo(mutableListOf()) { modelIndex ->
-      val width = tableView.getLayoutColumn(modelIndex)?.columnWidth ?: 0
+      val width = tableView.getColumnForPersistence(modelIndex)?.columnWidth ?: 0
       Pair(modelIndex, width)
     }
     .toMap()
@@ -46,6 +49,10 @@ class AdjustColumnsAfterMoveInData(
 
   override fun invoke() {
     val columnIndices = grid.getDataModel(DataAccessType.DATABASE_DATA).getColumnIndices()
+
+    // Re-key before changing visibility: setColumnEnabled(false) unpins its model index, which already identifies a
+    // different column after the move.
+    (grid as? TableResultPanel)?.restorePinnedColumnsAfterMoveInData { newIndex -> toOriginalIndex(newIndex) }
 
     // Show all columns for sorting
     for (columnIdx in columnIndices.asIterable()) {
@@ -78,9 +85,9 @@ class AdjustColumnsAfterMoveInData(
     }
 
     // Restore widths
-    grid.visibleColumns.asIterable().forEachIndexed { viewIndex, modelIndex ->
+    grid.visibleColumns.asIterable().forEach { modelIndex ->
       val originalIndex = toOriginalIndex(modelIndex)
-      tableView.getLayoutColumn(modelIndex)?.columnWidth = columnWidths[originalIndex]!!
+      tableView.getColumnForPersistence(modelIndex)?.columnWidth = columnWidths[originalIndex]!!
     }
 
     // Restore attributes (sortOrder, filter, displayType)
