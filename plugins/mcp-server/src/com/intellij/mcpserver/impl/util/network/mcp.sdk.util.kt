@@ -35,7 +35,11 @@ import io.modelcontextprotocol.kotlin.sdk.server.ServerSession
 import io.modelcontextprotocol.kotlin.sdk.server.SseServerTransport
 import io.modelcontextprotocol.kotlin.sdk.server.StreamableHttpServerTransport
 import io.modelcontextprotocol.kotlin.sdk.shared.Transport
+import io.modelcontextprotocol.kotlin.sdk.shared.TransportSendOptions
+import io.modelcontextprotocol.kotlin.sdk.types.JSONRPCMessage
+import io.modelcontextprotocol.kotlin.sdk.types.JSONRPCRequest
 import io.modelcontextprotocol.kotlin.sdk.types.McpJson
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
@@ -44,6 +48,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
 
@@ -150,7 +156,7 @@ private suspend fun ServerSSESession.mcpSseEndpoint(
 ) {
   val transport = mcpSseTransport(postEndpoint, transports)
 
-  val (serverSession, _) = block(call, transport)
+  val (serverSession, _) = block(call, ClientDisconnectTolerantTransport(transport))
 
   serverSession.onClose {
     logger.trace { "Server connection closed for sessionId: ${transport.sessionId}" }
@@ -267,7 +273,7 @@ private suspend fun obtainOrCreateStreamableTransport(
     logger.trace { "StreamableHttp session closed: $closedId" }
   }
 
-  val (serverSession, scope) = block(call, transport)
+  val (serverSession, scope) = block(call, ClientDisconnectTolerantTransport(transport))
   streamableSessionScopes[serverSession.sessionId] = scope
   transport.setSessionIdGenerator {
     serverSession.sessionId
@@ -283,6 +289,37 @@ private suspend fun obtainOrCreateStreamableTransport(
   }
 
   return transport
+}
+
+/**
+ * Wraps a server transport so that a failure to deliver an outgoing response or notification to a client
+ * that has already disconnected is treated as a routine disconnect instead of propagating to the MCP SDK's
+ * `Protocol`, which logs every send failure as an error. Depending on which side of the teardown race the send
+ * hits, an aborted HTTP request surfaces either as an [IOException] (`ClosedWriteChannelException` while writing
+ * the response) or as an [IllegalStateException] ("No connection established for request ID ..." after the call's
+ * job has already evicted the stream mapping). Send failures of server-initiated requests are still propagated
+ * so that callers awaiting a response fail fast instead of waiting for a timeout.
+ */
+@ApiStatus.Internal
+class ClientDisconnectTolerantTransport(private val delegate: Transport) : Transport {
+  override suspend fun start(): Unit = delegate.start()
+  override suspend fun close(): Unit = delegate.close()
+  override fun onClose(block: () -> Unit): Unit = delegate.onClose(block)
+  override fun onError(block: (Throwable) -> Unit): Unit = delegate.onError(block)
+  override fun onMessage(block: suspend (JSONRPCMessage) -> Unit): Unit = delegate.onMessage(block)
+
+  override suspend fun send(message: JSONRPCMessage, options: TransportSendOptions?) {
+    try {
+      delegate.send(message, options)
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Exception) {
+      if (message is JSONRPCRequest || (e !is IOException && e !is IllegalStateException)) throw e
+      logger.debug("Client disconnected before an outgoing ${message::class.simpleName} could be delivered", e)
+    }
+  }
 }
 
 private fun ServerSSESession.launchSseHeartbeat() {
