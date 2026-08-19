@@ -326,7 +326,8 @@ object PluginInitializationDiagnosticUtils {
             reportedCycles.add(exclusionReason.getDependencyCycleRepresentative())) {
           exclusionReason.majorProblemLogMessage()?.let(result::add)
         }
-        if (exclusionReason is PackagePrefixConflictWithAnotherModule) {
+        if (descriptor !is PluginMainDescriptor && // the plugin descriptor module gets reported below
+            exclusionReason is PackagePrefixConflictWithAnotherModule) {
           exclusionReason.majorProblemLogMessage()?.let(result::add)
         }
       }
