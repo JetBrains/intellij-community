@@ -23,6 +23,7 @@ import com.intellij.diff.tools.util.FocusTrackerSupport.Twoside
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.tools.util.PrevNextDifferenceIterableBase
 import com.intellij.diff.tools.util.SimpleDiffPanel
+import com.intellij.diff.tools.util.SyncScrollSupport
 import com.intellij.diff.tools.util.SyncScrollSupport.TwosideSyncScrollSupport
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
@@ -340,6 +341,9 @@ internal class SideBySidePatchDiffViewer(
   }
 
   private inner class PatchAlignedDiffModel : AlignedDiffModelBase(diffRequest, diffContext, component, editor1, editor2, syncScrollable) {
+    override val syncScrollSupport: SyncScrollSupport.Support
+      get() = this@SideBySidePatchDiffViewer.syncScrollSupport
+
     override fun getDiffChanges(): List<AlignableChange> = patchChanges
   }
 
