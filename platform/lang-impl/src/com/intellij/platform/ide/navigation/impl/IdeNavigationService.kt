@@ -41,7 +41,6 @@ import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.ide.navigation.NavigationTaskCoordinator
 import com.intellij.platform.ide.navigation.RequestedEditor
-import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
@@ -50,52 +49,30 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.sequenceOfNotNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asContextElement
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.withContext
 
 @Service(Service.Level.PROJECT)
 internal class IdeNavigationService(private val project: Project) : NavigationService {
-  /**
-   * - `permits = 1` means at any given time only one request is being handled.
-   * - [BufferOverflow.DROP_OLDEST] makes each new navigation request cancel the previous one.
-   */
-  private val semaphore: OverflowSemaphore = OverflowSemaphore(permits = 1, overflow = BufferOverflow.DROP_OLDEST)
+  private val twoPhaseExecutor: TwoPhaseOverflowExecutor = TwoPhaseOverflowExecutor()
   private val isInNavigation: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
 
   private val taskCoordinator: NavigationTaskCoordinator
     get() = NavigationTaskCoordinator.getInstance(project)
 
   override suspend fun navigateRequests(options: NavigationOptions, supplier: suspend () -> Collection<NavigationRequest>): Boolean {
-    return doExclusively {
-      val requests = withContext(Dispatchers.Default) { supplier() }
-      requests.isNotEmpty() && withHistoryIfNeeded(options) {
-        navigate(project = project, requests = requests, options = options)
-      }
+    return doExclusively(options) {
+      withContext(Dispatchers.Default) { supplier() }
     }
   }
 
   override suspend fun navigate(options: NavigationOptions, supplier: suspend () -> Collection<Navigatable>): Boolean {
-    return doExclusively {
-      val navigatables = withContext(Dispatchers.Default) { supplier() }
-      navigatables.isNotEmpty() && doNavigate(navigatables.toList(), options)
+    return doExclusively(options) {
+      withContext(Dispatchers.Default) { supplier() }.toNavigationRequests()
     }
   }
 
   override suspend fun navigate(navigatables: List<Navigatable>, options: NavigationOptions): Boolean {
-    return doExclusively {
-      doNavigate(navigatables, options)
-    }
-  }
-
-  private suspend fun doNavigate(navigatables: List<Navigatable>, options: NavigationOptions): Boolean {
-    val requests = navigatables.mapWithProgress {
-      readAction {
-        it.navigationRequest()
-      }
-    }.filterNotNull()
-    return withHistoryIfNeeded(options) {
-      navigate(project = project, requests = requests, options = options)
-    }
+    return navigatables.isNotEmpty() && doExclusively(options) { navigatables.toNavigationRequests() }
   }
 
   override suspend fun navigate(request: NavigationRequest, options: NavigationOptions): Boolean {
@@ -103,27 +80,36 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
   }
 
   override suspend fun navigate(requests: Collection<NavigationRequest>, options: NavigationOptions): Boolean {
-    return doExclusively {
-      withHistoryIfNeeded(options) {
-        navigate(project = project, requests = requests, options = options)
+    return requests.isNotEmpty() && doExclusively(options) { requests }
+  }
+
+  private suspend fun Collection<Navigatable>.toNavigationRequests(): List<NavigationRequest> {
+    return mapWithProgress {
+      readAction {
+        it.navigationRequest()
       }
-    }
+    }.filterNotNull()
   }
 
   /**
-   * Re-entering the permit would cancel the very navigation the caller is running inside and reset the options.
+   * Resolves the targets of a navigation and applies them as the latest navigation of this project, see [TwoPhaseOverflowExecutor]
    */
-  private suspend inline fun doExclusively(crossinline action: suspend () -> Boolean): Boolean {
+  private suspend inline fun doExclusively(options: NavigationOptions, crossinline action: suspend () -> Collection<NavigationRequest>): Boolean {
     if (isInNavigation.get()) {
       LOG.error("Navigation is already running: use `NavigationRequest` instead of starting a navigation from `navigate()`")
       return false
     }
+
     return taskCoordinator.runWithTracking {
-      semaphore.withPermit {
-        withContext(isInNavigation.asContextElement(true)) {
-          action()
+      withContext(isInNavigation.asContextElement(true)) {
+        twoPhaseExecutor.submit(
+          prepare = { action().takeIf { it.isNotEmpty() } }
+        ) { requests ->
+          withHistoryIfNeeded(options) {
+            navigate(project = project, requests = requests, options = options)
+          }.takeIf { it }
         }
-      }
+      } ?: false
     }
   }
 

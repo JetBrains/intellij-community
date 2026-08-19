@@ -34,7 +34,9 @@ interface NavigationService {
    * Initiates navigation, resolving the requests lazily via [supplier].
    *
    * The supplier is invoked exactly once, on a background thread inside the navigation task: resolving the target is therefore
-   * awaited together with the navigation, and a newer navigation cancels a resolution which is still running.
+   * awaited together with the navigation, but it runs before this navigation replaces the one which is currently running.
+   * A resolution which lost to a newer navigation is cancelled once the newer one knows it has something to navigate to;
+   * if the losing resolution has already completed, its result is discarded instead.
    * The supplier may perform `ReadAction`s, but it must not initiate another navigation:
    * a nested navigation is reported as an error and does nothing.
    *
