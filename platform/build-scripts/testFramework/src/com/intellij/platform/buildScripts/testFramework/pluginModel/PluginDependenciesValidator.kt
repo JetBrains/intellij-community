@@ -29,6 +29,7 @@ import com.intellij.ide.plugins.ProductRulesImposedExclusion
 import com.intellij.ide.plugins.ResolvedPluginSet
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.contentModuleName
+import com.intellij.ide.plugins.getMainDescriptor
 import com.intellij.ide.plugins.isLoaded
 import com.intellij.ide.plugins.loadPluginSubDescriptors
 import com.intellij.ide.plugins.sequenceAllDescriptors
@@ -132,9 +133,10 @@ class PluginDependenciesValidator private constructor(
     }
 
     val reportedMessages = HashSet<String>()
-    fun report(plugin: PluginMainDescriptor, reason: DescriptorExclusionReason) {
+    fun report(reason: DescriptorExclusionReason) {
+      val descriptor = reason.descriptor
       val rootReason = if (reason is ChainedExclusion) {
-        val rootDescriptor = reason.descriptor.sequenceDescriptorExclusionChain(pluginSet.resolvedPluginSet::getExclusionReason).last()
+        val rootDescriptor = descriptor.sequenceDescriptorExclusionChain(pluginSet.resolvedPluginSet::getExclusionReason).last()
         pluginSet.resolvedPluginSet.getExclusionReason(rootDescriptor)!!
       }
       else {
@@ -143,13 +145,13 @@ class PluginDependenciesValidator private constructor(
       if (rootReason.isIgnoredByBuildValidation() || rootReason.isHostSpecificIncompatibility()) {
         return
       }
-      val errorMessage = PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(pluginSet, plugin)
+      val errorMessage = PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(pluginSet, descriptor)
                          ?: return
       if (!reportedMessages.add(errorMessage)) {
         return
       }
       errors.add(PluginModuleConfigurationError(
-        pluginModelModuleName = "plugin_${plugin.name}",
+        pluginModelModuleName = "plugin_${descriptor.getMainDescriptor().name}",
         descriptorExclusionReason = reason,
         errorMessage = errorMessage,
       ))
@@ -157,15 +159,15 @@ class PluginDependenciesValidator private constructor(
 
     for ((plugin, reason) in pluginSet.excludedFromCandidateSubset) {
       if (!pluginSet.initContext.isPluginDisabled(plugin.pluginId)) {
-        report(plugin, reason)
+        report(reason)
       }
     }
     for (plugin in pluginSet.resolvedPluginSet.candidateSet.plugins) {
-      pluginSet.resolvedPluginSet.getExclusionReason(plugin)?.let { report(plugin, it) }
+      pluginSet.resolvedPluginSet.getExclusionReason(plugin)?.let(::report)
       for (descriptor in plugin.sequenceAllDescriptors()) {
         val reason = pluginSet.resolvedPluginSet.getExclusionReason(descriptor)
         if (reason is PackagePrefixConflictWithAnotherModule) {
-          report(plugin, reason)
+          report(reason)
         }
       }
     }
