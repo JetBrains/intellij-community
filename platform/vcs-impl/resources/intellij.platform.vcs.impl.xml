@@ -50,6 +50,7 @@
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.rpc.topics"/>
     <module name="intellij.platform.statistics"/>
@@ -60,6 +61,7 @@
     <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.workspace.jps"/>
   </dependencies>
   <!-- endregion -->
 

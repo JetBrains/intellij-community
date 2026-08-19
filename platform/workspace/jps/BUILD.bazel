@@ -86,7 +86,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.workspace.jps.iml",
-        "resources/META-INF/WorkspaceModelExtensions.xml",
+        "resources/intellij.platform.workspace.jps.xml",
     ],
     visibility = ["//visibility:public"],
 )

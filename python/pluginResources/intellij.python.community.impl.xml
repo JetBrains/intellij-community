@@ -61,6 +61,7 @@
     <module name="intellij.platform.ml"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.remote.core"/>
     <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.smRunner"/>
@@ -77,6 +78,7 @@
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.welcomeScreen.impl"/>
+    <module name="intellij.platform.workspace.jps"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.core.impl"/>

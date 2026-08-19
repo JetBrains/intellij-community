@@ -1,4 +1,3 @@
 - name: dist.all/lib/intellij.platform.lang.jar
   modules:
   - name: intellij.platform.lang
-  - name: intellij.platform.refactoring

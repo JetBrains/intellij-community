@@ -26,6 +26,7 @@
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.workspace.jps"/>
   </dependencies>
   <!-- endregion -->
   <xi:include href="/META-INF/AnalysisImpl.analyzer.xml"/>
@@ -175,7 +176,6 @@
                     serviceImplementation="com.intellij.openapi.editor.impl.LazyRangeMarkerFactoryImpl"/>
 
     <multiverse.codeInsightContextPresentationProvider implementation="com.intellij.codeInsight.multiverse.ModuleEntityContextPresentationProvider"/>
-    <iw.actionProvider implementation="com.intellij.openapi.editor.impl.multiverse.CodeInsightContextSwitcherProvider"/>
 
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="priority" order="first"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PrefixMatchingWeigher" id="prefix"

@@ -39,6 +39,7 @@
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.usageView.impl"/>
     <module name="intellij.platform.util.ui"/>

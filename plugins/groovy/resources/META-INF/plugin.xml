@@ -67,12 +67,14 @@
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.macro"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.testIntegration.ui"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.workspace.jps"/>
     <module name="intellij.properties.backend"/>
     <module name="intellij.properties.psi"/>
     <module name="intellij.regexp"/>

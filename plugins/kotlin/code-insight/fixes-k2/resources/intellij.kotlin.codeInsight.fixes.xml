@@ -39,6 +39,7 @@
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="kotlin.fir"/>
     <module name="kotlin.fir.frontend-independent"/>
   </dependencies>

@@ -37,6 +37,7 @@
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.markdown.utils"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.syntax.psi"/>
     <module name="intellij.platform.util.coroutines"/>

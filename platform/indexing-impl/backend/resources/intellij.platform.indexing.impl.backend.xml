@@ -1,6 +1,6 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
@@ -8,9 +8,10 @@
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.rpc.backend"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <findInProjectSearchEngine implementation="com.intellij.platform.indexing.impl.backend.IdeaIndexBasedFindInProjectSearchEngine"/>

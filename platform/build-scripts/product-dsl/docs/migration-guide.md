@@ -251,10 +251,9 @@ override fun getProductContentDescriptor(): ProductModulesContentSpec = productM
   alias("com.intellij.codeServer")
   
   // Only XML includes - modules not available at runtime
-  deprecatedInclude("intellij.platform.analysis", "META-INF/Analysis.xml")
-  deprecatedInclude("intellij.platform.core", "META-INF/Core.xml")
-  deprecatedInclude("intellij.platform.projectModel", "META-INF/ProjectModel.xml")
-  // ... 11 more deprecatedInclude calls
+  deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
+  deprecatedInclude("intellij.platform.resources", "META-INF/ProjectModel.xml")
+  // ... more deprecatedInclude calls
   
   // Only 5 modules total
   module("intellij.grid")
@@ -271,12 +270,11 @@ override fun getProductContentDescriptor(): ProductModulesContentSpec = productM
   moduleSet(CommunityModuleSets.corePlatform())
   
   // Keep deprecatedInclude only for modules NOT in corePlatform
-  deprecatedInclude("intellij.platform.indexing", "META-INF/Indexing.xml")
-  deprecatedInclude("intellij.platform.refactoring", "META-INF/RefactoringExtensionPoints.xml")
   deprecatedInclude("intellij.codeServer.core", "META-INF/codeserver-customization.xml")
   
   // Product-specific modules
   embeddedModule("intellij.platform.codeStyle.impl")
+  embeddedModule("intellij.platform.refactoring")
   module("intellij.grid")
   module("intellij.grid.types")
   module("intellij.grid.csv.core.impl")
