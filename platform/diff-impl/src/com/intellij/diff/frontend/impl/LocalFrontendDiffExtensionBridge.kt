@@ -80,7 +80,7 @@ object LocalFrontendDiffExtensionBridge {
     parentDisposable: Disposable,
   ) = when (viewer) {
     is SimpleOnesideDiffViewer -> adaptOneSideViewer(viewer)
-    is SimpleDiffViewer -> adaptTwoSideViewer(viewer)
+    is SimpleDiffViewer -> adaptTwoSideViewer(viewer, parentDisposable)
     is UnifiedDiffViewer -> adaptUnifiedViewer(viewer, parentDisposable)
     else -> null
   }
@@ -101,22 +101,20 @@ object LocalFrontendDiffExtensionBridge {
 
   private fun adaptTwoSideViewer(
     viewer: SimpleDiffViewer,
+    parentDisposable: Disposable,
   ): FrontendDiffViewer.FrontendTwoSideDiffViewer {
+    val mapping = LocalTwoSideDiffMapping(viewer, parentDisposable)
     return object : FrontendDiffViewer.FrontendTwoSideDiffViewer {
       override val component: JComponent = viewer.component
       override val left: FrontendDiffEditor = FrontendDiffEditor(
         editor = viewer.editor1,
         side = Side.LEFT,
-        lineMapper = FrontendDirectDiffLineMapper(viewer.editor1.document, Side.LEFT) { line ->
-          viewer.transferPosition(Side.RIGHT, LineCol(line, 0)).line
-        },
+        lineMapper = FrontendDirectDiffLineMapper(viewer.editor1.document, Side.LEFT, mapping),
       )
       override val right: FrontendDiffEditor = FrontendDiffEditor(
         editor = viewer.editor2,
         side = Side.RIGHT,
-        lineMapper = FrontendDirectDiffLineMapper(viewer.editor2.document, Side.RIGHT) { line ->
-          viewer.transferPosition(Side.LEFT, LineCol(line, 0)).line
-        },
+        lineMapper = FrontendDirectDiffLineMapper(viewer.editor2.document, Side.RIGHT, mapping),
       )
     }
   }
@@ -157,6 +155,72 @@ private class LocalFrontendDiffExtensionData(
   override fun <T : Any> getContextData(key: FrontendDiffUserDataKey<T>): T? = context.getUserData(key.rawKey)
 
   override fun <T : Any> getRequestData(key: FrontendDiffUserDataKey<T>): T? = request.getUserData(key.rawKey)
+}
+
+/**
+ * The two-side mapping of a local viewer: it is up to date whenever the viewer has a computed diff, which is what
+ * [SimpleDiffViewer.transferPosition] needs to map a line onto the opposite side.
+ */
+private class LocalTwoSideDiffMapping(
+  private val viewer: SimpleDiffViewer,
+  parentDisposable: Disposable,
+) : FrontendTwoSideDiffMapping {
+  private var currentRevision = 0L
+  private var available = false
+  private val listeners = mutableListOf<() -> Unit>()
+
+  init {
+    val diffListener = object : DiffViewerListener() {
+      override fun onBeforeRediff() {
+        invalidate()
+      }
+
+      override fun onAfterRediff() {
+        currentRevision++
+        available = true
+        notifyListeners()
+      }
+
+      override fun onRediffAborted() {
+        invalidate()
+      }
+    }
+    viewer.addListener(diffListener)
+    Disposer.register(parentDisposable, Disposable { viewer.removeListener(diffListener) })
+
+    @Suppress("SplitModeApiUsage")
+    val documentListener = object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        invalidate()
+      }
+    }
+    viewer.editor1.document.addDocumentListener(documentListener, parentDisposable)
+    viewer.editor2.document.addDocumentListener(documentListener, parentDisposable)
+  }
+
+  override val isAvailable: Boolean get() = available
+
+  override val revision: Long get() = currentRevision
+
+  override fun addListener(parentDisposable: Disposable, listener: () -> Unit) {
+    listeners += listener
+    Disposer.register(parentDisposable, Disposable { listeners.remove(listener) })
+  }
+
+  override fun mapOtherSide(side: Side, line: Int): Int {
+    if (!isAvailable) return -1
+    return viewer.transferPosition(side, LineCol(line, 0)).line
+  }
+
+  private fun invalidate() {
+    if (!available) return
+    available = false
+    notifyListeners()
+  }
+
+  private fun notifyListeners() {
+    listeners.toList().forEach { it() }
+  }
 }
 
 private class LocalFrontendUnifiedDiffMapping(

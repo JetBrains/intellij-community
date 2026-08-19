@@ -70,6 +70,18 @@ data class FrontendDiffLineLocation(val side: Side, val line: Int)
 
 @ApiStatus.Internal
 interface FrontendDiffLineMapper {
+  /**
+   * Whether the mapping the editor is viewed through describes the documents as they are right now.
+   *
+   * In split mode the mapping is computed on the backend, so it is unavailable until the frontend documents catch up with the
+   * versions it was built from, and again as soon as they change. While it is `false`, [lineToUnified] cannot resolve the
+   * opposite side of the mapping and reports `-1` for it.
+   */
+  val isAvailable: Boolean
+
+  /** Notifies when [isAvailable] or the mapping itself changes, so that mapped state can be recomputed. */
+  fun addListener(parentDisposable: Disposable, listener: () -> Unit)
+
   fun locationToLine(location: FrontendDiffLineLocation): Int?
   fun lineToLocation(line: Int): FrontendDiffLineLocation?
 
