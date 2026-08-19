@@ -23,7 +23,11 @@ public interface PyCallSiteExpression extends PyAstCallSiteExpression, PyCallSit
    * actual callee method and chained comparisons order if any.
    *
    * @param resolvedCallee optional callee corresponding to the call. Without it the receiver is deduced purely syntactically.
+   * @deprecated For {@link PySubscriptionExpression} and {@link PyPrefixExpression}, use {@code getOperand()};
+   * for {@link PyCallExpression}, use the qualifier of {@link PyCallExpression#getCallee()};
+   * for {@link PyBinaryExpression}, use the appropriate operand.
    */
+  @Deprecated(forRemoval = true)
   default @Nullable PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
     return (PyExpression)getReceiver((PyAstCallable)resolvedCallee);
   }

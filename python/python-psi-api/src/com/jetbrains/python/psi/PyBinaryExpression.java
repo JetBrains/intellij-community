@@ -3,10 +3,18 @@ package com.jetbrains.python.psi;
 
 import com.jetbrains.python.ast.PyAstBinaryExpression;
 import com.jetbrains.python.ast.PyAstExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 
 public interface PyBinaryExpression extends PyAstBinaryExpression, PyQualifiedExpression, PyCallSiteExpression, PyReferenceOwner {
+
+  @SuppressWarnings("removal")
+  @ApiStatus.Internal
+  @Override
+  default @Nullable PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
+    return (PyExpression)PyAstBinaryExpression.super.getReceiver(resolvedCallee);
+  }
 
   @Override
   default PyExpression getLeftExpression() {

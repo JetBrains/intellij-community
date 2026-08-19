@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyStarArgument;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
@@ -290,8 +291,8 @@ public final class PyArgumentListInspection extends PyInspection {
 
     final PyClass receiverClass = function.getContainingClass();
     if (receiverClass != null && PyUtil.isObjectClass(receiverClass)) {
-      final PyExpression receiverExpression = call.getReceiver(null);
-      if (receiverExpression instanceof PyCallExpression && PyUtil.isSuperCall((PyCallExpression)receiverExpression)) {
+      final PyExpression receiver = call.getCallee() instanceof PyQualifiedExpression callee ? callee.getQualifier() : null;
+      if (receiver instanceof PyCallExpression && PyUtil.isSuperCall((PyCallExpression)receiver)) {
         return true;
       }
     }

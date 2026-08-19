@@ -197,7 +197,7 @@ object PyDefUseUtil {
   }
 
   private fun isCallOnPrefix(callInstr: CallInstruction, varQname: QualifiedName): Boolean {
-    val receiver = callInstr.element.getReceiver(null)
+    val receiver = (callInstr.element.callee as? PyQualifiedExpression)?.qualifier
     if (isPrefixExpression(receiver, varQname)) return true
     for (arg in callInstr.element.arguments) {
       if (isPrefixExpression(arg, varQname)) return true

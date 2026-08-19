@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.PyLambdaExpression;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -95,8 +96,8 @@ public final class PyStaticCallHierarchyUtil {
         element = element.getParent();
       }
 
-      if (element instanceof PyCallExpression) {
-        final PyExpression receiver = ((PyCallExpression)element).getReceiver(null);
+      if (element instanceof PyCallExpression callExpr) {
+        final PyExpression receiver = callExpr.getCallee() instanceof PyQualifiedExpression callee ? callee.getQualifier() : null;
         if (receiver instanceof PyCallExpression && ((PyCallExpression)receiver).isCalleeText(PyNames.SUPER)) {
           continue;
         }
