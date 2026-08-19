@@ -1,6 +1,6 @@
 package com.intellij.sh.formatter
 
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.project.Project
 
 interface ShFormatterDownloader {
@@ -10,6 +10,6 @@ interface ShFormatterDownloader {
 
   companion object {
     @JvmStatic
-    fun getInstance(): ShFormatterDownloader = service()
+    fun getInstance(): ShFormatterDownloader = serviceOrNull() ?: DumbShFormatterDownloader
   }
 }

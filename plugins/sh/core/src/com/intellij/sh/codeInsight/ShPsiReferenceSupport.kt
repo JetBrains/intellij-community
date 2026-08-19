@@ -1,6 +1,6 @@
 package com.intellij.sh.codeInsight
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.psi.PsiReference
 import com.intellij.sh.psi.ShLiteral
 import com.intellij.sh.psi.ShLiteralExpression
@@ -19,6 +19,6 @@ interface ShPsiReferenceSupport {
 
   companion object {
     @JvmStatic
-    fun getInstance(): ShPsiReferenceSupport = ApplicationManager.getApplication().getService(ShPsiReferenceSupport::class.java)
+    fun getInstance(): ShPsiReferenceSupport = serviceOrNull<ShPsiReferenceSupport>() ?: DumbShPsiReferenceSupport
   }
 }
