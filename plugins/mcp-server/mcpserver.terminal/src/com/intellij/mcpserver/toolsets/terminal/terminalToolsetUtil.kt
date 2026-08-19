@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
 import kotlin.time.Duration
 
 internal class CommandSession(val sessionId: String, val console: TerminalExecutionConsole)
@@ -54,6 +55,8 @@ internal suspend fun executeShellCommand(
   }
 
   commandLine.withWorkingDirectory(project.basePath?.toNioPathOrNull())
+  // apply env variables from Settings | Tools | Terminal consistently with the built-in terminal (IJPL-253170)
+  TerminalProjectOptionsProvider.getInstance(project).getEffectiveEnvData().configureCommandLine(commandLine, true)
 
   // to start in a real terminal emulator pass PtyCommandLine(commandLine), but it works badly now
   val processHandler = try {

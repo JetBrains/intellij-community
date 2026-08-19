@@ -3,8 +3,6 @@ package org.jetbrains.plugins.terminal.runner;
 
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.wsl.WslPath;
-import com.intellij.ide.trustedProjects.TrustedProjects;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.eel.EelDescriptor;
@@ -140,7 +138,7 @@ public final class LocalOptionsConfigurer {
     final var isWindows = EelPlatformKt.isWindows(eelDescriptor.getOsFamily());
 
     Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(eelDescriptor.getOsFamily());
-    EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(project).getEnvData();
+    EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(project).getEffectiveEnvData();
     if (envData.isPassParentEnvs()) {
       var parentEnvs = processType == TerminalProcessType.SHELL
                        ? TerminalStartupKt.fetchMinimalEnvironmentVariablesBlocking(eelDescriptor)
@@ -169,15 +167,9 @@ public final class LocalOptionsConfigurer {
 
     TerminalEnvironment.INSTANCE.setCharacterEncoding(platform, envs);
 
-    // user-defined envs are passed for trusted projects only (IJPL-111912)
-    EnvironmentVariablesData trustedEnvData = TrustedProjects.isProjectTrusted(project) ? envData : null;
-    if (trustedEnvData != null) {
-      PathMacroManager macroManager = PathMacroManager.getInstance(project);
-      for (Map.Entry<String, String> env : trustedEnvData.getEnvs().entrySet()) {
-        envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
-      }
-    }
-    TerminalEnvironment.setWslEnv(eelDescriptor, shellCommand, trustedEnvData, envs);
+    // user-defined envs are already trust-filtered (IJPL-111912) and macro-expanded by getEffectiveEnvData()
+    envs.putAll(envData.getEnvs());
+    TerminalEnvironment.setWslEnv(eelDescriptor, shellCommand, envData, envs);
     return envs;
   }
 
