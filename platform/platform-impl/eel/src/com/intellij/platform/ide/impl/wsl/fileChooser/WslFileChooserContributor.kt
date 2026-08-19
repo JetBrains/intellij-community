@@ -130,7 +130,7 @@ internal class WslFileChooserContributor : UniversalFileChooserContributor {
    * Uses the `wsl.localhost` prefix as the canonical form, matching what `EelWslMrfsBackend.getCustomRoots` exposes.
    */
   private fun canonicalRootId(pathString: String): String {
-    val normalized = pathString.replace('/', '\\').trimEnd('\\').lowercase()
+    val normalized = pathString.replace('/', '\\').trimEnd('\\')
     val prefixes = listOf("\\\\wsl.localhost\\", "\\\\wsl\$\\")
     for (prefix in prefixes) {
       if (normalized.startsWith(prefix)) {
