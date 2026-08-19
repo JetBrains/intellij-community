@@ -23,6 +23,9 @@ class EditorState : ObservableState() {
     const val isStickySelectionPropertyName: String = "isStickySelection"
     const val myForcedBackgroundPropertyName: String = "myForcedBackground"
     const val myBorderPropertyName: String = "myBorder"
+    const val myPlaceholderTextPropertyName: String = "myPlaceholderText"
+    const val myPlaceholderAttributesPropertyName: String = "myPlaceholderAttributes"
+    const val myShowPlaceholderWhenFocusedPropertyName: String = "myShowPlaceholderWhenFocused"
     const val disableDefaultSoftWrapsCalculationPropertyName: String = "disableDefaultSoftWrapsCalculation"
   }
 
