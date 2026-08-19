@@ -8,10 +8,13 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.terminal.frontend.view.impl.createTerminalKeyEventDispatcherForTests
 import com.intellij.terminal.tests.reworked.frontend.TerminalTypingLocksTest.Companion.ALLOWED_WRITE_INTENT
+import com.intellij.terminal.tests.reworked.frontend.completion.TerminalCompletionFixture.Companion.doWithCompletionFixture
+import com.intellij.terminal.tests.reworked.util.EchoingTerminalSession
 import com.intellij.terminal.tests.reworked.util.LockKind
 import com.intellij.terminal.tests.reworked.util.TerminalEdtLocksSpy
 import com.intellij.testFramework.PlatformTestUtil
@@ -24,6 +27,10 @@ import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
+import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
+import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
@@ -47,27 +54,67 @@ internal class TerminalTypingLocksTest : BasePlatformTestCase() {
   override fun runInDispatchThread(): Boolean = false
 
   @Test
-  fun `typing does not take write or unexpected write-intent locks on EDT`(): Unit = doTest { fixture ->
+  fun `test EDT locks while typing`() {
     val spy = TerminalEdtLocksSpy(testRootDisposable)
 
-    fixture.type("echo hello world")
-    fixture.moveMouseOverOutput()
+    withTerminalTestFixture { fixture ->
+      fixture.type("echo hello world")
+      fixture.moveMouseOverOutput()
+    }
+    assertNoUnexpectedLocks(spy, "while typing in the terminal")
+  }
 
+  @Test
+  fun `test EDT locks while showing completion popup`() {
+    val spy = TerminalEdtLocksSpy(testRootDisposable)
+
+    timeoutRunBlocking(20.seconds, context = Dispatchers.EDT) {
+      val fixtureScope = childScope("TerminalCompletionFixture")
+      val startupOptions = TerminalStartupOptionsImpl(
+        shellCommand = listOf("/bin/zsh", "--login", "-i"),
+        workingDirectory = "fakeDir",
+        envVariables = emptyMap(),
+        processType = TerminalProcessType.SHELL,
+        pid = null,
+      )
+      val session = EchoingTerminalSession(startupOptions, fixtureScope.childScope("EchoingTerminalSession"))
+      doWithCompletionFixture(project, session, fixtureScope) { fixture ->
+        fixture.mockTestShellCommand(ShellCommandSpec("echo") {
+          argument {
+            suggestions("hello", "world")
+          }
+        })
+        fixture.awaitShellIntegrationFeaturesInitialized()
+        fixture.setCompletionOptions(
+          showPopupAutomatically = false,
+          showingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS,
+          parentDisposable = testRootDisposable,
+        )
+
+        fixture.type("echo ")
+        fixture.callCompletionPopup()
+        assertThat(fixture.isLookupActive()).isTrue()
+      }
+    }
+    assertNoUnexpectedLocks(spy, "while opening terminal completion popup")
+  }
+
+  private fun assertNoUnexpectedLocks(spy: TerminalEdtLocksSpy, operation: String) {
     val writes = spy.lockUsages(LockKind.WRITE)
     assertThat(writes)
-      .describedAs("Write actions shouldn't be taken on the EDT while typing in the terminal:\n" +
+      .describedAs("Write actions shouldn't be taken on the EDT $operation:\n" +
                    writes.joinToString("\n\n"))
       .isEmpty()
 
     val unexpectedWILs = spy.lockUsages(LockKind.WRITE_INTENT).filterNot { it.signature in ALLOWED_WRITE_INTENT }
     assertThat(unexpectedWILs)
-      .describedAs("New write-intent lock sites on the EDT while typing. " +
+      .describedAs("New write-intent lock sites on the EDT $operation. " +
                    "Add them to ALLOWED_WRITE_INTENT or avoid taking the lock:\n" +
                    unexpectedWILs.joinToString("\n\n"))
       .isEmpty()
   }
 
-  private fun doTest(test: suspend (TerminalTestFixture) -> Unit) {
+  private fun withTerminalTestFixture(test: suspend (TerminalTestFixture) -> Unit) {
     timeoutRunBlocking(20.seconds, context = Dispatchers.EDT) {
       ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask(id = TerminalToolWindowFactory.TOOL_WINDOW_ID))
 
@@ -81,13 +128,16 @@ internal class TerminalTypingLocksTest : BasePlatformTestCase() {
   }
 
   companion object {
-    private val ALLOWED_WRITE_INTENT: Set<String> = setOf()
+    private val ALLOWED_WRITE_INTENT: Set<String> = setOf(
+      "com.intellij.terminal.frontend.view.impl.TerminalViewImpl#configureOutputEditor",
+      "org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils#createOutputEditor"
+    )
   }
 }
 
 internal class TerminalTestFixture(
   private val manager: TerminalToolWindowTabsManager,
-  parentDisposable: Disposable
+  parentDisposable: Disposable,
 ) : AutoCloseable {
   private val fixtureDisposable = Disposer.newDisposable(parentDisposable)
 
@@ -163,7 +213,7 @@ internal class TerminalTestFixture(
   private suspend fun awaitTextAndCursor(
     outputModel: TerminalOutputModel,
     expectedCursor: TerminalOffset,
-    expectedText: String
+    expectedText: String,
   ) {
     fun matchesTextAndCursor(): Boolean {
       val actualText = outputModel.getText(outputModel.startOffset, outputModel.endOffset).toString()
