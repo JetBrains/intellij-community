@@ -600,6 +600,8 @@ jvm_library(
         "//platform/structuralsearch:structuralSearch-tests_test_lib",
         "//json/backend/tests",
         "//json/backend/tests:tests_test_lib",
+        "//json/backend/performanceTests:json-performance-tests",
+        "//json/backend/performanceTests:json-performance-tests_test_lib",
         "//json/networknt.wrapper/tests",
         "//json/networknt.wrapper/tests:tests_test_lib",
         "//platform/platform-tests:tests",

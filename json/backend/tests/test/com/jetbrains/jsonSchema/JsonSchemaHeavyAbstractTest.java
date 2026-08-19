@@ -29,7 +29,7 @@ import java.util.TreeMap;
 public abstract class JsonSchemaHeavyAbstractTest extends BasePlatformTestCase {
   private Map<String, UserDefinedJsonSchemaConfiguration> mySchemas;
   protected LookupElement[] myItems;
-  protected boolean myDoCompletion = true;
+  public boolean myDoCompletion = true;
 
   @Override
   public void setUp() throws Exception {
@@ -102,7 +102,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends BasePlatformTestCase {
     void doCheck() throws Exception;
   }
 
-  protected void addSchema(@NotNull final UserDefinedJsonSchemaConfiguration schema) {
+  public void addSchema(@NotNull final UserDefinedJsonSchemaConfiguration schema) {
     mySchemas.put(schema.getName(), schema);
   }
 
@@ -126,7 +126,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends BasePlatformTestCase {
     myFixture.checkResult(PlatformTestUtil.loadFileText(path + File.separator + StringUtil.trimStart(testDataFile, "/")), false);
   }
 
-  protected String getUrlUnderTestRoot(String path) {
+  public String getUrlUnderTestRoot(String path) {
     return JsonFileResolver.TEMP_URL + "src/" + StringUtil.trimStart(path, "/");
   }
 
