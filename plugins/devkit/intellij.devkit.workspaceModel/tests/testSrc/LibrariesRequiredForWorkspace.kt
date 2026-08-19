@@ -37,6 +37,8 @@ internal object LibrariesRequiredForWorkspace {
   private val gradleExternalSystemImpl = ModuleLibrary("intellij.platform.externalSystem.impl")
   private val pyCommon = ModuleLibrary("intellij.python.community.common")
   private val cidrProjectModel = ModuleLibrary("intellij.cidr.projectModel")
+  private val cidrPsiBase = ModuleLibrary("intellij.cidr.psi.base")
+  private val cidrUtilExecution = ModuleLibrary("intellij.cidr.util.execution")
   private val kotlinBaseScripting = ModuleLibrary("intellij.kotlin.base.scripting")
   private val androidProjectSystem = ModuleLibrary("intellij.android.projectSystem")
   private val androidGradleModels = ModuleLibrary("intellij.android.projectSystem.gradle.models")
@@ -89,6 +91,9 @@ internal object LibrariesRequiredForWorkspace {
       }
       "intellij.clion.openfolder" -> {
         listOf(cidrProjectModel)
+      }
+      "intellij.cidr.projectModel" -> {
+        listOf(cidrPsiBase, cidrUtilExecution)
       }
       "intellij.android.projectSystem.gradle" -> {
         listOf(androidProjectSystem, androidGradleModels, androidStudioPlatform, gradle, gradleToolingExtension)
