@@ -11,7 +11,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConsoleLine
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
@@ -105,10 +104,8 @@ internal class VcsConsoleTabServiceImpl(val project: Project) : VcsConsoleTabSer
     line.print(consoleView)
     hadMessages = true
 
-    if (Registry.`is`("vcs.showConsole")) {
-      runInEdt(ModalityState.nonModal()) {
-        showConsoleTab(false, null)
-      }
+    runInEdt(ModalityState.nonModal()) {
+      showConsoleTab(false, null)
     }
   }
 

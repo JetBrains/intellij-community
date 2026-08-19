@@ -4,7 +4,7 @@ import com.intellij.openapi.util.registry.RegistryManager
 class RegistryKeyId {
 
   fun registry() {
-    Registry.intValue("vcs.showConsole") // registry.properties
+    Registry.intValue("ide.popup.auto.delay") // registry.properties
     Registry.intValue("my.plugin.key") // registryKey.xml
 
     Registry.get("<error descr="Cannot resolve registry key 'INVALID_VALUE'">INVALID_VALUE</error>")
