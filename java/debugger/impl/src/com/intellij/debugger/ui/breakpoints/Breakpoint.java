@@ -190,21 +190,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   @Override
   public @NotNull OverheadProducer.Presentation computePresentation() {
     if (myXBreakpoint != null) {
-      String name;
-      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162794")) {
-        name = XBreakpointUtil.getShortText(myXBreakpoint);
-      }
       return new OverheadProducer.Presentation(
-        name,
+        XBreakpointUtil.getShortText(myXBreakpoint),
         myXBreakpoint.getType().getEnabledIcon());
     }
     else {
-      String name;
-      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162794")) {
-        name = getDisplayName();
-      }
       return new OverheadProducer.Presentation(
-        name,
+        getDisplayName(),
         AllIcons.Debugger.Db_set_breakpoint);
     }
   }
