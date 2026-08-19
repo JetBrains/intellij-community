@@ -74,6 +74,7 @@ public final class RangeMarkerStorageImpl implements RangeMarkerStorage {
                                                       int end,
                                                       byte tastePreference,
                                                       @NotNull Processor<? super RangeMarker> processor) {
+    // TODO remove when all implementations ported to SnapshotMarkerEngineImpl
     TextRange interval = new ProperTextRange(start, end);
     try (MarkupIterator<RangeMarkerEx> treeIterator =
            IntervalTreeImpl.mergingOverlappingIterator(myRangeMarkers, interval,
