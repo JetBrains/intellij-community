@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
-import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsConfiguration.StandardConfirmation
@@ -14,7 +12,6 @@ import com.intellij.openapi.vcs.impl.ContentRevisionCache
 import com.intellij.openapi.vcs.impl.VcsDescriptor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Processor
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -207,30 +204,6 @@ abstract class ProjectLevelVcsManager {
    * Marks the end of a background VCS operation (commit or update).
    */
   abstract fun stopBackgroundVcsOperation()
-
-  /**
-   * @see com.intellij.vcs.console.VcsConsoleTabService
-   */
-  abstract fun addMessageToConsoleWindow(@Nls message: @Nls String?, contentType: ConsoleViewContentType)
-
-  /**
-   * @see com.intellij.vcs.console.VcsConsoleTabService
-   */
-  abstract fun addMessageToConsoleWindow(line: VcsConsoleLine?)
-
-  @RequiresEdt
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {@link com.intellij.vcs.console.VcsConsoleTabService}")
-  abstract fun showConsole(then: Runnable?)
-
-  @RequiresEdt
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {@link com.intellij.vcs.console.VcsConsoleTabService}")
-  abstract fun scrollConsoleToTheEnd()
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("use {@link #addMessageToConsoleWindow(String, ConsoleViewContentType)}")
-  abstract fun addMessageToConsoleWindow(@Nls message: @Nls String?, attributes: TextAttributes?)
 
   abstract fun getStandardOption(option: StandardOption, vcs: AbstractVcs): VcsShowSettingOption
 

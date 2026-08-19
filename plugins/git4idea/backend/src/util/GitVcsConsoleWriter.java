@@ -10,8 +10,8 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConsoleLine;
+import com.intellij.vcs.console.VcsConsoleTabService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,6 +112,6 @@ public final class GitVcsConsoleWriter {
 
   private void showMessage(@Nullable VcsConsoleLine line) {
     if (myProject.isDisposed()) return;
-    ProjectLevelVcsManager.getInstance(myProject).addMessageToConsoleWindow(line);
+    VcsConsoleTabService.getInstance(myProject).addMessage(line);
   }
 }

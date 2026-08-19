@@ -45,9 +45,6 @@ interface VcsConsoleTabService {
   fun hadMessages(): Boolean
 
   @RequiresEdt
-  fun showConsoleTab(selectContent: Boolean, onShown: Runnable?)
-
-  @RequiresEdt
   fun showConsoleTabAndScrollToTheEnd()
 }
 
@@ -73,10 +70,6 @@ class MockVcsConsoleTabService : VcsConsoleTabService {
 
   override fun hadMessages(): Boolean {
     return false
-  }
-
-  @RequiresEdt
-  override fun showConsoleTab(selectContent: Boolean, onShown: Runnable?) {
   }
 
   @RequiresEdt
@@ -138,7 +131,7 @@ internal class VcsConsoleTabServiceImpl(val project: Project) : VcsConsoleTabSer
   override fun hadMessages(): Boolean = hadMessages
 
   @RequiresEdt
-  override fun showConsoleTab(selectContent: Boolean, onShown: Runnable?) {
+  private fun showConsoleTab(selectContent: Boolean, onShown: Runnable?) {
     if (project.isDisposed || project.isDefault) return
 
     val contentTab = ChangesViewContentManager.getInstance(project).findContent(ChangesViewContentManager.CONSOLE)
