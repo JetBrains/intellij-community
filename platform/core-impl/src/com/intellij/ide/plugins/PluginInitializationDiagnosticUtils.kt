@@ -159,13 +159,12 @@ object PluginInitializationDiagnosticUtils {
     ?: error("$this is not a cycle exclusion reason")
 
   private fun DescriptorExclusionReason.exclusionTreeLogMessage(): String {
-    val logDescr by descriptor::shortLogDescription
     return when (this) {
       is ContentModuleParentIsExcluded,
       is RequiredContentModuleIsExcluded,
       is DependencyIsExcluded,
       is DependsParentIsExcluded,
-      is DependencyIsNotResolved -> "dependent $logDescr excluded" // special handling in logExclusionTree
+      is DependencyIsNotResolved -> "dependent ${descriptor.shortLogDescription} excluded" // special handling in logExclusionTree
       else -> logMessage()
     }
   }
