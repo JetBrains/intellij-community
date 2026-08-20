@@ -56,6 +56,10 @@ sealed interface IjentApi : EelApi, AutoCloseable {
    */
   suspend fun waitUntilExit()
 
+  /** Sends a side-effect-free request containing [data] and returns IJent's response. */
+  @ApiStatus.Internal
+  suspend fun testRequest(data: String = ""): String
+
   /** Docs: [com.intellij.platform.eel.EelExecApi] */
   override val exec: EelExecApi
 
