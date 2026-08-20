@@ -209,6 +209,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     val ultimateTagLabel: UiComponent = x("'Ultimate' label") { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Ultimate")) }
     val proTagLabel: UiComponent = x("'Pro' label") { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Pro")) }
     val errorNotice: JTextComponentUI = textComponent("Error notice") { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
+    val unknownUpdateSourceWarning: UiComponent = x("Unknown update source warning") { byType("com.intellij.ui.components.JBTextArea") }
     val updatePluginButton: UiComponent = x("Update button") { byAccessibleName("Update") }
     val restartIdeButton: UiComponent = x("Restart button") { byAccessibleName("Restart IDE") }
 
@@ -337,10 +338,23 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     val additionalInfoTab: UiComponent = tabbedPane.tab("Additional Info")
     val updateSourceValue: UiComponent =
       x("${xQuery { and(byType(JLabel::class.java), byText("Updates from:")) }}/following-sibling::div[1]")
+    val updateSourceBanners: UIComponentsList<UpdateSourceBannerUiComponent> =
+      xx(UpdateSourceBannerUiComponent::class.java) { byType("com.intellij.ide.plugins.newui.UpdateSourceBanner") }
     val versionPanel: UiComponent = x { byType("com.intellij.ide.plugins.newui.VersionPanel") }
     val pluginHomepage: UiComponent = x("Plugin homepage link") { byAccessibleName("Plugin homepage") }
 
+    fun hasUnknownUpdateSourceWarningBanner(): Boolean = updateSourceBanners.list().any { it.isWarning() }
+    fun hasUpdateSourceSetBanner(): Boolean = updateSourceBanners.list().any { it.isSuccess() }
+
     fun additionalText(text: String): UiComponent = x { and(byType(JLabel::class.java), byText(text)) }
+
+    fun chooseUpdateSourceFromWarningBanner(updateSource: String): PluginDetailsPage {
+      step("Choose '$updateSource' update source from warning banner") {
+        updateSourceBanners.list().first { it.isWarning() }.chooseUpdateSourceAction.click()
+        driver.ui.popup().list().clickItem(updateSource)
+      }
+      return this
+    }
 
     fun chooseUpdateSourceFromDescription(updateSource: String): PluginDetailsPage {
       step("Choose '$updateSource' update source from `Update from` description") {
@@ -373,6 +387,25 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     class OptionButtonUiComponent(data: ComponentData) : UiComponent(data) {
       val disableButton: UiComponent = x { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Disable")) }
       val enableButton: UiComponent = x { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Enable")) }
+    }
+
+    class UpdateSourceBannerUiComponent(data: ComponentData) : UiComponent(data) {
+      private val banner get() = driver.cast(component, UpdateSourceBannerRef::class)
+
+      val chooseUpdateSourceAction: UiComponent = x(xQuery { byVisibleText("Choose where to get updates") })
+
+      fun isWarning(): Boolean = banner.getStatus().name() == "Warning"
+      fun isSuccess(): Boolean = banner.getStatus().name() == "Success"
+    }
+
+    @Remote("com.intellij.ide.plugins.newui.UpdateSourceBanner")
+    interface UpdateSourceBannerRef {
+      fun getStatus(): EditorNotificationPanelStatusRef
+    }
+
+    @Remote($$"com.intellij.ui.EditorNotificationPanel$Status")
+    interface EditorNotificationPanelStatusRef {
+      fun name(): String
     }
   }
 }
