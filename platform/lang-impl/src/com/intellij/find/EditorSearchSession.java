@@ -220,15 +220,17 @@ public class EditorSearchSession implements SearchSession,
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         if (event.getEditor() == myEditor) {
-          Disposer.dispose(myDisposable);
           disposeLivePreview();
-          myStartSessionSelectionMarker.dispose();
-          myStartSessionCaretMarker.dispose();
         }
       }
     }, myDisposable);
 
     myEditor.getSelectionModel().addSelectionListener(this, myDisposable);
+
+    Disposer.register(myDisposable, () -> {
+      myStartSessionSelectionMarker.dispose();
+      myStartSessionCaretMarker.dispose();
+    });
 
     FindUsagesCollector.triggerUsedOptionsStats(project, FindUsagesCollector.FIND_IN_FILE, findModel);
   }
@@ -634,8 +636,12 @@ public class EditorSearchSession implements SearchSession,
     myLivePreviewController.clearCursorHighlight();
   }
 
+  /**
+   * Ends the session: everything it holds - the live preview controller with its search results and highlighters, the
+   * editor listeners, the selection markers - hangs off {@link #myDisposable}.
+   */
   protected void disposeLivePreview() {
-    myLivePreviewController.dispose();
+    Disposer.dispose(myDisposable);
   }
 
   private void updateResults(boolean allowedToChangedEditorSelection) {

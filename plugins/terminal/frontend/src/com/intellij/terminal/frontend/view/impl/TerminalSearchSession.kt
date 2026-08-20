@@ -87,7 +87,6 @@ internal class TerminalSearchSession(
       override fun editorReleased(event: EditorFactoryEvent) {
         if (event.editor === editor) {
           Disposer.dispose(disposable)
-          livePreviewController.dispose()
         }
       }
     }, disposable)
@@ -246,7 +245,6 @@ internal class TerminalSearchSession(
 
   override fun close() {
     Disposer.dispose(disposable)
-    livePreviewController.dispose()
     closeCallback()
     // We only need to transfer the focus if the editor is still visible.
     // There can be several reasons for closing the search,

@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -127,11 +128,18 @@ public final class LivePreviewController implements LivePreview.Delegate, FindUt
     return cursor == last;
   }
 
+  /**
+   * @param parentDisposable owns this controller: disposing it disposes the update alarm and the controller itself,
+   *                         which releases the {@link LivePreview} and with it the editor and the search results it
+   *                         holds. That is the only way to dispose a controller - a caller that wants an earlier
+   *                         disposal gives it a disposable of its own and disposes that one.
+   */
   public LivePreviewController(SearchResults searchResults, @Nullable SearchSession component, @NotNull Disposable parentDisposable) {
     mySearchResults = searchResults;
     myComponent = component;
     getEditor().getDocument().addDocumentListener(myDocumentListener);
     myLivePreviewAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
+    Disposer.register(parentDisposable, this::dispose);
   }
 
   public void setUserActivityDelay(int userActivityDelay) {
@@ -273,7 +281,7 @@ public final class LivePreviewController implements LivePreview.Delegate, FindUt
     }
   }
 
-  public void dispose() {
+  private void dispose() {
     if (myDisposed) return;
 
     off();

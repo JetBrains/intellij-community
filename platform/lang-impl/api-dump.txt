@@ -2408,7 +2408,6 @@ f:com.intellij.find.impl.livePreview.LivePreview
 - com.intellij.openapi.editor.event.SelectionListener
 - searchResultsAppended(com.intellij.find.impl.livePreview.SearchResults,java.util.List):V
 f:com.intellij.find.impl.livePreview.LivePreviewController
-- dispose():V
 - moveCursor(com.intellij.find.impl.livePreview.SearchResults$Direction):V
 - on():V
 - setLivePreview(com.intellij.find.impl.livePreview.LivePreview):V
