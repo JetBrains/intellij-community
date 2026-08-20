@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil.lastUpdateAndCheckDumb
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
+import com.intellij.openapi.actionSystem.ex.ActionUtil.updateAction
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListPopupStepEx
 import com.intellij.openapi.ui.popup.ListSeparator
@@ -35,6 +36,17 @@ open class EvoActionPopupStep(
   private val listeners: MutableList<ListPopupStep.ListPopupModelListener> = arrayListOf()
 
   init {
+    // Rows that gate themselves (the package-manager actions) get their own update() run against this popup's data
+    // context — which carries the project's dependency file — so their presentation is truthful before anything is
+    // painted; getValues() then drops the ones that reported themselves invisible.
+    node.sections.asSequence()
+      .flatMap { it.elements }
+      .filterIsInstance<EvoTreeActionLeafElement>()
+      .forEach { element ->
+        // The event carries the element's own presentation (not a copy), so update() writes straight into the row.
+        val event = AnActionEvent.createEvent(dataContext, element.presentation, ActionPlaces.POPUP, ActionUiKind.POPUP, null)
+        updateAction(element.action, event)
+      }
     CommonDataKeys.PROJECT.getData(dataContext)?.let { project ->
       node.sections.forEach { section ->
         section.elements.filter { it.state == State.CREATED }.forEach { it.load(project, scope, listeners) }
@@ -95,8 +107,11 @@ open class EvoActionPopupStep(
 
   override fun getValues(): List<EvoTreeItem> =
     node.sections.flatMap { section ->
+      // A self-gating action that reported itself inapplicable is dropped before indexing, so the separator still
+      // lands on the first row actually shown.
+      val elements = section.elements.filter { it !is EvoTreeActionLeafElement || it.presentation.isVisible }
       // A section's header is painted into its first row's cell, so only that row carries the separator and its tooltip.
-      section.elements.mapIndexed { index, element ->
+      elements.mapIndexed { index, element ->
         EvoTreeItem(element, section.label?.takeIf { index == 0 }, section.labelTooltip?.takeIf { index == 0 })
       }
     }

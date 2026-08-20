@@ -54,7 +54,19 @@ sealed class EvoTreeElement(
   }
 }
 
-class EvoTreeLeafElement(val action: AnAction) : EvoTreeElement(action.templatePresentation)
+open class EvoTreeLeafElement(
+  val action: AnAction,
+  presentation: Presentation = action.templatePresentation,
+) : EvoTreeElement(presentation)
+
+/**
+ * A leaf whose action decides for itself whether it applies: [EvoActionPopupStep] runs the action's own `update()`
+ * against the popup's data context before the list is shown, and drops the row when the action reports itself
+ * invisible. Used for the package-manager rows, which are shared platform actions gated on the project's dependency
+ * file — unlike the widget's own inline actions, each of which is built for exactly the row it sits on and needs no
+ * update. Its presentation is a private copy, since a shared action's template must not be written to.
+ */
+class EvoTreeActionLeafElement(action: AnAction) : EvoTreeLeafElement(action, action.templatePresentation.clone())
 
 /**
  * Mutable holder for the edited env name, shared between the add-new submenu's name field and its version actions.

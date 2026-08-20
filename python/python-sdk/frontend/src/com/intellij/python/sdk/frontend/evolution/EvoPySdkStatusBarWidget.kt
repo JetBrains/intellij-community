@@ -239,7 +239,7 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     // warm cache makes it near-instant; it only does real work after an install invalidated that cache.
     if (reusable == null) refreshNodes(current.moduleName)
     val factory = EvoPySdkSwitchPopupFactory(project, current.moduleName, current.current, current.workspace, current.nodes, current.associated, current.shortcuts, scope)
-    val tree = reusable ?: factory.buildTree().also { popupTree = it }
+    val tree = reusable ?: factory.buildTree(context).also { popupTree = it }
     return factory.createPopup(tree, context) { popupClosedAt = System.currentTimeMillis() }
   }
 

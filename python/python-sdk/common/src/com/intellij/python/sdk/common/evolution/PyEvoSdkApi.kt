@@ -186,11 +186,15 @@ data class PyInterpreterDto(
   /** Selection token for [PyEvoSdkApi.selectInterpreter]. */
   val ref: PyInterpreterRef,
   /**
-   * IDs of the package-manager actions applicable to this interpreter's package manager (e.g. uv → lock/sync,
-   * poetry → lock/update), resolved on the frontend via the action manager. Empty for interpreters with no
-   * tool-specific actions (plain pip) and for target interpreters.
+   * URL of the dependency file this interpreter's package manager works with (`pyproject.toml`, `environment.yml`,
+   * `requirements.txt`, …), or `null` when it has none.
+   *
+   * The popup shows the whole `PythonPackageManagerActions` group and puts this file into its data context, which is
+   * what each action gates on in `update()` and acts on in `actionPerformed`. Naming it here — instead of whatever the
+   * editor happens to show, which has nothing to do with the interpreter — is what keeps a conda `environment.yml`
+   * action from firing against a `pyproject.toml`, and lets the applicable rows work whatever file is open.
    */
-  val packageManagerActionIds: List<String> = emptyList(),
+  val dependencyFileUrl: @NonNls String? = null,
 )
 
 /** Opaque, serializable selector telling the backend which interpreter [PyEvoSdkApi.selectInterpreter] must apply. */

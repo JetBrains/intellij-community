@@ -63,12 +63,10 @@ import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.getOrNull
-import com.jetbrains.python.hatch.packaging.HatchPackageManager
 import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.impl.getRootModuleOrNull
 import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.packaging.PyVersionSpecifiers
-import com.jetbrains.python.packaging.conda.CondaPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
@@ -103,12 +101,10 @@ import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.sdk.isSdkConfigurationInProgress
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.poetry.PoetryPackageManager
 import com.jetbrains.python.sdk.poetry.createNewPoetrySdk
 import com.jetbrains.python.sdk.poetry.createPoetrySdk
 import com.jetbrains.python.sdk.pyInterpreterPresentation
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.uv.UvPackageManager
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import com.jetbrains.python.sdk.uv.impl.validateAndCreateUvCli
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
@@ -236,12 +232,13 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     // The current-interpreter display works with Eel-based interpreters; remote/target SDKs surface only in the associated list.
     if (sdk.sdkAdditionalData is PyRemoteSdkAdditionalDataMarker) return null
     val presentation = sdk.pyInterpreterPresentation()
+    val manager = runCatching { PythonPackageManager.forSdk(pyProject.project, sdk) }.getOrNull()
     return PyInterpreterDto(
       title = presentation.shortName,
       description = presentation.description,
       icon = presentation.icon.rpcId(),
       ref = PyInterpreterRef.ExistingSdk(sdk.name),
-      packageManagerActionIds = packageManagerActionIds(pyProject.project, sdk),
+      dependencyFileUrl = manager?.getRootDependenciesFile()?.virtualFile?.url,
     )
   }
 
@@ -249,19 +246,6 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val workspace = resolvePyProject(projectId, moduleName)?.workspace ?: return null
     return EvoWorkspaceDto(rootModuleName = workspace.root.residesOnModule.name)
   }
-
-  /**
-   * Action ids (from the `PythonPackageManagerActions` group) applicable to [sdk]'s package manager. Mirrors that
-   * group so the current-interpreter popup shows the right tool actions instead of always poetry's.
-   */
-  private fun packageManagerActionIds(project: Project, sdk: Sdk): List<String> =
-    when (runCatching { PythonPackageManager.forSdk(project, sdk) }.getOrNull()) {
-      is UvPackageManager -> listOf("UvLockAction", "UvSyncAction")
-      is PoetryPackageManager -> listOf("PoetryLockAction", "PoetryUpdateAction")
-      is CondaPackageManager -> listOf("CondaExportAction", "CondaUpdateEnvAction")
-      is HatchPackageManager -> listOf("HatchRunAction")
-      else -> emptyList()
-    }
 
   override suspend fun listNodes(projectId: ProjectId, moduleName: String): List<EvoNodeDto> {
     val pyProject = resolvePyProject(projectId, moduleName) ?: return emptyList()

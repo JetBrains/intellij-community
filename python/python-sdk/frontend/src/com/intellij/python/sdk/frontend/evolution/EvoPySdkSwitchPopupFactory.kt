@@ -2,11 +2,18 @@ package com.intellij.python.sdk.frontend.evolution
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.icon
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.getAction
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopup
@@ -14,7 +21,9 @@ import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.psi.PsiManager
 import com.intellij.platform.project.projectId
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
@@ -29,6 +38,7 @@ import com.intellij.python.sdk.common.evolution.requestEvoNode
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
 import com.intellij.python.sdk.frontend.evolution.components.EvoEditableName
 import com.intellij.python.sdk.frontend.evolution.components.EvoErrorException
+import com.intellij.python.sdk.frontend.evolution.components.EvoTreeActionLeafElement
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeAddNewNode
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeElement
 import com.intellij.python.sdk.frontend.evolution.components.EvoLoadedNode
@@ -71,6 +81,9 @@ private fun EvoLeafDto.toStubAction(): AnAction = object : AnAction({ title }, {
 
 /** Synthetic node id for the "Shortcuts" autoconfigure rows (the backend ignores it for a [PyInterpreterRef.Autoconfigure] ref). */
 private const val SHORTCUTS_NODE_ID: String = "shortcuts"
+
+/** The platform group holding every tool's package-manager actions (uv lock/sync, conda export/update, …). */
+private const val PACKAGE_MANAGER_ACTIONS_GROUP: String = "PythonPackageManagerActions"
 
 internal class EvoPySdkSwitchPopupFactory(
   val project: Project,
@@ -188,6 +201,21 @@ internal class EvoPySdkSwitchPopupFactory(
     return EvoLoadedNode(onlyRow.sections.toList(), refreshable, onlyRow.editableName)
   }
 
+  /**
+   * The tool actions of the current interpreter, taken as-is from the platform's `PythonPackageManagerActions` group —
+   * the same group the dependency-file editor banner renders — so a tool that adds an action there gets it here for
+   * free, and the widget never has to know which action belongs to which package manager.
+   *
+   * Every action decides for itself whether it applies: each row is an [EvoTreeActionLeafElement], whose own `update()`
+   * the popup step runs against the dependency-file context and which it drops when the action reports itself
+   * invisible. The group's separators are dropped here, since which rows survive is only known after that.
+   */
+  private fun packageManagerActions(context: DataContext): List<EvoTreeElement> {
+    val group = getAction(PACKAGE_MANAGER_ACTIONS_GROUP) as? ActionGroup ?: return emptyList()
+    val event = AnActionEvent.createEvent(context, Presentation(), ActionPlaces.POPUP, ActionUiKind.POPUP, null)
+    return group.getChildren(event).filterNot { it is Separator }.map { EvoTreeActionLeafElement(it) }
+  }
+
   /** A single "Associated environments" node holding the interpreters the classic widget lists, shown inside the tool list. */
   private fun associatedInterpretersNode(traceId: String): EvoTreeStaticNodeElement =
     EvoTreeStaticNodeElement(
@@ -205,8 +233,11 @@ internal class EvoPySdkSwitchPopupFactory(
    * Builds the popup tree. A fresh trace root (`traceId`) is minted here, so all of this tree's backend commands
    * (tool listing, version probes) group under one "Python Interpreter Widget" root — the widget builds a tree once
    * per data change and reuses it across re-opens, so a re-open makes no new calls and mints no new root.
+   *
+   * [context] only enumerates the package-manager action group; what each of those actions *does* with a context is
+   * decided per popup open, against the enriched one [createPopup] builds.
    */
-  fun buildTree(): EvoTreeStaticNodeElement {
+  fun buildTree(context: DataContext): EvoTreeStaticNodeElement {
     val projectId = project.projectId()
     val traceId = UUID.randomUUID().toString()
 
@@ -239,9 +270,7 @@ internal class EvoPySdkSwitchPopupFactory(
       }
       else -> EvoTreeSection(
         label = ListSeparator(currentInterpreter.title, currentInterpreter.icon.icon()),
-        // The package-manager actions applicable to the current SDK (resolved by id on the backend), plus Manage Packages.
-        elements = currentInterpreter.packageManagerActionIds.mapNotNull { getAction(it) }.map { EvoTreeLeafElement(it) } +
-                   EvoTreeLeafElement(managePackagesAction),
+        elements = packageManagerActions(context) + EvoTreeLeafElement(managePackagesAction),
       )
     }
 
@@ -264,12 +293,32 @@ internal class EvoPySdkSwitchPopupFactory(
     else -> PySdkFrontendBundle.message("evo.sdk.status.bar.popup.title.workspace", workspace.rootModuleName, moduleName)
   }
 
+  /**
+   * The data context the popup's actions see: [context] with the interpreter's dependency file put in front of it.
+   *
+   * The package-manager actions take their file from the context — they gate on it in `update()` and write to it in
+   * `actionPerformed`. Left alone, that file would be whatever the editor happens to show, which for the status bar is
+   * unrelated to the interpreter: conda's "export to environment.yml" would then overwrite an open `pyproject.toml`.
+   * Naming the dependency file here makes the rows both correct and usable whatever is open.
+   */
+  private fun popupDataContext(context: DataContext): DataContext {
+    val file = currentInterpreter?.dependencyFileUrl?.let { VirtualFileManager.getInstance().findFileByUrl(it) } ?: return context
+    // Called while opening the popup, i.e. on the EDT, which already holds read access.
+    val psiFile = PsiManager.getInstance(project).findFile(file)
+    return SimpleDataContext.builder()
+      .setParent(context)
+      .add(CommonDataKeys.VIRTUAL_FILE, file)
+      // PythonPackageManagerAction.actionPerformed bails out without a PSI file (it restarts the daemon on it).
+      .apply { psiFile?.let { add(CommonDataKeys.PSI_FILE, it) } }
+      .build()
+  }
+
   /** Wraps an already-built [tree] into a popup; [onClose] fires when it is dismissed (the widget starts its TTL then). */
   fun createPopup(tree: EvoTreeStaticNodeElement, context: DataContext, onClose: () -> Unit): ListPopup =
     EvoSdkManagerTreePopup(
       title = popupTitle(),
       evoTreeNodeElement = tree,
-      dataContext = context,
+      dataContext = popupDataContext(context),
       disposeCallback = onClose,
       scope = scope,
     ).apply {
