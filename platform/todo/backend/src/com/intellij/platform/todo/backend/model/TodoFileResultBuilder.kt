@@ -58,10 +58,7 @@ object TodoFileResultBuilder {
   ) : List<TodoResult> {
     val document = psiFile.viewProvider.document
 
-    val allTodoItems = PsiTodoSearchHelper.getInstance(project).findTodoItems(psiFile)
-    val filteredTodoItems = if (filter != null) {
-      allTodoItems.filter { it.pattern != null && filter.contains(it.pattern) }
-    } else allTodoItems.asList()
+    val filteredTodoItems = PsiTodoSearchHelper.getInstance(project).findTodoItems(psiFile).filteredBy(filter)
 
     return filteredTodoItems
       .sortedWith(compareBy({ it.textRange.startOffset }, {it.textRange.endOffset}))
@@ -111,6 +108,15 @@ object TodoFileResultBuilder {
         add(SerializableTextChunk(text.substring(endInLine)))
       }
     }
+  }
+
+  private fun Array<out TodoItem>.filteredBy(todoFilter: TodoFilter?): List<TodoItem> {
+    if (todoFilter == null) return asList()
+
+    val acceptedPatterns = todoFilter.iterator()
+      .asSequence().map { it.indexPattern }.toSet()
+
+    return filter { it.pattern?.indexPattern in acceptedPatterns }
   }
 
   private fun getModuleName(project: Project, virtualFile: VirtualFile): String? {
