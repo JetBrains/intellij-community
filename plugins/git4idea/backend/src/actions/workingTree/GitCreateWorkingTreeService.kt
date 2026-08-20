@@ -2,6 +2,7 @@
 package git4idea.actions.workingTree
 
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.StructuredIdeActivity
@@ -15,8 +16,10 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.eel.provider.utils.EelSystemFolderUtils
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.progress.withProgressText
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.sanitizeFileName
@@ -49,6 +52,10 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
 
     private const val LAST_PARENT_PATH_KEY = "Git.CreateWorkingTree.LastParentPath"
     private const val MAX_WORKTREE_DIR_NAME_LENGTH = 100
+
+    //The [project]'s system temp directory, resolved in the same Eel environment (WSL/Docker/local) as the project itself
+    @RequiresBackgroundThread(generateAssertion = false)
+    internal fun getSystemTempDir(project: Project): Path = EelSystemFolderUtils.getSystemFolder(project).resolve("tmp")
   }
 
   /**
@@ -115,9 +122,10 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     val project = repository.project
     val ideActivity = GitOperationsCollector.logCreateWorktreeActionInvoked(project, place, refFromContext)
     coroutineScope.launch(Dispatchers.Default) {
+      val systemTempDir = withContext(Dispatchers.IO) { getSystemTempDir(project) }
       val preDialogData = readAction {
         val lastParentPath = loadLastParentPath(project)
-        val initialParentPath = computeInitialParentPath(project, repository)?.path
+        val initialParentPath = computeInitialParentPath(project, repository, systemTempDir)
         GitWorkingTreePreDialogData(project, repository, ideActivity, refFromContext,
                                     lastParentPath ?: initialParentPath)
       }
@@ -136,17 +144,22 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
   }
 
   /**
-   * Searches for a directory that doesn't lie under any of roots of the [project].
+   * Searches for a directory that doesn't lie under any of roots of the [project]. Falls back to the platform's
+   * default new-project directory ([ProjectUtil.getBaseDir]) when that search fails to leave [systemTempDir],
+   * e.g. when [project] itself is a scratch worktree opened from a temp directory (IJPL-252877).
    */
   @RequiresReadLock
-  private fun computeInitialParentPath(project: Project, repository: GitRepository): VirtualFile? {
+  internal fun computeInitialParentPath(project: Project, repository: GitRepository, systemTempDir: Path): String {
     val fromProject = project.guessProjectDir()?.parent
     var root: VirtualFile? = fromProject ?: repository.root.parent
     val index = ProjectFileIndex.getInstance(project)
     while (root != null && index.isInProjectOrExcluded(root)) {
       root = root.parent
     }
-    return root
+    if (root == null || Path(root.path).startsWith(systemTempDir)) {
+      return ProjectUtil.getBaseDir()
+    }
+    return root.path
   }
 
   private suspend fun doCreateWorkingTree(
