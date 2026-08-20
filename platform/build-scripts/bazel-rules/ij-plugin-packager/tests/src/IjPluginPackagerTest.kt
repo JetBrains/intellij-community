@@ -2,11 +2,18 @@ package com.intellij.tools.build.bazel.ijPluginPackager
 
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContent
+import io.opentelemetry.api.OpenTelemetry
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.bazel.jvm.WorkRequest
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.io.StringWriter
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.writeText
 
 internal class IjPluginPackagerTest {
   @Test
@@ -47,18 +54,22 @@ internal class IjPluginPackagerTest {
       }
     }.generate(inputDirectory)
 
+    // paths are relative to the base directory of the request, like they are when the packager runs as a worker
     val outputDirectory = tempDirectory.resolve("output")
-    IjPluginPackager.main(arrayOf(
-      outputDirectory.toString(),
-      "--plugin_content_yaml",
-      outputDirectory.resolve("plugin-content.yaml").toString(),
-      "--descriptor_module",
-      "descriptor:${inputDirectory.resolve("descriptor.jar")}",
-      "--content_module",
-      "embedded.module:${inputDirectory.resolve("embedded-module.jar")}",
-      "--content_module",
-      "optional.module:${inputDirectory.resolve("optional-module.jar")}",
-    ))
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--plugin_content_yaml",
+        "output/plugin-content.yaml",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+        "--content_module",
+        "embedded.module:input/embedded-module.jar",
+        "--content_module",
+        "optional.module:input/optional-module.jar",
+      ),
+      baseDir = tempDirectory,
+    )
 
     val expectedPluginXml = """
       <idea-plugin>
@@ -119,12 +130,77 @@ internal class IjPluginPackagerTest {
     }.generate(inputDirectory)
 
     val outputDirectory = tempDirectory.resolve("output")
-    IjPluginPackager.main(arrayOf(
-      outputDirectory.toString(),
-      "--descriptor_module",
-      "descriptor:${inputDirectory.resolve("descriptor.jar")}",
-    ))
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+      ),
+      baseDir = tempDirectory,
+    )
 
+    assertTrue(Files.exists(outputDirectory.resolve("lib/descriptor.jar")))
     assertFalse(Files.exists(outputDirectory.resolve("plugin-content.yaml")))
+  }
+
+  @Test
+  fun readsArgumentsFromParamsFile(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("plugin.xml", "<idea-plugin><id>my.plugin</id></idea-plugin>")
+        }
+      }
+    }.generate(inputDirectory)
+
+    tempDirectory.resolve("packager.params").writeText("""
+      output
+      --descriptor_module
+      descriptor:input/descriptor.jar
+    """.trimIndent())
+
+    val writer = StringWriter()
+    val exitCode = runBlocking {
+      IjPluginPackagerExecutor.execute(
+        request = WorkRequest(
+          arguments = arrayOf("--flagfile=packager.params"),
+          inputs = emptyArray(),
+          requestId = 0,
+          cancel = false,
+          verbosity = 0,
+          sandboxDir = null,
+        ),
+        writer = writer,
+        baseDir = tempDirectory,
+        tracer = OpenTelemetry.noop().getTracer("test"),
+      )
+    }
+
+    assertEquals(0, exitCode, writer.toString())
+    assertTrue(Files.exists(tempDirectory.resolve("output/lib/descriptor.jar")))
+  }
+
+  @Test
+  fun reportsErrorIfArgumentsAreNotPassedInParamsFile(@TempDir tempDirectory: Path) {
+    val writer = StringWriter()
+    val exitCode = runBlocking {
+      IjPluginPackagerExecutor.execute(
+        request = WorkRequest(
+          arguments = arrayOf("output", "--descriptor_module", "descriptor:input/descriptor.jar"),
+          inputs = emptyArray(),
+          requestId = 0,
+          cancel = false,
+          verbosity = 0,
+          sandboxDir = null,
+        ),
+        writer = writer,
+        baseDir = tempDirectory,
+        tracer = OpenTelemetry.noop().getTracer("test"),
+      )
+    }
+
+    assertEquals(3, exitCode)
+    assertTrue(writer.toString().contains("--flagfile="), writer.toString())
   }
 }

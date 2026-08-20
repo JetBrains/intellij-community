@@ -1,4 +1,6 @@
-load("@rules_jvm//:jvm.bzl", _jvm_platform_transition = "jvm_platform_transition")
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
+load("@rules_java//java/common:java_common.bzl", "java_common")
+load("@rules_jvm//:jvm.bzl", _jvm_platform_transition = "jvm_platform_transition", _scrubbed_host_platform_transition = "scrubbed_host_platform_transition")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 
 # This is the very first draft, many things are missing (todo):
@@ -13,25 +15,52 @@ def _ij_plugin_impl(ctx):
 
     plugin_descriptor_jar = plugin_descriptor_module_info.all_output_jars[0]
     inputs = [plugin_descriptor_jar]
+
+    # Files are added to `args` as artifacts and not as strings, so their paths are rewritten when path mapping is enabled.
     args = ctx.actions.args()
-    args.add(output_dir.path)
+    args.set_param_file_format("multiline")
+    args.use_param_file("--flagfile=%s", use_always = True)
+    args.add_all([output_dir], expand_directories = False)
     args.add("--plugin_content_yaml")
-    args.add(content_yaml_file.path)
-    args.add("--descriptor_module")
-    args.add(plugin_descriptor_module_info.module_name + ":" + plugin_descriptor_jar.path)
+    args.add(content_yaml_file)
+    args.add_all(
+        "--descriptor_module",
+        [plugin_descriptor_jar],
+        format_each = plugin_descriptor_module_info.module_name + ":%s",
+    )
     for content_module in ctx.attr.content_modules:
         content_module_info = content_module[_KtJvmInfo]
         content_module_jar = content_module_info.all_output_jars[0]
-        args.add("--content_module")
-        args.add(content_module_info.module_name + ":" + content_module_jar.path)
+        args.add_all(
+            "--content_module",
+            [content_module_jar],
+            format_each = content_module_info.module_name + ":%s",
+        )
         inputs.append(content_module_jar)
 
+    java_runtime = ctx.attr._tool_java_runtime[java_common.JavaRuntimeInfo]
     ctx.actions.run(
-        inputs = inputs,
+        # the JBR files are intentionally not declared as inputs: their exec paths and digests are platform-specific,
+        # so they would make the action key differ across Linux/macOS/Windows (see `bazel_scrubbing.cfg`).
+        # `JvmCompile` in `@rules_jvm` relies on the same JBR-is-available-in-the-exec-root assumption.
+        inputs = depset(inputs),
         outputs = [output_dir, content_yaml_file],
-        arguments = [args],
-        executable = ctx.executable._packager,
+        tools = [ctx.file._packager_launcher, ctx.file._packager],
+        executable = java_runtime.java_executable_exec_path,
+        execution_requirements = {
+            "supports-workers": "1",
+            "supports-multiplex-workers": "1",
+            "supports-worker-cancellation": "1",
+            "supports-path-mapping": "1",
+            "supports-multiplex-sandboxing": "1",
+        },
+        arguments = ctx.attr._packager_jvm_flags[BuildSettingInfo].value + [
+            ctx.file._packager_launcher.path,
+            ctx.file._packager.path,
+            args,
+        ],
         mnemonic = "IjPluginPackaging",
+        progress_message = "Packaging plugin %{label}",
     )
     return [
         DefaultInfo(files = depset([output_dir])),
@@ -49,8 +78,21 @@ This is an experimental rule, its API will change, please do not migrate the plu
 """,
     attrs = {
         "_packager": attr.label(
-            default = Label("//platform/build-scripts/bazel-rules/ij-plugin-packager:ij-plugin-packager"),
-            executable = True,
+            default = Label("//platform/build-scripts/bazel-rules/ij-plugin-packager:ij-plugin-packager_deploy.jar"),
+            allow_single_file = True,
+            # the deploy jar is platform-independent, so build it under a host-independent output directory to keep the
+            # `IjPluginPackaging` action key (and thus its remote cache entries) the same on Linux/macOS/Windows
+            cfg = _scrubbed_host_platform_transition,
+        ),
+        "_packager_jvm_flags": attr.label(
+            default = Label("//platform/build-scripts/bazel-rules/ij-plugin-packager:ij-plugin-packager-jvm_flags"),
+        ),
+        "_packager_launcher": attr.label(
+            default = Label("@rules_jvm//:rules/impl/MemoryLauncher.java"),
+            allow_single_file = True,
+        ),
+        "_tool_java_runtime": attr.label(
+            default = Label("@bazel_tools//tools/jdk:current_java_runtime"),
             cfg = "exec",
         ),
         "descriptor_module": attr.label(

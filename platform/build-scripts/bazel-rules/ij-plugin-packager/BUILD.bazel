@@ -1,15 +1,28 @@
+load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
 load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_jvm//:jvm-args.bzl", "get_jvm_flags")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+# The packager runs as a Bazel persistent worker: `ij_plugin.bzl` launches the `ij-plugin-packager_deploy.jar` implicit output of this
+# target, so JVM options are specified in `:ij-plugin-packager-jvm_flags` below instead of `jvm_flags` here.
 java_binary(
     name = "ij-plugin-packager",
-    jvm_flags = [
-        "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
-        "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
-    ],
     main_class = "com.intellij.tools.build.bazel.ijPluginPackager.IjPluginPackager",
     visibility = ["//visibility:public"],
     runtime_deps = [":ij-plugin-packager-lib"],
+)
+
+# JVM options for the packager worker process; shared with the other workers of `@rules_jvm` via `get_jvm_flags`.
+string_list_flag(
+    name = "ij-plugin-packager-jvm_flags",
+    build_setting_default = get_jvm_flags([
+        # required by the memory-mapped ZIP reader used to read and write JARs
+        "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
+        "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+        # packaging needs far less heap than compilation; the last `-Xmx` wins, so this overrides the default from `get_jvm_flags`
+        "-Xmx4g",
+    ]),
+    visibility = ["//visibility:public"],
 )
 
 kt_jvm_library(
@@ -23,5 +36,8 @@ kt_jvm_library(
         "@community//platform/util",
         "@community//platform/util/jdom",
         "@rules_jvm//:annotations_import",
+        "@rules_jvm//:kotlinx-coroutines-core_import",
+        "@rules_jvm//:opentelemetry-api_import",
+        "@rules_jvm//worker-framework",
     ],
 )

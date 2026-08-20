@@ -9,6 +9,9 @@ kt_jvm_library(
     deps = [
         "//libraries/junit5",
         "//platform/testFramework",
+        "@rules_jvm//:kotlinx-coroutines-core_import",
+        "@rules_jvm//:opentelemetry-api_import",
+        "@rules_jvm//worker-framework",
     ],
 )
 

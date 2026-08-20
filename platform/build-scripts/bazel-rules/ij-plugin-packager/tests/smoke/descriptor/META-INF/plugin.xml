@@ -1,0 +1,7 @@
+<idea-plugin>
+  <id>com.intellij.ijPluginPackager.smoke</id>
+  <content>
+    <module name="intellij.ijPluginPackagerSmoke.embedded" loading="embedded"/>
+    <module name="intellij.ijPluginPackagerSmoke.optional"/>
+  </content>
+</idea-plugin>

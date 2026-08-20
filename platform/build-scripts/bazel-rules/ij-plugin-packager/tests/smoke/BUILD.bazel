@@ -1,0 +1,40 @@
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+
+# A minimal plugin used to check that `ij_plugin` rule and the packager worker actually work.
+
+jvm_library(
+    name = "descriptor-module",
+    module_name = "intellij.ijPluginPackagerSmoke",
+    resource_strip_prefix = "descriptor",
+    resources = glob(["descriptor/**/*"]),
+)
+
+jvm_library(
+    name = "embedded-content-module",
+    module_name = "intellij.ijPluginPackagerSmoke.embedded",
+    resource_strip_prefix = "embedded",
+    resources = glob(["embedded/**/*"]),
+)
+
+jvm_library(
+    name = "optional-content-module",
+    module_name = "intellij.ijPluginPackagerSmoke.optional",
+    resource_strip_prefix = "optional",
+    resources = glob(["optional/**/*"]),
+)
+
+ij_plugin(
+    name = "smoke-plugin",
+    content_modules = [
+        ":embedded-content-module",
+        ":optional-content-module",
+    ],
+    descriptor_module = ":descriptor-module",
+)
+
+build_test(
+    name = "ij-plugin-smoke-test",
+    targets = [":smoke-plugin"],
+)
