@@ -384,14 +384,11 @@ open class PMarkerRootImpl private constructor(
 
     private val ENTRY_COMPARATOR = Comparator<MarkerEntry> { first, second -> PositionKey(first).compareTo(PositionKey(second)) }
     private const val NULL_NODE: Long = 0
-    object EMPTY: PMarkerRootImpl(NULL_NODE, PersistentLongMap.empty(PersistentLongMapImplementation.VECTOR_64)) {
+    private object EMPTY: PMarkerRootImpl(NULL_NODE, PersistentLongMap.empty(PersistentLongMapImplementation.VECTOR_64)) {
       override fun toString(): String = "EMPTY"
     }
 
-    fun empty(): PMarkerRootImpl {
-      val empty = EMPTY
-      return empty
-    }
+    fun empty(): PMarkerRootImpl = EMPTY
 
     private fun textEdit(op: DocumentOp): TextEdit? {
       if (op is DocumentOpMarkerEdit) {
