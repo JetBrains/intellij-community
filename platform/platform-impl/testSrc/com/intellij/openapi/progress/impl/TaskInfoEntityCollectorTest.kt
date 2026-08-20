@@ -112,7 +112,7 @@ internal class TaskInfoEntityCollectorTest {
    */
   private suspend fun withCollector(body: suspend () -> Unit) {
     coroutineScope {
-      val collector: Job = launch(start = CoroutineStart.UNDISPATCHED) { collectStaleProjectTasks() }
+      val collector: Job = launch(start = CoroutineStart.UNDISPATCHED) { collectStaleProjectTasks(this) }
       try {
         body()
       }

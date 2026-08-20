@@ -14,7 +14,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.ide.progress.TaskInfoEntity
 import com.intellij.platform.ide.progress.TaskManager
 import com.intellij.platform.ide.progress.TaskStatus
-import com.intellij.platform.ide.progress.TaskStorage
 import com.intellij.platform.ide.progress.activeTasks
 import com.intellij.platform.ide.progress.statuses
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
@@ -26,6 +25,8 @@ import com.intellij.platform.project.projectId
 import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.entities
 import com.jetbrains.rhizomedb.exists
+import fleet.kernel.change
+import fleet.kernel.delete
 import fleet.kernel.rete.asValuesFlow
 import fleet.kernel.rete.collect
 import fleet.kernel.rete.collectLatest
@@ -46,7 +47,7 @@ internal class TaskInfoEntityCollector(cs: CoroutineScope) {
   init {
     LOG.trace { "TaskInfoEntityCollector started for application"}
     collectActiveTasks(cs, project = null)
-    cs.launch { collectStaleProjectTasks() }
+    collectStaleProjectTasks(cs)
   }
 }
 
@@ -75,30 +76,39 @@ private fun collectActiveTasks(cs: CoroutineScope, project: Project?) {
  * (both peers create one; in IJ Light the id itself is re-bound on connect), which used to trip the
  * cascade delete and silently wipe the tasks.
  */
-internal suspend fun collectStaleProjectTasks() {
+internal fun collectStaleProjectTasks(cs: CoroutineScope) {
   val projectIdsByEntity = mutableMapOf<EID, ProjectId>()
-  ProjectEntity.each().tokenSetsFlow().collect { tokenSet ->
-    val removedProjectIds = tokenSet.retracted
-      .map { it.value }
-      .mapNotNull { projectEntity ->
-        projectIdsByEntity.remove(projectEntity.eid)
-      }.toSet()
+  cs.launch {
+    ProjectEntity.each().tokenSetsFlow().collect { tokenSet ->
+      val removedProjectIds = tokenSet.retracted
+        .map { it.value }
+        .mapNotNull { projectEntity ->
+          projectIdsByEntity.remove(projectEntity.eid) ?: run {
+            LOG.warn("Can't remove project entity with id ${projectEntity.eid}. It's already removed")
+            null
+          }
+        }.toSet()
 
-    tokenSet.asserted
-      .map { it.value }
-      .filter { it.exists() }
-      .forEach { projectEntity ->
-        projectIdsByEntity[projectEntity.eid] = projectEntity.projectId
-      }
+      tokenSet.asserted
+        .map { it.value }
+        .filter { it.exists() }
+        .forEach { projectEntity ->
+          projectIdsByEntity[projectEntity.eid] = projectEntity.projectId
+        }
 
-    removeTasksForUnregisteredProjects(removedProjectIds)
+      removeTasksForUnregisteredProjects(removedProjectIds)
+    }
   }
 }
 
 internal suspend fun removeTasksForUnregisteredProjects(projectIds: Set<ProjectId>) {
   projectIds
     .filter { projectId -> entities(ProjectEntity.ProjectIdValue, projectId).isEmpty() }
-    .forEach { projectId -> TaskStorage.getInstance().removeTasksForProject(projectId) }
+    .forEach { projectId ->
+      change {
+        entities(TaskInfoEntity.ProjectIdType, projectId).forEach { delete(it) }
+      }
+    }
 }
 
 private fun showTaskIndicator(cs: CoroutineScope, project: Project?, task: TaskInfoEntity) {

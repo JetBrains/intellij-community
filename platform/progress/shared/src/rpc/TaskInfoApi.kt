@@ -48,7 +48,7 @@ interface TaskInfoApi : RemoteApi<Unit> {
 
   companion object {
     /** Suspends until the RPC transport is connected (see [LiteRemoteApiProviderService]). */
-    suspend fun getInstance(): TaskInfoApi {
+    suspend fun awaitInstance(): TaskInfoApi {
       return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<TaskInfoApi>())
     }
   }

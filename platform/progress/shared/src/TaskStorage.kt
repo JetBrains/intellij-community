@@ -7,10 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.kernel.withKernel
-import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.projectId
 import com.jetbrains.rhizomedb.ChangeScope
-import com.jetbrains.rhizomedb.entities
 import com.jetbrains.rhizomedb.exists
 import fleet.kernel.change
 import fleet.kernel.delete
@@ -81,19 +79,6 @@ class TaskStorage {
   suspend fun removeTask(taskInfoEntity: TaskInfoEntity): Unit = withKernel {
     change {
       delete(taskInfoEntity)
-    }
-  }
-
-  /**
-   * Removes all tasks associated with [projectId].
-   *
-   * The explicit replacement of the cascade delete a `ProjectEntity` ref used to provide: callers
-   * invoke it once the project is truly unregistered — not when its entity merely got replaced by
-   * another one with the same id.
-   */
-  suspend fun removeTasksForProject(projectId: ProjectId): Unit = withKernel {
-    change {
-      entities(TaskInfoEntity.ProjectIdType, projectId).forEach { delete(it) }
     }
   }
 

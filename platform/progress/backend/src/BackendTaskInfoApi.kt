@@ -17,8 +17,7 @@ import com.intellij.platform.ide.progress.suspensionState
 import com.intellij.platform.ide.progress.updates
 import com.intellij.platform.kernel.withKernel
 import fleet.kernel.rete.asValuesFlow
-import fleet.kernel.rete.collect
-import fleet.kernel.tryWithEntities
+import fleet.kernel.rete.launchOnEach
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
@@ -44,42 +43,31 @@ internal class BackendTaskInfoApi : TaskInfoApi {
     // an RPC call carries no kernel context of its own, unlike a service coroutine scope
     @Suppress("DEPRECATION")
     withKernel {
-      // A task is served for as long as it lives, so that work must not run in the rete match scope the
-      // `collect` lambda gets: `Query.collect` invokes the lambda under `Match.withMatch`, which awaits
-      // that scope, and a child outliving the lambda would stall the sequential collection and let only
-      // the oldest task through. This scope is a sibling of the collection and still carries the kernel
-      // context. `tryWithEntities` below is what ends a task's work once its entity is gone.
-      val tasksScope = this
+      activeTasks.launchOnEach { task ->
+        val taskId = registry.register(task)
+        try {
+          send(TaskInfoEvent.TaskAdded(
+            taskId = taskId,
+            projectId = task.projectId,
+            title = task.title,
+            cancellation = task.cancellation,
+            suspension = task.suspension,
+            status = task.taskStatus,
+            visibleInStatusBar = task.visibleInStatusBar,
+          ))
 
-      activeTasks.collect { task ->
-        tasksScope.launch {
-          val taskId = registry.register(task)
-          try {
-            tryWithEntities(task) {
-              send(TaskInfoEvent.TaskAdded(
-                taskId = taskId,
-                projectId = task.projectId,
-                title = task.title,
-                cancellation = task.cancellation,
-                suspension = task.suspension,
-                status = task.taskStatus,
-                visibleInStatusBar = task.visibleInStatusBar,
-              ))
+          // progress ticks are conflated: only the freshest state matters to a UI on the other side
+          launch { task.updates.asValuesFlow().conflate().collect { send(TaskInfoEvent.ProgressChanged(taskId, it)) } }
+          launch { task.statuses.asValuesFlow().collect { send(TaskInfoEvent.StatusChanged(taskId, it)) } }
+          launch { task.suspensionState.asValuesFlow().collect { send(TaskInfoEvent.SuspensionChanged(taskId, it)) } }
 
-              // progress ticks are conflated: only the freshest state matters to a UI on the other side
-              launch { task.updates.asValuesFlow().conflate().collect { send(TaskInfoEvent.ProgressChanged(taskId, it)) } }
-              launch { task.statuses.asValuesFlow().collect { send(TaskInfoEvent.StatusChanged(taskId, it)) } }
-              launch { task.suspensionState.asValuesFlow().collect { send(TaskInfoEvent.SuspensionChanged(taskId, it)) } }
-
-              awaitCancellation()
-            }
-          }
-          finally {
-            registry.unregister(taskId)
-            withContext(NonCancellable) {
-              // the subscriber may be gone already (its channel closed) — then the removal is moot anyway
-              runCatching { send(TaskInfoEvent.TaskRemoved(taskId)) }
-            }
+          awaitCancellation()
+        }
+        finally {
+          registry.unregister(taskId)
+          withContext(NonCancellable) {
+            // the subscriber may be gone already (its channel closed) — then the removal is moot anyway
+            runCatching { send(TaskInfoEvent.TaskRemoved(taskId)) }
           }
         }
       }
@@ -118,23 +106,28 @@ internal class BackendTaskInfoApi : TaskInfoApi {
 @Service(Service.Level.APP)
 internal class BackendTaskRegistry {
   private val counter = AtomicLong()
-  private val tasksById = ConcurrentHashMap<RemoteTaskId, TaskInfoEntity>()
-  private val idsByTask = ConcurrentHashMap<TaskInfoEntity, RemoteTaskId>()
-  private val subscriptionsById = ConcurrentHashMap<RemoteTaskId, Int>()
 
-  fun register(task: TaskInfoEntity): RemoteTaskId {
-    val taskId = idsByTask.computeIfAbsent(task) {
-      val id = RemoteTaskId(counter.incrementAndGet())
-      tasksById[id] = task
-      id
+  // register/unregister must be mutually atomic: resolving an id and adjusting its refcount as separate
+  // steps lets a concurrent last-unregister drop the id mapping under a subscription that just adopted it
+  private val lock = Any()
+  private val tasksById = ConcurrentHashMap<RemoteTaskId, TaskInfoEntity>() // concurrent so [task] reads without [lock]
+  private val idsByTask = HashMap<TaskInfoEntity, RemoteTaskId>()
+  private val subscriptionsById = HashMap<RemoteTaskId, Int>()
+
+  fun register(task: TaskInfoEntity): RemoteTaskId = synchronized(lock) {
+    val taskId = idsByTask.getOrPut(task) {
+      RemoteTaskId(counter.incrementAndGet()).also { tasksById[it] = task }
     }
     subscriptionsById.merge(taskId, 1, Int::plus)
-    return taskId
+    taskId
   }
 
-  fun unregister(taskId: RemoteTaskId) {
-    val remaining = subscriptionsById.computeIfPresent(taskId) { _, count -> (count - 1).takeIf { it > 0 } }
-    if (remaining == null) {
+  fun unregister(taskId: RemoteTaskId): Unit = synchronized(lock) {
+    val remaining = (subscriptionsById[taskId] ?: return) - 1
+    if (remaining > 0) {
+      subscriptionsById[taskId] = remaining
+    }
+    else {
       subscriptionsById.remove(taskId)
       tasksById.remove(taskId)?.let { idsByTask.remove(it) }
     }
