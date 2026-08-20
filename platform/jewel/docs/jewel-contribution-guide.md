@@ -108,10 +108,20 @@ This is the **official flow** for all **external contributions** to Jewel.
 1. **Open a Pull Request** on GitHub against the `intellij-community` repository.
    The change must only affect Jewel-related paths listed above.
 
-2. **Receive one external and one internal approval.**
+2. **Receive the required approvals.** Always request three reviewers from the Jewel team. How many approvals are
+   needed before the change can be merged depends on the change itself:
 
-  - External reviewers are Jewel maintainers working outside of JetBrains (currently Google and Touchlab).
-  - Internal reviewers are JetBrains developers responsible for Jewel.
+  - **One** Jewel team approval is enough for a small or simple change, or for any change confined to `platform/jewel`.
+  - **Two** Jewel team approvals are required otherwise, and at least one of them must be an internal approval.
+
+  An internal approval is only strictly required when the change touches files outside `platform/jewel`. That is
+  deliberately narrower than the Jewel-related paths listed above: a change to `libraries/skiko`, for example, follows
+  the Jewel contribution flow but still needs an internal approval.
+
+  Internal reviewers are JetBrains developers responsible for Jewel; external reviewers are Jewel maintainers working
+  outside of JetBrains (currently Google, and Touchlab on Google's behalf). The current roster is published at
+  [jewel-ui.dev/data/maintainers.json](https://jewel-ui.dev/data/maintainers.json), whose `team` field records
+  `jetbrains` for internal maintainers; every other value is an external maintainer.
 
 3. **Wait for GitHub checks to pass.**
    All Jewel Github Action CI checks must be green before merge can proceed.
@@ -144,15 +154,21 @@ Changes to Jewel code not following the above process, and especially changes ma
 
 | Type | Required Approvals | Merge Trigger | CI Validation | Merge Responsible |
 | :---- | :---- | :---- | :---- | :---- |
-| **External PR (GitHub)** | 2 Jewel team approvals (1 external \+ 1 internal) | “Ready for merge” comment | GitHub \+ Patronus CI | Merge Robot |
-| **Internal PR (touches Jewel)** | 2 Jewel team approvals (1 external \+ 1 internal) | Internal merge request | Patronus CI | Merge Robot |
+| **External PR (GitHub)** | 1 Jewel team approval if the change is small, simple, or confined to `platform/jewel`\*\*; otherwise 2, at least 1 internal | “Ready for merge” comment | GitHub \+ Patronus CI | Merge Robot |
+| **Internal PR (touches Jewel)** | 1 Jewel team approval if the change is small, simple, or confined to `platform/jewel`\*\*; otherwise 2, at least 1 internal | Internal merge request | Patronus CI | Merge Robot |
 | **Internal-only change\*** | Internal approval | Direct merge | Patronus CI | Internal Developer |
+
+Always request three reviewers from the Jewel team when opening a PR, regardless of how many approvals are needed to merge.
 
 \* An example of internal-only change is adding / removing modules from the  `modules.xml` file in the monorepo `.idea` directory.
 
 \* **Internal Jewel team approval** refers to approval provided by a Jewel team developer employed by JetBrains.
 
-\* **External Jewel team approval** refers to approval provided by a Jewel team developer who works outside of JetBrains (currently at Google or Touchlab).
+\* **External Jewel team approval** refers to approval provided by a Jewel team developer who works outside of JetBrains (currently at Google, or at Touchlab on Google's behalf; the published maintainers list records both as `google`).
+
+\*\* For approval purposes, "confined to `platform/jewel`" means every file the PR touches is under `platform/jewel`. This is
+narrower than the Jewel-related paths listed in [Scope of Jewel Contributions](#scope-of-jewel-contributions), and
+deliberately so: touching anything outside `platform/jewel` requires an internal approval, even when it is a Jewel-related path.
 
 ---
 
@@ -189,8 +205,8 @@ When internal developers make changes that affect Jewel-related files, those cha
 
 1. Internal developers commit changes to the internal monorepo on a custom branch following the naming convention `jewel/<jewel-id>`
 2. The Merge Robot (or Mirror Bot) detects Jewel-related modifications on the custom branch and automatically creates a corresponding public PR on GitHub.
-3. External maintainers review the public portion on GitHub. Two approvals from the Jewel team are required, alongside a green GitHub CI status.
-4. Once both internal and external approvals are given, Merge Robot merges internally after Patronus CI validation.
+3. External maintainers review the public portion on GitHub. One Jewel team approval is enough for a small or simple change, or one confined to `platform/jewel`; otherwise two are required, at least one of them internal. A green GitHub CI status is required either way.
+4. Once the required approvals are given, Merge Robot merges internally after Patronus CI validation.
 5. The result is synced automatically to GitHub.
 
 ### Flow (public \+ internal changes)
@@ -198,8 +214,8 @@ When internal developers make changes that affect Jewel-related files, those cha
 1. Internal developers commit changes to the internal monorepo on a custom branch following the naming convention `jewel/<jewel-id>`
 2. The Merge Robot (or Mirror Bot) detects Jewel-related modifications on the custom branch and automatically creates a corresponding public PR on GitHub.
 3. For internal changes, the Merge Robot creates a Space (JetBrains Code) MR
-4. External maintainers review the public portion on GitHub, internal maintainers review internal changes on Space. For the public portion, two approvals from the Jewel team are required, alongside a green GitHub CI status.
-5. Once both internal and external approvals are given, Merge Robot merges internally after Patronus CI validation.
+4. External maintainers review the public portion on GitHub, internal maintainers review internal changes on Space. Because these PRs touch files outside `platform/jewel`, the public portion needs two Jewel team approvals, at least one of them internal, alongside a green GitHub CI status.
+5. Once the required approvals are given, Merge Robot merges internally after Patronus CI validation.
 6. The result is synced automatically to GitHub.
 
 ---
@@ -209,7 +225,7 @@ When internal developers make changes that affect Jewel-related files, those cha
 | Step | Action | System | Result |
 | :---- | :---- | :---- | :---- |
 | 1 | Contributor opens PR on GitHub | GitHub | PR created |
-| 2 | External \+ internal reviewers approve | GitHub | Approvals complete |
+| 2 | The required reviewers approve | GitHub | Approvals complete |
 | 3 | Jewel checks green | GitHub | ✅ Ready for merge |
 | 4 | Contributor adds comment “Ready for merge” | GitHub | Merge Robot triggers |
 | 5 | Merge Robot runs Patronus CI | Internal | Internal validation |
@@ -220,7 +236,8 @@ When internal developers make changes that affect Jewel-related files, those cha
 
 ## Summary
 
-- All Jewel changes must go through **dual approval** (external \+ internal) and have green CI on both GitHub and Patronus.
+- All Jewel changes need at least **one Jewel team approval** and green CI on both GitHub and Patronus. Changes that are not small, simple, or confined to `platform/jewel` need **two approvals, at least one of them internal**.
+- Always **request three reviewers** when opening a PR, regardless of how many approvals are required to merge.
 - Jewel changes must be on separate commits from unrelated changes and follow the commit message format conventions.
 - A **“Ready for merge” comment** triggers internal validation via **Merge Robot** and **Patronus CI**.
 - **Merge Robot** handles all actual merges — contributors never push directly to main.
