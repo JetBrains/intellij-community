@@ -67,13 +67,13 @@ suspend fun openLiteProject(
     useDefaultProjectAsTemplate = false
     preventIprLookup = true
     forceOpenInNewFrame = true
-    this.beforeInit = { project ->
+    beforeInitTasks += { project ->
       beforeInit(project)
-
       @OptIn(EelDelicateApi::class)
       project.setEelDescriptor(eelDescriptor)
     }
-  }.withProjectName(path.name)
+    projectName = path.name
+  }
 
   val project = ProjectManagerEx.getInstanceEx().openProjectAsync(projectFile, options)
   if (project == null) {

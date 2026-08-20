@@ -51,7 +51,7 @@ internal class ProjectOpenProcessorOptionsTest {
         runConfigurators = false
         showWelcomeScreen = false
         projectName = "imported-project"
-        beforeInit = { beforeInitInvoked = true }
+        beforeInitTasks += { beforeInitInvoked = true }
       })
 
       project?.closeProjectAsync()

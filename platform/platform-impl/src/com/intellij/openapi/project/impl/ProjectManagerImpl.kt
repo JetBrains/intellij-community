@@ -601,15 +601,13 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return runUnderModalProgressIfIsEdt {
       newProjectAsync(toCanonicalName(path), OpenProjectTask {
         projectName = name
-        beforeInit = null
         useDefaultProjectAsTemplate = true
-        preloadServices = true
       })
     }
   }
 
   final override fun loadAndOpenProject(originalFilePath: String): Project? =
-    openProject(toCanonicalName(originalFilePath), OpenProjectTask())
+    openProject(toCanonicalName(originalFilePath), OpenProjectTask {})
 
   final override fun openProject(projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
     @Suppress("DEPRECATION")
