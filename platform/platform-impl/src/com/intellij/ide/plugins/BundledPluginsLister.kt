@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.google.common.collect.Comparators
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
@@ -99,7 +100,10 @@ internal class BundledPluginsLister : ModernApplicationStarter() {
 
         writer.obj {
           writer.array("layout") {
-            for (module in layout.sortedBy { it.name }) {
+            val order = compareBy(LayoutItemDescriptor::name)
+              .thenBy(LayoutItemDescriptor::kind)
+              .thenBy(Comparators.lexicographical(Comparator.naturalOrder()), LayoutItemDescriptor::classPath)
+            for (module in layout.sortedWith(order)) {
               writer.obj {
                 writer.writeStringField("name", module.name)
                 writer.writeStringField("kind", module.kind.name)
