@@ -10,6 +10,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
@@ -18,16 +19,15 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
-import org.jetbrains.kotlin.gradle.scripting.shared.isGradleKotlinScript
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixesList
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesListBuilder
-import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
@@ -35,6 +35,7 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADL
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROVIDER_HAS_MULTIPLE_VALUES
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROVIDER_MAP_PROPERTY
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROVIDER_PROVIDER
+import org.jetbrains.plugins.gradle.util.GradleConstants
 
 /**
  * Registers narrowly scoped Kotlin DSL quick-fixes for breaking Gradle API migrations (IDEA-384547).
@@ -67,7 +68,8 @@ private fun createGradlePropertyMethodCallQuickFix(psi: PsiElement): ModCommandA
   val qualifiedExpression = psi.gradlePropertyMethodCall()
                             ?: return null
 
-  if (!isGradleKotlinScript(qualifiedExpression.containingKtFile.alwaysVirtualFile)) {
+
+  if (!isGradleKotlinScript(qualifiedExpression.containingKtFile)) {
     return null
   }
 
@@ -181,3 +183,6 @@ private enum class GradlePropertyUnwrap(
   GET("intention.name.gradle.property.method.call.unwrap", "$0.get().$1"),
   GET_AS_FILE("intention.name.gradle.file.property.method.call.unwrap", "$0.get().asFile.$1"),
 }
+
+private fun isGradleKotlinScript(file: KtFile): Boolean =
+  FileUtilRt.extensionEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
