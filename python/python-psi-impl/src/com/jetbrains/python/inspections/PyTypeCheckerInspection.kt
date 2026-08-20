@@ -999,13 +999,28 @@ open class PyTypeCheckerInspection : PyInspection() {
           }
         }
 
+        val calleeTypeComponents = PyCallExpressionHelper
+          .getCalleeType(callee, resolveContext)
+          .compositeComponents
+
+        val argumentMappingsPerCallee: List<List<PyArgumentsMapping>> = calleeTypeComponents
+          .mapNotNull { componentType ->
+            val callableItems = getCallableItems(componentType)
+            if (callableItems.isEmpty()) return@mapNotNull null
+
+            callableItems.map { callable ->
+              mapArguments(callSite, callable, myTypeEvalContext)
+            }
+          }
+
         // Calling a value of a union type is valid only if *every* member is callable and accepts the arguments
         // (a member that is not callable at all is reported by PyCallingNonCallableInspection). This differs from an
         // overloaded callable (a `PyOverloadType`, not a `PyUnionType`), for which matching *any* overload is enough.
         // TODO: intersection type
-        for (component in PyCallExpressionHelper.getCalleeType(callee, resolveContext).compositeComponents) {
-          val argumentsMappings = getCallableItems(component).map { mapArguments(callSite, it, myTypeEvalContext) }
-          if (reportIfNoneMatches(callSite, argumentsMappings)) break
+        for (mappings in argumentMappingsPerCallee) {
+          if (reportArgumentTypeMismatch(callSite, mappings)) {
+            return
+          }
         }
       }
       else if (callSite is PyQualifiedElement) {
@@ -1016,7 +1031,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         reportIfNoCalleeMatches(callSite, analyzedCallees.orEmpty().map { it.mapping to it.calleeResults })
       }
       else {
-        reportIfNoneMatches(callSite, mapArguments(callSite, resolveContext))
+        reportArgumentTypeMismatch(callSite, mapArguments(callSite, resolveContext))
       }
     }
 
@@ -1434,14 +1449,6 @@ open class PyTypeCheckerInspection : PyInspection() {
       }
     }
 
-    private fun reportIfNoneMatches(callSite: PyCallSiteOwner, argumentsMappings: List<PyArgumentsMapping>): Boolean {
-      val calleesResults = argumentsMappings
-        .filter { it.isComplete }
-        .mapNotNull { mapping -> analyzeCallee(callSite, mapping)?.let { mapping to it } }
-
-      return reportIfNoCalleeMatches(callSite, calleesResults)
-    }
-
     private fun reportIfNoCalleeMatches(callSite: PyCallSiteOwner, calleesResults: List<Pair<PyArgumentsMapping, AnalyzeCalleeResults>>): Boolean {
       if (calleesResults.isNotEmpty() && calleesResults.none { (mapping, results) -> isMatched(results, mapping) }) {
         PyTypeCheckerInspectionProblemRegistrar
@@ -1452,6 +1459,28 @@ open class PyTypeCheckerInspection : PyInspection() {
         return true
       }
       return false
+    }
+
+    private fun reportArgumentTypeMismatch(callSite: PyCallSiteOwner, argumentsMappings: List<PyArgumentsMapping>): Boolean {
+      val (shapeMatches, shapeMismatches) = argumentsMappings.partition { it.isComplete }
+
+      val shapeMatchesCalleesResults = shapeMatches.mapNotNull { mapping -> analyzeCallee(callSite, mapping)?.let { mapping to it } }
+      if (shapeMatchesCalleesResults.isNotEmpty()) {
+        return reportIfNoCalleeMatches(callSite, shapeMatchesCalleesResults)
+      }
+
+      // We can only reliably report an argument type mismatch if there is a single callable candidate and we have extra arguments
+      val onlyShapeMismatch = shapeMismatches.singleOrNull() ?: return false
+      if (onlyShapeMismatch.unmappedArguments.isEmpty() || onlyShapeMismatch.unmappedParameters.isNotEmpty()) return false
+      val typeMatchResult = analyzeCallee(callSite, onlyShapeMismatch) ?: return false
+      if (areTypesMatched(typeMatchResult)) return false
+
+      PyTypeCheckerInspectionProblemRegistrar
+        .registerProblem(
+          holder, callSite, listOf(typeMatchResult), myTypeEvalContext,
+          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        )
+      return true
     }
 
     private fun checkIteratedValue(iteratedValue: PyExpression?, isAsync: Boolean): Boolean {
@@ -1977,11 +2006,14 @@ open class PyTypeCheckerInspection : PyInspection() {
       }
 
       private fun isMatched(calleeResults: AnalyzeCalleeResults, mapping: PyArgumentsMapping): Boolean {
+        return areTypesMatched(calleeResults) && mapping.isComplete
+      }
+
+      private fun areTypesMatched(calleeResults: AnalyzeCalleeResults): Boolean {
         return calleeResults.results.all { it.isMatched } &&
                calleeResults.unmatchedArguments.isEmpty() &&
                calleeResults.unmatchedParameters.isEmpty() &&
-               calleeResults.unfilledPositionalVarargs.isEmpty() &&
-               mapping.isComplete
+               calleeResults.unfilledPositionalVarargs.isEmpty()
       }
 
       private fun hasExplicitType(node: PsiElement): Boolean {

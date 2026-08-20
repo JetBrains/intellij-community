@@ -430,6 +430,36 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
   }
 
   @Nested
+  inner class SurplusArgumentMappings {
+    @Test
+    @TestFor(issues = ["PY-91247"])
+    fun `argument types are checked even though the call has a surplus argument`() = test("""
+      def f(x: int) -> None: ...
+      f("s", 1)
+      # │    └ WARNING Unexpected argument
+      # ^^^ WARNING Expected type 'int', got 'Literal["s"]' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-91247"])
+    fun `surplus argument alone does not produce a type error`() = test("""
+      def f(x: int) -> None: ...
+      f(1, 2)
+      #    └ WARNING Unexpected argument
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-91247"])
+    fun `all bound arguments are checked in a call with a surplus argument`() = test("""
+      def f(x: int, y: int) -> None: ...
+      f("a", "b", 3)
+      # │    │    └ WARNING Unexpected argument
+      # │    ^^^ WARNING Expected type 'int', got 'Literal["b"]' instead
+      # ^^^ WARNING Expected type 'int', got 'Literal["a"]' instead
+      """)
+  }
+
+  @Nested
   inner class TypedArgsAndKwargs {
     @Test
     @TestFor(issues = ["PY-19723"])
