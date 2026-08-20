@@ -7,8 +7,9 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.application
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -21,9 +22,9 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.ReplaceExplicitLambdaParameterWithItUtils.ParamRenamingProcessor
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.ReplaceExplicitLambdaParameterWithItUtils.createAnalyzableExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.ReplaceExplicitLambdaParameterWithItUtils.getLambda
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -74,13 +75,14 @@ internal class ReplaceExplicitFunctionLiteralParamWithItIntention : SelfTargetin
 
 }
 
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 private fun targetFunctionLiteral(element: KtElement, caretOffset: Int, editor: Editor? = null): KtFunctionLiteral? {
     val expression = element.getParentOfType<KtNameReferenceExpression>(false)
     if (expression != null) {
         val existingEditor = editor ?: element.findExistingEditor() ?: return null
         return computeWithProgressIconIfNeeded(existingEditor, caretOffset) {
             analyze(expression) {
-                val target = expression.mainReference.resolveToSymbols().singleOrNull() as? KaValueParameterSymbol ?: return@analyze null
+                val target = expression.resolveSymbol() as? KaValueParameterSymbol ?: return@analyze null
                 val functionDescriptor = target.containingSymbol as? KaAnonymousFunctionSymbol ?: return@analyze null
                 functionDescriptor.psi as? KtFunctionLiteral
             }

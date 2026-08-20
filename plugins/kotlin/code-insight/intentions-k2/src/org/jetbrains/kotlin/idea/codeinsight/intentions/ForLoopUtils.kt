@@ -7,7 +7,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
@@ -20,12 +19,12 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidPointers
 import org.jetbrains.kotlin.idea.codeinsight.utils.findRelevantLoopForExpression
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtContinueExpression
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtLabeledExpression
@@ -76,6 +75,7 @@ object ForLoopUtils {
             !lambda.anyDescendantOfType<KtLabeledExpression> { it.getLabelName() == candidate }
         }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     internal fun suggestLoopVariableName(lambda: KtLambdaExpression, factory: KtPsiFactory): KtParameter {
         val body = lambda.bodyExpression
@@ -85,7 +85,7 @@ object ForLoopUtils {
             } else {
                 // Check if the candidate would conflict with existing names
                 !body.anyDescendantOfType<KtSimpleNameExpression> { nameExpr ->
-                    nameExpr.getReferencedName() == candidate && nameExpr.mainReference.resolveToSymbol() != null
+                    nameExpr.getReferencedName() == candidate && nameExpr.resolveSymbol() != null
                 }
             }
         }
@@ -93,6 +93,7 @@ object ForLoopUtils {
         return factory.createLoopParameter(suggestedName)
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     internal fun replaceImplicitItReferences(lambda: KtLambdaExpression, newParameter: KtParameter, factory: KtPsiFactory) {
         val body = lambda.bodyExpression ?: return
@@ -105,7 +106,7 @@ object ForLoopUtils {
 
         body.forEachDescendantOfType<KtNameReferenceExpression> { reference ->
             if (reference.getReferencedName() == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier &&
-                reference.mainReference.resolveToSymbol() == parameterSymbol
+                reference.resolveSymbol() == parameterSymbol
             ) {
                 reference.replace(factory.createExpression(newName))
             }
@@ -155,10 +156,11 @@ object ForLoopUtils {
         return body.referencesSymbol(loopParameter.symbol)
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.referencesSymbol(symbol: KaSymbol): Boolean =
         anyDescendantOfType<KtNameReferenceExpression> { ref ->
-            ref.mainReference.resolveToSymbol() == symbol
+            ref.resolveSymbol() == symbol
         }
 
     internal fun relabelReturns(

@@ -4,8 +4,9 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -17,7 +18,6 @@ import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.replaceImpl
 import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.replaceReturnsWithContinue
 import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.suggestLoopName
 import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.suggestLoopVariableName
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
@@ -54,9 +54,10 @@ internal class ReplaceRepeatWithForLoopIntention :
         return paramName != "_"
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): ReturnsToReplace? {
-        val symbol = element.calleeExpression?.mainReference?.resolveToSymbol() as? KaNamedFunctionSymbol ?: return null
+        val symbol = element.resolveSymbol() as? KaNamedFunctionSymbol ?: return null
         if (symbol.callableId != REPEAT_KEYWORD_CALLABLE_IDS) return null
         val lambda = element.getLambdaArgument() ?: return null
         return lambda.computeReturnsToReplace()

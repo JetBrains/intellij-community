@@ -3,9 +3,10 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.replaceRetu
 import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.suggestLoopName
 import org.jetbrains.kotlin.idea.codeinsight.utils.ImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsight.utils.getImplicitReceiverInfo
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
@@ -103,9 +103,10 @@ internal class ConvertForEachToForLoopIntention
         return Context(returnsToReplace, implicitReceiverInfo)
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtCallExpression.isForEachByAnalyze(): Boolean {
-        val symbol = calleeExpression?.mainReference?.resolveToSymbol() as? KaNamedFunctionSymbol ?: return false
+        val symbol = resolveSymbol() as? KaNamedFunctionSymbol ?: return false
         val callableId = symbol.callableId
         return callableId in FOR_EACH_CALLABLE_IDS || callableId in FOR_EACH_INDEXED_CALLABLE_IDS
     }
