@@ -601,6 +601,7 @@ libraries/protobuf
 libraries/protobuf-kotlin
 libraries/proxy-vole
 libraries/pty4j
+libraries/qodana/sarif
 libraries/rd/core
 libraries/rd/framework
 libraries/rd/swing

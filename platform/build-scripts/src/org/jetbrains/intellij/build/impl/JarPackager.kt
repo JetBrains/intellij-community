@@ -164,7 +164,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "org.apache.ivy",
   "org.scilab.forge:jlatexmath",
   "package-search-api-client",
-  "qodana-sarif",
   "software.amazon.awssdk.glue",
   // see the comment for `flexmark`
   "sqlite",

@@ -35,7 +35,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.libraries.kodein.di.jvm" />
-    <orderEntry type="library" name="qodana-sarif" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.qodana.sarif" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.tools.ide.performanceTesting.commands" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
