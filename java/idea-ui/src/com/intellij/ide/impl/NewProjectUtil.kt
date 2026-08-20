@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
@@ -176,7 +176,11 @@ suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFi
     val newProject: Project? = if (projectBuilder == null || !projectBuilder.isUpdate) {
       val name = wizard.projectName
       if (projectBuilder == null) {
-        projectManager.newProject(projectFile, OpenProjectTask.build().asNewProject().withProjectName(name))
+        projectManager.newProject(projectFile, OpenProjectTask {
+          isNewProject = true
+          useDefaultProjectAsTemplate = true
+          projectName = name
+        })
       }
       else {
         try {
