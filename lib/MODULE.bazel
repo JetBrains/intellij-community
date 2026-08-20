@@ -10963,6 +10963,20 @@ http_file(
 )
 
 http_file(
+    name = "com_github_marschall-memoryfilesystem-2_8_2_http",
+    downloaded_file_path = "memoryfilesystem-2.8.2.jar",
+    sha256 = "8b94840d71ad0caa36b3309425b2d23084bc8788ce84d71f2d805b0fc84d1f5a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/marschall/memoryfilesystem/2.8.2/memoryfilesystem-2.8.2.jar",
+)
+
+http_file(
+    name = "com_github_marschall-memoryfilesystem-2_8_2-sources_http",
+    downloaded_file_path = "memoryfilesystem-2.8.2-sources.jar",
+    sha256 = "112a99bacb1f3740515dadc9d52a4cdcf260c100e3cc915644183900b2f4a7e5",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/marschall/memoryfilesystem/2.8.2/memoryfilesystem-2.8.2-sources.jar",
+)
+
+http_file(
     name = "com_miglayout-miglayout-swing-11_4_2_http",
     downloaded_file_path = "miglayout-swing-11.4.2.jar",
     sha256 = "036b8532021092afcc7159d3756086a5fbe19f6014ac8474817d55d1289af756",
@@ -15636,20 +15650,6 @@ http_file(
     downloaded_file_path = "maven-wrapper-0.5.5-sources.jar",
     sha256 = "24f32dd1019cedff1c43da5009c4194ca1c31053a27ffd690c1f190fab5c102e",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/takari/maven-wrapper/0.5.5/maven-wrapper-0.5.5-sources.jar",
-)
-
-http_file(
-    name = "com_github_marschall-memoryfilesystem-2_8_2_http",
-    downloaded_file_path = "memoryfilesystem-2.8.2.jar",
-    sha256 = "8b94840d71ad0caa36b3309425b2d23084bc8788ce84d71f2d805b0fc84d1f5a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/marschall/memoryfilesystem/2.8.2/memoryfilesystem-2.8.2.jar",
-)
-
-http_file(
-    name = "com_github_marschall-memoryfilesystem-2_8_2-sources_http",
-    downloaded_file_path = "memoryfilesystem-2.8.2-sources.jar",
-    sha256 = "112a99bacb1f3740515dadc9d52a4cdcf260c100e3cc915644183900b2f4a7e5",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/marschall/memoryfilesystem/2.8.2/memoryfilesystem-2.8.2-sources.jar",
 )
 
 http_file(

@@ -157,7 +157,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "kotlinc.kotlin-scripting-jvm",
   "layoutlib",
   "libthrift",
-  "memoryfilesystem",
   "okhttp",
   "openai.java",
   "org.apache.ivy",

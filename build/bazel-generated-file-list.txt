@@ -569,6 +569,7 @@ libraries/lz4
 libraries/markdown
 libraries/maven-resolver-provider
 libraries/maven-resolver-transport
+libraries/memoryfilesystem
 libraries/microba
 libraries/miglayout-swing
 libraries/misc/plugin

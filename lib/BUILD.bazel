@@ -13766,6 +13766,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "com.github.marschall/memoryfilesystem-2.8.2.jar_copy",
+    src = "@com_github_marschall-memoryfilesystem-2_8_2_http//file",
+    out = "com.github.marschall/memoryfilesystem-2.8.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-memoryfilesystem-memoryfilesystem",
+    jar = "@com_github_marschall-memoryfilesystem-2_8_2_http//file",
+    source_jar = "@com_github_marschall-memoryfilesystem-2_8_2-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "com.miglayout/miglayout-swing-11.4.2.jar_copy",
     src = "@com_miglayout-miglayout-swing-11_4_2_http//file",
     out = "com.miglayout/miglayout-swing-11.4.2.jar",
@@ -19739,21 +19754,6 @@ jvm_import(
     name = "maven-test_framework-tests-io-takari-maven-wrapper",
     jar = "@io_takari-maven-wrapper-0_5_5_http//file",
     source_jar = "@io_takari-maven-wrapper-0_5_5-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.github.marschall/memoryfilesystem-2.8.2.jar_copy",
-    src = "@com_github_marschall-memoryfilesystem-2_8_2_http//file",
-    out = "com.github.marschall/memoryfilesystem-2.8.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "memoryfilesystem",
-    jar = "@com_github_marschall-memoryfilesystem-2_8_2_http//file",
-    source_jar = "@com_github_marschall-memoryfilesystem-2_8_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
