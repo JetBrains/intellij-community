@@ -35,6 +35,14 @@ import org.jetbrains.annotations.NonNls
 @ApiStatus.Internal
 @Rpc
 interface PyEvoSdkApi : RemoteApi<Unit> {
+  /**
+   * Whether the module is a Python one at all — a `PyProject`, i.e. a Python-typed module or one carrying a Python
+   * facet. The widget hides itself entirely for anything else (a plain Java module in a mixed project), which it
+   * cannot tell from [getCurrentInterpreter] alone: that returns `null` both here and for a Python module still
+   * waiting for an interpreter, and only the latter may show "No interpreter".
+   */
+  suspend fun isPythonModule(projectId: ProjectId, moduleName: String): Boolean
+
   /** The Eel interpreter currently configured for the module, as display-ready data (or `null` if none). */
   suspend fun getCurrentInterpreter(projectId: ProjectId, moduleName: String): PyInterpreterDto?
 
@@ -125,6 +133,10 @@ suspend fun PyEvoSdkApi(): PyEvoSdkApi = RemoteApiProviderService.resolve(remote
  * Frontend-facing wrappers that hide the RPC/`fleet.rpc` types behind plain DTO results, so the frontend
  * module does not need to depend on `intellij.platform.rpc`.
  */
+@ApiStatus.Internal
+suspend fun requestEvoIsPythonModule(projectId: ProjectId, moduleName: String): Boolean =
+  PyEvoSdkApi().isPythonModule(projectId, moduleName)
+
 @ApiStatus.Internal
 suspend fun requestEvoCurrentInterpreter(projectId: ProjectId, moduleName: String): PyInterpreterDto? =
   PyEvoSdkApi().getCurrentInterpreter(projectId, moduleName)

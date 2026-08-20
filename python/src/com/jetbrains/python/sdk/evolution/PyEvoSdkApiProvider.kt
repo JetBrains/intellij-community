@@ -13,7 +13,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -104,7 +103,6 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.poetry.createNewPoetrySdk
 import com.jetbrains.python.sdk.poetry.createPoetrySdk
 import com.jetbrains.python.sdk.pyInterpreterPresentation
-import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import com.jetbrains.python.sdk.uv.impl.validateAndCreateUvCli
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
@@ -225,6 +223,9 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
   /** How long a slow tool's env list stays cached. Registry-tunable. */
   private val slowCacheDuration: kotlin.time.Duration
     get() = PyEvoRegistry.slowToolCacheSeconds.seconds
+
+  override suspend fun isPythonModule(projectId: ProjectId, moduleName: String): Boolean =
+    resolvePyProject(projectId, moduleName) != null
 
   override suspend fun getCurrentInterpreter(projectId: ProjectId, moduleName: String): PyInterpreterDto? {
     val pyProject = resolvePyProject(projectId, moduleName) ?: return null
