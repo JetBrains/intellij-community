@@ -207,3 +207,6 @@ fun PsiElement.findTomlValueByKey(key: String): PsiElement? =
     (element as? PsiTomlKeyValue)?.key?.text == key
   } as? PsiTomlKeyValue)?.value
 
+@Internal
+fun <T> Result<T, TomlTableSafeGetError>.getOrIssue(issues: MutableList<PyProjectIssue>, onNull: (() -> Unit)? = null): T? =
+  getOrIssue(issues, { PyProjectIssue.SafeGetError(it) }, onNull)

@@ -5,6 +5,8 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.getPathMatcher
 import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.pyproject.PyProjectIssue
+import com.intellij.python.pyproject.PyProjectTable
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.spi.ProjectDependencies
 import com.intellij.python.pyproject.model.spi.ProjectName
@@ -184,12 +186,20 @@ internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBa
     else -> null
   }
 
-  override fun canBeVirtualProject(pyProjectToml: TomlTable): Boolean = try {
-    pyProjectToml.getTable(UV_WORKSPACE)
+  override fun getAlternativeProjectTable(
+    pyProjectToml: TomlTable,
+    fallbackName: String,
+    issues: MutableList<PyProjectIssue>,
+  ): PyProjectTable? {
+    val workspace = try {
+      // virtual workspace
+      pyProjectToml.getTable(UV_WORKSPACE)
+    }
+    catch (_: TomlInvalidTypeException) {
+      null
+    } != null
+    return if (workspace) PyProjectTable.makeVirtProj(fallbackName) else null
   }
-  catch (_: TomlInvalidTypeException) {
-    null
-  } != null
 }
 
 private const val UV_SOURCES = "tool.uv.sources"

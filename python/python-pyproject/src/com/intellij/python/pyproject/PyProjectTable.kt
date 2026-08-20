@@ -35,16 +35,16 @@ data class PyProjectTable @VisibleForTesting internal constructor(
   val guiScripts: Map<String, String>? = null,
   val urls: Map<String, String>? = null,
 ) {
-  internal companion object {
+  companion object {
     /**
      * Virtual project has no `[project]` table, but has [name]
      */
-    internal fun makeVirtProj(projectName: String): PyProjectTable = PyProjectTable(name = PyPackageName.normalizeProjectName(projectName))
+    fun makeVirtProj(projectName: String): PyProjectTable = PyProjectTable(name = PyPackageName.normalizeProjectName(projectName))
 
     /**
      * from [projectTable] (which is `[project]` table) fetch all data, report issues to [issues] and return instance if valid.
      */
-    internal fun make(projectTable: TomlTable, issues: MutableList<PyProjectIssue>): PyProjectTable? {
+    fun make(projectTable: TomlTable, issues: MutableList<PyProjectIssue>): PyProjectTable? {
       val name = projectTable.safeGetRequired<String>("name", unquotedDottedKey = false).getOrIssue(issues) ?: return null
 
       val dynamic = projectTable.safeGetArr<String>("dynamic", unquotedDottedKey = false).getOrIssue(issues)

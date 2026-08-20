@@ -6,6 +6,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.poetry.common.POETRY_UI_INFO
+import com.intellij.python.pyproject.PyProjectIssue
+import com.intellij.python.pyproject.PyProjectTable
+import com.intellij.python.pyproject.getOrIssue
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
 import com.intellij.python.pyproject.model.spi.PyProjectManager
@@ -14,6 +17,7 @@ import com.intellij.python.pyproject.model.spi.PySdkDependencyGroupSupport
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
 import com.intellij.python.pyproject.psi.spi.PyProjectTomlPathValue
 import com.intellij.python.pyproject.psi.spi.isPathDependencyKey
+import com.intellij.python.pyproject.safeGet
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.poetry.PoetryDependencyGroupSupport
@@ -95,6 +99,16 @@ internal class PoetryPyProjectManager : PyProjectManager {
     private const val GROUP = "group"
     private const val DEPENDENCIES = "dependencies"
   }
+
+  override fun getAlternativeProjectTable(
+    pyProjectToml: TomlTable,
+    fallbackName: String,
+    issues: MutableList<PyProjectIssue>,
+    // poetry 1 used this table instead of [project]
+  ): PyProjectTable? =
+    pyProjectToml.safeGet<TomlTable>("tool.poetry", unquotedDottedKey = true)
+      .getOrIssue(issues)
+      ?.let { PyProjectTable.make(it, issues) }
 }
 
 private const val FROM = "from"

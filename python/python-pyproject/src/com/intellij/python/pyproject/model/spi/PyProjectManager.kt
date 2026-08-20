@@ -3,6 +3,8 @@ package com.intellij.python.pyproject.model.spi
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.pyproject.PyProjectIssue
+import com.intellij.python.pyproject.PyProjectTable
 import com.intellij.python.pyproject.dependencies.spi.PyDependencyGroupLocator
 import com.intellij.python.pyproject.model.internal.DefaultPyProjectManager
 import com.intellij.python.pyproject.psi.spi.PyProjectTomlPathLocator
@@ -64,8 +66,11 @@ interface PyProjectManager : PyProjectCreator, PyDependencyGroupLocator, PyProje
   fun getTomlDependencySpecifications(): List<TomlDependencySpecification>
 
   /**
-   * Virtual project doesn't have `[project]` table but still can be a project.
-   * If this method returns `true`, we assume project is valid and has directory name as a project name
+   * [PyProjectTable] usually represents `[project]` table, but when it doesn't exist, this method is called as a fallback.
+   * @param pyProjectToml is `pyproject.toml` content
+   * @param fallbackName is a project name for virtual projects (e.g. directory name)
+   * @param issues is a sink to report issues from [PyProjectTable] creation.
    */
-  fun canBeVirtualProject(pyProjectToml: TomlTable): Boolean = false
+  fun getAlternativeProjectTable(pyProjectToml: TomlTable, fallbackName: String, issues: MutableList<PyProjectIssue>): PyProjectTable? =
+    null
 }

@@ -14,7 +14,6 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.python.pyproject.model.spi.PyProjectManager
-import com.jetbrains.python.Result
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.project.resolveFile
 import kotlinx.coroutines.Dispatchers
@@ -156,8 +155,8 @@ data class PyProjectToml internal constructor(
      * In case of serious errors (e.g. `[project]` exists, but has  no `name`) returns `null`. O
      * therwise, returns an object with data and issues.
      *
-     * It also supports "virtual projects" without `[project]` section at all ([fallbackName] is used then), but only if
-     * [PyProjectManager.canBeVirtualProject]
+     * It also supports "virtual projects" or legacy projects without `[project]` section at all ([fallbackName] is then passed to
+     * [PyProjectManager.getAlternativeProjectTable] to create a [PyProjectTable] from it)
      *
      * Example:
      *
@@ -182,18 +181,19 @@ data class PyProjectToml internal constructor(
                            .getOrIssue(issues)?.filterIsInstance<String>() ?: emptyList())
       }
 
+      // toml file has `[project]` section
       val projectTomlTable = toml.safeGet<TomlTable>(PY_PROJECT_TOML_PROJECT, unquotedDottedKey = false).getOrIssue(issues)
-      val pyProjectTable =
-        when {
-          // toml file has `[project]` section
-          projectTomlTable != null -> PyProjectTable.make(projectTomlTable, issues)
-          // toml file has no `[project]` but might be virtual project
-          PyProjectManager.EP.extensionList.any { it.canBeVirtualProject(toml) } -> PyProjectTable.makeVirtProj(fallbackName)
-          else -> null
-        } ?: return null
+                               ?.let { PyProjectTable.make(it, issues) }
+                             // toml file has no `[project]` but might be virtual project or poetry 1
+                             ?: PyProjectManager.EP.extensionList.firstNotNullOfOrNull {
+                               it.getAlternativeProjectTable(toml,
+                                                             fallbackName,
+                                                             issues)
+                             }
+                             ?: return null
 
       return PyProjectToml(
-        pyProjectTable,
+        projectTomlTable,
         issues,
         toml,
         dependencyGroups = PyProjectDependencyTable(depsFromGroups ?: emptyMap()),
@@ -229,5 +229,3 @@ data class PyProjectToml internal constructor(
   }
 }
 
-internal fun <T> Result<T, TomlTableSafeGetError>.getOrIssue(issues: MutableList<PyProjectIssue>, onNull: (() -> Unit)? = null) =
-  getOrIssue(issues, { PyProjectIssue.SafeGetError(it) }, onNull)

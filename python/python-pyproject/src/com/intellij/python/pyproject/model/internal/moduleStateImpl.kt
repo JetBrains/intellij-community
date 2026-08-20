@@ -38,11 +38,15 @@ internal suspend fun Module.getModuleSdkStateImpl(
           is CreateSdkInfo.ExistingEnv -> bestProposalFromTools
           is CreateSdkInfo.WillCreateEnv, is CreateSdkInfo.WillInstallTool, null -> {
             suggestedSdk?.let { suggestedSdk->
+              val answeredByTool = configurators.options.associateBy { it.toolId }
               configuratorsByTool
                 // First, find suggested tool that is also proposed by the fact of its venv existence
                 .filter { it.key in suggestedSdk.preferTools }
                 .firstNotNullOfOrNull { (toolId, extension) ->
-                  extension.asPyProjectTomlSdkConfigurationExtension()?.createSdkWithoutPyProjectTomlChecks(this, venvsInModule)?.let {
+                  // The probe above already asked this configurator, and its other entry point differs only by the
+                  // pyproject.toml precondition that answer implies. Reuse it instead of running the tool twice.
+                  answeredByTool[toolId]
+                  ?: extension.asPyProjectTomlSdkConfigurationExtension()?.createSdkWithoutPyProjectTomlChecks(this, venvsInModule)?.let {
                     CreateSdkInfoWithTool(it, toolId)
                   }
                 }
