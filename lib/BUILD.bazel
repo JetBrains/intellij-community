@@ -15595,6 +15595,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "com.google.zxing/core-3.5.1.jar_copy",
+    src = "@com_google_zxing-core-3_5_1_http//file",
+    out = "com.google.zxing/core-3.5.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-zxing-core-zxing-core",
+    jar = "@com_google_zxing-core-3_5_1_http//file",
+    source_jar = "@com_google_zxing-core-3_5_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.apache.thrift/libthrift-0.19.0.jar_copy",
     src = "@org_apache_thrift-libthrift-0_19_0_http//file",
     out = "org.apache.thrift/libthrift-0.19.0.jar",
@@ -21855,21 +21870,6 @@ jvm_import(
     name = "xml-resolver",
     jar = "@xml-resolver-xml-resolver-1_2_http//file",
     source_jar = "@xml-resolver-xml-resolver-1_2-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.google.zxing/core-3.5.1.jar_copy",
-    src = "@com_google_zxing-core-3_5_1_http//file",
-    out = "com.google.zxing/core-3.5.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "zxing-core",
-    jar = "@com_google_zxing-core-3_5_1_http//file",
-    source_jar = "@com_google_zxing-core-3_5_1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `maven libs` end

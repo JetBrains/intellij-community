@@ -636,6 +636,7 @@ libraries/xtext-xbase
 libraries/xz
 libraries/zip-signer
 libraries/zstd-jni
+libraries/zxing-core
 module-set-plugins/generated/intellij.moduleSet.plugin.main
 mps/build
 mps/build/intellij.mps.resources

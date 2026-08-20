@@ -173,7 +173,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   // declared by the android plugin layout, so the Rider android plugin needs its own copy
   "studio-platform",
   "workspace-model-codegen",
-  "zxing-core",
 )
 
 class JarPackager private constructor(
