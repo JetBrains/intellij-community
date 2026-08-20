@@ -51,6 +51,10 @@ object ExitCodes {
   const val SUCCESS: Int = 0
   const val TESTS_FAILED: Int = 1
   const val NO_TESTS_EXECUTED: Int = 2
+
+  /** Test harness internal failure, browser exception, premature interruption, etc. */
   const val INFRASTRUCTURE_FAILURE: Int = 3
+
+  /** Incorrect call of the test harness, usually misconfigured CLI options or invalid test harness environment/filesystem state */
   const val INVOCATION_ERROR: Int = 4
 }

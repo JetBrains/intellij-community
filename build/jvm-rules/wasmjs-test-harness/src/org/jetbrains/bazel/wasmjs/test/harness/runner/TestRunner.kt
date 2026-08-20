@@ -52,7 +52,7 @@ internal suspend fun runTests(
       val testRunState = TestRunState()
 
       // start Browser console listening, and make sure we are listening before navigating to the test page by using [startCollection] helper
-      val consoleFeed = page.runtime.events().startCollection { event ->
+      val browserEventsConsumptionJob = page.runtime.events().startCollection { event ->
         when (event) {
           is RuntimeEvent.ConsoleAPICalled -> { // process browser console logs
             val line = event.args.formatConsoleLine()
@@ -79,8 +79,11 @@ internal suspend fun runTests(
       while (testRunState.outcome.isActive) {
         // await for tests to complete successfully or fail
         select {
-          consoleFeed.onJoin { testRunState.interrupt(STREAM_ENDED_REASON) }
-          onTimeout(TEST_COMPLETION_POLLING_FREQUENCY) {
+          browserEventsConsumptionJob.onJoin {
+            // browser event stream got closed unexpectedly
+            testRunState.interrupt(STREAM_ENDED_REASON)
+          }
+          onTimeout(TEST_COMPLETION_POLLING_FREQUENCY) { // we periodically check whether the test runner is idle
             when {
               !testRunState.hasSeenTestEvents() -> Unit // do not check for idleness until the first test suite has started
               testRunState.isIdleFor(testCompletionGracePeriod) -> testRunState.complete()
@@ -104,7 +107,7 @@ internal suspend fun runTests(
       // A page that never finished loading leaves this still running, and it is a child of the
       // enclosing scope: without the cancel, returning here would hang on it.
       navigation.cancelAndJoin()
-      consoleFeed.cancelAndJoin()
+      browserEventsConsumptionJob.cancelAndJoin()
       require(!testRunState.outcome.isActive) { "testRunState must not be active at that point" }
       testRunState.outcome.await()
     }
