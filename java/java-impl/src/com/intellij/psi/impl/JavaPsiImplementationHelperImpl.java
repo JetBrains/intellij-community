@@ -10,6 +10,7 @@ import com.intellij.codeInsight.javadoc.SnippetMarkup;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
@@ -34,8 +35,10 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.platform.backend.documentation.DocumentationTarget;
 import com.intellij.platform.backend.navigation.NavigationRequest;
@@ -100,6 +103,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -227,20 +231,17 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   private Stream<VirtualFile> findSourceRoots(VirtualFile file) {
     ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
 
-    Stream<VirtualFileUrl> librarySourceRoots = index.findContainingLibraries(file).stream()
+    Stream<VirtualFile> librarySourceRoots = index.findContainingLibraries(file).stream()
       .sorted(Comparator.comparing(library -> library.getSymbolicId().getPresentableName()))
       .flatMap(library -> library.getRoots().stream())
       .filter(root -> root.getType().equals(LibraryRootTypeId.Companion.getSOURCES()))
-      .map(LibraryRoot::getUrl);
+      .flatMap(JavaPsiImplementationHelperImpl::getEffectiveRoots);
 
-    Stream<VirtualFileUrl> sdkSourceRoots = index.findContainingSdks(file).stream()
+    Stream<VirtualFile> sdkSourceRoots = index.findContainingSdks(file).stream()
       .sorted(Comparator.comparing(sdk -> sdk.getSymbolicId().getPresentableName()))
       .flatMap(sdk -> sdk.getRoots().stream())
       .filter(root -> root.getType().equals(SdkRootTypeId.SOURCES))
-      .map(SdkRoot::getUrl);
-
-    Stream<VirtualFile> modelRoots = Stream.concat(librarySourceRoots, sdkSourceRoots)
-      .map(VirtualFileUrls::getVirtualFile)
+      .map(SdkRoot::getUrl).map(VirtualFileUrls::getVirtualFile)
       .filter(Objects::nonNull);
 
     Stream<VirtualFile> synthRoots = AdditionalLibraryRootsProvider.EP_NAME.getExtensionList().stream()
@@ -248,7 +249,39 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       .filter(library -> library.contains(file, false, true))
       .flatMap(library -> library.getSourceRoots().stream());
 
-    return Stream.concat(modelRoots, synthRoots);
+    return Stream.concat(Stream.concat(librarySourceRoots, sdkSourceRoots), synthRoots);
+  }
+
+  /// @return The effective roots of the given [LibraryRoot].
+  private static Stream<VirtualFile> getEffectiveRoots(LibraryRoot libraryRoot) {
+    VirtualFile rootFile = VirtualFileUrls.getVirtualFile(libraryRoot.getUrl());
+    if (rootFile == null) return Stream.empty();
+    LibraryRoot.InclusionOptions inclusionOptions = libraryRoot.getInclusionOptions();
+    if (inclusionOptions == LibraryRoot.InclusionOptions.ROOT_ITSELF) return Stream.of(rootFile);
+
+    JarFileSystem jarFs = JarFileSystem.getInstance();
+    if (inclusionOptions == LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT) {
+      return Arrays.stream(rootFile.getChildren())
+        .map(jarFs::getJarRootForLocalFile)
+        .filter(Objects::nonNull);
+    }
+
+    if (inclusionOptions == LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY) {
+      List<VirtualFile> files = new ArrayList<>();
+      VfsUtilCore.visitChildrenRecursively(rootFile, new VirtualFileVisitor<>() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          VirtualFile jarFile = jarFs.getJarRootForLocalFile(file);
+          if (jarFile != null) {
+            files.add(jarFile);
+            return false;
+          }
+          return true;
+        }
+      });
+      return files.stream();
+    }
+    return Stream.empty();
   }
 
   @Override

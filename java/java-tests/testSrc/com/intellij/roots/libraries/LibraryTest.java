@@ -18,11 +18,14 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.roots.ModuleRootManagerTestCase;
 import com.intellij.testFramework.IndexingTestUtil;
@@ -179,6 +182,51 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     aClass = JavaPsiFacade.getInstance(getProject()).findClass("l.InLib", GlobalSearchScope.allScope(getProject()));
     assertNull(aClass);
+  }
+
+  /// See IDEA-388158
+  public void testNavigationToSourceFromJarDirectory() {
+    VirtualFile libDir = createChildDirectory(getOrCreateProjectBaseDir(), "lib");
+    VirtualFile sourcesDir = createChildDirectory(libDir, "src");
+    VirtualFile originalLibJar = getVirtualFile(new File(PathManagerEx.getTestDataPath() + OrderEntryTest.BASE_PATH + "lib/lib.jar"));
+    VirtualFile libJar = copy(originalLibJar, libDir, originalLibJar.getName());
+
+    File sourceRoot = new File(PathManagerEx.getTestDataPath() + OrderEntryTest.BASE_PATH + "lib/src");
+    File sourceJarFile = IoTestUtil.createTestJar(new File(sourcesDir.getPath(), "lib-sources.jar"), sourceRoot);
+    VirtualFile sourceJar = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceJarFile);
+    assertNotNull(sourceJar);
+
+    LibraryTable table = getProjectLibraryTable();
+    Library library = WriteAction.compute(() -> table.createLibrary("lib"));
+    Library.ModifiableModel model = library.getModifiableModel();
+    model.addJarDirectory(libDir.getUrl(), false, OrderRootType.CLASSES);
+    model.addJarDirectory(sourcesDir.getUrl(), false, OrderRootType.SOURCES);
+    commit(model);
+
+    ModuleRootModificationUtil.updateModel(getModule(), m -> m.addLibraryEntry(library));
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+
+    assertSameElements(library.getUrls(OrderRootType.CLASSES), libDir.getUrl());
+    assertSameElements(library.getUrls(OrderRootType.SOURCES), sourcesDir.getUrl());
+
+    VirtualFile[] classRoots = library.getFiles(OrderRootType.CLASSES);
+    assertSize(1, classRoots);
+    assertEquals(libJar.getPath() + "!/", classRoots[0].getPath());
+
+    VirtualFile[] sourceRoots = library.getFiles(OrderRootType.SOURCES);
+    assertSize(1, sourceRoots);
+    assertEquals(sourceJar.getPath() + "!/", sourceRoots[0].getPath());
+    VirtualFile expectedSource = sourceRoots[0].findFileByRelativePath("l/InLib.java");
+    assertNotNull(expectedSource);
+
+    PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass("l.InLib", GlobalSearchScope.allScope(getProject()));
+    assertNotNull(aClass);
+    assertInstanceOf(aClass, PsiCompiledElement.class);
+
+    PsiElement navigationElement = aClass.getNavigationElement();
+    assertNotSame(aClass, navigationElement);
+    assertFalse(navigationElement instanceof PsiCompiledElement);
+    assertEquals(expectedSource, navigationElement.getContainingFile().getVirtualFile());
   }
 
   public void testRootsMustRebuildAfterDeleteAndRestoreJar() throws IOException {
