@@ -12,6 +12,7 @@ import com.intellij.ide.setToolTipText
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.PopupTitle
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
 import com.intellij.ui.DocumentAdapter
@@ -29,6 +30,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
+import org.jetbrains.annotations.Nls
 import kotlinx.coroutines.CoroutineScope
 import java.awt.BorderLayout
 import java.awt.Component
@@ -66,6 +68,17 @@ private const val GEAR_RIGHT_INSET = 10
 
 /** Downward nudge (unscaled px) from vertical center, so the gear's optical center lines up with the caption text. */
 private const val GEAR_VERTICAL_OFFSET = 1
+
+/** Gap (unscaled px) between a submenu and the left edge of the parent popup it is placed next to. */
+private const val SUBMENU_LEFT_GAP = 2
+
+/**
+ * Width (in columns) of the add-new name field. Together with the caption beside it, it sets that submenu's width; longer
+ * names scroll inside the field rather than widening the popup. This is the one number to turn if the step should be wider
+ * or narrower — but the popup shrinks by less than this does, since the caption's width is fixed and the version rows set
+ * a floor of their own.
+ */
+private const val NAME_FIELD_COLUMNS = 14
 
 /**
  * Sample string whose rendered width is reserved for the version column, so a resolved version fits without resize.
@@ -146,9 +159,10 @@ class EvoPopupListElementRenderer(private val popup: EvoTreePopup) : PopupListEl
       // The platform gives the arrow a wide emptyLeft(20) inset; tighten it so the icon sits right by the arrow.
       arrow.border = JBUI.Borders.emptyLeft(4)
     }
-    // The "Add New" row shows a "<" as its leading icon (see addNewElement) and opens its submenu to the left, so hide
-    // the platform's right-side next-step arrow for it.
-    if (element !is EvoTreeAddNewNode) buttonPane.add(arrow, gb.next().weightx(0.0))
+    // Every expandable row keeps the platform's standard ">" arrow, even though this popup's submenus always open to the
+    // LEFT (see EvoTreePopup.show) — the arrow reads as "has a submenu" rather than as a direction, and matching the
+    // platform look everywhere beats being literal about which side it appears on.
+    buttonPane.add(arrow, gb.next().weightx(0.0))
   }
 
   /**
@@ -201,6 +215,20 @@ open class EvoTreePopup private constructor(
     return super.createPopup(parent, step, parentValue)
   }
 
+  /**
+   * The platform shows every child popup at its parent's RIGHT edge, flipping to the left only when the screen leaves no
+   * room there. This widget sits in the status bar, so submenus always open to the LEFT instead (and their rows are marked
+   * with a "<"): flip the requested x here, before the popup is ever painted — [repositionLeftOfParent] alone would show
+   * it on the right for one frame. [owner] is the parent popup's content component (see `ListPopupImpl.showNextStepPopup`).
+   */
+  override fun show(owner: Component, aScreenX: Int, aScreenY: Int, considerForcedXY: Boolean) {
+    // The root popup is positioned by the widget, not relative to a parent popup — leave its x alone. `isShowing` also
+    // keeps `locationOnScreen` (which throws for a detached component) safe for any caller other than the platform's own.
+    val flip = parent != null && owner.isShowing
+    val x = if (flip) leftOfX(owner.locationOnScreen.x, preferredContentSize.width) else aScreenX
+    super.show(owner, x, aScreenY, considerForcedXY)
+  }
+
   // FINAL_CHOICE is null, and so is the "cannot expand" result of a not-ready/empty node. Hand off to the platform
   // (which expands a real step, or on FINAL_CHOICE closes the popup via disposePopup → getFinalRunnable + disposeAllParents)
   // only for a real step or an actually-chosen leaf; a not-ready node stays open instead of closing or logging a warning.
@@ -222,23 +250,24 @@ open class EvoTreePopup private constructor(
   override fun createContent(): JComponent {
     val content = super.createContent()
     val editable = evoStep?.editableName ?: return content
-    // Full-width, right-aligned name field with the pencil as its trailing extension (so the name sits close to it).
+    // Right-aligned name, so it sits next to the pencil at the header's right edge and away from the caption on the left.
     val field = ExtendableTextField(editable.value)
     field.isOpaque = false
     field.border = JBUI.Borders.empty(1, 8)   // a touch more compact than the platform default
     field.horizontalAlignment = SwingConstants.RIGHT
-    // Give the header a comfortable, consistent width (fits a ~22-char name; longer names scroll) so the popup size
-    // doesn't depend on how short the Python-version rows below happen to be.
-    field.columns = 22
+    field.columns = NAME_FIELD_COLUMNS
     val defaultForeground = field.foreground
     fun refreshValidity() {
-      // Blank or already-taken name → red name + a tooltip explaining why, and the version rows won't create it
-      // (addVersionAction). A tooltip (rather than an extra line) keeps the popup height stable.
-      field.foreground = if (editable.isValid) defaultForeground else NamedColorUtil.getErrorForeground()
-      val hint = when {
-        editable.value.isBlank() -> PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.hint.empty")
-        editable.value in editable.takenNames -> PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.hint.exists", editable.value)
-        else -> null
+      // An unusable name → red text + a tooltip saying why, and the version rows won't create it (addVersionAction).
+      // A tooltip (rather than an extra line) keeps the popup height stable. Both the colour and the message come off the
+      // same EvoEditableName.problem, so a row can never look creatable while the tooltip says otherwise.
+      val problem = editable.problem
+      field.foreground = if (problem == null) defaultForeground else NamedColorUtil.getErrorForeground()
+      val hint = when (problem) {
+        EvoEditableName.Problem.BLANK -> PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.hint.empty")
+        EvoEditableName.Problem.ILLEGAL -> PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.hint.invalid")
+        EvoEditableName.Problem.TAKEN -> PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.hint.exists", editable.value)
+        null -> null
       }
       field.setToolTipText(hint?.let { HtmlChunk.text(it) })
       list.repaint()   // re-render the version rows so they grey out / un-grey with the name's validity
@@ -252,8 +281,9 @@ open class EvoTreePopup private constructor(
     refreshValidity()
     fun setEditing(on: Boolean) {
       if (field.isEditable == on) return
-      field.isEditable = on              // read-only reads as plain text; editable shows a normal field
-      field.isOpaque = on
+      // Editability is the only thing that changes: the field stays non-opaque either way, so it never paints a text-field
+      // background over the header band. Edit mode is visible from the caret and the selection, not from a second shade.
+      field.isEditable = on
       editable.editing = on
       if (on) {
         field.requestFocusInWindow()
@@ -282,8 +312,11 @@ open class EvoTreePopup private constructor(
     field.addFocusListener(object : FocusAdapter() {
       override fun focusLost(e: FocusEvent) = setEditing(false)
     })
-    // A muted caption on the left balances the right-aligned name and says what the field is.
-    val caption = JBLabel(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.name.caption")).apply {
+    // A muted caption at the left edge, balancing the right-aligned name: one header line, the caption naming the step and
+    // the name showing what will be created. Title case on purpose — it titles this whole "create an environment" step,
+    // which after the lone-add-new collapse (see EvoPySdkSwitchPopupFactory) can be all a tool's node shows.
+    @Suppress("DialogTitleCapitalization")
+    val caption = JBLabel(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.env.title")).apply {
       foreground = NamedColorUtil.getInactiveTextColor()
       border = JBUI.Borders.emptyLeft(8)
     }
@@ -293,6 +326,9 @@ open class EvoTreePopup private constructor(
       add(field, BorderLayout.CENTER)
     }
     return JPanel(BorderLayout()).apply {
+      // This wrapper is what shows through behind the header (both the header panel and the field are non-opaque), so it
+      // has to carry the popup's own background — a default JPanel one paints that band a different shade than the rows.
+      background = JBUI.CurrentTheme.Popup.BACKGROUND
       add(header, BorderLayout.NORTH)
       add(content, BorderLayout.CENTER)
     }
@@ -346,30 +382,41 @@ open class EvoTreePopup private constructor(
       }
     })
 
-    // Over the gear: show its tooltip and a hand cursor. The popup wires no per-row tooltips and uses the default
-    // cursor for rows, so toggling both on the list is safe. A boolean guards against redundant per-move updates.
+    // Two hover targets live in the list's own tooltip: the gear's help text, and the full folder path behind an elided
+    // section header. They share one listener because each would otherwise clear the other's tooltip on the next move.
+    // The remembered values guard against redundant per-move updates.
     list.addMouseMotionListener(object : MouseMotionAdapter() {
       private var overGear = false
+      private var shownTooltip: @Nls String? = null
       override fun mouseMoved(e: MouseEvent) {
         val hit = settingsGearAt(e.point)
-        if (hit == overGear) return
-        overGear = hit
-        list.setToolTipText(if (hit) HtmlChunk.text(gearTooltip) else null)
-        list.cursor = if (hit) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
+        if (hit != overGear) {
+          overGear = hit
+          list.cursor = if (hit) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
+        }
+        val tooltip = if (hit) gearTooltip else separatorTooltipAt(e.point)
+        if (tooltip != shownTooltip) {
+          shownTooltip = tooltip
+          list.setToolTipText(tooltip?.let { HtmlChunk.text(it) })
+        }
       }
     })
 
-    // This popup is the "add new environment" node's submenu → move it to the LEFT of its parent (platform opens right).
-    if (evoStep?.isAddNewSubmenu == true) repositionLeftOfParent()
+    // [show] already placed this submenu to the left using its *preferred* width; correct it now that the laid-out width
+    // is known, and clamp it into the screen (a submenu wider than the space on the left would otherwise hang off it).
+    repositionLeftOfParent()
   }
 
-  /** Moves this submenu to the LEFT of its parent popup (the platform opens child popups on the right). */
+  /** Screen x for a submenu [width] px wide that sits entirely left of a parent whose own left edge is [ownerX]. */
+  private fun leftOfX(ownerX: Int, width: Int): Int = ownerX - width - JBUI.scale(SUBMENU_LEFT_GAP)
+
+  /** Keeps this submenu to the LEFT of its parent popup, using its real (laid-out) width. */
   private fun repositionLeftOfParent() {
     val parentPopup = parent ?: return
     val self = content
     val parentContent = parentPopup.content
     if (!self.isShowing || !parentContent.isShowing) return
-    val target = Rectangle(parentContent.locationOnScreen.x - self.width - JBUI.scale(2), self.locationOnScreen.y, self.width, self.height)
+    val target = Rectangle(leftOfX(parentContent.locationOnScreen.x, self.width), self.locationOnScreen.y, self.width, self.height)
     ScreenUtil.moveToFit(target, ScreenUtil.getScreenRectangle(parentContent.locationOnScreen), null)
     setLocation(target.location)
   }
@@ -411,6 +458,34 @@ open class EvoTreePopup private constructor(
     if (c is JLabel && c.icon === AllIcons.Actions.Refresh) return c
     if (c is Container) c.components.forEach { child -> findRefreshLabel(child)?.let { return it } }
     return null
+  }
+
+  /**
+   * The full folder path to show while [point] is over a section header whose label was elided, or null anywhere else. A
+   * header is painted inside the top cell of its section, so this only answers within that separator's own strip — over
+   * the row underneath it, the row's own tooltip (if any) applies instead.
+   */
+  private fun separatorTooltipAt(point: Point): @NlsSafe String? {
+    val model = list.model ?: return null
+    val row = list.locationToIndex(point)
+    if (row < 0 || row >= model.size) return null
+    val item = model.getElementAt(row) as? EvoTreeItem ?: return null
+    val tooltip = item.separatorTooltip ?: return null
+    return if (separatorBounds(row, item)?.contains(point) == true) tooltip else null
+  }
+
+  /** Bounds (in list coordinates) of the section header painted at the top of [row]'s cell, or null when it has none. */
+  private fun separatorBounds(row: Int, item: EvoTreeItem): Rectangle? {
+    val cell = list.getCellBounds(row, row) ?: return null
+    @Suppress("UNCHECKED_CAST")
+    val jList = list as JList<Any?>
+    val renderer = jList.cellRenderer ?: return null
+    val comp = renderer.getListCellRendererComponent(jList, item, row, false, false) as? JComponent ?: return null
+    comp.setBounds(0, 0, cell.width, cell.height)
+    layoutRecursively(comp)
+    val separator = findGearSeparator(comp) ?: return null
+    val topLeft = SwingUtilities.convertPoint(separator, 0, 0, comp)
+    return Rectangle(cell.x + topLeft.x, cell.y + topLeft.y, separator.width, separator.height)
   }
 
   /** True if [point] hits the settings gear painted on the "Select Environment" separator (in that section's top cell). */

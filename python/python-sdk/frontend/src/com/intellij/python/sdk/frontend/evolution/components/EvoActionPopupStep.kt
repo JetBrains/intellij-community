@@ -49,11 +49,8 @@ open class EvoActionPopupStep(
   /** The chosen leaf's action, queued to run once the popup has closed (see [getFinalRunnable]); null for a node. */
   private var finalRunnable: Runnable? = null
 
-  /** True when this step renders the "add new environment" node's submenu — the popup positions it to the left. */
-  val isAddNewSubmenu: Boolean get() = node is EvoTreeAddNewNode
-
-  /** The editable env-name holder for an add-new submenu, or null when the name is fixed — see [EvoTreeAddNewNode]. */
-  val editableName: EvoEditableName? get() = (node as? EvoTreeAddNewNode)?.editableName
+  /** The editable env-name holder for an add-new submenu, or null when the name is fixed — see [EvoTreeNodeElement]. */
+  val editableName: EvoEditableName? get() = node.editableName
 
   override fun onChosen(
     selectedValue: EvoTreeItem,
@@ -98,7 +95,10 @@ open class EvoActionPopupStep(
 
   override fun getValues(): List<EvoTreeItem> =
     node.sections.flatMap { section ->
-      section.elements.mapIndexed { index, element -> EvoTreeItem(element, section.label?.takeIf { index == 0 }) }
+      // A section's header is painted into its first row's cell, so only that row carries the separator and its tooltip.
+      section.elements.mapIndexed { index, element ->
+        EvoTreeItem(element, section.label?.takeIf { index == 0 }, section.labelTooltip?.takeIf { index == 0 })
+      }
     }
 
   // set to true if we need actions '...' on disabled items too

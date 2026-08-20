@@ -26,6 +26,7 @@ import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.getHatchService
 import com.intellij.python.hatch.resolveHatchWorkingDirectory
 import com.intellij.python.pytools.resolveExecutable
+import com.intellij.python.sdk.backend.evolution.NO_VERSION
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.defaultVenvDir
 import com.intellij.python.sdk.backend.evolution.discoverVenvs
@@ -609,14 +610,16 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
 
   /**
    * For the Hatch node, turns each not-yet-created declared env (a `CreateEnv` leaf) into a Python-version picker so the
-   * user chooses the base Python instead of always getting the latest. Other nodes are returned unchanged.
+   * user chooses the base Python instead of always getting the latest. Such a row has no interpreter to probe, so it also
+   * gets an explicit "n/a" version — the frontend renders it in the version column the materialized envs fill, so the two
+   * kinds of row are distinguishable at a glance. Other nodes are returned unchanged.
    */
   private suspend fun withHatchVersionPickers(result: EvoLoadResultDto, nodeId: String, pyProject: PyProject): EvoLoadResultDto {
     if (nodeId != "Hatch" || result !is EvoLoadResultDto.Ok) return result
     val options = addNewVersionOptions(nodeId, pyProject).takeIf { it.isNotEmpty() } ?: return result
     return result.copy(sections = result.sections.map { section ->
       section.copy(leaves = section.leaves.map { leaf ->
-        if (leaf.ref is PyInterpreterRef.CreateEnv) leaf.copy(createVersions = options) else leaf
+        if (leaf.ref is PyInterpreterRef.CreateEnv) leaf.copy(createVersions = options, secondaryText = leaf.secondaryText ?: NO_VERSION) else leaf
       })
     })
   }

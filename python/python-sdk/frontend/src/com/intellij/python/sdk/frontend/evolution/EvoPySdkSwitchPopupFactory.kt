@@ -91,6 +91,9 @@ internal class EvoPySdkSwitchPopupFactory(
         text = title,
         icon = icon.icon(),
         versions = versions.map { EvoTreeLeafElement(addVersionAction(nodeId, it, createToken)) },
+        // There is no interpreter to probe yet, so the row carries the backend's "n/a" in the same column where the
+        // already-materialized envs show their resolved version.
+        secondaryText = secondaryText,
       )
     }
     return when (kind) {
@@ -108,7 +111,12 @@ internal class EvoPySdkSwitchPopupFactory(
       val takenNames = sections.flatMap { it.leaves }.mapTo(mutableSetOf()) { it.title }
       sections.map { section ->
         val leaves = section.leaves.map { it.toElement(nodeId, traceId) }
-        EvoTreeSection(label = section.label?.let { ListSeparator(it) }, elements = leaves + listOfNotNull(addNewElement(section, nodeId, takenNames)))
+        EvoTreeSection(
+          label = section.label?.let { ListSeparator(it) },
+          elements = leaves + listOfNotNull(addNewElement(section, nodeId, takenNames)),
+          // Only worth a tooltip when the header was actually shortened — otherwise it would just repeat what is on screen.
+          labelTooltip = section.labelTooltip?.takeIf { it != section.label },
+        )
       }
     }
     is EvoLoadResultDto.Warning -> throw EvoWarningException(message)
@@ -116,9 +124,10 @@ internal class EvoPySdkSwitchPopupFactory(
   }
 
   /**
-   * The section's trailing "add new environment" element: for uv/pip (version options present) an expandable node
-   * showing the auto-generated (non-editable) env folder name; its submenu lists the Python versions and is
-   * repositioned to the left (see EvoTreePopup). Otherwise the classic modal "Add new environment" row; or null.
+   * The section's trailing "add new environment" element: for uv/pip (version options present) an expandable node whose
+   * submenu lists the Python versions above the pre-filled env name. When it ends up being a node's only row, the row
+   * itself is dropped and its submenu becomes the node's ([withoutLoneAddNewStep]); or null when the tool offers no
+   * in-widget creation at all.
    */
   private fun addNewElement(section: EvoSectionDto, nodeId: String, takenNames: Set<String>): EvoTreeElement? {
     val addNewEnv = section.addNewEnv
@@ -131,9 +140,8 @@ internal class EvoPySdkSwitchPopupFactory(
         // Taken names combine the visible env rows (conda's named envs) with the backend's full directory listing (uv/pip).
         val editable = if (addNewEnv.nameEditable) EvoEditableName(addNewEnv.name, takenNames + addNewEnv.takenNames) else null
         EvoTreeAddNewNode(
-          // The submenu opens to the left, so the row leads with a "<" (in place of the usual "+") and shows no right arrow.
           text = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.title"),
-          icon = AllIcons.General.ChevronLeft,
+          icon = AllIcons.General.Add,
           versions = addNewEnv.options.map { EvoTreeLeafElement(addVersionAction(nodeId, it, addNewEnv.path, editable, addNewEnv.name)) },
           editableName = editable,
         )
@@ -165,6 +173,18 @@ internal class EvoPySdkSwitchPopupFactory(
     if (option.token.isBlank()) PySdkFrontendBundle.message("evolution.action.add.env.child.default")
     else PySdkFrontendBundle.message("evolution.action.add.env.child.version", option.title)
 
+  /**
+   * Drops the intermediate one-row popup from a tool whose entire node is a single "add new environment" row (a tool with
+   * no environments yet): with nothing to choose between, that step is pure friction, so expanding the tool lands straight
+   * on the name field + Python versions. The row's name holder is carried over, since the popup renders the field — and
+   * the caption above it, the only thing left saying what the step does — from the node it is showing. A node with any
+   * environment of its own keeps its normal listing.
+   */
+  private fun EvoLoadedNode.withoutLoneAddNewStep(): EvoLoadedNode {
+    val onlyRow = sections.singleOrNull()?.elements?.singleOrNull() as? EvoTreeAddNewNode ?: return this
+    return EvoLoadedNode(onlyRow.sections.toList(), refreshable, onlyRow.editableName)
+  }
+
   /** A single "Associated environments" node holding the interpreters the classic widget lists, shown inside the tool list. */
   private fun associatedInterpretersNode(traceId: String): EvoTreeStaticNodeElement =
     EvoTreeStaticNodeElement(
@@ -194,7 +214,7 @@ internal class EvoPySdkSwitchPopupFactory(
         add(EvoTreeLazyNodeElement(node.label, node.icon.icon()) { force ->
           val result = requestEvoNode(projectId, moduleName, node.id, traceId, force)
           val refreshable = (result as? EvoLoadResultDto.Ok)?.refreshable == true
-          EvoLoadedNode(result.toSections(node.id, traceId), refreshable)
+          EvoLoadedNode(result.toSections(node.id, traceId), refreshable).withoutLoneAddNewStep()
         })
       }
       if (associated.isNotEmpty() && nodes.none { it.id == ADVANCED_NODE_ID }) add(associatedInterpretersNode(traceId))

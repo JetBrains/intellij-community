@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsActions.ActionDescription
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.PathUtil
 import org.jetbrains.annotations.Nls
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -27,7 +28,12 @@ internal class EvoErrorException(message: String) : EvoLoadException(message)
 
 enum class State { CREATED, LOADING, DONE, ERROR, NOT_AVAILABLE }
 
-data class EvoTreeSection(val label: ListSeparator? = null, val elements: List<EvoTreeElement>) {
+/** [labelTooltip] is the full text behind an elided [label] (a section's folder path), shown when the header is hovered. */
+data class EvoTreeSection(
+  val label: ListSeparator? = null,
+  val elements: List<EvoTreeElement>,
+  val labelTooltip: @NlsSafe String? = null,
+) {
   constructor(label: ListSeparator? = null, vararg elements: EvoTreeElement) : this(label = label, elements = elements.toList())
 }
 
@@ -52,10 +58,13 @@ class EvoTreeLeafElement(val action: AnAction) : EvoTreeElement(action.templateP
 
 /**
  * Mutable holder for the edited env name, shared between the add-new submenu's name field and its version actions.
- * [takenNames] are the names already in use in this tool node (existing envs); a value matching one — or blank — is
- * [isValid]`= false`, which the field shows in red and the version rows refuse to create.
+ * [takenNames] are the names already in use in this tool node (existing envs). While the name has a [problem] the field
+ * shows it in red with an explaining tooltip and the version rows refuse to create anything.
  */
 class EvoEditableName(@Volatile @NlsSafe var value: String, val takenNames: Set<String> = emptySet()) {
+  /** Why a name cannot back a new environment. One enum, so the field's hint and [isValid] can never disagree. */
+  enum class Problem { BLANK, ILLEGAL, TAKEN }
+
   /** True while the name field is in edit mode, so the popup treats Enter as "finish editing" instead of "create env". */
   @Volatile
   var editing: Boolean = false
@@ -63,8 +72,22 @@ class EvoEditableName(@Volatile @NlsSafe var value: String, val takenNames: Set<
   /** Set by the name field: switches it back to read-only text (invoked by the popup when Enter is pressed while editing). */
   var finishEditing: (() -> Unit)? = null
 
-  /** The current name can back a new environment: non-blank and not already taken. */
-  val isValid: Boolean get() = value.isNotBlank() && value !in takenNames
+  /**
+   * What disqualifies the current name, or null when it is usable. [Problem.ILLEGAL] defers to the platform's own rule set
+   * (`PathUtilRt`): no path separators, no `.`/`..` traversal, no control or Windows-invalid characters, no reserved device
+   * name. That is what keeps the name a single path segment, so the environment always lands directly inside the parent
+   * folder the tool picked and the name can never steer it elsewhere.
+   */
+  val problem: Problem?
+    get() = when {
+      value.isBlank() -> Problem.BLANK
+      !PathUtil.isValidFileName(value) -> Problem.ILLEGAL
+      value in takenNames -> Problem.TAKEN
+      else -> null
+    }
+
+  /** The current name can back a new environment. */
+  val isValid: Boolean get() = problem == null
 }
 
 /**
@@ -72,15 +95,20 @@ class EvoEditableName(@Volatile @NlsSafe var value: String, val takenNames: Set<
  * handles mouse and keyboard natively. It is marked so [EvoTreePopup] can reposition its submenu to the *left* of the
  * parent (the platform opens submenus to the right). The row shows the pre-filled env name. When [editableName] is set,
  * the submenu also shows a name field on top (and turns off speed search) so the user can rename before creating.
+ * [secondaryText] fills the row's version column (an env that doesn't exist yet has no version, so "n/a"), keeping it
+ * aligned with the sibling rows that do show one.
  */
 class EvoTreeAddNewNode(
   text: @Nls String,
   icon: Icon,
   versions: List<EvoTreeLeafElement>,
-  val editableName: EvoEditableName? = null,
+  editableName: EvoEditableName? = null,
+  secondaryText: @Nls String? = null,
 ) : EvoTreeNodeElement(text, icon) {
   init {
     sections.add(EvoTreeSection(elements = versions))
+    this.editableName = editableName
+    secondaryText?.let { presentation.putClientProperty(ActionUtil.SECONDARY_TEXT, it) }
   }
 }
 
@@ -98,6 +126,13 @@ sealed class EvoTreeNodeElement(
   icon: Icon,
 ) : EvoTreeElement(Presentation(text)) {
   val sections = mutableListOf<EvoTreeSection>()
+
+  /**
+   * The env-name field this node's submenu shows above its rows, or null when it has none. Set by [EvoTreeAddNewNode],
+   * and inherited by a tool node that absorbed a lone "add new" child (see [EvoLoadedNode]) — the popup renders the
+   * field from whichever node it is showing, so the holder has to travel with the sections.
+   */
+  var editableName: EvoEditableName? = null
 
   init {
     presentation.icon = icon
@@ -117,8 +152,12 @@ class EvoTreeStaticNodeElement(
   }
 }
 
-/** Result of a lazy node's [EvoTreeLazyNodeElement.loader]: its sections plus whether the backend measured it slow. */
-class EvoLoadedNode(val sections: List<EvoTreeSection>, val refreshable: Boolean)
+/**
+ * Result of a lazy node's [EvoTreeLazyNodeElement.loader]: its sections, whether the backend measured it slow, and the
+ * name field its submenu should show — the last one set only when the loader collapsed a lone "add new" row into these
+ * sections, so that step keeps the field (and its caption) the absorbed row would have shown.
+ */
+class EvoLoadedNode(val sections: List<EvoTreeSection>, val refreshable: Boolean, val editableName: EvoEditableName? = null)
 
 class EvoTreeLazyNodeElement(
   text: String,
@@ -167,6 +206,7 @@ class EvoTreeLazyNodeElement(
           }
           withContext(Dispatchers.EDT) {
             refreshable = loaded.refreshable
+            editableName = loaded.editableName
             // Swap in the new data only once it's ready, so an open submenu never flashes empty during a reload.
             sections.clear()
             sections.addAll(loaded.sections)

@@ -1,6 +1,5 @@
 package com.jetbrains.python.poetry.sdk.evolution
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
@@ -12,7 +11,9 @@ import com.intellij.python.sdk.backend.evolution.defaultVenvDir
 import com.intellij.python.sdk.backend.evolution.evoCreateEnvLeaf
 import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
 import com.intellij.python.sdk.backend.evolution.resolvePythonExecutable
+import com.intellij.python.sdk.backend.evolution.toDisplayPath
 import com.intellij.python.sdk.backend.evolution.toLeaf
+import com.intellij.python.sdk.backend.evolution.toSectionLabel
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.jetbrains.python.sdk.impl.PySdkBundle
@@ -72,13 +73,22 @@ internal class PoetryEvoEnvironmentProvider : PyEvoEnvironmentProvider {
       .sortedByDescending { it.pythonInfo.languageLevel }
     val perVersionLeaves = systemPythons.map { sysPython ->
       val versionStr = sysPython.pythonInfo.languageLevel.toPythonVersion()
+      // These rows are identified by the Python they hold rather than by an env name, so spell that out the way the
+      // add-new version rows do ("Python 3.13") instead of showing a bare number. Only the label changes: the lookup
+      // below still matches on the plain version, which is what poetry puts at the end of the cache env's folder name.
+      val title = PySdkBundle.message("evolution.python.version", versionStr)
       val existingBinary = poetryEnvRoots.firstOrNull { it.name.endsWith(versionStr) }?.resolvePythonExecutable()
-      if (existingBinary != null) evoEnvLeaf(title = versionStr, pythonBinary = existingBinary, icon = icon)
-      else evoCreateEnvLeaf(title = versionStr, token = sysPython.pythonBinary.pathString, icon = icon)
+      if (existingBinary != null) evoEnvLeaf(title = title, pythonBinary = existingBinary, icon = icon)
+      else evoCreateEnvLeaf(title = title, token = sysPython.pythonBinary.pathString, icon = icon)
     }
-    val virtualenvsPath = runPoetry(projectDir, "config", "virtualenvs.path").getOrNull()?.trim()?.takeIf { it.isNotBlank() }
-      ?.let { FileUtil.getLocationRelativeToUserHome(it, false) }
-    val cacheSection = if (perVersionLeaves.isEmpty()) null else EvoSectionDto(label = virtualenvsPath, leaves = perVersionLeaves)
+    val virtualenvsDir = runPoetry(projectDir, "config", "virtualenvs.path").getOrNull()?.trim()?.takeIf { it.isNotBlank() }
+      ?.let { Path.of(it) }
+    val cacheSection = if (perVersionLeaves.isEmpty()) null
+    else EvoSectionDto(
+      label = virtualenvsDir?.toSectionLabel(),
+      labelTooltip = virtualenvsDir?.toDisplayPath(),
+      leaves = perVersionLeaves,
+    )
 
     return EvoLoadResultDto.Ok(listOf(inProjectSection) + listOfNotNull(cacheSection))
   }

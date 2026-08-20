@@ -267,6 +267,12 @@ enum class EvoLeafKind {
 @Serializable
 data class EvoSectionDto(
   val label: @Nls String? = null,
+  /**
+   * The un-elided form of [label], shown as its tooltip. Section labels are folder paths shortened to a fixed budget
+   * (`toSectionLabel`), so for a deeply nested folder the visible header is lossy and this is the only way back to the
+   * real path. Null when there is nothing more to show than the label itself.
+   */
+  val labelTooltip: @NlsSafe String? = null,
   val leaves: List<EvoLeafDto>,
   /** When true, the frontend appends its localized "Add new environment" row (opens the modal Add dialog). */
   val addNew: Boolean = false,

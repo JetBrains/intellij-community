@@ -18,6 +18,7 @@ import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.sdk.impl.shortenPath
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.sdk.add.v2.FileSystem
@@ -202,6 +203,24 @@ private fun Map<String, String>.pyvenvVersion(): String? =
 @ApiStatus.Internal
 fun Path.toDisplayPath(): @NlsSafe String = FileUtil.getLocationRelativeToUserHome(pathString, false)
 
+/**
+ * Max length (chars) of a section-header path before its middle is elided. Same budget as an SDK's `shortName`, which is
+ * the other place a path has to label something without dictating how wide it gets.
+ */
+private const val SECTION_LABEL_MAX_CHARS = 50
+
+/**
+ * Header form of a path: home-relative like [toDisplayPath], then middle-elided past [SECTION_LABEL_MAX_CHARS] by the same
+ * shortener a long SDK name goes through (`~/.cache/intellij-python-test-env/conda/Min…/envs/child`). Only headers get this
+ * — a row's description keeps the full [toDisplayPath], since a tooltip costs no layout width.
+ */
+@ApiStatus.Internal
+fun Path.toSectionLabel(): @NlsSafe String = shortenPath(toDisplayPath(), SECTION_LABEL_MAX_CHARS, keepPrefix = true)
+
+/** Version-column placeholder for a row that has no interpreter to report a version for (env not created / unreadable). */
+@ApiStatus.Internal
+const val NO_VERSION: @NlsSafe String = "n/a"
+
 /** Builds a SELECT_ENV leaf for a discovered venv; the version comes from `pyvenv.cfg` (or "n/a"). */
 @ApiStatus.Internal
 fun DiscoveredVenv.toLeaf(icon: Icon): EvoLeafDto {
@@ -209,7 +228,7 @@ fun DiscoveredVenv.toLeaf(icon: Icon): EvoLeafDto {
   return EvoLeafDto(
     title = name,
     description = pythonBinary.toDisplayPath(),
-    secondaryText = version ?: "n/a",
+    secondaryText = version ?: NO_VERSION,
     icon = icon.rpcId(),
     kind = EvoLeafKind.SELECT_ENV,
     ref = PyInterpreterRef.DetectedPath(pythonBinary.pathString),
@@ -228,7 +247,8 @@ fun List<DiscoveredVenv>.toSectionsGroupedByParent(icon: Icon, addNew: Boolean, 
   }
   return groupBy { it.venvRoot?.parent }.map { (containingFolder, venvs) ->
     EvoSectionDto(
-      label = containingFolder?.toDisplayPath(),
+      label = containingFolder?.toSectionLabel(),
+      labelTooltip = containingFolder?.toDisplayPath(),
       leaves = venvs.map { it.toLeaf(icon) },
       addNew = addNew,
       addNewFolderPath = (containingFolder ?: baseDir).pathString,
@@ -263,7 +283,7 @@ fun evoCreateEnvLeaf(title: @Nls String, token: String, icon: Icon): EvoLeafDto 
 @ApiStatus.Internal
 fun evoEnvLeaf(title: @Nls String, pythonBinary: Path?, icon: Icon, version: @NlsSafe String? = null): EvoLeafDto {
   if (pythonBinary == null) {
-    return evoActionLeaf(title = title, description = null, secondaryText = version ?: "n/a", icon = icon)
+    return evoActionLeaf(title = title, description = null, secondaryText = version ?: NO_VERSION, icon = icon)
   }
   return EvoLeafDto(
     title = title,
