@@ -73,7 +73,7 @@ class PMarkerRootImpl private constructor(
 
     val newRoot = insertAvl(editor, rootId, markerId)
     editor.setParent(newRoot, NULL_NODE)
-    return PMarkerRootImpl(newRoot, editor.states)
+    return PMarkerRootImpl(newRoot, editor.build())
   }
 
   override fun updateFlavor(markerId: Long, flavorFlags: Byte): PMarkerRoot {
@@ -91,7 +91,7 @@ class PMarkerRootImpl private constructor(
       }
       currentId = node.parentId
     }
-    return PMarkerRootImpl(rootId, editor.states)
+    return PMarkerRootImpl(rootId, editor.build())
   }
 
   override fun updateSpec(markerId: Long, spec: MarkerSpec): PMarkerRoot {
@@ -128,7 +128,7 @@ class PMarkerRootImpl private constructor(
         val newRoot = removeByKey(editor, rootId, key)
         editor.putAbsent(markerId, startOffset, endOffset, state.entry.markerReference)
         editor.setParent(newRoot, NULL_NODE)
-        PMarkerRootImpl(newRoot, editor.states)
+        PMarkerRootImpl(newRoot, editor.build())
       }
     }
   }
@@ -143,7 +143,7 @@ class PMarkerRootImpl private constructor(
         val newRoot = removeByKey(editor, rootId, PositionKey(startOffset, markerId))
         editor.remove(markerId)
         editor.setParent(newRoot, NULL_NODE)
-        PMarkerRootImpl(newRoot, editor.states)
+        PMarkerRootImpl(newRoot, editor.build())
       }
     }
   }
@@ -193,7 +193,7 @@ class PMarkerRootImpl private constructor(
       newRoot = retargetContainedMarkers(editor, newRoot, moveStart, moveEnd, editStart - moveStart)
     }
     editor.setParent(newRoot, NULL_NODE)
-    return PMarkerRootImpl(newRoot, editor.states)
+    return PMarkerRootImpl(newRoot, editor.build())
   }
 
   /**
@@ -339,16 +339,18 @@ class PMarkerRootImpl private constructor(
 
   private data class ExtractMinimumResult(val rootId: Long, val minimumId: Long)
 
-  private class Editor(var states: PersistentLongMap<StoredNode>) {
-    fun valid(markerId: Long): ValidNode = states[markerId] as? ValidNode
+  private class Editor(states: PersistentLongMap<StoredNode>) {
+    private val builder = states.builder()
+
+    fun valid(markerId: Long): ValidNode = builder[markerId] as? ValidNode
                                            ?: throw IllegalStateException("Marker $markerId is not a valid tree node")
 
     fun putValid(markerId: Long, node: ValidNode) {
-      states = states.put(markerId, node)
+      builder.put(markerId, node)
     }
 
     fun putInvalid(entry: MarkerEntry, reason: String) {
-      states = states.put(
+      builder.put(
         entry.markerId,
         InvalidNode(reason, entry.startOffset, entry.endOffset, entry.markerReference)
       )
@@ -360,11 +362,11 @@ class PMarkerRootImpl private constructor(
       endOffset: Int,
       markerReference: WeakReference<SnapshotRangeMarkerImpl>?,
     ) {
-      states = states.put(markerId, AbsentNode(startOffset, endOffset, markerReference))
+      builder.put(markerId, AbsentNode(startOffset, endOffset, markerReference))
     }
 
     fun remove(markerId: Long) {
-      states = states.remove(markerId)
+      builder.remove(markerId)
     }
 
     fun setParent(markerId: Long, parentId: Long) {
@@ -372,6 +374,8 @@ class PMarkerRootImpl private constructor(
       val node = valid(markerId)
       if (node.parentId != parentId) putValid(markerId, node.copy(parentId = parentId))
     }
+
+    fun build(): PersistentLongMap<StoredNode> = builder.build()
   }
 
   companion object {
@@ -380,7 +384,7 @@ class PMarkerRootImpl private constructor(
 
     private val ENTRY_COMPARATOR = Comparator<MarkerEntry> { first, second -> PositionKey(first).compareTo(PositionKey(second)) }
     private const val NULL_NODE: Long = 0
-    private val EMPTY = PMarkerRootImpl(NULL_NODE, PersistentLongMap.empty(PersistentLongMapImplementation.VECTOR_64))
+    private val EMPTY = PMarkerRootImpl(NULL_NODE, PersistentLongMap.empty(PersistentLongMapImplementation.PAGED_VECTOR_256))
 
 
     fun empty(): PMarkerRootImpl = EMPTY

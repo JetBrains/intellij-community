@@ -17,6 +17,8 @@ internal interface PersistentLongMap<V : Any> {
 
   fun remove(key: Long): PersistentLongMap<V>
 
+  fun builder(): PersistentLongMapBuilder<V> = CopyingPersistentLongMapBuilder(this)
+
   companion object {
     private val EMPTY_MAP_16 = PersistentLongMap16<Any>()
     private val EMPTY_VECTOR_32 = PersistentVector32<Any>()
@@ -32,6 +34,53 @@ internal interface PersistentLongMap<V : Any> {
       PersistentLongMapImplementation.PAGED_VECTOR_128 -> EMPTY_PAGED_VECTOR_128
       PersistentLongMapImplementation.PAGED_VECTOR_256 -> EMPTY_PAGED_VECTOR_256
     } as PersistentLongMap<V>
+  }
+}
+
+/**
+ * Single-use mutable view used to batch changes before publishing one new [PersistentLongMap] version.
+ *
+ * A builder must not be accessed after [build]. Implementations may therefore retain builder-owned mutable nodes in
+ * the resulting map without compromising persistence.
+ */
+internal interface PersistentLongMapBuilder<V : Any> {
+  operator fun get(key: Long): V?
+
+  fun put(key: Long, value: V)
+
+  fun remove(key: Long)
+
+  fun build(): PersistentLongMap<V>
+}
+
+private class CopyingPersistentLongMapBuilder<V : Any>(
+  private var map: PersistentLongMap<V>,
+) : PersistentLongMapBuilder<V> {
+  private var active = true
+
+  override fun get(key: Long): V? {
+    checkActive()
+    return map[key]
+  }
+
+  override fun put(key: Long, value: V) {
+    checkActive()
+    map = map.put(key, value)
+  }
+
+  override fun remove(key: Long) {
+    checkActive()
+    map = map.remove(key)
+  }
+
+  override fun build(): PersistentLongMap<V> {
+    checkActive()
+    active = false
+    return map
+  }
+
+  private fun checkActive() {
+    check(active) { "PersistentLongMapBuilder has already been built" }
   }
 }
 
@@ -85,9 +134,94 @@ internal class PersistentLongMap16<V : Any> private constructor(private val root
     return if (!result.removed) this else PersistentLongMap16(result.branch)
   }
 
-  private class Branch(val children: Array<Any?>)
+  override fun builder(): PersistentLongMapBuilder<V> = Builder(this)
+
+  private class Branch(val children: Array<Any?>, val owner: Any? = null)
 
   private data class Removal(val branch: Branch?, val removed: Boolean)
+
+  private class Builder<V : Any>(private val source: PersistentLongMap16<V>) : PersistentLongMapBuilder<V> {
+    private val owner = Any()
+    private var root = source.root
+    private var dirty = false
+    private var active = true
+
+    override fun get(key: Long): V? {
+      checkActive()
+      requireNonNegativeKey(key)
+      var branch = root ?: return null
+
+      for (depth in 0 until LEVELS) {
+        val child = branch.children[index(key, depth)] ?: return null
+        if (depth == LEVELS - 1) {
+          @Suppress("UNCHECKED_CAST")
+          return child as V
+        }
+        branch = child as Branch
+      }
+      return null
+    }
+
+    override fun put(key: Long, value: V) {
+      checkActive()
+      requireNonNegativeKey(key)
+      root = put(root, key, value, 0)
+      dirty = true
+    }
+
+    override fun remove(key: Long) {
+      checkActive()
+      requireNonNegativeKey(key)
+      val result = remove(root, key, 0)
+      if (!result.removed) return
+      root = result.branch
+      dirty = true
+    }
+
+    override fun build(): PersistentLongMap<V> {
+      checkActive()
+      active = false
+      return if (dirty) PersistentLongMap16(root) else source
+    }
+
+    private fun put(branch: Branch?, key: Long, value: V, depth: Int): Branch {
+      val editable = editable(branch)
+      val index = index(key, depth)
+      editable.children[index] = if (depth == LEVELS - 1) {
+        value
+      }
+      else {
+        put(editable.children[index] as? Branch, key, value, depth + 1)
+      }
+      return editable
+    }
+
+    private fun remove(branch: Branch?, key: Long, depth: Int): Removal {
+      branch ?: return Removal(null, false)
+      val index = index(key, depth)
+      val child = branch.children[index] ?: return Removal(branch, false)
+      val editable = editable(branch)
+
+      if (depth == LEVELS - 1) {
+        editable.children[index] = null
+      }
+      else {
+        val result = remove(child as Branch, key, depth + 1)
+        if (!result.removed) return Removal(branch, false)
+        editable.children[index] = result.branch
+      }
+      return Removal(if (isEmpty(editable.children)) null else editable, true)
+    }
+
+    private fun editable(branch: Branch?): Branch {
+      if (branch?.owner === owner) return branch
+      return Branch(branch?.children?.copyOf() ?: arrayOfNulls(WIDTH), owner)
+    }
+
+    private fun checkActive() {
+      check(active) { "PersistentLongMapBuilder has already been built" }
+    }
+  }
 
   companion object {
     private const val BITS: Int = 4
@@ -167,13 +301,104 @@ internal class PersistentVector32<V : Any> private constructor(
     return if (!updated.removed) this else PersistentVector32(updated.root, updated.shift)
   }
 
-  private class Node(val slots: Array<Any?>)
+  override fun builder(): PersistentLongMapBuilder<V> = Builder(this)
+
+  private class Node(val slots: Array<Any?>, val owner: Any? = null)
 
   private data class RootState(val root: Node?, val shift: Int)
 
   private data class Removal(val root: Node?, val shift: Int, val removed: Boolean)
 
   private data class NodeRemoval(val node: Node?, val removed: Boolean)
+
+  private class Builder<V : Any>(private val source: PersistentVector32<V>) : PersistentLongMapBuilder<V> {
+    private val owner = Any()
+    private var root = source.root
+    private var shift = source.shift
+    private var dirty = false
+    private var active = true
+
+    override fun get(key: Long): V? {
+      checkActive()
+      return get(root, shift, requireNonNegativeKey(key))
+    }
+
+    override fun put(key: Long, value: V) {
+      checkActive()
+      val index = requireNonNegativeKey(key)
+      val requiredShift = requiredShift(index)
+      var expandedRoot = root
+      var expandedShift = if (expandedRoot == null) requiredShift else shift
+
+      while (expandedRoot != null && expandedShift < requiredShift) {
+        val slots = arrayOfNulls<Any>(WIDTH)
+        slots[0] = expandedRoot
+        expandedRoot = Node(slots, owner)
+        expandedShift += BITS
+      }
+
+      root = putNode(expandedRoot, expandedShift, index, value)
+      shift = expandedShift
+      dirty = true
+    }
+
+    override fun remove(key: Long) {
+      checkActive()
+      val index = requireNonNegativeKey(key)
+      val currentRoot = root ?: return
+      if (requiredShift(index) > shift) return
+      val result = removeNode(currentRoot, shift, index)
+      if (!result.removed) return
+      val trimmed = trim(result.node, shift)
+      root = trimmed.root
+      shift = trimmed.shift
+      dirty = true
+    }
+
+    override fun build(): PersistentLongMap<V> {
+      checkActive()
+      active = false
+      return if (dirty) PersistentVector32(root, shift) else source
+    }
+
+    private fun putNode(node: Node?, shift: Int, index: Long, value: V): Node {
+      val editable = editable(node)
+      val slot = slot(index, shift)
+      editable.slots[slot] = if (shift == 0) {
+        value
+      }
+      else {
+        putNode(editable.slots[slot] as? Node, shift - BITS, index, value)
+      }
+      return editable
+    }
+
+    private fun removeNode(node: Node, shift: Int, index: Long): NodeRemoval {
+      val slot = slot(index, shift)
+      val child = node.slots[slot] ?: return NodeRemoval(node, false)
+      val editable = editable(node)
+
+      if (shift == 0) {
+        editable.slots[slot] = null
+      }
+      else {
+        val result = removeNode(child as Node, shift - BITS, index)
+        if (!result.removed) return NodeRemoval(node, false)
+        editable.slots[slot] = result.node
+      }
+
+      return NodeRemoval(if (isEmpty(editable.slots)) null else editable, true)
+    }
+
+    private fun editable(node: Node?): Node {
+      if (node?.owner === owner) return node
+      return Node(node?.slots?.copyOf() ?: arrayOfNulls(WIDTH), owner)
+    }
+
+    private fun checkActive() {
+      check(active) { "PersistentLongMapBuilder has already been built" }
+    }
+  }
 
   companion object {
     private const val BITS = 5
@@ -313,13 +538,104 @@ internal class PersistentVector64<V : Any> private constructor(
     return if (!updated.removed) this else PersistentVector64(updated.root, updated.shift)
   }
 
-  private class Node(val slots: Array<Any?>)
+  override fun builder(): PersistentLongMapBuilder<V> = Builder(this)
+
+  private class Node(val slots: Array<Any?>, val owner: Any? = null)
 
   private data class RootState(val root: Node?, val shift: Int)
 
   private data class Removal(val root: Node?, val shift: Int, val removed: Boolean)
 
   private data class NodeRemoval(val node: Node?, val removed: Boolean)
+
+  private class Builder<V : Any>(private val source: PersistentVector64<V>) : PersistentLongMapBuilder<V> {
+    private val owner = Any()
+    private var root = source.root
+    private var shift = source.shift
+    private var dirty = false
+    private var active = true
+
+    override fun get(key: Long): V? {
+      checkActive()
+      return get(root, shift, requireNonNegativeKey(key))
+    }
+
+    override fun put(key: Long, value: V) {
+      checkActive()
+      val index = requireNonNegativeKey(key)
+      val requiredShift = requiredShift(index)
+      var expandedRoot = root
+      var expandedShift = if (expandedRoot == null) requiredShift else shift
+
+      while (expandedRoot != null && expandedShift < requiredShift) {
+        val slots = arrayOfNulls<Any>(WIDTH)
+        slots[0] = expandedRoot
+        expandedRoot = Node(slots, owner)
+        expandedShift += BITS
+      }
+
+      root = putNode(expandedRoot, expandedShift, index, value)
+      shift = expandedShift
+      dirty = true
+    }
+
+    override fun remove(key: Long) {
+      checkActive()
+      val index = requireNonNegativeKey(key)
+      val currentRoot = root ?: return
+      if (requiredShift(index) > shift) return
+      val result = removeNode(currentRoot, shift, index)
+      if (!result.removed) return
+      val trimmed = trim(result.node, shift)
+      root = trimmed.root
+      shift = trimmed.shift
+      dirty = true
+    }
+
+    override fun build(): PersistentLongMap<V> {
+      checkActive()
+      active = false
+      return if (dirty) PersistentVector64(root, shift) else source
+    }
+
+    private fun putNode(node: Node?, shift: Int, index: Long, value: V): Node {
+      val editable = editable(node)
+      val slot = slot(index, shift)
+      editable.slots[slot] = if (shift == 0) {
+        value
+      }
+      else {
+        putNode(editable.slots[slot] as? Node, shift - BITS, index, value)
+      }
+      return editable
+    }
+
+    private fun removeNode(node: Node, shift: Int, index: Long): NodeRemoval {
+      val slot = slot(index, shift)
+      val child = node.slots[slot] ?: return NodeRemoval(node, false)
+      val editable = editable(node)
+
+      if (shift == 0) {
+        editable.slots[slot] = null
+      }
+      else {
+        val result = removeNode(child as Node, shift - BITS, index)
+        if (!result.removed) return NodeRemoval(node, false)
+        editable.slots[slot] = result.node
+      }
+
+      return NodeRemoval(if (isEmpty(editable.slots)) null else editable, true)
+    }
+
+    private fun editable(node: Node?): Node {
+      if (node?.owner === owner) return node
+      return Node(node?.slots?.copyOf() ?: arrayOfNulls(WIDTH), owner)
+    }
+
+    private fun checkActive() {
+      check(active) { "PersistentLongMapBuilder has already been built" }
+    }
+  }
 
   companion object {
     private const val BITS: Int = 6
@@ -473,7 +789,74 @@ internal class PersistentPagedVector128<V : Any> private constructor(
     return PersistentPagedVector128(pages.put(pageKey, Page(values, oldPage.size - 1)))
   }
 
-  private class Page<V : Any>(val values: Array<Any?>, val size: Int)
+  override fun builder(): PersistentLongMapBuilder<V> = Builder(this)
+
+  private class Page<V : Any>(val values: Array<Any?>, var size: Int, val owner: Any? = null)
+
+  private class Builder<V : Any>(private val source: PersistentPagedVector128<V>) : PersistentLongMapBuilder<V> {
+    private val owner = Any()
+    private val pages = source.pages.builder()
+    private var dirty = false
+    private var active = true
+
+    override fun get(key: Long): V? {
+      checkActive()
+      val index = requireNonNegativeKey(key)
+      val page = pages[index ushr PAGE_BITS] ?: return null
+      @Suppress("UNCHECKED_CAST")
+      return page.values[(index and PAGE_MASK).toInt()] as V?
+    }
+
+    override fun put(key: Long, value: V) {
+      checkActive()
+      val index = requireNonNegativeKey(key)
+      val pageKey = index ushr PAGE_BITS
+      val slot = (index and PAGE_MASK).toInt()
+      val oldPage = pages[pageKey]
+      val page = editable(oldPage)
+      if (page !== oldPage) pages.put(pageKey, page)
+      if (page.values[slot] == null) page.size++
+      page.values[slot] = value
+      dirty = true
+    }
+
+    override fun remove(key: Long) {
+      checkActive()
+      val index = requireNonNegativeKey(key)
+      val pageKey = index ushr PAGE_BITS
+      val slot = (index and PAGE_MASK).toInt()
+      val oldPage = pages[pageKey] ?: return
+      if (oldPage.values[slot] == null) return
+
+      if (oldPage.size == 1) {
+        pages.remove(pageKey)
+      }
+      else {
+        val page = editable(oldPage)
+        if (page !== oldPage) pages.put(pageKey, page)
+        page.values[slot] = null
+        page.size--
+      }
+      dirty = true
+    }
+
+    override fun build(): PersistentLongMap<V> {
+      checkActive()
+      @Suppress("UNCHECKED_CAST")
+      val builtPages = pages.build() as PersistentVector32<Page<V>>
+      active = false
+      return if (dirty) PersistentPagedVector128(builtPages) else source
+    }
+
+    private fun editable(page: Page<V>?): Page<V> {
+      if (page?.owner === owner) return page
+      return Page(page?.values?.copyOf() ?: arrayOfNulls(PAGE_SIZE), page?.size ?: 0, owner)
+    }
+
+    private fun checkActive() {
+      check(active) { "PersistentLongMapBuilder has already been built" }
+    }
+  }
 
   companion object {
     private const val PAGE_BITS: Int = 7
@@ -525,7 +908,74 @@ internal class PersistentPagedVector256<V : Any> private constructor(
     return PersistentPagedVector256(pages.put(pageKey, Page(values, oldPage.size - 1)))
   }
 
-  private class Page<V : Any>(val values: Array<Any?>, val size: Int)
+  override fun builder(): PersistentLongMapBuilder<V> = Builder(this)
+
+  private class Page<V : Any>(val values: Array<Any?>, var size: Int, val owner: Any? = null)
+
+  private class Builder<V : Any>(private val source: PersistentPagedVector256<V>) : PersistentLongMapBuilder<V> {
+    private val owner = Any()
+    private val pages = source.pages.builder()
+    private var dirty = false
+    private var active = true
+
+    override fun get(key: Long): V? {
+      checkActive()
+      val index = requireNonNegativeKey(key)
+      val page = pages[index ushr PAGE_BITS] ?: return null
+      @Suppress("UNCHECKED_CAST")
+      return page.values[(index and PAGE_MASK).toInt()] as V?
+    }
+
+    override fun put(key: Long, value: V) {
+      checkActive()
+      val index = requireNonNegativeKey(key)
+      val pageKey = index ushr PAGE_BITS
+      val slot = (index and PAGE_MASK).toInt()
+      val oldPage = pages[pageKey]
+      val page = editable(oldPage)
+      if (page !== oldPage) pages.put(pageKey, page)
+      if (page.values[slot] == null) page.size++
+      page.values[slot] = value
+      dirty = true
+    }
+
+    override fun remove(key: Long) {
+      checkActive()
+      val index = requireNonNegativeKey(key)
+      val pageKey = index ushr PAGE_BITS
+      val slot = (index and PAGE_MASK).toInt()
+      val oldPage = pages[pageKey] ?: return
+      if (oldPage.values[slot] == null) return
+
+      if (oldPage.size == 1) {
+        pages.remove(pageKey)
+      }
+      else {
+        val page = editable(oldPage)
+        if (page !== oldPage) pages.put(pageKey, page)
+        page.values[slot] = null
+        page.size--
+      }
+      dirty = true
+    }
+
+    override fun build(): PersistentLongMap<V> {
+      checkActive()
+      @Suppress("UNCHECKED_CAST")
+      val builtPages = pages.build() as PersistentVector32<Page<V>>
+      active = false
+      return if (dirty) PersistentPagedVector256(builtPages) else source
+    }
+
+    private fun editable(page: Page<V>?): Page<V> {
+      if (page?.owner === owner) return page
+      return Page(page?.values?.copyOf() ?: arrayOfNulls(PAGE_SIZE), page?.size ?: 0, owner)
+    }
+
+    private fun checkActive() {
+      check(active) { "PersistentLongMapBuilder has already been built" }
+    }
+  }
 
   companion object {
     private const val PAGE_BITS: Int = 8
