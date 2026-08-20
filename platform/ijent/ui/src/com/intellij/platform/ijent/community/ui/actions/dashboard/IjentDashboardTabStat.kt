@@ -18,6 +18,7 @@ import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.delay
 import java.awt.Font
 import javax.swing.JComponent
+import javax.swing.text.DefaultCaret
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
@@ -28,7 +29,7 @@ internal class IjentDashboardTabStat : IjentDashboardTab {
     get() = IjentImplBundle.message("tab.title.ijent.dashboard.stat")
 
   override fun createComponent(projects: List<Project>, ijentApi: IjentApi, ijentSession: IjentSession, parentComponent: JComponent?): JComponent {
-    return IjentStatDashboard(ijentSession.eventBus.counter).launchOnShow()
+    return IjentStatDashboard(ijentSession.eventBus.counter).component
   }
 }
 
@@ -36,18 +37,16 @@ internal class IjentStatDashboard(private val stat: IjentStatCounter) {
   private val statTextArea = createReadOnlyMonoViewer(10, 80)
   val component: JComponent = panel {
     row { cell(JBScrollPane(statTextArea)).resizableColumn().align(Align.FILL) }.resizableRow()
+  }.apply {
+    launchOnShow("display statistics") {
+      processUpdates()
+    }
   }
-  suspend fun processUpdates(): Nothing {
+  private suspend fun processUpdates(): Nothing {
     while (true) {
       statTextArea.text = stat.snapshot().printTable()
       delay(100.milliseconds)
     }
-  }
-  fun launchOnShow(): JComponent {
-    component.launchOnShow("display statistics") {
-      processUpdates()
-    }
-    return component
   }
 }
 
@@ -55,19 +54,18 @@ internal fun Map<String, IjentMethodStat>.printTable(): String {
   return this.entries.sortedBy { it.key }.joinToString("\n") { (methodName, v) ->
     val bareMethodName = methodName.substringAfterLast('.').substringAfterLast("/")
     val currentNanoTime = System.nanoTime()
-    val averageText = if (v.totalCallsFinished > 0) (v.totalNanos / v.totalCallsFinished).nanoseconds.toShortString() else ""
+    val averageText = if (v.totalCallsFinished > 0) "${(v.totalNanos / v.totalCallsFinished).nanoseconds.toShortString()} avg" else ""
+    val countText = if (v.pendingCalls.count > 0) "${v.pendingCalls.count}/${v.totalCallsFinished}" else v.totalCallsFinished.toString()
     val lastOpDuration = v.pendingCalls.oldestStartNanos?.let { oldestStartNanos ->
       val duration = (currentNanoTime - oldestStartNanos).nanoseconds.toShortString()
       if (v.pendingCalls.oldestStartIsExact) duration else "≥$duration"
     } ?: if (v.pendingCalls.count > 0) "?" else (v.lastOperationDurationNanos?.nanoseconds?.toShortString() ?: "")
-    val isPendingMark = if (v.pendingCalls.count > 0) " ⟳" else "  "
-    val lastOpFinished = v.lastOperationFinishedNanos?.let { currentNanoTime - it }?.nanoseconds?.toShortString() ?: "N/A"
+    val lastOpFinished = v.lastOperationFinishedNanos?.let { currentNanoTime - it }?.nanoseconds?.toShortString()?.let { "$it ago" } ?: ""
     "${bareMethodName.padStart(25)}:" +
-    "${v.totalCallsFinished.toString().padStart(5)} total, " +
-    "${averageText.padStart(6)} avg," +
-    isPendingMark +
+    "${countText.padStart(7)} total, " +
+    "${averageText.padStart(10)}," +
     "${lastOpDuration.padStart(6)} last" +
-    "${lastOpFinished.padStart(6)} ago."
+    lastOpFinished.padStart(10)
   }
 }
 
@@ -85,9 +83,12 @@ private fun Duration.toShortString(): String {
 internal fun createReadOnlyMonoViewer(rows: Int, cols: Int): JBTextArea =
   JBTextArea(rows, cols).apply {
     isEditable = false
+    isFocusable = false
+    isRequestFocusEnabled = false
     lineWrap = false
     border = JBUI.Borders.empty()
     background = UIUtil.getPanelBackground()
     font = JBFont.create(Font(Font.MONOSPACED, Font.PLAIN, JBFont.label().size))
     caret.blinkRate = 0
+    (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
   }

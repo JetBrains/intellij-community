@@ -24,7 +24,6 @@ import com.intellij.platform.eel.fs.stat
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.ijent.IjentCallerContext
-import com.intellij.platform.ijent.IjentEventBus
 import com.intellij.platform.ijent.IjentMachine
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandler
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult
@@ -117,7 +116,7 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
     LOG.warn("Ijent is unavailable. Modal dialog will be shown.")
     return NotRespondingFilesystemDialogService.getInstance().doOnceOrWait(eelDescriptor, projectsToClose) {
       coroutineScope {
-        val logJob = launch {
+        val logJob = launch(Dispatchers.IO) {
           val ijentSession = eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()
           if (ijentSession != null) {
             var backOff = 2.seconds
@@ -148,13 +147,14 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
       val builder = DialogBuilder(projects.first()).apply {
         setTitle(IjentImplBundle.message("dialog.title.ijent.unavailable"))
         setCenterPanel(createCenterPanel(eelDescriptor, projects))
-        addCancelAction().setText(IjentImplBundle.message("action.close.projects.text", projects.size))
+        DialogBuilder.CancelActionDescriptor().getAction(dialogWrapper).isEnabled = false
+        addOkAction().setText(IjentImplBundle.message("action.close.projects.text", projects.size))
         dialogWrapper.setShouldUseWriteIntentReadAction(false)
       }
 
       cont.invokeOnCancellation {
         ApplicationManager.getApplication().invokeLater(
-          { builder.dialogWrapper.close(DialogWrapper.OK_EXIT_CODE) },
+          { builder.dialogWrapper.close(DialogWrapper.CANCEL_EXIT_CODE) },
           ModalityState.any(),
         )
       }
@@ -164,7 +164,7 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
       // and the dialog (created to visualize the freeze) becomes a cause of the freeze to continue.
       val exitCode = builder.showWithPump(coroutineContext)
 
-      if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
+      if (exitCode == DialogWrapper.OK_EXIT_CODE) {
         ApplicationManager.getApplication().invokeLater {
           WriteIntentReadAction.run {
             for (projectToClose in projects) {
@@ -204,28 +204,27 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
   }
 
   private fun createCenterPanel(eelDescriptor: EelDescriptor, projects: List<Project>): JComponent {
+    val session = eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()
+    val statTab = session?.let { IjentStatDashboard(session.eventBus.counter) }
+    val preferredWidth = maxOf(480, statTab?.component?.preferredSize?.width ?: 0)
     return panel {
       createDefaultPanel(projects)
-      val session = eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()
-      if (session != null) {
-        createStatPanel(session.eventBus, session.getIjentInstance(eelDescriptor))
+      if (statTab != null) {
+        createStatPanel(statTab, session.getIjentInstance(eelDescriptor))
       }
     }
       .withBorder(JBUI.Borders.empty(16, 12, 8, 12))
-      .withPreferredWidth(480)
-      .withMinimumWidth(480)
-      .withMaximumWidth(480)
+      .withPreferredWidth(preferredWidth)
+      .withMinimumWidth(200)
   }
 
-  private fun Panel.createStatPanel(eventBus: IjentEventBus, eelApi: EelApi) {
-    val stat = eventBus.counter
-    val statTab = IjentStatDashboard(stat).launchOnShow()
-    statTab.launchOnShow("ping request") {
+  private fun Panel.createStatPanel(statDashboard: IjentStatDashboard, eelApi: EelApi) {
+    statDashboard.component.launchOnShow("ping request") {
       makePingRequest(eelApi)
     }
     collapsibleGroup(IjentImplBundle.message("tab.title.ijent.dashboard.stat")) {
       row {
-        cell(statTab)
+        cell(statDashboard.component)
       }
     }
   }

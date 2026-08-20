@@ -28,6 +28,7 @@ import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.IjentWindowsApi
 import com.intellij.platform.ijent.community.impl.nio.computeCallerContext
+import com.intellij.platform.ijent.community.impl.nio.fsBlocking
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
@@ -204,9 +205,7 @@ private class IjentFailSafeFileSystemPosixApiImpl(
 ) : IjentFileSystemPosixApi {
   // TODO Make user suspendable again?
   override val user: EelUserPosixInfo by lazy {
-    // A plain runBlocking would carry no IjentCalledContextElement; capture the thread state (EDT, locks)
-    // afresh so that awaitDelegate can detect a deployment awaited from a blocking call (IJPL-245001).
-    runBlocking(IjentCalledContextElement(IjentCallerContext.computeCallerContext())) {
+    fsBlocking {
       holder.withDelegateRetrying { user }
     }
   }
