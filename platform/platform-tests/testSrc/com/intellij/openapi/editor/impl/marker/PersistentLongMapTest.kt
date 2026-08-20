@@ -203,12 +203,13 @@ internal class PersistentLongMapTest {
     }
   }
 
-  @Test
-  fun `champ separates shared hash prefixes and compacts nodes after removal`() {
+  @ParameterizedTest
+  @EnumSource(value = PersistentLongMapImplementation::class, names = ["CHAMP", "CHAMP_64"])
+  fun `champ layouts separate shared hash prefixes and compact nodes after removal`(implementation: PersistentLongMapImplementation) {
     val keyCount = 4_096
-    var map = PersistentLongMap.empty<Int>(PersistentLongMapImplementation.CHAMP)
+    var map = PersistentLongMap.empty<Int>(implementation)
 
-    // A dense set much larger than the 32-way root forces repeated entry-to-child promotion at several trie levels.
+    // A dense set much larger than the widest root forces repeated entry-to-child promotion at several trie levels.
     repeat(keyCount) { key ->
       map = map.put(key.toLong(), key)
     }

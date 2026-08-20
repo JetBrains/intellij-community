@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 1)
 @Measurement(iterations = 5)
-@Fork(value = 0, jvmArgsAppend = {"-Xms2g", "-Xmx2g"})
+@Fork(value = 0)
 @Threads(1)
 @Timeout(time = 10, timeUnit = TimeUnit.MINUTES)
 public class PersistentLongMapBenchmark {
@@ -88,10 +88,12 @@ public class PersistentLongMapBenchmark {
   /** Parameterized dense-marker-ID workload covering every persistent-map implementation and load. */
   @State(Scope.Thread)
   public static class PersistentLongMapState {
-    @Param({"MAP_16", "VECTOR_32", "VECTOR_64", "PAGED_VECTOR_128", "PAGED_VECTOR_256", "CHAMP"})
+    @Param({
+      "MAP_16", "VECTOR_32", "VECTOR_64", "PAGED_VECTOR_128", "PAGED_VECTOR_256", "CHAMP", "CHAMP_64"
+    })
     public PersistentLongMapImplementation implementation;
 
-    @Param({"1000", "10000", "50000"})
+    @Param({"1000", "10000", "100000"})
     public int entryCount;
 
     PersistentLongMap<Object> map;
@@ -112,7 +114,7 @@ public class PersistentLongMapBenchmark {
     }
   }
 
-  private static final int MAP_LOOKUP_CALLS = 1_000_000;
+  private static final int MAP_LOOKUP_CALLS = 10_000_000;
   private static final int MAP_REPLACE_CALLS = 100_000;
   private static final int MAP_ACCESS_STEP = 8_191;
 
@@ -120,7 +122,7 @@ public class PersistentLongMapBenchmark {
   private static final Object REPLACEMENT_VALUE = new Object();
 
   /** Runs this benchmark class through JMH. */
-  public static void main(String[] args) throws Exception {
+  static void main() throws Exception {
     System.setProperty("jmh.separateClasspathJAR", "true");
 
     final Options options = new OptionsBuilder()

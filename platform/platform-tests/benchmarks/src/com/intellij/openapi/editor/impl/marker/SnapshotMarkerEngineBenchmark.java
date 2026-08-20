@@ -337,7 +337,7 @@ public class SnapshotMarkerEngineBenchmark {
    * SnapshotMarkerEngineBenchmark .*resolve4MMarkers.* -f 1 -wi 1 -i 3
    * </pre>
    */
-  static void main(String[] args) throws Exception {
+  static void main() throws Exception {
     System.setProperty("jmh.separateClasspathJAR", "true");
 
     final Options opt = new OptionsBuilder()

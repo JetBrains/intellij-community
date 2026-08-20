@@ -26,6 +26,7 @@ internal interface PersistentLongMap<V : Any> {
     private val EMPTY_PAGED_VECTOR_128 = PersistentPagedVector128<Any>()
     private val EMPTY_PAGED_VECTOR_256 = PersistentPagedVector256<Any>()
     private val EMPTY_CHAMP = PersistentLongChampMap<Any>()
+    private val EMPTY_CHAMP_64 = PersistentLongChampMap<Any>(bitsPerLevel = 6)
 
     @Suppress("UNCHECKED_CAST")
     fun <V : Any> empty(implementation: PersistentLongMapImplementation): PersistentLongMap<V> = when (implementation) {
@@ -35,6 +36,7 @@ internal interface PersistentLongMap<V : Any> {
       PersistentLongMapImplementation.PAGED_VECTOR_128 -> EMPTY_PAGED_VECTOR_128
       PersistentLongMapImplementation.PAGED_VECTOR_256 -> EMPTY_PAGED_VECTOR_256
       PersistentLongMapImplementation.CHAMP -> EMPTY_CHAMP
+      PersistentLongMapImplementation.CHAMP_64 -> EMPTY_CHAMP_64
     } as PersistentLongMap<V>
   }
 }
@@ -94,6 +96,7 @@ internal enum class PersistentLongMapImplementation {
   PAGED_VECTOR_128,
   PAGED_VECTOR_256,
   CHAMP,
+  CHAMP_64,
 }
 
 private fun requireNonNegativeKey(key: Long): Long {
@@ -277,43 +280,47 @@ internal class PersistentLongMap16<V : Any> private constructor(private val root
 }
 
 /**
- * Bitmap-compressed 32-way hash trie specialized for primitive [Long] keys.
+ * Bitmap-compressed hash trie specialized for primitive [Long] keys.
  *
- * Each level consumes five bits of the mixed key. An entry stays directly in its current node until another key selects
- * the same branch; the two entries are then moved into a child node that examines the next five bits. The `dataMap` and
- * `nodeMap` bitmaps identify direct entries and child nodes respectively, so empty branches occupy no array slots.
+ * Each level consumes the configured number of bits from the mixed key. An entry stays directly in its current node
+ * until another key selects the same branch; the two entries are then moved into a child node that examines the next
+ * group of bits. The `dataMap` and `nodeMap` bitmaps identify direct entries and child nodes respectively, so empty
+ * branches occupy no array slots. A single [Long] bitmap supports layouts up to 64 branches (six bits per level).
  *
  * Keys are mixed with a bijective 64-bit function, so distinct keys never require a boxed collision bucket. Nodes keep
  * direct keys in a primitive [LongArray], while one compact object array holds their values followed by child nodes.
  * Persistent updates copy only the affected path; the builder may mutate nodes carrying its unique ownership token.
  */
-internal class PersistentLongChampMap<V : Any> private constructor(private val root: Node?) : PersistentLongMap<V> {
-  constructor() : this(null)
+internal class PersistentLongChampMap<V : Any> private constructor(
+  private val layout: Layout,
+  private val root: Node?,
+) : PersistentLongMap<V> {
+  constructor(bitsPerLevel: Int = DEFAULT_BITS_PER_LEVEL) : this(Layout(bitsPerLevel), null)
 
   override operator fun get(key: Long): V? {
     val checkedKey = requireNonNegativeKey(key)
-    return find(root, checkedKey, mixKey(checkedKey))
+    return find(layout, root, checkedKey, mixKey(checkedKey))
   }
 
   override fun put(key: Long, value: V): PersistentLongChampMap<V> {
     val checkedKey = requireNonNegativeKey(key)
-    return PersistentLongChampMap(put(root, 0, checkedKey, mixKey(checkedKey), value))
+    return PersistentLongChampMap(layout, put(layout, root, 0, checkedKey, mixKey(checkedKey), value))
   }
 
   override fun remove(key: Long): PersistentLongChampMap<V> {
     val checkedKey = requireNonNegativeKey(key)
-    val result = remove(root, 0, checkedKey, mixKey(checkedKey))
-    return if (!result.removed) this else PersistentLongChampMap(result.node)
+    val result = remove(layout, root, 0, checkedKey, mixKey(checkedKey))
+    return if (!result.removed) this else PersistentLongChampMap(layout, result.node)
   }
 
   override fun builder(): PersistentLongMapBuilder<V> = Builder(this)
 
   private class Node(
     /** Bitmap of branches represented by direct entries in [keys] and the value prefix of [content]. */
-    var dataMap: Int,
+    var dataMap: Long,
 
     /** Bitmap of branches represented by child nodes in the suffix of [content]; disjoint from [dataMap]. */
-    var nodeMap: Int,
+    var nodeMap: Long,
 
     /** Direct keys ordered by their branch bit; its size is the population count of [dataMap]. */
     var keys: LongArray,
@@ -339,7 +346,7 @@ internal class PersistentLongChampMap<V : Any> private constructor(private val r
     override fun get(key: Long): V? {
       checkActive()
       val checkedKey = requireNonNegativeKey(key)
-      return find(root, checkedKey, mixKey(checkedKey))
+      return find(source.layout, root, checkedKey, mixKey(checkedKey))
     }
 
     override fun put(key: Long, value: V) {
@@ -361,15 +368,15 @@ internal class PersistentLongChampMap<V : Any> private constructor(private val r
     override fun build(): PersistentLongMap<V> {
       checkActive()
       active = false
-      return if (dirty) PersistentLongChampMap(root) else source
+      return if (dirty) PersistentLongChampMap(source.layout, root) else source
     }
 
     private fun put(node: Node?, shift: Int, key: Long, hash: Long, value: Any): Node {
-      if (node == null) return singletonNode(branchBit(hash, shift), key, value, owner)
+      if (node == null) return singletonNode(source.layout.branchBit(hash, shift), key, value, owner)
       val editable = editable(node)
-      val bit = branchBit(hash, shift)
+      val bit = source.layout.branchBit(hash, shift)
 
-      if (editable.dataMap and bit != 0) {
+      if (editable.dataMap and bit != 0L) {
         val dataIndex = bitmapIndex(editable.dataMap, bit)
         val existingKey = editable.keys[dataIndex]
         if (existingKey == key) {
@@ -377,13 +384,14 @@ internal class PersistentLongChampMap<V : Any> private constructor(private val r
         }
         else {
           val child = mergeEntries(
+            source.layout,
             existingKey,
             editable.content[dataIndex]!!,
             mixKey(existingKey),
             key,
             value,
             hash,
-            shift + BITS,
+            shift + source.layout.bitsPerLevel,
             owner,
           )
           editable.dataMap = editable.dataMap xor bit
@@ -396,10 +404,16 @@ internal class PersistentLongChampMap<V : Any> private constructor(private val r
         return editable
       }
 
-      if (editable.nodeMap and bit != 0) {
+      if (editable.nodeMap and bit != 0L) {
         val childIndex = bitmapIndex(editable.nodeMap, bit)
         val childOffset = editable.keys.size + childIndex
-        editable.content[childOffset] = put(editable.content[childOffset] as Node, shift + BITS, key, hash, value)
+        editable.content[childOffset] = put(
+          editable.content[childOffset] as Node,
+          shift + source.layout.bitsPerLevel,
+          key,
+          hash,
+          value,
+        )
         return editable
       }
 
@@ -412,9 +426,9 @@ internal class PersistentLongChampMap<V : Any> private constructor(private val r
 
     private fun remove(node: Node?, shift: Int, key: Long, hash: Long): Removal {
       node ?: return Removal(null, false)
-      val bit = branchBit(hash, shift)
+      val bit = source.layout.branchBit(hash, shift)
 
-      if (node.dataMap and bit != 0) {
+      if (node.dataMap and bit != 0L) {
         val dataIndex = bitmapIndex(node.dataMap, bit)
         if (node.keys[dataIndex] != key) return Removal(node, false)
         val editable = editable(node)
@@ -424,10 +438,10 @@ internal class PersistentLongChampMap<V : Any> private constructor(private val r
         return Removal(if (isEmpty(editable)) null else editable, true)
       }
 
-      if (node.nodeMap and bit == 0) return Removal(node, false)
+      if (node.nodeMap and bit == 0L) return Removal(node, false)
       val childIndex = bitmapIndex(node.nodeMap, bit)
       val childOffset = node.keys.size + childIndex
-      val result = remove(node.content[childOffset] as Node, shift + BITS, key, hash)
+      val result = remove(node.content[childOffset] as Node, shift + source.layout.bitsPerLevel, key, hash)
       if (!result.removed) return Removal(node, false)
 
       val editable = editable(node)
@@ -460,10 +474,26 @@ internal class PersistentLongChampMap<V : Any> private constructor(private val r
     }
   }
 
+  private class Layout(val bitsPerLevel: Int) {
+    private val mask: Int
+    val maxShift: Int
+
+    init {
+      require(bitsPerLevel in 1..MAX_BITS_PER_LEVEL) {
+        "bitsPerLevel must be between 1 and $MAX_BITS_PER_LEVEL"
+      }
+      mask = (1 shl bitsPerLevel) - 1
+      maxShift = (Long.SIZE_BITS - 1) / bitsPerLevel * bitsPerLevel
+    }
+
+    fun branchBit(hash: Long, shift: Int): Long = 1L shl slot(hash, shift)
+
+    fun slot(hash: Long, shift: Int): Int = (hash ushr shift).toInt() and mask
+  }
+
   companion object {
-    private const val BITS: Int = 5
-    private const val MASK: Int = (1 shl BITS) - 1
-    private const val MAX_SHIFT: Int = 60
+    private const val DEFAULT_BITS_PER_LEVEL: Int = 5
+    private const val MAX_BITS_PER_LEVEL: Int = 6
 
     private fun mixKey(key: Long): Long {
       var mixed = key
@@ -472,33 +502,31 @@ internal class PersistentLongChampMap<V : Any> private constructor(private val r
       return mixed xor (mixed ushr 31)
     }
 
-    private fun branchBit(hash: Long, shift: Int): Int = 1 shl ((hash ushr shift).toInt() and MASK)
+    private fun bitmapIndex(bitmap: Long, bit: Long): Int = java.lang.Long.bitCount(bitmap and (bit - 1))
 
-    private fun bitmapIndex(bitmap: Int, bit: Int): Int = Integer.bitCount(bitmap and (bit - 1))
-
-    private fun <V : Any> find(root: Node?, key: Long, hash: Long): V? {
+    private fun <V : Any> find(layout: Layout, root: Node?, key: Long, hash: Long): V? {
       var node = root ?: return null
       var shift = 0
       while (true) {
-        val bit = branchBit(hash, shift)
-        if (node.dataMap and bit != 0) {
+        val bit = layout.branchBit(hash, shift)
+        if (node.dataMap and bit != 0L) {
           val dataIndex = bitmapIndex(node.dataMap, bit)
           if (node.keys[dataIndex] != key) return null
           @Suppress("UNCHECKED_CAST")
           return node.content[dataIndex] as V
         }
-        if (node.nodeMap and bit == 0) return null
+        if (node.nodeMap and bit == 0L) return null
         val childIndex = bitmapIndex(node.nodeMap, bit)
         node = node.content[node.keys.size + childIndex] as Node
-        shift += BITS
+        shift += layout.bitsPerLevel
       }
     }
 
-    private fun put(node: Node?, shift: Int, key: Long, hash: Long, value: Any): Node {
-      if (node == null) return singletonNode(branchBit(hash, shift), key, value)
-      val bit = branchBit(hash, shift)
+    private fun put(layout: Layout, node: Node?, shift: Int, key: Long, hash: Long, value: Any): Node {
+      if (node == null) return singletonNode(layout.branchBit(hash, shift), key, value)
+      val bit = layout.branchBit(hash, shift)
 
-      if (node.dataMap and bit != 0) {
+      if (node.dataMap and bit != 0L) {
         val dataIndex = bitmapIndex(node.dataMap, bit)
         val existingKey = node.keys[dataIndex]
         if (existingKey == key) {
@@ -508,13 +536,14 @@ internal class PersistentLongChampMap<V : Any> private constructor(private val r
         }
 
         val child = mergeEntries(
+          layout,
           existingKey,
           node.content[dataIndex]!!,
           mixKey(existingKey),
           key,
           value,
           hash,
-          shift + BITS,
+          shift + layout.bitsPerLevel,
         )
         val keys = removeAt(node.keys, dataIndex)
         var content = removeAt(node.content, dataIndex)
@@ -523,11 +552,11 @@ internal class PersistentLongChampMap<V : Any> private constructor(private val r
         return Node(node.dataMap xor bit, node.nodeMap or bit, keys, content)
       }
 
-      if (node.nodeMap and bit != 0) {
+      if (node.nodeMap and bit != 0L) {
         val childIndex = bitmapIndex(node.nodeMap, bit)
         val childOffset = node.keys.size + childIndex
         val content = node.content.copyOf()
-        content[childOffset] = put(content[childOffset] as Node, shift + BITS, key, hash, value)
+        content[childOffset] = put(layout, content[childOffset] as Node, shift + layout.bitsPerLevel, key, hash, value)
         return Node(node.dataMap, node.nodeMap, node.keys, content)
       }
 
@@ -540,28 +569,28 @@ internal class PersistentLongChampMap<V : Any> private constructor(private val r
       )
     }
 
-    private fun remove(node: Node?, shift: Int, key: Long, hash: Long): Removal {
+    private fun remove(layout: Layout, node: Node?, shift: Int, key: Long, hash: Long): Removal {
       node ?: return Removal(null, false)
-      val bit = branchBit(hash, shift)
+      val bit = layout.branchBit(hash, shift)
 
-      if (node.dataMap and bit != 0) {
+      if (node.dataMap and bit != 0L) {
         val dataIndex = bitmapIndex(node.dataMap, bit)
         if (node.keys[dataIndex] != key) return Removal(node, false)
         val dataMap = node.dataMap xor bit
-        if (dataMap == 0 && node.nodeMap == 0) return Removal(null, true)
+        if (dataMap == 0L && node.nodeMap == 0L) return Removal(null, true)
         return Removal(Node(dataMap, node.nodeMap, removeAt(node.keys, dataIndex), removeAt(node.content, dataIndex)), true)
       }
 
-      if (node.nodeMap and bit == 0) return Removal(node, false)
+      if (node.nodeMap and bit == 0L) return Removal(node, false)
       val childIndex = bitmapIndex(node.nodeMap, bit)
       val childOffset = node.keys.size + childIndex
-      val result = remove(node.content[childOffset] as Node, shift + BITS, key, hash)
+      val result = remove(layout, node.content[childOffset] as Node, shift + layout.bitsPerLevel, key, hash)
       if (!result.removed) return Removal(node, false)
 
       val updatedChild = result.node
       if (updatedChild == null) {
         val nodeMap = node.nodeMap xor bit
-        if (node.dataMap == 0 && nodeMap == 0) return Removal(null, true)
+        if (node.dataMap == 0L && nodeMap == 0L) return Removal(null, true)
         return Removal(Node(node.dataMap, nodeMap, node.keys, removeAt(node.content, childOffset)), true)
       }
 
@@ -579,6 +608,7 @@ internal class PersistentLongChampMap<V : Any> private constructor(private val r
     }
 
     private fun mergeEntries(
+      layout: Layout,
       firstKey: Long,
       firstValue: Any,
       firstHash: Long,
@@ -588,25 +618,26 @@ internal class PersistentLongChampMap<V : Any> private constructor(private val r
       shift: Int,
       owner: Any? = null,
     ): Node {
-      check(shift <= MAX_SHIFT) { "Distinct long keys produced the same mixed hash" }
-      val firstBit = branchBit(firstHash, shift)
-      val secondBit = branchBit(secondHash, shift)
+      check(shift <= layout.maxShift) { "Distinct long keys produced the same mixed hash" }
+      val firstBit = layout.branchBit(firstHash, shift)
+      val secondBit = layout.branchBit(secondHash, shift)
       if (firstBit == secondBit) {
         val child = mergeEntries(
+          layout,
           firstKey,
           firstValue,
           firstHash,
           secondKey,
           secondValue,
           secondHash,
-          shift + BITS,
+          shift + layout.bitsPerLevel,
           owner,
         )
-        return Node(0, firstBit, LongArray(0), arrayOf<Any?>(child), owner)
+        return Node(0L, firstBit, LongArray(0), arrayOf<Any?>(child), owner)
       }
 
-      val firstSlot = (firstHash ushr shift).toInt() and MASK
-      val secondSlot = (secondHash ushr shift).toInt() and MASK
+      val firstSlot = layout.slot(firstHash, shift)
+      val secondSlot = layout.slot(secondHash, shift)
       val keys: LongArray
       val content: Array<Any?>
       if (firstSlot < secondSlot) {
@@ -617,16 +648,16 @@ internal class PersistentLongChampMap<V : Any> private constructor(private val r
         keys = longArrayOf(secondKey, firstKey)
         content = arrayOf(secondValue, firstValue)
       }
-      return Node(firstBit or secondBit, 0, keys, content, owner)
+      return Node(firstBit or secondBit, 0L, keys, content, owner)
     }
 
-    private fun singletonNode(bit: Int, key: Long, value: Any, owner: Any? = null): Node {
-      return Node(bit, 0, longArrayOf(key), arrayOf(value), owner)
+    private fun singletonNode(bit: Long, key: Long, value: Any, owner: Any? = null): Node {
+      return Node(bit, 0L, longArrayOf(key), arrayOf(value), owner)
     }
 
-    private fun isEmpty(node: Node): Boolean = node.dataMap == 0 && node.nodeMap == 0
+    private fun isEmpty(node: Node): Boolean = node.dataMap == 0L && node.nodeMap == 0L
 
-    private fun isSingletonData(node: Node): Boolean = node.nodeMap == 0 && node.keys.size == 1
+    private fun isSingletonData(node: Node): Boolean = node.nodeMap == 0L && node.keys.size == 1
 
     private fun insert(array: LongArray, index: Int, value: Long): LongArray {
       val result = LongArray(array.size + 1)
