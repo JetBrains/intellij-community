@@ -29,13 +29,16 @@ import java.util.stream.Stream;
 public final class ExceptionUtil {
   private ExceptionUtil() { }
 
+  /**
+   * Walks {@code e}'s cause chain to the deepest cause. If the cause chain ends in a cycle, returns an arbitrary
+   * exception within the cycle.
+   */
   public static @NotNull Throwable getRootCause(@NotNull Throwable e) {
-    while (true) {
-      if (e.getCause() == null) {
-        return e;
-      }
-      e = e.getCause();
+    Throwable last = e;
+    for (Throwable cause : ExceptionUtilRt.cycleAwareCauseChain(e)) {
+      last = cause;
     }
+    return last;
   }
 
   public static <T> T findCause(Throwable e, Class<T> klass) {
@@ -48,6 +51,7 @@ public final class ExceptionUtil {
 
   /**
    * If there are matching throwables both in causes of the {@code error} and in suppressed throwables, causes are guaranteed to be first.
+   * If a cause chain ends in a cycle, causes past the loop are not included.
    */
   public static @Unmodifiable @NotNull <T> List<T> findCauseAndSuppressed(@NotNull Throwable error, @NotNull Class<T> klass) {
     return causeAndSuppressed(error, klass).collect(Collectors.toList());
@@ -55,6 +59,7 @@ public final class ExceptionUtil {
 
   /**
    * If there are matching throwables both in causes of the {@code error} and in suppressed throwables, causes are guaranteed to be first.
+   * If a cause chain ends in a cycle, causes past the loop are not included.
    */
   @ApiStatus.Internal
   public static <T> @NotNull Stream<T> causeAndSuppressed(@NotNull Throwable error, @NotNull Class<T> klass) {
@@ -64,15 +69,20 @@ public final class ExceptionUtil {
     while (!deque.isEmpty()) {
       Throwable t = deque.removeFirst();
       if (allThrowables.add(t)) {
-        for (Throwable cause = t.getCause(); cause != null; cause = cause.getCause()) {
-          deque.addLast(cause);
-        }
+        enqueueCauseChain(t, deque);
         for (Throwable s : t.getSuppressed()) {
           deque.addLast(s);
         }
       }
     }
     return allThrowables.stream().filter(klass::isInstance).map(klass::cast);
+  }
+
+  /** Enqueues {@code t}'s cause chain, stopping (instead of growing the deque without bound) if it cycles. */
+  private static void enqueueCauseChain(@NotNull Throwable t, @NotNull Deque<Throwable> deque) {
+    for (Throwable cause : ExceptionUtilRt.cycleAwareCauseChain(t)) {
+      deque.addLast(cause);
+    }
   }
 
   public static @NotNull Throwable makeStackTraceRelative(@NotNull Throwable th, @NotNull Throwable relativeTo) {
@@ -113,14 +123,20 @@ public final class ExceptionUtil {
     return result;
   }
 
+  /**
+   * Walks {@code e}'s cause chain for the first message not needing further unwrapping. If the cause chain ends
+   * in a cycle, returns the message of the last exception visited.
+   */
   public static @NlsSafe @Nullable String getMessage(@NotNull Throwable e) {
-    String result = e.getMessage();
     String exceptionPattern = "Exception: ";
     String errorPattern = "Error: ";
 
-    while (e.getCause() != null && (result == null || result.contains(exceptionPattern) || result.contains(errorPattern))) {
-      e = e.getCause();
-      result = e.getMessage();
+    String result = e.getMessage();
+    for (Throwable cause : ExceptionUtilRt.cycleAwareCauseChain(e)) {
+      if (result != null && !result.contains(exceptionPattern) && !result.contains(errorPattern)) {
+        break;
+      }
+      result = cause.getMessage();
     }
 
     if (result != null) {
