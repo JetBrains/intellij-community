@@ -22,6 +22,7 @@ import com.intellij.python.sdk.common.evolution.EvoLeafKind
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoNodeDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
+import com.intellij.python.sdk.common.evolution.EvoWorkspaceDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.requestEvoNode
@@ -75,6 +76,8 @@ internal class EvoPySdkSwitchPopupFactory(
   val project: Project,
   val moduleName: @NlsSafe String,
   val currentInterpreter: PyInterpreterDto?,
+  /** The workspace [moduleName] takes part in, or `null` when it is standalone — see [popupTitle]. */
+  val workspace: EvoWorkspaceDto?,
   val nodes: List<EvoNodeDto>,
   val associated: List<PyInterpreterDto>,
   /** The "Shortcuts" rows shown when there is no current interpreter — the IDE's autoconfigure suggestion(s). */
@@ -250,10 +253,21 @@ internal class EvoPySdkSwitchPopupFactory(
     )
   }
 
+  /**
+   * The popup's title. The environments listed below belong to the *workspace*, not to the module on its own, so a
+   * module taking part in one is titled by its workspace: `monorepo` at the root, `monorepo[pkg-a]` for a member.
+   * A standalone module keeps its plain name.
+   */
+  private fun popupTitle(): @PopupTitle String = when {
+    workspace == null -> moduleName
+    workspace.rootModuleName == moduleName -> workspace.rootModuleName
+    else -> PySdkFrontendBundle.message("evo.sdk.status.bar.popup.title.workspace", workspace.rootModuleName, moduleName)
+  }
+
   /** Wraps an already-built [tree] into a popup; [onClose] fires when it is dismissed (the widget starts its TTL then). */
   fun createPopup(tree: EvoTreeStaticNodeElement, context: DataContext, onClose: () -> Unit): ListPopup =
     EvoSdkManagerTreePopup(
-      title = moduleName,
+      title = popupTitle(),
       evoTreeNodeElement = tree,
       dataContext = context,
       disposeCallback = onClose,

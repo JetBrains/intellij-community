@@ -6,6 +6,7 @@ import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
+import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.defaultVenvDir
 import com.intellij.python.sdk.backend.evolution.evoCreateEnvLeaf
@@ -20,7 +21,6 @@ import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.PyVersionSpecifiers
-import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
@@ -36,10 +36,10 @@ internal class PoetryEvoEnvironmentProvider : PyEvoEnvironmentProvider {
   override val label: String get() = "Poetry"
   override val icon: Icon get() = PythonIcons.Python.Origami
 
-  override suspend fun isAvailable(pyProject: PyProject, fileSystem: FileSystem<PathHolder.Eel>): Boolean =
+  override suspend fun isAvailable(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>): Boolean =
     PoetryPyTool.getInstance().resolveExecutable(fileSystem) != null
 
-  override suspend fun loadSections(pyProject: PyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
+  override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
     val projectDir = pyProject.baseDir
     // Poetry's cache environments, as full env-root paths. Force `virtualenvs.in-project=false` (as the v2 dialog does)
     // so poetry enumerates the cache envs even when an in-project `.venv` exists — otherwise it reports only `.venv`.

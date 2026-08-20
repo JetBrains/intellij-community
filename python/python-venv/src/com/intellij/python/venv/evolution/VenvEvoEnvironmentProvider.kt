@@ -1,11 +1,11 @@
 package com.intellij.python.venv.evolution
 
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
+import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.toSectionsGroupedByParent
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.venv.icons.PythonVenvIcons
-import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import javax.swing.Icon
@@ -16,6 +16,6 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
   override val label: String get() = "pip"
   override val icon: Icon get() = PythonVenvIcons.VirtualEnv
 
-  override suspend fun loadSections(pyProject: PyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto =
+  override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto =
     EvoLoadResultDto.Ok(discovered.filterNot { it.createdByUv }.toSectionsGroupedByParent(icon, addNew = true, baseDir = pyProject.baseDir))
 }

@@ -7,6 +7,7 @@ import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIc
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.pytools.runTool
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
+import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
 import com.intellij.python.sdk.backend.evolution.evoWarning
@@ -16,7 +17,6 @@ import com.intellij.python.sdk.backend.evolution.toSectionLabel
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.jetbrains.python.getOrNull
-import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import java.nio.file.Path
@@ -30,10 +30,10 @@ internal class CondaEvoEnvironmentProvider : PyEvoEnvironmentProvider {
 
   // Resolve via the tool's PyExecutableCache (custom-path store + conda-specific search paths such as
   // ~/miniconda3/bin), so conda installed outside PATH is still detected.
-  override suspend fun isAvailable(pyProject: PyProject, fileSystem: FileSystem<PathHolder.Eel>): Boolean =
+  override suspend fun isAvailable(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>): Boolean =
     CondaPyTool.getInstance().resolveExecutable(fileSystem) != null
 
-  override suspend fun loadSections(pyProject: PyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
+  override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
     val conda = CondaPyTool.getInstance()
     // Presence check only: the rows are grouped by where each env lives, not by where conda itself is installed.
     conda.resolveExecutable(fileSystem) ?: return evoWarning(PyCondaBundle.message("evolution.conda.executable.is.not.found"))

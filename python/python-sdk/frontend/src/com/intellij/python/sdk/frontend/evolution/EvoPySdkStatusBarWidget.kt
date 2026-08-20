@@ -18,10 +18,12 @@ import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.platform.project.projectId
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoNodeDto
+import com.intellij.python.sdk.common.evolution.EvoWorkspaceDto
 import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.requestEvoCurrentInterpreter
 import com.intellij.python.sdk.common.evolution.requestEvoNodes
+import com.intellij.python.sdk.common.evolution.requestEvoWorkspace
 import com.intellij.python.sdk.common.evolution.requestEvoShortcuts
 import com.intellij.python.sdk.common.evolution.requestEvoAssociatedInterpreters
 import com.intellij.python.sdk.common.evolution.requestEvoSdkConfigurationInProgress
@@ -61,6 +63,8 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   private data class Cached(
     val moduleName: String,
     val current: PyInterpreterDto?,
+    /** The tool workspace the module takes part in (`null` when standalone) — named in the popup title. */
+    val workspace: EvoWorkspaceDto?,
     val nodes: List<EvoNodeDto>,
     val associated: List<PyInterpreterDto>,
     /** "Shortcuts" rows (autoconfigure suggestions), fetched only when there is no current interpreter. */
@@ -164,15 +168,16 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
       val projectId = project.projectId()
       val interpreter = runCatching { requestEvoCurrentInterpreter(projectId, moduleName) }.getOrNull()
       val prev = cached?.takeIf { it.moduleName == moduleName }
-      cached = Cached(moduleName, interpreter, prev?.nodes.orEmpty(), prev?.associated.orEmpty(), prev?.shortcuts.orEmpty())
+      cached = Cached(moduleName, interpreter, prev?.workspace, prev?.nodes.orEmpty(), prev?.associated.orEmpty(), prev?.shortcuts.orEmpty())
       popupTree = null
       update()
 
+      val workspace = runCatching { requestEvoWorkspace(projectId, moduleName) }.getOrNull()
       val nodes = runCatching { requestEvoNodes(projectId, moduleName) }.getOrNull().orEmpty()
       val associated = runCatching { requestEvoAssociatedInterpreters(projectId, moduleName) }.getOrNull().orEmpty()
       // The "Shortcuts" autoconfigure suggestions are only shown (and only worth computing) when there is no interpreter.
       val shortcuts = if (interpreter == null) runCatching { requestEvoShortcuts(projectId, moduleName) }.getOrNull().orEmpty() else emptyList()
-      cached = Cached(moduleName, interpreter, nodes, associated, shortcuts)
+      cached = Cached(moduleName, interpreter, workspace, nodes, associated, shortcuts)
       popupTree = null
       loadingModule = null
       update()
@@ -233,7 +238,7 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     // The re-probe is async (takes effect from the next open) and availability is backed by PyExecutableCache, so a
     // warm cache makes it near-instant; it only does real work after an install invalidated that cache.
     if (reusable == null) refreshNodes(current.moduleName)
-    val factory = EvoPySdkSwitchPopupFactory(project, current.moduleName, current.current, current.nodes, current.associated, current.shortcuts, scope)
+    val factory = EvoPySdkSwitchPopupFactory(project, current.moduleName, current.current, current.workspace, current.nodes, current.associated, current.shortcuts, scope)
     val tree = reusable ?: factory.buildTree().also { popupTree = it }
     return factory.createPopup(tree, context) { popupClosedAt = System.currentTimeMillis() }
   }

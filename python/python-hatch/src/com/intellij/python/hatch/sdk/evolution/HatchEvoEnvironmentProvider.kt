@@ -6,6 +6,7 @@ import com.intellij.python.hatch.getHatchService
 import com.intellij.python.hatch.icons.PythonHatchIcons
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
+import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.evoCreateEnvLeaf
 import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
@@ -14,7 +15,6 @@ import com.intellij.python.sdk.backend.evolution.resolvePythonExecutable
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.jetbrains.python.getOrNull
-import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import javax.swing.Icon
@@ -24,11 +24,11 @@ internal class HatchEvoEnvironmentProvider : PyEvoEnvironmentProvider {
   override val label: String get() = "Hatch"
   override val icon: Icon get() = PythonHatchIcons.Logo
 
-  override suspend fun isAvailable(pyProject: PyProject, fileSystem: FileSystem<PathHolder.Eel>): Boolean =
+  override suspend fun isAvailable(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>): Boolean =
     HatchPyTool.getInstance().resolveExecutable(fileSystem) != null
 
-  override suspend fun loadSections(pyProject: PyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
-    val hatchService = pyProject.residesOnModule.getHatchService(fileSystem).getOrNull()
+  override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
+    val hatchService = pyProject.module.getHatchService(fileSystem).getOrNull()
                        ?: return evoWarning(PyHatchBundle.message("evolution.hatch.executable.is.not.found"))
     val environments = hatchService.findVirtualEnvironments().getOrNull() ?: return EvoLoadResultDto.Ok(emptyList())
     val leaves = environments.map { env ->

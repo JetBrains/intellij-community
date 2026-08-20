@@ -39,6 +39,13 @@ interface PyEvoSdkApi : RemoteApi<Unit> {
   suspend fun getCurrentInterpreter(projectId: ProjectId, moduleName: String): PyInterpreterDto?
 
   /**
+   * The tool workspace (uv/poetry) the module takes part in — as its root or as a member — or `null` when it is
+   * standalone. Every module of a workspace shares the one environment declared at its root, so the backend resolves
+   * every directory it works with against that root; this tells the widget to name the workspace in its popup title.
+   */
+  suspend fun getWorkspace(projectId: ProjectId, moduleName: String): EvoWorkspaceDto?
+
+  /**
    * The expandable nodes contributed by the backend `PyEvoEnvironmentProvider` extension point
    * (venv/uv/poetry/conda/hatch/advanced/…), filtered to the tools available on the module's Eel machine and shown
    * collapsed in the popup. Each tool-availability probe runs in that tool's
@@ -121,6 +128,10 @@ suspend fun PyEvoSdkApi(): PyEvoSdkApi = RemoteApiProviderService.resolve(remote
 @ApiStatus.Internal
 suspend fun requestEvoCurrentInterpreter(projectId: ProjectId, moduleName: String): PyInterpreterDto? =
   PyEvoSdkApi().getCurrentInterpreter(projectId, moduleName)
+
+@ApiStatus.Internal
+suspend fun requestEvoWorkspace(projectId: ProjectId, moduleName: String): EvoWorkspaceDto? =
+  PyEvoSdkApi().getWorkspace(projectId, moduleName)
 
 @ApiStatus.Internal
 suspend fun requestEvoNodes(projectId: ProjectId, moduleName: String): List<EvoNodeDto> =
@@ -218,6 +229,20 @@ sealed interface PyInterpreterRef {
   @Serializable
   data class Autoconfigure(val toolId: @NonNls String) : PyInterpreterRef
 }
+
+/**
+ * The tool workspace a module takes part in — see [PyEvoSdkApi.getWorkspace]. Named in the popup title, since the
+ * environments the widget lists are the workspace's, not the module's own.
+ */
+@ApiStatus.Internal
+@Serializable
+data class EvoWorkspaceDto(
+  /**
+   * Name of the module the workspace is rooted at (whose base dir the widget works in). Equal to the queried module's
+   * own name when that module *is* the root.
+   */
+  val rootModuleName: @NlsSafe String,
+)
 
 /** A collapsed expandable node in the popup's "select environment" section, contributed by a backend provider. */
 @ApiStatus.Internal
