@@ -20,6 +20,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
+import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.jetbrains.annotations.ApiStatus
 
@@ -69,7 +70,7 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
       override fun visitFile(file: PsiFile) {
         // Markdown file has two PSI trees: HTML and Markdown
         // We need to filter out HTML one otherwise it's going to be analyzed twice
-        if (file !is MarkdownFile) return
+        if (file !is MarkdownFile || MarkdownCodeFenceUtils.getCodeFence(file) != null) return
 
         if (!isSpecificationLikeFile(file)) {
           thisLogger().info("${file.name} is not specification-like")

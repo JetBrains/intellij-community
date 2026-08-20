@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import java.time.format.DateTimeFormatter
 import java.util.function.Supplier
@@ -35,7 +36,7 @@ internal class SpecificationUsageMarkerProvider : LineMarkerProviderDescriptor()
 
   override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
     val file = element as? MarkdownFile ?: return null
-    if (!isSpecificationLikeFile(file) || !isAnalysisAvailable()) return null
+    if (MarkdownCodeFenceUtils.getCodeFence(file) != null || !isSpecificationLikeFile(file) || !isAnalysisAvailable()) return null
     return UsageMarkerInfo(file, isAnalysisEnabled())
   }
 

@@ -9,9 +9,11 @@ import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.Replacement
 import com.google.gson.JsonObject
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.icons.GrazieIcons
 import com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationBaseInspection
 import com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationContradictionInspection
 import com.intellij.psi.PsiFile
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -33,6 +35,20 @@ internal class SpecificationInspectionTest : BaseTestCase() {
     myFixture.configureByText("README.md", "This is some specification")
     myFixture.checkHighlighting()
     assertFalse(analysisCalled)
+  }
+
+  @Test
+  fun `test injected markdown is not analyzed`() {
+    var analysisCalls = 0
+    myFixture.enableInspections(SpecificationTestInspection(emptyList<TestIssue>()) { analysisCalls++ })
+    myFixture.configureByText("SKILL.md", """
+      This is some specification
+      ```markdown
+      # Example
+      ```
+    """.trimIndent())
+    myFixture.checkHighlighting()
+    assertEquals(1, analysisCalls)
   }
 
   @Test
@@ -120,6 +136,23 @@ internal class SpecificationInspectionTest : BaseTestCase() {
     ))
     myFixture.checkHighlighting()
     assertNotNull(myFixture.getAvailableIntention("Navigate to contradiction at beautiful.md:L1"))
+  }
+
+  @Test
+  fun `test specification gutter marker is not added to injected markdown`() {
+    val text = """
+      ---
+      name: skill
+      description: Useful work.
+      ---
+      ```markdown
+      # Example
+      ```
+    """.trimIndent()
+    myFixture.configureByText("SKILL.md", text)
+
+    val markerCount = myFixture.findAllGutters().count { it.icon == GrazieIcons.Stroke.GrazieCloudProcessing }
+    assertEquals(1, markerCount)
   }
 
   internal class SpecificationTestInspection<T>(
