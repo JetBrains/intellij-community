@@ -5,6 +5,7 @@ import com.intellij.platform.debugger.impl.frontend.util.SequentialRpcRequestsEx
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.LoggedErrorProcessor
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -153,6 +154,28 @@ internal class SequentialRpcRequestsExecutorTest {
 
     requestCancelled.await()
     assertTrue(request.isCancelled)
+  }
+
+  @Test
+  fun `cancelling executor scope cancels running and queued requests`() = runBlocking {
+    val scope = childScope("SequentialRpcRequestsExecutor")
+    val executor = SequentialRpcRequestsExecutor.create(scope)
+    val requestStarted = CompletableDeferred<Unit>()
+    val runningRequest = executor.submit {
+      requestStarted.complete(Unit)
+      awaitCancellation()
+    }
+    val queuedRequest = executor.submit {
+      error("Queued request must not be executed")
+    }
+
+    requestStarted.await()
+    scope.cancel()
+    runningRequest.join()
+    queuedRequest.join()
+
+    assertTrue(runningRequest.isCancelled)
+    assertTrue(queuedRequest.isCancelled)
   }
 
   private fun runTest(test: suspend (SequentialRpcRequestsExecutor) -> Unit) = runBlocking {

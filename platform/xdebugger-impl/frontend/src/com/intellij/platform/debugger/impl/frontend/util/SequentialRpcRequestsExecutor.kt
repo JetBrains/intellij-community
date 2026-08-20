@@ -9,10 +9,8 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.completeWith
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.supervisorScope
 
 /**
@@ -58,22 +56,21 @@ internal class SequentialRpcRequestsExecutor private constructor() {
 
     override suspend fun performRequest() {
       if (!result.isActive) return
-
-      supervisorScope {
-        val requestResult = async { request() }
-        select {
-          requestResult.onJoin {
-            result.completeWith(runCatching { requestResult.await() })
-          }
-          result.onJoin {
-            requestResult.cancelAndJoin()
-          }
+      try {
+        supervisorScope {
+          val requestResult = async { request() }
+          result.invokeOnCompletion { requestResult.cancel() }
+          result.completeWith(runCatching { requestResult.await() })
         }
       }
+      finally {
+        result.cancel()
+      }
+
     }
 
     override fun markUndelivered() {
-      this.result.cancel()
+      result.cancel()
     }
   }
 
