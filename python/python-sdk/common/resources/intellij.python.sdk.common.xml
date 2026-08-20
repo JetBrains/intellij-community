@@ -17,8 +17,8 @@
   <!-- Evo interpreter widget registry keys. Declared here (common) so they register in both the frontend process
        (widget) and the backend process (PyEvoSdkApiProvider), since Registry is per-process. -->
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="python.evolution.widget" defaultValue="false" restartRequired="true"
-                 description="Enables the 'Evo Module Python Interpreter' widget in the status bar (PoC)"/>
+    <registryKey key="python.evolution.widget" defaultValue="true" restartRequired="true"
+                 description="Enables the 'Evo Module Python Interpreter' widget in the status bar, in place of the classic interpreter widget"/>
     <registryKey key="python.evolution.widget.cache.seconds" defaultValue="3"
                  description="Evo interpreter widget: how long (seconds) after closing the popup a re-open reuses the built tree before rebuilding"/>
     <registryKey key="python.evolution.widget.slow.threshold.seconds" defaultValue="5"
