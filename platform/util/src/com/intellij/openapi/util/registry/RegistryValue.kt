@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -323,33 +324,46 @@ open class RegistryValue @Internal constructor(
     }
   }
 
-  /** Returns a flow that emits when the raw string value changes. */
+  /** Returns a flow that emits when the raw string value is updated, without emitting the current value on collection. */
   @ApiStatus.Experimental
-  fun asStringFlow(): Flow<String> = requireNotNull(flow, { NO_COROUTINES_DIAGNOSTIC }).distinctUntilChanged()
+  fun asChangeEventsFlow(): Flow<Unit> = requireNotNull(flow) { NO_COROUTINES_DIAGNOSTIC }.map { }
+
+  private fun <T> asValueFlow(initialValue: () -> T, valueMapper: (String) -> T): Flow<T> {
+    return requireNotNull(flow) { NO_COROUTINES_DIAGNOSTIC }
+      .map { valueMapper(it) }
+      .onStart { emit(initialValue()) }
+      .distinctUntilChanged()
+  }
 
   /**
-   * Returns a flow that emits when the raw string value changes, converting the values to a boolean.
-   * Note that this will throw if the raw string value cannot be parsed as a boolean.
+   * Returns a flow that emits the current raw string value and then the updated distinct values.
+   * @see asString
+   * */
+  @ApiStatus.Experimental
+  fun asStringFlow(): Flow<String> = asValueFlow({ asString() }, { it })
+
+  /**
+   * Returns a flow that emits the current boolean value and then the updated distinct values.
    * @see asBoolean
    */
   @ApiStatus.Experimental
-  fun asBooleanFlow(): Flow<Boolean> = requireNotNull(flow, { NO_COROUTINES_DIAGNOSTIC }).map { it.toBoolean() }.distinctUntilChanged()
+  fun asBooleanFlow(): Flow<Boolean> = asValueFlow({ asBoolean() }, { it.toBoolean() })
 
   /**
-   * Returns a flow that emits when the raw string value changes, converting the values to an integer.
+   * Returns a flow that emits the current integer value and then the updated distinct values.
    * Note that this will throw if the raw string value cannot be parsed as an integer.
    * @see asInteger
    */
   @ApiStatus.Experimental
-  fun asIntegerFlow(): Flow<Int> = requireNotNull(flow, { NO_COROUTINES_DIAGNOSTIC }).map { it.toInt() }.distinctUntilChanged()
+  fun asIntegerFlow(): Flow<Int> = asValueFlow({ asInteger() }, { it.toInt() })
 
   /**
-   * Returns a flow that emits when the raw string value changes, converting the values to a double.
+   * Returns a flow that emits the current double value and then the updated distinct values.
    * Note that this will throw if the raw string value cannot be parsed as a double.
    * @see asDouble
    */
   @ApiStatus.Experimental
-  fun asDoubleFlow(): Flow<Double> = requireNotNull(flow, { NO_COROUTINES_DIAGNOSTIC }).map { it.toDouble() }.distinctUntilChanged()
+  fun asDoubleFlow(): Flow<Double> = asValueFlow({ asDouble() }, { it.toDouble() })
 
   internal fun resetCache() {
     stringCachedValue = null

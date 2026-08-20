@@ -8,7 +8,6 @@ import com.intellij.openapi.util.registry.Registry
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 
 internal class RegistryKeyMcpToolFilterProvider : McpToolFilterProvider {
   override fun applyFilters(context: McpToolFilterContext, clientInfo: Implementation?, sessionOptions: McpServerService.McpSessionOptions?, invocationMode: McpToolInvocationMode) {
@@ -16,6 +15,6 @@ internal class RegistryKeyMcpToolFilterProvider : McpToolFilterProvider {
   }
 
   override fun getUpdates(clientInfo: Implementation?, scope: CoroutineScope, sessionOptions: McpServerService.McpSessionOptions?, invocationMode: McpToolInvocationMode): Flow<Unit> {
-    return Registry.get("mcp.server.tools.filter").asStringFlow().map { }
+    return Registry.get("mcp.server.tools.filter").asChangeEventsFlow()
   }
 }

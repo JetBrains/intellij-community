@@ -7,7 +7,6 @@ import com.intellij.openapi.util.registry.Registry
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
 
 /**
@@ -41,13 +40,8 @@ internal class IndividualRegistryKeyMcpToolFilterProvider : McpToolFilterProvide
   }
 
   override fun getUpdates(clientInfo: Implementation?, scope: CoroutineScope, sessionOptions: McpServerService.McpSessionOptions?, invocationMode: McpToolInvocationMode): Flow<Unit> {
-    val flows = TOOL_REGISTRY_KEYS.values.map { registryKey ->
-      Registry.get(registryKey).asBooleanFlow()
-    }
-    return flows.merge().let { mergedFlow ->
-      flow {
-        mergedFlow.collect { emit(Unit) }
-      }
-    }
+    return TOOL_REGISTRY_KEYS.values.map { registryKey ->
+      Registry.get(registryKey).asChangeEventsFlow()
+    }.merge()
   }
 }

@@ -169,6 +169,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//libraries/kotlinx/coroutines/test",
         "@lib//:kotlin-test",
         "//platform/eel-provider",
         "//platform/core-impl",
@@ -201,6 +202,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
+        "//libraries/kotlinx/coroutines/test",
+        "//libraries/kotlinx/coroutines/test:test_test_lib",
         "@lib//:kotlin-test",
         "//platform/eel-provider",
         "//platform/eel-provider:eel-provider_test_lib",
