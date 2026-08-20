@@ -135,11 +135,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "jetbrains.mlapi.catboost.shadow.need.slf4j",
   "jetbrains.mlapi.core",
   "jetbrains.patronus.config",
-  "jetbrains.qodana.cloud.kotlin.client",
-  "jetbrains.qodana.configuration",
-  "jetbrains.qodana.publisher",
-  "jetbrains.qodana.sarif.converter",
-  "jetbrains.qodana.web.ui",
   // per-OS/arch native runtimes of the RenderDoc client, all packed into the plugin
   "jetbrains.rd.client.renderdoc.runtime.linux.aarch64",
   "jetbrains.rd.client.renderdoc.runtime.linux.x86_64",

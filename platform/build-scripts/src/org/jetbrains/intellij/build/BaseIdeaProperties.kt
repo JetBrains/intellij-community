@@ -93,10 +93,6 @@ fun configurePropertiesForAllEditionsOfIntelliJIdea(properties: JetBrainsProduct
     // this library is placed into a subdirectory of the 'lib' directory in the Android plugin layout, so we need to exclude it from the platform layout explicitly
     layout.withoutProjectLibrary("layoutlib")
 
-    layout.withoutProjectLibrary("jetbrains.qodana.cloud.kotlin.client")
-    layout.withoutProjectLibrary("jetbrains.qodana.publisher")
-    layout.withoutProjectLibrary("jetbrains.qodana.sarif.converter")
-    layout.withoutProjectLibrary("jetbrains.qodana.web.ui")
     layout.withoutProjectLibrary("qodana-sarif")
     layout.withoutProjectLibrary("hamcrest")
   }
