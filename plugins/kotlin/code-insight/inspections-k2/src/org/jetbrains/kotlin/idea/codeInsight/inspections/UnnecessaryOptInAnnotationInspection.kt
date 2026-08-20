@@ -13,9 +13,9 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.components.isClassType
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluateAsAnnotationValue
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbols
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -46,8 +46,6 @@ import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspection.WasExperimentalOptInsNecessityChecker
-import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -57,6 +55,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClassLiteralExpression
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -217,9 +216,10 @@ private class MarkerCollector(private val moduleApiVersion: ApiVersion) {
         }
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     fun collectMarkers(expression: KtReferenceExpression) {
-        val symbols = expression.mainReference.resolveToSymbols()
+        val symbols = expression.resolveSymbols()
         for (symbol in symbols) {
             (symbol as? KaAnnotatedSymbol)?.collectMarkers()
 
@@ -266,19 +266,10 @@ private class MarkerCollector(private val moduleApiVersion: ApiVersion) {
         }
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     fun collectMarkers(delegate: KtPropertyDelegate) {
-        val expression = delegate.expression
-        if (expression is KtReferenceExpression) {
-            val symbols = expression.mainReference.resolveToSymbols()
-            symbols.forEach {(it as? KaAnnotatedSymbol)?.collectMarkers() }
-        }
-
-        delegate.references.filterIsInstance<KtReference>().forEach {
-            it.resolveToSymbols().forEach { symbol ->
-                (symbol as? KaAnnotatedSymbol)?.collectMarkers()
-            }
-        }
+        delegate.resolveSymbols().forEach { (it as? KaAnnotatedSymbol)?.collectMarkers() }
     }
 
     context(_: KaSession)

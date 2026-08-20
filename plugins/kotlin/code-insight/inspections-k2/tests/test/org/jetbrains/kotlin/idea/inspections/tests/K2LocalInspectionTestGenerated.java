@@ -29916,6 +29916,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryCompanion.kt");
         }
 
+        @TestMetadata("necessaryDelegateExpression.kt")
+        public void testNecessaryDelegateExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryDelegateExpression.kt");
+        }
+
+        @TestMetadata("necessaryDelegateGetValue.kt")
+        public void testNecessaryDelegateGetValue() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryDelegateGetValue.kt");
+        }
+
+        @TestMetadata("necessaryDelegateSetValue.kt")
+        public void testNecessaryDelegateSetValue() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryDelegateSetValue.kt");
+        }
+
         @TestMetadata("necessaryDerivedClass.kt")
         public void testNecessaryDerivedClass() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryDerivedClass.kt");
@@ -30164,6 +30179,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("redundantClassTwoMarkersBothUseless.kt")
         public void testRedundantClassTwoMarkersBothUseless() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantClassTwoMarkersBothUseless.kt");
+        }
+
+        @TestMetadata("redundantDelegate.kt")
+        public void testRedundantDelegate() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantDelegate.kt");
+        }
+
+        @TestMetadata("redundantDelegateSetValueForVal.kt")
+        public void testRedundantDelegateSetValueForVal() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantDelegateSetValueForVal.kt");
         }
 
         @TestMetadata("redundantFunctionBody.kt")
