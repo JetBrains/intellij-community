@@ -13,11 +13,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlinc-symbol-light-classes-kotlinc-symbol-light-classes"],
+    exports = ["@lib//:kotlinc-symbol-light-classes"],
     runtime_deps = [
         # do not sort,
         "//java/java-psi-impl:psi-impl",
-        "@lib//:libraries-kotlinc-symbol-light-classes-kotlinc-symbol-light-classes",
+        "@lib//:kotlinc-symbol-light-classes",
         "//platform/backend",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
@@ -34,7 +34,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlinc.symbol.light.classes",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlinc-symbol-light-classes-kotlinc-symbol-light-classes"],
+    exports = ["@lib//:kotlinc-symbol-light-classes"],
     runtime_deps = [
         # do not sort,
         ":libraries-kotlinc-symbol-light-classes",
