@@ -2,16 +2,16 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ChangeToLabeledReturnFix
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -48,6 +48,7 @@ internal object ChangeToLabeledReturnFixFactory {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun findAccessibleLabels(position: KtReturnExpression): List<Name> {
         val result = mutableListOf<Name>()
@@ -61,8 +62,8 @@ internal object ChangeToLabeledReturnFixFactory {
                     }
 
                     // check if the current function literal is inlined and stop processing outer declarations if it's not
-                    val callee = call?.calleeExpression as? KtReferenceExpression ?: break
-                    val symbol = callee.mainReference.resolveToSymbol()
+                    if (call?.calleeExpression !is KtReferenceExpression) break
+                    val symbol = call.resolveSymbol()
                     if (!(symbol is KaNamedFunctionSymbol && symbol.isInline)) break
                 }
 
