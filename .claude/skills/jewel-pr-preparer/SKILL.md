@@ -350,16 +350,25 @@ gh pr edit <number> --repo JetBrains/intellij-community \
   --add-reviewer "<reviewer3>"
 ```
 
-Add 3 reviewers, mixing external and internal contributors. Known Jewel team reviewer handles:
+Always add 3 reviewers, mixing teams.
 
-- External reviewers (non-JetBrains): `DanielSouzaBertoldi`, `rock3r`
-- Internal reviewers (JetBrains): `DejanMilicic`, `nebojsa-vuksic`, `AlexVanGogen`, `daaria-s`
+The reviewer pool is **not** hardcoded here. It comes from the published Jewel maintainers list at
+<https://jewel-ui.dev/data/maintainers.json>, where every maintainer carries a `team` of either `jetbrains` or `google`. Maintainers from
+Touchlab work on Google's behalf and are recorded as `google`; the only distinction that matters for reviews is whether someone is a
+JetBrains employee. Never hardcode reviewer handles in this skill, in the helper script, or in a PR — if the roster is wrong, fix the
+published list instead.
 
 Do NOT ask for a review from the author of the PR, of course.
 
 For best-effort round-robin assignment, prefer reviewers with the fewest outstanding review requests across currently open Jewel PRs.
-Try to keep at least one external and one internal reviewer in the set whenever possible. This is only a heuristic — it does not know about
+Try to keep at least one reviewer from each team in the set whenever possible. This is only a heuristic — it does not know about
 vacations, availability, or special topic ownership. Ask the user before applying the suggested reviewers.
+
+Requesting 3 reviewers is unrelated to how many approvals the PR needs to merge. Per the
+[approval rules](../../../platform/jewel/docs/jewel-contribution-guide.md#approval-rules), one Jewel team approval is enough for a small or
+simple change, or for one confined to `platform/jewel`; anything else needs two approvals, at least one of them from a JetBrains
+maintainer. Note that "confined to `platform/jewel`" is deliberately narrower than the Jewel-related paths in the contribution guide, so a
+PR touching `libraries/skiko` — or this skill's own files — still needs a JetBrains approval.
 
 Run the helper script from the repository root (or adjust the path accordingly):
 
@@ -370,9 +379,13 @@ python3 .claude/skills/jewel-pr-preparer/scripts/suggest_reviewers.py \
   --exclude <optional-comma-separated-extra-logins>
 ```
 
-The script prints suggested reviewers and an example `gh pr edit ... --add-reviewer ...` command. If the script returns fewer than 3
-reviewers, ask the user how they want to fill the remaining slots. If the user wants a different balance (e.g., 2 internal + 1 external),
-adjust the selection accordingly.
+The script prints the maintainer list it used, the suggested reviewers with their team, and an example `gh pr edit ... --add-reviewer ...`
+command. If the script returns fewer than 3 reviewers, ask the user how they want to fill the remaining slots. If the user wants a different
+balance (e.g., 2 JetBrains + 1 Google), adjust the selection accordingly.
+
+The script fetches the maintainers list at run time. If that fetch fails it warns on stderr and falls back to `maintainers.fallback.json`,
+a snapshot bundled next to the script. When you see that warning, tell the user the suggestions came from a possibly stale copy so they can
+sanity-check the handles. If neither source is usable the script exits with an error and the user should pick reviewers manually.
 
 ### Update YouTrack ticket state
 
