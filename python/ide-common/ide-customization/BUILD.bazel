@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.pycharm.community.ide.customization` start
+jvm_library(
+    name = "pycharm-community-ide-customization",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.pycharm.community.ide.customization",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+    ],
+)
+
+jvm_library(
+    name = "pycharm-community-ide-customization_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.pycharm.community.ide.customization",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":pycharm-community-ide-customization",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.pycharm.community.ide.customization` end
+
+### auto-generated section `iml intellij.pycharm.community.ide.customization` start
+exports_files(
+    [
+        "intellij.pycharm.community.ide.customization.iml",
+        "resources/intellij.pycharm.community.ide.customization.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.pycharm.community.ide.customization` end

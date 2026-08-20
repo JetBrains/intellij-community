@@ -1,8 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
-                        serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"
-                        overrides="true"/>
+                        serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"/>
     <ide.newUiOnboarding ideHelpName="idea"/>
     <tipAndTrick file="CommandCompletion.html"/>
   </extensions>

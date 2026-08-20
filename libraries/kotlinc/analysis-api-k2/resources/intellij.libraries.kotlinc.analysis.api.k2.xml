@@ -12,6 +12,7 @@
     <module name="intellij.libraries.kotlinc.low.level.api.fir"/>
     <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.ide.core"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

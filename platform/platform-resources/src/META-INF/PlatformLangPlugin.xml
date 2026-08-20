@@ -5,31 +5,6 @@
   <module value="com.intellij.modules.platform"/>
   <module value="com.intellij.modules.lang"/>
 
-  <extensionPoints>
-    <extensionPoint name="applicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="false"/>
-    <!-- The platform skips such listeners on dynamic loading/unloading of plugins assuming it is safe -->
-    <extensionPoint name="dynamicApplicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="true"/>
-    <extensionPoint name="applicationActivity" interface="com.intellij.ide.ApplicationActivity" dynamic="false"/>
-    <extensionPoint name="registryKey" beanClass="com.intellij.openapi.util.registry.RegistryKeyBean" dynamic="true"/>
-    <extensionPoint name="registry.managed" interface="com.intellij.openapi.util.registry.ManagedRegistry" dynamic="false"/>
-    <extensionPoint name="applicationSettings"
-                    beanClass="com.intellij.ide.settings.SettingsComponentDescriptor"
-                    dynamic="true">
-      <with attribute="service" implements="com.intellij.openapi.components.PersistentStateComponent"/>
-    </extensionPoint>
-    <extensionPoint name="projectSettings"
-                    beanClass="com.intellij.ide.settings.SettingsComponentDescriptor"
-                    area="IDEA_PROJECT"
-                    dynamic="true">
-      <with attribute="service" implements="com.intellij.openapi.components.PersistentStateComponent"/>
-    </extensionPoint>
-  </extensionPoints>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <!-- registered main-time so product-descriptor overrides="true" registrations see the base first -->
-    <applicationService serviceImplementation="com.intellij.openapi.application.IdeUrlTrackingParametersProvider" open="true"/>
-  </extensions>
-
   <xi:include href="/idea/PriorityEditorLangActions.xml"/>
   <xi:include href="/idea/PlatformActions.xml"/>
   <xi:include href="/idea/ExecutionActions.xml"/>

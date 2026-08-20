@@ -1,0 +1,11 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.ide.core"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ea.auto.report.feature.visible" defaultValue="false" overrides="true"
+                 description="Makes the automatic error reporting feature hidden in UI"/>
+  </extensions>
+</idea-plugin>

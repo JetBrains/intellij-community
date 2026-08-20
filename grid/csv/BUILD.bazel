@@ -18,6 +18,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/ide-core"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
@@ -57,6 +58,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//libraries/automaton:automaton_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.grid.csv.core.impl` end

@@ -203,6 +203,8 @@ class MPSProperties : JetBrainsProductProperties() {
         module("intellij.platform.customization.min")
         module("intellij.idea.customization.base")
 
+        embeddedModule("intellij.idea.community.ide.customization")
+
       module("intellij.platform.ide.nonModalWelcomeScreen")
       module("intellij.platform.ide.nonModalWelcomeScreen.frontend")
       module("intellij.platform.ide.nonModalWelcomeScreen.backend")

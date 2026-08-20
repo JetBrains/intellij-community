@@ -27,6 +27,23 @@
                         serviceImplementation="com.intellij.execution.sudo.LocalSudoCommandProvider"/>
   </extensions>
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.applicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="false"/>
+    <!-- The platform skips such listeners on dynamic loading/unloading of plugins assuming it is safe -->
+    <extensionPoint qualifiedName="com.intellij.dynamicApplicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.applicationActivity" interface="com.intellij.ide.ApplicationActivity" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.registryKey" beanClass="com.intellij.openapi.util.registry.RegistryKeyBean" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.registry.managed" interface="com.intellij.openapi.util.registry.ManagedRegistry" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.applicationSettings"
+                    beanClass="com.intellij.ide.settings.SettingsComponentDescriptor"
+                    dynamic="true">
+      <with attribute="service" implements="com.intellij.openapi.components.PersistentStateComponent"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.projectSettings"
+                    beanClass="com.intellij.ide.settings.SettingsComponentDescriptor"
+                    area="IDEA_PROJECT"
+                    dynamic="true">
+      <with attribute="service" implements="com.intellij.openapi.components.PersistentStateComponent"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.appStarter" beanClass="com.intellij.openapi.application.ApplicationStarterEP" dynamic="true">
       <with attribute="implementation" implements="com.intellij.openapi.application.ApplicationStarter"/>
     </extensionPoint>

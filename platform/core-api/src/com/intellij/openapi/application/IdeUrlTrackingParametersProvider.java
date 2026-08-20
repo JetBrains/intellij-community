@@ -10,8 +10,11 @@ import org.jetbrains.annotations.NotNull;
  * This service isn't supposed to be overridden in regular plugins.
  */
 public class IdeUrlTrackingParametersProvider {
+  private static final IdeUrlTrackingParametersProvider IDENTITY = new IdeUrlTrackingParametersProvider();
+
   public static IdeUrlTrackingParametersProvider getInstance() {
-    return ApplicationManager.getApplication().getService(IdeUrlTrackingParametersProvider.class);
+    IdeUrlTrackingParametersProvider service = ApplicationManager.getApplication().getService(IdeUrlTrackingParametersProvider.class);
+    return service != null ? service : IDENTITY;
   }
 
   /**

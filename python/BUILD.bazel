@@ -29,6 +29,7 @@ jvm_library(
         ["ide-common/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//python/ide-common/ide-customization:pycharm-community-ide-customization"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -59,6 +60,7 @@ jvm_library(
         "//libraries/guava:guava_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
+        "//python/ide-common/ide-customization:pycharm-community-ide-customization_test_lib",
     ],
 )
 ### auto-generated section `build intellij.pycharm.community` end
@@ -68,7 +70,6 @@ exports_files(
     [
         "intellij.pycharm.community.iml",
         "ide-common/resources/META-INF/PyCharmCorePlugin.xml",
-        "ide-common/resources/META-INF/pycharm-core-customization.xml",
         "ide-common/resources/idea/PyCharmCoreApplicationInfo.xml",
         "resources/META-INF/pycharm-core.xml",
         "resources/ProductivityFeaturesRegistry.xml",

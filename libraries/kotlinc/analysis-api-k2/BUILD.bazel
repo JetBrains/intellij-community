@@ -26,6 +26,7 @@ jvm_library(
         "//java/java-psi-impl:psi-impl",
         "//java/java-frontback-psi-impl:frontback-psi-impl",
         "//platform/backend",
+        "//platform/ide-core",
     ],
 )
 
@@ -56,6 +57,7 @@ jvm_library(
         "//java/java-psi-impl:psi-impl_test_lib",
         "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
         "//platform/backend:backend_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.analysis.api.k2` end

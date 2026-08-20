@@ -32,6 +32,7 @@
     <module name="intellij.platform.customization.min"/>
     <module name="intellij.idea.customization.base"/>
     <module name="intellij.idea.customization.backend"/>
+    <module name="intellij.idea.community.ide.customization" loading="embedded"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen.frontend"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>

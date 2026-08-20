@@ -1,5 +1,17 @@
 com.intellij.ide.dnd.DnDEvent$DropTargetHighlightingType
 - *sf:BOTTOM:I
+*f:com.intellij.ide.settings.SettingsComponentDescriptor
+- com.intellij.openapi.extensions.PluginAware
+- *sf:Companion:com.intellij.ide.settings.SettingsComponentDescriptor$Companion
+- implementationClass:java.lang.String
+- <init>():V
+- f:getImplementationClass():java.lang.String
+- f:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
+- f:setImplementationClass(java.lang.String):V
+- setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
+*f:com.intellij.ide.settings.SettingsComponentDescriptor$Companion
+- f:getAPPLICATION_EP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+- f:getPROJECT_EP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 c:com.intellij.notification.Notification
 - *s:isDoNotAskFor(com.intellij.openapi.project.Project,java.lang.String):Z
 - *:setDoNotAskFor(com.intellij.openapi.project.Project):com.intellij.notification.Notification

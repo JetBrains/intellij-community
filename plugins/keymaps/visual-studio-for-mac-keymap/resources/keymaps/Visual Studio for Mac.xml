@@ -200,6 +200,8 @@
   <action id="RebuildProject">
     <keyboard-shortcut first-keystroke="control meta B" />
   </action>
+  <!-- F6 is Build here; shadow the inherited Move binding -->
+  <action id="Move"/>
   <action id="EditorDeleteLine"/>
   <action id="EditorScrollToCenter"/>
   <action id="CompareTwoFiles"/>

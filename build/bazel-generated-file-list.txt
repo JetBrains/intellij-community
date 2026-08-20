@@ -221,6 +221,7 @@ build/tasks
 build/tests
 commandInterface
 community-resources
+community-resources/ide-customization
 fleet/andel
 fleet/bifurcan
 fleet/build/authentication
@@ -1719,6 +1720,7 @@ python/build/build-debug-binaries
 python/common
 python/conda
 python/huggingFace
+python/ide-common/ide-customization
 python/ide/customization.backend
 python/ide/customization.shared
 python/ide/impl

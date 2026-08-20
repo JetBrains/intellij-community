@@ -20,6 +20,7 @@ jvm_library(
         "//idea/customization/min",
         "//idea/customization/base",
         "//platform/experiment",
+        "//community-resources/ide-customization",
     ],
 )
 
@@ -40,6 +41,7 @@ jvm_library(
         "//idea/customization/min:min_test_lib",
         "//idea/customization/base:base_test_lib",
         "//platform/experiment:experiment_test_lib",
+        "//community-resources/ide-customization:ide-customization_test_lib",
     ],
 )
 ### auto-generated section `build intellij.idea.community.customization` end

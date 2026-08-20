@@ -25,6 +25,7 @@ jvm_library(
         "//platform/indexing-impl",
         "//java/java-indexing-serializers:indexing-serializers",
     ],
+    runtime_deps = ["//platform/ide-core"],
     deps = [
         # do not sort,
         "//java/java-psi-api:psi",
@@ -104,6 +105,7 @@ jvm_library(
         "//platform/workspace/storage:storage_test_lib",
         "//platform/backend/workspace:workspace_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.indexing.impl` end
