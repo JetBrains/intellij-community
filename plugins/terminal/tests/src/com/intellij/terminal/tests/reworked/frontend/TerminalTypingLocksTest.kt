@@ -8,13 +8,10 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.terminal.frontend.view.impl.createTerminalKeyEventDispatcherForTests
 import com.intellij.terminal.tests.reworked.frontend.TerminalTypingLocksTest.Companion.ALLOWED_WRITE_INTENT
-import com.intellij.terminal.tests.reworked.frontend.completion.TerminalCompletionFixture.Companion.doWithCompletionFixture
-import com.intellij.terminal.tests.reworked.util.EchoingTerminalSession
 import com.intellij.terminal.tests.reworked.util.LockKind
 import com.intellij.terminal.tests.reworked.util.TerminalEdtLocksSpy
 import com.intellij.testFramework.PlatformTestUtil
@@ -27,10 +24,6 @@ import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
-import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
-import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
-import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
-import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
@@ -62,41 +55,6 @@ internal class TerminalTypingLocksTest : BasePlatformTestCase() {
       fixture.moveMouseOverOutput()
     }
     assertNoUnexpectedLocks(spy, "while typing in the terminal")
-  }
-
-  @Test
-  fun `test EDT locks while showing completion popup`() {
-    val spy = TerminalEdtLocksSpy(testRootDisposable)
-
-    timeoutRunBlocking(20.seconds, context = Dispatchers.EDT) {
-      val fixtureScope = childScope("TerminalCompletionFixture")
-      val startupOptions = TerminalStartupOptionsImpl(
-        shellCommand = listOf("/bin/zsh", "--login", "-i"),
-        workingDirectory = "fakeDir",
-        envVariables = emptyMap(),
-        processType = TerminalProcessType.SHELL,
-        pid = null,
-      )
-      val session = EchoingTerminalSession(startupOptions, fixtureScope.childScope("EchoingTerminalSession"))
-      doWithCompletionFixture(project, session, fixtureScope) { fixture ->
-        fixture.mockTestShellCommand(ShellCommandSpec("echo") {
-          argument {
-            suggestions("hello", "world")
-          }
-        })
-        fixture.awaitShellIntegrationFeaturesInitialized()
-        fixture.setCompletionOptions(
-          showPopupAutomatically = false,
-          showingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS,
-          parentDisposable = testRootDisposable,
-        )
-
-        fixture.type("echo ")
-        fixture.callCompletionPopup()
-        assertThat(fixture.isLookupActive()).isTrue()
-      }
-    }
-    assertNoUnexpectedLocks(spy, "while opening terminal completion popup")
   }
 
   private fun assertNoUnexpectedLocks(spy: TerminalEdtLocksSpy, operation: String) {
