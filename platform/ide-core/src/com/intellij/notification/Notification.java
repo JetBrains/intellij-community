@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -363,7 +363,11 @@ public class Notification {
     if (!myExpired.compareAndSet(false, true)) return;
 
     UIUtil.invokeLaterIfNeeded(this::hideBalloon);
-    NotificationsManager.getNotificationsManager().expire(this);
+
+    var manager = NotificationsManager.getNotificationsManager();
+    if (manager != null) {
+      manager.expire(this);
+    }
 
     if (myWhenExpired != null) {
       for (var each : myWhenExpired) {
