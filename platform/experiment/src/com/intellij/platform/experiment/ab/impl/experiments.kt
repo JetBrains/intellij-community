@@ -74,8 +74,8 @@ internal val experimentsPartition: List<ExperimentAssignment> = listOf(
   ),
   ExperimentAssignment(
     experiment = ABExperimentOption.CLION_WIZARD_REMOVAL,
-    experimentBuckets = (512 until 768).toSet(),
-    controlBuckets = (768 until 1024).toSet(),
+    experimentBuckets = (256 until 768).toSet(),
+    controlBuckets = (0 until 256).toSet() + (768 until 1024).toSet(),
     majorVersion = "2026.2",
     products = EnumSet.of(IntelliJPlatformProduct.CLION),
   ),
