@@ -36,7 +36,7 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * Regression guards for terminal EDT locks during initialization and interaction: neither phase must acquire the write lock,
- * and write-intent locks must stay within the allowlist for the relevant phase. See [TerminalEdtLocksSpy].
+ * write-intent and read lock sites must stay within their respective allowlists for the relevant phase. See [TerminalEdtLocksSpy].
  *
  * When this test fails with a new site, look at the printed stack and decide: add the site to the
  * allowlist or fix the code so it does not take the lock on the EDT.
@@ -50,7 +50,7 @@ internal class TerminalTypingLocksTest : BasePlatformTestCase() {
     val spy = TerminalEdtLocksSpy(testRootDisposable)
 
     withTerminalTestFixture {
-      assertNoUnexpectedLocks(spy, ALLOWED_INIT_LOCKS, "during terminal initialization")
+      assertNoUnexpectedLocks(spy, INIT_READ_LOCKS, INIT_WRITE_INTENT_LOCKS, "during terminal initialization")
     }
   }
 
@@ -61,26 +61,34 @@ internal class TerminalTypingLocksTest : BasePlatformTestCase() {
 
       fixture.type("echo hello world")
       fixture.moveMouseOverOutput()
-      assertNoUnexpectedLocks(spy, ALLOWED_INTERACTION_LOCKS, "during terminal typing")
+      assertNoUnexpectedLocks(spy, INTERACTION_READ_LOCKS, INTERACTION_WRITE_INTENT_LOCKS, "during terminal typing")
     }
   }
 
   private fun assertNoUnexpectedLocks(
     spy: TerminalEdtLocksSpy,
-    allowedLocks: Set<String>,
+    allowedReadLocks: Set<String>,
+    allowedWriteIntentLocks: Set<String>,
     operation: String,
   ) {
-    val writes = spy.lockUsages(LockKind.WRITE)
-    assertThat(writes)
+    val writeLocks = spy.lockUsages(LockKind.WRITE)
+    assertThat(writeLocks)
       .describedAs("Write actions shouldn't be taken on the EDT $operation:\n" +
-                   writes.joinToString("\n\n"))
+                   writeLocks.joinToString("\n\n"))
       .isEmpty()
 
-    val unexpectedWILs = spy.lockUsages(LockKind.WRITE_INTENT).filterNot { it.signature in allowedLocks }
-    assertThat(unexpectedWILs)
+    val readLocks = spy.lockUsages(LockKind.READ).filterNot { it.signature in allowedReadLocks }
+    assertThat(readLocks)
+      .describedAs("New read lock sites on the EDT $operation. " +
+                   "Add them to the corresponding allowlist or avoid taking the lock:\n" +
+                   readLocks.joinToString("\n\n"))
+      .isEmpty()
+
+    val writeIntentLocks = spy.lockUsages(LockKind.WRITE_INTENT).filterNot { it.signature in allowedWriteIntentLocks }
+    assertThat(writeIntentLocks)
       .describedAs("New write-intent lock sites on the EDT $operation. " +
                    "Add them to the corresponding allowlist or avoid taking the lock:\n" +
-                   unexpectedWILs.joinToString("\n\n"))
+                   writeIntentLocks.joinToString("\n\n"))
       .isEmpty()
   }
 
@@ -98,12 +106,21 @@ internal class TerminalTypingLocksTest : BasePlatformTestCase() {
   }
 
   companion object {
-    private val ALLOWED_INIT_LOCKS: Set<String> = setOf(
+    private val INIT_READ_LOCKS: Set<String> = emptySet()
+    private val INIT_WRITE_INTENT_LOCKS: Set<String> = setOf(
       "com.intellij.terminal.frontend.view.impl.TerminalViewImpl#configureOutputEditor",
       "org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils#createOutputEditor"
     )
 
-    private val ALLOWED_INTERACTION_LOCKS: Set<String> = emptySet()
+    private val INTERACTION_READ_LOCKS: Set<String> = setOf(
+      "com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionService#obtainLookup",
+      "com.intellij.terminal.frontend.view.completion.TerminalLookupManagerListener#activeLookupChanged",
+      "com.intellij.terminal.frontend.view.completion.TerminalLookupManagerListener#installLookupPrefixUpdater",
+      "com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionProcess#<init>",
+      "com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionProcess#cancel",
+      "org.jetbrains.plugins.terminal.block.prompt.TerminalLookupManagerListener#activeLookupChanged"
+    )
+    private val INTERACTION_WRITE_INTENT_LOCKS: Set<String> = emptySet()
   }
 }
 

@@ -2,6 +2,7 @@
 package com.intellij.terminal.tests.reworked.util
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ReadActionListener
 import com.intellij.openapi.application.WriteActionListener
 import com.intellij.openapi.application.WriteIntentReadActionListener
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -17,6 +18,11 @@ internal class TerminalEdtLocksSpy(parentDisposable: Disposable) {
     app.addWriteActionListener(object : WriteActionListener {
       override fun beforeWriteActionStart(action: Class<*>) {
         record(LockKind.WRITE)
+      }
+    }, parentDisposable)
+    app.addReadActionListener(object : ReadActionListener {
+      override fun beforeReadActionStart(action: Class<*>) {
+        record(LockKind.READ)
       }
     }, parentDisposable)
     app.addWriteIntentReadActionListener(object : WriteIntentReadActionListener {
@@ -60,7 +66,7 @@ internal class TerminalEdtLocksSpy(parentDisposable: Disposable) {
   }
 }
 
-internal enum class LockKind { WRITE, WRITE_INTENT }
+internal enum class LockKind { WRITE, READ, WRITE_INTENT }
 
 internal data class LockUsage(
   val kind: LockKind,
