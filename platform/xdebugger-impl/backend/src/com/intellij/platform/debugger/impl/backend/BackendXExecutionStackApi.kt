@@ -19,16 +19,13 @@ import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -40,7 +37,6 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
     val executionStackModel = executionStackId.findValue() ?: return emptyFlow()
     return channelFlow {
       val executionStack = executionStackModel.executionStack
-      val pendingPresentationJobs = mutableListOf<Job>()
       val events = Channel<suspend () -> Unit>(Channel.UNLIMITED)
 
       executionStack.computeStackFrames(firstFrameIndex, object : XStackFrameContainerEx {
@@ -65,35 +61,28 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
               val index = framesCopy.indexOf(it)
               if (index >= 0) frameDtos[index].stackFrameId else null
             }
-            this@channelFlow.send(XStackFramesEvent.XNewStackFrames(frameDtos, frameToSelectId, last))
-            val framesWithIds = frameDtos.zip(framesCopy) { dto, frame -> dto.stackFrameId to frame }
-            subscribeToPresentationUpdates(executionStackId, framesWithIds, last)
+            send(XStackFramesEvent.XNewStackFrames(frameDtos, frameToSelectId, last))
+            frameDtos.zip(framesCopy).forEach { (dto, frame) ->
+              subscribeToPresentationUpdates(dto.stackFrameId, frame)
+            }
+          }
+          if (last) {
+            // channelFlow waits for its child presentation coroutines before completing.
+            events.close()
           }
         }
 
-        private fun ProducerScope<XStackFramesEvent>.subscribeToPresentationUpdates(executionStackId: XExecutionStackId,
-                                                                                    framesWithIds: List<Pair<XStackFrameId, XStackFrame>>,
-                                                                                    last: Boolean) {
-          pendingPresentationJobs.addAll(framesWithIds.map { (id, frame) ->
-            launch(CoroutineName("Presentation update for $id")) {
-              frame.customizePresentation().collectLatest { presentation ->
-                val fragments = buildList {
-                  presentation.fragments.forEach { (text, attributes) ->
-                    add(XStackFramePresentationFragment(text, attributes.rpcId()))
-                  }
+        private fun subscribeToPresentationUpdates(id: XStackFrameId, frame: XStackFrame) {
+          launch(CoroutineName("Presentation update for $id")) {
+            // returns a finite flow, as stated in its doc
+            frame.customizePresentation().collectLatest { presentation ->
+              val fragments = buildList {
+                presentation.fragments.forEach { (text, attributes) ->
+                  add(XStackFramePresentationFragment(text, attributes.rpcId()))
                 }
-                val newPresentation = XStackFramePresentation(fragments, presentation.icon?.rpcId(), presentation.tooltipText)
-                this@channelFlow.send(XStackFramesEvent.NewPresentation(id, newPresentation))
               }
-            }
-          })
-          if (last) {
-            // here I rely on two things:
-            // 1. subscribeToPresentationUpdates is always called synchronously, because `addStackFrames` is synchronous
-            // 2. XStackFrame.customizePresentation() returns a finite flow, as stated in its doc.
-            launch(CoroutineName("computeStackFrames finisher for $executionStackId")) {
-              pendingPresentationJobs.joinAll()
-              events.close()
+              val newPresentation = XStackFramePresentation(fragments, presentation.icon?.rpcId(), presentation.tooltipText)
+              send(XStackFramesEvent.NewPresentation(id, newPresentation))
             }
           }
         }
