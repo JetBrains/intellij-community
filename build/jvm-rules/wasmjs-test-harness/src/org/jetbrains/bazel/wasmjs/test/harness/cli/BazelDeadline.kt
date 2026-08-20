@@ -6,9 +6,12 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * The in-harness deadline derived from `TEST_TIMEOUT`: end the run early enough to tear the browser
- * down and still write the reports before Bazel sends SIGTERM, but never lose the deadline entirely
- * — for timeouts at or below the standard grace, a quarter of the timeout is reserved instead.
+ * down and still write the reports before Bazel sends SIGTERM.
  */
-internal fun softDeadline(timeout: Duration): Duration = timeout - minOf(TEARDOWN_GRACE, timeout / 4)
+internal fun softDeadline(timeout: Duration): Duration {
+  val softDeadline = timeout - TEARDOWN_GRACE
+  require(softDeadline.isPositive()) { "test timeout cannot be under $TEARDOWN_GRACE" }
+  return softDeadline
+}
 
 private val TEARDOWN_GRACE = 15.seconds
