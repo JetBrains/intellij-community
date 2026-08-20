@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -95,9 +96,10 @@ public final class DiffApplicationBase {
   }
 
   public static @NotNull File getFile(@NotNull String path, @Nullable String currentDirectory) {
-    File file = new File(path);
+    String unquotedPath = StringUtilRt.unquoteString(path);
+    File file = new File(unquotedPath);
     if (!file.isAbsolute() && currentDirectory != null) {
-      file = new File(currentDirectory, path);
+      file = new File(currentDirectory, unquotedPath);
     }
     return file;
   }
