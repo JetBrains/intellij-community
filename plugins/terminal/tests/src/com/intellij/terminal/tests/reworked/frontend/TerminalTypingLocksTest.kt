@@ -11,7 +11,6 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.terminal.frontend.view.impl.createTerminalKeyEventDispatcherForTests
-import com.intellij.terminal.tests.reworked.frontend.TerminalTypingLocksTest.Companion.ALLOWED_WRITE_INTENT
 import com.intellij.terminal.tests.reworked.util.LockKind
 import com.intellij.terminal.tests.reworked.util.TerminalEdtLocksSpy
 import com.intellij.testFramework.PlatformTestUtil
@@ -36,38 +35,51 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Regression guard for the terminal hot path: typing (and a mouse move) must not acquire the write lock
- * on the EDT, and must not acquire any write-intent lock outside [ALLOWED_WRITE_INTENT]. See [TerminalEdtLocksSpy].
+ * Regression guards for terminal EDT locks during initialization and interaction: neither phase must acquire the write lock,
+ * and write-intent locks must stay within the allowlist for the relevant phase. See [TerminalEdtLocksSpy].
  *
  * When this test fails with a new site, look at the printed stack and decide: add the site to the
- * allow-list or fix the code so it does not take the lock on the EDT.
+ * allowlist or fix the code so it does not take the lock on the EDT.
  */
 @RunWith(JUnit4::class)
 internal class TerminalTypingLocksTest : BasePlatformTestCase() {
   override fun runInDispatchThread(): Boolean = false
 
   @Test
-  fun `test EDT locks while typing`() {
+  fun `test EDT locks while initializing terminal`() {
     val spy = TerminalEdtLocksSpy(testRootDisposable)
 
-    withTerminalTestFixture { fixture ->
-      fixture.type("echo hello world")
-      fixture.moveMouseOverOutput()
+    withTerminalTestFixture {
+      assertNoUnexpectedLocks(spy, ALLOWED_INIT_LOCKS, "during terminal initialization")
     }
-    assertNoUnexpectedLocks(spy, "while typing in the terminal")
   }
 
-  private fun assertNoUnexpectedLocks(spy: TerminalEdtLocksSpy, operation: String) {
+  @Test
+  fun `test EDT locks while typing`() {
+    withTerminalTestFixture { fixture ->
+      val spy = TerminalEdtLocksSpy(testRootDisposable)
+
+      fixture.type("echo hello world")
+      fixture.moveMouseOverOutput()
+      assertNoUnexpectedLocks(spy, ALLOWED_INTERACTION_LOCKS, "during terminal typing")
+    }
+  }
+
+  private fun assertNoUnexpectedLocks(
+    spy: TerminalEdtLocksSpy,
+    allowedLocks: Set<String>,
+    operation: String,
+  ) {
     val writes = spy.lockUsages(LockKind.WRITE)
     assertThat(writes)
       .describedAs("Write actions shouldn't be taken on the EDT $operation:\n" +
                    writes.joinToString("\n\n"))
       .isEmpty()
 
-    val unexpectedWILs = spy.lockUsages(LockKind.WRITE_INTENT).filterNot { it.signature in ALLOWED_WRITE_INTENT }
+    val unexpectedWILs = spy.lockUsages(LockKind.WRITE_INTENT).filterNot { it.signature in allowedLocks }
     assertThat(unexpectedWILs)
       .describedAs("New write-intent lock sites on the EDT $operation. " +
-                   "Add them to ALLOWED_WRITE_INTENT or avoid taking the lock:\n" +
+                   "Add them to the corresponding allowlist or avoid taking the lock:\n" +
                    unexpectedWILs.joinToString("\n\n"))
       .isEmpty()
   }
@@ -86,10 +98,12 @@ internal class TerminalTypingLocksTest : BasePlatformTestCase() {
   }
 
   companion object {
-    private val ALLOWED_WRITE_INTENT: Set<String> = setOf(
+    private val ALLOWED_INIT_LOCKS: Set<String> = setOf(
       "com.intellij.terminal.frontend.view.impl.TerminalViewImpl#configureOutputEditor",
       "org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils#createOutputEditor"
     )
+
+    private val ALLOWED_INTERACTION_LOCKS: Set<String> = emptySet()
   }
 }
 
