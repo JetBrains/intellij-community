@@ -15,6 +15,7 @@ import com.intellij.util.asSafely
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
@@ -99,6 +100,12 @@ object GitLabMergeRequestSelectorsComponentFactory {
       loginSource = GitLabLoginSource.MR_TW) { server, name ->
       GitLabLoginUtil.isAccountUnique(accounts, server, name)
     }
+    LoginRequest.Type.OAUTH_CUSTOM_SERVER -> GitLabLoginUtil.logInViaOAuthToCustomServer(
+      project, selectors,
+      serverPath = repo.repository.serverPath,
+      loginSource = GitLabLoginSource.MR_TW) { server, name ->
+      GitLabLoginUtil.isAccountUnique(accounts, server, name)
+    }
   }
 
   private fun LoginRequest.reLogIn(
@@ -120,6 +127,13 @@ object GitLabMergeRequestSelectorsComponentFactory {
       loginSource = GitLabLoginSource.MR_TW) { server, name ->
       GitLabLoginUtil.isAccountUnique(accounts, server, name)
     }
+    LoginRequest.Type.OAUTH_CUSTOM_SERVER -> GitLabLoginUtil.reLogInViaOAuthToCustomServer(
+      project,
+      selectors,
+      account,
+      loginSource = GitLabLoginSource.MR_TW) { server, name ->
+      GitLabLoginUtil.isAccountUnique(accounts, server, name)
+    }
   }
 
   private fun createLoginButtons(cs: CoroutineScope, vm: GitLabRepositoryAndAccountSelectorViewModel)
@@ -128,20 +142,35 @@ object GitLabMergeRequestSelectorsComponentFactory {
       JButton(GitLabBundle.message("account.add.popup.text")).apply {
         isOpaque = false
         isDefault = true
+        isVisible = false
         addActionListener {
-          vm.requestOAuthLogin(false, true)
+          vm.requestLogin(LoginRequest.Type.OAUTH, false, true)
         }
         bindDisabledIn(cs, vm.busyState)
-        bindVisibilityIn(cs, vm.oAuthLoginAvailableState)
+        bindVisibilityIn(cs, vm.isLoginAvailable.combine(vm.repoSelectionState) { loginAvailable, repoSelected ->
+          loginAvailable && repoSelected?.repository?.serverPath == GitLabServerPath.DEFAULT_SERVER
+        })
+      },
+      JButton(GitLabBundle.message("account.add.custom.server.popup.text")).apply {
+        isOpaque = false
+        isDefault = true
+        isVisible = false
+        addActionListener {
+          vm.requestLogin(LoginRequest.Type.OAUTH_CUSTOM_SERVER, false, true)
+        }
+        bindDisabledIn(cs, vm.busyState)
+        bindVisibilityIn(cs, vm.isLoginAvailable.combine(vm.repoSelectionState) { loginAvailable, repoSelected ->
+          loginAvailable && repoSelected?.repository?.serverPath != GitLabServerPath.DEFAULT_SERVER
+        })
       },
       ActionLink(CollaborationToolsBundle.message("accounts.action.add.account.with.token")).apply {
         addActionListener {
-          vm.requestTokenLogin(false, true)
+          vm.requestLogin(LoginRequest.Type.TOKEN, false, true)
         }
       }.apply {
         autoHideOnDisable = false
         bindDisabledIn(cs, vm.busyState)
-        bindVisibilityIn(cs, vm.tokenLoginAvailableState)
+        bindVisibilityIn(cs, vm.isLoginAvailable)
       }
     )
   }
@@ -152,13 +181,20 @@ object GitLabMergeRequestSelectorsComponentFactory {
       if (mapping.repository.serverPath == GitLabServerPath.DEFAULT_SERVER) {
         add(object : AbstractAction(GitLabBundle.message("account.add.popup.text")) {
           override fun actionPerformed(e: ActionEvent?) {
-            vm.requestOAuthLogin(true, false)
+            vm.requestLogin(LoginRequest.Type.OAUTH, true, false)
+          }
+        })
+      }
+      else {
+        add(object : AbstractAction(GitLabBundle.message("account.add.custom.server.popup.text")) {
+          override fun actionPerformed(e: ActionEvent?) {
+            vm.requestLogin(LoginRequest.Type.OAUTH_CUSTOM_SERVER, true, false)
           }
         })
       }
       add(object : AbstractAction(CollaborationToolsBundle.message("accounts.action.add.account.with.token")) {
         override fun actionPerformed(e: ActionEvent?) {
-          vm.requestTokenLogin(true, false)
+          vm.requestLogin(LoginRequest.Type.TOKEN, true, false)
         }
       })
     }

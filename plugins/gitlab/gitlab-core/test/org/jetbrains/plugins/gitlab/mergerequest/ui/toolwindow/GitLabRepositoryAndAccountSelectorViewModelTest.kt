@@ -58,7 +58,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     assertEquals(projectMapping, vm.repoSelectionState.value)
     assertEquals(account, vm.accountSelectionState.value)
     assertEquals(false, vm.missingCredentialsState.value)
-    assertEquals(false, vm.tokenLoginAvailableState.value)
+    assertEquals(false, vm.isLoginAvailable.value)
     assertEquals(true, vm.submitAvailableState.value)
 
     scope.cancel()
@@ -89,7 +89,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     assertEquals(null, vm.repoSelectionState.value)
     assertEquals(null, vm.accountSelectionState.value)
     assertEquals(false, vm.missingCredentialsState.value)
-    assertEquals(false, vm.tokenLoginAvailableState.value)
+    assertEquals(false, vm.isLoginAvailable.value)
     assertEquals(false, vm.submitAvailableState.value)
 
     vm.repoSelectionState.value = projectMapping
@@ -97,7 +97,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     assertEquals(projectMapping, vm.repoSelectionState.value)
     assertEquals(null, vm.accountSelectionState.value)
     assertEquals(false, vm.missingCredentialsState.value)
-    assertEquals(true, vm.tokenLoginAvailableState.value)
+    assertEquals(true, vm.isLoginAvailable.value)
     assertEquals(false, vm.submitAvailableState.value)
 
     vm.accountSelectionState.value = account
@@ -105,7 +105,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     assertEquals(projectMapping, vm.repoSelectionState.value)
     assertEquals(account, vm.accountSelectionState.value)
     assertEquals(false, vm.missingCredentialsState.value)
-    assertEquals(false, vm.tokenLoginAvailableState.value)
+    assertEquals(false, vm.isLoginAvailable.value)
     assertEquals(true, vm.submitAvailableState.value)
 
     scope.cancel()

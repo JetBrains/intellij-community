@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
-import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
@@ -35,15 +34,10 @@ class GitLabRepositoryAndAccountSelectorViewModel(
 ) {
 
   private val singleProjectAndAccountState = createSingleProjectAndAccountState(scope, projectsManager, accountManager)
-  val tokenLoginAvailableState: StateFlow<Boolean> =
-    combineState(scope, repoSelectionState, accountSelectionState, missingCredentialsState, ::isTokenLoginAvailable)
+  val isLoginAvailable: StateFlow<Boolean> =
+    combineState(scope, repoSelectionState, accountSelectionState, missingCredentialsState, ::isLoginAvailable)
 
-  val oAuthLoginAvailableState: StateFlow<Boolean> =
-    combineState(scope, tokenLoginAvailableState, repoSelectionState) { tokenLoginAvailableState, repoSelection ->
-      tokenLoginAvailableState && repoSelection?.repository?.serverPath == GitLabServerPath.DEFAULT_SERVER
-    }
-
-  private fun isTokenLoginAvailable(repo: GitLabProjectMapping?, account: GitLabAccount?, tokenMissing: Boolean?): Boolean =
+  private fun isLoginAvailable(repo: GitLabProjectMapping?, account: GitLabAccount?, tokenMissing: Boolean?): Boolean =
     repo != null && (account == null || tokenMissing == true)
 
   private val _loginRequestsFlow = MutableSharedFlow<LoginRequest>()
@@ -60,19 +54,11 @@ class GitLabRepositoryAndAccountSelectorViewModel(
     }
   }
 
-  fun requestTokenLogin(forceNewAccount: Boolean, submit: Boolean) {
+  fun requestLogin(loginType: LoginRequest.Type, forceNewAccount: Boolean, submit: Boolean) {
     val repo = repoSelectionState.value ?: return
     val account = if (forceNewAccount) null else accountSelectionState.value
     scope.launch {
-      _loginRequestsFlow.emit(LoginRequest(repo, account, LoginRequest.Type.TOKEN, submit))
-    }
-  }
-
-  fun requestOAuthLogin(forceNewAccount: Boolean, submit: Boolean) {
-    val repo = repoSelectionState.value ?: return
-    val account = if (forceNewAccount) null else accountSelectionState.value
-    scope.launch {
-      _loginRequestsFlow.emit(LoginRequest(repo, account, LoginRequest.Type.OAUTH, submit))
+      _loginRequestsFlow.emit(LoginRequest(repo, account, loginType, submit))
     }
   }
 
@@ -97,5 +83,6 @@ data class LoginRequest(
   enum class Type {
     TOKEN,
     OAUTH,
+    OAUTH_CUSTOM_SERVER
   }
 }

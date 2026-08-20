@@ -55,6 +55,7 @@ object GitLabLoginUtil {
     project: Project,
     parentComponent: JComponent?,
     requiredUsername: String? = null,
+    serverPath: GitLabServerPath? = null,
     loginSource: GitLabLoginSource,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
   ): LoginResult {
@@ -65,8 +66,7 @@ object GitLabLoginUtil {
                                            requiredUsername = requiredUsername,
                                            dialogTitle = dialogTitle,
                                            uniqueAccountPredicate = uniqueAccountPredicate,
-                                           serverFieldDisabled = false,
-                                           loginSource = loginSource)
+                                           serverFieldDisabled = false, loginSource = loginSource, requiredServerPath = serverPath)
   }
 
   @ApiStatus.Internal
@@ -251,6 +251,7 @@ object GitLabLoginUtil {
       LoginMethod.OAUTH_CUSTOM_SERVER -> logInViaOAuthToCustomServer(project,
                                                                      parentComponent,
                                                                      requiredUsername,
+                                                                     serverPath,
                                                                      loginSource,
                                                                      uniqueAccountPredicate)
       LoginMethod.TOKEN -> logInViaToken(project, parentComponent, serverPath, requiredUsername, loginSource, uniqueAccountPredicate)
