@@ -2,7 +2,6 @@
 package com.intellij.util.net
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.util.net.ProxyConfiguration.Companion.autodetect
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -14,10 +13,15 @@ import org.jetbrains.annotations.ApiStatus
 interface ProxySettings {
   companion object {
     @JvmStatic
-    fun getInstance(): ProxySettings = ApplicationManager.getApplication().getService(ProxySettings::class.java)
+    fun getInstance(): ProxySettings = ApplicationManager.getApplication().getService(ProxySettings::class.java) ?: DEFAULT
 
     @JvmStatic
-    val defaultProxyConfiguration: ProxyConfiguration get() = autodetect
+    val defaultProxyConfiguration: ProxyConfiguration get() = ProxyConfiguration.autodetect
+
+    private val DEFAULT = object : ProxySettings {
+      override fun getProxyConfiguration(): ProxyConfiguration = ProxyConfiguration.direct
+      override fun setProxyConfiguration(proxyConfiguration: ProxyConfiguration): Unit = throw UnsupportedOperationException()
+    }
   }
 
   fun getProxyConfiguration(): ProxyConfiguration
