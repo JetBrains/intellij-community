@@ -203,6 +203,33 @@ internal class PersistentLongMapTest {
     }
   }
 
+  @Test
+  fun `champ separates shared hash prefixes and compacts nodes after removal`() {
+    val keyCount = 4_096
+    var map = PersistentLongMap.empty<Int>(PersistentLongMapImplementation.CHAMP)
+
+    // A dense set much larger than the 32-way root forces repeated entry-to-child promotion at several trie levels.
+    repeat(keyCount) { key ->
+      map = map.put(key.toLong(), key)
+    }
+    val populated = map
+
+    for (key in 0 until keyCount step 2) {
+      map = map.remove(key.toLong())
+    }
+    repeat(keyCount) { key ->
+      assertEquals(key, populated[key.toLong()], "published version, key $key")
+      assertEquals(if (key and 1 == 0) null else key, map[key.toLong()], "partially removed version, key $key")
+    }
+
+    for (key in 1 until keyCount step 2) {
+      map = map.remove(key.toLong())
+    }
+    repeat(keyCount) { key ->
+      assertNull(map[key.toLong()], "fully removed version, key $key")
+    }
+  }
+
   @ParameterizedTest
   @EnumSource(PersistentLongMapImplementation::class)
   fun `random updates agree with a mutable map`(implementation: PersistentLongMapImplementation) {
