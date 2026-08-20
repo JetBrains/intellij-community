@@ -7,6 +7,7 @@ import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.hatch.impl.sdk.HatchSdkFlavor
 import com.intellij.python.hatch.impl.sdk.HatchSdkFlavorData
 import com.intellij.python.hatch.runtime.HatchConstants
+import com.intellij.python.hatch.icons.PythonHatchIcons
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.features.PyRunToolData
 import com.jetbrains.python.run.features.PyRunToolId
@@ -37,6 +38,8 @@ internal class HatchRunToolProvider : PySdkRunToolProvider<HatchSdkFlavorData, H
     PyRunToolId("hatch.run"),
     PyBundle.message("hatch.run.configuration.type.display.name"),
     PyBundle.message("python.run.configuration.fragments.python.group"),
+    label = PyBundle.message("hatch.run.tool.label"),
+    icon = PythonHatchIcons.Logo,
   )
 
   override val initialToolState: Boolean = true

@@ -39,6 +39,7 @@ import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.onFailure
@@ -50,7 +51,7 @@ import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.VIRTUA
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.ui.badgeIcon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -229,23 +230,16 @@ internal fun <P : PathHolder> SimpleColoredComponent.customizeForPythonInterpret
   }
 
   if (validation != null) {
-    icon?.let { base -> icon = badgeIcon(base, warning = validation.warning) }
+    icon?.let { base -> icon = interpreterBadgeIcon(base, warning = validation.warning) }
   }
 }
 
 /**
  * Decorates an interpreter icon with a small corner badge: a warning mark for non-blocking warnings,
- * or an error mark for blocking errors. The mark is scaled down and pinned to the bottom-right corner
- * so the base icon stays recognizable.
+ * or an error mark for blocking errors.
  */
-private fun badgeIcon(icon: javax.swing.Icon, warning: Boolean): javax.swing.Icon {
-  val mark = if (warning) AllIcons.General.Warning else AllIcons.General.Error
-  val smallMark = com.intellij.util.IconUtil.scale(mark, null, 0.5f)
-  return com.intellij.ui.LayeredIcon(2).apply {
-    setIcon(icon, 0)
-    setIcon(smallMark, 1, javax.swing.SwingConstants.SOUTH_EAST)
-  }
-}
+private fun interpreterBadgeIcon(icon: javax.swing.Icon, warning: Boolean): javax.swing.Icon =
+  badgeIcon(icon, if (warning) AllIcons.General.Warning else AllIcons.General.Error)
 
 private val userHomePath = lazy {
   try {

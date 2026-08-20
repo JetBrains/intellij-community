@@ -22,6 +22,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
+import javax.swing.Icon
 
 /**
  * Feature flag for Python "Run with …" tool integration.
@@ -43,6 +44,8 @@ internal object PyRunToolIds {
  * - id: a unique identifier of the tool.
  * - name: user‑visible action/configuration name (localized).
  * - group: user‑visible group name under which the action is shown in UI (localized).
+ * - label: short user-visible name, shown next to a configuration that runs with the tool.
+ * - icon: tool icon, badged onto the icon of a configuration that runs with the tool.
  * - idForStatistics: identifier for FUS statistics (should not change to avoid breaking statistics).
  */
 @ApiStatus.Internal
@@ -50,6 +53,8 @@ data class PyRunToolData(
   @param:NonNls val id: PyRunToolId,
   @param:Nls val name: String,
   @param:Nls val group: String,
+  @param:Nls @get:Nls val label: String,
+  val icon: Icon,
   @param:NonNls val idForStatistics: String = id.value,
 )
 

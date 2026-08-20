@@ -14,6 +14,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,6 +128,20 @@ public interface RunConfiguration extends RunProfile, Cloneable {
       return " (" + StringUtil.first(getType().getDisplayName(), 10, true) + ")";
     }
     return "";
+  }
+
+  /**
+   * A word or two shown greyed right after this configuration's name where configurations are listed. One example of usage would be
+   * in the Python plugin - it names the tool a configuration is run through there, such as {@code uv} or {@code hatch}.
+   * <p>
+   * Not the configuration's type, which {@link #getPresentableType()} covers, and not the folder it lives in, which is
+   * presented separately. Unlike {@code getPresentableType()} this is presentation only and does not reach
+   * {@link LocatableConfigurationBase#getActionName() action names}.
+   */
+  @Transient
+  @ApiStatus.Internal
+  default @Nullable @Nls String getSecondaryLabel() {
+    return null;
   }
 
   /**

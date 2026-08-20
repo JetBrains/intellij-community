@@ -32,12 +32,14 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
-import com.jetbrains.python.sdk.SdkExtKt;
+import com.jetbrains.python.run.features.PyRunToolData;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.SdkExtKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
+import static com.jetbrains.python.run.features.PyRunToolExtKt.activeRunToolData;
 
 /**
  * @author Leonid Shalupov
@@ -525,6 +528,16 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @Override
   public final void setUseRunTool(@Nullable Boolean useRunTool) {
     this.useRunTool = useRunTool;
+  }
+
+  /**
+   * Names the tool this configuration will run with, so that the list of configurations says how each one runs.
+   */
+  @ApiStatus.Internal
+  @Override
+  public @Nullable @Nls String getSecondaryLabel() {
+    PyRunToolData runTool = activeRunToolData(this);
+    return runTool == null ? null : runTool.getLabel();
   }
 
   /**

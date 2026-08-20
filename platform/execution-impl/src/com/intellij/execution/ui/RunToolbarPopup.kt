@@ -111,8 +111,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Predicate
 import javax.swing.GroupLayout
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.ListCellRenderer
+import javax.swing.UIManager
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.math.max
@@ -410,7 +412,16 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
   private inner class MyListElementRenderer : PopupListElementRenderer<PopupFactoryImpl.ActionItem>(this) {
     private lateinit var mainPanel: JComponent
     private lateinit var mainPanelLayout: GroupLayout
-    
+
+    /**
+     * A secondary label for a run configuration, right after its name. Separate from the secondary text, which says
+     * which folder a configuration lives in and only while the list is being filtered.
+     *
+     * Created in [relayoutMainPanel], like the fields above: the base constructor lays the item out, so anything
+     * initialized here would still be null by then and would overwrite itself afterwards.
+     */
+    private lateinit var secondaryLabel: JLabel
+
     override fun isShowSecondaryText(): Boolean = mySpeedSearch.isHoldingFilter
 
     override fun isShowSecondaryIcon(): Boolean = mySpeedSearch.isHoldingFilter
@@ -421,6 +432,11 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
       isSelected: Boolean,
     ) {
       isReserveSpaceForExtraButtons = false // otherwise the name won't fit if the popup has the same width as the button
+      val secondaryText = value?.getClientProperty(RUN_CONFIGURATION_ID)
+        ?.let { RunManagerImpl.getInstanceImpl(project).getConfigurationById(it) }
+        ?.configuration?.secondaryLabel
+      secondaryLabel.text = secondaryText
+      secondaryLabel.isVisible = secondaryText != null
       mainPanelLayout.invalidateLayout(mainPanel) // clear the cached preferred size
       super.customizeComponent(list, value, isSelected)
       if (value?.getClientProperty(NEEDS_RUN_CONFIG_NAME_TRIMMING) == true) {
@@ -451,13 +467,21 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
 
     /**
      * A hack to fix the default layout of the renderer.
-     * 
+     *
      * It uses `BorderLayout` by default, which doesn't support shrinking of the west and east components.
      */
     private fun relayoutMainPanel(panel: JComponent) {
       mainPanel = panel
+      secondaryLabel = JLabel().also {
+        it.isEnabled = false
+        it.foreground = UIManager.getColor("MenuItem.acceleratorForeground")
+        it.border = JBUI.Borders.emptyLeft(6)
+      }
       val components = panel.components.toList()
       panel.removeAll()
+      // The secondary label belongs right after the name, before whatever the renderer put next.
+      val leftComponents = if (components.isEmpty()) emptyList() else listOf(components.first(), secondaryLabel)
+      val rightComponents = components.drop(1)
       val layout = GroupLayout(panel).also { mainPanelLayout = it }
       val hg = layout.createSequentialGroup()
       val vg = layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
@@ -465,16 +489,22 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
       layout.setVerticalGroup(vg)
       val height = JBUI.CurrentTheme.List.rowHeight()
 
-      for ((i, c) in components.withIndex()) {
-        // The first component expand, pushing the others (the secondary text and the shortcut) to the right.
-        if (i == 0) {
+      for ((i, c) in leftComponents.withIndex()) {
+        // All the left components should be next to each other, and only the last one should expand, pushing the right components
+        // (the secondary text and the shortcut) to the right.
+        if (i == leftComponents.lastIndex) {
           hg.addComponent(c, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, 99999)
         }
         else {
           hg.addComponent(c)
         }
       }
-      for (c in components) {
+
+      for (c in rightComponents) {
+        hg.addComponent(c)
+      }
+
+      for (c in leftComponents + rightComponents) {
         // Vertically, they all should be the same size as the rest of the renderer, otherwise alignment issues will occur.
         vg.addComponent(c, height, height, height)
       }
