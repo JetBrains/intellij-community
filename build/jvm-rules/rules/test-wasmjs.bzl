@@ -57,6 +57,7 @@ def wasmjs_test(
         As kotlin-test never announces the end of a run, so the harness infers by waiting test_completion_grace_period_ms
         time since console output is silent and no test or test suite is in-flight (resets if one is not true anymore).
         Raise it for tests whose async gap between two suites outlasts it and some tests are missed because of that.
+        The default is set by the test harness to 3 seconds.
       size: standard test size attribute.
       tags: standard tags attribute.
       visibility: standard visibility attribute.
