@@ -34,8 +34,10 @@ import com.siyeh.ig.psiutils.SerializationUtils
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -117,6 +119,7 @@ import org.jetbrains.kotlin.psi.KtContainerNodeForControlStructureBody
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -160,6 +163,8 @@ import org.jetbrains.kotlin.psi.psiUtil.isPrivateNestedClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.psi.simpleNameExpressionRecursiveVisitor
+import org.jetbrains.kotlin.resolution.KtResolvable
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.resolve.DataClassResolver
 
 object K2UnusedSymbolUtil {
@@ -333,12 +338,13 @@ object K2UnusedSymbolUtil {
     }
 
     // variation of IDEA's AnnotationUtil.checkAnnotatedUsingPatterns()
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     fun checkAnnotatedUsingPatterns(declaration: KtNamedDeclaration, annotationPatterns: Collection<String>): Boolean {
         if (declaration.annotationEntries.isEmpty()) return false
         val annotationsPresent = declaration.annotationEntries.mapNotNull {
-            val reference = it?.calleeExpression?.constructorReferenceExpression?.mainReference ?: return@mapNotNull null
-            val symbol = reference.resolveToSymbol() ?: return@mapNotNull null
+            val reference = it?.calleeExpression?.constructorReferenceExpression ?: return@mapNotNull null
+            val symbol = reference.resolveSymbol() ?: return@mapNotNull null
             val constructorSymbol = symbol as? KaConstructorSymbol ?: return@mapNotNull null
             constructorSymbol.containingClassId?.asSingleFqName()?.asString()
         }
@@ -698,12 +704,14 @@ object K2UnusedSymbolUtil {
         return containingFile.anyDescendantOfType(PsiReferenceExpression::isQualifiedNameInEnumStaticMethods)
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun KtImportDirective.resolveReferenceToSymbol(): KaSymbol? = when (importedReference) {
         is KtReferenceExpression -> importedReference as KtReferenceExpression
         else -> importedReference?.getChildOfType<KtReferenceExpression>()
-    }?.mainReference?.resolveToSymbol()
+    }?.resolveSymbol()
 
+    @OptIn(KtExperimentalApi::class, KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtImportDirective.isUsedStarImportOfEnumStaticFunctions(): Boolean {
         if (importPath?.isAllUnder != true) return false
@@ -716,7 +724,9 @@ object K2UnusedSymbolUtil {
         fun KtExpression.isNameInEnumStaticMethods(): Boolean {
             if (getQualifiedExpressionForSelector() != null) return false
             if (((this as? KtNameReferenceExpression)?.parent as? KtCallableReferenceExpression)?.receiverExpression != null) return false
-            val symbol = mainReference?.resolveToSymbol() as? KaCallableSymbol ?: return false
+            val symbol = ((this as? KtResolvableCall)?.resolveCall() as? KaSingleCall<*, *>)?.symbol
+                ?: (this as? KtResolvable)?.resolveSymbol() as? KaCallableSymbol
+                ?: return false
             return symbol.callableId?.asSingleFqName() in enumStaticMethods
         }
 

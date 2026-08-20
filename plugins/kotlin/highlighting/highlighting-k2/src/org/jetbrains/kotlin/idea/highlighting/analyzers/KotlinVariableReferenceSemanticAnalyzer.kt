@@ -4,11 +4,16 @@ package org.jetbrains.kotlin.idea.highlighting.analyzers
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
+import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
+import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
@@ -32,25 +37,30 @@ import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticName
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.SYNTHETIC_EXTENSION_PROPERTY
 import org.jetbrains.kotlin.idea.highlighting.K2HighlightingBundle
 import org.jetbrains.kotlin.idea.highlighting.analyzers.KotlinFunctionCallSemanticAnalyzer.Companion.getHighlightInfoTypeForCallFromExtension
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentName
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 internal class KotlinVariableReferenceSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         highlightSimpleNameExpression(expression)
     }
 
+    @OptIn(KtExperimentalApi::class, KaExperimentalApi::class)
     private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression) {
         context(session) {
             if (expression.isAssignmentReference()) return
             if (expression.isByNameArgumentReference()) return
             if (expression.parent is KtInstanceExpressionWithLabel) return
 
-            when (val symbol = expression.mainReference.resolveToSymbol()) {
+            val symbol =
+                ((expression as? KtResolvableCall)?.collectCallCandidates()?.singleOrNull()?.candidate as? KaSingleCall<*, *>)?.symbol
+                    ?: expression.resolveSymbol()
+            when (symbol) {
                 is KaBackingFieldSymbol -> highlightBackingField(symbol, expression)
                 is KaKotlinPropertySymbol -> highlightProperty(symbol, expression)
                 is KaLocalVariableSymbol -> {
