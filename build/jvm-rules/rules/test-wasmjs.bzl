@@ -40,29 +40,23 @@ def wasmjs_test(
         package.
       configuration_scripts: scripts loaded as classic `<script>` tags in `<head>`, in
         order, before the test module.
-      npm_packages: bare import specifier -> npm package files (an http_archive exposing
-        the `//:package` filegroup of BUILD.npm.bazel); served under `/node_modules/` and
-        resolved through a generated import map. The npm packages carried by the module's
-        transitive `KtWasmJsInfo.npm_packages` are served automatically; this attribute is
-        only for packages the test page needs beyond them.
+      npm_packages: bare import specifier -> npm package label (must expose `//:package`);
+        served under `/node_modules/` and resolved through a generated import map.
+        The npm packages carried by the module's transitive `KtWasmJsInfo.npm_packages` are
+        served automatically; this attribute is only for packages the test page needs beyond them.
       module_runtime_files: files the linked module expects next to its entrypoint (e.g. the
-        skiko `./skiko.mjs` glue and its `skiko.wasm`). Served under `/_runtime/` — the linked
-        module directory is a single tree artifact that cannot gain siblings — with the page's
-        import map remapping the module-adjacent URL of every `.mjs`/`.js` file there, so
-        relative imports like `./skiko.mjs` resolve. Basenames must be unique.
+        skiko `./skiko.mjs` glue and its `skiko.wasm`). They are served under `/_runtime/`
+        like configuration_scripts, but remapped for `./<basename>` imports to work in test
+        and production code. Basenames must be unique as they will be used as the key.
       awaited_imports: module_runtime_files basename -> exported member the page awaits, in
         order, before the test entrypoint. For runtime that loads asynchronously but is used
         synchronously by tests: e.g. skiko exposes its skia bindings as lazy stubs and an
         `awaitSkiko` readiness promise; without the await, tests race its wasm instantiation.
-      test_completion_grace_period_ms: how long, in milliseconds, the harness still waits for output before
-        it calls the run finished. kotlin-test never announces the end of a run, so the harness infers it: the
-        grace period is measured from the last console line the page printed, and only counts once no test and
-        no suite is still open. Any further output resets it. Raise it for tests whose async gap between two
-        suites outlasts it, or the run is declared over early and reports without the suites that never came
-        — while still exiting 0. 0 (the default) keeps the harness default of 3000. This is the only tunable
-        harness phase: browser setup keeps its harness default, and page load needs no knob because it is
-        bounded by the harness deadline derived from Bazel's own `timeout`/`size` (which bounds the run
-        overall, and is reserved enough teardown grace to still write the report).
+      test_completion_grace_period_ms: this is *not* the test_timeout, most of the time you want to tweak test_timeout.
+        this is how long, in milliseconds, the harness still waits before assuming the run is finished.
+        As kotlin-test never announces the end of a run, so the harness infers by waiting test_completion_grace_period_ms
+        time since console output is silent and no test or test suite is in-flight (resets if one is not true anymore).
+        Raise it for tests whose async gap between two suites outlasts it and some tests are missed because of that.
       size: standard test size attribute.
       tags: standard tags attribute.
       visibility: standard visibility attribute.
