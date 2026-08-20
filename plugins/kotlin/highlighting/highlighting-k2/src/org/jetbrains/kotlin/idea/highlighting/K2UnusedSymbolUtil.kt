@@ -34,10 +34,10 @@ import com.siyeh.ig.psiutils.SerializationUtils
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbols
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -161,7 +161,6 @@ import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.isPrivateNestedClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.psi.simpleNameExpressionRecursiveVisitor
 import org.jetbrains.kotlin.resolution.KtResolvable
 import org.jetbrains.kotlin.resolution.KtResolvableCall
@@ -338,14 +337,12 @@ object K2UnusedSymbolUtil {
     }
 
     // variation of IDEA's AnnotationUtil.checkAnnotatedUsingPatterns()
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun checkAnnotatedUsingPatterns(declaration: KtNamedDeclaration, annotationPatterns: Collection<String>): Boolean {
         if (declaration.annotationEntries.isEmpty()) return false
         val annotationsPresent = declaration.annotationEntries.mapNotNull {
-            val reference = it?.calleeExpression?.constructorReferenceExpression ?: return@mapNotNull null
-            val symbol = reference.resolveSymbol() ?: return@mapNotNull null
-            val constructorSymbol = symbol as? KaConstructorSymbol ?: return@mapNotNull null
+            val constructorSymbol = it.resolveSymbol() ?: return@mapNotNull null
             constructorSymbol.containingClassId?.asSingleFqName()?.asString()
         }
         if (annotationsPresent.isEmpty()) return false
@@ -587,6 +584,7 @@ object K2UnusedSymbolUtil {
      * In the above code, CC is not referenced by any expressions other than `import C.CC.value`,
      * but `C.CC.value` is used by `fun value() = value`, so we cannot delete `import C.CC.value`, and we have to keep CC.
      */
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun checkPrivateDeclaration(
         declaration: KtNamedDeclaration,
@@ -600,9 +598,9 @@ object K2UnusedSymbolUtil {
             setOfImportedDeclarations += it
         })
 
-        return setOfImportedDeclarations.mapNotNull { it.referenceExpression() }
-            .filter { symbol in it.mainReference.resolveToSymbols() }
-            .any { !checkReference(it.mainReference.element, declaration, originalDeclaration) }
+        return setOfImportedDeclarations
+            .filter { symbol in it.resolveSymbols() }
+            .any { !checkReference(it, declaration, originalDeclaration) }
     }
 
     // search for references to an element in the scope, satisfying predicate, lazily
@@ -721,6 +719,7 @@ object K2UnusedSymbolUtil {
 
         val enumStaticMethods = ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES.map { FqName("$importedEnumFqName.$it") }
 
+        @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
         fun KtExpression.isNameInEnumStaticMethods(): Boolean {
             if (getQualifiedExpressionForSelector() != null) return false
             if (((this as? KtNameReferenceExpression)?.parent as? KtCallableReferenceExpression)?.receiverExpression != null) return false
