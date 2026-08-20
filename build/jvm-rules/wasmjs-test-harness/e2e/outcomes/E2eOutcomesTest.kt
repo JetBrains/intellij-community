@@ -4,6 +4,7 @@ package org.jetbrains.bazel.wasmjs.test.e2e
 import com.google.devtools.build.runfiles.Runfiles
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.file.Files
@@ -43,10 +44,23 @@ class E2eOutcomesTest {
       "awaitedImportCompletedBeforeTheEntrypoint",
       "importsNpmPackageThroughTheImportMap",
       "compilerGeneratedJsJodaImportResolvesThroughPropagatedNpmPackages",
+      "reportsHowLongItRan",
     ).forEach { name -> assertTrue("$name is missing from the report\n${run.log}", run.xml.contains(name)) }
     // A passing test's println is attributed to the test and lands in its <system-out>.
     assertTrue(run.log, run.xml.contains("<system-out>"))
     assertTrue(run.log, run.xml.contains("printed by passes"))
+  }
+
+  @Test
+  fun `the green e2e reports how long a test took`() {
+    val run = runFixture("E2E_GREEN")
+
+    assertEquals(run.log, 0, run.exitCode.toLong())
+    val reported = reportedTime(run.xml, "reportsHowLongItRan")
+    assertNotNull("no testcase named reportsHowLongItRan in the report\n${run.log}", reported)
+    // The test awaits 50ms, so anything at or above 40ms is the measurement and not a rounding
+    // artefact; an exact bound would only make this flaky on a loaded machine.
+    assertTrue("reportsHowLongItRan reported time=\"$reported\"\n${run.log}", reported!!.toDouble() >= 0.04)
   }
 
   @Test
@@ -139,6 +153,11 @@ class E2eOutcomesTest {
     assertEquals(run.log, 3, run.exitCode.toLong())
     assertTrue(run.log, run.log.contains("cannot write the test report"))
   }
+
+  /** The `time` attribute of the named testcase, or null when the report has no such case. */
+  private fun reportedTime(xml: String, testName: String): String? =
+    Regex("<testcase[^>]*\\bname=\"" + Regex.escape(testName) + "\"[^>]*\\btime=\"([^\"]*)\"")
+      .find(xml)?.groupValues?.get(1)
 
   private class FixtureRun(val exitCode: Int, val xml: String, val log: String)
 

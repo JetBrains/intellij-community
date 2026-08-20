@@ -86,6 +86,39 @@ internal fun generateIndexHtml(
   appendLine("""    }""")
   appendLine("""    return module[member];""")
   appendLine("""  };""")
+  // kotlin-test emits no duration of its own on wasmJs (its adapter knows only name, message,
+  // details, status and text). The page times each test and decorates the testFinished message
+  // with the `duration` attribute TestRunState already reads.
+  // Timing here rather than in the harness keeps CDP delivery and scheduling latency out of it.
+  appendLine("""  const testStartedAt = new Map();""")
+  // Keyed by the raw, still-escaped name: pairing a start with its finish needs no unescaping, and
+  // stepping over TeamCity's `|'` escapes keeps a name containing a quote from truncating the match.
+  appendLine("""  const testNameOf = (line) => {""")
+  appendLine("""    const name = /\sname='((?:[^'|]|\|.)*)'/.exec(line);""")
+  appendLine("""    return name === null ? null : name[1];""")
+  appendLine("""  };""")
+  appendLine("""  const timed = (line) => {""")
+  appendLine("""    if (line.startsWith("##teamcity[testStarted ")) {""")
+  appendLine("""      const name = testNameOf(line);""")
+  appendLine("""      if (name !== null) testStartedAt.set(name, performance.now());""")
+  appendLine("""      return line;""")
+  appendLine("""    }""")
+  // A duration already reported is left alone: it would be the framework's own, measured closer in.
+  appendLine("""    if (!line.startsWith("##teamcity[testFinished ") || line.includes(" duration='") || !line.endsWith("]")) {""")
+  appendLine("""      return line;""")
+  appendLine("""    }""")
+  appendLine("""    const name = testNameOf(line);""")
+  appendLine("""    const startedAt = testStartedAt.get(name);""")
+  appendLine("""    if (startedAt === undefined) return line;""")
+  appendLine("""    testStartedAt.delete(name);""")
+  // Rounded, so a genuinely sub-millisecond test still reports 0.000: the report has millisecond
+  // resolution and inflating a fast test would be a lie.
+  appendLine("""    return line.slice(0, -1) + " duration='" + Math.round(performance.now() - startedAt) + "']";""")
+  appendLine("""  };""")
+  appendLine("""  ["log", "info", "debug"].forEach((method) => {""")
+  appendLine("""    const original = console[method].bind(console);""")
+  appendLine("""    console[method] = (...args) => original(...(typeof args[0] === "string" ? [timed(args[0]), ...args.slice(1)] : args));""")
+  appendLine("""  });""")
   appendLine("""  globalThis.__kotlinTestRun = (async () => {""")
   // Awaited imports run before the entrypoint: they synchronize on module-adjacent runtime
   // the tests use synchronously (e.g. skiko's `awaitSkiko` wasm-readiness promise), which
