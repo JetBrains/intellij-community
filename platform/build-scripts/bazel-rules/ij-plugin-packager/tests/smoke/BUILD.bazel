@@ -1,6 +1,7 @@
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load(":build_settings_test.bzl", "ij_plugin_settings_test_target")
 
 # A minimal plugin used to check that `ij_plugin` rule and the packager worker actually work.
 
@@ -32,6 +33,34 @@ ij_plugin(
         ":embedded-content-module",
         ":optional-content-module",
     ],
+)
+
+ij_plugin_settings_test_target(
+    name = "smoke-plugin-default-settings",
+    plugin = ":smoke-plugin",
+)
+
+ij_plugin_settings_test_target(
+    name = "smoke-plugin-nightly-settings",
+    ide_build_number = "263.12345",
+    ide_stability_level = "nightly",
+    plugin = ":smoke-plugin",
+)
+
+ij_plugin_settings_test_target(
+    name = "smoke-plugin-release-settings",
+    ide_build_number = "263.12345.67",
+    ide_stability_level = "release",
+    plugin = ":smoke-plugin",
+    plugin_version = "1.2.3",
+)
+
+ij_plugin_settings_test_target(
+    name = "smoke-plugin-exact-settings",
+    force_exact_build_compatibility = True,
+    ide_build_number = "263.12345.67",
+    ide_stability_level = "EAP",
+    plugin = ":smoke-plugin",
 )
 
 build_test(

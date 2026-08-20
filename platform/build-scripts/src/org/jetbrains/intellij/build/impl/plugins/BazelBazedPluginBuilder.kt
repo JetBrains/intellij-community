@@ -12,6 +12,7 @@ import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.bazel.runBazelBuild
+import org.jetbrains.intellij.build.impl.isIncludePluginsInBuiltinCustomRepository
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.readEntryFromZip
@@ -66,7 +67,17 @@ internal suspend fun buildPluginsByBazel(
   spanBuilder("build plugins by Bazel")
     .setAttribute(AttributeKey.stringArrayKey("targets"), pluginsTargets)
     .use {
-      runBazelBuild(pluginsTargets, buildContext)
+      val additionalArguments = listOfNotNull(
+        buildContext.options.buildNumber?.let {
+          "--ide_build_number=$it"
+        },
+        "--ide_stability_level=${computeIdeStabilityLevel(buildContext)}",
+        "--ij_plugin_version=${buildContext.pluginBuildNumber}",
+        "--ij_plugin_force_exact_build_compatibility".takeIf {
+          isIncludePluginsInBuiltinCustomRepository(buildContext)
+        },
+      )
+      runBazelBuild(pluginsTargets, additionalArguments, buildContext)
     }
 
   val buildResults = spanBuilder("copy plugins built by Bazel").use {
@@ -87,6 +98,15 @@ internal suspend fun buildPluginsByBazel(
     }
   }
   return buildResults
+}
+
+private fun computeIdeStabilityLevel(buildContext: BuildContext): String {
+  return when {
+    !buildContext.applicationInfo.isEAP -> "release"
+    buildContext.options.buildNumber == null -> "snapshot"
+    buildContext.isNightlyBuild -> "nightly"
+    else -> "EAP"
+  }
 }
 
 /**

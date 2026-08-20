@@ -203,6 +203,12 @@ test --cache_test_results=auto
 # Limit concurrent local test actions on CI to avoid OOM from multiple heavy test JVMs.
 test:ci --local_test_jobs=1
 
+# Aliases for flags used by ij_plugin rule
+build --flag_alias=ide_build_number=@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ide_build_number
+build --flag_alias=ide_stability_level=@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ide_stability_level
+build --flag_alias=ij_plugin_version=@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ij_plugin_version
+build --flag_alias=ij_plugin_force_exact_build_compatibility=@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ij_plugin_force_exact_build_compatibility
+
 # A workaround for https://github.com/bazelbuild/rules_kotlin/issues/1352
 common --repo_env=ANDROID_HOME=
 

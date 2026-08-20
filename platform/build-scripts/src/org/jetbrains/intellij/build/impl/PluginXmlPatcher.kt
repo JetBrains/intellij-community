@@ -57,11 +57,9 @@ internal suspend fun patchPluginXml(
   val pluginModule = context.outputProvider.findRequiredModule(pluginLayout.mainModule)
   val descriptorContent = pluginLayout.rawPluginXmlPatcher(getUnprocessedPluginXmlContent(pluginModule, context.outputProvider).decodeToString(), context)
 
-  val includeInBuiltinCustomRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
-                                         context.proprietaryBuildTools.artifactsServer != null
   val isBundled = !pluginsToPublish.contains(pluginLayout)
   val compatibleBuildRange = context.productProperties.customCompatibleBuildRange ?: when {
-    isBundled || pluginLayout.pluginCompatibilityExactVersion || includeInBuiltinCustomRepository -> CompatibleBuildRange.EXACT
+    isBundled || pluginLayout.pluginCompatibilityExactVersion || isIncludePluginsInBuiltinCustomRepository(context) -> CompatibleBuildRange.EXACT
     context.applicationInfo.isEAP || pluginLayout.pluginCompatibilitySameRelease -> CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
     else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
   }
@@ -119,6 +117,11 @@ internal suspend fun patchPluginXml(
   // OS-specific plugins being built several times - we expect that plugin.xml must be the same
   moduleOutputPatcher.patchModuleOutput(moduleName = pluginLayout.mainModule, path = PLUGIN_XML_RELATIVE_PATH, content = content, overwrite = PatchOverwriteMode.IF_EQUAL)
   pluginDescriptorCache.put(PLUGIN_XML_RELATIVE_PATH, content.toByteArray())
+}
+
+internal fun isIncludePluginsInBuiltinCustomRepository(context: BuildContext): Boolean {
+  return context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
+         context.proprietaryBuildTools.artifactsServer != null
 }
 
 private val DEV_BUILD_SCHEME: Regex = Regex("^${SnapshotBuildNumber.BASE.replace(".", "\\.")}\\.(SNAPSHOT|[0-9]+)$")

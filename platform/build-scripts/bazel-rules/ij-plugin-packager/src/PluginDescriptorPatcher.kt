@@ -47,3 +47,29 @@ private const val XI_INCLUDE_URI = "http://www.w3.org/2001/XInclude"
 private fun isXIncludeElement(element: Element): Boolean {
   return element.name == "include" && element.namespace?.uri == XI_INCLUDE_URI
 }
+
+internal fun insertVersionAndCompatibilityRange(rootElement: Element, pluginVersion: String?, sinceBuild: String?, untilBuild: String?) {
+  if (sinceBuild != null || untilBuild != null) {
+    val versionElement = getOrCreateTag(rootElement, "idea-version")
+    if (sinceBuild != null) {
+      versionElement.setAttribute("since-build", sinceBuild)
+    }
+    if (untilBuild != null) {
+      versionElement.setAttribute("until-build", untilBuild)
+    }
+  }
+  if (pluginVersion != null) {
+    getOrCreateTag(rootElement, "version").text = pluginVersion
+  }
+}
+
+private fun getOrCreateTag(rootElement: Element, tagName: String): Element {
+  val existing = rootElement.getChild(tagName)
+  if (existing != null) return existing
+
+  val newElement = Element(tagName)
+  val anchor = rootElement.getChild("id") ?: rootElement.getChild("name")
+  val index = if (anchor != null) rootElement.indexOf(anchor) + 1 else 0
+  rootElement.addContent(index, newElement)
+  return newElement
+}
