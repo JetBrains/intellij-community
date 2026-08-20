@@ -83,7 +83,7 @@
     <module name="kotlin.jvm.shared"/>
 
     <module name="intellij.kotlin.base.scripting"/>
-    <module name="intellij.kotlin.base.scripting.main.kts"/>
+    <module name="intellij.kotlin.base.scripting.main.kts" loading="optional"/>
     <module name="intellij.kotlin.base.scripting.shared" loading="embedded"/>
     <module name="intellij.kotlin.base.scripting.scratch.definition"/>
     <module name="intellij.kotlin.base.scripting.scratch"/>
