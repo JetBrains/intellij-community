@@ -27,6 +27,7 @@ import com.intellij.driver.sdk.ui.components.elements.button
 import com.intellij.driver.sdk.ui.components.elements.checkBox
 import com.intellij.driver.sdk.ui.components.elements.dialog
 import com.intellij.driver.sdk.ui.components.elements.fileChooser
+import com.intellij.driver.sdk.ui.components.elements.list
 import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.components.elements.table
 import com.intellij.driver.sdk.ui.components.elements.textComponent
@@ -338,6 +339,17 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     val pluginHomepage = x("Plugin homepage link") { byAccessibleName("Plugin homepage") }
 
     fun additionalText(text: String): UiComponent = x { and(byType(JLabel::class.java), byText(text)) }
+
+    fun chooseUpdateSourceFromDescription(updateSource: String): PluginDetailsPage {
+      step("Choose '$updateSource' update source from `Update from` description") {
+        check(tabbedPane.selectedTabName == additionalInfoTab.accessibleName) {
+          "Tab \'${additionalInfoTab.accessibleName}\' is not selected; selected tab\'${tabbedPane.selectedTabName}\'"
+        }
+        updateSourceValue.click()
+        driver.ui.popup().list().clickItem(updateSource)
+      }
+      return this
+    }
 
     fun updatePlugin(): PluginDetailsPage {
       step("Click on 'Update' button in the plugin description") {
