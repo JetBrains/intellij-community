@@ -2,6 +2,7 @@
 package com.intellij.usages.rules;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageTarget;
 import org.jetbrains.annotations.ApiStatus;
@@ -20,6 +21,10 @@ public abstract class ImportFilteringRule {
 
   @ApiStatus.Internal
   public static final ExtensionPointName<ImportFilteringRule> EP_NAME = ExtensionPointName.create("com.intellij.importFilteringRule");
+  
+  public boolean isAvailable(@NotNull Project project) {
+    return true;
+  }
 
   /**
    * @param usage   a usage to test

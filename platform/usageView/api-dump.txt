@@ -519,11 +519,13 @@ f:com.intellij.usages.impl.rules.UsageType
 - <init>(java.util.function.Supplier):V
 com.intellij.usages.rules.GeneratedSourceUsageFilter
 - sf:Companion:com.intellij.usages.rules.GeneratedSourceUsageFilter$Companion
-- a:isAvailable():Z
+- isAvailable():Z
+- isAvailable(com.intellij.openapi.project.Project):Z
 - a:isGeneratedSource(com.intellij.usages.Usage,com.intellij.openapi.project.Project):Z
 f:com.intellij.usages.rules.GeneratedSourceUsageFilter$Companion
 a:com.intellij.usages.rules.ImportFilteringRule
 - <init>():V
+- isAvailable(com.intellij.openapi.project.Project):Z
 - isVisible(com.intellij.usages.Usage):Z
 - isVisible(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):Z
 com.intellij.usages.rules.MergeableUsage

@@ -12,7 +12,11 @@ interface GeneratedSourceUsageFilter {
     val EP_NAME: ExtensionPointName<GeneratedSourceUsageFilter> = ExtensionPointName.create("com.intellij.generatedSourceUsageFilter")
   }
 
-  fun isAvailable(): Boolean
+  @Deprecated(replaceWith = ReplaceWith("isAvailable(Project)"), message = "Use the Project override")
+  fun isAvailable(): Boolean = true
+
+  @Suppress("DEPRECATION")
+  fun isAvailable(project: Project): Boolean = isAvailable()
 
   fun isGeneratedSource(usage: Usage, project: Project): Boolean
 }

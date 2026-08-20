@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 class DefaultGeneratedSourceUsageFilter: GeneratedSourceUsageFilter {
   
-  override fun isAvailable(): Boolean = GeneratedSourcesFilter.EP_NAME.hasAnyExtensions()
+  override fun isAvailable(project: Project): Boolean = GeneratedSourcesFilter.EP_NAME.hasAnyExtensions()
 
   override fun isGeneratedSource(usage: Usage, project: Project): Boolean {
     return usage is UsageInFile &&
