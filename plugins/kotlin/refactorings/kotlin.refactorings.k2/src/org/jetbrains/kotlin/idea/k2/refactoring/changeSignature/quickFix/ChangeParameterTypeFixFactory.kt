@@ -9,12 +9,12 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -33,9 +33,9 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickF
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.psi.KtOperationExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.resolution.KtResolvable
 import org.jetbrains.kotlin.types.Variance
 
 object ChangeParameterTypeFixFactory {
@@ -87,6 +88,7 @@ object ChangeParameterTypeFixFactory {
         return listOfNotNull(createChangeParameterTypeFix(parameter, targetType, functionLikeSymbol))
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun createTypeMismatchFixesForDefinitelyNonNullable(
         psi: KtExpression,
@@ -97,7 +99,7 @@ object ChangeParameterTypeFixFactory {
         } else {
             psi
         }
-        val referencedSymbol = argumentOrSelectorExpression?.mainReference?.resolveToSymbol()?.let { symbol ->
+        val referencedSymbol = (argumentOrSelectorExpression as? KtResolvable)?.resolveSymbol()?.let { symbol ->
             if (symbol is KaPropertySymbol) {
                 getValueParameterSymbolForPropertySymbol(symbol)
             } else {

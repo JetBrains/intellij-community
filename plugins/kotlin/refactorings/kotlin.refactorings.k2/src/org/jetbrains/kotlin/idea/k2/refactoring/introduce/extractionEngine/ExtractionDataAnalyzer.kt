@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.diagnostics
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.dataflow.KaDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
@@ -24,6 +23,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.session.useSiteSession
@@ -32,11 +32,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
-import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.classId
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
@@ -74,6 +74,7 @@ import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtBreakExpression
 import org.jetbrains.kotlin.psi.KtContinueExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -346,6 +347,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
     if (propagatingMarkerDescriptors.isNotEmpty() || optInMarkerNames.isNotEmpty()) {
         originalElements.forEach { element ->
             element.accept(object : KtTreeVisitorVoid() {
+                @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
                 override fun visitReferenceExpression(expression: KtReferenceExpression) {
                     super.visitReferenceExpression(expression)
 
@@ -358,7 +360,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
                         }
                     }
 
-                    val targetSymbol = expression.mainReference.resolveToSymbol() as? KaAnnotatedSymbol ?: return
+                    val targetSymbol = expression.resolveSymbol() as? KaAnnotatedSymbol ?: return
                     processSymbolAnnotations(targetSymbol)
 
                     val typeSymbol = (targetSymbol as? KaCallableSymbol)?.returnType?.expandedSymbol ?: return

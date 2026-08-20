@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -56,9 +55,6 @@ import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.Suc
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.findRelevantLoopForExpression
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
-import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
@@ -79,11 +75,11 @@ import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDoubleColonExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEscapeStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtIfExpression
-import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtIsExpression
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
@@ -127,6 +123,7 @@ import org.jetbrains.kotlin.psi.KtWhenConditionIsPattern
 import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.resolution.KtResolvable
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.utils.addToStdlib.zipWithNulls
 
@@ -488,11 +485,12 @@ object K2SemanticMatcher {
         }
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun elementsMatchOrBothAreNull(targetElement: KtElement?, patternElement: KtElement?, context: MatchingContext): Boolean {
         if (targetElement == null || patternElement == null) return targetElement == null && patternElement == null
         if (patternElement is KtSimpleNameExpression) {
-            val param = patternElement.mainReference.resolveToSymbol()?.psi as? PsiNamedElement
+            val param = patternElement.resolveSymbol()?.psi as? PsiNamedElement
             if (param != null && context.parameterSubstitution.containsKey(param)) {
                 val oldElement = context.parameterSubstitution.put(param, targetElement)
                 return oldElement !is KtElement || oldElement.isSemanticMatch(targetElement)
@@ -663,7 +661,7 @@ object K2SemanticMatcher {
                 if (expression::class != patternExpression::class) return false
                 if (expression.operationToken != patternExpression.operationToken) return false
                 context(analysisSession) {
-                    if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference, context)) return false
+                    if (!areReferencesMatchingByResolve(expression, patternExpression, context)) return false
                 }
                 return elementsMatchOrBothAreNull(expression.baseExpression, patternExpression.baseExpression)
             }
@@ -675,7 +673,7 @@ object K2SemanticMatcher {
             if (patternExpression is KtBinaryExpression) {
                 if (expression.operationToken != patternExpression.operationToken) return false
                 context(analysisSession) {
-                    if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference, context)) return false
+                    if (!areReferencesMatchingByResolve(expression, patternExpression, context)) return false
                 }
                 return elementsMatchOrBothAreNull(expression.left, patternExpression.left) &&
                         elementsMatchOrBothAreNull(expression.right, patternExpression.right)
@@ -784,7 +782,7 @@ object K2SemanticMatcher {
         override fun visitThisExpression(expression: KtThisExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtThisExpression ?: return false
             context(analysisSession) {
-                if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference, context)) return false
+                if (!areReferencesMatchingByResolve(expression, patternExpression, context)) return false
             }
             return true
         }
@@ -792,7 +790,7 @@ object K2SemanticMatcher {
         override fun visitSuperExpression(expression: KtSuperExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtSuperExpression ?: return false
             context(analysisSession) {
-                if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference, context)) return false
+                if (!areReferencesMatchingByResolve(expression, patternExpression, context)) return false
             }
             return true
         }
@@ -936,6 +934,7 @@ object K2SemanticMatcher {
         return true
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun areNonCallsMatchingByResolve(
         targetExpression: KtExpression,
@@ -944,8 +943,8 @@ object K2SemanticMatcher {
     ): Boolean {
         if (targetExpression !is KtNameReferenceExpression || patternExpression !is KtNameReferenceExpression) return false
 
-        val targetSymbol = targetExpression.mainReference.resolveToSymbol().takeUnless { it is KaCallableSymbol } ?: return false
-        val patternSymbol = patternExpression.mainReference.resolveToSymbol().takeUnless { it is KaCallableSymbol } ?: return false
+        val targetSymbol = targetExpression.resolveSymbol().takeUnless { it is KaCallableSymbol } ?: return false
+        val patternSymbol = patternExpression.resolveSymbol().takeUnless { it is KaCallableSymbol } ?: return false
 
         return context.areSymbolsEqualOrAssociated(targetSymbol, patternSymbol)
     }
@@ -1026,16 +1025,21 @@ object K2SemanticMatcher {
     context(_: KaSession)
     private fun KaCallableMemberCall<*, *>.getTypeArguments(): List<KaType?> = symbol.typeParameters.map { typeArgumentsMapping[it] }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KaExplicitReceiverValue.getSymbolForThisExpressionOrNull(): KaSymbol? =
-        (expression as? KtThisExpression)?.mainReference?.resolveToSymbol()
+        (expression as? KtThisExpression)?.resolveSymbol()
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun areReferencesMatchingByResolve(
-        targetReference: KtReference,
-        patternReference: KtReference,
+        targetReference: KtExpression,
+        patternReference: KtExpression,
         context: MatchingContext,
-    ): Boolean = context.areSymbolsEqualOrAssociated(targetReference.resolveToSymbol(), patternReference.resolveToSymbol())
+    ): Boolean = context.areSymbolsEqualOrAssociated(
+        (targetReference as? KtResolvable)?.resolveSymbol(),
+        (patternReference as? KtResolvable)?.resolveSymbol(),
+    )
 
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
@@ -1121,10 +1125,6 @@ object K2SemanticMatcher {
 
     context(_: KaSession)
     private fun KtCallableDeclaration.getCallableSymbol(): KaCallableSymbol = symbol as KaCallableSymbol
-
-    private val KtInstanceExpressionWithLabel.mainReference: KtReference get() = instanceReference.mainReference
-
-    private val KtOperationExpression.mainReference: KtSimpleNameReference get() = operationReference.mainReference
 
     private val KtOperationExpression.operationToken: IElementType get() = operationReference.getReferencedNameElementType()
 

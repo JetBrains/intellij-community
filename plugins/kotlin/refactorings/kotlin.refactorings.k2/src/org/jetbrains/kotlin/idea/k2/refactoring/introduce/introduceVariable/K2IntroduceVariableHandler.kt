@@ -35,7 +35,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -47,6 +46,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
@@ -54,13 +54,13 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
-import org.jetbrains.kotlin.analysis.api.types.isDenotable
 import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isDenotable
 import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.types.type
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -85,7 +85,6 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHe
 import org.jetbrains.kotlin.idea.refactoring.introduce.calculateAnchorForExpressions
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.substringContextOrThis
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -96,6 +95,7 @@ import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLambdaArgument
@@ -683,6 +683,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         return (diagnostics.any { diagnostic -> diagnostic is KaFirDiagnostic.CannotInferParameterType })
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     override fun filterContainersWithContainedLambdasByAnalyze(
         containersWithContainedLambdas: Sequence<ContainerWithContained>,
         physicalExpression: KtExpression,
@@ -691,7 +692,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         return analyzeInModalWindow(physicalExpression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             val psiToCheck = referencesFromExpressionToExtract.flatMap { reference ->
                 // in case of an unresolved reference consider all containers applicable
-                val symbol = reference.mainReference.resolveToSymbol() ?: return@flatMap emptyList()
+                val symbol = reference.resolveSymbol() ?: return@flatMap emptyList()
                 val implicitReceivers = reference.resolveToCall()
                     ?.singleCallOrNull<KaCallableMemberCall<*, *>>()
                     ?.getImplicitReceivers()

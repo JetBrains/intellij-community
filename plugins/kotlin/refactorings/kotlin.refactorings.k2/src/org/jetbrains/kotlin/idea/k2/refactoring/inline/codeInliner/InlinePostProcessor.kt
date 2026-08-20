@@ -4,8 +4,9 @@ package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtLambdaArgument
@@ -136,6 +138,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
         }
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     override fun dropArgumentsForDefaultValues(pointer: SmartPsiElementPointer<KtElement>) {
         val result = pointer.element ?: return
 
@@ -163,7 +166,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
                         var needToSubstitute = false
                         defaultValue?.forEachDescendantOfType<KtSimpleNameExpression> { ref ->
                             analyze(defaultValue) {
-                                val symbol = ref.mainReference.resolveToSymbol()
+                                val symbol = ref.resolveSymbol()
                                 if (symbol is KaValueParameterSymbol && symbol in valueParameters) {
                                     ref.putCopyableUserData(
                                         key,
