@@ -30,7 +30,7 @@ interface PyAstAugAssignmentStatement : PyAstStatement, PyAstQualifiedExpression
   }
 
   fun isInplaceOperator(resolvedCallee: PyAstCallable?): Boolean {
-    return resolvedCallee != null && PyNames.isInplaceOperatorName(referencedName, resolvedCallee.getName())
+    return resolvedCallee != null && PyNames.isInplaceOperatorName(resolvedCallee.getName())
   }
 
   override fun getQualifier(): PyAstExpression? {
