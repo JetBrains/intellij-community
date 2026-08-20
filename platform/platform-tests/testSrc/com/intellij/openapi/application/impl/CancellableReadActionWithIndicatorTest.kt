@@ -2,6 +2,8 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -15,6 +17,7 @@ import com.intellij.openapi.progress.withIndicator
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -101,6 +104,20 @@ class CancellableReadActionWithIndicatorTest : CancellableReadActionTests() {
           testNoExceptions()
         }
       }
+    }
+  }
+
+  @Test
+  fun `try run read action inside non-blocking read action remains cancellable`() {
+    indicatorTest {
+      ReadAction.nonBlocking {
+        assertTrue(ApplicationManagerEx.getApplicationEx().tryRunReadAction {
+          waitForPendingWrite().up()
+          assertThrows<ProcessCanceledException> {
+            ProgressManager.checkCanceled()
+          }
+        })
+      }.executeSynchronously()
     }
   }
 }

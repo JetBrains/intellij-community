@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.fail
@@ -118,6 +119,7 @@ private fun testReadExceptions(): Nothing {
   throw jce
 }
 
+@RequiresBackgroundThread
 fun waitForPendingWrite(): Semaphore {
   val finishWrite = Semaphore(1)
   val pendingWrite = Semaphore(1)
