@@ -223,6 +223,14 @@ private class ScriptCommandLineState(
         setupJavaParameters(params)
         val jreHome = if (configuration.isAlternativeJrePathEnabled) myConfiguration.alternativeJrePath else null
         JavaParametersUtil.configureProject(environment.project, params, JavaParameters.JDK_ONLY, jreHome)
+        val shortenCommandLine = configuration.shortenCommandLine
+        if (shortenCommandLine != null) {
+            params.setShortenCommandLine(shortenCommandLine)
+        } else {
+            params.useDynamicClasspathDefinedByJdkLevel()
+        }
+        params.setUseDynamicParameters(params.isArgFile)
+        params.setUseDynamicVMOptions(params.isArgFile)
         return params
     }
 }

@@ -206,6 +206,7 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/observable:observable_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
     ],
     deps = [
         # do not sort,
@@ -341,6 +342,13 @@ jvm_library(
         "//plugins/kotlin/base/facet/tests:tests_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//plugins/kotlin/run-configurations/jvm",
+        "//plugins/kotlin/run-configurations/jvm:jvm_test_lib",
+        "//java/execution/impl",
+        "//java/execution/impl:impl_test_lib",
+        "//platform/execution-impl",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/platform-util-io:ide-util-io",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.scripting.tests` end

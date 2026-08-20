@@ -181,6 +181,11 @@ class KotlinScratchExecutor(val scratchFile: KotlinScratchFile, val project: Pro
         javaParameters.jdk = checkNotNull(scratchFile.jdk) {
             "Scratch JDK must be selected before execution; guarded by execute() and RunKotlinScratchAction.update()."
         }
+        javaParameters.useDynamicClasspathDefinedByJdkLevel()
+        // The compiler classpath is a program parameter, and only the arg file can carry those: the other methods route
+        // them through CommandLineWrapper, which refuses to run on Java 9+
+        javaParameters.setUseDynamicParameters(javaParameters.isArgFile)
+        javaParameters.setUseDynamicVMOptions(javaParameters.isArgFile)
 
         javaParameters.charset = null
         if (isExplainEnabled) {
