@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.platform.experiment.ab.impl.ABExperimentOption.UNASSIGNED
 import com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector
-import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -78,8 +77,8 @@ val experimentsPartition: List<ExperimentAssignment> = listOf(
   //),
   ExperimentAssignment(
     experiment = ABExperimentOption.CLION_WIZARD_REMOVAL,
-    experimentBuckets = (512 until 768).toSet(),
-    controlBuckets = (768 until 1024).toSet(),
+    experimentBuckets = (256 until 768).toSet(),
+    controlBuckets = (0 until 256).toSet() + (768 until 1024).toSet(),
     majorVersion = "2026.2",
     products = EnumSet.of(IntelliJPlatformProduct.CLION),
   ),
