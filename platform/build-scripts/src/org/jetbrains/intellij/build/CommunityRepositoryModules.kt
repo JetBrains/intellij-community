@@ -701,7 +701,6 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("javax-inject")
       //spec.withProjectLibrary("jetty")
       spec.withProjectLibrary("kotlinx-coroutines-guava")
-      spec.withProjectLibrary("kxml2")
       //spec.withProjectLibrary("libadb-server-proto")
       //spec.withProjectLibrary("oauth2")
       //spec.withModuleLibrary("libandroid-core-proto", "intellij.android.projectSystem.gradle", "")

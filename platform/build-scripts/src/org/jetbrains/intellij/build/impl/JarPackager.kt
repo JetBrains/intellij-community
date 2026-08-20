@@ -155,7 +155,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "kotlinc.kotlin-scripting-common",
   "kotlinc.kotlin-scripting-compiler-impl",
   "kotlinc.kotlin-scripting-jvm",
-  "kxml2",
   "layoutlib",
   "libthrift",
   "memoryfilesystem",

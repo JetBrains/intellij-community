@@ -558,6 +558,7 @@ libraries/ktor/server-cio
 libraries/ktor/server-content-negotiation
 libraries/ktor/server-sse
 libraries/ktor/utils
+libraries/kxml2
 libraries/log4j-to-slf4j
 libraries/lsp4j
 libraries/lsp4j/debug

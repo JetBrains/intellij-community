@@ -8363,21 +8363,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "net.sf.kxml/kxml2-2.3.0.jar_copy",
-    src = "@net_sf_kxml-kxml2-2_3_0_http//file",
-    out = "net.sf.kxml/kxml2-2.3.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kxml2",
-    jar = "@net_sf_kxml-kxml2-2_3_0_http//file",
-    source_jar = "@net_sf_kxml-kxml2-2_3_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "com.android.tools.layoutlib/layoutlib-16.2.2.jar_copy",
     src = "@com_android_tools_layoutlib-layoutlib-16_2_2_http//file",
     out = "com.android.tools.layoutlib/layoutlib-16.2.2.jar",
@@ -13635,6 +13620,21 @@ jvm_import(
     name = "org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_9_0_http_import",
     jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_9_0_http//file",
     source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_9_0-sources_http//file",
+)
+
+copy_file(
+    name = "net.sf.kxml/kxml2-2.3.0.jar_copy",
+    src = "@net_sf_kxml-kxml2-2_3_0_http//file",
+    out = "net.sf.kxml/kxml2-2.3.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kxml2-kxml2",
+    jar = "@net_sf_kxml-kxml2-2_3_0_http//file",
+    source_jar = "@net_sf_kxml-kxml2-2_3_0-sources_http//file",
+    visibility = ["//visibility:public"],
 )
 
 copy_file(

@@ -6448,20 +6448,6 @@ http_file(
 )
 
 http_file(
-    name = "net_sf_kxml-kxml2-2_3_0_http",
-    downloaded_file_path = "kxml2-2.3.0.jar",
-    sha256 = "f264dd9f79a1fde10ce5ecc53221eff24be4c9331c830b7d52f2f08a7b633de2",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/sf/kxml/kxml2/2.3.0/kxml2-2.3.0.jar",
-)
-
-http_file(
-    name = "net_sf_kxml-kxml2-2_3_0-sources_http",
-    downloaded_file_path = "kxml2-2.3.0-sources.jar",
-    sha256 = "85495366666158b58961e8911ced0f6f3bc92f1ebee865518b493fdb90760250",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/sf/kxml/kxml2/2.3.0/kxml2-2.3.0-sources.jar",
-)
-
-http_file(
     name = "com_android_tools_layoutlib-layoutlib-16_2_2_http",
     downloaded_file_path = "layoutlib-16.2.2.jar",
     sha256 = "00817c06c244b7baf7254fce9dee4cac2bcb109b9348e73717b3d5f042e6556a",
@@ -10848,6 +10834,20 @@ http_file(
     downloaded_file_path = "ktor-server-sse-jvm-3.4.1-sources.jar",
     sha256 = "70ddbbee82a3d5fcc47ae029bdd7ae5a31714a0fa1e07e92cd6b6c2ebccbe1d9",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-sse-jvm/3.4.1/ktor-server-sse-jvm-3.4.1-sources.jar",
+)
+
+http_file(
+    name = "net_sf_kxml-kxml2-2_3_0_http",
+    downloaded_file_path = "kxml2-2.3.0.jar",
+    sha256 = "f264dd9f79a1fde10ce5ecc53221eff24be4c9331c830b7d52f2f08a7b633de2",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/sf/kxml/kxml2/2.3.0/kxml2-2.3.0.jar",
+)
+
+http_file(
+    name = "net_sf_kxml-kxml2-2_3_0-sources_http",
+    downloaded_file_path = "kxml2-2.3.0-sources.jar",
+    sha256 = "85495366666158b58961e8911ced0f6f3bc92f1ebee865518b493fdb90760250",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/sf/kxml/kxml2/2.3.0/kxml2-2.3.0-sources.jar",
 )
 
 http_file(
