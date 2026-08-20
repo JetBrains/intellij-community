@@ -110,7 +110,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "assertj-swing",
   "com.jetbrains.fus.reporting.ap.validation.all",
   "cucumber-core-1",
-  "external-symbols",
   "git-learning-project",
   "github.javafaker",
   "google.protobuf.java.util",
