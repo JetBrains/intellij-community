@@ -1,14 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.authentication.ui
 
-import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.auth.ui.login.LoginModel.LoginState
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil.asObservableIn
-import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
-import com.intellij.collaboration.ui.util.bindComboBoxTextIn
-import com.intellij.collaboration.ui.util.bindTextIn
-import com.intellij.collaboration.ui.util.bindValidationOnApplyIn
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -19,18 +14,18 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.components.fields.ExtendableTextComponent
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
-import org.jetbrains.plugins.gitlab.authentication.GitLabLoginErrorStatusPresenter
+import org.jetbrains.plugins.gitlab.ui.clone.GitLabOAuthLoginInputPanelFactory
 import org.jetbrains.plugins.gitlab.ui.util.GitLabPluginProjectScopeProvider
-import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
+
+private const val SELF_MANAGED_SERVER_OAUTH_CONFIGURATION_HELP_ID = "self-managed-server-oauth-configuration"
+private const val SELF_MANAGED_SERVER_OAUTH_CONFIGURATION_DOCS_LINK =
+  "https://www.jetbrains.com/help/idea/set-up-a-gitlab-account.html#self-managed-server-oauth-configuration"
 
 internal object GitLabOAuthLoginDialogComponentFactory {
   fun showIn(
@@ -86,7 +81,20 @@ private class GitLabOAuthLoginDialog(
     setOKButtonText(CollaborationToolsBundle.message("login.button"))
     init()
 
-    cs.launch { vm.isLoggingIn.collect { isOKActionEnabled = !it } }
+    cs.launch {
+      vm.isLoggingIn.collect {
+        if (it) {
+          isOKActionEnabled = false
+          setOKButtonText(CollaborationToolsBundle.message("login.progress"))
+          setOKButtonIcon(AnimatedIcon.Default())
+        }
+        else {
+          isOKActionEnabled = true
+          setOKButtonText(CollaborationToolsBundle.message("login.button"))
+          setOKButtonIcon(null)
+        }
+      }
+    }
     cs.launch { vm.loginState.collect { if (it is LoginState.Failed) startTrackingValidation() } }
     cs.launch {
       vm.outcome.collect { outcome ->
@@ -103,43 +111,10 @@ private class GitLabOAuthLoginDialog(
 
   override fun doOKAction() = vm.requestLogin()
 
-  override fun createCenterPanel(): DialogPanel {
-    val progressExtension = ExtendableTextComponent.Extension
-      .create(AnimatedIcon.Default(), CollaborationToolsBundle.message("login.progress"), null)
-    val editable = vm.isLoggingIn.mapState { !it }
-    val errorPresenter = GitLabLoginErrorStatusPresenter(vm, canLogInWithGit)
+  override fun getHelpId(): String = SELF_MANAGED_SERVER_OAUTH_CONFIGURATION_HELP_ID
 
-    return panel {
-      row(CollaborationToolsBundle.message("login.field.server")) {
-        comboBox(vm.servers)
-          .applyToComponent {
-            isEditable = true
-            val editorField = editor.editorComponent as? ExtendableTextComponent
-            if (editorField != null) {
-              cs.launch {
-                vm.isLoggingIn.collect { inProgress ->
-                  if (inProgress) editorField.addExtension(progressExtension)
-                  else editorField.removeExtension(progressExtension)
-                }
-              }
-            }
-          }
-          .bindComboBoxTextIn(cs, vm.serverUri.valueFlow)
-          .bindValidationOnApplyIn(cs, vm.serverUri)
-          .align(AlignX.FILL)
-          .resizableColumn().enabledIf(editable.mapState { it && !serverFieldDisabled }.asObservableIn(cs))
-      }
-      row(GitLabBundle.message("account.oauth.client.id.label")) {
-        textField()
-          .bindTextIn(cs, vm.clientId.valueFlow)
-          .bindValidationOnApplyIn(cs, vm.clientId)
-          .align(AlignX.FILL)
-          .resizableColumn().enabledIf(editable.asObservableIn(cs))
-          .focused()
-      }
-      row {
-        cell(ErrorStatusPanelFactory.create(cs, vm.errorFlow, errorPresenter, ErrorStatusPanelFactory.Alignment.LEFT))
-      }
-    }.withPreferredWidth(350)
-  }
+  override fun doHelpAction() = BrowserUtil.browse(SELF_MANAGED_SERVER_OAUTH_CONFIGURATION_DOCS_LINK)
+
+  override fun createCenterPanel(): DialogPanel =
+    GitLabOAuthLoginInputPanelFactory.createIn(cs, vm, serverFieldDisabled, canLogInWithGit).withPreferredWidth(350)
 }

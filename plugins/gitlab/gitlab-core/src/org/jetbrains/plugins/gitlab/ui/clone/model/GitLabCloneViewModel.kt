@@ -19,9 +19,10 @@ internal interface GitLabCloneViewModel {
   val panelVm: SharedFlow<GitLabClonePanelViewModel>
 
   fun switchToEntryLoginPanel(account: GitLabAccount?)
+  fun switchToOAuthLoginPanel(account: GitLabAccount?)
   fun switchToTokenLoginPanel(account: GitLabAccount?)
   fun switchToRepositoryList()
-  fun switchBackFromTokenLogin()
+  fun switchBackFromLogin(account: GitLabAccount?)
 
   fun requestOAuthLogin()
 
@@ -37,6 +38,7 @@ internal class GitLabCloneViewModelImpl(
 
   private val entryLoginVm = GitLabCloneLoginEntryViewModel(cs, project, accountManager)
   private val tokenLoginVm = GitLabCloneTokenLoginViewModel(cs, accountManager)
+  private val oAuthCustomServerLoginVm = GitLabCloneOAuthCustomServerLoginViewModel(cs, project, accountManager)
   private val repositoriesVm = GitLabCloneRepositoriesViewModelImpl(project, cs, accountManager)
 
   private val accounts: StateFlow<Set<GitLabAccount>> = accountManager.accountsState
@@ -52,7 +54,7 @@ internal class GitLabCloneViewModelImpl(
     }
 
     cs.launch {
-      merge(tokenLoginVm.loginSucceeded, entryLoginVm.loginSucceeded).collect {
+      merge(tokenLoginVm.loginSucceeded, entryLoginVm.loginSucceeded, oAuthCustomServerLoginVm.loginSucceeded).collect {
         switchToRepositoryList()
       }
     }
@@ -61,6 +63,11 @@ internal class GitLabCloneViewModelImpl(
   override fun switchToEntryLoginPanel(account: GitLabAccount?) {
     entryLoginVm.setSelectedAccount(account)
     _panelVm.value = entryLoginVm
+  }
+
+  override fun switchToOAuthLoginPanel(account: GitLabAccount?) {
+    oAuthCustomServerLoginVm.setSelectedAccount(account)
+    _panelVm.value = oAuthCustomServerLoginVm
   }
 
   override fun switchToTokenLoginPanel(account: GitLabAccount?) {
@@ -72,12 +79,12 @@ internal class GitLabCloneViewModelImpl(
     _panelVm.value = repositoriesVm
   }
 
-  override fun switchBackFromTokenLogin() {
+  override fun switchBackFromLogin(account: GitLabAccount?) {
     if (accounts.value.isNotEmpty()) {
       switchToRepositoryList()
     }
     else {
-      switchToEntryLoginPanel(null)
+      switchToEntryLoginPanel(account)
     }
   }
 

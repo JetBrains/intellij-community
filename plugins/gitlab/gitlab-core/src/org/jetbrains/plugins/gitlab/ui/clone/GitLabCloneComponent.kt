@@ -51,16 +51,16 @@ internal class GitLabCloneComponent(
             addToLeft(title)
             border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
           }
-          val buttons = GitLabCloneLoginComponentFactory.create(innerCs, panelVm, this@GitLabCloneComponent.vm)
+          val centralPanel = GitLabCloneLoginComponentFactory.create(innerCs, panelVm, vm)
 
           VerticalListPanel().apply {
             border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
             add(titlePanel)
-            add(buttons)
+            add(centralPanel)
           }
         }
         is GitLabCloneRepositoriesViewModel -> GitLabCloneRepositoriesComponentFactory.create(
-          project, innerCs, panelVm, this@GitLabCloneComponent.vm
+          project, innerCs, panelVm, vm
         ).also { panel ->
           panel.registerValidators(innerCs.nestedDisposable())
 

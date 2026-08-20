@@ -247,6 +247,10 @@ internal object GitLabCloneRepositoriesComponentFactory {
       { cloneVm.requestOAuthLogin() },
       showSeparatorAbove = true
     )
+    private val loginViaOAuthToCustomServerAction: AccountMenuItem.Action =
+      AccountMenuItem.Action(GitLabBundle.message("account.add.custom.server.popup.text"),
+                             { cloneVm.switchToOAuthLoginPanel(account = null) },
+                             showSeparatorAbove = false)
     private val loginWithTokenAction: AccountMenuItem.Action = AccountMenuItem.Action(
       CollaborationToolsBundle.message("clone.dialog.login.with.token.action"),
       { cloneVm.switchToTokenLoginPanel(account = null) },
@@ -255,6 +259,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
 
     override val avatarSize: Int = VcsCloneDialogUiSpec.Components.popupMenuAvatarSize
 
-    override fun createActions(): Collection<AccountMenuItem.Action> = listOf(loginViaOAuthAction, loginWithTokenAction)
+    override fun createActions(): Collection<AccountMenuItem.Action> =
+      listOf(loginViaOAuthAction, loginViaOAuthToCustomServerAction, loginWithTokenAction)
   }
 }

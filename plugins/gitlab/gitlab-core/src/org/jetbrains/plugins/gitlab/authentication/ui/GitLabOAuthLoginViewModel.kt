@@ -17,6 +17,7 @@ import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +31,7 @@ import org.jetbrains.plugins.gitlab.authentication.GitLabGitAuthorizationSignal
 import org.jetbrains.plugins.gitlab.authentication.GitLabOAuthService
 import org.jetbrains.plugins.gitlab.authentication.GitLabOAuthSettings
 import org.jetbrains.plugins.gitlab.authentication.GitLabSecurityUtil
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabOAuthLoginOutcome.OtherMethod
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabOAuthLoginOutcome.Success
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -38,11 +40,13 @@ internal class GitLabOAuthLoginViewModel(
   private val project: Project,
   parentCs: CoroutineScope,
   requiredServerPath: GitLabServerPath?,
-  private val requiredUsername: String? = null,
-  private val uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
+  private var requiredUsername: String? = null,
+  private var uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
 ) : GitLabGitAuthorizationSignal {
 
   private val cs = parentCs.childScope(javaClass.name, Dispatchers.Default)
+  private var loginJob: Job? = null
+
   val servers: List<String> =
     (GitRepositoryManager.getInstance(project).collectRemotes().mapNotNull { getServerPath(it.url) } +
      GitLabOAuthSettings.getInstance(project).state.clientIds.keys.mapNotNull { getServerPath(it) })
@@ -106,7 +110,8 @@ internal class GitLabOAuthLoginViewModel(
 
   fun requestLogin() {
     if (_loginState.value is LoginState.Connecting) return
-    cs.launch {
+    loginJob?.cancel()
+    loginJob = cs.launch {
       _loginState.value = LoginState.Connecting
       try {
         val serverPath = GitLabServerPath(URIUtil.normalizeAndValidateHttpUri(_serverUri.value))
@@ -124,6 +129,22 @@ internal class GitLabOAuthLoginViewModel(
       catch (e: Throwable) {
         _loginState.value = LoginState.Failed(e)
       }
+      finally {
+        loginJob = null
+      }
+    }
+  }
+
+  fun setSelectedAccount(account: GitLabAccount?) {
+    requiredUsername = account?.name
+    _serverUri.value = account?.server?.uri ?: return
+  }
+
+  fun cancelLogin() {
+    loginJob?.cancel()
+    if (_loginState.value is LoginState.Connecting) {
+      _loginState.value = LoginState.Disconnected
+      _outcome.value = null
     }
   }
 

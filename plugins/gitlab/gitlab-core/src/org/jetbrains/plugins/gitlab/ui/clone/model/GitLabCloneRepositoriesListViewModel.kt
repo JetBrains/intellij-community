@@ -86,7 +86,7 @@ private class GitLabCloneRepositoriesForAccountViewModelImpl(
       }
       catch (e: Throwable) {
         if (GitLabApiUtil.isInvalidCredentialsError(e)) {
-          emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.RevokedToken(account))))
+          emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.InvalidToken(account))))
         }
         else {
           val errorMessage = e.localizedMessage ?: CollaborationToolsBundle.message("clone.dialog.error.load.repositories")
