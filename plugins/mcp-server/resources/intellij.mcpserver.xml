@@ -24,12 +24,14 @@
     <module name="intellij.mcpserver.stdio"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.builtInServer"/>
     <module name="intellij.platform.builtInServer.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
@@ -57,6 +59,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider"/>
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.McpServerService"/>
+    <applicationService serviceImplementation="com.intellij.mcpserver.impl.wsl.McpWslForwarderService" os="windows"/>
     <applicationService serviceInterface="com.intellij.mcpserver.impl.McpSessionProjectResolver" serviceImplementation="com.intellij.mcpserver.impl.McpSessionProjectResolverImpl" open="true"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector"/>
@@ -65,6 +68,7 @@
 
     <appStarter id="mcpServer" implementation="com.intellij.mcpserver.McpServerHeadlessStarter" internal="true"/>
     <backgroundPostStartupActivity implementation="com.intellij.mcpserver.impl.McpServerService$MyProjectListener" />
+    <backgroundPostStartupActivity implementation="com.intellij.mcpserver.impl.wsl.McpWslForwarderService$StartupTouch" os="windows"/>
     <notificationGroup id="MCP Server" displayType="BALLOON" bundle="messages.McpServerBundle" key="notification.group.mcp.server"
       notificationIds="mcp.client.detected;mcp.client.autoconfigured;mcp.client.error.autoconfigured;mcp.client.wrong.port.detected"/>
 
@@ -95,6 +99,10 @@
     <registryKey defaultValue="1000"
                  description="Throttle interval in milliseconds for MCP progress notifications and keep-alives"
                  key="mcp.server.progress.notification.interval.ms"/>
+    <registryKey defaultValue="false"
+                 description="Enable prototype: forward the IDE MCP SSE and built-in HTTP loopback ports into every attached WSL distro so tools running inside WSL (e.g. Claude Code) can reach the IDE without a 0.0.0.0 bind (IJPL-232933). Default off; restart the IDE after toggling. Windows only."
+                 key="ide.mcp.wsl.forward.enabled"
+                 restartRequired="true"/>
 
     <applicationSettings service="com.intellij.mcpserver.settings.McpServerSettingsImpl"/>
     <applicationSettings service="com.intellij.mcpserver.settings.McpToolDisallowListSettingsImpl"/>

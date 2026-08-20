@@ -51,6 +51,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -194,6 +198,16 @@ open class McpServerService(val cs: CoroutineScope) {
 
   val isRunning: Boolean
     get() = server.value != null
+
+  /**
+   * Observable state for the global MCP SSE server: the resolved loopback port when the server is running,
+   * or `null` when it is stopped. Preferred over polling [isRunning] / [port] by lifecycle-aware components
+   * (see `McpWslForwarderService`).
+   */
+  @get:ApiStatus.Internal
+  val serverPortFlow: StateFlow<Int?> =
+    server.map { it?.engineConfig?.connectors?.firstOrNull()?.port }
+      .stateIn(cs, SharingStarted.Eagerly, server.value?.engineConfig?.connectors?.firstOrNull()?.port)
 
   // For tests
   val theOnlySession: McpSessionOptions?

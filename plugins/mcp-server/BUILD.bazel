@@ -70,6 +70,8 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/util-ex",
         "//platform/eel-provider",
+        "//platform/built-in-server-api:builtInServer",
+        "//platform/execution",
     ],
 )
 
@@ -134,6 +136,8 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//platform/util-ex:util-ex_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
+        "//platform/built-in-server-api:builtInServer_test_lib",
+        "//platform/execution:execution_test_lib",
     ],
 )
 ### auto-generated section `build intellij.mcpserver` end
