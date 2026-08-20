@@ -15,27 +15,25 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.BadgeIconSupplier;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class ShowFilterPopupGroup extends DefaultActionGroup implements ShortcutProvider, DumbAware {
   private static final BadgeIconSupplier FILTER_ICON = new BadgeIconSupplier(AllIcons.General.Filter);
 
   public ShowFilterPopupGroup() {
-    super(new ToggleAnywhereAction(),
-          new ToggleInCommentsAction(),
-          new ToggleInLiteralsOnlyAction(),
-          new ToggleExceptCommentsAction(),
-          new ToggleExceptLiteralsAction(),
-          new ToggleExceptCommentsAndLiteralsAction());
+    getTemplatePresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+    // Temporary backward compatibility, to be removed
     setPopup(true);
     getTemplatePresentation().setText(FindBundle.message("find.popup.show.filter.popup"));
     getTemplatePresentation().setIcon(FILTER_ICON.getOriginalIcon());
-    getTemplatePresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, Boolean.TRUE);
   }
 
   @Override
@@ -58,7 +56,7 @@ public class ShowFilterPopupGroup extends DefaultActionGroup implements Shortcut
            || ActionGroupUtil.getActiveActions(this, e)
              .filter(ToggleAction.class)
              .filter(Conditions.notInstanceOf(ToggleAnywhereAction.class)) //enabled by default
-             .filter(action -> action.isSelected(e))
+             .filter(action -> Toggleable.isSelected(e.getUpdateSession().presentation(action)))
              .isNotEmpty();
   }
 

@@ -3014,6 +3014,14 @@
   ChangeKeymap
   ChangeView
 [group ShowFilterPopup]
+  Editor.Search.Filter.Results
+  <separator>
+  SearchContext.Anywhere
+  SearchContext.InComments
+  SearchContext.InStringLiterals
+  SearchContext.ExceptComments
+  SearchContext.ExceptStringLiterals
+  SearchContext.ExceptCommentsAndStringLiterals
 [group ShowIntentionsGroup]
   ShowIntentionActions
   <separator>
