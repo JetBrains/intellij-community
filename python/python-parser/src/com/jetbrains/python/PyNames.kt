@@ -270,6 +270,7 @@ object PyNames {
   const val ITER: String = "__iter__"
   const val NEXT: String = "next"
   const val DUNDER_NEXT: String = "__next__"
+  const val DIVMOD: String = "divmod"
   const val LEN: String = "__len__"
   const val CALL: String = "__call__"
   const val GETITEM: String = "__getitem__"

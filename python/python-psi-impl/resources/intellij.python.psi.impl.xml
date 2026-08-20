@@ -258,6 +258,10 @@
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.control.flow.issues"
                      key="INSP.NAME.check.can.be.simplified" enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="com.jetbrains.python.inspections.PySimplifyBooleanCheckInspection"/>
+    <localInspection language="Python" shortName="PyDivisionByZeroInspection" suppressId="PyDivisionByZero" bundle="messages.PyPsiBundle"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.general"
+                     key="INSP.NAME.division.by.zero" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PyDivisionByZeroInspection"/>
     <localInspection language="Python" shortName="PyDefaultArgumentInspection" suppressId="PyDefaultArgument" bundle="messages.PyPsiBundle"
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.general"
                      key="INSP.NAME.default.argument" enabledByDefault="true" level="WARNING"

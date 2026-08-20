@@ -297,6 +297,7 @@ abstract class PyCodeInsightTestCase {
       return cachedTestOptions == null
              || cachedTestOptions.languageLevel != testCaseOptions.languageLevel
              || cachedTestOptions.enablePyAnyType != testCaseOptions.enablePyAnyType
+             || cachedTestOptions.assertSdkRootsNotParsed != testCaseOptions.assertSdkRootsNotParsed
     }
 
     private fun createFixture(testCaseOptions: TestCaseOptions): CodeInsightTestFixture {
