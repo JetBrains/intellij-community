@@ -7908,21 +7908,6 @@ java_library(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlinx/binary-compatibility-validator-0.17.0.jar_copy",
-    src = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http//file",
-    out = "org.jetbrains.kotlinx/binary-compatibility-validator-0.17.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlinx-bcv",
-    jar = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http//file",
-    source_jar = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm-0.5.0.jar_copy",
     src = "@org_jetbrains_kotlinx-kotlinx-collections-immutable-jvm-0_5_0_http//file",
     out = "org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm-0.5.0.jar",
@@ -8375,36 +8360,6 @@ jvm_import(
     name = "com_typesafe-config-1_4_5_http_import",
     jar = "@com_typesafe-config-1_4_5_http//file",
     source_jar = "@com_typesafe-config-1_4_5-sources_http//file",
-)
-
-copy_file(
-    name = "io.ktor/ktor-server-content-negotiation-jvm-3.4.1.jar_copy",
-    src = "@io_ktor-ktor-server-content-negotiation-jvm-3_4_1_http//file",
-    out = "io.ktor/ktor-server-content-negotiation-jvm-3.4.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "ktor-server-content-negotiation",
-    jar = "@io_ktor-ktor-server-content-negotiation-jvm-3_4_1_http//file",
-    source_jar = "@io_ktor-ktor-server-content-negotiation-jvm-3_4_1-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.ktor/ktor-server-sse-jvm-3.4.1.jar_copy",
-    src = "@io_ktor-ktor-server-sse-jvm-3_4_1_http//file",
-    out = "io.ktor/ktor-server-sse-jvm-3.4.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "ktor-server-sse-jvm",
-    jar = "@io_ktor-ktor-server-sse-jvm-3_4_1_http//file",
-    source_jar = "@io_ktor-ktor-server-sse-jvm-3_4_1-sources_http//file",
-    visibility = ["//visibility:public"],
 )
 
 copy_file(
@@ -13372,6 +13327,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.jetbrains.kotlinx/binary-compatibility-validator-0.17.0.jar_copy",
+    src = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http//file",
+    out = "org.jetbrains.kotlinx/binary-compatibility-validator-0.17.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlinx-bcv-kotlinx-bcv",
+    jar = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http//file",
+    source_jar = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.jetbrains.kotlinx/kotlinx-datetime-jvm-0.7.1-0.6.x-compat.jar_copy",
     src = "@org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_7_1-0_6_x-compat_http//file",
     out = "org.jetbrains.kotlinx/kotlinx-datetime-jvm-0.7.1-0.6.x-compat.jar",
@@ -13619,6 +13589,36 @@ java_library(
         ":io_ktor-ktor-server-core-jvm-3_4_1_http_import",
         ":com_typesafe-config-1_4_5_http_import",
     ],
+)
+
+copy_file(
+    name = "io.ktor/ktor-server-content-negotiation-jvm-3.4.1.jar_copy",
+    src = "@io_ktor-ktor-server-content-negotiation-jvm-3_4_1_http//file",
+    out = "io.ktor/ktor-server-content-negotiation-jvm-3.4.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ktor-server-content-negotiation-ktor-server-content-negotiation",
+    jar = "@io_ktor-ktor-server-content-negotiation-jvm-3_4_1_http//file",
+    source_jar = "@io_ktor-ktor-server-content-negotiation-jvm-3_4_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.ktor/ktor-server-sse-jvm-3.4.1.jar_copy",
+    src = "@io_ktor-ktor-server-sse-jvm-3_4_1_http//file",
+    out = "io.ktor/ktor-server-sse-jvm-3.4.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ktor-server-sse-ktor-server-sse-jvm",
+    jar = "@io_ktor-ktor-server-sse-jvm-3_4_1_http//file",
+    source_jar = "@io_ktor-ktor-server-sse-jvm-3_4_1-sources_http//file",
+    visibility = ["//visibility:public"],
 )
 
 java_library(

@@ -45,8 +45,8 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="io.github.oshai.kotlin.logging.jvm" level="project" />
-    <orderEntry type="library" name="ktor-server-sse-jvm" level="project" />
-    <orderEntry type="library" name="ktor-server-content-negotiation" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.server.sse" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.server.content.negotiation" />
     <orderEntry type="module" module-name="intellij.libraries.schema.kenerator" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />

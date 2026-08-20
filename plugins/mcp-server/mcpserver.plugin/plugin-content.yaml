@@ -1,3 +1,15 @@
+- name: lib/intellij.libraries.ktor.server.content.negotiation.jar
+  contentModules:
+  - name: intellij.libraries.ktor.server.content.negotiation
+    libraries:
+      ktor-server-content-negotiation:
+      - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-content-negotiation-jvm/3/ktor-server-content-negotiation-jvm-3.jar
+- name: lib/intellij.libraries.ktor.server.sse.jar
+  contentModules:
+  - name: intellij.libraries.ktor.server.sse
+    libraries:
+      ktor-server-sse-jvm:
+      - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-sse-jvm/3/ktor-server-sse-jvm-3.jar
 - name: lib/intellij.libraries.schema.kenerator.jar
   contentModules:
   - name: intellij.libraries.schema.kenerator
@@ -9,10 +21,6 @@
       io.github.smiley4.schema.kenerator.serialization:
       - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2/schema-kenerator-serialization-2.jar
 - name: lib/intellij.mcpserver.jar
-  library: ktor-server-content-negotiation
-  files:
-  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-content-negotiation-jvm/3/ktor-server-content-negotiation-jvm-3.jar
-  reason: <- intellij.mcpserver
   contentModules:
   - name: intellij.mcpserver
 - name: lib/intellij.mcpserver.stdio.jar
@@ -27,10 +35,6 @@
     - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0/kotlin-sdk-client-jvm-0.jar
     - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0/kotlin-sdk-server-jvm-0.jar
     - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0/kotlin-sdk-core-jvm-0.jar
-    reason: <- intellij.mcpserver.stdio
-  - name: ktor-server-sse-jvm
-    files:
-    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-sse-jvm/3/ktor-server-sse-jvm-3.jar
     reason: <- intellij.mcpserver.stdio
   contentModules:
   - name: intellij.mcpserver.stdio

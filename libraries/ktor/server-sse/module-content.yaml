@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.ktor.server.sse.jar
+  modules:
+  - name: intellij.libraries.ktor.server.sse
+    libraries:
+      ktor-server-sse-jvm:
+      - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-sse-jvm/3/ktor-server-sse-jvm-3.jar

@@ -6182,20 +6182,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http",
-    downloaded_file_path = "binary-compatibility-validator-0.17.0.jar",
-    sha256 = "0c8d35914a9094ab7071001c5b789e20d5f80d284c70a915a1ecb8fcecf92031",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/binary-compatibility-validator/0.17.0/binary-compatibility-validator-0.17.0.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0-sources_http",
-    downloaded_file_path = "binary-compatibility-validator-0.17.0-sources.jar",
-    sha256 = "5257cdca3d1e7ad4b47fdb5b928a364710b792fe134d3feea58ec17813ac5f63",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/binary-compatibility-validator/0.17.0/binary-compatibility-validator-0.17.0-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_kotlinx-kotlinx-collections-immutable-jvm-0_5_0_http",
     downloaded_file_path = "kotlinx-collections-immutable-jvm-0.5.0.jar",
     sha256 = "9481ed3b87e282ffb95d7e2a033702afa3af476e3b89137294aeccebb27c76f7",
@@ -6459,34 +6445,6 @@ http_file(
     downloaded_file_path = "config-1.4.5-sources.jar",
     sha256 = "4e17ad7d6a83922a9f1f7b65a33a2d33052a85314303d6f6e318ca3caf9c5d75",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/typesafe/config/1.4.5/config-1.4.5-sources.jar",
-)
-
-http_file(
-    name = "io_ktor-ktor-server-content-negotiation-jvm-3_4_1_http",
-    downloaded_file_path = "ktor-server-content-negotiation-jvm-3.4.1.jar",
-    sha256 = "c58392aa2b481f08c79cb6fda2cc14990ac4a205bb98fca871abf3bcdcd86f77",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-content-negotiation-jvm/3.4.1/ktor-server-content-negotiation-jvm-3.4.1.jar",
-)
-
-http_file(
-    name = "io_ktor-ktor-server-content-negotiation-jvm-3_4_1-sources_http",
-    downloaded_file_path = "ktor-server-content-negotiation-jvm-3.4.1-sources.jar",
-    sha256 = "e75d842a9ec5a7152a88b22e5d10d707afd4e0e1b61a5fcdb08e8e69085be8e7",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-content-negotiation-jvm/3.4.1/ktor-server-content-negotiation-jvm-3.4.1-sources.jar",
-)
-
-http_file(
-    name = "io_ktor-ktor-server-sse-jvm-3_4_1_http",
-    downloaded_file_path = "ktor-server-sse-jvm-3.4.1.jar",
-    sha256 = "7d61ea646b7726a997e6c31b327c1ceb47afef50b9e2e55b3ad6a438cc271ff4",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-sse-jvm/3.4.1/ktor-server-sse-jvm-3.4.1.jar",
-)
-
-http_file(
-    name = "io_ktor-ktor-server-sse-jvm-3_4_1-sources_http",
-    downloaded_file_path = "ktor-server-sse-jvm-3.4.1-sources.jar",
-    sha256 = "70ddbbee82a3d5fcc47ae029bdd7ae5a31714a0fa1e07e92cd6b6c2ebccbe1d9",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-sse-jvm/3.4.1/ktor-server-sse-jvm-3.4.1-sources.jar",
 )
 
 http_file(
@@ -10669,6 +10627,20 @@ http_file(
 )
 
 http_file(
+    name = "org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http",
+    downloaded_file_path = "binary-compatibility-validator-0.17.0.jar",
+    sha256 = "0c8d35914a9094ab7071001c5b789e20d5f80d284c70a915a1ecb8fcecf92031",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/binary-compatibility-validator/0.17.0/binary-compatibility-validator-0.17.0.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0-sources_http",
+    downloaded_file_path = "binary-compatibility-validator-0.17.0-sources.jar",
+    sha256 = "5257cdca3d1e7ad4b47fdb5b928a364710b792fe134d3feea58ec17813ac5f63",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/binary-compatibility-validator/0.17.0/binary-compatibility-validator-0.17.0-sources.jar",
+)
+
+http_file(
     name = "org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_7_1-0_6_x-compat_http",
     downloaded_file_path = "kotlinx-datetime-jvm-0.7.1-0.6.x-compat.jar",
     sha256 = "cf9cdf7b3074044657a1a80bc1bb5280b58545a967ac7fe42b1aa3cf93305714",
@@ -10848,6 +10820,34 @@ http_file(
     downloaded_file_path = "ktor-serialization-gson-jvm-3.4.1-sources.jar",
     sha256 = "2f36ddfed2962117e4f552727e022b9b59f06d7d90758318285e6032503eab3a",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-gson-jvm/3.4.1/ktor-serialization-gson-jvm-3.4.1-sources.jar",
+)
+
+http_file(
+    name = "io_ktor-ktor-server-content-negotiation-jvm-3_4_1_http",
+    downloaded_file_path = "ktor-server-content-negotiation-jvm-3.4.1.jar",
+    sha256 = "c58392aa2b481f08c79cb6fda2cc14990ac4a205bb98fca871abf3bcdcd86f77",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-content-negotiation-jvm/3.4.1/ktor-server-content-negotiation-jvm-3.4.1.jar",
+)
+
+http_file(
+    name = "io_ktor-ktor-server-content-negotiation-jvm-3_4_1-sources_http",
+    downloaded_file_path = "ktor-server-content-negotiation-jvm-3.4.1-sources.jar",
+    sha256 = "e75d842a9ec5a7152a88b22e5d10d707afd4e0e1b61a5fcdb08e8e69085be8e7",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-content-negotiation-jvm/3.4.1/ktor-server-content-negotiation-jvm-3.4.1-sources.jar",
+)
+
+http_file(
+    name = "io_ktor-ktor-server-sse-jvm-3_4_1_http",
+    downloaded_file_path = "ktor-server-sse-jvm-3.4.1.jar",
+    sha256 = "7d61ea646b7726a997e6c31b327c1ceb47afef50b9e2e55b3ad6a438cc271ff4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-sse-jvm/3.4.1/ktor-server-sse-jvm-3.4.1.jar",
+)
+
+http_file(
+    name = "io_ktor-ktor-server-sse-jvm-3_4_1-sources_http",
+    downloaded_file_path = "ktor-server-sse-jvm-3.4.1-sources.jar",
+    sha256 = "70ddbbee82a3d5fcc47ae029bdd7ae5a31714a0fa1e07e92cd6b6c2ebccbe1d9",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-sse-jvm/3.4.1/ktor-server-sse-jvm-3.4.1-sources.jar",
 )
 
 http_file(

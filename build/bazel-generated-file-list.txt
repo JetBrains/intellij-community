@@ -533,6 +533,7 @@ libraries/kotlinc/kotlin-compiler-fir
 libraries/kotlinc/kotlinx-serialization-compiler-plugin
 libraries/kotlinc/low-level-api-fir
 libraries/kotlinc/symbol-light-classes
+libraries/kotlinx/bcv
 libraries/kotlinx/collections-immutable
 libraries/kotlinx/coroutines/core
 libraries/kotlinx/coroutines/debug
@@ -554,6 +555,8 @@ libraries/ktor/io
 libraries/ktor/network-tls
 libraries/ktor/serialization-gson
 libraries/ktor/server-cio
+libraries/ktor/server-content-negotiation
+libraries/ktor/server-sse
 libraries/ktor/utils
 libraries/log4j-to-slf4j
 libraries/lsp4j

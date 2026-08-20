@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.ktor.server.content.negotiation.jar
+  modules:
+  - name: intellij.libraries.ktor.server.content.negotiation
+    libraries:
+      ktor-server-content-negotiation:
+      - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-content-negotiation-jvm/3/ktor-server-content-negotiation-jvm-3.jar

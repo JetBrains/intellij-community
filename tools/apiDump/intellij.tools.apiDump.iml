@@ -10,7 +10,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.asm.tools" />
-    <orderEntry type="library" exported="" name="kotlinx-bcv" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.bcv" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="library" name="kotlin-metadata" level="project" />
   </component>

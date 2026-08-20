@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="ktor-server-sse-jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-server-sse-jvm:3.4.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-server-sse-jvm/3.4.1/ktor-server-sse-jvm-3.4.1.jar">
+              <sha256sum>7d61ea646b7726a997e6c31b327c1ceb47afef50b9e2e55b3ad6a438cc271ff4</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-sse-jvm/3.4.1/ktor-server-sse-jvm-3.4.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-sse-jvm/3.4.1/ktor-server-sse-jvm-3.4.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

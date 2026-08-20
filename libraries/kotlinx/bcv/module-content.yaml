@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinx.bcv.jar
+  modules:
+  - name: intellij.libraries.kotlinx.bcv
+    libraries:
+      kotlinx-bcv:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/binary-compatibility-validator/0/binary-compatibility-validator-0.jar
