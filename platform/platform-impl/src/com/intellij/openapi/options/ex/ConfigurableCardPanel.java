@@ -22,9 +22,11 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.dsl.gridLayout.GridLayout;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -104,7 +106,9 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
 
   /**
    * Creates UI component for the specified configurable.
-   * If a component is created successfully the configurable will be reset.
+   * Only {@link Configurable#createComponent()} is called in a read action.
+   * If a component is created successfully the configurable will be reset, so that
+   * {@link Configurable#reset()} is free to show a modal progress.
    * If the configurable implements {@link MasterDetails},
    * created component will not have the following modifications.
    * If the configurable does not implement {@link Configurable.NoMargin},
@@ -112,47 +116,58 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
    * If the configurable does not implement {@link Configurable.NoScroll},
    * this method adds a scroll bars for created component.
    */
-  public static JComponent createConfigurableComponent(Configurable configurable) {
-    return configurable == null ? null : ReadAction.computeBlocking(() -> {
-      JComponent component = null;
+  public static JComponent createConfigurableComponent(@Nullable Configurable configurable) {
+    if (configurable == null) return null;
+
+    ThreadingAssertions.softAssertAwtOperationsThread();
+
+    JComponent component = ReadAction.computeBlocking(() -> {
       long time = System.currentTimeMillis();
       try {
-        component = configurable.createComponent();
+        return configurable.createComponent();
       }
       catch (Exception unexpected) {
         LOG.error("cannot create configurable component", unexpected);
+        return null;
       }
       finally {
         warn(configurable, "create", time);
       }
-      if (component != null) {
-        reset(configurable);
-        if (ConfigurableWrapper.cast(MasterDetails.class, configurable) == null) {
-          if (ConfigurableWrapper.cast(Configurable.NoMargin.class, configurable) == null) {
-            if (!component.getClass().equals(JPanel.class) && !component.getClass().equals(DialogPanel.class)) {
-              // some custom components do not support borders
-              JPanel panel = new JPanel(new BorderLayout());
-              panel.add(BorderLayout.CENTER, component);
-              component = panel;
-            }
-            if (component.getLayout() instanceof GridLayout) {
-              // GridLayout uses SpacingConfiguration.verticalComponentGap = 6 as a part of components
-              component.setBorder(JBUI.Borders.empty(5, 16, 10, 16));
-            } else{
-              component.setBorder(JBUI.Borders.empty(11, 16, 16, 16));
-            }
-          }
-          if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
-            JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
-            scroll.setViewport(new GradientViewport(component, JBUI.insetsTop(5), true));
-            scroll.getVerticalScrollBar().setBackground(JBColor.PanelBackground);
-            scroll.getHorizontalScrollBar().setBackground(JBColor.PanelBackground);
-            component = scroll;
-          }
-        }
-      }
-      return component;
     });
+    if (component == null) return null;
+
+    JComponent decorated = decorate(configurable, component);
+    // reset() may show a modal progress, which is forbidden under the read lock above,
+    // here we may have WIL acquired, it still allows us to start modal progress
+    reset(configurable);
+    return decorated;
+  }
+
+  private static @NotNull JComponent decorate(@NotNull Configurable configurable, @NotNull JComponent component) {
+    if (ConfigurableWrapper.cast(MasterDetails.class, configurable) != null) return component;
+
+    if (ConfigurableWrapper.cast(Configurable.NoMargin.class, configurable) == null) {
+      if (!component.getClass().equals(JPanel.class) && !component.getClass().equals(DialogPanel.class)) {
+        // some custom components do not support borders
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(BorderLayout.CENTER, component);
+        component = panel;
+      }
+      if (component.getLayout() instanceof GridLayout) {
+        // GridLayout uses SpacingConfiguration.verticalComponentGap = 6 as a part of components
+        component.setBorder(JBUI.Borders.empty(5, 16, 10, 16));
+      } else{
+        component.setBorder(JBUI.Borders.empty(11, 16, 16, 16));
+      }
+    }
+    if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
+      JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
+      scroll.setViewport(new GradientViewport(component, JBUI.insetsTop(5), true));
+      scroll.getVerticalScrollBar().setBackground(JBColor.PanelBackground);
+      scroll.getHorizontalScrollBar().setBackground(JBColor.PanelBackground);
+      component = scroll;
+    }
+    return component;
   }
 
   @Override

@@ -14,7 +14,8 @@ import javax.swing.JComponent;
  * The lifecycle is the following:
  * <ol>
  *   <li>{@link #createComponent()} (this method is much like a constructor, implementation initializes its inner state)</li>
- *   <li>Some other methods might be called here (e.g. {@link #isModified()})</li>
+ *   <li>{@link #reset()} load additional data if needed and apply them to UI, remember to use modal progress indicator for IO operations</li>
+ *   <li>Other methods might be called here (e.g. {@link #isModified()} is called often)</li>
  *   <li>{@link #disposeUIResources()} (this is a destructor: no other method is called after it)</li>
  * </ol>
  *
@@ -23,7 +24,7 @@ import javax.swing.JComponent;
 public interface UnnamedConfigurable {
   /**
    * Creates a new Swing form that enables the user to configure the settings.
-   * Usually this method is called on the EDT, so it should not take a long time.
+   * Usually this method is called on the EDT, so it should not take a long time, it may not show modal progress either.
    * <p>
    * Also, this place is designed to allocate resources (subscriptions/listeners etc.)
    *
@@ -55,12 +56,14 @@ public interface UnnamedConfigurable {
    *
    * @throws ConfigurationException if values cannot be applied
    */
+  @RequiresEdt(generateAssertion = false)
   void apply() throws ConfigurationException;
 
   /**
    * Loads the settings from the configurable component to the Swing form.
    * This method is called on EDT immediately after the form creation or later upon user's request.
    */
+  @RequiresEdt(generateAssertion = false)
   default void reset() {
   }
 

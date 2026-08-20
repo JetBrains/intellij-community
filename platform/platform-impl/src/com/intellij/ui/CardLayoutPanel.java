@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
@@ -26,14 +27,16 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 /**
- * @param <K>  the type of an object used as a key
- * @param <UI> the type of an object used to create a component
- * @param <V>  the type of a component to create
+ * @param <K>  the type of object used as a key
+ * @param <UI> the type of object used to create a component
+ * @param <V>  the type of component to create
  */
 public abstract class CardLayoutPanel<K, UI, V extends Component> extends JComponent implements Accessible, Disposable {
   private final IdentityHashMap<K, V> myContent = new IdentityHashMap<>();
   private volatile boolean myDisposed;
   private K myKey;
+
+  private final CardLayoutPanelScheduler myScheduler = new CardLayoutPanelScheduler();
 
   /**
    * Prepares the specified key object to return the temporary object
@@ -58,6 +61,7 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
   @Override
   public void dispose() {
     if (!myDisposed) {
+      Disposer.dispose(myScheduler);
       myDisposed = true;
       removeAll();
     }
@@ -127,34 +131,26 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
     }
   }
 
-  private void selectLater(final ActionCallback callback, final K key) {
+  private void selectLater(ActionCallback callback, K key) {
     ModalityState modality = ModalityState.stateForComponent(this);
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      if (!myDisposed) {
-        final UI ui1 = prepare(key);
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (!myDisposed) {
-            select(callback, key, ui1);
-          }
-          else callback.setRejected();
-        }, modality);
-      }
-      else callback.setRejected();
-    });
+
+    myScheduler.computeAndLaunch(
+      modality,
+      () -> prepare(key),
+      (uiData) -> select(callback, key, uiData)
+    );
   }
 
-  private void selectNow(final ActionCallback callback, final K key, final UI ui) {
+  private void selectNow(ActionCallback callback, K key, UI ui) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       select(callback, key, ui);
       return;
     }
+
     ModalityState modality = ModalityState.stateForComponent(this);
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (!myDisposed) {
-        select(callback, key, ui);
-      }
-      else callback.setRejected();
-    }, modality);
+    myScheduler.launch(modality, () -> {
+      select(callback, key, ui);
+    });
   }
 
   @Override
