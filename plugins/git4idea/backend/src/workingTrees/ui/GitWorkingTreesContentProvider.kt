@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
@@ -119,7 +120,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
       }
     })
 
-    ActionManager.getInstance().getAction("Git.WorkingTrees.Open").registerCustomShortcutSet(CommonShortcuts.ENTER, list)
+    ActionUtil.wrap("Git.WorkingTrees.Open").registerCustomShortcutSet(CommonShortcuts.ENTER, list)
 
     return list
   }
