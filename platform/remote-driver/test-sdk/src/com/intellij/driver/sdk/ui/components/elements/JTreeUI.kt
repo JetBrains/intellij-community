@@ -162,7 +162,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     fullMatch: Boolean = true,
     timeout: Duration = 5.seconds,
   ): JTreeUiComponent {
-    waitForNodesLoaded()
+    waitForNodesLoaded(timeout)
     val row = findExpandedPath(*path, fullMatch = fullMatch)?.row ?: throw PathNotFoundException(path.toList())
     fixture.expandRowRecursively(row, timeout.inWholeMilliseconds.toInt())
     return this
