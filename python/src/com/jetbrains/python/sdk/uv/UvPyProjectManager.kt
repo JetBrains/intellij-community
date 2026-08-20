@@ -202,7 +202,7 @@ private val WORKSPACE_EXCLUDE_KEY = "$UV_WORKSPACE.exclude".split('.')
 private val DEPENDENCY_NAME_REGEX = """^\s*(\w([\w\-.]*\w)?).*$""".toRegex()
 
 private fun extractDependencyNamesWithoutExtras(toml: PyProjectToml): Set<String> =
-  toml.let { it.project.dependencies.project + it.allDepsFromGroups }.mapNotNull {
+  toml.allDeclaredDeps.mapNotNull {
     val (dependencyName, _) = DEPENDENCY_NAME_REGEX.matchEntire(it)?.destructured ?: return@mapNotNull null
     dependencyName
   }.toSet()

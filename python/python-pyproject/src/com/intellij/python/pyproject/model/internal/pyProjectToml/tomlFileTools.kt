@@ -142,8 +142,7 @@ private fun processDependenciesWithRootIndex(dependencies: Sequence<Directory>, 
 private fun collectAllDependencies(
   entry: PyProjectTomlProject, tomlDependencySpecifications: List<TomlDependencySpecification>,
 ): Sequence<Directory> = sequence {
-  yieldAll(getDependenciesFromProject(entry.root, entry.pyProjectToml))
-  yieldAll(getDependenciesFromPep735Groups(entry.root, entry.pyProjectToml))
+  yieldAll(getDeclaredPathDependencies(entry.root, entry.pyProjectToml))
   yieldAll(getToolSpecificDependencies(entry.root, entry.pyProjectToml.toml, tomlDependencySpecifications))
 }
 
@@ -205,15 +204,13 @@ private fun getToolSpecificDependenciesFromTomlTable(root: Path, tomlTable: Toml
   }.toSet()
 }
 
+/**
+ * Path dependencies (`lib @ file:///...`) among every dependency this file declares: `project.dependencies`,
+ * the `project.optional-dependencies` extras, and the PEP 735 `dependency-groups`.
+ */
 @RequiresBackgroundThread
-private fun getDependenciesFromPep735Groups(root: Path, tomlTable: PyProjectToml): Sequence<Directory> =
-  tomlTable.allDepsFromGroups.asSequence().mapNotNull { parsePep621Dependency(root, it) }
-
-@RequiresBackgroundThread
-private fun getDependenciesFromProject(root: Path, projectToml: PyProjectToml): Sequence<Directory> {
-  val depsFromFile = projectToml.project.dependencies.project
-  return depsFromFile.asSequence().mapNotNull { parsePep621Dependency(root, it) }
-}
+private fun getDeclaredPathDependencies(root: Path, projectToml: PyProjectToml): Sequence<Directory> =
+  projectToml.allDeclaredDeps.asSequence().mapNotNull { parsePep621Dependency(root, it) }
 
 private fun parsePep621Dependency(root: Path, depSpec: String): Path? {
   val match = PEP_621_PATH_DEPENDENCY.matchEntire(depSpec) ?: return null

@@ -2,6 +2,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject
 
 import com.intellij.python.pyproject.PyProjectContact
 import com.intellij.python.pyproject.PyProjectDependencies
+import com.intellij.python.pyproject.PyProjectDependencyTable
 import com.intellij.python.pyproject.PyProjectFile
 import com.intellij.python.pyproject.PyProjectIssue
 import com.intellij.python.pyproject.PyProjectIssue.InvalidContact
@@ -133,7 +134,7 @@ internal class PyProjectTomlTest {
     assertEquals(expectedProjectTable, result?.project)
     if (result != null) {
       assertEquals(expectedIssues, result.issues)
-      assertEquals(expectedDepGroups, result.depGroupsToDeps)
+      assertEquals(expectedDepGroups, result.dependencyGroups.depsByGroup)
     }
   }
 
@@ -331,7 +332,7 @@ internal class PyProjectTomlTest {
           version = "123"
           dependencies = ["a", "b"]
         """.trimIndent(),
-                    PyProjectTable(name = "name", version = "123", dependencies = PyProjectDependencies(project = listOf("a", "b"))),
+                    PyProjectTable(name = "name", version = "123", dependencies = PyProjectDependencies(required = listOf("a", "b"))),
                     listOf()),
 
       ParseTestCase(
@@ -402,8 +403,10 @@ internal class PyProjectTomlTest {
         """.trimIndent(),
                     PyProjectTable(name = "name",
                                    version = "123",
-                                   dependencies = PyProjectDependencies(optional = mapOf("foo" to listOf("a", "b"),
-                                                                                         "bar" to listOf("c", "d")))),
+                                   dependencies = PyProjectDependencies(
+                                     extras = PyProjectDependencyTable(mapOf(
+                                       "foo" to listOf("a", "b"),
+                                       "bar" to listOf("c", "d"))))),
                     listOf()),
 
       *listOf("scripts", "gui-scripts", "urls").flatMap {
@@ -591,16 +594,16 @@ internal class PyProjectTomlTest {
             "Programming Language :: Python",
           ),
           dependencies = PyProjectDependencies(
-            project = listOf(
+            required = listOf(
               "httpx",
               "gidgethub[httpx]>4.0.0",
               "django>2.1; os_name != 'nt'",
               "django>2.0; os_name == 'nt'",
             ),
-            optional = mapOf(
+            extras = PyProjectDependencyTable(mapOf(
               "gui" to listOf("PyQt5"),
               "cli" to listOf("rich", "click"),
-            ),
+            )),
           ),
           urls = mapOf(
             "Homepage" to "https://example.com",
@@ -711,7 +714,7 @@ internal class PyProjectTomlTest {
         expectedNames = listOf("main", "dev", "gui"),
       ),
 
-      // The three cases below guard the behaviour this class' `depGroupsToDeps` cases describe: a group is
+      // The three cases below guard the behaviour this class' `dependencyGroups` cases describe: a group is
       // user-visible as soon as its key exists, even when no dependency string could be read from it.
       GroupNamesTestCase(
         "a PEP 735 group with an empty array is still a group",

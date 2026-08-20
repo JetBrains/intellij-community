@@ -47,9 +47,10 @@ internal class MySampleTest {
   by `PyDefaultTestApplication` is `PYTHON` — reference it as
   `ExpectedModule(f.implicitModuleName, type = PYTHON, ...)`.
 - Module names must match the `[project].name` in the sample's `pyproject.toml`.
-- Module deps come from `[project].dependencies` only. Entries that appear only
-  in `[tool.uv.sources]` do NOT produce a module dep — see
-  `UvWorkspaceCodeInsightCheckTest.kt`.
+- Module deps come from every declared dependency: `[project].dependencies`,
+  the PEP 621 extras in `[project.optional-dependencies]` (PY-91629), and the
+  PEP 735 `[dependency-groups]`. Entries that appear only in `[tool.uv.sources]`
+  do NOT produce a module dep — see `UvWorkspaceCodeInsightCheckTest.kt`.
 - Known gaps are documented with `assertThrows<AssertionError>` plus a
   `PY-xxxxx` ticket reference (see `SomeProjectsWithSrcNonstandardNamingTest.kt`),
   not by deleting/weakening the assertion.

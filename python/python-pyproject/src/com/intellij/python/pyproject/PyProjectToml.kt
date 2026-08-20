@@ -86,12 +86,13 @@ data class PyProjectToml internal constructor(
    * Every declared key is present, so a group may map to an empty list: either its array is empty, or it only holds
    * still-unsupported `{include-group = "..."}` tables. A group is user-visible as soon as its key exists.
    */
-  val depGroupsToDeps: Map<String, List<String>>,
+  val dependencyGroups: PyProjectDependencyTable,
 ) {
   /**
-   * Values of [depGroupsToDeps]
+   * Every dependency declared anywhere in this file: `project.dependencies`, the
+   * `project.optional-dependencies` extras, and the PEP 735 [dependencyGroups] (PY-91629).
    */
-  val allDepsFromGroups: Set<String> = depGroupsToDeps.values.flatten().toSet()
+  val allDeclaredDeps: Set<String> = dependencyGroups.allDeps + project.dependencies.requiredAndExtras
 
   /**
    * Gets a specific tool from an object implementing [PyProjectToolFactory].
@@ -122,8 +123,8 @@ data class PyProjectToml internal constructor(
    */
   @Internal
   fun getDependencyGroupNames(toolSpecificGroups: List<String> = emptyList()): List<String> {
-    val extraGroups = depGroupsToDeps.keys
-    val optionalGroups = project.dependencies.optional.keys.toList()
+    val extraGroups = dependencyGroups.groupNames
+    val optionalGroups = project.dependencies.extras.groupNames
     return buildList {
       addAll(DEFAULT_GROUP_NAMES)
       addAll(toolSpecificGroups)
@@ -195,7 +196,7 @@ data class PyProjectToml internal constructor(
         pyProjectTable,
         issues,
         toml,
-        depGroupsToDeps = depsFromGroups ?: emptyMap(),
+        dependencyGroups = PyProjectDependencyTable(depsFromGroups ?: emptyMap()),
       )
     }
 

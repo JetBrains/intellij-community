@@ -131,7 +131,7 @@ data class PyProjectTable @VisibleForTesting internal constructor(
         dynamic,
         PyProjectDependencies(
           projectDependencies,
-          optionalDependencies,
+          PyProjectDependencyTable(optionalDependencies),
         ),
         scripts,
         guiScripts,
