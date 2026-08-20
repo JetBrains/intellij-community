@@ -66,6 +66,7 @@ import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.QuerySearchRequest;
 import com.intellij.psi.search.RequestResultProcessor;
 import com.intellij.psi.search.ScopeOptimizer;
+import com.intellij.psi.search.SearchCandidateBatcher.CandidateFilesBatchesIterator;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.SearchSession;
@@ -1052,17 +1053,20 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                         @NotNull List<VirtualFile> queryFiles) {
     Project project = myManager.getProject();
     for (Map<VirtualFile, Collection<T>> chunk : List.of(targetFiles, nearDirectoryFiles, intersectionCandidateFiles, restCandidateFiles)) {
-      Sequence<List<VirtualFile>> batches = batchCandidateFiles(project, queryFiles, new ArrayList<>(chunk.keySet()));
+      CandidateFilesBatchesIterator batches = batchCandidateFiles(project, queryFiles, new ArrayList<>(chunk.keySet()));
       if (batches != null) {
         // Iterate lazily: the organizer yields batches on demand, so processing of the first
         // (cheapest) batch starts before later batches are computed.
-        Iterator<List<VirtualFile>> iterator = batches.iterator();
-        while (iterator.hasNext()) {
-          List<VirtualFile> batch = iterator.next();
-          if (!processCandidates(localProcessors, chunk, batch, progress, totalSize, alreadyProcessedFiles)) {
-            return false;
+        try {
+          while (batches.hasNext()) {
+            List<VirtualFile> batch = batches.next();
+            if (!processCandidates(localProcessors, chunk, batch, progress, totalSize, alreadyProcessedFiles)) {
+              return false;
+            }
+            alreadyProcessedFiles += batch.size();
           }
-          alreadyProcessedFiles += batch.size();
+        } finally {
+          batches.close();
         }
       }
       else {
@@ -1074,11 +1078,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return true;
   }
 
-  private static @Nullable Sequence<List<VirtualFile>> batchCandidateFiles(@NotNull Project project,
+  private static @Nullable CandidateFilesBatchesIterator batchCandidateFiles(@NotNull Project project,
                                                                               @NotNull List<VirtualFile> queryFiles,
                                                                               @NotNull List<VirtualFile> candidateFiles) {
     for (SearchCandidateBatcher organizer : SearchCandidateBatcher.EP_NAME.getExtensionList()) {
-      Sequence<List<VirtualFile>> result = organizer.batchCandidateFiles(project, queryFiles, candidateFiles);
+      CandidateFilesBatchesIterator result = organizer.batchCandidateFiles(project, queryFiles, candidateFiles);
       if (result != null) return result;
     }
     return null;

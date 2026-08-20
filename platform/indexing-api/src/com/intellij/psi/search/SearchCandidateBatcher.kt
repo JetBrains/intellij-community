@@ -16,7 +16,15 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface SearchCandidateBatcher {
-  fun batchCandidateFiles(project: Project, queryFiles: List<VirtualFile>, candidateFiles: List<VirtualFile>): Sequence<List<VirtualFile>>?
+  fun batchCandidateFiles(project: Project, queryFiles: List<VirtualFile>, candidateFiles: List<VirtualFile>): CandidateFilesBatchesIterator?
+
+  interface CandidateFilesBatchesIterator {
+    fun hasNext(): Boolean
+
+    fun next(): List<VirtualFile>
+
+    fun close()
+  }
 
   companion object {
     @JvmField
