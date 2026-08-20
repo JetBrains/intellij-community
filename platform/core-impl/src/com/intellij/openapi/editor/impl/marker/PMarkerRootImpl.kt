@@ -28,7 +28,7 @@ class PMarkerRootImpl private constructor(
   private val cachedDelta: ConcurrentLongObjectMap<Int> = Java11Shim.createConcurrentLongObjectMap()
 
   override fun resolve(markerId: Long, absentRange: TextRange): PMarkerResolution {
-    return when (val state = states[markerId]) {
+    return when (val state = states.getUnchecked(markerId)) {
       null -> PMarkerResolution.Absent(absentRange.startOffset, absentRange.endOffset)
       is AbsentNode -> PMarkerResolution.Absent(state.startOffset, state.endOffset)
       is InvalidNode -> PMarkerResolution.Invalid(
@@ -53,7 +53,7 @@ class PMarkerRootImpl private constructor(
   ): PMarkerRoot {
     require(startOffset >= 0) { "startOffset must be non-negative" }
     require(endOffset >= startOffset) { "endOffset must not precede startOffset" }
-    val existingState = states[markerId]
+    val existingState = states.getUnchecked(markerId)
     require(existingState == null || existingState is AbsentNode) { "Marker $markerId already exists" }
 
     val editor = Editor(states)
@@ -77,7 +77,7 @@ class PMarkerRootImpl private constructor(
   }
 
   override fun updateFlavor(markerId: Long, flavorFlags: Byte): PMarkerRoot {
-    val state = states[markerId] as? ValidNode ?: return this
+    val state = states.getUnchecked(markerId) as? ValidNode ?: return this
     if (state.entry.flavorFlags == flavorFlags) return this
 
     val editor = Editor(states)
@@ -95,7 +95,7 @@ class PMarkerRootImpl private constructor(
   }
 
   override fun updateSpec(markerId: Long, spec: MarkerSpec): PMarkerRoot {
-    val state = states[markerId] as? ValidNode ?: return this
+    val state = states.getUnchecked(markerId) as? ValidNode ?: return this
     return PMarkerRootImpl(
       rootId,
       states.put(markerId, state.copy(entry = state.entry.copy(spec = spec))),
@@ -103,7 +103,7 @@ class PMarkerRootImpl private constructor(
   }
 
   override fun markerReference(markerId: Long): WeakReference<SnapshotRangeMarkerImpl>? {
-    return when (val state = states[markerId]) {
+    return when (val state = states.getUnchecked(markerId)) {
       null -> null
       is AbsentNode -> state.markerReference
       is InvalidNode -> state.markerReference
@@ -112,7 +112,7 @@ class PMarkerRootImpl private constructor(
   }
 
   override fun remove(markerId: Long): PMarkerRoot {
-    return when (val state = states[markerId]) {
+    return when (val state = states.getUnchecked(markerId)) {
       null -> this
       is AbsentNode -> this
       is InvalidNode -> PMarkerRootImpl(
@@ -134,7 +134,7 @@ class PMarkerRootImpl private constructor(
   }
 
   override fun purge(markerId: Long): PMarkerRoot {
-    return when (val state = states[markerId]) {
+    return when (val state = states.getUnchecked(markerId)) {
       null -> this
       is AbsentNode, is InvalidNode -> PMarkerRootImpl(rootId, states.remove(markerId))
       is ValidNode -> {
@@ -149,7 +149,7 @@ class PMarkerRootImpl private constructor(
   }
 
   @TestOnly
-  fun containsMarkerId(markerId: Long): Boolean = states[markerId] != null
+  fun containsMarkerId(markerId: Long): Boolean = states.getUnchecked(markerId) != null
 
   override fun applyEdit(op: DocumentOp): PMarkerRoot {
     val edit = textEdit(op) ?: return this
@@ -226,7 +226,7 @@ class PMarkerRootImpl private constructor(
       var parentId = state.parentId
 
       while (parentId != NULL_NODE) {
-        val parent = states[parentId] as? ValidNode
+        val parent = states.getUnchecked(parentId) as? ValidNode
                      ?: throw IllegalStateException("Parent $parentId is not a valid marker node")
         result += parent.lazyOffsetDelta
         parentId = parent.parentId
@@ -246,7 +246,7 @@ class PMarkerRootImpl private constructor(
     if (nodeId == NULL_NODE) {
       return true
     }
-    val node = states[nodeId] as ValidNode
+    val node = states.getUnchecked(nodeId) as ValidNode
     if (!containsAllFlavorFlags(node.subtreeFlavorFlags, requiredFlavorFlags)) {
       return true
     }
@@ -342,7 +342,7 @@ class PMarkerRootImpl private constructor(
   private class Editor(states: PersistentLongMap<StoredNode>) {
     private val builder = states.builder()
 
-    fun valid(markerId: Long): ValidNode = builder[markerId] as? ValidNode
+    fun valid(markerId: Long): ValidNode = builder.getUnchecked(markerId) as? ValidNode
                                            ?: throw IllegalStateException("Marker $markerId is not a valid tree node")
 
     fun putValid(markerId: Long, node: ValidNode) {

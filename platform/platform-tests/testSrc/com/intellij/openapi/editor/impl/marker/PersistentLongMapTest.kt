@@ -49,6 +49,7 @@ internal class PersistentLongMapTest {
       for ((keyIndex, key) in KEYS.withIndex()) {
         val expected = if (keyIndex < versionIndex) value(keyIndex) else null
         assertEquals(expected, version[key], "$implementation, version $versionIndex, key $key")
+        assertEquals(expected, version.getUnchecked(key), "$implementation, unchecked version $versionIndex, key $key")
       }
     }
   }
@@ -126,6 +127,8 @@ internal class PersistentLongMapTest {
     builder.put(2, "two")
     builder.put(256, "two hundred fifty six")
     builder.remove(128)
+    assertEquals("updated one", builder.getUnchecked(1))
+    assertEquals("two", builder.getUnchecked(2))
     val updated = builder.build()
 
     assertEquals("one", original[1])

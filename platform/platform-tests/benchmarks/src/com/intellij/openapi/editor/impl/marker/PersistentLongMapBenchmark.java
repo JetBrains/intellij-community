@@ -52,7 +52,7 @@ public class PersistentLongMapBenchmark {
     long checksum = 0L;
 
     for (int index = 0; index < MAP_LOOKUP_CALLS; index++) {
-      if (map.get(lookupKeys[index]) == PRESENT_VALUE) {
+      if (map.getUnchecked(lookupKeys[index]) == PRESENT_VALUE) {
         checksum += lookupKeys[index];
       }
     }
