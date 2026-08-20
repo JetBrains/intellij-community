@@ -29,6 +29,13 @@ interface IjentSession {
 
   suspend fun updateLogLevel()
 
+  /**
+   * Points IJent's parent-death watch at [pid] — the process that owns this session's lifetime. When that process
+   * dies, IJent loses the right to outlive its disconnects and exits with its last client. Calling again replaces
+   * the watch and restores the privilege, which is how a relaunched owner takes the session back.
+   */
+  suspend fun setParentProcessToWatch(pid: Long)
+
   fun close()
 
   fun getIjentInstance(descriptor: EelDescriptor): IjentApi
