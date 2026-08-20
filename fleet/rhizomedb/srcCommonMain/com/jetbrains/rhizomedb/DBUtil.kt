@@ -283,7 +283,7 @@ fun <T : Any> DbContext<Mut>.add(eid: EID, attribute: Attribute<T>, value: T) {
   mutate(Add(eid, attribute, value, generateSeed()))
 }
 
-internal fun <T : Any> DbContext<Mut>.remove(eid: EID, attribute: Attribute<T>, value: T) {
+fun <T : Any> DbContext<Mut>.remove(eid: EID, attribute: Attribute<T>, value: T) {
   mutate(Remove(eid, attribute, value, generateSeed()))
 }
 
