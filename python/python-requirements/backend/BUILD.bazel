@@ -20,6 +20,7 @@ jvm_library(
     exports = ["//python/python-requirements/common"],
     deps = [
         # do not sort,
+        "//platform/backend",
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//python/python-requirements/common",
@@ -52,6 +53,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":backend",
+        "//platform/backend:backend_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//python/python-requirements/common:common_test_lib",
         "//python/openapi:community_test_lib",
