@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.inspection
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabl
 import org.jetbrains.kotlin.idea.base.codeInsight.isSoftDeprecatedEnumValuesMethod
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isOptInRequired
 import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector
@@ -170,11 +171,11 @@ abstract class EnumValuesSoftDeprecateInspectionBase : AbstractKotlinInspection(
         private val fixType: ReplaceFixType,
         private val replacementName: String,
         private val fixExpression: String
-    ) : LocalQuickFix {
+    ) : KotlinModCommandQuickFix<KtCallExpression>() {
         override fun getFamilyName(): String = KotlinBundle.message("replace.with.0", replacementName)
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val qualifiedOrSimpleCall = descriptor.psiElement.qualifiedOrSimpleValuesCall()
+        override fun applyFix(project: Project, element: KtCallExpression, updater: ModPsiUpdater) {
+            val qualifiedOrSimpleCall = element.qualifiedOrSimpleValuesCall()
             val entriesCallStr = when (fixType) {
                 ReplaceFixType.WITH_CAST -> "$fixExpression.toTypedArray()"
                 else -> fixExpression
