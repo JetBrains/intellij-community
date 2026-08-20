@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 /// `OperationsPerInvocation`, JMH reports the total time for the complete batch in milliseconds.
 @BenchmarkMode(Mode.SingleShotTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Warmup(iterations = 1)
+@Warmup(iterations = 3)
 @Measurement(iterations = 5)
 @Fork(value = 0)
 @Threads(1)

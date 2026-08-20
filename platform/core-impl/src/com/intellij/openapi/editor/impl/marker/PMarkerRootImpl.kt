@@ -384,7 +384,7 @@ class PMarkerRootImpl private constructor(
 
     private val ENTRY_COMPARATOR = Comparator<MarkerEntry> { first, second -> PositionKey(first).compareTo(PositionKey(second)) }
     private const val NULL_NODE: Long = 0
-    private val EMPTY = PMarkerRootImpl(NULL_NODE, PersistentLongMap.empty(PersistentLongMapImplementation.PAGED_VECTOR_256))
+    private val EMPTY = PMarkerRootImpl(NULL_NODE, PersistentLongMap.empty(PersistentLongMapImplementation.VECTOR_64))
 
 
     fun empty(): PMarkerRootImpl = EMPTY
