@@ -24,7 +24,7 @@ class PlantUMLCodeGeneratingProvider: CodeFenceGeneratingProvider, MarkdownExten
     get() = ownFiles
 
   override val filesToDownload: Iterable<FileEntry>
-    get() = dowloadableFiles
+    get() = downloadableFiles
 
   override fun isApplicable(language: String): Boolean {
     return isEnabled && isAvailable && PlantUMLCodeFenceLanguageProvider.isPlantUmlInfoString(language.lowercase())
@@ -91,6 +91,6 @@ class PlantUMLCodeGeneratingProvider: CodeFenceGeneratingProvider, MarkdownExten
   companion object {
     const val jarFilename = "plantuml.jar"
     private val ownFiles = listOf(jarFilename)
-    private val dowloadableFiles = listOf(FileEntry(jarFilename) { Registry.stringValue("markdown.plantuml.download.link") })
+    private val downloadableFiles = listOf(FileEntry(jarFilename) { Registry.stringValue("markdown.plantuml.download.link") })
   }
 }
