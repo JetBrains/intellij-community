@@ -233,8 +233,8 @@ private fun getWorkspaceMembers(toml: TomlTable): WorkspaceInfo? {
   // PY-91089: safeGet instead of getTable/getArrayOrEmpty, which throw TomlInvalidTypeException when
   // the key holds an unexpected type (e.g. the `[[tool.uv.workspace]]` array typo, or `members = "x"`).
   val workspace = toml.safeGet<TomlTable>(UV_WORKSPACE, unquotedDottedKey = true).successOrNull ?: return null
-  val members = workspace.safeGet<TomlArray>("members").successOrNull?.asMatchers ?: emptyList()
-  val exclude = workspace.safeGet<TomlArray>("exclude").successOrNull?.asMatchers ?: emptyList()
+  val members = workspace.safeGet<TomlArray>("members", unquotedDottedKey = false).successOrNull?.asMatchers ?: emptyList()
+  val exclude = workspace.safeGet<TomlArray>("exclude", unquotedDottedKey = false).successOrNull?.asMatchers ?: emptyList()
   if (members.isEmpty()) return null
   return WorkspaceInfo(members = members, exclude = exclude)
 }
@@ -276,12 +276,12 @@ private fun getUvDependencies(
       var resolved = false
       for (table in depTables) {
         // PY-91089: safeGet instead of getBoolean/getString, which throw when the value has an unexpected type.
-        if (table.safeGet<Boolean>("workspace").successOrNull == true) {
+        if (table.safeGet<Boolean>("workspace", unquotedDottedKey = false).successOrNull == true) {
           workspaceDeps.add(ProjectName(depName))
           resolved = true
         }
         else {
-          val path = table.safeGet<String>("path").successOrNull ?: continue
+          val path = table.safeGet<String>("path", unquotedDottedKey = false).successOrNull ?: continue
           try {
             pathDeps.add(ownerRoot.resolve(path).normalize())
             resolved = true

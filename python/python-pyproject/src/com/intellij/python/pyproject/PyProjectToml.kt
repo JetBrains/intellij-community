@@ -172,15 +172,16 @@ data class PyProjectToml internal constructor(
 
 
       val depGroups = toml
-        .safeGet<TomlTable>(PY_PROJECT_TOML_DEPENDENCY_GROUPS)
+        .safeGet<TomlTable>(PY_PROJECT_TOML_DEPENDENCY_GROUPS, unquotedDottedKey = false)
         .getOrIssue(issues)
 
       val depsFromGroups = depGroups?.keySet()?.associate { depGroupName ->
         // Can't filter by string because there might be (still unsupported) { include-group = "" } tables
-        depGroupName to (depGroups.safeGetArr<Any>(depGroupName).getOrIssue(issues)?.filterIsInstance<String>() ?: emptyList())
+        depGroupName to (depGroups.safeGetArr<Any>(depGroupName, unquotedDottedKey = false)
+                           .getOrIssue(issues)?.filterIsInstance<String>() ?: emptyList())
       }
 
-      val projectTomlTable = toml.safeGet<TomlTable>(PY_PROJECT_TOML_PROJECT).getOrIssue(issues)
+      val projectTomlTable = toml.safeGet<TomlTable>(PY_PROJECT_TOML_PROJECT, unquotedDottedKey = false).getOrIssue(issues)
       val pyProjectTable =
         when {
           // toml file has `[project]` section

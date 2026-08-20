@@ -42,7 +42,7 @@ sealed class TomlTableSafeGetError {
  * Example:
  *
  * ```kotlin
- * val foo = tomlTable.safeGet<String>("foo")
+ * val foo = tomlTable.safeGet<String>("foo", unquotedDottedKey = false)
  * when (foo) {
  *   is Result.Success -> println("foo is ${foo.result}")
  *   is Result.Failure -> println("foo is of the incorrect type")
@@ -51,7 +51,7 @@ sealed class TomlTableSafeGetError {
  */
 @Internal
 inline fun <reified T> TomlTable.safeGet(
-  key: String, unquotedDottedKey: Boolean = false,
+  key: String, unquotedDottedKey: Boolean,
 ): Result<T?, TomlTableSafeGetError.UnexpectedType> {
   val value = if (unquotedDottedKey) get(key) else get("\"$key\"")
 
@@ -78,10 +78,13 @@ inline fun <reified T> TomlTable.safeGet(
  * On a missing value, returns an instance of [Result.Failure] with an error of [TomlTableSafeGetError.RequiredValueMissing].
  * On a present value with the valid type, returns an instance of [Result.Success] with that value.
  *
+ * @param key is the key in a table
+ * @param unquotedDottedKey specifies whether a key should be treated as a dotted key without quotes
+ *
  * Example:
  *
  * ```kotlin
- * tomlTable.safeGetRequired<String>("foo").getOr { error ->
+ * tomlTable.safeGetRequired<String>("foo", unquotedDottedKey = false).getOr { error ->
  *   when (error) {
  *     is TomlTableSafeGetError.UnexpectedType -> print("incorrect type")
  *     is TomlTableSafeGetError.RequiredValueMissing -> print("value is missing")
@@ -90,8 +93,8 @@ inline fun <reified T> TomlTable.safeGet(
  * }
  * ```
  */
-internal inline fun <reified T> TomlTable.safeGetRequired(key: String): Result<T, TomlTableSafeGetError> =
-  safeGet<T>(key).mapResult {
+internal inline fun <reified T> TomlTable.safeGetRequired(key: String, unquotedDottedKey: Boolean): Result<T, TomlTableSafeGetError> =
+  safeGet<T>(key, unquotedDottedKey).mapResult {
     if (it == null) {
       failure(TomlTableSafeGetError.RequiredValueMissing(key))
     }
@@ -112,7 +115,7 @@ internal inline fun <reified T> TomlTable.safeGetRequired(key: String): Result<T
  * Example:
  *
  * ```kotlin
- * val foo = tomlTable.safeGetArr<String>("foo")
+ * val foo = tomlTable.safeGetArr<String>("foo", unquotedDottedKey = false)
  * when (foo) {
  *   is Result.Success -> foo.result?.forEachIndexed { index, value ->
  *     print("foo[$index] is $value")
@@ -125,7 +128,7 @@ internal inline fun <reified T> TomlTable.safeGetRequired(key: String): Result<T
  */
 @Internal
 inline fun <reified T> TomlTable.safeGetArr(
-  key: String, unquotedDottedKey: Boolean = false,
+  key: String, unquotedDottedKey: Boolean,
 ): Result<List<T>?, TomlTableSafeGetError.UnexpectedType> {
   val array = safeGet<TomlArray>(key, unquotedDottedKey).getOr { return it }
 

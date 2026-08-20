@@ -45,25 +45,25 @@ data class PyProjectTable @VisibleForTesting internal constructor(
      * from [projectTable] (which is `[project]` table) fetch all data, report issues to [issues] and return instance if valid.
      */
     internal fun make(projectTable: TomlTable, issues: MutableList<PyProjectIssue>): PyProjectTable? {
-      val name = projectTable.safeGetRequired<String>("name").getOrIssue(issues) ?: return null
+      val name = projectTable.safeGetRequired<String>("name", unquotedDottedKey = false).getOrIssue(issues) ?: return null
 
-      val dynamic = projectTable.safeGetArr<String>("dynamic").getOrIssue(issues)
-      val version = projectTable.safeGet<String>("version").getOrIssue(issues) {
+      val dynamic = projectTable.safeGetArr<String>("dynamic", unquotedDottedKey = false).getOrIssue(issues)
+      val version = projectTable.safeGet<String>("version", unquotedDottedKey = false).getOrIssue(issues) {
         if (dynamic?.contains("version") != true) {
           issues += PyProjectIssue.MissingVersion
         }
       }
 
-      val requiresPython = projectTable.safeGet<String>("requires-python").getOrIssue(issues)
+      val requiresPython = projectTable.safeGet<String>("requires-python", unquotedDottedKey = false).getOrIssue(issues)
       val authors = projectTable.parseContacts("authors", issues)
       val maintainers = projectTable.parseContacts("maintainers", issues)
-      val description = projectTable.safeGet<String>("description").getOrIssue(issues)
-      val license = projectTable.safeGet<String>("license").getOrIssue(issues)
-      val licenseFiles = projectTable.safeGetArr<String>("license-files").getOrIssue(issues)
-      val keywords = projectTable.safeGetArr<String>("keywords").getOrIssue(issues)
-      val classifiers = projectTable.safeGetArr<String>("classifiers").getOrIssue(issues)
+      val description = projectTable.safeGet<String>("description", unquotedDottedKey = false).getOrIssue(issues)
+      val license = projectTable.safeGet<String>("license", unquotedDottedKey = false).getOrIssue(issues)
+      val licenseFiles = projectTable.safeGetArr<String>("license-files", unquotedDottedKey = false).getOrIssue(issues)
+      val keywords = projectTable.safeGetArr<String>("keywords", unquotedDottedKey = false).getOrIssue(issues)
+      val classifiers = projectTable.safeGetArr<String>("classifiers", unquotedDottedKey = false).getOrIssue(issues)
 
-      val readme = when (val res = projectTable.safeGet<String>("readme")) {
+      val readme = when (val res = projectTable.safeGet<String>("readme", unquotedDottedKey = false)) {
         is Result.Success -> {
           res.getOrIssue(issues)?.let { name ->
             PyProjectFile(name)
@@ -71,15 +71,15 @@ data class PyProjectTable @VisibleForTesting internal constructor(
         }
         is Result.Failure -> {
           val table = projectTable
-            .safeGet<TomlTable>("readme")
+            .safeGet<TomlTable>("readme", unquotedDottedKey = false)
             .getOrIssue(issues)
 
           val name = table
-            ?.safeGetRequired<String>("name")
+            ?.safeGetRequired<String>("name", unquotedDottedKey = false)
             ?.getOrIssue(issues)
 
           val contentType = table
-            ?.safeGetRequired<String>("content-type")
+            ?.safeGetRequired<String>("content-type", unquotedDottedKey = false)
             ?.getOrIssue(issues)
 
           if (name != null && contentType != null) {
@@ -91,16 +91,18 @@ data class PyProjectTable @VisibleForTesting internal constructor(
         }
       }
 
-      val projectDependencies = projectTable.safeGetArr<String>(PY_PROJECT_DEPENDENCIES).getOrIssue(issues) ?: listOf()
+      val projectDependencies = projectTable
+                                  .safeGetArr<String>(PY_PROJECT_DEPENDENCIES, unquotedDottedKey = false)
+                                  .getOrIssue(issues) ?: listOf()
 
       val optionalDependencies =
         projectTable
-          .safeGet<TomlTable>(PY_PROJECT_OPTIONAL_DEPENDENCIES)
+          .safeGet<TomlTable>(PY_PROJECT_OPTIONAL_DEPENDENCIES, unquotedDottedKey = false)
           .getOrIssue(issues)
           ?.let { table ->
             mapOf(
               *table.keySet().mapNotNull { key ->
-                table.safeGetArr<String>(key).getOrIssue(issues)?.let { value ->
+                table.safeGetArr<String>(key, unquotedDottedKey = false).getOrIssue(issues)?.let { value ->
                   key to value
                 }
               }.toTypedArray()
@@ -142,10 +144,10 @@ data class PyProjectTable @VisibleForTesting internal constructor(
       key: String,
       issues: MutableList<PyProjectIssue>,
     ): List<PyProjectContact>? {
-      val table = safeGetArr<TomlTable>(key).getOrIssue(issues) ?: return null
+      val table = safeGetArr<TomlTable>(key, unquotedDottedKey = false).getOrIssue(issues) ?: return null
       return table.mapIndexedNotNull { index, authorTable ->
-        val name = authorTable.safeGet<String>("name").getOrIssue(issues)
-        val email = authorTable.safeGet<String>("email").getOrIssue(issues)
+        val name = authorTable.safeGet<String>("name", unquotedDottedKey = false).getOrIssue(issues)
+        val email = authorTable.safeGet<String>("email", unquotedDottedKey = false).getOrIssue(issues)
 
         if (name == null && email == null) {
           issues += PyProjectIssue.InvalidContact("$key[$index]")
@@ -157,10 +159,10 @@ data class PyProjectTable @VisibleForTesting internal constructor(
     }
 
     private fun TomlTable.parseMap(key: String, issues: MutableList<PyProjectIssue>): Map<String, String>? {
-      val table = safeGet<TomlTable>(key).getOrIssue(issues) ?: return null
+      val table = safeGet<TomlTable>(key, unquotedDottedKey = false).getOrIssue(issues) ?: return null
       return mapOf(
         *table.keySet().mapNotNull { key ->
-          table.safeGet<String>(key).getOrIssue(issues)?.let { value ->
+          table.safeGet<String>(key, unquotedDottedKey = false).getOrIssue(issues)?.let { value ->
             key to value
           }
         }.toTypedArray()

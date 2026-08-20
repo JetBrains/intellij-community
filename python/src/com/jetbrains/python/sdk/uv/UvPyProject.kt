@@ -47,7 +47,7 @@ internal data class UvPyProject(val project: UvPyProjectTable?, val issues: List
         return UvPyProject(null, issues)
       }
 
-      val uvDevDependencies = table.safeGetArr<String>("dev-dependencies").getOrIssue(issues, { SafeGetError })
+      val uvDevDependencies = table.safeGetArr<String>("dev-dependencies", unquotedDottedKey = false).getOrIssue(issues, { SafeGetError })
 
       return UvPyProject(
         UvPyProjectTable(

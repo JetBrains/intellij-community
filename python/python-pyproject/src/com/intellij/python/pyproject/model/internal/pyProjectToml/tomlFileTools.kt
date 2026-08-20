@@ -165,7 +165,10 @@ private fun getToolSpecificDependencies(
         val groups =
           tomlTable.safeGet<TomlTable>(specification.tomlKeyToGroup, unquotedDottedKey = true).successOrNull ?: return@flatMap emptySet()
         groups.keySet().flatMap { group ->
-          groups.safeGet<TomlTable>("${group}.${specification.tomlKeyFromGroupToPath}", unquotedDottedKey = true).successOrNull?.let {
+          // A group name is a single literal key that may itself contain a dot, so look it up quoted
+          // and only then descend into the nested key.
+          groups.safeGet<TomlTable>(group, unquotedDottedKey = false).successOrNull
+            ?.safeGet<TomlTable>(specification.tomlKeyFromGroupToPath, unquotedDottedKey = false)?.successOrNull?.let {
             getToolSpecificDependenciesFromTomlTable(root, it)
           } ?: emptySet()
         }
@@ -174,7 +177,9 @@ private fun getToolSpecificDependencies(
         val groups =
           tomlTable.safeGet<TomlTable>(specification.tomlKeyToGroup, unquotedDottedKey = true).successOrNull ?: return@flatMap emptySet()
         groups.keySet().flatMap { group ->
-          getPep621Dependencies(root, groups, "${group}.${specification.tomlKeyFromGroupToDependencies}")
+          val groupTable = groups.safeGet<TomlTable>(group, unquotedDottedKey = false).successOrNull
+          if (groupTable == null) emptySet()
+          else getPep621Dependencies(root, groupTable, specification.tomlKeyFromGroupToDependencies)
         }
       }
     }
@@ -189,9 +194,12 @@ private fun getPep621Dependencies(root: Path, tomlTable: TomlTable, tomlKeyToDep
 
 @RequiresBackgroundThread
 private fun getToolSpecificDependenciesFromTomlTable(root: Path, tomlTable: TomlTable): Set<Directory> {
-  return tomlTable.keySet().asSequence().mapNotNull {
+  return tomlTable.keySet().asSequence().mapNotNull { depName ->
     // PY-91089: safeGet instead of getString, which throws when `<dep>.path` holds a non-string value.
-    tomlTable.safeGet<String>("${it}.path", unquotedDottedKey = true).successOrNull?.let { depPathString ->
+    // PY-90207: the dependency name is one literal key and may contain a dot (`zope.interface`,
+    // `ruamel.yaml`), so it must be looked up quoted; `path` is then read from the nested table.
+    tomlTable.safeGet<TomlTable>(depName, unquotedDottedKey = false).successOrNull
+      ?.safeGet<String>("path", unquotedDottedKey = false)?.successOrNull?.let { depPathString ->
       parseDepFromPathString(root, depPathString)
     }
   }.toSet()
