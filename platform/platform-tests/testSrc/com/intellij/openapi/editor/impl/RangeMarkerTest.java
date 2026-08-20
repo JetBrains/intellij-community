@@ -1107,7 +1107,11 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     markerRef.set(null);
     GCUtil.tryGcSoftlyReachableObjects(() -> reference.get() == null);
     assertNull(reference.get());
-
+    if (snapshotMarker) {
+      while (!SnapshotMarkerEngineImpl.INSTANCE.processQueue()) {
+        Thread.yield();
+      }
+    }
     ((DocumentEx)document).processRangeMarkers(candidate -> {
       assertTrue("Garbage-collected marker was enumerated", markerId != ((RangeMarkerEx)candidate).getId());
       return true;

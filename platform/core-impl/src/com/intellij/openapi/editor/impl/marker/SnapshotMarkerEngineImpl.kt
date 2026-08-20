@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.impl.DocumentSnapshotImpl
 import com.intellij.openapi.editor.impl.StripedIDGenerator
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
+import com.intellij.util.containers.ReferenceQueueable
 import org.jetbrains.annotations.TestOnly
 import java.lang.ref.ReferenceQueue
 import java.lang.ref.WeakReference
@@ -27,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference
  * Creating a child snapshot derives its marker root from the parent's current root. Marker creation, marker removal,
  * and child creation from the same parent are linearized by atomic root operations.
  */
-object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
+object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
   private val markerQueue = ReferenceQueue<SnapshotRangeMarkerImpl>()
   private val nextMarkerId: StripedIDGenerator = StripedIDGenerator().also { it.next() /* id must not be 0 */ }
 
@@ -107,18 +108,20 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     }
   }
 
-  internal fun processQueue() {
+  override fun processQueue(): Boolean {
+    var ret = false
     while (true) {
       val reference = markerQueue.poll() as MarkerReference? ?: break
       val fileRoot = reference.fileRootReference?.get()
       val document = reference.documentReference.get()
       if (document != null) {
-        purgeRangeMarker(markerRoot(document.core.snapshot()), reference.markerId)
+        ret = purgeRangeMarker(markerRoot(document.core.snapshot()), reference.markerId)
       }
       else if (fileRoot != null) {
-        purgeRangeMarker(fileRoot.rootReference(), reference.markerId)
+        ret = purgeRangeMarker(fileRoot.rootReference(), reference.markerId)
       }
     }
+    return ret
   }
 
   /**

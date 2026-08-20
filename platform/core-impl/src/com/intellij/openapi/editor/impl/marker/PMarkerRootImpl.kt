@@ -21,7 +21,7 @@ import java.lang.ref.WeakReference
  * Equal start offsets are supported. If an edit collapses differently ordered starts to one offset and therefore
  * violates marker-ID tie ordering, the affected middle part is sorted before it is rebuilt as a balanced AVL tree.
  */
-class PMarkerRootImpl private constructor(
+open class PMarkerRootImpl private constructor(
   private val rootId: Long,
   private val states: PersistentLongMap<StoredNode>,
 ) : PMarkerRoot {
@@ -384,10 +384,14 @@ class PMarkerRootImpl private constructor(
 
     private val ENTRY_COMPARATOR = Comparator<MarkerEntry> { first, second -> PositionKey(first).compareTo(PositionKey(second)) }
     private const val NULL_NODE: Long = 0
-    private val EMPTY = PMarkerRootImpl(NULL_NODE, PersistentLongMap.empty(PersistentLongMapImplementation.VECTOR_64))
+    object EMPTY: PMarkerRootImpl(NULL_NODE, PersistentLongMap.empty(PersistentLongMapImplementation.VECTOR_64)) {
+      override fun toString(): String = "EMPTY"
+    }
 
-
-    fun empty(): PMarkerRootImpl = EMPTY
+    fun empty(): PMarkerRootImpl {
+      val empty = EMPTY
+      return empty
+    }
 
     private fun textEdit(op: DocumentOp): TextEdit? {
       if (op is DocumentOpMarkerEdit) {
@@ -967,9 +971,5 @@ class PMarkerRootImpl private constructor(
       }
       return TransformResult.Invalid(INVALIDATED_BY_EDIT)
     }
-  }
-
-  override fun toString(): String {
-    return if (rootId == 0L) "EMPTY" else super.toString()
   }
 }
