@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,11 +35,10 @@ public abstract class UpdateTask<Item> {
 
   //TODO RC: `Collection itemsToProcess` is an ambiguous semantics -- it allows collections with duplicates [a,...a,...], but
   //         it is not clear how to deal with them: should we process the same item multiple times -- or should we deduplicate?
-  /// @param project must be !=null, but marked nullable for backward compatibility -- please, remove all the usages there `project=null`
   /// @return true if all itemsToProcess were processed without conflicts, in one go;
   ///         false, if there were competing concurrent processing for at least 1 item detected
   public final boolean processAll(@NotNull Collection<? extends Item> itemsToProcess,
-                                  @Nullable Project project) throws ProcessCanceledException {
+                                  @NotNull Project project) throws ProcessCanceledException {
     if (processingOnCurrentThread.get() != null) {
       throw new IllegalStateException("Reentrant processAll() call on the same UpdateTask instance");
     }
@@ -54,13 +52,13 @@ public abstract class UpdateTask<Item> {
     }
   }
 
-  protected abstract void doProcess(Item item, @Nullable Project project);
+  protected abstract void doProcess(Item item, @NotNull Project project);
 
   
 
   /// Runs item processing after the public entry point has established the per-thread reentrancy guard
   private boolean processAllNonReentrant(@NotNull Collection<? extends Item> itemsToProcess,
-                                         @Nullable Project project) throws ProcessCanceledException {
+                                         @NotNull Project project) throws ProcessCanceledException {
     boolean allItemsProcessedWithoutConflicts = true;
 
     while (true) {
@@ -101,11 +99,9 @@ public abstract class UpdateTask<Item> {
   /// Process ([#doProcess(Item, Project)]) the item only if the same item is not currently processing by some other thread.
   /// @return true if the item has been processed by the current thread, false if the processing was skipped because the same item
   ///         was processed by some other thread
-  private boolean processSerializable(Item item, @Nullable Project project) {
+  private boolean processSerializable(Item item, @NotNull Project project) {
     if (itemsBeingProcessed.add(item)) {
       try {
-        //TODO RC: there is a conflict around 'project' arg nullability: project must not be null in doProcess(), but .processAll()
-        //         _is_ called with project=null argument sometimes!
         doProcess(item, project);
         return true;
       }

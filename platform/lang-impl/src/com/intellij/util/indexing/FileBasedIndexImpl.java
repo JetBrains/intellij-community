@@ -133,6 +133,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -1143,6 +1144,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     Collection<Document> documentsToProcessForProject = ContainerUtil.filter(documents, docFilter);
 
     if (!documentsToProcessForProject.isEmpty()) {
+      if (project == null) throw new IllegalArgumentException("project must not be null here");
+
       UpdateTask<Document> task = myRegisteredIndexes.getUnsavedDataUpdateTask(indexId);
       assert task != null : "Task for unsaved data indexing was not initialized for index " + indexId;
 
@@ -1911,7 +1914,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
    */
   private final class VirtualFileUpdateTask extends UpdateTask<FileIndexingRequest> {
     @Override
-    public void doProcess(FileIndexingRequest item, @Nullable Project project) {
+    public void doProcess(FileIndexingRequest item, @NotNull Project project) {
       // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
       IndexingRequestToken indexingRequest = project.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
       var stamp = indexingRequest.getFileIndexingStamp(item.getFile());
@@ -1939,6 +1942,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
               LOG.debug(message, new Throwable());
             }
 
+            Objects.requireNonNull(project, "Project can't be null: it is needed to get ProjectIndexingDependenciesService below");
             myForceUpdateTask.processAll(virtualFilesToBeUpdatedForProject, project);
           }
         }

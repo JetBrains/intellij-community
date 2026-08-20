@@ -208,9 +208,7 @@ public final class RegisteredIndexes {
     }
 
     @Override
-    protected void doProcess(Document document, @Nullable Project project) {
-      if (project == null) throw new IllegalArgumentException("project must not be null here");
-
+    protected void doProcess(Document document, @NotNull Project project) {
       myFileBasedIndex.indexUnsavedDocument(document, myIndexId, project, myFileDocumentManager.getFile(document));
     }
   }

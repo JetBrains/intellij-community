@@ -6,9 +6,9 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.testFramework.junit5.TestApplication;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.util.AbstractCollection;
@@ -42,6 +42,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @TestApplication
 public class UpdateTaskTest {
+  /** Supplies the non-null project required by UpdateTask without introducing a project fixture unused by these tests. */
+  private static @NotNull Project project() {
+    return ProjectManager.getInstance().getDefaultProject();
+  }
+
   /** Verifies deterministically that contention is reported even though the skipped item is eventually retried. */
   @Test
   public void processAllReturnsFalseAfterSkippedItemIsRetried() throws Exception {
@@ -49,11 +54,11 @@ public class UpdateTaskTest {
     CountDownLatch competingAttemptFinished = new CountDownLatch(1);
 
     try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
-      Future<Boolean> firstResult = pool.submit(() -> task.processAll(List.of(1), null));
+      Future<Boolean> firstResult = pool.submit(() -> task.processAll(List.of(1), project()));
       assertTrue(task.firstProcessingStarted.await(10, TimeUnit.SECONDS), "The first processing attempt did not start");
 
       Future<Boolean> competingResult = pool.submit(
-        () -> task.processAll(new AttemptSignalingCollection<>(competingAttemptFinished, 1), null)
+        () -> task.processAll(new AttemptSignalingCollection<>(competingAttemptFinished, 1), project())
       );
       try {
         assertTrue(competingAttemptFinished.await(10, TimeUnit.SECONDS), "The competing attempt did not reach the busy item");
@@ -74,10 +79,10 @@ public class UpdateTaskTest {
     SelectivelyBlockingProcessingTask task = new SelectivelyBlockingProcessingTask();
 
     try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
-      Future<Boolean> blockingResult = pool.submit(() -> task.processAll(List.of(1), null));
+      Future<Boolean> blockingResult = pool.submit(() -> task.processAll(List.of(1), project()));
       assertTrue(task.blockingItemProcessingStarted.await(10, TimeUnit.SECONDS), "The blocking item was not processed");
 
-      Future<Boolean> competingResult = pool.submit(() -> task.processAll(List.of(1, 2), null));
+      Future<Boolean> competingResult = pool.submit(() -> task.processAll(List.of(1, 2), project()));
       try {
         assertTrue(task.unrelatedItemProcessed.await(10, TimeUnit.SECONDS), "The unrelated item was not processed on the first pass");
       }
@@ -97,7 +102,7 @@ public class UpdateTaskTest {
   public void processAllReturnsTrueWithoutContention() {
     RecordingTask task = new RecordingTask();
 
-    assertTrue(task.processAll(List.of(1, 2), null));
+    assertTrue(task.processAll(List.of(1, 2), project()));
     assertEquals(List.of(1, 2), task.processedItems, "Every item must be processed exactly once without contention");
   }
 
@@ -108,8 +113,8 @@ public class UpdateTaskTest {
     ConcurrentProcessingTask<Integer> task = new ConcurrentProcessingTask<>(tracker);
 
     try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
-      Future<Boolean> firstResult = pool.submit(() -> task.processAll(List.of(1), null));
-      Future<Boolean> secondResult = pool.submit(() -> task.processAll(List.of(2), null));
+      Future<Boolean> firstResult = pool.submit(() -> task.processAll(List.of(1), project()));
+      Future<Boolean> secondResult = pool.submit(() -> task.processAll(List.of(2), project()));
 
       assertTrue(firstResult.get());
       assertTrue(secondResult.get());
@@ -122,8 +127,8 @@ public class UpdateTaskTest {
   public void exceptionDoesNotLeakItemOrSemaphorePermit() {
     FailingOnceTask task = new FailingOnceTask();
 
-    assertThrows(TestProcessingException.class, () -> task.processAll(List.of(1), null));
-    assertTrue(task.processAll(List.of(1), null));
+    assertThrows(TestProcessingException.class, () -> task.processAll(List.of(1), project()));
+    assertTrue(task.processAll(List.of(1), project()));
     assertEquals(2, task.processingCount.get(), "The item must remain processable after an exception");
   }
 
@@ -132,8 +137,8 @@ public class UpdateTaskTest {
   public void reentrantProcessAllFailsFastAndDoesNotCorruptTask() {
     ReentrantOnceTask task = new ReentrantOnceTask();
 
-    assertThrows(IllegalStateException.class, () -> task.processAll(List.of(1), null));
-    assertTrue(task.processAll(List.of(1), null), "The task must remain usable after a rejected reentrant call");
+    assertThrows(IllegalStateException.class, () -> task.processAll(List.of(1), project()));
+    assertTrue(task.processAll(List.of(1), project()), "The task must remain usable after a rejected reentrant call");
     assertEquals(2, task.processingCount.get(), "The outer failed attempt must release item ownership");
   }
 
@@ -144,11 +149,11 @@ public class UpdateTaskTest {
     CountDownLatch competingAttemptFinished = new CountDownLatch(1);
 
     try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
-      Future<Boolean> firstResult = pool.submit(() -> task.processAll(List.of(1), null));
+      Future<Boolean> firstResult = pool.submit(() -> task.processAll(List.of(1), project()));
       assertTrue(task.firstProcessingStarted.await(10, TimeUnit.SECONDS), "The first processing attempt did not start");
 
       Future<Boolean> competingResult = pool.submit(
-        () -> task.processAll(new AttemptSignalingCollection<>(competingAttemptFinished, 1), null)
+        () -> task.processAll(new AttemptSignalingCollection<>(competingAttemptFinished, 1), project())
       );
       try {
         assertTrue(competingAttemptFinished.await(10, TimeUnit.SECONDS), "The competing attempt did not reach the busy item");
@@ -172,8 +177,8 @@ public class UpdateTaskTest {
     ConcurrentProcessingTask<Integer> secondTask = new ConcurrentProcessingTask<>(tracker);
 
     try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
-      Future<Boolean> firstResult = pool.submit(() -> firstTask.processAll(List.of(1), null));
-      Future<Boolean> secondResult = pool.submit(() -> secondTask.processAll(List.of(1), null));
+      Future<Boolean> firstResult = pool.submit(() -> firstTask.processAll(List.of(1), project()));
+      Future<Boolean> secondResult = pool.submit(() -> secondTask.processAll(List.of(1), project()));
 
       assertTrue(firstResult.get());
       assertTrue(secondResult.get());
@@ -190,11 +195,11 @@ public class UpdateTaskTest {
     EqualItem equalItem = new EqualItem(1);
 
     try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
-      Future<Boolean> firstResult = pool.submit(() -> task.processAll(List.of(firstItem), null));
+      Future<Boolean> firstResult = pool.submit(() -> task.processAll(List.of(firstItem), project()));
       assertTrue(task.firstProcessingStarted.await(10, TimeUnit.SECONDS), "The first processing attempt did not start");
 
       Future<Boolean> competingResult = pool.submit(
-        () -> task.processAll(new AttemptSignalingCollection<>(competingAttemptFinished, equalItem), null)
+        () -> task.processAll(new AttemptSignalingCollection<>(competingAttemptFinished, equalItem), project())
       );
       try {
         assertTrue(competingAttemptFinished.await(10, TimeUnit.SECONDS), "The equal item did not contend with the occupied item");
@@ -217,11 +222,11 @@ public class UpdateTaskTest {
     EmptyProgressIndicator indicator = new EmptyProgressIndicator(ModalityState.nonModal());
 
     try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
-      Future<Boolean> firstResult = pool.submit(() -> task.processAll(List.of(1), null));
+      Future<Boolean> firstResult = pool.submit(() -> task.processAll(List.of(1), project()));
       assertTrue(task.firstProcessingStarted.await(10, TimeUnit.SECONDS), "The first processing attempt did not start");
 
       Future<Boolean> canceledResult = pool.submit(() -> ProgressManager.getInstance().runProcess(
-        () -> task.processAll(new AttemptSignalingCollection<>(competingAttemptFinished, 1), null),
+        () -> task.processAll(new AttemptSignalingCollection<>(competingAttemptFinished, 1), project()),
         indicator
       ));
       try {
@@ -235,7 +240,7 @@ public class UpdateTaskTest {
       }
 
       assertTrue(firstResult.get());
-      assertTrue(task.processAll(List.of(1), null), "The task must remain usable after a waiting invocation is canceled");
+      assertTrue(task.processAll(List.of(1), project()), "The task must remain usable after a waiting invocation is canceled");
     }
   }
 
@@ -260,7 +265,7 @@ public class UpdateTaskTest {
             start.await();
 
             for (int j = 0; j < 1024; j++) {
-              boolean noneItemsSkipped = task.processAll(items, null);
+              boolean noneItemsSkipped = task.processAll(items, project());
               if (!noneItemsSkipped) {
                 return false;
               }
@@ -290,9 +295,9 @@ public class UpdateTaskTest {
   private static final class SlowProcessingTask extends UpdateTask<Integer> {
     @Override
     protected void doProcess(@NotNull Integer item,
-                             @Nullable Project project) {
+                             @NotNull Project project) {
       // Intentionally slow down processing a bit to increase the overlap window between threads
-      // The test doesn't rely on project being non-null
+      // The test does not otherwise use the supplied project
       try { Thread.sleep(10); } catch (InterruptedException ignored) {}
     }
   }
@@ -306,7 +311,7 @@ public class UpdateTaskTest {
     private final AtomicInteger maxActiveProcessingCount = new AtomicInteger();
 
     @Override
-    protected void doProcess(@NotNull T item, @Nullable Project project) {
+    protected void doProcess(@NotNull T item, @NotNull Project project) {
       int active = activeProcessingCount.incrementAndGet();
       maxActiveProcessingCount.accumulateAndGet(active, Math::max);
       try {
@@ -335,7 +340,7 @@ public class UpdateTaskTest {
     private final ConcurrentMap<Integer, Integer> processingCounts = new ConcurrentHashMap<>();
 
     @Override
-    protected void doProcess(@NotNull Integer item, @Nullable Project project) {
+    protected void doProcess(@NotNull Integer item, @NotNull Project project) {
       int processingCount = processingCounts.merge(item, 1, Integer::sum);
       if (item == 1 && processingCount == 1) {
         blockingItemProcessingStarted.countDown();
@@ -401,7 +406,7 @@ public class UpdateTaskTest {
     private final List<Integer> processedItems = new CopyOnWriteArrayList<>();
 
     @Override
-    protected void doProcess(@NotNull Integer item, @Nullable Project project) {
+    protected void doProcess(@NotNull Integer item, @NotNull Project project) {
       processedItems.add(item);
     }
   }
@@ -444,7 +449,7 @@ public class UpdateTaskTest {
     }
 
     @Override
-    protected void doProcess(@NotNull T item, @Nullable Project project) {
+    protected void doProcess(@NotNull T item, @NotNull Project project) {
       tracker.enterAndAwaitOthers();
     }
   }
@@ -455,7 +460,7 @@ public class UpdateTaskTest {
     private final AtomicInteger processingCount = new AtomicInteger();
 
     @Override
-    protected void doProcess(@NotNull Integer item, @Nullable Project project) {
+    protected void doProcess(@NotNull Integer item, @NotNull Project project) {
       processingCount.incrementAndGet();
       if (firstAttempt.compareAndSet(true, false)) {
         throw new TestProcessingException();
@@ -469,7 +474,7 @@ public class UpdateTaskTest {
     private final AtomicInteger processingCount = new AtomicInteger();
 
     @Override
-    protected void doProcess(@NotNull Integer item, @Nullable Project project) {
+    protected void doProcess(@NotNull Integer item, @NotNull Project project) {
       processingCount.incrementAndGet();
       if (firstAttempt.compareAndSet(true, false)) {
         processAll(List.of(item), project);

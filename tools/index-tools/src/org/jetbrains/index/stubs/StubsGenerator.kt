@@ -28,9 +28,7 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
 
   fun buildStubsForRoots(roots: Collection<VirtualFile>) {
     // ensure indexes initialized
-    ReadAction.run<Throwable> {
-      FileBasedIndex.getInstance().ensureUpToDate(ID.create<Any, Any>("Stubs"), null, null)
-    }
+    (FileBasedIndex.getInstance() as FileBasedIndexEx).waitUntilIndicesAreInitialized()
 
     try {
       buildIndexForRoots(roots)
