@@ -21,13 +21,11 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * Compares complete fixed-size workloads across {@link PersistentLongMap} implementations.
- *
- * <p>Every benchmark invocation performs either the number of operations stated in its method name or the number
- * selected by its load parameter. Because the class uses {@link Mode#SingleShotTime} and does not use
- * {@code OperationsPerInvocation}, JMH reports the total time for the complete batch in milliseconds.</p>
- */
+/// Compares complete fixed-size workloads across [PersistentLongMap] implementations.
+///
+/// Every benchmark invocation performs either the number of operations stated in its method name or the number
+/// selected by its load parameter. Because the class uses [Mode#SingleShotTime] and does not use
+/// `OperationsPerInvocation`, JMH reports the total time for the complete batch in milliseconds.
 @BenchmarkMode(Mode.SingleShotTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 1)
@@ -36,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 @Threads(1)
 @Timeout(time = 10, timeUnit = TimeUnit.MINUTES)
 public class PersistentLongMapBenchmark {
-  /** Builds a dense persistent map containing {@link PersistentLongMapState#entryCount} entries. */
+  /// Builds a dense persistent map containing [PersistentLongMapState#entryCount] entries.
   @Benchmark
   public PersistentLongMap<Object> buildDensePersistentMap(PersistentLongMapState state) {
     PersistentLongMap<Object> map = PersistentLongMap.Companion.empty(state.implementation);
@@ -46,9 +44,9 @@ public class PersistentLongMapBenchmark {
     return map;
   }
 
-  /** Performs 1,000,000 successful lookups in a deterministic permutation of the populated keys. */
+  /// Performs [MAP_LOOKUP_CALLS] successful lookups in a deterministic permutation of the populated keys.
   @Benchmark
-  public long lookup1MDensePersistentMap(PersistentLongMapState state) {
+  public long lookup10MDensePersistentMap(PersistentLongMapState state) {
     PersistentLongMap<Object> map = state.map;
     long[] lookupKeys = state.lookupKeys;
     long checksum = 0L;
@@ -61,7 +59,7 @@ public class PersistentLongMapBenchmark {
     return checksum;
   }
 
-  /** Replaces 100,000 existing values while retaining only the newest persistent-map version. */
+  /// Replaces [MAP_REPLACE_CALLS] existing values while retaining only the newest persistent-map version.
   @Benchmark
   public PersistentLongMap<Object> replace100KDensePersistentMapEntries(PersistentLongMapState state) {
     PersistentLongMap<Object> map = state.map;
@@ -73,7 +71,7 @@ public class PersistentLongMapBenchmark {
     return map;
   }
 
-  /** Removes every populated key once in a deterministic permutation. */
+  /// Removes every populated key once in a deterministic permutation.
   @Benchmark
   public PersistentLongMap<Object> removeAllDensePersistentMapEntries(PersistentLongMapState state) {
     PersistentLongMap<Object> map = state.map;
@@ -85,7 +83,7 @@ public class PersistentLongMapBenchmark {
     return map;
   }
 
-  /** Parameterized dense-marker-ID workload covering every persistent-map implementation and load. */
+  /// Parameterized dense-marker-ID workload covering every persistent-map implementation and load.
   @State(Scope.Thread)
   public static class PersistentLongMapState {
     @Param({
@@ -100,7 +98,7 @@ public class PersistentLongMapBenchmark {
     long[] lookupKeys;
     long[] removalKeys;
 
-    /** Builds the selected implementation and deterministic access orders outside the measured region. */
+    /// Builds the selected implementation and deterministic access orders outside the measured region.
     @Setup(Level.Trial)
     public void setUp() {
       PersistentLongMap<Object> currentMap = PersistentLongMap.Companion.empty(implementation);
@@ -121,7 +119,7 @@ public class PersistentLongMapBenchmark {
   private static final Object PRESENT_VALUE = new Object();
   private static final Object REPLACEMENT_VALUE = new Object();
 
-  /** Runs this benchmark class through JMH. */
+  /// Runs this benchmark class through JMH.
   static void main() throws Exception {
     System.setProperty("jmh.separateClasspathJAR", "true");
 
