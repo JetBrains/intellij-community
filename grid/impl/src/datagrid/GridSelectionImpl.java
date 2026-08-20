@@ -10,10 +10,35 @@ import java.util.Collections;
 public class GridSelectionImpl implements GridSelection<GridRow, GridColumn> {
   private final ModelIndexSet<GridRow> myRows;
   private ModelIndexSet<GridColumn> myColumns;
+  private final int myLeadRow;
+  private final int myAnchorRow;
 
   public GridSelectionImpl(@NotNull ModelIndexSet<GridRow> rows, @NotNull ModelIndexSet<GridColumn> columns) {
+    this(rows, columns, -1, -1);
+  }
+
+  /**
+   * Restoring the rows alone leaves the lead on the last row of the interval, so the lead is stored with them, as a
+   * model index like the sets above.
+   */
+  public GridSelectionImpl(@NotNull ModelIndexSet<GridRow> rows,
+                           @NotNull ModelIndexSet<GridColumn> columns,
+                           int leadRow,
+                           int anchorRow) {
     myRows = rows;
     myColumns = columns;
+    myLeadRow = leadRow;
+    myAnchorRow = anchorRow;
+  }
+
+  /** Model index of the stored lead row, or -1 when it was not stored. */
+  public int getLeadRow() {
+    return myLeadRow;
+  }
+
+  /** Model index of the stored anchor row, or -1 when it was not stored. */
+  public int getAnchorRow() {
+    return myAnchorRow;
   }
 
   @Override

@@ -18,6 +18,7 @@ import com.intellij.database.run.ui.grid.selection.GridSelectionTrackerImpl;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.DefaultListSelectionModel;
 import javax.swing.ListSelectionModel;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,7 +49,31 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
       rows = columns;
       columns = temp;
     }
-    return new GridSelectionImpl(ModelIndexSet.forRows(myGrid, rows), ModelIndexSet.forColumns(myGrid, columns));
+    ListSelectionModel rowSelection = rowSelectionModel();
+    return new GridSelectionImpl(ModelIndexSet.forRows(myGrid, rows), ModelIndexSet.forColumns(myGrid, columns),
+                                 toModelRow(rowSelection.getLeadSelectionIndex()),
+                                 toModelRow(rowSelection.getAnchorSelectionIndex()));
+  }
+
+  /** The rows of the data are laid out along the column axis in a transposed table. */
+  private @NotNull ListSelectionModel rowSelectionModel() {
+    return myTable.isTransposed() ? myTable.getColumnModel().getSelectionModel() : myTable.getSelectionModel();
+  }
+
+  private int toModelRow(int viewIndex) {
+    if (viewIndex < 0) return -1;
+    if (myTable.isTransposed()) {
+      return viewIndex < myTable.getColumnCount() ? myTable.convertColumnIndexToModel(viewIndex) : -1;
+    }
+    return viewIndex < myTable.getRowCount() ? myTable.convertRowIndexToModel(viewIndex) : -1;
+  }
+
+  private int toViewRow(int modelIndex) {
+    if (modelIndex < 0) return -1;
+    if (myTable.isTransposed()) return myTable.convertColumnIndexToView(modelIndex);
+    if (modelIndex >= myTable.getModel().getRowCount()) return -1;
+    int viewIndex = myTable.convertRowIndexToView(modelIndex);
+    return viewIndex < myTable.getRowCount() ? viewIndex : -1;
   }
 
   @Override
@@ -305,6 +330,9 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
     int columnCount = myTable.isTransposed() ? myTable.getRowCount() : myTable.getColumnCount();
     ModelIndexSet<GridRow> rows = ModelIndexSet.forRows(myGrid, fit(selection.getSelectedRows().asArray(), rowCount));
     ModelIndexSet<GridColumn> columns = ModelIndexSet.forColumns(myGrid, fit(selection.getSelectedColumns().asArray(), columnCount));
+    if (selection instanceof GridSelectionImpl stored) {
+      return new GridSelectionImpl(rows, columns, stored.getLeadRow(), stored.getAnchorRow());
+    }
     return new GridSelectionImpl(rows, columns);
   }
 
@@ -321,5 +349,14 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
     myTable.clearSelection();
     SelectionModel<GridRow, GridColumn> selectionModel = myGrid.getSelectionModel();
     selectionModel.setSelection(selection.getSelectedRows(), selection.getSelectedColumns());
+
+    // Re-adding the rows put the lead on the last row of the interval, and anything following the lead jumps there.
+    if (!(selection instanceof GridSelectionImpl stored)) return;
+    if (!(rowSelectionModel() instanceof DefaultListSelectionModel rows)) return;
+    int lead = toViewRow(stored.getLeadRow());
+    if (lead < 0) return;
+    int anchor = toViewRow(stored.getAnchorRow());
+    if (anchor >= 0) rows.setAnchorSelectionIndex(anchor);
+    rows.moveLeadSelectionIndex(lead); // moves the lead without changing the selection
   }
 }
