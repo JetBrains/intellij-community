@@ -96,6 +96,9 @@ private suspend fun logAndClearStats(projectName: String, perfFilePath: String?)
 
   var end = -1L
 
+  if (StartUpMeasurer.isOverflowDetected()) {
+    LOG.warn("StartUpMeasurer item limit was exceeded, the report is incomplete (see idea.start.up.measurer.item.limit)")
+  }
   StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false)) { item ->
     // process it now to ensure that a thread will have a first name (because a report writer can process events in any order)
     threadNameManager.getThreadName(item)
@@ -206,6 +209,12 @@ private fun generateJarAccessLog(outFile: Path) {
 }
 
 private class HeadlessStartUpPerformanceService : StartUpPerformanceService {
+  init {
+    // nothing ever drains StartUpMeasurer in headless mode, and this service exposes no data,
+    // so stop collecting and free the queue to avoid unbounded growth in long-lived headless processes
+    StartUpMeasurer.processAndClear(false) { }
+  }
+
   override fun reportStatistics(project: Project) { }
 
   override fun getPluginCostMap(): Map<String, Object2LongMap<String>> = emptyMap()
