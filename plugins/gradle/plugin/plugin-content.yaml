@@ -168,6 +168,36 @@
 - name: lib/modules/intellij.gradle.backend.jar
   contentModules:
   - name: intellij.gradle.backend
+- name: lib/modules/intellij.gradle.codeInsight.backend.jar
+  contentModules:
+  - name: intellij.gradle.codeInsight.backend
+- name: lib/modules/intellij.gradle.codeInsight.groovy.backend.jar
+  contentModules:
+  - name: intellij.gradle.codeInsight.groovy.backend
+- name: lib/modules/intellij.gradle.codeInsight.groovy.jar
+  contentModules:
+  - name: intellij.gradle.codeInsight.groovy
+- name: lib/modules/intellij.gradle.codeInsight.jar
+  contentModules:
+  - name: intellij.gradle.codeInsight
+- name: lib/modules/intellij.gradle.codeInsight.kotlin.backend.jar
+  contentModules:
+  - name: intellij.gradle.codeInsight.kotlin.backend
+- name: lib/modules/intellij.gradle.codeInsight.kotlin.jar
+  contentModules:
+  - name: intellij.gradle.codeInsight.kotlin
+- name: lib/modules/intellij.gradle.codeInsight.properties.backend.jar
+  contentModules:
+  - name: intellij.gradle.codeInsight.properties.backend
+- name: lib/modules/intellij.gradle.codeInsight.properties.jar
+  contentModules:
+  - name: intellij.gradle.codeInsight.properties
+- name: lib/modules/intellij.gradle.codeInsight.toml.backend.jar
+  contentModules:
+  - name: intellij.gradle.codeInsight.toml.backend
+- name: lib/modules/intellij.gradle.codeInsight.toml.jar
+  contentModules:
+  - name: intellij.gradle.codeInsight.toml
 - name: lib/modules/intellij.gradle.completion.ex.jar
   contentModules:
   - name: intellij.gradle.completion.ex
