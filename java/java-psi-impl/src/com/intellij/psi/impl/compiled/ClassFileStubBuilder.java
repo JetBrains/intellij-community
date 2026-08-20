@@ -55,6 +55,18 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
     return fileContent.getFile().computeWithPreloadedContentHint(fileContent.getContent(), () -> {
       VirtualFile file = fileContent.getFile();
       try {
+        //TODO: decompiler may use not only the fileContent provided, but a files around: e.g. inner-class files, see ClsFileImpl.findInnerClass()
+        //      method.
+        //      This is a violation of indexing contract: indexing data for a file X should depend _only_ on X.content, NOT on
+        //      any other files state/existence/content. Violation of this contract leads to indexes being outdated/inconsistent,
+        //      because indexing subsystem is not able to reliably detect when and which files needs to be re-indexed.
+        //      It is still possible to use it here, because we rely on Compiler to always modify inner and outer class-files
+        //      _together_. If the modification of inner-class are _always_ accompanied by the modification of outer (host) class
+        //      => outer-class modification will be detected by indexing subsystem as a reason to re-index the outer-class and,
+        //      consequently, the inter class, too.
+        //      The scheme is fragile, lawless, and probably pleases the Satan -- but so far it works.
+        //      Don't use something like that yourself, though: it is a hack, and such hacks could be meaningfully employed only by
+        //      ruthless and highly skilled Dark Jedi. Don't play with the Dark Side -- follow the indexing contract strictly.
         return decompiler.getStubBuilder().buildFileStub(fileContent);
       }
       catch (ClsFormatException e) {
