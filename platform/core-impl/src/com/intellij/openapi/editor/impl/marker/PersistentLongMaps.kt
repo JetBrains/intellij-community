@@ -279,9 +279,13 @@ internal class PersistentLongMap16<V : Any> private constructor(private val root
 /**
  * Bitmap-compressed 32-way hash trie specialized for primitive [Long] keys.
  *
- * Keys are mixed with a bijective 64-bit function, so distinct keys never require a boxed collision bucket. Each node
- * stores its directly contained keys in a [LongArray]; its compact object array contains the corresponding values
- * followed by child nodes.
+ * Each level consumes five bits of the mixed key. An entry stays directly in its current node until another key selects
+ * the same branch; the two entries are then moved into a child node that examines the next five bits. The `dataMap` and
+ * `nodeMap` bitmaps identify direct entries and child nodes respectively, so empty branches occupy no array slots.
+ *
+ * Keys are mixed with a bijective 64-bit function, so distinct keys never require a boxed collision bucket. Nodes keep
+ * direct keys in a primitive [LongArray], while one compact object array holds their values followed by child nodes.
+ * Persistent updates copy only the affected path; the builder may mutate nodes carrying its unique ownership token.
  */
 internal class PersistentLongChampMap<V : Any> private constructor(private val root: Node?) : PersistentLongMap<V> {
   constructor() : this(null)
@@ -305,10 +309,22 @@ internal class PersistentLongChampMap<V : Any> private constructor(private val r
   override fun builder(): PersistentLongMapBuilder<V> = Builder(this)
 
   private class Node(
+    /** Bitmap of branches represented by direct entries in [keys] and the value prefix of [content]. */
     var dataMap: Int,
+
+    /** Bitmap of branches represented by child nodes in the suffix of [content]; disjoint from [dataMap]. */
     var nodeMap: Int,
+
+    /** Direct keys ordered by their branch bit; its size is the population count of [dataMap]. */
     var keys: LongArray,
+
+    /** Direct values for [keys], followed by child nodes ordered by their bits in [nodeMap]. */
     var content: Array<Any?>,
+
+    /**
+     * Identity token of the builder allowed to mutate this node. Published nodes may retain an old token, but every
+     * subsequent builder uses a new token and therefore copies the node before changing it.
+     */
     val owner: Any? = null,
   )
 
