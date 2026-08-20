@@ -50,6 +50,9 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   private static final String SOFT_WRAP_FILE_MASKS_ENABLED_DEFAULT = "*";
   private static final @NonNls String SOFT_WRAP_FILE_MASKS_DISABLED_DEFAULT = "*.md; *.txt; *.rst; *.adoc";
 
+  private static final EditorSettings.LineNumerationType DEFAULT_LINE_NUMERATION = EditorSettings.LineNumerationType.ABSOLUTE;
+  private static final EditorSettings.CaretEasing DEFAULT_CARET_EASING = EditorSettings.CaretEasing.SNAPPY;
+
   //Q: make it interface?
   public static final class OptionSet {
     // todo: unused? schedule for removal?
@@ -76,7 +79,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     @ApiStatus.Experimental public boolean IS_SMOOTH_CARET_BLINKING = false;
     public boolean IS_RIGHT_MARGIN_SHOWN = true;
     public boolean ARE_LINE_NUMBERS_SHOWN = true;
-    public @NotNull EditorSettings.LineNumerationType LINE_NUMERATION = EditorSettings.LineNumerationType.ABSOLUTE;
+    /** May be {@code null} after deserialization of a broken value — read via {@link #getLineNumeration()}. */
+    public @Nullable EditorSettings.LineNumerationType LINE_NUMERATION = DEFAULT_LINE_NUMERATION;
     public boolean ARE_GUTTER_ICONS_SHOWN = true;
     public boolean IS_FOLDING_OUTLINE_SHOWN = true;
     public boolean IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER = true;
@@ -94,9 +98,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean IS_BLOCK_CURSOR = false;
     public boolean IS_FULL_LINE_HEIGHT_CURSOR = false;
     @ApiStatus.Experimental public boolean IS_SMOOTH_CARET_MOVEMENT = false;
+    /** May be {@code null} after deserialization of a broken value — read via {@link #getCaretEasing()}. */
     @ApiStatus.Experimental
     @OptionTag(converter = CaretEasingConverter.class)
-    public @NotNull EditorSettings.CaretEasing CARET_EASING = EditorSettings.CaretEasing.SNAPPY;
+    public @Nullable EditorSettings.CaretEasing CARET_EASING = DEFAULT_CARET_EASING;
     public boolean IS_HIGHLIGHT_SELECTION_OCCURRENCES = true;
     public boolean IS_WHITESPACES_SHOWN = false;
     public boolean IS_LEADING_WHITESPACES_SHOWN = true;
@@ -242,6 +247,11 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   @Override
   public void loadState(@NotNull OptionSet state) {
+    // xmlb writes null into an enum field when the stored `<option>` carries no `value` attribute
+    // (converter path, see TagBinding) or an unknown constant name (plain enum path, see ClassUtil.stringToEnum).
+    // Heal it right after loading so that the broken value is not written back on the next save.
+    state.CARET_EASING = Objects.requireNonNullElse(state.CARET_EASING, DEFAULT_CARET_EASING);
+    state.LINE_NUMERATION = Objects.requireNonNullElse(state.LINE_NUMERATION, DEFAULT_LINE_NUMERATION);
     myOptions = state;
     parseRawSoftWraps();
   }
@@ -315,16 +325,16 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ARE_LINE_NUMBERS_SHOWN, old, val);
   }
 
-  public EditorSettings.LineNumerationType getLineNumeration() {
-    return myOptions.LINE_NUMERATION;
+  public @NotNull EditorSettings.LineNumerationType getLineNumeration() {
+    return Objects.requireNonNullElse(myOptions.LINE_NUMERATION, DEFAULT_LINE_NUMERATION);
   }
 
-  public void setLineNumeration(EditorSettings.LineNumerationType val) {
+  public void setLineNumeration(@Nullable EditorSettings.LineNumerationType val) {
+    EditorSettings.LineNumerationType newValue = Objects.requireNonNullElse(val, DEFAULT_LINE_NUMERATION);
     EditorSettings.LineNumerationType old = myOptions.LINE_NUMERATION;
-    if (old == val) return;
-    myOptions.LINE_NUMERATION = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_LINE_NUMERATION, old, val);
-
+    if (old == newValue) return;
+    myOptions.LINE_NUMERATION = newValue;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_LINE_NUMERATION, old, newValue);
   }
 
   public boolean areGutterIconsShown() {
@@ -559,16 +569,17 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   @ApiStatus.Experimental
-  public EditorSettings.CaretEasing getCaretEasing() {
-    return myOptions.CARET_EASING;
+  public @NotNull EditorSettings.CaretEasing getCaretEasing() {
+    return Objects.requireNonNullElse(myOptions.CARET_EASING, DEFAULT_CARET_EASING);
   }
 
   @ApiStatus.Experimental
-  public void setCaretEasing(EditorSettings.CaretEasing val) {
+  public void setCaretEasing(@Nullable EditorSettings.CaretEasing val) {
+    EditorSettings.CaretEasing newValue = Objects.requireNonNullElse(val, DEFAULT_CARET_EASING);
     EditorSettings.CaretEasing old = myOptions.CARET_EASING;
-    if (old == val) return;
-    myOptions.CARET_EASING = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_CARET_EASING, old, val);
+    if (old == newValue) return;
+    myOptions.CARET_EASING = newValue;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_CARET_EASING, old, newValue);
   }
   
   public boolean isHighlightSelectionOccurrences() {
