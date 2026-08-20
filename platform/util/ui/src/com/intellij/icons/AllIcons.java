@@ -1521,12 +1521,6 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowVariableView = load("expui/toolwindows/toolWindowVariableView.svg", "toolwindows/toolWindowVariableView.svg", 684149723, 2);
     /** 13x13 */ public static final @NotNull Icon WarningEvents = load("toolwindows/warningEvents.svg", 249706562, 2);
     /** 13x13 */ public static final @NotNull Icon WebToolWindow = load("expui/toolwindows/web.svg", "toolwindows/webToolWindow.svg", -1935851554, 2);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    /** 16x16 */ public static final @NotNull Icon MeetNewUi = load("expui/toolwindows/meetNewUi.svg", -215928280, 2);
   }
 
   public static final class TransferSettings {
