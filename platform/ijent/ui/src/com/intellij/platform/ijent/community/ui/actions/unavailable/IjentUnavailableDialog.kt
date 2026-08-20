@@ -11,6 +11,7 @@ import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogBuilder
@@ -30,6 +31,7 @@ import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerRes
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult.UnrelatedIjent
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
 import com.intellij.platform.ijent.community.ui.actions.dashboard.IjentStatDashboard
+import com.intellij.platform.ijent.community.ui.actions.dashboard.printTable
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
@@ -42,7 +44,10 @@ import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainCoroutineDispatcher
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -53,6 +58,7 @@ import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.time.Duration.Companion.milliseconds
 
 private class EdtOnceTask : OnceTask<ProjectCloseDecision>() {
   override suspend fun <R> executeUnderLockIfNotAlreadyAcquired(f: suspend () -> R): R {
@@ -107,9 +113,29 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
       eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()?.close()
       return UnrelatedIjent(eelDescriptor)
     }
+    LOG.warn("Ijent is unavailable. Modal dialog will be shown.")
     return NotRespondingFilesystemDialogService.getInstance().doOnceOrWait(eelDescriptor, projectsToClose) {
-      showCloseProjectDialog(eelDescriptor, projectsToClose).also {
-        eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()?.close()
+      coroutineScope {
+        val logJob = launch {
+          val ijentSession = eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()
+          if (ijentSession != null) {
+            var backOff = 500.milliseconds
+            while (true) {
+              val statTable = ijentSession.eventBus.counter.snapshot().printTable()
+              LOG.warn("Ijent is unavailable. Calls statistics:\n\n$statTable")
+              delay(backOff)
+              backOff *= 2
+            }
+          }
+        }
+        try {
+          showCloseProjectDialog(eelDescriptor, projectsToClose).also {
+            eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()?.close()
+          }
+        }
+        finally {
+          logJob.cancel()
+        }
       }
     }
   }
@@ -236,3 +262,5 @@ private fun DialogBuilder.showWithPump(coroutineContext: CoroutineContext): Int 
     else -> error("Unknown loop type: $loop")
   }
 }
+
+private val LOG = logger<IjentUnavailableDialogHandler>()
