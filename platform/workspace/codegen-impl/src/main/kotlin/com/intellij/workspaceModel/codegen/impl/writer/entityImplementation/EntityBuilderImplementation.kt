@@ -27,8 +27,9 @@ fun CodeContext.entityBuilderImplementationCode(objClass: ObjClass<*>, hasConnec
 
     section("override fun checkInitialization()") {
       line("val _diff = diff")
-      listBuilder(getAllProperties(objClass, withSymbolicId = false, withOptional = false, withDefault = false)) { field ->
-        implWsBuilderIsInitializedCode(field)
+      val properties = getAllProperties(objClass, withSymbolicId = false, withOptional = false, withDefault = false)
+      for (property in properties) {
+        implWsBuilderIsInitializedCode(property)
       }
       symbolicIdIsInitializedCode(objClass)
     }
@@ -60,18 +61,19 @@ fun CodeContext.entityBuilderImplementationCode(objClass: ObjClass<*>, hasConnec
     lineComment("Relabeling code, move information from dataSource to this builder")
     section("override fun relabel(dataSource: ${WorkspaceEntity}, parents: Set<${WorkspaceEntity}>?)") {
       line("dataSource as ${objClass.javaFullName}")
-      listBuilder(getAllProperties(objClass, withSymbolicId = false, withRefs = false)) { field ->
-        var type = field.valueType
-        var qm = ""
-        if (type is ValueType.Optional<*>) {
-          qm = "?"
-          type = type.type
+      val properties = getAllProperties(objClass, withSymbolicId = false, withRefs = false)
+      for (property in properties) { 
+        val valueTypeRaw = property.valueType
+        val (valueType, safeCall) = if (valueTypeRaw is ValueType.Optional<*>) {
+          valueTypeRaw.type to "?"
+        } else {
+          valueTypeRaw to ""
         }
-        when (type) {
-          is ValueType.List<*> -> line("if (this.${field.name} != dataSource${qm}.${field.name}) this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableList()")
-          is ValueType.Set<*> -> line("if (this.${field.name} != dataSource${qm}.${field.name}) this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableSet()")
-          is ValueType.Map<*, *> -> line("if (this.${field.name} != dataSource${qm}.${field.name}) this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableMap()")
-          else -> line("if (this.${field.name} != dataSource${qm}.${field.name}) this.${field.name} = dataSource.${field.name}")
+        when (valueType) {
+          is ValueType.List<*> -> line("if (this.${property.name} != dataSource.${property.name}) this.${property.name} = dataSource.${property.name}${safeCall}.toMutableList()")
+          is ValueType.Set<*> -> line("if (this.${property.name} != dataSource.${property.name}) this.${property.name} = dataSource.${property.name}${safeCall}.toMutableSet()")
+          is ValueType.Map<*, *> -> line("if (this.${property.name} != dataSource.${property.name}) this.${property.name} = dataSource.${property.name}${safeCall}.toMutableMap()")
+          else -> line("if (this.${property.name} != dataSource.${property.name}) this.${property.name} = dataSource.${property.name}")
         }
       }
 

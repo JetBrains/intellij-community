@@ -10,7 +10,6 @@ import com.intellij.workspaceModel.codegen.impl.dsl.annotation
 import com.intellij.workspaceModel.codegen.impl.dsl.notReferenceError
 import com.intellij.workspaceModel.codegen.impl.dsl.unsupportedTypeError
 import com.intellij.workspaceModel.codegen.impl.writer.EntityLink
-import com.intellij.workspaceModel.codegen.impl.writer.Instrumentation
 import com.intellij.workspaceModel.codegen.impl.writer.LibraryRoot
 import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceList
 import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceSet
@@ -167,40 +166,32 @@ private fun CodeContext.implWsBuilderBlockingCode(
   }
 }
 
-fun CodeContext.implWsBuilderIsInitializedCode(field: ObjProperty<*, *>) {
-  val javaName = field.javaName
-  val isChild = unwrapReferenceType(field.valueType)?.child
-  when (field.valueType) {
-    is ValueType.List<*> -> if (field.valueType.isReferenceType()) {
+fun CodeContext.implWsBuilderIsInitializedCode(property: ObjProperty<*, *>) {
+  val javaName = property.javaName
+  val isChild = unwrapReferenceType(property.valueType)?.child
+  when (property.valueType) {
+    is ValueType.List<*> -> if (property.valueType.isReferenceType()) {
       if (isChild == null) {
-        notReferenceError("isInitialized", field)
+        notReferenceError("isInitialized", property)
         return
-      }
-      lineComment("Check initialization for list with ref type")
-      ifElse("_diff != null", {
-        `if`("_diff.${Instrumentation.getManyChildrenBuilders}(${connectionIdForReference(field)}, this) == null") {
-          line("error(\"Field ${field.receiver.name}#$javaName should be initialized\")")
-        }
-      }) {
-        isInitializedBaseCode(field, "this.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(field)})] == null")
       }
     }
     else {
       val capitalizedFieldName = javaName.replaceFirstChar { it.titlecaseChar() }
-      isInitializedBaseCode(field, "!getEntityData().is${capitalizedFieldName}Initialized()")
+      isInitializedBaseCode(property, "!getEntityData().is${capitalizedFieldName}Initialized()")
     }
 
     is ValueType.ObjRef<*> -> {
       if (isChild == null) {
-        notReferenceError("isInitialized", field)
+        notReferenceError("isInitialized", property)
         return
       }
       ifElse("_diff != null", {
-        `if`("_diff.${refsConnectionMethodCode(field, true)} == null") {
-          line("error(\"Field ${field.receiver.name}#$javaName should be initialized\")")
+        `if`("_diff.${refsConnectionMethodCode(property, true)} == null") {
+          line("error(\"Field ${property.receiver.name}#$javaName should be initialized\")")
         }
       }) {
-        isInitializedBaseCode(field, "this.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(field)})] == null")
+        isInitializedBaseCode(property, "this.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(property)})] == null")
       }.toString()
     }
 
@@ -209,7 +200,7 @@ fun CodeContext.implWsBuilderIsInitializedCode(field: ObjProperty<*, *>) {
       -> return
     else -> {
       val capitalizedFieldName = javaName.replaceFirstChar { it.titlecaseChar() }
-      isInitializedBaseCode(field, "!getEntityData().is${capitalizedFieldName}Initialized()")
+      isInitializedBaseCode(property, "!getEntityData().is${capitalizedFieldName}Initialized()")
     }
   }
 }
@@ -295,8 +286,10 @@ private fun CodeContext.entityReferencePropertyBuilderCode(
   val receiverName = property.receiver.name
 
 
+  val referenceIsAbstract = unwrapReferenceType(property.valueType)?.target?.openness == ObjClass.Openness.abstract
   val referenceBuilderType = getJavaBuilderTypeWithGeneric(property)
   sectionNoBrackets("override var ${property.javaName}: $referenceBuilderType") {
+    if (referenceIsAbstract) suppressUncheckedCast()
     when (referenceType) {
       ReferenceType.Parent -> {
         +"get() = getParent($connectionName) as? $referenceBuilderType ?: error(\"${property.name} is null for $receiverName\")"
@@ -315,7 +308,7 @@ private fun CodeContext.entityReferencePropertyBuilderCode(
         }
       }
       ReferenceType.Children -> {
-        suppressUncheckedCast()
+        if (!referenceIsAbstract) suppressUncheckedCast()
         +"get() = getChildren($connectionName) as $referenceBuilderType"
         section("set(value)") {
           +"changeChildren(value, $connectionName)"
