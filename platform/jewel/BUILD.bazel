@@ -17,6 +17,7 @@ kt_jvm_import(
     name = "spectre-core",
     testonly = True,
     jar = "@jewel_deps_spectre_core//file",
+    srcjar = "@jewel_deps_spectre_core_sources//file",
     visibility = ["//visibility:private"],
 )
 
@@ -24,6 +25,7 @@ kt_jvm_import(
     name = "spectre-testing",
     testonly = True,
     jar = "@jewel_deps_spectre_testing//file",
+    srcjar = "@jewel_deps_spectre_testing_sources//file",
     visibility = ["//visibility:private"],
 )
 
@@ -31,6 +33,7 @@ kt_jvm_import(
     name = "spectre-agent",
     testonly = True,
     jar = "@jewel_deps_spectre_agent//file",
+    srcjar = "@jewel_deps_spectre_agent_sources//file",
     visibility = ["//visibility:private"],
 )
 
@@ -38,6 +41,7 @@ kt_jvm_import(
     name = "spectre-recording",
     testonly = True,
     jar = "@jewel_deps_spectre_recording//file",
+    srcjar = "@jewel_deps_spectre_recording_sources//file",
     visibility = ["//visibility:private"],
 )
 

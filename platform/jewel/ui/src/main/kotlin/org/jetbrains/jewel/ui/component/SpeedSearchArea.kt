@@ -49,6 +49,7 @@ import androidx.compose.ui.layout.onFirstVisible
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.window.rememberComponentRectPositionProvider
 import java.awt.event.KeyEvent as AWTKeyEvent
 import kotlinx.coroutines.CoroutineDispatcher
@@ -429,7 +430,10 @@ private fun SpeedSearchInput(
 
     Popup(
         popupPositionProvider = rememberComponentRectPositionProvider(anchor, alignment),
-        onDismissRequest = if (dismissOnLoseFocus) ({ speedSearchState.hideSearch() }) else null,
+        onDismissRequest = { speedSearchState.hideSearch() },
+        // Only the outside-click path is conditional. Escape always hides the search input, which is what makes
+        // the first Escape belong to speed search and the second to whatever the search is layered over.
+        properties = PopupProperties(dismissOnClickOutside = dismissOnLoseFocus),
     ) {
         val focusRequester = remember { FocusRequester() }
 

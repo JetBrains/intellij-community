@@ -195,11 +195,7 @@ public fun EditableComboBox(
         val popupVisible by popupManager.isPopupVisible
         if (popupVisible) {
             PopupContainer(
-                onDismissRequest = {
-                    if (!chevronHovered && !textFieldHovered) {
-                        popupManager.setPopupVisible(false)
-                    }
-                },
+                onDismissRequest = { popupManager.setPopupVisible(false) },
                 modifier =
                     Modifier.testTag("Jewel.ComboBox.Popup")
                         .semantics { contentDescription = "Jewel.EditableComboBox.Popup" }
@@ -208,7 +204,9 @@ public fun EditableComboBox(
                         .then(popupModifier)
                         .onClick { popupManager.setPopupVisible(false) },
                 horizontalAlignment = Alignment.Start,
-                popupProperties = PopupProperties(focusable = false),
+                // See ComboBox: only the pointer path is suppressed while hovered; Escape stays enabled.
+                popupProperties =
+                    PopupProperties(focusable = false, dismissOnClickOutside = !chevronHovered && !textFieldHovered),
                 content = popupContent,
             )
         }
