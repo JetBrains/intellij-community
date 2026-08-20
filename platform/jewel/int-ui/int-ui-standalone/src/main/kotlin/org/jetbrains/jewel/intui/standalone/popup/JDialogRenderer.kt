@@ -430,12 +430,21 @@ private fun JPopupImpl(
                         currentOnPreviewKeyEvent?.invoke(composeEvent) == true ||
                             currentOnKeyEvent?.invoke(composeEvent) == true
                     val dismissRequest = currentOnDismissRequest
-                    val dismissed = !consumed && composeEvent.isDismissRequest() && dismissRequest != null
+                    // Whether Escape dismisses is the popup's declared policy; a null callback just means we have
+                    // no way to act on it, so we must not claim the key either.
+                    val dismissed =
+                        !consumed &&
+                            composeEvent.isDismissRequest() &&
+                            currentProperties.dismissOnBackPress &&
+                            dismissRequest != null
 
                     if (dismissed) {
                         dismissRequest.invoke()
                     }
-                    if (consumed || dismissed) {
+                    // A focusable popup swallows Escape whether or not it dismissed, matching Compose. A
+                    // non-focusable one must let a key it did not act on reach whatever owns it.
+                    val claimsDismissRequest = composeEvent.isDismissRequest() && currentProperties.focusable
+                    if (consumed || dismissed || claimsDismissRequest) {
                         event.consume()
                     }
                 }

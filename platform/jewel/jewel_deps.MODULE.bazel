@@ -31,10 +31,24 @@ http_file(
 )
 
 http_file(
+    name = "jewel_deps_spectre_core_sources",
+    downloaded_file_path = "spectre-core-0.5.0-sources.jar",
+    sha256 = "798968ef359092d51beca43dbd2707792a21405761bf4f817a98addac038e1f9",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-core/0.5.0/spectre-core-0.5.0-sources.jar",
+)
+
+http_file(
     name = "jewel_deps_spectre_testing",
     downloaded_file_path = "spectre-testing-0.5.0.jar",
     sha256 = "0856b8d2758ffb436910bde53cd35f947d9873ff37173787c796fc6a49f6ff94",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-testing/0.5.0/spectre-testing-0.5.0.jar",
+)
+
+http_file(
+    name = "jewel_deps_spectre_testing_sources",
+    downloaded_file_path = "spectre-testing-0.5.0-sources.jar",
+    sha256 = "2f95170eb876feeb284261077257a019eb0073e89f91e24322fef07730972917",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-testing/0.5.0/spectre-testing-0.5.0-sources.jar",
 )
 
 # Compile dependency of spectre-testing; unused by the in-process lane, but must resolve.
@@ -45,12 +59,26 @@ http_file(
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-agent/0.5.0/spectre-agent-0.5.0.jar",
 )
 
+http_file(
+    name = "jewel_deps_spectre_agent_sources",
+    downloaded_file_path = "spectre-agent-0.5.0-sources.jar",
+    sha256 = "8117ee97f119d1fae12ee44a467ceb6d91f6c552edaea1a3d32d033e43e7a6e4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-agent/0.5.0/spectre-agent-0.5.0-sources.jar",
+)
+
 # Runtime dependency of spectre-testing.
 http_file(
     name = "jewel_deps_spectre_recording",
     downloaded_file_path = "spectre-recording-0.5.0.jar",
     sha256 = "ab44895f231546d0209924caa4f429f9a2fd700f499f9d1b34dcb92a39431f80",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-recording/0.5.0/spectre-recording-0.5.0.jar",
+)
+
+http_file(
+    name = "jewel_deps_spectre_recording_sources",
+    downloaded_file_path = "spectre-recording-0.5.0-sources.jar",
+    sha256 = "7c84c5c3e9bd2774d06183d802fbad5a8fe4bb3bd2bb2ea271b7e5d5b1bb61b8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-recording/0.5.0/spectre-recording-0.5.0-sources.jar",
 )
 
 # Runtime dependency of spectre-core, not otherwise in the monorepo.

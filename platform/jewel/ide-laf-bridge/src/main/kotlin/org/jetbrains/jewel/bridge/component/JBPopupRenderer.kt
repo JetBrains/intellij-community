@@ -45,6 +45,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.scale.JBUIScale
 import java.awt.Component
 import java.awt.Dimension
@@ -118,6 +119,8 @@ private fun JBPopup(
     val currentContent = rememberUpdatedState(content)
     val currentPopupPositionProvider by rememberUpdatedState(popupPositionProvider)
     val currentOnDismissRequest by rememberUpdatedState(onDismissRequest)
+    val currentOnPreviewKeyEvent by rememberUpdatedState(onPreviewKeyEvent)
+    val currentOnKeyEvent by rememberUpdatedState(onKeyEvent)
     val currentProperties by rememberUpdatedState(properties)
 
     val owner = LocalComponent.current
@@ -182,17 +185,29 @@ private fun JBPopup(
             .setCancelOnClickOutside(currentProperties.dismissOnClickOutside)
             .setCancelOnWindowDeactivation(currentProperties.dismissOnClickOutside)
             .setLocateWithinScreenBounds(false)
+            // AbstractPopup cancels itself on Escape whenever the handler below declines the event, which would
+            // close the popup behind Compose's back and leave the two out of sync. Take sole ownership instead.
+            .setCancelKeyEnabled(false)
             .setKeyEventHandler { event ->
                 val composeEvent = event.toComposeKeyEvent()
                 val consumed =
-                    onPreviewKeyEvent?.invoke(composeEvent) == true || onKeyEvent?.invoke(composeEvent) == true
+                    currentOnPreviewKeyEvent?.invoke(composeEvent) == true ||
+                        currentOnKeyEvent?.invoke(composeEvent) == true
+                // Whether Escape dismisses is the popup's declared policy, not something inferred from the shape
+                // of its callbacks. A null callback means we have no way to dismiss, so we must not claim the key.
+                val dismissed =
+                    !consumed &&
+                        composeEvent.isDismissRequest() &&
+                        currentProperties.dismissOnBackPress &&
+                        currentOnDismissRequest != null
 
-                if (!consumed && composeEvent.isDismissRequest()) {
+                if (dismissed) {
                     isVisible = false
-                    true
-                } else {
-                    consumed
                 }
+                // A focusable popup swallows Escape whether or not it dismissed, matching Compose. A
+                // non-focusable one must let a key it did not act on reach whatever owns it.
+                val claimsDismissRequest = composeEvent.isDismissRequest() && currentProperties.focusable
+                consumed || dismissed || claimsDismissRequest
             }
             .addListener(
                 object : JBPopupListener {
@@ -206,6 +221,15 @@ private fun JBPopup(
                 }
             )
             .createPopup()
+    }
+
+    // The builder above only captures the properties as they were on first composition. AbstractPopup reads these
+    // flags live on every event, so pushing changes keeps a popup whose properties vary (a ComboBox suppressing
+    // click-outside dismissal while its chevron is hovered) in step without recreating the native window.
+    LaunchedEffect(popup, currentProperties) {
+        val abstractPopup = popup as? AbstractPopup ?: return@LaunchedEffect
+        abstractPopup.setCancelOnClickOutside(currentProperties.dismissOnClickOutside)
+        abstractPopup.setCancelOnWindowDeactivation(currentProperties.dismissOnClickOutside)
     }
 
     val rectValue = popupRectangle.value

@@ -275,7 +275,9 @@ public fun GotItTooltip(
                 popupPositionProvider =
                     rememberGotItTooltipBalloonPopupPositionProvider(gotItBalloonPosition, anchor, padding = offset),
                 cornerSize = CornerSize(style.metrics.cornerRadius),
-                properties = PopupProperties(focusable = false, dismissOnClickOutside = false),
+                // Escape is handled on the anchor above, so the renderer must neither dismiss nor consume it.
+                properties =
+                    PopupProperties(focusable = false, dismissOnBackPress = false, dismissOnClickOutside = false),
                 onDismissRequest = {},
                 windowShape = { logicalSize ->
                     createBalloonAwtShape(
