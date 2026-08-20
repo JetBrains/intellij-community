@@ -157,7 +157,7 @@ Run this suite before relying on TeamCity after pluginization or plugin dependen
 6. Rider packaging baseline:
    `./tests.cmd --module intellij.rider.build.tests --test com.jetbrains.rider.build.RiderPackagingTest`
 7. Database and SQL plugin loading:
-   `./tests.cmd --module intellij.database.tests --test com.intellij.database.DataGripLiteSuite`
+   `./tests.cmd --module intellij.database.tests --test com.intellij.database.DatabaseTestSuite`
    `./tests.cmd --module intellij.database.sql.tests --test com.intellij.sql.SqlFileStructureViewTest`
    `./tests.cmd --module intellij.database.sql.tests --test com.intellij.sql.editor.SqlMultiLineTodoTest`
 8. Code Server DB plugin loading:
