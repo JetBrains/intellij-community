@@ -744,25 +744,25 @@ WASMJS_TEST_HARNESS_JARS = {
 # Kotlin wasmJs klibs for the wasmjs_test e2e module; must match _KOTLIN_VERSION.
 http_file(
     name = "kotlin-stdlib-wasm-js_http",
-    downloaded_file_path = "kotlin-stdlib-wasm-js-{}.klib".format(_KOTLIN_VERSION),
+    downloaded_file_path = "kotlin-stdlib-wasm-js-%s.klib" % _KOTLIN_VERSION,
     sha256 = "3af345d72a5fb90fc7eb2d1dea56159f74c7e7f1b123cef92d44bc1a1181ba7d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-wasm-js/{0}/kotlin-stdlib-wasm-js-{0}.klib".format(_KOTLIN_VERSION),
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-wasm-js/%s/kotlin-stdlib-wasm-js-%s.klib" % (_KOTLIN_VERSION, _KOTLIN_VERSION),
 )
 
 http_file(
     name = "kotlin-test-wasm-js_http",
-    downloaded_file_path = "kotlin-test-wasm-js-{}.klib".format(_KOTLIN_VERSION),
+    downloaded_file_path = "kotlin-test-wasm-js-%s.klib" % _KOTLIN_VERSION,
     sha256 = "4778108d19305a97e389db787b79bc244b42e7c96ca5a6b0d6408b1dbd1f5002",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-wasm-js/{0}/kotlin-test-wasm-js-{0}.klib".format(_KOTLIN_VERSION),
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-wasm-js/%s/kotlin-test-wasm-js-%s.klib" % (_KOTLIN_VERSION, _KOTLIN_VERSION),
 )
 
 _KOTLIN_DATETIME_VERSION = "0.8.0"  # The version does not matter here, it's only used in WasmJS e2e tests to exercise a klib-declared npm dependency (@js-joda/core)
 
 http_file(
     name = "kotlinx-datetime-wasm-js_http",
-    downloaded_file_path = "kotlinx-datetime-wasm-js-{}.klib".format(_KOTLIN_DATETIME_VERSION),
+    downloaded_file_path = "kotlinx-datetime-wasm-js-%s.klib" % _KOTLIN_DATETIME_VERSION,
     sha256 = "5d84e1a3fb30f15337bf78259ca76ca4bba67a7690d9ae07da9bdbc75b88b5ed",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-datetime-wasm-js/{0}/kotlinx-datetime-wasm-js-{0}.klib".format(_KOTLIN_DATETIME_VERSION),
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-datetime-wasm-js/%s/kotlinx-datetime-wasm-js-%s.klib" % (_KOTLIN_DATETIME_VERSION, _KOTLIN_DATETIME_VERSION),
 )
 
 # npm packages consumable through the npm_packages attributes of the wasmjs rules; only for the
