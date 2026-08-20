@@ -166,8 +166,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "package-search-api-client",
   "qodana-sarif",
   "software.amazon.awssdk.glue",
-  "space-idea-sdk",
-  "spaceport-idea-sdk",
   // see the comment for `flexmark`
   "sqlite",
   "sqlite-native",
