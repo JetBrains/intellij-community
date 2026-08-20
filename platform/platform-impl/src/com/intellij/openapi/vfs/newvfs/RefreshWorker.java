@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -144,24 +145,38 @@ final class RefreshWorker {
     }
   }
 
-  List<VFileEvent> scanNewFiles(@NotNull Map<NewVirtualFile, ? extends Collection<String>> newFilesCaseSensitive) {
+  List<VFileEvent> scanNewFiles(@NotNull Map<NewVirtualFile, NewChildren> newFilesCaseSensitive) {
     var events = new ArrayList<VFileEvent>(newFilesCaseSensitive.size());
-    for (var entry : newFilesCaseSensitive.entrySet()) {
-      var parent = entry.getKey();
-      var fs = parent.getFileSystem();
-      Collection<String> childNames = createFilePathSet(entry.getValue(), parent.isCaseSensitive());
-      for (var childName : childNames) {
-        if (cancelled) return events;
-        if (VfsUtil.isBadName(childName)) continue;
+    try {
+      for (var entry : newFilesCaseSensitive.entrySet()) {
+        var parent = entry.getKey();
+        var fs = parent.getFileSystem();
+        var newChildren = entry.getValue();
+        Object requestor = newChildren.getRequestor();
+        VirtualFile file = newChildren.getFile();
+        Collection<String> childNames = createFilePathSet(newChildren.getChildren(), parent.isCaseSensitive());
+        for (var childName : childNames) {
+          if (cancelled) return events;
+          if (VfsUtil.isBadName(childName)) continue;
 
-        var fakeChild = new FakeVirtualFile(parent, childName);
-        var attributes = computeAttributesForFile(fs, fakeChild);
-        if (attributes == null) continue;
+          var fakeChild = new FakeVirtualFile(parent, childName);
+          var attributes = computeAttributesForFile(fs, fakeChild);
+          if (attributes == null) continue;
 
-        var canonicalName = fs.getCanonicallyCasedName(fakeChild);
-        var symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(fakeChild) : null;
-        scheduleCreation(events, parent, canonicalName, attributes, symlinkTarget);
+          var canonicalName = fs.getCanonicallyCasedName(fakeChild);
+          var symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(fakeChild) : null;
+          scheduleCreationOrCopy(events, parent, canonicalName, attributes, symlinkTarget, file, requestor);
+        }
       }
+    }
+    catch (RefreshCancelledException _) {
+    }
+    catch (CancellationException _) {
+      cancelled = true;
+    }
+    catch (Throwable t) {
+      LOG.error(t);
+      cancelled = true;
     }
     return events;
   }
@@ -548,7 +563,9 @@ final class RefreshWorker {
 
   private void generateCreateEvents(List<VFileEvent> events, VirtualDirectoryImpl dir, List<ChildInfo> newKids) {
     for (ChildInfo record : newKids) {
-      scheduleCreation(events, dir, record.getName().toString(), record.getFileAttributes(), record.getSymlinkTarget());
+      scheduleCreationOrCopy(
+        events, dir, record.getName().toString(), record.getFileAttributes(), record.getSymlinkTarget(), null, REQUESTOR
+      );
     }
   }
 
@@ -606,9 +623,15 @@ final class RefreshWorker {
     events.add(new VFileDeleteEvent(REQUESTOR, file));
   }
 
-  private void scheduleCreation(List<VFileEvent> events, NewVirtualFile parent, String childName, FileAttributes attributes, @Nullable String symlinkTarget) {
+  private void scheduleCreationOrCopy(List<VFileEvent> events,
+                                       NewVirtualFile parent,
+                                       String childName,
+                                       FileAttributes attributes,
+                                       @Nullable String symlinkTarget,
+                                       @Nullable VirtualFile file,
+                                       @Nullable Object requestor) {
     if (LOG.isTraceEnabled()) {
-      LOG.trace("create parent=" + parent + " name=" + childName + " attr=" + attributes);
+      LOG.trace((file == null ? "create" : "copy") + " parent=" + parent + " name=" + childName + " attr=" + attributes);
     }
 
     ChildScanner.ScannedChildren scannedChildren = null;
@@ -620,7 +643,14 @@ final class RefreshWorker {
 
     ChildInfo[] children = scannedChildren == null ? null : scannedChildren.children();
     boolean childrenComplete = scannedChildren != null && scannedChildren.childrenComplete();
-    events.add(new VFileCreateEvent(REQUESTOR, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, children, childrenComplete));
+    if (file == null) {
+      events.add(new VFileCreateEvent(
+        requestor, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, children, childrenComplete
+      ));
+    }
+    else {
+      events.add(new VFileCopyEvent(requestor, file, parent, childName, attributes, symlinkTarget, children, childrenComplete));
+    }
 
     VFileEvent caseSensitivityChangingEvent = ((PersistentFSImpl)persistentFS).determineCaseSensitivityAndPrepareUpdate(parent, childName);
     if (caseSensitivityChangingEvent != null) {
@@ -702,7 +732,7 @@ final class RefreshWorker {
         var t = System.nanoTime();
         String symlinkTarget = upToDateIsSymlink ? fs.resolveSymLink(child) : null;
         ioTime.addAndGet(System.nanoTime() - t);
-        scheduleCreation(events, parent, child.getName(), childAttributes, symlinkTarget);
+        scheduleCreationOrCopy(events, parent, child.getName(), childAttributes, symlinkTarget, null, REQUESTOR);
       }
       else {
         LOG.error("transgender orphan: " + child + ' ' + childAttributes);

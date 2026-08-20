@@ -7,6 +7,7 @@ import com.intellij.internal.visitChildrenInVfsRecursively
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.vfs.AfterEventShouldBeFiredBeforeOtherListeners
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -15,9 +16,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
@@ -302,6 +305,65 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
       val skippedVirtualFile = rootVirtualFile.findFileByRelativePath("content/build/tmp/marker.txt")
       assertThat(skippedVirtualFile).isNotNull
       assertThat(skippedVirtualFile!!.toNioPath().invariantSeparatorsPathString).isEqualTo(skippedFile.invariantSeparatorsPathString)
+    }
+  }
+
+  @Test
+  fun `test partial excluded subtree stays unloaded when directory is copied`(): Unit = runBlocking {
+    rootDir.newDirectoryPath(".idea")
+    rootDir.newDirectoryPath("source/excluded")
+    rootDir.newFileNio("source/excluded/skipped.txt").writeText("skipped")
+    rootDir.newFileNio("source/loaded.txt").writeText("loaded")
+
+    val copiedRoot = rootDir.rootPath.resolve("copied")
+    val excludedRoot = copiedRoot.resolve("excluded")
+    val options = OpenProjectTask { createModule = false }
+    ProjectUtil.openOrImportAsync(rootDir.rootPath, options)!!.useProjectAsync { project ->
+      TestObservation.awaitConfiguration(project)
+      val rootVirtualFile = findVirtualFile(rootDir.rootPath)
+      rootVirtualFile.children // load all children to trigger full sync later
+      val sourceVirtualFile = findVirtualFile(rootDir.rootPath.resolve("source"))
+      sourceVirtualFile.children
+
+      val urlManager = project.workspaceModel.getVirtualFileUrlManager()
+      project.workspaceModel.update("Add copied content root") {
+        it.addEntity(IndexingTestEntity(
+          listOf(copiedRoot.toVirtualFileUrl(urlManager)),
+          listOf(excludedRoot.toVirtualFileUrl(urlManager)),
+          NonPersistentEntitySource,
+        ))
+      }
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+      val copyResult = CompletableDeferred<Result<Unit>>()
+      VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable({ events ->
+        val copyEvent = events.filterIsInstance<VFileCopyEvent>().singleOrNull {
+          it.newParent == rootVirtualFile && it.newChildName == "copied"
+        } ?: return@addAsyncFileListenerBackgroundable null
+
+        object : AsyncFileListener.ChangeApplier, AfterEventShouldBeFiredBeforeOtherListeners {
+          override fun afterVfsChange() {
+            copyResult.complete(runCatching {
+              val copiedDirectory = checkNotNull((rootVirtualFile as NewVirtualFile).findChildIfCached("copied")) as NewVirtualFile
+              check(copiedDirectory.allChildrenLoaded())
+              checkNotNull(copiedDirectory.findChildIfCached("loaded.txt"))
+
+              val excludedDirectory = checkNotNull(copiedDirectory.findChildIfCached("excluded")) as NewVirtualFile
+              check(!excludedDirectory.allChildrenLoaded())
+              check(excludedDirectory.findChildIfCached("skipped.txt") == null)
+
+              val excludedInfo = checkNotNull(copyEvent.children).single { it.name.toString() == "excluded" }
+              check(!excludedInfo.isAllChildren)
+            })
+          }
+        }
+      }, disposable)
+
+      val requestor = Any()
+      writeAction {
+        (PersistentFS.getInstance() as PersistentFSImpl).copyFile(requestor, sourceVirtualFile, rootVirtualFile, "copied")
+      }
+      copyResult.await().getOrThrow()
     }
   }
 

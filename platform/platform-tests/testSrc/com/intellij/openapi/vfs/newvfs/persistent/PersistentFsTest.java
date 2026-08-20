@@ -98,6 +98,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
@@ -726,6 +727,155 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
     Path target = Files.createDirectory(tempDirectory.getRootPath().resolve("target"));
     processEvent(new VFileCreateEvent(this, vTemp, "target", true, fileAttributes(target), null, ChildInfo.EMPTY_ARRAY));
+
+    VirtualFile vTarget = vTemp.findChild("target");
+    assertNotNull(vTarget);
+    assertChildrenAreLoaded(vTarget);
+    assertEmpty(((VirtualDirectoryImpl)vTarget).getCachedChildren());
+  }
+
+  @Test
+  public void testCopyFileUsesRefreshSessionAndLoadsCopiedChildren() throws Exception {
+    Files.createDirectories(tempDirectory.getRootPath().resolve(".idea"));
+    Path sourcePath = Files.createDirectories(tempDirectory.getRootPath().resolve("source/nested"));
+    Files.writeString(sourcePath.resolve("file.txt"), "content");
+    Files.createDirectory(tempDirectory.getRootPath().resolve("destination"));
+
+    Project project = ProjectUtil.openOrImport(tempDirectory.getRoot().toPath());
+    Disposer.register(getTestRootDisposable(), () -> ProjectManager.getInstance().closeAndDispose(project));
+
+    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.getRoot());
+    assertNotNull(root);
+    VirtualFile source = root.findChild("source");
+    assertNotNull(source);
+    source.getChildren();
+    VirtualFile destinationParent = root.findChild("destination");
+    assertNotNull(destinationParent);
+    assertNull(destinationParent.findChild("renamed"));
+
+    AtomicReference<VFileCopyEvent> copyEvent = new AtomicReference<>();
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+        for (VFileEvent event : events) {
+          if (event instanceof VFileCopyEvent) copyEvent.set((VFileCopyEvent)event);
+        }
+      }
+    });
+
+    PersistentFSImpl pfs = (PersistentFSImpl)PersistentFS.getInstance();
+    VirtualFile copied = WriteAction.computeAndWait(() -> pfs.copyFile(this, source, destinationParent, "renamed"));
+
+    assertSame(copied, destinationParent.findChild("renamed"));
+    assertSame(this, copyEvent.get().getRequestor());
+    assertSame(source, copyEvent.get().getFile());
+    assertEquals("renamed", copyEvent.get().getNewChildName());
+    FileAttributes copyAttributes = copyEvent.get().getAttributes();
+    assertNotNull(copyAttributes);
+    assertTrue(copyAttributes.isDirectory());
+    assertNotNull(copyEvent.get().getChildren());
+    assertTrue(copyEvent.get().isAllChildren());
+
+    VirtualDirectoryImpl copiedDir = (VirtualDirectoryImpl)copied;
+    assertChildrenAreLoaded(copiedDir);
+    VirtualDirectoryImpl nested = (VirtualDirectoryImpl)copiedDir.findChildIfCached("nested");
+    assertNotNull(nested);
+    assertChildrenAreLoaded(nested);
+    assertNotNull(nested.findChildIfCached("file.txt"));
+  }
+
+  @Test
+  public void testCopyFilePreservesSymlinkTarget() throws Exception {
+    IoTestUtil.assumeSymLinkCreationIsSupported();
+    Path targetPath = Files.writeString(tempDirectory.getRootPath().resolve("target.txt"), "target");
+    Path sourcePath = tempDirectory.getRootPath().resolve("source");
+    IoTestUtil.createSymLink(targetPath.toString(), sourcePath.toString());
+    Path destinationPath = Files.createDirectory(tempDirectory.getRootPath().resolve("destination"));
+
+    VirtualFile source = refreshAndFind(sourcePath.toFile());
+    assertNotNull(source);
+    VirtualFile destinationParent = refreshAndFind(destinationPath.toFile());
+    assertNotNull(destinationParent);
+    PersistentFSImpl pfs = (PersistentFSImpl)PersistentFS.getInstance();
+    assertTrue(pfs.isSymLink(source));
+
+    VirtualFile copied = WriteAction.computeAndWait(() -> pfs.copyFile(this, source, destinationParent, "copied"));
+
+    assertTrue(pfs.isSymLink(copied));
+    assertEquals(targetPath.toRealPath().toString(), pfs.resolveSymLink(copied));
+  }
+
+  @Test
+  public void testCopyEventRecursivelyLoadsCompleteScannedChildren() throws Exception {
+    VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.getRoot());
+    assertNotNull(vTemp);
+    assertEmpty(vTemp.getChildren());
+
+    Path sourcePath = Files.createDirectory(tempDirectory.getRootPath().resolve("source"));
+    VirtualFile source = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourcePath.toFile());
+    assertNotNull(source);
+    Path target = Files.createDirectory(tempDirectory.getRootPath().resolve("target"));
+    Path child = Files.createDirectory(target.resolve("child"));
+    Path nested = Files.writeString(child.resolve("nested.txt"), "nested");
+
+    PersistentFSImpl pfs = (PersistentFSImpl)PersistentFS.getInstance();
+    ChildInfo nestedInfo = new ChildInfoImpl(pfs.peer().getNameId("nested.txt"), fileAttributes(nested), null, null, false);
+    ChildInfo childInfo = new ChildInfoImpl(
+      pfs.peer().getNameId("child"), fileAttributes(child), new ChildInfo[]{nestedInfo}, null, true
+    );
+    FileAttributes attributes = new FileAttributes(true, false, false, false, 0, 123456789L, true);
+    VFileCopyEvent event = new VFileCopyEvent(this, source, vTemp, "target", attributes, null, new ChildInfo[]{childInfo}, true);
+    assertSame(attributes, event.getAttributes());
+    processEvent(event);
+
+    VirtualDirectoryImpl vTarget = (VirtualDirectoryImpl)vTemp.findChild("target");
+    assertNotNull(vTarget);
+    assertEquals(attributes.lastModified, vTarget.getTimeStamp());
+    assertChildrenAreLoaded(vTarget);
+    VirtualDirectoryImpl vChild = (VirtualDirectoryImpl)vTarget.findChild("child");
+    assertNotNull(vChild);
+    assertChildrenAreLoaded(vChild);
+    assertNotNull(vChild.findChildIfCached("nested.txt"));
+  }
+
+  @Test
+  public void testCopyEventWithPartialChildrenDoesNotMarkDirectoryLoaded() throws Exception {
+    VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.getRoot());
+    assertNotNull(vTemp);
+    assertEmpty(vTemp.getChildren());
+
+    Path sourcePath = Files.createDirectory(tempDirectory.getRootPath().resolve("source"));
+    VirtualFile source = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourcePath.toFile());
+    assertNotNull(source);
+    Path target = Files.createDirectory(tempDirectory.getRootPath().resolve("target"));
+    Path loaded = Files.writeString(target.resolve("loaded.txt"), "loaded");
+    Files.writeString(target.resolve("skipped.txt"), "skipped");
+
+    PersistentFSImpl pfs = (PersistentFSImpl)PersistentFS.getInstance();
+    ChildInfo loadedInfo = new ChildInfoImpl(pfs.peer().getNameId("loaded.txt"), fileAttributes(loaded), null, null, false);
+    processEvent(new VFileCopyEvent(this, source, vTemp, "target", fileAttributes(target), null, new ChildInfo[]{loadedInfo}, false));
+
+    VirtualDirectoryImpl vTarget = (VirtualDirectoryImpl)vTemp.findChild("target");
+    assertNotNull(vTarget);
+    assertFalse(vTarget.allChildrenLoaded());
+    assertFalse(pfs.areChildrenLoaded(vTarget));
+    assertNotNull(vTarget.findChildIfCached("loaded.txt"));
+    assertNull(vTarget.findChildIfCached("skipped.txt"));
+  }
+
+  @Test
+  public void testCompleteEmptyCopyEventMarksDirectoryLoaded() throws Exception {
+    VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.getRoot());
+    assertNotNull(vTemp);
+    assertEmpty(vTemp.getChildren());
+
+    Path sourcePath = Files.createDirectory(tempDirectory.getRootPath().resolve("source"));
+    VirtualFile source = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourcePath.toFile());
+    assertNotNull(source);
+    Path target = Files.createDirectory(tempDirectory.getRootPath().resolve("target"));
+
+    processEvent(new VFileCopyEvent(this, source, vTemp, "target", fileAttributes(target), null, ChildInfo.EMPTY_ARRAY, true));
 
     VirtualFile vTarget = vTemp.findChild("target");
     assertNotNull(vTarget);

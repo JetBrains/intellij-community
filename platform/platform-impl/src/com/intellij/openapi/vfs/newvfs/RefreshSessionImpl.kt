@@ -31,7 +31,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.progress.waitForMaybeCancellable
 import com.intellij.util.ui.EDT
-import java.util.LinkedHashMap
 import java.util.Objects
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
@@ -42,6 +41,14 @@ private val LOG = Logger.getInstance(RefreshSession::class.java)
 private val RETRY_LIMIT = SystemProperties.getIntProperty("refresh.session.retry.limit", 3)
 private val DURATION_REPORT_THRESHOLD_MS = SystemProperties.getIntProperty("refresh.session.duration.report.threshold.seconds", -1) * 1000L
 private const val PROGRESS_THRESHOLD_MILLIS = 5000
+
+@ConsistentCopyVisibility
+internal data class NewChildren internal constructor(
+  val requestor: Any?,
+  val file: VirtualFile?,
+  val children: MutableList<String>,
+)
+
 
 internal class RefreshSessionImpl internal constructor(
   val isAsynchronous: Boolean,
@@ -56,7 +63,7 @@ internal class RefreshSessionImpl internal constructor(
   private val mySemaphore = Semaphore()
 
   private var myWorkQueue: MutableList<VirtualFile> = ArrayList()
-  private var myNewFilesCaseSensitive: MutableMap<NewVirtualFile, MutableList<String>> = LinkedHashMap()
+  private var myNewFilesCaseSensitive: MutableMap<NewVirtualFile, NewChildren> = LinkedHashMap()
   private val myEvents: MutableList<VFileEvent> = ArrayList()
 
   @Volatile private var myWorker: RefreshWorker? = null
@@ -94,13 +101,49 @@ internal class RefreshSessionImpl internal constructor(
   }
 
   override fun addNewChildren(parent: VirtualFile, childrenNames: Collection<String>) {
+    addNewChildren(parent, childrenNames, null, VFileEvent.REFRESH_REQUESTOR)
+  }
+
+  override fun addCopyFile(newParent: VirtualFile, newName: String, file: VirtualFile, requestor: Any?) {
+    addNewChildren(newParent, listOf(newName), file, requestor)
+  }
+
+  /**
+   * Scan those children if they are not cached in VFS and recursively preload their children.
+   *
+   * When [file] is `null`, newly found children are reported as create events. Otherwise, [file] is
+   * reported as being copied to [parent] with the name from [childrenNames]. A non-null [file]
+   * requires exactly one child name.
+   *
+   * The [requestor] is used as the requestor of the resulting VFS events. All calls for the same
+   * [parent] in one session must use the same requestor and source file. A session cannot mix create
+   * and copy requests.
+   */
+  private fun addNewChildren(parent: VirtualFile, childrenNames: Collection<String>, file: VirtualFile?, requestor: Any?) {
     checkState()
+    require(file == null || childrenNames.size == 1) { "A copy request must have exactly one child name" }
     if (childrenNames.isEmpty()) return
     if (parent !is NewVirtualFile) {
       LOG.debug("skipped: $parent / ${parent.javaClass}")
       return
     }
-    myNewFilesCaseSensitive.computeIfAbsent(parent) { ArrayList() }.addAll(childrenNames)
+    val newChildren = myNewFilesCaseSensitive[parent]
+    if (newChildren != null) {
+      if (newChildren.requestor !== requestor) {
+        throw IllegalArgumentException("Different requestors are not allowed for the same parent: $parent")
+      }
+      if (newChildren.file != null) {
+        throw IllegalArgumentException("Can't copy the same file twice. file: ${newChildren.file}")
+      }
+      newChildren.children.addAll(childrenNames)
+      return
+    }
+
+    val creatingCopies = file != null
+    if (myNewFilesCaseSensitive.values.any { (it.file != null) != creatingCopies }) {
+      throw IllegalArgumentException("A refresh session cannot create children and copies at the same time")
+    }
+    myNewFilesCaseSensitive[parent] = NewChildren(requestor, file, childrenNames.toMutableList())
   }
 
   private fun checkState() {

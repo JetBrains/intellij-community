@@ -66,6 +66,7 @@ import com.intellij.openapi.vfs.newvfs.FileDeletedException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -945,7 +946,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     ThreadingAssertions.assertWriteAccess();
 
     fileSystemOf(file).copyFile(requestor, file, parent, name);
-    processEvent(new VFileCopyEvent(requestor, file, parent, name));
+
+    RefreshSession session = RefreshQueue.getInstance().createSession(false, false, null);
+    session.addCopyFile(parent, name, file, requestor);
+    session.launch();
 
     VirtualFile child = parent.findChild(name);
     if (child == null) {
@@ -1923,39 +1927,47 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       // todo avoid expensive findFile
       VirtualFile createdDir = createEvent.getFile();
       if (createdDir instanceof VirtualDirectoryImpl) {
-        record ScannedChildren(VirtualDirectoryImpl directory, ChildInfo[] children, boolean allChildren) { }
-        Queue<ScannedChildren> queue = new ArrayDeque<>();
-        queue.add(new ScannedChildren((VirtualDirectoryImpl)createdDir, children, createEvent.isAllChildren()));
-        while (!queue.isEmpty()) {
-          ScannedChildren queued = queue.remove();
-          VirtualDirectoryImpl directory = queued.directory();
-          List<ChildInfo> scannedChildren = Arrays.asList(queued.children());
-          int directoryId = directory.getId();
-          List<ChildInfo> added = new ArrayList<>(scannedChildren.size());
-          for (ChildInfo childInfo : scannedChildren) {
-            CharSequence childName = childInfo.getName();
-            Pair<@NotNull FileAttributes, String> childData =
-              getChildData(fs, directory, childName.toString(), childInfo.getFileAttributes(), childInfo.getSymlinkTarget());
-            if (childData != null) {
-              added.add(makeChildRecord(directory, directoryId, childName, childData, fs, childInfo.getChildren(), childInfo.isAllChildren()));
-            }
-          }
+        saveScannedChildrenRecursively((VirtualDirectoryImpl)createdDir, children, createEvent.isAllChildren(), fs, isCaseSensitive);
+      }
+    }
+  }
 
-          added.sort(ChildInfo.BY_ID);
-          // set "all children cached" only when the scanned list is complete; partial lists must stay partial
-          vfsPeer.update(
-            directory, directoryId,
-            oldChildren -> oldChildren.merge(vfsPeer, added, isCaseSensitive),
-            /*setAllChildrenCached: */ queued.allChildren()
-          );
-          directory.initializeAndAddChildren(added, /*allChildrenLoaded: */ queued.allChildren(), (childCreated, childInfo) -> {
-            // enqueue recursive children
-            if (childCreated instanceof VirtualDirectoryImpl && childInfo.getChildren() != null) {
-              queue.add(new ScannedChildren((VirtualDirectoryImpl)childCreated, childInfo.getChildren(), childInfo.isAllChildren()));
-            }
-          });
+  private void saveScannedChildrenRecursively(@NotNull VirtualDirectoryImpl createdDirectory,
+                                              @NotNull ChildInfo[] children,
+                                              boolean allChildren,
+                                              @NotNull NewVirtualFileSystem fs,
+                                              boolean isCaseSensitive) {
+    record ScannedChildren(VirtualDirectoryImpl directory, ChildInfo[] children, boolean allChildren) { }
+    Queue<ScannedChildren> queue = new ArrayDeque<>();
+    queue.add(new ScannedChildren(createdDirectory, children, allChildren));
+    while (!queue.isEmpty()) {
+      ScannedChildren queued = queue.remove();
+      VirtualDirectoryImpl directory = queued.directory();
+      List<ChildInfo> scannedChildren = Arrays.asList(queued.children());
+      int directoryId = directory.getId();
+      List<ChildInfo> added = new ArrayList<>(scannedChildren.size());
+      for (ChildInfo childInfo : scannedChildren) {
+        CharSequence childName = childInfo.getName();
+        Pair<@NotNull FileAttributes, String> childData =
+          getChildData(fs, directory, childName.toString(), childInfo.getFileAttributes(), childInfo.getSymlinkTarget());
+        if (childData != null) {
+          added.add(makeChildRecord(directory, directoryId, childName, childData, fs, childInfo.getChildren(), childInfo.isAllChildren()));
         }
       }
+
+      added.sort(ChildInfo.BY_ID);
+      // set "all children cached" only when the scanned list is complete; partial lists must stay partial
+      vfsPeer.update(
+        directory, directoryId,
+        oldChildren -> oldChildren.merge(vfsPeer, added, isCaseSensitive),
+        /*setAllChildrenCached: */ queued.allChildren()
+      );
+      directory.initializeAndAddChildren(added, /*allChildrenLoaded: */ queued.allChildren(), (childCreated, childInfo) -> {
+        // enqueue recursive children
+        if (childCreated instanceof VirtualDirectoryImpl && childInfo.getChildren() != null) {
+          queue.add(new ScannedChildren((VirtualDirectoryImpl)childCreated, childInfo.getChildren(), childInfo.isAllChildren()));
+        }
+      });
     }
   }
 
@@ -2489,7 +2501,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         executeTouch(file, reloadContent, contentUpdateEvent.getModificationStamp(), length, timestamp);
       }
       else if (event instanceof VFileCopyEvent ce) {
-        executeCreateChild(ce.getNewParent(), ce.getNewChildName(), null, null, ce.getFile().getChildren().length == 0);
+        boolean isEmptyDirectory = ce.getChildren() == null
+                                    ? ce.getFile().getChildren().length == 0
+                                    : ce.isEmptyDirectory();
+        executeCreateChild(ce.getNewParent(), ce.getNewChildName(), ce.getAttributes(), ce.getSymlinkTarget(), isEmptyDirectory);
+        ChildInfo[] children = ce.getChildren();
+        VirtualFile createdFile = ce.findCreatedFile();
+        if (children != null && createdFile instanceof VirtualDirectoryImpl) {
+          NewVirtualFileSystem fs = fileSystemOf(ce.getNewParent());
+          saveScannedChildrenRecursively(
+            (VirtualDirectoryImpl)createdFile, children, ce.isAllChildren(), fs, ce.getNewParent().isCaseSensitive()
+          );
+        }
       }
       else if (event instanceof VFileMoveEvent moveEvent) {
         executeMove(moveEvent.getFile(), moveEvent.getNewParent());

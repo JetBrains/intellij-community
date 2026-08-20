@@ -25,6 +25,9 @@ abstract class RefreshSession {
   @ApiStatus.Internal
   abstract fun addNewChildren(parent: VirtualFile, childrenNames: Collection<String>)
 
+  @ApiStatus.Internal
+  abstract fun addCopyFile(newParent: VirtualFile, newName: String, file: VirtualFile, requestor: Any?)
+
   abstract fun launch()
 
   @ApiStatus.Internal

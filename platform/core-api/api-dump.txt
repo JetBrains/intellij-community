@@ -1978,9 +1978,12 @@ f:com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 f:com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 - com.intellij.openapi.vfs.newvfs.events.VFileEvent
 - findCreatedFile():com.intellij.openapi.vfs.VirtualFile
+- getAttributes():com.intellij.openapi.util.io.FileAttributes
 - getFile():com.intellij.openapi.vfs.VirtualFile
 - getNewChildName():java.lang.String
 - getNewParent():com.intellij.openapi.vfs.VirtualFile
+- getSymlinkTarget():java.lang.String
+- isEmptyDirectory():Z
 f:com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 - com.intellij.openapi.vfs.newvfs.events.VFileEvent
 - getChildName():java.lang.String
