@@ -3371,6 +3371,9 @@ f:com.intellij.ui.progress.ProgressUIUtil
 - sf:INSTANCE:com.intellij.ui.progress.ProgressUIUtil
 f:com.intellij.ui.render.RenderingUtil
 - sf:ALWAYS_PAINT_SELECTION_AS_FOCUSED:com.intellij.openapi.util.Key
+- sf:CUSTOM_SELECTION_BACKGROUND:com.intellij.openapi.util.Key
+- sf:CUSTOM_SELECTION_FOREGROUND:com.intellij.openapi.util.Key
+- sf:PAINT_HOVERED_BACKGROUND:com.intellij.openapi.util.Key
 - <init>():V
 - s:getBackground(javax.swing.JList):java.awt.Color
 - s:getBackground(javax.swing.JList,Z):java.awt.Color
@@ -3395,6 +3398,8 @@ f:com.intellij.ui.render.RenderingUtil
 - s:getSelectionForeground(javax.swing.JTable):java.awt.Color
 - s:getSelectionForeground(javax.swing.JTree):java.awt.Color
 - s:isFocused(javax.swing.JComponent):Z
+- s:isHoverPaintingDisabled(javax.swing.JComponent):Z
+- s:setHoverPaintingDisabled(javax.swing.JComponent,Z):V
 a:com.intellij.ui.scale.AbstractScaleContextAware
 - com.intellij.ui.scale.ScaleContextAware
 - p:<init>(com.intellij.ui.scale.UserScaleContext):V

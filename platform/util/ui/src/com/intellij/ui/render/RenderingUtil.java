@@ -31,7 +31,6 @@ public final class RenderingUtil {
   /**
    * This key allows to paint a background of a hovered row if it is not selected.
    */
-  @ApiStatus.Experimental
   public static final Key<Boolean> PAINT_HOVERED_BACKGROUND = Key.create("PAINT_HOVERED_BACKGROUND");
 
   /**
@@ -45,15 +44,12 @@ public final class RenderingUtil {
   /**
    * This key can be set to provide a custom selection background.
    */
-  @ApiStatus.Internal
   public static final Key<Supplier<Color>> CUSTOM_SELECTION_BACKGROUND = Key.create("CUSTOM_SELECTION_BACKGROUND");
 
   /**
    * This key can be set to provide a custom selection foreground.
    */
-  @ApiStatus.Internal
   public static final Key<Supplier<Color>> CUSTOM_SELECTION_FOREGROUND = Key.create("CUSTOM_SELECTION_FOREGROUND");
-
 
   /**
    * @param icon     an icon to render
@@ -163,15 +159,14 @@ public final class RenderingUtil {
   }
 
 
-  @ApiStatus.Internal
   public static boolean isHoverPaintingDisabled(@NotNull JComponent component) {
     return Boolean.FALSE.equals(component.getClientProperty(PAINT_HOVERED_BACKGROUND));
   }
 
-  @ApiStatus.Internal
   public static void setHoverPaintingDisabled(@NotNull JComponent component, boolean disabled) {
     component.putClientProperty(PAINT_HOVERED_BACKGROUND, !disabled);
   }
+
   public static @Nullable Color getHoverBackground(@NotNull JList<?> list) {
     if (isHoverPaintingDisabled(list)) return null;
     return CurrentTheme.List.Hover.background(isFocused(list));
