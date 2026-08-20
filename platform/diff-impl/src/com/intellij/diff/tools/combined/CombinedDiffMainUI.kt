@@ -274,7 +274,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeAction:
 
     override fun uiDataSnapshot(sink: DataSink) {
       sink[DiffDataKeys.DIFF_REQUEST] = getCurrentRequest()
-      sink[DiffDataKeys.NAVIGATION_CALLBACK] = Runnable { DiffUtil.minimizeDiffIfOpenedInWindow(this) }
       sink[CommonDataKeys.PROJECT] = context.project
       sink[PlatformCoreDataKeys.HELP_ID] = context.getUserData(DiffUserDataKeys.HELP_ID) ?: "reference.dialogs.diff.file"
       sink[DiffDataKeys.DIFF_CONTEXT] = context

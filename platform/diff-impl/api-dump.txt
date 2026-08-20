@@ -2024,7 +2024,6 @@ f:com.intellij.diff.util.DiffUtil
 - s:makeWritable(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
 - s:markDirtyAndRefresh(Z,Z,Z,com.intellij.openapi.vfs.VirtualFile[]):V
 - s:mergeLineConverters(java.util.function.IntUnaryOperator,java.util.function.IntUnaryOperator):java.util.function.IntUnaryOperator
-- s:minimizeDiffIfOpenedInWindow(java.awt.Component):V
 - s:moveCaret(com.intellij.openapi.editor.Editor,I):V
 - s:moveCaretToLineRangeIfNeeded(com.intellij.openapi.editor.Editor,I,I):V
 - s:putDataKey(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.actionSystem.DataKey,java.lang.Object):V
