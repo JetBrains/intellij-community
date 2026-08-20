@@ -68,6 +68,7 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -553,6 +554,22 @@ private fun createProcessCallback(
       return
     }
 
+    val sessionId = try {
+      buildSessionId(
+        project = project,
+        executorId = executorId,
+        sessionName = sessionName,
+        descriptor = descriptor,
+      )
+    }
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      startedDeferred.completeExceptionally(e)
+      processHandler.destroyProcess()
+      processCallbackDelegate?.processNotStarted(e)
+      return
+    }
+
     val outputCollector = try {
       val outputPath = createRunConfigurationOutputFile(sessionName)
       // remove on IDE close
@@ -592,12 +609,6 @@ private fun createProcessCallback(
           IllegalStateException("Process explicitly reported as not started."))
       }
     })
-    val sessionId = buildSessionId(
-      project = project,
-      executorId = executorId,
-      sessionName = sessionName,
-      descriptor = descriptor,
-    )
     // The delegate lets tool-specific code inspect the fresh RunContentDescriptor before processHandler.startNotify().
     // This keeps debugger-mcp session tweaks out of the generic execution helper and avoids debugger internals here.
     processCallbackDelegate?.processStarted(descriptor)
@@ -655,10 +666,10 @@ fun buildSessionId(
   descriptor: RunContentDescriptor,
 ): String {
   if (executorId == DefaultDebugExecutor.EXECUTOR_ID) {
-    val debugSession = XDebuggerManager.getInstance(project).getDebugSession(descriptor.executionConsole)
-    if (debugSession != null) {
-      return buildDebugSessionId(project, debugSession)
+    val debugSession = descriptor.executionConsole?.let {
+      XDebuggerManager.getInstance(project).getDebugSession(it)
     }
+    return buildDebugSessionId(debugSession)
   }
   val executionManager = ExecutionManager.getInstance(project)
   val activeSessionNames = executionManager.getRunningDescriptors(Conditions.alwaysTrue())
@@ -672,19 +683,11 @@ fun buildSessionId(
   return buildSessionId(sessionName, descriptor.executionId, activeSessionNames)
 }
 
-private fun buildDebugSessionId(project: Project, session: XDebugSession): String {
-  val activeSessionNames = XDebuggerManager.getInstance(project).debugSessions
-    .asSequence()
-    .map { it.sessionName }
-    .toMutableList()
-  if (!activeSessionNames.contains(session.sessionName)) {
-    activeSessionNames.add(session.sessionName)
-  }
-  return buildSessionId(
-    sessionName = session.sessionName,
-    executionId = session.executionEnvironment?.executionId,
-    activeSessionNames = activeSessionNames,
-  )
+@ApiStatus.Internal
+fun buildDebugSessionId(session: XDebugSession?): String {
+  val sessionImpl = session as? XDebugSessionImpl
+                    ?: mcpFail("The debug process started, but no XDebugSessionImpl is registered for its execution console.")
+  return sessionImpl.id.uid.toString()
 }
 
 private fun extractExecutionSessionName(descriptor: RunContentDescriptor): String? {

@@ -1,11 +1,14 @@
 package com.intellij.mcpserver.util
 
+import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.toolsets.util.OutputCollector
+import com.intellij.mcpserver.toolsets.util.buildDebugSessionId
 import com.intellij.mcpserver.toolsets.util.buildSessionId
 import com.intellij.mcpserver.toolsets.util.truncateRunConfigurationPreviewLine
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 
@@ -18,6 +21,13 @@ class ExecutionUtilTest {
   @Test
   fun buildSessionId_appends_execution_id_for_duplicate_sessions() {
     assertThat(buildSessionId("run", 42, listOf("run", "run"))).isEqualTo("run#42")
+  }
+
+  @Test
+  fun buildDebugSessionId_rejects_missing_xdebug_session() {
+    assertThrows(McpExpectedError::class.java) {
+      buildDebugSessionId(null)
+    }
   }
 
   @Test
