@@ -147,6 +147,15 @@ class SafeDeferred<T>(
   }
 }
 
+/**
+ * Just syntax sugar for the constructor of [SafeDeferred].
+ * It may be helpful for preventing git history pollution when converting [Deferred] to [SafeDeferred].
+ */
+@ApiStatus.Experimental
+fun <T> Deferred<T>.toSafeDeferred(deadSessionMapper: (suspend (Throwable) -> Throwable?)?): SafeDeferred<T> {
+  return SafeDeferred(this, deadSessionMapper)
+}
+
 @ApiStatus.Experimental
 fun <A, B> SafeDeferred<A>.map(block: (A) -> B): SafeDeferred<B> {
   val result = CompletableDeferred<B>()

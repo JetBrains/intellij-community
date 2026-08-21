@@ -9,6 +9,7 @@ import com.intellij.platform.eel.channels.EelChannelException
 import com.intellij.platform.eel.channels.sendWholeBuffer
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import com.intellij.platform.eel.provider.utils.sendWholeText
+import com.intellij.platform.eel.toSafeDeferred
 import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentSession
@@ -23,7 +24,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
@@ -164,8 +164,9 @@ abstract class IjentDeployingOverShellProcessStrategy(
   /** Non-null while the deployer owns cleanup; cleared on close or when the session takes ownership. */
   private var createdShellProcess: ShellProcessWrapper? = null
 
-  private val myContext: Deferred<ShellSession> = parentScope.s.async(currentDispatcher, start = CoroutineStart.LAZY) {
-    val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(parentScope, ijentLabel)
+  private val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(parentScope, ijentLabel)
+
+  private val myContext: SafeDeferred<ShellSession> = ijentProcessScope.s.async(currentDispatcher, start = CoroutineStart.LAZY) {
     val processFacade = createShellProcessFacade(ijentProcessScope)
     val mediator = IjentSessionProcessMediator.create(
       parentScope = parentScope,
@@ -208,7 +209,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
         is PowerShellIo -> PowerShellSession(shellIo)
       }
     }
-  }
+  }.toSafeDeferred(IjentUnavailableException::unwrapFromCancellationExceptions)
 
   private val myDetectedTarget = parentScope.s.async(currentDispatcher, start = CoroutineStart.LAZY) {
     val session = getMyContext()
@@ -264,9 +265,8 @@ abstract class IjentDeployingOverShellProcessStrategy(
     try {
       myContext.await()
     }
-    catch (e: CancellationException) {
-      currentCoroutineContext().ensureActive()
-      throw IjentUnavailableException.unwrapFromCancellationExceptions(e)
+    catch (e: SafeDeferred.FailedDeferred) {
+      throw e.cause
     }
 
   final override fun close() {

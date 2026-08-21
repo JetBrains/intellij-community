@@ -574,6 +574,7 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 f:com.intellij.platform.eel.SafeDeferredKt
 - *sf:computeDeferred(java.util.Map,kotlinx.coroutines.CoroutineScope,java.lang.Object,kotlin.jvm.functions.Function2):com.intellij.platform.eel.SafeDeferred
 - *sf:map(com.intellij.platform.eel.SafeDeferred,kotlin.jvm.functions.Function1):com.intellij.platform.eel.SafeDeferred
+- *sf:toSafeDeferred(kotlinx.coroutines.Deferred,kotlin.jvm.functions.Function2):com.intellij.platform.eel.SafeDeferred
 *e:com.intellij.platform.eel.UnixSignal
 - java.lang.Enum
 - sf:SIGABRT:com.intellij.platform.eel.UnixSignal
