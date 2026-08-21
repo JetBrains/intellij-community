@@ -1,10 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.frontend.session
+package com.intellij.terminal.frontend.session.jediterm
 
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.frontend.session.JediTermServices
+import com.intellij.terminal.frontend.session.TerminalShellIntegrationController
+import com.intellij.terminal.frontend.session.addWorkingDirectoryListener
 import com.intellij.util.asDisposable
 import com.intellij.util.asSafely
 import com.jediterm.terminal.CursorShape
@@ -54,21 +57,23 @@ internal fun createTerminalOutputFlow(
   val contentChangesTracker = TerminalContentChangesTracker(textBuffer, discardedHistoryTracker)
   val cursorPositionTracker = TerminalCursorPositionTracker(textBuffer, discardedHistoryTracker, terminalDisplay)
   val outputLatencyTracker = TerminalOutputLatencyTracker(services.ttyConnector, textBuffer, coroutineScope.asDisposable())
-  val stateChangesTracker = TerminalStateChangesTracker(TerminalState(
-    isCursorVisible = terminalDisplay.isCursorVisible,
-    cursorShape = terminalDisplay.cursorShape,
-    mouseMode = terminalDisplay.mouseMode,
-    mouseFormat = terminalDisplay.mouseFormat,
-    isAlternateScreenBuffer = controller.alternativeBufferEnabled,
-    isApplicationArrowKeys = controller.applicationArrowKeys,
-    isApplicationKeypad = controller.applicationKeypad,
-    isAutoNewLine = controller.isAutoNewLine,
-    isAltSendsEscape = controller.altSendsEscape,
-    isBracketedPasteMode = terminalDisplay.isBracketedPasteMode,
-    windowTitle = terminalDisplay.windowTitleText,
-    isShellIntegrationEnabled = false,
-    currentDirectory = getInitialWorkingDirectory(services),
-  ))
+  val stateChangesTracker = TerminalStateChangesTracker(
+    TerminalState(
+      isCursorVisible = terminalDisplay.isCursorVisible,
+      cursorShape = terminalDisplay.cursorShape,
+      mouseMode = terminalDisplay.mouseMode,
+      mouseFormat = terminalDisplay.mouseFormat,
+      isAlternateScreenBuffer = controller.alternativeBufferEnabled,
+      isApplicationArrowKeys = controller.applicationArrowKeys,
+      isApplicationKeypad = controller.applicationKeypad,
+      isAutoNewLine = controller.isAutoNewLine,
+      isAltSendsEscape = controller.altSendsEscape,
+      isBracketedPasteMode = terminalDisplay.isBracketedPasteMode,
+      windowTitle = terminalDisplay.windowTitleText,
+      isShellIntegrationEnabled = false,
+      currentDirectory = getInitialWorkingDirectory(services),
+    )
+  )
 
   /**
    * Events should be sent in the following order: content update / cursor position update, other events.

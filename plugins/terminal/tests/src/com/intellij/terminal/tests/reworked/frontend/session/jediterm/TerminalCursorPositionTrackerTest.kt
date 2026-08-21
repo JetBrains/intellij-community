@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.tests.reworked.backend
+package com.intellij.terminal.tests.reworked.frontend.session.jediterm
 
-import com.intellij.terminal.frontend.session.TerminalContentChangesTracker
-import com.intellij.terminal.frontend.session.TerminalContentUpdate
-import com.intellij.terminal.frontend.session.TerminalCursorPosition
-import com.intellij.terminal.frontend.session.TerminalCursorPositionTracker
-import com.intellij.terminal.frontend.session.TerminalDiscardedHistoryTracker
-import com.intellij.terminal.frontend.session.TerminalDisplayImpl
+import com.intellij.terminal.frontend.session.jediterm.TerminalContentChangesTracker
+import com.intellij.terminal.frontend.session.jediterm.TerminalContentUpdate
+import com.intellij.terminal.frontend.session.jediterm.TerminalCursorPosition
+import com.intellij.terminal.frontend.session.jediterm.TerminalCursorPositionTracker
+import com.intellij.terminal.frontend.session.jediterm.TerminalDiscardedHistoryTracker
+import com.intellij.terminal.frontend.session.jediterm.TerminalDisplayImpl
 import com.intellij.terminal.tests.reworked.util.write
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer

@@ -8,6 +8,13 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalExecutorServiceManagerImpl
 import com.intellij.terminal.frontend.session.ghostty.createGhosttyTerminalSession
+import com.intellij.terminal.frontend.session.jediterm.JediTermOsc8HyperlinkFilter
+import com.intellij.terminal.frontend.session.jediterm.ObservableJediTerminal
+import com.intellij.terminal.frontend.session.jediterm.TerminalDisplayImpl
+import com.intellij.terminal.frontend.session.jediterm.TerminalSessionImpl
+import com.intellij.terminal.frontend.session.jediterm.TerminalStarterEx
+import com.intellij.terminal.frontend.session.jediterm.createTerminalInputChannel
+import com.intellij.terminal.frontend.session.jediterm.createTerminalOutputFlow
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.typeahead.TerminalTypeAheadManager

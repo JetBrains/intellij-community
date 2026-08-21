@@ -1,4 +1,4 @@
-package com.intellij.terminal.frontend.session
+package com.intellij.terminal.frontend.session.jediterm
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.jediterm.core.input.KeyEvent

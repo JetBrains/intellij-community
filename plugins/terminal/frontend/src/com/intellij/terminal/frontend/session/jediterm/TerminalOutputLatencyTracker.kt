@@ -1,6 +1,8 @@
-package com.intellij.terminal.frontend.session
+package com.intellij.terminal.frontend.session.jediterm
 
 import com.intellij.openapi.Disposable
+import com.intellij.terminal.frontend.session.ObservableTtyConnector
+import com.intellij.terminal.frontend.session.TtyConnectorListener
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.model.TextBufferChangesListener
 import kotlin.time.TimeMark

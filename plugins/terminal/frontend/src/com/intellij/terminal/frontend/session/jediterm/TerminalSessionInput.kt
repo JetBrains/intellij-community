@@ -1,7 +1,9 @@
-package com.intellij.terminal.frontend.session
+package com.intellij.terminal.frontend.session.jediterm
 
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.terminal.frontend.session.JediTermServices
+import com.intellij.terminal.frontend.session.TerminalActivityTracker
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
 import kotlinx.coroutines.CoroutineScope
