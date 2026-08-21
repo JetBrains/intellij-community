@@ -11,9 +11,8 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -107,8 +106,8 @@ public interface ExtractionHelper {
       super.after(project, info);
       notification(project, info);
       errorNotification(project, info);
-      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
-      if (virtualFile != null) VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile);
+      VirtualFile virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(myFile.toPath().toAbsolutePath());
+      if (virtualFile != null) virtualFile.refresh(false, false);
     }
 
     private void notification(@NotNull Project project, @NotNull DumpInfo info) {
