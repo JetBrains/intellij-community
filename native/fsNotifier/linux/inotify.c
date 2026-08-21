@@ -10,18 +10,24 @@
 #include <string.h>
 #include <sys/inotify.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 
 #define WATCH_COUNT_NAME "/proc/sys/fs/inotify/max_user_watches"
 
 #define DEFAULT_SUBDIR_COUNT 5
+#define ADD_WATCH_ATTEMPTS 3
 
 typedef struct watch_node_str {
   int wd;
+  dev_t device;
+  ino_t inode;
   struct watch_node_str* parent;
   array* kids;
   unsigned int path_len;
+  struct watch_node_str* prev;
+  struct watch_node_str* next;
   char path[];
 } watch_node;
 
@@ -39,6 +45,11 @@ static char path_buf[2 * PATH_MAX];
 
 static void read_watch_descriptors_count(void);
 static void watch_limit_reached(void);
+static int path_error_result(int error, bool root);
+static bool watch_node_aliases_match(const watch_node* node);
+#ifdef FSNOTIFIER_TESTING
+static void run_add_watch_test_hook(void);
+#endif
 
 
 bool init_inotify(void) {
@@ -102,57 +113,121 @@ int get_inotify_fd(void) {
 
 #define EVENT_MASK (IN_MODIFY | IN_ATTRIB | IN_CREATE | IN_DELETE | IN_MOVE | IN_DELETE_SELF | IN_MOVE_SELF)
 
-static int add_watch(unsigned int path_len, watch_node* parent) {
-  int wd = inotify_add_watch(inotify_fd, path_buf, EVENT_MASK);
-  if (wd < 0) {
-    if (errno == EACCES || errno == ENOENT) {
-      userlog(LOG_INFO, "inotify_add_watch(%s): %s", path_buf, strerror(errno));
-      return ERR_IGNORE;
-    }
-    else if (errno == ENOSPC) {
-      userlog(LOG_WARNING, "inotify_add_watch(%s): %s", path_buf, strerror(errno));
-      watch_limit_reached();
-      return ERR_CONTINUE;
-    }
-    else {
-      userlog(LOG_ERR, "inotify_add_watch(%s): %s", path_buf, strerror(errno));
-      return ERR_ABORT;
-    }
-  }
-  else {
-    userlog(LOG_INFO, "watching %s: %d", path_buf, wd);
-  }
+static bool is_same_file_system_node(const watch_node* expected, const char* path) {
+  struct stat actual;
+  return stat(path, &actual) == 0 && actual.st_dev == expected->device && actual.st_ino == expected->inode;
+}
 
-  watch_node* node = table_get(watches, wd);
-  if (node != NULL) {
-    if (node->wd != wd) {
-      userlog(LOG_ERR, "table error: corruption at %d:%s / %d:%s / %d", wd, path_buf, node->wd, node->path, watch_count);
-      return ERR_ABORT;
+
+static int add_watch(unsigned int path_len, watch_node* parent, watch_node** result) {
+  int wd = -1;
+  watch_node* existing = NULL;
+  struct stat path_stat;
+  for (int attempt = 0; attempt < ADD_WATCH_ATTEMPTS; attempt++) {
+    struct stat before;
+    if (stat(path_buf, &before) != 0) {
+      int e = errno;
+      userlog(LOG_INFO, "stat(%s): %s", path_buf, strerror(e));
+      return path_error_result(e, parent == NULL);
     }
-    else if (strcmp(node->path, path_buf) != 0) {
-      char buf1[PATH_MAX], buf2[PATH_MAX];
-      const char* normalized1 = realpath(node->path, buf1);
-      const char* normalized2 = realpath(path_buf, buf2);
-      if (normalized1 == NULL || normalized2 == NULL || strcmp(normalized1, normalized2) != 0) {
-        userlog(LOG_ERR, "table error: collision at %d (new %s, existing %s)", wd, path_buf, node->path);
-        return ERR_ABORT;
+
+    wd = inotify_add_watch(inotify_fd, path_buf, EVENT_MASK);
+    if (wd < 0) {
+      int e = errno;
+      if (e == EACCES || e == ENOENT) {
+        userlog(LOG_INFO, "inotify_add_watch(%s): %s", path_buf, strerror(e));
+        return path_error_result(e, parent == NULL);
+      }
+      else if (e == ENOSPC) {
+        userlog(LOG_WARNING, "inotify_add_watch(%s): %s", path_buf, strerror(e));
+        watch_limit_reached();
+        return ERR_CONTINUE;
       }
       else {
-        userlog(LOG_INFO, "intersection at %d: (new %s, existing %s, real %s)", wd, path_buf, node->path, normalized1);
-        return ERR_IGNORE;
+        userlog(LOG_ERR, "inotify_add_watch(%s): %s", path_buf, strerror(e));
+        return ERR_ABORT;
       }
     }
+    else {
+      userlog(LOG_INFO, "watching %s: %d", path_buf, wd);
+    }
 
-    return wd;
+    existing = table_get(watches, wd);
+#ifdef FSNOTIFIER_TESTING
+    run_add_watch_test_hook();
+#endif
+
+    if (stat(path_buf, &path_stat) != 0) {
+      int e = errno;
+      userlog(LOG_INFO, "stat(%s): %s", path_buf, strerror(e));
+      if (existing == NULL && inotify_rm_watch(inotify_fd, wd) < 0) {
+        userlog(LOG_INFO, "inotify_rm_watch(%d:%s): %s", wd, path_buf, strerror(errno));
+      }
+      return path_error_result(e, parent == NULL);
+    }
+
+    if (before.st_dev == path_stat.st_dev && before.st_ino == path_stat.st_ino) {
+      break;
+    }
+
+    userlog(LOG_INFO, "watch path changed during registration, retrying: %s", path_buf);
+    if (existing == NULL && inotify_rm_watch(inotify_fd, wd) < 0) {
+      userlog(LOG_INFO, "inotify_rm_watch(%d:%s): %s", wd, path_buf, strerror(errno));
+    }
+    wd = -1;
   }
 
-  node = malloc(sizeof(watch_node) + path_len + 1);
+  if (wd < 0) {
+    return parent == NULL ? ERR_MISSING : ERR_IGNORE;
+  }
+
+  watch_node* tail = existing;
+  if (existing != NULL) {
+    char normalized_path[PATH_MAX];
+    const char* normalized = realpath(path_buf, normalized_path);
+    bool same_node_found = false;
+
+    for (watch_node* node = existing; node != NULL; node = node->next) {
+      if (node->wd != wd) {
+        userlog(LOG_ERR, "table error: corruption at %d:%s / %d:%s / %d", wd, path_buf, node->wd, node->path, watch_count);
+        return ERR_ABORT;
+      }
+      bool same_node = path_stat.st_dev == node->device && path_stat.st_ino == node->inode;
+      if (same_node && strcmp(node->path, path_buf) == 0) {
+        *result = node;
+        return wd;
+      }
+
+      char normalized_existing_path[PATH_MAX];
+      const char* normalized_existing = realpath(node->path, normalized_existing_path);
+      if (same_node && normalized != NULL && normalized_existing != NULL && strcmp(normalized, normalized_existing) == 0) {
+        userlog(LOG_INFO, "intersection at %d: (new %s, existing %s, real %s)", wd, path_buf, node->path, normalized);
+        return ERR_IGNORE;
+      }
+
+      if (same_node) {
+        same_node_found = true;
+      }
+      tail = node;
+    }
+
+    if (!same_node_found) {
+      userlog(LOG_ERR, "table error: collision at %d (new %s, existing %s)", wd, path_buf, existing->path);
+      return ERR_ABORT;
+    }
+  }
+
+  watch_node* node = malloc(sizeof(watch_node) + path_len + 1);
   CHECK_NULL(node, ERR_ABORT)
   memcpy(node->path, path_buf, path_len + 1);
   node->path_len = path_len;
   node->wd = wd;
+  node->device = path_stat.st_dev;
+  node->inode = path_stat.st_ino;
   node->parent = parent;
   node->kids = NULL;
+  node->prev = tail;
+  node->next = NULL;
 
   if (parent != NULL) {
     if (parent->kids == NULL) {
@@ -162,13 +237,55 @@ static int add_watch(unsigned int path_len, watch_node* parent) {
     CHECK_NULL(array_push(parent->kids, node), ERR_ABORT)
   }
 
-  if (table_put(watches, wd, node) == NULL) {
+  if (tail != NULL) {
+    tail->next = node;
+  }
+  else if (table_put(watches, wd, node) == NULL) {
     userlog(LOG_ERR, "table error: unable to put (%d:%s)", wd, path_buf);
     return ERR_ABORT;
   }
 
+  *result = node;
   return wd;
 }
+
+static int path_error_result(int error, bool root) {
+  if (error == ENOENT) {
+    return root ? ERR_MISSING : ERR_IGNORE;
+  }
+  if (error == EACCES) {
+    return ERR_IGNORE;
+  }
+  return ERR_ABORT;
+}
+
+#ifdef FSNOTIFIER_TESTING
+static void run_add_watch_test_hook(void) {
+  static bool used = false;
+  const char* fds = getenv("FSNOTIFIER_TEST_REGISTRATION_FDS");
+  if (used || fds == NULL) {
+    return;
+  }
+
+  const char* path = getenv("FSNOTIFIER_TEST_REGISTRATION_PATH");
+  if (path != NULL && strcmp(path, path_buf) != 0) {
+    return;
+  }
+
+  int ready_fd;
+  int resume_fd;
+  if (sscanf(fds, "%d:%d", &ready_fd, &resume_fd) != 2) {
+    userlog(LOG_WARNING, "invalid registration test descriptors: %s", fds);
+    return;
+  }
+
+  used = true;
+  char signal = 0;
+  if (write(ready_fd, &signal, 1) != 1 || read(resume_fd, &signal, 1) != 1) {
+    userlog(LOG_WARNING, "registration test synchronization failed: %s", strerror(errno));
+  }
+}
+#endif
 
 static void watch_limit_reached(void) {
   if (!limit_reached) {
@@ -177,22 +294,17 @@ static void watch_limit_reached(void) {
   }
 }
 
-static void rm_watch(int wd, bool update_parent) {
-  watch_node* node = table_get(watches, wd);
+static void rm_watch(watch_node* node, bool update_parent) {
   if (node == NULL) {
     return;
   }
 
   userlog(LOG_INFO, "unwatching %s: %d (%p)", node->path, node->wd, node);
 
-  if (inotify_rm_watch(inotify_fd, node->wd) < 0) {
-    userlog(LOG_INFO, "inotify_rm_watch(%d:%s): %s", node->wd, node->path, strerror(errno));
-  }
-
   for (int i = 0; i < array_size(node->kids); i++) {
     watch_node* kid = array_get(node->kids, i);
     if (kid != NULL) {
-      rm_watch(kid->wd, false);
+      rm_watch(kid, false);
     }
   }
 
@@ -205,9 +317,23 @@ static void rm_watch(int wd, bool update_parent) {
     }
   }
 
+  bool last_alias = node->prev == NULL && node->next == NULL;
+  if (node->prev != NULL) {
+    node->prev->next = node->next;
+  }
+  else {
+    table_set(watches, node->wd, node->next);
+  }
+  if (node->next != NULL) {
+    node->next->prev = node->prev;
+  }
+
+  if (last_alias && inotify_rm_watch(inotify_fd, node->wd) < 0) {
+    userlog(LOG_INFO, "inotify_rm_watch(%d:%s): %s", node->wd, node->path, strerror(errno));
+  }
+
   array_delete(node->kids);
   free(node);
-  table_put(watches, wd, NULL);
 }
 
 
@@ -234,7 +360,8 @@ static int walk_tree(unsigned int path_len, watch_node* parent, bool recursive, 
     }
   }
 
-  int id = add_watch(path_len, parent);
+  watch_node* node;
+  int id = add_watch(path_len, parent, &node);
 
   if (dir == NULL) {
     return id;
@@ -269,9 +396,9 @@ static int walk_tree(unsigned int path_len, watch_node* parent, bool recursive, 
       }
     }
 
-    int subdir_id = walk_tree(path_len + 1 + name_len, table_get(watches, id), recursive, mounts);
+    int subdir_id = walk_tree(path_len + 1 + name_len, node, recursive, mounts);
     if (subdir_id < 0 && subdir_id != ERR_IGNORE) {
-      rm_watch(id, true);
+      rm_watch(node, true);
       id = subdir_id;
       break;
     }
@@ -323,8 +450,37 @@ int watch(const char* root, array* mounts) {
 }
 
 
-void unwatch(int id) {
-  rm_watch(id, true);
+void unwatch(int id, const char* path) {
+  for (watch_node* node = table_get(watches, id); node != NULL; node = node->next) {
+    if (strcmp(node->path, path) == 0) {
+      rm_watch(node, true);
+      return;
+    }
+  }
+}
+
+
+bool watch_tree_matches(int id, const char* path) {
+  for (watch_node* node = table_get(watches, id); node != NULL; node = node->next) {
+    if (strcmp(node->path, path) == 0) {
+      return is_same_file_system_node(node, path) && watch_node_aliases_match(node);
+    }
+  }
+  return false;
+}
+
+
+static bool watch_node_aliases_match(const watch_node* node) {
+  if ((node->prev != NULL || node->next != NULL) && !is_same_file_system_node(node, node->path)) {
+    return false;
+  }
+  for (int i = 0; i < array_size(node->kids); i++) {
+    watch_node* kid = array_get(node->kids, i);
+    if (kid != NULL && !watch_node_aliases_match(kid)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 
@@ -334,38 +490,60 @@ static bool process_inotify_event(struct inotify_event* event) {
     return true;
   }
 
-  bool is_dir = (event->mask & IN_ISDIR) == IN_ISDIR;
-  userlog(LOG_INFO, "inotify: wd=%d mask=%d dir=%d name=%s", event->wd, event->mask & (~IN_ISDIR), is_dir, node->path);
-
-  unsigned int path_len = node->path_len;
-  memcpy(path_buf, node->path, path_len + 1);
-  if (event->len > 0) {
-    path_buf[path_len] = '/';
-    unsigned int name_len = strlen(event->name);
-    memcpy(path_buf + path_len + 1, event->name, name_len + 1);
-    path_len += name_len + 1;
-  }
-
-  if (callback != NULL) {
-    (*callback)(path_buf, event->mask);
-  }
-
-  if (is_dir && event->mask & (IN_CREATE | IN_MOVED_TO)) {
-    int result = walk_tree(path_len, node, true, NULL);
-    if (result < 0 && result != ERR_IGNORE && result != ERR_CONTINUE) {
-      return false;
+  while (node != NULL) {
+    watch_node* next = node->next;
+    if (event->mask & (IN_ATTRIB | IN_DELETE_SELF | IN_MOVE_SELF) &&
+        !is_same_file_system_node(node, node->path)) {
+      memcpy(path_buf, node->path, node->path_len + 1);
+      rm_watch(node, true);
+      if (callback != NULL) {
+        (*callback)(path_buf, IN_DELETE_SELF);
+      }
+      node = next;
+      continue;
     }
-  }
 
-  if (is_dir && event->mask & (IN_DELETE | IN_MOVED_FROM)) {
-    for (int i = 0; i < array_size(node->kids); i++) {
-      watch_node* kid = array_get(node->kids, i);
-      if (kid != NULL && strncmp(path_buf, kid->path, kid->path_len) == 0) {
-        rm_watch(kid->wd, false);
-        array_put(node->kids, i, NULL);
-        break;
+    uint32_t event_mask = event->mask & ~(IN_DELETE_SELF | IN_MOVE_SELF);
+    if (event_mask == 0) {
+      node = next;
+      continue;
+    }
+
+    bool is_dir = (event->mask & IN_ISDIR) == IN_ISDIR;
+    userlog(LOG_INFO, "inotify: wd=%d mask=%d dir=%d name=%s", event->wd, event_mask & (~IN_ISDIR), is_dir, node->path);
+
+    unsigned int path_len = node->path_len;
+    memcpy(path_buf, node->path, path_len + 1);
+    if (event->len > 0) {
+      path_buf[path_len] = '/';
+      unsigned int name_len = strlen(event->name);
+      memcpy(path_buf + path_len + 1, event->name, name_len + 1);
+      path_len += name_len + 1;
+    }
+
+    if (callback != NULL) {
+      (*callback)(path_buf, event_mask);
+    }
+
+    if (is_dir && event_mask & (IN_CREATE | IN_MOVED_TO)) {
+      int result = walk_tree(path_len, node, true, NULL);
+      if (result < 0 && result != ERR_IGNORE && result != ERR_CONTINUE) {
+        return false;
       }
     }
+
+    if (is_dir && event_mask & (IN_DELETE | IN_MOVED_FROM)) {
+      for (int i = 0; i < array_size(node->kids); i++) {
+        watch_node* kid = array_get(node->kids, i);
+        if (kid != NULL && strcmp(path_buf, kid->path) == 0) {
+          rm_watch(kid, false);
+          array_put(node->kids, i, NULL);
+          break;
+        }
+      }
+    }
+
+    node = next;
   }
 
   return true;
