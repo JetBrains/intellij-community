@@ -38,7 +38,6 @@ f:org.jetbrains.jewel.ui.component.DropdownKt
 - positionProvider-9KIMszo(J,androidx.compose.runtime.Composer,I):androidx.compose.ui.window.PopupPositionProvider
 f:org.jetbrains.jewel.ui.component.LazyTreeKt
 - *sf:LazyTree(org.jetbrains.jewel.foundation.lazy.tree.Tree,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.tree.TreeState,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I):V
-- *bsf:LazyTree(org.jetbrains.jewel.foundation.lazy.tree.Tree,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.tree.TreeState,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.ListComboBoxKt
 - *sf:ListComboBox-pglpRAY(java.util.List,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,kotlin.jvm.functions.Function5,androidx.compose.runtime.Composer,I,I,I):V
 - *bsf:ListComboBox-xKBSf-U(java.util.List,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,kotlin.jvm.functions.Function5,androidx.compose.runtime.Composer,I,I,I):V
@@ -72,8 +71,6 @@ f:org.jetbrains.jewel.ui.component.SpeedSearchAreaKt
 - a:matchResultForText(java.lang.String):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
 - a:setPosition(androidx.compose.ui.Alignment$Vertical):V
 - a:setVisible(Z):V
-f:org.jetbrains.jewel.ui.component.TabStripKt
-- *bsf:TabStrip(java.util.List,org.jetbrains.jewel.ui.component.styling.TabStyle,androidx.compose.ui.Modifier,Z,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.TextAreaKt
 - *sf:TextArea(androidx.compose.ui.text.input.TextFieldValue,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,Z,Z,kotlin.jvm.functions.Function2,Z,org.jetbrains.jewel.ui.Outline,androidx.compose.ui.text.input.VisualTransformation,androidx.compose.foundation.text.KeyboardOptions,androidx.compose.foundation.text.KeyboardActions,I,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.TextAreaStyle,androidx.compose.ui.text.TextStyle,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I,I):V
 f:org.jetbrains.jewel.ui.component.TextFieldKt
