@@ -9,6 +9,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.elf.Elf
+import com.intellij.psi.util.PsiVersioningService
 
 private class InlineCompletionLookupManagerListener : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
@@ -35,7 +36,7 @@ private class InlineCompletionLookupManagerListener : LookupManagerListener {
       }
 
       override fun lookupCanceled(event: LookupEvent) {
-        val editor = Elf.getElf().runReadAction { event.lookup.editor }
+        val editor = PsiVersioningService.freezePsiVersion { event.lookup.editor }
         val lookupCancelled = InlineCompletionEvent.LookupCancelled(editor, event)
         val handler = InlineCompletion.getHandlerOrNull(lookupCancelled.topLevelEditor)
         LOG.trace {
