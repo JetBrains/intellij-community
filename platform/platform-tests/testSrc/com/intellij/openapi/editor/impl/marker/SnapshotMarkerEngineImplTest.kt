@@ -502,6 +502,27 @@ class SnapshotMarkerEngineImplTest {
   }
 
   @Test
+  fun `marker spec delegates transformation to its policy`() {
+    var receivedEdit: MarkerEdit? = null
+    val policy = MarkerPolicy { _, edit ->
+      receivedEdit = edit
+      MarkerTransformResult.Invalid("Invalidated by test marker policy")
+    }
+    val root = PMarkerRootImpl.empty().insert(
+      markerId = 1,
+      startOffset = 2,
+      endOffset = 4,
+      spec = nonGreedySpec().copy(policy = policy),
+    )
+
+    val edited = root.applyEdit(DocumentNewOps.getInstance().createInsertOp(2, "x"))
+
+    val invalid = edited.resolve(1, TextRange(0, 0)) as PMarkerResolution.Invalid
+    assertEquals("Invalidated by test marker policy", invalid.reason)
+    assertEquals(MarkerEdit(2, 2, 1, 2, 2, 2), receivedEdit)
+  }
+
+  @Test
   fun `root flavor filtering survives edits removals and flavor updates`() {
     val firstFlavor: Byte = 1
     val secondFlavor: Byte = 2

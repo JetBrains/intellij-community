@@ -173,8 +173,8 @@ open class PMarkerRootImpl private constructor(
     val transformedMiddle = ArrayList<MarkerEntry>(middleEntries.size)
     for (entry in middleEntries) {
       when (val update = transform(entry, edit)) {
-        is TransformResult.Valid -> transformedMiddle.add(update.entry)
-        is TransformResult.Invalid -> editor.putInvalid(entry, update.reason)
+        is MarkerTransformResult.Valid -> transformedMiddle.add(update.entry)
+        is MarkerTransformResult.Invalid -> editor.putInvalid(entry, update.reason)
       }
     }
 
@@ -323,20 +323,6 @@ open class PMarkerRootImpl private constructor(
     }
   }
 
-  private sealed class TransformResult {
-    data class Valid(val entry: MarkerEntry) : TransformResult()
-    data class Invalid(val reason: String) : TransformResult()
-  }
-
-  private data class TextEdit(
-    val startOffset: Int,
-    val endOffset: Int,
-    val newLength: Int,
-    val originStartOffset: Int,
-    val originEndOffset: Int,
-    val moveOffset: Int,
-  )
-
   private data class ExtractMinimumResult(val rootId: Long, val minimumId: Long)
 
   private class Editor(states: PersistentLongMap<StoredNode>) {
@@ -379,7 +365,6 @@ open class PMarkerRootImpl private constructor(
   }
 
   companion object {
-    private const val INVALIDATED_BY_EDIT = "Marker was invalidated by a document edit"
     private const val ALL_FLAVOR_FLAGS = 0xFF
 
     private val ENTRY_COMPARATOR = Comparator<MarkerEntry> { first, second -> PositionKey(first).compareTo(PositionKey(second)) }
@@ -390,10 +375,10 @@ open class PMarkerRootImpl private constructor(
 
     fun empty(): PMarkerRootImpl = EMPTY
 
-    private fun textEdit(op: DocumentOp): TextEdit? {
+    private fun textEdit(op: DocumentOp): MarkerEdit? {
       if (op is DocumentOpMarkerEdit) {
         return op.markerEdit?.let {
-          TextEdit(
+          MarkerEdit(
             startOffset = it.startOffset,
             endOffset = it.endOffset,
             newLength = it.newLength,
@@ -406,7 +391,7 @@ open class PMarkerRootImpl private constructor(
       return when (op) {
         is DocumentOp.Insert -> {
           val offset = op.offset()
-          TextEdit(
+          MarkerEdit(
             startOffset = offset,
             endOffset = offset,
             newLength = op.fragment().length,
@@ -421,7 +406,7 @@ open class PMarkerRootImpl private constructor(
           require(offset >= 0) { "DocumentOp.Delete offset must be non-negative" }
           require(length >= 0) { "DocumentOp.Delete length must be non-negative" }
           require(offset <= Int.MAX_VALUE - length) { "DocumentOp.Delete range overflows Int" }
-          TextEdit(
+          MarkerEdit(
             startOffset = offset,
             endOffset = offset + length,
             newLength = 0,
@@ -434,7 +419,7 @@ open class PMarkerRootImpl private constructor(
       }
     }
 
-    private fun validateEdit(edit: TextEdit) {
+    private fun validateEdit(edit: MarkerEdit) {
       require(edit.startOffset >= 0) { "Document edit startOffset must be non-negative" }
       require(edit.endOffset >= edit.startOffset) { "Document edit endOffset must not precede startOffset" }
       require(edit.startOffset <= Int.MAX_VALUE - edit.newLength) { "Document edit new range overflows Int" }
@@ -734,7 +719,7 @@ open class PMarkerRootImpl private constructor(
       }
     }
 
-    private fun updateMarkersStartingBeforeEdit(editor: Editor, rootId: Long, edit: TextEdit): Long {
+    private fun updateMarkersStartingBeforeEdit(editor: Editor, rootId: Long, edit: MarkerEdit): Long {
       if (rootId == NULL_NODE) return NULL_NODE
       val initial = editor.valid(rootId)
       if (initial.maximumEndOffset < edit.startOffset) return rootId
@@ -749,7 +734,7 @@ open class PMarkerRootImpl private constructor(
       val newRight = updateMarkersStartingBeforeEdit(editor, rightId, edit)
 
       return when (val update = transform(entry, edit)) {
-        is TransformResult.Valid -> {
+        is MarkerTransformResult.Valid -> {
           check(update.entry.startOffset == entry.startOffset) {
             "An edit changed the start of a marker that starts before the edit"
           }
@@ -759,7 +744,7 @@ open class PMarkerRootImpl private constructor(
           editor.setParent(result, NULL_NODE)
           result
         }
-        is TransformResult.Invalid -> {
+        is MarkerTransformResult.Invalid -> {
           editor.putInvalid(entry, update.reason)
           val result = joinDisjoint(editor, newLeft, newRight)
           editor.setParent(result, NULL_NODE)
@@ -892,81 +877,14 @@ open class PMarkerRootImpl private constructor(
       return entry.markerId
     }
 
-    private fun transform(entry: MarkerEntry, edit: TextEdit): TransformResult {
-      return if (entry.startOffset == entry.endOffset) {
-        transformPoint(entry, edit)
-      }
-      else {
-        transformRange(entry, edit)
-      }
-    }
-
-    private fun transformPoint(entry: MarkerEntry, edit: TextEdit): TransformResult {
-      val point = entry.startOffset
-      val editStart = edit.startOffset
-      val editEnd = edit.endOffset
-      val oldLength = editEnd - editStart
-      val newLength = edit.newLength
-
-      if (editStart < point && point < editEnd) return TransformResult.Invalid(INVALIDATED_BY_EDIT)
-
-      if (oldLength == 0 && editStart == point && entry.spec.isGreedyToRight) {
-        return TransformResult.Valid(entry.copy(endOffset = point + newLength))
-      }
-
-      if (oldLength == 0 && editStart == point && entry.spec.isStickingToRight) {
-        val shifted = point + newLength
-        return TransformResult.Valid(entry.copy(startOffset = shifted, endOffset = shifted))
-      }
-
-      if (point > editEnd || point == editEnd && oldLength > 0) {
-        val shifted = point + newLength - oldLength
-        return TransformResult.Valid(entry.copy(startOffset = shifted, endOffset = shifted))
-      }
-
-      return TransformResult.Valid(entry)
-    }
-
-    private fun transformRange(entry: MarkerEntry, edit: TextEdit): TransformResult {
-      val startOffset = entry.startOffset
-      val endOffset = entry.endOffset
-      val editStart = edit.startOffset
-      val editEnd = edit.endOffset
-      val newLength = edit.newLength
-      val delta = newLength - (editEnd - editStart)
-
-      if (editStart > endOffset) return TransformResult.Valid(entry)
-      if (!entry.spec.isGreedyToRight && endOffset == editStart) {
-        if (editStart == editEnd && edit.originStartOffset < editStart) {
-          return TransformResult.Valid(entry.copy(endOffset = endOffset + newLength))
+    private fun transform(entry: MarkerEntry, edit: MarkerEdit): MarkerTransformResult {
+      val result = entry.spec.policy.transform(entry, edit)
+      if (result is MarkerTransformResult.Valid) {
+        check(result.entry.markerId == entry.markerId) {
+          "Marker policy changed marker ID ${entry.markerId} to ${result.entry.markerId}"
         }
-        return TransformResult.Valid(entry)
       }
-      if (startOffset > editEnd) {
-        return TransformResult.Valid(
-          entry.copy(startOffset = startOffset + delta, endOffset = endOffset + delta)
-        )
-      }
-      if (!entry.spec.isGreedyToLeft && startOffset == editEnd) {
-        if (editStart == editEnd && edit.originEndOffset > editStart) {
-          return TransformResult.Valid(entry.copy(endOffset = endOffset + newLength))
-        }
-        return TransformResult.Valid(
-          entry.copy(startOffset = startOffset + delta, endOffset = endOffset + delta)
-        )
-      }
-      if (startOffset <= editStart && endOffset >= editEnd) {
-        return TransformResult.Valid(entry.copy(endOffset = endOffset + delta))
-      }
-      if (startOffset >= editStart && startOffset <= editEnd && endOffset > editEnd) {
-        return TransformResult.Valid(
-          entry.copy(startOffset = editStart + newLength, endOffset = endOffset + delta)
-        )
-      }
-      if (endOffset <= editEnd && startOffset < editStart) {
-        return TransformResult.Valid(entry.copy(endOffset = editStart))
-      }
-      return TransformResult.Invalid(INVALIDATED_BY_EDIT)
+      return result
     }
   }
 }

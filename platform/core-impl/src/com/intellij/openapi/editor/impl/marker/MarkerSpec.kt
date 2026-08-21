@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.impl.marker
 /**
  * Immutable marker configuration.
  */
-data class MarkerSpec(
+data class MarkerSpec @JvmOverloads constructor(
     /**
      * Controls insertion at the marker start offset.
      *
@@ -31,4 +31,8 @@ data class MarkerSpec(
      * When `false`, it remains before the inserted text.
      */
     val isStickingToRight: Boolean = false,
+    /**
+     * Defines how this marker is transformed by document edits.
+     */
+    val policy: MarkerPolicy = DefaultMarkerPolicy,
 )
