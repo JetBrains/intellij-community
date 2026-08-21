@@ -8,17 +8,16 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class PySyntaxCoreBundle extends DynamicBundle {
+public final class PySyntaxCoreBundle {
   public static final @NonNls String BUNDLE = "messages.PySyntaxCoreBundle";
-  public static final PySyntaxCoreBundle INSTANCE = new PySyntaxCoreBundle();
-
-  private PySyntaxCoreBundle() { super(BUNDLE); }
+  public static final DynamicBundle INSTANCE = new DynamicBundle(PySyntaxCoreBundle.class, BUNDLE);
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                              Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

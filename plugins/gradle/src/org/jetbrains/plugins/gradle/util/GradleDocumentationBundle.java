@@ -9,20 +9,17 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class GradleDocumentationBundle extends DynamicBundle {
+public final class GradleDocumentationBundle {
   private static final @NonNls String BUNDLE = "messages.GradleDocumentationBundle";
 
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                              Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 
-  public static final GradleDocumentationBundle INSTANCE = new GradleDocumentationBundle();
-
-  public GradleDocumentationBundle() {
-    super(BUNDLE);
-  }
+  public static final DynamicBundle INSTANCE = new DynamicBundle(GradleDocumentationBundle.class, BUNDLE);
 }

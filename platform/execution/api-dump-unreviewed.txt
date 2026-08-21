@@ -93,10 +93,6 @@ f:com.intellij.execution.DefaultInlineResumeCreator
 - com.intellij.execution.InlineResumeCreator
 - <init>():V
 - getInlineResumeCreator(com.intellij.execution.RunnerAndConfigurationSettings,Z):com.intellij.openapi.actionSystem.AnAction
-f:com.intellij.execution.ExecutionBundle
-- sf:PATH_TO_BUNDLE:java.lang.String
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 a:com.intellij.execution.ExecutionManager
 - sf:Companion:com.intellij.execution.ExecutionManager$Companion
 - sf:EXECUTION_SESSION_ID_KEY:com.intellij.openapi.util.Key

@@ -115,7 +115,7 @@ public final class GeneralCodeStylePropertyMapper extends AbstractCodeStylePrope
   @Override
   public @Nullable String getPropertyDescription(@NotNull String externalName) {
     String key = "codestyle.property.description." + externalName;
-    return OptionsBundle.INSTANCE.containsKey(key) ? OptionsBundle.message("codestyle.property.description." + externalName) : null;
+    return OptionsBundle.containsKey(key) ? OptionsBundle.message("codestyle.property.description." + externalName) : null;
   }
 
   @Override
