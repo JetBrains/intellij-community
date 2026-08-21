@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.statistics.metrics.NumericalMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringListMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 
-private const val BASE_FUS_VERSION = 17
+private const val BASE_FUS_VERSION = 18
 
 object KotlinGradleFUSCollector : CounterUsagesCollector() {
 
@@ -103,7 +103,6 @@ object KotlinGradleFUSCollector : CounterUsagesCollector() {
             NumericalMetrics.CONFIGURATION_RUNTIME_ONLY_COUNT,
             NumericalMetrics.GRADLE_NUMBER_OF_TASKS,
             NumericalMetrics.GRADLE_NUMBER_OF_UNCONFIGURED_TASKS,
-            NumericalMetrics.GRADLE_NUMBER_OF_INCREMENTAL_TASKS
         ),
 
         KotlinGradleEvent(
@@ -124,7 +123,6 @@ object KotlinGradleFUSCollector : CounterUsagesCollector() {
             NumericalMetrics.BUILD_SRC_COUNT,
             BooleanMetrics.GRADLE_BUILD_CACHE_USED,
             BooleanMetrics.GRADLE_WORKER_API_USED,
-            BooleanMetrics.KOTLIN_OFFICIAL_CODESTYLE,
             BooleanMetrics.KOTLIN_PROGRESSIVE_MODE,
             BooleanMetrics.KOTLIN_KTS_USED,
             BooleanMetrics.KOTLIN_BTA_USED,

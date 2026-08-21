@@ -33,20 +33,17 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.ENABLED_COMPILER_PLUGIN_NO_ARG,
             KotlinBuildToolFusMetricName.ENABLED_COMPILER_PLUGIN_SAM_WITH_RECEIVER,
             KotlinBuildToolFusMetricName.JVM_DEFAULTS,
-            KotlinBuildToolFusMetricName.USE_OLD_BACKEND,
             KotlinBuildToolFusMetricName.ENABLED_COMPILER_REFERENCE_INDEX
         )
     ),
 
     FusFlowSendingStep(
         GradleStatisticsEventGroups.JS, listOf(
-            KotlinBuildToolFusMetricName.JS_GENERATE_EXTERNALS,
             KotlinBuildToolFusMetricName.JS_SOURCE_MAP,
             KotlinBuildToolFusMetricName.JS_IR_INCREMENTAL,
             KotlinBuildToolFusMetricName.JS_GENERATE_DTS,
             KotlinBuildToolFusMetricName.JS_LONG_AS_BIGINT,
             KotlinBuildToolFusMetricName.JS_COMPILER_MODE,
-            KotlinBuildToolFusMetricName.JS_GENERATE_EXECUTABLE_DEFAULT,
             KotlinBuildToolFusMetricName.JS_TARGET_MODE,
             KotlinBuildToolFusMetricName.JS_OUTPUT_GRANULARITY,
             KotlinBuildToolFusMetricName.JS_BINARY_TYPE,
@@ -93,7 +90,6 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.CONFIGURATION_RUNTIME_ONLY_COUNT,
             KotlinBuildToolFusMetricName.GRADLE_NUMBER_OF_TASKS,
             KotlinBuildToolFusMetricName.GRADLE_NUMBER_OF_UNCONFIGURED_TASKS,
-            KotlinBuildToolFusMetricName.GRADLE_NUMBER_OF_INCREMENTAL_TASKS
         )
     ),
 
@@ -116,7 +112,6 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.BUILD_SRC_COUNT,
             KotlinBuildToolFusMetricName.GRADLE_BUILD_CACHE_USED,
             KotlinBuildToolFusMetricName.GRADLE_WORKER_API_USED,
-            KotlinBuildToolFusMetricName.KOTLIN_OFFICIAL_CODESTYLE,
             KotlinBuildToolFusMetricName.KOTLIN_PROGRESSIVE_MODE,
             KotlinBuildToolFusMetricName.KOTLIN_KTS_USED,
             KotlinBuildToolFusMetricName.KOTLIN_BTA_USED
@@ -147,7 +142,8 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.SINGLE_FILE_BUILD_REPORT,
             KotlinBuildToolFusMetricName.FILE_BUILD_REPORT,
             KotlinBuildToolFusMetricName.HTTP_BUILD_REPORT,
-            KotlinBuildToolFusMetricName.BUILD_SCAN_BUILD_REPORT
+            KotlinBuildToolFusMetricName.BUILD_SCAN_BUILD_REPORT,
+            KotlinBuildToolFusMetricName.JSON_BUILD_REPORT
         )
     ),
 
