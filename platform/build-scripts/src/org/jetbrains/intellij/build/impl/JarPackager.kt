@@ -135,13 +135,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "jetbrains.mlapi.catboost.shadow.need.slf4j",
   "jetbrains.mlapi.core",
   "jetbrains.patronus.config",
-  // per-OS/arch native runtimes of the RenderDoc client, all packed into the plugin
-  "jetbrains.rd.client.renderdoc.runtime.linux.aarch64",
-  "jetbrains.rd.client.renderdoc.runtime.linux.x86_64",
-  "jetbrains.rd.client.renderdoc.runtime.macos.aarch64",
-  "jetbrains.rd.client.renderdoc.runtime.macos.x86_64",
-  "jetbrains.rd.client.renderdoc.runtime.windows.aarch64",
-  "jetbrains.rd.client.renderdoc.runtime.windows.x86_64",
   "jgrapht.core",
   "jooq.joox",
   "jps-javac-extension",
