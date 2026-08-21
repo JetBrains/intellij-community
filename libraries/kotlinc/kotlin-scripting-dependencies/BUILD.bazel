@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.kotlinc.kotlin.scripting.dependencies` start
+jvm_library(
+    name = "libraries-kotlinc-kotlin-scripting-dependencies",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinc.kotlin.scripting.dependencies",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-kotlin-scripting-dependencies-kotlinc-kotlin-scripting-dependencies"],
+    runtime_deps = ["@lib//:libraries-kotlinc-kotlin-scripting-dependencies-kotlinc-kotlin-scripting-dependencies"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlinc-kotlin-scripting-dependencies-kotlinc-kotlin-scripting-dependencies"],
+    module = ":libraries-kotlinc-kotlin-scripting-dependencies",
+)
+
+jvm_library(
+    name = "libraries-kotlinc-kotlin-scripting-dependencies_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinc.kotlin.scripting.dependencies",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-kotlin-scripting-dependencies-kotlinc-kotlin-scripting-dependencies"],
+    runtime_deps = [":libraries-kotlinc-kotlin-scripting-dependencies"],
+)
+### auto-generated section `build intellij.libraries.kotlinc.kotlin.scripting.dependencies` end
+
+### auto-generated section `iml intellij.libraries.kotlinc.kotlin.scripting.dependencies` start
+exports_files(
+    [
+        "intellij.libraries.kotlinc.kotlin.scripting.dependencies.iml",
+        "resources/intellij.libraries.kotlinc.kotlin.scripting.dependencies.xml",
+        "module-content.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.kotlinc.kotlin.scripting.dependencies` end

@@ -44,13 +44,13 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.libraries.kotlinc.kotlin.script.runtime",
       "intellij.libraries.kotlinc.kotlin.scripting.common",
       "intellij.libraries.kotlinc.kotlin.scripting.compiler.impl",
+      "intellij.libraries.kotlinc.kotlin.scripting.dependencies",
       "intellij.libraries.kotlinc.kotlin.scripting.jvm",
       "intellij.libraries.kotlinc.low.level.api.fir",
       "intellij.libraries.kotlinc.symbol.light.classes",
     )
 
     private val LIBRARIES_UNPACKED = java.util.List.of(
-      "kotlinc.kotlin-scripting-dependencies",
       "kotlinc.kotlin-gradle-statistics",
       "kotlin-metadata",
       "kotlinc.kotlin-build-tools-api",

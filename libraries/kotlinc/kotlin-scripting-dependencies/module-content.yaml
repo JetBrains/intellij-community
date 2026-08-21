@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.kotlin.scripting.dependencies.jar
+  modules:
+  - name: intellij.libraries.kotlinc.kotlin.scripting.dependencies
+    libraries:
+      kotlinc.kotlin-scripting-dependencies:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2/kotlin-scripting-dependencies-2.jar
