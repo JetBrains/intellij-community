@@ -33,7 +33,6 @@ a:com.intellij.application.options.colors.ColorAndFontDescription
 - f:setForegroundChecked(Z):V
 - f:setForegroundColor(java.awt.Color):V
 f:com.intellij.application.options.colors.ColorAndFontDescriptionPanel
-- $$$getRootComponent$$$():javax.swing.JComponent
 - apply(com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor,com.intellij.openapi.editor.colors.EditorColorsScheme):V
 c:com.intellij.application.options.colors.ColorAndFontOptions
 - sf:ID:java.lang.String

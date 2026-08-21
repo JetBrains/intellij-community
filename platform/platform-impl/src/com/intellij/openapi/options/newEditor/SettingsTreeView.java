@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
@@ -761,7 +761,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         if (myFilter.context.getErrors().containsKey(configurable)) {
           myTextLabel.setForeground(WRONG_CONTENT);
         }
-        else if (myFilter.context.getModified().contains(configurable)) {
+        else if (myFilter.context.getModified().contains(configurable) || hasCustomizedSettings(configurable)) {
           myTextLabel.setForeground(MODIFIED_CONTENT);
         }
       }
@@ -927,6 +927,13 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private static boolean isBeta(Configurable c) {
     return c instanceof Configurable.Beta ||
            ConfigurableWrapper.cast(Configurable.Beta.class, c) != null;
+  }
+
+  private static boolean hasCustomizedSettings(@Nullable Configurable configurable) {
+    CustomizedSettingsProvider provider = configurable instanceof CustomizedSettingsProvider c
+                                          ? c
+                                          : ConfigurableWrapper.cast(CustomizedSettingsProvider.class, configurable);
+    return provider != null && provider.hasCustomizedSettings();
   }
 
   private static @Nullable Configurable.Promo asPromo(Configurable c) {

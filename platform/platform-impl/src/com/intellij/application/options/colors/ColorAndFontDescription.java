@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -217,6 +217,50 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
 
   @Override
   public boolean isModified() {
+    return false;
+  }
+
+  /**
+   * A single editable facet of a color option, as shown in {@link ColorAndFontDescriptionPanel}.
+   */
+  enum Channel {
+    BOLD, ITALIC, FOREGROUND, BACKGROUND, ERROR_STRIPE, EFFECTS
+  }
+
+  /**
+   * Tells whether the given facet differs from its baseline value: the value in the original (default)
+   * scheme the edited scheme was created from, or, for schemes without an original, the value the option
+   * had when the settings dialog was opened. Unlike {@link #isModified()}, this reflects persistent
+   * customizations, not just unsaved changes of the current settings session.
+   */
+  boolean isChannelModified(@NotNull Channel channel) {
+    return false;
+  }
+
+  /**
+   * Restores the given facet to its baseline value, see {@link #isChannelModified(Channel)}.
+   */
+  void revertChannel(@NotNull Channel channel) {
+  }
+
+  boolean isInheritanceModified() {
+    return false;
+  }
+
+  /**
+   * Restores the inheritance flag to its baseline state together with the attribute values.
+   */
+  void revertInheritance() {
+  }
+
+  /**
+   * Tells whether the option as a whole differs from its baseline, see {@link #isChannelModified(Channel)}.
+   */
+  boolean isModifiedFromBaseline() {
+    if (isInheritanceModified()) return true;
+    for (Channel channel : Channel.values()) {
+      if (isChannelModified(channel)) return true;
+    }
     return false;
   }
 

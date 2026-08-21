@@ -1,29 +1,36 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.FontUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.treetable.DefaultMutableTreeTableNode;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
+import java.awt.Color;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,6 +54,7 @@ public final class ColorOptionsTree extends Tree {
     setRootVisible(false);
     getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myCategoryName = categoryName;
+    setCellRenderer(new MyTreeCellRenderer());
     TreeSpeedSearch.installOn(this, true, TreeSpeedSearch.NODE_PRESENTATION_FUNCTION);
   }
 
@@ -167,6 +175,50 @@ public final class ColorOptionsTree extends Tree {
       return path;
     }
     return null;
+  }
+
+  private static final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+    private static final Color MODIFIED_ITEM_FOREGROUND = JBColor.namedColor("Tree.modifiedItemForeground", JBColor.BLUE);
+
+    @Override
+    public void customizeCellRenderer(@NotNull JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
+      @NlsSafe String text = value == null ? "" : StringUtil.notNullize(value.toString());
+      Color foreground;
+      if (selected) {
+        foreground = UIUtil.getTreeForeground(true, hasFocus);
+      }
+      else if (value instanceof MyTreeNode node && containsModified(node)) {
+        foreground = MODIFIED_ITEM_FOREGROUND;
+      }
+      else {
+        foreground = UIUtil.getTreeForeground();
+      }
+      append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, foreground));
+      SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
+    }
+
+    private static boolean containsModified(@NotNull TreeNode node) {
+      if (node instanceof DefaultMutableTreeNode mutableNode && isMarkedModified(mutableNode.getUserObject())) {
+        return true;
+      }
+      for (int i = 0; i < node.getChildCount(); i++) {
+        if (containsModified(node.getChildAt(i))) return true;
+      }
+      return false;
+    }
+
+    private static boolean isMarkedModified(@Nullable Object userObject) {
+      if (userObject instanceof ColorAndFontDescription description) {
+        return description.isModifiedFromBaseline();
+      }
+      return userObject instanceof EditorSchemeAttributeDescriptor descriptor && descriptor.isModified();
+    }
   }
 
   private static final class MyTreeNode extends DefaultMutableTreeNode {
