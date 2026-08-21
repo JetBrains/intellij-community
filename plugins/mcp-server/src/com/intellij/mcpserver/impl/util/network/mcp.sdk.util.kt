@@ -66,7 +66,7 @@ private val logger = logger<RoutingContext>()
  */
 internal const val MCP_SESSION_ID_HEADER: String = "mcp-session-id"
 
-private val SSE_HEARTBEAT_PERIOD = 5.seconds
+internal val SSE_HEARTBEAT_PERIOD = 5.seconds
 
 private val SSE_HEARTBEAT_EVENT = ServerSentEvent(comments = "heartbeat")
 
