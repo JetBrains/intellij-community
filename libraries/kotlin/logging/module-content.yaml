@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlin.logging.jar
+  modules:
+  - name: intellij.libraries.kotlin.logging
+    libraries:
+      io.github.oshai.kotlin.logging.jvm:
+      - name: $MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7/kotlin-logging-jvm-7.jar

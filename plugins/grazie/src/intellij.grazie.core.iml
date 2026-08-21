@@ -758,6 +758,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
-    <orderEntry type="library" name="io.github.oshai.kotlin.logging.jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.logging" />
   </component>
 </module>

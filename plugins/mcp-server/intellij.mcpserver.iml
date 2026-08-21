@@ -44,7 +44,7 @@
     <orderEntry type="module" module-name="fleet.rhizomedb.transactor" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="library" name="io.github.oshai.kotlin.logging.jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.logging" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.server.sse" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.server.content.negotiation" />
     <orderEntry type="module" module-name="intellij.libraries.schema.kenerator" />

@@ -37,7 +37,7 @@
     <orderEntry type="library" exported="" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.server.sse" exported="" />
     <orderEntry type="library" exported="" name="io.modelcontextprotocol.kotlin.sdk" level="project" />
-    <orderEntry type="library" exported="" name="io.github.oshai.kotlin.logging.jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.logging" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
   </component>

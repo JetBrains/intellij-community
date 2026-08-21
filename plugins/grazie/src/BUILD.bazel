@@ -119,7 +119,7 @@ jvm_library(
         "//platform/ide-core-impl",
         "//platform/ide-core",
         "//platform/progress/shared:ide-progress",
-        "@lib//:io-github-oshai-kotlin-logging-jvm",
+        "//libraries/kotlin/logging",
     ],
 )
 
@@ -203,6 +203,7 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
+        "//libraries/kotlin/logging:logging_test_lib",
     ],
 )
 ### auto-generated section `build intellij.grazie.core` end

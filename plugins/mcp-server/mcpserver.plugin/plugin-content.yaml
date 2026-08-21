@@ -1,3 +1,9 @@
+- name: lib/intellij.libraries.kotlin.logging.jar
+  contentModules:
+  - name: intellij.libraries.kotlin.logging
+    libraries:
+      io.github.oshai.kotlin.logging.jvm:
+      - name: $MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7/kotlin-logging-jvm-7.jar
 - name: lib/intellij.libraries.ktor.server.content.negotiation.jar
   contentModules:
   - name: intellij.libraries.ktor.server.content.negotiation
@@ -24,20 +30,15 @@
   contentModules:
   - name: intellij.mcpserver
 - name: lib/intellij.mcpserver.stdio.jar
-  projectLibraries:
-  - name: io.github.oshai.kotlin.logging.jvm
-    files:
-    - name: $MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7/kotlin-logging-jvm-7.jar
-    reason: <- intellij.mcpserver.stdio
-  - name: io.modelcontextprotocol.kotlin.sdk
-    files:
-    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0/kotlin-sdk-jvm-0.jar
-    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0/kotlin-sdk-client-jvm-0.jar
-    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0/kotlin-sdk-server-jvm-0.jar
-    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0/kotlin-sdk-core-jvm-0.jar
-    reason: <- intellij.mcpserver.stdio
   contentModules:
   - name: intellij.mcpserver.stdio
+  library: io.modelcontextprotocol.kotlin.sdk
+  files:
+  - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0/kotlin-sdk-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0/kotlin-sdk-client-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0/kotlin-sdk-server-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0/kotlin-sdk-core-jvm-0.jar
+  reason: <- intellij.mcpserver.stdio
 - name: lib/mcpserver-plugin.jar
   modules:
   - name: intellij.mcpserver.plugin

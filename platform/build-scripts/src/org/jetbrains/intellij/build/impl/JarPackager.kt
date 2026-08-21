@@ -103,8 +103,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "agentclientprotocol.acp.ktor",
   "ai.grazie.rule.engine",
   "ai.grazie.semantic.engine",
-  "air.acp.jvm",
-  "air.acp.ktor",
   "antlr4-runtime",
   "apache.avro",
   "assertj-swing",
@@ -116,7 +114,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   // used by `intellij.rider.test.cases.rdct`, whose plugin is built by an auto layout
   "intellij-plugin-structure",
   // also used by `intellij.ml.llm.libraries.grazie`, which is a library module by intention, but not by name
-  "io.github.oshai.kotlin.logging.jvm",
   "io.modelcontextprotocol.kotlin.sdk",
   "io.qameta.allure.java.commons",
   "jerolba.carpet.record",

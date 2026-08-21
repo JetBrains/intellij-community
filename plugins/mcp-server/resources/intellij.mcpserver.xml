@@ -11,6 +11,7 @@
     <module name="fleet.rhizomedb.transactor"/>
     <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlin.logging"/>
     <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>

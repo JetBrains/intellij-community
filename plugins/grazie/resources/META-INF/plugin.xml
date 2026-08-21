@@ -37,6 +37,9 @@
     <module name="intellij.grazie.yaml"/>
     <module name="intellij.libraries.ai.grazie.spell.gec.engine.local" loading="embedded"/>
   </content>
+  <content>
+    <module name="intellij.libraries.kotlin.logging" loading="embedded"/>
+  </content>
 
   <extensions defaultExtensionNs="com.intellij">
     <spellchecker.support language="IgnoreLang" implementationClass="com.intellij.grazie.ide.language.ignore.IgnoreSpellcheckingStrategy"/>

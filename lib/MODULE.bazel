@@ -4663,20 +4663,6 @@ http_file(
 )
 
 http_file(
-    name = "io_github_oshai-kotlin-logging-jvm-7_0_3_http",
-    downloaded_file_path = "kotlin-logging-jvm-7.0.3.jar",
-    sha256 = "241daa21665dd0ca55576a4bc4d8e9ace8891ae3c698cc77f13bb4bdac372e94",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/oshai/kotlin-logging-jvm/7.0.3/kotlin-logging-jvm-7.0.3.jar",
-)
-
-http_file(
-    name = "io_github_oshai-kotlin-logging-jvm-7_0_3-sources_http",
-    downloaded_file_path = "kotlin-logging-jvm-7.0.3-sources.jar",
-    sha256 = "9e447b4e7765d7ad558422976b9b4d54b0f605185ede77214df6bb98e8bd82f8",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/oshai/kotlin-logging-jvm/7.0.3/kotlin-logging-jvm-7.0.3-sources.jar",
-)
-
-http_file(
     name = "io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http",
     downloaded_file_path = "kotlin-sdk-jvm-0.12.0.jar",
     sha256 = "88c25c0136e9be9539a906c2dc25d1ba7b2bedae0c8c3f7421ca3fb8090192dc",
@@ -10386,6 +10372,20 @@ http_file(
     downloaded_file_path = "kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162-sources.jar",
     sha256 = "17cfd9ffb163ab974875820368673a42edf8cd6c8f3a0d9750ccb0cb21f6d21d",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.9.20-dev-8162/kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162-sources.jar",
+)
+
+http_file(
+    name = "io_github_oshai-kotlin-logging-jvm-7_0_3_http",
+    downloaded_file_path = "kotlin-logging-jvm-7.0.3.jar",
+    sha256 = "241daa21665dd0ca55576a4bc4d8e9ace8891ae3c698cc77f13bb4bdac372e94",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/oshai/kotlin-logging-jvm/7.0.3/kotlin-logging-jvm-7.0.3.jar",
+)
+
+http_file(
+    name = "io_github_oshai-kotlin-logging-jvm-7_0_3-sources_http",
+    downloaded_file_path = "kotlin-logging-jvm-7.0.3-sources.jar",
+    sha256 = "9e447b4e7765d7ad558422976b9b4d54b0f605185ede77214df6bb98e8bd82f8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/oshai/kotlin-logging-jvm/7.0.3/kotlin-logging-jvm-7.0.3-sources.jar",
 )
 
 http_file(

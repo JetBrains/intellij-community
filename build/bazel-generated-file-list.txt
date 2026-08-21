@@ -519,6 +519,7 @@ libraries/keychain
 libraries/kodein-di-jvm
 libraries/kotlin/gradle-plugin-idea
 libraries/kotlin/gradle-plugin-idea-proto
+libraries/kotlin/logging
 libraries/kotlin/reflect
 libraries/kotlin/test
 libraries/kotlin/test-assertions-core-jvm
