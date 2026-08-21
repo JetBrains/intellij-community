@@ -1912,17 +1912,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
    * It is much more effective for a larger number of files, but for a small number of files a synchronous way is faster
    * and more predictable.
    */
-  private final class VirtualFileUpdateTask extends UpdateTask<FileIndexingRequest> {
-    @Override
-    public void doProcess(FileIndexingRequest item, @NotNull Project project) {
-      // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
-      IndexingRequestToken indexingRequest = project.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
-      var stamp = indexingRequest.getFileIndexingStamp(item.getFile());
-      processRefreshedFile(project, new CachedFileContent(item.getFile()), item.isDeleteRequest(), stamp);
-    }
-  }
-
-  private final VirtualFileUpdateTask myForceUpdateTask = new VirtualFileUpdateTask();
+  private final UpdateTask<FileIndexingRequest> myForceUpdateTask = new UpdateTask<>((item, project) -> {
+    // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
+    IndexingRequestToken indexingRequest = project.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
+    var stamp = indexingRequest.getFileIndexingStamp(item.getFile());
+    processRefreshedFile(project, new CachedFileContent(item.getFile()), item.isDeleteRequest(), stamp);
+  });
 
   private void forceUpdate(@Nullable Project project,
                            boolean skipUpdatingIfNoNewUpdatesAvailable,

@@ -13,15 +13,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
-/// Coordinates processing ([#processSerializable(Object, Project)]) of items passed to [#processAll(Collection, Project)] in a multithreading environment so that:
+/// Coordinates processing ([#singleItemProcessor]) of items passed to [#processAll(Collection, Project)] in a multithreading environment so that:
 /// 1. processing of the same item by different threads is always **serialized**, never concurrent
 ///    (if all threads are using the same instance of [UpdateTask]!)
 /// 2. different items **could** be processed concurrently by different threads
-/// 3. **all** items passed in [#processAll(Collection, Project)] are eventually processed by this thread
-/// 
+/// 3. **all** items passed in [#processAll(Collection, Project)] by thread X -- are eventually processed by thread X
 @ApiStatus.Internal
-public abstract class UpdateTask<Item> {
+public final class UpdateTask<Item> {//TODO RC: rename to ExclusiveItemProcessor
+
+  private final BiConsumer<? super Item, ? super Project> singleItemProcessor;
+
   /// Semaphore is used in an unusual way: as a counter of active operations, with option to wait for no active operations.
   /// Each attempt to process an item starts with .down(), and ends with .up(), so .waitFor() terminates when there is
   /// 0 attempts currently in progress -- which is when a repeating attempt has more chances to succeed.
@@ -29,16 +32,25 @@ public abstract class UpdateTask<Item> {
 
   private final Set<Item> itemsBeingProcessed = ConcurrentCollectionFactory.createConcurrentSet();
 
-  /// Prevents a nested processAll() call from waiting for an operation that can finish only after the nested call returns.
+  /// Prevents nested [#processAll] calls
   private final ThreadLocal<Boolean> processingOnCurrentThread = new ThreadLocal<>();
 
+  /// Creates a task that coordinates concurrent invocations of the supplied item processor.
+  public UpdateTask(@NotNull BiConsumer<? super Item, ? super @NotNull Project> singleItemProcessor) {
+    this.singleItemProcessor = singleItemProcessor;
+  }
 
-  //TODO RC: `Collection itemsToProcess` is an ambiguous semantics -- it allows collections with duplicates [a,...a,...], but
-  //         it is not clear how to deal with them: should we process the same item multiple times -- or should we deduplicate?
+  /// Each item in itemsToProcess is processed by this thread once. Item equality is used to prevent concurrent processing of
+  /// equal items by different threads that may run [#processAll] concurrently with this thread;
+  ///
+  /// BEWARE: behavior of duplicates in itemsToProcess is underdefined: each item is processed at least once, but if an item
+  /// duplicated N times in itemsToProcess -- there is no guarantee about how exactly N occurrences are treated. Better pass
+  /// in a collection without duplicates.
+  /// @implNote Current implementation processes N-duplicates N times -- but this could be changed anytime
   /// @return true if all itemsToProcess were processed without conflicts, in one go;
   ///         false, if there were competing concurrent processing for at least 1 item detected
-  public final boolean processAll(@NotNull Collection<? extends Item> itemsToProcess,
-                                  @NotNull Project project) throws ProcessCanceledException {
+  public boolean processAll(@NotNull Collection<? extends Item> itemsToProcess,
+                            @NotNull Project project) throws ProcessCanceledException {
     if (processingOnCurrentThread.get() != null) {
       throw new IllegalStateException("Reentrant processAll() call on the same UpdateTask instance");
     }
@@ -51,10 +63,6 @@ public abstract class UpdateTask<Item> {
       processingOnCurrentThread.remove();
     }
   }
-
-  protected abstract void doProcess(Item item, @NotNull Project project);
-
-  
 
   /// Runs item processing after the public entry point has established the per-thread reentrancy guard
   private boolean processAllNonReentrant(@NotNull Collection<? extends Item> itemsToProcess,
@@ -96,13 +104,13 @@ public abstract class UpdateTask<Item> {
     }
   }
 
-  /// Process ([#doProcess(Item, Project)]) the item only if the same item is not currently processing by some other thread.
+  /// Processes the item only if the same item is not currently processing by some other thread.
   /// @return true if the item has been processed by the current thread, false if the processing was skipped because the same item
   ///         was processed by some other thread
   private boolean processSerializable(Item item, @NotNull Project project) {
     if (itemsBeingProcessed.add(item)) {
       try {
-        doProcess(item, project);
+        singleItemProcessor.accept(item, project);
         return true;
       }
       finally {

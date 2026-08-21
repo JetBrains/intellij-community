@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.indexing.FileBasedIndexDataInitialization.FileBasedIndexDataInitializationResult;
 import kotlin.Pair;
@@ -16,6 +15,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -43,7 +43,7 @@ public final class RegisteredIndexes {
   private volatile FileBasedIndexDataInitializationResult myInitResult;
   private volatile Future<?> myAllIndicesInitializedFuture;
 
-  private final Map<ID<?, ?>, DocumentUpdateTask> myUnsavedDataUpdateTasks = new ConcurrentHashMap<>();
+  private final Map<ID<?, ?>, UpdateTask<Document>> myUnsavedDataUpdateTasks = new ConcurrentHashMap<>();
 
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
 
@@ -143,7 +143,9 @@ public final class RegisteredIndexes {
   void registerIndexExtension(@NotNull FileBasedIndexExtension<?, ?> extension) {
     ID<?, ?> name = extension.getName();
     if (extension.dependsOnFileContent()) {
-      myUnsavedDataUpdateTasks.put(name, new DocumentUpdateTask(name));
+      myUnsavedDataUpdateTasks.put(name, new UpdateTask<>((document, project) ->
+        myFileBasedIndex.indexUnsavedDocument(document, name, project, Objects.requireNonNull(myFileDocumentManager.getFile(document)))
+      ));
     }
 
     if (extension.getName() == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
@@ -198,19 +200,6 @@ public final class RegisteredIndexes {
 
   UpdateTask<Document> getUnsavedDataUpdateTask(@NotNull ID<?, ?> indexId) {
     return myUnsavedDataUpdateTasks.get(indexId);
-  }
-
-  private final class DocumentUpdateTask extends UpdateTask<Document> {
-    private final ID<?, ?> myIndexId;
-
-    DocumentUpdateTask(@NotNull ID<?, ?> indexId) {
-      myIndexId = indexId;
-    }
-
-    @Override
-    protected void doProcess(Document document, @NotNull Project project) {
-      myFileBasedIndex.indexUnsavedDocument(document, myIndexId, project, myFileDocumentManager.getFile(document));
-    }
   }
 
   @NotNull
