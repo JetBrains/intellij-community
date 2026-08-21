@@ -6,6 +6,7 @@ import com.intellij.ide.impl.TrustedPathsSettings
 import com.intellij.ide.impl.TrustedProjectsStatistics
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator.LocatedProject
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.ThreeState
 import com.intellij.util.application
@@ -77,6 +78,20 @@ object TrustedProjects {
         else -> syncPublisher.onProjectUntrusted(locatedProject)
       }
     }
+  }
+
+  /**
+   * Whether the trusted project dialog may offer to trust every project in [projectPath]'s parent directory.
+   *
+   * A project stored inside the IDE's own configuration directory shares that parent with every other such project -
+   * this is what a frontend does with the projects it mirrors, see `ThinClientProjectUtil.createProjectDir`. Trusting
+   * the location would silently trust all of them, present and future, and would put an IDE-internal path into the
+   * user's trusted locations.
+   */
+  @ApiStatus.Internal
+  fun isProjectLocationOfferedForTrust(projectPath: Path): Boolean {
+    val parent = projectPath.parent ?: return false
+    return !parent.startsWith(PathManager.getOriginalConfigDir())
   }
 
   /**

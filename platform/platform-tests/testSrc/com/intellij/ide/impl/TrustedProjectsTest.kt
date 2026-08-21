@@ -3,6 +3,7 @@ package com.intellij.ide.impl
 
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.impl.TrustedProjectStartupDialog
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.testFramework.IndexingTestUtil
@@ -49,6 +50,18 @@ class TrustedProjectsTest {
     TrustedProjects.setProjectTrusted(projectRoot1, true)
     Assertions.assertEquals(ThreeState.YES, TrustedProjects.getProjectTrustedState(projectRoot1))
     Assertions.assertEquals(ThreeState.UNSURE, TrustedProjects.getProjectTrustedState(projectRoot2))
+  }
+
+  // IJPL-253268: Used from JBC in IjLight
+  @Test
+  fun `do not offer to trust the location of a project stored in the IDE config directory`() {
+
+    Assertions.assertTrue(TrustedProjects.isProjectLocationOfferedForTrust(testRoot.resolve("project")))
+
+    val mirroredProjectDir = PathManager.getOriginalConfigDir().resolve("projects").resolve("0123456789abcdef")
+    Assertions.assertFalse(TrustedProjects.isProjectLocationOfferedForTrust(mirroredProjectDir))
+
+    Assertions.assertFalse(TrustedProjects.isProjectLocationOfferedForTrust(testRoot.root!!))
   }
 
   @Test

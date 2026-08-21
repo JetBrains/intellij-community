@@ -173,7 +173,7 @@ class TrustedProjectStartupDialog private constructor(
               component.isFocusable = true // Workaround for IJPL-184339
             }
           }
-          projectPath.parent?.let { projectParentPath ->
+          projectPath.parent?.takeIf { TrustedProjects.isProjectLocationOfferedForTrust(projectPath) }?.let { projectParentPath ->
             row {
               val parentDirName = NioFiles.getFileName(projectParentPath)
               val trimmedParentDirName = StringUtil.shortenTextWithEllipsis(parentDirName, 40, 0, true)
