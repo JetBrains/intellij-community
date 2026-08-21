@@ -54,6 +54,7 @@
     <extensionPoint qualifiedName="com.intellij.mcpServer.mcpManagedSessionSupport" interface="com.intellij.mcpserver.McpManagedSessionSupport" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.mcpServer.elicitationProvider" interface="com.intellij.mcpserver.elicitation.McpElicitationProvider" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.mcpServer.projectDependenciesProvider" interface="com.intellij.mcpserver.McpProjectDependenciesProvider" dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.mcpServer.statusBarWidgetProvider" interface="com.intellij.mcpserver.widget.McpServerStatusBarWidgetProvider" dynamic="true" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

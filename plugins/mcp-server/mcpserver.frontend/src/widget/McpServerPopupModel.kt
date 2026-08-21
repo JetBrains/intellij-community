@@ -84,7 +84,7 @@ internal class McpServerPopupModelImpl(
 
   override val unconfiguredMessage: String? by lazy {
     val unconfigured = McpClientDetector.detectGlobalMcpClients()
-      .filter { it.isConfigured() != true || !it.isPortCorrect() }
+      .filter { !it.isConnectedToThisIde() }
       .map { it.mcpClientInfo.displayName }
     if (unconfigured.isNotEmpty()) {
       McpServerBundle.message("mcp.unconfigured.clients.detected.notification.message", unconfigured.joinToString(", "))

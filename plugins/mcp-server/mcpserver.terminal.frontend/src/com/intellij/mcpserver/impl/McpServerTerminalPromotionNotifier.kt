@@ -373,7 +373,7 @@ private fun showMcpServerTerminalPromotionBanner(
       val configuredClients = ArrayList<McpClient>(clientsToConfigure.size)
 
       for (targetClient in clientsToConfigure.distinct()) {
-        val shouldConfigureClient = targetClient.isConfigured() != true || !targetClient.isPortCorrect()
+        val shouldConfigureClient = !targetClient.isConnectedToThisIde()
         if (!shouldConfigureClient) {
           continue
         }
