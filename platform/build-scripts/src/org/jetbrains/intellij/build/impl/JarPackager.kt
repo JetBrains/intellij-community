@@ -124,7 +124,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "jetbrains.ai.completion.trigger.model.polyglot.cloud",
   "jetbrains.ai.completion.trigger.model.text.cloud",
   "jetbrains.intellij.deps.eclipse.jgit",
-  "jetbrains.intellij.deps.scheduled.debugger.agent",
   "jetbrains.intellij.deps.searchEverywhere.model.context.ranker.test",
   "jetbrains.kotlin.doctor.kdoctor.api",
   "jetbrains.kotlin.doctor.kdoctor.checks",
