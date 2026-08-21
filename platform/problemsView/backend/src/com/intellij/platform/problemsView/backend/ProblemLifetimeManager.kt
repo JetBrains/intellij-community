@@ -8,8 +8,6 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.AwaitCancellationAndInvoke
-import com.intellij.util.awaitCancellationAndInvoke
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 
@@ -21,32 +19,35 @@ internal class ProblemLifetimeManager {
   private val problemToIntentions = ConcurrentHashMap<String, MutableSet<IntentionAction>>()
 
   fun getOrCreateHighlightingProblemId(problem: HighlightingProblem, lifetime: ProblemLifetime): String {
-    val problemId = problemIds.getOrCreateId(problem, lifetime.coroutineScope)
-    removeIntentionsOfProblem(problemId)
+    val problemId = getOrCreateProblemId(problem, lifetime)
+    removeAllIntentionsOfProblem(problemId).forEach(lifetime::unbindId)
     return problemId
   }
 
   fun getOrCreateProblemId(problem: Problem, lifetime: ProblemLifetime): String {
-    return problemIds.getOrCreateId(problem, lifetime.coroutineScope)
+    val id = problemIds.getOrCreateId(problem)
+    lifetime.bindIdToLifetime(id)
+
+    return id
   }
 
-  @OptIn(AwaitCancellationAndInvoke::class)
   fun createIntentionId(intention: IntentionAction, lifetime: ProblemLifetime, problemId: String): String {
-    val intentionId = intentionIds.getOrCreateId(intention, lifetime.coroutineScope)
+    val id = intentionIds.getOrCreateId(intention)
+    problemToIntentions.computeIfAbsent(problemId) { ConcurrentHashMap.newKeySet() }.add(intention)
 
-    problemToIntentions.computeIfAbsent(problemId) {
-      lifetime.coroutineScope.awaitCancellationAndInvoke {
-        problemToIntentions.remove(problemId)
-      }
-      ConcurrentHashMap.newKeySet()
-    }.add(intention)
+    if (!lifetime.bindIdToLifetime(id)) {
+      removeIntentionFromProblem(problemId, intention)
+    }
 
-    return intentionId
+    return id
   }
 
-  fun removeProblemId(problem: Problem): String? {
+  fun removeProblemId(problem: Problem, lifetime: ProblemLifetime): String? {
     val problemId = problemIds.remove(problem) ?: return null
-    removeIntentionsOfProblem(problemId)
+
+    lifetime.unbindId(problemId)
+    removeAllIntentionsOfProblem(problemId).forEach(lifetime::unbindId)
+
     return problemId
   }
 
@@ -58,10 +59,36 @@ internal class ProblemLifetimeManager {
     return intentionIds.findValueById(id)
   }
 
-  private fun removeIntentionsOfProblem(problemId: String) {
-    problemToIntentions[problemId]?.let { intentions ->
-      intentions.forEach { intentionIds.remove(it) }
-      intentions.clear()
+  private fun ProblemLifetime.bindIdToLifetime(id: String): Boolean {
+    ensureCompletionHandlerRegistered {
+      unbindAllIds().forEach(::removeStoredId)
+    }
+
+    if (bindId(id)) return true
+
+    // the lifetime completed before id could be bound, so we remove it explicitly from the IdValueStore
+    removeStoredId(id)
+    return false
+  }
+
+  private fun removeStoredId(id: String) {
+    if (problemIds.removeById(id)) {
+      removeAllIntentionsOfProblem(id)
+    }
+    else {
+      intentionIds.removeById(id)
+    }
+  }
+
+  private fun removeAllIntentionsOfProblem(problemId: String): List<String> =
+    problemToIntentions.remove(problemId)?.mapNotNull(intentionIds::remove).orEmpty()
+
+  private fun removeIntentionFromProblem(problemId: String, intention: IntentionAction) {
+    val intentions = problemToIntentions[problemId] ?: return
+    intentions.remove(intention)
+
+    if (intentions.isEmpty()) {
+      problemToIntentions.remove(problemId, intentions)
     }
   }
 
@@ -73,7 +100,7 @@ internal class ProblemLifetimeManager {
   @TestOnly
   fun getProblemIdsSize(): Int = problemIds.getSize()
 
-  companion object{
+  companion object {
     fun getInstance(project: Project): ProblemLifetimeManager = project.service()
   }
 }
