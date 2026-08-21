@@ -1488,7 +1488,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return ContainerUtil.filter(getAllFilesToUpdate(), filesToBeIndexedForProjectCondition(project)::test);
   }
 
-  private @NotNull Predicate<FileIndexingRequest> filesToBeIndexedForProjectCondition(Project project) {
+  private @NotNull Predicate<FileIndexingRequest> filesToBeIndexedForProjectCondition(@NotNull Project project) {
     return indexingRequest -> {
       if (indexingRequest.isDeleteRequest() || !indexingRequest.getFile().isValid()) {
         return true;
