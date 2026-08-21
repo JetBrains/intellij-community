@@ -55,8 +55,8 @@ object TrustedProjects {
   fun getProjectTrustedState(locatedProject: LocatedProject): ThreeState {
     val explicitTrustedState = TrustedPaths.getInstance().getProjectTrustedState(locatedProject)
     return when {
-      explicitTrustedState != ThreeState.UNSURE -> explicitTrustedState
       isTrustedCheckDisabledForProduct() -> ThreeState.YES
+      explicitTrustedState != ThreeState.UNSURE -> explicitTrustedState
       LightEdit.owns(locatedProject.project) && locatedProject.project === LightEditUtil.getProjectIfCreated() -> ThreeState.YES
       TrustedPathsSettings.getInstance().isProjectTrusted(locatedProject) -> {
         TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_PATH.log(locatedProject.project)
