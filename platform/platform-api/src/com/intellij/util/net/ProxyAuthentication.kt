@@ -45,12 +45,12 @@ interface ProxyAuthentication {
    *  But if credentials are already remembered, they will be used in [getKnownAuthentication]/[getOrPromptAuthentication].
    *
    * @param prompt prompt from the authentication request to be shown to the user
-   * @return null if the user has refused to provide credentials
+   * @return `null` if the user has refused to provide credentials
    */
   fun getPromptedAuthentication(prompt: @Nls String, host: String, port: Int): Credentials?
 
   /**
-   * Whether the user refused to provide credentials for the specified proxy
+   * Whether the user refused to provide credentials for the specified proxy.
    */
   fun isPromptedAuthenticationCancelled(host: String, port: Int): Boolean
 
@@ -67,7 +67,6 @@ interface ProxyAuthentication {
  */
 fun ProxyAuthentication.getOrPromptAuthentication(prompt: @Nls String, host: String, port: Int): Credentials? =
   getKnownAuthentication(host, port) ?: getPromptedAuthentication(prompt, host, port)
-
 
 @ApiStatus.Internal
 interface DisabledProxyAuthPromptsManager {
@@ -134,7 +133,7 @@ class PlatformProxyAuthentication(
       return null
     }
     if (isPromptedAuthenticationCancelled(host, port)) {
-      LOG.debug { "prompted auth for $host:$port: prompted auth was cancelled " }
+      LOG.debug { "prompted auth for $host:$port: prompted auth was canceled" }
       return null
     }
     val credentialStore = getCredentialStore()
