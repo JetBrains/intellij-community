@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.load.java.JvmAnnotationNames.REPEATABLE_ANNOTATION
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames.RETENTION_ANNOTATION
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames.TARGET_ANNOTATION
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.kotlin.utils.ifEmpty
 
 class JavaAnnotationsConversion(context: ConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
@@ -82,7 +81,11 @@ class JavaAnnotationsConversion(context: ConverterContext) : RecursiveConversion
         val jvmRepeatable = "kotlin.jvm.JvmRepeatable"
         val scope = context.converter.targetModule?.let { GlobalSearchScope.moduleWithLibrariesScope(it) }
             ?: ProjectScope.getLibrariesScope(context.project)
-        KotlinFullTypeAliasNameIndex[jvmRepeatable, context.project, scope].ifEmpty { return }
+
+        if (!KotlinFullTypeAliasNameIndex.hasValue(jvmRepeatable, context.project, scope)) {
+            return
+        }
+
         classSymbol = symbolProvider.provideClassSymbol(jvmRepeatable)
     }
 

@@ -7,7 +7,6 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.Processor
 import com.intellij.util.ThreeState
 import com.intellij.util.ThreeState.NO
 import com.intellij.util.ThreeState.UNSURE
@@ -45,9 +44,8 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
         val javaClassExists = JavaLibraryUtil.hasLibraryClass(module, markerClassFqn)
         if (javaOnly || javaClassExists) return javaClassExists
         val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
-        val processor = Processor<Any> { false }
-        return !KotlinFullClassNameIndex.processElements(markerClassFqn, element.project, scope, processor) ||
-                !KotlinFullTypeAliasNameIndex.processElements(markerClassFqn, element.project, scope, processor)
+        return KotlinFullClassNameIndex.hasValue(markerClassFqn, element.project, scope) ||
+                KotlinFullTypeAliasNameIndex.hasValue(markerClassFqn, element.project, scope)
     }
 
     override fun responsibleFor(declaration: KtNamedDeclaration): Boolean {

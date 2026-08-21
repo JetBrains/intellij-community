@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.diagnostic.Logger
@@ -56,6 +56,10 @@ abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private 
      */
     fun processElements(s: String, project: Project, scope: GlobalSearchScope, processor: Processor<in Key>): Boolean {
         return processElements(s, project, scope, null, processor)
+    }
+
+    fun hasValue(s: String, project: Project, scope: GlobalSearchScope): Boolean {
+        return !processElements(s, project, scope, alwaysFalseProcessor)
     }
 
     /**
@@ -148,6 +152,8 @@ class CancelableDelegateFilterProcessor<T>(
         }
     }
 }
+
+private val alwaysFalseProcessor = Processor<Any> { false }
 
 @ApiStatus.Internal
 fun <T> cancelableCollectFilterProcessor(

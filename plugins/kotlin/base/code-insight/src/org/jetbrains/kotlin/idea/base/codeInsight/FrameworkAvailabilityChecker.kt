@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.openapi.module.Module
@@ -44,8 +44,8 @@ abstract class FrameworkAvailabilityChecker(
 
         return fqNames.any { fqName ->
             (javaClassLookup && javaPsiFacade.findClass(fqName, moduleScope) != null)
-                    || (aliasLookup && KotlinFullTypeAliasNameIndex[fqName, project, moduleScope].isNotEmpty())
-                    || (kotlinFullClassLookup && KotlinFullClassNameIndex[fqName, project, moduleScope].isNotEmpty())
+                    || (aliasLookup && KotlinFullTypeAliasNameIndex.hasValue(fqName, project, moduleScope))
+                    || (kotlinFullClassLookup && KotlinFullClassNameIndex.hasValue(fqName, project, moduleScope))
         }
     }
 
