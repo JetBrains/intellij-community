@@ -1,12 +1,12 @@
 package com.intellij.grazie.rule;
 
-import ai.grazie.nlp.tokenizer.Tokenizer;
+import ai.grazie.nlp.langs.Language;
 import ai.grazie.nlp.tokenizer.sentence.StandardSentenceTokenizer;
-import ai.grazie.text.Text;
+import ai.grazie.nlp.tokenizer.sentence.StandardSentenceTokenizer.SentenceToken;
 import ai.grazie.text.exclusions.Exclusion;
-import ai.grazie.text.exclusions.ExclusionUtilsKt;
 import ai.grazie.text.exclusions.SentenceWithExclusions;
 import com.intellij.grazie.text.TextContent;
+import com.intellij.grazie.utils.GrazieUtilsKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.Cancellation;
@@ -28,24 +28,30 @@ import java.util.List;
 
 public final class SentenceTokenizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.grazie.rule.SentenceTokenizer");
-  private static final Key<List<Tokenizer.Token>> tokenized =
+  private static final Key<List<SentenceToken>> tokenized =
     Key.create("grazie pro sentence tokenization");
 
-  public static List<Tokenizer.Token> toTokens(@NotNull TextContent text) {
-    List<Tokenizer.Token> result = text.getUserData(tokenized);
+  public static List<SentenceToken> toTokens(@NotNull TextContent text) {
+    List<SentenceToken> result = text.getUserData(tokenized);
     if (result == null) {
-      Text textWithExclusions = ExclusionUtilsKt.withExclusions(new Text(bombed(text)), rangeExclusions(text, new TextRange(0, text.length())));
-      result = StandardSentenceTokenizer.Companion.getDefault().tokenize(textWithExclusions);
+      //noinspection StaticMethodReferencedViaSubclass
+      if (ProgressManager.getGlobalProgressIndicator() == null && Cancellation.currentJob() == null && !ApplicationManager.getApplication().isDispatchThread()) {
+        LOG.error("Sentence tokenizer should be called with a cancellable indicator");
+      }
+      result = StandardSentenceTokenizer.defaultFor(getLanguage(text))
+        .tokenize(bombed(text), rangeExclusions(text, new TextRange(0, text.length())));
       text.putUserData(tokenized, result);
     }
     return result;
   }
 
+  private static Language getLanguage(@NotNull TextContent text) {
+    Language language = GrazieUtilsKt.getLanguageIfAvailable(text);
+    if (language == null) language = Language.UNKNOWN;
+    return language;
+  }
+
   private static CharSequence bombed(@NotNull CharSequence text) {
-    //noinspection UnstableApiUsage
-    if (ProgressManager.getGlobalProgressIndicator() == null && Cancellation.currentJob() == null && !ApplicationManager.getApplication().isDispatchThread()) {
-      LOG.error("Sentence tokenizer should be called with a cancellable indicator");
-    }
     return new StringUtil.BombedCharSequence(text) {
       @Override
       protected void checkCanceled() {
@@ -58,16 +64,8 @@ public final class SentenceTokenizer {
     return ContainerUtil.map(toTokens(content), SentenceTokenizer::toSentence);
   }
 
-  private static Sentence toSentence(Tokenizer.Token token) {
-    var range = new ai.grazie.text.TextRange(token.getRange().getFirst(), token.getRange().getLast() + 1);
-    return new Sentence(range.getStart(), token.getToken(), tokenExclusions(token));
-  }
-
-  private static List<Exclusion> tokenExclusions(@NotNull Tokenizer.Token token) {
-    return ContainerUtil.map(
-      ExclusionUtilsKt.getExclusions(token.getText()),
-      e -> e instanceof Exclusion ? (Exclusion)e : new Exclusion(e.getOffset(), e.isUnknown() ? Exclusion.Kind.Unknown : Exclusion.Kind.Markup)
-    );
+  private static Sentence toSentence(SentenceToken token) {
+    return new Sentence(token.getRange().getStart(), token.getText(), token.getExclusions());
   }
 
   public static List<Exclusion> rangeExclusions(TextContent textContent, TextRange range) {
