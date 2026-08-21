@@ -48,11 +48,14 @@ private const val PROJECTS_DIR_NAME = "projects"
  * [beforeInit] is invoked before the project is initialized, prior to associating the project with its Eel descriptor.
  * [eelMachineInitializer] initializes the Eel machine for the project's Eel descriptor after the project is opened;
  * a `null` result leaves the project without an Eel machine.
+ * [showWelcomeScreen] tells the platform whether the welcome frame is a valid outcome of a project that does not open;
+ * pass `false` in a product that has nothing to show without its project.
  */
 @ApiStatus.Internal
 suspend fun openProjectForLightProduct(
   path: Path,
   projectStoreSeed: String,
+  showWelcomeScreen: Boolean = true,
   beforeInit: (Project) -> Unit = {},
   eelMachineInitializer: suspend (EelDescriptor) -> EelMachine? = ::defaultLightEelMachineInitializer,
 ): Project? {
@@ -61,6 +64,7 @@ suspend fun openProjectForLightProduct(
   val projectFile = createLightProjectStoreDir(projectStoreSeed)
   val options = OpenProjectTask {
     isNewProject = !ProjectUtil.isValidProjectPath(projectFile)
+    this.showWelcomeScreen = showWelcomeScreen
     projectRootDir = if (path.isDirectory()) path else path.parent
     createModule = false
     runConfigurators = false
