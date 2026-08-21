@@ -35,8 +35,6 @@ kotlin {
     "-progressive",
   )
   jvm {}
-  iosArm64 {}
-  iosSimulatorArm64 {}
   sourceSets.jvmMain.configure {
     kotlin.srcDir(layout.projectDirectory.dir("../srcJvmMain"))
     resources.srcDir(layout.projectDirectory.dir("../resources"))
@@ -60,14 +58,6 @@ kotlin {
   configureAtMostOneJvmTargetOrThrow { compilations.named("test") { withJavaSourceSet { javaSourceSet ->
     javaSourceSet.java.srcDir(layout.projectDirectory.dir("../srcJvmTest"))
   } } }
-  sourceSets.iosMain.configure {
-    kotlin.srcDir(layout.projectDirectory.dir("../srcIosMain"))
-    resources.srcDir(layout.projectDirectory.dir("../resourcesIosMain"))
-  }
-  sourceSets.iosTest.configure {
-    kotlin.srcDir(layout.projectDirectory.dir("../srcIosTest"))
-    resources.srcDir(layout.projectDirectory.dir("../resourcesIosTest"))
-  }
   sourceSets.commonMain.dependencies {
     implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.core.jvm930800474.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
       isTransitive = false

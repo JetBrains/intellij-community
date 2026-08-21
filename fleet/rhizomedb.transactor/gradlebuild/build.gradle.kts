@@ -41,8 +41,6 @@ kotlin {
     "-progressive",
   )
   jvm {}
-  iosArm64 {}
-  iosSimulatorArm64 {}
   sourceSets.jvmMain.configure {
     kotlin.srcDir(layout.projectDirectory.dir("../srcJvmMain"))
     resources.srcDir(layout.projectDirectory.dir("../resources"))
@@ -66,14 +64,6 @@ kotlin {
   configureAtMostOneJvmTargetOrThrow { compilations.named("test") { withJavaSourceSet { javaSourceSet ->
     javaSourceSet.java.srcDir(layout.projectDirectory.dir("../srcJvmTest"))
   } } }
-  sourceSets.iosMain.configure {
-    kotlin.srcDir(layout.projectDirectory.dir("../srcIosMain"))
-    resources.srcDir(layout.projectDirectory.dir("../resourcesIosMain"))
-  }
-  sourceSets.iosTest.configure {
-    kotlin.srcDir(layout.projectDirectory.dir("../srcIosTest"))
-    resources.srcDir(layout.projectDirectory.dir("../resourcesIosTest"))
-  }
   sourceSets.commonMain.dependencies {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
