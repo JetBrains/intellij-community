@@ -94,16 +94,21 @@ object Git {
     try {
       ProcessExecutor(
         "git-repo-root-get",
-        workDir = null,
+        // Asked in the IDE home directory rather than the process working directory. Under Bazel the latter
+        // is the runfiles directory, from which `rev-parse` either fails outright or answers about the wrong
+        // tree, and the checkout root it yields is then used for every output path the starter writes.
+        workDir = homeDir,
         timeout = 1.minutes,
         args = listOf("git", "rev-parse", "--show-toplevel", "HEAD"),
         stdoutRedirect = stdout
       ).start()
     }
     catch (e: Exception) {
-      val workDir = Paths.get("").toAbsolutePath()
-      logError("There is a problem in detecting git repo root. Trying to acquire working dir path: '$workDir'")
-      return workDir
+      // Outside the monorepo there may be no IDE home: `PathManager` throws then, and a failed `lazy` throws
+      // again on every access, so the working directory stays the last resort.
+      val fallbackDir = runCatching { homeDir }.getOrElse { Paths.get("").toAbsolutePath() }
+      logError("There is a problem in detecting git repo root. Falling back to: '$fallbackDir'")
+      return fallbackDir
     }
 
     // Takes first line from output like this:

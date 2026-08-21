@@ -34,6 +34,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.JewelFlags
+import org.jetbrains.jewel.intui.standalone.awaitWindow
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.intui.standalone.window.Window as JewelWindow
 import org.jetbrains.jewel.ui.component.ComboBox
@@ -49,7 +50,7 @@ import org.junit.jupiter.api.Test
 
 // Headful, and deliberately not a jps_test: the app under test must keep a standalone-only runtime closure,
 // with no IntelliJ Platform classes on the classpath. Runs in CI on any agent with a display:
-//   bazel test //platform/jewel/int-ui/int-ui-standalone-tests:jewel-intUi-standalone-spectre-tests
+//   bazel test //platform/jewel/int-ui/int-ui-standalone-tests:jewel-intUi-standalone-e2e-tests
 //
 // Every assertion here is on what is actually on screen. The renderers under test put popups in their own native
 // windows, so a popup can be gone while Compose still believes it is showing, or the reverse: asserting on the
@@ -311,15 +312,7 @@ private class SpectreTestApplication(private val content: @Composable () -> Unit
         exitApplication.get()?.invoke()
     }
 
-    suspend fun awaitWindow(): ComposeWindow {
-        repeat(100) {
-            window.get()?.let {
-                return it
-            }
-            delay(100.milliseconds)
-        }
-        error("The Compose test window was not created")
-    }
+    suspend fun awaitWindow(): ComposeWindow = window.awaitWindow()
 }
 
 /** Set by both ComboBox and EditableComboBox on their popup content, including the speed searchable variant. */
