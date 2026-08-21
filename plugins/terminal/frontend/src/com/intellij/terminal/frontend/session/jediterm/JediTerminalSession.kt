@@ -32,7 +32,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 
-internal class TerminalSessionImpl(
+internal class JediTerminalSession(
   private val inputChannel: SendChannel<TerminalInputEvent>,
   outputFlow: Flow<List<TerminalOutputEvent>>,
   override val coroutineScope: CoroutineScope,
@@ -150,4 +150,4 @@ internal class TerminalSessionImpl(
   }
 }
 
-private val LOG = logger<TerminalSessionImpl>()
+private val LOG = logger<JediTerminalSession>()

@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.frontend.session.JediTermServices
 import com.intellij.terminal.frontend.session.TerminalShellIntegrationController
 import com.intellij.terminal.frontend.session.addWorkingDirectoryListener
 import com.intellij.util.asDisposable
