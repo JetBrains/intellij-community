@@ -5,16 +5,30 @@ import org.jdom.CDATA
 import org.jdom.Element
 
 /**
- * Includes bodies of content modules in the corresponding 'module' tags wrapped into CDATA.
- * @param pluginDescriptorRoot root tag of the plugin descriptor; it'll be modified in-place
- * @param contentModules maps from a name of a content module to text of its descriptor
+ * Computes the patched version of `plugin.xml` descriptor where `version` tag, `since-build` and `until-build` attributes are replaced by the provided values,
+ * and bodies of content module descriptors are inlined in the corresponding 'module' tags wrapped into CDATA.
+ * @param contentModuleDescriptors maps from a name of a content module to the text of its descriptor
  */
-internal fun embedContentModules(pluginDescriptorRoot: Element, contentModules: Map<String, ByteArray>) {
+internal fun patchPluginDescriptor(
+  originalContent: ByteArray,
+  pluginVersion: String?,
+  sinceBuild: String?,
+  untilBuild: String?,
+  contentModuleDescriptors: Map<String, ByteArray>,
+): ByteArray {
+  val pluginDescriptorRoot = JDOMUtil.load(originalContent)
+  insertVersionAndCompatibilityRange(pluginDescriptorRoot, pluginVersion = pluginVersion, sinceBuild = sinceBuild, untilBuild = untilBuild)
+  embedContentModules(pluginDescriptorRoot, contentModuleDescriptors)
+  val patchedData = JDOMUtil.write(pluginDescriptorRoot)
+  return patchedData.toByteArray()
+}
+
+private fun embedContentModules(pluginDescriptorRoot: Element, contentModuleDescriptors: Map<String, ByteArray>) {
   inlineXIncludes(pluginDescriptorRoot)
   for (contentElement in pluginDescriptorRoot.getChildren("content")) {
     for (moduleElement in contentElement.getChildren("module")) {
       val moduleName = requireNotNull(moduleElement.getAttributeValue("name")) { "'name' is required for 'module' tag in 'content' tag" }
-      val contentDescriptor = contentModules[moduleName]
+      val contentDescriptor = contentModuleDescriptors[moduleName]
       requireNotNull(contentDescriptor) { "Descriptor for content module '$moduleName' is not found" }
       val contentDescriptorRoot = JDOMUtil.load(contentDescriptor)
       inlineXIncludes(contentDescriptorRoot)
@@ -48,7 +62,7 @@ private fun isXIncludeElement(element: Element): Boolean {
   return element.name == "include" && element.namespace?.uri == XI_INCLUDE_URI
 }
 
-internal fun insertVersionAndCompatibilityRange(rootElement: Element, pluginVersion: String?, sinceBuild: String?, untilBuild: String?) {
+private fun insertVersionAndCompatibilityRange(rootElement: Element, pluginVersion: String?, sinceBuild: String?, untilBuild: String?) {
   if (sinceBuild != null || untilBuild != null) {
     val versionElement = getOrCreateTag(rootElement, "idea-version")
     if (sinceBuild != null) {

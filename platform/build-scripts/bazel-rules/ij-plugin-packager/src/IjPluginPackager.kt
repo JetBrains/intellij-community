@@ -1,6 +1,5 @@
 package com.intellij.tools.build.bazel.ijPluginPackager
 
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.pluginSystem.parser.impl.elements.ContentModuleElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
@@ -117,24 +116,19 @@ object IjPluginPackager {
 
     val descriptorOutputJar = libDirectory.resolve(generateNameForPluginDescriptorJar(descriptorModuleArgument.name))
     PluginJarPackager(descriptorOutputJar).use {
+      val patchedPluginXmlContent = patchPluginDescriptor(
+        originalContent = originalPluginXmlContent,
+        pluginVersion = substituteBuildNumber(pluginVersion, buildNumberFromFile),
+        sinceBuild = substituteBuildNumber(sinceBuild, buildNumberFromFile),
+        untilBuild = substituteBuildNumber(untilBuild, buildNumberFromFile),
+        contentModuleDescriptors = contentModuleDescriptors
+      )
+      it.addFile(PLUGIN_DESCRIPTOR_ENTRY_NAME, patchedPluginXmlContent)
       it.addEntriesFromJar(descriptorJar) { filePath, dataFetcher ->
-        if (!isIncludedFromModuleOutput(filePath)) {
+        if (!isIncludedFromModuleOutput(filePath) || filePath == PLUGIN_DESCRIPTOR_ENTRY_NAME) {
           return@addEntriesFromJar null
         }
-        val data = dataFetcher()
-        if (filePath == PLUGIN_DESCRIPTOR_ENTRY_NAME) {
-          val pluginDescriptorRoot = JDOMUtil.load(data.toByteArray())
-          insertVersionAndCompatibilityRange(
-            pluginDescriptorRoot,
-            pluginVersion = substituteBuildNumber(pluginVersion, buildNumberFromFile),
-            sinceBuild = substituteBuildNumber(sinceBuild, buildNumberFromFile),
-            untilBuild = substituteBuildNumber(untilBuild, buildNumberFromFile),
-          )
-          embedContentModules(pluginDescriptorRoot, contentModuleDescriptors)
-          val patchedData = JDOMUtil.write(pluginDescriptorRoot)
-          return@addEntriesFromJar ByteBuffer.wrap(patchedData.toByteArray())
-        }
-        data
+        dataFetcher()
       }
     }
     pluginContentYamlWriter?.addModule(descriptorOutputJar, descriptorModuleArgument.name)

@@ -23,6 +23,11 @@ internal class PluginJarPackager(outputJarPath: Path) : AutoCloseable {
     fun patchEntry(filePath: String, dataFetcher: () -> ByteBuffer): ByteBuffer?
   }
 
+  fun addFile(relativePath: String, content: ByteArray) {
+    packageIndexBuilder.addFile(relativePath)
+    zipWriter.uncompressedData(relativePath, content)
+  }
+
   fun addEntriesFromJar(inputJar: Path, entryPatcher: ZipEntryPatcher) {
     readZipFile(inputJar) { filePath, dataFetcher ->
       val patchedData = entryPatcher.patchEntry(filePath, dataFetcher)
