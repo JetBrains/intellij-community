@@ -218,9 +218,7 @@ def fleet_wasmjs_module(
             # calls skia synchronously, so await its readiness promise before the entrypoint runs
             # (the same await production does in fleet.dock.desktop's WebFontLoading).
             awaited_imports = {"skiko.mjs": "awaitSkiko"} if test_skiko_runtime else {},
-            # Initial rollout is opt-in: run explicitly with the target label; the tag is
-            # removed per-module (or globally) once modules are validated in CI.
-            tags = ["manual"],
+            tags = ["fleet-browser-test"],
             size = test_size,
             timeout = test_timeout,
         )
