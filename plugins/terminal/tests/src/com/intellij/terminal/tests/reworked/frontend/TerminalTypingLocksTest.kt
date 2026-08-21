@@ -13,6 +13,7 @@ import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.terminal.frontend.view.impl.createTerminalKeyEventDispatcherForTests
 import com.intellij.terminal.tests.reworked.util.LockKind
 import com.intellij.terminal.tests.reworked.util.TerminalEdtLocksSpy
+import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil.assumeCommandBlockShellIntegration
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -22,6 +23,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
+import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
@@ -93,6 +95,9 @@ internal class TerminalTypingLocksTest : BasePlatformTestCase() {
   }
 
   private fun withTerminalTestFixture(test: suspend (TerminalTestFixture) -> Unit) {
+    val shellPath = TerminalProjectOptionsProvider.getInstance(project).shellPath
+    assumeCommandBlockShellIntegration(listOf(shellPath))
+
     timeoutRunBlocking(20.seconds, context = Dispatchers.EDT) {
       ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask(id = TerminalToolWindowFactory.TOOL_WINDOW_ID))
 
