@@ -27,10 +27,8 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.imageio.ImageIO
 import kotlin.concurrent.thread
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.delay
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
@@ -42,7 +40,7 @@ import org.jetbrains.jewel.ui.component.Text
 import org.junit.jupiter.api.Test
 
 // Headful, standalone-only. Spectre cannot see the IJP bridge or the Darcula LaF (JEWEL-1397).
-//   bazel test //platform/jewel/int-ui/int-ui-standalone-tests:jewel-intUi-standalone-spectre-tests
+//   bazel test //platform/jewel/int-ui/int-ui-standalone-tests:jewel-intUi-standalone-e2e-tests
 //
 // Assertions are on framebuffer pixels in each control's bounds. Compose state alone would not
 // catch a missing Error/Warning outline.
@@ -146,15 +144,7 @@ private class ValidationOutlineApplication(private val isDark: Boolean) {
         exitApplication.get()?.invoke()
     }
 
-    suspend fun awaitWindow(): ComposeWindow {
-        repeat(100) {
-            window.get()?.let {
-                return it
-            }
-            delay(100.milliseconds)
-        }
-        error("The Compose test window was not created")
-    }
+    suspend fun awaitWindow(): ComposeWindow = window.awaitWindow()
 }
 
 private suspend fun waitForTaggedNode(automator: ComposeAutomator, tag: String) =
