@@ -311,6 +311,16 @@ public abstract class HighLevelSmartCompletionHandlerTestGenerated extends Abstr
             runTest("../../completion/testData/handlers/smart/ArrayAccessTrailingComma3.kt");
         }
 
+        @TestMetadata("ArrayAccessTrailingComma4.kt")
+        public void testArrayAccessTrailingComma4() throws Exception {
+            runTest("../../completion/testData/handlers/smart/ArrayAccessTrailingComma4.kt");
+        }
+
+        @TestMetadata("ArrayAccessTwoIndices.kt")
+        public void testArrayAccessTwoIndices() throws Exception {
+            runTest("../../completion/testData/handlers/smart/ArrayAccessTwoIndices.kt");
+        }
+
         @TestMetadata("ArrayClassLiteral.kt")
         public void testArrayClassLiteral() throws Exception {
             runTest("../../completion/testData/handlers/smart/ArrayClassLiteral.kt");
@@ -914,6 +924,11 @@ public abstract class HighLevelSmartCompletionHandlerTestGenerated extends Abstr
         @TestMetadata("SetWithBrackets.kt")
         public void testSetWithBrackets() throws Exception {
             runTest("../../completion/testData/handlers/smart/SetWithBrackets.kt");
+        }
+
+        @TestMetadata("SetWithBracketsGetAndSetLastIndex.kt")
+        public void testSetWithBracketsGetAndSetLastIndex() throws Exception {
+            runTest("../../completion/testData/handlers/smart/SetWithBracketsGetAndSetLastIndex.kt");
         }
 
         @TestMetadata("TabReplaceComma1.kt")
