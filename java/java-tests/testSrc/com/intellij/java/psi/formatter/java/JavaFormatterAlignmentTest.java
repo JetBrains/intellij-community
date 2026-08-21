@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -31,6 +31,20 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "                .foo();",
       "Holder.INSTANCE\n" +
       "        .foo();"
+    );
+  }
+
+  public void testDanglingDotInAlignedMethodCallChain() {
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    doMethodTest(
+      """
+        foo.bar()
+        .
+        baz();""",
+      """
+        foo.bar()
+           .
+           baz();"""
     );
   }
 
