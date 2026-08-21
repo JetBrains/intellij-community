@@ -42,6 +42,9 @@
     <notificationGroup id="Incompatible codegen api versions"
                        displayType="BALLOON"
                        key="notification.workspace.incompatible.codegen.api.versions"/>
+    <notificationGroup id="Different codegen api versions"
+                       displayType="BALLOON"
+                       key="notification.workspace.compatible.but.different.codegen.api.versions"/>
     <notificationGroup id="Workspace code generation not available"
                        displayType="BALLOON"
                        key="notification.workspace.code.generation.not.available"/>
