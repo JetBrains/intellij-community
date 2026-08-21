@@ -10,9 +10,11 @@ import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
@@ -35,7 +37,9 @@ import com.intellij.python.sdk.frontend.evolution.components.EvoTreeStaticNodeEl
 import com.intellij.ui.AnimatedIcon
 import com.intellij.util.Function
 import com.intellij.util.IconUtil
+import com.intellij.util.PlatformUtils
 import com.intellij.util.messages.MessageBusConnection
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 import kotlinx.coroutines.CoroutineScope
@@ -196,9 +200,7 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   }
 
   override fun getWidgetState(file: VirtualFile?): WidgetState {
-    // The widget speaks for the module of the file in front of the user, so with no file — or none owning it — there is
-    // nothing to speak for.
-    val module = file?.let { findModule(it) } ?: return hidden()
+    val module = moduleFor(file) ?: return hidden()
     val moduleName = module.name
 
     val current = cachedFor(module)
@@ -384,6 +386,39 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   override fun ID(): String = ID
 
   override fun createInstance(project: Project): StatusBarWidget = EvoPySdkStatusBarWidget(project, scope)
+
+  /**
+   * The module the widget speaks for: the one owning [file], falling back in PyCharm to the project's root module.
+   *
+   * That fallback is what keeps the widget in the status bar when the focused file belongs to no module — a file dragged
+   * in from outside the project, a scratch — or when no file is focused at all. Without it the widget vanished until a
+   * module's file was focused again, and the interpreter could be neither seen nor switched (PY-90708).
+   *
+   * PyCharm only, deliberately: there the project *is* the Python project, so the root module's interpreter is the one
+   * the user means. In IDEA a Python module is one of many, and claiming one for an unrelated file would hang a Python
+   * interpreter widget over, say, a Java file.
+   */
+  private fun moduleFor(file: VirtualFile?): Module? {
+    file?.let { findModule(it) }?.let { return it }
+    if (!PlatformUtils.isPyCharm()) return null
+    return rootModule()
+  }
+
+  /**
+   * The module rooted *at* the project root — not merely the first one the model lists, which in a multi-module project
+   * would be an arbitrary answer for a file that belongs to none of them.
+   *
+   * "Root module" is defined the same way `preserveRootModule` in `python-pyproject` defines it: the module one of whose
+   * content roots is the project base path. [Project.getBasePath] is that same path — both it and
+   * `IProjectStore.projectBasePath` return `storeDescriptor.historicalProjectBasePath` — so the two agree on which
+   * module this is. `null` when the project root belongs to no module, which leaves the widget hidden as before.
+   */
+  private fun rootModule(): Module? {
+    val projectRoot = project.basePath?.let { Path.of(it) } ?: return null
+    return ModuleManager.getInstance(project).modules.firstOrNull { module ->
+      ModuleRootManager.getInstance(module).contentRoots.any { it.toNioPathOrNull() == projectRoot }
+    }
+  }
 
   private fun findModule(file: VirtualFile): Module? =
     ModuleManager.getInstance(project).modules.firstOrNull { it.moduleContentScope.contains(file) }
