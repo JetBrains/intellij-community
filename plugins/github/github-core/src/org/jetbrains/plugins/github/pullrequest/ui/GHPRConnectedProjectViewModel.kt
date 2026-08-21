@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.computeEmitting
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.collaboration.util.onFailure
 import com.intellij.openapi.components.service
@@ -14,8 +15,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.remote.hosting.findHostedRemoteBranchTrackedByCurrent
 import git4idea.workingTrees.GitWorkingTreesService
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -209,11 +213,19 @@ abstract class GHPRConnectedProjectViewModelBase(
     cs.launch {
       viewPullRequest(id, true)
       val changesData = dataContext.dataProviderRepository.getDataProvider(id, cs).changesData
-      val changes = runCatching {
-        changesData.loadChanges().also { changesData.ensureAllRevisionsFetched() }.changes
-      }.onFailure {
-        LOG.warn("Failed to load changes for PR ${id.number} to open in diff", it)
-      }.getOrNull()
+      val changes = try {
+        runCatchingUser {
+          changesData.loadChanges().also { changesData.ensureAllRevisionsFetched() }.changes
+        }.onFailure {
+          LOG.warn("Failed to load changes for PR ${id.number} to open in diff", it)
+        }.getOrNull()
+      }
+      catch (ce: CancellationException) {
+        // Changes loader may be cancelled by an unrelated concurrent reload; don't skip opening the diff tab
+        // for that. ensureActive() still lets real ambient cancellation propagate.
+        currentCoroutineContext().ensureActive()
+        null
+      }
       if (!changes.isNullOrEmpty()) {
         acquireDiffViewModel(id, cs).showDiffFor(ChangesSelection.Precise(changes, 0))
       }

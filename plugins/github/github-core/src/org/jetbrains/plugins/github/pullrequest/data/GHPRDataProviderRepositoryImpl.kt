@@ -108,7 +108,9 @@ internal class GHPRDataProviderRepositoryImpl(
     val commentsData = GHPRCommentsDataProviderImpl(commentService, id, messageBus)
 
     providerCs.launch {
-      detailsData.loadedDetailsState.distinctUntilChangedBy { it?.refs }.drop(1).collect {
+      // filterNotNull(): without it, the first details load (null -> details) itself counts as a "refs
+      // changed" transition, spuriously cancelling a changes load already in flight for those same refs.
+      detailsData.loadedDetailsState.filterNotNull().distinctUntilChangedBy { it.refs }.drop(1).collect {
         changesData.signalChangesNeedReload()
         viewedStateData.signalViewedStateNeedsReload()
       }
