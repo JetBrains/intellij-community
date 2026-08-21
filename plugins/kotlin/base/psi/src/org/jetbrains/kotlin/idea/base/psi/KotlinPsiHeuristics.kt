@@ -50,7 +50,7 @@ object KotlinPsiHeuristics {
 
     @JvmStatic
     fun unwrapImportAlias(type: KtUserType, aliasName: String): Collection<String> {
-        val file = type.containingKotlinFileStub?.psi as? KtFile ?: return emptyList()
+        val file = type.greenStub?.containingFileStub?.psi as? KtFile ?: return emptyList()
         return unwrapImportAlias(file, aliasName)
     }
 

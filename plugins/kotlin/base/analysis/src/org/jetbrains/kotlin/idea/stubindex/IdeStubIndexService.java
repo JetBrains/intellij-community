@@ -3,18 +3,21 @@
 package org.jetbrains.kotlin.idea.stubindex;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.IndexSink;
+import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.KtNodeTypes;
-import org.jetbrains.kotlin.idea.base.psi.KotlinStubUtils;
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.load.java.JvmAbi;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.KtAnnotationEntry;
 import org.jetbrains.kotlin.psi.KtClassOrObject;
+import org.jetbrains.kotlin.psi.KtFile;
 import org.jetbrains.kotlin.psi.KtNamedFunction;
 import org.jetbrains.kotlin.psi.KtParameter;
 import org.jetbrains.kotlin.psi.KtProperty;
@@ -24,7 +27,6 @@ import org.jetbrains.kotlin.psi.stubs.KotlinClassOrObjectStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinClassStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinFileStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinFunctionStub;
-import org.jetbrains.kotlin.psi.stubs.KotlinImportDirectiveStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinModifierListStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinObjectStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinParameterStub;
@@ -36,6 +38,7 @@ import org.jetbrains.kotlin.psi.stubs.elements.StubIndexService;
 import org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.List;
 
 public class IdeStubIndexService extends StubIndexService {
@@ -270,13 +273,13 @@ public class IdeStubIndexService extends StubIndexService {
         }
         sink.occurrence(KotlinAnnotationsIndex.Helper.getIndexKey(), name);
 
-        KotlinFileStub fileStub = KotlinStubUtils.getContainingKotlinFileStub(stub);
+        PsiFileStub<?> fileStub = stub.getContainingFileStub();
         if (fileStub != null) {
-            List<KotlinImportDirectiveStub> aliasImportStubs = fileStub.findImportsByAlias(name);
-            for (KotlinImportDirectiveStub importStub : aliasImportStubs) {
-                FqName importedFqName = importStub.getImportedFqName();
-                if (importedFqName != null) {
-                    sink.occurrence(KotlinAnnotationsIndex.Helper.getIndexKey(), importedFqName.shortName().asString());
+            PsiFile file = fileStub.getPsi();
+            if (file instanceof KtFile) {
+                Collection<@NotNull String> shortImportedName = KotlinPsiHeuristics.unwrapImportAlias((KtFile) file, name);
+                for (String importedName : shortImportedName) {
+                    sink.occurrence(KotlinAnnotationsIndex.Helper.getIndexKey(), importedName);
                 }
             }
         }
