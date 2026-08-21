@@ -74,6 +74,10 @@ sealed interface VersionedUserDataFMap : KeyFMap {
    */
   fun keyAt(index: Int): Key<*>?
 
+  /**
+   * Assuming that structure is represented as an array, returns the map stored at the provided [index]
+   * This function is used for iterating over the keys in the map.
+   */
   fun payloadMapAt(index: Int): VersionedPayloadMap
 
   fun findPayloadMap(key: Key<*>): VersionedPayloadMap?
