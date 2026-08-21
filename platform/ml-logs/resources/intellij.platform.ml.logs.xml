@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.mlapi.core"/>
     <module name="intellij.platform.statistics"/>
   </dependencies>
   <!-- endregion -->

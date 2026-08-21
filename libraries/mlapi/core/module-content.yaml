@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.mlapi.core.jar
+  modules:
+  - name: intellij.libraries.mlapi.core
+    libraries:
+      jetbrains.mlapi.core:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0/mlapi-core-0.jar

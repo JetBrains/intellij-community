@@ -1176,6 +1176,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/microba/intellij.libraries.microba.iml" filepath="$PROJECT_DIR$/libraries/microba/intellij.libraries.microba.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/miglayout-swing/intellij.libraries.miglayout.swing.iml" filepath="$PROJECT_DIR$/libraries/miglayout-swing/intellij.libraries.miglayout.swing.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/misc/plugin/intellij.libraries.misc.plugin.iml" filepath="$PROJECT_DIR$/libraries/misc/plugin/intellij.libraries.misc.plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/mlapi/core/intellij.libraries.mlapi.core.iml" filepath="$PROJECT_DIR$/libraries/mlapi/core/intellij.libraries.mlapi.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/mockito/intellij.libraries.mockito.iml" filepath="$PROJECT_DIR$/libraries/mockito/intellij.libraries.mockito.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/mockito-kotlin/intellij.libraries.mockito.kotlin.iml" filepath="$PROJECT_DIR$/libraries/mockito-kotlin/intellij.libraries.mockito.kotlin.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/mockk/intellij.libraries.mockk.iml" filepath="$PROJECT_DIR$/libraries/mockk/intellij.libraries.mockk.iml" />

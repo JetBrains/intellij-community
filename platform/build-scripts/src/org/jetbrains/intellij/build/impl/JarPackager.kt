@@ -133,7 +133,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "jetbrains.kotlin.doctor.kdoctor.checks",
   "jetbrains.mlapi.catboost",
   "jetbrains.mlapi.catboost.shadow.need.slf4j",
-  "jetbrains.mlapi.core",
   "jetbrains.patronus.config",
   "jgrapht.core",
   "jooq.joox",

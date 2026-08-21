@@ -12,6 +12,6 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
-    <orderEntry type="library" exported="" name="jetbrains.mlapi.core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.mlapi.core" exported="" />
   </component>
 </module>

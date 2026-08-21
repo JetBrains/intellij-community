@@ -573,6 +573,7 @@ libraries/memoryfilesystem
 libraries/microba
 libraries/miglayout-swing
 libraries/misc/plugin
+libraries/mlapi/core
 libraries/mockito
 libraries/mockito-kotlin
 libraries/mockk
