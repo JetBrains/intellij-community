@@ -169,9 +169,8 @@ fun KtNamedFunction.getKMPGradleConfigurationName(runTask: KotlinJvmRunTaskData)
     "${getConfigurationName()} [${runTask.targetName}]"
 
 fun KtNamedFunction.getConfigurationName(): String {
-    val gradleSubprojectName = ReadAction
-        .computeBlocking<Module?, Throwable> { module }
-        ?.getSubprojectNameOfGradleRoot()
+    val module = ReadAction.computeBlocking<Module?, Throwable> { module }
+    val gradleBasedConfigurationName = module?.getSubprojectNameOfGradleRoot() ?: module?.getGradleRootProjectName()
 
     val fileName = ReadAction
         .computeBlocking<String?, Throwable> { containingKtFile.virtualFile?.nameWithoutExtension }
@@ -181,7 +180,7 @@ fun KtNamedFunction.getConfigurationName(): String {
         .computeBlocking<String?, Throwable> { name }
         ?.takeUnless { it.equals("main", ignoreCase = true) }
 
-    return listOfNotNull(gradleSubprojectName, fileName, functionName).joinToString(".")
+    return listOfNotNull(gradleBasedConfigurationName, fileName, functionName).joinToString(".")
 }
 
 @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
@@ -196,6 +195,8 @@ internal fun mainClassScriptParameter(function: KtFunction): String = "-DmainCla
  */
 private fun Module.getSubprojectNameOfGradleRoot(): String? =
     name.split(".").takeIf { it.size >= 3 }?.run { subList(1, lastIndex) }?.joinToString(".")
+
+private fun Module.getGradleRootProjectName(): String = this.name.split(".").first()
 
 fun configureKmpJvmRunConfigurationFromMainFunction(
     configuration: GradleRunConfiguration,
