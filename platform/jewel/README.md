@@ -2,12 +2,12 @@
 [![Licensed under Apache 2.0](https://img.shields.io/github/license/JetBrains/jewel?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRiIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMiIgZD0ibTMgNiAzIDFtMCAwLTMgOWE1LjAwMiA1LjAwMiAwIDAgMCA2LjAwMSAwTTYgN2wzIDlNNiA3bDYtMm02IDIgMy0xbS0zIDEtMyA5YTUuMDAyIDUuMDAyIDAgMCAwIDYuMDAxIDBNMTggN2wzIDltLTMtOS02LTJtMC0ydjJtMCAxNlY1bTAgMTZIOW0zIDBoMyIvPjwvc3ZnPg==)](https://github.com/JetBrains/intellij-community/blob/master/LICENSE.txt)
 [![Latest release](https://img.shields.io/maven-central/v/org.jetbrains.jewel/jewel-int-ui-standalone?label=Latest%20release&color=orange)](RELEASE%20NOTES.md)
 
-# Jewel: a Compose for Desktop theme
+# Jewel: a Compose Multiplatform desktop theme
 
 <img alt="Jewel logo" src="art/jewel-logo.svg" width="20%"/>
 
-Jewel aims at recreating the IntelliJ Platform's _New UI_ Swing Look and Feel in Compose for Desktop, providing a
-desktop-optimized theme and set of components.
+Jewel aims at recreating the IntelliJ Platform's _New UI_ Swing Look and Feel in Compose Multiplatform for desktop,
+providing a desktop-optimized theme and set of components.
 
 **Website: [jewel-ui.dev](https://jewel-ui.dev)**
 
@@ -30,10 +30,10 @@ desktop-optimized theme and set of components.
 
 > [!WARNING]
 >
-> Writing 3rd party IntelliJ Plugins in Compose for Desktop is currently **not officially supported** by the IntelliJ
+> Writing 3rd party IntelliJ Plugins in Compose Multiplatform is currently **not officially supported** by the IntelliJ
 > Platform. It should work, but your mileage may vary, and if things break you're on your own.
 
-Jewel provides an implementation of the IntelliJ Platform themes that can be used in any Compose for Desktop
+Jewel provides an implementation of the IntelliJ Platform themes that can be used in any Compose Multiplatform desktop
 application. Additionally, it has a Swing LaF Bridge that only works in the IntelliJ Platform (i.e., used to create IDE
 plugins), but automatically mirrors the current Swing LaF into Compose for a native-looking, consistent UI.
 
@@ -42,7 +42,7 @@ plugins), but automatically mirrors the current Swing LaF into Compose for a nat
 > <img src="https://i3.ytimg.com/vi/2H1jMn_SGcA/hqdefault.jpg?" align="left" width="150" />
 > </a>
 >
-> If you want to learn more about Jewel and Compose for Desktop and why they're a great, modern solution for your
+> If you want to learn more about Jewel and Compose Multiplatform and why they're a great, modern solution for your
 > desktop
 > UI needs, check out [this talk](https://www.youtube.com/watch?v=2H1jMn_SGcA) by Jewel
 > contributors Sebastiano and Chris.
@@ -56,7 +56,7 @@ plugins), but automatically mirrors the current Swing LaF into Compose for a nat
 
 Jewel can be used in two scenarios:
 
-1. A **standalone** Compose for Desktop app
+1. A **standalone** Compose Multiplatform desktop app
 2. An **IntelliJ Platform** plugin
 
 The setup differs significantly between the two.
@@ -182,8 +182,8 @@ The project is split in modules:
    * `ui-tests` contains all the tests for the `ui` module
 3. `decorated-window` contains the custom window decoration for the JetBrains Runtime, along with its Int UI styling
 4. `int-ui` contains two modules:
-   * `int-ui-standalone` has a standalone version of the Int UI styling values that can be used in any Compose for
-     Desktop app
+   * `int-ui-standalone` has a standalone version of the Int UI styling values that can be used in any Compose
+     Multiplatform desktop app
    * `int-ui-decorated-window` is an older module kept only for compatibility. It carries no code of its own and
      simply brings in `decorated-window`; new code should depend on `decorated-window` directly
 5. `ide-laf-bridge` contains the Swing LaF bridge to use in IntelliJ Platform plugins (see more below)
@@ -193,7 +193,8 @@ The project is split in modules:
    * `ide-laf-bridge-styling` contains the IntelliJ Platform bridge theming for the Markdown renderer
    * `int-ui-standalone-styling` contains the standalone Int UI theming for the Markdown renderer
 7. `samples` contains the example apps, which showcase the available components:
-   * `standalone` is a regular CfD app, using the standalone theme definitions and custom window decoration. See DevKit plugin for demo inside IntelliJ IDEA plugin.
+   * `standalone` is a regular Compose Multiplatform desktop app, using the standalone theme definitions and custom
+     window decoration. See DevKit plugin for demo inside IntelliJ IDEA plugin.
    * `showcase` contains the shared component showcase code, used by both the IDE plugin and the standalone sample
 
 ## Branching strategy and IJ Platforms
@@ -217,14 +218,15 @@ as `[mainTag]-xxx`, and used to publish the artifacts for that major IJP version
 
 > [!CAUTION]
 > When you target Android Studio, you might encounter issues due to Studio shipping its own (older) version of Jewel
-> and Compose for Desktop. If you want to target Android Studio, you'll need to shadow the CfD and Jewel dependencies
+> and Compose Multiplatform. If you want to target Android Studio, you'll need to shadow the Compose Multiplatform and
+> Jewel dependencies
 > until that dependency isn't leaked on the classpath by Studio anymore. You can look at how the
 > [Package Search](https://github.com/JetBrains/package-search-intellij-plugin) plugin implements shadowing.
 
 ## Int UI Standalone theme
 
-The standalone theme can be used in any Compose for Desktop app. You use it as a normal theme, and you can customise it
-to your heart's content. By default, it matches the official Int UI specs.
+The standalone theme can be used in any Compose Multiplatform desktop app. You use it as a normal theme, and you can
+customise it to your heart's content. By default, it matches the official Int UI specs.
 
 For an example on how to set up a standalone app, you can refer to
 the [`standalone` sample](samples/standalone/build.gradle.kts).
@@ -455,8 +457,8 @@ val myLabelFamily = JBFont.label().asComposeFontFamily()
 
 ## Swing interoperability
 
-As this is Compose for Desktop, you get a good degree of interoperability with Swing. To avoid glitches and z-order
-issues, you should enable the
+As this is Compose Multiplatform for desktop, you get a good degree of interoperability with Swing. To avoid glitches
+and z-order issues, you should enable the
 [experimental Swing rendering pipeline](https://blog.jetbrains.com/kotlin/2023/08/compose-multiplatform-1-5-0-release/#enhanced-swing-interop)
 before you initialize Compose content.
 
@@ -471,7 +473,7 @@ you. However, if you want to also enable it in other scenarios and in standalone
 
 ## Written with Jewel
 
-Here is a small selection of projects that use Compose for Desktop and Jewel:
+Here is a small selection of projects that use Compose Multiplatform and Jewel:
 
 * [Junie](https://jetbrains.com/junie)
 * [Journeys](https://developer.android.com/studio/preview/gemini/journeys)
