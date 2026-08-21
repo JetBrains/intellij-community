@@ -136,13 +136,18 @@ private class SurefireProcessProxy(
   private val testModuleDirectory: String,
 ) : ProcessHandler() {
 
+  // Filters out [IJ]-... Maven spy protocol messages (normally consumed by MavenHandlerFilterSpyWrapper).
+  private val spyFilter = MavenSimpleConsoleEventsBuffer.Builder { text, outputType ->
+    notifyTextAvailable(text, outputType)
+  }.build()
+
   init {
     mavenHandler.addProcessListener(object : ProcessListener {
+      @Suppress("UNCHECKED_CAST")
       override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
         // Forward Maven build output (compilation, downloading, etc.) to the proxy so it
-        // appears in the SM console.  Text arriving before testSuiteStarted is attributed
-        // to the root "Test Results" node, which is exactly where the user expects it.
-        notifyTextAvailable(event.text, outputType)
+        // appears in the SM console, filtering out internal spy-protocol lines.
+        spyFilter.addText(event.text, outputType as Key<Any>)
       }
 
       override fun processTerminated(event: ProcessEvent) {
