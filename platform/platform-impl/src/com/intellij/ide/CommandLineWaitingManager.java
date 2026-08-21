@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.ide.lightEdit.LightEditService;
@@ -122,8 +122,24 @@ public final class CommandLineWaitingManager {
     if (future == null) {
       return;
     }
+    // A `--wait` caller (e.g. an $EDITOR/$VISUAL such as `git commit`) reads the file as soon as the future completes.
+    // Flush pending edits to disk first, otherwise closing the editor tab without an explicit save returns stale
+    // content to the caller (IJPL-35398).
+    saveDocumentIfUnsaved(fileOrProject);
     LOG.debug("Finished waiting for the " + fileOrProject);
     future.complete(CliResult.OK);
+  }
+
+  private static void saveDocumentIfUnsaved(@NotNull Object fileOrProject) {
+    if (!(fileOrProject instanceof VirtualFile file)) {
+      return;
+    }
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    Document document = fileDocumentManager.getDocument(file);
+    if (document == null || !fileDocumentManager.isDocumentUnsaved(document)) {
+      return;
+    }
+    ApplicationManager.getApplication().runWriteAction(() -> fileDocumentManager.saveDocument(document));
   }
 
   static final class MyNotification implements EditorNotificationProvider, DumbAware {
