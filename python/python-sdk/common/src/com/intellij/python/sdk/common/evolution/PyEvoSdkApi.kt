@@ -205,6 +205,9 @@ data class PyInterpreterDto(
    * what each action gates on in `update()` and acts on in `actionPerformed`. Naming it here — instead of whatever the
    * editor happens to show, which has nothing to do with the interpreter — is what keeps a conda `environment.yml`
    * action from firing against a `pyproject.toml`, and lets the applicable rows work whatever file is open.
+   *
+   * `null` is a statement, not a gap: the popup masks the file keys outright, so an interpreter with no dependency file
+   * shows no package-manager rows regardless of what is open, rather than borrowing the editor's file.
    */
   val dependencyFileUrl: @NonNls String? = null,
 )

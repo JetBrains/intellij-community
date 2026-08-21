@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -84,6 +85,15 @@ private const val SHORTCUTS_NODE_ID: String = "shortcuts"
 
 /** The platform group holding every tool's package-manager actions (uv lock/sync, conda export/update, …). */
 private const val PACKAGE_MANAGER_ACTIONS_GROUP: String = "PythonPackageManagerActions"
+
+/**
+ * Puts [value] under [key], or masks [key] with an explicit null when [value] is absent.
+ *
+ * [SimpleDataContext.Builder.add] silently ignores a null value, which leaves the key falling through to the parent
+ * context — the opposite of what a caller supplying null means. This states the absence instead.
+ */
+private fun <T : Any> SimpleDataContext.Builder.addOrNull(key: DataKey<T>, value: T?): SimpleDataContext.Builder =
+  if (value == null) addNull(key) else add(key, value)
 
 internal class EvoPySdkSwitchPopupFactory(
   val project: Project,
@@ -300,16 +310,22 @@ internal class EvoPySdkSwitchPopupFactory(
    * `actionPerformed`. Left alone, that file would be whatever the editor happens to show, which for the status bar is
    * unrelated to the interpreter: conda's "export to environment.yml" would then overwrite an open `pyproject.toml`.
    * Naming the dependency file here makes the rows both correct and usable whatever is open.
+   *
+   * The file keys are therefore *always* decided here, never inherited — an interpreter with no dependency file masks
+   * them with an explicit null instead of leaving the editor's file showing through. Otherwise exactly the interpreters
+   * with nothing to act on are the ones whose rows would be driven by the open editor: they would appear only while a
+   * matching file happens to be open, and act on that unrelated file — `PipSetDefaultRequirementsAction` would adopt a
+   * stranger's `requirements.txt` as the SDK default.
    */
   private fun popupDataContext(context: DataContext): DataContext {
-    val file = currentInterpreter?.dependencyFileUrl?.let { VirtualFileManager.getInstance().findFileByUrl(it) } ?: return context
+    val file = currentInterpreter?.dependencyFileUrl?.let { VirtualFileManager.getInstance().findFileByUrl(it) }
     // Called while opening the popup, i.e. on the EDT, which already holds read access.
-    val psiFile = PsiManager.getInstance(project).findFile(file)
+    val psiFile = file?.let { PsiManager.getInstance(project).findFile(it) }
     return SimpleDataContext.builder()
       .setParent(context)
-      .add(CommonDataKeys.VIRTUAL_FILE, file)
+      .addOrNull(CommonDataKeys.VIRTUAL_FILE, file)
       // PythonPackageManagerAction.actionPerformed bails out without a PSI file (it restarts the daemon on it).
-      .apply { psiFile?.let { add(CommonDataKeys.PSI_FILE, it) } }
+      .addOrNull(CommonDataKeys.PSI_FILE, psiFile)
       .build()
   }
 
