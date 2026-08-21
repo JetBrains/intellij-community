@@ -9,9 +9,18 @@ val extension: StudioVersionsGenerationExtension =
 
 val task =
     tasks.register<AndroidStudioReleasesGeneratorTask>("generateAndroidStudioReleasesList") {
-        val className = ClassName.bestGuess(STUDIO_RELEASES_OUTPUT_CLASS_NAME)
-        val filePath = className.packageName.replace(".", "/") + "/${className.simpleName}.kt"
-        outputFile = extension.targetDir.file(filePath)
+        // Default output path mirrors the package of the generated class; override `outputFile`
+        // directly when the target source tree doesn't mirror its package structure.
+        outputFile =
+            extension.targetDir.file(
+                extension.outputClassName.map {
+                    val className = ClassName.bestGuess(it)
+                    className.packageName.replace(".", "/") + "/${className.simpleName}.kt"
+                }
+            )
         dataUrl = extension.dataUrl
         resourcesDirs = extension.resourcesDirs
+        outputClassName = extension.outputClassName
+        modelPackage = extension.modelPackage
+        indent = extension.indent
     }

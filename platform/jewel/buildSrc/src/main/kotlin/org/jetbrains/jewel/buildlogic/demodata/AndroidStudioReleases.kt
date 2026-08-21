@@ -56,10 +56,22 @@ open class StudioVersionsGenerationExtension(project: Project) {
 
     val dataUrl: Property<String> =
         project.objects.property<String>().convention("https://jb.gg/android-studio-releases-list.json")
+
+    /** Fully-qualified name of the generated object. Its package also drives the default output path. */
+    val outputClassName: Property<String> =
+        project.objects.property<String>().convention(STUDIO_RELEASES_OUTPUT_CLASS_NAME)
+
+    /** Package that holds the `ContentItem` and `ContentSource` types the generated code refers to. */
+    val modelPackage: Property<String> =
+        project.objects.property<String>().convention(STUDIO_RELEASES_DEFAULT_MODEL_PACKAGE)
+
+    /** Indentation unit used by the generated file. */
+    val indent: Property<String> = project.objects.property<String>().convention("    ")
 }
 
-internal const val STUDIO_RELEASES_OUTPUT_CLASS_NAME =
-    "org.jetbrains.jewel.samples.ideplugin.releasessample.AndroidStudioReleases"
+internal const val STUDIO_RELEASES_DEFAULT_MODEL_PACKAGE = "org.jetbrains.jewel.samples.ideplugin.releasessample"
+
+internal const val STUDIO_RELEASES_OUTPUT_CLASS_NAME = "$STUDIO_RELEASES_DEFAULT_MODEL_PACKAGE.AndroidStudioReleases"
 
 open class AndroidStudioReleasesGeneratorTask : DefaultTask() {
     @get:OutputFile val outputFile: RegularFileProperty = project.objects.fileProperty()
@@ -67,6 +79,12 @@ open class AndroidStudioReleasesGeneratorTask : DefaultTask() {
     @get:Input val dataUrl = project.objects.property<String>()
 
     @get:Input val resourcesDirs = project.objects.setProperty<File>()
+
+    @get:Input val outputClassName = project.objects.property<String>()
+
+    @get:Input val modelPackage = project.objects.property<String>()
+
+    @get:Input val indent = project.objects.property<String>()
 
     init {
         group = "jewel"
@@ -85,8 +103,16 @@ open class AndroidStudioReleasesGeneratorTask : DefaultTask() {
         logger.debug("Registered resources directories:\n" + lookupDirs.joinToString("\n") { " * ${it.absolutePath}" })
         val releases = URI.create(url).toURL().openStream().use { json.decodeFromStream<ApiAndroidStudioReleases>(it) }
 
-        val className = ClassName.bestGuess(STUDIO_RELEASES_OUTPUT_CLASS_NAME)
-        val file = AndroidStudioReleasesReader.readFrom(releases, className, url, lookupDirs)
+        val className = ClassName.bestGuess(outputClassName.get())
+        val file =
+            AndroidStudioReleasesReader.readFrom(
+                releases = releases,
+                className = className,
+                url = url,
+                resourceDirs = lookupDirs,
+                modelPackage = modelPackage.get(),
+                indentString = indent.get(),
+            )
 
         val outputFile = outputFile.get().asFile
         outputFile.bufferedWriter().use { file.writeTo(it) }

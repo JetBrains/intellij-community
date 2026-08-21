@@ -57,9 +57,7 @@ public class PopupAdColors(
 
         other as PopupAdColors
 
-        if (background != other.background) return false
-
-        return true
+        return background == other.background
     }
 
     override fun hashCode(): Int = background.hashCode()

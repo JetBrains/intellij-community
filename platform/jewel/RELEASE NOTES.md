@@ -96,9 +96,9 @@
 
 ## v0.39.1 (2026-07-24)
 
-| Min supported IJP versions | Compose Multiplatform version |
-|----------------------------|-------------------------------|
-| 2026.2                     | 1.11.0                        |
+| Min supported IJP versions | Compose Multiplatform version | Standalone Version |
+|----------------------------|-------------------------------|--------------------|
+| 2026.2                     | 1.11.0                        | 0.39.1-262.9437.29 |
 
 ### Bug fixes
 
@@ -109,9 +109,9 @@
 
 ## v0.39 (2026-07-14)
 
-| Min supported IJP versions | Compose Multiplatform version |
-|----------------------------|-------------------------------|
-| 2026.2                     | 1.11.0                        |
+| Min supported IJP versions | Compose Multiplatform version | Standalone Version |
+|----------------------------|-------------------------------|--------------------|
+| 2026.2                     | 1.11.0                        | 0.39.0-262.9437.21 |
 
 ### ⚠️ Important Changes
 
@@ -184,9 +184,9 @@
 
 ## v0.38.1 (2026-07-24)
 
-| Min supported IJP versions | Compose Multiplatform version |
-|----------------------------|-------------------------------|
-| 2026.2 beta 1              | 1.11.0                        |
+| Min supported IJP versions | Compose Multiplatform version | Standalone Version  |
+|----------------------------|-------------------------------|---------------------|
+| 2026.2 beta 1              | 1.11.0                        | 0.38.1-262.8665.354 |
 
 ### Bug fixes
 
@@ -197,9 +197,9 @@
 
 ## v0.38 (2026-06-30)
 
-| Min supported IJP versions | Compose Multiplatform version |
-|----------------------------|-------------------------------|
-| 2026.2 beta 1              | 1.11.0                        |
+| Min supported IJP versions | Compose Multiplatform version | Standalone Version  |
+|----------------------------|-------------------------------|---------------------|
+| 2026.2 beta 1              | 1.11.0                        | 0.38.0-262.8665.351 |
 
 ### ⚠️ Important Changes
 
@@ -223,9 +223,9 @@
 
 ## v0.37 (2026-06-02)
 
-| Min supported IJP versions | Compose Multiplatform version |
-|----------------------------|-------------------------------|
-| 2026.1.3                   | 1.10.0                        |
+| Min supported IJP versions | Compose Multiplatform version | Standalone Version                      |
+|----------------------------|-------------------------------|-----------------------------------------|
+| 2026.1.3                   | 1.10.0                        | 0.37.0-261.26222.65, 0.37.0-262.4852.51 |
 
 ### ⚠️ Important Changes
 
@@ -321,9 +321,9 @@
 
 ## v0.36 (2026-04-27)
 
-| Min supported IJP versions | Compose Multiplatform version |
-|----------------------------|-------------------------------|
-| 2025.3.4, 2026.1.1         | 1.10.0                        |
+| Min supported IJP versions | Compose Multiplatform version | Standalone Version  |
+|----------------------------|-------------------------------|---------------------|
+| 2025.3.4, 2026.1.1         | 1.10.0                        | 0.36.0-261.24374.85 |
 
 ### ⚠️ Important Changes
 
@@ -359,9 +359,9 @@
 
 ## v0.35 (2026-03-30)
 
-| Min supported IJP versions | Compose Multiplatform version |
-|----------------------------|-------------------------------|
-| 2025.3.3, 2026.1.1         | 1.10.0                        |
+| Min supported IJP versions | Compose Multiplatform version | Standalone Version                        |
+|----------------------------|-------------------------------|-------------------------------------------|
+| 2025.3.3, 2026.1.1         | 1.10.0                        | 0.35.0-253.33813.55, 0.35.0-261.23567.198 |
 
 ### New features
 

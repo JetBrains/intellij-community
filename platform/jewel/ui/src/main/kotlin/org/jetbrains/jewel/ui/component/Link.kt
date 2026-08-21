@@ -75,7 +75,7 @@ import org.jetbrains.jewel.ui.util.LocalMessageResourceResolverProvider
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/link.html#link.md)
  *
  * **Usage example:**
- * [`Links.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/standalone/src/main/kotlin/org/jetbrains/jewel/samples/standalone/view/component/Links.kt)
+ * [`Links.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Links.kt)
  *
  * **Swing equivalent:** [`JLabel`](https://docs.oracle.com/javase/tutorial/uiswing/components/label.html) with HTML
  * link styling. ALso see
@@ -125,7 +125,7 @@ public fun Link(
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/link.html#external-link-icon)
  *
  * **Usage example:**
- * [`Links.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/standalone/src/main/kotlin/org/jetbrains/jewel/samples/standalone/view/component/Links.kt)
+ * [`Links.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Links.kt)
  *
  * **Swing equivalent:**
  * [`BrowserLink`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/BrowserLink.kt)
@@ -176,7 +176,7 @@ public fun ExternalLink(
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/link.html#external-link-icon)
  *
  * **Usage example:**
- * [`Links.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/standalone/src/main/kotlin/org/jetbrains/jewel/samples/standalone/view/component/Links.kt)
+ * [`Links.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Links.kt)
  *
  * **Swing equivalent:**
  * [`BrowserLink`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/BrowserLink.kt)
@@ -288,7 +288,7 @@ public fun openUri(uriHandler: UriHandler, link: String) {
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/link.html#drop-down-link)
  *
  * **Usage example:**
- * [`Links.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/standalone/src/main/kotlin/org/jetbrains/jewel/samples/standalone/view/component/Links.kt)
+ * [`Links.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Links.kt)
  *
  * **Swing equivalent:**
  * [`DropDownLink`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/DropDownLink.kt)

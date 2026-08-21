@@ -10,7 +10,6 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.window.application
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.decodeToSvgPainter
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
@@ -113,7 +112,6 @@ private fun processKeyShortcuts(keyEvent: KeyEvent, onNavigateTo: (String) -> Un
 }
 
 @Suppress("SameParameterValue")
-@OptIn(ExperimentalResourceApi::class)
 private fun svgResource(resourcePath: String): Painter =
     checkNotNull(ResourceLoader.javaClass.classLoader.getResourceAsStream(resourcePath)) {
             "Could not load resource $resourcePath: it does not exist or can't be read."

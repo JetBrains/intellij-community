@@ -364,39 +364,38 @@ internal fun handlePopupMenuOnKeyEvent(
     inputModeManager: InputModeManager,
     menuController: MenuController,
 ): Boolean {
-    if (keyEvent.type != KeyEventType.KeyDown) return false
-
-    return when (keyEvent.key) {
-        Key.DirectionDown -> {
-            inputModeManager.requestInputMode(InputMode.Keyboard)
-            focusManager.moveFocus(FocusDirection.Next)
-            true
-        }
-
-        Key.DirectionUp -> {
-            inputModeManager.requestInputMode(InputMode.Keyboard)
-            focusManager.moveFocus(FocusDirection.Previous)
-            true
-        }
-
-        Key.Escape -> {
-            inputModeManager.requestInputMode(InputMode.Keyboard)
-            menuController.closeAll(InputMode.Keyboard, true)
-            true
-        }
-
-        Key.DirectionLeft -> {
-            if (menuController.isSubmenu()) {
+    return keyEvent.type == KeyEventType.KeyDown &&
+        when (keyEvent.key) {
+            Key.DirectionDown -> {
                 inputModeManager.requestInputMode(InputMode.Keyboard)
-                menuController.close(InputMode.Keyboard)
+                focusManager.moveFocus(FocusDirection.Next)
                 true
-            } else {
-                false
             }
-        }
 
-        else -> false
-    }
+            Key.DirectionUp -> {
+                inputModeManager.requestInputMode(InputMode.Keyboard)
+                focusManager.moveFocus(FocusDirection.Previous)
+                true
+            }
+
+            Key.Escape -> {
+                inputModeManager.requestInputMode(InputMode.Keyboard)
+                menuController.closeAll(InputMode.Keyboard, true)
+                true
+            }
+
+            Key.DirectionLeft -> {
+                if (menuController.isSubmenu()) {
+                    inputModeManager.requestInputMode(InputMode.Keyboard)
+                    menuController.close(InputMode.Keyboard)
+                    true
+                } else {
+                    false
+                }
+            }
+
+            else -> false
+        }
 }
 
 @Immutable

@@ -6,7 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.skiaCanvas
 import kotlin.math.pow
 import org.intellij.lang.annotations.Language
 import org.jetbrains.jewel.foundation.LocalDisabledAppearanceValues
@@ -80,13 +80,13 @@ public fun Modifier.disabledAppearance(
 
             // Use the NATIVE canvas to save a layer with the NATIVE paint.
             val skiaRect = SkiaRect.makeWH(size.width, size.height)
-            canvas.nativeCanvas.saveLayer(skiaRect, paint)
+            canvas.skiaCanvas.saveLayer(skiaRect, paint)
 
             // Draw the original composable content into the layer.
             drawContent()
 
             // Restore the native canvas to apply the filter.
-            canvas.nativeCanvas.restore()
+            canvas.skiaCanvas.restore()
         }
     }
 }

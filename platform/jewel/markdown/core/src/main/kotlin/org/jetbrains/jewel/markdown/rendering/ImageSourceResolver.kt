@@ -109,7 +109,7 @@ public interface ImageSourceResolver {
         /** Represents the ability to resolve absolute paths as-is. */
         public object AbsolutePath : ResolveCapability {
             override fun resolve(rawDestination: String): String? {
-                val rawPath = Path.of(rawDestination)
+                val rawPath = runCatching { Path.of(rawDestination) }.getOrNull() ?: return null
                 if (rawPath.isAbsolute) return rawDestination
                 return null
             }
@@ -120,7 +120,7 @@ public interface ImageSourceResolver {
         @ExperimentalJewelApi
         public class RelativePath(private val rootDir: Path) : ResolveCapability {
             override fun resolve(rawDestination: String): String? {
-                val rawPath = Path.of(rawDestination)
+                val rawPath = runCatching { Path.of(rawDestination) }.getOrNull() ?: return null
                 // don't resolve absolute paths, it's not this resolver's capability
                 if (rawPath.isAbsolute) return null
 

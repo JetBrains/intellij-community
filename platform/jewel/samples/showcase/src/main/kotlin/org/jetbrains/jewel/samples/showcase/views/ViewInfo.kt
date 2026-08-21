@@ -83,7 +83,7 @@ public class ViewInfo(
     override fun hashCode(): Int {
         var result = title.hashCode()
         result = 31 * result + iconKey.hashCode()
-        result = 31 * result + (keyboardShortcut?.hashCode() ?: 0)
+        result = 31 * result + keyboardShortcut.hashCode()
         result = 31 * result + content.hashCode()
         return result
     }

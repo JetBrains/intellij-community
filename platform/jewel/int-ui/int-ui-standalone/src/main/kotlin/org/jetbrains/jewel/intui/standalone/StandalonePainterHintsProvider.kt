@@ -78,9 +78,9 @@ public class StandalonePainterHintsProvider(theme: ThemeDefinition) :
         }
 
         if (adjustedKey != key) {
-            logger.warn(
-                "${if (isDark) "Dark" else "Light"} theme: color key $key is deprecated, use $adjustedKey instead"
-            )
+            // adjustedKey differs from key only when the ".Dark" suffix was stripped, which happens
+            // only when isDark is true, so this branch is dark-theme-only by construction.
+            logger.warn("Dark theme: color key $key is deprecated, use $adjustedKey instead")
         }
 
         val parsedValue = resolveColor(value)

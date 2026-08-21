@@ -44,7 +44,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -576,7 +575,6 @@ private suspend fun animateToTarget(draggableState: DraggableState, current: Flo
 
 // TODO: Edge case - losing focus on slider while key is pressed will end up with
 // onValueChangeFinished not being invoked
-@OptIn(ExperimentalComposeUiApi::class)
 private fun Modifier.slideOnKeyEvents(
     enabled: Boolean,
     steps: Int,

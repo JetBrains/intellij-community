@@ -101,7 +101,7 @@ public fun SelectableIconActionButton(
 }
 
 /**
- * Renders a selectable icon action button that displays an icon resolved from [key], with an optional [extraHint]
+ * Renders a selectable icon action button that displays an icon resolved from [key], with an optional [extraHints]
  * applied to the painter.
  */
 @Composable

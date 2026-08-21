@@ -93,9 +93,7 @@ internal fun ContextMenu(
         },
         cornerSize = style.metrics.cornerSize,
     ) {
-        @Suppress("AssignedValueIsNeverRead")
         focusManager = LocalFocusManager.current
-        @Suppress("AssignedValueIsNeverRead")
         inputModeManager = LocalInputModeManager.current
 
         CompositionLocalProvider(LocalMenuController provides menuController) {

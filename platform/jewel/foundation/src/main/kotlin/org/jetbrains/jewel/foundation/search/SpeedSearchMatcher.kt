@@ -4,7 +4,6 @@ package org.jetbrains.jewel.foundation.search
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.InternalJewelApi
-import org.jetbrains.jewel.foundation.search.SpeedSearchMatcher.Companion.patternMatcher
 import org.jetbrains.jewel.foundation.search.SpeedSearchMatcher.MatchResult
 import org.jetbrains.jewel.foundation.search.impl.ExactSubstringSpeedSearchMatcher
 import org.jetbrains.jewel.foundation.search.impl.PatternSpeedSearchMatcher
@@ -186,7 +185,7 @@ public enum class MatchingCaseSensitivity {
 @InternalJewelApi
 @ApiStatus.Internal
 public object EmptySpeedSearchMatcher : SpeedSearchMatcher {
-    override fun matches(text: String?): SpeedSearchMatcher.MatchResult = SpeedSearchMatcher.MatchResult.NoMatch
+    override fun matches(text: String?): MatchResult = MatchResult.NoMatch
 }
 
 /**
@@ -206,8 +205,7 @@ public object EmptySpeedSearchMatcher : SpeedSearchMatcher {
  * @return `true` if the text matches the pattern, `false` otherwise.
  * @see SpeedSearchMatcher.matches for the underlying match result with ranges
  */
-public fun CharSequence.matches(matcher: SpeedSearchMatcher): Boolean =
-    matcher.matches(this) != SpeedSearchMatcher.MatchResult.NoMatch
+public fun CharSequence.matches(matcher: SpeedSearchMatcher): Boolean = matcher.matches(this) != MatchResult.NoMatch
 
 /**
  * Filters an iterable collection based on whether items match the given [SpeedSearchMatcher].

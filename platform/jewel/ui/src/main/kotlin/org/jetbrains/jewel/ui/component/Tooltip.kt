@@ -69,7 +69,7 @@ public fun Tooltip(
     JewelTooltipArea(
         tooltip = { TooltipImpl(enabled, style, tooltip = tooltip) },
         modifier = modifier,
-        delayMillis = style.metrics.showDelay.inWholeMilliseconds.toInt(),
+        delayDuration = style.metrics.showDelay,
         tooltipPlacement = tooltipPlacement,
         cornerSize = style.metrics.cornerSize,
         content = content,

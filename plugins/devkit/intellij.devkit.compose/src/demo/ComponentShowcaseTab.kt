@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalLayoutApi::class)
-
 package com.intellij.devkit.compose.demo
 
 import androidx.compose.foundation.background
@@ -7,7 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -36,18 +33,19 @@ import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onFirstVisible
+import androidx.compose.ui.layout.onVisibilityChanged
 import androidx.compose.ui.unit.dp
+import com.intellij.devkit.compose.DevkitComposeBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.project.Project
+import com.intellij.platform.icons.swing.toNewIcon
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.delay
-import com.intellij.platform.icons.Icon
-import com.intellij.platform.icons.swing.toNewIcon
 import org.jetbrains.jewel.bridge.toComposeColor
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.foundation.actionSystem.provideData
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
@@ -102,7 +100,9 @@ import org.jetbrains.jewel.ui.theme.colorPalette
 import org.jetbrains.jewel.ui.theme.inlineBannerStyle
 import org.jetbrains.jewel.ui.typography
 import javax.swing.JButton
+import kotlin.time.Duration.Companion.seconds
 
+@OptIn(ExperimentalJewelApi::class)
 @Composable
 internal fun ComponentShowcaseTab(project: Project) {
   val bgColor by remember(JBColor.PanelBackground.rgb) { mutableStateOf(JBColor.PanelBackground.toComposeColor()) }
@@ -146,7 +146,11 @@ private fun RowScope.ColumnOne() {
         Modifier
           .widthIn(min = 200.dp, max = 350.dp)
           .focusRequester(focusRequester)
-          .onFirstVisible { focusRequester.requestFocus() },
+          .onVisibilityChanged { visible ->
+            if (visible) {
+              focusRequester.requestFocus()
+            }
+          },
     )
     ListComboBox(
       items = popupData,
@@ -242,7 +246,7 @@ private fun RowScope.ColumnOne() {
       Text("Swing interop:")
       SwingPanel(
         factory = {
-          JButton("Click me (Swing)").apply {
+          JButton(DevkitComposeBundle.message("jewel.showcase.tab.swing.interop.button")).apply {
             addActionListener {
               swingButtonClicks++
               requestFocusInWindow()
@@ -271,9 +275,9 @@ private fun RowScope.ColumnOne() {
       Text(text = "Clicked action: $clickLabel")
       when (bannerStyle) {
         1 -> {
-          DefaultErrorBanner(text = "This is an error banner in Compose")
+          DefaultErrorBanner(text = DevkitComposeBundle.message("jewel.showcase.tab.error.banner"))
           InlineErrorBanner(
-            text = LOREM_IPSUM_SHORT,
+            text = DevkitComposeBundle.message("jewel.showcase.tab.lorem.ipsum.short"),
             iconActions = {
               iconAction(AllIconsKeys.General.Close, "Close button", "Close") {
                 clickLabel = "Error Inline Action Icon clicked"
@@ -284,9 +288,9 @@ private fun RowScope.ColumnOne() {
         }
 
         0 -> {
-          DefaultSuccessBanner(text = "This is a success banner in Compose")
+          DefaultSuccessBanner(text = DevkitComposeBundle.message("jewel.showcase.tab.success.banner"))
           InlineSuccessBanner(
-            text = LOREM_IPSUL_TEXT,
+            text = DevkitComposeBundle.message("jewel.showcase.tab.lorem.ipsum"),
             linkActions = {
               action("Action A", onClick = { clickLabel = "Success Inline Action A clicked" })
               action("Action B", onClick = { clickLabel = "Success Inline Action B clicked" })
@@ -304,13 +308,13 @@ private fun RowScope.ColumnOne() {
         }
 
         2 -> {
-          DefaultWarningBanner(text = "This is a warning banner in Compose")
-          InlineWarningBanner(text = "This is a warning banner in Compose")
+          DefaultWarningBanner(text = DevkitComposeBundle.message("jewel.showcase.tab.warning.banner"))
+          InlineWarningBanner(text = DevkitComposeBundle.message("jewel.showcase.tab.warning.banner"))
         }
 
         else -> {
-          DefaultInformationBanner(text = "This is an information banner in Compose")
-          InlineInformationBanner(text = "This is an information banner in Compose")
+          DefaultInformationBanner(text = DevkitComposeBundle.message("jewel.showcase.tab.information.banner"))
+          InlineInformationBanner(text = DevkitComposeBundle.message("jewel.showcase.tab.information.banner"))
         }
       }
     }
@@ -488,10 +492,11 @@ private val deferedIcon = IconDeferrer.getInstance().deferAsync(
   AllIcons.General.Print,
   "KABOOM-DEF_ICON_TST"
 ) {
-  delay(10000)
+  delay(10.seconds)
   AllIcons.General.GreenCheckmark
 }
 
+@OptIn(ExperimentalJewelApi::class)
 @Composable
 private fun RowScope.ColumnTwo(project: Project) {
   Column(Modifier.trackActivation().weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -532,6 +537,7 @@ private fun RowScope.ColumnTwo(project: Project) {
   }
 }
 
+@OptIn(ExperimentalJewelApi::class)
 @Composable
 private fun MarkdownExample(project: Project) {
   var enabled by remember { mutableStateOf(true) }
