@@ -75,6 +75,7 @@ object CustomWindowHeaderUtil {
     get() = when {
       !JBR.isWindowMoveSupported() -> HideNativeLinuxTitleNotSupportedReason.INCOMPATIBLE_JBR
       StartupUiUtil.isWaylandToolkit() -> null
+      StartupUiUtil.isOhosToolkit() -> null
       !StartupUiUtil.isXToolkit() -> HideNativeLinuxTitleNotSupportedReason.WAYLAND_OR_XTOOLKIT_REQUIRED
       X11UiUtil.isWSL() -> HideNativeLinuxTitleNotSupportedReason.WSL_NOT_SUPPORTED
       X11UiUtil.isTileWM() -> HideNativeLinuxTitleNotSupportedReason.TILING_WM_NOT_SUPPORTED
