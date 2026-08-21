@@ -10,11 +10,12 @@ import com.jetbrains.fus.reporting.model.lion3.LogEvent
 internal class ChangedStateEventsPanel(val project: Project,
                                        parentDisposable: Disposable,
                                        difference: Collection<LogEvent>,
-                                       recorderId: String)
+                                       recorderId: String,
+                                       toolWindowId: String)
   : SimpleToolWindowPanel(false, true) {
   private val model = StatisticsLogFilterModel()
   private val logFormatter = StatisticsEventLogFormatter(model)
-  private val consoleLog = StatisticsEventLogConsole(project, model, recorderId, logFormatter)
+  private val consoleLog = StatisticsEventLogConsole(project, model, recorderId, toolWindowId, logFormatter)
 
   init {
     setContent(consoleLog.component)

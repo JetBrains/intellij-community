@@ -1,25 +1,25 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.statistics.devkit.actions
 
-import com.intellij.ide.actions.ActivateToolWindowAction
-import com.intellij.platform.statistics.devkit.toolwindow.eventLogToolWindowsId
+import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.statistics.devkit.toolwindow.eventLogToolWindowId
+import com.intellij.platform.statistics.devkit.toolwindow.hostEventLogToolWindowId
 
 /**
  * Opens a toolwindow with feature usage statistics event log
  */
-internal class OpenStatisticsEventLogAction : DumbAwareAction() {
+internal class OpenStatisticsEventLogAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Duplicated {
 
   override fun actionPerformed(event: AnActionEvent) {
-    val action = ActionManager.getInstance().getAction(ActivateToolWindowAction.Manager.getActionIdForToolWindow(eventLogToolWindowsId))
-    if (action != null) {
-      ActionUtil.performAction(action, event)
-    }
+    val project = event.project ?: return
+    val toolWindowId = if (AppMode.isRemoteDevHost()) hostEventLogToolWindowId else eventLogToolWindowId
+    ToolWindowManager.getInstance(project).getToolWindow(toolWindowId)?.activate(null)
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
