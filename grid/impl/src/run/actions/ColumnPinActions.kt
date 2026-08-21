@@ -9,7 +9,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 
 private fun pinPanel(grid: DataGrid): TableResultPanel? =
-  if (TableResultPanel.isColumnPinningEnabled()) grid as? TableResultPanel else null
+  (grid as? TableResultPanel)?.takeIf {
+    TableResultPanel.isColumnPinningEnabled() && !it.resultView.isTransposed
+  }
 
 private fun allPinned(panel: TableResultPanel, columns: ModelIndexSet<GridColumn>, pinned: Boolean): Boolean =
   columns.asIterable().all { panel.isColumnPinned(it) == pinned }
