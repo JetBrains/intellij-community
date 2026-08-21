@@ -18,8 +18,9 @@ import javax.swing.text.JTextComponent
 
 internal class MarkdownPreviewSearchSession(
   private val project: Project,
+  private val findManager: FindManager,
   private val browser: CefBrowser,
-  private val targetComponent: JComponent,
+  private val targetComponent: JComponent
 ) : SearchSession, SearchReplaceComponent.Listener, FindModel.FindModelObserver {
   private val findModel: FindModel = createFindModel()
   private val searchComponent: SearchReplaceComponent = createSearchComponent()
@@ -84,7 +85,7 @@ internal class MarkdownPreviewSearchSession(
 
   private fun createFindModel(): FindModel {
     val model = FindModel()
-    model.copyFrom(FindManager.getInstance(project).findInFileModel)
+    model.copyFrom(findManager.findInFileModel)
     model.addObserver(this)
     return model
   }
