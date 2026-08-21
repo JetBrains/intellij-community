@@ -23,7 +23,9 @@ internal class SurefireRemoteConnectionCreator : MavenRemoteConnectionCreator() 
 
     if (jdwpArgs.isNotEmpty()) {
       val goals = ArrayList(runConfiguration.runnerParameters.goals)
-      goals.add("-Dmaven.surefire.debug=$jdwpArgs")
+      // Replace any stale -Dmaven.surefire.debug= left by a previous debug run (idempotent on rerun).
+      val idx = goals.indexOfFirst { it.startsWith("-Dmaven.surefire.debug=") }
+      if (idx >= 0) goals[idx] = "-Dmaven.surefire.debug=$jdwpArgs" else goals.add("-Dmaven.surefire.debug=$jdwpArgs")
       runConfiguration.runnerParameters.setGoals(goals)
     }
 

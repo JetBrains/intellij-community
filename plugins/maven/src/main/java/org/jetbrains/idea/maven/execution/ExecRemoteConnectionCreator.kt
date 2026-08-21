@@ -67,7 +67,10 @@ internal class ExecRemoteConnectionCreator : MavenRemoteConnectionCreator() {
       }
       val execArgs = ParametersList()
       execArgs.addAll(jdwpArgs)
-      execArgs.addParametersString(execArgsStr)
+      // Strip any stale JDWP args left by a previous debug run so they don't accumulate on rerun.
+      val previousExecArgs = ParametersList()
+      previousExecArgs.addParametersString(execArgsStr)
+      previousExecArgs.list.filter { !it.startsWith("-agentlib:jdwp=") }.forEach { execArgs.add(it) }
       val classPath = FileUtil.toSystemDependentName(parameters.classPath.pathsString)
       if (classPath.isNotEmpty()) {
         appendToClassPath(execArgs, classPath)
