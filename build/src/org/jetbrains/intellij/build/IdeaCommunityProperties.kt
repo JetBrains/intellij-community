@@ -225,7 +225,6 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
   moduleSet(CommunityModuleSets.ideCommon())
   moduleSet(CommunityModuleSets.rdCommon())
 
-  deprecatedInclude("intellij.idea.community.customization", "META-INF/community-customization.xml")
   embeddedModule("intellij.idea.community.ide.customization")
 
   module("intellij.platform.ide.nonModalWelcomeScreen")

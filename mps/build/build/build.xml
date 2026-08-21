@@ -80,7 +80,6 @@
         idea/IdeaApplicationInfo.xml,
         META-INF/IdeaPlugin.xml,
         META-INF/tips-intellij-idea-community.xml,
-        META-INF/community-customization.xml,
         tips/**,
         localization/**,
         lafs/**,

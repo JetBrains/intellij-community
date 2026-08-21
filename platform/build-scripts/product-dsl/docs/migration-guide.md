@@ -269,8 +269,8 @@ override fun getProductContentDescriptor(): ProductModulesContentSpec = productM
   // Use corePlatform for analysis tools (core platform without language editing)
   moduleSet(CommunityModuleSets.corePlatform())
   
-  // Keep deprecatedInclude only for modules NOT in corePlatform
-  deprecatedInclude("intellij.codeServer.core", "META-INF/codeserver-customization.xml")
+  // Product-specific customization lives in a dedicated embedded content module
+  embeddedModule("intellij.codeServer.ide.customization")
   
   // Product-specific modules
   embeddedModule("intellij.platform.codeStyle.impl")
