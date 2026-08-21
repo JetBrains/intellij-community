@@ -1,16 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl.inspections
 
+import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import com.intellij.gradle.java.toml.codeInspection.UnusedVersionCatalogEntryInspection
 import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.BASE_VERSION_CATALOG_FIXTURE
 import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.VERSION_CATALOG_COMPOSITE_BUILD_FIXTURE
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
+import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightBaseTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.params.ParameterizedTest
 
-class GradleUnusedVersionCatalogInspectionTest : GradleCodeInsightTestCase() {
+@GradleProjectTestApplication
+class GradleUnusedVersionCatalogInspectionTest : GradleCodeInsightBaseTestCase() {
 
   internal enum class ProjectType { SIMPLE, COMPOSITE }
 
@@ -39,6 +42,12 @@ class GradleUnusedVersionCatalogInspectionTest : GradleCodeInsightTestCase() {
     }
   }
 
+  private fun testHighlighting(relativePath: String, expression: String) {
+    writeTextAndCommit(relativePath, expression)
+    runInEdtAndWait {
+      codeInsightFixture.testHighlighting(true, false, true, getFile(relativePath))
+    }
+  }
 
   @ParameterizedTest(name = "[{index}] {0}, project type={1}")
   @BaseGradleVersionSource("SIMPLE, COMPOSITE")

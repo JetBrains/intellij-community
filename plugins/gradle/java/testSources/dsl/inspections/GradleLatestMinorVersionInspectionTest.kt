@@ -1,26 +1,51 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl.inspections
 
+import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleLatestMinorVersionInspection
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
+import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightBaseTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
+import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.jetbrains.plugins.gradle.testFramework.util.DEPRECATED_BY_IDEA_VERSIONS
 import org.jetbrains.plugins.gradle.testFramework.util.NON_DEPRECATED_BY_IDEA_VERSIONS
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.Companion.BASE_GRADLE_VERSION
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.params.ParameterizedTest
 
-class GradleLatestMinorVersionInspectionTest : GradleCodeInsightTestCase() {
+@GradleProjectTestApplication
+class GradleLatestMinorVersionInspectionTest : GradleCodeInsightBaseTestCase() {
 
   private fun runTest(gradleVersion: GradleVersion, test: () -> Unit) {
     testEmptyProject(gradleVersion) {
       codeInsightFixture.enableInspections(GradleLatestMinorVersionInspection::class.java)
       test()
+    }
+  }
+
+  private fun testHighlighting(expression: String) {
+    val relativePath = "gradle/wrapper/gradle-wrapper.properties"
+    writeTextAndCommit(relativePath, expression)
+    runInEdtAndWait {
+      codeInsightFixture.testHighlighting(true, false, true, getFile(relativePath))
+    }
+  }
+
+  private fun testIntention(before: String, after: String, intentionPrefix: String) {
+    assertTrue("<caret>" in before, "Please define caret position in build script.")
+    val relativePath = "gradle/wrapper/gradle-wrapper.properties"
+    writeTextAndCommit(relativePath, before)
+    runInEdtAndWait {
+      codeInsightFixture.configureFromExistingVirtualFile(getFile(relativePath))
+      val intention = codeInsightFixture.filterAvailableIntentions(intentionPrefix).single()
+      codeInsightFixture.launchAction(intention)
+      codeInsightFixture.checkResult(after)
+      gradleFixture.fileFixture.rollback(relativePath)
     }
   }
 
@@ -32,10 +57,7 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightTestCase() {
       "Gradle ${gradleVersion.version} is not the latest minor version."
     }
     runTest(gradleVersion) {
-      testHighlighting(
-        "gradle/wrapper/gradle-wrapper.properties",
-        "distributionUrl=https\\://services.gradle.org/distributions/gradle-${gradleVersion.version}-bin.zip"
-      )
+      testHighlighting("distributionUrl=https\\://services.gradle.org/distributions/gradle-${gradleVersion.version}-bin.zip")
     }
   }
 
@@ -44,10 +66,7 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightTestCase() {
   @TargetVersions(DEPRECATED_BY_IDEA_VERSIONS, reason = "Only test deprecated by Idea Gradle versions")
   fun testDeprecatedVersion(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
-      testHighlighting(
-        "gradle/wrapper/gradle-wrapper.properties",
-        "distributionUrl=https\\://services.gradle.org/distributions/gradle-${gradleVersion.version}-bin.zip"
-      )
+      testHighlighting("distributionUrl=https\\://services.gradle.org/distributions/gradle-${gradleVersion.version}-bin.zip")
     }
   }
 
@@ -63,7 +82,6 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightTestCase() {
     }
     runTest(gradleVersion) {
       testHighlighting(
-        "gradle/wrapper/gradle-wrapper.properties",
         "distributionUrl=https\\://services.gradle.org/distributions/gradle-<warning>${gradleVersion.version}</warning>-$distributionType.zip"
       )
     }
@@ -74,7 +92,6 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightTestCase() {
   fun testWhiteSpaceInProperty(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
-        "gradle/wrapper/gradle-wrapper.properties",
         "distributionUrl = https\\://services.gradle.org/distributions/gradle-<warning>${gradleVersion.version}</warning>-bin.zip"
       )
     }
@@ -85,7 +102,6 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightTestCase() {
   fun testCustomUrl(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
-        "gradle/wrapper/gradle-wrapper.properties",
         "distributionUrl=https\\://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-<warning>${gradleVersion.version}</warning>-bin.zip"
       )
     }
@@ -98,7 +114,6 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightTestCase() {
 
     runTest(gradleVersion) {
       testIntention(
-        "gradle/wrapper/gradle-wrapper.properties",
         "distributionUrl=https\\://services.gradle.org/distributions/gradle-${gradleVersion.version}<caret>-$distributionType.zip",
         "distributionUrl=https\\://services.gradle.org/distributions/gradle-$latestGradle8Version-$distributionType.zip",
         "Switch to Gradle $latestGradle8Version"
@@ -113,7 +128,6 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightTestCase() {
 
     runTest(gradleVersion) {
       testIntention(
-        "gradle/wrapper/gradle-wrapper.properties",
         "distributionUrl = https\\://services.gradle.org/distributions/gradle-${gradleVersion.version}<caret>-bin.zip",
         "distributionUrl = https\\://services.gradle.org/distributions/gradle-$latestGradle8Version-bin.zip",
         "Switch to Gradle $latestGradle8Version"
@@ -128,7 +142,6 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightTestCase() {
 
     runTest(gradleVersion) {
       testIntention(
-        "gradle/wrapper/gradle-wrapper.properties",
         "distributionUrl=https\\://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-${gradleVersion.version}<caret>-$distributionType.zip",
         "distributionUrl=https\\://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-$latestGradle8Version-$distributionType.zip",
         "Switch to Gradle $latestGradle8Version"
@@ -151,7 +164,6 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightTestCase() {
 
     runTest(gradleVersion) {
       testIntention(
-        "gradle/wrapper/gradle-wrapper.properties",
         "distributionUrl=https\\://services.gradle.org/distributions/gradle-${gradleVersion.version}<caret>-bin.zip",
         "distributionUrl=https\\://services.gradle.org/distributions/gradle-$latestGradleMinorVersion-bin.zip",
         "Switch to Gradle $latestGradleMinorVersion"
