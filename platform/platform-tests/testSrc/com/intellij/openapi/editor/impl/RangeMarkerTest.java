@@ -1134,7 +1134,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }));
 
     assertEquals(1, processedMarkers.size());
-    assertSame(liveMarker, processedMarkers.get(0));
+    assertSame(liveMarker, processedMarkers.getFirst());
   }
 
   // Checks that early termination releases enumeration state so the selected marker can be disposed immediately afterward.
@@ -1336,7 +1336,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }
     markupModel.addRangeHighlighter(null, N / 2, N / 2 + 1, 0, HighlighterTargetArea.LINES_IN_RANGE);
 
-    Benchmark.newBenchmark("highlighters lookup", () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
       List<RangeHighlighterEx> list = new ArrayList<>();
       CommonProcessors.CollectProcessor<RangeHighlighterEx> coll = new CommonProcessors.CollectProcessor<>(list);
       for (int i=0; i<N-1;i++) {
@@ -1547,7 +1547,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     for (RangeMarker rm : markers) {
       assertTrue(rm.isValid());
     }
-    Benchmark.newBenchmark("RM.getStartOffset", ()->{
+    Benchmark.newBenchmark(getTestName(false), ()->{
       for (int i=0; i<1000; i++) {
         int length = 0;
         for (RangeMarker rm : markers) {
@@ -1570,7 +1570,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
-    Benchmark.newBenchmark("RM.getStartOffset", ()->{
+    Benchmark.newBenchmark(getTestName(false), ()->{
       insertString(doc, 0, " ");
       for (int i=0; i<1000; i++) {
         for (int j = 0; j < markers.size(); j++) {
@@ -1597,7 +1597,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       markers.add(marker);
     }
     FileEditorManager.getInstance(getProject()); // warmup
-    Benchmark.newBenchmark("insert/delete string", ()->{
+    Benchmark.newBenchmark(getTestName(false), ()->{
       for (int i=0; i<15000; i++) {
         insertString(doc, 0, " ");
         deleteString(doc, 0, 1);
@@ -1613,7 +1613,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     int N = 1_000_000;
     List<RangeMarker> markers = new ArrayList<>(N);
-    Benchmark.newBenchmark("createRM", ()->{
+    Benchmark.newBenchmark(getTestName(false), ()->{
       for (int i = 0; i < N; i++) {
         int start = i % doc.getTextLength();
         int end = start + 1;
