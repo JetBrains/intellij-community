@@ -50,6 +50,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -158,6 +162,16 @@ open class McpServerService(val cs: CoroutineScope) {
   val isRunning: Boolean
     get() = server.value != null
 
+  /**
+   * The port the server listens on, or `null` while it is stopped. A widget outside this module collects it to
+   * repaint on a toggle that did not come from the widget itself.
+   */
+  @get:ApiStatus.Internal
+  val serverPortFlow: StateFlow<Int?> by lazy {
+    server.map { it?.engineConfig?.connectors?.firstOrNull()?.port }
+      .stateIn(cs, SharingStarted.Eagerly, server.value?.engineConfig?.connectors?.firstOrNull()?.port)
+  }
+
   // For tests
   val theOnlySession: McpSessionOptions?
     @ApiStatus.Internal
@@ -262,7 +276,8 @@ open class McpServerService(val cs: CoroutineScope) {
     return currentServer.engineConfig.connectors.firstOrNull()?.host?.takeUnless { it.isBlank() }
   }
 
-  internal fun settingsChanged(enabled: Boolean) {
+  @ApiStatus.Internal
+  fun settingsChanged(enabled: Boolean) {
     server.update { currentServer ->
       val effectivelyEnabled = enabled || isMcpServerForceEnabled()
       if (!effectivelyEnabled) {
@@ -454,7 +469,8 @@ open class McpServerService(val cs: CoroutineScope) {
     }.start(wait = false)
   }
 
-  internal fun getMcpTools(filter: McpToolFilter? = null, useFiltersFromEP: Boolean = true, clientInfo: Implementation? = null, sessionOptions: McpSessionOptions? = null, invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT): List<McpTool> {
+  @ApiStatus.Internal
+  fun getMcpTools(filter: McpToolFilter? = null, useFiltersFromEP: Boolean = true, clientInfo: Implementation? = null, sessionOptions: McpSessionOptions? = null, invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT): List<McpTool> {
     return getMcpToolsFiltered(filter, useFiltersFromEP, excludeProviders = emptySet(), clientInfo = clientInfo, sessionOptions = sessionOptions, invocationMode = invocationMode)
   }
   
