@@ -12,6 +12,15 @@ suspend fun testFunction() {
     withSimpleReceiver({
         Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(2)
     })
+
+    // @RestrictsSuspension annotation allows blocking calls, also inside inlined lambdas
+    withRestrictedReceiver({ run { Thread.sleep(3) } }, { Thread.sleep(4) })
+
+    withSimpleReceiver({
+        run {
+            Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(5)
+        }
+    })
 }
 
 fun withRestrictedReceiver(firstParam: suspend Test1.() -> Unit, secondParam: () -> Unit) {}

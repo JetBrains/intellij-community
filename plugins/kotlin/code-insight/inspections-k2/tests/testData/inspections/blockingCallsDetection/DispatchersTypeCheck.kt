@@ -30,4 +30,17 @@ suspend fun withIoDispatcher() {
         //no warning since IO dispatcher type used
         Thread.sleep(42)
     }
+
+    withContext(Dispatchers.IO) {
+        run {
+            //no warning since IO dispatcher type used, even through an inlined lambda
+            Thread.sleep(43)
+        }
+    }
+
+    withContext(Dispatchers.Default) {
+        run {
+            Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(2)
+        }
+    }
 }
