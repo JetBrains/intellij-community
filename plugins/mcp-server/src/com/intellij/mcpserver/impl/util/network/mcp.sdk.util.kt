@@ -111,11 +111,10 @@ private class StreamableSession(val transport: StreamableHttpServerTransport) {
 @KtorDsl
 fun Application.mcpPatched(
   prePhase: suspend PipelineContext<*, PipelineCall>.() -> Unit,
-  block: suspend (ApplicationCall, Transport) -> Pair<ServerSession, CoroutineScope>,
+  block: suspend (ApplicationCall, Transport) -> ServerSession,
 ) {
   val sseTransports = ConcurrentMap<String, SseServerTransport>()
   val streamableSessions = ConcurrentMap<String, StreamableSession>()
-  val streamableSessionScopes = ConcurrentMap<String, CoroutineScope>()
 
   install(SSE)
   install(ContentNegotiation) { json(McpJson) }
@@ -161,11 +160,7 @@ fun Application.mcpPatched(
       }
 
       post {
-        val session = obtainOrCreateStreamableSession(call,
-                                                     streamableSessions,
-                                                     this@mcpPatched,
-                                                     block,
-                                                     streamableSessionScopes) ?: return@post
+        val session = obtainOrCreateStreamableSession(call, streamableSessions, this@mcpPatched, block) ?: return@post
         session.whileInUse { session.transport.handleRequest(null, call) }
       }
 
@@ -180,11 +175,11 @@ fun Application.mcpPatched(
 private suspend fun ServerSSESession.mcpSseEndpoint(
   postEndpoint: String,
   transports: ConcurrentMap<String, SseServerTransport>,
-  block: suspend (ApplicationCall, Transport) -> Pair<ServerSession, CoroutineScope>,
+  block: suspend (ApplicationCall, Transport) -> ServerSession,
 ) {
   val transport = mcpSseTransport(postEndpoint, transports)
 
-  val (serverSession, _) = block(call, ClientDisconnectTolerantTransport(transport))
+  val serverSession = block(call, ClientDisconnectTolerantTransport(transport))
 
   serverSession.onClose {
     logger.trace { "Server connection closed for sessionId: ${transport.sessionId}" }
@@ -257,8 +252,7 @@ private suspend fun obtainOrCreateStreamableSession(
   call: ApplicationCall,
   sessions: ConcurrentMap<String, StreamableSession>,
   scope: CoroutineScope,
-  block: suspend (ApplicationCall, Transport) -> Pair<ServerSession, CoroutineScope>,
-  streamableSessionScopes: ConcurrentMap<String, CoroutineScope>,
+  block: suspend (ApplicationCall, Transport) -> ServerSession,
 ): StreamableSession? {
   val incomingSessionId = call.request.headers[MCP_SESSION_ID_HEADER]
   if (incomingSessionId != null) {
@@ -280,12 +274,10 @@ private suspend fun obtainOrCreateStreamableSession(
   }
   transport.setOnSessionClosed { closedId ->
     sessions.remove(closedId)
-    streamableSessionScopes.remove(closedId)
     logger.trace { "StreamableHttp session closed: $closedId" }
   }
 
-  val (serverSession, scope) = block(call, ClientDisconnectTolerantTransport(transport))
-  streamableSessionScopes[serverSession.sessionId] = scope
+  val serverSession = block(call, ClientDisconnectTolerantTransport(transport))
   transport.setSessionIdGenerator {
     serverSession.sessionId
   }
@@ -293,7 +285,6 @@ private suspend fun obtainOrCreateStreamableSession(
     val id = transport.sessionId
     if (id != null) {
       sessions.remove(id)
-      streamableSessionScopes.remove(id)
       logger.trace { "Server connection closed for StreamableHttp sessionId: $id" }
     }
   }

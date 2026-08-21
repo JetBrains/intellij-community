@@ -517,7 +517,7 @@ open class McpServerService(val cs: CoroutineScope) {
 
         val session = sessionToolsManager.createAndInitializeSession(transport)
 
-        return@mcpPatched session to sessionToolsManager.sessionScope
+        return@mcpPatched session
       }
     }.start(wait = false)
   }
