@@ -6,7 +6,9 @@ import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
@@ -20,6 +22,12 @@ import javax.swing.Icon
 
 class CodeFenceLanguageListCompletionProvider: CompletionProvider<CompletionParameters>() {
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+    result.addElement(PrioritizedLookupElement.withPriority(
+      LookupElementBuilder.create("")
+        .withTailText(" (no language)", true)
+        .withInsertHandler(MyInsertHandler(parameters)),
+      Double.MAX_VALUE
+    ))
     for (provider in CodeFenceLanguageGuesser.customProviders) {
       val lookups = provider.getCompletionVariantsForInfoString(parameters)
       for (lookupElement in lookups) {

@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.editor.typing
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 
 class MarkdownTypingFencesTest : LightPlatformCodeInsightTestCase() {
@@ -19,6 +20,17 @@ class MarkdownTypingFencesTest : LightPlatformCodeInsightTestCase() {
   fun testFenceInjectedInBlockQuote() = doTest()
 
   fun testFenceInNestedBlockQuote() = doTest()
+
+  class AutopopupTest : CompletionAutoPopupTestCase() {
+    fun testEmptyFenceInReadme() {
+      myFixture.configureByText("README.md", "")
+      type("```")
+      assertNotNull("Lookup should auto-activate", lookup)
+      assertEquals("", lookup.currentItem?.lookupString)
+      type("\n")
+      myFixture.checkResult("```\n<caret>\n```")
+    }
+  }
 
   private fun doTest(text: String = "\n") {
     val testName = getTestName(true)
