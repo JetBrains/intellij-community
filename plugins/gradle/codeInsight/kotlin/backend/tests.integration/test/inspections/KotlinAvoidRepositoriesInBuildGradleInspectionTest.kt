@@ -1400,7 +1400,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
       }
 
     private val COMPOSITE_PROJECT_WITHOUT_INCLUDED_SETTINGS_FILE =
-      GradleTestFixtureBuilder.create("composite-project-without-included-settings-file") { gradleVersion ->
+      GradleTestFixtureBuilder.create("cmpst-prjct-without-included-settings") { gradleVersion ->
         withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
           setProjectName("composite-project-without-included-settings-file")
           includeBuild("included")
