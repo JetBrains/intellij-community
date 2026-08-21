@@ -165,6 +165,13 @@ build --incompatible_compact_repo_mapping_manifest
 common --remote_cache_async=false --remote_cache_compression=true
 common:ci --remote_cache_async=false
 
+# Recover from remote-cache eviction by re-running the producing actions instead of failing the build
+build --rewind_lost_inputs
+
+# For tests reproducibility.
+# Note: this disables --rewind_lost_inputs for any compile action that `bazel test` may run, if any.
+test --norewind_lost_inputs
+
 # https://www.buildbuddy.io/blog/debugging-slow-bazel-builds/
 # check if `--remote_download_outputs=minimal` makes sense for CI or some local builds
 build --remote_build_event_upload=minimal

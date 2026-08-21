@@ -105,6 +105,13 @@ startup --noautodetect_server_javabase
 common --remote_upload_local_results=false
 common:ci --remote_upload_local_results=true
 
+# Recover from remote-cache eviction by re-running the producing actions instead of failing the build
+build --rewind_lost_inputs
+
+# For tests reproducibility.
+# Note: this disables --rewind_lost_inputs for any compile action that `bazel test` may run, if any.
+test --norewind_lost_inputs
+
 # More debug on CI
 common:ci --announce_rc
 
