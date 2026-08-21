@@ -22,6 +22,8 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.acceptOnTcpPort
 import com.intellij.platform.eel.provider.utils.connectToTcpPort
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -93,7 +95,11 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
   init {
     // In unit-test mode, mirror BuiltInServerManagerImpl's short-circuit: do not start collectors or
     // touch WSL from tests that merely instantiate the service graph.
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
+    //
+    // Also stay completely off when the registry flag is not explicitly set — no coroutines
+    // launched in [cs], no subscription to McpServerService.serverPortFlow.
+    //
+    if (!ApplicationManager.getApplication().isUnitTestMode && isFeatureEnabled()) {
       startReconcileCollector()
       subscribeToMcpServerFlow()
       subscribeToBuiltInHttpStart()
@@ -332,8 +338,9 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
   // Signal accessors.
   // ---------------------------------------------------------------------------
 
+  @OptIn(LowLevelLocalMachineAccess::class)
   private fun isFeatureEnabled(): Boolean =
-    Registry.`is`(FORWARDER_REGISTRY_KEY, false)
+    Registry.`is`(FORWARDER_REGISTRY_KEY, false) && OS.CURRENT == OS.Windows
 
   /**
    * @return the IDE-side loopback port on which the MCP SSE server is listening, or `null` if the server is

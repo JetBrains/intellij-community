@@ -205,9 +205,10 @@ open class McpServerService(val cs: CoroutineScope) {
    * (see `McpWslForwarderService`).
    */
   @get:ApiStatus.Internal
-  val serverPortFlow: StateFlow<Int?> =
+  val serverPortFlow: StateFlow<Int?> by lazy {
     server.map { it?.engineConfig?.connectors?.firstOrNull()?.port }
       .stateIn(cs, SharingStarted.Eagerly, server.value?.engineConfig?.connectors?.firstOrNull()?.port)
+  }
 
   // For tests
   val theOnlySession: McpSessionOptions?
