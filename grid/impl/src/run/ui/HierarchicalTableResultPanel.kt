@@ -316,24 +316,24 @@ open class HierarchicalTableResultPanel(
 
     if (column !is HierarchicalGridColumn) {
       updateColumnEnableState(column, state)
-      return
     }
-
-    if (state) {
+    else if (state) {
       updateEnableStateForColumns(getDisabledAncestorColumns(column), true)
       updateColumnEnableState(column, true)
-      return
-    }
-
-    val ancestor = column.parent
-    if (column.isLeftMostChildOfDirectAncestor && ancestor != null) {
-      updateEnableStateForColumns(ancestor.leaves, false)
     }
     else {
-      updateColumnEnableState(column, false)
+      val ancestor = column.parent
+      if (column.isLeftMostChildOfDirectAncestor && ancestor != null) {
+        updateEnableStateForColumns(ancestor.leaves, false)
+      }
+      else {
+        updateColumnEnableState(column, false)
+      }
+
+      resultView.onColumnHierarchyChanged()
     }
 
-    resultView.onColumnHierarchyChanged()
+    updateFrozenColumns()
   }
 
   override fun getHierarchicalColumnsCollapseManager(): HierarchicalColumnsCollapseManager? {

@@ -665,8 +665,8 @@ public class TableResultPanel extends UserDataHolderBase
     myColumnPinModel = myColumnPinModel.pinAll(restoredIds);
   }
 
-  /** A hidden column is not in the view, so the strip shows the pinned ones that are currently there. */
-  private void updateFrozenColumns() {
+  /** Syncs logical pin state into the current table view, which filters out hidden pinned columns. */
+  protected final void updateFrozenColumns() {
     if (!(myResultView instanceof TableResultView view)) return;
     view.setFrozenColumns(isColumnPinningEnabled() ? myColumnPinModel.pinnedIds() : Set.of());
   }
@@ -766,12 +766,15 @@ public class TableResultPanel extends UserDataHolderBase
     updateFrozenColumns();
   }
 
-  private boolean removeFromPinModel(@NotNull ModelIndex<GridColumn> columnIdx) {
-    GridColumnPinModel updated = myColumnPinModel.onColumnHidden(columnIdx.value);
-    if (updated.equals(myColumnPinModel)) return false;
+  private void unpinRemovedColumns(@NotNull ModelIndexSet<GridColumn> columns) {
+    List<Integer> removedIds = new ArrayList<>(columns.size());
+    for (ModelIndex<GridColumn> column : columns.asIterable()) {
+      removedIds.add(column.value);
+    }
+    GridColumnPinModel updated = myColumnPinModel.unpinAll(removedIds);
+    if (updated.equals(myColumnPinModel)) return;
     myUserChangedPinState = true;
     myColumnPinModel = updated;
-    return true;
   }
 
   private void restoreColumnWidths() {
@@ -793,9 +796,7 @@ public class TableResultPanel extends UserDataHolderBase
   @Override
   public void columnsRemoved(ModelIndexSet<GridColumn> columns) {
     rememberPinnedColumnNames(columns);
-    for (ModelIndex<GridColumn> column : columns.asIterable()) {
-      removeFromPinModel(column);
-    }
+    unpinRemovedColumns(columns);
     myResultView.columnsRemoved(columns);
     updateFrozenColumns();
     trueLayout();
@@ -1950,17 +1951,13 @@ public class TableResultPanel extends UserDataHolderBase
     GridColumn column = getDataModel(DATA_WITH_MUTATIONS).getColumn(columnIdx);
     if (column == null || isColumnEnabled(column) == state) return;
 
-    boolean pinStateChanged = !state && removeFromPinModel(columnIdx);
     myColumnAttributes.setEnabled(column, state);
-    // Restore the frozen copy's width while the main column is still present; after removal its model-to-view
-    // conversion no longer resolves and the cached main column would remain hidden at width zero.
-    if (pinStateChanged && myResultView instanceof TableResultView view) view.setFrozenColumns(Set.of());
 
     GridSelection<GridRow, GridColumn> selection = getSelectionModel().store();
     ModelIndex<GridColumn> colIdx = ModelIndex.forColumn(this, column.getColumnNumber());
     storeOrRestoreSelection(colIdx, state, selection);
     myResultView.setColumnEnabled(colIdx, state);
-    if (pinStateChanged || hasPinnedColumns()) {
+    if (hasPinnedColumns()) {
       updateFrozenColumns();
     }
     fireContentChanged(null); // update structure view

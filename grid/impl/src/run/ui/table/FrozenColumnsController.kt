@@ -172,8 +172,9 @@ internal class FrozenColumnsController(
   }
 
   /**
-   * Shows [pinnedModelIndices] in the strip, in the order the main table has them. They keep their place there at
-   * width 0, so pinning never reorders anything: the order stays the user's own, and so does the persisted one.
+   * Shows the currently visible [pinnedModelIndices] in the strip, in the order the main table has them. They keep
+   * their place there at width 0, so pinning never reorders anything: the order stays the user's own, and so does the
+   * persisted one. Logical pins that are not present in the main view do not create an empty strip.
    */
   fun setFrozenColumns(pinnedModelIndices: Collection<Int>) {
     val parent = findScrollPane() ?: return
@@ -186,16 +187,24 @@ internal class FrozenColumnsController(
       return
     }
 
+    val mainColumns = primaryView.columnModel
+    val visiblePinnedColumns = mutableListOf<TableResultViewColumn>()
+    for (viewIndex in 0 until mainColumns.columnCount) {
+      val mainColumn = mainColumns.getColumn(viewIndex) as TableResultViewColumn
+      if (mainColumn.modelIndex in pinned) visiblePinnedColumns.add(mainColumn)
+    }
+    if (visiblePinnedColumns.isEmpty()) {
+      removeFrozenView(parent)
+      return
+    }
+
     val frozen = frozenView ?: createFrozenView(parent)
     val orientation = parent.componentOrientation
     primaryView.applyComponentOrientation(orientation)
     frozen.applyComponentOrientation(orientation)
 
     (frozen.columnModel as TableResultView.MyTableColumnModel).removeAllColumns()
-    val mainColumns = primaryView.columnModel
-    for (viewIndex in 0 until mainColumns.columnCount) {
-      val mainColumn = mainColumns.getColumn(viewIndex) as TableResultViewColumn
-      if (mainColumn.modelIndex !in pinned) continue
+    for (mainColumn in visiblePinnedColumns) {
       val frozenColumn = frozen.columnCache.getOrCreateColumn(mainColumn.modelIndex)
       val width = if (mainColumn.isWidthSetByUser) mainColumn.columnWidth else maxOf(mainColumn.width, mainColumn.columnWidth)
       frozenColumn.setFrozenColumnWidth(width, mainColumn.isWidthSetByUser)

@@ -33,9 +33,6 @@ class GridColumnPinModel private constructor(private val pinned: Set<Int>) {
 
   fun unpinAll(): GridColumnPinModel = if (pinned.isEmpty()) this else GridColumnPinModel(emptySet())
 
-  /** Un-pins a column that is being hidden; un-hiding it later leaves it unpinned. */
-  fun onColumnHidden(columnId: Int): GridColumnPinModel = unpin(columnId)
-
   /**
    * Pins every column from the start of [displayOrder] up to and including [targetId], filling in any that are not
    * pinned yet. Returns this unchanged if the target is absent.

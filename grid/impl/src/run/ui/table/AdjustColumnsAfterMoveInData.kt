@@ -50,8 +50,8 @@ class AdjustColumnsAfterMoveInData(
   override fun invoke() {
     val columnIndices = grid.getDataModel(DataAccessType.DATABASE_DATA).getColumnIndices()
 
-    // Re-key before changing visibility: setColumnEnabled(false) unpins its model index, which already identifies a
-    // different column after the move.
+    // Re-key before changing visibility: every visibility update refreshes the strip, and the old model index already
+    // identifies a different column after the move.
     (grid as? TableResultPanel)?.restorePinnedColumnsAfterMoveInData { newIndex -> toOriginalIndex(newIndex) }
 
     // Show all columns for sorting
