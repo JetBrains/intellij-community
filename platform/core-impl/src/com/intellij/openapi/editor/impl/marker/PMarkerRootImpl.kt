@@ -56,7 +56,7 @@ open class PMarkerRootImpl private constructor(
     val existingState = states.getUnchecked(markerId)
     require(existingState == null || existingState is AbsentNode) { "Marker $markerId already exists" }
 
-    val editor = Editor(states)
+    val editor = MapBatchEditor(states)
     editor.putValid(
       markerId,
       ValidNode(
@@ -80,7 +80,7 @@ open class PMarkerRootImpl private constructor(
     val state = states.getUnchecked(markerId) as? ValidNode ?: return this
     if (state.entry.flavorFlags == flavorFlags) return this
 
-    val editor = Editor(states)
+    val editor = MapBatchEditor(states)
     editor.putValid(markerId, state.copy(entry = state.entry.copy(flavorFlags = flavorFlags)))
     var currentId = markerId
     while (currentId != NULL_NODE) {
@@ -124,7 +124,7 @@ open class PMarkerRootImpl private constructor(
         val startOffset = state.entry.startOffset + offsetDelta
         val endOffset = state.entry.endOffset + offsetDelta
         val key = PositionKey(startOffset, markerId)
-        val editor = Editor(states)
+        val editor = MapBatchEditor(states)
         val newRoot = removeByKey(editor, rootId, key)
         editor.putAbsent(markerId, startOffset, endOffset, state.entry.markerReference)
         editor.setParent(newRoot, NULL_NODE)
@@ -139,7 +139,7 @@ open class PMarkerRootImpl private constructor(
       is AbsentNode, is InvalidNode -> PMarkerRootImpl(rootId, states.remove(markerId))
       is ValidNode -> {
         val startOffset = state.entry.startOffset + ancestorDelta(state, markerId)
-        val editor = Editor(states)
+        val editor = MapBatchEditor(states)
         val newRoot = removeByKey(editor, rootId, PositionKey(startOffset, markerId))
         editor.remove(markerId)
         editor.setParent(newRoot, NULL_NODE)
@@ -161,7 +161,7 @@ open class PMarkerRootImpl private constructor(
     if (oldLength == 0 && newLength == 0 || rootId == NULL_NODE) return this
 
     val delta = newLength - oldLength
-    val editor = Editor(states)
+    val editor = MapBatchEditor(states)
 
     val (before, fromEditStart) = splitByStart(editor, rootId, editStart, equalGoesLeft = false)
     val (middle, after) = splitByStart(editor, fromEditStart, editEnd, equalGoesLeft = true)
@@ -325,7 +325,7 @@ open class PMarkerRootImpl private constructor(
 
   private data class ExtractMinimumResult(val rootId: Long, val minimumId: Long)
 
-  private class Editor(states: PersistentLongMap<StoredNode>) {
+  private class MapBatchEditor(states: PersistentLongMap<StoredNode>) {
     private val builder = states.builder()
 
     fun valid(markerId: Long): ValidNode = builder.getUnchecked(markerId) as? ValidNode
@@ -429,22 +429,22 @@ open class PMarkerRootImpl private constructor(
 
     private fun key(markerId: Long, node: ValidNode): PositionKey = PositionKey(node.entry.startOffset, markerId)
 
-    private fun height(editor: Editor, markerId: Long): Int = if (markerId != NULL_NODE) editor.valid(markerId).height else 0
+    private fun height(editor: MapBatchEditor, markerId: Long): Int = if (markerId != NULL_NODE) editor.valid(markerId).height else 0
 
     private fun containsAllFlavorFlags(flavorFlags: Byte, requiredFlavorFlags: Int): Boolean =
       (flavorFlags.toInt() and requiredFlavorFlags) == requiredFlavorFlags
 
-    private fun subtreeFlavorFlags(editor: Editor, markerId: Long): Int =
+    private fun subtreeFlavorFlags(editor: MapBatchEditor, markerId: Long): Int =
       if (markerId == NULL_NODE) 0 else editor.valid(markerId).subtreeFlavorFlags.toInt()
 
-    private fun subtreeFlavorFlags(editor: Editor, entry: MarkerEntry, leftId: Long, rightId: Long): Byte =
+    private fun subtreeFlavorFlags(editor: MapBatchEditor, entry: MarkerEntry, leftId: Long, rightId: Long): Byte =
       (entry.flavorFlags.toInt() or subtreeFlavorFlags(editor, leftId) or subtreeFlavorFlags(editor, rightId)).toByte()
 
-    private fun balanceFactor(editor: Editor, node: ValidNode): Int {
+    private fun balanceFactor(editor: MapBatchEditor, node: ValidNode): Int {
       return height(editor, node.leftId) - height(editor, node.rightId)
     }
 
-    private fun shift(editor: Editor, nodeId: Long, delta: Int): Long {
+    private fun shift(editor: MapBatchEditor, nodeId: Long, delta: Int): Long {
       if (nodeId == NULL_NODE || delta == 0) return nodeId
       val node = editor.valid(nodeId)
       editor.putValid(
@@ -461,7 +461,7 @@ open class PMarkerRootImpl private constructor(
       return nodeId
     }
 
-    private fun push(editor: Editor, nodeId: Long): ValidNode {
+    private fun push(editor: MapBatchEditor, nodeId: Long): ValidNode {
       val node = editor.valid(nodeId)
       val delta = node.lazyOffsetDelta
       if (delta == 0) return node
@@ -474,7 +474,7 @@ open class PMarkerRootImpl private constructor(
     }
 
     private fun rewrite(
-      editor: Editor,
+      editor: MapBatchEditor,
       markerId: Long,
       node: ValidNode,
       parentId: Long,
@@ -503,14 +503,14 @@ open class PMarkerRootImpl private constructor(
       return updated
     }
 
-    private fun detachAsLeaf(editor: Editor, markerId: Long): ValidNode {
+    private fun detachAsLeaf(editor: MapBatchEditor, markerId: Long): ValidNode {
       val node = push(editor, markerId)
       editor.setParent(node.leftId, NULL_NODE)
       editor.setParent(node.rightId, NULL_NODE)
       return rewrite(editor, markerId, node, NULL_NODE, NULL_NODE, NULL_NODE)
     }
 
-    private fun rotateLeft(editor: Editor, rootId: Long): Long {
+    private fun rotateLeft(editor: MapBatchEditor, rootId: Long): Long {
       val root = push(editor, rootId)
       val rightId = checkNotNull(root.rightId) { "Cannot rotate node $rootId left without a right child" }
       val right = push(editor, rightId)
@@ -522,7 +522,7 @@ open class PMarkerRootImpl private constructor(
       return rightId
     }
 
-    private fun rotateRight(editor: Editor, rootId: Long): Long {
+    private fun rotateRight(editor: MapBatchEditor, rootId: Long): Long {
       val root = push(editor, rootId)
       val leftId = checkNotNull(root.leftId) { "Cannot rotate node $rootId right without a left child" }
       val left = push(editor, leftId)
@@ -534,7 +534,7 @@ open class PMarkerRootImpl private constructor(
       return leftId
     }
 
-    private fun rebalance(editor: Editor, rootId: Long): Long {
+    private fun rebalance(editor: MapBatchEditor, rootId: Long): Long {
       var root = push(editor, rootId)
       val factor = balanceFactor(editor, root)
 
@@ -563,7 +563,7 @@ open class PMarkerRootImpl private constructor(
       return rootId
     }
 
-    private fun insertAvl(editor: Editor, rootId: Long, markerId: Long): Long {
+    private fun insertAvl(editor: MapBatchEditor, rootId: Long, markerId: Long): Long {
       if (rootId == NULL_NODE) return markerId
 
       val root = push(editor, rootId)
@@ -579,7 +579,7 @@ open class PMarkerRootImpl private constructor(
       return rebalance(editor, rootId)
     }
 
-    private fun removeByKey(editor: Editor, rootId: Long, target: PositionKey): Long {
+    private fun removeByKey(editor: MapBatchEditor, rootId: Long, target: PositionKey): Long {
       if (rootId == NULL_NODE) return NULL_NODE
       val root = push(editor, rootId)
       val comparison = target.compareTo(key(rootId, root))
@@ -612,7 +612,7 @@ open class PMarkerRootImpl private constructor(
       return rebalance(editor, extracted.minimumId)
     }
 
-    private fun extractMinimum(editor: Editor, rootId: Long): ExtractMinimumResult {
+    private fun extractMinimum(editor: MapBatchEditor, rootId: Long): ExtractMinimumResult {
       val root = push(editor, rootId)
       if (root.leftId == NULL_NODE) {
         val remainingRoot = root.rightId
@@ -626,7 +626,7 @@ open class PMarkerRootImpl private constructor(
       return ExtractMinimumResult(rebalance(editor, rootId), extracted.minimumId)
     }
 
-    private fun joinWithPivot(editor: Editor, leftId: Long, pivotId: Long, rightId: Long): Long {
+    private fun joinWithPivot(editor: MapBatchEditor, leftId: Long, pivotId: Long, rightId: Long): Long {
       editor.setParent(leftId, NULL_NODE)
       editor.setParent(rightId, NULL_NODE)
       detachAsLeaf(editor, pivotId)
@@ -638,7 +638,7 @@ open class PMarkerRootImpl private constructor(
       return id
     }
 
-    private fun joinPrepared(editor: Editor, leftId: Long, pivotId: Long, rightId: Long): Long {
+    private fun joinPrepared(editor: MapBatchEditor, leftId: Long, pivotId: Long, rightId: Long): Long {
       val leftHeight = height(editor, leftId)
       val rightHeight = height(editor, rightId)
 
@@ -671,7 +671,7 @@ open class PMarkerRootImpl private constructor(
       return result
     }
 
-    private fun joinDisjoint(editor: Editor, leftId: Long, rightId: Long): Long {
+    private fun joinDisjoint(editor: MapBatchEditor, leftId: Long, rightId: Long): Long {
       if (leftId == NULL_NODE) {
         editor.setParent(rightId, NULL_NODE)
         return rightId
@@ -690,7 +690,7 @@ open class PMarkerRootImpl private constructor(
     }
 
     private fun splitByStart(
-      editor: Editor,
+      editor: MapBatchEditor,
       rootId: Long,
       boundaryOffset: Int,
       equalGoesLeft: Boolean,
@@ -719,7 +719,7 @@ open class PMarkerRootImpl private constructor(
       }
     }
 
-    private fun updateMarkersStartingBeforeEdit(editor: Editor, rootId: Long, edit: MarkerEdit): Long {
+    private fun updateMarkersStartingBeforeEdit(editor: MapBatchEditor, rootId: Long, edit: MarkerEdit): Long {
       if (rootId == NULL_NODE) return NULL_NODE
       val initial = editor.valid(rootId)
       if (initial.maximumEndOffset < edit.startOffset) return rootId
@@ -754,7 +754,7 @@ open class PMarkerRootImpl private constructor(
     }
 
     private fun collectEntries(
-      editor: Editor,
+      editor: MapBatchEditor,
       rootId: Long,
       ancestorDelta: Int,
       destination: MutableList<MarkerEntry>,
@@ -772,7 +772,7 @@ open class PMarkerRootImpl private constructor(
     }
 
     private fun retargetContainedMarkers(
-      editor: Editor,
+      editor: MapBatchEditor,
       rootId: Long,
       moveStart: Int,
       moveEnd: Int,
@@ -808,7 +808,7 @@ open class PMarkerRootImpl private constructor(
     }
 
     private fun collectContainedEntries(
-      editor: Editor,
+      editor: MapBatchEditor,
       rootId: Long,
       ancestorDelta: Int,
       startOffset: Int,
@@ -839,12 +839,12 @@ open class PMarkerRootImpl private constructor(
       return true
     }
 
-    private fun buildBalanced(editor: Editor, sortedEntries: List<MarkerEntry>): Long {
+    private fun buildBalanced(editor: MapBatchEditor, sortedEntries: List<MarkerEntry>): Long {
       return buildBalanced(editor, sortedEntries, 0, sortedEntries.size, NULL_NODE)
     }
 
     private fun buildBalanced(
-      editor: Editor,
+      editor: MapBatchEditor,
       sortedEntries: List<MarkerEntry>,
       fromIndex: Int,
       toIndex: Int,
