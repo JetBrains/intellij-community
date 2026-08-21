@@ -615,11 +615,13 @@ object GithubApiRequests {
         state: GithubIssueState? = null,
         baseRef: String? = null,
         headRef: String? = null,
+        pagination: GithubRequestPagination? = null,
       ): GithubApiRequest<GithubResponsePage<GHPullRequestRestIdOnly>> =
         Get.jsonPage<GHPullRequestRestIdOnly>(getUrl(repository, urlSuffix, urlQuery {
           param("state", state?.toString())
           param("base", baseRef)
           param("head", headRef)
+          param(pagination)
         }))
           .withOperation(GithubApiRequestOperation.RestGetPullRequests)
           .withOperationName("find pull requests")
