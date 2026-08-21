@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.util.caching.ModuleEntityChangeListener
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullTypeAliasNameIndex
 
 abstract class FrameworkAvailabilityChecker(
     project: Project
@@ -44,8 +44,8 @@ abstract class FrameworkAvailabilityChecker(
 
         return fqNames.any { fqName ->
             (javaClassLookup && javaPsiFacade.findClass(fqName, moduleScope) != null)
-                    || (aliasLookup && KotlinTopLevelTypeAliasFqNameIndex.get(fqName, project, moduleScope).isNotEmpty())
-                    || (kotlinFullClassLookup && KotlinFullClassNameIndex.get(fqName, project, moduleScope).isNotEmpty())
+                    || (aliasLookup && KotlinFullTypeAliasNameIndex[fqName, project, moduleScope].isNotEmpty())
+                    || (kotlinFullClassLookup && KotlinFullClassNameIndex[fqName, project, moduleScope].isNotEmpty())
         }
     }
 

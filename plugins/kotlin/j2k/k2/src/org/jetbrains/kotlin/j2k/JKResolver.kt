@@ -10,11 +10,11 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullTypeAliasNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.j2k.types.typeFqName
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -53,7 +53,7 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
     private fun resolveFqNameOfKtClassByIndex(fqName: FqName): KtDeclaration? {
         val fqNameString = fqName.asString()
         val classesPsi = KotlinFullClassNameIndex[fqNameString, project, scope]
-        val typeAliasesPsi = KotlinTopLevelTypeAliasFqNameIndex[fqNameString, project, scope]
+        val typeAliasesPsi = KotlinFullTypeAliasNameIndex[fqNameString, project, scope]
 
         return selectNearest(classesPsi, typeAliasesPsi)
     }

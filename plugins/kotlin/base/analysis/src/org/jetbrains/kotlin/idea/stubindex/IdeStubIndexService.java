@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics;
 import org.jetbrains.kotlin.idea.base.psi.KotlinStubUtils;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.load.java.JvmAbi;
-import org.jetbrains.kotlin.name.ClassId;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.KtAnnotationEntry;
@@ -247,15 +246,11 @@ public class IdeStubIndexService extends StubIndexService {
 
         FqName fqName = stub.getFqName();
         if (fqName != null) {
+            sink.occurrence(KotlinFullTypeAliasNameIndex.Helper.getIndexKey(), fqName.asString());
+
             if (stub.isTopLevel()) {
-                sink.occurrence(KotlinTopLevelTypeAliasFqNameIndex.Helper.getIndexKey(), fqName.asString());
                 sink.occurrence(KotlinTopLevelTypeAliasByPackageIndex.Helper.getIndexKey(), fqName.parent().asString());
             }
-        }
-
-        ClassId classId = stub.getClassId();
-        if (classId != null && !stub.isTopLevel()) {
-            sink.occurrence(KotlinInnerTypeAliasClassIdIndex.Helper.getIndexKey(), classId.asString());
         }
     }
 

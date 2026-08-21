@@ -5,13 +5,8 @@ package org.jetbrains.kotlin.j2k.conversions
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_6
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullTypeAliasNameIndex
 import org.jetbrains.kotlin.j2k.ConverterContext
-import org.jetbrains.kotlin.load.java.JvmAnnotationNames.DEPRECATED_ANNOTATION
-import org.jetbrains.kotlin.load.java.JvmAnnotationNames.DOCUMENTED_ANNOTATION
-import org.jetbrains.kotlin.load.java.JvmAnnotationNames.REPEATABLE_ANNOTATION
-import org.jetbrains.kotlin.load.java.JvmAnnotationNames.RETENTION_ANNOTATION
-import org.jetbrains.kotlin.load.java.JvmAnnotationNames.TARGET_ANNOTATION
 import org.jetbrains.kotlin.j2k.RecursiveConversion
 import org.jetbrains.kotlin.j2k.moduleApiVersion
 import org.jetbrains.kotlin.j2k.tree.JKAnnotation
@@ -25,6 +20,11 @@ import org.jetbrains.kotlin.j2k.tree.JKLiteralExpression
 import org.jetbrains.kotlin.j2k.tree.JKQualifiedExpression
 import org.jetbrains.kotlin.j2k.tree.JKTreeElement
 import org.jetbrains.kotlin.j2k.tree.copyTreeAndDetach
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames.DEPRECATED_ANNOTATION
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames.DOCUMENTED_ANNOTATION
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames.REPEATABLE_ANNOTATION
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames.RETENTION_ANNOTATION
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames.TARGET_ANNOTATION
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.ifEmpty
 
@@ -82,7 +82,7 @@ class JavaAnnotationsConversion(context: ConverterContext) : RecursiveConversion
         val jvmRepeatable = "kotlin.jvm.JvmRepeatable"
         val scope = context.converter.targetModule?.let { GlobalSearchScope.moduleWithLibrariesScope(it) }
             ?: ProjectScope.getLibrariesScope(context.project)
-        KotlinTopLevelTypeAliasFqNameIndex[jvmRepeatable, context.project, scope].ifEmpty { return }
+        KotlinFullTypeAliasNameIndex[jvmRepeatable, context.project, scope].ifEmpty { return }
         classSymbol = symbolProvider.provideClassSymbol(jvmRepeatable)
     }
 

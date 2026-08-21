@@ -8,22 +8,16 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
-@Deprecated(
-    message = "Use 'KotlinFullTypeAliasNameIndex' instead",
-    replaceWith = ReplaceWith(
-        expression = "KotlinFullTypeAliasNameIndex",
-        imports = ["org.jetbrains.kotlin.idea.stubindex.KotlinFullTypeAliasNameIndex"],
-    )
-)
-class KotlinTopLevelTypeAliasFqNameIndex internal constructor() : StringStubIndexExtension<KtTypeAlias>() {
+class KotlinFullTypeAliasNameIndex internal constructor() : StringStubIndexExtension<KtTypeAlias>() {
     companion object Helper : KotlinStringStubIndexHelper<KtTypeAlias>(KtTypeAlias::class.java) {
-        override val indexKey: StubIndexKey<String, KtTypeAlias> get() = KotlinFullTypeAliasNameIndex.indexKey
+        override val indexKey: StubIndexKey<String, KtTypeAlias> =
+            StubIndexKey.createIndexKey(KotlinFullTypeAliasNameIndex::class.java.name)
     }
 
     override fun getKey(): StubIndexKey<String, KtTypeAlias> = indexKey
 
     @Deprecated("Base method is deprecated", ReplaceWith("KotlinFullTypeAliasNameIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
-        return KotlinFullTypeAliasNameIndex[key, project, scope]
+        return Helper[key, project, scope]
     }
 }
