@@ -144,18 +144,7 @@ fun Application.mcpPatched(
 
     route("/stream") {
       sse {
-        val sessionId = call.request.headers[MCP_SESSION_ID_HEADER]
-        if (sessionId.isNullOrEmpty()) {
-          call.respond(HttpStatusCode.BadRequest, "Missing $MCP_SESSION_ID_HEADER header")
-          return@sse
-        }
-
-        val session = streamableSessions[sessionId]
-        if (session == null) {
-          call.respond(HttpStatusCode.NotFound, "Streamable HTTP session not found")
-          return@sse
-        }
-
+        val session = call.streamableSession(streamableSessions) ?: return@sse
         session.whileInUse { serveNotificationStream(session.transport) }
       }
 
@@ -165,7 +154,7 @@ fun Application.mcpPatched(
       }
 
       delete {
-        val session = existingStreamableSession(call, streamableSessions) ?: return@delete
+        val session = call.streamableSession(streamableSessions) ?: return@delete
         session.transport.handleRequest(null, call)
       }
     }
@@ -228,21 +217,20 @@ internal suspend fun RoutingContext.mcpPostEndpoint(
 }
 
 /**
- * Returns the session already associated with the `mcp-session-id` header, or responds with an error
- * and returns `null`. Used for GET and DELETE.
+ * Returns the session named by the `mcp-session-id` header, or responds with the reason it cannot be served
+ * and returns `null`.
  */
-private suspend fun existingStreamableSession(
-  call: ApplicationCall,
+private suspend fun ApplicationCall.streamableSession(
   sessions: ConcurrentMap<String, StreamableSession>,
 ): StreamableSession? {
-  val sessionId = call.request.headers[MCP_SESSION_ID_HEADER]
+  val sessionId = request.headers[MCP_SESSION_ID_HEADER]
   if (sessionId.isNullOrEmpty()) {
-    call.respond(HttpStatusCode.BadRequest, "Missing $MCP_SESSION_ID_HEADER header")
+    respond(HttpStatusCode.BadRequest, "Missing $MCP_SESSION_ID_HEADER header")
     return null
   }
   val session = sessions[sessionId]
   if (session == null) {
-    call.respond(HttpStatusCode.NotFound, "Streamable HTTP session not found")
+    respond(HttpStatusCode.NotFound, "Streamable HTTP session not found")
     return null
   }
   return session
@@ -254,13 +242,7 @@ private suspend fun obtainOrCreateStreamableSession(
   scope: CoroutineScope,
   block: suspend (ApplicationCall, Transport) -> ServerSession,
 ): StreamableSession? {
-  val incomingSessionId = call.request.headers[MCP_SESSION_ID_HEADER]
-  if (incomingSessionId != null) {
-    val existing = sessions[incomingSessionId]
-    if (existing != null) return existing
-    call.respond(HttpStatusCode.NotFound, "Streamable HTTP session not found")
-    return null
-  }
+  if (call.request.headers[MCP_SESSION_ID_HEADER] != null) return call.streamableSession(sessions)
 
   val transport = StreamableHttpServerTransport(
     StreamableHttpServerTransport.Configuration(enableJsonResponse = true)
