@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -110,7 +110,7 @@ public class AddReturnFix extends PsiUpdateModCommandAction<PsiParameterListOwne
         return conversion;
       }
     }
-    return PsiTypesUtil.getDefaultValueOfType(type, true);
+    return PsiTypesUtil.getDefaultValueOfType(type, owner);
   }
 
   private static @NonNls String getConversionToType(@NotNull PsiParameterListOwner method,
