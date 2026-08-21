@@ -201,6 +201,8 @@ com.intellij.openapi.editor.EditorSettings
 - runBatchMutation(kotlin.jvm.functions.Function1):java.lang.Object
 com.intellij.openapi.editor.FoldingModel
 - *:addCustomLinesFolding(I,I,com.intellij.openapi.editor.CustomFoldRegionRenderer):com.intellij.openapi.editor.CustomFoldRegion
+com.intellij.openapi.editor.LineWrapPositionStrategy
+- *:isSoftWrappingAllowed(com.intellij.openapi.editor.Editor,I):Z
 *:com.intellij.openapi.editor.ScrollPositionCalculator
 - calcOffsetsToScroll(com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.openapi.editor.ScrollType,java.awt.Rectangle,javax.swing.JScrollPane):java.awt.Point
 - a:getHorizontalOffset(com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.openapi.editor.ScrollType,java.awt.Rectangle,javax.swing.JScrollPane):I

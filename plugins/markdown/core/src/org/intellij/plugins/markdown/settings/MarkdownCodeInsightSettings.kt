@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nls
        storages = [(Storage("markdown.xml"))])
 class MarkdownCodeInsightSettings: SimplePersistentStateComponent<MarkdownCodeInsightSettings.State>(State()) {
   class State: BaseState() {
+    var alignTableCellsVisually: Boolean by property(true)
     var reformatTablesOnType: Boolean by property(false)
     var insertHtmlLineBreakInsideTables: Boolean by property(true)
     var insertNewTableRowOnShiftEnter: Boolean by property(true)

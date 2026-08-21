@@ -226,8 +226,6 @@
                             implementationClass="org.intellij.plugins.markdown.editor.MarkdownFenceLangCompletionContributor"/>
 
     <textEditorCustomizer implementation="org.intellij.plugins.markdown.ui.floating.AddFloatingToolbarTextEditorCustomizer"/>
-    <textEditorCustomizer implementation="org.intellij.plugins.markdown.editor.MarkdownCharacterGridCustomizer"/>
-    <editorFactoryListener implementation="org.intellij.plugins.markdown.editor.MarkdownCharacterGridEditorFactoryListener"/>
 
     <fileDropHandler implementation="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownDocxFileDropHandler"/>
 

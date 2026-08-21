@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindSelected
 import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.tables.ui.alignment.MarkdownTableAlignmentSettingsListener
 import org.intellij.plugins.markdown.util.MarkdownApplicationScope
 
 internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(), SearchableConfigurable, CodeCompletionOptionsCustomSection {
@@ -33,6 +34,17 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
 
   override fun Panel.createContent() {
     group(title = MarkdownBundle.message("markdown.smart.keys.configurable.tables.group.name")) {
+      row {
+        checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.tables.align.cells"))
+          .bindSelected(
+            getter = { settings.state.alignTableCellsVisually },
+            setter = {
+              settings.state.alignTableCellsVisually = it
+              MarkdownTableAlignmentSettingsListener.fireChanged()
+            }
+          )
+          .comment(MarkdownBundle.message("markdown.smart.keys.configurable.tables.align.cells.comment"))
+      }
       row {
         checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.tables.reformat.on.type"))
           .bindSelected(

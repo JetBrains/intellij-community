@@ -18,6 +18,7 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Defines contract for the strategy that calculates the best place to apply wrap to particular line (sequence of characters).
@@ -92,6 +93,17 @@ public interface LineWrapPositionStrategy {
    */
   default @NotNull Document getWrapDocument(@NotNull Editor editor, boolean isSoftWrap) {
     return isSoftWrap ? editor.getElfDocument() : editor.getDocument();
+  }
+
+  /**
+   * Tells whether automatic soft wrapping is allowed on the logical line containing {@code offset}.
+   *
+   * @param editor target editor
+   * @param offset an offset on the logical line being laid out
+   */
+  @ApiStatus.Experimental
+  default boolean isSoftWrappingAllowed(@NotNull Editor editor, int offset) {
+    return true;
   }
 
   /**

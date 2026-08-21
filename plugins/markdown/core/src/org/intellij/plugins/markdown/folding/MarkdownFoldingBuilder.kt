@@ -12,7 +12,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.childrenOfType
-import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.toc.GenerateTableOfContentsAction
@@ -58,10 +57,6 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
       }
 
       override fun visitLinkDestination(linkDestination: MarkdownLinkDestination) {
-        if (linkDestination.parentOfType<MarkdownTable>() != null) {
-          super.visitLinkDestination(linkDestination)
-          return
-        }
         val node = linkDestination.node
         val descriptor = FoldingDescriptor(
           node,

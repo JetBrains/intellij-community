@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LineWrapPositionStrategy;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
@@ -62,6 +63,38 @@ public class EditorCharacterGridSizeTest extends AbstractEditorTest {
     verifySoftWrapPositions(8);
   }
 
+  public void testGridEditorWithSoftWrapOptimizationsRespectsLineStrategy() {
+    initText(LONG_LINE.substring(0, 20));
+    configureSoftWraps(10, false);
+    softWrapApplianceManager().setLineWrapPositionStrategy(new MarkerLineWrapPositionStrategy() {
+      @Override
+      public boolean isSoftWrappingAllowed(@NotNull Editor editor, int offset) {
+        return false;
+      }
+    });
+    enableGridMode(true);
+
+    verifySoftWrapPositions();
+  }
+
+  public void testLineStrategyIsNotConsultedForLinesThatFit() {
+    initText("short line\nanother short line");
+    configureSoftWraps(20, false);
+    int[] calls = {0};
+    softWrapApplianceManager().setLineWrapPositionStrategy(new MarkerLineWrapPositionStrategy() {
+      @Override
+      public boolean isSoftWrappingAllowed(@NotNull Editor editor, int offset) {
+        calls[0]++;
+        return true;
+      }
+    });
+
+    softWrapApplianceManager().recalculateIfNecessary("line strategy changed");
+
+    assertEquals(0, calls[0]);
+    verifySoftWrapPositions();
+  }
+
   // The grid mode soft-wrapping optimization is not a pure optimization:
   //  it places wraps at grid column boundaries without consulting LineWrapPositionStrategy.
   // Grid editors that didn't opt in should keep the strategy-based wrap positions.
@@ -75,7 +108,7 @@ public class EditorCharacterGridSizeTest extends AbstractEditorTest {
   }
 
   // Wraps right before {@link #WRAP_MARKER} only
-  private static final class MarkerLineWrapPositionStrategy implements LineWrapPositionStrategy {
+  private static class MarkerLineWrapPositionStrategy implements LineWrapPositionStrategy {
     @Override
     public int calculateWrapPosition(@NotNull Document document,
                                      @Nullable Project project,
