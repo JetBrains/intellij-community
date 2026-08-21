@@ -22,7 +22,7 @@ SPECTRE_TAGS = [
     "external",
 ]
 
-def spectre_test(
+def standalone_e2e_test(
         name,
         srcs,
         module_name,
