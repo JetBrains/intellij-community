@@ -31,14 +31,19 @@ internal class WhatsNewContentVersionChecker {
       return result
     }
 
-    fun saveLastShownContent(content: WhatsNewContent) {
+    /**
+     * @return `true` if the newly shown content's version differs from the previously saved one.
+     */
+    fun saveLastShownContent(content: WhatsNewContent): Boolean {
       LOG.info("EapWhatsNew version saved '${content.getVersion()}'")
       val version = content.getVersion() ?: run {
         LOG.error("What's New content $content returned a null version.")
-        return
+        return false
       }
 
+      val previousVersion = PropertiesComponent.getInstance().getValue(LAST_SHOWN_EAP_VERSION_PROP)
       PropertiesComponent.getInstance().setValue(LAST_SHOWN_EAP_VERSION_PROP, version.toString())
+      return previousVersion != version.toString()
     }
 
     internal fun shouldShowWhatsNew(
