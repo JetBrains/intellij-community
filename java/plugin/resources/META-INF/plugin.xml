@@ -74,6 +74,7 @@
 
     <module name="intellij.java.backend" required-if-available="intellij.platform.backend"/>
 
+    <module name="intellij.java.frontend.split.base"/>
     <module name="intellij.java.frontend.split" required-if-available="intellij.platform.frontend.split"/>
     <module name="intellij.java.frontend" required-if-available="intellij.platform.frontend"/>
 

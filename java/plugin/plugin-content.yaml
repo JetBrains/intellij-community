@@ -173,6 +173,9 @@
 - name: lib/modules/intellij.java.frontend.jar
   contentModules:
   - name: intellij.java.frontend
+- name: lib/modules/intellij.java.frontend.split.base.jar
+  contentModules:
+  - name: intellij.java.frontend.split.base
 - name: lib/modules/intellij.java.frontend.split.jar
   contentModules:
   - name: intellij.java.frontend.split

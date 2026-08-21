@@ -773,6 +773,7 @@ intellij.java.execution.impl.frontend
 intellij.java.featuresTrainer
 intellij.java.frontend
 intellij.java.frontend.split
+intellij.java.frontend.split.base
 intellij.java.ide.customization.backend
 intellij.java.ide.customization.training
 intellij.java.impl
