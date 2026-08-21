@@ -255,6 +255,7 @@ fleet/reporting/shared
 fleet/rhizomedb
 fleet/rhizomedb.transactor
 fleet/rhizomedb.transactor.rebase
+fleet/rhizomedb.transactor.rebase/test
 fleet/rpc
 fleet/rpc.server
 fleet/test-runtime
