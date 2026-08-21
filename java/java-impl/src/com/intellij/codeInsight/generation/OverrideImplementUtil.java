@@ -141,10 +141,8 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   public static boolean isInsertOverride(@NotNull PsiMethod superMethod, @NotNull PsiClass targetClass) {
-    if (!JavaCodeStyleSettings.getInstance(targetClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION) {
-      return false;
-    }
-    return canInsertOverride(superMethod, targetClass);
+    return JavaCodeStyleSettings.getInstance(targetClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION
+           && canInsertOverride(superMethod, targetClass);
   }
 
   public static boolean canInsertOverride(@NotNull PsiMethod superMethod, @NotNull PsiClass targetClass) {
@@ -171,7 +169,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (!method.isValid() || !substitutor.isValid()) return Collections.emptyList();
 
     List<PsiMethod> results = new ArrayList<>();
-    for (final MethodImplementor implementor : getImplementors()) {
+    for (MethodImplementor implementor : getImplementors()) {
       final PsiMethod[] prototypes = implementor.createImplementationPrototypes(aClass, method);
       for (PsiMethod prototype : prototypes) {
         implementor.createDecorator(aClass, method, toCopyJavaDoc, insertOverrideIfPossible).consume(prototype);
@@ -184,7 +182,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
       PsiClass copyClass = copyClass(aClass);
       // FIXME: Force document initialization
-      //        otherwise something strange happens in analyzer context, 
+      //        otherwise something strange happens in analyzer context,
       //        and the document is not synchronized.
       //        Probably some extension is not registered.
       copyClass.getContainingFile().getFileDocument();
@@ -231,8 +229,8 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
   public static @NotNull Consumer<PsiMethod> createDefaultDecorator(@NotNull PsiClass aClass,
                                                                     @NotNull PsiMethod method,
-                                                                    final boolean toCopyJavaDoc,
-                                                                    final boolean insertOverrideIfPossible) {
+                                                                    boolean toCopyJavaDoc,
+                                                                    boolean insertOverrideIfPossible) {
     return result -> decorateMethod(aClass, method, toCopyJavaDoc, insertOverrideIfPossible, result);
   }
 
@@ -456,7 +454,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
       methodText = FileTemplateUtil.indent(methodText, project, fileType);
     }
     catch (Exception e) {
-      throw new IncorrectOperationException("Failed to parse file template", (Throwable)e);
+      throw new IncorrectOperationException("Failed to parse file template", e);
     }
     PsiMethod m;
     try {
@@ -492,10 +490,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     chooseAndOverrideOrImplementMethods(project, editor, aClass, true);
   }
 
-  public static void chooseAndOverrideOrImplementMethods(final Project project,
-                                                         final Editor editor,
-                                                         @NotNull PsiClass aClass,
-                                                         final boolean toImplement) {
+  public static void chooseAndOverrideOrImplementMethods(Project project, Editor editor, @NotNull PsiClass aClass, boolean toImplement) {
     NonBlockingReadAction<JavaOverrideImplementMemberChooserContainer> prepareChooserTask = ReadAction.nonBlocking(() -> {
         return DumbService.getInstance(project).withAlternativeResolveEnabled(() -> prepareChooser(aClass, toImplement));
       })
@@ -530,8 +525,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     final String commandName = CommandProcessor.getInstance().getCurrentCommandName();
     String title = ObjectUtils.notNull(commandName, getChooserTitle(toImplement, false));
     Runnable runnable = () -> ApplicationManagerEx.getApplicationEx()
-      .runWriteActionWithCancellableProgressInDispatchThread(title, project, null,
-                                                             indicator -> performImplementOverrideRunnable.run());
+      .runWriteActionWithCancellableProgressInDispatchThread(title, project, null, _ -> performImplementOverrideRunnable.run());
     if (commandName == null) {
       CommandProcessor.getInstance().executeCommand(project, runnable, title, null);
     }
@@ -555,7 +549,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
    */
   public static void showJavaOverrideImplementChooser(@NotNull Editor editor,
                                                       @NotNull PsiElement aClass,
-                                                      final boolean toImplement,
+                                                      boolean toImplement,
                                                       @NotNull Collection<CandidateInfo> candidates,
                                                       @NotNull Collection<CandidateInfo> secondary,
                                                       @NotNull java.util.function.Consumer<JavaOverrideImplementMemberChooser> callback) {
@@ -596,9 +590,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
       return chooser;
     }
     chooser.show();
-    if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
-
-    return chooser;
+    return chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE ? null : chooser;
   }
 
   private static @Nullable JavaOverrideImplementMemberChooserContainer prepareJavaOverrideImplementChooser(@NotNull PsiElement aClass,
@@ -610,7 +602,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
         for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext(); ) {
           CandidateInfo candidate = iterator.next();
           PsiElement element = candidate.getElement();
-          if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.DEFAULT)) {
+          if (element instanceof PsiMethod m && m.hasModifierProperty(PsiModifier.DEFAULT)) {
             iterator.remove();
             secondary.add(candidate);
           }
@@ -631,23 +623,21 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   private static void registerHandlerForComplementaryAction(@NotNull Project project,
                                                             @NotNull Editor editor,
                                                             @NotNull PsiElement aClass,
-                                                            final boolean toImplement,
+                                                            boolean toImplement,
                                                             @NotNull MemberChooser<PsiMethodMember> chooser) {
     final JComponent preferredFocusedComponent = chooser.getPreferredFocusedComponent();
 
     final @NonNls String s = toImplement ? "OverrideMethods" : "ImplementMethods";
     final Shortcut shortcut = KeymapUtil.getPrimaryShortcut(s);
 
-    if (shortcut instanceof KeyboardShortcut) {
-      preferredFocusedComponent.getInputMap().put(
-        ((KeyboardShortcut)shortcut).getFirstKeyStroke(), s
-      );
+    if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
+      preferredFocusedComponent.getInputMap().put(keyboardShortcut.getFirstKeyStroke(), s);
 
       preferredFocusedComponent.getActionMap().put(
           s,
           new AbstractAction() {
             @Override
-            public void actionPerformed(final ActionEvent e) {
+            public void actionPerformed(ActionEvent e) {
               chooser.close(DialogWrapper.CANCEL_EXIT_CODE);
 
               // invoke later in order to close previous modal dialog
@@ -725,7 +715,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
             }
           }
         }
-        resultMembers.get(0).positionCaret(editor, true);
+        resultMembers.getFirst().positionCaret(editor, true);
       }
     }
     catch (IncorrectOperationException e) {
@@ -782,7 +772,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
       if (psiFile.isPhysical()) {
         Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(psiFile.getProject(), psiFile.getVirtualFile()), true);
         if (editor != null && !results.isEmpty()) {
-          results.get(0).positionCaret(editor, true);
+          results.getFirst().positionCaret(editor, true);
           editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
         }
       }
