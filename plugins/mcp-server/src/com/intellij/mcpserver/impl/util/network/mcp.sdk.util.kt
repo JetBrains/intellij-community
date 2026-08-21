@@ -1,7 +1,5 @@
 package com.intellij.mcpserver.impl.util.network
 
-import com.intellij.mcpserver.toolwindow.McpDiagnosticService
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
@@ -44,17 +42,21 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 private val logger = logger<RoutingContext>()
@@ -67,24 +69,43 @@ internal const val MCP_SESSION_ID_HEADER: String = "mcp-session-id"
 private val SSE_HEARTBEAT_PERIOD = 5.seconds
 
 private val SSE_HEARTBEAT_EVENT = ServerSentEvent(comments = "heartbeat")
-private val PENDING_TRANSPORT_TIMEOUT = 15.seconds
 
 /**
- * A Streamable HTTP session, together with the count of the requests currently using it. The count is a state
- * flow so that it can be waited on, not only read.
+ * Inactivity is the only signal an abandoned session gives: the Kotlin MCP client never sends DELETE, and a client may
+ * work without a notification stream at all, so nothing else distinguishes it from an idle one.
+ */
+private val STREAMABLE_SESSION_IDLE_TIMEOUT = 5.minutes
+
+/**
+ * A Streamable HTTP session, which lives independently of the requests that use it: notification streams come and go,
+ * and a client may never open one.
  */
 private class StreamableSession(val transport: StreamableHttpServerTransport) {
-  private val inFlight = MutableStateFlow(0)
+  private data class Usage(val inFlight: Int = 0, val everStarted: Long = 0)
+
+  private val usage = MutableStateFlow(Usage())
 
   suspend fun <T> whileInUse(operation: suspend () -> T): T {
-    inFlight.update { it + 1 }
+    usage.update { Usage(inFlight = it.inFlight + 1, everStarted = it.everStarted + 1) }
     try {
       return operation()
     }
     finally {
-      inFlight.update { it - 1 }
+      usage.update { it.copy(inFlight = it.inFlight - 1) }
     }
   }
+
+  suspend fun awaitUnused(idleTimeout: Duration) {
+    while (true) {
+      val idleSince = awaitNothingInFlight()
+      if (!usedWithin(idleTimeout, since = idleSince)) return
+    }
+  }
+
+  private suspend fun awaitNothingInFlight(): Usage = usage.first { it.inFlight == 0 }
+
+  private suspend fun usedWithin(timeout: Duration, since: Usage): Boolean =
+    withTimeoutOrNull(timeout) { usage.first { it != since } } != null
 }
 
 @KtorDsl
@@ -94,8 +115,6 @@ fun Application.mcpPatched(
 ) {
   val sseTransports = ConcurrentMap<String, SseServerTransport>()
   val streamableSessions = ConcurrentMap<String, StreamableSession>()
-  // sessions created during POST initialize but not yet connected to a GET SSE stream.
-  val pendingSessions = ConcurrentMap<String, StreamableSession>()
   val streamableSessionScopes = ConcurrentMap<String, CoroutineScope>()
 
   install(SSE)
@@ -106,7 +125,7 @@ fun Application.mcpPatched(
       prePhase()
       if (context.request.httpMethod == HttpMethod.Get) {
         val sessionId = context.request.header(MCP_SESSION_ID_HEADER)
-        if (sessionId != null && (streamableSessions[sessionId] != null || pendingSessions[sessionId] != null)) {
+        if (sessionId != null && streamableSessions[sessionId] != null) {
           context.response.header(MCP_SESSION_ID_HEADER, sessionId)
         }
       }
@@ -127,35 +146,23 @@ fun Application.mcpPatched(
     route("/stream") {
       sse {
         val sessionId = call.request.headers[MCP_SESSION_ID_HEADER]
-        try {
-          if (sessionId.isNullOrEmpty()) {
-            call.respond(HttpStatusCode.BadRequest, "Missing $MCP_SESSION_ID_HEADER header")
-            return@sse
-          }
-
-          val session = pendingSessions.remove(sessionId)?.also { streamableSessions[sessionId] = it }
-                        ?: streamableSessions[sessionId]
-          if (session == null) {
-            call.respond(HttpStatusCode.NotFound, "Streamable HTTP session not found")
-            return@sse
-          }
-
-          session.whileInUse { serveNotificationStream(session.transport) }
+        if (sessionId.isNullOrEmpty()) {
+          call.respond(HttpStatusCode.BadRequest, "Missing $MCP_SESSION_ID_HEADER header")
+          return@sse
         }
-        finally {
-          if (sessionId != null) {
-            //todo temp fix for flaky tests
-            streamableSessions.remove(sessionId)
-            streamableSessionScopes.remove(sessionId)?.cancel()
-            service<McpDiagnosticService>().sessionEnded(sessionId = sessionId)
-          }
+
+        val session = streamableSessions[sessionId]
+        if (session == null) {
+          call.respond(HttpStatusCode.NotFound, "Streamable HTTP session not found")
+          return@sse
         }
+
+        session.whileInUse { serveNotificationStream(session.transport) }
       }
 
       post {
         val session = obtainOrCreateStreamableSession(call,
                                                      streamableSessions,
-                                                     pendingSessions,
                                                      this@mcpPatched,
                                                      block,
                                                      streamableSessionScopes) ?: return@post
@@ -246,24 +253,16 @@ private suspend fun existingStreamableSession(
   return session
 }
 
-/**
- * For POST: returns an existing session from [activeSessions] if the client supplied a known
- * session id, otherwise creates a new session, wires lifecycle callbacks, and hands its transport to [block].
- * Newly initialized sessions are placed into [pendingSessions]. They are promoted to
- * [activeSessions] when the client opens the GET SSE stream. If the client does not open the
- * SSE stream within [PENDING_TRANSPORT_TIMEOUT], the session is evicted and closed.
- */
 private suspend fun obtainOrCreateStreamableSession(
   call: ApplicationCall,
-  activeSessions: ConcurrentMap<String, StreamableSession>,
-  pendingSessions: ConcurrentMap<String, StreamableSession>,
+  sessions: ConcurrentMap<String, StreamableSession>,
   scope: CoroutineScope,
   block: suspend (ApplicationCall, Transport) -> Pair<ServerSession, CoroutineScope>,
   streamableSessionScopes: ConcurrentMap<String, CoroutineScope>,
 ): StreamableSession? {
   val incomingSessionId = call.request.headers[MCP_SESSION_ID_HEADER]
   if (incomingSessionId != null) {
-    val existing = activeSessions[incomingSessionId] ?: pendingSessions[incomingSessionId]
+    val existing = sessions[incomingSessionId]
     if (existing != null) return existing
     call.respond(HttpStatusCode.NotFound, "Streamable HTTP session not found")
     return null
@@ -275,22 +274,12 @@ private suspend fun obtainOrCreateStreamableSession(
   val session = StreamableSession(transport)
 
   transport.setOnSessionInitialized { initializedId ->
-    pendingSessions[initializedId] = session
+    sessions[initializedId] = session
+    scope.closeWhenAbandoned(initializedId, session)
     logger.trace { "New StreamableHttp session initialized with sessionId: $initializedId" }
-
-    // drop if client never opens a GET SSE stream.
-    scope.launch(CoroutineName("pending-transport-timeout-$initializedId")) {
-      delay(PENDING_TRANSPORT_TIMEOUT)
-      if (pendingSessions.remove(initializedId) != null) {
-        streamableSessionScopes.remove(initializedId)
-        logger.warn("Pending StreamableHttp transport timed out without SSE stream: $initializedId")
-        try { transport.close() } catch (_: Exception) {}
-      }
-    }
   }
   transport.setOnSessionClosed { closedId ->
-    pendingSessions.remove(closedId)
-    activeSessions.remove(closedId)
+    sessions.remove(closedId)
     streamableSessionScopes.remove(closedId)
     logger.trace { "StreamableHttp session closed: $closedId" }
   }
@@ -303,8 +292,7 @@ private suspend fun obtainOrCreateStreamableSession(
   serverSession.onClose {
     val id = transport.sessionId
     if (id != null) {
-      pendingSessions.remove(id)
-      activeSessions.remove(id)
+      sessions.remove(id)
       streamableSessionScopes.remove(id)
       logger.trace { "Server connection closed for StreamableHttp sessionId: $id" }
     }
@@ -345,7 +333,24 @@ class ClientDisconnectTolerantTransport(private val delegate: Transport) : Trans
 }
 
 /**
- * Heartbeats keep intermediaries from dropping the stream.
+ * Because cancelling this coroutine runs the same `finally`, a session is closed on server shutdown as well. Closing
+ * the transport is what ends a session: its `onClose` callbacks unregister it and cancel the scope that serves it.
+ */
+private fun CoroutineScope.closeWhenAbandoned(sessionId: String, session: StreamableSession) {
+  launch(CoroutineName("streamable-session-$sessionId")) {
+    try {
+      session.awaitUnused(STREAMABLE_SESSION_IDLE_TIMEOUT)
+      logger.warn("Closing abandoned StreamableHttp session: $sessionId")
+    }
+    finally {
+      withContext(NonCancellable) { session.transport.close() }
+    }
+  }
+}
+
+/**
+ * Heartbeats keep intermediaries from dropping the stream. Neither the stream nor its heartbeat ends the MCP session
+ * they belong to: a session outlives every stream opened for it.
  */
 private suspend fun ServerSSESession.serveNotificationStream(transport: StreamableHttpServerTransport) {
   coroutineScope {
