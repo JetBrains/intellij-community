@@ -101,9 +101,7 @@ fun String.toNioPathOrNull(): Path? {
 
 @ApiStatus.Internal
 object PathPrefixTree : PrefixTreeFactory<Path, Path> {
-  override fun convertToList(element: Path): List<Path> {
-    return element.toList()
-  }
+  override fun convertToList(element: Path): List<Path> = listOfNotNull(element.root) + element.toList()
 }
 
 @ApiStatus.Internal

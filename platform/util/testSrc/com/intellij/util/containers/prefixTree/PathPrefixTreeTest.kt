@@ -36,6 +36,39 @@ class PathPrefixTreeTest {
   }
 
   @Test
+  fun `test paths that differ only in their root`() {
+    val cDrivePath = windowsFs.getPath("C:/root/path")
+    val dDrivePath = windowsFs.getPath("D:/root/path")
+
+    val tree = PathPrefixTree.createMap<Int>()
+
+    Assertions.assertThat(tree.put(cDrivePath, 10)).isEqualTo(null as Int?)
+
+    Assertions.assertThat(tree).containsKey(cDrivePath)
+    Assertions.assertThat(tree).doesNotContainKey(dDrivePath)
+
+    Assertions.assertThat(tree.put(dDrivePath, 20)).isEqualTo(null as Int?)
+
+    Assertions.assertThat(tree.getAncestorValues(windowsFs.getPath("C:/root/path/inner"))).containsExactly(10)
+    Assertions.assertThat(tree.getAncestorValues(windowsFs.getPath("D:/root/path/inner"))).containsExactly(20)
+  }
+
+  @Test
+  fun `test relative path is not an ancestor of an absolute one`() {
+    val absolutePath = unixFs.getPath("/root/path")
+    val relativePath = unixFs.getPath("root/path")
+
+    val tree = PathPrefixTree.createMap<Int>()
+
+    Assertions.assertThat(tree.put(relativePath, 10)).isEqualTo(null as Int?)
+
+    Assertions.assertThat(tree).containsKey(relativePath)
+    Assertions.assertThat(tree).doesNotContainKey(absolutePath)
+    Assertions.assertThat(tree.getAncestorValues(unixFs.getPath("/root/path/inner"))).isEmpty()
+    Assertions.assertThat(tree.getAncestorValues(unixFs.getPath("root/path/inner"))).containsExactly(10)
+  }
+
+  @Test
   fun `test case insensitive file system`() {
     val pathLow = windowsFs.getPath("C:/root/path")
     val pathHigh = windowsFs.getPath("C:/root/PATH")
