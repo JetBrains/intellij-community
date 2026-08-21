@@ -7,6 +7,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.Key
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning.IS_UNDER_TESTING
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning.PsiVersionRegistry
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning.PsiVersioningLockingListener
 import com.intellij.psi.tree.IElementType
@@ -16,6 +17,9 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.keyFMap.ArrayBackedFMap
 import com.intellij.util.keyFMap.KeyFMap
+import kotlinx.coroutines.async
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -424,6 +428,51 @@ internal class VersionedUserDataTest {
     assertNotReferenced(leaf, initial)
   }
 
+  fun assertSetupCorrect() {
+    Assumptions.assumeTrue(IS_UNDER_TESTING) {
+      "Please pass `-Didea.is.unit.tests=true` to this test."
+    }
+  }
+
+  @Test
+  fun `freezing the latest psi version is atomic with respect to garbage collection`(@TestDisposable disposable: Disposable) {
+    assertSetupCorrect()
+    installVersioningListeners(disposable)
+
+    concurrencyTest {
+
+      val key = Key.create<UserDataPayload>("versioned user data stale freeze test")
+      val leaf = createVersionedLeaf()
+
+      runVersionedWriteAction {
+        leaf.putUserData(key, UserDataPayload("1"))
+      }
+
+      val resultingValue = async {
+        InternalPsiVersioning.withInjectionHook(
+          {
+            checkpoint(1)
+            checkpoint(4)
+          }) {
+          leaf.getUserData(key)
+        }
+      }
+
+      checkpoint(2)
+      runVersionedWriteAction {
+        leaf.putUserData(key, UserDataPayload("2"))
+      }
+
+      runVersionedWriteAction {
+        leaf.putUserData(key, UserDataPayload("3"))
+      }
+      checkpoint(3)
+
+      val result = resultingValue.await()
+      Assertions.assertNotNull(result, "Value must be visible")
+    }
+  }
+
   /**
    * The flavor of [com.intellij.psi.impl.source.tree.mvcc.userData.VersionedUserDataFMap] that is expected to hold
    * the given number of keys. Mirrors the ladder of the plain `KeyFMap` implementations, `ARRAY_THRESHOLD` included.
@@ -473,5 +522,11 @@ internal class VersionedUserDataTest {
     override fun toString(): String {
       return debugName
     }
+  }
+
+  private companion object {
+    // the race between publishing a version and freezing it is narrow, so it needs a lot of attempts to be reproduced
+    private const val READER_THREAD_COUNT = 4
+    private const val WRITE_ACTION_COUNT = 20_000
   }
 }
