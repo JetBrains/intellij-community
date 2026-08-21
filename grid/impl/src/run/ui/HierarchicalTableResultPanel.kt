@@ -310,30 +310,21 @@ open class HierarchicalTableResultPanel(
     return myLocalFilterStateManager.activeFilterState
   }
 
-  override fun setColumnEnabled(columnIdx: ModelIndex<GridColumn?>, state: Boolean) {
-    val column = getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getColumn(columnIdx)
-    if (column == null || isColumnEnabled(column) == state) return
+  override fun getColumnsAffectedByVisibilityChange(column: GridColumn, state: Boolean): Array<GridColumn> {
+    if (column !is HierarchicalGridColumn) return super.getColumnsAffectedByVisibilityChange(column, state)
+    if (state) return (getDisabledAncestorColumns(column) + column).toTypedArray()
 
-    if (column !is HierarchicalGridColumn) {
-      updateColumnEnableState(column, state)
-    }
-    else if (state) {
-      updateEnableStateForColumns(getDisabledAncestorColumns(column), true)
-      updateColumnEnableState(column, true)
-    }
-    else {
-      val ancestor = column.parent
-      if (column.isLeftMostChildOfDirectAncestor && ancestor != null) {
-        updateEnableStateForColumns(ancestor.leaves, false)
-      }
-      else {
-        updateColumnEnableState(column, false)
-      }
+    val ancestor = column.parent
+    return if (column.isLeftMostChildOfDirectAncestor && ancestor != null) ancestor.leaves.toTypedArray()
+    else arrayOf(column)
+  }
 
-      resultView.onColumnHierarchyChanged()
-    }
+  override fun shouldUpdateResultViewForColumnVisibility(column: GridColumn): Boolean {
+    return !myHierarchicalColumnsCollapseManager.isColumnHiddenDueToCollapse(column)
+  }
 
-    updateFrozenColumns()
+  override fun afterColumnVisibilityChanged(column: GridColumn, state: Boolean) {
+    if (!state && column is HierarchicalGridColumn) resultView.onColumnHierarchyChanged()
   }
 
   override fun getHierarchicalColumnsCollapseManager(): HierarchicalColumnsCollapseManager? {
@@ -354,27 +345,6 @@ open class HierarchicalTableResultPanel(
     }
 
     return columnsBranchToUpdate
-  }
-
-  private fun updateEnableStateForColumns(columns: MutableList<out GridColumn>, state: Boolean) {
-    for (c in columns) {
-      updateColumnEnableState(c, state)
-    }
-  }
-
-  private fun updateColumnEnableState(c: GridColumn, state: Boolean) {
-    columnAttributes.setEnabled(c, state)
-
-    if (myHierarchicalColumnsCollapseManager.isColumnHiddenDueToCollapse(c)) return
-
-    val selection = selectionModel.store()
-    val colIdx = ModelIndex.forColumn<GridColumn?>(this, c.getColumnNumber())
-    storeOrRestoreSelection(colIdx, state, selection)
-    resultView.setColumnEnabled(colIdx, state)
-    fireContentChanged(null) // update structure view
-    runWithIgnoreSelectionChanges(Runnable {
-      selectionModel.restore(selection)
-    })
   }
 
   internal inner class NestedTablesNavigationErrorPanel {
