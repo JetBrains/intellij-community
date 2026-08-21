@@ -1,6 +1,6 @@
 ---
 name: jewel-pr-preparer
-description: Prepare a Jewel pull request: validate the commit, run local CI checks, draft release notes, and create the PR.
+description: "Prepare a Jewel pull request: validate the commit, run local CI checks, draft release notes, and create the PR."
 allowed-tools:
   - Bash
   - Read

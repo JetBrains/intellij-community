@@ -1,6 +1,6 @@
 ---
 name: jewel-release-helper
-description: Prepare a Jewel release: version bumps, checks, release notes, cherry-picks, artifact validation, and tagging.
+description: "Prepare a Jewel release: version bumps, checks, release notes, cherry-picks, artifact validation, and tagging."
 allowed-tools:
   - Bash
   - Read
