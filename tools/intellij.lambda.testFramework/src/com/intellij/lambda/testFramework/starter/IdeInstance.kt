@@ -37,6 +37,20 @@ object IdeInstance {
 
   fun isStarted(): Boolean = _ide != null
 
+  /**
+   * Whether [recycleIde] has a context to relaunch, whether or not an IDE is currently alive on it.
+   *
+   * A separate question from [isStarted], and the difference is the whole recovery story of a suite set that
+   * shares one IDE. A relaunch that fails leaves no IDE behind ([_ide] is cleared before the launch), and the
+   * caller then has to choose between relaunching the surviving context again and asking [startIde] for a
+   * fresh one. Those are not equivalent: a fresh context is built by `Starter.newContextWithLambda`, which
+   * wipes the config, system and project directories the sharing suites chain state through, and re-resolves
+   * the installation — which for a prebuilt distribution can fail outright, turning one lost IDE into a failed
+   * start for every suite that comes after it.
+   */
+  fun canRecycle(): Boolean =
+    this::currentIdeMode.isInitialized && this::currentIdeConfig.isInitialized && this::runContext.isInitialized
+
   fun startIde(runMode: IdeRunMode): IdeWithLambda = synchronized(this) {
     // Allow IDE building to access test modules
     System.setProperty("idea.build.pack.test.source.enabled", "true")
@@ -131,8 +145,13 @@ object IdeInstance {
    *
    * [_ide] is reassigned rather than left alone because `IdeWithLambdaParameterResolver` hands
    * [IdeInstance.ide] to the next test class: a recycle that did not publish its replacement would give that
-   * class a handle to the IDE this one killed. A relaunch that *fails* leaves it null, so the next
-   * [startIde] sees no running IDE and builds a fresh context rather than handing out a dead one.
+   * class a handle to the IDE this one killed. A relaunch that *fails* leaves it null, and that is a state
+   * this call can be made from again: the precondition is [canRecycle], not [isStarted]. It used to be
+   * [isStarted], on the reading that the next [startIde] would build a fresh context instead — which is the
+   * one remedy that is not equivalent, because a fresh context wipes the directories a sharing suite set
+   * chains state through and re-resolves the installation. Measured on the AIR UI lane: one relaunch whose
+   * replacement never answered its RD session left 19 later suites reporting a failed cold start, each
+   * against its own innocent subject, while relaunching this context again was still possible.
    *
    * One honesty note about [runContext]: it is only ever assigned from the `IdeLaunchEvent` subscription
    * [startIde] registers, and `EventsBus.unsubscribeAll()` between tests can leave the relaunch's event with no
@@ -141,7 +160,7 @@ object IdeInstance {
    * should read [runContext] expecting it to track a relaunch.
    */
   fun recycleIde(betweenRuns: () -> Unit = {}): IdeWithLambda = synchronized(this) {
-    check(isStarted()) { "IDE is not started yet; there is nothing to recycle" }
+    check(canRecycle()) { "no IDE has been launched in this JVM; there is no context to relaunch" }
     val context = when (currentIdeMode) {
       IdeRunMode.MONOLITH -> runContext.frontendContext.testContext
       // A split run has a frontend and a backend context, and relaunching one of them leaves the other pointing
