@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2.uv
 
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
@@ -21,6 +22,7 @@ internal class UvViewModel<P : PathHolder>(
 ) : PythonToolViewModel {
   val uvExecutable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = propertyGraph.property(null)
   val uvVenvPath: ObservableMutableProperty<ValidatedPath.Folder<P>?> = propertyGraph.property(null)
+  val inheritSitePackages: GraphProperty<Boolean> = propertyGraph.property(false)
 
   val toolValidator: ToolValidator<P> = ToolValidator(
     fileSystem = fileSystem,

@@ -100,11 +100,15 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
     return Result.success(newSdk)
   }
 
+  /** Whether the created env inherits the base interpreter's site-packages; only tools that offer the choice override it. */
+  protected open val globalSitePackage: Boolean
+    get() = false
+
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo =
     InterpreterStatisticsInfo(
       type = interpreterType,
       target = target.toStatisticsField(),
-      globalSitePackage = false,
+      globalSitePackage = globalSitePackage,
       makeAvailableToAllProjects = false,
       previouslyConfigured = false,
       isWSLContext = false, // todo fix for wsl

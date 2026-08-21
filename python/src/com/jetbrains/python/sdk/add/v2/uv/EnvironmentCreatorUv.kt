@@ -21,6 +21,7 @@ import com.intellij.python.uv.backend.runtime.uvCli
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.ui.AsyncProcessIcon
@@ -79,6 +80,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   override val interpreterType: InterpreterType = InterpreterType.UV
   override val pyTool: PyTool = UvPyTool.getInstance()
   override val toolValidator: ToolValidator<P> = model.uvViewModel.toolValidator
+  override val globalSitePackage: Boolean get() = model.uvViewModel.inheritSitePackages.get()
   private val executableFlow = MutableStateFlow(model.uvViewModel.uvExecutable.get())
   private val pythonVersion: ObservableMutableProperty<Version?> = propertyGraph.property(null)
   private lateinit var versionComboBox: ComboBox<Version?>
@@ -152,6 +154,12 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
           onVenvSelectExisting()
         }
       }
+
+      row("") {
+        checkBox(message("sdk.create.custom.inherit.packages"))
+          .bindSelected(model.uvViewModel.inheritSitePackages)
+          .comment(message("sdk.create.custom.uv.inherit.packages.comment"))
+      }
     }
   }
 
@@ -221,6 +229,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
       version = pythonVersion.get(),
       errorSink = errorSink,
       overrideExistingEnv = venvAlreadyExistsError.get() != null,
+      inheritSitePackages = model.uvViewModel.inheritSitePackages.get(),
     )
   }
 

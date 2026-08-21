@@ -49,7 +49,12 @@ private class UvLowLevelImpl<P : PathHolder>(
   private val uvCli: UvCli<P>,
   private val fileSystem: FileSystem<P>,
 ) : UvLowLevel<P> {
-  override suspend fun initializeEnvironment(init: Boolean, version: Version?, clearExisting: Boolean): PyResult<P> {
+  override suspend fun initializeEnvironment(
+    init: Boolean,
+    version: Version?,
+    clearExisting: Boolean,
+    inheritSitePackages: Boolean,
+  ): PyResult<P> {
     val addPythonArg: (MutableList<String>) -> Unit = { args ->
       version?.let {
         args.add("--python")
@@ -74,6 +79,15 @@ private class UvLowLevelImpl<P : PathHolder>(
     venvPath?.also { venvArgs += it.toString() }
     if (clearExisting) {
       venvArgs.add("--clear")
+    }
+    // `uv venv` accepts these, `uv init` does not, so they belong to this branch only.
+    if (inheritSitePackages) {
+      venvArgs.add("--system-site-packages")
+      // uv defaults to `python-preference = managed`, so it would base the env on a uv-downloaded
+      // interpreter whose site-packages is empty, making the inherited packages nothing at all. The
+      // user asked to inherit the *system* packages, so the base has to be the system interpreter.
+      venvArgs.add("--python-preference")
+      venvArgs.add("system")
     }
     addPythonArg(venvArgs)
     uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray()).onFailure {
