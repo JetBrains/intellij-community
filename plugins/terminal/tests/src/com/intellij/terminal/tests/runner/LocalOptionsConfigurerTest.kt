@@ -96,8 +96,8 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
   }
 
   fun testBashDefaults() {
-    TerminalProjectOptionsProvider.getInstance(project).startingDirectory = tempDirectory.pathString
-    TerminalProjectOptionsProvider.getInstance(project).shellPath = "/bin/bash"
+    setDefaultStartingDirectory(tempDirectory.pathString)
+    setDefaultShellPath("/bin/bash")
 
     val actual = LocalOptionsConfigurer.configureStartupOptions(
       ShellStartupOptions.Builder()
