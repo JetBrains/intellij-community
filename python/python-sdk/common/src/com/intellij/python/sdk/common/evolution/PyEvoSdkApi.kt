@@ -1,17 +1,23 @@
 package com.intellij.python.sdk.common.evolution
 
 import com.intellij.ide.ui.icons.IconId
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
+import fleet.rpc.client.RpcClientException
+import fleet.rpc.core.RpcException
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.flow.Flow
-import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+
+private val LOG: Logger = fileLogger()
 
 /**
  * Split-mode wire contract for the "Evo" Python interpreter widget
@@ -133,6 +139,48 @@ suspend fun PyEvoSdkApi(): PyEvoSdkApi = RemoteApiProviderService.resolve(remote
  * Frontend-facing wrappers that hide the RPC/`fleet.rpc` types behind plain DTO results, so the frontend
  * module does not need to depend on `intellij.platform.rpc`.
  */
+/**
+ * Runs an Evo RPC call, returning `null` when the backend could not answer.
+ *
+ * The widget must survive a backend that is not there — a closing project, a reconnecting remote-dev host, a handler
+ * that failed — by degrading to "no data" rather than by breaking the status bar. Only the two RPC failure families are
+ * caught: [RpcException] for a call the backend failed, [RpcClientException] for transport (route closed, timeout,
+ * disconnect, unresolved service). Anything else is not an RPC problem and propagates.
+ */
+/**
+ * An Evo RPC call the backend could not answer — it failed there, or the call never reached it.
+ *
+ * Declared here so callers can react to "the backend is not available" without depending on the RPC library: the
+ * frontend renders it, and only this module knows which fleet exceptions mean it.
+ */
+@ApiStatus.Internal
+class EvoRpcFailedException internal constructor(cause: Throwable) : Exception(cause.message, cause)
+
+/** Runs an Evo RPC call, translating either RPC failure family into [EvoRpcFailedException]. */
+@ApiStatus.Internal
+suspend fun <T> evoRpc(call: suspend () -> T): T =
+  try {
+    call()
+  }
+  catch (e: RpcException) {
+    throw EvoRpcFailedException(e)
+  }
+  catch (e: RpcClientException) {
+    throw EvoRpcFailedException(e)
+  }
+
+@ApiStatus.Internal
+suspend fun <T> evoRpcOrNull(call: suspend () -> T): T? =
+  try {
+    call()
+  }
+  catch (e: RpcException) {
+    LOG.info("Evo RPC call failed on the backend", e); null
+  }
+  catch (e: RpcClientException) {
+    LOG.info("Evo RPC call could not reach the backend", e); null
+  }
+
 @ApiStatus.Internal
 suspend fun requestEvoIsPythonModule(projectId: ProjectId, moduleName: String): Boolean =
   PyEvoSdkApi().isPythonModule(projectId, moduleName)
@@ -263,11 +311,41 @@ data class EvoWorkspaceDto(
   val rootModuleName: @NlsSafe String,
 )
 
-/** A collapsed expandable node in the popup's "select environment" section, contributed by a backend provider. */
+/**
+ * Node ids that are not a tool's, declared here — the one module both sides of the RPC see — because a node id is a
+ * wire value: the backend names a node and the frontend sends the same string back. A tool node's id is its
+ * `ToolId`, which the backend resolves through its provider list; these are the ids no `ToolId` can supply, so they
+ * are the ones at risk of being spelled twice and drifting.
+ *
+ * [ADVANCED] is the only one both sides use ([ASSOCIATED] and [SHORTCUTS] name frontend-synthetic nodes the backend
+ * never dispatches on), but all three are reserved: a provider claiming one would shadow it, which is what the
+ * backend's startup uniqueness check rejects.
+ */
+@ApiStatus.Internal
+object EvoNodeIds {
+  /** The "advanced" node — the full set of add-interpreter actions. Not a tool; the only backend-dispatched id here. */
+  const val ADVANCED: @NonNls String = "advanced"
+
+  /** Frontend-synthetic: the "Associated environments" node, whose rows are existing SDKs. */
+  const val ASSOCIATED: @NonNls String = "associated"
+
+  /** Frontend-synthetic: the "Shortcuts" autoconfigure rows. */
+  const val SHORTCUTS: @NonNls String = "shortcuts"
+
+  /** Every id above — the set a tool provider may not claim. */
+  val RESERVED: Set<String> = setOf(ADVANCED, ASSOCIATED, SHORTCUTS)
+}
+
+/**
+ * A collapsed expandable node in the popup's "select environment" section, contributed by a backend provider.
+ *
+ * [id] is the provider's `ToolId` string (or one of [EvoNodeIds]); the frontend passes it back verbatim to address
+ * the node, so it is a wire value and never a display string — [label] is what the user reads.
+ */
 @ApiStatus.Internal
 @Serializable
 data class EvoNodeDto(
-  val id: String,
+  val id: @NonNls String,
   val label: @Nls String,
   val icon: IconId,
 )

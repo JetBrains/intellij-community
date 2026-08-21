@@ -24,25 +24,27 @@ import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.psi.PsiManager
 import com.intellij.platform.project.projectId
+import com.intellij.psi.PsiManager
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLeafKind
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoNodeDto
+import com.intellij.python.sdk.common.evolution.EvoNodeIds
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.EvoWorkspaceDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
+import com.intellij.python.sdk.common.evolution.evoRpc
 import com.intellij.python.sdk.common.evolution.requestEvoNode
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
 import com.intellij.python.sdk.frontend.evolution.components.EvoEditableName
 import com.intellij.python.sdk.frontend.evolution.components.EvoErrorException
+import com.intellij.python.sdk.frontend.evolution.components.EvoLoadedNode
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeActionLeafElement
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeAddNewNode
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeElement
-import com.intellij.python.sdk.frontend.evolution.components.EvoLoadedNode
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeLazyNodeElement
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeLeafElement
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeNodeElement
@@ -51,8 +53,8 @@ import com.intellij.python.sdk.frontend.evolution.components.EvoTreeSection
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeStaticNodeElement
 import com.intellij.python.sdk.frontend.evolution.components.EvoWarningException
 import com.intellij.python.sdk.frontend.icons.PythonSdkFrontendIcons
-import kotlinx.coroutines.CoroutineScope
 import java.util.UUID
+import kotlinx.coroutines.CoroutineScope
 
 private val managePackagesAction = object : AnAction(
   { PySdkFrontendBundle.message("evo.sdk.python.packaging.interpreter.widget.manage.packages") },
@@ -67,10 +69,10 @@ private val managePackagesAction = object : AnAction(
 }
 
 /** Backend id of the `advanced` node (`AdvancedEvoEnvironmentProvider`), the anchor for the target-interpreters node. */
-private const val ADVANCED_NODE_ID: String = "advanced"
+private const val ADVANCED_NODE_ID: String = EvoNodeIds.ADVANCED
 
 /** Synthetic node id for the frontend-only "Associated environments" node (its rows are existing SDKs, never version-probed). */
-private const val ASSOCIATED_NODE_ID: String = "associated"
+private const val ASSOCIATED_NODE_ID: String = EvoNodeIds.ASSOCIATED
 
 private fun EvoLeafDto.toStubAction(): AnAction = object : AnAction({ title }, { description ?: "" }, icon.icon()), DumbAware {
   init {
@@ -81,7 +83,7 @@ private fun EvoLeafDto.toStubAction(): AnAction = object : AnAction({ title }, {
 }
 
 /** Synthetic node id for the "Shortcuts" autoconfigure rows (the backend ignores it for a [PyInterpreterRef.Autoconfigure] ref). */
-private const val SHORTCUTS_NODE_ID: String = "shortcuts"
+private const val SHORTCUTS_NODE_ID: String = EvoNodeIds.SHORTCUTS
 
 /** The platform group holding every tool's package-manager actions (uv lock/sync, conda export/update, …). */
 private const val PACKAGE_MANAGER_ACTIONS_GROUP: String = "PythonPackageManagerActions"
@@ -256,7 +258,7 @@ internal class EvoPySdkSwitchPopupFactory(
       for (node in nodes) {
         if (node.id == ADVANCED_NODE_ID && associated.isNotEmpty()) add(associatedInterpretersNode(traceId))
         add(EvoTreeLazyNodeElement(node.label, node.icon.icon()) { force ->
-          val result = requestEvoNode(projectId, moduleName, node.id, traceId, force)
+          val result = evoRpc { requestEvoNode(projectId, moduleName, node.id, traceId, force) }
           val refreshable = (result as? EvoLoadResultDto.Ok)?.refreshable == true
           EvoLoadedNode(result.toSections(node.id, traceId), refreshable).withoutLoneAddNewStep()
         })

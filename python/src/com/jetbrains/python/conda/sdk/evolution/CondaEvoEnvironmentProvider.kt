@@ -1,43 +1,56 @@
 package com.jetbrains.python.conda.sdk.evolution
 
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.impl.conda.CondaPyTool
 import com.intellij.python.community.impl.conda.PyCondaBundle
-import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
-import com.intellij.python.pytools.resolveExecutable
+import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.runTool
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
-import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
+import com.intellij.python.sdk.backend.evolution.EvoToolContext
+import com.intellij.python.sdk.backend.evolution.PyToolEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
 import com.intellij.python.sdk.backend.evolution.evoWarning
 import com.intellij.python.sdk.backend.evolution.resolvePythonExecutable
 import com.intellij.python.sdk.backend.evolution.toDisplayPath
 import com.intellij.python.sdk.backend.evolution.toSectionLabel
+import com.intellij.python.sdk.backend.evolution.toolMissing
+import com.intellij.python.sdk.common.evolution.EvoAddNewDto
+import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
+import com.intellij.python.sdk.common.evolution.PyInterpreterRef
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.conda.condaSupportedLanguages
+import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
+import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
+import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
+import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import java.nio.file.Path
-import javax.swing.Icon
 import kotlin.io.path.name
 
-internal class CondaEvoEnvironmentProvider : PyEvoEnvironmentProvider {
-  override val id: String get() = "Conda"
-  override val label: String get() = "Conda"
-  override val icon: Icon get() = PythonCommunityImplCondaIcons.Anaconda
+/** Fallback env-name stem when the project directory has no usable name. */
+private const val DEFAULT_ENV_NAME: String = "conda"
 
-  // Resolve via the tool's PyExecutableCache (custom-path store + conda-specific search paths such as
-  // ~/miniconda3/bin), so conda installed outside PATH is still detected.
-  override suspend fun isAvailable(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>): Boolean =
-    CondaPyTool.getInstance().resolveExecutable(fileSystem) != null
+internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
+  override val tool: PyTool get() = CondaPyTool.getInstance()
+  override val toolId: ToolId get() = CONDA_TOOL_ID
 
   override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
-    val conda = CondaPyTool.getInstance()
     // Presence check only: the rows are grouped by where each env lives, not by where conda itself is installed.
-    conda.resolveExecutable(fileSystem) ?: return evoWarning(PyCondaBundle.message("evolution.conda.executable.is.not.found"))
-    val stdout = conda.runTool(fileSystem, null, null, "env", "list").getOrNull()
+    executableOrNull(fileSystem) ?: return evoWarning(PyCondaBundle.message("evolution.conda.executable.is.not.found"))
+    val stdout = tool.runTool(fileSystem, null, null, "env", "list").getOrNull()
                  ?: return EvoLoadResultDto.Ok(emptyList())
     val envs = parseEnvList(stdout)
     // One section per folder the envs actually live in, labelled with that folder — the same grouping the venv-based tools
@@ -53,9 +66,60 @@ internal class CondaEvoEnvironmentProvider : PyEvoEnvironmentProvider {
     // Conda envs are named (not folder-based): propose a free env name derived from the project so the widget's
     // in-place "add new" can offer name + Python version (PyEvoSdkApiProvider fills the version options), instead of
     // the modal dialog. addNewFolderPath carries the proposed name here.
-    val proposedName = firstFreeCondaEnvName(pyProject.baseDir.fileName?.toString() ?: "conda", envs.mapTo(mutableSetOf()) { it.name })
+    val proposedName = firstFreeCondaEnvName(pyProject.baseDir.fileName?.toString() ?: DEFAULT_ENV_NAME, envs.mapTo(mutableSetOf()) { it.name })
     val addNewSection = EvoSectionDto(label = null, leaves = emptyList(), addNew = true, addNewFolderPath = proposedName)
     return EvoLoadResultDto.Ok(envSections + addNewSection)
+  }
+
+  /** Adopts an existing conda env (named or `-p`-created) as a conda-typed SDK, matched by the env directory. */
+  override suspend fun createSdkForExistingEnv(context: EvoToolContext, homePath: Path): PyResult<Sdk> {
+    val condaExecutable = executableOrNull(context.fileSystem) ?: return toolMissing()
+    val envDir = homePath.parent?.parent
+                 ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.env.not.found", homePath.toString()))
+    val envs = PyCondaEnv.getEnvs(PyCondaCommand(condaExecutable.path.toString(), null).asBinaryToExec()).getOr { return it }
+    val env = envs.firstOrNull { candidate ->
+      when (val identity = candidate.envIdentity) {
+        // conda reports an unnamed env by path; a path it cannot parse simply is not this env.
+        is PyCondaEnvIdentity.UnnamedEnv -> identity.envPath.toNioPathOrNull() == envDir
+        is PyCondaEnvIdentity.NamedEnv -> envDir.fileName?.toString() == identity.envName
+      }
+    } ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.env.not.found", envDir.toString()))
+    return env.createSdkFromThisEnv(null, PythonSdkUtil.getAllSdks(), context.pyProject.baseDir)
+  }
+
+  /**
+   * Creates a named conda env: `name` is the (possibly user-edited) env name and `token` the chosen Python version.
+   *
+   * No base interpreter is involved — conda provides the Python for the requested version itself, which is why its
+   * version list is conda's own rather than the machine's system Pythons.
+   */
+  override suspend fun createSdkForNewEnv(context: EvoToolContext, ref: PyInterpreterRef.CreateEnv): PyResult<Sdk> {
+    val condaExecutable = executableOrNull(context.fileSystem) ?: return toolMissing()
+    val envName = ref.name?.takeIf { it.isNotBlank() } ?: ref.folder?.takeIf { it.isNotBlank() }
+                  ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.env.name.missing"))
+    val languageLevel = LanguageLevel.fromPythonVersion(ref.token)
+                        ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.bad.python.version", ref.token, ""))
+    // conda itself refuses to recreate an existing named env; that refusal comes back as the returned failure.
+    return PyCondaCommand(condaExecutable.path.toString(), null)
+      .createCondaSdkAlongWithNewEnv(
+        NewCondaEnvRequest.EmptyNamedEnv(languageLevel, envName),
+        PythonSdkUtil.getAllSdks(),
+        context.pyProject.baseDir,
+      )
+  }
+
+  /**
+   * Conda envs are named rather than folder-based, so the editable field is the env *name* and `path` is unused.
+   *
+   * The proposed name comes from the section [loadSections] built, which already picked one that is free; the versions
+   * are conda's own supported levels, deliberately *not* filtered by the project's `requires-python` — matching the v2
+   * dialog, since conda can install any of them rather than having to find one on the machine.
+   */
+  override suspend fun addNewEnvSpec(context: EvoToolContext, section: EvoSectionDto): EvoAddNewDto? {
+    val options = condaSupportedLanguages.map { EvoAddNewOptionDto(title = it.toPythonVersion(), token = it.toPythonVersion()) }
+    if (options.isEmpty()) return null
+    val envName = section.addNewFolderPath ?: context.pyProject.baseDir.fileName?.toString() ?: DEFAULT_ENV_NAME
+    return EvoAddNewDto(name = envName, path = "", options = options, nameEditable = true)
   }
 
   /** First conda env name not already taken: `base`, then `base-1`, `base-2`, … */

@@ -16,6 +16,7 @@ import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoSelectResultDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
+import com.intellij.python.sdk.common.evolution.evoRpcOrNull
 import com.intellij.python.sdk.common.evolution.requestEvoPerformNodeAction
 import com.intellij.python.sdk.common.evolution.requestEvoResolveVersion
 import com.intellij.python.sdk.common.evolution.requestEvoSelectInterpreter
@@ -119,7 +120,7 @@ internal class SelectEnvAction(
     if (versionRequested || templatePresentation.getClientProperty(ActionUtil.SECONDARY_TEXT) != null) return
     versionRequested = true
     scope.launch {
-      val version = runCatching { requestEvoResolveVersion(project.projectId(), moduleName, nodeId, detected.homePath, traceId) }.getOrNull() ?: "n/a"
+      val version = evoRpcOrNull { requestEvoResolveVersion(project.projectId(), moduleName, nodeId, detected.homePath, traceId) } ?: "n/a"
       withContext(Dispatchers.EDT) {
         templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, version)
         onResolved()

@@ -3,6 +3,7 @@ package com.intellij.python.sdk.frontend.evolution
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
@@ -14,7 +15,6 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
-import com.intellij.openapi.components.service
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.platform.project.projectId
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
@@ -22,23 +22,24 @@ import com.intellij.python.sdk.common.evolution.EvoNodeDto
 import com.intellij.python.sdk.common.evolution.EvoWorkspaceDto
 import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
+import com.intellij.python.sdk.common.evolution.evoRpcOrNull
+import com.intellij.python.sdk.common.evolution.requestEvoAssociatedInterpreters
 import com.intellij.python.sdk.common.evolution.requestEvoCurrentInterpreter
 import com.intellij.python.sdk.common.evolution.requestEvoIsPythonModule
 import com.intellij.python.sdk.common.evolution.requestEvoNodes
-import com.intellij.python.sdk.common.evolution.requestEvoWorkspace
-import com.intellij.python.sdk.common.evolution.requestEvoShortcuts
-import com.intellij.python.sdk.common.evolution.requestEvoAssociatedInterpreters
 import com.intellij.python.sdk.common.evolution.requestEvoSdkConfigurationInProgress
+import com.intellij.python.sdk.common.evolution.requestEvoShortcuts
+import com.intellij.python.sdk.common.evolution.requestEvoWorkspace
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeStaticNodeElement
 import com.intellij.ui.AnimatedIcon
 import com.intellij.util.Function
 import com.intellij.util.IconUtil
 import com.intellij.util.messages.MessageBusConnection
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 private const val ID: String = "EvoPySdkStatusBarWidget"
 
@@ -271,20 +272,20 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
       try {
         // Treat an RPC failure as "not Python": staying hidden is the safe way to be wrong, and the stamp check or the
         // next module change retries.
-        if (!runCatching { requestEvoIsPythonModule(projectId, moduleName) }.getOrDefault(false)) {
+        if (evoRpcOrNull { requestEvoIsPythonModule(projectId, moduleName) } != true) {
           publish(Cached(module, moduleName, stamp, isPyProject = false, null, null, emptyList(), emptyList(), emptyList()))
           return@launch
         }
 
-        val interpreter = runCatching { requestEvoCurrentInterpreter(projectId, moduleName) }.getOrNull()
+        val interpreter = evoRpcOrNull { requestEvoCurrentInterpreter(projectId, moduleName) }
         publish(Cached(module, moduleName, stamp, true, interpreter,
                        prev?.workspace, prev?.nodes.orEmpty(), prev?.associated.orEmpty(), prev?.shortcuts.orEmpty()))
 
-        val workspace = runCatching { requestEvoWorkspace(projectId, moduleName) }.getOrNull()
-        val nodes = runCatching { requestEvoNodes(projectId, moduleName) }.getOrNull().orEmpty()
-        val associated = runCatching { requestEvoAssociatedInterpreters(projectId, moduleName) }.getOrNull().orEmpty()
+        val workspace = evoRpcOrNull { requestEvoWorkspace(projectId, moduleName) }
+        val nodes = evoRpcOrNull { requestEvoNodes(projectId, moduleName) }.orEmpty()
+        val associated = evoRpcOrNull { requestEvoAssociatedInterpreters(projectId, moduleName) }.orEmpty()
         // The "Shortcuts" autoconfigure suggestions are only shown (and only worth computing) when there is no interpreter.
-        val shortcuts = if (interpreter == null) runCatching { requestEvoShortcuts(projectId, moduleName) }.getOrNull().orEmpty() else emptyList()
+        val shortcuts = if (interpreter == null) evoRpcOrNull { requestEvoShortcuts(projectId, moduleName) }.orEmpty() else emptyList()
         publish(Cached(module, moduleName, stamp, true, interpreter, workspace, nodes, associated, shortcuts))
       }
       finally {
@@ -309,7 +310,7 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     refreshingNodes = true
     scope.launch {
       try {
-        val nodes = runCatching { requestEvoNodes(project.projectId(), moduleName) }.getOrNull().orEmpty()
+        val nodes = evoRpcOrNull { requestEvoNodes(project.projectId(), moduleName) }.orEmpty()
         val base = cache[moduleName] ?: return@launch
         // Compare by node ids (stable identity) — a newly available or removed tool changes this set; icon/label
         // identity is irrelevant and IconId equality is not guaranteed across fetches.

@@ -5,7 +5,12 @@ import com.intellij.DynamicBundle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 
-internal object PyToolsBundle {
+/**
+ * Public because `python-sdk` hosts the SDK-aware half of this module's API (`PyToolSdkExt.kt`) and reports its errors
+ * from these messages. Widening the bundle keeps each string with the module that owns the concept, rather than
+ * orphaning existing translations by moving keys into another bundle.
+ */
+object PyToolsBundle {
   private const val BUNDLE = "messages.PyToolsBundle"
 
   private val INSTANCE = DynamicBundle(PyToolsBundle::class.java, BUNDLE)

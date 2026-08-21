@@ -116,11 +116,11 @@ internal sealed interface CliCommandResult {
 }
 
 /**
- * Runs [tool] via [PyTool.executeOn] against [moduleOrProject]. Delegating to [PyTool] gives us
+ * Runs [tool] via [executeOn] against [moduleOrProject]. Delegating to [PyTool] gives us
  * OS-specific binary names (`.exe` on Windows), remote / target-based SDKs and PATH resolution
  * for free — the actions layer does not have to reinvent any of it.
  *
- * Off-EDT: [PyTool.executeOn] hops to [Dispatchers.IO] internally.
+ * Off-EDT: [executeOn] hops to [Dispatchers.IO] internally.
  */
 internal suspend fun runCliCommand(
   moduleOrProject: ModuleOrProject,

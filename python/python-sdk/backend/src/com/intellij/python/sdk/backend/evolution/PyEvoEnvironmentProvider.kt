@@ -3,9 +3,12 @@
 package com.intellij.python.sdk.backend.evolution
 
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -13,6 +16,8 @@ import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
+import com.intellij.python.sdk.common.evolution.EvoAddNewDto
+import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLeafKind
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
@@ -21,18 +26,18 @@ import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.sdk.impl.shortenPath
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.ExecError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.project
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.jetbrains.python.sdk.impl.shortenPath
 import com.jetbrains.python.venvReader.Directory
 import com.jetbrains.python.venvReader.VirtualEnvReader
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -42,6 +47,14 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isExecutable
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+
+private val LOG: Logger = fileLogger()
 
 /**
  * A tool workspace (uv/poetry) a module takes part in: the [root] project everything is resolved against, the [tool]
@@ -80,6 +93,58 @@ class EvoPyProject(
   val sdkModules: List<Module> get() = workspace?.let { (it.modules + module).distinct() } ?: listOf(module)
 }
 
+/** [EvoToolContext.cached] key under which the core-supplied system-Python list is memoized. */
+private const val SYSTEM_PYTHONS_KEY: String = "core.systemPythons"
+
+/**
+ * What a provider needs to act on the module the widget is showing: the [pyProject] resolved against its workspace, the
+ * [fileSystem] of the machine it lives on, and the [errorSink] a failed tool command must be reported to.
+ *
+ * Bundled into one parameter because every tool-owned operation needs all three, and because it gives the core a single
+ * place to decide what a provider is handed — a provider must not reach for the project or the Eel machine itself.
+ *
+ * Report a tool failure through [errorSink] rather than swallowing it: the default sink opens the platform's
+ * process-execution-error dialog with the command, its exit code and its output, which is the only way the user finds
+ * out why an environment was not created.
+ */
+@ApiStatus.Internal
+class EvoToolContext(
+  val pyProject: EvoPyProject,
+  val fileSystem: FileSystem<PathHolder.Eel>,
+  val errorSink: ErrorSink,
+  private val systemPythons: suspend () -> List<EvoAddNewOptionDto>,
+) {
+  /**
+   * The system Pythons that can back a new environment here, newest first, one per minor version — filtered to what the
+   * project's `requires-python` allows and to what can actually host a venv.
+   *
+   * Supplied by the core rather than computed here: the services that enumerate interpreters and parse
+   * `pyproject.toml` both sit *above* this module, so naming them here would be a cycle. It is core knowledge anyway —
+   * which Pythons a machine has is not a fact about any one tool — which is why pip, poetry and hatch can all build
+   * their version pickers from the same list instead of each deciding what counts.
+   *
+   * Memoized per context via [cached], since enumerating interpreters can spawn processes.
+   */
+  suspend fun systemPythonOptions(): List<EvoAddNewOptionDto> = cached(SYSTEM_PYTHONS_KEY) { systemPythons() }
+
+  private val memo = mutableMapOf<String, Any?>()
+  private val memoLock = Mutex()
+
+  /**
+   * Runs [compute] once per context and returns the same value for every later call with the same [key].
+   *
+   * A context is built per operation, so this is the scope of "once for this request". It exists because the core may
+   * call a provider several times for one operation — [PyEvoEnvironmentProvider.addNewEnvSpec] is asked per section,
+   * and a tool can own several — while the expensive part (probing the tool for its Python versions, which spawns a
+   * process) depends on the project and not on the section. Without this, a node with three folders would probe three
+   * times.
+   */
+  @Suppress("UNCHECKED_CAST")
+  suspend fun <T> cached(key: String, compute: suspend () -> T): T = memoLock.withLock {
+    if (key in memo) memo[key] as T else compute().also { memo[key] = it }
+  }
+}
+
 /**
  * Backend extension point for the "Evo" interpreter widget. Each provider (contributed by a *tool* module —
  * pip/uv/poetry/conda/hatch/…) owns one expandable node and the *layout* of that tool's environments.
@@ -93,16 +158,24 @@ class EvoPyProject(
  */
 @ApiStatus.Internal
 interface PyEvoEnvironmentProvider {
-  /** Stable node id used to dispatch [loadSections]. */
-  val id: String
+  /**
+   * This provider's identity, and the node id the frontend addresses it by.
+   *
+   * Use the tool's *canonical* [ToolId] — the same constant its `PyProjectSdkConfigurationExtension` uses — rather
+   * than a string spelled for the widget. The widget already speaks that vocabulary on its other path
+   * (`PyInterpreterRef.Autoconfigure` carries a setup option's `toolId`), so reusing it keeps one id space instead of
+   * a parallel one that can drift from it. A node that is not a tool's takes an id from
+   * [com.intellij.python.sdk.common.evolution.EvoNodeIds] instead.
+   */
+  val toolId: ToolId
 
-  /** Collapsed node label. */
+  /** Collapsed node label — the display string, unrelated to [toolId]. */
   val label: @Nls String
 
   /** Collapsed node icon (this provider's own tool icon). */
   val icon: Icon
 
-  fun getNode(): EvoNodeDto = EvoNodeDto(id = id, label = label, icon = icon.rpcId())
+  fun getNode(): EvoNodeDto = EvoNodeDto(id = toolId.id, label = label, icon = icon.rpcId())
 
   /**
    * Whether this provider's tool is available on the project's Eel machine. Unavailable providers are dropped
@@ -115,6 +188,43 @@ interface PyEvoEnvironmentProvider {
    * centrally-found list of virtualenvs under the project's base dirs; providers filter it to the subset they own.
    */
   suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto
+
+  /**
+   * Builds the correctly-typed SDK for an *existing* environment at [homePath] — the tool's own "select existing"
+   * logic, the same the v2 Add dialog runs.
+   *
+   * Returns a failure rather than a null when the tool cannot adopt the env, so "I could not" is never confused with
+   * "not mine" — the pip node builds a generic path-based SDK itself rather than leaving the core to guess.
+   */
+  suspend fun createSdkForExistingEnv(context: EvoToolContext, homePath: Path): PyResult<Sdk> = notSupported()
+
+  /**
+   * Builds the SDK for an environment that does not exist yet, creating it first via the tool's own "create" logic —
+   * a poetry per-version row, a hatch declared env, or an "add new" version pick.
+   *
+   * The provider owns [PyInterpreterRef.CreateEnv]'s payload: its `token`, `folder` and `name` mean whatever this tool
+   * put in the leaf it built, and nothing outside this method interprets them. A failure travels back as the result —
+   * the core reports it once, so an [ExecError] from a tool command still reaches the process-execution-error dialog.
+   */
+  suspend fun createSdkForNewEnv(context: EvoToolContext, ref: PyInterpreterRef.CreateEnv): PyResult<Sdk> = notSupported()
+
+  /**
+   * The in-widget "add new environment" flow for one of this node's [section]s: the proposed name, where it goes,
+   * whether the user may edit it, and the Python versions offered.
+   *
+   * `null` keeps the frontend's plain "add new" row. What the fields mean is the provider's business — conda names an
+   * env, uv and pip name a folder inside the section's directory, poetry's in-project env is always `.venv` and so is
+   * not editable.
+   */
+  suspend fun addNewEnvSpec(context: EvoToolContext, section: EvoSectionDto): EvoAddNewDto? = null
+
+  /**
+   * Last look at this node's own [result] before it is serialized, for a decoration only the tool can compute — hatch
+   * turning each declared-but-not-created env into a Python-version picker.
+   *
+   * Applies to this provider's sections only; returning [result] unchanged is the default.
+   */
+  suspend fun decorate(context: EvoToolContext, result: EvoLoadResultDto): EvoLoadResultDto = result
 
   companion object {
     @ApiStatus.Internal
@@ -198,6 +308,62 @@ suspend fun discoverVenvs(
     depth++
   }
   found
+}
+
+/** The default for a tool-owned operation a provider does not implement: a failure naming the node, never a null. */
+@ApiStatus.Internal
+fun <T> notSupported(): PyResult<T> = PyResult.localizedError(PySdkBundle.message("evolution.error.select.failed"))
+
+/** The tool backing this node is not installed on the target machine — its executable did not resolve. */
+@ApiStatus.Internal
+fun <T> PyEvoEnvironmentProvider.toolMissing(): PyResult<T> =
+  PyResult.localizedError(PySdkBundle.message("evolution.error.tool.not.found", label))
+
+/**
+ * The names of every entry directly inside [dir], for validating a new environment's name against what is already there.
+ *
+ * Catches only [IOException], which is what [listDirectoryEntries] declares: an unreadable directory means "nothing
+ * known to be taken", which is the safe answer since creating the environment will fail on its own if the name is in
+ * fact occupied. Anything else is not an expected outcome and propagates.
+ */
+@ApiStatus.Internal
+suspend fun listEntryNames(dir: Path): List<@NlsSafe String> = withContext(Dispatchers.IO) {
+  try {
+    dir.listDirectoryEntries().map { it.fileName.toString() }
+  }
+  catch (e: IOException) {
+    LOG.info("Cannot list $dir for env-name validation", e)
+    emptyList()
+  }
+}
+
+/**
+ * "That environment already exists", so a create never silently overwrites or recreates one.
+ *
+ * The widget's name field already rejects a taken name, so reaching this means the directory appeared between the popup
+ * being built and the row being clicked.
+ */
+@ApiStatus.Internal
+fun <T> envExistsError(name: @NlsSafe String): PyResult<T> =
+  PyResult.localizedError(PySdkBundle.message("evolution.error.env.exists", name))
+
+/**
+ * Where a folder-based tool (uv, pip) should create the environment a [ref] asks for: the (possibly user-edited)
+ * [PyInterpreterRef.CreateEnv.name] inside its [PyInterpreterRef.CreateEnv.folder] containing directory.
+ *
+ * The fallbacks keep older refs working — a `folder` that is itself the full path, or neither field set, in which case
+ * the first free `.venv{X}` under the base dir is used, matching what the add-new row proposes.
+ */
+@ApiStatus.Internal
+fun EvoToolContext.resolveNewVenvDir(ref: PyInterpreterRef.CreateEnv): Path {
+  // Locals, so `isNullOrBlank`'s contract can narrow them — it does not narrow a property receiver.
+  val folder = ref.folder
+  val name = ref.name
+  return when {
+    !folder.isNullOrBlank() && !name.isNullOrBlank() -> Path.of(folder).resolve(name)
+    !folder.isNullOrBlank() -> pyProject.baseDir.resolve(folder)
+    else -> firstFreeVenvDir(pyProject.baseDir)
+  }
 }
 
 /** Upper bound for the `.venv{X}` suffix search when auto-naming a new env folder; far beyond any realistic project. */

@@ -2,10 +2,11 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.ToolCommandSpec
 import com.intellij.python.pytools.Version
 import com.intellij.python.pytools.getToolVersion
 import com.intellij.python.pytools.parseVersion
@@ -15,7 +16,7 @@ import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.isSuccess
 import com.jetbrains.python.orLogException
-import com.jetbrains.python.sdk.ToolCommandSpec
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -23,7 +24,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 class ToolValidator<P : PathHolder>(
   val fileSystem: FileSystem<P>,

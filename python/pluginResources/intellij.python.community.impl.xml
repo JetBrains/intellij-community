@@ -1054,6 +1054,7 @@
     <evoEnvironmentProvider id="CondaEvoProvider"
                             implementation="com.jetbrains.python.conda.sdk.evolution.CondaEvoEnvironmentProvider"/>
 
+    <evoEnvironmentProvider implementation="com.jetbrains.python.venv.sdk.evolution.VenvEvoEnvironmentProvider"/>
     <evoEnvironmentProvider id="AdvancedEvoProvider"
                             order="last"
                             implementation="com.jetbrains.python.sdk.evolution.AdvancedEvoEnvironmentProvider"/>

@@ -12,7 +12,6 @@
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.execService"/>
-    <module name="intellij.python.sdk.backend"/>
   </dependencies>
   <!-- endregion -->
 

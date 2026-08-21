@@ -3,23 +3,24 @@ package com.intellij.python.sdk.frontend.evolution.components
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsActions.ActionDescription
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.PathUtil
-import org.jetbrains.annotations.Nls
-import com.intellij.openapi.application.EDT
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.python.sdk.common.evolution.EvoRpcFailedException
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
+import com.intellij.util.PathUtil
+import javax.swing.Icon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import javax.swing.Icon
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
 
 /** Failure of a lazy node [EvoTreeLazyNodeElement] loader; a warning is a soft "n/a", anything else an error. */
 internal sealed class EvoLoadException(message: String) : Exception(message)
@@ -233,14 +234,24 @@ class EvoTreeLazyNodeElement(
             updateState(State.NOT_AVAILABLE, listeners)
           }
         }
-        catch (error: Exception) {
-          withContext(Dispatchers.EDT) {
-            presentation.isEnabled = false
-            presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, error.message)
-            updateState(State.ERROR, listeners)
-          }
+        // Two ways loading a node can fail: the backend reported it ([EvoErrorException]), or the backend could not be
+        // asked at all. Anything else is a bug here and propagates instead of becoming a tooltip.
+        catch (error: EvoLoadException) {
+          showLoadError(error, listeners)
+        }
+        catch (error: EvoRpcFailedException) {
+          showLoadError(error, listeners)
         }
       }
+    }
+  }
+
+  /** Renders a failed load as a disabled row whose tooltip carries the reason. */
+  private suspend fun showLoadError(error: Throwable, listeners: List<ListPopupStep.ListPopupModelListener>) {
+    withContext(Dispatchers.EDT) {
+      presentation.isEnabled = false
+      presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, error.message)
+      updateState(State.ERROR, listeners)
     }
   }
 }

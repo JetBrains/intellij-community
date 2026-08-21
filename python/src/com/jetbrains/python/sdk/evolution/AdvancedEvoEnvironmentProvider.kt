@@ -1,11 +1,13 @@
 package com.jetbrains.python.sdk.evolution
 
 import com.intellij.icons.AllIcons
+import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.evoActionLeaf
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
+import com.intellij.python.sdk.common.evolution.EvoNodeIds
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.FileSystem
@@ -15,7 +17,7 @@ import javax.swing.Icon
 
 /** The "advanced" node: the full set of add-interpreter actions. Not tool-specific. */
 internal class AdvancedEvoEnvironmentProvider : PyEvoEnvironmentProvider {
-  override val id: String get() = "advanced"
+  override val toolId: ToolId get() = ToolId(EvoNodeIds.ADVANCED)
   override val label: String get() = "Advanced"
   override val icon: Icon get() = AllIcons.Toolwindows.ToolWindowInternal
 

@@ -2,8 +2,6 @@
 package com.intellij.python.pytools
 
 import com.intellij.execution.Platform
-import com.jetbrains.python.sdk.ToolCommandSpec
-import com.jetbrains.python.sdk.ToolSearchPath
 
 /**
  * Something with a resolvable executable whose custom path and auto-detection are managed per Eel

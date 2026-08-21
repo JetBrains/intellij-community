@@ -1,13 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk
+package com.intellij.python.pytools
 
 import com.intellij.execution.Platform
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.PyInternalExecApi
-import com.jetbrains.python.sdk.add.v2.PathHolder
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * How to find one tool executable: its command [toolName] plus the directories to search beyond `PATH`.
+ *
+ * Lives here rather than in `python-sdk` because this module owns the semantics — [PyExecutable.toolCommandSpec] is a
+ * member of this module's interface, and [pyExecutableSpec] is what builds a spec — while `python-sdk` only consumes one
+ * (`FileSystem.detectTool`, `FileSystem.probeTools`). Detection is what pytools is for; an SDK is not involved.
+ */
 @ApiStatus.Internal
 @PyInternalExecApi
 data class ToolCommandSpec(
@@ -18,13 +24,6 @@ data class ToolCommandSpec(
     return searchPaths.distinct().filter { it.platform == null || it.platform == platform }
   }
 }
-
-@ApiStatus.Internal
-@PyInternalExecApi
-data class ToolProbeResult<P : PathHolder>(
-  val path: P,
-  val versionOutput: String?,
-)
 
 /**
  * Represents a location to search for a tool executable.

@@ -47,7 +47,6 @@ jvm_library(
         "//python/python-exec-service:community-execService",
         "//platform/eel",
         "//platform/eel-provider",
-        "//python/python-sdk/backend",
         "//libraries/caffeine",
     ],
 )
@@ -80,7 +79,6 @@ jvm_library(
         "//python/python-exec-service:community-execService_test_lib",
         "//platform/eel:eel_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
-        "//python/python-sdk/backend:backend_test_lib",
         "//libraries/caffeine:caffeine_test_lib",
     ],
 )
