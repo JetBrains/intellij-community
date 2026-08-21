@@ -104,6 +104,34 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     }
   }
 
+  fun testDefinitionListTermsOverrideCodeSpanHighlighting() {
+    myFixture.configureByText("test.md", """
+      ## Command-line options
+
+      `help`
+      :  Help about any command
+
+      `license`
+      :  Display license information
+
+      `upgrade`
+      :  Upgrade to the latest version
+
+      `verify`
+      :  Perform an internal signature verification
+
+      `version`
+      :  Print the version number
+    """.trimIndent())
+    val highlights = myFixture.doHighlighting()
+    val fileText = myFixture.file.text
+
+    for (term in listOf("help", "license", "upgrade", "verify", "version")) {
+      val startOffset = fileText.indexOf("`$term`") + 1
+      assertElementHighlightedWithKey(highlights, term, MarkdownHighlighterColors.TERM, startOffset = startOffset)
+    }
+  }
+
   fun testNestedContainersCreateUniquePerRangeTextAnnotations() {
     myFixture.configureByText("test.md", """
       # Header with **bold**
@@ -128,10 +156,9 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     highlights: List<HighlightInfo>,
     element: String,
     attributesKey: TextAttributesKey,
-    highlightingState: HighlightingState = HighlightingState.HIGHLIGHTED
+    highlightingState: HighlightingState = HighlightingState.HIGHLIGHTED,
+    startOffset: Int = myFixture.file.text.indexOf(element),
   ) {
-    val fileText = myFixture.file.text
-    val startOffset = fileText.indexOf(element)
     assertTrue("Fragment '$element' was not found", startOffset >= 0)
     val endOffset = startOffset + element.length
     val assertionPredicate = { highlight: HighlightInfo ->
