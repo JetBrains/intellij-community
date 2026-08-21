@@ -70,7 +70,7 @@ public final class StatsAppConnectionSettings implements StatsConnectionSettings
     var credentials = IdeUiService.getInstance().getProxyCredentials();
     return credentials == null ? null : new StatsProxyInfo.StatsProxyAuthProvider() {
       @Override public @Nullable String getProxyLogin() { return credentials.first; }
-      @Override public @Nullable String getProxyPassword() { return credentials.second; }
+      @Override public @Nullable String getProxyPassword() { return credentials.second != null ? new String(credentials.second) : null; }
     };
   }
 }

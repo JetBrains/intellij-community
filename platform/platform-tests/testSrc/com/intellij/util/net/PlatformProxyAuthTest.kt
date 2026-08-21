@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
 import com.intellij.credentialStore.Credentials
@@ -26,7 +26,7 @@ class PlatformProxyAuthTest {
   @Test
   fun testHttpConnectionThroughProxyWithAuthentication(): Unit = runBlocking {
     val serverScope = childScope("embedded http proxy server", Dispatchers.IO)
-    val proxyServer = serverScope.embeddedHttpProxyServer(3141)
+    val proxyServer = embeddedHttpProxyServer(serverScope, 3141)
     proxyServer.serverSocket.await()
     //launchTestHttpWebServer(3142)
     withProxyConfiguration(ProxyConfiguration.proxy(ProxyConfiguration.ProxyProtocol.HTTP, "0.0.0.0", 3141)) {
@@ -51,63 +51,48 @@ class PlatformProxyAuthTest {
     }
     serverScope.cancel()
   }
-}
 
-/**
- * Based on recorded squid proxy interaction
- */
-private fun CoroutineScope.embeddedHttpProxyServer(
-  port: Int,
-): HttpServer {
-  return httpServer(HttpServerSettings(port = port)) { req ->
-    assertEquals("http://0.0.0.0:3142/path", req.uri.toString())
-    val resp = if (req.headers["Proxy-authorization"] != "Basic bXl1c2VyOm15cGFzc3dvcmQ=") {
-      // content cut out
-      """
-      HTTP/1.1 407 Proxy Authentication Required
-      Server: squid/6.9
-      Mime-Version: 1.0
-      Date: Mon, 03 Jun 2024 10:10:42 GMT
-      Content-Type: text/html;charset=utf-8
-      Content-Length: 0
-      X-Squid-Error: ERR_CACHE_ACCESS_DENIED 0
-      Vary: Accept-Language
-      Content-Language: en
-      Proxy-Authenticate: Basic realm="Squid proxy-caching web server"
-      Cache-Status: localhost
-      Via: 1.1 localhost (squid/6.9)
-      Connection: close
-      
-      
-      """.trimIndent()
-    } else {
-      """
-      HTTP/1.1 200 OK
-      Content-Length: 13
-      Content-Type: text/plain; charset=UTF-8
-      Date: Mon, 03 Jun 2024 10:10:42 GMT
-      Cache-Status: localhost;fwd=stale;detail=match
-      Via: 1.1 localhost (squid/6.9)
-      Connection: close
-      
-      Hello, World!""".trimIndent()
-    }.replace("\n", "\r\n").toByteArray()
-    output.writeFully(resp, 0, resp.size)
-    output.flush()
-    req.close()
-  }
-}
-
-/*
-private fun CoroutineScope.launchTestHttpWebServer(port: Int): Job {
-  return launch(CoroutineName("embedded http web server") + Dispatchers.IO) {
-    embeddedServer(CIO, port) {
-      routing {
-        get("/path") {
-          call.respondText("Hello, World!")
-        }
+  /**
+   * Based on recorded squid proxy interaction
+   */
+  private fun embeddedHttpProxyServer(scope: CoroutineScope, @Suppress("SameParameterValue") port: Int): HttpServer {
+    return scope.httpServer(HttpServerSettings(port = port)) { req ->
+      assertEquals("http://0.0.0.0:3142/path", req.uri.toString())
+      val resp = if (req.headers["Proxy-authorization"] != "Basic bXl1c2VyOm15cGFzc3dvcmQ=") {
+        // content cut out
+        """
+        HTTP/1.1 407 Proxy Authentication Required
+        Server: squid/6.9
+        Mime-Version: 1.0
+        Date: Mon, 03 Jun 2024 10:10:42 GMT
+        Content-Type: text/html;charset=utf-8
+        Content-Length: 0
+        X-Squid-Error: ERR_CACHE_ACCESS_DENIED 0
+        Vary: Accept-Language
+        Content-Language: en
+        Proxy-Authenticate: Basic realm="Squid proxy-caching web server"
+        Cache-Status: localhost
+        Via: 1.1 localhost (squid/6.9)
+        Connection: close
+        
+        
+        """.trimIndent()
       }
-    }.start()
+      else {
+        """
+        HTTP/1.1 200 OK
+        Content-Length: 13
+        Content-Type: text/plain; charset=UTF-8
+        Date: Mon, 03 Jun 2024 10:10:42 GMT
+        Cache-Status: localhost;fwd=stale;detail=match
+        Via: 1.1 localhost (squid/6.9)
+        Connection: close
+        
+        Hello, World!""".trimIndent()
+      }.replace("\n", "\r\n").toByteArray()
+      output.writeFully(resp, 0, resp.size)
+      output.flush()
+      req.close()
+    }
   }
 }
-*/

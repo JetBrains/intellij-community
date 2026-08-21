@@ -134,9 +134,9 @@ public class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
-  public @Nullable Pair<String, String> getProxyCredentials() {
+  public @Nullable Pair<String, char[]> getProxyCredentials() {
     var credentials = ProxyCredentialStore.getInstance().getCredentials(ProxySettings.getInstance().getProxyConfiguration());
-    return credentials != null ? new Pair<>(credentials.getUserName(), credentials.getPasswordAsString()) : null;
+    return credentials != null ? new Pair<>(credentials.getUserName(), credentials.getPassword() != null ? credentials.getPassword().toCharArray() : null) : null;
   }
 
   @Override

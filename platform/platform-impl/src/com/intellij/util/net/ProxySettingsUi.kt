@@ -410,7 +410,8 @@ internal class ProxySettingsUi(
         settings.isOverrideEnabled = pluginOverrideCheckbox.isSelected
       }
       settings.proxyState = state
-    } else {
+    }
+    else {
       settings.setProxyConfiguration(state.asProxyConfiguration())
     }
     credentialStore.setCredentials(state.PROXY_HOST, state.PROXY_PORT, credentials, rememberProxyPasswordCheckBox.isSelected)
