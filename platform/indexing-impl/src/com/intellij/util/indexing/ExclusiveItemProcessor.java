@@ -17,11 +17,11 @@ import java.util.function.BiConsumer;
 
 /// Coordinates processing ([#singleItemProcessor]) of items passed to [#processAll(Collection, Project)] in a multithreading environment so that:
 /// 1. processing of the same item by different threads is always **serialized**, never concurrent
-///    (if all threads are using the same instance of [UpdateTask]!)
+///    (if all threads are using the same instance of [ExclusiveItemProcessor]!)
 /// 2. different items **could** be processed concurrently by different threads
 /// 3. **all** items passed in [#processAll(Collection, Project)] by thread X -- are eventually processed by thread X
 @ApiStatus.Internal
-public final class UpdateTask<Item> {//TODO RC: rename to ExclusiveItemProcessor
+public final class ExclusiveItemProcessor<Item> {
 
   private final BiConsumer<? super Item, ? super Project> singleItemProcessor;
 
@@ -35,8 +35,8 @@ public final class UpdateTask<Item> {//TODO RC: rename to ExclusiveItemProcessor
   /// Prevents nested [#processAll] calls
   private final ThreadLocal<Boolean> processingOnCurrentThread = new ThreadLocal<>();
 
-  /// Creates a task that coordinates concurrent invocations of the supplied item processor.
-  public UpdateTask(@NotNull BiConsumer<? super Item, ? super @NotNull Project> singleItemProcessor) {
+  /// Creates a processor that coordinates concurrent invocations of the supplied item processor.
+  public ExclusiveItemProcessor(@NotNull BiConsumer<? super Item, ? super @NotNull Project> singleItemProcessor) {
     this.singleItemProcessor = singleItemProcessor;
   }
 
@@ -52,7 +52,7 @@ public final class UpdateTask<Item> {//TODO RC: rename to ExclusiveItemProcessor
   public boolean processAll(@NotNull Collection<? extends Item> itemsToProcess,
                             @NotNull Project project) throws ProcessCanceledException {
     if (processingOnCurrentThread.get() != null) {
-      throw new IllegalStateException("Reentrant processAll() call on the same UpdateTask instance");
+      throw new IllegalStateException("Reentrant processAll() call on the same ExclusiveItemProcessor instance");
     }
 
     processingOnCurrentThread.set(Boolean.TRUE);

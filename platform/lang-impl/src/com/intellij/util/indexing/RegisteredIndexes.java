@@ -43,7 +43,7 @@ public final class RegisteredIndexes {
   private volatile FileBasedIndexDataInitializationResult myInitResult;
   private volatile Future<?> myAllIndicesInitializedFuture;
 
-  private final Map<ID<?, ?>, UpdateTask<Document>> myUnsavedDataUpdateTasks = new ConcurrentHashMap<>();
+  private final Map<ID<?, ?>, ExclusiveItemProcessor<Document>> myUnsavedDataProcessors = new ConcurrentHashMap<>();
 
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
 
@@ -143,7 +143,7 @@ public final class RegisteredIndexes {
   void registerIndexExtension(@NotNull FileBasedIndexExtension<?, ?> extension) {
     ID<?, ?> name = extension.getName();
     if (extension.dependsOnFileContent()) {
-      myUnsavedDataUpdateTasks.put(name, new UpdateTask<>((document, project) ->
+      myUnsavedDataProcessors.put(name, new ExclusiveItemProcessor<>((document, project) ->
         myFileBasedIndex.indexUnsavedDocument(document, name, project, Objects.requireNonNull(myFileDocumentManager.getFile(document)))
       ));
     }
@@ -198,8 +198,8 @@ public final class RegisteredIndexes {
     return myRequiringContentIndices.contains(indexId);
   }
 
-  UpdateTask<Document> getUnsavedDataUpdateTask(@NotNull ID<?, ?> indexId) {
-    return myUnsavedDataUpdateTasks.get(indexId);
+  ExclusiveItemProcessor<Document> getUnsavedDataProcessor(@NotNull ID<?, ?> indexId) {
+    return myUnsavedDataProcessors.get(indexId);
   }
 
   @NotNull

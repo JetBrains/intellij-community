@@ -35,13 +35,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Verifies that when the same {@link UpdateTask} instance processes the same collection from different
- * threads in parallel, at least one invocation of {@link UpdateTask#processAll(Collection, Project)}
+ * Verifies that when the same {@link ExclusiveItemProcessor} instance processes the same collection from different
+ * threads in parallel, at least one invocation of {@link ExclusiveItemProcessor#processAll(Collection, Project)}
  * reports that some items were skipped (returns {@code false}).
  */
 @TestApplication
-public class UpdateTaskTest {
-  /** Supplies the non-null project required by UpdateTask without introducing a project fixture unused by these tests. */
+public class ExclusiveItemProcessorTest {
+  /** Supplies the non-null project required by ExclusiveItemProcessor without introducing a project fixture unused by these tests. */
   private static @NotNull Project project() {
     return ProjectManager.getInstance().getDefaultProject();
   }
@@ -50,15 +50,15 @@ public class UpdateTaskTest {
   @Test
   public void processAllReturnsFalseAfterSkippedItemIsRetried() throws Exception {
     BlockingProcessor<Integer> processor = new BlockingProcessor<>();
-    UpdateTask<Integer> task = new UpdateTask<>(processor::process);
+    ExclusiveItemProcessor<Integer> exclusiveProcessor = new ExclusiveItemProcessor<>(processor::process);
     CountDownLatch competingAttemptFinished = new CountDownLatch(1);
 
     try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
-      Future<Boolean> firstResult = pool.submit(() -> task.processAll(List.of(1), project()));
+      Future<Boolean> firstResult = pool.submit(() -> exclusiveProcessor.processAll(List.of(1), project()));
       assertTrue(processor.firstProcessingStarted.await(10, TimeUnit.SECONDS), "The first processing attempt did not start");
 
       Future<Boolean> competingResult = pool.submit(
-        () -> task.processAll(new AttemptSignalingCollection<>(competingAttemptFinished, 1), project())
+        () -> exclusiveProcessor.processAll(new AttemptSignalingCollection<>(competingAttemptFinished, 1), project())
       );
       try {
         assertTrue(competingAttemptFinished.await(10, TimeUnit.SECONDS), "The competing attempt did not reach the busy item");
@@ -77,13 +77,13 @@ public class UpdateTaskTest {
   @Test
   public void onlyItemsSkippedDueToContentionAreRetried() throws Exception {
     SelectivelyBlockingProcessor processor = new SelectivelyBlockingProcessor();
-    UpdateTask<Integer> task = new UpdateTask<>(processor::process);
+    ExclusiveItemProcessor<Integer> exclusiveProcessor = new ExclusiveItemProcessor<>(processor::process);
 
     try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
-      Future<Boolean> blockingResult = pool.submit(() -> task.processAll(List.of(1), project()));
+      Future<Boolean> blockingResult = pool.submit(() -> exclusiveProcessor.processAll(List.of(1), project()));
       assertTrue(processor.blockingItemProcessingStarted.await(10, TimeUnit.SECONDS), "The blocking item was not processed");
 
-      Future<Boolean> competingResult = pool.submit(() -> task.processAll(List.of(1, 2), project()));
+      Future<Boolean> competingResult = pool.submit(() -> exclusiveProcessor.processAll(List.of(1, 2), project()));
       try {
         assertTrue(processor.unrelatedItemProcessed.await(10, TimeUnit.SECONDS), "The unrelated item was not processed on the first pass");
       }
@@ -102,25 +102,25 @@ public class UpdateTaskTest {
   @Test
   public void processAllReturnsTrueWithoutContention() {
     List<Integer> processedItems = new ArrayList<>();
-    UpdateTask<Integer> task = new UpdateTask<>((item, ignoredProject) -> processedItems.add(item));
+    ExclusiveItemProcessor<Integer> exclusiveProcessor = new ExclusiveItemProcessor<>((item, ignoredProject) -> processedItems.add(item));
 
-    assertTrue(task.processAll(List.of(1, 2), project()));
+    assertTrue(exclusiveProcessor.processAll(List.of(1, 2), project()));
     assertEquals(List.of(1, 2), processedItems, "Every item must be processed exactly once without contention");
   }
 
-  /** Verifies that the task coordinates equal items without serializing unrelated ones. */
+  /** Verifies that the processor coordinates equal items without serializing unrelated ones. */
   @Test
   public void differentItemsAreProcessedConcurrently() throws Exception {
     ConcurrentProcessor<Integer> processor = new ConcurrentProcessor<>(2);
-    UpdateTask<Integer> task = new UpdateTask<>(processor::process);
+    ExclusiveItemProcessor<Integer> exclusiveProcessor = new ExclusiveItemProcessor<>(processor::process);
 
     try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
-      Future<Boolean> firstResult = pool.submit(() -> task.processAll(List.of(1), project()));
-      Future<Boolean> secondResult = pool.submit(() -> task.processAll(List.of(2), project()));
+      Future<Boolean> firstResult = pool.submit(() -> exclusiveProcessor.processAll(List.of(1), project()));
+      Future<Boolean> secondResult = pool.submit(() -> exclusiveProcessor.processAll(List.of(2), project()));
 
       assertTrue(firstResult.get());
       assertTrue(secondResult.get());
-      assertEquals(2, processor.maxActiveEntries.get(), "Different items must not be serialized by the task semaphore");
+      assertEquals(2, processor.maxActiveEntries.get(), "Different items must not be serialized by the processor semaphore");
     }
   }
 
@@ -129,34 +129,34 @@ public class UpdateTaskTest {
   public void exceptionDoesNotLeakItemOrSemaphorePermit() {
     AtomicBoolean firstAttempt = new AtomicBoolean(true);
     AtomicInteger processingCount = new AtomicInteger();
-    UpdateTask<Integer> task = new UpdateTask<>((ignoredItem, ignoredProject) -> {
+    ExclusiveItemProcessor<Integer> exclusiveProcessor = new ExclusiveItemProcessor<>((ignoredItem, ignoredProject) -> {
       processingCount.incrementAndGet();
       if (firstAttempt.compareAndSet(true, false)) {
         throw new TestProcessingException();
       }
     });
 
-    assertThrows(TestProcessingException.class, () -> task.processAll(List.of(1), project()));
-    assertTrue(task.processAll(List.of(1), project()));
+    assertThrows(TestProcessingException.class, () -> exclusiveProcessor.processAll(List.of(1), project()));
+    assertTrue(exclusiveProcessor.processAll(List.of(1), project()));
     assertEquals(2, processingCount.get(), "The item must remain processable after an exception");
   }
 
   /** Verifies that reentrancy fails fast and releases all state held by the outer invocation. */
   @Test
-  public void reentrantProcessAllFailsFastAndDoesNotCorruptTask() {
-    AtomicReference<UpdateTask<Integer>> taskRef = new AtomicReference<>();
+  public void reentrantProcessAllFailsFastAndDoesNotCorruptProcessor() {
+    AtomicReference<ExclusiveItemProcessor<Integer>> processorRef = new AtomicReference<>();
     AtomicBoolean firstAttempt = new AtomicBoolean(true);
     AtomicInteger processingCount = new AtomicInteger();
-    UpdateTask<Integer> task = new UpdateTask<>((item, project) -> {
+    ExclusiveItemProcessor<Integer> exclusiveProcessor = new ExclusiveItemProcessor<>((item, project) -> {
       processingCount.incrementAndGet();
       if (firstAttempt.compareAndSet(true, false)) {
-        taskRef.get().processAll(List.of(item), project);
+        processorRef.get().processAll(List.of(item), project);
       }
     });
-    taskRef.set(task);
+    processorRef.set(exclusiveProcessor);
 
-    assertThrows(IllegalStateException.class, () -> task.processAll(List.of(1), project()));
-    assertTrue(task.processAll(List.of(1), project()), "The task must remain usable after a rejected reentrant call");
+    assertThrows(IllegalStateException.class, () -> exclusiveProcessor.processAll(List.of(1), project()));
+    assertTrue(exclusiveProcessor.processAll(List.of(1), project()), "The processor must remain usable after a rejected reentrant call");
     assertEquals(2, processingCount.get(), "The outer failed attempt must release item ownership");
   }
 
@@ -164,15 +164,15 @@ public class UpdateTaskTest {
   @Test
   public void sameItemIsNeverProcessedConcurrently() throws Exception {
     BlockingProcessor<Integer> processor = new BlockingProcessor<>();
-    UpdateTask<Integer> task = new UpdateTask<>(processor::process);
+    ExclusiveItemProcessor<Integer> exclusiveProcessor = new ExclusiveItemProcessor<>(processor::process);
     CountDownLatch competingAttemptFinished = new CountDownLatch(1);
 
     try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
-      Future<Boolean> firstResult = pool.submit(() -> task.processAll(List.of(1), project()));
+      Future<Boolean> firstResult = pool.submit(() -> exclusiveProcessor.processAll(List.of(1), project()));
       assertTrue(processor.firstProcessingStarted.await(10, TimeUnit.SECONDS), "The first processing attempt did not start");
 
       Future<Boolean> competingResult = pool.submit(
-        () -> task.processAll(new AttemptSignalingCollection<>(competingAttemptFinished, 1), project())
+        () -> exclusiveProcessor.processAll(new AttemptSignalingCollection<>(competingAttemptFinished, 1), project())
       );
       try {
         assertTrue(competingAttemptFinished.await(10, TimeUnit.SECONDS), "The competing attempt did not reach the busy item");
@@ -188,20 +188,20 @@ public class UpdateTaskTest {
     }
   }
 
-  /** Verifies that item exclusion is local to an UpdateTask instance rather than global. */
+  /** Verifies that item exclusion is local to an ExclusiveItemProcessor instance rather than global. */
   @Test
-  public void differentTaskInstancesDoNotCoordinate() throws Exception {
+  public void differentProcessorInstancesDoNotCoordinate() throws Exception {
     ConcurrentProcessor<Integer> processor = new ConcurrentProcessor<>(2);
-    UpdateTask<Integer> firstTask = new UpdateTask<>(processor::process);
-    UpdateTask<Integer> secondTask = new UpdateTask<>(processor::process);
+    ExclusiveItemProcessor<Integer> firstExclusiveProcessor = new ExclusiveItemProcessor<>(processor::process);
+    ExclusiveItemProcessor<Integer> secondExclusiveProcessor = new ExclusiveItemProcessor<>(processor::process);
 
     try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
-      Future<Boolean> firstResult = pool.submit(() -> firstTask.processAll(List.of(1), project()));
-      Future<Boolean> secondResult = pool.submit(() -> secondTask.processAll(List.of(1), project()));
+      Future<Boolean> firstResult = pool.submit(() -> firstExclusiveProcessor.processAll(List.of(1), project()));
+      Future<Boolean> secondResult = pool.submit(() -> secondExclusiveProcessor.processAll(List.of(1), project()));
 
       assertTrue(firstResult.get());
       assertTrue(secondResult.get());
-      assertEquals(2, processor.maxActiveEntries.get(), "Different task instances must not share item ownership");
+      assertEquals(2, processor.maxActiveEntries.get(), "Different processor instances must not share item ownership");
     }
   }
 
@@ -209,17 +209,17 @@ public class UpdateTaskTest {
   @Test
   public void equalItemsAreConsideredTheSame() throws Exception {
     BlockingProcessor<EqualItem> processor = new BlockingProcessor<>();
-    UpdateTask<EqualItem> task = new UpdateTask<>(processor::process);
+    ExclusiveItemProcessor<EqualItem> exclusiveProcessor = new ExclusiveItemProcessor<>(processor::process);
     CountDownLatch competingAttemptFinished = new CountDownLatch(1);
     EqualItem firstItem = new EqualItem(1);
     EqualItem equalItem = new EqualItem(1);
 
     try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
-      Future<Boolean> firstResult = pool.submit(() -> task.processAll(List.of(firstItem), project()));
+      Future<Boolean> firstResult = pool.submit(() -> exclusiveProcessor.processAll(List.of(firstItem), project()));
       assertTrue(processor.firstProcessingStarted.await(10, TimeUnit.SECONDS), "The first processing attempt did not start");
 
       Future<Boolean> competingResult = pool.submit(
-        () -> task.processAll(new AttemptSignalingCollection<>(competingAttemptFinished, equalItem), project())
+        () -> exclusiveProcessor.processAll(new AttemptSignalingCollection<>(competingAttemptFinished, equalItem), project())
       );
       try {
         assertTrue(competingAttemptFinished.await(10, TimeUnit.SECONDS), "The equal item did not contend with the occupied item");
@@ -234,20 +234,20 @@ public class UpdateTaskTest {
     }
   }
 
-  /** Verifies that cancellation during semaphore waiting leaves the task reusable. */
+  /** Verifies that cancellation during semaphore waiting leaves the processor reusable. */
   @Test
-  public void cancellationWhileWaitingDoesNotCorruptTask() throws Exception {
+  public void cancellationWhileWaitingDoesNotCorruptProcessor() throws Exception {
     BlockingProcessor<Integer> processor = new BlockingProcessor<>();
-    UpdateTask<Integer> task = new UpdateTask<>(processor::process);
+    ExclusiveItemProcessor<Integer> exclusiveProcessor = new ExclusiveItemProcessor<>(processor::process);
     CountDownLatch competingAttemptFinished = new CountDownLatch(1);
     EmptyProgressIndicator indicator = new EmptyProgressIndicator(ModalityState.nonModal());
 
     try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
-      Future<Boolean> firstResult = pool.submit(() -> task.processAll(List.of(1), project()));
+      Future<Boolean> firstResult = pool.submit(() -> exclusiveProcessor.processAll(List.of(1), project()));
       assertTrue(processor.firstProcessingStarted.await(10, TimeUnit.SECONDS), "The first processing attempt did not start");
 
       Future<Boolean> canceledResult = pool.submit(() -> ProgressManager.getInstance().runProcess(
-        () -> task.processAll(new AttemptSignalingCollection<>(competingAttemptFinished, 1), project()),
+        () -> exclusiveProcessor.processAll(new AttemptSignalingCollection<>(competingAttemptFinished, 1), project()),
         indicator
       ));
       try {
@@ -261,13 +261,13 @@ public class UpdateTaskTest {
       }
 
       assertTrue(firstResult.get());
-      assertTrue(task.processAll(List.of(1), project()), "The task must remain usable after a waiting invocation is canceled");
+      assertTrue(exclusiveProcessor.processAll(List.of(1), project()), "The processor must remain usable after a waiting invocation is canceled");
     }
   }
 
   @Test
   public void processAllReturnsFalseSometimesWhenCalledInParallelOnSameCollection() throws Exception {
-    UpdateTask<Integer> task = new UpdateTask<>((ignoredItem, ignoredProject) -> {
+    ExclusiveItemProcessor<Integer> exclusiveProcessor = new ExclusiveItemProcessor<>((ignoredItem, ignoredProject) -> {
       // Intentionally slow down processing a bit to increase the overlap window between threads.
       try {
         Thread.sleep(10);
@@ -295,7 +295,7 @@ public class UpdateTaskTest {
             start.await();
 
             for (int j = 0; j < 1024; j++) {
-              boolean noneItemsSkipped = task.processAll(items, project());
+              boolean noneItemsSkipped = exclusiveProcessor.processAll(items, project());
               if (!noneItemsSkipped) {
                 return false;
               }
@@ -330,7 +330,7 @@ public class UpdateTaskTest {
     private final AtomicInteger activeProcessingCount = new AtomicInteger();
     private final AtomicInteger maxActiveProcessingCount = new AtomicInteger();
 
-    /** Blocks only the first invocation so a competing UpdateTask call can observe the occupied item. */
+    /** Blocks only the first invocation so a competing ExclusiveItemProcessor call can observe the occupied item. */
     private void process(@NotNull T ignoredItem, @NotNull Project ignoredProject) {
       int active = activeProcessingCount.incrementAndGet();
       maxActiveProcessingCount.accumulateAndGet(active, Math::max);
@@ -424,7 +424,7 @@ public class UpdateTaskTest {
     }
   }
 
-  /** Coordinates processor entries shared by one or more UpdateTask instances. */
+  /** Coordinates processor entries shared by one or more ExclusiveItemProcessor instances. */
   private static final class ConcurrentProcessor<T> {
     private final CountDownLatch expectedEntries;
     private final AtomicInteger activeEntries = new AtomicInteger();

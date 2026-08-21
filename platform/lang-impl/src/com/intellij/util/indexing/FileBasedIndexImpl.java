@@ -1146,10 +1146,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (!documentsToProcessForProject.isEmpty()) {
       if (project == null) throw new IllegalArgumentException("project must not be null here");
 
-      UpdateTask<Document> task = myRegisteredIndexes.getUnsavedDataUpdateTask(indexId);
-      assert task != null : "Task for unsaved data indexing was not initialized for index " + indexId;
+      ExclusiveItemProcessor<Document> processor = myRegisteredIndexes.getUnsavedDataProcessor(indexId);
+      assert processor != null : "Processor for unsaved data indexing was not initialized for index " + indexId;
 
-      if (myStorageBufferingHandler.runUpdate(true, () -> task.processAll(documentsToProcessForProject, project)) &&
+      if (myStorageBufferingHandler.runUpdate(true, () -> processor.processAll(documentsToProcessForProject, project)) &&
           documentsToProcessForProject.size() == documents.size() &&
           !hasActiveTransactions()
       ) {
@@ -1912,7 +1912,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
    * It is much more effective for a larger number of files, but for a small number of files a synchronous way is faster
    * and more predictable.
    */
-  private final UpdateTask<FileIndexingRequest> myForceUpdateTask = new UpdateTask<>((item, project) -> {
+  private final ExclusiveItemProcessor<FileIndexingRequest> myForceUpdateProcessor = new ExclusiveItemProcessor<>((item, project) -> {
     // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
     IndexingRequestToken indexingRequest = project.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
     var stamp = indexingRequest.getFileIndexingStamp(item.getFile());
@@ -1938,7 +1938,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             }
 
             Objects.requireNonNull(project, "Project can't be null: it is needed to get ProjectIndexingDependenciesService below");
-            myForceUpdateTask.processAll(virtualFilesToBeUpdatedForProject, project);
+            myForceUpdateProcessor.processAll(virtualFilesToBeUpdatedForProject, project);
           }
         }
       }
