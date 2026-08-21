@@ -35,7 +35,7 @@
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleProjectStartupActivity"/>
     <externalSystemTaskNotificationListener
         implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleMavenProjectImportNotificationListener"/>
-    <completion.contributor language="Groovy" order="first"
+    <completion.contributor id="gradleMavenDependencies" language="Groovy" order="first"
                             implementationClass="org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.integrations.maven.MavenRepositoriesHolder"/>
   </extensions>
