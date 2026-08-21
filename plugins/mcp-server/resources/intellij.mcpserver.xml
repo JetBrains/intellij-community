@@ -68,7 +68,7 @@
 
     <appStarter id="mcpServer" implementation="com.intellij.mcpserver.McpServerHeadlessStarter" internal="true"/>
     <backgroundPostStartupActivity implementation="com.intellij.mcpserver.impl.McpServerService$MyProjectListener" />
-    <backgroundPostStartupActivity implementation="com.intellij.mcpserver.impl.wsl.McpWslForwarderService$StartupTouch" os="windows"/>
+    <backgroundPostStartupActivity implementation="com.intellij.mcpserver.impl.wsl.McpWslForwarderService$ProjectOpenTracker" os="windows"/>
     <notificationGroup id="MCP Server" displayType="BALLOON" bundle="messages.McpServerBundle" key="notification.group.mcp.server"
       notificationIds="mcp.client.detected;mcp.client.autoconfigured;mcp.client.error.autoconfigured;mcp.client.wrong.port.detected"/>
 
@@ -100,7 +100,7 @@
                  description="Throttle interval in milliseconds for MCP progress notifications and keep-alives"
                  key="mcp.server.progress.notification.interval.ms"/>
     <registryKey defaultValue="false"
-                 description="Enable prototype: forward the IDE MCP SSE and built-in HTTP loopback ports into every attached WSL distro so tools running inside WSL (e.g. Claude Code) can reach the IDE without a 0.0.0.0 bind (IJPL-232933). Default off; restart the IDE after toggling. Windows only."
+                 description="Enable prototype: forward the IDE MCP SSE and built-in HTTP loopback ports into each WSL distro that hosts an open project. Windows only."
                  key="ide.mcp.wsl.forward.enabled"
                  restartRequired="true"/>
 

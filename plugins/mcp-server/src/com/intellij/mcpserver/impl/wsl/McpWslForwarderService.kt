@@ -2,15 +2,18 @@
 package com.intellij.mcpserver.impl.wsl
 
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
@@ -26,6 +29,8 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.acceptOnTcpPort
 import com.intellij.platform.eel.provider.utils.asInetAddress
 import com.intellij.platform.eel.provider.utils.connectToTcpPort
+import com.intellij.platform.project.ProjectId
+import com.intellij.platform.project.projectIdOrNull
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CancellationException
@@ -37,7 +42,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -45,15 +49,19 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.ide.BuiltInServerManager
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<McpWslForwarderService>()
 
 /**
  * Reconciles per-WSL-distro TCP forwarders that expose the IDE's MCP SSE server and the built-in HTTP server
- * on loopback inside each attached WSL distro, so tools running in WSL (e.g. Claude Code) can reach them
- * without a `0.0.0.0` bind on the Windows side.
+ * on loopback inside a WSL distro, so tools running in WSL (e.g. Claude Code) can reach them without a
+ * `0.0.0.0` bind on the Windows side.
+ *
+ * Forwarders are scoped to the open-project lifecycle: a distro is forwarded into while at least one open
+ * project lives on it, and the forwarders are torn down when the last such project closes -- even if the
+ * distro itself keeps running. Distros without an open project are never touched at all; in particular no
+ * [EelApi] is resolved for them, so an installed-but-stopped distro is not booted just because the IDE runs.
  */
 @Service(Service.Level.APP)
 @ApiStatus.Internal
@@ -74,10 +82,13 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
   private val distroMutex = ConcurrentHashMap<WSLDistribution, Mutex>()
 
   /**
-   * Best-effort snapshot of currently attached distros. Populated from the stopgap
-   * [WslDistributionManager] change listener; consulted by [readDistroAttachedSignal].
+   * The WSL distribution hosting each currently open project, for the projects that live on one. A distro is
+   * present as a value <=> it has at least one open project <=> it should be forwarded into. Maintained by
+   * [onProjectOpened] / [onProjectClosed] and consulted by [readDistroInUseSignal].
+   *
+   * Keyed by the string identity from [projectKeyOf].
    */
-  private val attachedDistros = CopyOnWriteArraySet<WSLDistribution>()
+  private val distroByProjectId = ConcurrentHashMap<String, WSLDistribution>()
 
   /**
    * Single reconcile-trigger surface. Callers ([requestReconcile]) emit a distro; the collector below
@@ -107,7 +118,6 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
       startReconcileCollector()
       subscribeToMcpServerFlow()
       subscribeToBuiltInHttpStart()
-      subscribeToWslDistroChanges()
     }
   }
 
@@ -153,50 +163,64 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
   }
 
   /**
-   * Populate [attachedDistros] from the current WSL enumeration and subscribe to
-   * [WslDistributionManager.addWslDistributionsChangeListener] for future changes.
+   * Marks the distro hosting [project] as in use and reconciles it, which starts the forwarders once the MCP
+   * and built-in HTTP signals are up too. Projects that do not live on a WSL distro are ignored, and so is a
+   * second call for a project that is already registered.
+   *
+   * The close edge comes from [CloseHook], a project-level service materialized here, rather than from an
+   * application-level `ProjectCloseListener`: the entry then cannot outlive the project it describes, and
+   * nothing is subscribed for projects this service never cared about.
    */
-  private fun subscribeToWslDistroChanges() {
-    val mgr = try {
-      WslDistributionManager.getInstance()
-    }
-    catch (t: Throwable) {
-      LOG.debug("WSL distribution manager unavailable", t)
-      return
-    }
-    cs.launch(CoroutineName("mcp-wsl-forwarder-initial-distros")) {
-      val initial = try {
-        mgr.installedDistributionsFuture.await()
-      }
-      catch (t: Throwable) {
-        LOG.debug("Failed to enumerate installed WSL distributions", t)
-        return@launch
-      }
-      for (d in initial) {
-        attachedDistros.add(d)
-        requestReconcile(d)
+  fun onProjectOpened(project: Project) {
+    if (!isFeatureEnabled()) return
+    val distro = distroOf(project) ?: return
+    val projectKey = projectKeyOf(project)
+    val projectName = project.name
+    // Materialize the close hook before claiming the distro. On an already-disposed project this throws
+    // AlreadyDisposedException (a cancellation exception) before anything was claimed, which is the correct
+    // outcome: no entry, no forwarder.
+    project.service<CloseHook>()
+    if (distroByProjectId.putIfAbsent(projectKey, distro) == null) {
+      LOG.info("Project '$projectName' opened on WSL distro '${distro.msId}'")
+      if (project.isDisposed) {
+        // Disposal started between the two statements above, so [CloseHook] may have already run and missed
+        // the entry. `isDisposed` flips before children are disposed, so the converse cannot happen.
+        onProjectClosed(projectKey, projectName)
+        return
       }
     }
-    mgr.addWslDistributionsChangeListener { before, after ->
-      val added = after - before
-      val removed = before - after
-      for (d in added) {
-        attachedDistros.add(d)
-        LOG.info("WSL distro attached: ${d.msId}")
-        requestReconcile(d)
-      }
-      for (d in removed) {
-        attachedDistros.remove(d)
-        LOG.info("WSL distro detached: ${d.msId}")
-        requestReconcile(d)
-      }
-    }
+    requestReconcile(distro)
+  }
+
+  /**
+   * Drops the project identified by [projectKey] from the in-use set and reconciles its distro, which stops
+   * the forwarders when this was the last open project on that distro. That the distro itself may still be
+   * running is irrelevant: with no project left there is nothing in the IDE for a WSL-side client to talk to.
+   */
+  internal fun onProjectClosed(projectKey: String, projectName: String) {
+    val distro = distroByProjectId.remove(projectKey) ?: return
+    LOG.info("Project '$projectName' on WSL distro '${distro.msId}' closed")
+    // Reconcile the distro even though it may have just left the map -- that is exactly the transition that
+    // has to stop the forwarder.
+    requestReconcile(distro)
+  }
+
+  /**
+   * @return the WSL distribution hosting [project], or `null` if the project does not live inside one.
+   *
+   * Path-based on purpose: [WslPath] only parses the WSL UNC prefix of the project path and maps the distro
+   * id onto a [WSLDistribution] handle. Neither step starts the distro or resolves an [EelApi], which is
+   * what keeps a stopped distro stopped until a project on it is actually opened.
+   */
+  private fun distroOf(project: Project): WSLDistribution? {
+    val basePath = project.guessProjectDir()?.path ?: return null
+    return WslPath.getDistributionByWindowsUncPath(basePath)
   }
 
   private fun reconcileAllKnownDistros(reason: String) {
-    val snapshot = attachedDistros.toList()
+    val snapshot = distroByProjectId.values.distinct()
     if (snapshot.isEmpty()) {
-      LOG.debug { "Reconcile trigger '$reason' but no distros are known yet" }
+      LOG.debug { "Reconcile trigger '$reason' but no open project lives on a WSL distro" }
       return
     }
     LOG.debug { "Reconcile trigger '$reason' → ${snapshot.size} distro(s)" }
@@ -204,12 +228,12 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
   }
 
   /**
-   * Public entry point for the three signal sources (MCP server, built-in HTTP server, WSL attach tracker).
+   * Public entry point for the three signal sources (MCP server, built-in HTTP server, project lifecycle).
    * Non-blocking; safe to call from any thread and any dispatcher, including EDT.
    *
    * Callers pass the distro whose state might have changed; when a signal is IDE-global (MCP or built-in
-   * HTTP started/stopped), the caller should invoke [requestReconcile] once per currently-known distro
-   * (see [reconcileAllKnownDistros]).
+   * HTTP started/stopped), the caller should invoke [requestReconcile] once per distro that currently hosts
+   * an open project (see [reconcileAllKnownDistros]).
    */
   fun requestReconcile(distro: WSLDistribution) {
     if (ApplicationManager.getApplication().isUnitTestMode) return
@@ -242,7 +266,7 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
       val enabled = isFeatureEnabled()
       val s1McpPort = if (enabled) readMcpSignal() else null
       val s2HttpPort = if (enabled) readBuiltInHttpSignal() else null
-      val s3Attached = enabled && readDistroAttachedSignal(distro)
+      val s3InUse = enabled && readDistroInUseSignal(distro)
 
       for (kind in PortKind.entries) {
         val key = ForwarderKey(distro, kind)
@@ -250,7 +274,7 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
           PortKind.MCP -> s1McpPort
           PortKind.BUILT_IN_HTTP -> s2HttpPort
         }
-        val shouldRun = s3Attached && idePort != null
+        val shouldRun = s3InUse && idePort != null
         val existing = jobs[key]
         when {
           shouldRun && existing == null -> {
@@ -399,14 +423,12 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
   }
 
   /**
-   * @return `true` while [distro] is attached (present in the last observed WSL enumeration).
+   * @return `true` while at least one open project lives on [distro].
+   *
+   * Deliberately *not* "is the distro attached": forwarding exists to serve open projects, and enumerating
+   * attached distros would mean resolving an [EelApi] per installed distro, which boots them.
    */
-  private fun readDistroAttachedSignal(distro: WSLDistribution): Boolean {
-    // TODO: subscribe to WslDistroAttachTracker events tied to the IJent session
-    //  lifecycle (survives `wsl --shutdown`); the WslDistributionManager change listener tracks
-    //  *installed* distros, not per-session attach/detach.
-    return distro in attachedDistros
-  }
+  private fun readDistroInUseSignal(distro: WSLDistribution): Boolean = distroByProjectId.containsValue(distro)
 
   // ---------------------------------------------------------------------------
   // Helpers
@@ -435,17 +457,53 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
 
     @JvmStatic
     fun getInstance(): McpWslForwarderService = service()
+
+    /**
+     * @return a stable string identity for [project], used as the key of [distroByProjectId].
+     *
+     * [ProjectId] is the platform's own instance identity and is exactly what a long-lived map should hold in
+     * place of the [Project] itself. It is unregistered when the project is disposed, so callers must read it
+     * while the project is still alive and keep the resulting string. [Project.getLocationHash] is the
+     * fallback for project implementations that never registered an id; it is unique among simultaneously
+     * open projects, which is all this map needs.
+     */
+    private fun projectKeyOf(project: Project): String =
+      project.projectIdOrNull()?.serializeToString() ?: project.locationHash
   }
 
   /**
-   * Touches [McpWslForwarderService] on the first project open so that its `init { }` block runs and the
-   * three signal subscriptions come up. The service itself is registered as `os="windows"` in the plugin
-   * XML, but we defensively re-check [SystemInfo.isWindows] here too.
+   * Instantiates [McpWslForwarderService] on project open -- which brings up the `init { }` subscriptions --
+   * and reports the newly opened project, so that a forwarder is started for the distro hosting it, if any.
+   *
+   * The service itself is registered as `os="windows"` in the plugin XML, but we defensively re-check
+   * [SystemInfo.isWindows] here too.
    */
-  internal class StartupTouch : ProjectActivity {
+  internal class ProjectOpenTracker : ProjectActivity {
     override suspend fun execute(project: Project) {
       if (!SystemInfo.isWindows) return
-      serviceOrNull<McpWslForwarderService>()
+      serviceOrNull<McpWslForwarderService>()?.onProjectOpened(project)
+    }
+  }
+
+  /**
+   * Delivers the "project closed" edge to [onProjectClosed]. A project-level service is disposed when its
+   * project closes and is the sanctioned parent for project-scoped state in plugin code -- registering a
+   * [Disposable] on the [Project] instance itself is not. It is created on demand from [onProjectOpened],
+   * i.e. only for projects that actually live on a WSL distro.
+   */
+  @Service(Service.Level.PROJECT)
+  internal class CloseHook(project: Project) : Disposable {
+    /**
+     * Captured eagerly, i.e. while the project is still open: [dispose] runs during teardown, by which time
+     * the platform may already have unregistered the project's [ProjectId]. Keeping the two strings also
+     * stops this hook from handing a half-disposed [Project] back to the application-level service.
+     */
+    private val projectKey: String = projectKeyOf(project)
+    private val projectName: String = project.name
+
+    override fun dispose() {
+      // On IDE shutdown the application container may already be gone; there is nothing to reconcile then.
+      serviceIfCreated<McpWslForwarderService>()?.onProjectClosed(projectKey, projectName)
     }
   }
 }
