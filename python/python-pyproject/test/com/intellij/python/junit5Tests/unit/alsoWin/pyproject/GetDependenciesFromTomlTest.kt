@@ -143,17 +143,17 @@ internal class GetDependenciesFromTomlTest {
     val libLinuxDir = tempDir.resolve("lib-linux").createDirectories()
     val libWinDir = tempDir.resolve("lib-win").createDirectories()
 
-    val toml = PyProjectToml.parse("""
-      [project]
-      name = "main"
-      version = "1.0"
+    val toml = PyProjectToml.parse(tomlFileContent = """
+          [project]
+          name = "main"
+          version = "1.0"
 
-      [tool.uv.sources]
-      lib = [
-          { path = "../lib-linux", marker = "sys_platform == 'linux'" },
-          { path = "../lib-win", marker = "sys_platform == 'win32'" },
-      ]
-    """.trimIndent())!!
+          [tool.uv.sources]
+          lib = [
+              { path = "../lib-linux", marker = "sys_platform == 'linux'" },
+              { path = "../lib-win", marker = "sys_platform == 'win32'" },
+          ]
+        """.trimIndent(), "someProject")!!
 
     val mainName = ProjectName("main")
     val libLinuxName = ProjectName("lib-linux")
