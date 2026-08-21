@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
@@ -27,7 +27,6 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiStatement;
@@ -43,6 +42,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -73,10 +73,9 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
     if (field.hasModifierProperty(PsiModifier.STATIC)) return null;
     PsiClass psiClass = field.getContainingClass();
     if (psiClass == null || psiClass instanceof PsiSyntheticClass || psiClass.isRecord() || psiClass.getName() == null) return null;
-    if (psiClass.getConstructors().length <= 1 && getFieldsToFix(psiClass, field, List.of()).size() > 1) {
-      return Presentation.of(QuickFixBundle.message("add.constructor.parameters"));
-    }
-    return Presentation.of(QuickFixBundle.message("add.constructor.parameter.name"));
+    return psiClass.getConstructors().length <= 1 && getFieldsToFix(psiClass, field, List.of()).size() > 1
+           ? Presentation.of(QuickFixBundle.message("add.constructor.parameters"))
+           : Presentation.of(QuickFixBundle.message("add.constructor.parameter.name"));
   }
 
   @Override
@@ -158,7 +157,7 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
     result.removeIf(ctr -> isFieldAssignedInConstructor(field, ctr));
     return result;
   }
-  
+
   private static @NotNull PsiMethod getTargetConstructor(@NotNull PsiMethod constructor) {
     Set<PsiMethod> visited = null;
     while (true) {
@@ -183,15 +182,11 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
   private static @NotNull ModCommand performForConstructorsAndFields(ActionContext context, List<PsiField> fields, List<PsiMethod> constructors) {
     return ModCommand.psiUpdate(context, updater -> {
       List<PsiField> writableFields = ContainerUtil.map(fields, updater::getWritable);
-      PsiClass psiClass = writableFields.get(0).getContainingClass();
+      PsiClass psiClass = writableFields.getFirst().getContainingClass();
       if (psiClass == null) return;
-      List<PsiMethod> writableConstructors;
-      if (constructors.isEmpty()) {
-        writableConstructors = List.of(AddDefaultConstructorFix.addDefaultConstructor(psiClass));
-      }
-      else {
-        writableConstructors = ContainerUtil.map(constructors, updater::getWritable);
-      }
+      List<PsiMethod> writableConstructors = constructors.isEmpty()
+                                             ? List.of(AddDefaultConstructorFix.addDefaultConstructor(psiClass))
+                                             : ContainerUtil.map(constructors, updater::getWritable);
       for (PsiMethod constructor : writableConstructors) {
         updater.trackDeclaration(constructor);
       }
@@ -205,11 +200,10 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
   }
 
   private static void addParameterToConstructor(@NotNull ActionContext context, @NotNull PsiMethod constructor,
-                                                @NotNull ModPsiUpdater updater, @Nullable ChainedConstructorData chainedConstructorData, 
+                                                @NotNull ModPsiUpdater updater, @Nullable ChainedConstructorData chainedConstructorData,
                                                 @NotNull List<PsiVariable> params) {
     final PsiParameterList parameterList = constructor.getParameterList();
 
-    final Map<PsiField, String> usedFields = new LinkedHashMap<>();
     final MultiMap<PsiType, PsiVariable> types = new MultiMap<>();
     for (PsiVariable param : params) {
       types.putValue(param.getType(), param);
@@ -221,6 +215,7 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
     JavaCodeStyleSettings settings = allSettings.getCustomSettings(JavaCodeStyleSettings.class);
     boolean preferLongerNames = settings.PREFER_LONGER_NAMES;
     Ref<PsiElement> prev = Ref.create();
+    final Map<PsiField, String> usedFields = new LinkedHashMap<>();
     for (PsiVariable param : params) {
       final PsiType paramType = param.getType();
       if (param instanceof PsiField field) {
@@ -231,9 +226,7 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
           PsiType type = AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(param.getModifierList(), paramType);
           PsiParameter parameter = factory.createParameter(uniqueParameterName, type, parameterList);
           if (settings.GENERATE_FINAL_PARAMETERS) {
-            PsiModifierList modifierList = parameter.getModifierList();
-            assert modifierList != null;
-            modifierList.setModifierProperty(PsiModifier.FINAL, true);
+            PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, true);
           }
           if (prev.isNull()) {
             prev.set(parameterList.isEmpty() ? parameterList.add(parameter) :
@@ -344,7 +337,7 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
       }
     }
   }
-  
+
   private static class FieldParameterComparator implements Comparator<PsiVariable> {
     private final PsiParameterList myParameterList;
 
@@ -354,25 +347,23 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
 
     @Override
     public int compare(PsiVariable o1, PsiVariable o2) {
-      if (o1 instanceof PsiParameter && ((PsiParameter)o1).isVarArgs()) return 1;
-      if (o2 instanceof PsiParameter && ((PsiParameter)o2).isVarArgs()) return -1;
+      if (o1 instanceof PsiParameter p && p.isVarArgs()) return 1;
+      if (o2 instanceof PsiParameter p && p.isVarArgs()) return -1;
 
       if (o1 instanceof PsiField && o2 instanceof PsiField) {
         return o1.getTextOffset() - o2.getTextOffset();
       }
-      if (o1 instanceof PsiParameter && o2 instanceof PsiParameter) {
-        return myParameterList.getParameterIndex((PsiParameter)o1) - myParameterList.getParameterIndex((PsiParameter)o2);
+      if (o1 instanceof PsiParameter p1 && o2 instanceof PsiParameter p2) {
+        return myParameterList.getParameterIndex(p1) - myParameterList.getParameterIndex(p2);
       }
 
-      if (o1 instanceof PsiField && o2 instanceof PsiParameter) {
-        final PsiField field = FieldFromParameterUtils.getParameterAssignedToField((PsiParameter)o2);
-        if (field == null) return 1;
-        return o1.getTextOffset() - field.getTextOffset();
+      if (o1 instanceof PsiField && o2 instanceof PsiParameter p) {
+        final PsiField field = FieldFromParameterUtils.getParameterAssignedToField(p);
+        return field == null ? 1 : o1.getTextOffset() - field.getTextOffset();
       }
-      if (o1 instanceof PsiParameter && o2 instanceof PsiField) {
-        final PsiField field = FieldFromParameterUtils.getParameterAssignedToField((PsiParameter)o1);
-        if (field == null) return -1;
-        return field.getTextOffset() - o2.getTextOffset();
+      if (o1 instanceof PsiParameter p && o2 instanceof PsiField) {
+        final PsiField field = FieldFromParameterUtils.getParameterAssignedToField(p);
+        return field == null ? -1 : field.getTextOffset() - o2.getTextOffset();
       }
 
       return 0;
