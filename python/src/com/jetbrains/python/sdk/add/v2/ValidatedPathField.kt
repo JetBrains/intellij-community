@@ -14,6 +14,7 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.not
+import com.intellij.openapi.observable.util.or
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
@@ -35,10 +36,11 @@ import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.components.ValidationType
 import com.intellij.ui.dsl.builder.components.validationTooltip
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.asDisposable
+import com.intellij.util.ui.AsyncProcessIcon
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.onSuccess
 import kotlinx.coroutines.CoroutineScope
@@ -154,6 +156,7 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
 
   init {
     setButtonVisible(canBeEdited)
+    isEnabled = canBeEdited
     addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
         textInputFlow.value = text
@@ -296,26 +299,35 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
   }
 }
 
+/**
+ * Shows [missingExecutableText] in place of the tool path field. Returns the tooltip component, so that the
+ * caller can tell "hidden because this whole section is not selected" from "hidden because there is nothing
+ * to show" - see the validation guard in [validatablePathField].
+ */
 private fun <T, P : PathHolder, V : ValidatedPath<T, P>> Panel.missingToolRow(
   fileSystem: FileSystem<*>,
   missingExecutableText: @Nls String,
   installAction: ActionLink?,
   validatedPathField: ValidatedPathField<T, P, V>,
-): Row {
+  visiblePredicate: ObservableProperty<Boolean>,
+): JPanel {
   val selectExecutableLink = if (fileSystem.isBrowsable && fileSystem.toolPathCanBePersisted) ActionLink(message("sdk.create.custom.select.executable.link")) {
     validatedPathField.button.doClick()
   }
   else null
 
-  return row("") {
-    validationTooltip(missingExecutableText,
-                      installAction,
-                      selectExecutableLink,
-                      validationType = ValidationType.WARNING,
-                      inline = true)
+  lateinit var tooltip: JPanel
+  row("") {
+    tooltip = validationTooltip(missingExecutableText,
+                                installAction,
+                                selectExecutableLink,
+                                validationType = ValidationType.WARNING,
+                                inline = true)
       .align(Align.FILL)
       .component
-  }
+  }.visibleIf(visiblePredicate)
+
+  return tooltip
 }
 
 internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePathField(
@@ -338,14 +350,36 @@ internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePath
     canBeEdited = canBeEdited,
   )
 
-  if (missingExecutableText != null) {
+  /** A lookup has produced a verdict, as opposed to "nothing has been looked up yet". */
+  val hasVerdict = pathValidator.backProperty.transform { it != null }
+
+  /** No path resolved: either nothing was found, or nothing has been looked up yet. */
+  val toolMissing = pathValidator.backProperty.transform { it?.pathHolder == null }
+
+  val missingToolTooltip = if (missingExecutableText != null) {
     missingToolRow(
       fileSystem = fileSystem,
       missingExecutableText = missingExecutableText,
       installAction = if (canBeEdited) installAction else null,
-      validatedPathField = validatedPathField
-    ).visibleIf(pathValidator.backProperty.transform { it?.pathHolder == null }.and(pathValidator.isDirtyValue.not()))
+      validatedPathField = validatedPathField,
+      // Only claim that the tool is missing once we have actually looked for it.
+      visiblePredicate = hasVerdict.and(toolMissing).and(pathValidator.isDirtyValue.not()),
+    )
   }
+  else null
+
+  // The path field is hidden while the tool is being looked up (see below), and on a target that lookup is a
+  // remote probe. The existing environment selector also hides its interpreter combo until the tool validates,
+  // so without this row the whole section would render empty for the duration of the probe.
+  val detectingIcon = if (!canBeEdited) {
+    AsyncProcessIcon("$labelText detecting").also { icon ->
+      row(labelText) {
+        cell(icon).customize(UnscaledGaps(0))
+        label(message("sdk.create.custom.tool.detecting"))
+      }.visibleIf(hasVerdict.not() or pathValidator.isDirtyValue)
+    }
+  }
+  else null
 
   val initialValidationRequestor = (validationRequestor
     and WHEN_PROPERTY_CHANGED(pathValidator.isDirtyValue)
@@ -356,12 +390,19 @@ internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePath
   }
   else initialValidationRequestor
 
-  row(labelText) {
+  val fieldRow = row(labelText) {
     cell(validatedPathField)
       .align(AlignX.FILL)
       .validationRequestor(finalValidationRequestor)
       .validationOnInput { component ->
-        if (!component.isVisible) return@validationOnInput null
+        // This section is built for every environment manager and the unselected ones are hidden with
+        // `rowsRange { }.visibleIf(..)`, so an invisible field usually means "another manager is selected" and
+        // must not gate the dialog. But the field is also hidden when it has no path to show, and then the
+        // detecting row or the missing tool warning stands in its place - keep validating in that case, or a
+        // target without the tool installed would silently enable the action button.
+        if (!component.isVisible && detectingIcon?.isVisible != true && missingToolTooltip?.isVisible != true) {
+          return@validationOnInput null
+        }
 
         val isVenvOverridden = when (venvExistenceValidationState?.get()) {
           is VenvExistenceValidationState.Warning -> true
@@ -385,6 +426,14 @@ internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePath
           else -> null
         }
       }
+  }
+
+  // A path field the user cannot edit and that has no path in it carries no information: there is no browse
+  // button to pick another executable, and the missing tool row already says that the tool has to be installed
+  // on the target. Once a path is resolved keep the field even if the version probe failed, so that the error
+  // stays attached to something visible.
+  if (!canBeEdited) {
+    fieldRow.visibleIf(toolMissing.not())
   }
 
   return validatedPathField
