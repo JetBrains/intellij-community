@@ -27,11 +27,11 @@ jvm_library(
 
 ij_plugin(
     name = "smoke-plugin",
+    descriptor_module = ":descriptor-module",
     content_modules = [
         ":embedded-content-module",
         ":optional-content-module",
     ],
-    descriptor_module = ":descriptor-module",
 )
 
 build_test(
