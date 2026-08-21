@@ -323,8 +323,7 @@ class IjentBinaryCacheTest {
       }
     }
     else null
-    val strategy = object : IjentDeployingOverShellProcessStrategy(ParentOfIjentScopes(this), Dispatchers.IO) {
-      override val ijentLabel: String = "cache test"
+    val strategy = object : IjentDeployingOverShellProcessStrategy(ParentOfIjentScopes(this), Dispatchers.IO, "cache test") {
       var bytesSent = 0L
       var processesCreated = 0
       var commandExchanges = 0

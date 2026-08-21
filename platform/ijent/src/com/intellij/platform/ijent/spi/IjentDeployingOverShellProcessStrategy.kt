@@ -58,8 +58,8 @@ private val PROCESS_CLEANUP_TIMEOUT: Duration = 3_000.milliseconds
 abstract class IjentDeployingOverShellProcessStrategy(
   scope: ParentOfIjentScopes,
   currentDispatcher: CoroutineDispatcher,
+  private val ijentLabel: String
 ) : IjentControlledEnvironmentDeployingStrategy() {
-  protected abstract val ijentLabel: String
 
   /**
    * If there's some bind mount, returns the path for the remote machine/container that corresponds to [path].
@@ -69,8 +69,11 @@ abstract class IjentDeployingOverShellProcessStrategy(
 
   protected abstract suspend fun createShellProcessFacade(ijentProcessScope: IjentScope): IjentSessionProcessMediator.ProcessFacade
 
-  abstract class JavaProcessBasedStrategy(protected val scope: ParentOfIjentScopes, currentDispatcher: CoroutineDispatcher) :
-    IjentDeployingOverShellProcessStrategy(scope, currentDispatcher) {
+  abstract class JavaProcessBasedStrategy(
+    protected val scope: ParentOfIjentScopes,
+    currentDispatcher: CoroutineDispatcher,
+    ijentLabel: String,
+  ) : IjentDeployingOverShellProcessStrategy(scope, currentDispatcher, ijentLabel) {
     protected abstract suspend fun createShellProcess(): Process
 
     override suspend fun createShellProcessFacade(ijentProcessScope: IjentScope): IjentSessionProcessMediator.ProcessFacade {
@@ -79,8 +82,11 @@ abstract class IjentDeployingOverShellProcessStrategy(
   }
 
   /** Starts a deployment shell through a command when the target shell is unknown. */
-  abstract class WithShellBootstrap(scope: ParentOfIjentScopes, currentDispatcher: CoroutineDispatcher) :
-    IjentDeployingOverShellProcessStrategy(scope, currentDispatcher) {
+  abstract class WithShellBootstrap(
+    scope: ParentOfIjentScopes,
+    currentDispatcher: CoroutineDispatcher,
+    ijentLabel: String,
+  ) : IjentDeployingOverShellProcessStrategy(scope, currentDispatcher, ijentLabel) {
     private val shellBootstrap by lazy { createShellBootstrap() }
 
     /** Runs [script] as the initial command and keeps the process streams open. */

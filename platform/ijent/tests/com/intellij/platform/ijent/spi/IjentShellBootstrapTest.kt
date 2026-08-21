@@ -68,9 +68,7 @@ class IjentShellBootstrapTest {
   @Test
   @EnabledOnOs(OS.LINUX, OS.MAC)
   fun `shared strategy detects a local shell without SSH or IJent`(): Unit = timeoutRunBlocking {
-    val strategy = object : IjentDeployingOverShellProcessStrategy.WithShellBootstrap(ParentOfIjentScopes(this), Dispatchers.IO) {
-      override val ijentLabel: String = "local bootstrap test"
-
+    val strategy = object : IjentDeployingOverShellProcessStrategy.WithShellBootstrap(ParentOfIjentScopes(this), Dispatchers.IO, "local bootstrap test") {
       override val ijentExecFileProvider: IjentExecFileProvider = object : IjentExecFileProvider {
         override suspend fun getIjentBinary(targetPlatform: EelPlatform): Path = error("The shell probe must not request an IJent binary")
       }

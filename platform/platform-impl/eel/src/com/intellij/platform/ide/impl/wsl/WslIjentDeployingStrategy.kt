@@ -23,11 +23,11 @@ import java.nio.file.Path
 class WslIjentDeployingStrategy(
   scope: ParentOfIjentScopes,
   currentDispatcher: CoroutineDispatcher,
-  override val ijentLabel: String,
+  ijentLabel: String,
   private val distribution: WSLDistribution,
   private val project: Project?,
   private val wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
-) : IjentDeployingOverShellProcessStrategy.JavaProcessBasedStrategy(scope, currentDispatcher) {
+) : IjentDeployingOverShellProcessStrategy.JavaProcessBasedStrategy(scope, currentDispatcher, ijentLabel) {
   override suspend fun mapPath(path: Path): String? =
     distribution.getWslPath(path)
 

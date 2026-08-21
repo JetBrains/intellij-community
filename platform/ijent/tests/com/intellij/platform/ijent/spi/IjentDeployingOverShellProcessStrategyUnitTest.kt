@@ -27,12 +27,12 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.be
 import io.kotest.matchers.collections.beIn
-import io.kotest.matchers.shouldBe
 import io.kotest.matchers.should
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.include
 import io.kotest.matchers.types.shouldBeInstanceOf
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -584,8 +584,7 @@ private class TestShellStrategy(
   private val destroyFailure: Exception? = null,
   private val shellWriteFailure: IOException? = null,
   private val tlsCertificates: MutualTlsCertificates? = null,
-) : IjentDeployingOverShellProcessStrategy(ParentOfIjentScopes(parentScope), Dispatchers.Default) {
-  override val ijentLabel: String = "test shell"
+) : IjentDeployingOverShellProcessStrategy(ParentOfIjentScopes(parentScope), Dispatchers.Default, "test shell") {
   override val executionStrategy: ExecutionStrategy
     get() = tlsCertificates?.let { ExecutionStrategy.Tcp(TcpDeployInfo.RandomPort("127.0.0.1"), it) } ?: ExecutionStrategy.Default
   val shellCreated = CompletableDeferred<Unit>()
@@ -641,8 +640,7 @@ private class TestShellCommandStrategy(
   parentScope: CoroutineScope,
   private val shellProbe: String,
   private val destroyFailure: Exception? = null,
-) : IjentDeployingOverShellProcessStrategy.WithShellBootstrap(ParentOfIjentScopes(parentScope), Dispatchers.Default) {
-  override val ijentLabel: String = "test shell bootstrap"
+) : IjentDeployingOverShellProcessStrategy.WithShellBootstrap(ParentOfIjentScopes(parentScope), Dispatchers.Default, "test shell bootstrap") {
   lateinit var shellProcess: TestShellProcessFacade
     private set
 

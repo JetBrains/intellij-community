@@ -126,9 +126,11 @@ internal class IjentDockerVerificationAction : AbstractIjentVerificationAction()
     }
 
     val title = "Docker $dockerImage"
-    return Triple(title, object : IjentDeployingOverShellProcessStrategy.JavaProcessBasedStrategy(ijentProcessScope, ijentProcessScope.s.coroutineDispatcher()) {
-      override val ijentLabel: String = title
-
+    return Triple(title, object : IjentDeployingOverShellProcessStrategy.JavaProcessBasedStrategy(
+      ijentProcessScope,
+      ijentProcessScope.s.coroutineDispatcher(),
+      title,
+    ) {
       override suspend fun mapPath(path: Path): String? = null
 
       override val ijentExecFileProvider: IjentExecFileProvider = service()
