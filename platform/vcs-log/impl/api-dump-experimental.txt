@@ -84,6 +84,7 @@ Fa:com.intellij.vcs.log.impl.VcsProjectLog
 - p:getStyle():com.intellij.openapi.ui.DialogWrapper$DialogStyle
 - pf:init():V
 - pa:loadChanges(java.util.List):java.util.List
+- pf:loadCommitsInBackground(com.intellij.openapi.util.ThrowableComputable):V
 - f:resetFilter():V
 - f:setFilter(kotlin.jvm.functions.Function1):V
 *f:com.intellij.vcs.log.ui.details.MultipleCommitInfoDialog$Companion

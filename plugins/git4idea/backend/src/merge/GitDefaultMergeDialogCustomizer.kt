@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -357,29 +356,18 @@ internal fun getTitleWithCommitsRangeDetailsCustomizer(
   range: Pair<@NlsSafe String, @NlsSafe String>
 ) = DiffEditorTitleCustomizer {
   getTitleWithShowDetailsAction(title) {
-    val details = mutableListOf<VcsCommitMetadata>()
-    val filteredCommits = HashSet<VcsCommitMetadata>()
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      {
-        readFullDetails(
-          repository.project,
-          repository.root,
-          { commit ->
-            val commitMetadata = VcsCommitMetadataImpl(
-              commit.id, commit.parents, commit.commitTime, commit.root, commit.subject,
-              commit.author, commit.fullMessage, commit.committer, commit.authorTime)
-            if (commit.affectedPaths.contains(file)) {
-              filteredCommits.add(commitMetadata)
-            }
-            details.add(commitMetadata)
-          },
-          "${range.first}..${range.second}")
-      },
-      GitBundle.message("merge.dialog.customizer.collecting.details.progress"),
-      true,
-      repository.project)
-    val dlg = MergeConflictMultipleCommitInfoDialog(repository.project, repository.root, details, filteredCommits)
+    val dlg = MergeConflictMultipleCommitInfoDialog(repository.project, repository.root, file, range)
     dlg.title = StringUtil.stripHtml(title, false)
+
+    // Load the commits under the modal dialog's own modality (captured from its root pane), scheduled before
+    // show() so it runs inside the dialog's modal event loop. Loading before the dialog is shown would publish
+    // the result to the EDT under the outer modality, leaving it stuck behind the modal dialog until it closes
+    // (the same trap that hangs the "Loading..." spinner in getTitleWithCommitDetailsCustomizer, IJPL-252584).
+    ApplicationManager.getApplication().invokeLater(
+      { dlg.loadCommits() },
+      ModalityState.stateForComponent(dlg.rootPane),
+    )
+
     dlg.show()
   }
 }
@@ -395,11 +383,37 @@ private fun Boolean.toInt() = if (this) 1 else 0
 private class MergeConflictMultipleCommitInfoDialog(
   private val project: Project,
   private val root: VirtualFile,
-  commits: List<VcsCommitMetadata>,
-  private val filteredCommits: Set<VcsCommitMetadata>
-) : MultipleCommitInfoDialog(project, commits) {
+  private val file: FilePath,
+  private val range: Pair<@NlsSafe String, @NlsSafe String>,
+) : MultipleCommitInfoDialog(project, emptyList()) {
+  private var filteredCommits: Set<VcsCommitMetadata> = emptySet()
+
   init {
     filterCommitsByConflictingFile()
+  }
+
+  fun loadCommits() {
+    loadCommitsInBackground {
+      val details = mutableListOf<VcsCommitMetadata>()
+      val filtered = HashSet<VcsCommitMetadata>()
+      readFullDetails(
+        project,
+        root,
+        { commit ->
+          val commitMetadata = VcsCommitMetadataImpl(
+            commit.id, commit.parents, commit.commitTime, commit.root, commit.subject,
+            commit.author, commit.fullMessage, commit.committer, commit.authorTime)
+          if (commit.affectedPaths.contains(file)) {
+            filtered.add(commitMetadata)
+          }
+          details.add(commitMetadata)
+        },
+        "${range.first}..${range.second}")
+      // Set the filtered subset before returning; the list's active filter (see filterCommitsByConflictingFile)
+      // reads this field when the base re-applies it after populating the list.
+      filteredCommits = filtered
+      details
+    }
   }
 
   @Throws(VcsException::class)
