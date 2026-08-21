@@ -2,10 +2,9 @@ package com.intellij.devkit.compose.demo.releasessample
 
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.datetime.LocalDate
-import org.jetbrains.annotations.Nls
 
 internal sealed class ContentItem {
-  @get:Nls
+  @get:NlsSafe
   abstract val displayText: String
   abstract val imagePath: String?
   abstract val versionName: String
@@ -13,7 +12,7 @@ internal sealed class ContentItem {
   abstract val key: Any
 
   data class AndroidStudio(
-    @Nls override val displayText: String,
+    @NlsSafe override val displayText: String,
     override val imagePath: String?,
     override val versionName: String,
     val build: String,

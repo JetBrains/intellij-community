@@ -294,8 +294,8 @@ private fun TextField(
                 .focusRequester(textFieldFocusRequester)
                 .onPreviewKeyEvent {
                     if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                    when {
-                        it.key == Key.DirectionDown -> {
+                    when (it.key) {
+                        Key.DirectionDown -> {
                             if (popupVisible) {
                                 onArrowDownPress()
                             } else {
@@ -303,18 +303,18 @@ private fun TextField(
                             }
                             true
                         }
-                        it.key == Key.DirectionUp -> {
+                        Key.DirectionUp -> {
                             if (popupVisible) {
                                 onArrowUpPress()
                             }
                             true
                         }
-                        it.key == Key.Enter -> {
+                        Key.Enter -> {
                             popupManager.setPopupVisible(false)
                             onEnterPress()
                             true
                         }
-                        it.key == Key.Escape && popupVisible -> {
+                        Key.Escape if popupVisible -> {
                             popupManager.setPopupVisible(false)
                             true
                         }

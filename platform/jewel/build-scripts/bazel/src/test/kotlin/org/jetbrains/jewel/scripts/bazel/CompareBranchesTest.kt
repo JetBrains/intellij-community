@@ -287,9 +287,7 @@ class CompareBranchesTest {
     @Test
     fun `run throws usage error when --no-build-changes and --build-only are both set`() = runTest {
         val result =
-            testClass.test(
-                listOf("branch1", "branch2", "--no-build-changes", "--build-only", "--since", "2026-05-10")
-            )
+            testClass.test(listOf("branch1", "branch2", "--no-build-changes", "--build-only", "--since", "2026-05-10"))
 
         assertContains(result.output, "Error: --no-build-changes and --build-only are mutually exclusive.")
     }

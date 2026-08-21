@@ -14,7 +14,8 @@ class ValidateMavenArtifactsTest {
     private val fakeRunner = FakeCommandRunner { CmdResult.Success("") }
     private val command = ValidateMavenArtifactsCommand(fakeRunner)
     private val tmpDir = createSafeTempDir("validate-maven-artifacts-test")
-    private val basicPom = """
+    private val basicPom =
+        """
       <?xml version="1.0" encoding="UTF-8"?>
       <project>
           <groupId>org.jetbrains.jewel</groupId>
@@ -27,11 +28,12 @@ class ValidateMavenArtifactsTest {
               </dependency>
           </dependencies>
       </project>
-    """.trimIndent()
-    private fun createPomFile(content: String = basicPom, name: String = "test.pom") = tmpDir.resolve(name).also { 
-        it.writeText(content)
-    }
-    
+    """
+            .trimIndent()
+
+    private fun createPomFile(content: String = basicPom, name: String = "test.pom") =
+        tmpDir.resolve(name).also { it.writeText(content) }
+
     @After
     fun tearDown() {
         tmpDir.deleteRecursively()
@@ -46,49 +48,53 @@ class ValidateMavenArtifactsTest {
 
     @Test
     fun `getArtifactNameFromPom with missing groupId throws`() {
-        val pomFileWithoutGroupId = createPomFile(
-            content = """
+        val pomFileWithoutGroupId =
+            createPomFile(
+                content =
+                    """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <project>
                     <artifactId>wheres-my-group-id</artifactId>
                 </project>
-            """.trimIndent()
-        )
+            """
+                        .trimIndent()
+            )
 
-        assertFailsWith<PrintMessage> { 
-            command.getArtifactNameFromPom(pomFileWithoutGroupId)
-        }
+        assertFailsWith<PrintMessage> { command.getArtifactNameFromPom(pomFileWithoutGroupId) }
     }
 
     @Test
     fun `getArtifactNameFromPom with missing artifactId throws`() {
-        val pomFileWithoutArtifactId = createPomFile(
-            content = """
+        val pomFileWithoutArtifactId =
+            createPomFile(
+                content =
+                    """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <project>
                     <groupId>wheres-my-artifact-id</groupId>
                 </project>
-            """.trimIndent()
-        )
+            """
+                        .trimIndent()
+            )
 
-        assertFailsWith<PrintMessage> {
-            command.getArtifactNameFromPom(pomFileWithoutArtifactId)
-        }
+        assertFailsWith<PrintMessage> { command.getArtifactNameFromPom(pomFileWithoutArtifactId) }
     }
-    
+
     @Test
     fun `getDependenciesFromPom with one dependency assert expected result`() {
         val result = command.getDependenciesFromPom(createPomFile())
-        
+
         val expected = setOf("org.jetbrains.kotlin:kotlin-stdlib")
-        
+
         assertEquals(expected, result)
     }
 
     @Test
     fun `getDependenciesFromPom skips dependency with missing groupId`() {
-        val unresolvedDependencyPom = createPomFile(
-            content = """
+        val unresolvedDependencyPom =
+            createPomFile(
+                content =
+                    """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <project>
                     <groupId>org.jetbrains.jewel</groupId>
@@ -103,8 +109,9 @@ class ValidateMavenArtifactsTest {
                         </dependency>
                     </dependencies>
                 </project>
-            """.trimIndent()
-        )
+            """
+                        .trimIndent()
+            )
         val result = command.getDependenciesFromPom(unresolvedDependencyPom)
 
         val expected = setOf("org.jetbrains.kotlin:kotlin-stdlib")
@@ -114,8 +121,10 @@ class ValidateMavenArtifactsTest {
 
     @Test
     fun `getDependenciesFromPom skips dependency with missing artifactId`() {
-        val unresolvedDependencyPom = createPomFile(
-            content = """
+        val unresolvedDependencyPom =
+            createPomFile(
+                content =
+                    """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <project>
                     <groupId>org.jetbrains.jewel</groupId>
@@ -130,8 +139,9 @@ class ValidateMavenArtifactsTest {
                         </dependency>
                     </dependencies>
                 </project>
-            """.trimIndent()
-        )
+            """
+                        .trimIndent()
+            )
         val result = command.getDependenciesFromPom(unresolvedDependencyPom)
 
         val expected = setOf("org.jetbrains.kotlin:kotlin-stdlib")
@@ -141,15 +151,18 @@ class ValidateMavenArtifactsTest {
 
     @Test
     fun `getDependenciesFromPom with no dependencies returns empty set`() {
-        val pomWithNoDeps = createPomFile(
-            content = """
+        val pomWithNoDeps =
+            createPomFile(
+                content =
+                    """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <project>
                     <groupId>org.jetbrains.jewel</groupId>
                     <artifactId>jewel-ui</artifactId>
                 </project>
-            """.trimIndent()
-        )
+            """
+                        .trimIndent()
+            )
 
         val result = command.getDependenciesFromPom(pomWithNoDeps)
 
@@ -165,32 +178,34 @@ class ValidateMavenArtifactsTest {
 
     @Test
     fun `getVersionFromPom with missing version throws`() {
-        val pomWithoutVersion = createPomFile(
-            content = """
+        val pomWithoutVersion =
+            createPomFile(
+                content =
+                    """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <project>
                     <groupId>org.jetbrains.jewel</groupId>
                     <artifactId>jewel-ui</artifactId>
                 </project>
-            """.trimIndent()
-        )
+            """
+                        .trimIndent()
+            )
 
-        assertFailsWith<PrintMessage> {
-            command.getVersionFromPom(pomWithoutVersion)
-        }
+        assertFailsWith<PrintMessage> { command.getVersionFromPom(pomWithoutVersion) }
     }
 
     @Test
     fun `crossValidateDependencies with identical deps returns false`() {
         val deps = setOf("org.jetbrains.kotlin:kotlin-stdlib", "org.jetbrains.compose:compose-ui")
 
-        val result = command.crossValidateDependencies(
-            "org.jetbrains.jewel:jewel-ui",
-            File("branch1.pom"),
-            File("branch2.pom"),
-            deps,
-            deps,
-        )
+        val result =
+            command.crossValidateDependencies(
+                "org.jetbrains.jewel:jewel-ui",
+                File("branch1.pom"),
+                File("branch2.pom"),
+                deps,
+                deps,
+            )
 
         assertFalse(result)
     }
@@ -200,26 +215,28 @@ class ValidateMavenArtifactsTest {
         val deps1 = setOf("org.jetbrains.kotlin:kotlin-stdlib", "org.jetbrains.compose:compose-ui")
         val deps2 = setOf("org.jetbrains.kotlin:kotlin-stdlib")
 
-        val result = command.crossValidateDependencies(
-            "org.jetbrains.jewel:jewel-ui",
-            File("branch1.pom"),
-            File("branch2.pom"),
-            deps1,
-            deps2,
-        )
+        val result =
+            command.crossValidateDependencies(
+                "org.jetbrains.jewel:jewel-ui",
+                File("branch1.pom"),
+                File("branch2.pom"),
+                deps1,
+                deps2,
+            )
 
         assertTrue(result)
     }
 
     @Test
     fun `crossValidateDependencies with both empty deps returns false`() {
-        val result = command.crossValidateDependencies(
-            "org.jetbrains.jewel:jewel-ui",
-            File("branch1.pom"),
-            File("branch2.pom"),
-            emptySet(),
-            emptySet(),
-        )
+        val result =
+            command.crossValidateDependencies(
+                "org.jetbrains.jewel:jewel-ui",
+                File("branch1.pom"),
+                File("branch2.pom"),
+                emptySet(),
+                emptySet(),
+            )
 
         assertFalse(result)
     }

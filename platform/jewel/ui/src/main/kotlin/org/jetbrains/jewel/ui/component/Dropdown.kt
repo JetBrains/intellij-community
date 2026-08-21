@@ -124,7 +124,6 @@ public fun Dropdown(
                         if (!skipNextClick) {
                             expanded = !expanded
                         }
-                        @Suppress("AssignedValueIsNeverRead")
                         skipNextClick = false
                     },
                     enabled = enabled,

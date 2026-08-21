@@ -34,7 +34,7 @@ public class TreeState(delegate: SelectableLazyListState) : SelectableScope by d
     @InternalJewelApi @ApiStatus.Internal public val lazyListState: SelectableLazyListState = delegate
 
     /** The set of node IDs that are currently expanded (open) in the tree. */
-    public var openNodes: Set<Any> by mutableStateOf<Set<Any>>(emptySet())
+    public var openNodes: Set<Any> by mutableStateOf(emptySet())
 
     /**
      * Toggles the open/closed state of the node with [nodeId]: removes it from [openNodes] if present, or adds it

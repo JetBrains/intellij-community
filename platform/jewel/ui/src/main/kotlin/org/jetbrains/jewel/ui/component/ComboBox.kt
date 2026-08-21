@@ -326,13 +326,12 @@ internal fun ComboBoxImpl(
                         .onPreviewKeyEvent {
                             if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
 
-                            when {
-                                it.key == Key.Spacebar -> {
+                            when (it.key) {
+                                Key.Spacebar -> {
                                     popupManager.setPopupVisible(!popupVisible)
                                     true
                                 }
-
-                                it.key == Key.DirectionDown -> {
+                                Key.DirectionDown -> {
                                     if (popupVisible) {
                                         onArrowDownPress()
                                     } else {
@@ -340,17 +339,14 @@ internal fun ComboBoxImpl(
                                     }
                                     true
                                 }
-
-                                it.key == Key.DirectionUp && popupVisible -> {
+                                Key.DirectionUp if popupVisible -> {
                                     onArrowUpPress()
                                     true
                                 }
-
-                                it.key == Key.Escape && popupVisible -> {
+                                Key.Escape if popupVisible -> {
                                     popupManager.setPopupVisible(false)
                                     true
                                 }
-
                                 else -> false
                             }
                         }

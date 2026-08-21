@@ -77,7 +77,7 @@ internal class PatternSpeedSearchMatcher(
         }
 
         var patternIndex = 0
-        for (i in 0 until length) {
+        for (i in indices) {
             if (patternIndex >= meaningfulCharacters.size) break
             val c = this[i]
             if (c == meaningfulCharacters[patternIndex] || c == meaningfulCharacters[patternIndex + 1]) {
@@ -519,11 +519,11 @@ private fun Int.isKanaBreakFrom(prev: Int): Boolean {
     if (!maybeKana() && !prev.maybeKana()) return false
     val curScript = Character.UnicodeScript.of(this)
     val prevScript = Character.UnicodeScript.of(prev)
-    if (prevScript == curScript) return false
-    return (curScript == Character.UnicodeScript.KATAKANA ||
-        curScript == Character.UnicodeScript.HIRAGANA ||
-        prevScript == Character.UnicodeScript.KATAKANA ||
-        prevScript == Character.UnicodeScript.HIRAGANA) &&
+    return prevScript != curScript &&
+        (curScript == Character.UnicodeScript.KATAKANA ||
+            curScript == Character.UnicodeScript.HIRAGANA ||
+            prevScript == Character.UnicodeScript.KATAKANA ||
+            prevScript == Character.UnicodeScript.HIRAGANA) &&
         prevScript != Character.UnicodeScript.COMMON &&
         curScript != Character.UnicodeScript.COMMON
 }

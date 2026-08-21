@@ -45,6 +45,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.InlineBanner
@@ -90,7 +91,7 @@ import org.jetbrains.jewel.ui.theme.textAreaStyle
 import org.jetbrains.jewel.ui.typography
 import java.awt.Dimension
 import java.awt.MouseInfo
-import java.net.URL
+import java.net.URI
 import javax.swing.BoxLayout
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
@@ -172,7 +173,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
         messageText = DevkitComposeBundle.message("jewel.swing.inline.banners"),
         status = EditorNotificationPanel.Status.Info,
       )
-      inlineBanner.setGearAction("", {})
+      inlineBanner.setGearAction("") {}
       inlineBanner.addAction(DevkitComposeBundle.message("jewel.swing.inline.banner.action.a")) {}
       inlineBanner.addAction(DevkitComposeBundle.message("jewel.swing.inline.banner.action.b")) {}
       inlineBanner.addAction(DevkitComposeBundle.message("jewel.swing.inline.banner.action.c")) {}
@@ -186,6 +187,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
       compose {
         Box {
           InlineInformationBanner(
+            modifier = Modifier.width(300.dp), // TODO: this is a hack. A proper fix will come in JEWEL-1415
             text = DevkitComposeBundle.message("jewel.compose.inline.banners"),
             iconActions = {
               iconAction(
@@ -249,7 +251,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
 
   init {
     addToCenter(scrollingContainer)
-    scrollingContainer.border = null
+    scrollingContainer.border = JBUI.Borders.empty()
     scrollingContainer.isOpaque = false
     isOpaque = false
   }
@@ -724,7 +726,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
               .withPosition(balloonPosition[currentBalloonPosition % balloonPosition.size])
               .withShowCount(999)
               .withLink(DevkitComposeBundle.message("jewel.swing.gotit.example.link"), {})
-              .withBrowserLink(DevkitComposeBundle.message("jewel.swing.gotit.example.browser.link"), URL("https://www.jetbrains.com/help/idea/getting-started.html"))
+              .withBrowserLink(DevkitComposeBundle.message("jewel.swing.gotit.example.browser.link"), URI.create("https://www.jetbrains.com/help/idea/getting-started.html").toURL())
               .show(this, gotItPosition[currentGotItPosition % gotItPosition.size])
           }
         }
@@ -857,23 +859,23 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
 
   private fun createIntelliJMenuActionGroup(): DefaultActionGroup {
     return DefaultActionGroup().apply {
-      add(createSimpleAction("Menu Item 1"))
-      add(createSimpleAction("Menu Item 2"))
-      add(createSimpleAction("Menu Item 3"))
+      add(createSimpleAction(DevkitComposeBundle.message("jewel.swing.comparison.menu.item.one")))
+      add(createSimpleAction(DevkitComposeBundle.message("jewel.swing.comparison.menu.item.two")))
+      add(createSimpleAction(DevkitComposeBundle.message("jewel.swing.comparison.menu.item.three")))
       addSeparator()
 
       val submenu = DefaultActionGroup(DevkitComposeBundle.message("jewel.section.menu.swing.submenu"), true)
-      submenu.add(createSimpleAction("Submenu Item 1"))
-      submenu.add(createSimpleAction("Submenu Item 2"))
-      submenu.add(createSimpleAction("Submenu Item 3"))
+      submenu.add(createSimpleAction(DevkitComposeBundle.message("jewel.swing.comparison.submenu.item.one")))
+      submenu.add(createSimpleAction(DevkitComposeBundle.message("jewel.swing.comparison.submenu.item.two")))
+      submenu.add(createSimpleAction(DevkitComposeBundle.message("jewel.swing.comparison.submenu.item.three")))
       add(submenu)
 
       addSeparator()
-      add(createSimpleAction("Menu Item 4"))
+      add(createSimpleAction(DevkitComposeBundle.message("jewel.swing.comparison.menu.item.four")))
     }
   }
 
-  private fun createSimpleAction(text: String): AnAction {
+  private fun createSimpleAction(@NlsActions.ActionText text: String): AnAction {
     return object : AnAction(text) {
       override fun actionPerformed(e: AnActionEvent) {
         // No-op for demo purposes

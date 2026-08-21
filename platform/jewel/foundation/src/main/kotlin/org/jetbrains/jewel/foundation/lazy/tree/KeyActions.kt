@@ -7,6 +7,8 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.isCtrlPressed
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -266,7 +268,7 @@ public open class DefaultTreeViewPointerEventAction(private val treeState: TreeS
             // is a single click
             onElementClick(item)
             scope.launch {
-                delay(doubleClickTimeDelayMillis)
+                delay(doubleClickTimeDelayMillis.toDuration(DurationUnit.MILLISECONDS))
                 if (elementClickedTmpHolder == item.id) elementClickedTmpHolder = null
             }
         }

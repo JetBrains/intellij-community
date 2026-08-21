@@ -2,7 +2,6 @@ package org.jetbrains.jewel.foundation.actionSystem
 
 import androidx.compose.ui.node.ModifierNodeElement
 
-@Suppress("DEPRECATION")
 internal class DataProviderElement(val dataProvider: DataProviderContext.() -> Unit) :
     ModifierNodeElement<DataProviderNode>() {
     override fun create(): DataProviderNode = DataProviderNode(dataProvider)

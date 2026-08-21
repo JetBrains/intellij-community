@@ -306,9 +306,7 @@ private fun PopupMenuImpl(
         },
         cornerSize = style.metrics.cornerSize,
     ) {
-        @Suppress("AssignedValueIsNeverRead")
         focusManager = LocalFocusManager.current
-        @Suppress("AssignedValueIsNeverRead")
         inputModeManager = LocalInputModeManager.current
 
         OverrideDarkMode(style.isDark) {
@@ -719,9 +717,9 @@ public class MenuSelectableItem(
     override fun hashCode(): Int {
         var result = isSelected.hashCode()
         result = 31 * result + isEnabled.hashCode()
-        result = 31 * result + (iconKey?.hashCode() ?: 0)
-        result = 31 * result + (itemOptionAction?.hashCode() ?: 0)
-        result = 31 * result + (keybinding?.hashCode() ?: 0)
+        result = 31 * result + iconKey.hashCode()
+        result = 31 * result + itemOptionAction.hashCode()
+        result = 31 * result + keybinding.hashCode()
         result = 31 * result + onClick.hashCode()
         result = 31 * result + content.hashCode()
         return result
@@ -1100,9 +1098,7 @@ internal fun Submenu(
             handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuController)
         },
     ) {
-        @Suppress("AssignedValueIsNeverRead")
         focusManager = LocalFocusManager.current
-        @Suppress("AssignedValueIsNeverRead")
         inputModeManager = LocalInputModeManager.current
 
         CompositionLocalProvider(LocalMenuController provides menuController) {

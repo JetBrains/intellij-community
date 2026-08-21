@@ -92,7 +92,7 @@ private const val BANNER_CONTENT_SPACING = 8
 public fun InlineInformationBanner(
     @Nls text: String,
     modifier: Modifier = Modifier,
-    title: String? = null,
+    @Nls title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonInformation, null) },
     linkActions: (BannerLinkActionScope.() -> Unit)? = null,
     iconActions: (BannerIconActionScope.() -> Unit)? = null,
@@ -551,7 +551,6 @@ public fun InlineErrorBanner(
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun InlineBannerImpl(
     style: InlineBannerStyle,
@@ -585,7 +584,6 @@ private fun InlineBannerImpl(
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun InlineBannerImpl(
     style: InlineBannerStyle,

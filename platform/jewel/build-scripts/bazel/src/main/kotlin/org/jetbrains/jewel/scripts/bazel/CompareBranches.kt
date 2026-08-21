@@ -1,4 +1,5 @@
 @file:Suppress("RAW_RUN_BLOCKING", "SSBasedInspection")
+
 package org.jetbrains.jewel.scripts.bazel
 
 import com.github.ajalt.clikt.command.SuspendingCliktCommand

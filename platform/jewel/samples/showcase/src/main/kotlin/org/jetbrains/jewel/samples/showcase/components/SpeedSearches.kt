@@ -255,7 +255,8 @@ private fun SpeedSearchListWithHighlighting(modifier: Modifier = Modifier) {
  * - **Filtering behavior**: Uses [filter] extension to hide non-matching items
  * - **Explicit state management**: Uses [rememberSpeedSearchState] to manually control search state
  * - **Derived state**: [derivedStateOf] efficiently recomputes filtered list only when search changes
- * - **Matcher pattern**: SpeedSearchState provides a [currentMatcher] that implements the matching logic
+ * - **Matcher pattern**: [org.jetbrains.jewel.ui.component.SpeedSearchState] provides a
+ *   [org.jetbrains.jewel.ui.component.SpeedSearchState.currentMatcher] that implements the matching logic
  * - **Combined highlighting**: Filtered items are still highlighted to show which parts matched
  *
  * Use this approach when:

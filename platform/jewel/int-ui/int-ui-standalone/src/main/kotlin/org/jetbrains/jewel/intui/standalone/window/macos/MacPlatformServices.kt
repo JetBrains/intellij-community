@@ -22,7 +22,7 @@ import org.jetbrains.skiko.hostOs
  * Provides macOS-specific platform services for window decoration and system preference observation.
  *
  * Implementations communicate with macOS APIs (via JNA/Objective-C) to apply native window chrome updates and read
- * scrollbar settings from native sources such as NSUserDefaults (track-click behavior) and NSScroller (scroller style)
+ * scrollbar settings from native sources such as NSUserDefaults (track-click behavior) and NSScroller (scroller style).
  */
 @ApiStatus.Internal
 @InternalJewelApi
@@ -160,9 +160,9 @@ public object MacPlatformServicesDefaultImpl : MacPlatformServices {
                     /**
                      * Callback method invoked by macOS NSNotificationCenter when a system preference changes.
                      *
-                     * This method is called via Objective-C message dispatch when notifications are posted. It
-                     * refreshes both the track click behavior and scrollbar visibility from system preferences,
-                     * updating the corresponding state flows to notify observers of the changes.
+                     * This method is called via Objective-C message dispatch when notifications are posted. It invokes
+                     * the `action` registered by the caller; what to do in response to the change is the caller's
+                     * responsibility.
                      *
                      * @param self The Objective-C receiver object
                      * @param selector The selector that was invoked

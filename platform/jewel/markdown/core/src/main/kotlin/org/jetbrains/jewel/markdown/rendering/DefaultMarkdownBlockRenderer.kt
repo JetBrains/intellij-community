@@ -1007,13 +1007,13 @@ public open class DefaultMarkdownBlockRenderer(
 
         return buildAnnotatedString {
             var currentIndex = 0
-            for (range in inlineRanges) {
-                if (currentIndex < range.start) {
-                    append(text, currentIndex, range.start)
+            for ((_, start, end) in inlineRanges) {
+                if (currentIndex < start) {
+                    append(text, currentIndex, start)
                 }
 
                 append(' ')
-                currentIndex = range.end
+                currentIndex = end
             }
 
             if (currentIndex < text.length) {

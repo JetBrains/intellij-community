@@ -286,7 +286,7 @@ public interface MarkdownBlockRenderer {
 
     /**
      * Renders a [HtmlBlock] into a Compose UI. Since Compose can't render HTML out of the box, this might result in a
-     * no-op (e.g., in [DefaultMarkdownBlockRenderer.render]).
+     * no-op (e.g., in [DefaultMarkdownBlockRenderer.RenderBlocks]).
      *
      * @param block The HTML block to render.
      * @param styling The [`HtmlBlock`][MarkdownStyling.HtmlBlock] styling to use to render.

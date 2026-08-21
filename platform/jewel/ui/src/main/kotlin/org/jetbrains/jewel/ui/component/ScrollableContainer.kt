@@ -1098,7 +1098,6 @@ private fun Modifier.withKeepVisible(
                 delayJob?.cancel()
                 onKeepVisibleChange(true)
 
-                @Suppress("AssignedValueIsNeverRead") // It's read on each gesture, two lines above; false positive
                 delayJob =
                     scope.launch {
                         delay(lingerDuration)
@@ -1425,7 +1424,7 @@ private fun computeContentConstraints(
  * Safeguard for if the constraints provided by `Layout` are less than the dimensions of the scrollbar. This way, the
  * content will be overlaid until the next recomposition when `Layout` hands out its the proper sizing.
  */
-private inline fun adjustForScrollbar(size: Int, scrollbarSize: Int) =
+private fun adjustForScrollbar(size: Int, scrollbarSize: Int) =
     if (size > scrollbarSize) {
         size - scrollbarSize
     } else {

@@ -16,7 +16,7 @@ class JewelBazelScriptsUtilsTest {
         runTest {
             // JUnit4 equivalent of @DisabledOnOs from JUnit5
             Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows", ignoreCase = true))
-            
+
             var elapsed = 0L
 
             assertFailsWith<IllegalStateException> {
