@@ -18,6 +18,15 @@ f:com.intellij.execution.filters.HyperlinkInfoBaseKt
 *:com.intellij.ide.RegionSettings$RegionSettingsListener
 - sf:UPDATE_TOPIC:com.intellij.util.messages.Topic
 - a:regionChanged():V
+*f:com.intellij.ide.RegionSettingsService
+- *sf:Companion:com.intellij.ide.RegionSettingsService$Companion
+- <init>(kotlinx.coroutines.CoroutineScope):V
+- f:getCurrenRegion(kotlin.coroutines.Continuation):java.lang.Object
+- f:getCurrentRegionBlocking():com.intellij.ide.Region
+- f:getCurrentRegionIfKnown():com.intellij.ide.Region
+*f:com.intellij.ide.RegionSettingsService$Companion
+- f:getInstance():com.intellij.ide.RegionSettingsService
+- f:getInstanceAsync(kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.ide.SaveAndSyncHandler
 - *f:getExternalChangesTracker():com.intellij.openapi.util.ModificationTracker
 f:com.intellij.ide.dnd.SmoothAutoScroller

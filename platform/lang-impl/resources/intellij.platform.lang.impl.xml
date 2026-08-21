@@ -1901,6 +1901,8 @@
     <applicationSettings service="com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingComponent"/>
     <applicationService serviceInterface="com.intellij.refactoring.move.moveClassesOrPackages.MovedFileProvider"
                         serviceImplementation="com.intellij.refactoring.move.moveClassesOrPackages.DefaultMovedFileProvider"/>
+
+    <applicationActivity implementation="com.intellij.ide.RegionSettingsServiceActivity"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.codeInsight.hints.InlayUnloadingListener" activeInHeadlessMode="false" activeInTestMode="false"
