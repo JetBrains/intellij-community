@@ -8,7 +8,6 @@ import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.KtNodeTypes;
-import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics;
 import org.jetbrains.kotlin.idea.base.psi.KotlinStubUtils;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.load.java.JvmAbi;
@@ -19,7 +18,6 @@ import org.jetbrains.kotlin.psi.KtClassOrObject;
 import org.jetbrains.kotlin.psi.KtNamedFunction;
 import org.jetbrains.kotlin.psi.KtParameter;
 import org.jetbrains.kotlin.psi.KtProperty;
-import org.jetbrains.kotlin.psi.KtTypeReference;
 import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
 import org.jetbrains.kotlin.psi.stubs.KotlinAnnotationEntryStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinClassOrObjectStub;
@@ -57,12 +55,6 @@ public class IdeStubIndexService extends StubIndexService {
             sink.occurrence(KotlinFileFacadeClassByPackageIndex.Helper.getIndexKey(), packageFqName.asString());
         }
 
-        String partSimpleName = fileStub.getPartSimpleName();
-        if (partSimpleName != null) {
-            FqName partFqName = packageFqName.child(Name.identifier(partSimpleName));
-            sink.occurrence(KotlinFilePartClassIndex.Helper.getIndexKey(), partFqName.asString());
-        }
-
         List<String> partNames = fileStub.getFacadePartSimpleNames();
         if (partNames != null) {
             for (String partName : partNames) {
@@ -74,7 +66,7 @@ public class IdeStubIndexService extends StubIndexService {
 
     @Override
     public void indexClass(@NotNull KotlinClassStub stub, @NotNull IndexSink sink) {
-        processNames(sink, stub.getName(), stub.getFqName(), stub.isTopLevel());
+        processNames(sink, stub.getName(), stub.getFqName());
 
         if (stub.isInterface()) {
             sink.occurrence(KotlinClassShortNameIndex.Helper.getIndexKey(), JvmAbi.DEFAULT_IMPLS_CLASS_NAME);
@@ -117,7 +109,7 @@ public class IdeStubIndexService extends StubIndexService {
     @Override
     public void indexObject(@NotNull KotlinObjectStub stub, @NotNull IndexSink sink) {
         String shortName = stub.getName();
-        processNames(sink, shortName, stub.getFqName(), stub.isTopLevel());
+        processNames(sink, shortName, stub.getFqName());
 
         indexSuperNames(stub, sink);
 
@@ -131,18 +123,14 @@ public class IdeStubIndexService extends StubIndexService {
     private static void processNames(
             @NotNull IndexSink sink,
             String shortName,
-            FqName fqName,
-            boolean level) {
+            FqName fqName
+    ) {
         if (shortName != null) {
             sink.occurrence(KotlinClassShortNameIndex.Helper.getIndexKey(), shortName);
         }
 
         if (fqName != null) {
             sink.occurrence(KotlinFullClassNameIndex.Helper.getIndexKey(), fqName.asString());
-
-            if (level) {
-                sink.occurrence(KotlinTopLevelClassByPackageIndex.Helper.getIndexKey(), fqName.parent().asString());
-            }
         }
     }
 
@@ -186,11 +174,6 @@ public class IdeStubIndexService extends StubIndexService {
             }
 
             KtNamedFunction ktNamedFunction = stub.getPsi();
-            KtTypeReference typeReference = ktNamedFunction.getTypeReference();
-            if (typeReference != null && KotlinPsiHeuristics.isProbablyNothing(typeReference)) {
-                sink.occurrence(KotlinProbablyNothingFunctionShortNameIndex.Helper.getIndexKey(), name);
-            }
-
             List<KtParameter> parameters = ktNamedFunction.getValueParameters();
             boolean injectedCandidate = false;
             parameterLoop: for (KtParameter parameter : parameters) {
@@ -209,10 +192,6 @@ public class IdeStubIndexService extends StubIndexService {
                 sink.occurrence(KotlinProbablyInjectedFunctionShortNameIndex.Helper.getIndexKey(), name);
             }
 
-            if (stub.getMayHaveContract()) {
-                sink.occurrence(KotlinProbablyContractedFunctionShortNameIndex.Helper.getIndexKey(), name);
-            }
-
             indexPrime(stub, sink);
         }
 
@@ -226,12 +205,9 @@ public class IdeStubIndexService extends StubIndexService {
                 }
 
                 sink.occurrence(KotlinTopLevelFunctionFqnNameIndex.Helper.getIndexKey(), fqName.asString());
-                sink.occurrence(KotlinTopLevelFunctionByPackageIndex.Helper.getIndexKey(), fqName.parent().asString());
                 IndexUtilsKt.indexTopLevelExtension(stub, sink);
             }
         }
-
-        IndexUtilsKt.indexInternals(stub, sink);
     }
 
     @Override
@@ -247,10 +223,6 @@ public class IdeStubIndexService extends StubIndexService {
         FqName fqName = stub.getFqName();
         if (fqName != null) {
             sink.occurrence(KotlinFullTypeAliasNameIndex.Helper.getIndexKey(), fqName.asString());
-
-            if (stub.isTopLevel()) {
-                sink.occurrence(KotlinTopLevelTypeAliasByPackageIndex.Helper.getIndexKey(), fqName.parent().asString());
-            }
         }
     }
 
@@ -264,10 +236,6 @@ public class IdeStubIndexService extends StubIndexService {
                 IndexUtilsKt.indexExtensionInObject(stub, sink);
             }
 
-            KtTypeReference typeReference = stub.getPsi().getTypeReference();
-            if (typeReference != null && KotlinPsiHeuristics.isProbablyNothing(typeReference)) {
-                sink.occurrence(KotlinProbablyNothingPropertyShortNameIndex.Helper.getIndexKey(), name);
-            }
             indexPrime(stub, sink);
         }
 
@@ -281,12 +249,9 @@ public class IdeStubIndexService extends StubIndexService {
                 }
 
                 sink.occurrence(KotlinTopLevelPropertyFqnNameIndex.Helper.getIndexKey(), fqName.asString());
-                sink.occurrence(KotlinTopLevelPropertyByPackageIndex.Helper.getIndexKey(), fqName.parent().asString());
                 IndexUtilsKt.indexTopLevelExtension(stub, sink);
             }
         }
-
-        IndexUtilsKt.indexInternals(stub, sink);
     }
 
     @Override
