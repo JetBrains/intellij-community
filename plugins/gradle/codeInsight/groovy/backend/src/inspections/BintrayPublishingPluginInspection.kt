@@ -28,16 +28,16 @@ class BintrayPublishingPluginInspection: GradleBaseInspection() {
     }
 
     private fun isApplyPlugin(literal: GrLiteral): Boolean {
-      return (literal.parent?.parent?.parent as? GrCall)?.resolveMethod()?.let {
-        "org.gradle.api.plugins.PluginAware" == it.containingClass?.qualifiedName
-        && "apply" == it.name
+      return (literal.parent?.parent?.parent as? GrCall)?.resolveMethod()?.let { psiMethod ->
+        "org.gradle.api.plugins.PluginAware" == psiMethod.containingClass?.qualifiedName
+        && "apply" == psiMethod.name
       } ?: false
     }
 
     private fun isPluginDSL(literal: GrLiteral): Boolean {
-      return (literal.parent?.parent as? GrCall)?.resolveMethod()?.let {
-        "org.gradle.plugin.use.PluginDependenciesSpec" == it.containingClass?.qualifiedName
-        && "id" == it.name
+      return (literal.parent?.parent as? GrCall)?.resolveMethod()?.let { psiMethod ->
+        "org.gradle.plugin.use.PluginDependenciesSpec" == psiMethod.containingClass?.qualifiedName
+        && "id" == psiMethod.name
       } ?: false
     }
   }

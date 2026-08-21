@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogPsiResolverUtil.getResolvedDependency
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 
-class KotlinAvoidDuplicateDependenciesInspectionVisitor(
+internal class KotlinAvoidDuplicateDependenciesInspectionVisitor(
   private val holder: ProblemsHolder,
   private val isOnTheFly: Boolean,
 ) : KtVisitorVoid() {

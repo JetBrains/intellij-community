@@ -34,7 +34,7 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADL
 
 private const val DESCRIPTION_PROPERTY = "description"
 
-class KotlinTaskMissingDescriptionInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
+internal class KotlinTaskMissingDescriptionInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
   override fun visitCallExpression(expression: KtCallExpression) {
     if (expression.calleeExpression?.text !in setOf("register", "create", "registering", "creating")) return
     if (!expression.isTaskContainerReceiver()) return

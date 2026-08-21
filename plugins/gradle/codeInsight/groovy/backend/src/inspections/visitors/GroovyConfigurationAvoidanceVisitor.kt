@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 
-class GroovyConfigurationAvoidanceVisitor(val holder: ProblemsHolder) : GroovyElementVisitor() {
+internal class GroovyConfigurationAvoidanceVisitor(val holder: ProblemsHolder) : GroovyElementVisitor() {
   override fun visitMethodCall(call: GrMethodCall) {
     if (!lazyApiAvailable(call)) return
     val method = call.resolveMethod() ?: return

@@ -11,7 +11,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 interface GradleDslInspectionProvider {
 
   companion object {
-    val INSTANCE = LanguageExtension<GradleDslInspectionProvider>("org.jetbrains.plugins.gradle.dslInspectionProvider")
+    val INSTANCE: LanguageExtension<GradleDslInspectionProvider> =
+      LanguageExtension<GradleDslInspectionProvider>("org.jetbrains.plugins.gradle.dslInspectionProvider")
   }
 
   /**

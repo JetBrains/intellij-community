@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.intentions.GrReplaceMethodCallQuickFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
-class GroovyDeprecatedConfigurationInspectionVisitor(val holder: ProblemsHolder) : GroovyElementVisitor() {
+internal class GroovyDeprecatedConfigurationInspectionVisitor(val holder: ProblemsHolder) : GroovyElementVisitor() {
 
   override fun visitReferenceExpression(referenceExpression: GrReferenceExpression) {
     val referenceNameElement = referenceExpression.referenceNameElement ?: return

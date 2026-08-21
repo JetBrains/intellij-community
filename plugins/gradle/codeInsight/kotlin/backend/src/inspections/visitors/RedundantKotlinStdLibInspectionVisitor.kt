@@ -33,7 +33,7 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogPsiResol
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.toUElementOfType
 
-class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
+internal class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
 
   private val kotlinJvmPluginVersion = findKotlinJvmVersion(holder.file as KtFile)
 
@@ -182,7 +182,8 @@ class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder)
       is KtBinaryExpression -> {
         val methodName = operationReference.text.trim()
         val leftCallChain = left?.parsePluginCallChain() ?: return null
-        leftCallChain + ChainedMethodCallPart(methodName, listOf(right ?: return null))
+        val rightExpression = right ?: return null
+        leftCallChain + ChainedMethodCallPart(methodName, listOf(rightExpression))
       }
 
       is KtDotQualifiedExpression -> {

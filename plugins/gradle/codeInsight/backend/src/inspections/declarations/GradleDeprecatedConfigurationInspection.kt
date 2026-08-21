@@ -7,7 +7,6 @@ import com.intellij.gradle.codeInsight.backend.inspections.GradleDslInspectionPr
 import com.intellij.psi.PsiElementVisitor
 
 class GradleDeprecatedConfigurationInspection : LocalInspectionTool() {
-
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     val language = holder.file.language
     val inspectionProvider = GradleDslInspectionProvider.INSTANCE.forLanguage(language) ?: return PsiElementVisitor.EMPTY_VISITOR

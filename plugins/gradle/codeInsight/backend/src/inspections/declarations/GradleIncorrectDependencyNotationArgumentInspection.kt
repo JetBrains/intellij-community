@@ -8,11 +8,9 @@ import com.intellij.psi.PsiElementVisitor
 
 
 class GradleIncorrectDependencyNotationArgumentInspection : LocalInspectionTool() {
-
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     val language = holder.file.language
     val inspectionProvider = GradleDslInspectionProvider.INSTANCE.forLanguage(language) ?: return PsiElementVisitor.EMPTY_VISITOR
     return inspectionProvider.getIncorrectDependencyNotationArgumentInspectionVisitor(holder, isOnTheFly)
   }
-
 }

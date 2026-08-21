@@ -53,7 +53,7 @@ private enum class RepositoriesParentBlockKind(val blockName: String) {
   DEPENDENCY("dependencyResolutionManagement"), PLUGIN("pluginManagement")
 }
 
-class KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
+internal class KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
   override fun visitCallExpression(expression: KtCallExpression) {
     if (!expression.isGradleRepositoriesBlock()) return
 

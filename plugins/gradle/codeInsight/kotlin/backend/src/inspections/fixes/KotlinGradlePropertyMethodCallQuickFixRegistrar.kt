@@ -151,8 +151,7 @@ private fun PsiElement.gradlePropertyMethodCall(): KtDotQualifiedExpression? {
 private fun KtDotQualifiedExpression.hasFileCallableSelector(): Boolean {
   val calleeName = selectorCallName() ?: return false
   val fileClass = JavaPsiFacade.getInstance(project).findClass(JAVA_IO_FILE_FQN, resolveScope)
-  if (fileClass?.findMethodsByName(calleeName, true)?.isNotEmpty() == true) return true
-  return hasKotlinIoFileExtensionFunction(calleeName)
+  return fileClass?.findMethodsByName(calleeName, true)?.isNotEmpty() == true || hasKotlinIoFileExtensionFunction(calleeName)
 }
 
 private fun KtDotQualifiedExpression.selectorCallName(): String? {

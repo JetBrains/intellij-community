@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 
-class GradleWithTypeFix : LocalQuickFix {
+internal class GradleWithTypeFix : LocalQuickFix {
   override fun getFamilyName(): String {
     return GroovyBundle.message("intention.family.name.replace.keywords")
   }

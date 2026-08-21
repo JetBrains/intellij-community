@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
-class KotlinAvoidDuplicateRepositoriesInspectionVisitor(
+internal class KotlinAvoidDuplicateRepositoriesInspectionVisitor(
   private val holder: ProblemsHolder,
 ) : KtVisitorVoid() {
   override fun visitCallExpression(expression: KtCallExpression) {

@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvalua
  * but it would greatly pollute the completion list, since there are 12 overloads to each of the configuration.
  * Also, we can provide custom parsing of string and map literals right here.
  */
-class GroovyIncorrectDependencyNotationArgumentInspectionVisitor(val holder: ProblemsHolder) : GroovyElementVisitor() {
+internal class GroovyIncorrectDependencyNotationArgumentInspectionVisitor(val holder: ProblemsHolder) : GroovyElementVisitor() {
   override fun visitMethodCall(call: GrMethodCall) {
     val method = call.resolveMethod() ?: return
     if (method !is OriginInfoAwareElement || method.originInfo != GradleDependencyHandlerContributor.DEPENDENCY_NOTATION) {

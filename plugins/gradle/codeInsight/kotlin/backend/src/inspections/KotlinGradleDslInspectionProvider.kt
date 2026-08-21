@@ -17,7 +17,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
-class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
+internal class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
   private fun isSuitableGradleKtsFile(file: PsiFile): Boolean =
     file is KtFile && FileUtilRt.extensionEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
 

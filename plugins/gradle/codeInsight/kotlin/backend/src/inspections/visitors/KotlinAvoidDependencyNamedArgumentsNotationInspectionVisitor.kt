@@ -13,6 +13,8 @@ import com.intellij.gradle.codeInsight.kotlin.backend.inspections.getBlock
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
+import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForBinaryExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -23,7 +25,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.plugins.gradle.util.GradleDependencyUtil.buildSingleStringDependencyNotation
 
-class KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
+internal class KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
   override fun visitCallExpression(expression: KtCallExpression) {
     val dependencyType = findDependencyType(expression) ?: return
     if (dependencyType != DependencyType.NAMED_ARGUMENTS) return
@@ -98,7 +100,7 @@ private class GradleDependencyNamedArgumentsFix(
   }
 
   private fun replaceArguments(argList: KtValueArgumentList, factory: KtPsiFactory, newArgument: KtStringTemplateExpression) {
-    argList.arguments.forEach { argList.removeArgument(it) }
-    argList.addArgument(factory.createArgument(newArgument))
+    argList.arguments.forEach { argList.deleteValueArgument(it) }
+    argList.appendValueArgument(factory.createArgument(newArgument))
   }
 }

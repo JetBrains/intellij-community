@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 
 class AvoidRepositoriesInBuildGradleInspection : LocalInspectionTool() {
-
   override fun isAvailableForFile(file: PsiFile): Boolean {
     val language = file.language
     val inspectionProvider = GradleDslInspectionProvider.INSTANCE.forLanguage(language) ?: return false
@@ -20,5 +19,4 @@ class AvoidRepositoriesInBuildGradleInspection : LocalInspectionTool() {
     val inspectionProvider = GradleDslInspectionProvider.INSTANCE.forLanguage(language) ?: return PsiElementVisitor.EMPTY_VISITOR
     return inspectionProvider.getAvoidRepositoriesInBuildGradleInspectionVisitor(holder, isOnTheFly)
   }
-
 }

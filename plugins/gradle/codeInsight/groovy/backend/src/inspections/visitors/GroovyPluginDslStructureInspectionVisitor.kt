@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
-class GroovyPluginDslStructureInspectionVisitor(val holder: ProblemsHolder) : GroovyElementVisitor() {
+internal class GroovyPluginDslStructureInspectionVisitor(val holder: ProblemsHolder) : GroovyElementVisitor() {
   override fun visitFile(file: GroovyFileBase) {
     if (!file.isGradleFile()) return
     val statements = file.statements
@@ -117,7 +117,7 @@ private fun getStatements(call: GrMethodCall) : Array<GrStatement> {
 
 private fun getStatements(funExpr: GrFunctionalExpression) : Array<GrStatement> {
   return when (funExpr) {
-    is GrClosableBlock -> return funExpr.statements
+    is GrClosableBlock -> funExpr.statements
     is GrLambdaExpression -> when (val body = funExpr.body) {
       is GrBlockLambdaBody -> body.statements
       is GrExpressionLambdaBody -> arrayOf(body.expression)

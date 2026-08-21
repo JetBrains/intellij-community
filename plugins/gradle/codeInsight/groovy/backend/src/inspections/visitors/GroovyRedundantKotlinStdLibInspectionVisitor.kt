@@ -37,7 +37,7 @@ import org.jetbrains.uast.toUElementOfType
 
 private val LOG = logger<GroovyRedundantKotlinStdLibInspectionVisitor>()
 
-class GroovyRedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder) : GroovyElementVisitor() {
+internal class GroovyRedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder) : GroovyElementVisitor() {
 
   private val kotlinJvmPluginVersion = findKotlinJvmVersion(holder.file as GroovyFile)
 
@@ -55,8 +55,7 @@ class GroovyRedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsH
   }
 
   private fun isNonRedundantConfiguration(configurationName: String?): Boolean {
-    if (configurationName == null) return false
-    return configurationName.endsWith("compileOnly", ignoreCase = true)
+    return configurationName != null && configurationName.endsWith("compileOnly", ignoreCase = true)
   }
 
   private fun processNamedArgumentsDependency(elementToRemove: GrExpression, namedArguments: List<GrNamedArgument>) {
@@ -216,7 +215,7 @@ class GroovyRedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsH
   }
 }
 
-private class RemoveDependencyFix() : PsiUpdateModCommandQuickFix() {
+private class RemoveDependencyFix : PsiUpdateModCommandQuickFix() {
   override fun getName(): @IntentionName String {
     return CommonQuickFixBundle.message("fix.remove.title", "dependency")
   }

@@ -39,7 +39,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_CORE_PLUGIN_SHORT_NAMES
 
-class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
+internal class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
 
   override fun visitCallExpression(expression: KtCallExpression) {
     analyze(expression) {

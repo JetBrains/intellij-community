@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.util.GStringConcatenationUtil
  * Provides a quick fix for simplifying Gradle dependency syntax in Groovy build scripts
  * by transforming named arguments into a colon-separated string representation.
  */
-class GradleDependencyNamedArgumentsFix(
+internal class GradleDependencyNamedArgumentsFix(
   private val concat: String,
   private val targetConfig: String?,
 ) : PsiUpdateModCommandQuickFix() {

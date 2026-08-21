@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.stringValue
 
-class GradleTaskToRegisterFix : LocalQuickFix {
+internal class GradleTaskToRegisterFix : LocalQuickFix {
   override fun getFamilyName(): String {
     return GroovyBundle.message("intention.family.name.replace.keywords")
   }

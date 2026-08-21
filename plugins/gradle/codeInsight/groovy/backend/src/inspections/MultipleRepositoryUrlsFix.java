@@ -20,10 +20,10 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-public class MultipleRepositoryUrlsFix extends GroovyFix {
+class MultipleRepositoryUrlsFix extends GroovyFix {
   private final String myRepoType;
 
-  public MultipleRepositoryUrlsFix(@NotNull String repoType) {
+  MultipleRepositoryUrlsFix(@NotNull String repoType) {
     myRepoType = repoType;
   }
 
@@ -33,7 +33,7 @@ public class MultipleRepositoryUrlsFix extends GroovyFix {
     if (closure == null) return;
     List<GrCallExpression> statements = MultipleRepositoryUrlsInspection.findUrlCallExpressions(closure);
     if (statements.size() <= 1) return;
-    statements.remove(0);
+    statements.removeFirst();
 
     List<PsiElement> elements = new ArrayList<>(statements);
     for (GrCallExpression statement : statements) {

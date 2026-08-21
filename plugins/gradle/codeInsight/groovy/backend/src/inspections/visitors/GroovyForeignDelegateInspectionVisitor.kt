@@ -11,10 +11,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
-class GroovyForeignDelegateInspectionVisitor(val holder: ProblemsHolder) : GroovyElementVisitor() {
+internal class GroovyForeignDelegateInspectionVisitor(val holder: ProblemsHolder) : GroovyElementVisitor() {
   override fun visitMethodCall(call: GrMethodCall) {
     val callQualifier = call.invokedExpression.asSafely<GrReferenceExpression>()
-    if (callQualifier != null && callQualifier.qualifierExpression != null) {
+    if (callQualifier?.qualifierExpression != null) {
       return
     }
     val resolvedMethod = call.resolveMethod() ?: return

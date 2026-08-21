@@ -7,7 +7,7 @@ import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.junit.jupiter.params.ParameterizedTest
 
-class GradlePluginDslStructureTest : GradleCodeInsightTestCase() {
+class GradlePluginDslStructureInspectionTest : GradleCodeInsightTestCase() {
 
   private fun doTest(gradleVersion: GradleVersion, action: () -> Unit) {
     testEmptyProject(gradleVersion) {

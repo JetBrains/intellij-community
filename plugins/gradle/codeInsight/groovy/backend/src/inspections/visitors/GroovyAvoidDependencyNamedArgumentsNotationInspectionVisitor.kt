@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyMethodCallPattern
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.psi.patterns.withKind
 
-class GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val holder: ProblemsHolder) : GroovyElementVisitor() {
+internal class GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val holder: ProblemsHolder) : GroovyElementVisitor() {
   override fun visitMethodCall(call: GrMethodCall) {
     if (!DEPENDENCY_CALL_PATTERN.accepts(call) && !SPECIAL_DEPENDENCY_CALL_PATTERN.accepts(call)) return
     val arguments = call.argumentList.expressionArguments
