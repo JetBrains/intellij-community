@@ -23,6 +23,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
+import org.jetbrains.annotations.ApiStatus
 
 object McpClientDetector {
   fun detectGlobalMcpClients(): List<McpClient> {
@@ -62,7 +63,8 @@ object McpClientDetector {
     return globalClients
   }
 
-  internal fun detectProjectMcpClients(project: Project): List<McpClient> {
+  @ApiStatus.Internal
+  fun detectProjectMcpClients(project: Project): List<McpClient> {
     val projectClients = mutableListOf<McpClient>()
 
     runCatching {

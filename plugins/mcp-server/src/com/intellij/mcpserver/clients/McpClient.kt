@@ -145,6 +145,9 @@ abstract class McpClient(
     return promotionCandidateServers(expectedPort).isNotEmpty()
   }
 
+  /** Whether this client's configuration already points at this IDE's MCP server. */
+  fun isConnectedToThisIde(): Boolean = isConfigured() == true && isPortCorrect()
+
   fun isPortCorrect(expectedPort: Int = expectedPromotionPort()): Boolean {
     val candidates = promotionCandidateServers(expectedPort)
     return candidates.isEmpty() || candidates.any { serverConfig -> isPortMatching(serverConfig, expectedPort) }

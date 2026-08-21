@@ -7,10 +7,12 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus
 
 @Service
 @State(name = "McpServerSettings", storages = [Storage("mcpServer.xml")])
-internal class McpServerSettings : SimplePersistentStateComponent<McpServerSettings.MyState>(MyState()) {
+@ApiStatus.Internal
+class McpServerSettings : SimplePersistentStateComponent<McpServerSettings.MyState>(MyState()) {
   companion object {
     @JvmStatic
     fun getInstance(): McpServerSettings = service()
@@ -46,7 +48,7 @@ internal class McpServerSettings : SimplePersistentStateComponent<McpServerSetti
     super.loadState(state)
   }
 
-  internal class MyState : BaseState() {
+  class MyState : BaseState() {
     var enableBraveMode: Boolean by property(false)
     var enableMcpServer: Boolean by property(false)
     var mcpServerPort: Int by property(DEFAULT_MCP_PORT)
