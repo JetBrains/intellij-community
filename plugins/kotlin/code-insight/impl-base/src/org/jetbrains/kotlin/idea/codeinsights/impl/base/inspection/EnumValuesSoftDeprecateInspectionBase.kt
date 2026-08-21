@@ -180,7 +180,6 @@ abstract class EnumValuesSoftDeprecateInspectionBase : AbstractKotlinInspection(
                 ReplaceFixType.WITH_CAST -> "$fixExpression.toTypedArray()"
                 else -> fixExpression
             }
-            KotlinLanguageFeaturesFUSCollector.enumEntriesCollector.logQuickFixApplied(qualifiedOrSimpleCall.containingFile)
             var replaced = qualifiedOrSimpleCall.replace(KtPsiFactory(project).createExpression(entriesCallStr))
             replaced = applyRemovalsIfNeeded(replaced)
 
