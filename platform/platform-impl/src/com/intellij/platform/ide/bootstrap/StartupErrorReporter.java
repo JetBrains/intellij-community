@@ -273,7 +273,7 @@ public final class StartupErrorReporter {
     try {
       var reportId = worker.get();
       var message = prepareMessage(message("bootstrap.error.message.submitted", reportId));
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, message("bootstrap.error.title.submitted"), JOptionPane.INFORMATION_MESSAGE);
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), prepareMessage(message), message("bootstrap.error.title.submitted"), JOptionPane.INFORMATION_MESSAGE);
     }
     catch (Throwable t) {
       var buf = new StringWriter();
