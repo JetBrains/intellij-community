@@ -14,9 +14,12 @@ import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 private val TEXT_GAPS: UnscaledGaps = UnscaledGaps(top = 4, left = 16, bottom = 3, right = 16)
 private const val DEFAULT_FONT_SIZE: Int = 13
@@ -70,6 +73,7 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
     }
 
   private var hovered = false
+  private var mouseDown = false
   private var colorState: ColorState = BLUE
 
   /**
@@ -102,7 +106,21 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
 
       override fun mouseExited(e: MouseEvent?) {
         hovered = false
+        mouseDown = false
         repaint()
+      }
+
+      override fun mousePressed(e: MouseEvent?) {
+        mouseDown = true
+      }
+
+      override fun mouseReleased(e: MouseEvent) {
+        if (mouseDown) {
+          mouseDown = false
+          if (isEnabled && SwingUtilities.isLeftMouseButton(e)) {
+            fireActionPerformed(ActionEvent(this@PillButton, ActionEvent.ACTION_PERFORMED, null, e.`when`, e.modifiersEx))
+          }
+        }
       }
     })
   }
@@ -119,6 +137,24 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
     if (!enabled) {
       // Disabled components don't receive mouseExited
       hovered = false
+      mouseDown = false
+    }
+  }
+
+  /**
+   * The listeners are notified on a left mouse click and on [doClick], the same way [javax.swing.AbstractButton] does it.
+   */
+  fun addActionListener(l: ActionListener) {
+    listenerList.add(ActionListener::class.java, l)
+  }
+
+  fun removeActionListener(l: ActionListener) {
+    listenerList.remove(ActionListener::class.java, l)
+  }
+
+  private fun fireActionPerformed(event: ActionEvent) {
+    for (listener in listenerList.getListeners(ActionListener::class.java)) {
+      listener.actionPerformed(event)
     }
   }
 

@@ -24,6 +24,11 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.updateCheckFirstRunDeferral" interface="com.intellij.openapi.updateSettings.impl.UpdateCheckFirstRunDeferral" dynamic="true"/>
   </extensionPoints>
+  <actions>
+    <action id="IdeUpdateToolbarWidget" class="com.intellij.openapi.updateSettings.impl.IdeUpdateToolbarWidget">
+      <add-to-group group-id="MainToolbarRight" anchor="last"/>
+    </action>
+  </actions>
   <extensions defaultExtensionNs="com.intellij">
     <appStarter id="update" implementation="com.intellij.ide.plugins.UpdatePluginsApp" bundle="messages.IdeBundle" key="update.plugins.help"/>
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade"

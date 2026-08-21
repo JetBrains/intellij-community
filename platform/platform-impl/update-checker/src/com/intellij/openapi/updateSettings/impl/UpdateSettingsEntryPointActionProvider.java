@@ -43,6 +43,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   private static final String NEXT_RUN_KEY_BUILD = "NextRunPlatformUpdateBuild";
   private static final String NEXT_RUN_KEY_VERSION = "NextRunPlatformUpdateVersion";
   private static final String NEXT_RUN_KEY_SELF_BUILD = "NextRunPlatformUpdateSelfBuild";
+  private static final String NEXT_RUN_KEY_RELEASE_CHANNEL = "NextRunPlatformUpdateReleaseChannel";
 
   private static boolean myNewPlatformUpdate;
   private static @Nullable String myNextRunPlatformUpdateVersion;
@@ -90,20 +91,24 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
         if (myNextRunPlatformUpdateVersion != null) {
           myNewPlatformUpdate = true;
+          setWidgetStatus(properties.getBoolean(NEXT_RUN_KEY_RELEASE_CHANNEL, false));
           updateState();
         }
         else {
-          properties.unsetValue(NEXT_RUN_KEY_BUILD);
-          properties.unsetValue(NEXT_RUN_KEY_VERSION);
-          properties.unsetValue(NEXT_RUN_KEY_SELF_BUILD);
+          clearNextRunProperties(properties);
         }
       }
       else {
-        properties.unsetValue(NEXT_RUN_KEY_BUILD);
-        properties.unsetValue(NEXT_RUN_KEY_VERSION);
-        properties.unsetValue(NEXT_RUN_KEY_SELF_BUILD);
+        clearNextRunProperties(properties);
       }
     }
+  }
+
+  private static void clearNextRunProperties(@NotNull PropertiesComponent properties) {
+    properties.unsetValue(NEXT_RUN_KEY_BUILD);
+    properties.unsetValue(NEXT_RUN_KEY_VERSION);
+    properties.unsetValue(NEXT_RUN_KEY_SELF_BUILD);
+    properties.unsetValue(NEXT_RUN_KEY_RELEASE_CHANNEL);
   }
 
   private static void initPluginsListeners() {
@@ -136,9 +141,11 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     UpdateSettings settings = UpdateSettings.getInstance();
     if (settings.isCheckNeeded()) {
       setPlatformUpdateInfo(platformUpdateInfo);
+      setWidgetStatus(isReleaseChannel(platformUpdateInfo));
     }
     else {
       setPlatformUpdateInfo(null);
+      setWidgetStatus(false);
     }
     if (settings.isPluginsCheckNeeded()) {
       newPlatformUpdate(updatesForPlugins, incompatiblePluginNames, null, localUpdatesForPlugins);
@@ -155,16 +162,29 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
     PropertiesComponent properties = PropertiesComponent.getInstance();
     if (platformUpdateInfo == null) {
-      properties.unsetValue(NEXT_RUN_KEY_BUILD);
-      properties.unsetValue(NEXT_RUN_KEY_VERSION);
-      properties.unsetValue(NEXT_RUN_KEY_SELF_BUILD);
+      clearNextRunProperties(properties);
     }
     else {
       BuildInfo build = platformUpdateInfo.getNewBuild();
       properties.setValue(NEXT_RUN_KEY_BUILD, build.getNumber().toString());
       properties.setValue(NEXT_RUN_KEY_VERSION, build.getVersion());
       properties.setValue(NEXT_RUN_KEY_SELF_BUILD, ApplicationInfo.getInstance().getBuild().asString());
+      properties.setValue(NEXT_RUN_KEY_RELEASE_CHANNEL, isReleaseChannel(platformUpdateInfo));
     }
+  }
+
+  private static void setWidgetStatus(boolean updateAvailable) {
+    IdeUpdateWidgetState.getInstance()
+      .updateStatus(updateAvailable ? IdeUpdateWidgetState.Status.AVAILABLE : IdeUpdateWidgetState.Status.NONE);
+  }
+
+  /**
+   * Only major and minor releases are announced by {@link IdeUpdateToolbarWidget}; EAP and nightly builds keep the update item
+   * in the {@link com.intellij.ide.actions.SettingsEntryPointAction} menu.
+   */
+  private static boolean isReleaseChannel(@NotNull PlatformUpdates.Loaded platformUpdateInfo) {
+    UpdateChannel channel = platformUpdateInfo.getUpdatedChannel();
+    return channel.getLicensing() == UpdateChannel.Licensing.RELEASE && channel.getStatus() == ChannelStatus.RELEASE;
   }
 
   private static void newPlatformUpdate(@Nullable List<PluginUiModel> updatesForPlugins,
@@ -232,64 +252,86 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     myEnableUpdateAction = value;
   }
 
+  static @Nullable PlatformUpdates.Loaded getPlatformUpdateInfo() {
+    return myPlatformUpdateInfo;
+  }
+
+  static void showPlatformUpdateDialog(@Nullable Project project, @NotNull PlatformUpdates.Loaded platformUpdateInfo) {
+    PlatformUpdateDialog dialog = new PlatformUpdateDialog(project, platformUpdateInfo, true,
+                                                          myLocalUpdatesForPlugins, myIncompatiblePluginNames);
+    if (dialog.showAndGet() && !IdeUpdateWidgetState.isWidgetShown()) {
+      clearUpdatesInfo();
+    }
+  }
+
+  static @Nullable PlatformUpdates.Loaded reloadPlatformUpdateInfo(@Nullable Project project) {
+    Pair<PlatformUpdates, PluginUpdatesModel> result = ProgressManager.getInstance()
+      .run(new Task.WithResult<>(project,
+                                 IdeBundle.message("find.ide.update.title"),
+                                 true) {
+
+        @Override
+        protected @NotNull Pair<@NotNull PlatformUpdates, @Nullable PluginUpdatesModel> compute(@NotNull ProgressIndicator indicator) {
+          PlatformUpdates platformUpdates = UpdateChecker.getPlatformUpdates(UpdateSettings.getInstance(), indicator);
+          PluginUpdatesModel pluginResults = platformUpdates instanceof PlatformUpdates.Loaded ?
+                                                getInternalPluginUpdates((PlatformUpdates.Loaded)platformUpdates, indicator) :
+                                                null;
+          return Pair.create(platformUpdates, pluginResults);
+        }
+
+        private static PluginUpdatesModel getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
+                                                                               @NotNull ProgressIndicator indicator) {
+          return PluginUpdateHandler.loadAndStorePluginUpdates(loadedResult.getNewBuild().getApiVersion().asString(),
+                                                               indicator);
+        }
+      });
+
+    PlatformUpdates platformUpdateInfo = result.getFirst();
+    PluginUpdatesModel pluginUpdatesModel = result.getSecond();
+    if (platformUpdateInfo instanceof PlatformUpdates.Loaded loadedUpdate && pluginUpdatesModel != null) {
+      setPlatformUpdateInfo(loadedUpdate);
+      setWidgetStatus(isReleaseChannel(loadedUpdate));
+      newPlatformUpdate(new ArrayList<>(pluginUpdatesModel.getPluginUpdates()),
+                        pluginUpdatesModel.getIncompatiblePluginNames(),
+                        null,
+                        pluginUpdatesModel.getDownloaders());
+      return loadedUpdate;
+    }
+
+    if (platformUpdateInfo instanceof PlatformUpdates.ConnectionError) {
+      String errorMessage = ((PlatformUpdates.ConnectionError)platformUpdateInfo).getError().getMessage();
+      Messages.showErrorDialog(project,
+                               IdeBundle.message("updates.error.connection.failed", errorMessage),
+                               IdeBundle.message("find.ide.update.title"));
+    }
+    else {
+      Messages.showInfoMessage(project,
+                               IdeBundle.message("updates.no.updates.notification"),
+                               IdeBundle.message("find.ide.update.title"));
+      clearUpdatesInfo();
+      setWidgetStatus(false);
+    }
+    return null;
+  }
+
   @Override
   public @NotNull Collection<UpdateAction> getUpdateActions(@NotNull DataContext context) {
     Collection<UpdateAction> actions = new ArrayList<>();
 
-    if (myNextRunPlatformUpdateVersion != null) {
+    // when the update is announced by IdeUpdateToolbarWidget, only plugin updates are left for the Settings menu
+    boolean ideUpdateInToolbar = IdeUpdateWidgetState.isWidgetShown();
+
+    if (!ideUpdateInToolbar && myNextRunPlatformUpdateVersion != null) {
       actions.add(new IdeUpdateAction(myNextRunPlatformUpdateVersion) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          Project project = e.getProject();
-          Pair<PlatformUpdates, PluginUpdatesModel> result = ProgressManager.getInstance()
-            .run(new Task.WithResult<>(project,
-                                       IdeBundle.message("find.ide.update.title"),
-                                       true) {
-
-              @Override
-              protected @NotNull Pair<@NotNull PlatformUpdates, @Nullable PluginUpdatesModel> compute(@NotNull ProgressIndicator indicator) {
-                PlatformUpdates platformUpdates = UpdateChecker.getPlatformUpdates(UpdateSettings.getInstance(), indicator);
-                PluginUpdatesModel pluginResults = platformUpdates instanceof PlatformUpdates.Loaded ?
-                                                      getInternalPluginUpdates((PlatformUpdates.Loaded)platformUpdates, indicator) :
-                                                      null;
-                return Pair.create(platformUpdates, pluginResults);
-              }
-
-              private static PluginUpdatesModel getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
-                                                                                     @NotNull ProgressIndicator indicator) {
-                return PluginUpdateHandler.loadAndStorePluginUpdates(loadedResult.getNewBuild().getApiVersion().asString(),
-                                                                     indicator);
-              }
-            });
-
-          PlatformUpdates platformUpdateInfo = result.getFirst();
-          PluginUpdatesModel pluginUpdatesModel = result.getSecond();
-          if (platformUpdateInfo instanceof PlatformUpdates.Loaded && pluginUpdatesModel != null) {
-            setPlatformUpdateInfo((PlatformUpdates.Loaded)platformUpdateInfo);
-            newPlatformUpdate(new ArrayList<>(pluginUpdatesModel.getPluginUpdates()),
-                              pluginUpdatesModel.getIncompatiblePluginNames(),
-                              null,
-                              pluginUpdatesModel.getDownloaders());
+          if (reloadPlatformUpdateInfo(e.getProject()) != null) {
             super.actionPerformed(e);
-          }
-          else {
-            if (platformUpdateInfo instanceof PlatformUpdates.ConnectionError) {
-              String errorMessage = ((PlatformUpdates.ConnectionError)platformUpdateInfo).getError().getMessage();
-              Messages.showErrorDialog(project,
-                                       IdeBundle.message("updates.error.connection.failed", errorMessage),
-                                       IdeBundle.message("find.ide.update.title"));
-            }
-            else {
-              Messages.showInfoMessage(project,
-                                       IdeBundle.message("updates.no.updates.notification"),
-                                       IdeBundle.message("find.ide.update.title"));
-              clearUpdatesInfo();
-            }
           }
         }
       });
     }
-    else if (myPlatformUpdateInfo != null) {
+    else if (!ideUpdateInToolbar && myPlatformUpdateInfo != null) {
       actions.add(new IdeUpdateAction(myPlatformUpdateInfo.getNewBuild().getVersion()));
     }
     // todo[AL/RS] separate action for plugins compatible with both old and new builds
@@ -366,11 +408,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      PlatformUpdateDialog dialog = new PlatformUpdateDialog(e.getProject(), Objects.requireNonNull(myPlatformUpdateInfo),
-                                                             true, myLocalUpdatesForPlugins, myIncompatiblePluginNames);
-      if (dialog.showAndGet()) {
-        clearUpdatesInfo();
-      }
+      showPlatformUpdateDialog(e.getProject(), Objects.requireNonNull(myPlatformUpdateInfo));
     }
   }
 }

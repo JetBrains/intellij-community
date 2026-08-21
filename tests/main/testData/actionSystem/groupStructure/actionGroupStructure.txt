@@ -2517,6 +2517,7 @@
   NewUiRunWidget
   SearchEverywhere
   SettingsEntryPoint
+  IdeUpdateToolbarWidget
 [group MarkFileAs]
   OverrideFileTypeAction
   ReverteOverrideFileTypeAction

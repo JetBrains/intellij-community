@@ -91,7 +91,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
     myPlatformUpdate = platformUpdate;
     myUpdatesForPlugins = updatesForPlugins;
     var patches = myPlatformUpdate.getPatches();
-    myWriteProtected = patches != null && OS.CURRENT != OS.Windows && !Files.isWritable(PathManager.getHomeDir());
+    myWriteProtected = isPatchWriteProtected(myPlatformUpdate);
     myLicenseInfo = getLicensingInfo(myPlatformUpdate);
     myTestPatch = null;
     init();
@@ -303,6 +303,10 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
     return IdeBundle.message("updates.remind.later.button");
   }
 
+  static boolean isPatchWriteProtected(@NotNull PlatformUpdates.Loaded platformUpdate) {
+    return platformUpdate.getPatches() != null && OS.CURRENT != OS.Windows && !Files.isWritable(PathManager.getHomeDir());
+  }
+
   private void downloadPatchAndRestart(Map<PluginId, PluginUiModel> installedPlugins) {
     Collection<PluginDownloader> selectedPluginsToUpdate = new ArrayList<>();
     if (myUpdatesForPlugins != null && !installedPlugins.isEmpty()) {
@@ -314,17 +318,28 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
       selectedPluginsToUpdate.addAll(ContainerUtil.filter(myUpdatesForPlugins, it -> selectedPlugins.contains(it.getId())));
     }
 
+    startPatchTask(myProject, myPlatformUpdate, myTestPatch, selectedPluginsToUpdate);
+  }
+
+  static void startPatchTask(
+    @Nullable Project project,
+    @NotNull PlatformUpdates.Loaded platformUpdate,
+    @Nullable Path testPatch,
+    @NotNull Collection<PluginDownloader> pluginsToUpdate
+  ) {
+    IdeUpdateWidgetState.getInstance().updateStatus(IdeUpdateWidgetState.Status.DOWNLOADING);
+
     //noinspection UsagesOfObsoleteApi
-    new Task.Backgroundable(myProject, IdeBundle.message("update.preparing"), true, PerformInBackgroundOption.DEAF) {
+    new Task.Backgroundable(project, IdeBundle.message("update.preparing"), true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        String[] command;
+        @NotNull String @NotNull [] command;
         try {
-          if (myTestPatch != null) {
-            command = UpdateInstaller.preparePatchCommand(List.of(myTestPatch), indicator);
+          if (testPatch != null) {
+            command = UpdateInstaller.preparePatchCommand(List.of(testPatch), indicator);
           }
           else {
-            var files = UpdateInstaller.downloadPatchChain(requireNonNull(myPlatformUpdate.getPatches()).getChain(), indicator);
+            var files = UpdateInstaller.downloadPatchChain(requireNonNull(platformUpdate.getPatches()).getChain(), indicator);
             command = UpdateInstaller.preparePatchCommand(files, indicator);
           }
         }
@@ -335,23 +350,26 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
           Logger.getInstance(PlatformUpdateDialog.class).warn(e);
 
           var title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-          var downloadUrl = UpdateInfoPanel.downloadUrl(myPlatformUpdate.getNewBuild(), myPlatformUpdate.getUpdatedChannel());
+          var downloadUrl = UpdateInfoPanel.downloadUrl(platformUpdate.getNewBuild(), platformUpdate.getUpdatedChannel());
           var message = IdeBundle.message("update.downloading.patch.error", e.getMessage());
           UpdateChecker.getNotificationGroupForIdeUpdateResults()
             .createNotification(title, message, NotificationType.ERROR)
             .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.downloading.patch.open"), () -> BrowserUtil.browse(downloadUrl)))
             .setDisplayId("ide.patch.download.failed")
-            .notify(myProject);
+            .notify(project);
 
           return;
         }
 
-        if (!ContainerUtil.isEmpty(selectedPluginsToUpdate)) {
-          UpdateInstaller.installPluginUpdates(selectedPluginsToUpdate, indicator);
+        if (!ContainerUtil.isEmpty(pluginsToUpdate)) {
+          UpdateInstaller.installPluginUpdates(pluginsToUpdate, indicator);
         }
 
         if (ApplicationManager.getApplication().isRestartCapable()) {
-          if (indicator.isShowing()) {
+          if (IdeUpdateWidgetState.isWidgetShown()) {
+            IdeUpdateWidgetState.getInstance().onRestartReady(command);
+          }
+          else if (indicator.isShowing()) {
             restartLaterAndRunCommand(command);
           }
           else {
@@ -361,17 +379,22 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
               .createNotification(title, message, NotificationType.INFORMATION)
               .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.ready.restart"), () -> restartLaterAndRunCommand(command)))
               .setDisplayId("ide.update.suggest.restart")
-              .notify(myProject);
+              .notify(project);
           }
         }
         else {
           showPatchInstructions(command);
         }
       }
+
+      @Override
+      public void onFinished() {
+        IdeUpdateWidgetState.getInstance().onDownloadFinished();
+      }
     }.queue();
   }
 
-  private static void restartLaterAndRunCommand(String[] command) {
+  static void restartLaterAndRunCommand(String[] command) {
     IdeUpdateUsageTriggerCollector.UPDATE_STARTED.log();
     PropertiesComponent.getInstance().setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
     Restarter.setRestarterEnv(Map.of(ConfigImportHelper.IMPORT_FROM_ENV_VAR, PathManager.getConfigDir().toString()));
