@@ -1086,6 +1086,10 @@
       </group>
     </group>
 
+    <action id="IdeUpdateToolbarWidget" class="com.intellij.openapi.updateSettings.impl.IdeUpdateToolbarWidget">
+      <add-to-group group-id="MainToolbarRight" anchor="last"/>
+    </action>
+
     <group id="NavBarVcsGroup"/>
     <group id="SegmentedVcsActionsBarGroup"/>
     <group id="EditorPopupMenu">
