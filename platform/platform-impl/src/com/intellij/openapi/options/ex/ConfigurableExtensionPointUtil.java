@@ -12,6 +12,7 @@ import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.options.newEditor.SettingsDialogPerformanceTracker;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -141,10 +142,11 @@ public final class ConfigurableExtensionPointUtil {
   public static @NotNull ConfigurableGroup doGetConfigurableGroup(@Nullable Project targetProject, boolean withIdeSettings) {
     return new EpBasedConfigurableGroup(
       targetProject,
-      () -> {
+      // the group is built lazily, so the build is measured here and not at the call site
+      () -> SettingsDialogPerformanceTracker.measureConfigurableTreeBuild(() -> {
         List<Configurable> configurables = getConfigurables(targetProject, withIdeSettings);
         return getConfigurableGroup(configurables, targetProject);
-      }
+      })
     );
   }
 

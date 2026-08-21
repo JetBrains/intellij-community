@@ -237,11 +237,13 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
             if (modified != null) myLeaveState.put(oldConfigurable, modified);
           }
         }
+        SettingsDialogPerformanceTracker.startPageLoading();
         Promise<? super Object> result = editor.select(configurable);
         result.onSuccess(it -> {
           updateController(configurable);
           //requestFocusToEditor(); // TODO
           loadingDecorator.stopLoading();
+          SettingsDialogPerformanceTracker.finishPageReady();
         });
         return result;
       }

@@ -22,6 +22,7 @@ import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.options.newEditor.SettingsDialogFactory
+import com.intellij.openapi.options.newEditor.SettingsDialogPerformanceTracker
 import com.intellij.openapi.options.newEditor.SettingsNonModalDialogFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -117,6 +118,8 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
 
     @JvmStatic
     fun showSettingsDialog(project: Project?, idToSelect: String?, filter: String?) {
+      SettingsDialogPerformanceTracker.markOpeningStarted()
+
       val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */true)
         .takeIf { !it.configurables.isEmpty() }
       val configurableToSelect = if (idToSelect == null) null else ConfigurableVisitor.findById(idToSelect, listOf(group))
@@ -193,6 +196,8 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     predicate: Predicate<in Configurable>,
     additionalConfiguration: Consumer<in Configurable>?,
   ) {
+    SettingsDialogPerformanceTracker.markOpeningStarted()
+
     val groups = getConfigurableGroups(project, true)
     val config = ConfigurableVisitor.find(predicate, groups.asList()) ?: error("Cannot find configurable for specified predicate")
     additionalConfiguration?.accept(config)
@@ -362,6 +367,8 @@ private fun <T : Configurable> editConfigurable(
 }
 
 internal fun scheduleDoShowSettingsDialogWithACheckThatProjectIsInitialized(project: Project) {
+  SettingsDialogPerformanceTracker.markOpeningStarted()
+
   project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
     launch {
       (serviceAsync<SearchableOptionsRegistrar>() as? SearchableOptionsRegistrarImpl)?.initialize()

@@ -61,6 +61,7 @@ import com.jetbrains.performancePlugin.commands.JBRFullGCCommand;
 import com.jetbrains.performancePlugin.commands.LogProjectLibrariesAndSdksCommand;
 import com.jetbrains.performancePlugin.commands.MeasureVFSUpdateCommand;
 import com.jetbrains.performancePlugin.commands.MeasureVfsMassUpdateCommand;
+import com.jetbrains.performancePlugin.commands.MeasureSettingsDialogCommand;
 import com.jetbrains.performancePlugin.commands.MemoryDumpCommand;
 import com.jetbrains.performancePlugin.commands.MoveCaretCommand;
 import com.jetbrains.performancePlugin.commands.MoveDirectoryCommand;
@@ -187,6 +188,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(WaitForDumbCommand.PREFIX, WaitForDumbCommand::new),
       Map.entry(GoToNextPsiElement.PREFIX, GoToNextPsiElement::new),
       Map.entry(GoToNamedElementCommand.PREFIX, GoToNamedElementCommand::new),
+      Map.entry(MeasureSettingsDialogCommand.PREFIX, MeasureSettingsDialogCommand::new),
       Map.entry(MeasureVFSUpdateCommand.PREFIX, MeasureVFSUpdateCommand::new),
       Map.entry(StartInlineRenameCommand.PREFIX, StartInlineRenameCommand::new),
       Map.entry(FinishInlineRename.PREFIX, FinishInlineRename::new),

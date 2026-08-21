@@ -202,6 +202,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
 
   override fun onShown() {
     getUiEventLogger().logShowDialog(SettingsNonModalDialog::class.java)
+    SettingsDialogPerformanceTracker.finishDialogShown()
   }
 
   override fun onWindowDeactivated(): Unit = editor.recordWindowLeaveState()
