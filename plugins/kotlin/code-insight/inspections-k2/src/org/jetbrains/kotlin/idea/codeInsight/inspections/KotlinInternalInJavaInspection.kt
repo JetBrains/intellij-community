@@ -13,8 +13,8 @@ import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.javadoc.PsiInlineDocTag
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.lexer.KtTokens.INTERNAL_KEYWORD
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 
@@ -34,7 +34,7 @@ class KotlinInternalInJavaInspection : LocalInspectionTool() {
     private fun PsiElement.checkAndReport(holder: ProblemsHolder) {
         val lightElement = (this as? PsiReference)?.resolve() as? KtLightElement<*, *> ?: return
         val modifierListOwner = lightElement.kotlinOrigin as? KtModifierListOwner ?: return
-        if (inSameModule(modifierListOwner)) {
+        if (inSameModuleOrFriendDependency(modifierListOwner)) {
             return
         }
 
@@ -46,5 +46,9 @@ class KotlinInternalInJavaInspection : LocalInspectionTool() {
         }
     }
 
-    private fun PsiElement.inSameModule(element: PsiElement) = module?.equals(element.module) ?: true
+    private fun PsiElement.inSameModuleOrFriendDependency(element: PsiElement): Boolean {
+        val useSiteModule = getKaModule(project, useSiteModule = null)
+        val declarationModule = element.getKaModule(project, useSiteModule)
+        return declarationModule == useSiteModule || declarationModule in useSiteModule.directFriendDependencies
+    }
 }

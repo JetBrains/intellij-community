@@ -59,6 +59,19 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/multiFileInspections/kotlinInternalInJavaFriendModules")
+    public static class KotlinInternalInJavaFriendModules extends AbstractK2MultiFileInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("kotlinInternalInJavaFriendModules.test")
+        public void testKotlinInternalInJavaFriendModules() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileInspections/kotlinInternalInJavaFriendModules/kotlinInternalInJavaFriendModules.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiFileInspections/kotlinInternalInJavaTest")
     public static class KotlinInternalInJavaTest extends AbstractK2MultiFileInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
