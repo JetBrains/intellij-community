@@ -8,7 +8,6 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-const val TERMINAL_AI_AGENTS_REGISTRY_KEY: String = "terminal.agent.predefined.actions.enabled"
 private val DEFAULT_WINDOWS_EXECUTABLE_EXTENSIONS: List<String> = listOf("exe", "bat", "cmd", "ps1")
 
 @ApiStatus.Internal

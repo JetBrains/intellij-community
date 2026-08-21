@@ -24,7 +24,7 @@ class TerminalAgentsAvailabilityService(
   private var cachedAvailableAgents: List<TerminalAvailableAgentDto> = emptyList()
 
   fun getAvailableAgents(): List<TerminalAvailableAgentDto> {
-    return if (isTerminalAgentsEnabled()) cachedAvailableAgents else emptyList()
+    return cachedAvailableAgents
   }
 
   fun prewarm() {
@@ -36,7 +36,6 @@ class TerminalAgentsAvailabilityService(
   suspend fun refreshAvailableAgents(): List<TerminalAvailableAgentDto> {
     val availableAgents = when {
       project.isDisposed -> emptyList()
-      !isTerminalAgentsEnabled() -> emptyList()
       else -> {
         try {
           val allAgents = TerminalAgentResolver.listAvailableAgents(project)
