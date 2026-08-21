@@ -8,6 +8,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -175,6 +176,11 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
   public @Nls @NotNull String getCountMessage(int count) {
     if (myCountMessageTemplate != null) return BundleBase.format(myCountMessageTemplate.get(), count);
     return InspectionsBundle.message("custom.severity.count.message", count, myName);
+  }
+
+  @ApiStatus.Internal
+  public @Nullable Supplier<@Nls String> getCountMessageTemplate() {
+    return myCountMessageTemplate;
   }
 
   private @NotNull @Nls String getBundleMessage(@Nullable Supplier<@Nls String> messageSupplier) {
