@@ -78,6 +78,10 @@ internal fun updateProjectModel(preferences: GeneratorPreferences) {
             convertJpsToBazel(monorepoRoot)
         }
 
+        if (preferences.updateFleetProjectModel == true) {
+            updateFleetProjectModel(monorepoRoot)
+        }
+
         if (preferences.applyPatronusDenyList == true) {
             applyPatronusDenyList(monorepoRoot)
         }
@@ -134,6 +138,19 @@ private fun convertJpsToBazel(monorepoRoot: Path) {
 
     if (exitCode != 0) {
         exitWithErrorMessage("The JPS-to-Bazel converter has failed", exitCode)
+    }
+}
+
+private fun updateFleetProjectModel(monorepoRoot: Path) {
+    println("Updating Fleet project model...")
+    val exitCode = ProcessBuilder("fleet/build/generateProjectModel.cmd", "dump")
+        .directory(monorepoRoot.toFile())
+        .inheritIO()
+        .start()
+        .waitFor()
+
+    if (exitCode != 0) {
+        exitWithErrorMessage("The fleet project model generator has failed", exitCode)
     }
 }
 

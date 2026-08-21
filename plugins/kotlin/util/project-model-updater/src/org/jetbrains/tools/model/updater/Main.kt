@@ -66,6 +66,11 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val convertJpsToBazel: Boolean? by OptionalPreference(String::toBooleanStrictOrNull)
 
     /**
+     * Whether to update the Fleet project model dump.
+     */
+    val updateFleetProjectModel: Boolean?  by OptionalPreference(String::toBooleanStrictOrNull)
+
+    /**
      * Whether to patch the Patronus configuration file, excluding triggers for non-Kotlin checks.
      */
     val applyPatronusDenyList: Boolean? by OptionalPreference(String::toBooleanStrictOrNull)

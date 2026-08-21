@@ -67,6 +67,7 @@ internal fun updateProjectAndCommit(
         modifications + listOf(
             preferences::applicationMode.modify(GeneratorPreferences.ApplicationMode.PROJECT_MODEL_UPDATER),
             preferences::convertJpsToBazel.modify(true),
+            preferences::updateFleetProjectModel.modify(true),
         )
     )
 
