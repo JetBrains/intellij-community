@@ -32,6 +32,8 @@ spectre_test(
     deps = [
         "//libraries/compose-foundation-desktop",
         "//libraries/junit5",
+        "//platform/jewel/showcase-e2e:showcase-e2e-scenarios",
+        "//platform/jewel/samples/showcase",
         "//libraries/kotlinx/coroutines/core",
         "//platform/jewel/foundation",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",

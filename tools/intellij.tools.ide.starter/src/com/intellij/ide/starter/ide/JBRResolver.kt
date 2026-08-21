@@ -153,7 +153,11 @@ object JBRResolver {
 
   fun getRuntimeBuildVersion(): String {
     val jbrVersion = ConfigurationStorage.jbrVersionForDevServer() ?: run {
-      val jbrDependencyFile = GlobalPaths.instance.checkoutDir / "community" / "build" / "dependencies" / "dependencies.properties"
+      // "community" is a subdirectory only in an Ultimate checkout; in a standalone community checkout the
+      // checkout root already is the community root.
+      val checkout = GlobalPaths.instance.checkoutDir
+      val communityRoot = (checkout / "community").takeIf { java.nio.file.Files.isDirectory(it) } ?: checkout
+      val jbrDependencyFile = communityRoot / "build" / "dependencies" / "dependencies.properties"
       val props = Properties()
       Files.newBufferedReader(jbrDependencyFile).use { reader -> props.load(reader) }
       props.getProperty("runtimeBuild")

@@ -82,13 +82,13 @@ working, but do not be surprised by the flicker.
 Every Spectre target is tagged `requires-display`. That tag is both the CI routing hint and the escape hatch: a lane
 that genuinely has no display skips them with `--test_tag_filters=-requires-display`.
 
-### Scope: standalone only
+### Scope: standalone here, the bridge next door
 
-This lane covers **standalone** Jewel, and cannot be extended to the IJP bridge. Spectre automates a Compose Desktop
-window; inside the IDE a Jewel popup is a `JBPopup` hosting a `ComposePanel`, and the application under test is the
-IDE itself. So `JBPopupRenderer` and the other bridge renderers currently have **no headful coverage at all** — only
-the Compose UI unit tests in `ui-tests`. That gap is JEWEL-1397, which is IDE Starter / UI Driver work rather than
-Spectre work. Do not try to add a bridge test to `src/spectreTest`; it cannot run there.
+This lane covers **standalone** Jewel, and a bridge test cannot be added to `src/spectreTest`: Spectre automates a
+Compose Desktop window, whereas inside the IDE a Jewel popup is a `JBPopup` hosting a `ComposePanel` and the
+application under test is the IDE itself.
+
+The IDE is covered by a separate test that shares its scenarios with this lane. See [End-to-end tests](e2e-tests.md).
 
 ### Adding a Spectre test
 

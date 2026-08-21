@@ -39,6 +39,12 @@ import kotlin.io.path.pathString
 class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : IdeInstaller {
   private val projectRoot by lazy { Path.of(PathManager.getHomePath(false)) }
 
+  // community is a subdirectory only in an Ultimate checkout; in a standalone community checkout the project
+  // root already is the community root. Mirrors IdeaProjectLoaderUtil.guessCommunityHome.
+  private val communityRoot by lazy {
+    projectRoot.resolve("community").takeIf { java.nio.file.Files.isDirectory(it) } ?: projectRoot
+  }
+
   private data class InstallationCacheKey(
     val ideInfo: IdeInfo,
     val useDockerContainer: Boolean,
@@ -102,7 +108,7 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
       override val vmOptions: VMOptions = VMOptions(ide = this, data = defaultVmOptions, env = emptyMap())
 
       override val build: String
-        get() = Files.readString(projectRoot.resolve("community/build.txt")).trim()
+        get() = Files.readString(communityRoot.resolve("build.txt")).trim()
 
       override val os = OS.CURRENT
       override val productCode: String = ideInfo.productCode
@@ -130,8 +136,10 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
         }
         finalVMOptions.writeJavaArgsFile(argsFile)
 
-        val openedPackages = GlobalPaths.instance.checkoutDir
-          .resolve("community/platform/platform-impl/resources/META-INF/OpenedPackages.txt")
+        val openedPackagesRoot = GlobalPaths.instance.checkoutDir
+          .let { it.resolve("community").takeIf { c -> java.nio.file.Files.isDirectory(c) } ?: it }
+        val openedPackages = openedPackagesRoot
+          .resolve("platform/platform-impl/resources/META-INF/OpenedPackages.txt")
           .let { JavaModuleOptions.readOptions(it, if (ConfigurationStorage.useDockerContainer()) OS.Linux else OS.CURRENT) }
 
         val otherArgs = buildList {

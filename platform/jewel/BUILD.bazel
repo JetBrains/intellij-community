@@ -1,3 +1,4 @@
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
 
@@ -38,10 +39,42 @@ kt_jvm_import(
 )
 
 kt_jvm_import(
+    name = "spectre-agent-runtime",
+    testonly = True,
+    jar = "@jewel_deps_spectre_agent_runtime//file",
+    visibility = ["//visibility:private"],
+)
+
+# The bridge e2e lane hands the agent jar to the attacher as a runfiles path. Taken straight from the
+# external repo, that path carries the `+http_file+...` canonical repo name, and a `-D` flag holding it does
+# not survive Bazel's Windows launcher. Copying it into this package keeps the path under `_main`.
+copy_file(
+    name = "spectre-agent-runtime-jar",
+    testonly = True,
+    src = "@jewel_deps_spectre_agent_runtime//file",
+    out = "spectre-agent-runtime.jar",
+    visibility = ["//visibility:public"],
+)
+
+kt_jvm_import(
     name = "spectre-recording",
     testonly = True,
     jar = "@jewel_deps_spectre_recording//file",
     srcjar = "@jewel_deps_spectre_recording_sources//file",
+    visibility = ["//visibility:private"],
+)
+
+kt_jvm_import(
+    name = "spectre-input-coordinator",
+    testonly = True,
+    jar = "@jewel_deps_spectre_input_coordinator//file",
+    visibility = ["//visibility:private"],
+)
+
+kt_jvm_import(
+    name = "spectre-input-coordinator-server",
+    testonly = True,
+    jar = "@jewel_deps_spectre_input_coordinator_server//file",
     visibility = ["//visibility:private"],
 )
 
@@ -73,7 +106,12 @@ java_library(
         ":androidx-tracing-wire-desktop",
         ":kotlinx-coroutines-swing",
         ":spectre-agent",
+        ":spectre-input-coordinator",
+        ":spectre-input-coordinator-server",
         ":spectre-recording",
+        # The input coordinator serialises its protocol with kotlinx-serialization-json. The monorepo's copy
+        # is used rather than a second one, for the same reason Compose and coroutines are not exported.
+        "//libraries/kotlinx/serialization/json",
     ],
 )
 
@@ -102,5 +140,21 @@ java_library(
         "//libraries/junit5",
         "//libraries/junit5-jupiter",
         "//libraries/junit5-launcher",
+    ],
+)
+
+# Everything an out-of-process test needs to attach to a running Compose JVM. Deliberately separate
+# from `:spectre`, which is the in-process bundle: an attacher must not pull `spectre-core` in, or the
+# target would be driven in-process instead of over the agent's IPC.
+java_library(
+    name = "spectre-attach",
+    testonly = True,
+    visibility = ["//visibility:public"],
+    exports = [":spectre-agent"],
+    runtime_deps = [
+        ":spectre-agent-runtime",
+        ":spectre-input-coordinator",
+        ":spectre-input-coordinator-server",
+        "//libraries/kotlinx/serialization/json",
     ],
 )
