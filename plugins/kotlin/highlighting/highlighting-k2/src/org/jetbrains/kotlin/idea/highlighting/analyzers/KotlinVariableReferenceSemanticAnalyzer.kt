@@ -9,11 +9,12 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
-import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCallResolutionAttempt
+import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
@@ -58,7 +59,8 @@ internal class KotlinVariableReferenceSemanticAnalyzer(holder: HighlightInfoHold
             if (expression.parent is KtInstanceExpressionWithLabel) return
 
             val symbol =
-                ((expression as? KtResolvableCall)?.collectCallCandidates()?.singleOrNull()?.candidate as? KaSingleCall<*, *>)?.symbol
+                (((expression as? KtResolvableCall)
+                    ?.tryResolveCall() as? KaSingleCallResolutionAttempt)?.calls?.singleOrNull() as? KaSingleCall<*,*>)?.symbol
                     ?: expression.resolveSymbol()
             when (symbol) {
                 is KaBackingFieldSymbol -> highlightBackingField(symbol, expression)
