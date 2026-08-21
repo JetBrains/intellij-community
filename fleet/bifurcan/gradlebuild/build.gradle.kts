@@ -37,21 +37,37 @@ kotlin {
   jvm {}
   iosArm64 {}
   iosSimulatorArm64 {}
-  sourceSets.jvmMain.configure { resources.srcDir(layout.projectDirectory.dir("../resources")) }
-  sourceSets.commonMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain")) }
-  sourceSets.commonMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesCommonMain")) }
-  sourceSets.commonTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonTest")) }
-  sourceSets.commonTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesCommonTest")) }
-  sourceSets.jvmMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcJvmMain")) }
-  configureAtMostOneJvmTargetOrThrow { compilations.named("main") { withJavaSourceSet { javaSourceSet -> javaSourceSet.java.srcDir(layout.projectDirectory.dir("../srcJvmMain")) } } }
-  sourceSets.jvmMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesJvmMain")) }
-  sourceSets.jvmTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcJvmTest")) }
-  configureAtMostOneJvmTargetOrThrow { compilations.named("test") { withJavaSourceSet { javaSourceSet -> javaSourceSet.java.srcDir(layout.projectDirectory.dir("../srcJvmTest")) } } }
-  sourceSets.jvmTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesJvmTest")) }
-  sourceSets.iosMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcIosMain")) }
-  sourceSets.iosMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesIosMain")) }
-  sourceSets.iosTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcIosTest")) }
-  sourceSets.iosTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesIosTest")) }
+  sourceSets.jvmMain.configure {
+    kotlin.srcDir(layout.projectDirectory.dir("../srcJvmMain"))
+    resources.srcDir(layout.projectDirectory.dir("../resources"))
+    resources.srcDir(layout.projectDirectory.dir("../resourcesJvmMain"))
+  }
+  configureAtMostOneJvmTargetOrThrow { compilations.named("main") { withJavaSourceSet { javaSourceSet ->
+    javaSourceSet.java.srcDir(layout.projectDirectory.dir("../srcJvmMain"))
+  } } }
+  sourceSets.commonMain.configure {
+    kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain"))
+    resources.srcDir(layout.projectDirectory.dir("../resourcesCommonMain"))
+  }
+  sourceSets.commonTest.configure {
+    kotlin.srcDir(layout.projectDirectory.dir("../srcCommonTest"))
+    resources.srcDir(layout.projectDirectory.dir("../resourcesCommonTest"))
+  }
+  sourceSets.jvmTest.configure {
+    kotlin.srcDir(layout.projectDirectory.dir("../srcJvmTest"))
+    resources.srcDir(layout.projectDirectory.dir("../resourcesJvmTest"))
+  }
+  configureAtMostOneJvmTargetOrThrow { compilations.named("test") { withJavaSourceSet { javaSourceSet ->
+    javaSourceSet.java.srcDir(layout.projectDirectory.dir("../srcJvmTest"))
+  } } }
+  sourceSets.iosMain.configure {
+    kotlin.srcDir(layout.projectDirectory.dir("../srcIosMain"))
+    resources.srcDir(layout.projectDirectory.dir("../resourcesIosMain"))
+  }
+  sourceSets.iosTest.configure {
+    kotlin.srcDir(layout.projectDirectory.dir("../srcIosTest"))
+    resources.srcDir(layout.projectDirectory.dir("../resourcesIosTest"))
+  }
   sourceSets.commonMain.dependencies {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
