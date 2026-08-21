@@ -437,7 +437,7 @@ public final class JobLauncherImpl extends JobLauncher {
     boolean isQueueBounded = things.contains(tombStone);
     int remainingSize = things.size() + failedToProcess.size() - (isQueueBounded ? 1 : 0);
     // start up (CPU cores) parallel tasks but no more than (queue size)
-    int n = Math.clamp(isQueueBounded ? remainingSize : Integer.MAX_VALUE, 1, JobSchedulerImpl.getJobPoolParallelism() - 1);
+    int n = Math.clamp(isQueueBounded ? remainingSize : Integer.MAX_VALUE, 1, Math.max(1, myForkJoinPool.getParallelism() - 1));
     List<ForkJoinTask<Boolean>> tasks = new ArrayList<>(n-1);
     List<T> firstElements = new ArrayList<>(n);
     things.drainTo(firstElements, n);
@@ -488,4 +488,3 @@ public final class JobLauncherImpl extends JobLauncher {
     return invokeConcurrentlyUnderProgressAsync(items, progress, true, true, thingProcessor, runnable);
   }
 }
-
