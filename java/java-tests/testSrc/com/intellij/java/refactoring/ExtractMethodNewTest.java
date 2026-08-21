@@ -44,12 +44,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
-  @NonNls private static final String BASE_PATH = "/refactoring/extractMethodNew/";
+  private static final @NonNls String BASE_PATH = "/refactoring/extractMethodNew/";
   private boolean myCatchOnNewLine = true;
 
-  @NotNull
   @Override
-  protected String getTestDataPath() {
+  protected @NotNull String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
@@ -446,7 +445,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   public void testFinalOutputVar() {
     doDuplicatesTest();
   }
-  
+
   public void testGenerateFinalVar() {
     final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
     settings.GENERATE_FINAL_LOCALS = true;
@@ -563,6 +562,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testCompactRecordConstructor() {
+    doTest();
+  }
+
   public void testChainedConstructor() {
     doChainedConstructorTest(false);
   }
@@ -654,7 +657,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   public void testNullableCheckBreak() {
     doTest();
   }
-  
+
   public void testArrayInitializer() {
     doTest();
   }
