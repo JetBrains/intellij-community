@@ -14,13 +14,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelConnectionError
+import com.intellij.platform.eel.EelProxy
+import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.eelProxy
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.acceptOnTcpPort
+import com.intellij.platform.eel.provider.utils.asInetAddress
 import com.intellij.platform.eel.provider.utils.connectToTcpPort
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
@@ -277,11 +281,23 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
 
     val debugLabel = "mcp-wsl-fwd/${distro.msId}/$kind[ide=$idePort]"
 
+    // WSL1 distros share the Windows network stack: "loopback inside the distro" is Windows loopback, so
+    // forwarding buys nothing and the per-distro isolation this feature assumes does not exist there.
+    //
+    if (withContext(Dispatchers.IO) { distro.version } == 1) {
+      LOG.info("$debugLabel: skipping WSL1 distro '${distro.msId}' — it shares the Windows network stack")
+      return
+    }
+
     // Resolve the remote EelApi for this WSL distribution via public API only:
     //   WSLDistribution -> UNC root path -> EelDescriptor -> EelApi
-    // In mirrored networking mode the resolved EelApi's tunnels transparently delegate to
-    // localEel.tunnels (see WslEelMachine.toEelApi), and eelProxy() short-circuits accept+connect on
-    // the same EelTunnelsApi via _fakeProxyPossible — so this path is a no-op there.
+    //
+    // TODO: skip mirrored networking mode explicitly (IJPL-232933, security review finding F3).
+    //  In mirrored mode `WslEelMachine.toEelApi` swaps in a tunnels implementation that delegates *both*
+    //  accept and connect to localEel.tunnels, and eelProxy()'s `_fakeProxyPossible` short-circuit does not
+    //  fire for the reverse (accept-remote / connect-local) direction because the acceptor's descriptor is
+    //  not LocalEelDescriptor. The result is a redundant Windows-side loopback listener, not the intended
+    //  no-op. Detection lives in the platform (`isMirroredMode`) but is `internal` today.
     val descriptor = distro.getUNCRootPath().getEelDescriptor()
     if (descriptor === LocalEelDescriptor) {
       LOG.warn("$debugLabel: could not resolve WSL EelDescriptor for '${distro.msId}'; " +
@@ -294,26 +310,29 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
     val preferredPort = idePort.toUShort()
 
     val proxy = try {
-      eelProxy()
-        .acceptOnTcpPort(remoteEel.tunnels, port = preferredPort)
-        .connectToTcpPort(localEel.tunnels, port = idePort.toUShort())
-        .debugLabel(debugLabel)
-        .eelIt()
+      acceptInDistro(remoteEel, bindPort = preferredPort, idePort = idePort, debugLabel = debugLabel)
     }
     catch (e: EelConnectionError) {
       LOG.info("$debugLabel: could not bind in-distro port $preferredPort ($e); " +
                "retrying with an ephemeral port")
       // TODO: expose the ephemeral-port mapping to the discovery layer so
       //  WSL clients can find the actual forwarded port.
-      eelProxy()
-        .acceptOnTcpPort(remoteEel.tunnels, port = 0u)
-        .connectToTcpPort(localEel.tunnels, port = idePort.toUShort())
-        .debugLabel(debugLabel)
-        .eelIt()
+      acceptInDistro(remoteEel, bindPort = 0u, idePort = idePort, debugLabel = debugLabel)
     }
 
-    val boundPort = proxy.acceptor.boundAddress.port
-    LOG.info("$debugLabel: acceptor bound inside distro on 127.0.0.1:$boundPort → localhost:$idePort")
+    // Security invariant (IJPL-200926): the endpoint must stay loopback-only. `hostname` in the accept
+    // request is resolved *inside* the distro, so a broken or hostile /etc/hosts (or a future Eel change)
+    // could still land the acceptor on eth0 — an address that is reachable from the Windows host and from
+    // every other running WSL2 distro, and that is LAN-routable under `networkingMode=bridged`. Verify the
+    // address we actually got instead of trusting the request, and refuse to serve on anything else.
+    val boundAddress = proxy.acceptor.boundAddress.asInetAddress()
+    if (!boundAddress.address.isLoopbackAddress) {
+      LOG.warn("$debugLabel: refusing to expose the IDE endpoint — acceptor bound to non-loopback " +
+               "address $boundAddress inside '${distro.msId}'")
+      proxy.acceptor.close()
+      return
+    }
+    LOG.info("$debugLabel: acceptor bound inside distro on $boundAddress → localhost:$idePort")
 
     try {
       proxy.runForever()
@@ -330,9 +349,26 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
       throw e
     }
     finally {
-      LOG.info("$debugLabel: acceptor on 127.0.0.1:$boundPort closed")
+      LOG.info("$debugLabel: acceptor on $boundAddress closed")
     }
   }
+
+  /**
+   * Opens the in-distro acceptor and wires it to the IDE-side loopback port.
+   *
+   * The accept side is pinned to the literal [LOOPBACK_V4] rather than the `localhost` default of
+   * [acceptOnTcpPort]: the hostname is resolved by the distro, and this is the only bind in the whole path
+   * that faces a network the IDE does not control.
+   *
+   * @param bindPort port to bind inside the distro, or `0` to let the distro pick an ephemeral one.
+   */
+  @ThrowsChecked(EelConnectionError::class)
+  private suspend fun acceptInDistro(remoteEel: EelApi, bindPort: UShort, idePort: Int, debugLabel: String): EelProxy =
+    eelProxy()
+      .acceptOnTcpPort(remoteEel.tunnels, host = LOOPBACK_V4, port = bindPort)
+      .connectToTcpPort(localEel.tunnels, port = idePort.toUShort())
+      .debugLabel(debugLabel)
+      .eelIt()
 
   // ---------------------------------------------------------------------------
   // Signal accessors.
@@ -376,9 +412,6 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
   // Helpers
   // ---------------------------------------------------------------------------
 
-  private suspend fun coroutineContextJob(): Job =
-    kotlin.coroutines.coroutineContext[Job] ?: error("no Job in coroutine context")
-
   private fun CoroutineScope.coroutineContextJob(): Job =
     this.coroutineContext[Job] ?: error("no Job in coroutine context")
 
@@ -388,6 +421,14 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
      * released builds until the design has soaked.
      */
     const val FORWARDER_REGISTRY_KEY: String = "ide.mcp.wsl.forward.enabled"
+
+    /**
+     * The only address the in-distro acceptor is ever allowed to bind. A literal is used on purpose: the
+     * `localhost` default of [acceptOnTcpPort] is resolved inside the distro and is therefore attacker- and
+     * misconfiguration-controlled (on a stock Ubuntu-22.04 distro `getent hosts localhost` already answers
+     * `::1`, not `127.0.0.1`).
+     */
+    private const val LOOPBACK_V4: String = "127.0.0.1"
 
     /** Debounce window applied per-distro to coalesce reconcile requests. */
     private val RECONCILE_DEBOUNCE = 200.milliseconds
