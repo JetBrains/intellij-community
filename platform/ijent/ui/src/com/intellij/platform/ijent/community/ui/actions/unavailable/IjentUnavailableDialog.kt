@@ -29,7 +29,6 @@ import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerRes
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult.ProjectCloseDecision
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult.UnrelatedIjent
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
-import com.intellij.platform.ijent.community.ui.actions.dashboard.IjentStatCounter
 import com.intellij.platform.ijent.community.ui.actions.dashboard.IjentStatDashboard
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
@@ -38,15 +37,13 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.computeDetached
-import kotlinx.coroutines.DelicateCoroutinesApi
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
@@ -193,13 +190,10 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
   }
 
   private fun Panel.createStatPanel(eventBus: IjentEventBus, eelApi: EelApi) {
-    val stat = IjentStatCounter()
+    val stat = eventBus.counter
     val statTab = IjentStatDashboard(stat).launchOnShow()
-    statTab.launchOnShow("ijent stats") {
-      stat.process(eventBus) {
-        launch { makePingRequest(eelApi) }
-        awaitCancellation()
-      }
+    statTab.launchOnShow("ping request") {
+      makePingRequest(eelApi)
     }
     collapsibleGroup(IjentImplBundle.message("tab.title.ijent.dashboard.stat")) {
       row {

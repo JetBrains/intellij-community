@@ -1,37 +1,24 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent.community.ui.actions.dashboard
+package com.intellij.platform.ijent
 
-import com.intellij.platform.ijent.IjentEventBus
-import com.intellij.platform.ijent.IjentEventBusListener
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.LongAdder
 
-internal class IjentStatCounter {
+class IjentStatCounter {
 
   private val methods = ConcurrentHashMap<String, IjentMethodStatAcc>()
 
-  val listener: IjentEventBusListener = object : IjentEventBusListener {
-    override fun started(method: String, nanoTimeStart: Long) {
-      methods.computeIfAbsent(method) { IjentMethodStatAcc() }.onStarted(nanoTimeStart)
-    }
-    override fun finished(method: String, nanoTimeStart: Long, status: Int, nanoTimeFinish: Long) {
-      methods.computeIfAbsent(method) { IjentMethodStatAcc() }.onFinished(nanoTimeStart, nanoTimeFinish)
-    }
+  fun started(method: String, nanoTimeStart: Long) {
+    methods.computeIfAbsent(method) { IjentMethodStatAcc() }.onStarted(nanoTimeStart)
   }
 
-  inline fun <T> process(eventBus: IjentEventBus, f: () -> T): T {
-    eventBus.addListener(listener)
-    return try {
-      f()
-    }
-    finally {
-      eventBus.removeListener(listener)
-    }
+  fun finished(method: String, nanoTimeStart: Long, status: Int, nanoTimeFinish: Long) {
+    methods.computeIfAbsent(method) { IjentMethodStatAcc() }.onFinished(nanoTimeStart, nanoTimeFinish)
   }
 
   // All the snapshot is weakly consistent because all values are updated atomically.
-  internal fun snapshot(): Map<String, IjentMethodStat> {
+  fun snapshot(): Map<String, IjentMethodStat> {
     return methods.mapValues { (_, value) ->
       val finishedBefore = value.totalCallsFinished.sum()
       val startedBefore = value.totalCallsStarted.sum()
@@ -68,6 +55,7 @@ internal class IjentMethodStatAcc {
   val totalNanos = LongAdder()
   val lastOperationDurationNanos = AtomicLong(-1L)
   val lastOperationFinishedNanos = AtomicLong(-1L)
+
   // if more than 4 grpc operations simultaneous, we can lose information about the duration of the oldest one
   val notFinishedOperationsStartNanos = StripedList(4)
 
@@ -86,13 +74,13 @@ internal class IjentMethodStatAcc {
   }
 }
 
-internal data class PendingCalls(
+data class PendingCalls(
   val count: Long,
   val oldestStartNanos: Long?,
   val oldestStartIsExact: Boolean,
 )
 
-internal data class IjentMethodStat(
+data class IjentMethodStat(
   val totalCallsFinished: Long,
   val totalNanos: Long,
   val lastOperationDurationNanos: Long?,

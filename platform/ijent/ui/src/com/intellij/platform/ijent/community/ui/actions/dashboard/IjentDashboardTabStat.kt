@@ -3,7 +3,9 @@ package com.intellij.platform.ijent.community.ui.actions.dashboard
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ijent.IjentApi
+import com.intellij.platform.ijent.IjentMethodStat
 import com.intellij.platform.ijent.IjentSession
+import com.intellij.platform.ijent.IjentStatCounter
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
@@ -14,7 +16,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.awaitCancellation
 import java.awt.Font
 import javax.swing.JComponent
 import kotlin.time.Duration
@@ -27,15 +28,7 @@ internal class IjentDashboardTabStat : IjentDashboardTab {
     get() = IjentImplBundle.message("tab.title.ijent.dashboard.stat")
 
   override fun createComponent(projects: List<Project>, ijentApi: IjentApi, ijentSession: IjentSession, parentComponent: JComponent?): JComponent {
-    val stat = IjentStatCounter()
-    val result = IjentStatDashboard(stat).launchOnShow()
-    val scopeComponent = parentComponent ?: result
-    scopeComponent.launchOnShow("listen statistics") {
-      stat.process(ijentSession.eventBus) {
-        awaitCancellation()
-      }
-    }
-    return result
+    return IjentStatDashboard(ijentSession.eventBus.counter).launchOnShow()
   }
 }
 
