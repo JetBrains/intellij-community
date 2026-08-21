@@ -62,7 +62,7 @@ import static com.intellij.openapi.util.Pair.pair;
  * <p/>
  * For removal in version 24.3
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
 @Deprecated(forRemoval = true)
 @State(
   name = "HttpConfigurable",
@@ -154,9 +154,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
     HttpConfigurable state = new HttpConfigurable();
     XmlSerializerUtil.copyBean(this, state);
-    if (!KEEP_PROXY_PASSWORD) {
-      removeSecure("proxy.password");
-    }
+    if (!KEEP_PROXY_PASSWORD) removeSecure();
     correctPasswords(state);
     return state;
   }
@@ -187,9 +185,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   @Override
   public void loadState(@NotNull HttpConfigurable state) {
     XmlSerializerUtil.copyBean(state, this);
-    if (!KEEP_PROXY_PASSWORD) {
-      removeSecure("proxy.password");
-    }
+    if (!KEEP_PROXY_PASSWORD) removeSecure();
     correctPasswords(this);
   }
 
@@ -252,28 +248,67 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   @Deprecated(forRemoval = true)
   @Transient
   public @Nullable String getProxyLogin() {
-    return getSecure("proxy.login");
-  }
-
-  /// @deprecated use [ProxyCredentialStore#setCredentials] instead
-  @Deprecated(forRemoval = true)
-  @Transient
-  public void setProxyLogin(String login) {
-    storeSecure("proxy.login", login);
+    var credentials = readCredentials();
+    return credentials != null ? credentials.getUserName() : null;
   }
 
   /// @deprecated use [ProxyCredentialStore#getCredentials] instead
   @Deprecated(forRemoval = true)
   @Transient
   public @Nullable String getPlainProxyPassword() {
-    return getSecure("proxy.password");
+    var credentials = readCredentials();
+    return credentials != null ? credentials.getPasswordAsString() : null;
+  }
+
+  /// @deprecated use [ProxyCredentialStore#getCredentials] instead
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
+  @Transient
+  public @Nullable Credentials readCredentials() {
+    try {
+      synchronized (myProxyCredentials) {
+        var props = myProxyCredentials.getValue();
+        var login = props.getProperty("proxy.login", null);
+        var password = props.getProperty("proxy.password", null);
+        if (login != null && !login.isEmpty()) {
+          return new Credentials(login, password == null || password.isEmpty() ? null : password);
+        }
+      }
+    }
+    catch (Exception e) {
+      LOG.info(e);
+    }
+    return null;
   }
 
   /// @deprecated use [ProxyCredentialStore#setCredentials] instead
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   @Transient
-  public void setPlainProxyPassword (String password) {
-    storeSecure("proxy.password", password);
+  public void writeCredentials(@Nullable Credentials credentials) {
+    try {
+      synchronized (myProxyCredentials) {
+        var properties = myProxyCredentials.getValue();
+        if (credentials != null && credentials.getUserName() != null) {
+          properties.setProperty("proxy.login", credentials.getUserName());
+          var password = credentials.getPasswordAsString();
+          if (password == null || password.isEmpty()) {
+            properties.remove("proxy.password");
+          }
+          else {
+            properties.setProperty("proxy.password", password);
+          }
+        }
+        else {
+          properties.remove("proxy.login");
+          properties.remove("proxy.password");
+        }
+        myEncryptionSupport.store(properties, "Proxy Credentials", PROXY_CREDENTIALS_FILE);
+      }
+    }
+    catch (Exception e) {
+      LOG.info(e);
+    }
   }
 
   private static String decode(String value) {
@@ -508,43 +543,12 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
-  private String getSecure(String key) {
+  private void removeSecure() {
     try {
       synchronized (myProxyCredentials) {
-        final Properties props = myProxyCredentials.getValue();
-        return props.getProperty(key, null);
-      }
-    }
-    catch (Exception e) {
-      LOG.info(e);
-    }
-    return null;
-  }
-
-  private void storeSecure(String key, @Nullable String value) {
-    if (value == null) {
-      removeSecure(key);
-      return;
-    }
-
-    try {
-      synchronized (myProxyCredentials) {
-        final Properties props = myProxyCredentials.getValue();
-        props.setProperty(key, value);
-        myEncryptionSupport.store(props, "Proxy Credentials", PROXY_CREDENTIALS_FILE);
-      }
-    }
-    catch (Exception e) {
-      LOG.info(e);
-    }
-  }
-
-  private void removeSecure(String key) {
-    try {
-      synchronized (myProxyCredentials) {
-        final Properties props = myProxyCredentials.getValue();
-        props.remove(key);
-        myEncryptionSupport.store(props, "Proxy Credentials", PROXY_CREDENTIALS_FILE);
+        var properties = myProxyCredentials.getValue();
+        properties.remove("proxy.password");
+        myEncryptionSupport.store(properties, "Proxy Credentials", PROXY_CREDENTIALS_FILE);
       }
     }
     catch (Exception e) {
