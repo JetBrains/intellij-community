@@ -79,6 +79,7 @@ interface TestContainer {
           .enableAsyncProfiler()
           .applyVMOptionsPatch {
             overrideDirectories(context.paths)
+            addSystemProperty("ide.default.smooth.caret.enabled", true)
             if (isUnderDebug()) {
               debug(PortUtil.getAvailablePort(proposedPort = 5010), suspend = false)
             }
