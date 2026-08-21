@@ -677,7 +677,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     span("checkTrustedState") {
-      if (!checkTrustedState(projectIdentityFile)) {
+      if (!checkTrustedState(projectIdentityFile, options.projectName)) {
         LOG.info("Project is not trusted, aborting")
         if (options.showWelcomeScreen) {
           WelcomeFrame.showIfNoProjectOpened()
@@ -1571,13 +1571,15 @@ interface ProjectServiceContainerCustomizer {
 /**
  * Checks if the project path is trusted and shows the Trust Project dialog if needed.
  *
+ * @param projectName optional name to open the project with. If null, the project's store directory name is used.
  * @return true, if we should proceed with project opening, false if the process of project opening should be canceled.
  */
-internal suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
+internal suspend fun checkTrustedState(projectStoreBaseDir: Path, projectName: String? = null): Boolean {
+  val displayName = projectName ?: projectStoreBaseDir.fileName?.toString() ?: projectStoreBaseDir.toString()
   return confirmOpeningOrLinkingUntrustedProject(
     projectRoot = projectStoreBaseDir,
     project = null,
-    title = IdeBundle.message("untrusted.project.open.dialog.title", projectStoreBaseDir.fileName ?: projectStoreBaseDir.toString())
+    title = IdeBundle.message("untrusted.project.open.dialog.title", displayName)
   )
 }
 
