@@ -1,7 +1,7 @@
 <idea-plugin>
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.json.backend"/>
+    <module name="intellij.json"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.jackson"/>
     <module name="intellij.libraries.jackson.databind"/>
@@ -70,7 +70,4 @@
     <extensionPoint qualifiedName="com.intellij.internal.statistic.devkit.toolwindow.logGroupActionsProvider"
                     interface="com.intellij.platform.statistics.devkit.toolwindow.StatisticsLogGroupActionsProvider" dynamic="true"/>
   </extensionPoints>
-  <extensions defaultExtensionNs="JavaScript.JsonSchema">
-    <ProviderFactory implementation="com.intellij.platform.statistics.devkit.actions.scheme.EventsSchemeJsonSchemaProviderFactory"/>
-  </extensions>
 </idea-plugin>

@@ -6,17 +6,22 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.json.psi.JsonFile
 import com.intellij.json.psi.JsonProperty
 import com.intellij.json.psi.JsonPsiUtil
 import com.intellij.json.psi.JsonStringLiteral
 import com.intellij.openapi.editor.EditorModificationUtil
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.NotNull
 
+internal val EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY = Key.create<Boolean>("statistics.events.test.scheme.validation.rules.file")
+
 private val utilsRules = hashSetOf("class_name", "lang", "plugin_type", "plugin", "plugin_version", "current_file", "place",
                                    "hash", "shortcut", "file_type", "action", "toolwindow")
 internal val PREFIXES = listOf("{util#}", "{util:}", "{enum#}", "{enum:}", "{regexp#}", "{regexp:}", "{default_value:}", "{required:}")
+internal val TOP_LEVEL_PROPERTIES = listOf("event_id", "event_data")
 
 internal class ValidationRulesCompletionContributor : CompletionContributor() {
 
@@ -28,7 +33,12 @@ internal class ValidationRulesCompletionContributor : CompletionContributor() {
     val parent = element.originalElement.parent as? JsonStringLiteral ?: return
 
     val dataFieldProperty = PsiTreeUtil.getParentOfType(parent, JsonProperty::class.java, true) ?: return
-    if (JsonPsiUtil.isPropertyKey(parent)) return
+    if (JsonPsiUtil.isPropertyKey(parent)) {
+      if (dataFieldProperty.parent.parent is JsonFile) {
+        result.addAllElements(TOP_LEVEL_PROPERTIES.map { LookupElementBuilder.create(it) })
+      }
+      return
+    }
     val dataProperty = PsiTreeUtil.getParentOfType(dataFieldProperty, JsonProperty::class.java, true)
     if (dataFieldProperty.name != "event_id" && dataProperty?.name != "event_data") return
     val resultSet = patchPrefix(element, parameters, result)

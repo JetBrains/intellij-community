@@ -888,6 +888,11 @@
         DumpGroovyControlFlowAction
       DetectProjectLeaks
       TestJbProtocolCommand
+      FeatureUsage.Internal
+        OpenStatisticsEventLogAction
+        RecordStateCollectors
+        AddGroupToTestSchemeAction
+        CollectFUStatisticsAction
       Vcs.Internal
         Vcs.Log.Internal
           Vcs.Log.InvalidateCaches
@@ -930,11 +935,6 @@
         SetCurrentLessonAsPassed
         ResetOnboardingFeedbackState
         ShowDemoAltClickPromoter
-      FeatureUsage.Internal
-        OpenStatisticsEventLogAction
-        RecordStateCollectors
-        AddGroupToTestSchemeAction
-        CollectFUStatisticsAction
       PythonGenerateDictionaries
       Internal.Python
         PyUpdateProjectSdk
