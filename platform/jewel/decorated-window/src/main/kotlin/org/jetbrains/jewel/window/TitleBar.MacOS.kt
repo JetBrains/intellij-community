@@ -18,7 +18,7 @@ import org.jetbrains.jewel.window.utils.WindowMouseEventEffect
 /**
  * Enables or disables the macOS "new fullscreen controls" (the three colored circles displayed in the upper-left corner
  * of a window in fullscreen mode). When enabled, the background color of the controls is taken from
- * [TitleBarColors.fullscreenControlButtonsBackground].
+ * [org.jetbrains.jewel.window.styling.TitleBarColors.fullscreenControlButtonsBackground].
  *
  * @param newControls Whether to use the new fullscreen controls. Defaults to `true`.
  */

@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.ui.component.interactions
 
 import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.performKeyInput
@@ -38,7 +37,6 @@ private val CHAR_KEY_MAP = buildMap {
     put(' ', Key.Spacebar)
 }
 
-@OptIn(ExperimentalTestApi::class)
 internal fun SemanticsNodeInteraction.performKeyPress(
     key: Key,
     ctrl: Boolean = false,
@@ -65,7 +63,6 @@ internal fun SemanticsNodeInteraction.performKeyPress(
     rule?.waitForIdle()
 }
 
-@OptIn(ExperimentalTestApi::class)
 internal fun SemanticsNodeInteraction.performKeyPress(
     letter: Char,
     duration: Long = 50L,
@@ -83,7 +80,6 @@ internal fun SemanticsNodeInteraction.performKeyPress(
     return result
 }
 
-@OptIn(ExperimentalTestApi::class)
 internal fun SemanticsNodeInteraction.performKeyPress(
     text: String,
     duration: Long = 50L,

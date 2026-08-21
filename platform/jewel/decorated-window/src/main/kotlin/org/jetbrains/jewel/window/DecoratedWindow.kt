@@ -96,7 +96,7 @@ public fun DecoratedWindow(
         }
     }
 
-    // Using undecorated window for linux
+    // Using undecorated window for Linux
     val undecorated = DesktopPlatform.Linux == DesktopPlatform.Current
 
     Window(

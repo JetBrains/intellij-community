@@ -1,4 +1,5 @@
 @file:Suppress("RAW_RUN_BLOCKING", "SSBasedInspection")
+
 package org.jetbrains.jewel.scripts.bazel
 
 import com.github.ajalt.clikt.command.SuspendingCliktCommand
@@ -31,8 +32,8 @@ internal fun buildApiCheckCommand(): String = "./tests.cmd --module $TEST_MODULE
 /**
  * Builds the shell script that runs [command] and tees its output to [outputFile], from [repoRoot].
  *
- * The pipeline's exit status must be [command]'s and not tee's, hence `pipefail`; `errexit` makes a failing `cd`
- * fatal, too.
+ * The pipeline's exit status must be [command]'s and not tee's, hence `pipefail`; `errexit` makes a failing `cd` fatal,
+ * too.
  */
 internal fun buildApiCheckScript(repoRoot: File, outputFile: File, command: String): String =
     """

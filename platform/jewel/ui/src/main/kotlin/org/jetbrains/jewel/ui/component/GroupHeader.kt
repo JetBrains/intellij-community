@@ -22,7 +22,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalGroupHeaderStyle
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/group-header.html)
  *
  * **Usage example:**
- * [`Borders.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/standalone/src/main/kotlin/org/jetbrains/jewel/samples/standalone/view/component/Borders.kt)
+ * [`Borders.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Borders.kt)
  *
  * **Swing equivalent:**
  * [`TitledSeparator`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/TitledSeparator.java)

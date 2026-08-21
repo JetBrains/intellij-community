@@ -20,6 +20,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.JBUI
 import org.jetbrains.jewel.bridge.toComposeColor
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.intui.markdown.bridge.ProvideMarkdownStyling
@@ -27,6 +28,7 @@ import org.jetbrains.jewel.markdown.Markdown
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 
+@OptIn(ExperimentalJewelApi::class)
 @Composable
 internal fun MarkdownShowcaseTab(project: Project) {
     VerticallyScrollableContainer {

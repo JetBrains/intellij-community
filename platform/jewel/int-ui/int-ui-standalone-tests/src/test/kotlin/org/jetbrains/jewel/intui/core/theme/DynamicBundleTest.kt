@@ -7,7 +7,7 @@ import kotlin.test.assertTrue
 import org.jetbrains.jewel.intui.standalone.bundle.DynamicBundle
 import org.junit.jupiter.api.Test
 
-private val MNEMONIC = 0x1B.toChar().toString()
+private const val MNEMONIC = 0x1B.toChar().toString()
 
 internal class DynamicBundleTest {
     private val testBundle = DynamicBundle(DynamicBundle::class.java, "messages.TestBundle")

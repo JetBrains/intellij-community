@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import org.jetbrains.jewel.ui.component.CircularProgressIndicator
 import org.jetbrains.jewel.ui.component.CircularProgressIndicatorBig
@@ -45,7 +46,7 @@ public fun ProgressBar(modifier: Modifier = Modifier) {
     var intermittentProgress by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(Unit) {
         while (true) {
-            delay(800)
+            delay(800.milliseconds)
             if (intermittentProgress >= .9) {
                 intermittentProgress = 0f
             } else {

@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.util.messages.impl.subscribeAsFlow
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,10 +55,14 @@ internal class SwingBridgeReader {
         while (counter < 20) {
             delay(20.milliseconds)
             counter++
-            runCatching { readThemeData() }
-                .onSuccess {
-                    return it
-                }
+            try {
+                return readThemeData()
+            } catch (e: CancellationException) {
+                // Covers ProcessCanceledException too; must never be swallowed by the retry loop
+                throw e
+            } catch (_: Exception) {
+                // Theme data isn't available yet: keep retrying
+            }
         }
         return readThemeData()
     }

@@ -25,6 +25,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -34,7 +36,7 @@ import kotlinx.coroutines.launch
 internal fun JewelTooltipArea(
     tooltip: @Composable () -> Unit,
     modifier: Modifier = Modifier,
-    delayMillis: Int = 500,
+    delayDuration: Duration = 500.milliseconds,
     tooltipPlacement: TooltipPlacement = TooltipPlacement.CursorPoint(offset = DpOffset(0.dp, 16.dp)),
     cornerSize: CornerSize = ZeroCornerSize,
     content: @Composable () -> Unit,
@@ -51,7 +53,7 @@ internal fun JewelTooltipArea(
         }
         job =
             scope.launch {
-                delay(delayMillis.toLong())
+                delay(delayDuration)
                 isVisible = true
             }
     }

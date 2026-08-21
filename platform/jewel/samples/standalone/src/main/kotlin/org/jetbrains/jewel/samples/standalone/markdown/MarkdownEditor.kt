@@ -21,9 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import java.awt.Component
 import java.awt.Frame
-import java.io.File
+import java.nio.file.Path
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
+import kotlin.io.path.extension
+import kotlin.io.path.readText
 import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation
@@ -95,7 +97,7 @@ private fun Editor(state: TextFieldState, modifier: Modifier = Modifier) {
     }
 }
 
-private fun pickMarkdownFile(component: Component): File? {
+private fun pickMarkdownFile(component: Component): Path? {
     val fileChooser =
         JFileChooser().apply {
             @Suppress("HardCodedStringLiteral")
@@ -107,7 +109,7 @@ private fun pickMarkdownFile(component: Component): File? {
         }
 
     return if (fileChooser.showOpenDialog(component) == JFileChooser.APPROVE_OPTION) {
-        fileChooser.selectedFile.takeIf { it.extension == "md" }
+        fileChooser.selectedFile.toPath().takeIf { it.extension == "md" }
     } else {
         null
     }

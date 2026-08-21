@@ -252,7 +252,7 @@ public class BannerMetrics(
     }
 
     override fun toString(): String =
-        "BannerMetrics(" + "borderWidth=$borderWidth, " + "cornerSize=$cornerSize, " + "padding=$padding" + ")"
+        "BannerMetrics(borderWidth=$borderWidth, cornerSize=$cornerSize, padding=$padding)"
 
     /** Companion object for [BannerMetrics]. */
     public companion object

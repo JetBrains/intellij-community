@@ -40,8 +40,8 @@ public class TreeBuilder<T> : TreeGeneratorScope<T> {
             }
 
             override fun hashCode(): Int {
-                var result = data?.hashCode() ?: 0
-                result = 31 * result + (id?.hashCode() ?: 0)
+                var result = data.hashCode()
+                result = 31 * result + id.hashCode()
                 return result
             }
 
@@ -71,8 +71,8 @@ public class TreeBuilder<T> : TreeGeneratorScope<T> {
             }
 
             override fun hashCode(): Int {
-                var result = data?.hashCode() ?: 0
-                result = 31 * result + (id?.hashCode() ?: 0)
+                var result = data.hashCode()
+                result = 31 * result + id.hashCode()
                 result = 31 * result + childrenGenerator.hashCode()
                 return result
             }
@@ -225,7 +225,7 @@ public class ChildrenGeneratorScope<T>(private val parentElement: Tree.Element.N
         override fun hashCode(): Int {
             var result = depth
             result = 31 * result + index
-            result = 31 * result + (data?.hashCode() ?: 0)
+            result = 31 * result + data.hashCode()
             return result
         }
 

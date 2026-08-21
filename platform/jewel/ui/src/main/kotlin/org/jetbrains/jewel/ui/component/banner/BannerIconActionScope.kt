@@ -82,7 +82,7 @@ private class BannerActionIcon(
 
     override fun hashCode(): Int {
         var result = icon.hashCode()
-        result = 31 * result + (contentDescription?.hashCode() ?: 0)
+        result = 31 * result + contentDescription.hashCode()
         result = 31 * result + tooltipText.hashCode()
         result = 31 * result + onClick.hashCode()
         return result

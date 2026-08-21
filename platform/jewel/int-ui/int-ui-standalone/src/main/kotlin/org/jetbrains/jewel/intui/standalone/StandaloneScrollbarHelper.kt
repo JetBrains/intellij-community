@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.intui.standalone
 
-import com.sun.jna.Callback
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
@@ -18,8 +17,8 @@ import org.jetbrains.skiko.hostOs
  * Provides access to platform-specific scrollbar settings and observes changes to those settings.
  *
  * This interface abstracts scrollbar behavior and visibility preferences that are configured at the operating system
- * level. On macOS, it reads and observes NSScroller preferences. On other platforms, it provides default fallback
- * values.
+ * level. On macOS, it reads and observes the scroller style from `NSScroller` and the track click behavior from
+ * `NSUserDefaults`. On other platforms, it provides default fallback values.
  *
  * The companion object automatically delegates to the appropriate implementation based on the current platform.
  */
@@ -52,15 +51,17 @@ private val scrollbarService by lazy { StandaloneScrollbarHelper() }
 
 /**
  * macOS-specific implementation of [ScrollbarHelper] that reads scrollbar preferences from the system and observes
- * changes via NSNotificationCenter.
+ * changes to them.
  *
- * This class implements [Callback] to receive notifications from macOS when scrollbar-related system preferences
- * change, including:
+ * Both reading and observing are delegated to [MacPlatformServices]; the native `NSNotificationCenter` observer and its
+ * JNA callback live in [MacPlatformServices.onPreferencesChanged]. The observed preferences are:
  * - Scrollbar visibility style (always visible vs. overlay/when scrolling)
  * - Track click behavior (jump to spot vs. next page)
  *
- * When a notification is received, the [callback] method is invoked, which updates the internal state flows that
- * consumers can observe reactively.
+ * When a change notification arrives, [scrollbarVisibilityStyleFlow] and [trackClickBehaviorFlow] are both refreshed
+ * from the system, so consumers observing them see the new values.
+ *
+ * @param macPlatformServices The platform services used to read the preferences and register the native observer.
  */
 @ApiStatus.Internal
 @InternalJewelApi

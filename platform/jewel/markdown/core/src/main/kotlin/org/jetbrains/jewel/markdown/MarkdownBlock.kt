@@ -92,7 +92,7 @@ public sealed interface MarkdownBlock {
 
             override fun hashCode(): Int {
                 var result = content.hashCode()
-                result = 31 * result + (language?.hashCode() ?: 0)
+                result = 31 * result + language.hashCode()
                 return result
             }
 

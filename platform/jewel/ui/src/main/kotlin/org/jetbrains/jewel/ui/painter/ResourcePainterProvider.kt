@@ -24,7 +24,6 @@ import javax.xml.transform.TransformerException
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.decodeToImageBitmap
 import org.jetbrains.compose.resources.decodeToImageVector
 import org.jetbrains.compose.resources.decodeToSvgPainter
@@ -148,7 +147,6 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
         return null
     }
 
-    @OptIn(ExperimentalResourceApi::class)
     @Composable
     private fun createSvgPainter(scope: Scope, url: URL): Painter =
         tryLoadingResource(
@@ -183,7 +181,6 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
         }
     }
 
-    @OptIn(ExperimentalResourceApi::class)
     @Composable
     private fun createVectorDrawablePainter(scope: Scope, url: URL): Painter =
         tryLoadingResource(
@@ -194,7 +191,6 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
             paintAction = { rememberVectorPainter(it) },
         )
 
-    @OptIn(ExperimentalResourceApi::class)
     @Composable
     private fun createBitmapPainter(url: URL) =
         tryLoadingResource(

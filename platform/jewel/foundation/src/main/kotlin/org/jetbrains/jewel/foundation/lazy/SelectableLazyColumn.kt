@@ -685,20 +685,23 @@ private fun LogLegacySelectionModeWarnings(selectionMode: SelectionMode, state: 
 
     LaunchedEffect(selectionMode, state.selectionMode, state.selectedKeys.size) {
         if (!modeMismatch) return@LaunchedEffect
-        when {
-            selectionMode == SelectionMode.None && state.selectedKeys.isNotEmpty() -> {
+        when (selectionMode) {
+            SelectionMode.None if state.selectedKeys.isNotEmpty() -> {
                 logger.warn(
                     "SelectableLazyColumn: selectionMode=${SelectionMode.None} " +
                         "while state has ${state.selectedKeys.size} selected key(s). " +
                         "Initial selection may appear inconsistent until user interaction."
                 )
             }
-            selectionMode == SelectionMode.Single && state.selectedKeys.size > 1 -> {
+            SelectionMode.Single if state.selectedKeys.size > 1 -> {
                 logger.warn(
                     "SelectableLazyColumn: selectionMode=${SelectionMode.Single} " +
                         "while state has ${state.selectedKeys.size} selected key(s). " +
                         "Initial selection may appear inconsistent until user interaction."
                 )
+            }
+            else -> {
+                // no-op
             }
         }
     }

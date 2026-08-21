@@ -49,7 +49,7 @@ public class PopupManager(public val onPopupVisibleChange: (Boolean) -> Unit = {
     }
 
     override fun hashCode(): Int {
-        var result = name?.hashCode() ?: 0
+        var result = name.hashCode()
         result = 31 * result + isPopupVisible.value.hashCode()
         return result
     }

@@ -154,7 +154,7 @@ public class Tree<T> internal constructor(public val roots: List<Element<T>>) {
              */
             public fun close() {
                 detachChildren()
-                children?.asSequence()?.filterIsInstance<Node<*>>()?.forEach { it.closeRecursively() }
+                closeRecursively()
             }
 
             private fun closeRecursively() {

@@ -151,6 +151,6 @@ public class HorizontalProgressBarMetrics(
 
 /** CompositionLocal providing the current [HorizontalProgressBarStyle]. */
 public val LocalHorizontalProgressBarStyle: ProvidableCompositionLocal<HorizontalProgressBarStyle> =
-    staticCompositionLocalOf<HorizontalProgressBarStyle> {
+    staticCompositionLocalOf {
         error("No HorizontalProgressBarStyle provided. Have you forgotten the theme?")
     }

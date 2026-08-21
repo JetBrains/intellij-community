@@ -233,22 +233,6 @@ public class SegmentedControlButtonMetrics(
     public companion object
 }
 
-@Composable
-private fun <T> SegmentedControlButtonState.chooseValueIgnoreCompat(
-    normal: T,
-    disabled: T,
-    pressed: T,
-    hovered: T,
-    active: T,
-): T =
-    when {
-        !isEnabled -> disabled
-        isPressed -> pressed
-        isHovered -> hovered
-        isActive -> active
-        else -> normal
-    }
-
 /** CompositionLocal providing the current [SegmentedControlButtonStyle]. */
 public val LocalSegmentedControlButtonStyle: ProvidableCompositionLocal<SegmentedControlButtonStyle> =
     staticCompositionLocalOf {

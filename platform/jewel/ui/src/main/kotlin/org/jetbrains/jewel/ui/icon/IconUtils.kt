@@ -28,8 +28,6 @@ import com.intellij.platform.icons.scale.fitArea
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 
-@ExperimentalJewelApi
-@ApiStatus.Experimental
 /**
  * Applies a tint of [composeColor] with [blendMode] to this [IconModifier], converting to the IntelliJ Platform Icons
  * color and blend-mode types.
@@ -37,6 +35,8 @@ import org.jetbrains.jewel.foundation.ExperimentalJewelApi
  * @param composeColor The Compose [Color] to use as the tint.
  * @param blendMode The [BlendMode] to use for blending. Defaults to [BlendMode.SrcIn].
  */
+@ExperimentalJewelApi
+@ApiStatus.Experimental
 public fun IconModifier.tintColor(composeColor: Color, blendMode: BlendMode = BlendMode.SrcIn): IconModifier =
     tintColor(composeColor.toIconsColor(), blendMode.toIconsBlendMode())
 
@@ -61,13 +61,11 @@ public fun fillArea(width: Dp, heigth: Dp): FillAreaScale = fillArea(width.toIco
 /** Converts this Compose [Dp] value to an IntelliJ Platform Icons [DisplayPoint]. */
 @ExperimentalJewelApi @ApiStatus.Experimental public fun Dp.toIconsDp(): DisplayPoint = this.value.dp
 
+/** Applies a stroke with the given Compose [composeColor] to this [IconModifier]. */
 @ExperimentalJewelApi
 @ApiStatus.Experimental
-/** Applies a stroke with the given Compose [composeColor] to this [IconModifier]. */
 public fun IconModifier.stroke(composeColor: Color): IconModifier = stroke(composeColor.toIconsColor())
 
-@ExperimentalJewelApi
-@ApiStatus.Experimental
 /**
  * Adds a badge to this icon using a Compose [color], with configurable [shape], [align], [cutout], and [modifier].
  *
@@ -77,6 +75,8 @@ public fun IconModifier.stroke(composeColor: Color): IconModifier = stroke(compo
  * @param cutout The size of the cutout carved into the icon beneath the badge.
  * @param modifier Additional icon modifier to apply to the badge.
  */
+@ExperimentalJewelApi
+@ApiStatus.Experimental
 public fun IconDesigner.badge(
     color: Color,
     shape: Shape = circle(2.8.dp),

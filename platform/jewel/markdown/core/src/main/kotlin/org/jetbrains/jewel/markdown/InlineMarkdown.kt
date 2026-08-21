@@ -179,10 +179,10 @@ public sealed interface InlineMarkdown {
         override fun hashCode(): Int {
             var result = source.hashCode()
             result = 31 * result + alt.hashCode()
-            result = 31 * result + (title?.hashCode() ?: 0)
+            result = 31 * result + title.hashCode()
             result = 31 * result + inlineContent.hashCode()
-            result = 31 * result + (width?.hashCode() ?: 0)
-            result = 31 * result + (height?.hashCode() ?: 0)
+            result = 31 * result + width.hashCode()
+            result = 31 * result + height.hashCode()
             return result
         }
 
@@ -231,7 +231,7 @@ public sealed interface InlineMarkdown {
 
         override fun hashCode(): Int {
             var result = destination.hashCode()
-            result = 31 * result + (title?.hashCode() ?: 0)
+            result = 31 * result + title.hashCode()
             result = 31 * result + inlineContent.hashCode()
             return result
         }

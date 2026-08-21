@@ -471,7 +471,7 @@ public class MarkdownStyling(
             var result = padding.hashCode()
             result = 31 * result + lineWidth.hashCode()
             result = 31 * result + lineColor.hashCode()
-            result = 31 * result + (pathEffect?.hashCode() ?: 0)
+            result = 31 * result + pathEffect.hashCode()
             result = 31 * result + strokeCap.hashCode()
             result = 31 * result + textColor.hashCode()
             return result
@@ -750,7 +750,7 @@ public class MarkdownStyling(
             }
 
             override fun hashCode(): Int {
-                var result = bullet?.hashCode() ?: 0
+                var result = bullet.hashCode()
                 result = 31 * result + bulletStyle.hashCode()
                 result = 31 * result + bulletContentGap.hashCode()
                 result = 31 * result + itemVerticalSpacing.hashCode()

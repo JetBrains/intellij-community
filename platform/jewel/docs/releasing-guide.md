@@ -85,13 +85,21 @@ The version of the artefacts is a concatenation of:
 
 To do a test publish run, you can run the command
 ```shell
-./publishJewelStandaloneToMavenLocal.cmd <platform-build-number>
+../scripts/publishJewelStandaloneToMavenLocal.cmd [<platform-build-number>]
 ```
-This will publish Jewel Standalone to the local Maven repository.
+This will publish Jewel Standalone to the local Maven repository (`~/.m2/repository`). The build number is optional:
+when you omit it, the script reads it from [`build.txt`](../../../build.txt) in the project root, e.g., `263.SNAPSHOT`.
 
-> [!IMPORTANT]
-> If you are running it from the Community repository, you'll need to temporarily change the value of the
-> `BuildContextImpl.createContext`'s `projectHome` from its default value of `ULTIMATE_HOME` to
-> `COMMUNITY_ROOT.communityRoot`.
->
-> Don't commit the change!
+The script builds the `//build:jewel_standalone_maven_artifacts` Bazel target. That compiles the Jewel modules and
+generates the artefacts into `out/idea-ce/artifacts/maven-artifacts`, then copies them into `~/.m2/repository`. You can
+inspect the POMs in either place, but keep in mind the `out/` copy is wiped and regenerated on every run.
+
+Generation runs with validation on, so [`JewelMavenArtifacts.validate`](../../../build/src/org/jetbrains/intellij/build/JewelMavenArtifacts.kt)
+fails the build when an artefact is missing, has an unexpected `groupId`, or publishes a POM containing the IntelliJ
+Platform fork of coroutines (`org.jetbrains.intellij.deps.kotlinx`). The fork shares the `kotlinx.coroutines.*` packages
+with the stock artefact but has a different `groupId`, so Gradle and Maven cannot conflict-resolve the two and consumers
+end up with both jars.
+
+> [!NOTE]
+> The script tolerates exit code 1. A JVM shutdown hook in the build framework can throw `CancellationException` after
+> the build has already succeeded, so only exit codes of 2 or higher are real failures.

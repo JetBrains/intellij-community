@@ -73,6 +73,8 @@ import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -771,10 +773,10 @@ private suspend fun PointerInputScope.detectScrollViaTrackGestures(isVertical: B
 }
 
 /** The delay between the 1st and 2nd scroll while the scrollbar track is pressed outside the thumb. */
-internal const val DELAY_BEFORE_SECOND_SCROLL_ON_TRACK_PRESS: Long = 300L
+internal val DELAY_BEFORE_SECOND_SCROLL_ON_TRACK_PRESS: Duration = 300.milliseconds
 
 /** The delay between each subsequent (after the 2nd) scroll while the scrollbar track is pressed outside the thumb. */
-internal const val DELAY_BETWEEN_SCROLLS_ON_TRACK_PRESS: Long = 100L
+internal val DELAY_BETWEEN_SCROLLS_ON_TRACK_PRESS: Duration = 100.milliseconds
 
 @Immutable
 private data class ScrollbarDragModifier(
