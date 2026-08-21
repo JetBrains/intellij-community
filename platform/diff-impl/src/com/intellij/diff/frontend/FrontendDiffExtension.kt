@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.serialization.KSerializer
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -131,20 +130,7 @@ object FrontendDiffContentKeys {
 }
 
 @ApiStatus.Internal
-interface FrontendDiffUserDataKey<T : Any> {
-  val id: String
-  val rawKey: Key<T>
-  val serializer: KSerializer<T>
-
-  companion object {
-    @JvmField
-    val EP_NAME: ExtensionPointName<FrontendDiffUserDataKey<*>> =
-      ExtensionPointName.create("com.intellij.diff.frontendUserDataKey")
-  }
-}
-
-@ApiStatus.Internal
 interface FrontendDiffExtensionData {
-  fun <T : Any> getContextData(key: FrontendDiffUserDataKey<T>): T?
-  fun <T : Any> getRequestData(key: FrontendDiffUserDataKey<T>): T?
+  fun <T : Any> getContextData(descriptor: FrontendDiffUserDataKeyDescriptor<T>): T?
+  fun <T : Any> getRequestData(descriptor: FrontendDiffUserDataKeyDescriptor<T>): T?
 }

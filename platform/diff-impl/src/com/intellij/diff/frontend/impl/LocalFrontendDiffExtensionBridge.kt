@@ -16,7 +16,7 @@ import com.intellij.diff.frontend.FrontendDiffExtension
 import com.intellij.diff.frontend.FrontendDiffExtensionData
 import com.intellij.diff.frontend.FrontendDiffLineLocation
 import com.intellij.diff.frontend.FrontendDiffRequest
-import com.intellij.diff.frontend.FrontendDiffUserDataKey
+import com.intellij.diff.frontend.FrontendDiffUserDataKeyDescriptor
 import com.intellij.diff.frontend.FrontendDiffViewer
 import com.intellij.diff.frontend.FrontendUnifiedDiffMapping
 import com.intellij.diff.requests.ContentDiffRequest
@@ -152,9 +152,9 @@ private class LocalFrontendDiffExtensionData(
   private val context: DiffContext,
   private val request: DiffRequest,
 ) : FrontendDiffExtensionData {
-  override fun <T : Any> getContextData(key: FrontendDiffUserDataKey<T>): T? = context.getUserData(key.rawKey)
+  override fun <T : Any> getContextData(descriptor: FrontendDiffUserDataKeyDescriptor<T>): T? = context.getUserData(descriptor.key)
 
-  override fun <T : Any> getRequestData(key: FrontendDiffUserDataKey<T>): T? = request.getUserData(key.rawKey)
+  override fun <T : Any> getRequestData(descriptor: FrontendDiffUserDataKeyDescriptor<T>): T? = request.getUserData(descriptor.key)
 }
 
 /**
