@@ -254,22 +254,17 @@ private suspend fun obtainOrCreateStreamableSession(
     scope.closeWhenAbandoned(initializedId, session)
     logger.trace { "New StreamableHttp session initialized with sessionId: $initializedId" }
   }
-  transport.setOnSessionClosed { closedId ->
-    sessions.remove(closedId)
-    logger.trace { "StreamableHttp session closed: $closedId" }
+  fun unregister(sessionId: String) {
+    sessions.remove(sessionId)
+    logger.trace { "StreamableHttp session unregistered: $sessionId" }
   }
+  transport.setOnSessionClosed(::unregister)
 
   val serverSession = block(call, ClientDisconnectTolerantTransport(transport))
   transport.setSessionIdGenerator {
     serverSession.sessionId
   }
-  serverSession.onClose {
-    val id = transport.sessionId
-    if (id != null) {
-      sessions.remove(id)
-      logger.trace { "Server connection closed for StreamableHttp sessionId: $id" }
-    }
-  }
+  serverSession.onClose { transport.sessionId?.let(::unregister) }
 
   return session
 }
