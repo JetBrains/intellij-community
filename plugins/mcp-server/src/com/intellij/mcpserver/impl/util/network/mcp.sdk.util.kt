@@ -3,6 +3,7 @@ package com.intellij.mcpserver.impl.util.network
 import com.intellij.mcpserver.toolwindow.McpDiagnosticService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
@@ -42,10 +43,11 @@ import io.modelcontextprotocol.kotlin.sdk.types.McpJson
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -118,8 +120,7 @@ fun Application.mcpPatched(
             return@sse
           }
 
-          launchSseHeartbeat()
-          transport.handleRequest(this, call)
+          serveNotificationStream(transport)
         }
         finally {
           if (sessionId != null) {
@@ -322,14 +323,39 @@ class ClientDisconnectTolerantTransport(private val delegate: Transport) : Trans
   }
 }
 
-private fun ServerSSESession.launchSseHeartbeat() {
-  launch(CoroutineName("sse-heartbeat")) {
-    while (isActive) {
-      send(SSE_HEARTBEAT_EVENT)
-      delay(SSE_HEARTBEAT_PERIOD)
-    }
+/**
+ * Heartbeats keep intermediaries from dropping the stream.
+ */
+private suspend fun ServerSSESession.serveNotificationStream(transport: StreamableHttpServerTransport) {
+  coroutineScope {
+    val stream = launch(CoroutineName("sse-notification-stream")) { transport.handleRequest(this@serveNotificationStream, call) }
+    val heartbeat = launch(CoroutineName("sse-heartbeat")) { heartbeatUntilDisconnected() }
+    stream.endsTogetherWith(heartbeat)
   }
 }
+
+private fun Job.endsTogetherWith(other: Job) {
+  invokeOnCompletion { other.cancel() }
+  other.invokeOnCompletion { cancel() }
+}
+
+private suspend fun ServerSSESession.heartbeatUntilDisconnected() {
+  while (trySendHeartbeat()) {
+    delay(SSE_HEARTBEAT_PERIOD)
+  }
+}
+
+/** A failed write is how a connection lost without a clean shutdown is noticed. */
+private suspend fun ServerSSESession.trySendHeartbeat(): Boolean =
+  try {
+    send(SSE_HEARTBEAT_EVENT)
+    true
+  }
+  catch (e: Exception) {
+    rethrowControlFlowException(e)
+    logger.trace { "Notification stream is gone: ${e.message}" }
+    false
+  }
 
 //–– your custom context element
 class HttpRequestElement(val request: ApplicationRequest) : CoroutineContext.Element {
