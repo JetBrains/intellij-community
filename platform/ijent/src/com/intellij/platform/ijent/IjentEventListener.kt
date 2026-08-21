@@ -2,25 +2,8 @@
 package com.intellij.platform.ijent
 
 interface IjentEventBusListener {
-  fun onEvent(event: IjentEvent)
-}
-
-sealed class IjentEvent {
-  abstract val method: String
-}
-
-data class IjentRequestEvent(
-  override val method: String,
-  val nanoTimeStart: Long
-) : IjentEvent()
-
-data class IjentResponseEvent(
-  val request: IjentRequestEvent,
-  val status: Int,
-  val nanoTimeFinish: Long,
-) : IjentEvent() {
-  override val method: String
-    get() = request.method
+  fun started(method: String, nanoTimeStart: Long)
+  fun finished(method: String, nanoTimeStart: Long, status: Int, nanoTimeFinish: Long)
 }
 
 interface IjentEventBus {

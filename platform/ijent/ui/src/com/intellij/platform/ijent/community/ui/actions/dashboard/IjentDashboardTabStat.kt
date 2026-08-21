@@ -13,6 +13,7 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.awaitCancellation
 import java.awt.Font
 import javax.swing.JComponent
@@ -44,33 +45,36 @@ internal class IjentStatDashboard(private val stat: IjentStatCounter) {
     row { cell(JBScrollPane(statTextArea)).resizableColumn().align(Align.FILL) }.resizableRow()
   }
   suspend fun processUpdates(): Nothing {
-    stat.snapshotFlow(100.milliseconds).collect { dataMap ->
-      statTextArea.text = dataMap.entries.sortedBy { it.key }.joinToString("\n") { (methodName, v) ->
-        val currentNanoTime = System.nanoTime()
-        val averageText = if (v.totalCallsFinished > 0) (v.totalCallsDuration / v.totalCallsFinished).toShortString() else ""
-        val lastOpDuration = if (v.notFinishedOperationsStartNanos.isNotEmpty()) {
-          (currentNanoTime - v.notFinishedOperationsStartNanos.first()).nanoseconds.toShortString()
-        }
-        else {
-          v.lastOperationDurationNanos?.nanoseconds?.toShortString() ?: ""
-        }
-        val isPendingMark = if (v.notFinishedOperationsStartNanos.isNotEmpty()) " ⟳" else "  "
-        val lastOpFinished = v.lastOperationFinishedNanos?.let { currentNanoTime - it }?.nanoseconds?.toShortString() ?: "N/A"
-        "${methodName.padStart(25)}:" +
-        "${v.totalCallsFinished.toString().padStart(5)} total, " +
-        "${averageText.padStart(6)} avg," +
-        isPendingMark +
-        "${lastOpDuration.padStart(6)} last" +
-        "${lastOpFinished.padStart(6)} ago."
-      }
+    while (true) {
+      statTextArea.text = stat.snapshot().printTable()
+      delay(100.milliseconds)
     }
-    error("unreachable")
   }
   fun launchOnShow(): JComponent {
     component.launchOnShow("display statistics") {
       processUpdates()
     }
     return component
+  }
+}
+
+internal fun Map<String, IjentMethodStat>.printTable(): String {
+  return this.entries.sortedBy { it.key }.joinToString("\n") { (methodName, v) ->
+    val bareMethodName = methodName.substringAfterLast('.').substringAfterLast("/")
+    val currentNanoTime = System.nanoTime()
+    val averageText = if (v.totalCallsFinished > 0) (v.totalNanos / v.totalCallsFinished).nanoseconds.toShortString() else ""
+    val lastOpDuration = v.pendingCalls.oldestStartNanos?.let { oldestStartNanos ->
+      val duration = (currentNanoTime - oldestStartNanos).nanoseconds.toShortString()
+      if (v.pendingCalls.oldestStartIsExact) duration else "≥$duration"
+    } ?: if (v.pendingCalls.count > 0) "?" else (v.lastOperationDurationNanos?.nanoseconds?.toShortString() ?: "")
+    val isPendingMark = if (v.pendingCalls.count > 0) " ⟳" else "  "
+    val lastOpFinished = v.lastOperationFinishedNanos?.let { currentNanoTime - it }?.nanoseconds?.toShortString() ?: "N/A"
+    "${bareMethodName.padStart(25)}:" +
+    "${v.totalCallsFinished.toString().padStart(5)} total, " +
+    "${averageText.padStart(6)} avg," +
+    isPendingMark +
+    "${lastOpDuration.padStart(6)} last" +
+    "${lastOpFinished.padStart(6)} ago."
   }
 }
 

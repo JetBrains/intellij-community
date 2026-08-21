@@ -55,6 +55,7 @@ import javax.swing.JComponent
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 private class EdtOnceTask : OnceTask<ProjectCloseDecision>() {
   override suspend fun <R> executeUnderLockIfNotAlreadyAcquired(f: suspend () -> R): R {
@@ -150,10 +151,10 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
         cont.resume(ProjectCloseDecision(eelDescriptor))
       }
       else {
-        cont.resume(null)
+        cont.resumeWithException(IllegalStateException("Unexpected exit code: $exitCode"))
       }
     }
-    return checkNotNull(closeDecision)
+    return closeDecision
   }
 
   private fun Panel.createDefaultPanel(projects: List<Project>) {
@@ -200,8 +201,10 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
         awaitCancellation()
       }
     }
-    row {
-      cell(statTab)
+    collapsibleGroup(IjentImplBundle.message("tab.title.ijent.dashboard.stat")) {
+      row {
+        cell(statTab)
+      }
     }
   }
 
