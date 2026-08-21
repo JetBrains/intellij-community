@@ -575,6 +575,7 @@ libraries/memoryfilesystem
 libraries/microba
 libraries/miglayout-swing
 libraries/misc/plugin
+libraries/mlapi/catboost
 libraries/mlapi/core
 libraries/mockito
 libraries/mockito-kotlin
