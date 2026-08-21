@@ -449,8 +449,7 @@ class SnapshotMarkerEngineImplTest {
     val weakMarker = createWeakMarker(fixture, startOffset = 2, endOffset = 4)
     assertTrue(currentRootContains(fixture, weakMarker.markerId))
 
-    GCUtil.tryGcSoftlyReachableObjects { weakMarker.reference.get() == null }
-    assertNull(weakMarker.reference.get())
+    gcMarkerAndWaitForProcessQueues(weakMarker)
 
     assertEquals(0, countOverlappingMarkers(fixture.initialSnapshot, startOffset = 0, endOffset = 6))
     assertFalse(currentRootContains(fixture, weakMarker.markerId))
@@ -461,8 +460,7 @@ class SnapshotMarkerEngineImplTest {
     val fixture = Fixture("abcdef")
     val weakMarker = createWeakMarker(fixture, startOffset = 2, endOffset = 4)
 
-    GCUtil.tryGcSoftlyReachableObjects { weakMarker.reference.get() == null }
-    assertNull(weakMarker.reference.get())
+    gcMarkerAndWaitForProcessQueues(weakMarker)
     fixture.document.insertString(0, "X")
 
     assertFalse(currentRootContains(fixture, weakMarker.markerId))
@@ -471,14 +469,21 @@ class SnapshotMarkerEngineImplTest {
   @Test
   fun `garbage collected invalid marker is purged`() {
     val fixture = Fixture("abcdef")
-    val weakMarker = createWeakInvalidMarker(fixture)
+    val weakMarker = createWeakInvalidMarker(fixture, 2, 4)
     assertTrue(currentRootContains(fixture, weakMarker.markerId))
 
-    GCUtil.tryGcSoftlyReachableObjects { weakMarker.reference.get() == null }
-    assertNull(weakMarker.reference.get())
-    countOverlappingMarkers(fixture.document.core.snapshot(), startOffset = 0, endOffset = 2)
+    gcMarkerAndWaitForProcessQueues(weakMarker)
+    assertEquals(0, countOverlappingMarkers(fixture.document.core.snapshot(), startOffset = 0, endOffset = 2))
 
     assertFalse(currentRootContains(fixture, weakMarker.markerId))
+  }
+
+  private fun gcMarkerAndWaitForProcessQueues(weakMarker: WeakMarker) {
+    GCUtil.tryGcSoftlyReachableObjects { weakMarker.reference.get() == null }
+    while (!SnapshotMarkerEngineImpl.processQueue()) {
+      Thread.yield()
+    }
+    assertNull(weakMarker.reference.get())
   }
 
   @Test
@@ -716,12 +721,12 @@ class SnapshotMarkerEngineImplTest {
     return WeakMarker(marker.id, WeakReference(marker))
   }
 
-  private fun createWeakInvalidMarker(fixture: Fixture): WeakMarker {
+  private fun createWeakInvalidMarker(fixture: Fixture, startOffset: Int, endOffset: Int): WeakMarker {
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
       snapshot = fixture.document.core.snapshot(),
-      startOffset = 2,
-      endOffset = 4,
+      startOffset = startOffset,
+      endOffset = endOffset,
       spec = nonGreedySpec(),
     ) as SnapshotRangeMarkerImpl
     fixture.document.deleteString(1, 5)
