@@ -31,16 +31,30 @@ def _native_content_module_packer_impl(ctx):
         # A static binary needs nothing beside itself. This is the whole difference from a JVM implementation, which
         # declares its runtime tree - 159 files - as an input of every packing action in the repository.
         tools = depset([ctx.executable.binary], transitive = [ctx.attr.binary[DefaultInfo].default_runfiles.files]),
-        # No worker keys: the process is the action. `supports-path-mapping` is worker-only and path mapping is not
-        # enabled in this repository anyway, and `supports-multiplex-sandboxing` is inert without `--worker_sandboxing`.
+        # A worker, even though the binary starts in about two milliseconds. What a worker amortises here is not this
+        # process's startup but Bazel's per-spawn cost, and the per-jar work is ~1 ms against a spawn-and-teardown
+        # envelope an order of magnitude larger - so at this action count the envelope *is* the build. Measured on this
+        # repository at 2 524 jars, one process per action cost 55.1 s where the JVM worker it replaced cost 29.5 s.
         #
-        # `no-sandbox` is not an optimisation, it is parity. The worker this replaces ran *non-sandboxed* - Bazel's
-        # worker strategy behaves like `local` unless `--worker_sandboxing` is set, and it is set nowhere here - so
-        # without this the rewrite silently adds a sandbox per jar that the JVM never paid for. Measured on this
-        # repository at 2 524 jars: 59.4 s sandboxed against 29.5 s for the worker, which is the whole cold pack lost
-        # to sandbox setup. The action reads only its declared inputs and writes only its declared output, so the
-        # sandbox was buying nothing.
-        execution_requirements = {"no-sandbox": "1"},
+        # `json` rather than the proto dialect: the two encodings are otherwise identical, and proto would cost a
+        # protobuf dependency for a message with six fields. `rules_go` ships no worker package either way.
+        #
+        # `supports-path-mapping` is deliberately absent - path mapping is not enabled in this repository - and so is
+        # `supports-multiplex-sandboxing`, which is inert without `--worker_sandboxing`.
+        #
+        # `no-sandbox` stays, and it is parity rather than an optimisation. It is inert under the worker strategy, but it
+        # is what keeps the `local` fallback - `--strategy=PackContentModuleJar=local`, or `--noworker_multiplex` - at
+        # the cost the JVM worker paid: that worker ran *non-sandboxed*, since Bazel's worker strategy behaves like
+        # `local` unless `--worker_sandboxing` is set, and it is set nowhere here. Measured at 2 524 jars: 59.4 s
+        # sandboxed against 55.1 s not. The action reads only its declared inputs and writes only its declared output,
+        # so the sandbox was buying nothing.
+        execution_requirements = {
+            "supports-workers": "1",
+            "supports-multiplex-workers": "1",
+            "supports-worker-cancellation": "1",
+            "requires-worker-protocol": "json",
+            "no-sandbox": "1",
+        },
     )]
 
 native_content_module_packer = rule(
