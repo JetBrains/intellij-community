@@ -164,7 +164,15 @@ internal class BazelBuildFileGenerator(
    * only in generated output keeps the module on the JarPackager path.
    */
   val pluginContentModuleJarCandidates: Set<String> by lazy {
-    indexPluginContentModuleJarCandidates(ultimateRoot ?: communityRoot)
+    // The set is an AND over every checked-in report, and a community-only run does not have the ultimate ones - so it
+    // reads what an ultimate run recorded instead of computing a different answer from a smaller world.
+    if (ultimateRoot == null) {
+      readPluginContentModuleJarCandidates(communityRoot.resolve("build/$PLUGIN_CONTENT_CANDIDATES_FILE_NAME"))
+      ?: indexPluginContentModuleJarCandidates(communityRoot)
+    }
+    else {
+      indexPluginContentModuleJarCandidates(ultimateRoot)
+    }
   }
 
   /** Product/plugin layout transformations that make a raw module-output jar ineligible for direct handoff. */

@@ -88,6 +88,13 @@ _library_jars_test = analysistest.make(
 )
 
 def _expected_failure_test_impl(ctx):
+    """Asserts the target under test fails analysis, with [expected_message] in the failure.
+
+    Every target tested through here must be tagged `manual`. `expect_failure` tolerates the failure only under this
+    rule's own `analysis_test_transition`, which is where `--allow_analysis_failures` is set; the same target reached
+    as a top-level target of a wildcard build is in the default configuration, and there its `fail()` aborts the
+    whole build.
+    """
     env = analysistest.begin(ctx)
     asserts.expect_failure(env, ctx.attr.expected_message)
     return analysistest.end(env)
@@ -189,6 +196,7 @@ def dev_dist_content_test_suite(name):
         name = name + "_provided_library_content",
         descriptor_module = name + "_descriptor",
         libraries = [name + "_provided_library"],
+        tags = ["manual"],
     )
     _expected_failure_test(
         name = name + "_provided_library_test",
@@ -202,6 +210,7 @@ def dev_dist_content_test_suite(name):
         prepacked_content_modules = {
             name + "_missing_output_group": "modules/test.missing.jar",
         },
+        tags = ["manual"],
     )
     _expected_failure_test(
         name = name + "_missing_output_group_test",
@@ -215,6 +224,7 @@ def dev_dist_content_test_suite(name):
         prepacked_content_modules = {
             name + "_multiple_outputs": "modules/test.multiple.jar",
         },
+        tags = ["manual"],
     )
     _expected_failure_test(
         name = name + "_multiple_outputs_test",
@@ -265,6 +275,7 @@ def dev_dist_content_test_suite(name):
     intellij_dev_build_inputs(
         name = name + "_conflicting_inputs",
         content = name + "_conflicting_content",
+        tags = ["manual"],
     )
     _expected_failure_test(
         name = name + "_conflicting_relation_test",
@@ -290,6 +301,7 @@ def dev_dist_content_test_suite(name):
         prepacked_content_modules = {
             name + "_content": "modules/test.content.jar",
         },
+        tags = ["manual"],
     )
     _expected_failure_test(
         name = name + "_unnamed_completion_test",
