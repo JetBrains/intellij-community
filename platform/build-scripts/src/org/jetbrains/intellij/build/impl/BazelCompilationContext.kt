@@ -187,6 +187,14 @@ class BazelTargetsInfo {
      * consumer that needs it reports the empty value against the file it came from.
      */
     @JvmField val contentTarget: String = "",
+    /**
+     * Prepack-eligible content modules of this plugin that its own [contentTarget] could not name.
+     *
+     * Non-empty only for a community plugin that packs ultimate modules: the community repository cannot name an
+     * ultimate label, so the completion set in `//build/dev-dist-content` is what turns these into
+     * `prepacked_content_modules`. Written by `JpsModuleToBazel.PluginDistributionTargetDescription`.
+     */
+    @JvmField val crossRepositoryPrepackedContentModules: List<String> = emptyList(),
   )
 
   @Serializable

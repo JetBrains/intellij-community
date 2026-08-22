@@ -38,6 +38,7 @@ DevDistContentInfo = provider(
         # Not bare `File`s, unlike the module halves: a library jar's manifest key is the declared label, which is not
         # derivable from the file. See `_collect_libraries`.
         "library_jars": "depset of struct(label, jar): library jars, `label` being the jar target's own label.",
+        "prepacked_plugin_jars": "depset of struct(plugin_main_module, content_module, relative_output_file, jar).",
     },
 )
 
@@ -170,19 +171,61 @@ def _collect_libraries(ctx, library_jars):
             fail("%s: library jar %s must provide exactly one file, got %s" % (ctx.label, target.label, files))
         library_jars.append(depset([struct(label = str(target.label), jar = files[0])]))
 
+def _collect_prepacked(ctx, plugin_main_module, prepacked_plugin_jars):
+    """Turn `prepacked_content_modules` into typed *(plugin, module, path, jar)* records.
+
+    Shared by `dev_dist_plugin_content` and `dev_dist_content_set` because a plugin split across the repository boundary
+    is declared in two places: the community half names what a community package can name, and the completion set in
+    `//build/dev-dist-content` - the one package that sees both repositories - names the ultimate members. Both halves
+    hand the collector the same kind of record, so nothing downstream can tell which side a jar came from.
+    """
+    for target, relative_output_file in ctx.attr.prepacked_content_modules.items():
+        output_groups = target[OutputGroupInfo]
+        if not hasattr(output_groups, "content_module_jar"):
+            fail("%s: prepacked content module %s has no `content_module_jar` output" % (ctx.label, target.label))
+        jars = output_groups.content_module_jar.to_list()
+        if len(jars) != 1:
+            fail("%s: prepacked content module %s must have exactly one `content_module_jar` output, got %s" % (
+                ctx.label,
+                target.label,
+                jars,
+            ))
+        content_module = target[_KtJvmInfo].module_name
+        if not content_module:
+            fail("%s: prepacked content target %s has no module name" % (ctx.label, target.label))
+        prepacked_plugin_jars.append(depset([struct(
+            plugin_main_module = plugin_main_module,
+            content_module = content_module,
+            relative_output_file = relative_output_file,
+            jar = jars[0],
+        )]))
+
+_PREPACKED_CONTENT_MODULES_ATTR = attr.label_keyed_string_dict(
+    doc = "Content modules handed to their `content_module_jar` output, mapped to the path below plugin `lib/`.",
+    providers = [_KtJvmInfo],
+)
+
 def _dev_dist_plugin_content_impl(ctx):
     module_jars = []
     dependency_module_jars = []
     library_jars = []
+    prepacked_plugin_jars = []
 
     _collect_modules([ctx.attr.descriptor_module], module_jars, dependency_module_jars)
     _collect_modules(ctx.attr.content_modules, module_jars, dependency_module_jars)
     _collect_libraries(ctx, library_jars)
 
+    _collect_prepacked(
+        ctx,
+        plugin_main_module = ctx.attr.descriptor_module[_KtJvmInfo].module_name,
+        prepacked_plugin_jars = prepacked_plugin_jars,
+    )
+
     return [DevDistContentInfo(
         module_jars = depset(transitive = module_jars),
         dependency_module_jars = depset(transitive = dependency_module_jars),
         library_jars = depset(transitive = library_jars),
+        prepacked_plugin_jars = depset(transitive = prepacked_plugin_jars),
     )]
 
 dev_dist_plugin_content = rule(
@@ -214,6 +257,7 @@ dev_dist_plugin_content = rule(
             doc = "The plugin's library jars, as individual jar targets - see `_collect_libraries`.",
             allow_files = True,
         ),
+        "prepacked_content_modules": _PREPACKED_CONTENT_MODULES_ATTR,
     },
 )
 
@@ -221,20 +265,35 @@ def _dev_dist_content_set_impl(ctx):
     module_jars = []
     dependency_module_jars = []
     library_jars = []
+    prepacked_plugin_jars = []
 
     for dep in ctx.attr.deps:
         info = dep[DevDistContentInfo]
         module_jars.append(info.module_jars)
         dependency_module_jars.append(info.dependency_module_jars)
         library_jars.append(info.library_jars)
+        prepacked_plugin_jars.append(info.prepacked_plugin_jars)
 
     _collect_modules(ctx.attr.modules, module_jars, dependency_module_jars)
     _collect_libraries(ctx, library_jars)
+
+    # A relation needs the plugin it belongs to, and a set has no `descriptor_module` to read it from - so a set that
+    # completes a plugin names it. Required together: a relation without a plugin has no key, and a plugin name with no
+    # relation is a set that says it completes something and then does not.
+    if bool(ctx.attr.prepacked_plugin_main_module) != bool(ctx.attr.prepacked_content_modules):
+        fail("%s: `prepacked_plugin_main_module` and `prepacked_content_modules` must be set together" % ctx.label)
+    if ctx.attr.prepacked_content_modules:
+        _collect_prepacked(
+            ctx,
+            plugin_main_module = ctx.attr.prepacked_plugin_main_module,
+            prepacked_plugin_jars = prepacked_plugin_jars,
+        )
 
     return [DevDistContentInfo(
         module_jars = depset(transitive = module_jars),
         dependency_module_jars = depset(transitive = dependency_module_jars),
         library_jars = depset(transitive = library_jars),
+        prepacked_plugin_jars = depset(transitive = prepacked_plugin_jars),
     )]
 
 dev_dist_content_set = rule(
@@ -258,6 +317,13 @@ dev_dist_content_set = rule(
         "libraries": attr.label_list(
             doc = "Library jars no dep covers, as individual jar targets - see `_collect_libraries`.",
             allow_files = True,
+        ),
+        "prepacked_content_modules": _PREPACKED_CONTENT_MODULES_ATTR,
+        "prepacked_plugin_main_module": attr.string(
+            doc = """The plugin `prepacked_content_modules` belongs to, for a set that completes one across the repository split.
+
+            `dev_dist_plugin_content` reads this from its `descriptor_module`; a set has no such attribute, and the
+            module it would name is in the other repository for exactly the plugins that need this.""",
         ),
     },
 )

@@ -16,6 +16,8 @@ import org.jetbrains.intellij.build.dev.DevBuildFragment
 import org.jetbrains.intellij.build.dev.DevBuildOutput
 import org.jetbrains.intellij.build.dev.PlatformJarSelector
 import org.jetbrains.intellij.build.dev.PluginFragmentSelector
+import org.jetbrains.intellij.build.dev.PrepackedPluginContentJar
+import org.jetbrains.intellij.build.dev.PrepackedPluginContentKey
 import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.dev.materializeProjectModelTree
 import org.jetbrains.intellij.build.impl.BazelBuildInputs
@@ -92,8 +94,10 @@ fun main(args: Array<String>) {
   val componentManifest = options.optionalPath("--component-manifest")
   val pluginClasspathPart = options.optionalPath("--plugin-classpath-part")
   val pluginClasspathPrefix = options.optionalPath("--plugin-classpath-prefix")
+  val prepackedPluginContent = options.optionalPath("--prepacked-plugin-jars")?.let(::readPrepackedPluginContentPlan).orEmpty()
+  val prepackedPluginContentPlacement = options.optionalPath("--prepacked-plugin-jars-placement")
   val output = if (fragment.isComplete) {
-    require(componentManifest == null && pluginClasspathPart == null && pluginClasspathPrefix == null) {
+    require(componentManifest == null && pluginClasspathPart == null && pluginClasspathPrefix == null && prepackedPluginContentPlacement == null) {
       "Component output options require --fragment"
     }
     DevBuildOutput.Complete
@@ -104,6 +108,7 @@ fun main(args: Array<String>) {
       manifestFile = checkNotNull(componentManifest) { "--component-manifest is required for fragment '$fragment'" },
       pluginClasspathPartFile = pluginClasspathPart,
       pluginClasspathPrefixFile = pluginClasspathPrefix,
+      prepackedPluginContentPlacementFile = prepackedPluginContentPlacement,
     )
   }
   options.optionalPath("--bazel-targets-json")?.let { path ->
@@ -152,6 +157,7 @@ fun main(args: Array<String>) {
         buildDateInSeconds = buildDateInSeconds,
         jarCacheDir = jarCacheDir,
         output = output,
+        prepackedPluginContent = prepackedPluginContent,
       )
     )
 
@@ -175,6 +181,25 @@ fun main(args: Array<String>) {
   unusedInputs?.let(BazelBuildInputs::writeUnusedInputs)
   // the build uses thread pools and Netty/Ktor selectors that may outlive the last coroutine
   exitProcess(0)
+}
+
+private fun readPrepackedPluginContentPlan(file: Path): Map<PrepackedPluginContentKey, PrepackedPluginContentJar> {
+  val result = LinkedHashMap<PrepackedPluginContentKey, PrepackedPluginContentJar>()
+  for ((index, line) in Files.readAllLines(file).withIndex()) {
+    if (line.isBlank()) {
+      continue
+    }
+    val fields = line.split('\t')
+    require(fields.size == 3) { "$file:${index + 1}: expected plugin, content module and relative output path" }
+    val jar = PrepackedPluginContentJar(
+      pluginMainModule = fields[0],
+      contentModule = fields[1],
+      relativeOutputFile = fields[2],
+    )
+    val previous = result.put(jar.key, jar)
+    require(previous == null) { "$file:${index + 1}: duplicate prepacked plugin relation ${jar.key}" }
+  }
+  return result
 }
 
 /**

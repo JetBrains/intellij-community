@@ -22,6 +22,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_kotlin-completion-impl",
     module_name = "intellij.kotlin.completion.impl",
     resource_strip_prefix = "resources",

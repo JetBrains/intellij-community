@@ -44,11 +44,8 @@ exports_files(
 dev_dist_plugin_content(
     name = "plugin_dev_content",
     content_modules = [
-        "//platform/problemsView/backend",
         "//platform/problemsView/collector",
         "//platform/problemsView/core",
-        "//platform/problemsView/frontend",
-        "//platform/problemsView/shared",
         "//platform/problemsView/ui",
     ],
     descriptor_module = ":plugin",
@@ -66,13 +63,17 @@ dev_dist_plugin_content(
         "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
         "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
         "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-core-jvm-1.9.0.jar",
-        "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-json-jvm-1.9.0.jar",
         "@lib//:org.jetbrains/annotations-26.0.2.jar",
         "@lib//:org.jmock/jmock-2.5.1.jar",
         "@lib//:org.slf4j/log4j-over-slf4j-1.7.36.jar",
         "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
         "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
     ],
+    prepacked_content_modules = {
+        "//platform/problemsView/backend": "modules/intellij.platform.problemView.backend.jar",
+        "//platform/problemsView/frontend": "modules/intellij.platform.problemView.frontend.jar",
+        "//platform/problemsView/shared": "modules/intellij.platform.problemView.shared.jar",
+    },
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.platform.problemView.plugin` end

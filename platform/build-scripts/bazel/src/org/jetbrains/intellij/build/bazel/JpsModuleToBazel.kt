@@ -261,6 +261,15 @@ internal class JpsModuleToBazel {
       @JvmField val target: String = "",
       @JvmField val distributionDirectory: String = "",
       @JvmField val contentTarget: String = "",
+      /**
+       * Prepack-eligible content modules of this plugin that its own `contentTarget` could not name.
+       *
+       * Module names, and only ever non-empty for a community plugin that packs ultimate modules: the community
+       * repository cannot name an ultimate label, so the completion set in `//build/dev-dist-content` - the one package
+       * that sees both repositories - is what turns these into `prepacked_content_modules`. Without this, every such
+       * member silently fell back to `JarPackager`, which was 70 of the 79 relations the vetoes cost.
+       */
+      @JvmField val crossRepositoryPrepackedContentModules: List<String> = emptyList(),
     )
 
     @Serializable
@@ -422,7 +431,10 @@ internal class JpsModuleToBazel {
             .mapNotNull { moduleTarget ->
               val pluginTarget = moduleTarget.pluginDistributionTarget
               val contentTarget = moduleTarget.pluginContentTarget
-              if (pluginTarget == null && contentTarget == null) {
+              val crossRepositoryPrepacked = moduleTarget.crossRepositoryPrepackedModules
+              // The third half is independent of the other two: a plugin can have no `ij_plugin` target and no content
+              // target of its own and still have cross-repository members to complete.
+              if (pluginTarget == null && contentTarget == null && crossRepositoryPrepacked.isEmpty()) {
                 return@mapNotNull null
               }
 
@@ -430,6 +442,7 @@ internal class JpsModuleToBazel {
                 target = pluginTarget?.target ?: "",
                 distributionDirectory = pluginTarget?.let { adjustOutputPath(it.distributionDirectory) } ?: "",
                 contentTarget = contentTarget ?: "",
+                crossRepositoryPrepackedContentModules = crossRepositoryPrepacked,
               )
             }
             .sortedBy { it.first }

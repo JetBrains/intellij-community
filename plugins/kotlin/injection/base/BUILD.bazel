@@ -23,6 +23,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_kotlin-base-injection",
     module_name = "kotlin.base.injection",
     resource_strip_prefix = "resources",

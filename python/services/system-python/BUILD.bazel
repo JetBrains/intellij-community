@@ -20,6 +20,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_system-python",
     module_name = "intellij.python.community.services.systemPython",
     resource_strip_prefix = "resources",

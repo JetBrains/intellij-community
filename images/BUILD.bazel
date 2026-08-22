@@ -118,11 +118,6 @@ exports_files(
 ### auto-generated section `dev content intellij.platform.images` start
 dev_dist_plugin_content(
     name = "images_dev_content",
-    content_modules = [
-        "//images/intellij.platform.images.copyright:copyright",
-        "//images/intellij.platform.images.xdebugger:xdebugger",
-        "//images/jcef",
-    ],
     descriptor_module = ":images",
     libraries = [
         "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
@@ -131,7 +126,6 @@ dev_dist_plugin_content(
         "@lib//:com.jetbrains.fus.reporting/fus-api-jvm-2.0.242.jar",
         "@lib//:eawtstub.jar",
         "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
-        "@lib//:org.jetbrains.intellij.deps.jcef/jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b11.jar",
         "@lib//:org.jetbrains.intellij.deps/commons-imaging-1.0-RC-1.jar",
         "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
         "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
@@ -139,11 +133,15 @@ dev_dist_plugin_content(
         "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-core-jvm-1.9.0.jar",
         "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-json-jvm-1.9.0.jar",
         "@lib//:org.jmock/jmock-2.5.1.jar",
-        "@lib//:org.slf4j/log4j-over-slf4j-1.7.36.jar",
         "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
         "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
         "@lib//:xml-resolver/xml-resolver-1.2.jar",
     ],
+    prepacked_content_modules = {
+        "//images/intellij.platform.images.copyright:copyright": "modules/intellij.platform.images.copyright.jar",
+        "//images/intellij.platform.images.xdebugger:xdebugger": "modules/intellij.platform.images.xdebugger.jar",
+        "//images/jcef": "modules/intellij.platform.images.jcef.jar",
+    },
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.platform.images` end

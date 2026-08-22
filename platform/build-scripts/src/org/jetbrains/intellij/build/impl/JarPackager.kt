@@ -17,6 +17,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
@@ -36,6 +37,8 @@ import org.jetbrains.intellij.build.buildJar
 import org.jetbrains.intellij.build.checkForNoDiskSpace
 import org.jetbrains.intellij.build.computeHashForModuleOutput
 import org.jetbrains.intellij.build.computeModuleSourcesByContent
+import org.jetbrains.intellij.build.dev.PrepackedPluginContentJar
+import org.jetbrains.intellij.build.dev.PrepackedPluginContentKey
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.getLibraryRoots
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
@@ -159,6 +162,7 @@ class JarPackager private constructor(
   private val platformLayout: PlatformLayout?,
   private val isRootDir: Boolean,
   @JvmField internal val moduleOutputPatcher: ModuleOutputPatcher,
+  private val prepackedPluginContent: Map<PrepackedPluginContentKey, PrepackedPluginContentJar> = emptyMap(),
 ) {
   private val assets = LinkedHashMap<Path, AssetDescriptor>()
 
@@ -168,6 +172,8 @@ class JarPackager private constructor(
   private val implicitProjectLibraryViolations = TreeMap<String, MutableSet<String>>()
 
   private val helper = (context as BuildContextImpl).jarPackagerDependencyHelper
+
+  private val prepackedContentJars = ArrayList<PrepackedPluginContentJar>()
 
   companion object {
     suspend fun pack(includedModules: Collection<ModuleItem>, outputDir: Path, context: BuildContext) {
@@ -197,9 +203,18 @@ class JarPackager private constructor(
       searchableOptionSet: SearchableOptionSetDescriptor? = null,
       descriptorCache: ScopedCachedDescriptorContainer? = null,
       assetFilter: DistributionAssetFilter? = null,
+      prepackedPluginContent: Map<PrepackedPluginContentKey, PrepackedPluginContentJar> = emptyMap(),
+      prepackedPluginContentJars: MutableCollection<PrepackedPluginContentJar>? = null,
       context: BuildContext,
     ): Collection<DistributionFileEntry> {
-      val packager = JarPackager(outDir = outputDir, context = context, platformLayout = platformLayout, isRootDir = isRootDir, moduleOutputPatcher = moduleOutputPatcher)
+      val packager = JarPackager(
+        outDir = outputDir,
+        context = context,
+        platformLayout = platformLayout,
+        isRootDir = isRootDir,
+        moduleOutputPatcher = moduleOutputPatcher,
+        prepackedPluginContent = prepackedPluginContent,
+      )
       packager.computeModuleSources(
         includedModules = includedModules,
         layout = layout,
@@ -214,6 +229,7 @@ class JarPackager private constructor(
         copiedFiles = packager.copiedFiles,
         assetFilter = assetFilter,
       )
+      prepackedPluginContentJars?.addAll(packager.prepackedContentJars)
 
       // The whole layout is computed above, but only the owned jars are packed and reported: everything downstream -
       // the built files, the distribution entries, the classpath - must see one consistent subset.
@@ -313,7 +329,47 @@ class JarPackager private constructor(
       )
     }
 
+    if (layout is PluginLayout) {
+      validatePrepackedPluginContent(layout)
+    }
+
     checkImplicitProjectLibraries(layout)
+  }
+
+  internal fun handOffPluginContentModule(
+    pluginLayout: PluginLayout,
+    moduleName: String,
+    relativeOutputFile: String,
+    searchableOptionSet: SearchableOptionSetDescriptor?,
+  ): Boolean {
+    val key = PrepackedPluginContentKey(pluginMainModule = pluginLayout.mainModule, contentModule = moduleName)
+    val expected = prepackedPluginContent.get(key) ?: return false
+    val module = context.outputProvider.findRequiredModule(moduleName)
+    validatePrepackedPluginContentHandoff(
+      expected = expected,
+      actualRelativeOutputFile = relativeOutputFile,
+      hasModuleExclusions = !pluginLayout.moduleExcludes.get(moduleName).isNullOrEmpty(),
+      hasPatchedOutput = moduleOutputPatcher.getPatchedContent(moduleName).isNotEmpty(),
+      hasGeneratedSearchableOptions = !searchableOptionSet?.createSourceByModule(moduleName).isNullOrEmpty(),
+      hasSeparateLibraryJar = helper.getLibraryDependencies(module, withTests = false).any { dependency ->
+        val library = dependency.library ?: return@any false
+        getLibraryRoots(library, context.outputProvider).any { isSeparateLibraryJar(it.fileName.toString()) }
+      },
+      hasLayoutPlacedModuleLibrary = pluginLayout.includedModuleLibraries.any { it.moduleName == moduleName },
+      isTestPluginModule = helper.isTestPluginModule(moduleName, module),
+    )
+    prepackedContentJars.add(expected)
+    return true
+  }
+
+  private fun validatePrepackedPluginContent(layout: PluginLayout) {
+    val expected = prepackedPluginContent.keys.filterTo(HashSet()) { it.pluginMainModule == layout.mainModule }
+    val actual = prepackedContentJars.mapTo(HashSet(), PrepackedPluginContentJar::key)
+    check(actual == expected) {
+      "Prepacked plugin content of ${layout.mainModule} does not match its descriptor/layout:" +
+      " missing ${(expected - actual).sortedBy(PrepackedPluginContentKey::contentModule)}," +
+      " unexpected ${(actual - expected).sortedBy(PrepackedPluginContentKey::contentModule)}"
+    }
   }
 
   /**
@@ -799,6 +855,47 @@ class JarPackager private constructor(
       AssetDescriptor(isDir = false, file = targetFile, relativePath = relativeOutputFile)
     }
   }
+}
+
+/**
+ * Taking a prepacked jar means [JarPackager.computeSourcesForModule] never runs for that module, so everything that function
+ * would have done is silently dropped, not merely done elsewhere. The generator that picks the relation cannot see any of these facts,
+ * hence the assembler - the one place that knows both sides - refuses the handoff instead of shipping a quietly different plugin.
+ */
+@VisibleForTesting
+internal fun validatePrepackedPluginContentHandoff(
+  expected: PrepackedPluginContentJar,
+  actualRelativeOutputFile: String,
+  hasModuleExclusions: Boolean,
+  hasPatchedOutput: Boolean,
+  hasGeneratedSearchableOptions: Boolean,
+  hasSeparateLibraryJar: Boolean,
+  hasLayoutPlacedModuleLibrary: Boolean,
+  isTestPluginModule: Boolean,
+) {
+  val relation = "${expected.pluginMainModule}/${expected.contentModule}"
+  check(expected.relativeOutputFile == actualRelativeOutputFile) {
+    "Prepacked plugin content $relation expected '${expected.relativeOutputFile}', but JarPackager selected '$actualRelativeOutputFile'"
+  }
+  check(!hasModuleExclusions) { "Prepacked plugin content $relation has module exclusions" }
+  check(!hasPatchedOutput) { "Prepacked plugin content $relation has patched module output" }
+  check(!hasGeneratedSearchableOptions) { "Prepacked plugin content $relation has generated searchable options" }
+  // `computeSourcesForModuleLibs` lifts every `isSeparateLibraryJar` file out of the module jar into its own `lib/<name>.jar`. That call
+  // sits inside `computeSourcesForModule`, so for a handed-off module the sibling jar is never written at all - while the module jar it
+  // would have been lifted out of stays byte-identical, which is why no comparison of the jar can notice. The file name is the signal here,
+  // not the dependency: a COMPILE-scope library is the norm rather than a symptom - `kotlin-stdlib` is in
+  // `LAYOUT_PACKED_PROJECT_LIBRARIES`, the platform packs it and it contributes nothing to this jar - and vetoing on any library dependency
+  // at all would refuse 12.9 % of the relations the generator legitimately selects.
+  check(!hasSeparateLibraryJar) { "Prepacked plugin content $relation has a library jar packed beside the module jar" }
+  // `withModuleLibrary` makes the plugin layout, not the module, decide where one of this module's libraries lands. With `extraCopy` it is
+  // packed into the module jar *as well as* beside it - a copy a prepacked jar simply does not have. Without it,
+  // `computeSourcesForModuleLibs` is what keeps the library out of the module jar, so the jar's contents hinge on a layout entry the
+  // generator never reads. Both are refused rather than told apart: the entries are hand-written per module, and which of the two a given
+  // one is says nothing about whether a Bazel-packed jar may stand in for it.
+  check(!hasLayoutPlacedModuleLibrary) { "Prepacked plugin content $relation has a module library placed by the plugin layout" }
+  // A test plugin module is packed from its *test* output and with directory entries; `PackContentModuleJar` merges the production jar
+  // and has no such flag, so the handed-off bytes would be wrong rather than just differently placed.
+  check(!isTestPluginModule) { "Prepacked plugin content $relation is a test plugin module" }
 }
 
 private fun getCanonicalPath(mavenPaths: List<String>, file: Path): String {

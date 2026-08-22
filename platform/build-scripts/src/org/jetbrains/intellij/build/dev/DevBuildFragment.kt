@@ -4,6 +4,25 @@ package org.jetbrains.intellij.build.dev
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.ModuleItem
 
+/** Stable key of one plugin content-module jar handed from JarPackager to a Bazel packing action. */
+@ApiStatus.Internal
+data class PrepackedPluginContentKey(
+  @JvmField val pluginMainModule: String,
+  @JvmField val contentModule: String,
+)
+
+/** The product-independent jar relation. Placement is validated against the product layout before it is used. */
+@ApiStatus.Internal
+data class PrepackedPluginContentJar(
+  @JvmField val pluginMainModule: String,
+  @JvmField val contentModule: String,
+  /** Path below the plugin's `lib/` directory. */
+  @JvmField val relativeOutputFile: String,
+) {
+  val key: PrepackedPluginContentKey
+    get() = PrepackedPluginContentKey(pluginMainModule = pluginMainModule, contentModule = contentModule)
+}
+
 /**
  * Which independently cacheable slice of a dev distribution one assembly produces.
  *

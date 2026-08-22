@@ -21,6 +21,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_kotlin-devkit",
     module_name = "intellij.kotlin.devkit",
     resource_strip_prefix = "resources",

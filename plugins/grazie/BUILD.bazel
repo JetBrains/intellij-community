@@ -71,10 +71,8 @@ dev_dist_plugin_content(
     name = "grazie_dev_content",
     content_modules = [
         "//libraries/ai.grazie.spell.gec.engine.local",
-        "//plugins/grazie/java",
         "//plugins/grazie/json",
         "//plugins/grazie/markdown",
-        "//plugins/grazie/properties",
         "//plugins/grazie/src:core",
         "//plugins/grazie/xml",
         "//plugins/grazie/yaml",
@@ -231,6 +229,10 @@ dev_dist_plugin_content(
         "@lib//:tech.uom.lib/uom-lib-common-1.1.jar",
         "@lib//:xml-resolver/xml-resolver-1.2.jar",
     ],
+    prepacked_content_modules = {
+        "//plugins/grazie/java": "modules/intellij.grazie.java.jar",
+        "//plugins/grazie/properties": "modules/intellij.grazie.properties.jar",
+    },
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.grazie` end

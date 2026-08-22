@@ -19,6 +19,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_scripting.scratch",
     module_name = "intellij.kotlin.base.scripting.scratch",
     resource_strip_prefix = "resources",

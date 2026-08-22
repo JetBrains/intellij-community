@@ -114,7 +114,6 @@ exports_files(
 ### auto-generated section `dev content intellij.platform.ui.webview` start
 dev_dist_plugin_content(
     name = "ui.webview_dev_content",
-    content_modules = ["//plugins/ui.webview/jcef"],
     descriptor_module = ":ui.webview",
     libraries = [
         "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
@@ -122,7 +121,6 @@ dev_dist_plugin_content(
         "@lib//:net.java.dev.jna/jna-5.19.1.jar",
         "@lib//:net.java.dev.jna/jna-platform-5.19.1.jar",
         "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
-        "@lib//:org.jetbrains.intellij.deps.jcef/jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b11.jar",
         "@lib//:org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-core-jvm-1.10.2-intellij-2.jar",
         "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
         "@lib//:org.jetbrains.kotlin/kotlin-reflect-2.4.10-RC2.jar",
@@ -134,6 +132,9 @@ dev_dist_plugin_content(
         "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
         "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
     ],
+    prepacked_content_modules = {
+        "//plugins/ui.webview/jcef": "modules/intellij.platform.ui.webview.jcef.jar",
+    },
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.platform.ui.webview` end

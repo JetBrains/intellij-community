@@ -93,14 +93,12 @@ private val FILE_ENTRY = NarrowSchema(
   canonical = FileEntry.serializer(),
   canonicalName = "FileEntry",
   narrowName = "RecipeEntry",
-  modeled = setOf("name", "modules", "contentModules", "projectLibraries", "library", "module"),
+  // `os`/`arch`/`libc` are modeled rather than ignored although no checked-in plugin or module report carries one: a
+  // report is an OS superset (`collectPluginContentCategoryFailures` unions the per-OS variants), so an entry that did
+  // carry one would be read as unconditional, and `simplePluginContentModuleName` hands only unconditional jars off to
+  // a Bazel target. Declaring them turns that from a silent misread into a veto.
+  modeled = setOf("name", "os", "arch", "libc", "modules", "contentModules", "projectLibraries", "library", "module"),
   ignored = mapOf(
-    // Written only for a `DistFile` of a *platform* content report (`buildPlatformContentReport`), never in a
-    // `plugin-content.yaml` or `module-content.yaml`. Which files of a jar survive a target platform is a product-layout
-    // decision the converter keeps out of a fragment action - see `EXCLUDED_CONTENT_MODULES` for the cases it declines.
-    "os" to "platform selector of a distribution file, absent from plugin and module reports",
-    "arch" to "platform selector of a distribution file, absent from plugin and module reports",
-    "libc" to "platform selector of a distribution file, absent from plugin and module reports",
     // Written only onto the synthetic `name: plugins` entry of a *product platform* content report
     // (`writeProductModules`), where they list the product layout's own modules and its `intellij.moduleSets.*`
     // references. The plan generator reads them from that baseline into the platform fragment's payload

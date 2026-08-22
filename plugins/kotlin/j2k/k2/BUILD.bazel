@@ -22,6 +22,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_kotlin-j2k",
     module_name = "intellij.kotlin.j2k",
     resource_strip_prefix = "resources",

@@ -28,6 +28,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_pyproject",
     module_name = "intellij.python.pyproject",
     resource_strip_prefix = "resources",

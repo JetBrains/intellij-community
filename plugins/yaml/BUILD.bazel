@@ -126,16 +126,10 @@ exports_files(
 ### auto-generated section `dev content intellij.yaml` start
 dev_dist_plugin_content(
     name = "yaml_dev_content",
-    content_modules = [
-        "//plugins/yaml/backend",
-        "//plugins/yaml/syntax",
-    ],
+    content_modules = ["//plugins/yaml/syntax"],
     descriptor_module = ":yaml",
     libraries = [
         "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
-        "@lib//:com.jetbrains.fus.reporting/ap-validation-all-2.0.242.jar",
-        "@lib//:com.jetbrains.fus.reporting/fus-api-2.0.242.jar",
-        "@lib//:com.jetbrains.fus.reporting/fus-api-jvm-2.0.242.jar",
         "@lib//:eawtstub.jar",
         "@lib//:one.util/streamex-0.8.4.jar",
         "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
@@ -150,6 +144,9 @@ dev_dist_plugin_content(
         "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
         "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
     ],
+    prepacked_content_modules = {
+        "//plugins/yaml/backend": "modules/intellij.yaml.backend.jar",
+    },
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.yaml` end

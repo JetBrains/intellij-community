@@ -24,6 +24,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_project-structure",
     module_name = "intellij.kotlin.projectStructure",
     resource_strip_prefix = "resources",

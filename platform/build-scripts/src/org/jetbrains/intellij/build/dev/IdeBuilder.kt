@@ -36,6 +36,7 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.contentModuleJarCoreClasspathEntries
 import org.jetbrains.intellij.build.classPath.generateClassPathByLayoutReport
 import org.jetbrains.intellij.build.classPath.generateCoreClasspathFromPlugins
@@ -109,11 +110,15 @@ sealed interface DevBuildOutput {
     @JvmField val manifestFile: Path,
     @JvmField val pluginClasspathPartFile: Path? = null,
     @JvmField val pluginClasspathPrefixFile: Path? = null,
+    @JvmField val prepackedPluginContentPlacementFile: Path? = null,
   ) : DevBuildOutput {
     init {
       require(!fragment.isComplete) { "A complete dev distribution must use DevBuildOutput.Complete" }
       require(!fragment.ownsPlugins || pluginClasspathPartFile != null) {
         "The '$fragment' fragment owns plugins, so it requires a plugin-classpath part file"
+      }
+      require(!fragment.ownsPlugins || prepackedPluginContentPlacementFile != null) {
+        "The '$fragment' fragment owns plugins, so it requires a prepacked-plugin-content placement file"
       }
     }
   }
@@ -180,6 +185,8 @@ data class BuildRequest(
 
   /** Complete distribution, or one fully specified independently cacheable component. */
   @JvmField val output: DevBuildOutput = DevBuildOutput.Complete,
+  /** Relation-only plan; the jar files themselves are deliberately not inputs of the fragment action. */
+  @JvmField val prepackedPluginContent: Map<PrepackedPluginContentKey, PrepackedPluginContentJar> = emptyMap(),
 ) {
   internal val fragment: DevBuildFragment
     get() = (output as? DevBuildOutput.Component)?.fragment ?: DevBuildFragment.COMPLETE
@@ -427,6 +434,13 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
         val platformFileEntries = platformScrambleResultDeferred.await().distributionEntries
         // ensure plugin dist files added to the list
         val pluginDistributionEntries = pluginDistributionEntriesDeferred.await()
+        request.componentOutput?.prepackedPluginContentPlacementFile?.let { placementFile ->
+          writePrepackedPluginContentPlacement(
+            file = placementFile,
+            plugins = pluginDistributionEntries.pluginEntries,
+            runDir = runDir,
+          )
+        }
         val platformLayoutAwaited = platformLayout?.await()
 
         val pluginClasspathJob = if (request.fragment.ownsPlugins) launch {
@@ -576,6 +590,27 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
     contextToClose?.messages?.close()
   }
   return runDir
+}
+
+private fun writePrepackedPluginContentPlacement(file: Path, plugins: List<PluginBuildResult>, runDir: Path) {
+  val placements = LinkedHashMap<PrepackedPluginContentKey, String>()
+  for (plugin in plugins.sortedBy(PluginBuildResult::mainModule)) {
+    for (jar in plugin.prepackedContentJars.sortedBy(PrepackedPluginContentJar::contentModule)) {
+      val finalPath = runDir.relativize(plugin.dir.resolve("lib").resolve(jar.relativeOutputFile)).invariantSeparatorsPathString
+      val previous = placements.put(jar.key, finalPath)
+      check(previous == null) {
+        "Prepacked plugin content ${jar.pluginMainModule}/${jar.contentModule} was placed twice: $previous and $finalPath"
+      }
+    }
+  }
+  file.parent?.createDirectories()
+  Files.writeString(file, buildString {
+    for ((key, finalPath) in placements) {
+      append(key.pluginMainModule).append('\t')
+        .append(key.contentModule).append('\t')
+        .append(finalPath).append('\n')
+    }
+  })
 }
 
 @VisibleForTesting

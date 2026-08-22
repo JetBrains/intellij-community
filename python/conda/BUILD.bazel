@@ -22,6 +22,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_conda",
     module_name = "intellij.python.community.impl.conda",
     resource_strip_prefix = "resources",

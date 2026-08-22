@@ -203,13 +203,8 @@ dev_dist_plugin_content(
     name = "terminal_dev_content",
     content_modules = [
         "//libraries/completion-ranking-sh",
-        "//plugins/terminal/backend",
-        "//plugins/terminal/cloud",
         "//plugins/terminal/completion",
-        "//plugins/terminal/emulator",
-        "//plugins/terminal/frontend",
         "//plugins/terminal/libraries:libraries-completionDbWithExtensions",
-        "//plugins/terminal/sh",
     ],
     descriptor_module = ":terminal",
     libraries = [
@@ -256,6 +251,13 @@ dev_dist_plugin_content(
         "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
         "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
     ],
+    prepacked_content_modules = {
+        "//plugins/terminal/backend": "modules/intellij.terminal.backend.jar",
+        "//plugins/terminal/cloud": "modules/intellij.terminal.cloud.jar",
+        "//plugins/terminal/emulator": "modules/intellij.terminal.emulator.jar",
+        "//plugins/terminal/frontend": "modules/intellij.terminal.frontend.jar",
+        "//plugins/terminal/sh": "modules/intellij.terminal.sh.jar",
+    },
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.terminal` end

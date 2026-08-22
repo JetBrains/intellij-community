@@ -20,6 +20,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_impl",
     module_name = "intellij.java.impl",
     resource_strip_prefix = "resources",

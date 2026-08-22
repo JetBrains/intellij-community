@@ -44,11 +44,8 @@ exports_files(
 dev_dist_plugin_content(
     name = "toml_dev_content",
     content_modules = [
-        "//plugins/toml/backend",
         "//plugins/toml/core",
-        "//plugins/toml/frontend",
         "//plugins/toml/grazie",
-        "//plugins/toml/json",
     ],
     descriptor_module = ":toml",
     libraries = [
@@ -110,7 +107,6 @@ dev_dist_plugin_content(
         "@lib//:javax.xml.bind/jaxb-api-2.3.1.jar",
         "@lib//:net.fellbaum/jemoji-1.3.1.jar",
         "@lib//:net.loomchild/segment-2.0.3.jar",
-        "@lib//:one.util/streamex-0.8.4.jar",
         "@lib//:org.carrot2/morfologik-fsa-2.1.9.jar",
         "@lib//:org.carrot2/morfologik-fsa-builders-2.1.9.jar",
         "@lib//:org.carrot2/morfologik-speller-2.1.9.jar",
@@ -130,6 +126,11 @@ dev_dist_plugin_content(
         "@lib//:tech.units/indriya-1.3.jar",
         "@lib//:tech.uom.lib/uom-lib-common-1.1.jar",
     ],
+    prepacked_content_modules = {
+        "//plugins/toml/backend": "modules/intellij.toml.backend.jar",
+        "//plugins/toml/frontend": "modules/intellij.toml.frontend.jar",
+        "//plugins/toml/json": "modules/intellij.toml.json.jar",
+    },
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.toml` end

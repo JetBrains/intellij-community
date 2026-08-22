@@ -22,6 +22,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     module_name = "intellij.evaluationPlugin.languages.kotlin",
     resource_strip_prefix = "resources",
     resources = glob(

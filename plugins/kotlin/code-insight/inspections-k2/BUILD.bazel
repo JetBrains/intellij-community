@@ -23,6 +23,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_kotlin-codeInsight-inspections",
     module_name = "intellij.kotlin.codeInsight.inspections",
     resource_strip_prefix = "resources",

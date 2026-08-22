@@ -153,7 +153,6 @@ dev_dist_plugin_content(
     content_modules = [
         "//libraries/hamcrest",
         "//libraries/junit4",
-        "//plugins/junit/properties",
         "//plugins/junit5_rt:junit-v5-rt",
         "//plugins/junit6_rt:junit-v6-rt",
         "//plugins/junit_rt:junit-rt",
@@ -195,6 +194,9 @@ dev_dist_plugin_content(
         "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
         "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
     ],
+    prepacked_content_modules = {
+        "//plugins/junit/properties": "modules/intellij.junit.properties.jar",
+    },
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.junit` end

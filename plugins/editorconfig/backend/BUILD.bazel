@@ -30,6 +30,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     module_name = "intellij.editorconfig.backend",
     resource_jars = [":backend_resources"],
     resource_strip_prefix = "resources",

@@ -171,7 +171,6 @@ dev_dist_plugin_content(
     name = "testng_dev_content",
     content_modules = [
         "//libraries/testng",
-        "//plugins/testng/langInjection",
         "//plugins/testng_rt:testng-rt",
     ],
     descriptor_module = ":testng",
@@ -201,6 +200,9 @@ dev_dist_plugin_content(
         "@lib//:org.testng/testng-7.8.0.jar",
         "@lib//:org.webjars/jquery-3.6.1.jar",
     ],
+    prepacked_content_modules = {
+        "//plugins/testng/langInjection": "modules/intellij.testng.langInjection.jar",
+    },
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.testng` end

@@ -20,6 +20,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_navigation",
     module_name = "intellij.kotlin.navigation",
     resource_strip_prefix = "resouces",

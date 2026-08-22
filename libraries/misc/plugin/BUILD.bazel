@@ -45,7 +45,6 @@ dev_dist_plugin_content(
     name = "plugin_dev_content",
     content_modules = [
         "//libraries/commons/text",
-        "//libraries/javax/activation",
         "//libraries/jettison",
         "//libraries/lucene.common",
         "//libraries/opencsv",
@@ -56,7 +55,6 @@ dev_dist_plugin_content(
     libraries = [
         "@lib//:com.github.oshi/oshi-core-6.9.2.jar",
         "@lib//:com.opencsv/opencsv-5.11.2.jar",
-        "@lib//:com.sun.activation/javax.activation-1.2.0.jar",
         "@lib//:com.thoughtworks.xstream/xstream-1.4.21.jar",
         "@lib//:commons-beanutils/commons-beanutils-1.11.0.jar",
         "@lib//:io.github.x-stream/mxparser-1.2.2.jar",
@@ -66,6 +64,9 @@ dev_dist_plugin_content(
         "@lib//:org.codehaus.jettison/jettison-1.5.4.jar",
         "@lib//:xmlpull/xmlpull-1.1.3.1.jar",
     ],
+    prepacked_content_modules = {
+        "//libraries/javax/activation": "modules/intellij.libraries.javax.activation.jar",
+    },
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.libraries.misc.plugin` end

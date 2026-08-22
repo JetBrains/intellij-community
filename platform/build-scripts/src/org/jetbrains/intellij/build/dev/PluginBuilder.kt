@@ -72,6 +72,7 @@ internal suspend fun buildPluginsForDevMode(
     searchableOptionSet = searchableOptionSet,
     platformEntriesProvider = platformEntriesProvider,
     layoutOnly = false,
+    prepackedPluginContent = request.prepackedPluginContent,
   )
   // Prebuilt plugin directories are not plugin layouts, so no fragment can claim them by name - one fragment owns them
   // all, and it is the one that also assembles whatever the named fragments did not claim.
@@ -107,6 +108,7 @@ internal suspend fun layoutAllPluginsForDevMode(
     searchableOptionSet = searchableOptionSet,
     platformEntriesProvider = null,
     layoutOnly = true,
+    prepackedPluginContent = request.prepackedPluginContent,
   )
 }
 
@@ -120,6 +122,7 @@ private suspend fun buildPluginDescriptorsForDevMode(
   searchableOptionSet: SearchableOptionSetDescriptor?,
   platformEntriesProvider: (suspend () -> List<DistributionFileEntry>)?,
   layoutOnly: Boolean,
+  prepackedPluginContent: Map<PrepackedPluginContentKey, PrepackedPluginContentJar>,
 ): List<PluginBuildResult> {
   if (plugins.isEmpty()) return emptyList()
   val pluginRootDir = runDir.resolve("plugins")
@@ -141,6 +144,7 @@ private suspend fun buildPluginDescriptorsForDevMode(
       descriptorCacheContainer = platform.descriptorCacheContainer,
       context = context,
       layoutOnly = layoutOnly,
+      prepackedPluginContent = prepackedPluginContent,
     ) { layout, pluginDirOrFile ->
       buildPlatformSpecificPluginResources(
         plugin = layout,

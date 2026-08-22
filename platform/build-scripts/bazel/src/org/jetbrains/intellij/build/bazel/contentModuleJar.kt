@@ -8,11 +8,16 @@ import kotlinx.serialization.builtins.ListSerializer
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
 
@@ -134,7 +139,7 @@ internal const val LIB_MODULE_PREFIX = "intellij.libraries."
  *
  * A narrow schema rather than `com.intellij.platform.distributionContent.testFramework.FileEntry`: that class lives in
  * the platform, and this generator is a standalone Bazel module that gets the platform as published Maven artifacts,
- * which do not include it. Hence also `strictMode = false` - the files carry fields (`reason`, `os`, `size`, `files`,
+ * which do not include it. Hence also `strictMode = false` - the files carry fields (`reason`, `size`, `files`,
  * `productModules`, ...) this schema deliberately ignores, and enumerating them here would recreate `FileEntry` field by
  * field, which is the coupling the narrow schema exists to avoid.
  *
@@ -154,6 +159,20 @@ internal const val LIB_MODULE_PREFIX = "intellij.libraries."
 @Serializable
 internal data class RecipeEntry(
   val name: String = "",
+  /**
+   * The target-platform selectors of an entry the distribution writes for some operating systems only.
+   *
+   * Declared although no checked-in report carries any of them, because a report is an OS **superset**:
+   * `collectPluginContentCategoryFailures` in `contentChecker.kt` unions a plugin's per-OS variants into the one file
+   * that is checked in, precisely so a per-OS difference does not need a report per OS. Undeclared, `strictMode = false`
+   * would read an OS-conditional entry as an unconditional one - and a handed-off jar is packed unconditionally, for
+   * every product and every OS. So any non-null value vetoes the entry in [simplePluginContentModuleName] instead of
+   * being interpreted here: which files a target platform keeps is a product-layout decision, the same one
+   * `EXCLUDED_CONTENT_MODULES` declines for `presignedNativeLibs`.
+   */
+  val os: String? = null,
+  val arch: String? = null,
+  val libc: String? = null,
   val modules: List<RecipeModule> = emptyList(),
   val contentModules: List<RecipeModule> = emptyList(),
   val projectLibraries: List<RecipeNamed> = emptyList(),
@@ -216,7 +235,20 @@ internal fun computeContentModuleJar(module: ModuleDescriptor, moduleList: Modul
     return null
   }
 
-  val entry = readRecipe(module) ?: return null
+  val entry = readRecipe(module)
+  if (entry == null) {
+    return if (isPrepackedPluginContentModule(module = module, context = context)) {
+      ContentModuleJar(
+        libraryTargetLabels = emptyList(),
+        modulesBefore = emptyList(),
+        modulesAfter = emptyList(),
+        rewriteBootClassPath = false,
+      )
+    }
+    else {
+      null
+    }
+  }
   // `contentModules:` means a plugin content-module jar under `lib/modules/`, which `ij_plugin` owns.
   if (entry.contentModules.isNotEmpty() || entry.modules.isEmpty()) {
     return null
@@ -322,10 +354,149 @@ internal fun computeContentModuleJar(module: ModuleDescriptor, moduleList: Modul
 }
 
 /**
+ * Whether [module] may use its `content_module_jar` output for a plugin-content relation.
+ *
+ * The report index proves the plugin jar is a single-module self-named jar. The checks here cover facts local to the
+ * module target: a platform recipe must not ask the same output group to produce different bytes, and the descriptor
+ * used by `computeModuleSourcesByContent` must remain readable after the raw module jar stops being a fragment input.
+ */
+internal fun isPrepackedPluginContentModule(module: ModuleDescriptor, context: BazelBuildFileGenerator): Boolean {
+  val moduleName = module.module.name
+  if (moduleName !in context.pluginContentModuleJarCandidates ||
+      moduleName in context.pluginContentModuleJarVetoes ||
+      moduleName in EXCLUDED_CONTENT_MODULES ||
+      moduleName == BOOT_CLASS_PATH_MODULE) {
+    return false
+  }
+
+  readRecipe(module)?.let { platformRecipe ->
+    if (!isCompatibleSingleModuleRecipe(entry = platformRecipe, moduleName = moduleName)) {
+      return false
+    }
+  }
+
+  // A resource root and nothing else: `_find_descriptor_rel_paths` in `@community//build:jps_model.bzl` derives a
+  // module's descriptors from its `java-resource` roots only, so a `<moduleName>.xml` that lives in a source root is
+  // absent from the project-model tree the assembly reads. Accepting it here takes the raw module jar out of the
+  // fragment while leaving `DescriptorSearchPass.MODULE_OUTPUT` as the only reader that could still find the
+  // descriptor, and that reads a label nobody declared - "Bazel input '<label>' is not declared in the explicit input
+  // manifest", which names the jar and not the descriptor that made it unreachable.
+  return module.module.sourceRoots.any { root ->
+    root.rootType == JavaResourceRootType.RESOURCE && context.javaExtensionService.findSourceFile(root, "$moduleName.xml") != null
+  }
+}
+
+private fun isCompatibleSingleModuleRecipe(entry: RecipeEntry, moduleName: String): Boolean {
+  return entry.contentModules.isEmpty() &&
+         entry.modules.size == 1 &&
+         entry.modules.single().name == moduleName &&
+         entry.modules.single().libraries.isEmpty() &&
+         entry.projectLibraries.isEmpty() &&
+         entry.library == null &&
+         entry.module == null &&
+         (entry.name == "<file>" || entry.name == "$PLATFORM_LIB_DIST_PREFIX$moduleName.jar")
+}
+
+/**
+ * The repo-global candidates for the first plugin tranche.
+ *
+ * A module is selected only when every `contentModules` occurrence agrees on the same plain, product-independent
+ * recipe. An occurrence in a main plugin jar (`modules:`) is irrelevant: `content_module_jar` is an extra output and
+ * does not change that plugin's normal module jar.
+ */
+/**
+ * Directories this walk never enters, matching `isPrunedDirectory` in `build/content-report`, name for name.
+ *
+ * Other dot-directories are deliberately *not* pruned. `plugins/.remdev/remDevFeatureSample/plugin-content.yaml` is a
+ * real checked-in report, and skipping dot-directories wholesale - the default in most glob implementations, and the
+ * trap this repository's own search wrappers document - silently loses it. That cost nothing while that report held one
+ * main-jar entry, but the two halves of this index fail in opposite directions: a missed `lib/modules/<module>.jar`
+ * entry only
+ * declines to pack a jar, while a missed taken-out-library entry declines to *veto* one, and a wrongly prepacked module
+ * loses bytes that no byte comparison can see. The two readers of these reports agreeing on which files exist is
+ * cheaper than rediscovering that.
+ */
+private fun isPrunedReportDirectory(name: String): Boolean {
+  return name == "out" || name == "node_modules" || name == ".git" || name == ".idea" || name.startsWith("bazel-")
+}
+
+internal fun indexPluginContentModuleJarCandidates(projectRoot: Path): Set<String> {
+  val eligibility = HashMap<String, Boolean>()
+  Files.walkFileTree(projectRoot, object : SimpleFileVisitor<Path>() {
+    override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
+      if (dir != projectRoot && isPrunedReportDirectory(dir.fileName.toString())) {
+        return FileVisitResult.SKIP_SUBTREE
+      }
+      return FileVisitResult.CONTINUE
+    }
+
+    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+      if (file.fileName.toString() != "plugin-content.yaml") {
+        return FileVisitResult.CONTINUE
+      }
+      val text = file.readText()
+      if (text.isBlank()) {
+        return FileVisitResult.CONTINUE
+      }
+      for (entry in recipeYaml.decodeFromString(ListSerializer(RecipeEntry.serializer()), text)) {
+        if (entry.contentModules.isEmpty()) {
+          // A bare library jar laid beside a module's own jar - `lib/debugger-memory-agent.jar`, `lib/sa-jdwp.jar` -
+          // which [RecipeEntry.module] names the owner of. Two mechanisms produce one, and only the first loses bytes
+          // to a hand-off, so this veto is loss-detecting for it and deliberately conservative for the other:
+          //
+          // - `isSeparateLibraryJar` inside `JarPackager.computeSourcesForModuleLibs`, which runs *inside*
+          //   `computeSourcesForModule`. That one call both removes the file from the module jar and emits the sibling,
+          //   so a prepacked module - which skips `computeSourcesForModule` entirely - never writes it. Silently:
+          //   nothing else asks for that jar. `lib/debugger-memory-agent.jar` is the measured case.
+          // - `withModuleLibrary`, i.e. `layout.includedModuleLibraries`, which `computeModuleCustomLibrarySources`
+          //   walks on its own. `lib/sa-jdwp.jar` survives a hand-off, and the same call would have kept the library
+          //   out of the module jar anyway - which is what the Bazel-packed jar does too. Refused all the same: telling
+          //   the variants apart needs `extraCopy`, which does lose bytes, and the report records neither.
+          //
+          // The owner's own `lib/modules/<module>.jar` entry looks perfectly simple, and looks that way *because* the
+          // library was taken out of it; the taken-out jar is a separate entry keyed by `library:` + `module:` with no
+          // `contentModules:` at all, which is why walking only `contentModules` cannot see the coupling. Vetoing on
+          // sight is cheap and needs no cross-entry bookkeeping: eligibility is a repo-global AND, so this holds
+          // however the entries are ordered and whichever report the pair is split across.
+          entry.module?.let { eligibility.put(it, false) }
+          continue
+        }
+        for (contentModule in entry.contentModules) {
+          val moduleName = contentModule.moduleName
+          val simple = simplePluginContentModuleName(entry) == moduleName
+          eligibility.put(moduleName, eligibility.getOrDefault(moduleName, true) && simple)
+        }
+      }
+      return FileVisitResult.CONTINUE
+    }
+  })
+  return eligibility.filterValues { it }.keys
+}
+
+/** The module of a first-tranche plugin entry, or `null` when the entry needs JarPackager. */
+internal fun simplePluginContentModuleName(entry: RecipeEntry): String? {
+  val contentModule = entry.contentModules.singleOrNull() ?: return null
+  val moduleName = contentModule.moduleName
+  if (entry.name != "lib/modules/$moduleName.jar" ||
+      contentModule.libraries.isNotEmpty() ||
+      entry.modules.isNotEmpty() ||
+      entry.projectLibraries.isNotEmpty() ||
+      entry.library != null ||
+      entry.module != null ||
+      // An OS-conditional jar; see [RecipeEntry.os]. No report has one today, so this is a guard, not a filter.
+      entry.os != null ||
+      entry.arch != null ||
+      entry.libc != null) {
+    return null
+  }
+  return moduleName
+}
+
+/**
  * Whether `JarPackager` merges the library [jpsLibraryName] declares into the content-module jar owned by
  * [packedModuleName], reproducing `JarPackager.computeSourcesForModuleLibs`.
  *
- * Everything the platform path of that function tests is here. What is *not* here is deliberate: the 88-entry
+ * Everything the platform path of that function tests is here. What is *not* here is deliberate:
  * `IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST` and `LibraryPackMode` are reachable only for an auto `PluginLayout`, and
  * `excludedProjectLibraries`/`excludedModuleLibraries` are `PluginLayout` fields that are empty for the platform.
  *

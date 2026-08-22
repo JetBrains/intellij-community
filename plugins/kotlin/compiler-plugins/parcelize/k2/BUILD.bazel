@@ -21,6 +21,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_kotlin-compilerPlugins-parcelize",
     module_name = "intellij.kotlin.compilerPlugins.parcelize",
     resource_strip_prefix = "resources",

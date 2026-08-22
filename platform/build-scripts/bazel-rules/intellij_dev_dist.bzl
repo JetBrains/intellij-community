@@ -17,6 +17,8 @@ IntellijDevBuildInputsInfo = provider(
     fields = {
         "files": "The input files named by the manifest.",
         "manifest": "The logical Bazel input label to execution path manifest.",
+        "prepacked_plugin_jars": "The typed prepacked plugin-jar records carried by this content.",
+        "prepacked_plugin_jars_plan": "The relation-only plan passed to JarPackager; it contains no jar paths.",
     },
 )
 
@@ -38,6 +40,7 @@ def _add_input_entry(ctx, entries, logical_key, file, source):
 
 def _dev_build_inputs_impl(ctx):
     entries = {}
+    prepacked_plugin_jars = []
     for target in ctx.attr.inputs:
         files = target[DefaultInfo].files.to_list()
         if len(files) != 1:
@@ -63,6 +66,8 @@ def _dev_build_inputs_impl(ctx):
         for entry in content.library_jars.to_list():
             _add_input_entry(ctx, entries, entry.label, entry.jar, entry.label)
 
+        prepacked_plugin_jars = content.prepacked_plugin_jars.to_list()
+
     lines = []
     files = []
     for logical_key in sorted(entries.keys()):
@@ -76,9 +81,36 @@ def _dev_build_inputs_impl(ctx):
     # Unchanged for every non-empty manifest, so no fragment is re-keyed by this.
     ctx.actions.write(manifest, ("\n".join(lines) + "\n") if lines else "")
 
+    prepacked_by_key = {}
+    for entry in prepacked_plugin_jars:
+        key = (entry.plugin_main_module, entry.content_module)
+        previous = prepacked_by_key.get(key)
+        if previous != None and (previous.relative_output_file != entry.relative_output_file or previous.jar != entry.jar):
+            fail("%s: prepacked plugin relation %s/%s is provided by conflicting records" % (
+                ctx.label,
+                entry.plugin_main_module,
+                entry.content_module,
+            ))
+        prepacked_by_key[key] = entry
+
+    plan_lines = []
+    for key in sorted(prepacked_by_key.keys()):
+        entry = prepacked_by_key[key]
+        for value in [entry.plugin_main_module, entry.content_module, entry.relative_output_file]:
+            if "\t" in value or "\n" in value:
+                fail("%s: prepacked plugin plan value contains a tab or newline: %s" % (ctx.label, value))
+        plan_lines.append("%s\t%s\t%s" % (entry.plugin_main_module, entry.content_module, entry.relative_output_file))
+    prepacked_plan = ctx.actions.declare_file(ctx.label.name + ".prepacked-plugin-jars")
+    ctx.actions.write(prepacked_plan, ("\n".join(plan_lines) + "\n") if plan_lines else "")
+
     return [
-        DefaultInfo(files = depset([manifest])),
-        IntellijDevBuildInputsInfo(files = depset(files), manifest = manifest),
+        DefaultInfo(files = depset([manifest, prepacked_plan])),
+        IntellijDevBuildInputsInfo(
+            files = depset(files),
+            manifest = manifest,
+            prepacked_plugin_jars = depset(prepacked_by_key.values()),
+            prepacked_plugin_jars_plan = prepacked_plan,
+        ),
     ]
 
 intellij_dev_build_inputs = rule(
@@ -106,6 +138,8 @@ IntellijDevFragmentInfo = provider(
         "plugin_classpath_prefix": "The plugin-classpath prefix, or None if another fragment produces it.",
         "inputs_manifest": "The label-to-path manifest of the fragment's declared Bazel inputs.",
         "unused_inputs": "The declared inputs the assembly never resolved - declared minus these is what it used.",
+        "prepacked_plugin_jars": "The prepacked jar records this fragment hands to a collector without consuming.",
+        "prepacked_plugin_jars_placement": "The assembler-validated placement manifest, or None for a non-plugin component.",
     },
 )
 
@@ -246,6 +280,7 @@ def _fragment_impl(ctx):
         args.add("--platform-resources")
 
     plugin_classpath_part = None
+    prepacked_plugin_jars_placement = None
     if ctx.attr.plugins:
         args.add("--plugins=" + ctx.attr.plugins)
         args.add_all(ctx.attr.plugin_main_modules, format_each = "--plugin=%s")
@@ -258,6 +293,11 @@ def _fragment_impl(ctx):
         plugin_classpath_part = ctx.actions.declare_file(ctx.label.name + ".plugin-classpath-part")
         args.add("--plugin-classpath-part=" + plugin_classpath_part.path)
         outputs.append(plugin_classpath_part)
+
+        prepacked_plugin_jars_placement = ctx.actions.declare_file(ctx.label.name + ".prepacked-plugin-jars-placement")
+        args.add("--prepacked-plugin-jars=" + build_inputs.prepacked_plugin_jars_plan.path)
+        args.add("--prepacked-plugin-jars-placement=" + prepacked_plugin_jars_placement.path)
+        outputs.append(prepacked_plugin_jars_placement)
 
     plugin_classpath_prefix = None
     if ctx.attr.produces_plugin_classpath_prefix:
@@ -273,6 +313,7 @@ def _fragment_impl(ctx):
             direct = [
                 project_tree,
                 bazel_inputs_manifest,
+                build_inputs.prepacked_plugin_jars_plan,
                 ctx.file.bazel_targets_json,
             ] + ctx.files.preloaded_downloads + ctx.files.preloaded_manifests + ctx.files.ijent_binaries,
             transitive = [build_inputs.files],
@@ -294,6 +335,8 @@ def _fragment_impl(ctx):
             plugin_classpath_prefix = plugin_classpath_prefix,
             inputs_manifest = bazel_inputs_manifest,
             unused_inputs = unused_inputs,
+            prepacked_plugin_jars = build_inputs.prepacked_plugin_jars,
+            prepacked_plugin_jars_placement = prepacked_plugin_jars_placement,
         ),
     ]
 
@@ -400,6 +443,8 @@ def _packed_jars_component_impl(ctx):
             # over-declaration to measure. `dev_dist_unused_inputs_report_test` skips a component that reports neither.
             inputs_manifest = None,
             unused_inputs = None,
+            prepacked_plugin_jars = depset(),
+            prepacked_plugin_jars_placement = None,
         ),
     ]
 
@@ -425,6 +470,86 @@ intellij_dev_packed_jars_component = rule(
             mandatory = True,
             doc = "The module targets whose `content_module_jar` output group this component collects.",
         ),
+    },
+)
+
+def _packed_plugin_jars_component_impl(ctx):
+    home = ctx.actions.declare_directory(ctx.label.name + ".home")
+    component_manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
+
+    records = {}
+    placement_manifests = []
+    for target in ctx.attr.fragments:
+        fragment = target[IntellijDevFragmentInfo]
+        if fragment.prepacked_plugin_jars_placement:
+            placement_manifests.append(fragment.prepacked_plugin_jars_placement)
+        for entry in fragment.prepacked_plugin_jars.to_list():
+            key = (entry.plugin_main_module, entry.content_module)
+            previous = records.get(key)
+            if previous != None and (previous.relative_output_file != entry.relative_output_file or previous.jar != entry.jar):
+                fail("%s: conflicting prepacked plugin jar records for %s/%s" % (
+                    ctx.label,
+                    entry.plugin_main_module,
+                    entry.content_module,
+                ))
+            records[key] = entry
+
+    metadata_lines = []
+    jars = []
+    for key in sorted(records.keys()):
+        entry = records[key]
+        metadata_lines.append("%s\t%s\t%s\t%s" % (
+            entry.plugin_main_module,
+            entry.content_module,
+            entry.relative_output_file,
+            entry.jar.path,
+        ))
+        jars.append(entry.jar)
+    metadata = ctx.actions.declare_file(ctx.label.name + ".prepacked-plugin-jars")
+    ctx.actions.write(metadata, ("\n".join(metadata_lines) + "\n") if metadata_lines else "")
+
+    args = ctx.actions.args()
+    args.add("--output-dir=" + home.path)
+    args.add("--component-manifest=" + component_manifest.path)
+    args.add("--kind=" + ctx.attr.component_name)
+    args.add("--platform-prefix=" + ctx.attr.platform_prefix)
+    args.add("--plugin-jars-file=" + metadata.path)
+    args.add_all(placement_manifests, format_each = "--plugin-placement=%s")
+    _add_target_platform_args(args, ctx.attr.target_platform)
+
+    ctx.actions.run(
+        inputs = depset(direct = [metadata] + jars + placement_manifests),
+        outputs = [home, component_manifest],
+        executable = ctx.executable.collector,
+        arguments = [args],
+        execution_requirements = _LOCAL_DISK_CACHE_ONLY,
+        mnemonic = "IntellijDevPackedPluginJars",
+        progress_message = "Collecting packed plugin content jars for %{label}",
+    )
+    return [
+        DefaultInfo(files = depset([home, component_manifest])),
+        IntellijDevFragmentInfo(
+            name = ctx.attr.component_name,
+            home = home,
+            manifest = component_manifest,
+            plugin_classpath_part = None,
+            plugin_classpath_prefix = None,
+            inputs_manifest = None,
+            unused_inputs = None,
+            prepacked_plugin_jars = depset(),
+            prepacked_plugin_jars_placement = None,
+        ),
+    ]
+
+intellij_dev_packed_plugin_jars_component = rule(
+    doc = "Collects plugin content-module jars packed by `jvm_library` into their JarPackager-validated destinations.",
+    implementation = _packed_plugin_jars_component_impl,
+    attrs = {
+        "collector": attr.label(executable = True, cfg = "exec", mandatory = True),
+        "component_name": attr.string(mandatory = True),
+        "platform_prefix": attr.string(mandatory = True),
+        "target_platform": attr.string(default = ""),
+        "fragments": attr.label_list(providers = [IntellijDevFragmentInfo], mandatory = True),
     },
 )
 

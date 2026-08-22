@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
+import org.jetbrains.intellij.build.dev.PrepackedPluginContentJar
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
 import org.jetbrains.intellij.build.impl.LIB_DIRECTORY
@@ -190,6 +191,11 @@ internal suspend fun generateCoreClasspathFromPlugins(
         classPathResult.add(distributionEntry.path)
       }
     }
+    for (jar in buildResult.prepackedContentJars) {
+      if (jar.contentModule in classPathModules) {
+        classPathResult.add(buildResult.dir.resolve("lib").resolve(jar.relativeOutputFile))
+      }
+    }
   }
   return classPathResult
 }
@@ -231,6 +237,7 @@ data class PluginBuildResult(
   @JvmField val os: OsFamily?,
   @JvmField val arch: JvmArchitecture?,
   @JvmField val distribution: Collection<DistributionFileEntry>,
+  @JvmField val prepackedContentJars: List<PrepackedPluginContentJar> = emptyList(),
 )
 
 /**
@@ -341,6 +348,15 @@ internal suspend fun generatePluginClassPath(
 
       check(!file.startsWith(pluginDir) || pluginDir.relativize(file).nameCount == 2) {
         "plugin entry is not specified correctly: $file"
+      }
+    }
+    for (jar in plugin.prepackedContentJars) {
+      if (jar.relativeOutputFile.contains('/')) {
+        continue
+      }
+      val file = pluginDir.resolve("lib").resolve(jar.relativeOutputFile)
+      if (uniqueGuard.add(file)) {
+        files.add(file)
       }
     }
 

@@ -19,6 +19,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_postfix-templates",
     module_name = "intellij.kotlin.codeInsight.postfixTemplates",
     resource_strip_prefix = "resources",

@@ -88,10 +88,6 @@ dev_dist_plugin_content(
         "//libraries/search-everywhere-find-ec-model",
         "//platform/ml-logs",
         "//plugins/search-everywhere-ml/ranking/core",
-        "//plugins/search-everywhere-ml/ranking/ext",
-        "//plugins/search-everywhere-ml/ranking/java",
-        "//plugins/search-everywhere-ml/ranking/vcs",
-        "//plugins/search-everywhere-ml/ranking/yaml",
         "//plugins/search-everywhere-ml/typos",
     ],
     descriptor_module = ":search-everywhere-ml",
@@ -206,6 +202,12 @@ dev_dist_plugin_content(
         "@lib//:tech.units/indriya-1.3.jar",
         "@lib//:tech.uom.lib/uom-lib-common-1.1.jar",
     ],
+    prepacked_content_modules = {
+        "//plugins/search-everywhere-ml/ranking/ext": "modules/intellij.searchEverywhereMl.ranking.ext.jar",
+        "//plugins/search-everywhere-ml/ranking/java": "modules/intellij.searchEverywhereMl.ranking.java.jar",
+        "//plugins/search-everywhere-ml/ranking/vcs": "modules/intellij.searchEverywhereMl.ranking.vcs.jar",
+        "//plugins/search-everywhere-ml/ranking/yaml": "modules/intellij.searchEverywhereMl.ranking.yaml.jar",
+    },
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.searchEverywhereMl` end

@@ -1,6 +1,11 @@
+load(":dev_dist_content_test.bzl", "dev_dist_content_test_suite")
+
+dev_dist_content_test_suite(name = "dev_dist_content_tests")
+
 test_suite(
     name = "bazel_rules_tests",
     tests = [
+        ":dev_dist_content_tests",
         "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests:ij-plugin-packager-tests",
         "@jps_to_bazel//:bazel-generator-integration-tests",
         "@jps_to_bazel//:kotlinc-project-defaults-tests",

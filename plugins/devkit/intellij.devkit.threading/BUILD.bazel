@@ -23,6 +23,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_threading",
     module_name = "intellij.devkit.threading",
     resource_strip_prefix = "resources",

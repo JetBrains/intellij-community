@@ -43,28 +43,17 @@ exports_files(
 ### auto-generated section `dev content intellij.searchEverywhereLucene.plugin` start
 dev_dist_plugin_content(
     name = "searchEverywhereLucene-plugin_dev_content",
-    content_modules = [
-        "//plugins/search-everywhere-lucene/backend",
-        "//plugins/search-everywhere-lucene/common",
-        "//plugins/search-everywhere-lucene/frontend",
-        "//plugins/search-everywhere-lucene/test-commands:searchEverywhereLucene-performanceTesting",
-    ],
+    content_modules = ["//plugins/search-everywhere-lucene/common"],
     descriptor_module = ":searchEverywhereLucene-plugin",
     libraries = [
-        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
-        "@lib//:eawtstub.jar",
-        "@lib//:org.apache.lucene/lucene-analysis-common-10.5.0.jar",
-        "@lib//:org.apache.lucene/lucene-core-10.5.0.jar",
-        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
-        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
         "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-test-2.4.10-RC2.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-test-junit5-2.2.20.jar",
         "@lib//:org.jetbrains/annotations-26.0.2.jar",
-        "@lib//:org.jmock/jmock-2.5.1.jar",
-        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
-        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
     ],
+    prepacked_content_modules = {
+        "//plugins/search-everywhere-lucene/backend": "modules/intellij.searchEverywhereLucene.backend.jar",
+        "//plugins/search-everywhere-lucene/frontend": "modules/intellij.searchEverywhereLucene.frontend.jar",
+        "//plugins/search-everywhere-lucene/test-commands:searchEverywhereLucene-performanceTesting": "modules/intellij.searchEverywhereLucene.performanceTesting.jar",
+    },
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.searchEverywhereLucene.plugin` end

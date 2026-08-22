@@ -15,6 +15,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     module_name = "intellij.lombok",
     resource_strip_prefix = "src/main/resources",
     resources = glob(

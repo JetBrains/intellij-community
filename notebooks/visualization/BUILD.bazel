@@ -32,6 +32,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_visualization",
     module_name = "intellij.notebooks.visualization",
     resource_strip_prefix = "resources",

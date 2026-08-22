@@ -23,6 +23,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_kotlin-codeInsight",
     module_name = "intellij.kotlin.codeInsight",
     resource_strip_prefix = "resources",

@@ -29,6 +29,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_gradle-java",
     module_name = "kotlin.gradle.gradle-java",
     resource_strip_prefix = "resources",

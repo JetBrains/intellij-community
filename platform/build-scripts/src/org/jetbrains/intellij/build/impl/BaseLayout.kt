@@ -11,6 +11,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.plus
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import java.lang.StackWalker.Option
 import kotlin.streams.asSequence
@@ -34,6 +35,9 @@ sealed class BaseLayout {
   /** module name to entries which should be excluded from its output */
   internal var moduleExcludes: PersistentMap<String, MutableList<String>> = persistentMapOf()
     private set
+
+  @ApiStatus.Internal
+  fun getModuleExcludesModuleNames(): Set<String> = moduleExcludes.keys
 
   @JvmField
   internal val includedProjectLibraries: ObjectLinkedOpenHashSet<ProjectLibraryData> = ObjectLinkedOpenHashSet()

@@ -173,12 +173,9 @@ dev_dist_plugin_content(
     content_modules = [
         "//libraries/test-discovery",
         "//plugins/coverage/coverage_rt:java-coverage-rt",
-        "//plugins/coverage/junit",
-        "//plugins/coverage/testng",
     ],
     descriptor_module = ":coverage",
     libraries = [
-        "@lib//:com.beust/jcommander-1.82.jar",
         "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
         "@lib//:com.jetbrains.fus.reporting/ap-validation-all-2.0.242.jar",
         "@lib//:com.jetbrains.fus.reporting/fus-api-2.0.242.jar",
@@ -186,8 +183,6 @@ dev_dist_plugin_content(
         "@lib//:com.sun.activation/jakarta.activation-1.2.2.jar",
         "@lib//:com.sun.istack/istack-commons-runtime-3.0.12.jar",
         "@lib//:eawtstub.jar",
-        "@lib//:org.apache.ant/ant-1.7.1.jar",
-        "@lib//:org.apache.ant/ant-launcher-1.7.1.jar",
         "@lib//:org.freemarker/freemarker-2.3.32.jar",
         "@lib//:org.glassfish.jaxb/jaxb-runtime-2.3.9.jar",
         "@lib//:org.glassfish.jaxb/txw2-2.3.9.jar",
@@ -210,9 +205,11 @@ dev_dist_plugin_content(
         "@lib//:org.ow2.asm/asm-tree-9.10.1.jar",
         "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
         "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
-        "@lib//:org.testng/testng-7.8.0.jar",
-        "@lib//:org.webjars/jquery-3.6.1.jar",
     ],
+    prepacked_content_modules = {
+        "//plugins/coverage/junit": "modules/intellij.java.coverage.rt.junit.jar",
+        "//plugins/coverage/testng": "modules/intellij.java.coverage.rt.testng.jar",
+    },
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.java.coverage` end

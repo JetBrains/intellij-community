@@ -43,20 +43,11 @@ exports_files(
 ### auto-generated section `dev content intellij.extendedToolWindowsUi` start
 dev_dist_plugin_content(
     name = "extendedToolWindowsUi_dev_content",
-    content_modules = [
-        "//plugins/extended-toolwindows-ui/backend",
-        "//plugins/extended-toolwindows-ui/frontend",
-    ],
     descriptor_module = ":extendedToolWindowsUi",
-    libraries = [
-        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
-        "@lib//:eawtstub.jar",
-        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
-        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
-        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
-        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
-    ],
+    prepacked_content_modules = {
+        "//plugins/extended-toolwindows-ui/backend": "modules/intellij.extendedToolWindowsUi.backend.jar",
+        "//plugins/extended-toolwindows-ui/frontend": "modules/intellij.extendedToolWindowsUi.frontend.jar",
+    },
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.extendedToolWindowsUi` end

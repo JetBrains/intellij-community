@@ -24,6 +24,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.cli.common.arguments.Argument
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.IdentityHashMap
 import java.util.TreeMap
@@ -153,6 +154,29 @@ internal class BazelBuildFileGenerator(
    */
   @JvmField
   val packedContentModuleJars: MutableMap<String, List<String>> = TreeMap()
+
+  /**
+   * Modules whose checked-in plugin content reports agree that they are a plain
+   * `lib/modules/<module>.jar` containing only that module's production output.
+   *
+   * Indexed once for the whole generator run. The per-module recipe still gets the final veto in
+   * [isPrepackedPluginContentModule]: a conflicting platform recipe, an excluded module, or a descriptor that exists
+   * only in generated output keeps the module on the JarPackager path.
+   */
+  val pluginContentModuleJarCandidates: Set<String> by lazy {
+    indexPluginContentModuleJarCandidates(ultimateRoot ?: communityRoot)
+  }
+
+  /** Product/plugin layout transformations that make a raw module-output jar ineligible for direct handoff. */
+  val pluginContentModuleJarVetoes: Set<String> by lazy {
+    val file = (ultimateRoot?.resolve("community") ?: communityRoot).resolve("build/dev_dist_plugin_content_vetoes.txt")
+    if (Files.exists(file)) {
+      Files.readAllLines(file).asSequence().map(String::trim).filter { it.isNotEmpty() && !it.startsWith('#') }.toSet()
+    }
+    else {
+      emptySet()
+    }
+  }
 
   fun getKnownModuleDescriptorOrError(module: JpsModule): ModuleDescriptor {
     return moduleToDescriptor.get(module) ?: error("No descriptor for module ${module.name}")
@@ -709,6 +733,13 @@ internal class BazelBuildFileGenerator(
      * bundling that plugin.
      */
     val pluginContent: PluginContent?,
+    /**
+     * Prepack-eligible members of this plugin that only the other repository can name - see [PluginContentResult].
+     *
+     * Independent of [pluginContentTarget]: a community plugin whose only extra content is a prepack-eligible ultimate
+     * member gets no content target and still has to have that member packed.
+     */
+    val crossRepositoryPrepackedModules: List<String>,
   )
 
   internal data class PluginDistributionTarget(
@@ -994,11 +1025,13 @@ internal class BazelBuildFileGenerator(
 
     // What this plugin contributes to a dev distribution: computed for every plugin with a checked-in
     // `plugin-content.yaml` and gated on nothing else, unlike `ij_plugin`, whose opt-in marker is about packaging.
-    val pluginContent = computePluginContent(module = moduleDescriptor, moduleList = moduleList, context = this@BazelBuildFileGenerator)
+    val pluginContentResult = computePluginContent(module = moduleDescriptor, moduleList = moduleList, context = this@BazelBuildFileGenerator)
+    val pluginContent = pluginContentResult.content
 
     return ModuleTargets(
       moduleDescriptor = moduleDescriptor,
       pluginContent = pluginContent,
+      crossRepositoryPrepackedModules = pluginContentResult.crossRepositoryPrepackedModules,
       pluginContentTarget = pluginContent?.let { addPackagePrefix(BazelLabel(pluginContentTargetName(moduleDescriptor), moduleDescriptor)) },
       productionTargets = productionCompileTargets.map { addPackagePrefix(it) } + customModule?.additionalProductionTargets.orEmpty(),
       productionJars = productionCompileJars.map { getJarLocation(it) } + customModule?.additionalProductionJars.orEmpty(),

@@ -22,6 +22,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_pytools",
     module_name = "intellij.python.pytools",
     resource_strip_prefix = "resources",

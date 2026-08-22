@@ -44,11 +44,9 @@ exports_files(
 dev_dist_plugin_content(
     name = "compose-ide-plugin_dev_content",
     content_modules = [
-        "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
         "//plugins/compose/intellij.compose.ide.plugin.k2:ide-plugin-k2",
         "//plugins/compose/intellij.compose.ide.plugin.resources.android:ide-plugin-resources-android",
         "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources",
-        "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
     ],
     descriptor_module = ":compose-ide-plugin",
     libraries = [
@@ -60,7 +58,6 @@ dev_dist_plugin_content(
         "@lib//:eawtstub.jar",
         "@lib//:net.sf.kxml/kxml2-2.3.0.jar",
         "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
-        "@lib//:org.jetbrains.intellij.deps/gradle-api-9.7.0.jar",
         "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
         "@lib//:org.jetbrains.intellij.deps/studio-platform-2025.3.2-389.jar",
         "@lib//:org.jetbrains.intellij.deps/studio-test-platform-2025.3.2-389.jar",
@@ -81,6 +78,10 @@ dev_dist_plugin_content(
         "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
         "@lib//:xml-resolver/xml-resolver-1.2.jar",
     ],
+    prepacked_content_modules = {
+        "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt": "modules/intellij.compose.ide.plugin.gradleTooling.rt.jar",
+        "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared": "modules/intellij.compose.ide.plugin.shared.jar",
+    },
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.compose.ide.plugin` end
