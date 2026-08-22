@@ -59,6 +59,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
     )
 
     productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS + sequenceOf(
+      "intellij.idea.customization.plugin",
       "intellij.javaFX.community"
     )
 
@@ -214,9 +215,14 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
   module("intellij.ide.startup.importSettings")
   // the sqlite JDBC driver `importSettings` needs; private, so plugins bundle their own copy of it
   privateModule("intellij.libraries.sqlite")
+  // Load-bearing product defaults stay core-time.
+  // The com.intellij.idea.customization plugin holds only additive rows.
   module("intellij.platform.customization.min")
   module("intellij.idea.customization.base")
-  module("intellij.idea.customization.backend")
+  if (platformPrefix == "AndroidStudio") {
+    // Android Studio's bundled plugin set is managed externally, so this module stays in its core
+    module("intellij.idea.customization.backend")
+  }
 
   if (System.getProperty("idea.platform.prefix") == "AndroidStudio") {
     module("intellij.idea.android.customization")

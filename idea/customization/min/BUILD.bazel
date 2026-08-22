@@ -14,7 +14,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/ide-core"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/lang-impl",
+    ],
 )
 
 content_module_jar(module = ":min")
@@ -32,6 +37,8 @@ jvm_library(
         # do not sort,
         ":min",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.customization.min` end

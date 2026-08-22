@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.idea.customization.base.jar
-  modules:
-  - name: intellij.idea.customization.base

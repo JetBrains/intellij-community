@@ -1,0 +1,16 @@
+<idea-plugin implementation-detail="true" require-restart="true">
+  <id>com.intellij.idea.customization</id>
+  <!--suppress PluginXmlValidity -->
+  <name>IntelliJ IDEA Customization</name>
+  <description>Brings customizations specific for IntelliJ IDEA</description>
+  <vendor>JetBrains</vendor>
+  <dependencies>
+    <plugin id="com.intellij.modules.platform"/>
+  </dependencies>
+  <content namespace="jetbrains">
+    <module name="intellij.idea.customization.backend"/>
+    <!-- ultimate-homed modules, skipped in community-based dists -->
+    <module name="intellij.idea.customization.ultimate"/>
+    <module name="intellij.idea.ultimate.customizationTrial"/>
+  </content>
+</idea-plugin>

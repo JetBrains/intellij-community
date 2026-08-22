@@ -279,6 +279,7 @@ grid/types
 idea/customization/backend
 idea/customization/base
 idea/customization/min
+idea/customization/plugin
 images
 images/intellij.platform.images.copyright
 images/intellij.platform.images.xdebugger
