@@ -26,6 +26,8 @@
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <editorFactoryListener implementation="com.intellij.markdown.frontend.editor.tables.ui.alignment.MarkdownTableAlignmentController$Listener"/>
+    <applicationService serviceInterface="org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewReconcilerBridge"
+                        serviceImplementation="com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconcilerBridgeImpl"/>
     <fileEditorProvider id="markdown-preview-editor" implementation="com.intellij.markdown.frontend.preview.MarkdownSplitEditorProvider"/>
     <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
                         serviceImplementation="com.intellij.markdown.frontend.preview.accessor.impl.MarkdownLinkOpenerImpl"/>

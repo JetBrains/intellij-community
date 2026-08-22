@@ -1,5 +1,15 @@
 <?xml version='1.0'?>
 <list>
+  <option baseAttributes="MARKDOWN_TEXT" name="MARKDOWN_BOLD">
+    <value>
+      <option name="FONT_TYPE" value="1"/>
+    </value>
+  </option>
+  <option baseAttributes="MARKDOWN_TEXT" name="MARKDOWN_ITALIC">
+    <value>
+      <option name="FONT_TYPE" value="2"/>
+    </value>
+  </option>
   <option name="MARKDOWN_HEADER">
     <value>
       <option name="FOREGROUND" value="bbbbbb"/>

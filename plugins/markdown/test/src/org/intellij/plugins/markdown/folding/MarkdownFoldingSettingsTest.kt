@@ -1,10 +1,19 @@
 package org.intellij.plugins.markdown.folding
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.settings.MarkdownCodeFoldingSettings
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 class MarkdownFoldingSettingsTest: BasePlatformTestCase() {
+  override fun setUp() {
+    super.setUp()
+    val livePreview = MarkdownSettings.getInstance(project).enableLivePreview
+    Disposer.register(testRootDisposable) { MarkdownSettings.getInstance(project).enableLivePreview = livePreview }
+    MarkdownSettings.getInstance(project).enableLivePreview = false
+  }
+
   fun `test default settings`() {
     checkFolding()
   }

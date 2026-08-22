@@ -16,6 +16,10 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 @Service(Service.Level.PROJECT)
 @State(name = "MarkdownSettings", storages = [(Storage("markdown.xml"))])
 class MarkdownSettings(internal val project: Project): SimplePersistentStateComponent<MarkdownSettingsState>(MarkdownSettingsState()) {
+  var enableLivePreview: Boolean
+    get() = state.enableLivePreview
+    set(value) { state.enableLivePreview = value }
+
   var areInjectionsEnabled: Boolean
     get() = state.areInjectionsEnabled
     set(value) { state.areInjectionsEnabled = value }

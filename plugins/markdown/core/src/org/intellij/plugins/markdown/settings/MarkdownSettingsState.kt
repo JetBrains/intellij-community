@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class MarkdownSettingsState: BaseState() {
+  var enableLivePreview by property(true)
   var areInjectionsEnabled by property(true)
   var showProblemsInCodeBlocks by property(false)
   var isStripTrailingSpacesOnSave: Boolean by property(false)

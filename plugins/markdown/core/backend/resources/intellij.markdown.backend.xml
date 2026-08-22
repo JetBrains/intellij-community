@@ -31,6 +31,7 @@
     </dependencies>
     <!-- endregion -->
     <extensions defaultExtensionNs="com.intellij">
+      <highlightingPassFactory implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewPassFactory"/>
       <completion.contributor
         language="Markdown" implementationClass="com.intellij.markdown.backend.completion.MarkdownAtPathCompletionContributor"/>
       <platform.rpc.backend.remoteApiProvider
