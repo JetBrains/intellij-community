@@ -204,7 +204,7 @@ fun projectFixture(
   val isValidIdeaProject = ProjectUtil.isValidProjectPath(path)
   // we should respect if user explicitly set isNewProject
   val isNewProject = !isValidIdeaProject || openProjectTask.isNewProject
-  val openProjectTask = openProjectTask.copy(preloadServices = false, isNewProject = isNewProject)
+  val openProjectTask = openProjectTask.prepareForTests(isNewProject)
 
   val projectManager = ProjectManagerEx.getInstanceEx()
 

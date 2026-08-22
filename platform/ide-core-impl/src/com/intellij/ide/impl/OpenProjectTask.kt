@@ -25,7 +25,7 @@ private fun Any?.withOpensFileAfterProjectOpen(value: Boolean): OpenProjectTaskI
 }
 
 /** Project creation options. Do not compose directly; use [OpenProjectTaskBuilder] instead. */
-class OpenProjectTask @ApiStatus.Internal @Deprecated("Use `OpenProjectTaskBuilder` or `OpenProjectTask { ... }`") constructor(
+class OpenProjectTask @ApiStatus.Internal @Deprecated("Use `OpenProjectTask { ... }`") constructor(
   val forceOpenInNewFrame: Boolean,
   val forceReuseFrame: Boolean,
   val projectToClose: Project?,
@@ -94,7 +94,7 @@ class OpenProjectTask @ApiStatus.Internal @Deprecated("Use `OpenProjectTaskBuild
       task -> { module -> task(module) }
     }
 
-  @Deprecated("Use `OpenProjectTaskBuilder` or `OpenProjectTask { ... }`")
+  @Deprecated("Use `OpenProjectTask { ... }`")
   @ApiStatus.Internal
   @Suppress("DEPRECATION")
   constructor(
@@ -113,7 +113,7 @@ class OpenProjectTask @ApiStatus.Internal @Deprecated("Use `OpenProjectTaskBuild
     createModule = true, projectRootDir = null
   )
 
-  @Deprecated("Use `OpenProjectTaskBuilder` or `OpenProjectTask { ... }`")
+  @Deprecated("Use `OpenProjectTask { ... }`")
   @Suppress("DEPRECATION")
   fun copy(
     forceOpenInNewFrame: Boolean = this.forceOpenInNewFrame,
@@ -150,28 +150,27 @@ class OpenProjectTask @ApiStatus.Internal @Deprecated("Use `OpenProjectTaskBuild
   )
 
   companion object {
-    @Deprecated("Use `OpenProjectTaskBuilder` or `OpenProjectTask { ... }`")
+    @Deprecated("Use `OpenProjectTask { ... }`")
     @JvmStatic
     fun build(): OpenProjectTask = OpenProjectTask {}
   }
 
-  @Deprecated("Use `OpenProjectTaskBuilder` or `OpenProjectTask { ... }`")
+  @Deprecated("Use `OpenProjectTask { ... }`")
   @Suppress("DEPRECATION")
   fun withForceOpenInNewFrame(forceOpenInNewFrame: Boolean): OpenProjectTask = copy(forceOpenInNewFrame = forceOpenInNewFrame)
 
-  @Deprecated("Use `OpenProjectTaskBuilder` or `OpenProjectTask { ... }`")
+  @Deprecated("Use `OpenProjectTask { ... }`")
   @Suppress("DEPRECATION")
   fun withProjectToClose(projectToClose: Project?): OpenProjectTask = copy(projectToClose = projectToClose)
 
-  @Deprecated("Use `OpenProjectTaskBuilder` or `OpenProjectTask { ... }`")
+  @Deprecated("Use `OpenProjectTask { ... }`")
   @Suppress("DEPRECATION")
   fun asNewProject(): OpenProjectTask = copy(isNewProject = true, useDefaultProjectAsTemplate = true)
 
-  @Deprecated("Use `OpenProjectTaskBuilder` or `OpenProjectTask { ... }`")
   @Suppress("DEPRECATION")
   fun withProject(project: Project?): OpenProjectTask = copy(project = project)
 
-  @Deprecated("Use `OpenProjectTaskBuilder` or `OpenProjectTask { ... }`")
+  @Deprecated("Use `OpenProjectTask { ... }`")
   @Suppress("DEPRECATION")
   fun withProjectName(projectName: String?): OpenProjectTask = copy(projectName = projectName)
 
@@ -182,6 +181,11 @@ class OpenProjectTask @ApiStatus.Internal @Deprecated("Use `OpenProjectTaskBuild
   @ApiStatus.Internal
   @Suppress("DEPRECATION")
   fun markAsOpeningFileAfterProjectOpen(): OpenProjectTask = copy(implOptions = implOptions.withOpensFileAfterProjectOpen(value = true))
+
+  @ApiStatus.Internal
+  @TestOnly
+  @Suppress("DEPRECATION")
+  fun prepareForTests(asNewProject: Boolean): OpenProjectTask = copy(preloadServices = false, isNewProject = asNewProject)
 }
 
 @get:ApiStatus.Internal
@@ -198,7 +202,7 @@ fun OpenProjectTask.withImplOptions(implOptions: Any?): OpenProjectTask {
   return copy(implOptions = options)
 }
 
-class OpenProjectTaskBuilder {
+class OpenProjectTaskBuilder @PublishedApi internal constructor() {
   var projectName: String? = null
 
   var forceOpenInNewFrame: Boolean = false
@@ -244,7 +248,7 @@ class OpenProjectTaskBuilder {
 
   var callback: ProjectOpenedCallback? = null
 
-  /** Whether to show welcome screen if failed to open a project. */
+  /** Whether to show the welcome screen if failed to open a project. */
   var showWelcomeScreen: Boolean = true
 
   var projectWorkspaceId: String? = null
@@ -258,7 +262,7 @@ class OpenProjectTaskBuilder {
   @ApiStatus.Internal
   var opensFileAfterProjectOpen: Boolean = false
 
-  /**  Shim for Java clients  */
+  /** A shim for Java clients. */
   fun withBeforeOpenCallback(callback: Predicate<Project>) {
     beforeOpenTasks += { callback.test(it) }
   }
@@ -282,7 +286,8 @@ class OpenProjectTaskBuilder {
   @PublishedApi
   internal fun build(builder: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask = apply { builder() }.build()
 
-  fun build(): OpenProjectTask {
+  @PublishedApi
+  internal fun build(): OpenProjectTask {
     if (project != null && createModule) {
       thisLogger().warn("Project is explicitly set (name=${project?.name}), but createModule is true")
     }
