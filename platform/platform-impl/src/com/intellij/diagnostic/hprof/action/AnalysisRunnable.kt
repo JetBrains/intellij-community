@@ -33,6 +33,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -48,7 +49,9 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.nio.channels.FileChannel
 import java.nio.file.Files
@@ -262,7 +265,11 @@ internal class SubmitHeapAnalysisService(val coroutineScope: CoroutineScope) {
   fun submit(reportText: String, heapProperties: HeapReportProperties, parentComponent: JFrame) {
     coroutineScope.launch(DiagnosticDispatchers.Default) {
       if (ExceptionAutoReportUtil.isAutoReportEnabled()) {
-        HeapDumpAnalysisSupport.getInstance().uploadReport(reportText, heapProperties, parentComponent)
+        thisLogger().info("Reporting memory leak report automatically")
+
+        withContext(Dispatchers.EDT) {
+          HeapDumpAnalysisSupport.getInstance().uploadReport(reportText, heapProperties, parentComponent, automaticReport = true)
+        }
       }
     }
   }
