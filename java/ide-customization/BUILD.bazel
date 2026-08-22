@@ -88,7 +88,7 @@ exports_files(
 dev_dist_plugin_content(
     name = "ide-customization_dev_content",
     descriptor_module = ":ide-customization",
-    libraries = ["@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar"],
+    libraries = ["@lib//:kotlin-stdlib"],
     prepacked_content_modules = {
         "//java/ide-customization/backend": "modules/intellij.java.ide.customization.backend.jar",
         "//java/ide-customization/training": "modules/intellij.java.ide.customization.training.jar",

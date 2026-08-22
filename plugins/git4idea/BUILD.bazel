@@ -71,8 +71,8 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":vcs-git",
     libraries = [
-        "@lib//:info.cukes/cucumber-jvm-deps-1.0.5.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:cucumber-testing",
+        "@lib//:kotlin-stdlib",
     ],
     prepacked_content_modules = {
         "//plugins/git4idea/frontend": "modules/intellij.vcs.git.frontend.jar",

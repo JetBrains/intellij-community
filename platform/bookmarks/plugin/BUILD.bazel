@@ -49,7 +49,7 @@ dev_dist_plugin_content(
         "//platform/xdebugger-impl/bookmarks",
     ],
     descriptor_module = ":plugin",
-    libraries = ["@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar"],
+    libraries = ["@lib//:kotlin-stdlib"],
     prepacked_content_modules = {
         "//platform/bookmarks": "modules/intellij.platform.bookmarks.jar",
         "//platform/vcs-log/impl/bookmarks": "modules/intellij.platform.vcs.log.impl.bookmarks.jar",

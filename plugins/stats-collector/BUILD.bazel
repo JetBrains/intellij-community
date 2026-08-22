@@ -96,8 +96,8 @@ dev_dist_plugin_content(
     name = "stats-collector_dev_content",
     descriptor_module = ":stats-collector",
     libraries = [
-        "@lib//:org.jetbrains.intellij.deps.completion/completion-log-events-0.0.3.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:kotlin-stdlib",
+        "@lib//:stats_collector-completion-log-events",
     ],
     visibility = ["//visibility:public"],
 )

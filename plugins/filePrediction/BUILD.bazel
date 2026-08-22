@@ -97,9 +97,9 @@ dev_dist_plugin_content(
     name = "filePrediction_dev_content",
     descriptor_module = ":filePrediction",
     libraries = [
-        "@lib//:org.jetbrains.intellij.deps.completion/ngram-slp-0.0.3.jar",
-        "@lib//:org.jetbrains.intellij.deps.filePrediction.model/file-prediction-model-0.3.0.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:file_prediction-file-prediction-model",
+        "@lib//:kotlin-stdlib",
+        "@lib//:ngram-slp",
     ],
     prepacked_content_modules = {
         "//plugins/filePrediction/java": "modules/intellij.filePrediction.java.jar",

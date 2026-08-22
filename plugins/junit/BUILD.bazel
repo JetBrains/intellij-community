@@ -159,8 +159,8 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":junit",
     libraries = [
-        "@lib//:junit/junit-4.13.2.jar",
-        "@lib//:org.hamcrest/hamcrest-2.2.jar",
+        "@lib//:libraries-hamcrest-hamcrest",
+        "@lib//:libraries-junit4-_j_unit4",
     ],
     prepacked_content_modules = {
         "//plugins/junit/properties": "modules/intellij.junit.properties.jar",

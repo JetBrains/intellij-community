@@ -114,7 +114,7 @@ dev_dist_plugin_content(
     name = "compilation-charts_dev_content",
     content_modules = ["//plugins/compilation-charts/jps-plugin:compilation-charts-jps"],
     descriptor_module = ":compilation-charts",
-    libraries = ["@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar"],
+    libraries = ["@lib//:kotlin-stdlib"],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.compilation.charts` end

@@ -50,11 +50,11 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":compose-ide-plugin",
     libraries = [
-        "@lib//:org.jetbrains.intellij.deps/studio-platform-2025.3.2-389.jar",
-        "@lib//:org.jetbrains.kotlin/compose-compiler-plugin-for-ide-2.5.0-dev-4715.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-compiler-tests-for-ide-2.5.0-dev-4715.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-jps-common-for-ide-2.5.0-dev-4715.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinc-compose-compiler-plugin",
+        "@lib//:kotlinc-kotlin-compiler-tests",
+        "@lib//:kotlinc-kotlin-jps-common",
+        "@lib//:studio-platform",
     ],
     prepacked_content_modules = {
         "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt": "modules/intellij.compose.ide.plugin.gradleTooling.rt.jar",

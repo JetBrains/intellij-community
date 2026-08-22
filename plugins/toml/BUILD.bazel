@@ -48,7 +48,7 @@ dev_dist_plugin_content(
         "//plugins/toml/grazie",
     ],
     descriptor_module = ":toml",
-    libraries = ["@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar"],
+    libraries = ["@lib//:kotlin-stdlib"],
     prepacked_content_modules = {
         "//plugins/toml/backend": "modules/intellij.toml.backend.jar",
         "//plugins/toml/frontend": "modules/intellij.toml.frontend.jar",

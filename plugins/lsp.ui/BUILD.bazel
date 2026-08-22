@@ -87,7 +87,7 @@ exports_files(
 dev_dist_plugin_content(
     name = "lsp.ui_dev_content",
     descriptor_module = ":lsp.ui",
-    libraries = ["@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar"],
+    libraries = ["@lib//:kotlin-stdlib"],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.lsp.ui` end

@@ -34,11 +34,15 @@ internal class PluginContent(
    */
   @JvmField val prepackedContentModuleLabels: Map<String, String>,
   /**
-   * One label per library jar - the `copy_file` output of a Maven jar, the `exports_files` entry of a local one - and
-   * not the `jvm_import` target that groups them: `dev_dist_plugin_content.libraries` keys its manifest by the jar target's
-   * own label, which is what `bazel-targets.json` records as `jarTargets` and what `BazelBuildInputs.resolve` asks for.
+   * One label per library - the `jvm_import`, `java_library` or `java_import` target that *groups* its jars, and not the
+   * per-jar `copy_file`/`exports_files` labels those jars have.
+   *
+   * `dev_dist_plugin_content.libraries` keys its manifest by this container and expands it through
+   * `JavaInfo.transitive_runtime_jars`, so the checked-in label carries no artifact version and a Maven bump leaves
+   * every plugin `BUILD.bazel` alone. It is the same label `bazel-targets.json` records as `LibraryDescription.target`
+   * and that `BazelBuildInputs.resolveAll` is asked for.
    */
-  @JvmField val libraryJarLabels: List<String>,
+  @JvmField val libraryContainerLabels: List<String>,
 )
 
 /**
@@ -98,8 +102,8 @@ internal fun BuildFile.emitPluginContent(module: ModuleDescriptor, content: Plug
     }
     // The rule puts the descriptor module into the content itself, so it is deliberately not in `content_modules`.
     option("descriptor_module", ":${module.targetName}")
-    if (content.libraryJarLabels.isNotEmpty()) {
-      option("libraries", content.libraryJarLabels)
+    if (content.libraryContainerLabels.isNotEmpty()) {
+      option("libraries", content.libraryContainerLabels)
     }
     if (content.prepackedContentModuleLabels.isNotEmpty()) {
       option("prepacked_content_modules", LinkedHashMap(content.prepackedContentModuleLabels))
@@ -186,7 +190,7 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
     }
   }
 
-  val libraryJarLabels = computeLibraryJarLabels(
+  val libraryContainerLabels = computeLibraryContainerLabels(
     module = module,
     members = members,
     recordedLibraries = recordedLibraries(entries),
@@ -194,7 +198,7 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
   )
   // Sorted: these are sets of inputs, not merge orders, so a stable order keeps a regeneration free of diff noise.
   val crossRepository = crossRepositoryPrepackedModules.distinct().sorted()
-  if (contentModuleLabels.isEmpty() && prepackedContentModuleLabels.isEmpty() && libraryJarLabels.isEmpty()) {
+  if (contentModuleLabels.isEmpty() && prepackedContentModuleLabels.isEmpty() && libraryContainerLabels.isEmpty()) {
     return PluginContentResult(content = null, crossRepositoryPrepackedModules = crossRepository)
   }
 
@@ -202,39 +206,41 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
     content = PluginContent(
       contentModuleLabels = contentModuleLabels.distinct().sorted(),
       prepackedContentModuleLabels = prepackedContentModuleLabels.toSortedMap(),
-      libraryJarLabels = libraryJarLabels,
+      libraryContainerLabels = libraryContainerLabels,
     ),
     crossRepositoryPrepackedModules = crossRepository,
   )
 }
 
 /**
- * The library jars a plugin fragment has to declare, as jar target labels.
+ * The libraries a plugin fragment has to declare, as **container** target labels.
+ *
+ * The container is the `jvm_import`, `java_library` or `java_import` that groups a library's jars - the label a module
+ * already names in its `deps`/`runtime_deps`/`exports` ([libraryTargetLabel]) - and not the per-jar `copy_file` outputs
+ * ([libraryJarTargets]). The distinction is the whole reason this list is cheap to check in: a per-jar label **carries
+ * the artifact version**, so a Maven bump rewrote every plugin `BUILD.bazel` that named the library; a container label
+ * does not, so a bump now touches only the library's own package. The rule expands the container back into its ordered
+ * jars through `JavaInfo.transitive_runtime_jars` (`_collect_libraries` in `dev_dist_content.bzl`), and the container is
+ * also what `build/bazel-targets.json` already records as `LibraryDescription.target` - which is the key
+ * `BazelModuleOutputProvider.findLibraryRoots` asks the manifest for, so the two ends agree by construction.
  *
  * Two sources, unioned, because they answer two different questions:
  *
- * 1. the JPS dependencies of every member module *and of each member's direct module dependencies*, which is what the
- *    retired plugin payload of `build/jps_dynamic_deps_ultimate.bzl:601-686` declared - `_add_module_input_targets(...,
- *    include_libraries = True)` for the members and for one level of their dependencies. That is the set the assembler
- *    resolves against the manifest, so declaring less fails the fragment; nothing in the graph supplies it, because the
- *    aspect deliberately does not walk `deps` for library jars (a `jvm_import`'s file is owned by an `http_file` repo,
- *    so the key would not be the one the assembler asks for);
+ * 1. the JPS library dependencies of every member module. That is the set the assembler resolves against the manifest,
+ *    so declaring less fails the fragment;
  * 2. the libraries the report records, which is what the distribution really packs into the plugin's `lib/`. A member's
  *    dependency is not necessarily where a packed library is declared, so this is not implied by the first.
  *
- * Scope-blind for a **member**, TEST-filtered on the **frontier**. The retired payload was scope-blind on both, and this
- * reproduced it exactly so that the move from a name table to targets stayed a mechanical migration; the asymmetry is
- * the first deliberate narrowing on top of it, and it is where the whole cost was. A member's own TEST-scope library
- * can still be packed - `jmc-flightrecorder-writer` of `intellij.profiler.ultimate` is one, and dropping it took its
- * jar out of the java fragment's manifest - so members keep declaring every `<orderEntry type="library">` and every
- * `module-library` whatever its scope. A member's *direct dependency* is a different case: this plugin does not pack
- * that module, so a library it declares for its own tests cannot be a distribution input here. Scope-blindness there
- * put `jmock` - TEST-scope on `intellij.platform.lang` - into 369 of the 475 content targets, packed by none of them.
- *
- * PROVIDED stays declared on both halves. It is compile-only rather than test-only, the layout can still pack such a
- * library, and the hard-failure asymmetry says to narrow one clause at a time and measure.
+ * **Scope-blind, TEST included.** A member's own TEST-scope library can still be packed -
+ * `jmc-flightrecorder-writer` of `intellij.profiler.ultimate` is one - so a member declares every
+ * `<orderEntry type="library">` and every `module-library` whatever its scope. There is no second scope rule to keep
+ * this one in step with: the dependency frontier that had the other half is gone, so the walk is one level of one thing.
+ * PROVIDED is declared for the same reason - it is compile-only rather than test-only, and the layout can still pack
+ * such a library. Note that a PROVIDED dependency is written as the `-provided` variant
+ * ([libraryDependencyLabel]) while this list names the plain container, which is what keeps the manifest key
+ * scope-independent and keeps a `neverlink` target - whose `transitive_runtime_jars` is empty - out of the declaration.
  */
-private fun computeLibraryJarLabels(
+private fun computeLibraryContainerLabels(
   module: ModuleDescriptor,
   members: List<ModuleDescriptor>,
   recordedLibraries: Set<RecordedLibrary>,
@@ -280,28 +286,24 @@ private fun computeLibraryJarLabels(
     libraries.add(library)
   }
 
-  val projectRoot = context.ultimateRoot ?: context.communityRoot
   val nameableRepositories = nameableRepositories(module = module, context = context)
   val labels = TreeSet<String>()
   for (library in libraries) {
-    val jarLabels = libraryJarTargets(
+    val label = libraryTargetLabel(
       library = library,
       communityRoot = context.communityRoot,
       ultimateRoot = context.ultimateRoot,
-      // The repo the labels are written into, which is what decides between `//` and `@community//` for a local
-      // library under the community root - the same distinction `getBazelDependencyLabel` makes for a module.
-      projectRoot = if (module.isCommunity) context.communityRoot else projectRoot,
+      // Decides between `//` and `@community//` for a local library under the community root - the same distinction
+      // `getBazelDependencyLabel` makes for a module.
+      isCommunityDependent = module.isCommunity,
     )
-    val unreachable = jarLabels.filter { nameableRepositories != null && labelRepository(it) !in nameableRepositories }
-    if (unreachable.isNotEmpty()) {
+    if (nameableRepositories != null && labelRepository(label) !in nameableRepositories) {
       // Same edge as the ultimate content module above, and the same resolution: the ultimate side of the distribution
-      // declares these jars, so dropping them here is what keeps the community target analyzable.
-      for (label in unreachable) {
-        println("WARN: ${module.module.name} content target: library jar $label is outside the community repository")
-      }
+      // declares this library, so dropping it here is what keeps the community target analyzable.
+      println("WARN: ${module.module.name} content target: library $label is outside the community repository")
       continue
     }
-    labels.addAll(jarLabels)
+    labels.add(label)
   }
   return labels.toList()
 }

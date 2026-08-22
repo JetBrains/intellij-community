@@ -47,8 +47,8 @@ dev_dist_plugin_content(
     content_modules = ["//libraries/jcef"],
     descriptor_module = ":plugin",
     libraries = [
-        "@lib//:org.jetbrains.intellij.deps.jcef/jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b11.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:kotlin-stdlib",
+        "@lib//:libraries-jcef-jcef",
     ],
     prepacked_content_modules = {
         "//platform/new-ui-onboarding/jcef": "modules/intellij.platform.ide.newUiOnboarding.jcef.jar",

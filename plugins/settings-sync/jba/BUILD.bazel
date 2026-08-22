@@ -102,8 +102,8 @@ dev_dist_plugin_content(
     content_modules = ["//libraries/cloud-config-client"],
     descriptor_module = ":settingsSync",
     libraries = [
-        "@lib//:com.jetbrains.cloudconfig/cloudconfig-2023.9.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:kotlin-stdlib",
+        "@lib//:libraries-cloud-config-client-cloud-config-client",
     ],
     prepacked_content_modules = {
         "//plugins/settings-sync/settingsSync.performanceTesting": "modules/intellij.settingsSync.performanceTesting.jar",

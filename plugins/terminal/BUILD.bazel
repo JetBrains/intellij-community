@@ -208,10 +208,10 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":terminal",
     libraries = [
-        "@lib//:org.jetbrains.intellij.deps.completion/completion-ranking-sh-0.0.2.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
-        "@lib//:org.jetbrains.terminal/completion-db-with-extensions-0.7.0.jar",
-        "@lib//:org.jetbrains.terminal/completion-spec-0.7.0.jar",
+        "@lib//:kotlin-stdlib",
+        "@lib//:libraries-completion-ranking-sh-completion-ranking-sh",
+        "@lib//:terminal-completion-terminal-completion-spec",
+        "@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions",
     ],
     prepacked_content_modules = {
         "//plugins/terminal/backend": "modules/intellij.terminal.backend.jar",

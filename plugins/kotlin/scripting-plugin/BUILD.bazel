@@ -72,11 +72,11 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":jsr223-plugin",
     libraries = [
-        "@lib//:org.jetbrains.kotlin/kotlin-compiler-common-for-ide-2.5.0-dev-4715.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-compiler-fe10-for-ide-2.5.0-dev-4715.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-script-runtime-2.5.0-dev-4715.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-scripting-jvm-2.5.0-dev-4715.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinc-kotlin-compiler-fe10",
+        "@lib//:kotlinc-kotlin-script-runtime",
+        "@lib//:kotlinc-kotlin-scripting-jvm",
+        "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
     ],
     visibility = ["//visibility:public"],
 )

@@ -206,7 +206,7 @@ exports_files(
 dev_dist_plugin_content(
     name = "vcs-gitlab_dev_content",
     descriptor_module = ":vcs-gitlab",
-    libraries = ["@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar"],
+    libraries = ["@lib//:kotlin-stdlib"],
     prepacked_content_modules = {
         "//plugins/gitlab/gitlab-git:vcs-gitlab-git": "modules/intellij.vcs.gitlab.git.jar",
         "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml": "modules/intellij.vcs.gitlab.yaml.jar",

@@ -55,6 +55,47 @@ internal class BazelBuildInputsTest {
   }
 
   @Test
+  fun `a repeated label collects its files in manifest order`(@TempDir tempDir: Path) {
+    // How a multi-jar library states its jars: one line per file, all under the container's key. Order is the
+    // container's `exports` order and must survive, because the packer resolves a duplicated entry to its first source.
+    val first = "bazel-out/jvm-fastbuild/bin/lib/grazie-rule-engine.jar"
+    val second = "bazel-out/jvm-fastbuild/bin/lib/jemoji.jar"
+    val manifest = tempDir.resolve("inputs.manifest")
+    Files.writeString(
+      manifest,
+      listOf(
+        "@@lib+//:ai-grazie-rule-engine\t$first",
+        "@@lib+//:ai-grazie-rule-engine\t$second",
+      ).joinToString(separator = "\n", postfix = "\n"),
+    )
+
+    val resolver = ExplicitBazelInputResolver.load(manifest)
+    val expected = listOf(first, second).map { Path.of(it).toAbsolutePath().normalize() }
+
+    assertThat(resolver.resolveAll("@@lib+//:ai-grazie-rule-engine")).containsExactlyElementsOf(expected)
+    // The apparent-repository alias names the same ordered list.
+    assertThat(resolver.resolveAll("@lib//:ai-grazie-rule-engine")).containsExactlyElementsOf(expected)
+    // `resolve` is the single-file contract, so a container is not silently truncated to its first jar.
+    assertThatThrownBy { resolver.resolve("@lib//:ai-grazie-rule-engine") }.isInstanceOf(IllegalArgumentException::class.java)
+    // Resolving the key marks every file it returned used, so an unread sibling jar is not reported as unused.
+    val unusedInputs = tempDir.resolve("unused-inputs")
+    resolver.writeUnusedInputs(unusedInputs)
+    assertThat(Files.readString(unusedInputs)).isEmpty()
+  }
+
+  @Test
+  fun `the same label may not repeat one exec path`(@TempDir tempDir: Path) {
+    // The writer deduplicates first-wins, so a repeat means two producers disagreed about the same key.
+    val manifest = tempDir.resolve("inputs.manifest")
+    val execPath = "bazel-out/jvm-fastbuild/bin/lib/only.jar"
+    Files.writeString(manifest, "@@lib+//:only\t$execPath\n@@lib+//:only\t$execPath\n")
+
+    assertThatThrownBy { ExplicitBazelInputResolver.load(manifest) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("Duplicate Bazel input")
+  }
+
+  @Test
   fun `absolute input paths are rejected`(@TempDir tempDir: Path) {
     val manifest = tempDir.resolve("inputs.manifest")
     val absoluteInput = tempDir.resolve("input.jar")

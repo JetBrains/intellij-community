@@ -26,10 +26,17 @@ IntellijDevBuildInputsInfo = provider(
 # How strongly a declaration half demands its key, lowest first, for a key more than one half names.
 _ORIGIN_RANK = {"raw": 0, "member": 1, "library": 2}
 
-def _add_input_entry(ctx, entries, origins, logical_key, file, source, origin):
-    """Record one manifest entry, failing when two different files claim the same logical key.
+def _add_input_entry(ctx, entries, origins, logical_key, files, source, origin):
+    """Record one manifest entry, failing when two different file lists claim the same logical key.
 
-    Same key, same file is the normal case - two content targets naming the same module, say - and deduplicates.
+    Same key, same files is the normal case - two content targets naming the same module, say - and deduplicates.
+
+    [files] is a *list* because one key does not always mean one file: a module or a raw input is one jar, but a library
+    is keyed by the container target that groups its jars (see `_collect_libraries` in `dev_dist_content.bzl`) and a
+    multi-jar library has several, in an order the packer depends on. The manifest still holds one line per file, which
+    is what keeps `wc -l` counting files for `dev_dist_unused_inputs_test.bzl`. The origin sidecar stays one line per
+    *key* and is read as a lookup rather than positionally (`tallyOrigins` in `//build/dev-dist` keeps the manifest as
+    a list of pairs and the origins as a `Map`), so a repeated key resolves to the one origin it was recorded under.
 
     [origin] is written to a sidecar only, never to the manifest: it answers "which half of the declaration asked for
     this key", which is what turns `.unused-inputs` from a count into an attributable measurement.
@@ -40,12 +47,12 @@ def _add_input_entry(ctx, entries, origins, logical_key, file, source, origin):
 
     previous = entries.get(logical_key)
     if previous == None:
-        entries[logical_key] = file
-    elif previous != file:
+        entries[logical_key] = files
+    elif previous != files:
         fail("%s: logical input '%s' is provided by both %s and %s" % (
             ctx.label,
             logical_key,
-            previous.owner,
+            [file.owner for file in previous],
             source,
         ))
 
@@ -57,7 +64,7 @@ def _dev_build_inputs_impl(ctx):
         files = target[DefaultInfo].files.to_list()
         if len(files) != 1:
             fail("%s: %s must provide exactly one file, got %s" % (ctx.label, target.label, files))
-        _add_input_entry(ctx, entries, origins, str(target.label), files[0], target.label, "raw")
+        _add_input_entry(ctx, entries, origins, str(target.label), (files[0],), target.label, "raw")
 
     if ctx.attr.content:
         content = ctx.attr.content[DevDistContentInfo]
@@ -70,22 +77,27 @@ def _dev_build_inputs_impl(ctx):
         # (`jvm-rules/rules/common-attrs.bzl:129-132`) - so the jar file's owner is the rule and `owner + ".jar"`
         # reproduces the label. `jps_dynamic_deps_ultimate.bzl:567-570` states the same identity from the other side.
         for jar in content.module_jars.to_list():
-            _add_input_entry(ctx, entries, origins, str(jar.owner) + ".jar", jar, jar.owner, "member")
+            _add_input_entry(ctx, entries, origins, str(jar.owner) + ".jar", (jar,), jar.owner, "member")
 
-        # A library jar carries its own label, which is *not* derivable from the file: a Maven library's jar target is a
-        # `copy_file` output, so the file's owner is the `...jar_copy` rule rather than the label recorded as
-        # `jarTargets` (`lib.kt:408-423`). `DevDistContentInfo` therefore carries the label the target had.
+        # A library is keyed by its *container* target, whose label is not derivable from the jars: a Maven library's
+        # per-jar target is a `copy_file` output, so a file's owner is the `...jar_copy` rule (`lib.kt:408-423`), and the
+        # container is a third label again. The key is what `build/bazel-targets.json` records as
+        # `LibraryDescription.target`, because that is what `findLibraryRoots` asks for; `DevDistContentInfo` carries it
+        # with the container's ordered jars.
         for entry in content.library_jars.to_list():
-            _add_input_entry(ctx, entries, origins, entry.label, entry.jar, entry.label, "library")
+            _add_input_entry(ctx, entries, origins, entry.label, entry.jars, entry.label, "library")
 
         prepacked_plugin_jars = content.prepacked_plugin_jars.to_list()
 
     lines = []
     files = []
     for logical_key in sorted(entries.keys()):
-        file = entries[logical_key]
-        lines.append("%s\t%s" % (logical_key, file.path))
-        files.append(file)
+        # One line per file, so a multi-jar library repeats its key. `ExplicitBazelInputResolver.load` collects the
+        # repeats into one ordered list; keeping the file as the unit is what lets `wc -l` and the origin sidecar go on
+        # meaning what they meant.
+        for file in entries[logical_key]:
+            lines.append("%s\t%s" % (logical_key, file.path))
+            files.append(file)
     manifest = ctx.actions.declare_file(ctx.label.name + ".bazel-inputs")
 
     # An empty declaration writes an empty file rather than a lone newline, for the same reason `writeUnusedInputs`

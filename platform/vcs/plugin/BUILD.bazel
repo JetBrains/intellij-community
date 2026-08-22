@@ -46,8 +46,8 @@ dev_dist_plugin_content(
     content_modules = ["//platform/sqlite"],
     descriptor_module = ":plugin",
     libraries = [
-        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
-        "@lib//:org.sqlite/native-3.42.0-jb.1.jar",
+        "@lib//:kotlin-stdlib",
+        "@lib//:sqlite-native",
     ],
     prepacked_content_modules = {
         "//platform/dvcs-api:vcs-dvcs": "modules/intellij.platform.vcs.dvcs.jar",

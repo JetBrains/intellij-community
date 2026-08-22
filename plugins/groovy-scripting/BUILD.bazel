@@ -62,9 +62,9 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":groovy-scripting",
     libraries = [
-        "@lib//:org.apache.ivy/ivy-2.5.2.jar",
-        "@lib//:org.codehaus.groovy/groovy-3.0.25.jar",
-        "@lib//:org.codehaus.groovy/groovy-jsr223-3.0.25.jar",
+        "@lib//:libraries-groovy-groovy",
+        "@lib//:libraries-groovy-jsr223-groovy-jsr223",
+        "@lib//:libraries-ivy-ivy",
     ],
     visibility = ["//visibility:public"],
 )

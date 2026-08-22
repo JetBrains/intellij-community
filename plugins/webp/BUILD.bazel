@@ -65,7 +65,7 @@ exports_files(
 dev_dist_plugin_content(
     name = "webp_dev_content",
     descriptor_module = ":webp",
-    libraries = ["//plugins/webp/lib:libwebp.jar"],
+    libraries = ["//plugins/webp/lib:webp-libwebp"],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.webp` end

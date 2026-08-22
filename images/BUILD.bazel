@@ -119,7 +119,7 @@ exports_files(
 dev_dist_plugin_content(
     name = "images_dev_content",
     descriptor_module = ":images",
-    libraries = ["@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar"],
+    libraries = ["@lib//:kotlin-stdlib"],
     prepacked_content_modules = {
         "//images/intellij.platform.images.copyright:copyright": "modules/intellij.platform.images.copyright.jar",
         "//images/intellij.platform.images.xdebugger:xdebugger": "modules/intellij.platform.images.xdebugger.jar",

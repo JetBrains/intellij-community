@@ -121,8 +121,8 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":community",
     libraries = [
-        "@lib//:org.jetbrains.intellij.deps/scenebuilderkit-11.0.5.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:java_f_x-scene_builder-_scene_builder_kit11",
+        "@lib//:kotlin-stdlib",
     ],
     prepacked_content_modules = {
         "//plugins/javaFX": "modules/intellij.javaFX.jar",

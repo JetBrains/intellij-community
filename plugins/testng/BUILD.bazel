@@ -174,11 +174,7 @@ dev_dist_plugin_content(
         "//plugins/testng_rt:testng-rt",
     ],
     descriptor_module = ":testng",
-    libraries = [
-        "@lib//:com.beust/jcommander-1.82.jar",
-        "@lib//:org.testng/testng-7.8.0.jar",
-        "@lib//:org.webjars/jquery-3.6.1.jar",
-    ],
+    libraries = ["@lib//:test_n_g"],
     prepacked_content_modules = {
         "//plugins/testng/langInjection": "modules/intellij.testng.langInjection.jar",
     },

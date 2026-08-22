@@ -1,6 +1,7 @@
 """Analysis tests for the prepacked plugin-content provider boundary."""
 
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
+load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":dev_dist_content.bzl", "DevDistContentInfo", "dev_dist_content_set", "dev_dist_plugin_content")
 load(":intellij_dev_dist.bzl", "intellij_dev_build_inputs")
@@ -34,6 +35,55 @@ _fake_module = rule(
         "content_output_count": attr.int(default = 0),
         "has_content_output_group": attr.bool(default = True),
         "module_name": attr.string(mandatory = True),
+    },
+)
+
+def _fake_library_impl(ctx):
+    """A library container: `JavaInfo` with [runtime_jar_count] runtime jars, and no `KtJvmInfo` module name.
+
+    `neverlink` reproduces the `-provided` wrapper, whose `transitive_runtime_jars` is empty - the shape
+    `_collect_libraries` must refuse rather than paper over, because for a local library behind such a wrapper the
+    compile-time sets hold an *interface* jar.
+    """
+    jars = []
+    for index in range(ctx.attr.runtime_jar_count):
+        jar = ctx.actions.declare_file("%s-%d.jar" % (ctx.label.name, index))
+        ctx.actions.write(jar, "%s:%d" % (ctx.label.name, index))
+        jars.append(jar)
+
+    # `compile_jar` is required per output, so each jar is announced as its own `JavaInfo` and they are merged - which is
+    # also what the real multi-jar container is: a srcs-less `java_library` re-exporting one `jvm_import` per jar.
+    infos = [JavaInfo(output_jar = jar, compile_jar = jar, neverlink = ctx.attr.neverlink) for jar in jars]
+    return [
+        DefaultInfo(files = depset(jars)),
+        java_common.merge(infos) if infos else JavaInfo(output_jar = None, compile_jar = None),
+    ]
+
+_fake_library = rule(
+    implementation = _fake_library_impl,
+    attrs = {
+        "neverlink": attr.bool(default = False),
+        "runtime_jar_count": attr.int(default = 1),
+    },
+)
+
+def _library_jars_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    entries = analysistest.target_under_test(env)[DevDistContentInfo].library_jars.to_list()
+    asserts.equals(env, 1, len(entries))
+
+    # The key is the container's own label, not a jar's owner.
+    asserts.true(env, entries[0].label.endswith(ctx.attr.expected_label_suffix), "got key " + entries[0].label)
+
+    # Order is the container's, not sorted: the packer resolves a duplicated entry to its first source.
+    asserts.equals(env, ctx.attr.expected_jars, [jar.basename for jar in entries[0].jars])
+    return analysistest.end(env)
+
+_library_jars_test = analysistest.make(
+    _library_jars_test_impl,
+    attrs = {
+        "expected_jars": attr.string_list(mandatory = True),
+        "expected_label_suffix": attr.string(mandatory = True),
     },
 )
 
@@ -103,6 +153,47 @@ def dev_dist_content_test_suite(name):
         name = name + "_multiple_outputs",
         content_output_count = 2,
         module_name = "test.multiple",
+    )
+
+    _fake_library(
+        name = name + "_multi_jar_library",
+        runtime_jar_count = 3,
+    )
+    _fake_library(
+        name = name + "_provided_library",
+        neverlink = True,
+        runtime_jar_count = 1,
+    )
+
+    # A container expands to every runtime jar it holds, under one key, in the container's own order.
+    dev_dist_plugin_content(
+        name = name + "_multi_jar_library_content",
+        descriptor_module = name + "_descriptor",
+        libraries = [name + "_multi_jar_library"],
+    )
+    _library_jars_test(
+        name = name + "_multi_jar_library_test",
+        expected_jars = [
+            # do not sort
+            name + "_multi_jar_library-0.jar",
+            name + "_multi_jar_library-1.jar",
+            name + "_multi_jar_library-2.jar",
+        ],
+        expected_label_suffix = ":" + name + "_multi_jar_library",
+        target_under_test = name + "_multi_jar_library_content",
+    )
+
+    # A `neverlink` container holds no runtime jar, so declaring it would declare nothing. Refused rather than resolved
+    # through a compile-time set, which for a local library would be an interface jar.
+    dev_dist_plugin_content(
+        name = name + "_provided_library_content",
+        descriptor_module = name + "_descriptor",
+        libraries = [name + "_provided_library"],
+    )
+    _expected_failure_test(
+        name = name + "_provided_library_test",
+        expected_message = "contributes no runtime jars",
+        target_under_test = name + "_provided_library_content",
     )
 
     dev_dist_plugin_content(
@@ -209,6 +300,8 @@ def dev_dist_content_test_suite(name):
     native.test_suite(
         name = name,
         tests = [
+            name + "_multi_jar_library_test",
+            name + "_provided_library_test",
             name + "_missing_output_group_test",
             name + "_multiple_outputs_test",
             name + "_composed_provider_test",

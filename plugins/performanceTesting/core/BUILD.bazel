@@ -195,9 +195,9 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":performanceTesting",
     libraries = [
-        "@lib//:org.assertj/assertj-core-4.0.0-M1.jar",
-        "@lib//:org.assertj/assertj-swing-3.17.1.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:assertj-swing",
+        "@lib//:kotlin-stdlib",
+        "@lib//:libraries-assertj-core-assert_j",
     ],
     prepacked_content_modules = {
         "//plugins/performanceTesting/backend": "modules/intellij.performanceTesting.backend.jar",

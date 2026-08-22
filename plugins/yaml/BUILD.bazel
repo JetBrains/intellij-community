@@ -128,7 +128,7 @@ dev_dist_plugin_content(
     name = "yaml_dev_content",
     content_modules = ["//plugins/yaml/syntax"],
     descriptor_module = ":yaml",
-    libraries = ["@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar"],
+    libraries = ["@lib//:kotlin-stdlib"],
     prepacked_content_modules = {
         "//plugins/yaml/backend": "modules/intellij.yaml.backend.jar",
     },

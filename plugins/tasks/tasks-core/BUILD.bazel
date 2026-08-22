@@ -143,13 +143,10 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":core",
     libraries = [
-        "//plugins/tasks/tasks-core/lib:axis-1.4.jar",
-        "//plugins/tasks/tasks-core/lib:axis-jaxrpc-1.4.jar",
-        "//plugins/tasks/tasks-core/lib:axis-saaj-1.3.jar",
-        "//plugins/tasks/tasks-core/lib:wsdl4j-1.4.jar",
-        "@lib//:commons-discovery/commons-discovery-0.4.jar",
-        "@lib//:commons-httpclient-3.1-patched.jar",
-        "@lib//:org.apache.ws.xmlrpc/xmlrpc-2.0.1.jar",
+        "//plugins/tasks/tasks-core/lib:tasks-core-axis-1-4",
+        "@lib//:libraries-xml-rpc-xml-rpc",
+        "@lib//:tasks-compatibility-http-client-3-1",
+        "@lib//:tasks-core-libraries-commons_discovery-commons-discovery",
     ],
     prepacked_content_modules = {
         "//plugins/tasks/tasks-core/bugzilla": "modules/intellij.tasks.bugzilla.jar",

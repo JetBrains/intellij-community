@@ -49,7 +49,7 @@ dev_dist_plugin_content(
         "//platform/problemsView/ui",
     ],
     descriptor_module = ":plugin",
-    libraries = ["@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar"],
+    libraries = ["@lib//:kotlin-stdlib"],
     prepacked_content_modules = {
         "//platform/problemsView/backend": "modules/intellij.platform.problemView.backend.jar",
         "//platform/problemsView/frontend": "modules/intellij.platform.problemView.frontend.jar",

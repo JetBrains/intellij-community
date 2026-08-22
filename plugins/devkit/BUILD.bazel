@@ -49,9 +49,9 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":devkit",
     libraries = [
-        "@lib//:com.jetbrains.intellij.platform/workspace-model-codegen-0.0.9.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-jps-common-for-ide-2.5.0-dev-4715.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:kotlin-stdlib",
+        "@lib//:kotlinc-kotlin-jps-common",
+        "@lib//:workspace-model-codegen",
     ],
     prepacked_content_modules = {
         "//platform/jewel/samples/showcase": "modules/intellij.platform.jewel.samples.showcase.jar",
