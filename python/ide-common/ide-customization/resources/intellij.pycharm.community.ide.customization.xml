@@ -17,10 +17,5 @@
     <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
                         serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"/>
     <defaultToolWindowLayout implementation="com.intellij.pycharm.community.customization.PyToolWindowLayoutProvider" order="last"/>
-    <!-- embedded module must not depend on the optional newUiOnboarding module -->
-    <!--suppress PluginXmlReferencesModuleReachability -->
-    <ide.newUiOnboarding ideHelpName="pycharm">
-      <remove stepId="codeWithMe"/>
-    </ide.newUiOnboarding>
   </extensions>
 </idea-plugin>

@@ -1,0 +1,13 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.ide.newUiOnboarding"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <ide.newUiOnboarding ideHelpName="pycharm">
+      <remove stepId="codeWithMe"/>
+    </ide.newUiOnboarding>
+  </extensions>
+</idea-plugin>

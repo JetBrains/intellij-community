@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.pycharm.community.newUiOnboarding` start
+jvm_library(
+    name = "newUiOnboarding",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.pycharm.community.newUiOnboarding",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//platform/new-ui-onboarding",
+    ],
+)
+
+jvm_library(
+    name = "newUiOnboarding_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.pycharm.community.newUiOnboarding",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":newUiOnboarding",
+        "//platform/backend:backend_test_lib",
+        "//platform/new-ui-onboarding:new-ui-onboarding_test_lib",
+    ],
+)
+### auto-generated section `build intellij.pycharm.community.newUiOnboarding` end
+
+### auto-generated section `iml intellij.pycharm.community.newUiOnboarding` start
+exports_files(
+    [
+        "intellij.pycharm.community.newUiOnboarding.iml",
+        "resources/intellij.pycharm.community.newUiOnboarding.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.pycharm.community.newUiOnboarding` end

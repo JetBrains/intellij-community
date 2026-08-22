@@ -1727,6 +1727,7 @@ python/ide/customization.shared
 python/ide/impl
 python/ide/impl/intellij.pycharm.community.ide.impl.promotion
 python/ide/implTraining/intellij.pycharm.community.ide.implTraining
+python/ide/newUiOnboarding
 python/impl.helperLocator
 python/installer
 python/intellij.python.community.communityOnly
