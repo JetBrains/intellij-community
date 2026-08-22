@@ -5,4 +5,9 @@
   with other copies of this module registered in other plugins.
 -->
 <idea-plugin visibility="private">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.ktor.server.cio"/>
+  </dependencies>
+  <!-- endregion -->
 </idea-plugin>

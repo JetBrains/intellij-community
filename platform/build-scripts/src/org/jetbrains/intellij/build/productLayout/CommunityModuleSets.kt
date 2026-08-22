@@ -4,7 +4,6 @@
 package org.jetbrains.intellij.build.productLayout
 
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.coreLang
-import org.jetbrains.intellij.build.productLayout.CoreModuleSets.librariesKtor
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcBackend
 
 /**
@@ -76,9 +75,6 @@ object CommunityModuleSets {
     // RPC backend functionality (base RPC/kernel already in corePlatform via rpcMinimal)
     moduleSet(rpcBackend())
 
-    // Additional library sets not in corePlatform but needed by essentialMinimal+
-    moduleSet(librariesKtor())  // For RPC/Remote Dev
-    embeddedModule("intellij.libraries.teamcity.service.messages")
     module("intellij.platform.buildScripts.downloader")
 
     embeddedModule("intellij.platform.credentialStore.ui")
@@ -236,15 +232,15 @@ object CommunityModuleSets {
     module("intellij.xml.parser")
     module("intellij.xml.syntax")
     module("intellij.relaxng")
+    // kept embedded (i.e. loaded by the core classloader): `AdvancedEnhancer.getDefaultClassLoader()` defines each
+    // generated DOM proxy in the `PluginClassLoader` of one of the proxied interfaces, so `net.sf.cglib.proxy.Factory`
+    // has to be resolvable from any plugin classloader - a set the layout cannot enumerate.
+    embeddedModule("intellij.libraries.cglib")
     module("intellij.libraries.isorelax")
     module("intellij.libraries.jing")
+    module("intellij.libraries.xerces")
     module("intellij.xml.impl")
     module("intellij.xml.analysis.impl")
-    // kept embedded (i.e. loaded by the core classloader): the non-embedded xml content modules
-    // (intellij.xml.dom, intellij.xml.dom.impl, ...) use these libraries at runtime and can only see them
-    // through the core classloader; as sibling content modules they would be invisible.
-    embeddedModule("intellij.libraries.cglib")
-    embeddedModule("intellij.libraries.xerces")
     module("intellij.xml.langInjection")
     module("intellij.xml.langInjection.xpath")
   }
@@ -265,15 +261,15 @@ object CommunityModuleSets {
     module("intellij.xml.parser")
     module("intellij.xml.syntax")
     module("intellij.relaxng")
+    // kept embedded (i.e. loaded by the core classloader): `AdvancedEnhancer.getDefaultClassLoader()` defines each
+    // generated DOM proxy in the `PluginClassLoader` of one of the proxied interfaces, so `net.sf.cglib.proxy.Factory`
+    // has to be resolvable from any plugin classloader - a set the layout cannot enumerate.
+    embeddedModule("intellij.libraries.cglib")
     module("intellij.libraries.isorelax")
     module("intellij.libraries.jing")
+    module("intellij.libraries.xerces")
     module("intellij.xml.impl")
     module("intellij.xml.analysis.impl")
-    // kept embedded (i.e. loaded by the core classloader): the non-embedded xml content modules
-    // (intellij.xml.dom, intellij.xml.dom.impl, ...) use these libraries at runtime and can only see them
-    // through the core classloader; as sibling content modules they would be invisible.
-    embeddedModule("intellij.libraries.cglib")
-    embeddedModule("intellij.libraries.xerces")
     module("intellij.xml.langInjection")
     module("intellij.xml.langInjection.xpath")
   }

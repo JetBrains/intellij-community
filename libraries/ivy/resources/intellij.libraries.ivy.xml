@@ -1,2 +1,7 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jsch.agent.proxy"/>
+  </dependencies>
+  <!-- endregion -->
 </idea-plugin>

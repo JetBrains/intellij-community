@@ -13562,20 +13562,11 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
-java_library(
-    name = "libraries-ktor-utils-ktor-utils",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":io_ktor-ktor-utils-jvm-3_4_1_http_import",
-        ":org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_9_0_http_import",
-    ],
-)
-
 jvm_import(
-    name = "org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_9_0_http_import",
-    jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_9_0_http//file",
-    source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_9_0-sources_http//file",
+    name = "libraries-ktor-utils-ktor-utils",
+    jar = "@io_ktor-ktor-utils-jvm-3_4_1_http//file",
+    source_jar = "@io_ktor-ktor-utils-jvm-3_4_1-sources_http//file",
+    visibility = ["//visibility:public"],
 )
 
 copy_file(

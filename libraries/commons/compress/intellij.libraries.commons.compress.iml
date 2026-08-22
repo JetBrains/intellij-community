@@ -31,5 +31,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.codec" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.io" scope="RUNTIME" />
   </component>
 </module>

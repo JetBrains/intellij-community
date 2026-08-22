@@ -117,4 +117,10 @@ internal object NodeIds {
 
   /** Product/module-set embedded content modules must not depend on non-embedded content modules */
   @JvmField val EMBEDDED_CONTENT_MODULE_DEPENDENCY_VALIDATION = NodeId("embeddedContentModuleDependencyValidation", NodeCategory.VALIDATION)
+
+  /** Embedded library modules must be reachable from embedded platform content */
+  @JvmField val UNUSED_EMBEDDED_LIBRARY_MODULE_VALIDATION = NodeId("unusedEmbeddedLibraryModuleValidation", NodeCategory.VALIDATION)
+
+  /** Shared (non-embedded) library modules must have at least one consumer */
+  @JvmField val UNUSED_SHARED_LIBRARY_MODULE_VALIDATION = NodeId("unusedSharedLibraryModuleValidation", NodeCategory.VALIDATION)
 }
