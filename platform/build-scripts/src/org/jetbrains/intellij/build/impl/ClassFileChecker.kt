@@ -11,6 +11,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.io.DataInputStream
@@ -39,10 +40,13 @@ import kotlin.io.path.relativeTo
  * </p>
  * <p>Example: <code>["": "1.8", "lib/idea_rt.jar": "1.3"]</code>.</p>
  */
-internal suspend fun checkClassFiles(versionCheckConfig: Map<String, String>,
-                                     forbiddenSubPaths: List<String>,
-                                     forbiddenSubPathExceptions: List<String>,
-                                     root: Path) {
+@ApiStatus.Internal
+suspend fun checkClassFiles(
+  versionCheckConfig: Map<String, String>,
+  forbiddenSubPaths: List<String>,
+  forbiddenSubPathExceptions: List<String>,
+  root: Path,
+) {
   spanBuilder("verify class files")
     .setAttribute("ruleCount", versionCheckConfig.size.toLong())
     .setAttribute("forbiddenSubPathCount", forbiddenSubPaths.size.toLong())
