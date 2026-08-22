@@ -126,7 +126,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.settingsRepository` start
 dev_dist_plugin_content(
-    name = "settings-repository_dev_content",
     content_modules = [
         "//libraries/jgit-ssh",
         "//libraries/sshd-osgi",
@@ -134,14 +133,12 @@ dev_dist_plugin_content(
     descriptor_module = ":settings-repository",
     libraries = [
         "@lib//:jetbrains-intellij-deps-eclipse-jgit",
-        "@lib//:kotlin-stdlib",
         "@lib//:libraries-jgit-ssh-eclipse-jgit-ssh-apache",
         "@lib//:libraries-jgit-ssh-eclipse-jgit-ssh-apache-agent",
         "@lib//:libraries-sshd-osgi-apache-sshd-osgi",
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.settingsRepository` end
 

@@ -42,14 +42,12 @@ exports_files(
 
 ### auto-generated section `dev content intellij.platform.structureView.plugin` start
 dev_dist_plugin_content(
-    name = "plugin_dev_content",
     descriptor_module = ":plugin",
-    prepacked_content_modules = {
-        "//platform/structure-view-impl/backend": "modules/intellij.platform.structureView.backend.jar",
-        "//platform/structure-view-impl/frontend": "modules/intellij.platform.structureView.frontend.jar",
-        "//platform/structure-view-impl/intellij.platform.structureView.impl:structureView-impl": "modules/intellij.platform.structureView.impl.jar",
-        "//platform/structure-view-impl:structureView": "modules/intellij.platform.structureView.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//platform/structure-view-impl/backend",
+        "//platform/structure-view-impl/frontend",
+        "//platform/structure-view-impl/intellij.platform.structureView.impl:structureView-impl",
+        "//platform/structure-view-impl:structureView",
+    ],
 )
 ### auto-generated section `dev content intellij.platform.structureView.plugin` end

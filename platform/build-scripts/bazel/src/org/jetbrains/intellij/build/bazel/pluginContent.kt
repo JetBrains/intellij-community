@@ -27,12 +27,16 @@ internal class PluginContent(
   /** Raw member modules except the main module, which `dev_dist_plugin_content` takes as `descriptor_module`. */
   @JvmField val contentModuleLabels: List<String>,
   /**
-   * Eligible content-module target label to its path relative to the plugin's `lib/` directory.
+   * Eligible content-module target labels.
    *
    * These modules are still members of the plugin, but their jar bytes bypass the fragment and reach the composed
    * distribution through the packed-plugin-jars component.
+   *
+   * No path: eligibility *is* the report entry being exactly `lib/modules/<module>.jar`, so the rule derives
+   * `modules/<module>.jar` from the module name it already reads off the target. Writing it here put one copy of that
+   * rule into each of 2030 relations in checked-in build files, and a Maven-style renaming of a module rewrote both.
    */
-  @JvmField val prepackedContentModuleLabels: Map<String, String>,
+  @JvmField val prepackedContentModuleLabels: List<String>,
   /**
    * One label per library - the `jvm_import`, `java_library` or `java_import` target that *groups* its jars, and not the
    * per-jar `copy_file`/`exports_files` labels those jars have.
@@ -69,6 +73,16 @@ internal class PluginContentResult(
 
 private const val PLUGIN_CONTENT_REPORT_FILE_NAME = "plugin-content.yaml"
 
+/**
+ * The one library `dev_dist_plugin_content` declares implicitly, so a content target never names it.
+ *
+ * Its presence in a plugin's `libraries` said nothing about the plugin. The converter puts it into a module's
+ * `runtime_deps` itself and JPS declares it for nobody, so whether it reached the attribute depended on whether some
+ * member's JPS model or the layout report happened to mention it - true for 250 of 408 content targets, false for the
+ * other 158, and describing neither group.
+ */
+private const val KOTLIN_STDLIB_LABEL = "@lib//:kotlin-stdlib"
+
 private val EMPTY_PLUGIN_CONTENT_RESULT = PluginContentResult(content = null, crossRepositoryPrepackedModules = emptyList())
 
 /**
@@ -94,9 +108,11 @@ internal fun pluginContentTargetName(module: ModuleDescriptor): String = "${modu
 internal fun BuildFile.emitPluginContent(module: ModuleDescriptor, content: PluginContent) {
   load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
   target("dev_dist_plugin_content") {
-    option("name", pluginContentTargetName(module))
-    // Emitted in the order the Starlark formatter sorts them - alphabetical after `name` - so that a regeneration needs
-    // no reformat.
+    // Neither `name` nor `visibility`: `dev_dist_plugin_content` is a macro that derives the first from
+    // `descriptor_module` - the same `${module.targetName}_dev_content` that `pluginContentTargetName` writes into
+    // `bazel-targets.json` - and defaults the second to public, which all 408 of these targets were.
+    //
+    // Emitted in the order the Starlark formatter sorts them - alphabetical - so that a regeneration needs no reformat.
     if (content.contentModuleLabels.isNotEmpty()) {
       option("content_modules", content.contentModuleLabels)
     }
@@ -106,9 +122,8 @@ internal fun BuildFile.emitPluginContent(module: ModuleDescriptor, content: Plug
       option("libraries", content.libraryContainerLabels)
     }
     if (content.prepackedContentModuleLabels.isNotEmpty()) {
-      option("prepacked_content_modules", LinkedHashMap(content.prepackedContentModuleLabels))
+      option("prepacked_content_modules", content.prepackedContentModuleLabels)
     }
-    visibility(arrayOf("//visibility:public"))
   }
 }
 
@@ -153,7 +168,7 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
   }
 
   val contentModuleLabels = ArrayList<String>()
-  val prepackedContentModuleLabels = LinkedHashMap<String, String>()
+  val prepackedContentModuleLabels = ArrayList<String>()
   val crossRepositoryPrepackedModules = ArrayList<String>()
   val members = ArrayList<ModuleDescriptor>()
   members.add(module)
@@ -182,7 +197,7 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
 
     val label = context.getBazelDependencyLabel(member, module)
     if (isPrepacked) {
-      prepackedContentModuleLabels.put(label, "modules/$memberName.jar")
+      prepackedContentModuleLabels.add(label)
     }
     else {
       members.add(member)
@@ -205,7 +220,7 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
   return PluginContentResult(
     content = PluginContent(
       contentModuleLabels = contentModuleLabels.distinct().sorted(),
-      prepackedContentModuleLabels = prepackedContentModuleLabels.toSortedMap(),
+      prepackedContentModuleLabels = prepackedContentModuleLabels.distinct().sorted(),
       libraryContainerLabels = libraryContainerLabels,
     ),
     crossRepositoryPrepackedModules = crossRepository,
@@ -301,6 +316,10 @@ private fun computeLibraryContainerLabels(
       // Same edge as the ultimate content module above, and the same resolution: the ultimate side of the distribution
       // declares this library, so dropping it here is what keeps the community target analyzable.
       println("WARN: ${module.module.name} content target: library $label is outside the community repository")
+      continue
+    }
+    if (label == KOTLIN_STDLIB_LABEL) {
+      // The rule declares it for every plugin, so naming it here says nothing - see `_collect_libraries`.
       continue
     }
     labels.add(label)

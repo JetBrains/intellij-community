@@ -63,9 +63,7 @@ exports_files(
 
 ### auto-generated section `dev content intellij.webp` start
 dev_dist_plugin_content(
-    name = "webp_dev_content",
     descriptor_module = ":webp",
     libraries = ["//plugins/webp/lib:webp-libwebp"],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.webp` end

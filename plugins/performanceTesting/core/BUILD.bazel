@@ -184,7 +184,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.performanceTesting` start
 dev_dist_plugin_content(
-    name = "performanceTesting_dev_content",
     content_modules = [
         "//libraries/assertj-core",
         "//platform/remote-driver/client",
@@ -196,20 +195,18 @@ dev_dist_plugin_content(
     descriptor_module = ":performanceTesting",
     libraries = [
         "@lib//:assertj-swing",
-        "@lib//:kotlin-stdlib",
         "@lib//:libraries-assertj-core-assert_j",
     ],
-    prepacked_content_modules = {
-        "//plugins/performanceTesting/backend": "modules/intellij.performanceTesting.backend.jar",
-        "//plugins/performanceTesting/freezes": "modules/intellij.performanceTesting.freezes.jar",
-        "//plugins/performanceTesting/frontend": "modules/intellij.performanceTesting.frontend.jar",
-        "//plugins/performanceTesting/problemsView": "modules/intellij.performanceTesting.problemsView.jar",
-        "//plugins/performanceTesting/remote-driver.compose": "modules/intellij.performanceTesting.remoteDriver.compose.jar",
-        "//plugins/performanceTesting/remote-driver.jcef": "modules/intellij.performanceTesting.remoteDriver.jcef.jar",
-        "//plugins/performanceTesting/structureView": "modules/intellij.performanceTesting.structureView.jar",
-        "//plugins/performanceTesting/vcs": "modules/intellij.performanceTesting.vcs.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/performanceTesting/backend",
+        "//plugins/performanceTesting/freezes",
+        "//plugins/performanceTesting/frontend",
+        "//plugins/performanceTesting/problemsView",
+        "//plugins/performanceTesting/remote-driver.compose",
+        "//plugins/performanceTesting/remote-driver.jcef",
+        "//plugins/performanceTesting/structureView",
+        "//plugins/performanceTesting/vcs",
+    ],
 )
 ### auto-generated section `dev content intellij.performanceTesting` end
 

@@ -42,7 +42,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.tipsOfTheDay.plugin` start
 dev_dist_plugin_content(
-    name = "plugin_dev_content",
     content_modules = ["//plugins/tips-of-the-day:tips"],
     descriptor_module = ":plugin",
     libraries = [
@@ -60,6 +59,5 @@ dev_dist_plugin_content(
         "@lib//:tips-tips-rubymine",
         "@lib//:tips-tips-webstorm",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.tipsOfTheDay.plugin` end

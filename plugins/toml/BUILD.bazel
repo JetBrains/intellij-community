@@ -42,18 +42,15 @@ exports_files(
 
 ### auto-generated section `dev content intellij.toml` start
 dev_dist_plugin_content(
-    name = "toml_dev_content",
     content_modules = [
         "//plugins/toml/core",
         "//plugins/toml/grazie",
     ],
     descriptor_module = ":toml",
-    libraries = ["@lib//:kotlin-stdlib"],
-    prepacked_content_modules = {
-        "//plugins/toml/backend": "modules/intellij.toml.backend.jar",
-        "//plugins/toml/frontend": "modules/intellij.toml.frontend.jar",
-        "//plugins/toml/json": "modules/intellij.toml.json.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/toml/backend",
+        "//plugins/toml/frontend",
+        "//plugins/toml/json",
+    ],
 )
 ### auto-generated section `dev content intellij.toml` end

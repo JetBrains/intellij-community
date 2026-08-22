@@ -42,19 +42,16 @@ exports_files(
 
 ### auto-generated section `dev content intellij.platform.problemView.plugin` start
 dev_dist_plugin_content(
-    name = "plugin_dev_content",
     content_modules = [
         "//platform/problemsView/collector",
         "//platform/problemsView/core",
         "//platform/problemsView/ui",
     ],
     descriptor_module = ":plugin",
-    libraries = ["@lib//:kotlin-stdlib"],
-    prepacked_content_modules = {
-        "//platform/problemsView/backend": "modules/intellij.platform.problemView.backend.jar",
-        "//platform/problemsView/frontend": "modules/intellij.platform.problemView.frontend.jar",
-        "//platform/problemsView/shared": "modules/intellij.platform.problemView.shared.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//platform/problemsView/backend",
+        "//platform/problemsView/frontend",
+        "//platform/problemsView/shared",
+    ],
 )
 ### auto-generated section `dev content intellij.platform.problemView.plugin` end

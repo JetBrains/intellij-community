@@ -42,16 +42,12 @@ exports_files(
 
 ### auto-generated section `dev content intellij.java.jshell` start
 dev_dist_plugin_content(
-    name = "jshell_dev_content",
     content_modules = [
         "//plugins/jshell/execution",
         "//plugins/jshell/protocol",
     ],
     descriptor_module = ":jshell",
     libraries = ["//plugins/jshell/execution:java-jshell-execution-jshell-frontend"],
-    prepacked_content_modules = {
-        "//plugins/jshell/console": "modules/intellij.java.jshell.console.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = ["//plugins/jshell/console"],
 )
 ### auto-generated section `dev content intellij.java.jshell` end

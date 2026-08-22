@@ -168,17 +168,13 @@ exports_files(
 
 ### auto-generated section `dev content intellij.testng` start
 dev_dist_plugin_content(
-    name = "testng_dev_content",
     content_modules = [
         "//libraries/testng",
         "//plugins/testng_rt:testng-rt",
     ],
     descriptor_module = ":testng",
     libraries = ["@lib//:test_n_g"],
-    prepacked_content_modules = {
-        "//plugins/testng/langInjection": "modules/intellij.testng.langInjection.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = ["//plugins/testng/langInjection"],
 )
 ### auto-generated section `dev content intellij.testng` end
 

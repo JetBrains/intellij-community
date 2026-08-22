@@ -153,7 +153,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.featuresTrainer` start
 dev_dist_plugin_content(
-    name = "featuresTrainer_dev_content",
     content_modules = [
         "//libraries/assertj-core",
         "//plugins/git-features-trainer:vcs-git-featuresTrainer",
@@ -163,14 +162,12 @@ dev_dist_plugin_content(
     libraries = [
         "@lib//:assertj-swing",
         "@lib//:git-learning-project",
-        "@lib//:kotlin-stdlib",
         "@lib//:libraries-assertj-core-assert_j",
     ],
-    prepacked_content_modules = {
-        "//plugins/ide-features-trainer/tips": "modules/intellij.featuresTrainer.tips.jar",
-        "//plugins/kotlin/onboarding-promoter": "modules/intellij.kotlin.onboarding.promoter.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/ide-features-trainer/tips",
+        "//plugins/kotlin/onboarding-promoter",
+    ],
 )
 ### auto-generated section `dev content intellij.featuresTrainer` end
 

@@ -112,7 +112,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.javaFX.community` start
 dev_dist_plugin_content(
-    name = "community_dev_content",
     content_modules = [
         "//plugins/javaFX/common",
         "//plugins/javaFX/jps",
@@ -120,14 +119,8 @@ dev_dist_plugin_content(
         "//plugins/javaFX:javaFX-properties",
     ],
     descriptor_module = ":community",
-    libraries = [
-        "@lib//:java_f_x-scene_builder-_scene_builder_kit11",
-        "@lib//:kotlin-stdlib",
-    ],
-    prepacked_content_modules = {
-        "//plugins/javaFX": "modules/intellij.javaFX.jar",
-    },
-    visibility = ["//visibility:public"],
+    libraries = ["@lib//:java_f_x-scene_builder-_scene_builder_kit11"],
+    prepacked_content_modules = ["//plugins/javaFX"],
 )
 ### auto-generated section `dev content intellij.javaFX.community` end
 

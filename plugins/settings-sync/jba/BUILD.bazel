@@ -98,17 +98,10 @@ exports_files(
 
 ### auto-generated section `dev content intellij.settingsSync` start
 dev_dist_plugin_content(
-    name = "settingsSync_dev_content",
     content_modules = ["//libraries/cloud-config-client"],
     descriptor_module = ":settingsSync",
-    libraries = [
-        "@lib//:kotlin-stdlib",
-        "@lib//:libraries-cloud-config-client-cloud-config-client",
-    ],
-    prepacked_content_modules = {
-        "//plugins/settings-sync/settingsSync.performanceTesting": "modules/intellij.settingsSync.performanceTesting.jar",
-    },
-    visibility = ["//visibility:public"],
+    libraries = ["@lib//:libraries-cloud-config-client-cloud-config-client"],
+    prepacked_content_modules = ["//plugins/settings-sync/settingsSync.performanceTesting"],
 )
 ### auto-generated section `dev content intellij.settingsSync` end
 

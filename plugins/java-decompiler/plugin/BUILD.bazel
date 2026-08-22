@@ -105,11 +105,9 @@ exports_files(
 
 ### auto-generated section `dev content intellij.java.decompiler` start
 dev_dist_plugin_content(
-    name = "java-decompiler_dev_content",
     content_modules = ["//plugins/java-decompiler/engine"],
     descriptor_module = ":java-decompiler",
     libraries = ["@lib//:eclipse"],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.java.decompiler` end
 

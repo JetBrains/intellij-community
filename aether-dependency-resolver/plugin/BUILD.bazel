@@ -42,7 +42,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.java.aetherDependencyResolver.plugin` start
 dev_dist_plugin_content(
-    name = "plugin_dev_content",
     content_modules = [
         "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore",
         "//libraries/maven-resolver-provider",
@@ -52,7 +51,6 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":plugin",
     libraries = [
-        "@lib//:kotlin-stdlib",
         "@lib//:ktor-client-mock",
         "@lib//:libraries-kotlinx-document-store-mvstore-kotlinx-document-store-mvstore",
         "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-connector-basic",
@@ -62,10 +60,9 @@ dev_dist_plugin_content(
         "@lib//:maven-resolver-provider",
         "@lib//:package-search-api-client",
     ],
-    prepacked_content_modules = {
-        "//aether-dependency-resolver": "modules/intellij.java.aetherDependencyResolver.jar",
-        "//plugins/repository-search/completion": "modules/intellij.repository.search.completion.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//aether-dependency-resolver",
+        "//plugins/repository-search/completion",
+    ],
 )
 ### auto-generated section `dev content intellij.java.aetherDependencyResolver.plugin` end

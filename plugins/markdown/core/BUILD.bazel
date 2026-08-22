@@ -172,26 +172,23 @@ exports_files(
 
 ### auto-generated section `dev content intellij.markdown` start
 dev_dist_plugin_content(
-    name = "markdown_dev_content",
     descriptor_module = ":markdown",
-    libraries = ["@lib//:kotlin-stdlib"],
-    prepacked_content_modules = {
-        "//plugins/markdown/compose:compose-preview": "modules/intellij.markdown.compose.preview.jar",
-        "//plugins/markdown/core/backend": "modules/intellij.markdown.backend.jar",
-        "//plugins/markdown/core/frontend": "modules/intellij.markdown.frontend.jar",
-        "//plugins/markdown/fenceInjection": "modules/intellij.markdown.fenceInjection.jar",
-        "//plugins/markdown/frontmatter": "modules/intellij.markdown.frontmatter.jar",
-        "//plugins/markdown/frontmatter/toml": "modules/intellij.markdown.frontmatter.toml.jar",
-        "//plugins/markdown/frontmatter/yaml": "modules/intellij.markdown.frontmatter.yaml.jar",
-        "//plugins/markdown/images": "modules/intellij.markdown.images.jar",
-        "//plugins/markdown/java": "modules/intellij.markdown.java.jar",
-        "//plugins/markdown/jcef": "modules/intellij.markdown.jcef.jar",
-        "//plugins/markdown/model": "modules/intellij.markdown.model.jar",
-        "//plugins/markdown/projectView": "modules/intellij.markdown.projectView.jar",
-        "//plugins/markdown/spellchecker": "modules/intellij.markdown.spellchecker.jar",
-        "//plugins/markdown/textMate": "modules/intellij.markdown.fenceInjector.textMate.jar",
-        "//plugins/markdown/xml": "modules/intellij.markdown.xml.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/markdown/compose:compose-preview",
+        "//plugins/markdown/core/backend",
+        "//plugins/markdown/core/frontend",
+        "//plugins/markdown/fenceInjection",
+        "//plugins/markdown/frontmatter",
+        "//plugins/markdown/frontmatter/toml",
+        "//plugins/markdown/frontmatter/yaml",
+        "//plugins/markdown/images",
+        "//plugins/markdown/java",
+        "//plugins/markdown/jcef",
+        "//plugins/markdown/model",
+        "//plugins/markdown/projectView",
+        "//plugins/markdown/spellchecker",
+        "//plugins/markdown/textMate",
+        "//plugins/markdown/xml",
+    ],
 )
 ### auto-generated section `dev content intellij.markdown` end

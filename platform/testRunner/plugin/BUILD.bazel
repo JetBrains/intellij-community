@@ -42,14 +42,11 @@ exports_files(
 
 ### auto-generated section `dev content intellij.platform.testRunner.plugin` start
 dev_dist_plugin_content(
-    name = "plugin_dev_content",
     content_modules = ["//platform/smRunner/vcs"],
     descriptor_module = ":plugin",
-    libraries = ["@lib//:kotlin-stdlib"],
-    prepacked_content_modules = {
-        "//platform/smRunner": "modules/intellij.platform.smRunner.jar",
-        "//platform/testRunner": "modules/intellij.platform.testRunner.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//platform/smRunner",
+        "//platform/testRunner",
+    ],
 )
 ### auto-generated section `dev content intellij.platform.testRunner.plugin` end

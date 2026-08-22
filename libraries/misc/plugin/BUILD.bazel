@@ -42,7 +42,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.libraries.misc.plugin` start
 dev_dist_plugin_content(
-    name = "plugin_dev_content",
     content_modules = [
         "//libraries/commons/text",
         "//libraries/jettison",
@@ -61,9 +60,6 @@ dev_dist_plugin_content(
         "@lib//:libraries-oshi-core-github-oshi-core",
         "@lib//:libraries-xstream-xstream",
     ],
-    prepacked_content_modules = {
-        "//libraries/javax/activation": "modules/intellij.libraries.javax.activation.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = ["//libraries/javax/activation"],
 )
 ### auto-generated section `dev content intellij.libraries.misc.plugin` end

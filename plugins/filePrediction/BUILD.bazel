@@ -94,18 +94,15 @@ exports_files(
 
 ### auto-generated section `dev content intellij.filePrediction` start
 dev_dist_plugin_content(
-    name = "filePrediction_dev_content",
     descriptor_module = ":filePrediction",
     libraries = [
         "@lib//:file_prediction-file-prediction-model",
-        "@lib//:kotlin-stdlib",
         "@lib//:ngram-slp",
     ],
-    prepacked_content_modules = {
-        "//plugins/filePrediction/java": "modules/intellij.filePrediction.java.jar",
-        "//plugins/filePrediction/vcs": "modules/intellij.filePrediction.vcs.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/filePrediction/java",
+        "//plugins/filePrediction/vcs",
+    ],
 )
 ### auto-generated section `dev content intellij.filePrediction` end
 

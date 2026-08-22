@@ -86,15 +86,6 @@ exports_files(
 )
 ### auto-generated section `iml intellij.turboComplete` end
 
-### auto-generated section `dev content intellij.turboComplete` start
-dev_dist_plugin_content(
-    name = "turboComplete_dev_content",
-    descriptor_module = ":turboComplete",
-    libraries = ["@lib//:kotlin-stdlib"],
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `dev content intellij.turboComplete` end
-
 ### auto-generated section `build intellij.turboComplete.tests` start
 jvm_library(
     name = "turboComplete-tests",

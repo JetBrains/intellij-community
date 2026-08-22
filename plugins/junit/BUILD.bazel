@@ -149,7 +149,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.junit` start
 dev_dist_plugin_content(
-    name = "junit_dev_content",
     content_modules = [
         "//libraries/hamcrest",
         "//libraries/junit4",
@@ -162,9 +161,6 @@ dev_dist_plugin_content(
         "@lib//:libraries-hamcrest-hamcrest",
         "@lib//:libraries-junit4-_j_unit4",
     ],
-    prepacked_content_modules = {
-        "//plugins/junit/properties": "modules/intellij.junit.properties.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = ["//plugins/junit/properties"],
 )
 ### auto-generated section `dev content intellij.junit` end

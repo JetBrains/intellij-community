@@ -42,7 +42,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.gradle.java.plugin` start
 dev_dist_plugin_content(
-    name = "plugin_dev_content",
     content_modules = [
         "//plugins/gradle/java",
         "//plugins/gradle/jps-plugin:jps",
@@ -50,21 +49,19 @@ dev_dist_plugin_content(
     descriptor_module = ":plugin",
     libraries = [
         "@lib//:gradle-jps-ant",
-        "@lib//:kotlin-stdlib",
         "@lib//ant/lib:ant",
     ],
-    prepacked_content_modules = {
-        "//plugins/gradle-maven:gradle-java-maven": "modules/intellij.gradle.java.maven.jar",
-        "//plugins/gradle/gradle-dependency-updater:dependencyUpdater": "modules/intellij.gradle.dependencyUpdater.jar",
-        "//plugins/gradle/intellij.gradle.analysis:analysis": "modules/intellij.gradle.analysis.jar",
-        "//plugins/gradle/java/coverage": "modules/intellij.gradle.java.coverage.jar",
-        "//plugins/gradle/java/groovy": "modules/intellij.gradle.java.groovy.jar",
-        "//plugins/gradle/java/groovy/ml": "modules/intellij.gradle.java.groovy.ml.jar",
-        "//plugins/gradle/java/groovy/toml": "modules/intellij.gradle.java.groovy.toml.jar",
-        "//plugins/gradle/java/performance": "modules/intellij.gradle.java.performance.jar",
-        "//plugins/gradle/java/properties": "modules/intellij.gradle.java.properties.jar",
-        "//plugins/gradle/java/toml": "modules/intellij.gradle.java.toml.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/gradle-maven:gradle-java-maven",
+        "//plugins/gradle/gradle-dependency-updater:dependencyUpdater",
+        "//plugins/gradle/intellij.gradle.analysis:analysis",
+        "//plugins/gradle/java/coverage",
+        "//plugins/gradle/java/groovy",
+        "//plugins/gradle/java/groovy/ml",
+        "//plugins/gradle/java/groovy/toml",
+        "//plugins/gradle/java/performance",
+        "//plugins/gradle/java/properties",
+        "//plugins/gradle/java/toml",
+    ],
 )
 ### auto-generated section `dev content intellij.gradle.java.plugin` end

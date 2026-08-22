@@ -64,25 +64,20 @@ exports_files(
 
 ### auto-generated section `dev content intellij.vcs.git` start
 dev_dist_plugin_content(
-    name = "vcs-git_dev_content",
     content_modules = [
         "//plugins/git4idea/backend",
         "//plugins/git4idea/rt",
     ],
     descriptor_module = ":vcs-git",
-    libraries = [
-        "@lib//:cucumber-testing",
-        "@lib//:kotlin-stdlib",
+    libraries = ["@lib//:cucumber-testing"],
+    prepacked_content_modules = [
+        "//plugins/git4idea/frontend",
+        "//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage",
+        "//plugins/git4idea/localHistory",
+        "//plugins/git4idea/performanceTesting",
+        "//plugins/git4idea/shared",
+        "//plugins/git4idea/terminal",
     ],
-    prepacked_content_modules = {
-        "//plugins/git4idea/frontend": "modules/intellij.vcs.git.frontend.jar",
-        "//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage": "modules/intellij.vcs.git.coverage.jar",
-        "//plugins/git4idea/localHistory": "modules/intellij.vcs.git.localHistory.jar",
-        "//plugins/git4idea/performanceTesting": "modules/intellij.vcs.git.performanceTesting.jar",
-        "//plugins/git4idea/shared": "modules/intellij.vcs.git.shared.jar",
-        "//plugins/git4idea/terminal": "modules/intellij.vcs.git.terminal.jar",
-    },
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.vcs.git` end
 

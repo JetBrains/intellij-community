@@ -42,7 +42,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.dev` start
 dev_dist_plugin_content(
-    name = "dev_dev_content",
     content_modules = [
         "//plugins/dev/intellij.dev.codeInsight:codeInsight",
         "//plugins/dev/intellij.dev.psiViewer:psiViewer",
@@ -50,12 +49,11 @@ dev_dist_plugin_content(
         "//plugins/dev/intellij.kotlin.dev:kotlin-dev",
     ],
     descriptor_module = ":dev",
-    prepacked_content_modules = {
-        "//platform/platform-impl/ui-inspector:ide-ui-inspector": "modules/intellij.platform.ide.ui.inspector.jar",
-        "//platform/statistics/devkit": "modules/intellij.platform.statistics.devkit.jar",
-        "//plugins/dev/intellij.dev.leakDetection:leakDetection": "modules/intellij.dev.leakDetection.jar",
-        "//plugins/dev/intellij.groovy.dev:groovy-dev": "modules/intellij.groovy.dev.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//platform/platform-impl/ui-inspector:ide-ui-inspector",
+        "//platform/statistics/devkit",
+        "//plugins/dev/intellij.dev.leakDetection:leakDetection",
+        "//plugins/dev/intellij.groovy.dev:groovy-dev",
+    ],
 )
 ### auto-generated section `dev content intellij.dev` end

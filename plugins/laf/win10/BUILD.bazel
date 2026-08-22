@@ -64,12 +64,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.laf.win10` end
-
-### auto-generated section `dev content intellij.laf.win10` start
-dev_dist_plugin_content(
-    name = "win10_dev_content",
-    descriptor_module = ":win10",
-    libraries = ["@lib//:kotlin-stdlib"],
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `dev content intellij.laf.win10` end

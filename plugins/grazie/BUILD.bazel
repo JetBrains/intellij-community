@@ -68,7 +68,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.grazie` start
 dev_dist_plugin_content(
-    name = "grazie_dev_content",
     content_modules = [
         "//libraries/ai.grazie.spell.gec.engine.local",
         "//libraries/kotlin/logging",
@@ -108,7 +107,6 @@ dev_dist_plugin_content(
         "@lib//:grazie-markdown-ai-grazie-tasks-library-model-jvm",
         "@lib//:jaxb-api",
         "@lib//:jaxb-runtime",
-        "@lib//:kotlin-stdlib",
         "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-common-jvm",
         "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-gec-jvm",
         "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-swagger-annotations-jvm",
@@ -125,10 +123,9 @@ dev_dist_plugin_content(
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
     ],
-    prepacked_content_modules = {
-        "//plugins/grazie/java": "modules/intellij.grazie.java.jar",
-        "//plugins/grazie/properties": "modules/intellij.grazie.properties.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/grazie/java",
+        "//plugins/grazie/properties",
+    ],
 )
 ### auto-generated section `dev content intellij.grazie` end

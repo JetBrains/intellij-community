@@ -66,12 +66,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.vcs.git.commit.modal` end
-
-### auto-generated section `dev content intellij.vcs.git.commit.modal` start
-dev_dist_plugin_content(
-    name = "vcs-git-commit-modal_dev_content",
-    descriptor_module = ":vcs-git-commit-modal",
-    libraries = ["@lib//:kotlin-stdlib"],
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `dev content intellij.vcs.git.commit.modal` end

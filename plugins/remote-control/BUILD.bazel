@@ -98,15 +98,6 @@ exports_files(
 )
 ### auto-generated section `iml intellij.remoteControl` end
 
-### auto-generated section `dev content intellij.remoteControl` start
-dev_dist_plugin_content(
-    name = "remote-control_dev_content",
-    descriptor_module = ":remote-control",
-    libraries = ["@lib//:kotlin-stdlib"],
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `dev content intellij.remoteControl` end
-
 ### auto-generated section `build intellij.remoteControl.tests` start
 jvm_library(
     name = "remoteControl-tests",

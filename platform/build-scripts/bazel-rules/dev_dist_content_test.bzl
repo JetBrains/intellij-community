@@ -69,11 +69,12 @@ _fake_library = rule(
 
 def _library_jars_test_impl(ctx):
     env = analysistest.begin(ctx)
-    entries = analysistest.target_under_test(env)[DevDistContentInfo].library_jars.to_list()
-    asserts.equals(env, 1, len(entries))
+    all_entries = analysistest.target_under_test(env)[DevDistContentInfo].library_jars.to_list()
 
-    # The key is the container's own label, not a jar's owner.
-    asserts.true(env, entries[0].label.endswith(ctx.attr.expected_label_suffix), "got key " + entries[0].label)
+    # The key is the container's own label, not a jar's owner. Selected by that key rather than by position: the rule
+    # declares `@lib//:kotlin-stdlib` for every plugin, so the declared container is not the only entry.
+    entries = [entry for entry in all_entries if entry.label.endswith(ctx.attr.expected_label_suffix)]
+    asserts.equals(env, 1, len(entries), "keys: %s" % [entry.label for entry in all_entries])
 
     # Order is the container's, not sorted: the packer resolves a duplicated entry to its first source.
     asserts.equals(env, ctx.attr.expected_jars, [jar.basename for jar in entries[0].jars])
@@ -207,9 +208,7 @@ def dev_dist_content_test_suite(name):
     dev_dist_plugin_content(
         name = name + "_missing_output_group_content",
         descriptor_module = name + "_descriptor",
-        prepacked_content_modules = {
-            name + "_missing_output_group": "modules/test.missing.jar",
-        },
+        prepacked_content_modules = [name + "_missing_output_group"],
         tags = ["manual"],
     )
     _expected_failure_test(
@@ -221,9 +220,7 @@ def dev_dist_content_test_suite(name):
     dev_dist_plugin_content(
         name = name + "_multiple_outputs_content",
         descriptor_module = name + "_descriptor",
-        prepacked_content_modules = {
-            name + "_multiple_outputs": "modules/test.multiple.jar",
-        },
+        prepacked_content_modules = [name + "_multiple_outputs"],
         tags = ["manual"],
     )
     _expected_failure_test(
@@ -235,16 +232,12 @@ def dev_dist_content_test_suite(name):
     dev_dist_plugin_content(
         name = name + "_plugin_content",
         descriptor_module = name + "_descriptor",
-        prepacked_content_modules = {
-            name + "_content": "modules/test.content.jar",
-        },
+        prepacked_content_modules = [name + "_content"],
     )
     dev_dist_plugin_content(
         name = name + "_same_plugin_content",
         descriptor_module = name + "_descriptor",
-        prepacked_content_modules = {
-            name + "_content": "modules/test.content.jar",
-        },
+        prepacked_content_modules = [name + "_content"],
     )
     dev_dist_content_set(
         name = name + "_composed_content",
@@ -261,9 +254,7 @@ def dev_dist_content_test_suite(name):
     dev_dist_plugin_content(
         name = name + "_conflicting_plugin_content",
         descriptor_module = name + "_descriptor",
-        prepacked_content_modules = {
-            name + "_content_same_name": "modules/test.content.jar",
-        },
+        prepacked_content_modules = [name + "_content_same_name"],
     )
     dev_dist_content_set(
         name = name + "_conflicting_content",
@@ -285,9 +276,7 @@ def dev_dist_content_test_suite(name):
 
     dev_dist_content_set(
         name = name + "_completion_content",
-        prepacked_content_modules = {
-            name + "_content": "modules/test.content.jar",
-        },
+        prepacked_content_modules = [name + "_content"],
         prepacked_plugin_main_module = "test.plugin",
     )
     _completion_provider_test(
@@ -298,9 +287,7 @@ def dev_dist_content_test_suite(name):
     # A relation with no plugin has no key, so the two attributes are required together rather than defaulted.
     dev_dist_content_set(
         name = name + "_unnamed_completion_content",
-        prepacked_content_modules = {
-            name + "_content": "modules/test.content.jar",
-        },
+        prepacked_content_modules = [name + "_content"],
         tags = ["manual"],
     )
     _expected_failure_test(

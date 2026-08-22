@@ -42,18 +42,15 @@ exports_files(
 
 ### auto-generated section `dev content intellij.platform.bookmarks.plugin` start
 dev_dist_plugin_content(
-    name = "plugin_dev_content",
     content_modules = [
         "//platform/bookmarks/backend",
         "//platform/bookmarks/frontend",
         "//platform/xdebugger-impl/bookmarks",
     ],
     descriptor_module = ":plugin",
-    libraries = ["@lib//:kotlin-stdlib"],
-    prepacked_content_modules = {
-        "//platform/bookmarks": "modules/intellij.platform.bookmarks.jar",
-        "//platform/vcs-log/impl/bookmarks": "modules/intellij.platform.vcs.log.impl.bookmarks.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//platform/bookmarks",
+        "//platform/vcs-log/impl/bookmarks",
+    ],
 )
 ### auto-generated section `dev content intellij.platform.bookmarks.plugin` end

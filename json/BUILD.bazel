@@ -98,7 +98,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.json` start
 dev_dist_plugin_content(
-    name = "json_dev_content",
     content_modules = [
         "//json/networknt.wrapper/libraries:json-networknt-wrapper-libraries-jsonSchemaValidator",
         "//json/syntax",
@@ -107,15 +106,13 @@ dev_dist_plugin_content(
     descriptor_module = ":json",
     libraries = [
         "@lib//:json-networknt-wrapper-libraries-json_schema_validator-json-schema-validator-jetbrains",
-        "@lib//:kotlin-stdlib",
         "@lib//:libraries-joni-joni",
     ],
-    prepacked_content_modules = {
-        "//json/backend": "modules/intellij.json.backend.jar",
-        "//json/backend/regexp": "modules/intellij.json.backend.regexp.jar",
-        "//json/networknt.wrapper": "modules/intellij.json.networknt.wrapper.jar",
-        "//json/structureView": "modules/intellij.json.structureView.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//json/backend",
+        "//json/backend/regexp",
+        "//json/networknt.wrapper",
+        "//json/structureView",
+    ],
 )
 ### auto-generated section `dev content intellij.json` end

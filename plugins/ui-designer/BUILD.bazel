@@ -215,10 +215,8 @@ exports_files(
 
 ### auto-generated section `dev content intellij.java.guiForms.designer` start
 dev_dist_plugin_content(
-    name = "java-guiForms-designer_dev_content",
     content_modules = ["//plugins/ui-designer/jps-plugin:java-guiForms-jps"],
     descriptor_module = ":java-guiForms-designer",
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.java.guiForms.designer` end
 

@@ -155,13 +155,11 @@ exports_files(
 
 ### auto-generated section `dev content intellij.eclipse` start
 dev_dist_plugin_content(
-    name = "eclipse_dev_content",
     content_modules = [
         "//plugins/eclipse/common-eclipse-util:common",
         "//plugins/eclipse/jps-plugin:jps",
     ],
     descriptor_module = ":eclipse",
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.eclipse` end
 

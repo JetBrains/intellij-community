@@ -150,10 +150,8 @@ exports_files(
 
 ### auto-generated section `dev content intellij.xpath` start
 dev_dist_plugin_content(
-    name = "xpath_dev_content",
     content_modules = ["//plugins/xpath/xslt-rt:rt"],
     descriptor_module = ":xpath",
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.xpath` end
 

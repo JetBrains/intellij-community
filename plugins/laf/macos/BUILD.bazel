@@ -64,12 +64,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.laf.macos` end
-
-### auto-generated section `dev content intellij.laf.macos` start
-dev_dist_plugin_content(
-    name = "macos_dev_content",
-    descriptor_module = ":macos",
-    libraries = ["@lib//:kotlin-stdlib"],
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `dev content intellij.laf.macos` end

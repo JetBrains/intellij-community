@@ -42,17 +42,15 @@ exports_files(
 
 ### auto-generated section `dev content intellij.textmate.plugin` start
 dev_dist_plugin_content(
-    name = "plugin_dev_content",
     content_modules = ["//libraries/joni"],
     descriptor_module = ":plugin",
     libraries = ["@lib//:libraries-joni-joni"],
-    prepacked_content_modules = {
-        "//plugins/textmate": "modules/intellij.textmate.jar",
-        "//plugins/textmate/backend": "modules/intellij.textmate.backend.jar",
-        "//plugins/textmate/common": "modules/intellij.textmate.common.jar",
-        "//plugins/textmate/core": "modules/intellij.textmate.core.jar",
-        "//plugins/textmate/joni": "modules/intellij.textmate.joni.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/textmate",
+        "//plugins/textmate/backend",
+        "//plugins/textmate/common",
+        "//plugins/textmate/core",
+        "//plugins/textmate/joni",
+    ],
 )
 ### auto-generated section `dev content intellij.textmate.plugin` end

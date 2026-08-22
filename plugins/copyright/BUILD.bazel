@@ -123,11 +123,8 @@ exports_files(
 
 ### auto-generated section `dev content intellij.copyright` start
 dev_dist_plugin_content(
-    name = "copyright_dev_content",
     content_modules = ["//plugins/copyright/vcs"],
     descriptor_module = ":copyright",
-    libraries = ["@lib//:kotlin-stdlib"],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.copyright` end
 

@@ -124,15 +124,6 @@ exports_files(
 )
 ### auto-generated section `iml intellij.completionMlRanking` end
 
-### auto-generated section `dev content intellij.completionMlRanking` start
-dev_dist_plugin_content(
-    name = "completion-ml-ranking_dev_content",
-    descriptor_module = ":completion-ml-ranking",
-    libraries = ["@lib//:kotlin-stdlib"],
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `dev content intellij.completionMlRanking` end
-
 ### auto-generated section `build intellij.completionMlRanking.tests` start
 jvm_library(
     name = "completionMlRanking-tests",

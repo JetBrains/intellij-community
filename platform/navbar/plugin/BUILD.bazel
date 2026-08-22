@@ -42,14 +42,12 @@ exports_files(
 
 ### auto-generated section `dev content intellij.platform.navbar.plugin` start
 dev_dist_plugin_content(
-    name = "plugin_dev_content",
     descriptor_module = ":plugin",
-    prepacked_content_modules = {
-        "//platform/navbar/backend": "modules/intellij.platform.navbar.backend.jar",
-        "//platform/navbar/frontend": "modules/intellij.platform.navbar.frontend.jar",
-        "//platform/navbar/monolith": "modules/intellij.platform.navbar.monolith.jar",
-        "//platform/navbar/shared:navbar": "modules/intellij.platform.navbar.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//platform/navbar/backend",
+        "//platform/navbar/frontend",
+        "//platform/navbar/monolith",
+        "//platform/navbar/shared:navbar",
+    ],
 )
 ### auto-generated section `dev content intellij.platform.navbar.plugin` end

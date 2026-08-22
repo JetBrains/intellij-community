@@ -221,7 +221,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.groovy` start
 dev_dist_plugin_content(
-    name = "groovy_dev_content",
     content_modules = [
         "//libraries/hamcrest",
         "//libraries/junit4",
@@ -238,20 +237,18 @@ dev_dist_plugin_content(
     libraries = [
         "@lib//:eclipse",
         "@lib//:groovy-spock-rt-spockframework-spock-core",
-        "@lib//:kotlin-stdlib",
         "@lib//:libraries-hamcrest-hamcrest",
         "@lib//:libraries-junit4-_j_unit4",
         "@lib//:libraries-opentest4j-opentest4j",
     ],
-    prepacked_content_modules = {
-        "//plugins/groovy/ant": "modules/intellij.groovy.ant.jar",
-        "//plugins/groovy/byteCodeViewer": "modules/intellij.groovy.byteCodeViewer.jar",
-        "//plugins/groovy/intellij.groovy.copyright:copyright": "modules/intellij.groovy.copyright.jar",
-        "//plugins/groovy/langInjection": "modules/intellij.groovy.langInjection.jar",
-        "//plugins/groovy/spock": "modules/intellij.groovy.spock.jar",
-        "//plugins/groovy/structuralsearch-groovy:structuralSearch": "modules/intellij.groovy.structuralSearch.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/groovy/ant",
+        "//plugins/groovy/byteCodeViewer",
+        "//plugins/groovy/intellij.groovy.copyright:copyright",
+        "//plugins/groovy/langInjection",
+        "//plugins/groovy/spock",
+        "//plugins/groovy/structuralsearch-groovy:structuralSearch",
+    ],
 )
 ### auto-generated section `dev content intellij.groovy` end
 

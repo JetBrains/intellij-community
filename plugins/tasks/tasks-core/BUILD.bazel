@@ -134,7 +134,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.tasks.core` start
 dev_dist_plugin_content(
-    name = "core_dev_content",
     content_modules = [
         "//libraries/xml-rpc",
         "//plugins/tasks/tasks-api:tasks",
@@ -148,12 +147,11 @@ dev_dist_plugin_content(
         "@lib//:tasks-compatibility-http-client-3-1",
         "@lib//:tasks-core-libraries-commons_discovery-commons-discovery",
     ],
-    prepacked_content_modules = {
-        "//plugins/tasks/tasks-core/bugzilla": "modules/intellij.tasks.bugzilla.jar",
-        "//plugins/tasks/tasks-core/jira": "modules/intellij.tasks.jira.jar",
-        "//plugins/tasks/tasks-core/trac": "modules/intellij.tasks.trac.jar",
-        "//plugins/tasks/tasks-java:java": "modules/intellij.tasks.java.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/tasks/tasks-core/bugzilla",
+        "//plugins/tasks/tasks-core/jira",
+        "//plugins/tasks/tasks-core/trac",
+        "//plugins/tasks/tasks-java:java",
+    ],
 )
 ### auto-generated section `dev content intellij.tasks.core` end

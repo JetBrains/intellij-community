@@ -80,15 +80,6 @@ exports_files(
 )
 ### auto-generated section `iml intellij.gradle.declarativeSync` end
 
-### auto-generated section `dev content intellij.gradle.declarativeSync` start
-dev_dist_plugin_content(
-    name = "declarativeSync_dev_content",
-    descriptor_module = ":declarativeSync",
-    libraries = ["@lib//:kotlin-stdlib"],
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `dev content intellij.gradle.declarativeSync` end
-
 ### auto-generated section `build intellij.gradle.declarativeSync.tests` start
 jvm_library(
     name = "declarativeSync-tests",

@@ -42,12 +42,10 @@ exports_files(
 
 ### auto-generated section `dev content intellij.extendedToolWindowsUi` start
 dev_dist_plugin_content(
-    name = "extendedToolWindowsUi_dev_content",
     descriptor_module = ":extendedToolWindowsUi",
-    prepacked_content_modules = {
-        "//plugins/extended-toolwindows-ui/backend": "modules/intellij.extendedToolWindowsUi.backend.jar",
-        "//plugins/extended-toolwindows-ui/frontend": "modules/intellij.extendedToolWindowsUi.frontend.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/extended-toolwindows-ui/backend",
+        "//plugins/extended-toolwindows-ui/frontend",
+    ],
 )
 ### auto-generated section `dev content intellij.extendedToolWindowsUi` end

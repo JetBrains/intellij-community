@@ -42,7 +42,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.maven.plugin` start
 dev_dist_plugin_content(
-    name = "plugin_dev_content",
     content_modules = [
         "//build/deps:dependencies",
         "//plugins/maven",
@@ -60,7 +59,6 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":plugin",
     libraries = [
-        "@lib//:kotlin-stdlib",
         "@lib//:maven-artifact_resolver-common-org-apache-maven-maven-artifact-3-0-5",
         "@lib//:maven-artifact_resolver-m31-org-apache-maven-maven-core-3-0-5",
         "@lib//:maven-artifact_resolver-m31-org-codehaus-plexus-plexus-component-annotations-1-5-5",
@@ -101,14 +99,13 @@ dev_dist_plugin_content(
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
     ],
-    prepacked_content_modules = {
-        "//plugins/maven/completion": "modules/intellij.maven.completion.jar",
-        "//plugins/maven/groovy": "modules/intellij.maven.groovy.jar",
-        "//plugins/maven/jps": "modules/intellij.maven.jps.jar",
-        "//plugins/maven/jps/ide": "modules/intellij.maven.jps.ide.jar",
-        "//plugins/maven/performanceTesting": "modules/intellij.maven.performanceTesting.jar",
-        "//plugins/maven/proofreading": "modules/intellij.maven.proofreading.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/maven/completion",
+        "//plugins/maven/groovy",
+        "//plugins/maven/jps",
+        "//plugins/maven/jps/ide",
+        "//plugins/maven/performanceTesting",
+        "//plugins/maven/proofreading",
+    ],
 )
 ### auto-generated section `dev content intellij.maven.plugin` end

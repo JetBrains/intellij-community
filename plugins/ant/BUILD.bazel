@@ -176,11 +176,9 @@ exports_files(
 
 ### auto-generated section `dev content intellij.ant` start
 dev_dist_plugin_content(
-    name = "ant_dev_content",
     content_modules = ["//plugins/ant/jps-plugin:jps"],
     descriptor_module = ":ant",
     libraries = ["@lib//ant/lib:ant"],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.ant` end
 

@@ -124,7 +124,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.evaluationPlugin` start
 dev_dist_plugin_content(
-    name = "evaluation-plugin_dev_content",
     content_modules = [
         "//libraries/clikt",
         "//libraries/xerial-snappy-java",
@@ -136,17 +135,15 @@ dev_dist_plugin_content(
     descriptor_module = ":evaluation-plugin",
     libraries = [
         "@lib//:io-modelcontextprotocol-kotlin-sdk",
-        "@lib//:kotlin-stdlib",
         "@lib//:libraries-clikt-clikt",
         "@lib//:libraries-xerial-snappy-java-xerial-snappy-java",
         "@lib//:mockito-junit-jupiter",
     ],
-    prepacked_content_modules = {
-        "//plugins/evaluation-plugin/languages/java": "modules/intellij.evaluationPlugin.languages.java.jar",
-        "//plugins/evaluation-plugin/languages/kotlin": "modules/intellij.evaluationPlugin.languages.kotlin.jar",
-        "//plugins/evaluation-plugin/languages/python": "modules/intellij.evaluationPlugin.languages.python.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/evaluation-plugin/languages/java",
+        "//plugins/evaluation-plugin/languages/kotlin",
+        "//plugins/evaluation-plugin/languages/python",
+    ],
 )
 ### auto-generated section `dev content intellij.evaluationPlugin` end
 

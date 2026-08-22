@@ -140,10 +140,8 @@ exports_files(
 
 ### auto-generated section `dev content intellij.lombok` start
 dev_dist_plugin_content(
-    name = "lombok_dev_content",
     content_modules = ["//plugins/lombok/generated"],
     descriptor_module = ":lombok",
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.lombok` end
 

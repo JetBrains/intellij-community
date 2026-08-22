@@ -120,15 +120,6 @@ exports_files(
 )
 ### auto-generated section `iml intellij.configurationScript` end
 
-### auto-generated section `dev content intellij.configurationScript` start
-dev_dist_plugin_content(
-    name = "configuration-script_dev_content",
-    descriptor_module = ":configuration-script",
-    libraries = ["@lib//:kotlin-stdlib"],
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `dev content intellij.configurationScript` end
-
 ### auto-generated section `build intellij.configurationScript.test.java` start
 jvm_library(
     name = "configurationScript-test-java",

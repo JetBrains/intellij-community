@@ -43,20 +43,15 @@ exports_files(
 
 ### auto-generated section `dev content intellij.jcef.plugin` start
 dev_dist_plugin_content(
-    name = "plugin_dev_content",
     content_modules = ["//libraries/jcef"],
     descriptor_module = ":plugin",
-    libraries = [
-        "@lib//:kotlin-stdlib",
-        "@lib//:libraries-jcef-jcef",
+    libraries = ["@lib//:libraries-jcef-jcef"],
+    prepacked_content_modules = [
+        "//platform/new-ui-onboarding/jcef",
+        "//platform/platform-impl/internal/jcef",
+        "//platform/platform-impl/jcef",
+        "//platform/ui.jcef",
+        "//plugins/jcef/frontend",
     ],
-    prepacked_content_modules = {
-        "//platform/new-ui-onboarding/jcef": "modules/intellij.platform.ide.newUiOnboarding.jcef.jar",
-        "//platform/platform-impl/internal/jcef": "modules/intellij.internal.jcef.jar",
-        "//platform/platform-impl/jcef": "modules/intellij.platform.ide.impl.jcef.jar",
-        "//platform/ui.jcef": "modules/intellij.platform.ui.jcef.jar",
-        "//plugins/jcef/frontend": "modules/intellij.jcef.frontend.jar",
-    },
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.jcef.plugin` end

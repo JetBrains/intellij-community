@@ -450,6 +450,20 @@ def _collect_libraries(ctx, library_jars):
         # `compile_jars` and `transitive_compile_time_jars` both yield the *interface* jar.
         library_jars.append(depset([_library_entry(target, ctx.label)]))
 
+    # Every plugin needs it, and no plugin says anything by naming it. The Bazel converter puts `@lib//:kotlin-stdlib`
+    # into a module's `runtime_deps` implicitly and JPS declares it for nobody, so whether it reached a plugin's
+    # `libraries` was decided by whether some member's JPS model or the layout report happened to mention it - true for
+    # 250 of 408 content targets and false for the rest, describing nothing about either group. It is a fact of the
+    # toolchain, so it lives on the rule. Costs no manifest entry either: the key is the container label, so a fragment
+    # that already had it gains nothing to resolve.
+    library_jars.append(depset([_library_entry(ctx.attr._kotlin_stdlib, ctx.label)]))
+
+_KOTLIN_STDLIB_ATTR = attr.label(
+    doc = "The Kotlin standard library, declared for every plugin - see `_collect_libraries`.",
+    default = "@lib//:kotlin-stdlib",
+    providers = [[JavaInfo]],
+)
+
 def _collect_library_jars(ctx, library_jars):
     """The per-jar half, for labels a *repository rule* produced rather than a generator writing a BUILD file.
 
@@ -479,8 +493,16 @@ def _collect_prepacked(ctx, plugin_main_module, prepacked_plugin_jars):
     is declared in two places: the community half names what a community package can name, and the completion set in
     `//build/dev-dist-content` - the one package that sees both repositories - names the ultimate members. Both halves
     hand the collector the same kind of record, so nothing downstream can tell which side a jar came from.
+
+    The path is derived, not declared. A relation is eligible for prepacking only when its content-report entry is
+    exactly `lib/modules/<module>.jar` - `simplePluginContentModuleName` in `contentModuleJar.kt` returns nothing for
+    any other shape - so `modules/<module>.jar` is the only path a prepacked relation can have, and the module name it
+    is built from is read off the target one line above. Declaring it as well put 2 030 copies of that one rule into
+    checked-in `BUILD.bazel` files, and made a *generated* path the thing that
+    `JarPackager.validatePrepackedPluginContentHandoff` compared the layout against. That check keeps its value here:
+    it now asserts that the layout put the jar where the eligibility rule says it must be.
     """
-    for target, relative_output_file in ctx.attr.prepacked_content_modules.items():
+    for target in ctx.attr.prepacked_content_modules:
         output_groups = target[OutputGroupInfo]
         if not hasattr(output_groups, "content_module_jar"):
             fail("%s: prepacked content module %s has no `content_module_jar` output" % (ctx.label, target.label))
@@ -497,12 +519,12 @@ def _collect_prepacked(ctx, plugin_main_module, prepacked_plugin_jars):
         prepacked_plugin_jars.append(depset([struct(
             plugin_main_module = plugin_main_module,
             content_module = content_module,
-            relative_output_file = relative_output_file,
+            relative_output_file = "modules/" + content_module + ".jar",
             jar = jars[0],
         )]))
 
-_PREPACKED_CONTENT_MODULES_ATTR = attr.label_keyed_string_dict(
-    doc = "Content modules handed to their `content_module_jar` output, mapped to the path below plugin `lib/`.",
+_PREPACKED_CONTENT_MODULES_ATTR = attr.label_list(
+    doc = "Content modules handed to their own `content_module_jar` output instead of being packed by the fragment.",
     providers = [_KtJvmInfo],
 )
 
@@ -527,7 +549,7 @@ def _dev_dist_plugin_content_impl(ctx):
         prepacked_plugin_jars = depset(transitive = prepacked_plugin_jars),
     )]
 
-dev_dist_plugin_content = rule(
+_dev_dist_plugin_content = rule(
     doc = """Which jars a dev distribution must have on hand to assemble one plugin.
 
     One target per plugin, in the plugin's own package, generated from the `plugin-content.yaml` checked in beside the
@@ -557,8 +579,23 @@ dev_dist_plugin_content = rule(
             providers = [[JavaInfo]],
         ),
         "prepacked_content_modules": _PREPACKED_CONTENT_MODULES_ATTR,
+        "_kotlin_stdlib": _KOTLIN_STDLIB_ATTR,
     },
 )
+
+def dev_dist_plugin_content(descriptor_module, name = None, visibility = ["//visibility:public"], **kwargs):
+    """`_dev_dist_plugin_content` with the two attributes that are the same for every plugin filled in.
+
+    A content target is named after the module that carries the plugin descriptor, and every one of them is public
+    because the fragment that packs the plugin is in another package. Both were generated into 408 checked-in
+    `BUILD.bazel` files, 816 lines that said the same thing every time.
+    """
+    _dev_dist_plugin_content(
+        name = name if name else descriptor_module.lstrip(":") + "_dev_content",
+        descriptor_module = descriptor_module,
+        visibility = visibility,
+        **kwargs
+    )
 
 def _dev_dist_content_set_impl(ctx):
     module_jars = []
@@ -620,6 +657,7 @@ dev_dist_content_set = rule(
             allow_files = True,
         ),
         "prepacked_content_modules": _PREPACKED_CONTENT_MODULES_ATTR,
+        "_kotlin_stdlib": _KOTLIN_STDLIB_ATTR,
         "prepacked_plugin_main_module": attr.string(
             doc = """The plugin `prepacked_content_modules` belongs to, for a set that completes one across the repository split.
 

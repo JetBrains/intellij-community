@@ -42,27 +42,22 @@ exports_files(
 
 ### auto-generated section `dev content intellij.platform.vcs.plugin` start
 dev_dist_plugin_content(
-    name = "plugin_dev_content",
     content_modules = ["//platform/sqlite"],
     descriptor_module = ":plugin",
-    libraries = [
-        "@lib//:kotlin-stdlib",
-        "@lib//:sqlite-native",
+    libraries = ["@lib//:sqlite-native"],
+    prepacked_content_modules = [
+        "//platform/dvcs-api:vcs-dvcs",
+        "//platform/dvcs-impl:vcs-dvcs-impl",
+        "//platform/vcs-impl",
+        "//platform/vcs-impl/debugger",
+        "//platform/vcs-impl/exec",
+        "//platform/vcs-impl/frontend",
+        "//platform/vcs-impl/lang",
+        "//platform/vcs-impl/lang/actions",
+        "//platform/vcs-log/api:vcs-log",
+        "//platform/vcs-log/graph-api:vcs-log-graph",
+        "//platform/vcs-log/graph:vcs-log-graph-impl",
+        "//platform/vcs-log/impl",
     ],
-    prepacked_content_modules = {
-        "//platform/dvcs-api:vcs-dvcs": "modules/intellij.platform.vcs.dvcs.jar",
-        "//platform/dvcs-impl:vcs-dvcs-impl": "modules/intellij.platform.vcs.dvcs.impl.jar",
-        "//platform/vcs-impl": "modules/intellij.platform.vcs.impl.jar",
-        "//platform/vcs-impl/debugger": "modules/intellij.platform.vcs.impl.debugger.jar",
-        "//platform/vcs-impl/exec": "modules/intellij.platform.vcs.impl.exec.jar",
-        "//platform/vcs-impl/frontend": "modules/intellij.platform.vcs.impl.frontend.jar",
-        "//platform/vcs-impl/lang": "modules/intellij.platform.vcs.impl.lang.jar",
-        "//platform/vcs-impl/lang/actions": "modules/intellij.platform.vcs.impl.lang.actions.jar",
-        "//platform/vcs-log/api:vcs-log": "modules/intellij.platform.vcs.log.jar",
-        "//platform/vcs-log/graph-api:vcs-log-graph": "modules/intellij.platform.vcs.log.graph.jar",
-        "//platform/vcs-log/graph:vcs-log-graph-impl": "modules/intellij.platform.vcs.log.graph.impl.jar",
-        "//platform/vcs-log/impl": "modules/intellij.platform.vcs.log.impl.jar",
-    },
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.platform.vcs.plugin` end

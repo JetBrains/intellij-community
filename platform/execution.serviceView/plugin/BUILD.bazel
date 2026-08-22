@@ -42,17 +42,15 @@ exports_files(
 
 ### auto-generated section `dev content intellij.platform.execution.serviceView.plugin` start
 dev_dist_plugin_content(
-    name = "plugin_dev_content",
     descriptor_module = ":plugin",
-    prepacked_content_modules = {
-        "//platform/execution.dashboard": "modules/intellij.platform.execution.dashboard.jar",
-        "//platform/execution.dashboard/backend": "modules/intellij.platform.execution.dashboard.backend.jar",
-        "//platform/execution.dashboard/frontend": "modules/intellij.platform.execution.dashboard.frontend.jar",
-        "//platform/execution.serviceView": "modules/intellij.platform.execution.serviceView.jar",
-        "//platform/execution.serviceView/backend": "modules/intellij.platform.execution.serviceView.backend.jar",
-        "//platform/execution.serviceView/frontend": "modules/intellij.platform.execution.serviceView.frontend.jar",
-        "//platform/remote-servers/clouds": "modules/intellij.platform.clouds.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//platform/execution.dashboard",
+        "//platform/execution.dashboard/backend",
+        "//platform/execution.dashboard/frontend",
+        "//platform/execution.serviceView",
+        "//platform/execution.serviceView/backend",
+        "//platform/execution.serviceView/frontend",
+        "//platform/remote-servers/clouds",
+    ],
 )
 ### auto-generated section `dev content intellij.platform.execution.serviceView.plugin` end

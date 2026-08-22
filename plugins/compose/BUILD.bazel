@@ -42,7 +42,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.compose.ide.plugin` start
 dev_dist_plugin_content(
-    name = "compose-ide-plugin_dev_content",
     content_modules = [
         "//plugins/compose/intellij.compose.ide.plugin.k2:ide-plugin-k2",
         "//plugins/compose/intellij.compose.ide.plugin.resources.android:ide-plugin-resources-android",
@@ -50,16 +49,14 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":compose-ide-plugin",
     libraries = [
-        "@lib//:kotlin-stdlib",
         "@lib//:kotlinc-compose-compiler-plugin",
         "@lib//:kotlinc-kotlin-compiler-tests",
         "@lib//:kotlinc-kotlin-jps-common",
         "@lib//:studio-platform",
     ],
-    prepacked_content_modules = {
-        "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt": "modules/intellij.compose.ide.plugin.gradleTooling.rt.jar",
-        "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared": "modules/intellij.compose.ide.plugin.shared.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
+        "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
+    ],
 )
 ### auto-generated section `dev content intellij.compose.ide.plugin` end

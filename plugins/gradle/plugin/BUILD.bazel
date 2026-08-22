@@ -42,7 +42,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.gradle.plugin` start
 dev_dist_plugin_content(
-    name = "plugin_dev_content",
     content_modules = [
         "//libraries/gradle",
         "//libraries/groovy",
@@ -56,7 +55,6 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":plugin",
     libraries = [
-        "@lib//:kotlin-stdlib",
         "@lib//:libraries-gradle-_gradle",
         "@lib//:libraries-groovy-ant-groovy-ant",
         "@lib//:libraries-groovy-groovy",
@@ -64,13 +62,12 @@ dev_dist_plugin_content(
         "@lib//:slf4j-jdk14",
         "@lib//ant/lib:ant",
     ],
-    prepacked_content_modules = {
-        "//plugins/gradle/backend": "modules/intellij.gradle.backend.jar",
-        "//plugins/gradle/completion": "modules/intellij.gradle.completion.jar",
-        "//plugins/gradle/completion/kotlin": "modules/intellij.gradle.completion.kotlin.jar",
-        "//plugins/gradle/completion/toml": "modules/intellij.gradle.completion.toml.jar",
-        "//plugins/gradle/properties": "modules/intellij.gradle.properties.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/gradle/backend",
+        "//plugins/gradle/completion",
+        "//plugins/gradle/completion/kotlin",
+        "//plugins/gradle/completion/toml",
+        "//plugins/gradle/properties",
+    ],
 )
 ### auto-generated section `dev content intellij.gradle.plugin` end

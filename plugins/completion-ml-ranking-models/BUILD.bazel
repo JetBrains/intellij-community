@@ -95,7 +95,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.completionMlRankingModels` start
 dev_dist_plugin_content(
-    name = "completion-ml-ranking-models_dev_content",
     content_modules = [
         "//libraries/completion-ranking-cpp",
         "//libraries/completion-ranking-go",
@@ -117,7 +116,6 @@ dev_dist_plugin_content(
         "@lib//:completion_ml_ranking_models-libraries-completion-ranking-html-exp",
         "@lib//:completion_ml_ranking_models-libraries-completion-ranking-python-exp",
         "@lib//:completion_ml_ranking_models-libraries-completion-ranking-scala-exp",
-        "@lib//:kotlin-stdlib",
         "@lib//:libraries-completion-ranking-cpp-completion-ranking-cpp",
         "@lib//:libraries-completion-ranking-go-completion-ranking-go",
         "@lib//:libraries-completion-ranking-java-completion-ranking-java",
@@ -130,7 +128,6 @@ dev_dist_plugin_content(
         "@lib//:libraries-completion-ranking-swift-completion-ranking-swift",
         "@lib//:libraries-completion-ranking-typescript-completion-ranking-typescript",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.completionMlRankingModels` end
 

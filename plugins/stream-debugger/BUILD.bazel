@@ -62,20 +62,18 @@ exports_files(
 
 ### auto-generated section `dev content intellij.debugger.streams.plugin` start
 dev_dist_plugin_content(
-    name = "debugger-streams-plugin_dev_content",
     content_modules = [
         "//plugins/stream-debugger/rt",
         "//plugins/stream-debugger/rt/gatherers",
     ],
     descriptor_module = ":debugger-streams-plugin",
-    prepacked_content_modules = {
-        "//plugins/stream-debugger/backend": "modules/intellij.debugger.streams.backend.jar",
-        "//plugins/stream-debugger/core": "modules/intellij.debugger.streams.core.jar",
-        "//plugins/stream-debugger/java": "modules/intellij.debugger.streams.java.jar",
-        "//plugins/stream-debugger/java/frontend": "modules/intellij.debugger.streams.java.frontend.jar",
-        "//plugins/stream-debugger/shared": "modules/intellij.debugger.streams.shared.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/stream-debugger/backend",
+        "//plugins/stream-debugger/core",
+        "//plugins/stream-debugger/java",
+        "//plugins/stream-debugger/java/frontend",
+        "//plugins/stream-debugger/shared",
+    ],
 )
 ### auto-generated section `dev content intellij.debugger.streams.plugin` end
 

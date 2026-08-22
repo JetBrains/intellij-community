@@ -92,15 +92,12 @@ exports_files(
 
 ### auto-generated section `dev content intellij.properties` start
 dev_dist_plugin_content(
-    name = "properties_dev_content",
     content_modules = ["//plugins/properties/properties-psi-api:psi"],
     descriptor_module = ":properties",
-    libraries = ["@lib//:kotlin-stdlib"],
-    prepacked_content_modules = {
-        "//plugins/properties/copyright": "modules/intellij.properties.copyright.jar",
-        "//plugins/properties/properties-psi-impl:backend-psi": "modules/intellij.properties.backend.psi.jar",
-        "//plugins/properties:properties-backend": "modules/intellij.properties.backend.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/properties/copyright",
+        "//plugins/properties/properties-psi-impl:backend-psi",
+        "//plugins/properties:properties-backend",
+    ],
 )
 ### auto-generated section `dev content intellij.properties` end

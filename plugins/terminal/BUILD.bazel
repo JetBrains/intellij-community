@@ -200,7 +200,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.terminal` start
 dev_dist_plugin_content(
-    name = "terminal_dev_content",
     content_modules = [
         "//libraries/completion-ranking-sh",
         "//plugins/terminal/completion",
@@ -208,18 +207,16 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":terminal",
     libraries = [
-        "@lib//:kotlin-stdlib",
         "@lib//:libraries-completion-ranking-sh-completion-ranking-sh",
         "@lib//:terminal-completion-terminal-completion-spec",
         "@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions",
     ],
-    prepacked_content_modules = {
-        "//plugins/terminal/backend": "modules/intellij.terminal.backend.jar",
-        "//plugins/terminal/cloud": "modules/intellij.terminal.cloud.jar",
-        "//plugins/terminal/emulator": "modules/intellij.terminal.emulator.jar",
-        "//plugins/terminal/frontend": "modules/intellij.terminal.frontend.jar",
-        "//plugins/terminal/sh": "modules/intellij.terminal.sh.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//plugins/terminal/backend",
+        "//plugins/terminal/cloud",
+        "//plugins/terminal/emulator",
+        "//plugins/terminal/frontend",
+        "//plugins/terminal/sh",
+    ],
 )
 ### auto-generated section `dev content intellij.terminal` end

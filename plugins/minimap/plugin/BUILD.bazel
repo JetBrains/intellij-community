@@ -42,11 +42,7 @@ exports_files(
 
 ### auto-generated section `dev content intellij.minimap.plugin` start
 dev_dist_plugin_content(
-    name = "plugin_dev_content",
     descriptor_module = ":plugin",
-    prepacked_content_modules = {
-        "//plugins/minimap/core": "modules/intellij.minimap.core.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = ["//plugins/minimap/core"],
 )
 ### auto-generated section `dev content intellij.minimap.plugin` end

@@ -117,15 +117,12 @@ exports_files(
 
 ### auto-generated section `dev content intellij.platform.images` start
 dev_dist_plugin_content(
-    name = "images_dev_content",
     descriptor_module = ":images",
-    libraries = ["@lib//:kotlin-stdlib"],
-    prepacked_content_modules = {
-        "//images/intellij.platform.images.copyright:copyright": "modules/intellij.platform.images.copyright.jar",
-        "//images/intellij.platform.images.xdebugger:xdebugger": "modules/intellij.platform.images.xdebugger.jar",
-        "//images/jcef": "modules/intellij.platform.images.jcef.jar",
-    },
-    visibility = ["//visibility:public"],
+    prepacked_content_modules = [
+        "//images/intellij.platform.images.copyright:copyright",
+        "//images/intellij.platform.images.xdebugger:xdebugger",
+        "//images/jcef",
+    ],
 )
 ### auto-generated section `dev content intellij.platform.images` end
 
