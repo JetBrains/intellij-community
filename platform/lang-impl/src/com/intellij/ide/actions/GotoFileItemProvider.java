@@ -374,18 +374,20 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   }
 
   private @Nullable PsiFileSystemItem getFileByAbsolutePath(@NotNull String pattern) {
-    if (pattern.contains("/") || pattern.contains("\\")) {
-      String path = FileUtil.toSystemIndependentName(ChooseByNamePopup.getTransformedPattern(pattern, myModel));
-      VirtualFile vFile = LocalFileSystem.getInstance().findFileByPathIfCached(path);
-      if (vFile == null) {
-        path = unitePaths(myProject.getBasePath(), path);
-        if (path != null) vFile = LocalFileSystem.getInstance().findFileByPathIfCached(path);
-      }
-      if (vFile != null) {
-        ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
-        if (index.isInContent(vFile) || index.isInLibrary(vFile)) {
-          return PsiUtilCore.findFileSystemItem(myProject, vFile);
-        }
+    if (!pattern.contains("/") && !pattern.contains("\\")) {
+      return null;
+    }
+
+    String path = FileUtil.toSystemIndependentName(ChooseByNamePopup.getTransformedPattern(pattern, myModel));
+    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPathIfCached(path);
+    if (vFile == null) {
+      String unitedPath = unitePaths(myProject.getBasePath(), path);
+      if (unitedPath != null) vFile = LocalFileSystem.getInstance().findFileByPathIfCached(unitedPath);
+    }
+    if (vFile != null) {
+      ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
+      if (index.isInContent(vFile) || index.isInLibrary(vFile)) {
+        return PsiUtilCore.findFileSystemItem(myProject, vFile);
       }
     }
     return null;
