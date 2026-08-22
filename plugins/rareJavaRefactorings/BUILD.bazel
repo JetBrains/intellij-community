@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.rareRefactorings` start
@@ -104,10 +105,36 @@ exports_files(
     [
         "intellij.java.rareRefactorings.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.rareRefactorings` end
+
+### auto-generated section `dev content intellij.java.rareRefactorings` start
+dev_dist_plugin_content(
+    name = "java-rareRefactorings_dev_content",
+    descriptor_module = ":java-rareRefactorings",
+    libraries = [
+        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
+        "@lib//:com.sun.activation/jakarta.activation-1.2.2.jar",
+        "@lib//:com.sun.istack/istack-commons-runtime-3.0.12.jar",
+        "@lib//:eawtstub.jar",
+        "@lib//:one.util/streamex-0.8.4.jar",
+        "@lib//:org.glassfish.jaxb/jaxb-runtime-2.3.9.jar",
+        "@lib//:org.glassfish.jaxb/txw2-2.3.9.jar",
+        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
+        "@lib//:org.jetbrains.intellij.deps.fastutil/intellij-deps-fastutil-8.5.18-jb1.jar",
+        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm-0.5.0.jar",
+        "@lib//:org.jmock/jmock-2.5.1.jar",
+        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
+        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev content intellij.java.rareRefactorings` end
 
 ### auto-generated section `build intellij.java.rareRefactorings.tests` start
 jvm_library(

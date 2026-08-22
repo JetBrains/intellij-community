@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -89,10 +90,38 @@ exports_files(
     [
         "intellij.settingsSync.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.settingsSync` end
+
+### auto-generated section `dev content intellij.settingsSync` start
+dev_dist_plugin_content(
+    name = "settingsSync_dev_content",
+    content_modules = [
+        "//libraries/cloud-config-client",
+        "//plugins/settings-sync/settingsSync.performanceTesting",
+    ],
+    descriptor_module = ":settingsSync",
+    libraries = [
+        "@lib//:com.googlecode.javaewah/JavaEWAH-1.2.3.jar",
+        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
+        "@lib//:com.jetbrains.cloudconfig/cloudconfig-2023.9.jar",
+        "@lib//:com.jetbrains.fus.reporting/ap-validation-all-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-jvm-2.0.242.jar",
+        "@lib//:eawtstub.jar",
+        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
+        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
+        "@lib//:org.jetbrains.intellij.deps/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
+        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev content intellij.settingsSync` end
 
 ### auto-generated section `build intellij.settingsSync.tests` start
 jvm_library(

@@ -34,6 +34,7 @@ exports_files(
         "intellij.keymap.xcode.iml",
         "resources/META-INF/plugin.xml",
         "resources/keymaps/Xcode.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

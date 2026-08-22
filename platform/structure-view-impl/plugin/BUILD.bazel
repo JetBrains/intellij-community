@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.structureView.plugin` start
@@ -33,7 +34,41 @@ exports_files(
     [
         "intellij.platform.structureView.plugin.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.structureView.plugin` end
+
+### auto-generated section `dev content intellij.platform.structureView.plugin` start
+dev_dist_plugin_content(
+    name = "plugin_dev_content",
+    content_modules = [
+        "//platform/structure-view-impl/backend",
+        "//platform/structure-view-impl/frontend",
+        "//platform/structure-view-impl/intellij.platform.structureView.impl:structureView-impl",
+        "//platform/structure-view-impl:structureView",
+    ],
+    descriptor_module = ":plugin",
+    libraries = [
+        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
+        "@lib//:com.jetbrains.fus.reporting/ap-validation-all-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-jvm-2.0.242.jar",
+        "@lib//:dk.brics/automaton-1.12-4.jar",
+        "@lib//:eawtstub.jar",
+        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
+        "@lib//:org.jetbrains.intellij.deps.fastutil/intellij-deps-fastutil-8.5.18-jb1.jar",
+        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm-0.5.0.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-core-jvm-1.9.0.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-json-jvm-1.9.0.jar",
+        "@lib//:org.jmock/jmock-2.5.1.jar",
+        "@lib//:org.slf4j/log4j-over-slf4j-1.7.36.jar",
+        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
+        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev content intellij.platform.structureView.plugin` end

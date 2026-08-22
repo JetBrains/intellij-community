@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -128,10 +129,50 @@ exports_files(
         "resources/colorSchemes/MermaidDarcula.xml",
         "resources/colorSchemes/MermaidDefault.xml",
         "resources/liveTemplates/MermaidHidden.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.mermaid` end
+
+### auto-generated section `dev content intellij.mermaid` start
+dev_dist_plugin_content(
+    name = "mermaid_dev_content",
+    content_modules = [
+        "//plugins/mermaid/frontend",
+        "//plugins/mermaid/json",
+        "//plugins/mermaid/markdown",
+        "//plugins/mermaid/spellchecker",
+    ],
+    descriptor_module = ":mermaid",
+    libraries = [
+        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
+        "@lib//:com.jetbrains.fus.reporting/ap-validation-all-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-jvm-2.0.242.jar",
+        "@lib//:eawtstub.jar",
+        "@lib//:io.netty/netty-buffer-4.2.16.Final.jar",
+        "@lib//:io.netty/netty-codec-base-4.2.16.Final.jar",
+        "@lib//:io.netty/netty-codec-http-4.2.16.Final.jar",
+        "@lib//:io.netty/netty-codec-http2-4.2.16.Final.jar",
+        "@lib//:io.netty/netty-common-4.2.16.Final.jar",
+        "@lib//:io.netty/netty-handler-4.2.16.Final.jar",
+        "@lib//:io.netty/netty-resolver-4.2.16.Final.jar",
+        "@lib//:io.netty/netty-transport-4.2.16.Final.jar",
+        "@lib//:io.netty/netty-transport-native-unix-common-4.2.16.Final.jar",
+        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
+        "@lib//:org.jetbrains.intellij.deps.jcef/jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b11.jar",
+        "@lib//:org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-core-jvm-1.10.2-intellij-2.jar",
+        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains/markdown-jvm-0.7.8.jar",
+        "@lib//:org.jmock/jmock-2.5.1.jar",
+        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
+        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev content intellij.mermaid` end
 
 ### auto-generated section `build intellij.mermaid.tests` start
 jvm_library(

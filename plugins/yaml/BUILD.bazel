@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -116,10 +117,42 @@ exports_files(
         "intellij.yaml.iml",
         "resources/META-INF/plugin.xml",
         "resources/intellij.yaml.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.yaml` end
+
+### auto-generated section `dev content intellij.yaml` start
+dev_dist_plugin_content(
+    name = "yaml_dev_content",
+    content_modules = [
+        "//plugins/yaml/backend",
+        "//plugins/yaml/syntax",
+    ],
+    descriptor_module = ":yaml",
+    libraries = [
+        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
+        "@lib//:com.jetbrains.fus.reporting/ap-validation-all-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-jvm-2.0.242.jar",
+        "@lib//:eawtstub.jar",
+        "@lib//:one.util/streamex-0.8.4.jar",
+        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
+        "@lib//:org.jetbrains.intellij.deps.fastutil/intellij-deps-fastutil-8.5.18-jb1.jar",
+        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-test-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm-0.5.0.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-core-jvm-1.9.0.jar",
+        "@lib//:org.jetbrains/annotations-26.0.2.jar",
+        "@lib//:org.jmock/jmock-2.5.1.jar",
+        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
+        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev content intellij.yaml` end
 
 ### auto-generated section `build intellij.yaml.tests` start
 jvm_library(

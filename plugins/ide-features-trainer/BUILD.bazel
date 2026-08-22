@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -144,10 +145,62 @@ exports_files(
     [
         "intellij.featuresTrainer.iml",
         "res/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.featuresTrainer` end
+
+### auto-generated section `dev content intellij.featuresTrainer` start
+dev_dist_plugin_content(
+    name = "featuresTrainer_dev_content",
+    content_modules = [
+        "//libraries/assertj-core",
+        "//plugins/git-features-trainer:vcs-git-featuresTrainer",
+        "//plugins/ide-features-trainer/onboarding",
+        "//plugins/ide-features-trainer/tips",
+        "//plugins/kotlin/onboarding-promoter",
+    ],
+    descriptor_module = ":featuresTrainer",
+    libraries = [
+        "@lib//:com.google.guava/failureaccess-1.0.3.jar",
+        "@lib//:com.google.guava/guava-33.5.0-jre.jar",
+        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
+        "@lib//:com.jetbrains.fus.reporting/ap-validation-all-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-jvm-2.0.242.jar",
+        "@lib//:com.jetbrains.intellij.documentation/tips-appcode-222.33.jar",
+        "@lib//:com.jetbrains.intellij.documentation/tips-big-data-tools-241.60.jar",
+        "@lib//:com.jetbrains.intellij.documentation/tips-clion-241.61.jar",
+        "@lib//:com.jetbrains.intellij.documentation/tips-database-plugin-241.71.jar",
+        "@lib//:com.jetbrains.intellij.documentation/tips-datagrip-241.59.jar",
+        "@lib//:com.jetbrains.intellij.documentation/tips-goland-241.63.jar",
+        "@lib//:com.jetbrains.intellij.documentation/tips-intellij-idea-241.73.jar",
+        "@lib//:com.jetbrains.intellij.documentation/tips-intellij-idea-community-241.62.jar",
+        "@lib//:com.jetbrains.intellij.documentation/tips-phpstorm-241.67.jar",
+        "@lib//:com.jetbrains.intellij.documentation/tips-pycharm-241.68.jar",
+        "@lib//:com.jetbrains.intellij.documentation/tips-pycharm-community-241.74.jar",
+        "@lib//:com.jetbrains.intellij.documentation/tips-rubymine-241.58.jar",
+        "@lib//:com.jetbrains.intellij.documentation/tips-webstorm-241.72.jar",
+        "@lib//:eawtstub.jar",
+        "@lib//:info.cukes/cucumber-jvm-deps-1.0.5.jar",
+        "@lib//:org.assertj/assertj-core-4.0.0-M1.jar",
+        "@lib//:org.assertj/assertj-swing-3.17.1.jar",
+        "@lib//:org.easymock/easymock-5.6.0.jar",
+        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
+        "@lib//:org.jetbrains.intellij.deps.ift/git-learning-project-212.0.2.jar",
+        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-datetime-jvm-0.7.1-0.6.x-compat.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-core-jvm-1.9.0.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-json-jvm-1.9.0.jar",
+        "@lib//:org.jmock/jmock-2.5.1.jar",
+        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
+        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev content intellij.featuresTrainer` end
 
 ### auto-generated section `build intellij.featuresTrainer.tests` start
 jvm_library(

@@ -129,32 +129,72 @@ private val LAYOUT_PACKED_MODULE_LIBRARIES = mapOf(
 internal const val LIB_MODULE_PREFIX = "intellij.libraries."
 
 /**
- * Entries of a `module-content.yaml`, narrowed to what packing needs.
+ * One jar of a checked-in content report - `module-content.yaml` here, `plugin-content.yaml` in [computePluginContent] -
+ * narrowed to what packing and membership need.
  *
  * A narrow schema rather than `com.intellij.platform.distributionContent.testFramework.FileEntry`: that class lives in
  * the platform, and this generator is a standalone Bazel module that gets the platform as published Maven artifacts,
- * which do not include it. Hence also `strictMode = false` - the files carry fields (`reason`, `os`, `size`, ...) this
- * schema deliberately ignores.
+ * which do not include it. Hence also `strictMode = false` - the files carry fields (`reason`, `os`, `size`, `files`,
+ * `productModules`, ...) this schema deliberately ignores, and enumerating them here would recreate `FileEntry` field by
+ * field, which is the coupling the narrow schema exists to avoid.
+ *
+ * That leniency has a cost: a field this class *forgets to declare* is silently dropped rather than reported, and the
+ * same reports are read by a second, independent narrow schema - `indexPluginContentReports`/`MutablePayload` in
+ * `platform/buildScripts/src/productLayout/devDistPlanGenerator.kt`, which reads `FileEntry` directly and therefore sees
+ * every field. When the two disagree about which entries name a module, the plan generator points a fragment at a content
+ * target that does not contain what the plan counted - which is exactly how `module` went missing.
+ *
+ * So the agreement is enforced rather than asked for. `ContentReportSchemaTest` in
+ * `community/platform/build-scripts/testFramework/tests` compares `FileEntry`'s serialization descriptor against the
+ * field set this class declares plus an explicit, commented set of fields it deliberately ignores, and fails naming the
+ * offending field - on an addition and on a rename alike. It cannot import this class (separate Bazel module, no target
+ * to depend on), so it mirrors the field names; a field added or renamed here belongs in that mirror too, and the test
+ * says so when it fails.
  */
 @Serializable
-private data class RecipeEntry(
+internal data class RecipeEntry(
   val name: String = "",
   val modules: List<RecipeModule> = emptyList(),
   val contentModules: List<RecipeModule> = emptyList(),
   val projectLibraries: List<RecipeNamed> = emptyList(),
   val library: String? = null,
+  /**
+   * The module that owns [library] when this entry is a bare library jar taken out of a module's own jar - the agent
+   * jars under `lib/rt/`, `lib/jshell-frontend.jar`, the native-library wrappers.
+   *
+   * Load-bearing twice over. The module is a member of the plugin like any other, so its own jar has to be declared;
+   * and [library] is then that module's *module* library rather than a project library, which is the only thing that
+   * makes it resolvable - `getLibraryByJpsIdentity` keys a module library by (name, owning module).
+   */
+  val module: String? = null,
 )
 
 @Serializable
-private data class RecipeModule(
+internal data class RecipeModule(
   val name: String = "",
   val libraries: Map<String, List<RecipeNamed>> = emptyMap(),
 )
 
-@Serializable
-private data class RecipeNamed(val name: String = "")
+/**
+ * The module a `contentModules:` entry names, with the descriptor suffix of a `moduleName/descriptorName` key dropped.
+ *
+ * A content module can be shipped under a descriptor other than its own, and the report then names it
+ * `moduleName/descriptorName` - the same key `moduleToSetChain` uses in the plan generator, whose `MutablePayload.add`
+ * and `indexPluginContentReports` both strip it with `substringBeforeLast('/')` because a Bazel output is per module, not
+ * per descriptor. Doing it here too is what keeps the two readers agreeing on which module an entry names: a raw
+ * `intellij.foo/bar` finds no module descriptor, so the member would be dropped with a warning and its jar would go
+ * missing from the fragment manifest - the `module:` failure again, by a different route.
+ *
+ * A no-op on every one of the 1233 checked-in reports today; none has a `contentModules:` name with a slash in it.
+ * Deliberately not applied to `modules:`, which the plan generator does not strip either.
+ */
+internal val RecipeModule.moduleName: String
+  get() = name.substringBeforeLast('/')
 
-private val recipeYaml = Yaml(
+@Serializable
+internal data class RecipeNamed(val name: String = "")
+
+internal val recipeYaml: Yaml = Yaml(
   configuration = YamlConfiguration(
     strictMode = false,
     codePointLimit = 10 * 1024 * 1024,

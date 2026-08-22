@@ -1,5 +1,6 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
@@ -195,10 +196,53 @@ exports_files(
         "intellij.vcs.gitlab.iml",
         "resources/META-INF/plugin.xml",
         "resources/intellij.vcs.gitlab.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.vcs.gitlab` end
+
+### auto-generated section `dev content intellij.vcs.gitlab` start
+dev_dist_plugin_content(
+    name = "vcs-gitlab_dev_content",
+    content_modules = [
+        "//plugins/gitlab/gitlab-git:vcs-gitlab-git",
+        "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml",
+    ],
+    descriptor_module = ":vcs-gitlab",
+    libraries = [
+        "@lib//:app.cash.turbine/turbine-jvm-1.0.0.jar",
+        "@lib//:com.fasterxml.jackson.core/jackson-core-2.19.0.jar",
+        "@lib//:com.fasterxml.jackson.core/jackson-databind-2.19.0.jar",
+        "@lib//:com.fasterxml.jackson.module/jackson-module-kotlin-2.19.0.jar",
+        "@lib//:com.github.ben-manes.caffeine/caffeine-3.2.3.jar",
+        "@lib//:com.google.errorprone/error_prone_annotations-2.43.0.jar",
+        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
+        "@lib//:com.jetbrains.fus.reporting/ap-validation-all-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-jvm-2.0.242.jar",
+        "@lib//:com.miglayout/miglayout-core-11.4.2.jar",
+        "@lib//:com.miglayout/miglayout-swing-11.4.2.jar",
+        "@lib//:eawtstub.jar",
+        "@lib//:info.cukes/cucumber-jvm-deps-1.0.5.jar",
+        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
+        "@lib//:org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-core-jvm-1.10.2-intellij-2.jar",
+        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains.kotlin/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-dev-4715.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-core-jvm-1.9.0.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-json-jvm-1.9.0.jar",
+        "@lib//:org.jetbrains/markdown-jvm-0.7.8.jar",
+        "@lib//:org.jmock/jmock-2.5.1.jar",
+        "@lib//:org.jsoup/jsoup-1.22.1.jar",
+        "@lib//:org.jspecify/jspecify-1.0.0.jar",
+        "@lib//:org.slf4j/log4j-over-slf4j-1.7.36.jar",
+        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
+        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev content intellij.vcs.gitlab` end
 
 ### auto-generated section `build intellij.vcs.gitlab.tests` start
 jvm_library(

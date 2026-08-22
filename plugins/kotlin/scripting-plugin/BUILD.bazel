@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.kotlin.jsr223.plugin` start
@@ -56,7 +57,28 @@ exports_files(
     [
         "intellij.kotlin.jsr223.plugin.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.kotlin.jsr223.plugin` end
+
+### auto-generated section `dev content intellij.kotlin.jsr223.plugin` start
+dev_dist_plugin_content(
+    name = "jsr223-plugin_dev_content",
+    content_modules = [
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin/jsr223",
+    ],
+    descriptor_module = ":jsr223-plugin",
+    libraries = [
+        "@lib//:org.jetbrains.kotlin/kotlin-compiler-common-for-ide-2.5.0-dev-4715.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-compiler-fe10-for-ide-2.5.0-dev-4715.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-script-runtime-2.5.0-dev-4715.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-scripting-jvm-2.5.0-dev-4715.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:org.slf4j/log4j-over-slf4j-1.7.36.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev content intellij.kotlin.jsr223.plugin` end

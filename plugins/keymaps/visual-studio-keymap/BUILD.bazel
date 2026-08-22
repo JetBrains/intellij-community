@@ -35,6 +35,7 @@ exports_files(
         "resources/META-INF/plugin.xml",
         "resources/keymaps/Visual Studio OSX.xml",
         "resources/keymaps/Visual Studio.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

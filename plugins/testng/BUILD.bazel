@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 jps_test(
@@ -159,10 +160,50 @@ exports_files(
     [
         "intellij.testng.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.testng` end
+
+### auto-generated section `dev content intellij.testng` start
+dev_dist_plugin_content(
+    name = "testng_dev_content",
+    content_modules = [
+        "//libraries/testng",
+        "//plugins/testng/langInjection",
+        "//plugins/testng_rt:testng-rt",
+    ],
+    descriptor_module = ":testng",
+    libraries = [
+        "@lib//:com.beust/jcommander-1.82.jar",
+        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
+        "@lib//:com.jetbrains.fus.reporting/ap-validation-all-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-jvm-2.0.242.jar",
+        "@lib//:com.jgoodies/forms-1.1-preview.jar",
+        "@lib//:com.sun.activation/jakarta.activation-1.2.2.jar",
+        "@lib//:com.sun.istack/istack-commons-runtime-3.0.12.jar",
+        "@lib//:eawtstub.jar",
+        "@lib//:org.apache.ant/ant-1.7.1.jar",
+        "@lib//:org.apache.ant/ant-launcher-1.7.1.jar",
+        "@lib//:org.easymock/easymock-5.6.0.jar",
+        "@lib//:org.glassfish.jaxb/jaxb-runtime-2.3.9.jar",
+        "@lib//:org.glassfish.jaxb/txw2-2.3.9.jar",
+        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
+        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
+        "@lib//:org.jetbrains.intellij.deps/sa-jdwp-1.25.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm-0.5.0.jar",
+        "@lib//:org.jmock/jmock-2.5.1.jar",
+        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
+        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
+        "@lib//:org.testng/testng-7.8.0.jar",
+        "@lib//:org.webjars/jquery-3.6.1.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev content intellij.testng` end
 
 ### auto-generated section `build intellij.testng.tests` start
 jvm_library(

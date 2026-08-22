@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -167,10 +168,68 @@ exports_files(
     [
         "intellij.ant.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.ant` end
+
+### auto-generated section `dev content intellij.ant` start
+dev_dist_plugin_content(
+    name = "ant_dev_content",
+    content_modules = ["//plugins/ant/jps-plugin:jps"],
+    descriptor_module = ":ant",
+    libraries = [
+        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
+        "@lib//:com.jetbrains.fus.reporting/ap-validation-all-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-jvm-2.0.242.jar",
+        "@lib//:com.thoughtworks.qdox/qdox-2.2.0.jar",
+        "@lib//:eawtstub.jar",
+        "@lib//:one.util/streamex-0.8.4.jar",
+        "@lib//:org.apache.ant/ant-1.7.1.jar",
+        "@lib//:org.apache.ant/ant-launcher-1.7.1.jar",
+        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
+        "@lib//:org.jetbrains.intellij.deps.fastutil/intellij-deps-fastutil-8.5.18-jb1.jar",
+        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
+        "@lib//:org.jetbrains.jps/jps-javac-extension-11.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-metadata-jvm-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm-0.5.0.jar",
+        "@lib//:org.jmock/jmock-2.5.1.jar",
+        "@lib//:org.slf4j/log4j-over-slf4j-1.7.36.jar",
+        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
+        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
+        "@lib//ant/lib:ant-antlr.jar",
+        "@lib//ant/lib:ant-apache-bcel.jar",
+        "@lib//ant/lib:ant-apache-bsf.jar",
+        "@lib//ant/lib:ant-apache-log4j.jar",
+        "@lib//ant/lib:ant-apache-oro.jar",
+        "@lib//ant/lib:ant-apache-regexp.jar",
+        "@lib//ant/lib:ant-apache-resolver.jar",
+        "@lib//ant/lib:ant-apache-xalan2.jar",
+        "@lib//ant/lib:ant-commons-logging.jar",
+        "@lib//ant/lib:ant-commons-net.jar",
+        "@lib//ant/lib:ant-imageio.jar",
+        "@lib//ant/lib:ant-jai.jar",
+        "@lib//ant/lib:ant-jakartamail.jar",
+        "@lib//ant/lib:ant-javamail.jar",
+        "@lib//ant/lib:ant-jdepend.jar",
+        "@lib//ant/lib:ant-jmf.jar",
+        "@lib//ant/lib:ant-jsch.jar",
+        "@lib//ant/lib:ant-junit.jar",
+        "@lib//ant/lib:ant-junit4.jar",
+        "@lib//ant/lib:ant-junitlauncher.jar",
+        "@lib//ant/lib:ant-launcher.jar",
+        "@lib//ant/lib:ant-netrexx.jar",
+        "@lib//ant/lib:ant-swing.jar",
+        "@lib//ant/lib:ant-testutil.jar",
+        "@lib//ant/lib:ant-xz.jar",
+        "@lib//ant/lib:ant.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev content intellij.ant` end
 
 ### auto-generated section `build intellij.ant.tests` start
 jvm_library(

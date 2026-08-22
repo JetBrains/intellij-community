@@ -67,7 +67,6 @@ jvm_library(
     content_module_jar_modules_before = [
         # do not sort,
         "//platform/buildData",
-        "//platform/code-style-impl:codeStyle-impl",
         "//platform/diagnostic/startUpPerformanceReporter",
     ],
     javac_opts = ":custom-javac-options",

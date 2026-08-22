@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 # Checkout directories that plugin layouts copy into a distribution verbatim (`withResource*`). They are
@@ -191,7 +192,70 @@ exports_files(
         "intellij.terminal.iml",
         "resources/META-INF/plugin.xml",
         "resources/META-INF/terminal.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.terminal` end
+
+### auto-generated section `dev content intellij.terminal` start
+dev_dist_plugin_content(
+    name = "terminal_dev_content",
+    content_modules = [
+        "//libraries/completion-ranking-sh",
+        "//plugins/terminal/backend",
+        "//plugins/terminal/cloud",
+        "//plugins/terminal/completion",
+        "//plugins/terminal/emulator",
+        "//plugins/terminal/frontend",
+        "//plugins/terminal/libraries:libraries-completionDbWithExtensions",
+        "//plugins/terminal/sh",
+    ],
+    descriptor_module = ":terminal",
+    libraries = [
+        "@lib//:com.github.ben-manes.caffeine/caffeine-3.2.3.jar",
+        "@lib//:com.google.errorprone/error_prone_annotations-2.43.0.jar",
+        "@lib//:com.google.guava/failureaccess-1.0.3.jar",
+        "@lib//:com.google.guava/guava-33.5.0-jre.jar",
+        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
+        "@lib//:com.jetbrains.fus.reporting/ap-validation-all-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-jvm-2.0.242.jar",
+        "@lib//:eawtstub.jar",
+        "@lib//:io.opentelemetry.semconv/opentelemetry-semconv-1.30.0.jar",
+        "@lib//:io.opentelemetry/opentelemetry-api-1.48.0.jar",
+        "@lib//:io.opentelemetry/opentelemetry-context-1.48.0.jar",
+        "@lib//:io.opentelemetry/opentelemetry-extension-kotlin-1.48.0.jar",
+        "@lib//:io.opentelemetry/opentelemetry-sdk-1.48.0.jar",
+        "@lib//:io.opentelemetry/opentelemetry-sdk-common-1.48.0.jar",
+        "@lib//:io.opentelemetry/opentelemetry-sdk-logs-1.48.0.jar",
+        "@lib//:io.opentelemetry/opentelemetry-sdk-metrics-1.48.0.jar",
+        "@lib//:io.opentelemetry/opentelemetry-sdk-trace-1.48.0.jar",
+        "@lib//:net.java.dev.jna/jna-5.19.1.jar",
+        "@lib//:net.java.dev.jna/jna-platform-5.19.1.jar",
+        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
+        "@lib//:org.jetbrains.intellij.deps.completion/completion-ranking-sh-0.0.2.jar",
+        "@lib//:org.jetbrains.intellij.deps.fastutil/intellij-deps-fastutil-8.5.18-jb1.jar",
+        "@lib//:org.jetbrains.intellij.deps.winp/winp-1.30.1.jar",
+        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
+        "@lib//:org.jetbrains.jediterm/jediterm-core-3.74.jar",
+        "@lib//:org.jetbrains.jediterm/jediterm-ui-3.74.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-test-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-test-junit5-2.2.20.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm-0.5.0.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-datetime-jvm-0.7.1-0.6.x-compat.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-core-jvm-1.9.0.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-json-jvm-1.9.0.jar",
+        "@lib//:org.jetbrains.pty4j/pty4j-0.13.12.jar",
+        "@lib//:org.jetbrains.terminal/completion-db-with-extensions-0.7.0.jar",
+        "@lib//:org.jetbrains.terminal/completion-spec-0.7.0.jar",
+        "@lib//:org.jmock/jmock-2.5.1.jar",
+        "@lib//:org.jspecify/jspecify-1.0.0.jar",
+        "@lib//:org.slf4j/log4j-over-slf4j-1.7.36.jar",
+        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
+        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev content intellij.terminal` end

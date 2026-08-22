@@ -14,6 +14,7 @@ jvm_library(
         allow_empty = True,
     ),
     content_module_jar = True,
+    content_module_jar_modules_after = ["//platform/util/annotations"],
     content_module_jar_modules_before = ["//platform/eel-provider"],
     module_name = "intellij.platform.projectModel.impl",
     resource_strip_prefix = "resources",

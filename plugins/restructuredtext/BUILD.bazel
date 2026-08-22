@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.restructuredtext` start
@@ -119,10 +120,65 @@ exports_files(
         "resources/META-INF/plugin.xml",
         "resources/colorSchemes/RestDarcula.xml",
         "resources/colorSchemes/RestDefault.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.restructuredtext` end
+
+### auto-generated section `dev content intellij.restructuredtext` start
+dev_dist_plugin_content(
+    name = "restructuredtext_dev_content",
+    content_modules = ["//python/python-restructuredtext:restructuredtext-python"],
+    descriptor_module = ":restructuredtext",
+    libraries = [
+        "@lib//:com.google.guava/failureaccess-1.0.3.jar",
+        "@lib//:com.google.guava/guava-33.5.0-jre.jar",
+        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
+        "@lib//:com.jetbrains.fus.reporting/ap-validation-all-2.0.242.jar",
+        "@lib//:completion.ml.python.features/ml-completion-prev-exprs-models-1.11.jar",
+        "@lib//:eawtstub.jar",
+        "@lib//:org.apache.thrift/libthrift-0.19.0.jar",
+        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
+        "@lib//:org.jetbrains.intellij.deps.completion/completion-ranking-python-with-full-line-0.2.1.jar",
+        "@lib//:org.jetbrains.intellij.deps.jcef/jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b11.jar",
+        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm-0.5.0.jar",
+        "@lib//:org.jmock/jmock-2.5.1.jar",
+        "@lib//:org.jsoup/jsoup-1.22.1.jar",
+        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
+        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
+        "@lib//ant/lib:ant-antlr.jar",
+        "@lib//ant/lib:ant-apache-bcel.jar",
+        "@lib//ant/lib:ant-apache-bsf.jar",
+        "@lib//ant/lib:ant-apache-log4j.jar",
+        "@lib//ant/lib:ant-apache-oro.jar",
+        "@lib//ant/lib:ant-apache-regexp.jar",
+        "@lib//ant/lib:ant-apache-resolver.jar",
+        "@lib//ant/lib:ant-apache-xalan2.jar",
+        "@lib//ant/lib:ant-commons-logging.jar",
+        "@lib//ant/lib:ant-commons-net.jar",
+        "@lib//ant/lib:ant-imageio.jar",
+        "@lib//ant/lib:ant-jai.jar",
+        "@lib//ant/lib:ant-jakartamail.jar",
+        "@lib//ant/lib:ant-javamail.jar",
+        "@lib//ant/lib:ant-jdepend.jar",
+        "@lib//ant/lib:ant-jmf.jar",
+        "@lib//ant/lib:ant-jsch.jar",
+        "@lib//ant/lib:ant-junit.jar",
+        "@lib//ant/lib:ant-junit4.jar",
+        "@lib//ant/lib:ant-junitlauncher.jar",
+        "@lib//ant/lib:ant-launcher.jar",
+        "@lib//ant/lib:ant-netrexx.jar",
+        "@lib//ant/lib:ant-swing.jar",
+        "@lib//ant/lib:ant-testutil.jar",
+        "@lib//ant/lib:ant-xz.jar",
+        "@lib//ant/lib:ant.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev content intellij.restructuredtext` end
 
 ### auto-generated section `build intellij.restructuredtext.tests` start
 jvm_library(

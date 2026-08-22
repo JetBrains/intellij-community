@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -91,10 +92,39 @@ exports_files(
     [
         "intellij.remoteControl.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.remoteControl` end
+
+### auto-generated section `dev content intellij.remoteControl` start
+dev_dist_plugin_content(
+    name = "remote-control_dev_content",
+    descriptor_module = ":remote-control",
+    libraries = [
+        "@lib//:com.google.code.gson/gson-2.13.2.jar",
+        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
+        "@lib//:eawtstub.jar",
+        "@lib//:io.netty/netty-buffer-4.2.16.Final.jar",
+        "@lib//:io.netty/netty-codec-base-4.2.16.Final.jar",
+        "@lib//:io.netty/netty-codec-http-4.2.16.Final.jar",
+        "@lib//:io.netty/netty-codec-http2-4.2.16.Final.jar",
+        "@lib//:io.netty/netty-common-4.2.16.Final.jar",
+        "@lib//:io.netty/netty-handler-4.2.16.Final.jar",
+        "@lib//:io.netty/netty-resolver-4.2.16.Final.jar",
+        "@lib//:io.netty/netty-transport-4.2.16.Final.jar",
+        "@lib//:io.netty/netty-transport-native-unix-common-4.2.16.Final.jar",
+        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
+        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:org.jmock/jmock-2.5.1.jar",
+        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
+        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev content intellij.remoteControl` end
 
 ### auto-generated section `build intellij.remoteControl.tests` start
 jvm_library(

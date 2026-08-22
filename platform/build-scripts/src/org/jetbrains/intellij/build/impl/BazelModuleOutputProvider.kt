@@ -54,8 +54,11 @@ internal class ExplicitBazelInputResolver private constructor(
   @Synchronized
   fun writeUnusedInputs(file: Path) {
     file.parent?.let { Files.createDirectories(it) }
-    val unused = inputs.values.asSequence().map(ExplicitBazelInput::execPath).filterNot(usedExecPaths::contains).distinct().sorted()
-    Files.writeString(file, unused.joinToString(separator = "\n", postfix = "\n"))
+    val unused = inputs.values.asSequence().map(ExplicitBazelInput::execPath).filterNot(usedExecPaths::contains).distinct().sorted().toList()
+    // Empty means an empty file, not a lone newline. The only reader is `wc -l`
+    // (`build/dev_dist_unused_inputs_test.bzl`), so a trailing newline with nothing before it reports a fully honest
+    // fragment as having one unused input.
+    Files.writeString(file, if (unused.isEmpty()) "" else unused.joinToString(separator = "\n", postfix = "\n"))
   }
 
   companion object {

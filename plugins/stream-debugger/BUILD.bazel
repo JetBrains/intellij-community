@@ -1,5 +1,6 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -53,10 +54,54 @@ exports_files(
     [
         "intellij.debugger.streams.plugin.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.debugger.streams.plugin` end
+
+### auto-generated section `dev content intellij.debugger.streams.plugin` start
+dev_dist_plugin_content(
+    name = "debugger-streams-plugin_dev_content",
+    content_modules = [
+        "//plugins/stream-debugger/backend",
+        "//plugins/stream-debugger/core",
+        "//plugins/stream-debugger/java",
+        "//plugins/stream-debugger/java/frontend",
+        "//plugins/stream-debugger/rt",
+        "//plugins/stream-debugger/rt/gatherers",
+        "//plugins/stream-debugger/shared",
+    ],
+    descriptor_module = ":debugger-streams-plugin",
+    libraries = [
+        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
+        "@lib//:com.jetbrains.fus.reporting/ap-validation-all-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-jvm-2.0.242.jar",
+        "@lib//:com.sun.activation/jakarta.activation-1.2.2.jar",
+        "@lib//:com.sun.istack/istack-commons-runtime-3.0.12.jar",
+        "@lib//:eawtstub.jar",
+        "@lib//:one.util/streamex-0.8.4.jar",
+        "@lib//:org.glassfish.jaxb/jaxb-runtime-2.3.9.jar",
+        "@lib//:org.glassfish.jaxb/txw2-2.3.9.jar",
+        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
+        "@lib//:org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-core-jvm-1.10.2-intellij-2.jar",
+        "@lib//:org.jetbrains.intellij.deps/asm-all-9.6.1.jar",
+        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
+        "@lib//:org.jetbrains.intellij.deps/sa-jdwp-1.25.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-test-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm-0.5.0.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-core-jvm-1.9.0.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-json-jvm-1.9.0.jar",
+        "@lib//:org.jmock/jmock-2.5.1.jar",
+        "@lib//:org.slf4j/log4j-over-slf4j-1.7.36.jar",
+        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
+        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev content intellij.debugger.streams.plugin` end
 
 ### auto-generated section `build intellij.java.debugger.streams.tests` start
 jvm_library(

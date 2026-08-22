@@ -11,17 +11,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_libraries = [
-        # do not sort,
-        "@lib//:io-modelcontextprotocol-kotlin-sdk",
-        "@lib//:io-github-oshai-kotlin-logging-jvm",
-        "@lib//:ktor-server-sse-jvm",
-        "@lib//:ktor-server-content-negotiation",
-        "@lib//:io-github-smiley4-schema-kenerator-jsonschema",
-        "@lib//:io-github-smiley4-schema-kenerator-serialization",
-        "@lib//:io-github-smiley4-schema-kenerator-core",
-    ],
     module_name = "intellij.mcpserver",
     resource_strip_prefix = "resources",
     resources = glob(

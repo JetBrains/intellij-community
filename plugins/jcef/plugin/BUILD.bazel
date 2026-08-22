@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.jcef.plugin` start
@@ -34,7 +35,55 @@ exports_files(
     [
         "intellij.jcef.plugin.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.jcef.plugin` end
+
+### auto-generated section `dev content intellij.jcef.plugin` start
+dev_dist_plugin_content(
+    name = "plugin_dev_content",
+    content_modules = [
+        "//libraries/jcef",
+        "//platform/new-ui-onboarding/jcef",
+        "//platform/platform-impl/internal/jcef",
+        "//platform/platform-impl/jcef",
+        "//platform/ui.jcef",
+        "//plugins/jcef/frontend",
+    ],
+    descriptor_module = ":plugin",
+    libraries = [
+        "@lib//:com.google.code.gson/gson-2.13.2.jar",
+        "@lib//:com.google.guava/failureaccess-1.0.3.jar",
+        "@lib//:com.google.guava/guava-33.5.0-jre.jar",
+        "@lib//:com.googlecode.plist/dd-plist-1.28.jar",
+        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
+        "@lib//:com.jetbrains.fus.reporting/ap-validation-all-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-2.0.242.jar",
+        "@lib//:com.jetbrains.fus.reporting/fus-api-jvm-2.0.242.jar",
+        "@lib//:com.miglayout/miglayout-core-11.4.2.jar",
+        "@lib//:com.miglayout/miglayout-swing-11.4.2.jar",
+        "@lib//:eawtstub.jar",
+        "@lib//:net.java.dev.jna/jna-5.19.1.jar",
+        "@lib//:net.java.dev.jna/jna-platform-5.19.1.jar",
+        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
+        "@lib//:org.jetbrains.intellij.deps.fastutil/intellij-deps-fastutil-8.5.18-jb1.jar",
+        "@lib//:org.jetbrains.intellij.deps.jcef/jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b11.jar",
+        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
+        "@lib//:org.jetbrains.intellij.deps/rwmutex-idea-0.0.10.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-reflect-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm-0.5.0.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-core-jvm-1.9.0.jar",
+        "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-json-jvm-1.9.0.jar",
+        "@lib//:org.jetbrains.runtime/jbr-api-1.9.0.jar",
+        "@lib//:org.jetbrains/annotations-26.0.2.jar",
+        "@lib//:org.jmock/jmock-2.5.1.jar",
+        "@lib//:org.slf4j/log4j-over-slf4j-1.7.36.jar",
+        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
+        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev content intellij.jcef.plugin` end

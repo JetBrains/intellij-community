@@ -10,6 +10,7 @@ scrambling require both component layouts in one process.
 
 load("@community//build:project_model_manifest.bzl", "write_project_model_manifest")
 load("//build:dev_launch_dependencies.bzl", "platform_parts")
+load(":dev_dist_content.bzl", "DevDistContentInfo")
 
 IntellijDevBuildInputsInfo = provider(
     doc = "The exact Bazel inputs and label-to-path manifest made available to one dev-build fragment.",
@@ -19,24 +20,48 @@ IntellijDevBuildInputsInfo = provider(
     },
 )
 
+def _add_input_entry(ctx, entries, logical_key, file, source):
+    """Record one manifest entry, failing when two different files claim the same logical key.
+
+    Same key, same file is the normal case - two content targets naming the same module, say - and deduplicates.
+    """
+    previous = entries.get(logical_key)
+    if previous == None:
+        entries[logical_key] = file
+    elif previous != file:
+        fail("%s: logical input '%s' is provided by both %s and %s" % (
+            ctx.label,
+            logical_key,
+            previous.owner,
+            source,
+        ))
+
 def _dev_build_inputs_impl(ctx):
     entries = {}
     for target in ctx.attr.inputs:
-        logical_key = str(target.label)
         files = target[DefaultInfo].files.to_list()
         if len(files) != 1:
             fail("%s: %s must provide exactly one file, got %s" % (ctx.label, target.label, files))
-        file = files[0]
-        previous = entries.get(logical_key)
-        if previous == None:
-            entries[logical_key] = file
-        elif previous != file:
-            fail("%s: logical input '%s' is provided by both %s and %s" % (
-                ctx.label,
-                logical_key,
-                previous.owner,
-                target.label,
-            ))
+        _add_input_entry(ctx, entries, str(target.label), files[0], target.label)
+
+    if ctx.attr.content:
+        content = ctx.attr.content[DevDistContentInfo]
+
+        # The keys must be byte-identical to the ones the generated name table produced, because `DevDistMain` asks
+        # for exactly those strings through `BazelBuildInputs.resolve` and an unknown key is a hard error there.
+        #
+        # A module's production label is the *rule* label plus `.jar` (`compute_module_targets`,
+        # `@community//build:jps_target_derivation.bzl:410-420`), and the rule's jar output is `%{name}.jar`
+        # (`jvm-rules/rules/common-attrs.bzl:129-132`) - so the jar file's owner is the rule and `owner + ".jar"`
+        # reproduces the label. `jps_dynamic_deps_ultimate.bzl:567-570` states the same identity from the other side.
+        for jar in content.module_jars.to_list() + content.dependency_module_jars.to_list():
+            _add_input_entry(ctx, entries, str(jar.owner) + ".jar", jar, jar.owner)
+
+        # A library jar carries its own label, which is *not* derivable from the file: a Maven library's jar target is a
+        # `copy_file` output, so the file's owner is the `...jar_copy` rule rather than the label recorded as
+        # `jarTargets` (`lib.kt:408-423`). `DevDistContentInfo` therefore carries the label the target had.
+        for entry in content.library_jars.to_list():
+            _add_input_entry(ctx, entries, entry.label, entry.jar, entry.label)
 
     lines = []
     files = []
@@ -45,7 +70,11 @@ def _dev_build_inputs_impl(ctx):
         lines.append("%s\t%s" % (logical_key, file.path))
         files.append(file)
     manifest = ctx.actions.declare_file(ctx.label.name + ".bazel-inputs")
-    ctx.actions.write(manifest, "\n".join(lines) + "\n")
+
+    # An empty declaration writes an empty file rather than a lone newline, for the same reason `writeUnusedInputs`
+    # does: `wc -l` is what reads this pair, and a blank line would report one declared input that does not exist.
+    # Unchanged for every non-empty manifest, so no fragment is re-keyed by this.
+    ctx.actions.write(manifest, ("\n".join(lines) + "\n") if lines else "")
 
     return [
         DefaultInfo(files = depset([manifest])),
@@ -58,7 +87,13 @@ intellij_dev_build_inputs = rule(
     attrs = {
         # Inputs are direct generated labels, never aliases: configured Target.label is the manifest key. The Kotlin
         # resolver adds apparent-repository aliases for canonical external-repository labels.
+        #
+        # This half keeps carrying the raw sources - the project-model tree's files, plugin descriptors, build modules -
+        # which are files a generator names one by one and no provider can aggregate.
         "inputs": attr.label_list(allow_files = True),
+        # The jars, aggregated from the graph instead of from a generated name list. Both halves land in one manifest
+        # under the same key convention, so nothing on the Kotlin side can tell where an entry came from.
+        "content": attr.label(providers = [DevDistContentInfo]),
     },
 )
 
