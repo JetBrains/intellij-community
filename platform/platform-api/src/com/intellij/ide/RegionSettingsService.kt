@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.assertRunBlockingBackgroundThreadAndNoWriteAction
 import com.intellij.openapi.progress.util.runWithCheckCanceled
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -97,7 +98,10 @@ class RegionSettingsService(coroutineScope: CoroutineScope) {
    */
   @RequiresBackgroundThread(generateAssertion = false)
   fun getCurrentRegionBlocking(): Region {
-    cachedRegion.value?.let { return it }
+    cachedRegion.value?.let {
+      assertRunBlockingBackgroundThreadAndNoWriteAction() // even if we are lucky to get cached value on EDT here, still LOG.error
+      return it
+    }
 
     return runWithCheckCanceled { computeRegion() }
   }
