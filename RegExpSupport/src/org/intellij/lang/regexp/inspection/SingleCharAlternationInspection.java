@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -56,7 +56,7 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
       final RegExpAtom[] atoms = branch.getAtoms();
       if (atoms.length != 1) return false;
       RegExpAtom atom = atoms[0];
-      return atom instanceof RegExpChar || atom instanceof RegExpSimpleClass;
+      return atom instanceof RegExpChar || (atom instanceof RegExpSimpleClass c && c.getKind() != RegExpSimpleClass.Kind.ANY);
     }
 
     private static class SingleCharAlternationFix extends PsiUpdateModCommandQuickFix {
